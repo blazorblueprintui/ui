@@ -33,6 +33,18 @@ jobs:
         with:
           fetch-depth: 0  # Full history for MinVer
 
+      - name: Fetch tags
+        run: git fetch --force --tags
+
+      - name: Debug git info
+        run: |
+          echo "Current commit: $(git rev-parse HEAD)"
+          echo "Current branch/tag: $(git describe --tags --always)"
+          echo "All tags on this commit:"
+          git tag --points-at HEAD
+          echo "Git status:"
+          git status
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -87,7 +99,10 @@ jobs:
         run: dotnet restore ${{ steps.package-info.outputs.project_path }}
 
       - name: Build
-        run: dotnet build ${{ steps.package-info.outputs.project_path }} --configuration Release --no-restore
+        run: |
+          dotnet build ${{ steps.package-info.outputs.project_path }} --configuration Release --no-restore
+          echo "Checking MinVer calculated version..."
+          dotnet msbuild ${{ steps.package-info.outputs.project_path }} -getProperty:Version -p:Configuration=Release
 
       - name: Pack
         run: dotnet pack ${{ steps.package-info.outputs.project_path }} --configuration Release --no-build --output ./packages
@@ -99,7 +114,12 @@ jobs:
           echo "Created package: $PACKAGE_FILE"
 
           # Extract version from package filename
-          PACKAGE_VERSION=$(basename "$PACKAGE_FILE" | sed 's/.*\.\([0-9].*\)\.nupkg/\1/')
+          # Remove package name prefix and .nupkg suffix
+          PACKAGE_NAME="${{ steps.package-info.outputs.display_name }}"
+          BASENAME=$(basename "$PACKAGE_FILE" .nupkg)
+          PACKAGE_VERSION="${BASENAME#$PACKAGE_NAME.}"
+
+          echo "Package name: $PACKAGE_NAME"
           echo "Package version: $PACKAGE_VERSION"
           echo "Expected version: ${{ steps.package-info.outputs.version }}"
 
