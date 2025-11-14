@@ -1,0 +1,113 @@
+@page "/components/popover"
+@using BlazorUI.Primitives.Services
+@using BlazorUI.Components.Popover
+
+<PageTitle>Popover Component - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Popover Component</h1>
+        <p class="text-xl text-muted-foreground">
+            Styled Popover component with shadcn/ui design.
+        </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+    </div>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold mb-4">Basic Popover</h2>
+        <Popover>
+            <PopoverTrigger>
+                <Button Variant="ButtonVariant.Outline">Open Popover</Button>
+            </PopoverTrigger>
+            <PopoverContent>
+                <div class="grid gap-4">
+                    <div class="space-y-2">
+                        <h4 class="font-medium leading-none">Dimensions</h4>
+                        <p class="text-sm text-muted-foreground">
+                            Set the dimensions for the layer.
+                        </p>
+                    </div>
+                    <div class="grid gap-2">
+                        <div class="grid grid-cols-3 items-center gap-4">
+                            <label class="text-sm font-medium">Width</label>
+                            <input class="col-span-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" type="number" value="100" />
+                        </div>
+                        <div class="grid grid-cols-3 items-center gap-4">
+                            <label class="text-sm font-medium">Height</label>
+                            <input class="col-span-2 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" type="number" value="100" />
+                        </div>
+                    </div>
+                </div>
+            </PopoverContent>
+        </Popover>
+    </section>
+
+    <section>
+        <h2 class="text-2xl font-semibold mb-4">Positioning</h2>
+        <div class="flex flex-wrap gap-4">
+            <Popover>
+                <PopoverTrigger>
+                    <Button Variant="ButtonVariant.Secondary">Top</Button>
+                </PopoverTrigger>
+                <PopoverContent Side="@PopoverSide.Top">
+                    <p class="text-sm">Positioned on top</p>
+                </PopoverContent>
+            </Popover>
+
+            <Popover>
+                <PopoverTrigger>
+                    <Button Variant="ButtonVariant.Secondary">Bottom</Button>
+                </PopoverTrigger>
+                <PopoverContent Side="@PopoverSide.Bottom">
+                    <p class="text-sm">Positioned on bottom</p>
+                </PopoverContent>
+            </Popover>
+
+            <Popover>
+                <PopoverTrigger>
+                    <Button Variant="ButtonVariant.Secondary">Left</Button>
+                </PopoverTrigger>
+                <PopoverContent Side="@PopoverSide.Left">
+                    <p class="text-sm">Positioned on left</p>
+                </PopoverContent>
+            </Popover>
+
+            <Popover>
+                <PopoverTrigger>
+                    <Button Variant="ButtonVariant.Secondary">Right</Button>
+                </PopoverTrigger>
+                <PopoverContent Side="@PopoverSide.Right">
+                    <p class="text-sm">Positioned on right</p>
+                </PopoverContent>
+            </Popover>
+        </div>
+    </section>
+
+    <section>
+        <h2 class="text-2xl font-semibold mb-4">Controlled Popover</h2>
+        <div class="flex items-center gap-4">
+            <Popover @bind-Open="_isControlledOpen">
+                <PopoverTrigger>
+                    <Button>@(_isControlledOpen ? "Close" : "Open") Controlled</Button>
+                </PopoverTrigger>
+                <PopoverContent>
+                    <div class="space-y-2">
+                        <p class="text-sm">This popover is controlled externally.</p>
+                        <p class="text-sm font-medium">State: @(_isControlledOpen ? "Open" : "Closed")</p>
+                    </div>
+                </PopoverContent>
+            </Popover>
+            <Button Variant="ButtonVariant.Outline" OnClick="() => _isControlledOpen = !_isControlledOpen">
+                Toggle from Outside
+            </Button>
+        </div>
+    </section>
+</div>
+
+@code {
+    private bool _isControlledOpen = false;
+}

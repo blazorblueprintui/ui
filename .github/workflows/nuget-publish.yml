@@ -1,0 +1,128 @@
+name: Publish to NuGet
+
+on:
+  push:
+    tags:
+      - 'primitives/v*'
+      - 'components/v*'
+      - 'icons/v*'
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package to publish'
+        required: true
+        type: choice
+        options:
+          - primitives
+          - components
+          - icons
+      version:
+        description: 'Version (e.g., 1.0.0-beta.4)'
+        required: true
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for MinVer
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Determine package and version
+        id: package-info
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Manual workflow dispatch
+            PACKAGE="${{ inputs.package }}"
+            VERSION="${{ inputs.version }}"
+            echo "Manually triggered release"
+          else
+            # Tag push
+            TAG_NAME="${{ github.ref_name }}"
+            # Extract package name (e.g., "primitives" from "primitives/v1.0.0-beta.4")
+            PACKAGE=$(echo "$TAG_NAME" | cut -d'/' -f1)
+            # Extract version (e.g., "1.0.0-beta.4" from "primitives/v1.0.0-beta.4")
+            VERSION=$(echo "$TAG_NAME" | cut -d'/' -f2 | sed 's/^v//')
+            echo "Tag-triggered release"
+          fi
+
+          echo "package=$PACKAGE" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+          # Determine project path and display name
+          case $PACKAGE in
+            primitives)
+              echo "project_path=src/BlazorUI.Primitives/BlazorUI.Primitives.csproj" >> $GITHUB_OUTPUT
+              echo "display_name=BlazorUI.Primitives" >> $GITHUB_OUTPUT
+              ;;
+            components)
+              echo "project_path=src/BlazorUI.Components/BlazorUI.Components.csproj" >> $GITHUB_OUTPUT
+              echo "display_name=BlazorUI.Components" >> $GITHUB_OUTPUT
+              ;;
+            icons)
+              echo "project_path=src/BlazorUI.Icons/BlazorUI.Icons.csproj" >> $GITHUB_OUTPUT
+              echo "display_name=BlazorUI.Icons" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "Unknown package: $PACKAGE"
+              exit 1
+              ;;
+          esac
+
+          echo "📦 Package: $PACKAGE"
+          echo "🏷️  Version: $VERSION"
+
+      - name: Restore dependencies
+        run: dotnet restore ${{ steps.package-info.outputs.project_path }}
+
+      - name: Build
+        run: dotnet build ${{ steps.package-info.outputs.project_path }} --configuration Release --no-restore
+
+      - name: Pack
+        run: dotnet pack ${{ steps.package-info.outputs.project_path }} --configuration Release --no-build --output ./packages
+
+      - name: Verify package version
+        shell: bash
+        run: |
+          PACKAGE_FILE=$(ls ./packages/*.nupkg)
+          echo "Created package: $PACKAGE_FILE"
+
+          # Extract version from package filename
+          PACKAGE_VERSION=$(basename "$PACKAGE_FILE" | sed 's/.*\.\([0-9].*\)\.nupkg/\1/')
+          echo "Package version: $PACKAGE_VERSION"
+          echo "Expected version: ${{ steps.package-info.outputs.version }}"
+
+          # Verify version matches
+          if [ "$PACKAGE_VERSION" != "${{ steps.package-info.outputs.version }}" ]; then
+            echo "❌ Version mismatch! Package has version $PACKAGE_VERSION but expected ${{ steps.package-info.outputs.version }}"
+            echo "This usually means the git tag doesn't match the MinVer configuration."
+            exit 1
+          fi
+
+          echo "✅ Version verified successfully"
+
+      - name: Push to NuGet
+        run: dotnet nuget push ./packages/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Summary
+        shell: bash
+        run: |
+          echo "## 🎉 Release Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Package:** ${{ steps.package-info.outputs.display_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.package-info.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The package has been published to NuGet.org and should be available shortly." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [View on NuGet.org](https://www.nuget.org/packages/${{ steps.package-info.outputs.display_name }}/${{ steps.package-info.outputs.version }})" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,192 @@
+@namespace BlazorUI.Components.DataTable
+@typeparam TData where TData : class
+@using BlazorUI.Primitives.Table
+@using BlazorUI.Components.Button
+@using BlazorUI.Components.Select
+@using BlazorUI.Components.Utilities
+
+<div class="flex items-center justify-between px-2 py-4">
+    <div class="flex-1 text-sm text-muted-foreground">
+        @{
+            var start = (State.Pagination.CurrentPage - 1) * State.Pagination.PageSize + 1;
+            var end = Math.Min(State.Pagination.CurrentPage * State.Pagination.PageSize, State.Pagination.TotalItems);
+            var total = State.Pagination.TotalItems;
+        }
+        @if (total > 0)
+        {
+            <span>Showing @start-@end of @total</span>
+        }
+        else
+        {
+            <span>No items</span>
+        }
+    </div>
+
+    <div class="flex items-center gap-6 lg:gap-8">
+        <div class="flex items-center gap-2">
+            <p class="text-sm font-medium">Rows per page</p>
+            <Select TValue="string"
+                    Value="@pageSizeValue"
+                    ValueChanged="@HandlePageSizeChanged">
+                <SelectTrigger Class="h-8 w-[70px]">
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                    @foreach (var size in PageSizes)
+                    {
+                        <SelectItem Value="@size.ToString()">@size</SelectItem>
+                    }
+                </SelectContent>
+            </Select>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <div class="flex w-[100px] items-center justify-center text-sm font-medium">
+                Page @State.Pagination.CurrentPage of @State.Pagination.TotalPages
+            </div>
+
+            <div class="flex items-center gap-1">
+                <Button Variant="ButtonVariant.Outline"
+                        Size="ButtonSize.IconSmall"
+                        Class="h-8 w-8"
+                        Disabled="@(!State.Pagination.CanGoPrevious)"
+                        OnClick="@GoToFirstPage"
+                        AriaLabel="Go to first page">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                    </svg>
+                </Button>
+
+                <Button Variant="ButtonVariant.Outline"
+                        Size="ButtonSize.IconSmall"
+                        Class="h-8 w-8"
+                        Disabled="@(!State.Pagination.CanGoPrevious)"
+                        OnClick="@GoToPreviousPage"
+                        AriaLabel="Go to previous page">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </Button>
+
+                <Button Variant="ButtonVariant.Outline"
+                        Size="ButtonSize.IconSmall"
+                        Class="h-8 w-8"
+                        Disabled="@(!State.Pagination.CanGoNext)"
+                        OnClick="@GoToNextPage"
+                        AriaLabel="Go to next page">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </Button>
+
+                <Button Variant="ButtonVariant.Outline"
+                        Size="ButtonSize.IconSmall"
+                        Class="h-8 w-8"
+                        Disabled="@(!State.Pagination.CanGoNext)"
+                        OnClick="@GoToLastPage"
+                        AriaLabel="Go to last page">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                    </svg>
+                </Button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string pageSizeValue = "10";
+    private bool _initialized = false;
+
+    [Parameter, EditorRequired]
+    public TableState<TData> State { get; set; } = null!;
+
+    [Parameter]
+    public int[] PageSizes { get; set; } = { 10, 20, 50, 100 };
+
+    [Parameter]
+    public EventCallback<int> OnPageChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OnPageSizeChanged { get; set; }
+
+    protected override void OnInitialized()
+    {
+        pageSizeValue = State.Pagination.PageSize.ToString();
+        _initialized = true;
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (_initialized)
+        {
+            var currentPageSize = State.Pagination.PageSize.ToString();
+            if (pageSizeValue != currentPageSize)
+            {
+                pageSizeValue = currentPageSize;
+            }
+        }
+    }
+
+    private async Task HandlePageSizeChanged(string newValue)
+    {
+        pageSizeValue = newValue;
+
+        if (int.TryParse(newValue, out var newSize) && newSize != State.Pagination.PageSize)
+        {
+            State.Pagination.PageSize = newSize;
+            State.Pagination.CurrentPage = 1; // Reset to first page
+
+            if (OnPageSizeChanged.HasDelegate)
+            {
+                await OnPageSizeChanged.InvokeAsync(newSize);
+            }
+        }
+    }
+
+    private async Task GoToFirstPage()
+    {
+        State.Pagination.CurrentPage = 1;
+
+        if (OnPageChanged.HasDelegate)
+        {
+            await OnPageChanged.InvokeAsync(State.Pagination.CurrentPage);
+        }
+    }
+
+    private async Task GoToPreviousPage()
+    {
+        if (State.Pagination.CanGoPrevious)
+        {
+            State.Pagination.CurrentPage--;
+
+            if (OnPageChanged.HasDelegate)
+            {
+                await OnPageChanged.InvokeAsync(State.Pagination.CurrentPage);
+            }
+        }
+    }
+
+    private async Task GoToNextPage()
+    {
+        if (State.Pagination.CanGoNext)
+        {
+            State.Pagination.CurrentPage++;
+
+            if (OnPageChanged.HasDelegate)
+            {
+                await OnPageChanged.InvokeAsync(State.Pagination.CurrentPage);
+            }
+        }
+    }
+
+    private async Task GoToLastPage()
+    {
+        State.Pagination.CurrentPage = State.Pagination.TotalPages;
+
+        if (OnPageChanged.HasDelegate)
+        {
+            await OnPageChanged.InvokeAsync(State.Pagination.CurrentPage);
+        }
+    }
+}

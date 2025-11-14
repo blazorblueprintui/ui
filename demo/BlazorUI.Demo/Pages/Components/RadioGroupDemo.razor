@@ -1,0 +1,347 @@
+@page "/components/radio-group"
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>Radio Group Component - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Radio Group Component</h1>
+        <p class="text-xl text-muted-foreground">
+            A set of checkable buttons—known as radio buttons—where no more than one of the buttons can be checked at a time.
+        </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+    </div>
+
+    <!-- Basic Usage -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-sm text-muted-foreground">
+                Simple radio group with two-way binding.
+            </p>
+        </div>
+        <RadioGroup @bind-Value="selectedOption" AriaLabel="Choose an option">
+            <div class="flex items-center gap-3">
+                <RadioGroupItem Value="@("default")" Id="r1" />
+                <label for="r1" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Default
+                </label>
+            </div>
+            <div class="flex items-center gap-3">
+                <RadioGroupItem Value="@("comfortable")" Id="r2" />
+                <label for="r2" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Comfortable
+                </label>
+            </div>
+            <div class="flex items-center gap-3">
+                <RadioGroupItem Value="@("compact")" Id="r3" />
+                <label for="r3" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Compact
+                </label>
+            </div>
+        </RadioGroup>
+        <p class="text-sm text-muted-foreground">
+            Selected value: <strong>@(selectedOption ?? "none")</strong>
+        </p>
+    </div>
+
+    <!-- Disabled State -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled State</h2>
+            <p class="text-sm text-muted-foreground">
+                Radio groups and individual items that cannot be interacted with.
+            </p>
+        </div>
+        <div class="space-y-6">
+            <div>
+                <h3 class="text-lg font-medium mb-3">Disabled Group</h3>
+                <RadioGroup @bind-Value="disabledGroupValue" Disabled="true" AriaLabel="Disabled group">
+                    <div class="flex items-center gap-3">
+                        <RadioGroupItem Value="@("option1")" Id="d1" />
+                        <label for="d1" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            Option 1
+                        </label>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <RadioGroupItem Value="@("option2")" Id="d2" />
+                        <label for="d2" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            Option 2
+                        </label>
+                    </div>
+                </RadioGroup>
+            </div>
+            <div>
+                <h3 class="text-lg font-medium mb-3">Individual Item Disabled</h3>
+                <RadioGroup @bind-Value="individualDisabledValue" AriaLabel="Individual items disabled">
+                    <div class="flex items-center gap-3">
+                        <RadioGroupItem Value="@("enabled1")" Id="id1" />
+                        <label for="id1" class="text-sm font-medium leading-none">
+                            Enabled Option 1
+                        </label>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <RadioGroupItem Value="@("disabled")" Id="id2" Disabled="true" />
+                        <label for="id2" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            Disabled Option
+                        </label>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <RadioGroupItem Value="@("enabled2")" Id="id3" />
+                        <label for="id3" class="text-sm font-medium leading-none">
+                            Enabled Option 2
+                        </label>
+                    </div>
+                </RadioGroup>
+                <p class="text-sm text-muted-foreground mt-3">
+                    Selected: <strong>@(individualDisabledValue ?? "none")</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Validation -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Form Validation</h2>
+            <p class="text-sm text-muted-foreground">
+                Radio group integrated with Blazor's EditForm and validation.
+            </p>
+        </div>
+        <EditForm Model="formModel" OnValidSubmit="HandleValidSubmit" class="space-y-4">
+            <DataAnnotationsValidator />
+
+            <div class="space-y-3">
+                <label class="text-sm font-medium">Notification Preference *</label>
+                <RadioGroup @bind-Value="formModel.NotificationPreference" AriaLabel="Choose notification preference">
+                    <div class="flex items-center gap-3">
+                        <RadioGroupItem Value="@("email")" Id="form-email" />
+                        <label for="form-email" class="text-sm font-medium leading-none">
+                            Email
+                        </label>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <RadioGroupItem Value="@("sms")" Id="form-sms" />
+                        <label for="form-sms" class="text-sm font-medium leading-none">
+                            SMS
+                        </label>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <RadioGroupItem Value="@("push")" Id="form-push" />
+                        <label for="form-push" class="text-sm font-medium leading-none">
+                            Push Notifications
+                        </label>
+                    </div>
+                </RadioGroup>
+                <ValidationMessage For="@(() => formModel.NotificationPreference)" class="text-sm text-destructive" />
+            </div>
+
+            <div class="flex gap-4">
+                <Button Type="ButtonType.Submit" Variant="ButtonVariant.Default">Submit</Button>
+                <Button Type="ButtonType.Button" Variant="ButtonVariant.Outline" OnClick="ResetForm">Reset</Button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(formMessage))
+            {
+                <div class="p-4 bg-card rounded-lg border">
+                    <p class="text-sm">@formMessage</p>
+                </div>
+            }
+        </EditForm>
+    </div>
+
+    <!-- Different Value Types -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Different Value Types</h2>
+            <p class="text-sm text-muted-foreground">
+                Radio groups support various data types through generics.
+            </p>
+        </div>
+        <div class="space-y-6">
+            <div>
+                <h3 class="text-lg font-medium mb-3">Integer Values</h3>
+                <RadioGroup @bind-Value="intValue" AriaLabel="Select a number">
+                    <div class="flex items-center gap-3">
+                        <RadioGroupItem Value="1" Id="int1" />
+                        <label for="int1" class="text-sm font-medium leading-none">
+                            One
+                        </label>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <RadioGroupItem Value="2" Id="int2" />
+                        <label for="int2" class="text-sm font-medium leading-none">
+                            Two
+                        </label>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <RadioGroupItem Value="3" Id="int3" />
+                        <label for="int3" class="text-sm font-medium leading-none">
+                            Three
+                        </label>
+                    </div>
+                </RadioGroup>
+                <p class="text-sm text-muted-foreground mt-3">
+                    Selected: <strong>@intValue</strong>
+                </p>
+            </div>
+            <div>
+                <h3 class="text-lg font-medium mb-3">Enum Values</h3>
+                <RadioGroup @bind-Value="sizeValue" AriaLabel="Select a size">
+                    <div class="flex items-center gap-3">
+                        <RadioGroupItem Value="Size.Small" Id="size-small" />
+                        <label for="size-small" class="text-sm font-medium leading-none">
+                            Small
+                        </label>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <RadioGroupItem Value="Size.Medium" Id="size-medium" />
+                        <label for="size-medium" class="text-sm font-medium leading-none">
+                            Medium
+                        </label>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <RadioGroupItem Value="Size.Large" Id="size-large" />
+                        <label for="size-large" class="text-sm font-medium leading-none">
+                            Large
+                        </label>
+                    </div>
+                </RadioGroup>
+                <p class="text-sm text-muted-foreground mt-3">
+                    Selected: <strong>@sizeValue</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Highlighted Container -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">With Container Background</h2>
+            <p class="text-sm text-muted-foreground">
+                Radio items within highlighted containers. Click anywhere in the container to select.
+            </p>
+        </div>
+        <RadioGroup @bind-Value="highlightedValue" AriaLabel="Select a plan">
+            <div
+                @onclick="@(() => highlightedValue = "free")"
+                class="@($"flex items-start space-x-3 rounded-lg border p-4 cursor-pointer transition-colors {(highlightedValue == "free" ? "border-primary bg-primary/5" : "border-input")}")">
+                <div @onclick:stopPropagation class="mt-0.5">
+                    <RadioGroupItem Value="@("free")" Id="plan-free" />
+                </div>
+                <div class="flex-1">
+                    <div class="text-sm font-medium leading-none">
+                        Free Plan
+                    </div>
+                    <p class="text-sm text-muted-foreground mt-1.5">
+                        Perfect for getting started. Includes basic features.
+                    </p>
+                </div>
+            </div>
+            <div
+                @onclick="@(() => highlightedValue = "pro")"
+                class="@($"flex items-start space-x-3 rounded-lg border p-4 cursor-pointer transition-colors {(highlightedValue == "pro" ? "border-primary bg-primary/5" : "border-input")}")">
+                <div @onclick:stopPropagation class="mt-0.5">
+                    <RadioGroupItem Value="@("pro")" Id="plan-pro" />
+                </div>
+                <div class="flex-1">
+                    <div class="text-sm font-medium leading-none">
+                        Pro Plan
+                    </div>
+                    <p class="text-sm text-muted-foreground mt-1.5">
+                        For professionals. Unlimited features and priority support.
+                    </p>
+                </div>
+            </div>
+        </RadioGroup>
+        <p class="text-sm text-muted-foreground">
+            Selected plan: <strong>@(highlightedValue ?? "none")</strong>
+        </p>
+    </div>
+
+    <!-- Accessibility Notes -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Accessibility</h2>
+            <p class="text-sm text-muted-foreground">
+                Keyboard navigation and screen reader support.
+            </p>
+        </div>
+        <div class="space-y-2 text-sm">
+            <p>✓ Tab key focuses the selected radio button (or first if none selected)</p>
+            <p>✓ Arrow keys (Up/Down/Left/Right) navigate between options and select</p>
+            <p>✓ Space and Enter keys select the focused radio button</p>
+            <p>✓ Disabled items are not focusable (tabindex="-1")</p>
+            <p>✓ ARIA attributes set correctly (role="radiogroup", role="radio", aria-checked)</p>
+            <p>✓ Focus ring appears on keyboard focus (focus-visible:ring-2)</p>
+            <p>✓ Color contrast meets WCAG 2.1 AA standards</p>
+            <p>✓ Semantic label association using htmlFor attribute</p>
+            <p>✓ Screen readers announce radio state and group membership</p>
+        </div>
+    </div>
+
+    <!-- Browser Compatibility -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Browser Compatibility</h2>
+            <p class="text-sm text-muted-foreground">
+                Tested and verified across modern browsers.
+            </p>
+        </div>
+        <div class="space-y-2 text-sm">
+            <p>✓ Chrome 120+ (compatible)</p>
+            <p>✓ Firefox 120+ (compatible)</p>
+            <p>✓ Edge 120+ (compatible)</p>
+            <p>✓ Safari 17+ (compatible)</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Basic usage
+    private string? selectedOption = "comfortable";
+
+    // Disabled states
+    private string? disabledGroupValue = "option1";
+    private string? individualDisabledValue = "enabled1";
+
+    // Form validation
+    private FormModel formModel = new();
+    private string formMessage = "";
+
+    // Different value types
+    private int intValue = 2;
+    private Size sizeValue = Size.Medium;
+
+    // Highlighted container
+    private string? highlightedValue = "free";
+
+    private void HandleValidSubmit()
+    {
+        formMessage = $"Form submitted successfully at {DateTime.Now:HH:mm:ss}. " +
+                     $"Notification preference: {formModel.NotificationPreference}";
+    }
+
+    private void ResetForm()
+    {
+        formModel = new FormModel();
+        formMessage = "";
+    }
+
+    public enum Size
+    {
+        Small,
+        Medium,
+        Large
+    }
+
+    public class FormModel
+    {
+        [Required(ErrorMessage = "Please select a notification preference")]
+        public string? NotificationPreference { get; set; }
+    }
+}

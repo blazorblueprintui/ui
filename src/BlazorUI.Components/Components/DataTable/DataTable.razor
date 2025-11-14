@@ -1,0 +1,152 @@
+@namespace BlazorUI.Components.DataTable
+@typeparam TData where TData : class
+@using BlazorUI.Primitives.Table
+@using BlazorUI.Components.Utilities
+@using BlazorUI.Components.Checkbox
+
+<CascadingValue Value="this" IsFixed="true">
+    <div class="@ContainerCssClass">
+        @if (ShowToolbar)
+        {
+            <DataTableToolbar TData="TData"
+                              GlobalSearchValue="@_globalSearchValue"
+                              OnGlobalSearchChanged="HandleGlobalSearchChanged"
+                              Columns="@_columns"
+                              OnColumnVisibilityChanged="HandleColumnVisibilityChanged">
+                @ToolbarActions
+            </DataTableToolbar>
+        }
+
+        <div class="@TableContainerCssClass">
+            @if (IsLoading)
+            {
+                @if (LoadingTemplate != null)
+                {
+                    @LoadingTemplate
+                }
+                else
+                {
+                    <div class="flex items-center justify-center p-8 text-muted-foreground">
+                        <div class="text-sm">Loading...</div>
+                    </div>
+                }
+            }
+            else if (!_processedData.Any())
+            {
+                @if (EmptyTemplate != null)
+                {
+                    @EmptyTemplate
+                }
+                else
+                {
+                    <div class="flex items-center justify-center p-8 text-muted-foreground">
+                        <div class="text-sm">No results found.</div>
+                    </div>
+                }
+            }
+            else
+            {
+                <BlazorUI.Primitives.Table.Table TData="TData"
+                                                 Data="@_processedData"
+                                                 @bind-State="@_tableState"
+                                                 SelectionMode="@GetPrimitiveSelectionMode()"
+                                                 ManualPagination="true"
+                                                 OnSortChange="HandleSortChange"
+                                                 OnSelectionChange="HandleSelectionChange"
+                                                 Class="@TableCssClass"
+                                                 AriaLabel="@AriaLabel">
+                    <TableHeader>
+                        <TableRow TData="TData" Class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                            @if (SelectionMode == DataTableSelectionMode.Multiple)
+                            {
+                                <TableHeaderCell TData="TData" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-12" role="columnheader">
+                                    <Checkbox Checked="@IsAllSelected()"
+                                              CheckedChanged="@(async (bool isChecked) => await HandleSelectAllChanged(isChecked))"
+                                              AriaLabel="Select all rows on this page" />
+                                </TableHeaderCell>
+                            }
+                            @foreach (var column in _columns.Where(c => c.Visible))
+                            {
+                                var ariaSortValue = column.Sortable && _tableState.Sorting.SortedColumn == column.Id
+                                    ? (_tableState.Sorting.Direction == SortDirection.Ascending ? "ascending" : "descending")
+                                    : (column.Sortable ? "none" : null);
+
+                                <TableHeaderCell TData="TData" ColumnId="@(column.Sortable ? column.Id : null)"
+                                                 Class="@ClassNames.cn("h-12 px-4 text-left align-middle font-medium text-muted-foreground", column.Sortable ? "cursor-pointer select-none" : "", column.HeaderClass)"
+                                                 style="@GetColumnWidthStyle(column)"
+                                                 aria-sort="@ariaSortValue">
+                                    <div class="flex items-center gap-2">
+                                        <span>@column.Header</span>
+                                        @if (column.Sortable && _tableState.Sorting.SortedColumn == column.Id)
+                                        {
+                                            @if (_tableState.Sorting.Direction == SortDirection.Ascending)
+                                            {
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                                                </svg>
+                                            }
+                                            else if (_tableState.Sorting.Direction == SortDirection.Descending)
+                                            {
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            }
+                                        }
+                                        else if (column.Sortable)
+                                        {
+                                            <svg class="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                            </svg>
+                                        }
+                                    </div>
+                                </TableHeaderCell>
+                            }
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        @foreach (var item in _processedData)
+                        {
+                            var isSelected = _tableState.Selection.IsSelected(item);
+                            <TableRow TData="TData" Class="@ClassNames.cn("border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted", isSelected ? "bg-muted" : "")">
+                                @if (SelectionMode == DataTableSelectionMode.Multiple)
+                                {
+                                    <TableCell Class="p-4 align-middle w-12" role="gridcell">
+                                        <Checkbox Checked="@isSelected"
+                                                  CheckedChanged="@(async (bool isChecked) => await HandleRowSelectionChanged(item, isChecked))"
+                                                  AriaLabel="@($"Select this row")" />
+                                    </TableCell>
+                                }
+                                @foreach (var column in _columns.Where(c => c.Visible))
+                                {
+                                    <TableCell Class="@ClassNames.cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", column.CellClass)">
+                                        @if (column.CellTemplate != null)
+                                        {
+                                            @column.CellTemplate(item)
+                                        }
+                                        else
+                                        {
+                                            var value = column.Property(item);
+                                            @(value?.ToString() ?? "")
+                                        }
+                                    </TableCell>
+                                }
+                            </TableRow>
+                        }
+                    </TableBody>
+                </BlazorUI.Primitives.Table.Table>
+            }
+        </div>
+
+        @if (ShowPagination && !IsLoading && _processedData.Any())
+        {
+            <DataTablePagination TData="TData"
+                                 State="@_tableState"
+                                 PageSizes="@PageSizes"
+                                 OnPageChanged="@HandlePageChanged"
+                                 OnPageSizeChanged="@HandlePageSizeChanged" />
+        }
+    </div>
+
+    @* Capture column definitions *@
+    @Columns
+</CascadingValue>

@@ -1,0 +1,84 @@
+@namespace BlazorUI.Primitives.Sheet
+
+@*
+    SheetClose provides a button to close the sheet.
+    Can be used multiple times within a sheet (e.g., X button, Cancel button, etc.)
+*@
+
+<button type="button"
+        @onclick="HandleClick"
+        @onkeydown="HandleKeyDown"
+        @attributes="AdditionalAttributes">
+    @ChildContent
+</button>
+
+@code {
+    [CascadingParameter]
+    private SheetContext Context { get; set; } = null!;
+
+    /// <summary>
+    /// The content to display inside the close button.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the close button element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Custom click handler. Called after the sheet is closed.
+    /// </summary>
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnClick { get; set; }
+
+    /// <summary>
+    /// Whether to prevent the default close behavior.
+    /// When true, only the OnClick handler is invoked.
+    /// Default is false (sheet closes on click).
+    /// </summary>
+    [Parameter]
+    public bool PreventClose { get; set; } = false;
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "SheetClose must be used within a Sheet component. " +
+                "Ensure SheetClose is a child of a Sheet component.");
+        }
+    }
+
+    private async Task HandleClick(MouseEventArgs args)
+    {
+        if (!PreventClose)
+        {
+            Context.Close();
+        }
+
+        if (OnClick.HasDelegate)
+        {
+            await OnClick.InvokeAsync(args);
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        // Support Enter and Space for accessibility
+        if (args.Key == "Enter" || args.Key == " ")
+        {
+            if (!PreventClose)
+            {
+                Context.Close();
+            }
+
+            if (OnClick.HasDelegate)
+            {
+                await OnClick.InvokeAsync(new MouseEventArgs());
+            }
+        }
+    }
+}

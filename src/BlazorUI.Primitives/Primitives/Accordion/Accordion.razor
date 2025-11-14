@@ -1,0 +1,126 @@
+@namespace BlazorUI.Primitives.Accordion
+@implements IDisposable
+
+@* Accordion primitive root component - headless, unstyled behavior only *@
+<div @attributes="AdditionalAttributes">
+    <CascadingValue Value="@_context" IsFixed="false">
+        @ChildContent
+    </CascadingValue>
+</div>
+
+@code {
+    private AccordionContext _context = new();
+    private UseControllableState<HashSet<string>> _state = null!;
+
+    /// <summary>
+    /// The child content to render within the accordion context.
+    /// Should contain AccordionItem components.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls which items are open (controlled mode).
+    /// When null, the accordion manages its own state (uncontrolled mode).
+    /// </summary>
+    [Parameter]
+    public HashSet<string>? Value { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open items change.
+    /// Use with @bind-Value for two-way binding.
+    /// </summary>
+    [Parameter]
+    public EventCallback<HashSet<string>> ValueChanged { get; set; }
+
+    /// <summary>
+    /// Default open items when in uncontrolled mode.
+    /// </summary>
+    [Parameter]
+    public HashSet<string>? DefaultValue { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open items change.
+    /// Receives the new set of open item values as a parameter.
+    /// </summary>
+    [Parameter]
+    public EventCallback<HashSet<string>> OnValueChange { get; set; }
+
+    /// <summary>
+    /// Type of accordion (single or multiple).
+    /// Default is single.
+    /// </summary>
+    [Parameter]
+    public AccordionType Type { get; set; } = AccordionType.Single;
+
+    /// <summary>
+    /// Whether items can be collapsed when in single mode.
+    /// Default is false (one item must always be open).
+    /// </summary>
+    [Parameter]
+    public bool Collapsible { get; set; } = false;
+
+    /// <summary>
+    /// Additional attributes to apply to the root div element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override void OnInitialized()
+    {
+        // Initialize controllable state
+        _state = new UseControllableState<HashSet<string>>(DefaultValue ?? new HashSet<string>())
+        {
+            ControlledValue = Value ?? new HashSet<string>(),
+            OnValueChanged = ValueChanged,
+            IsControlled = ValueChanged.HasDelegate
+        };
+
+        // Sync initial state to context
+        _context.State.OpenValues = new HashSet<string>(_state.Value);
+        _context.State.Type = Type;
+        _context.State.Collapsible = Collapsible;
+
+        // Subscribe to context state changes
+        _context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Update controlled value if it changed
+        if (_state.IsControlled && Value != null && _state.ControlledValue != null && !Value.SetEquals(_state.ControlledValue))
+        {
+            _state.ControlledValue = Value;
+            _context.State.OpenValues = new HashSet<string>(Value);
+        }
+
+        // Update type and collapsible settings
+        _context.State.Type = Type;
+        _context.State.Collapsible = Collapsible;
+    }
+
+    private void HandleContextStateChanged()
+    {
+        // When context state changes (e.g., from AccordionTrigger),
+        // update the controllable state
+        var newOpenValues = _context.State.OpenValues;
+
+        if (!_state.Value.SetEquals(newOpenValues))
+        {
+            _ = _state.SetValueAsync(new HashSet<string>(newOpenValues));
+
+            // Invoke additional callback if provided
+            if (OnValueChange.HasDelegate)
+            {
+                _ = OnValueChange.InvokeAsync(new HashSet<string>(newOpenValues));
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        _context.OnStateChanged -= HandleContextStateChanged;
+    }
+}

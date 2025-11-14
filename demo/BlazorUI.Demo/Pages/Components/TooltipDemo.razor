@@ -1,0 +1,344 @@
+@page "/components/tooltip"
+@using BlazorUI.Primitives.Services
+@using BlazorUI.Components.Tooltip
+
+<PageTitle>Tooltip Component - BlazorUI</PageTitle>
+
+<TooltipProvider>
+    <div class="space-y-8 max-w-4xl">
+        <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Tooltip Component</h1>
+            <p class="text-xl text-muted-foreground">
+                A popup that displays information related to an element when the element receives keyboard focus or the mouse hovers over it.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        </div>
+
+        <!-- Basic Usage -->
+        <div class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Usage</h2>
+                <p class="text-sm text-muted-foreground">
+                    Hover over or focus the element to see the tooltip.
+                </p>
+            </div>
+            <div class="flex gap-4">
+                <Tooltip>
+                    <TooltipTrigger Class="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                        Hover me
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>This is a tooltip</p>
+                    </TooltipContent>
+                </Tooltip>
+            </div>
+        </div>
+
+        <!-- Placements -->
+        <div class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Tooltip Placements</h2>
+                <p class="text-sm text-muted-foreground">
+                    Tooltips can be positioned in different locations relative to the trigger.
+                </p>
+            </div>
+            <div class="flex flex-wrap gap-4">
+                <Tooltip Placement="@PopoverPlacement.Top">
+                    <TooltipTrigger Class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 cursor-pointer">
+                        Top
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        Tooltip on top
+                    </TooltipContent>
+                </Tooltip>
+
+                <Tooltip Placement="@PopoverPlacement.Bottom">
+                    <TooltipTrigger Class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 cursor-pointer">
+                        Bottom
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        Tooltip on bottom
+                    </TooltipContent>
+                </Tooltip>
+
+                <Tooltip Placement="@PopoverPlacement.Left">
+                    <TooltipTrigger Class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 cursor-pointer">
+                        Left
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        Tooltip on left
+                    </TooltipContent>
+                </Tooltip>
+
+                <Tooltip Placement="@PopoverPlacement.Right">
+                    <TooltipTrigger Class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 cursor-pointer">
+                        Right
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        Tooltip on right
+                    </TooltipContent>
+                </Tooltip>
+            </div>
+        </div>
+
+        <!-- With Icons -->
+        <div class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Icon Tooltips</h2>
+                <p class="text-sm text-muted-foreground">
+                    Common pattern for providing contextual help.
+                </p>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-2">
+                    <span>Username</span>
+                    <Tooltip>
+                        <TooltipTrigger>
+                            <LucideIcon Name="help-circle" Size="16" Class="cursor-help text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            Choose a unique username for your account
+                        </TooltipContent>
+                    </Tooltip>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <span>Email</span>
+                    <Tooltip>
+                        <TooltipTrigger>
+                            <LucideIcon Name="info" Size="16" Class="cursor-help text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            We'll never share your email with anyone
+                        </TooltipContent>
+                    </Tooltip>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toolbar Example -->
+        <div class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Toolbar with Tooltips</h2>
+                <p class="text-sm text-muted-foreground">
+                    Icons with descriptive tooltips for toolbar actions.
+                </p>
+            </div>
+            <div class="border rounded-lg p-2 inline-flex gap-1">
+                <Tooltip>
+                    <TooltipTrigger Class="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                        <LucideIcon Name="bold" Size="16" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        Bold (Ctrl+B)
+                    </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                    <TooltipTrigger Class="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                        <LucideIcon Name="italic" Size="16" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        Italic (Ctrl+I)
+                    </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                    <TooltipTrigger Class="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                        <LucideIcon Name="underline" Size="16" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        Underline (Ctrl+U)
+                    </TooltipContent>
+                </Tooltip>
+
+                <Separator Orientation="SeparatorOrientation.Vertical" Class="mx-1 h-8" />
+
+                <Tooltip>
+                    <TooltipTrigger Class="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                        <LucideIcon Name="align-left" Size="16" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        Align Left
+                    </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                    <TooltipTrigger Class="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                        <LucideIcon Name="align-center" Size="16" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        Align Center
+                    </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                    <TooltipTrigger Class="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                        <LucideIcon Name="align-right" Size="16" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        Align Right
+                    </TooltipContent>
+                </Tooltip>
+            </div>
+        </div>
+
+        <!-- Rich Content -->
+        <div class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Rich Content Tooltips</h2>
+                <p class="text-sm text-muted-foreground">
+                    Tooltips can contain formatted content and multiple elements.
+                </p>
+            </div>
+            <div class="flex gap-4">
+                <Tooltip>
+                    <TooltipTrigger Class="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground cursor-pointer">
+                        <LucideIcon Name="package" Size="16" Class="mr-2" />
+                        Premium Plan
+                    </TooltipTrigger>
+                    <TooltipContent Class="max-w-xs">
+                        <div class="space-y-1">
+                            <p class="font-semibold">Premium Features</p>
+                            <ul class="text-xs space-y-0.5 text-muted-foreground">
+                                <li>• Unlimited projects</li>
+                                <li>• Priority support</li>
+                                <li>• Advanced analytics</li>
+                            </ul>
+                        </div>
+                    </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                    <TooltipTrigger Class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors cursor-help">
+                        <LucideIcon Name="zap" Size="12" Class="mr-1" />
+                        Performance
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <div class="text-xs">
+                            <p class="font-medium mb-1">Optimized for Speed</p>
+                            <p class="text-muted-foreground">Loads 40% faster than competitors</p>
+                        </div>
+                    </TooltipContent>
+                </Tooltip>
+            </div>
+        </div>
+
+        <!-- Accessibility Notes -->
+        <div class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Accessibility Notes</h2>
+                <p class="text-sm text-muted-foreground">
+                    Best practices for accessible tooltips.
+                </p>
+            </div>
+            <div class="border rounded-lg p-6 space-y-3 bg-muted/50">
+                <p class="text-sm">
+                    ✓ <strong>Hover AND focus:</strong> Tooltips appear on both hover and keyboard focus.
+                </p>
+                <p class="text-sm">
+                    ✓ <strong>Delayed appearance:</strong> 700ms delay prevents accidental tooltips during mouse movement.
+                </p>
+                <p class="text-sm">
+                    ✓ <strong>ARIA role:</strong> role="tooltip" helps screen readers identify the popup.
+                </p>
+                <p class="text-sm">
+                    ✓ <strong>Non-essential content:</strong> Tooltips should enhance, not replace, essential information.
+                </p>
+                <p class="text-sm">
+                    ✓ <strong>Discovery mode:</strong> After seeing one tooltip, subsequent tooltips appear faster.
+                </p>
+            </div>
+        </div>
+
+        <!-- API Reference -->
+        <div class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">API Reference</h2>
+            </div>
+            <div class="border rounded-lg p-6 space-y-6">
+                <!-- TooltipProvider -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">TooltipProvider</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="font-mono text-sm font-medium mb-1">DelayDuration</p>
+                            <p class="text-sm text-muted-foreground">
+                                Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">int</code> |
+                                Default: <code class="text-xs bg-muted px-1 py-0.5 rounded">700</code>
+                            </p>
+                            <p class="text-sm text-muted-foreground mt-1">
+                                Duration in ms before showing tooltips.
+                            </p>
+                        </div>
+                        <Separator />
+                        <div>
+                            <p class="font-mono text-sm font-medium mb-1">SkipDelayDuration</p>
+                            <p class="text-sm text-muted-foreground">
+                                Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">int</code> |
+                                Default: <code class="text-xs bg-muted px-1 py-0.5 rounded">300</code>
+                            </p>
+                            <p class="text-sm text-muted-foreground mt-1">
+                                Duration to skip delay for subsequent tooltips.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <Separator />
+
+                <!-- Tooltip -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">Tooltip</h3>
+                    <div>
+                        <p class="font-mono text-sm font-medium mb-1">Placement</p>
+                        <p class="text-sm text-muted-foreground">
+                            Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string</code> |
+                            Default: <code class="text-xs bg-muted px-1 py-0.5 rounded">"top"</code>
+                        </p>
+                        <p class="text-sm text-muted-foreground mt-1">
+                            Position of tooltip: "top", "bottom", "left", "right", or variants like "top-start", "bottom-end".
+                        </p>
+                    </div>
+                </div>
+
+                <Separator />
+
+                <!-- TooltipTrigger -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">TooltipTrigger</h3>
+                    <div>
+                        <p class="font-mono text-sm font-medium mb-1">Focusable</p>
+                        <p class="text-sm text-muted-foreground">
+                            Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">bool</code> |
+                            Default: <code class="text-xs bg-muted px-1 py-0.5 rounded">true</code>
+                        </p>
+                        <p class="text-sm text-muted-foreground mt-1">
+                            Whether to add tabindex="0" for keyboard focus. Set false if child is already focusable.
+                        </p>
+                    </div>
+                </div>
+
+                <Separator />
+
+                <!-- TooltipContent -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-3">TooltipContent</h3>
+                    <div>
+                        <p class="font-mono text-sm font-medium mb-1">Class</p>
+                        <p class="text-sm text-muted-foreground">
+                            Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string?</code>
+                        </p>
+                        <p class="text-sm text-muted-foreground mt-1">
+                            Additional CSS classes for the tooltip content container.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</TooltipProvider>

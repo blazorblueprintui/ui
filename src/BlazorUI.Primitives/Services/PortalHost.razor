@@ -1,0 +1,23 @@
+@namespace BlazorUI.Primitives.Services
+@implements IDisposable
+@inject IPortalService PortalService
+
+@* Renders all registered portals at the document body level *@
+@foreach (var portal in PortalService.GetPortals())
+{
+    <div data-portal-id="@portal.Key" class="shadcn-portal">
+        @portal.Value
+    </div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        PortalService.OnPortalsChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        PortalService.OnPortalsChanged -= StateHasChanged;
+    }
+}

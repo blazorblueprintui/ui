@@ -1,0 +1,58 @@
+@namespace BlazorUI.Components.Sidebar
+@using BlazorUI.Components.Tooltip
+@implements IAsyncDisposable
+
+@*
+    SidebarProvider component that manages sidebar state, persistence, and responsive behavior.
+    Wraps the entire application or page layout to provide sidebar context.
+*@
+
+<TooltipProvider>
+    <CascadingValue Value="@Context" IsFixed="false">
+        <div class="@($"flex w-full {HeightClass}")">
+            @ChildContent
+        </div>
+    </CascadingValue>
+</TooltipProvider>
+
+@code {
+    /// <summary>
+    /// The content to render inside the sidebar provider.
+    /// Should typically contain SidebarLayout with Sidebar and SidebarInset.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Default open state for the sidebar on desktop.
+    /// </summary>
+    [Parameter]
+    public bool DefaultOpen { get; set; } = true;
+
+    /// <summary>
+    /// The sidebar variant/style.
+    /// </summary>
+    [Parameter]
+    public SidebarVariant Variant { get; set; } = SidebarVariant.Sidebar;
+
+    /// <summary>
+    /// Which side the sidebar appears on.
+    /// </summary>
+    [Parameter]
+    public SidebarSide Side { get; set; } = SidebarSide.Left;
+
+    /// <summary>
+    /// Cookie key for persisting sidebar state.
+    /// Set to null to disable persistence.
+    /// </summary>
+    [Parameter]
+    public string? CookieKey { get; set; } = "sidebar:state";
+
+    /// <summary>
+    /// CSS class for controlling the container height.
+    /// Defaults to "min-h-screen" to fill viewport and grow with content.
+    /// Can be set to "h-screen" for fixed viewport height or "h-full" for contained layouts.
+    /// </summary>
+    [Parameter]
+    public string HeightClass { get; set; } = "min-h-screen";
+}

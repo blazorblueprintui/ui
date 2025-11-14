@@ -1,0 +1,124 @@
+@typeparam TValue
+@namespace BlazorUI.Primitives.Select
+@implements IDisposable
+
+@* SelectItem primitive - headless selectable option *@
+@if (_context != null)
+{
+    <div id="@ItemId"
+         role="option"
+         aria-selected="@IsSelected.ToString().ToLower()"
+         data-state="@(IsSelected ? "checked" : "unchecked")"
+         data-focused="@(IsFocused ? "true" : null)"
+         data-disabled="@(Disabled ? "true" : null)"
+         @onclick="HandleClick"
+         @onclick:stopPropagation="true"
+         @onmouseenter="HandleMouseEnter"
+         @attributes="AdditionalAttributes">
+        @ChildContent
+    </div>
+}
+
+@code {
+    [CascadingParameter]
+    private SelectContext<TValue>? _context { get; set; }
+
+    private int _itemIndex = -1;
+
+    /// <summary>
+    /// The value this item represents.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public TValue? Value { get; set; }
+
+    /// <summary>
+    /// Optional display text. If not provided, ChildContent is used.
+    /// </summary>
+    [Parameter]
+    public string? TextValue { get; set; }
+
+    /// <summary>
+    /// Whether this item is disabled and cannot be selected.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Content to render for this item.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to be applied to the item element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string ItemId => _context != null ? $"{_context.ContentId}-item-{_itemIndex}" : "";
+
+    private bool IsSelected
+    {
+        get
+        {
+            if (_context == null) return false;
+
+            if (_context.Value == null && Value == null)
+                return true;
+
+            return EqualityComparer<TValue?>.Default.Equals(_context.Value, Value);
+        }
+    }
+
+    private bool IsFocused => _context != null && _context.FocusedIndex == _itemIndex;
+
+    protected override void OnInitialized()
+    {
+        if (_context == null) return;
+
+        // Get display text - either from TextValue parameter or fallback to Value string
+        var displayText = TextValue ?? Value?.ToString();
+
+        // Register this item with the context for keyboard navigation
+        _itemIndex = _context.RegisterItem(Value, Disabled, displayText);
+
+        // Subscribe to state changes to update focus
+        _context.OnStateChanged += HandleStateChanged;
+    }
+
+    private void HandleStateChanged()
+    {
+        StateHasChanged();
+    }
+
+    private void HandleClick()
+    {
+        if (_context == null || Disabled || _context.Disabled) return;
+
+        // Get display text - either from TextValue parameter or render ChildContent to string
+        var displayText = TextValue ?? Value?.ToString();
+
+        _context.SelectValue(Value, displayText);
+    }
+
+    private void HandleMouseEnter()
+    {
+        if (_context == null) return;
+
+        // Update focused index on mouse hover for better UX
+        if (!Disabled && !_context.Disabled)
+        {
+            _context.SetFocusedIndex(_itemIndex);
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_context != null)
+        {
+            _context.OnStateChanged -= HandleStateChanged;
+        }
+        // Note: We don't unregister the item here as it could mess up indices
+        // The context will be recreated when the select is reopened
+    }
+}

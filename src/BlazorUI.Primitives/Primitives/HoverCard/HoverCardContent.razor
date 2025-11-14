@@ -1,0 +1,252 @@
+@namespace BlazorUI.Primitives.HoverCard
+@using System.Linq
+@using BlazorUI.Primitives.Services
+@inject IPositioningService PositioningService
+@inject IPortalService PortalService
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@*
+    HoverCardContent is the content container for the hover card.
+    Handles positioning and ARIA attributes.
+    Renders through a portal to avoid z-index stacking issues and clipping.
+*@
+
+@* Hidden element to track DOM position for positioning calculations *@
+@if (Context.IsOpen)
+{
+    <span @ref="_contentRef" style="position: absolute; pointer-events: none; opacity: 0;"></span>
+}
+
+@code {
+    [CascadingParameter]
+    private HoverCardContext Context { get; set; } = null!;
+
+    /// <summary>
+    /// The content to render inside the hover card.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the content container.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Preferred side for positioning.
+    /// Default is Bottom.
+    /// </summary>
+    [Parameter]
+    public PopoverSide Side { get; set; } = PopoverSide.Bottom;
+
+    /// <summary>
+    /// Alignment relative to trigger.
+    /// Default is Center.
+    /// </summary>
+    [Parameter]
+    public PopoverAlign Align { get; set; } = PopoverAlign.Center;
+
+    /// <summary>
+    /// Offset distance from the trigger element in pixels.
+    /// Default is 4.
+    /// </summary>
+    [Parameter]
+    public int Offset { get; set; } = 4;
+
+    private ElementReference _contentRef;
+    private IAsyncDisposable? _positioningCleanup;
+    private bool _isInitialized = false;
+    private bool _isPositioned = false;
+    private System.Timers.Timer? _closeTimer;
+    private string _portalId = "";
+    private ElementReference _portalContentRef;
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException("HoverCardContent must be used within a HoverCard component.");
+        }
+
+        _portalId = $"hovercard-portal-{Context.ContentId}";
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Context.IsOpen && !_isInitialized)
+        {
+            _isInitialized = true;
+            _isPositioned = false;
+
+            // Register hover card content through portal
+            PortalService.RegisterPortal(_portalId, RenderHoverCardContent());
+
+            // Set up positioning
+            await SetupPositioningAsync();
+        }
+        else if (!Context.IsOpen && _isInitialized)
+        {
+            await CleanupAsync();
+        }
+    }
+
+    private RenderFragment RenderHoverCardContent() => __builder =>
+    {
+        <div @ref="_portalContentRef"
+             id="@Context.ContentId"
+             role="dialog"
+             aria-describedby="@Context.TriggerId"
+             tabindex="-1"
+             @onmouseenter="HandleMouseEnter"
+             @onmouseleave="HandleMouseLeave"
+             data-state="open"
+             data-side="@Side"
+             style="@GetMergedStyle()"
+             @attributes="GetNonStyleAttributes()">
+            @ChildContent
+        </div>
+    };
+
+    private async Task SetupPositioningAsync()
+    {
+        if (Context.State.TriggerElement == null)
+        {
+            Console.WriteLine("Warning: HoverCardContent - TriggerElement is null, positioning may not work correctly");
+            _isPositioned = true;
+            PortalService.UpdatePortalContent(_portalId, RenderHoverCardContent());
+            return;
+        }
+
+        // Wait a tick for portal to render
+        await Task.Delay(1);
+
+        try
+        {
+            // Construct placement string from Side and Align
+            var placement = Align == PopoverAlign.Center ? Side.ToValue() : $"{Side.ToValue()}-{Align.ToValue()}";
+
+            var options = new PositioningOptions
+            {
+                Placement = placement,
+                Offset = Offset
+            };
+
+            // Compute and apply position using the portal content ref
+            var position = await PositioningService.ComputePositionAsync(
+                Context.State.TriggerElement.Value,
+                _portalContentRef,
+                options);
+
+            await PositioningService.ApplyPositionAsync(_portalContentRef, position);
+
+            // Show the hover card now that positioning is complete
+            _isPositioned = true;
+            PortalService.UpdatePortalContent(_portalId, RenderHoverCardContent());
+
+            // Set up auto-update for dynamic positioning
+            _positioningCleanup = await PositioningService.AutoUpdateAsync(
+                Context.State.TriggerElement.Value,
+                _portalContentRef,
+                options);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to set up positioning: {ex.Message}");
+            _isPositioned = true;
+            PortalService.UpdatePortalContent(_portalId, RenderHoverCardContent());
+        }
+    }
+
+    private void HandleMouseEnter()
+    {
+        // Cancel any pending close timer when hovering over content
+        CancelCloseTimer();
+    }
+
+    private void HandleMouseLeave()
+    {
+        // Close with delay when leaving content
+        _closeTimer?.Dispose();
+        _closeTimer = new System.Timers.Timer(Context.CloseDelay);
+        _closeTimer.Elapsed += (sender, e) =>
+        {
+            InvokeAsync(() =>
+            {
+                Context.Close();
+                StateHasChanged();
+            });
+        };
+        _closeTimer.AutoReset = false;
+        _closeTimer.Start();
+    }
+
+    private void CancelCloseTimer()
+    {
+        if (_closeTimer != null)
+        {
+            _closeTimer.Stop();
+            _closeTimer.Dispose();
+            _closeTimer = null;
+        }
+    }
+
+    private string GetInitialStyle()
+    {
+        var baseStyle = "position: absolute; z-index: 50;";
+
+        if (!_isPositioned)
+        {
+            baseStyle += " opacity: 0; pointer-events: none;";
+        }
+
+        return baseStyle;
+    }
+
+    private string GetMergedStyle()
+    {
+        var baseStyle = GetInitialStyle();
+
+        if (AdditionalAttributes != null && AdditionalAttributes.TryGetValue("style", out var userStyle))
+        {
+            return $"{userStyle}; {baseStyle}";
+        }
+
+        return baseStyle;
+    }
+
+    private Dictionary<string, object>? GetNonStyleAttributes()
+    {
+        if (AdditionalAttributes == null) return null;
+
+        // Return all attributes except 'style' since we handle it separately
+        return AdditionalAttributes
+            .Where(kvp => kvp.Key != "style")
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+    }
+
+    private async Task CleanupAsync()
+    {
+        if (_positioningCleanup != null)
+        {
+            await _positioningCleanup.DisposeAsync();
+            _positioningCleanup = null;
+        }
+
+        // Unregister portal when hover card closes
+        if (!string.IsNullOrEmpty(_portalId))
+        {
+            PortalService.UnregisterPortal(_portalId);
+        }
+
+        _isInitialized = false;
+        _isPositioned = false;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await CleanupAsync();
+        CancelCloseTimer();
+    }
+}

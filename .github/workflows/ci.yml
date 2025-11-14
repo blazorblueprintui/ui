@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build All Projects
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for MinVer
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build Primitives
+        run: dotnet build src/BlazorUI.Primitives/BlazorUI.Primitives.csproj --configuration Release --no-restore
+
+      - name: Build Icons
+        run: dotnet build src/BlazorUI.Icons/BlazorUI.Icons.csproj --configuration Release --no-restore
+
+      - name: Build Components
+        run: dotnet build src/BlazorUI.Components/BlazorUI.Components.csproj --configuration Release --no-restore
+
+      - name: Build Demo
+        run: dotnet build demo/BlazorUI.Demo/BlazorUI.Demo.csproj --configuration Release --no-restore
+
+      - name: Test (if tests exist)
+        run: |
+          if [ -d "tests" ]; then
+            dotnet test --configuration Release --no-build --verbosity normal
+          else
+            echo "No test projects found, skipping tests"
+          fi
+        shell: bash
+
+      - name: Pack packages
+        run: |
+          dotnet pack src/BlazorUI.Primitives/BlazorUI.Primitives.csproj --configuration Release --no-build --output ./packages
+          dotnet pack src/BlazorUI.Icons/BlazorUI.Icons.csproj --configuration Release --no-build --output ./packages
+          dotnet pack src/BlazorUI.Components/BlazorUI.Components.csproj --configuration Release --no-build --output ./packages
+
+      - name: Upload packages as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: ./packages/*.nupkg
+          retention-days: 7
+
+      - name: Build summary
+        shell: bash
+        run: |
+          echo "## ✅ Build Successful!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All projects built successfully:" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ BlazorUI.Primitives" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ BlazorUI.Icons" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ BlazorUI.Components" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ BlazorUI.Demo" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📦 NuGet packages created and uploaded as artifacts." >> $GITHUB_STEP_SUMMARY

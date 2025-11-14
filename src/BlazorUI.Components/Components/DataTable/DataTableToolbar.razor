@@ -1,0 +1,103 @@
+@namespace BlazorUI.Components.DataTable
+@typeparam TData where TData : class
+@using BlazorUI.Components.Input
+@using BlazorUI.Components.Button
+@using BlazorUI.Components.Popover
+@using BlazorUI.Components.Utilities
+@using BlazorUI.Components.Checkbox
+@using BlazorUI.Primitives.Services
+
+<div class="flex items-center justify-between gap-2 py-4">
+    <div class="flex flex-1 items-center gap-2">
+        <Input @bind-Value="@_searchValue"
+               @bind-Value:after="@HandleSearchChanged"
+               Placeholder="Search..."
+               Class="h-8 w-[150px] lg:w-[250px]" />
+
+        @if (Columns.Any(c => c.Filterable))
+        {
+            <Popover>
+                <PopoverTrigger>
+                    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Class="h-8 border-dashed">
+                        <svg class="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        Filter
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent Class="w-[200px] p-0" Align="@PopoverAlign.Start">
+                    <div class="p-4 space-y-2">
+                        <div class="text-sm font-medium">Filter columns</div>
+                        <div class="text-xs text-muted-foreground">
+                            (Column filtering UI - To be implemented in Phase 2)
+                        </div>
+                    </div>
+                </PopoverContent>
+            </Popover>
+        }
+
+        <Popover>
+            <PopoverTrigger>
+                <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Class="h-8 ms-auto">
+                    <svg class="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Columns
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent Class="w-[200px] p-0" Side="@PopoverSide.Bottom" Align="@PopoverAlign.End">
+                <div class="p-4 space-y-2">
+                    <div class="text-sm font-medium mb-3">Toggle columns</div>
+                    @foreach (var column in Columns)
+                    {
+                        <div class="flex items-center gap-2 p-2 hover:bg-accent rounded-sm transition-colors"
+                             @onclick:stopPropagation="true">
+                            <Checkbox Checked="@column.Visible"
+                                      CheckedChanged="@((bool isChecked) => OnColumnVisibilityChanged?.Invoke(column.Id, isChecked))" />
+                            <span class="text-sm select-none cursor-pointer" @onclick="@(() => OnColumnVisibilityChanged?.Invoke(column.Id, !column.Visible))">@column.Header</span>
+                        </div>
+                    }
+                </div>
+            </PopoverContent>
+        </Popover>
+    </div>
+
+    @if (ChildContent != null)
+    {
+        <div class="flex items-center gap-2">
+            @ChildContent
+        </div>
+    }
+</div>
+
+@code {
+    private string _searchValue = string.Empty;
+
+    [Parameter]
+    public string GlobalSearchValue { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> OnGlobalSearchChanged { get; set; }
+
+    [Parameter]
+    public List<DataTable<TData>.ColumnData> Columns { get; set; } = new();
+
+    [Parameter]
+    public Action<string, bool> OnColumnVisibilityChanged { get; set; } = null!;
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _searchValue = GlobalSearchValue;
+    }
+
+    private async Task HandleSearchChanged()
+    {
+        if (OnGlobalSearchChanged.HasDelegate)
+        {
+            await OnGlobalSearchChanged.InvokeAsync(_searchValue);
+        }
+    }
+}

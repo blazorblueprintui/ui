@@ -1,0 +1,390 @@
+@inherits LayoutComponentBase
+@using BlazorUI.Primitives.Services
+@using BlazorUI.Components.Collapsible
+@using BlazorUI.Components.Sidebar
+
+<PageTitle>BlazorUI Demo</PageTitle>
+
+<SidebarProvider DefaultOpen="true">
+    <Sidebar Collapsible="true">
+        <SidebarHeader>
+            <SidebarMenu>
+                <SidebarMenuItem>
+                    <SidebarMenuButton AsChild="@SidebarMenuButtonElement.Anchor" Href="" Size="@SidebarMenuButtonSize.Large" class="data-[state=collapsed]:justify-center">
+                        <div class="flex aspect-square size-8 items-center justify-center rounded-lg">
+                            <img src="images/b-icon.png" alt="Blazor UI" class="size-8 rounded-lg" />
+                        </div>
+                        <div class="grid flex-1 text-left text-sm leading-tight">
+                            <span class="truncate font-semibold">Blazor UI</span>
+                        </div>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </SidebarMenu>
+        </SidebarHeader>
+
+        <SidebarContent>
+            <!-- Top-level Navigation -->
+            <SidebarGroup>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton AsChild="@SidebarMenuButtonElement.Anchor" Href="" Match="NavLinkMatch.All" Tooltip="Home">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
+                            <span>Home</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    <SidebarMenuItem>
+                        <SidebarMenuButton AsChild="@SidebarMenuButtonElement.Anchor" Href="architecture" Tooltip="Architecture">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect width="16" height="20" x="4" y="2" rx="2"></rect>
+                                <path d="M8 6h8"></path>
+                                <path d="M8 10h8"></path>
+                                <path d="M8 14h5"></path>
+                            </svg>
+                            <span>Architecture</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    <SidebarMenuItem>
+                        <SidebarMenuButton AsChild="@SidebarMenuButtonElement.Anchor" Href="primitives" Tooltip="Primitives">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+                                <path d="M9 3v18"></path>
+                            </svg>
+                            <span>Primitives</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+
+                    <SidebarMenuItem>
+                        <SidebarMenuButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components" Tooltip="Components">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+                                <path d="M3 9h18"></path>
+                                <path d="M9 21V9"></path>
+                            </svg>
+                            <span>Components</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarGroup>
+
+            <!-- Primitives Section with Collapsible Submenu -->
+            <SidebarGroup>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <Collapsible Open="@_primitivesMenuOpen" OpenChanged="@OnPrimitivesMenuOpenChanged">
+                            <SidebarMenuButton Tooltip="Primitives">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+                                    <path d="M9 3v18"></path>
+                                </svg>
+                                <span>Primitives</span>
+                                <SidebarMenuChevron>
+                                    <LucideIcon Name="chevron-right" Size="16" />
+                                </SidebarMenuChevron>
+                            </SidebarMenuButton>
+                            <CollapsibleContent>
+                                <SidebarMenuSub>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="primitives/accordion">
+                                            <span>Accordion</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="primitives/checkbox">
+                                            <span>Checkbox</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="primitives/collapsible">
+                                            <span>Collapsible</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="primitives/combobox">
+                                            <span>Combobox</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="primitives/dialog">
+                                            <span>Dialog</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="primitives/dropdown-menu">
+                                            <span>Dropdown Menu</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="primitives/hovercard">
+                                            <span>Hover Card</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="primitives/label">
+                                            <span>Label</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="primitives/popover">
+                                            <span>Popover</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="primitives/radio-group">
+                                            <span>Radio Group</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="primitives/select">
+                                            <span>Select</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="primitives/sheet">
+                                            <span>Sheet</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="primitives/switch">
+                                            <span>Switch</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="primitives/table">
+                                            <span>Table</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="primitives/tabs">
+                                            <span>Tabs</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="primitives/tooltip">
+                                            <span>Tooltip</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                </SidebarMenuSub>
+                            </CollapsibleContent>
+                        </Collapsible>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarGroup>
+
+            <!-- Components Section with Collapsible Submenu -->
+            <SidebarGroup>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <Collapsible Open="@_componentsMenuOpen" OpenChanged="@OnComponentsMenuOpenChanged">
+                            <SidebarMenuButton Tooltip="Components">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+                                    <path d="M3 9h18"></path>
+                                    <path d="M9 21V9"></path>
+                                </svg>
+                                <span>Components</span>
+                                <SidebarMenuChevron>
+                                    <LucideIcon Name="chevron-right" Size="16" />
+                                </SidebarMenuChevron>
+                            </SidebarMenuButton>
+                            <CollapsibleContent>
+                                <SidebarMenuSub>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/accordion">
+                                            <span>Accordion</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/avatar">
+                                            <span>Avatar</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/badge">
+                                            <span>Badge</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/button">
+                                            <span>Button</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/button-group">
+                                            <span>Button Group</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/card">
+                                            <span>Card</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/checkbox">
+                                            <span>Checkbox</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/collapsible">
+                                            <span>Collapsible</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/combobox">
+                                            <span>Combobox</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/command">
+                                            <span>Command</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/dialog">
+                                            <span>Dialog</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/dropdown-menu">
+                                            <span>Dropdown Menu</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/field">
+                                            <span>Field</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/hovercard">
+                                            <span>Hover Card</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/input">
+                                            <span>Input</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/input-group">
+                                            <span>Input Group</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/item">
+                                            <span>Item</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/label">
+                                            <span>Label</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/popover">
+                                            <span>Popover</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/radio-group">
+                                            <span>Radio Group</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/select">
+                                            <span>Select</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/separator">
+                                            <span>Separator</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/sheet">
+                                            <span>Sheet</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/sidebar">
+                                            <span>Sidebar</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/skeleton">
+                                            <span>Skeleton</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/switch">
+                                            <span>Switch</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/tabs">
+                                            <span>Tabs</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/textarea">
+                                            <span>Textarea</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/tooltip">
+                                            <span>Tooltip</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                </SidebarMenuSub>
+                            </CollapsibleContent>
+                        </Collapsible>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarGroup>
+
+            <!-- Icons Section with Collapsible Submenu -->
+            <SidebarGroup>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <Collapsible Open="@_iconsMenuOpen" OpenChanged="@OnIconsMenuOpenChanged">
+                            <SidebarMenuButton Tooltip="Icons">
+                                <LucideIcon Name="smile" Size="18" />
+                                <span>Icons</span>
+                                <SidebarMenuChevron>
+                                    <LucideIcon Name="chevron-right" Size="16" />
+                                </SidebarMenuChevron>
+                            </SidebarMenuButton>
+                            <CollapsibleContent>
+                                <SidebarMenuSub>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="components/icons">
+                                            <span>Lucid Icons</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                </SidebarMenuSub>
+                            </CollapsibleContent>
+                        </Collapsible>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarGroup>
+        </SidebarContent>
+    </Sidebar>
+
+    <SidebarInset>
+        <header class="sticky top-0 flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 z-10 focus:outline-none">
+            <SidebarTrigger />
+            <div class="ml-auto">
+                <DarkModeToggle />
+            </div>
+        </header>
+
+        <div class="flex-1 p-6 md:p-8">
+            @Body
+        </div>
+    </SidebarInset>
+</SidebarProvider>
+
+<PortalHost />

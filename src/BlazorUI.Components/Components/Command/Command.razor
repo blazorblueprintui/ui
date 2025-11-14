@@ -1,0 +1,37 @@
+@namespace BlazorUI.Components.Command
+@using BlazorUI.Components.Utilities
+@using BlazorUI.Primitives.Combobox
+
+@* Command - styled wrapper over Combobox *@
+<Combobox class="@CssClass"
+                   @attributes="AdditionalAttributes">
+    @ChildContent
+</Combobox>
+
+@code {
+    /// <summary>
+    /// Gets or sets additional CSS classes to apply to the command container.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets the content to be rendered inside the command.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional attributes to apply to the component.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Gets the computed CSS classes for the command container.
+    /// </summary>
+    private string CssClass => ClassNames.cn(
+        "flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground",
+        Class
+    );
+}

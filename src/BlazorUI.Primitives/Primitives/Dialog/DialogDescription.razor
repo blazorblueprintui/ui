@@ -1,0 +1,38 @@
+@namespace BlazorUI.Primitives.Dialog
+
+@*
+    DialogDescription provides an accessible description for the dialog.
+    Automatically linked to DialogContent via aria-describedby.
+*@
+
+<p id="@Context.DescriptionId"
+   @attributes="AdditionalAttributes">
+    @ChildContent
+</p>
+
+@code {
+    [CascadingParameter]
+    private DialogContext Context { get; set; } = null!;
+
+    /// <summary>
+    /// The description content to display.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the description element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "DialogDescription must be used within a Dialog component. " +
+                "Ensure DialogDescription is a child of a Dialog component.");
+        }
+    }
+}

@@ -1,0 +1,31 @@
+@namespace BlazorUI.Components.DropdownMenu
+
+<div class="@CssClass" role="presentation">
+    @ChildContent
+</div>
+
+@code {
+    /// <summary>
+    /// Gets or sets additional CSS classes to apply to the label.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets the content to be rendered inside the label.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets the computed CSS classes for the label.
+    /// </summary>
+    private string CssClass
+    {
+        get
+        {
+            var baseClasses = "px-2 py-1.5 text-sm font-semibold";
+            return string.IsNullOrWhiteSpace(Class) ? baseClasses : $"{baseClasses} {Class}";
+        }
+    }
+}

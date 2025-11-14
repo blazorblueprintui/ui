@@ -1,0 +1,231 @@
+@page "/components/icons"
+
+<PageTitle>Lucide Icons - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Lucide Icons</h1>
+        <p class="text-xl text-muted-foreground">
+            Browse and search through @TotalIconCount beautiful icons from the Lucide icon library.
+        </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+    </div>
+
+    <!-- Search and Stats -->
+    <div class="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+        <div class="w-full md:w-96">
+            <div class="relative">
+                <LucideIcon Name="search" Size="20" Class="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                <input
+                    type="text"
+                    placeholder="Search icons..."
+                    class="w-full pl-10 pr-4 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    @bind="searchQuery"
+                    @bind:event="oninput" />
+            </div>
+        </div>
+
+        <div class="text-sm text-muted-foreground">
+            Showing <span class="font-semibold text-foreground">@FilteredIcons.Count()</span> of @TotalIconCount icons
+        </div>
+    </div>
+
+    <!-- Icon Grid -->
+    @if (FilteredIcons.Any())
+    {
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+            @foreach (var iconName in FilteredIcons)
+            {
+                <div class="flex flex-col items-center justify-center p-4 border border-border rounded-lg hover:bg-accent hover:border-accent-foreground/20 transition-colors cursor-pointer group"
+                     title="@iconName">
+                    <div class="mb-2 text-foreground group-hover:scale-110 transition-transform">
+                        <LucideIcon Name="@iconName" Size="32" />
+                    </div>
+                    <span class="text-xs text-center text-muted-foreground group-hover:text-foreground font-mono break-all">
+                        @iconName
+                    </span>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="flex flex-col items-center justify-center py-16 text-center">
+            <LucideIcon Name="search-x" Size="48" Class="text-muted-foreground mb-4" />
+            <h3 class="text-lg font-semibold mb-2">No icons found</h3>
+            <p class="text-muted-foreground">
+                Try adjusting your search query
+            </p>
+        </div>
+    }
+
+    <!-- Usage Examples -->
+    <div class="mt-12 space-y-6">
+        <h2 class="text-2xl font-bold">Usage Examples</h2>
+
+        <!-- Basic Usage -->
+        <div class="space-y-4">
+            <h3 class="text-xl font-semibold">Basic Usage</h3>
+            <div class="p-6 border border-border rounded-lg bg-card space-y-4">
+                <div class="flex items-center gap-4">
+                    <LucideIcon Name="house" />
+                    <LucideIcon Name="settings" />
+                    <LucideIcon Name="user" />
+                    <LucideIcon Name="heart" />
+                    <LucideIcon Name="star" />
+                </div>
+                <pre class="bg-muted p-4 rounded text-sm overflow-x-auto"><code>&lt;LucideIcon Name="house" /&gt;
+&lt;LucideIcon Name="settings" /&gt;
+&lt;LucideIcon Name="user" /&gt;</code></pre>
+            </div>
+        </div>
+
+        <!-- Different Sizes -->
+        <div class="space-y-4">
+            <h3 class="text-xl font-semibold">Different Sizes</h3>
+            <div class="p-6 border border-border rounded-lg bg-card space-y-4">
+                <div class="flex items-center gap-6">
+                    <LucideIcon Name="camera" Size="16" />
+                    <LucideIcon Name="camera" Size="24" />
+                    <LucideIcon Name="camera" Size="32" />
+                    <LucideIcon Name="camera" Size="48" />
+                    <LucideIcon Name="camera" Size="64" />
+                </div>
+                <pre class="bg-muted p-4 rounded text-sm overflow-x-auto"><code>&lt;LucideIcon Name="camera" Size="16" /&gt;
+&lt;LucideIcon Name="camera" Size="24" /&gt;
+&lt;LucideIcon Name="camera" Size="32" /&gt;</code></pre>
+            </div>
+        </div>
+
+        <!-- Custom Colors -->
+        <div class="space-y-4">
+            <h3 class="text-xl font-semibold">Custom Colors</h3>
+            <div class="p-6 border border-border rounded-lg bg-card space-y-4">
+                <div class="flex items-center gap-6">
+                    <LucideIcon Name="heart" Size="32" Color="red" />
+                    <LucideIcon Name="star" Size="32" Color="gold" />
+                    <LucideIcon Name="circle-check" Size="32" Color="green" />
+                    <LucideIcon Name="circle-alert" Size="32" Color="orange" />
+                    <LucideIcon Name="circle-x" Size="32" Color="#ef4444" />
+                </div>
+                <pre class="bg-muted p-4 rounded text-sm overflow-x-auto"><code>&lt;LucideIcon Name="heart" Size="32" Color="red" /&gt;
+&lt;LucideIcon Name="star" Size="32" Color="gold" /&gt;
+&lt;LucideIcon Name="circle-check" Size="32" Color="green" /&gt;</code></pre>
+            </div>
+        </div>
+
+        <!-- With Buttons -->
+        <div class="space-y-4">
+            <h3 class="text-xl font-semibold">Integration with Button Component</h3>
+            <div class="p-6 border border-border rounded-lg bg-card space-y-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <Button>
+                        <Icon>
+                            <LucideIcon Name="download" Size="20" />
+                        </Icon>
+                        <ChildContent>Download</ChildContent>
+                    </Button>
+
+                    <Button Variant="ButtonVariant.Outline">
+                        <Icon>
+                            <LucideIcon Name="trash" Size="20" />
+                        </Icon>
+                        <ChildContent>Delete</ChildContent>
+                    </Button>
+
+                    <Button Variant="ButtonVariant.Secondary">
+                        <Icon>
+                            <LucideIcon Name="settings" Size="20" />
+                        </Icon>
+                        <ChildContent>Settings</ChildContent>
+                    </Button>
+
+                    <Button Variant="ButtonVariant.Destructive">
+                        <Icon>
+                            <LucideIcon Name="triangle-alert" Size="20" />
+                        </Icon>
+                        <ChildContent>Warning</ChildContent>
+                    </Button>
+
+                    <Button Variant="ButtonVariant.Ghost">
+                        <Icon>
+                            <LucideIcon Name="send-horizontal" Size="20" />
+                        </Icon>
+                        <ChildContent>Send</ChildContent>
+                    </Button>
+                </div>
+                <pre class="bg-muted p-4 rounded text-sm overflow-x-auto"><code>&lt;Button&gt;
+    &lt;Icon&gt;
+        &lt;LucideIcon Name="download" Size="20" /&gt;
+    &lt;/Icon&gt;
+    Download
+&lt;/Button&gt;</code></pre>
+            </div>
+        </div>
+
+        <!-- Icon Position -->
+        <div class="space-y-4">
+            <h3 class="text-xl font-semibold">Icon Position</h3>
+            <div class="p-6 border border-border rounded-lg bg-card space-y-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <Button IconPosition="IconPosition.Start">
+                        <Icon>
+                            <LucideIcon Name="arrow-left" Size="20" />
+                        </Icon>
+                        <ChildContent>Back</ChildContent>
+                    </Button>
+
+                    <Button IconPosition="IconPosition.End">
+                        <Icon>
+                            <LucideIcon Name="arrow-right" Size="20" />
+                        </Icon>
+                        <ChildContent>Next</ChildContent>
+                    </Button>
+
+                    <Button IconPosition="IconPosition.Start">
+                        <Icon>
+                            <LucideIcon Name="save" Size="20" />
+                        </Icon>
+                        <ChildContent>Save Changes</ChildContent>
+                    </Button>
+                </div>
+                <pre class="bg-muted p-4 rounded text-sm overflow-x-auto"><code>&lt;Button IconPosition="IconPosition.End"&gt;
+    &lt;Icon&gt;
+        &lt;LucideIcon Name="arrow-right" Size="20" /&gt;
+    &lt;/Icon&gt;
+    Next
+&lt;/Button&gt;</code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string searchQuery = string.Empty;
+    private IEnumerable<string> allIcons = Enumerable.Empty<string>();
+
+    private int TotalIconCount => LucideIconData.IconCount;
+
+    private IEnumerable<string> FilteredIcons
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(searchQuery))
+            {
+                return allIcons;
+            }
+
+            return allIcons.Where(icon =>
+                icon.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        allIcons = LucideIconData.GetAvailableIcons().OrderBy(x => x).ToList();
+    }
+}

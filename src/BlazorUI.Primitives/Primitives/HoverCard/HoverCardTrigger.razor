@@ -1,0 +1,145 @@
+@namespace BlazorUI.Primitives.HoverCard
+@using System.Timers
+@implements IDisposable
+
+@* HoverCardTrigger primitive - trigger element that opens on hover *@
+<div id="@Context.TriggerId"
+     @ref="_triggerRef"
+     @onmouseenter="HandleMouseEnter"
+     @onmouseleave="HandleMouseLeave"
+     @onfocus="HandleFocus"
+     @onblur="HandleBlur"
+     @attributes="AdditionalAttributes">
+    @ChildContent
+</div>
+
+@code {
+    private ElementReference _triggerRef;
+    private System.Timers.Timer? _openTimer;
+    private System.Timers.Timer? _closeTimer;
+
+    /// <summary>
+    /// Cascading parameter to receive the hover card context.
+    /// </summary>
+    [CascadingParameter]
+    public HoverCardContext Context { get; set; } = null!;
+
+    /// <summary>
+    /// The child content to render within the trigger.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the trigger element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException("HoverCardTrigger must be used within a HoverCard component.");
+        }
+    }
+
+    private void HandleMouseEnter()
+    {
+        CancelCloseTimer();
+
+        if (!Context.IsOpen)
+        {
+            _openTimer?.Dispose();
+            _openTimer = new System.Timers.Timer(Context.OpenDelay);
+            _openTimer.Elapsed += OnOpenTimerElapsed;
+            _openTimer.AutoReset = false;
+            _openTimer.Start();
+        }
+    }
+
+    private void HandleMouseLeave()
+    {
+        CancelOpenTimer();
+
+        if (Context.IsOpen)
+        {
+            _closeTimer?.Dispose();
+            _closeTimer = new System.Timers.Timer(Context.CloseDelay);
+            _closeTimer.Elapsed += OnCloseTimerElapsed;
+            _closeTimer.AutoReset = false;
+            _closeTimer.Start();
+        }
+    }
+
+    private void HandleFocus()
+    {
+        CancelCloseTimer();
+
+        if (!Context.IsOpen)
+        {
+            // Open immediately on focus (keyboard navigation)
+            Context.Open(_triggerRef);
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void HandleBlur()
+    {
+        CancelOpenTimer();
+
+        if (Context.IsOpen)
+        {
+            // Close with delay on blur
+            _closeTimer?.Dispose();
+            _closeTimer = new System.Timers.Timer(Context.CloseDelay);
+            _closeTimer.Elapsed += OnCloseTimerElapsed;
+            _closeTimer.AutoReset = false;
+            _closeTimer.Start();
+        }
+    }
+
+    private void OnOpenTimerElapsed(object? sender, ElapsedEventArgs e)
+    {
+        InvokeAsync(() =>
+        {
+            Context.Open(_triggerRef);
+            StateHasChanged();
+        });
+    }
+
+    private void OnCloseTimerElapsed(object? sender, ElapsedEventArgs e)
+    {
+        InvokeAsync(() =>
+        {
+            Context.Close();
+            StateHasChanged();
+        });
+    }
+
+    private void CancelOpenTimer()
+    {
+        if (_openTimer != null)
+        {
+            _openTimer.Stop();
+            _openTimer.Dispose();
+            _openTimer = null;
+        }
+    }
+
+    private void CancelCloseTimer()
+    {
+        if (_closeTimer != null)
+        {
+            _closeTimer.Stop();
+            _closeTimer.Dispose();
+            _closeTimer = null;
+        }
+    }
+
+    public void Dispose()
+    {
+        CancelOpenTimer();
+        CancelCloseTimer();
+    }
+}

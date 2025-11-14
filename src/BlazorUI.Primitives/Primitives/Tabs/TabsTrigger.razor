@@ -1,0 +1,137 @@
+@namespace BlazorUI.Primitives.Tabs
+@implements IDisposable
+
+@* TabsTrigger primitive - clickable tab button *@
+<button id="@_triggerId"
+        type="button"
+        role="tab"
+        aria-selected="@_isSelected"
+        aria-controls="@_contentId"
+        data-state="@(_isSelected ? "active" : "inactive")"
+        tabindex="@_tabIndex"
+        disabled="@Disabled"
+        @onclick="HandleClick"
+        @onkeydown="HandleKeyDown"
+        @ref="_elementRef"
+        @attributes="AdditionalAttributes">
+    @ChildContent
+</button>
+
+@code {
+    private ElementReference _elementRef;
+    private string _triggerId => Context.GetTriggerId(Value);
+    private string _contentId => Context.GetContentId(Value);
+    private bool _isSelected => Context.IsTabActive(Value);
+    private int _tabIndex => _isSelected ? 0 : -1;
+
+    /// <summary>
+    /// Cascading parameter to receive the tabs context.
+    /// </summary>
+    [CascadingParameter]
+    public TabsContext Context { get; set; } = null!;
+
+    /// <summary>
+    /// Cascading parameter to receive the parent tabs list.
+    /// </summary>
+    [CascadingParameter]
+    public TabsList? List { get; set; }
+
+    /// <summary>
+    /// The value that identifies this tab.
+    /// Used to match with TabsContent components.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string Value { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Whether this tab trigger is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// The child content to render within the tab trigger.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the tab trigger button element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException("TabsTrigger must be used within a Tabs component.");
+        }
+
+        // Register with the list for keyboard navigation
+        List?.RegisterTrigger(this);
+
+        // Subscribe to context changes to update selected state
+        Context.OnStateChanged += StateHasChanged;
+    }
+
+    private void HandleClick()
+    {
+        if (!Disabled)
+        {
+            Activate();
+        }
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (Disabled) return;
+
+        // Handle activation keys
+        if (e.Key == "Enter" || e.Key == " ")
+        {
+            Activate();
+            return;
+        }
+
+        // Handle navigation keys
+        if (List != null && (e.Key == "ArrowLeft" || e.Key == "ArrowRight" ||
+                             e.Key == "ArrowUp" || e.Key == "ArrowDown" ||
+                             e.Key == "Home" || e.Key == "End"))
+        {
+            List.HandleKeyNavigation(Value, e.Key);
+        }
+    }
+
+    /// <summary>
+    /// Activates this tab (sets it as the active tab).
+    /// </summary>
+    internal void Activate()
+    {
+        if (!Disabled)
+        {
+            Context.SetActiveTab(Value);
+        }
+    }
+
+    /// <summary>
+    /// Focuses this tab trigger element.
+    /// </summary>
+    internal async Task FocusAsync()
+    {
+        try
+        {
+            await _elementRef.FocusAsync();
+        }
+        catch
+        {
+            // Ignore focus errors (element may not be rendered yet)
+        }
+    }
+
+    public void Dispose()
+    {
+        List?.UnregisterTrigger(this);
+        Context.OnStateChanged -= StateHasChanged;
+    }
+}

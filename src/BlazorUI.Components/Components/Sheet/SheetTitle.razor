@@ -1,0 +1,36 @@
+@namespace BlazorUI.Components.Sheet
+@using BlazorUI.Components.Utilities
+@using BlazorUI.Primitives.Sheet
+
+@*
+    Styled SheetTitle component with shadcn/ui typography classes.
+*@
+
+<BlazorUI.Primitives.Sheet.SheetTitle class="@GetClassNames()" @attributes="AdditionalAttributes">
+    @ChildContent
+</BlazorUI.Primitives.Sheet.SheetTitle>
+
+@code {
+    /// <summary>
+    /// The title text or content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the title.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the title element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string GetClassNames() => ClassNames.cn(
+        "text-lg font-semibold text-foreground",
+        Class
+    );
+}

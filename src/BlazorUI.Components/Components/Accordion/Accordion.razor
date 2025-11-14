@@ -1,0 +1,70 @@
+@namespace BlazorUI.Components.Accordion
+@using BlazorUI.Primitives.Accordion
+
+@*
+    Styled Accordion component wrapper.
+    Wraps the Accordion primitive with shadcn/ui styling.
+*@
+
+<BlazorUI.Primitives.Accordion.Accordion Value="@Value"
+                                              ValueChanged="@ValueChanged"
+                                              DefaultValue="@DefaultValue"
+                                              OnValueChange="@OnValueChange"
+                                              Type="@Type"
+                                              Collapsible="@Collapsible"
+                                              class="@CssClass">
+    @ChildContent
+</BlazorUI.Primitives.Accordion.Accordion>
+
+@code {
+    /// <summary>
+    /// The child content to render within the accordion.
+    /// Should include AccordionItem components.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls which items are open (controlled mode).
+    /// </summary>
+    [Parameter]
+    public HashSet<string>? Value { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open items change.
+    /// </summary>
+    [Parameter]
+    public EventCallback<HashSet<string>> ValueChanged { get; set; }
+
+    /// <summary>
+    /// Default open items when in uncontrolled mode.
+    /// </summary>
+    [Parameter]
+    public HashSet<string>? DefaultValue { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open items change.
+    /// </summary>
+    [Parameter]
+    public EventCallback<HashSet<string>> OnValueChange { get; set; }
+
+    /// <summary>
+    /// Type of accordion (single or multiple).
+    /// </summary>
+    [Parameter]
+    public AccordionType Type { get; set; } = AccordionType.Single;
+
+    /// <summary>
+    /// Whether items can be collapsed when in single mode.
+    /// </summary>
+    [Parameter]
+    public bool Collapsible { get; set; } = false;
+
+    /// <summary>
+    /// Additional CSS classes to apply to the accordion.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    private string CssClass => $"{Class}".Trim();
+}

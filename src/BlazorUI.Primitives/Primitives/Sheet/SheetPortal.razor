@@ -1,0 +1,128 @@
+@namespace BlazorUI.Primitives.Sheet
+@inject IPortalService PortalService
+@implements IDisposable
+
+@*
+    SheetPortal renders its content at the document body level using PortalService.
+    This ensures proper z-index stacking for overlays.
+*@
+
+@code {
+    [CascadingParameter]
+    private SheetContext Context { get; set; } = null!;
+
+    /// <summary>
+    /// The content to render in the portal (typically SheetOverlay and SheetContent).
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// The container element to render the portal into.
+    /// When null (default), renders into document body.
+    /// </summary>
+    [Parameter]
+    public string? Container { get; set; }
+
+    /// <summary>
+    /// Whether to force rendering in a portal.
+    /// When false, portal is only used when sheet is open.
+    /// Default is false.
+    /// </summary>
+    [Parameter]
+    public bool ForceMount { get; set; } = false;
+
+    private string _portalId = string.Empty;
+    private bool _isRegistered = false;
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "SheetPortal must be used within a Sheet component. " +
+                "Ensure SheetPortal is a child of a Sheet component.");
+        }
+
+        _portalId = $"{Context.Id}-portal";
+
+        // Subscribe to context changes to update portal content
+        Context.OnStateChanged += HandleStateChanged;
+
+        // Register initial portal if sheet is open or force mount
+        if (Context.IsOpen || ForceMount)
+        {
+            RegisterPortal();
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Update portal registration based on open state
+        if (Context.IsOpen || ForceMount)
+        {
+            if (_isRegistered)
+            {
+                UpdatePortal();
+            }
+            else
+            {
+                RegisterPortal();
+            }
+        }
+        else
+        {
+            UnregisterPortal();
+        }
+    }
+
+    private void HandleStateChanged()
+    {
+        StateHasChanged();
+    }
+
+    private void RegisterPortal()
+    {
+        if (!_isRegistered && ChildContent != null)
+        {
+            PortalService.RegisterPortal(_portalId, GetPortalContent());
+            _isRegistered = true;
+        }
+    }
+
+    private void UpdatePortal()
+    {
+        if (_isRegistered && ChildContent != null)
+        {
+            PortalService.UpdatePortalContent(_portalId, GetPortalContent());
+        }
+    }
+
+    private RenderFragment GetPortalContent() => builder =>
+    {
+        builder.OpenComponent<CascadingValue<SheetContext>>(0);
+        builder.AddAttribute(1, "Value", Context);
+        builder.AddAttribute(2, "IsFixed", false);
+        builder.AddAttribute(3, "ChildContent", ChildContent);
+        builder.CloseComponent();
+    };
+
+    private void UnregisterPortal()
+    {
+        if (_isRegistered)
+        {
+            PortalService.UnregisterPortal(_portalId);
+            _isRegistered = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        UnregisterPortal();
+
+        if (Context != null)
+        {
+            Context.OnStateChanged -= HandleStateChanged;
+        }
+    }
+}

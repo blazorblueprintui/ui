@@ -1,0 +1,65 @@
+@namespace BlazorUI.Components.Tabs
+@using BlazorUI.Primitives.Tabs
+
+@*
+    Styled Tabs component wrapper.
+    Wraps the Tabs primitive with shadcn/ui styling.
+*@
+
+<BlazorUI.Primitives.Tabs.Tabs Value="@Value"
+                                      ValueChanged="@ValueChanged"
+                                      DefaultValue="@DefaultValue"
+                                      OnValueChange="@OnValueChange"
+                                      Orientation="@Orientation"
+                                      ActivationMode="@ActivationMode">
+    @ChildContent
+</BlazorUI.Primitives.Tabs.Tabs>
+
+@code {
+    /// <summary>
+    /// The child content to render within the tabs.
+    /// Should include TabsList and TabsContent components.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls which tab is active (controlled mode).
+    /// When null, the tabs manage their own state (uncontrolled mode).
+    /// </summary>
+    [Parameter]
+    public string? Value { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the active tab changes.
+    /// Use with @bind-Value for two-way binding.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string?> ValueChanged { get; set; }
+
+    /// <summary>
+    /// Default active tab value when in uncontrolled mode.
+    /// </summary>
+    [Parameter]
+    public string? DefaultValue { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the active tab changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string?> OnValueChange { get; set; }
+
+    /// <summary>
+    /// Orientation of the tabs (horizontal or vertical).
+    /// Default is horizontal.
+    /// </summary>
+    [Parameter]
+    public TabsOrientation Orientation { get; set; } = TabsOrientation.Horizontal;
+
+    /// <summary>
+    /// Activation mode for tabs (automatic on focus or manual on click).
+    /// Default is automatic.
+    /// </summary>
+    [Parameter]
+    public TabsActivationMode ActivationMode { get; set; } = TabsActivationMode.Automatic;
+}

@@ -1,0 +1,35 @@
+@namespace BlazorUI.Components.Sidebar
+@using BlazorUI.Components.Utilities
+
+@*
+    SidebarMenuSub component for submenu items.
+*@
+
+<ul class="@GetClasses()" @attributes="AdditionalAttributes">
+    @ChildContent
+</ul>
+
+@code {
+    /// <summary>
+    /// The submenu items to render.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string GetClasses()
+    {
+        return ClassNames.cn("mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l border-sidebar-border px-2.5 py-0.5 group-data-[collapsible=icon]:hidden", Class);
+    }
+}

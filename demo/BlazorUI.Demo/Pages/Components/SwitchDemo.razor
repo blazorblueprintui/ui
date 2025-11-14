@@ -1,0 +1,380 @@
+@page "/components/switch"
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>Switch Component - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Switch Component</h1>
+        <p class="text-xl text-muted-foreground">
+            A toggle control that allows users to switch between checked and unchecked states.
+        </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+    </div>
+
+    <!-- Basic Usage -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-sm text-muted-foreground">
+                Simple switch with label using two-way binding.
+            </p>
+        </div>
+        <div class="space-y-3">
+            <div class="flex items-center space-x-2">
+                <Switch @bind-Checked="basicChecked" Id="basic-switch" />
+                <label for="basic-switch" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Airplane Mode
+                </label>
+            </div>
+            <p class="text-sm text-muted-foreground">
+                Current state: @(basicChecked ? "On ✓" : "Off")
+            </p>
+        </div>
+    </div>
+
+    <!-- Size Variants -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Size Variants</h2>
+            <p class="text-sm text-muted-foreground">
+                Switches come in three sizes: Small, Medium (default), and Large.
+            </p>
+        </div>
+        <div class="space-y-3">
+            <div class="flex items-center space-x-2">
+                <Switch @bind-Checked="smallChecked" Size="SwitchSize.Small" Id="small-switch" />
+                <label for="small-switch" class="text-sm font-medium leading-none">
+                    Small switch
+                </label>
+            </div>
+            <div class="flex items-center space-x-2">
+                <Switch @bind-Checked="mediumChecked" Size="SwitchSize.Medium" Id="medium-switch" />
+                <label for="medium-switch" class="text-sm font-medium leading-none">
+                    Medium switch (default)
+                </label>
+            </div>
+            <div class="flex items-center space-x-2">
+                <Switch @bind-Checked="largeChecked" Size="SwitchSize.Large" Id="large-switch" />
+                <label for="large-switch" class="text-sm font-medium leading-none">
+                    Large switch
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Settings Panel</h2>
+            <p class="text-sm text-muted-foreground">
+                Group of switches for application settings.
+            </p>
+        </div>
+        <div class="space-y-3">
+            <div class="flex items-center space-x-2">
+                <Switch @bind-Checked="notifications" Id="notifications" />
+                <label for="notifications" class="text-sm font-medium leading-none">
+                    Enable notifications
+                </label>
+            </div>
+            <div class="flex items-center space-x-2">
+                <Switch @bind-Checked="autoSave" Id="auto-save" />
+                <label for="auto-save" class="text-sm font-medium leading-none">
+                    Auto-save changes
+                </label>
+            </div>
+            <div class="flex items-center space-x-2">
+                <Switch @bind-Checked="analytics" Id="analytics" />
+                <label for="analytics" class="text-sm font-medium leading-none">
+                    Send usage analytics
+                </label>
+            </div>
+            <p class="text-sm text-muted-foreground">
+                Active settings: @string.Join(", ", GetActiveSettings())
+            </p>
+        </div>
+    </div>
+
+    <!-- Disabled State -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled State</h2>
+            <p class="text-sm text-muted-foreground">
+                Switches that cannot be interacted with.
+            </p>
+        </div>
+        <div class="space-y-3">
+            <div class="flex items-center space-x-2">
+                <Switch Disabled="true" Checked="false" Id="disabled-off" />
+                <label for="disabled-off" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Disabled (off)
+                </label>
+            </div>
+            <div class="flex items-center space-x-2">
+                <Switch Disabled="true" Checked="true" Id="disabled-on" />
+                <label for="disabled-on" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Disabled (on)
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Validation -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Form Validation</h2>
+            <p class="text-sm text-muted-foreground">
+                Switch integrated with Blazor's EditForm and validation.
+            </p>
+        </div>
+        <EditForm Model="formModel" OnValidSubmit="HandleValidSubmit" class="space-y-4">
+            <DataAnnotationsValidator />
+
+            <div class="space-y-3">
+                <div class="flex items-center space-x-2">
+                    <Switch @bind-Checked="formModel.AcceptTerms" Id="terms" />
+                    <label for="terms" class="text-sm font-medium leading-none">
+                        I accept the terms and conditions
+                    </label>
+                </div>
+                <ValidationMessage For="@(() => formModel.AcceptTerms)" class="text-sm text-destructive" />
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex items-center space-x-2">
+                    <Switch @bind-Checked="formModel.EnableMarketing" Id="marketing" />
+                    <label for="marketing" class="text-sm font-medium leading-none">
+                        Enable marketing emails (optional)
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex gap-4">
+                <Button Type="ButtonType.Submit" Variant="ButtonVariant.Default">Submit</Button>
+                <Button Type="ButtonType.Button" Variant="ButtonVariant.Outline" OnClick="ResetForm">Reset</Button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(formMessage))
+            {
+                <div class="p-4 bg-card rounded-lg border">
+                    <p class="text-sm">@formMessage</p>
+                </div>
+            }
+        </EditForm>
+    </div>
+
+    <!-- Interactive Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Interactive</h2>
+            <p class="text-sm text-muted-foreground">
+                Switch with custom change handler.
+            </p>
+        </div>
+        <div class="space-y-3">
+            <div class="flex items-center space-x-2">
+                <Switch @bind-Checked="interactiveChecked" Id="interactive" />
+                <label for="interactive" class="text-sm font-medium leading-none">
+                    Enable dark mode
+                </label>
+            </div>
+            @if (interactiveChecked)
+            {
+                <div class="p-4 bg-primary/10 rounded-lg border border-primary">
+                    <p class="text-sm">✓ Dark mode enabled! Last toggled at @lastToggleTime</p>
+                </div>
+            }
+            else
+            {
+                <div class="p-4 bg-muted rounded-lg">
+                    <p class="text-sm text-muted-foreground">Dark mode disabled</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Card Layout -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Settings Cards</h2>
+            <p class="text-sm text-muted-foreground">
+                Switches within card containers for a polished settings interface.
+            </p>
+        </div>
+        <div class="space-y-3">
+            <div class="flex items-center justify-between rounded-lg border p-4">
+                <div class="space-y-0.5">
+                    <div class="text-sm font-medium leading-none">
+                        Email Notifications
+                    </div>
+                    <div class="text-sm text-muted-foreground">
+                        Receive email about your account activity
+                    </div>
+                </div>
+                <Switch @bind-Checked="cardNotifications" Id="card-notifications" />
+            </div>
+            <div class="flex items-center justify-between rounded-lg border p-4">
+                <div class="space-y-0.5">
+                    <div class="text-sm font-medium leading-none">
+                        Marketing Emails
+                    </div>
+                    <div class="text-sm text-muted-foreground">
+                        Receive emails about new products and features
+                    </div>
+                </div>
+                <Switch @bind-Checked="cardMarketing" Id="card-marketing" />
+            </div>
+            <div class="flex items-center justify-between rounded-lg border p-4">
+                <div class="space-y-0.5">
+                    <div class="text-sm font-medium leading-none">
+                        Social Notifications
+                    </div>
+                    <div class="text-sm text-muted-foreground">
+                        Receive notifications from social interactions
+                    </div>
+                </div>
+                <Switch @bind-Checked="cardSocial" Id="card-social" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Styling -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Styling</h2>
+            <p class="text-sm text-muted-foreground">
+                Switches with additional CSS classes.
+            </p>
+        </div>
+        <div class="space-y-3">
+            <div class="flex items-center space-x-2">
+                <Switch @bind-Checked="styled1" Class="shadow-lg" Id="styled1" />
+                <label for="styled1" class="text-sm font-medium leading-none">
+                    With shadow
+                </label>
+            </div>
+            <div class="flex items-center space-x-2">
+                <Switch @bind-Checked="styled2" Class="ring-2 ring-offset-2" Id="styled2" />
+                <label for="styled2" class="text-sm font-medium leading-none">
+                    With ring
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Accessibility Notes -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Accessibility</h2>
+            <p class="text-sm text-muted-foreground">
+                Keyboard navigation and screen reader support.
+            </p>
+        </div>
+        <div class="space-y-2 text-sm">
+            <p>✓ Tab key focuses switches in sequence</p>
+            <p>✓ Space or Enter key toggles focused switch</p>
+            <p>✓ Disabled switches are not focusable (tabindex="-1")</p>
+            <p>✓ ARIA attributes set correctly (role="switch", aria-checked, aria-disabled)</p>
+            <p>✓ Focus ring appears on keyboard focus (focus-visible:ring-2)</p>
+            <p>✓ Color contrast meets WCAG 2.1 AA standards</p>
+            <p>✓ Semantic label association using htmlFor attribute</p>
+            <p>✓ Screen readers announce switch state correctly</p>
+        </div>
+    </div>
+
+    <!-- Browser Compatibility -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Browser Compatibility</h2>
+            <p class="text-sm text-muted-foreground">
+                Tested and verified across modern browsers.
+            </p>
+        </div>
+        <div class="space-y-2 text-sm">
+            <p>✓ Chrome 120+ (compatible)</p>
+            <p>✓ Firefox 120+ (compatible)</p>
+            <p>✓ Edge 120+ (compatible)</p>
+            <p>✓ Safari 17+ (compatible)</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Basic switch
+    private bool basicChecked = false;
+
+    // Size variants
+    private bool smallChecked = false;
+    private bool mediumChecked = true;
+    private bool largeChecked = false;
+
+    // Settings panel
+    private bool notifications = true;
+    private bool autoSave = false;
+    private bool analytics = true;
+
+    // Interactive
+    private bool _interactiveChecked = false;
+    private bool interactiveChecked
+    {
+        get => _interactiveChecked;
+        set
+        {
+            _interactiveChecked = value;
+            if (value)
+            {
+                lastToggleTime = DateTime.Now.ToString("HH:mm:ss");
+            }
+        }
+    }
+    private string lastToggleTime = "";
+
+    // Card layout
+    private bool cardNotifications = true;
+    private bool cardMarketing = false;
+    private bool cardSocial = true;
+
+    // Custom styling
+    private bool styled1 = false;
+    private bool styled2 = false;
+
+    // Form validation
+    private FormModel formModel = new();
+    private string formMessage = "";
+
+    private List<string> GetActiveSettings()
+    {
+        var active = new List<string>();
+        if (notifications) active.Add("Notifications");
+        if (autoSave) active.Add("Auto-save");
+        if (analytics) active.Add("Analytics");
+        return active.Count > 0 ? active : new List<string> { "None" };
+    }
+
+    private void HandleValidSubmit()
+    {
+        formMessage = $"Form submitted successfully at {DateTime.Now:HH:mm:ss}. " +
+                     $"Terms accepted: {formModel.AcceptTerms}, " +
+                     $"Marketing: {formModel.EnableMarketing}";
+    }
+
+    private void ResetForm()
+    {
+        formModel = new FormModel();
+        formMessage = "";
+    }
+
+    public class FormModel
+    {
+        [Required(ErrorMessage = "You must accept the terms and conditions")]
+        [Range(typeof(bool), "true", "true", ErrorMessage = "You must accept the terms and conditions")]
+        public bool AcceptTerms { get; set; }
+
+        public bool EnableMarketing { get; set; }
+    }
+}

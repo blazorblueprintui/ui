@@ -1,0 +1,98 @@
+@namespace BlazorUI.Primitives.Tooltip
+
+@* Tooltip trigger - shows tooltip on hover/focus *@
+<span @ref="@_triggerRef"
+      id="@Context.TriggerId"
+      @onmouseenter="HandleMouseEnter"
+      @onmouseleave="HandleMouseLeave"
+      @onfocus="HandleFocus"
+      @onblur="HandleBlur"
+      @attributes="AdditionalAttributes"
+      tabindex="@(Focusable ? "0" : null)"
+      aria-describedby="@(Context.IsOpen ? Context.TooltipId : null)">
+    @ChildContent
+</span>
+
+@code {
+    [CascadingParameter]
+    private TooltipContext Context { get; set; } = null!;
+
+    private ElementReference _triggerRef;
+
+    /// <summary>
+    /// The content to display inside the trigger.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the trigger element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Whether the trigger should be keyboard focusable.
+    /// Default is true. Set to false if child content is already focusable.
+    /// </summary>
+    [Parameter]
+    public bool Focusable { get; set; } = true;
+
+    /// <summary>
+    /// Custom mouse enter handler. If provided, this is called in addition to the default show behavior.
+    /// </summary>
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnMouseEnter { get; set; }
+
+    /// <summary>
+    /// Custom mouse leave handler. If provided, this is called in addition to the default hide behavior.
+    /// </summary>
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnMouseLeave { get; set; }
+
+    private async Task HandleMouseEnter(MouseEventArgs args)
+    {
+        // Open tooltip and store trigger element for positioning
+        Context.Open(_triggerRef);
+
+        // Invoke custom handler if provided
+        if (OnMouseEnter.HasDelegate)
+        {
+            await OnMouseEnter.InvokeAsync(args);
+        }
+    }
+
+    private async Task HandleMouseLeave(MouseEventArgs args)
+    {
+        // Close tooltip
+        Context.Close();
+
+        // Invoke custom handler if provided
+        if (OnMouseLeave.HasDelegate)
+        {
+            await OnMouseLeave.InvokeAsync(args);
+        }
+    }
+
+    private void HandleFocus(FocusEventArgs args)
+    {
+        // Open tooltip on focus for keyboard users
+        Context.Open(_triggerRef);
+    }
+
+    private void HandleBlur(FocusEventArgs args)
+    {
+        // Close tooltip on blur
+        Context.Close();
+    }
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "TooltipTrigger must be used within a Tooltip component. " +
+                "Ensure TooltipTrigger is a child of a Tooltip component.");
+        }
+    }
+}

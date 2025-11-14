@@ -1,0 +1,118 @@
+@namespace BlazorUI.Primitives.Tabs
+@implements IDisposable
+
+@* Tabs primitive root component - headless, unstyled behavior only *@
+<CascadingValue Value="@_context" IsFixed="false">
+    @ChildContent
+</CascadingValue>
+
+@code {
+    private TabsContext _context = new();
+    private UseControllableState<string?> _state = null!;
+
+    /// <summary>
+    /// The child content to render within the tabs context.
+    /// Typically includes TabsList and TabsContent components.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls which tab is active (controlled mode).
+    /// When null, the tabs manage their own state (uncontrolled mode).
+    /// </summary>
+    [Parameter]
+    public string? Value { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the active tab changes.
+    /// Use with @bind-Value for two-way binding.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string?> ValueChanged { get; set; }
+
+    /// <summary>
+    /// Default active tab value when in uncontrolled mode.
+    /// </summary>
+    [Parameter]
+    public string? DefaultValue { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the active tab changes.
+    /// Receives the new active tab value as a parameter.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string?> OnValueChange { get; set; }
+
+    /// <summary>
+    /// Orientation of the tabs (horizontal or vertical).
+    /// Default is horizontal.
+    /// </summary>
+    [Parameter]
+    public TabsOrientation Orientation { get; set; } = TabsOrientation.Horizontal;
+
+    /// <summary>
+    /// Activation mode for tabs (automatic on focus or manual on click).
+    /// Default is automatic.
+    /// </summary>
+    [Parameter]
+    public TabsActivationMode ActivationMode { get; set; } = TabsActivationMode.Automatic;
+
+    protected override void OnInitialized()
+    {
+        // Initialize controllable state
+        _state = new UseControllableState<string?>(DefaultValue)
+        {
+            ControlledValue = Value,
+            OnValueChanged = ValueChanged,
+            IsControlled = ValueChanged.HasDelegate
+        };
+
+        // Sync initial state to context
+        _context.State.ActiveValue = _state.Value;
+        _context.State.Orientation = Orientation;
+        _context.State.ActivationMode = ActivationMode;
+
+        // Subscribe to context state changes
+        _context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Update controlled value if it changed
+        if (_state.IsControlled && Value != _state.ControlledValue)
+        {
+            _state.ControlledValue = Value;
+            _context.State.ActiveValue = Value;
+        }
+
+        // Update orientation and activation mode
+        _context.State.Orientation = Orientation;
+        _context.State.ActivationMode = ActivationMode;
+    }
+
+    private void HandleContextStateChanged()
+    {
+        // When context state changes (e.g., from TabsTrigger),
+        // update the controllable state
+        var newActiveValue = _context.State.ActiveValue;
+
+        if (_state.Value != newActiveValue)
+        {
+            _ = _state.SetValueAsync(newActiveValue);
+
+            // Invoke additional callback if provided
+            if (OnValueChange.HasDelegate)
+            {
+                _ = OnValueChange.InvokeAsync(newActiveValue);
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        _context.OnStateChanged -= HandleContextStateChanged;
+    }
+}

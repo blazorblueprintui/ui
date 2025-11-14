@@ -1,0 +1,29 @@
+@namespace BlazorUI.Components.Sheet
+@using BlazorUI.Components.Utilities
+
+@*
+    SheetHeader helper component for organizing sheet title and description.
+*@
+
+<div class="@GetClassNames()">
+    @ChildContent
+</div>
+
+@code {
+    /// <summary>
+    /// The content to display in the sheet header (typically SheetTitle and SheetDescription).
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the header container.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    private string GetClassNames() => ClassNames.cn(
+        "flex flex-col space-y-2 text-center sm:text-left",
+        Class
+    );
+}

@@ -1,0 +1,171 @@
+@namespace BlazorUI.Primitives.Tabs
+
+@* TabsList primitive - container for tab triggers *@
+<div id="@Context.ListId"
+     role="tablist"
+     aria-orientation="@_ariaOrientation"
+     @attributes="AdditionalAttributes">
+    <CascadingValue Value="this" IsFixed="true">
+        @ChildContent
+    </CascadingValue>
+</div>
+
+@code {
+    private string _ariaOrientation => Context.Orientation == TabsOrientation.Horizontal ? "horizontal" : "vertical";
+    private List<TabsTrigger> _triggers = new();
+
+    /// <summary>
+    /// Cascading parameter to receive the tabs context.
+    /// </summary>
+    [CascadingParameter]
+    public TabsContext Context { get; set; } = null!;
+
+    /// <summary>
+    /// The child content to render within the tabs list.
+    /// Should contain TabsTrigger components.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the tabs list element.
+    /// Allows for custom CSS classes, data attributes, etc.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Registers a tab trigger with this list for keyboard navigation.
+    /// </summary>
+    internal void RegisterTrigger(TabsTrigger trigger)
+    {
+        if (!_triggers.Contains(trigger))
+        {
+            _triggers.Add(trigger);
+        }
+    }
+
+    /// <summary>
+    /// Unregisters a tab trigger from this list.
+    /// </summary>
+    internal void UnregisterTrigger(TabsTrigger trigger)
+    {
+        _triggers.Remove(trigger);
+    }
+
+    /// <summary>
+    /// Handles keyboard navigation between tabs.
+    /// </summary>
+    internal void HandleKeyNavigation(string currentValue, string key)
+    {
+        if (_triggers.Count == 0) return;
+
+        var currentIndex = _triggers.FindIndex(t => t.Value == currentValue);
+        if (currentIndex == -1) return;
+
+        var nextIndex = -1;
+        var isHorizontal = Context.Orientation == TabsOrientation.Horizontal;
+        var isRtl = System.Globalization.CultureInfo.CurrentCulture.TextInfo.IsRightToLeft;
+
+        switch (key)
+        {
+            case "ArrowLeft":
+                if (isHorizontal)
+                {
+                    nextIndex = isRtl ? GetNextIndex(currentIndex) : GetPreviousIndex(currentIndex);
+                }
+                break;
+
+            case "ArrowRight":
+                if (isHorizontal)
+                {
+                    nextIndex = isRtl ? GetPreviousIndex(currentIndex) : GetNextIndex(currentIndex);
+                }
+                break;
+
+            case "ArrowUp":
+                if (!isHorizontal)
+                {
+                    nextIndex = GetPreviousIndex(currentIndex);
+                }
+                break;
+
+            case "ArrowDown":
+                if (!isHorizontal)
+                {
+                    nextIndex = GetNextIndex(currentIndex);
+                }
+                break;
+
+            case "Home":
+                nextIndex = GetFirstEnabledIndex();
+                break;
+
+            case "End":
+                nextIndex = GetLastEnabledIndex();
+                break;
+        }
+
+        if (nextIndex != -1 && nextIndex != currentIndex)
+        {
+            var nextTrigger = _triggers[nextIndex];
+            _ = nextTrigger.FocusAsync();
+
+            // Activate immediately if in automatic mode
+            if (Context.ActivationMode == TabsActivationMode.Automatic)
+            {
+                nextTrigger.Activate();
+            }
+        }
+    }
+
+    private int GetNextIndex(int currentIndex)
+    {
+        for (int i = currentIndex + 1; i < _triggers.Count; i++)
+        {
+            if (!_triggers[i].Disabled)
+                return i;
+        }
+        // Wrap to first enabled
+        return GetFirstEnabledIndex();
+    }
+
+    private int GetPreviousIndex(int currentIndex)
+    {
+        for (int i = currentIndex - 1; i >= 0; i--)
+        {
+            if (!_triggers[i].Disabled)
+                return i;
+        }
+        // Wrap to last enabled
+        return GetLastEnabledIndex();
+    }
+
+    private int GetFirstEnabledIndex()
+    {
+        for (int i = 0; i < _triggers.Count; i++)
+        {
+            if (!_triggers[i].Disabled)
+                return i;
+        }
+        return -1;
+    }
+
+    private int GetLastEnabledIndex()
+    {
+        for (int i = _triggers.Count - 1; i >= 0; i--)
+        {
+            if (!_triggers[i].Disabled)
+                return i;
+        }
+        return -1;
+    }
+
+    /// <summary>
+    /// Gets all registered trigger values in order.
+    /// </summary>
+    internal IEnumerable<string> GetTriggerValues()
+    {
+        return _triggers.Select(t => t.Value);
+    }
+}

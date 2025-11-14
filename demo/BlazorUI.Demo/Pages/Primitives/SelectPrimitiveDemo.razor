@@ -1,0 +1,202 @@
+@page "/primitives/select"
+@using BlazorUI.Primitives.Select
+
+<PageTitle>Select Primitive - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div class="space-y-8 max-w-4xl">
+        <!-- Header -->
+        <div class="space-y-2">
+            <h1 class="text-4xl font-bold tracking-tight">Select Primitive</h1>
+            <p class="text-lg text-muted-foreground">
+                Headless, unstyled select component with full keyboard navigation and ARIA support.
+            </p>
+        </div>
+
+        <!-- Features -->
+        <div class="rounded-lg border border-border bg-card p-6">
+            <h2 class="text-xl font-semibold mb-4">Features</h2>
+            <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+                <li>Generic TValue support for type-safe values</li>
+                <li>Full keyboard navigation (Arrow keys, Home, End, Enter, Space, Escape)</li>
+                <li>Mouse hover integration with keyboard focus</li>
+                <li>Controlled and uncontrolled modes</li>
+                <li>ARIA attributes (role, aria-expanded, aria-activedescendant)</li>
+                <li>Click-outside to close</li>
+                <li>Item registration for navigation</li>
+                <li>Disabled state support</li>
+            </ul>
+        </div>
+
+        <!-- Basic Example -->
+        <div class="space-y-6">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold tracking-tight">Basic Example</h2>
+                <p class="text-sm text-muted-foreground">
+                    Minimal unstyled primitive (add your own styles)
+                </p>
+            </div>
+            <div class="rounded-lg border border-border bg-card p-6">
+                <div class="w-[280px]">
+                    <BlazorUI.Primitives.Select.Select TValue="string" @bind-Value="basicValue" style="position: relative;">
+                        <BlazorUI.Primitives.Select.SelectTrigger TValue="string" class="flex items-center justify-between w-full px-3 py-2 border border-input rounded-md bg-background">
+                            <span>Selected: @basicValue</span>
+                            <span>▼</span>
+                        </BlazorUI.Primitives.Select.SelectTrigger>
+                        <BlazorUI.Primitives.Select.SelectContent TValue="string" class="absolute z-50 mt-1 w-full border border-border rounded-md bg-popover shadow-md">
+                            <BlazorUI.Primitives.Select.SelectItem TValue="string" Value="@("apple")" class="px-3 py-2 cursor-pointer hover:bg-accent">
+                                Apple
+                            </BlazorUI.Primitives.Select.SelectItem>
+                            <BlazorUI.Primitives.Select.SelectItem TValue="string" Value="@("banana")" class="px-3 py-2 cursor-pointer hover:bg-accent">
+                                Banana
+                            </BlazorUI.Primitives.Select.SelectItem>
+                            <BlazorUI.Primitives.Select.SelectItem TValue="string" Value="@("orange")" class="px-3 py-2 cursor-pointer hover:bg-accent">
+                                Orange
+                            </BlazorUI.Primitives.Select.SelectItem>
+                            <BlazorUI.Primitives.Select.SelectItem TValue="string" Value="@("grape")" class="px-3 py-2 cursor-pointer hover:bg-accent">
+                                Grape
+                            </BlazorUI.Primitives.Select.SelectItem>
+                        </BlazorUI.Primitives.Select.SelectContent>
+                    </BlazorUI.Primitives.Select.Select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controlled Example -->
+        <div class="space-y-6">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold tracking-tight">Controlled Example</h2>
+                <p class="text-sm text-muted-foreground">
+                    Parent component controls the selected value
+                </p>
+            </div>
+            <div class="rounded-lg border border-border bg-card p-6">
+                <div class="space-y-6">
+                    <div class="w-[280px]">
+                        <BlazorUI.Primitives.Select.Select TValue="string" @bind-Value="controlledValue" style="position: relative;">
+                            <BlazorUI.Primitives.Select.SelectTrigger TValue="string" class="flex items-center justify-between w-full px-3 py-2 border border-input rounded-md bg-background">
+                                <span>@(string.IsNullOrEmpty(controlledValue) ? "Select a fruit" : controlledValue)</span>
+                                <span>▼</span>
+                            </BlazorUI.Primitives.Select.SelectTrigger>
+                            <BlazorUI.Primitives.Select.SelectContent TValue="string" class="absolute z-50 mt-1 w-full max-h-60 overflow-auto border border-border rounded-md bg-popover shadow-md">
+                                <BlazorUI.Primitives.Select.SelectItem TValue="string" Value="@("Strawberry")" class="px-3 py-2 cursor-pointer hover:bg-accent">
+                                    🍓 Strawberry
+                                </BlazorUI.Primitives.Select.SelectItem>
+                                <BlazorUI.Primitives.Select.SelectItem TValue="string" Value="@("Watermelon")" class="px-3 py-2 cursor-pointer hover:bg-accent">
+                                    🍉 Watermelon
+                                </BlazorUI.Primitives.Select.SelectItem>
+                                <BlazorUI.Primitives.Select.SelectItem TValue="string" Value="@("Pineapple")" class="px-3 py-2 cursor-pointer hover:bg-accent">
+                                    🍍 Pineapple
+                                </BlazorUI.Primitives.Select.SelectItem>
+                                <BlazorUI.Primitives.Select.SelectItem TValue="string" Value="@("Mango")" class="px-3 py-2 cursor-pointer hover:bg-accent">
+                                    🥭 Mango
+                                </BlazorUI.Primitives.Select.SelectItem>
+                            </BlazorUI.Primitives.Select.SelectContent>
+                        </BlazorUI.Primitives.Select.Select>
+                    </div>
+                    <div class="text-sm text-muted-foreground">
+                        Current value: <span class="font-mono">@(string.IsNullOrEmpty(controlledValue) ? "null" : controlledValue)</span>
+                    </div>
+                    <button @onclick="@(() => controlledValue = "Mango")" class="px-4 py-2 text-sm border border-border rounded-md hover:bg-accent">
+                        Set to Mango
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Disabled State -->
+        <div class="space-y-6">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold tracking-tight">Disabled State</h2>
+                <p class="text-sm text-muted-foreground">
+                    Select with disabled state
+                </p>
+            </div>
+            <div class="rounded-lg border border-border bg-card p-6">
+                <div class="w-[280px]">
+                    <BlazorUI.Primitives.Select.Select TValue="string" Disabled="true" DefaultValue="@("disabled")" style="position: relative;">
+                        <BlazorUI.Primitives.Select.SelectTrigger TValue="string" class="flex items-center justify-between w-full px-3 py-2 border border-input rounded-md bg-background opacity-50 cursor-not-allowed">
+                            <span>Disabled Select</span>
+                            <span>▼</span>
+                        </BlazorUI.Primitives.Select.SelectTrigger>
+                        <BlazorUI.Primitives.Select.SelectContent TValue="string" class="absolute z-50 mt-1 w-full border border-border rounded-md bg-popover shadow-md">
+                            <BlazorUI.Primitives.Select.SelectItem TValue="string" Value="@("disabled")" class="px-3 py-2">
+                                This won't open
+                            </BlazorUI.Primitives.Select.SelectItem>
+                        </BlazorUI.Primitives.Select.SelectContent>
+                    </BlazorUI.Primitives.Select.Select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Keyboard Navigation -->
+        <div class="space-y-6">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold tracking-tight">Keyboard Navigation</h2>
+                <p class="text-sm text-muted-foreground">
+                    Full keyboard support with all standard keys
+                </p>
+            </div>
+            <div class="rounded-lg border border-border bg-card p-6">
+                <div class="space-y-6">
+                    <div class="w-[280px]">
+                        <BlazorUI.Primitives.Select.Select TValue="int" @bind-Value="keyboardValue" style="position: relative;">
+                            <BlazorUI.Primitives.Select.SelectTrigger TValue="int" class="flex items-center justify-between w-full px-3 py-2 border border-input rounded-md bg-background">
+                                <span>Item @keyboardValue</span>
+                                <span>▼</span>
+                            </BlazorUI.Primitives.Select.SelectTrigger>
+                            <BlazorUI.Primitives.Select.SelectContent TValue="int" class="absolute z-50 mt-1 w-full max-h-60 overflow-auto border border-border rounded-md bg-popover shadow-md">
+                                @for (int i = 1; i <= 10; i++)
+                                {
+                                    var value = i;
+                                    <BlazorUI.Primitives.Select.SelectItem TValue="int" Value="@value" class="px-3 py-2 cursor-pointer hover:bg-accent data-[focused=true]:bg-accent">
+                                        Item @value
+                                    </BlazorUI.Primitives.Select.SelectItem>
+                                }
+                            </BlazorUI.Primitives.Select.SelectContent>
+                        </BlazorUI.Primitives.Select.Select>
+                    </div>
+                    <div class="text-sm text-muted-foreground space-y-1">
+                        <p><kbd class="px-2 py-1 text-xs border rounded">↑</kbd> <kbd class="px-2 py-1 text-xs border rounded">↓</kbd> Navigate items</p>
+                        <p><kbd class="px-2 py-1 text-xs border rounded">Home</kbd> <kbd class="px-2 py-1 text-xs border rounded">End</kbd> First/Last item</p>
+                        <p><kbd class="px-2 py-1 text-xs border rounded">Enter</kbd> <kbd class="px-2 py-1 text-xs border rounded">Space</kbd> Select item</p>
+                        <p><kbd class="px-2 py-1 text-xs border rounded">Esc</kbd> Close dropdown</p>
+                        <p><kbd class="px-2 py-1 text-xs border rounded">Tab</kbd> Close and move focus</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Reference -->
+        <div class="space-y-6">
+            <h2 class="text-2xl font-semibold tracking-tight">API Reference</h2>
+
+            <div class="rounded-lg border border-border bg-card p-6">
+                <h3 class="text-lg font-semibold mb-2">Select&lt;TValue&gt;</h3>
+                <div class="text-sm text-muted-foreground space-y-2">
+                    <p><code>Value</code> - Currently selected value (controlled)</p>
+                    <p><code>ValueChanged</code> - Event callback when value changes</p>
+                    <p><code>DefaultValue</code> - Initial value (uncontrolled)</p>
+                    <p><code>Open</code> - Whether dropdown is open (controlled)</p>
+                    <p><code>OpenChanged</code> - Event callback when open state changes</p>
+                    <p><code>Disabled</code> - Whether select is disabled</p>
+                </div>
+            </div>
+
+            <div class="rounded-lg border border-border bg-card p-6">
+                <h3 class="text-lg font-semibold mb-2">SelectItem&lt;TValue&gt;</h3>
+                <div class="text-sm text-muted-foreground space-y-2">
+                    <p><code>Value</code> - Value this item represents (required)</p>
+                    <p><code>TextValue</code> - Optional display text override</p>
+                    <p><code>Disabled</code> - Whether this item is disabled</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string? basicValue = "apple";
+    private string? controlledValue = "";
+    private int keyboardValue = 1;
+}

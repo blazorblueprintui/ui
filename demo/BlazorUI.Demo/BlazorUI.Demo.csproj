@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BlazorUI.Components\BlazorUI.Components.csproj" />
+    <ProjectReference Include="..\..\src\BlazorUI.Icons\BlazorUI.Icons.csproj" />
+    <ProjectReference Include="..\..\src\BlazorUI.Primitives\BlazorUI.Primitives.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>BlazorUI.Demo</RootNamespace>
+    <AssemblyName>BlazorUI.Demo</AssemblyName>
+  </PropertyGroup>
+
+  <!-- Build Tailwind CSS -->
+  <Target Name="BuildTailwindCSS" BeforeTargets="BeforeBuild">
+    <Message Text="Building Tailwind CSS..." Importance="high" />
+    <Exec Command="$(MSBuildProjectDirectory)\..\..\tools\tailwindcss.exe -i wwwroot/css/app-input.css -o wwwroot/css/app.css" />
+  </Target>
+
+</Project>

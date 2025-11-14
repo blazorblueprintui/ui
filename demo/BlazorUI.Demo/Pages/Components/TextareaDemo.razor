@@ -1,0 +1,279 @@
+@page "/components/textarea"
+@using BlazorUI.Components.Textarea
+
+<PageTitle>Textarea Component - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Textarea Component</h1>
+        <p class="text-xl text-muted-foreground">
+            Displays a multi-line text input field that follows the shadcn/ui design system.
+        </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+    </div>
+
+    <!-- Default Textarea -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Default</h2>
+            <p class="text-sm text-muted-foreground">
+                A simple textarea with placeholder and automatic content sizing.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <Textarea Placeholder="Type your message here." />
+        </div>
+    </div>
+
+    <!-- Disabled State -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">
+                Textarea with disabled state.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <Textarea Placeholder="Disabled textarea" Disabled="true" Value="Cannot edit this text." />
+        </div>
+    </div>
+
+    <!-- Required State -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Required</h2>
+            <p class="text-sm text-muted-foreground">
+                Textarea with HTML5 required validation.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <form class="space-y-4">
+                <div class="space-y-2">
+                    <label class="text-sm font-medium">Message (required)</label>
+                    <Textarea Placeholder="Enter your message" Required="true" />
+                </div>
+                <button type="submit" class="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90">
+                    Submit
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- With Label and Description -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">With Label</h2>
+            <p class="text-sm text-muted-foreground">
+                Textarea with labels and helper text.
+            </p>
+        </div>
+        <div class="max-w-md space-y-4">
+            <div class="space-y-2">
+                <label for="bio-textarea" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Bio
+                </label>
+                <Textarea Placeholder="Tell us about yourself..." AriaLabel="Biography" />
+                <p class="text-sm text-muted-foreground">
+                    Your bio will be displayed on your public profile.
+                </p>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Comments
+                </label>
+                <Textarea Placeholder="Leave a comment..." AriaLabel="Comments" />
+                <p class="text-sm text-muted-foreground">
+                    Share your thoughts with the community.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MaxLength -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Character Limit</h2>
+            <p class="text-sm text-muted-foreground">
+                Textarea with maximum character limit using MaxLength parameter.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Tweet (max 280 characters)</label>
+                <Textarea MaxLength="280" Placeholder="What's happening?" Value="@tweetValue" ValueChanged="@((value) => tweetValue = value)" />
+                <p class="text-xs text-muted-foreground">
+                    @(tweetValue?.Length ?? 0) / 280 characters
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARIA Attributes -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Accessibility (ARIA)</h2>
+            <p class="text-sm text-muted-foreground">
+                Textarea with ARIA attributes for screen readers.
+            </p>
+        </div>
+        <div class="max-w-md space-y-4">
+            <div class="space-y-2">
+                <label class="text-sm font-medium">With aria-label</label>
+                <Textarea AriaLabel="User feedback" Placeholder="Share your feedback..." />
+            </div>
+
+            <div class="space-y-2">
+                <label id="description-label" class="text-sm font-medium">Description</label>
+                <Textarea AriaDescribedBy="description-help" Placeholder="Describe the issue..." />
+                <p id="description-help" class="text-sm text-muted-foreground">
+                    Please provide as much detail as possible.
+                </p>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Invalid textarea (error state styling)</label>
+                <Textarea AriaInvalid="true" Value="This text is invalid" Placeholder="Message" />
+                <p class="text-sm text-destructive">
+                    Please correct the error. Note the destructive border and ring applied via aria-invalid.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Two-Way Binding Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Two-Way Binding</h2>
+            <p class="text-sm text-muted-foreground">
+                Demonstrating real-time value updates using Value and ValueChanged.
+            </p>
+        </div>
+        <div class="max-w-md space-y-4">
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Type something</label>
+                <Textarea Value="@boundValue" ValueChanged="@((value) => boundValue = value)" Placeholder="Start typing..." />
+                <p class="text-xs text-muted-foreground">
+                    Updates on every keystroke using Value and ValueChanged parameters.
+                </p>
+            </div>
+            <div class="rounded-lg border p-4 bg-muted/50">
+                <p class="text-sm font-medium mb-1">Current value:</p>
+                <p class="text-sm font-mono whitespace-pre-wrap break-words">@(string.IsNullOrEmpty(boundValue) ? "(empty)" : boundValue)</p>
+                <p class="text-xs text-muted-foreground mt-2">
+                    Character count: @(boundValue?.Length ?? 0)
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Styling -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Styling</h2>
+            <p class="text-sm text-muted-foreground">
+                Override styles with the Class parameter.
+            </p>
+        </div>
+        <div class="space-y-4 max-w-md">
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Custom border color</label>
+                <Textarea Placeholder="Blue border" Class="border-blue-500 focus-visible:ring-blue-500" />
+            </div>
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Custom height</label>
+                <Textarea Placeholder="Taller textarea" Class="min-h-32" />
+            </div>
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Success state</label>
+                <Textarea Value="Valid message" Class="border-green-500 focus-visible:ring-green-500" />
+            </div>
+        </div>
+    </div>
+
+    <!-- API Reference -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Value</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    The current value of the textarea. Supports two-way binding with @("@")bind-Value.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Placeholder</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Placeholder text shown when textarea is empty.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">MaxLength</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">int?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Maximum number of characters allowed. Browser will prevent exceeding this limit.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Disabled</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">bool</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Whether the textarea is disabled. Default: false
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Required</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">bool</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Whether the textarea is required for form validation. Default: false
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">ARIA Attributes</h3>
+                <p class="text-sm text-muted-foreground">
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">AriaLabel</code>,
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">AriaDescribedBy</code>,
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">AriaInvalid</code> for accessibility.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Class</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Additional CSS classes to apply. Custom classes override default styles.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string? boundValue = "";
+    private string? tweetValue = "";
+}

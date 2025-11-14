@@ -1,0 +1,43 @@
+@namespace BlazorUI.Components.Tabs
+@using BlazorUI.Primitives.Tabs
+
+@*
+    Styled TabsContent component.
+    Wraps the TabsContent primitive with shadcn/ui styling.
+*@
+
+<BlazorUI.Primitives.Tabs.TabsContent Value="@Value"
+                                            ForceMount="@ForceMount"
+                                            class="@CssClass">
+    @ChildContent
+</BlazorUI.Primitives.Tabs.TabsContent>
+
+@code {
+    /// <summary>
+    /// The value that identifies this tab content panel.
+    /// Must match the Value of the corresponding TabsTrigger.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string Value { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Whether to force mount the content even when inactive.
+    /// </summary>
+    [Parameter]
+    public bool ForceMount { get; set; } = false;
+
+    /// <summary>
+    /// The child content to render when this tab is active.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the tab content.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    private string CssClass =>
+        $"mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 {Class}".Trim();
+}

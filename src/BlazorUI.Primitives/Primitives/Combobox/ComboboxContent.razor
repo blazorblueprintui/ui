@@ -1,0 +1,384 @@
+@namespace BlazorUI.Primitives.Combobox
+@using BlazorUI.Primitives.Services
+@inject IPositioningService PositioningService
+@inject IPortalService PortalService
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+@*
+    ComboboxContent primitive - headless listbox container.
+    Renders through a portal to avoid z-index stacking issues and clipping.
+    Supports smart positioning with IPositioningService.
+*@
+
+@if (UsePortal)
+{
+    @* Hidden element to track DOM position for positioning calculations *@
+    @if (_shouldRender)
+    {
+        <span @ref="_contentRef" style="position: absolute; pointer-events: none; opacity: 0;"></span>
+    }
+}
+else
+{
+    @* Direct rendering when already inside a portal (e.g., within Popover) *@
+    @if (_shouldRender)
+    {
+        <CascadingValue Value="Context" IsFixed="false">
+            <div id="@Context.ContentId"
+                 role="listbox"
+                 style="@GetMergedStyle()"
+                 @attributes="GetAttributesWithoutStyle()">
+                @ChildContent
+            </div>
+        </CascadingValue>
+    }
+}
+
+@code {
+    [CascadingParameter]
+    public ComboboxContext Context { get; set; } = null!;
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the content element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Preferred side for positioning.
+    /// Default is Bottom.
+    /// </summary>
+    [Parameter]
+    public PopoverSide Side { get; set; } = PopoverSide.Bottom;
+
+    /// <summary>
+    /// Alignment relative to trigger.
+    /// Default is Start.
+    /// </summary>
+    [Parameter]
+    public PopoverAlign Align { get; set; } = PopoverAlign.Start;
+
+    /// <summary>
+    /// Offset distance from the trigger element in pixels.
+    /// Default is 4.
+    /// </summary>
+    [Parameter]
+    public int Offset { get; set; } = 4;
+
+    /// <summary>
+    /// Whether the combobox content should match the input width.
+    /// Default is true (common pattern for comboboxes).
+    /// </summary>
+    [Parameter]
+    public bool MatchTriggerWidth { get; set; } = true;
+
+    /// <summary>
+    /// Whether to render through a portal.
+    /// Set to false when already inside another portal (e.g., Popover).
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool UsePortal { get; set; } = true;
+
+    private ElementReference _contentRef;
+    private ElementReference _portalContentRef;
+    private bool _shouldRender;
+    private IJSObjectReference? _jsModule;
+    private IJSObjectReference? _matchWidthModule;
+    private IJSObjectReference? _matchWidthCleanup;
+    private IAsyncDisposable? _positioningCleanup;
+    private bool _isInitialized = false;
+    private bool _isPositioned = false;
+    private string _portalId = "";
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException($"{nameof(ComboboxContent)} must be used within a {nameof(Combobox)} component.");
+        }
+
+        _portalId = $"combobox-portal-{Context.ContentId}";
+
+        // Subscribe to context state changes
+        Context.OnStateChanged += HandleContextStateChanged;
+
+        // Determine initial render state
+        UpdateShouldRender();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _jsModule == null)
+        {
+            try
+            {
+                _jsModule = await JS.InvokeAsync<IJSObjectReference>(
+                    "import", "./_content/BlazorUI.Primitives/js/primitives/select.js");
+            }
+            catch
+            {
+                // JS module not critical, continue without it
+            }
+        }
+
+        if (_shouldRender && !_isInitialized && UsePortal)
+        {
+            _isInitialized = true;
+            _isPositioned = false;
+
+            // Register combobox content through portal
+            PortalService.RegisterPortal(_portalId, RenderComboboxContent());
+
+            // Set up positioning
+            await SetupPositioningAsync();
+        }
+        else if (!_shouldRender && _isInitialized && UsePortal)
+        {
+            await CleanupAsync();
+        }
+
+        // Scroll focused item into view when focus changes
+        if (_shouldRender && Context.FocusedIndex >= 0)
+        {
+            var itemId = Context.GetItemId(Context.FocusedIndex);
+            if (_jsModule != null)
+            {
+                try
+                {
+                    await _jsModule.InvokeVoidAsync("scrollItemIntoView", itemId);
+                }
+                catch
+                {
+                    // Ignore JS errors
+                }
+            }
+        }
+    }
+
+    private RenderFragment RenderComboboxContent() => builder =>
+    {
+        // Re-cascade the context through the portal
+        builder.OpenComponent<CascadingValue<ComboboxContext>>(0);
+        builder.AddAttribute(1, "Value", Context);
+        builder.AddAttribute(2, "IsFixed", false);
+        builder.AddAttribute(3, "ChildContent", (RenderFragment)(contentBuilder =>
+        {
+            contentBuilder.OpenElement(0, "div");
+            contentBuilder.AddAttribute(1, "id", Context.ContentId);
+            contentBuilder.AddAttribute(2, "role", "listbox");
+            contentBuilder.AddAttribute(3, "style", GetMergedStyle());
+            contentBuilder.AddMultipleAttributes(4, GetAttributesWithoutStyle());
+            contentBuilder.AddElementReferenceCapture(5, capturedRef => _portalContentRef = capturedRef);
+            contentBuilder.AddContent(6, ChildContent);
+            contentBuilder.CloseElement();
+        }));
+        builder.CloseComponent();
+    };
+
+    private async Task SetupPositioningAsync()
+    {
+        if (Context.State.InputElement == null)
+        {
+            Console.WriteLine("Warning: ComboboxContent - InputElement is null, positioning may not work correctly");
+            _isPositioned = true;
+            PortalService.UpdatePortalContent(_portalId, RenderComboboxContent());
+            return;
+        }
+
+        // Wait a tick for portal to render
+        await Task.Delay(1);
+
+        try
+        {
+            // Construct placement string from Side and Align
+            var placement = Align == PopoverAlign.Center ? Side.ToValue() : $"{Side.ToValue()}-{Align.ToValue()}";
+
+            var options = new PositioningOptions
+            {
+                Placement = placement,
+                Offset = Offset
+            };
+
+            // Compute and apply position using the portal content ref
+            var position = await PositioningService.ComputePositionAsync(
+                Context.State.InputElement.Value,
+                _portalContentRef,
+                options);
+
+            await PositioningService.ApplyPositionAsync(_portalContentRef, position);
+
+            // Show the combobox now that positioning is complete
+            _isPositioned = true;
+            PortalService.UpdatePortalContent(_portalId, RenderComboboxContent());
+
+            // Set up width matching if needed
+            if (MatchTriggerWidth)
+            {
+                await SetupMatchTriggerWidthAsync();
+            }
+
+            // Set up auto-update for dynamic positioning
+            _positioningCleanup = await PositioningService.AutoUpdateAsync(
+                Context.State.InputElement.Value,
+                _portalContentRef,
+                options);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to set up positioning: {ex.Message}");
+            _isPositioned = true;
+            PortalService.UpdatePortalContent(_portalId, RenderComboboxContent());
+        }
+    }
+
+    private async Task SetupMatchTriggerWidthAsync()
+    {
+        if (Context.State.InputElement == null) return;
+
+        try
+        {
+            _matchWidthModule = await JS.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorUI.Primitives/js/primitives/match-trigger-width.js");
+
+            _matchWidthCleanup = await _matchWidthModule.InvokeAsync<IJSObjectReference>(
+                "matchTriggerWidth", Context.State.InputElement, _portalContentRef);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to set up input width matching: {ex.Message}");
+        }
+    }
+
+    private void HandleContextStateChanged()
+    {
+        UpdateShouldRender();
+        StateHasChanged();
+    }
+
+    private void UpdateShouldRender()
+    {
+        if (!UsePortal)
+        {
+            // When not using portal (inside Popover/Dialog), always render
+            // The parent container controls visibility
+            _shouldRender = true;
+        }
+        else
+        {
+            // When using portal (standalone), only render when there's an active search query
+            // This ensures the dropdown closes after selection
+            _shouldRender = !string.IsNullOrEmpty(Context.SearchQuery);
+        }
+    }
+
+    private string GetInitialStyle()
+    {
+        if (!UsePortal)
+        {
+            // No positioning styles needed when not using portal
+            return "";
+        }
+
+        var baseStyle = "position: absolute; z-index: 50;";
+
+        if (!_isPositioned)
+        {
+            baseStyle += " opacity: 0; pointer-events: none;";
+        }
+
+        return baseStyle;
+    }
+
+    private string GetMergedStyle()
+    {
+        var baseStyle = GetInitialStyle();
+
+        if (AdditionalAttributes != null && AdditionalAttributes.TryGetValue("style", out var userStyle))
+        {
+            return string.IsNullOrEmpty(baseStyle) ? userStyle?.ToString() ?? "" : $"{userStyle}; {baseStyle}";
+        }
+
+        return baseStyle;
+    }
+
+    private Dictionary<string, object>? GetAttributesWithoutStyle()
+    {
+        if (AdditionalAttributes == null) return null;
+
+        var attributes = new Dictionary<string, object>(AdditionalAttributes);
+        attributes.Remove("style");
+
+        return attributes.Count > 0 ? attributes : null;
+    }
+
+    private async Task CleanupAsync()
+    {
+        if (_positioningCleanup != null)
+        {
+            await _positioningCleanup.DisposeAsync();
+            _positioningCleanup = null;
+        }
+
+        if (_matchWidthCleanup != null)
+        {
+            try
+            {
+                await _matchWidthCleanup.InvokeVoidAsync("dispose");
+                await _matchWidthCleanup.DisposeAsync();
+            }
+            catch
+            {
+                // Cleanup may already be disposed
+            }
+            _matchWidthCleanup = null;
+        }
+
+        // Unregister portal when combobox closes
+        if (!string.IsNullOrEmpty(_portalId))
+        {
+            PortalService.UnregisterPortal(_portalId);
+        }
+
+        _isInitialized = false;
+        _isPositioned = false;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await CleanupAsync();
+
+        if (Context != null)
+        {
+            Context.OnStateChanged -= HandleContextStateChanged;
+        }
+
+        if (_jsModule != null)
+        {
+            try
+            {
+                await _jsModule.DisposeAsync();
+            }
+            catch
+            {
+                // Ignore disposal errors
+            }
+        }
+
+        if (_matchWidthModule != null)
+        {
+            try
+            {
+                await _matchWidthModule.DisposeAsync();
+            }
+            catch
+            {
+                // Ignore disposal errors
+            }
+        }
+    }
+}

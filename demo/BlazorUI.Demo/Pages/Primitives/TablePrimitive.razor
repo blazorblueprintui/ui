@@ -1,0 +1,1366 @@
+@page "/primitives/table"
+@using BlazorUI.Primitives.Services
+@using BlazorUI.Primitives.Table
+@using BlazorUI.Primitives.Popover
+@using BlazorUI.Components.Button
+@using BlazorUI.Icons.Components
+
+<div class="container mx-auto p-6 space-y-8">
+    <div class="space-y-2">
+        <h1 class="text-3xl font-bold">Table Primitive</h1>
+        <p class="text-muted-foreground">
+            A headless table primitive with sorting, pagination, and selection capabilities. Inspired by Radix UI.
+        </p>
+    </div>
+
+    @* Basic Table Example *@
+    <section class="space-y-4">
+        <div>
+            <h2 class="text-2xl font-semibold">Basic Table</h2>
+            <p class="text-sm text-muted-foreground">Simple table with no sorting, pagination, or selection</p>
+        </div>
+
+        <div class="rounded-md border">
+            <Table TData="Person" Data="@people" Class="w-full caption-bottom text-sm">
+                <TableHeader Class="[&_tr]:border-b">
+                    <TableRow TData="Person" Class="border-b transition-colors hover:bg-muted/50">
+                        <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Name</TableHeaderCell>
+                        <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Email</TableHeaderCell>
+                        <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Age</TableHeaderCell>
+                        <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Department</TableHeaderCell>
+                    </TableRow>
+                </TableHeader>
+                <TableBody Class="[&_tr:last-child]:border-0">
+                    @foreach (var person in people)
+                    {
+                        <TableRow TData="Person" Class="border-b transition-colors hover:bg-muted/50">
+                            <TableCell Class="p-4 align-middle">@person.Name</TableCell>
+                            <TableCell Class="p-4 align-middle">@person.Email</TableCell>
+                            <TableCell Class="p-4 align-middle">@person.Age</TableCell>
+                            <TableCell Class="p-4 align-middle">@person.Department</TableCell>
+                        </TableRow>
+                    }
+                </TableBody>
+            </Table>
+        </div>
+    </section>
+
+    @* Sortable Table Example *@
+    <section class="space-y-4">
+        <div>
+            <h2 class="text-2xl font-semibold">Sortable Table</h2>
+            <p class="text-sm text-muted-foreground">Click column headers to sort. Three-state cycle: None → Ascending → Descending → None</p>
+        </div>
+
+        <div class="rounded-md border">
+            <Table TData="Person" Data="@GetSortedPeople()" @bind-State="@sortableTableState" Class="w-full caption-bottom text-sm">
+                <TableHeader Class="[&_tr]:border-b">
+                    <TableRow TData="Person" Class="border-b transition-colors hover:bg-muted/50">
+                        <TableHeaderCell TData="Person" ColumnId="name" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer select-none hover:bg-accent">
+                            <div class="flex items-center gap-2">
+                                <span>Name</span>
+                                @if (sortableTableState.Sorting.SortedColumn == "name")
+                                {
+                                    @if (sortableTableState.Sorting.Direction == SortDirection.Ascending)
+                                    {
+                                        <span class="text-xs">↑</span>
+                                    }
+                                    else if (sortableTableState.Sorting.Direction == SortDirection.Descending)
+                                    {
+                                        <span class="text-xs">↓</span>
+                                    }
+                                }
+                            </div>
+                        </TableHeaderCell>
+                        <TableHeaderCell TData="Person" ColumnId="email" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer select-none hover:bg-accent">
+                            <div class="flex items-center gap-2">
+                                <span>Email</span>
+                                @if (sortableTableState.Sorting.SortedColumn == "email")
+                                {
+                                    @if (sortableTableState.Sorting.Direction == SortDirection.Ascending)
+                                    {
+                                        <span class="text-xs">↑</span>
+                                    }
+                                    else if (sortableTableState.Sorting.Direction == SortDirection.Descending)
+                                    {
+                                        <span class="text-xs">↓</span>
+                                    }
+                                }
+                            </div>
+                        </TableHeaderCell>
+                        <TableHeaderCell TData="Person" ColumnId="age" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer select-none hover:bg-accent">
+                            <div class="flex items-center gap-2">
+                                <span>Age</span>
+                                @if (sortableTableState.Sorting.SortedColumn == "age")
+                                {
+                                    @if (sortableTableState.Sorting.Direction == SortDirection.Ascending)
+                                    {
+                                        <span class="text-xs">↑</span>
+                                    }
+                                    else if (sortableTableState.Sorting.Direction == SortDirection.Descending)
+                                    {
+                                        <span class="text-xs">↓</span>
+                                    }
+                                }
+                            </div>
+                        </TableHeaderCell>
+                        <TableHeaderCell TData="Person" ColumnId="department" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer select-none hover:bg-accent">
+                            <div class="flex items-center gap-2">
+                                <span>Department</span>
+                                @if (sortableTableState.Sorting.SortedColumn == "department")
+                                {
+                                    @if (sortableTableState.Sorting.Direction == SortDirection.Ascending)
+                                    {
+                                        <span class="text-xs">↑</span>
+                                    }
+                                    else if (sortableTableState.Sorting.Direction == SortDirection.Descending)
+                                    {
+                                        <span class="text-xs">↓</span>
+                                    }
+                                }
+                            </div>
+                        </TableHeaderCell>
+                    </TableRow>
+                </TableHeader>
+                <TableBody Class="[&_tr:last-child]:border-0">
+                    @foreach (var person in GetSortedPeople())
+                    {
+                        <TableRow TData="Person" Class="border-b transition-colors hover:bg-muted/50">
+                            <TableCell Class="p-4 align-middle">@person.Name</TableCell>
+                            <TableCell Class="p-4 align-middle">@person.Email</TableCell>
+                            <TableCell Class="p-4 align-middle">@person.Age</TableCell>
+                            <TableCell Class="p-4 align-middle">@person.Department</TableCell>
+                        </TableRow>
+                    }
+                </TableBody>
+            </Table>
+        </div>
+
+        <div class="rounded-lg border bg-card p-4">
+            <h3 class="font-semibold mb-2">Current Sort State</h3>
+            <div class="text-sm space-y-1">
+                <p><span class="font-medium">Column:</span> @(sortableTableState.Sorting.SortedColumn ?? "None")</p>
+                <p><span class="font-medium">Direction:</span> @sortableTableState.Sorting.Direction</p>
+            </div>
+        </div>
+    </section>
+
+    @* Paginated Table Example *@
+    <section class="space-y-4">
+        <div>
+            <h2 class="text-2xl font-semibold">Paginated Table</h2>
+            <p class="text-sm text-muted-foreground">Table with pagination controls and configurable page size</p>
+        </div>
+
+        <div class="space-y-4">
+            <div class="rounded-md border">
+                <Table TData="Person" Data="@largePeopleDataset" @bind-State="@paginatedTableState"
+                       OnPageChange="@HandlePaginationChange"
+                       OnPageSizeChange="@HandlePaginationChange"
+                       Class="w-full caption-bottom text-sm">
+                    <TableHeader Class="[&_tr]:border-b">
+                        <TableRow TData="Person" Class="border-b transition-colors hover:bg-muted/50">
+                            <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Name</TableHeaderCell>
+                            <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Email</TableHeaderCell>
+                            <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Age</TableHeaderCell>
+                            <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Department</TableHeaderCell>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody Class="[&_tr:last-child]:border-0">
+                        @foreach (var person in GetPaginatedData())
+                        {
+                            <TableRow TData="Person" Class="border-b transition-colors hover:bg-muted/50">
+                                <TableCell Class="p-4 align-middle">@person.Name</TableCell>
+                                <TableCell Class="p-4 align-middle">@person.Email</TableCell>
+                                <TableCell Class="p-4 align-middle">@person.Age</TableCell>
+                                <TableCell Class="p-4 align-middle">@person.Department</TableCell>
+                            </TableRow>
+                        }
+                    </TableBody>
+                </Table>
+            </div>
+
+            <TablePagination TData="Person" State="@paginatedTableState.Pagination"
+                             OnPageChange="@HandlePaginationChange"
+                             OnPageSizeChange="@HandlePaginationChange">
+                <PaginationTemplate Context="context">
+                    <div class="flex items-center justify-between px-2">
+                        <div class="flex-1 text-sm text-muted-foreground">
+                            @context.GetPageInfoText()
+                        </div>
+                        <div class="flex items-center space-x-6 lg:space-x-8">
+                            <div class="flex items-center space-x-2">
+                                <p class="text-sm font-medium">Rows per page</p>
+                                <select @onchange="@((e) => context.ChangePageSize(int.Parse(e.Value?.ToString() ?? "10")))"
+                                        class="h-8 w-[70px] rounded-md border border-input bg-background px-2 py-1 text-sm">
+                                    @foreach (var size in context.PageSizeOptions)
+                                    {
+                                        <option value="@size" selected="@(context.State.PageSize == size)">@size</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="flex w-[100px] items-center justify-center text-sm font-medium">
+                                Page @context.State.CurrentPage of @context.State.TotalPages
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <Button Variant="ButtonVariant.Outline"
+                                        Size="ButtonSize.Icon"
+                                        OnClick="@context.GoToFirstPage"
+                                        Disabled="@(!context.State.CanGoPrevious)"
+                                        AriaLabel="Go to first page">
+                                    <LucideIcon Name="chevrons-left" Size="16" />
+                                </Button>
+                                <Button Variant="ButtonVariant.Outline"
+                                        Size="ButtonSize.Icon"
+                                        OnClick="@context.GoToPreviousPage"
+                                        Disabled="@(!context.State.CanGoPrevious)"
+                                        AriaLabel="Go to previous page">
+                                    <LucideIcon Name="chevron-left" Size="16" />
+                                </Button>
+                                <Button Variant="ButtonVariant.Outline"
+                                        Size="ButtonSize.Icon"
+                                        OnClick="@context.GoToNextPage"
+                                        Disabled="@(!context.State.CanGoNext)"
+                                        AriaLabel="Go to next page">
+                                    <LucideIcon Name="chevron-right" Size="16" />
+                                </Button>
+                                <Button Variant="ButtonVariant.Outline"
+                                        Size="ButtonSize.Icon"
+                                        OnClick="@context.GoToLastPage"
+                                        Disabled="@(!context.State.CanGoNext)"
+                                        AriaLabel="Go to last page">
+                                    <LucideIcon Name="chevrons-right" Size="16" />
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </PaginationTemplate>
+            </TablePagination>
+        </div>
+    </section>
+
+    @* Selectable Table Example *@
+    <section class="space-y-4">
+        <div>
+            <h2 class="text-2xl font-semibold">Selectable Table (Multi-Select)</h2>
+            <p class="text-sm text-muted-foreground">Click rows or checkboxes to select. Click header checkbox to select/deselect all.</p>
+        </div>
+
+        <div class="space-y-4">
+            <div class="rounded-md border">
+                <Table TData="Person" Data="@people" @bind-State="@selectableTableState"
+                       SelectionMode="SelectionMode.Multiple"
+                       OnSelectionChange="@HandleSelectionChange"
+                       Class="w-full caption-bottom text-sm">
+                    <TableHeader Class="[&_tr]:border-b">
+                        <TableRow TData="Person" Class="border-b transition-colors hover:bg-muted/50">
+                            <TableHeaderCell TData="Person" Class="h-12 w-12 px-4">
+                                <input type="checkbox"
+                                       checked="@selectAllChecked"
+                                       @onchange="@((e) => { selectAllChecked = (bool)(e.Value ?? false); HandleSelectAllChanged(); })"
+                                       class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary"
+                                       aria-label="Select all" />
+                            </TableHeaderCell>
+                            <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Name</TableHeaderCell>
+                            <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Email</TableHeaderCell>
+                            <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Age</TableHeaderCell>
+                            <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Department</TableHeaderCell>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody Class="[&_tr:last-child]:border-0">
+                        @foreach (var person in people)
+                        {
+                            var isSelected = selectableTableState.Selection.IsSelected(person);
+                            <TableRow TData="Person" Item="@person" Class="@($"border-b transition-colors hover:bg-muted/50 {(isSelected ? "bg-muted" : "")}")">
+                                <TableCell Class="w-12 px-4">
+                                    <input type="checkbox"
+                                           checked="@isSelected"
+                                           @onchange="@(() => ToggleRowSelection(person))"
+                                           @onclick:stopPropagation="true"
+                                           @onkeydown:stopPropagation="true"
+                                           tabindex="-1"
+                                           class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary"
+                                           aria-label="@($"Select {person.Name}")" />
+                                </TableCell>
+                                <TableCell Class="p-4 align-middle">@person.Name</TableCell>
+                                <TableCell Class="p-4 align-middle">@person.Email</TableCell>
+                                <TableCell Class="p-4 align-middle">@person.Age</TableCell>
+                                <TableCell Class="p-4 align-middle">@person.Department</TableCell>
+                            </TableRow>
+                        }
+                    </TableBody>
+                </Table>
+            </div>
+
+            <div class="rounded-lg border bg-card p-4">
+                <h3 class="font-semibold mb-2">Selection State</h3>
+                <div class="text-sm space-y-1">
+                    <p><span class="font-medium">Selected:</span> @selectableTableState.Selection.SelectedCount rows</p>
+                    @if (selectableTableState.Selection.SelectedCount > 0)
+                    {
+                        <div class="mt-2">
+                            <button @onclick="@(() => { selectableTableState.Selection.Clear(); selectAllChecked = false; })"
+                                    class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-4">
+                                Clear Selection
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* Combined Features Example *@
+    <section class="space-y-4">
+        <div>
+            <h2 class="text-2xl font-semibold">All Features Combined</h2>
+            <p class="text-sm text-muted-foreground">Filtering, sorting, pagination, and selection all working together</p>
+        </div>
+
+        <div class="space-y-4">
+            <div class="rounded-md border">
+                <Table TData="Person" Data="@GetSortedCombinedData()" @bind-State="@combinedTableState"
+                       SelectionMode="SelectionMode.Multiple"
+                       OnPageChange="@HandleCombinedPaginationChange"
+                       OnPageSizeChange="@HandleCombinedPaginationChange"
+                       OnSelectionChange="@HandleCombinedSelectionChange"
+                       Class="w-full caption-bottom text-sm">
+                    <TableHeader Class="[&_tr]:border-b">
+                        <TableRow TData="Person" Class="border-b transition-colors hover:bg-muted/50">
+                            <TableHeaderCell TData="Person" Class="h-12 w-12 px-4">
+                                <input type="checkbox"
+                                       checked="@combinedSelectAllChecked"
+                                       @onchange="@((e) => { combinedSelectAllChecked = (bool)(e.Value ?? false); HandleCombinedSelectAllChanged(); })"
+                                       class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary"
+                                       aria-label="Select all on page" />
+                            </TableHeaderCell>
+                            <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2 cursor-pointer select-none hover:text-foreground flex-1"
+                                         @onclick="@(() => combinedTableState.Sorting.ToggleSort("name"))">
+                                        <span>Name</span>
+                                        @if (combinedTableState.Sorting.SortedColumn == "name")
+                                        {
+                                            @if (combinedTableState.Sorting.Direction == SortDirection.Ascending)
+                                            {
+                                                <span class="text-xs">↑</span>
+                                            }
+                                            else if (combinedTableState.Sorting.Direction == SortDirection.Descending)
+                                            {
+                                                <span class="text-xs">↓</span>
+                                            }
+                                        }
+                                    </div>
+                                    <Popover>
+                                        <PopoverTrigger>
+                                            <button class="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-accent @(combinedTableState.Filtering.IsColumnFiltered("name") ? "text-primary" : "text-muted-foreground")"
+                                                    aria-label="Filter name">
+                                                <LucideIcon Name="filter" Size="14" />
+                                            </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent Class="w-64 p-4 bg-popover text-popover-foreground rounded-md border shadow-md" Align="PopoverAlign.Start">
+                                            <div class="space-y-2">
+                                                <h4 class="font-medium text-sm">Filter by Name</h4>
+                                                <input type="text"
+                                                       @bind="combinedNameFilter"
+                                                       @bind:event="oninput"
+                                                       @onchange="@((e) => { combinedTableState.Filtering.SetColumnFilter("name", combinedNameFilter); StateHasChanged(); })"
+                                                       placeholder="Enter name..."
+                                                       class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                                                @if (!string.IsNullOrWhiteSpace(combinedNameFilter))
+                                                {
+                                                    <button @onclick="@(() => { combinedNameFilter = ""; combinedTableState.Filtering.ClearColumnFilter("name"); StateHasChanged(); })"
+                                                            class="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-3 border border-input bg-background hover:bg-accent hover:text-accent-foreground">
+                                                        Clear
+                                                    </button>
+                                                }
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+                            </TableHeaderCell>
+                            <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2 cursor-pointer select-none hover:text-foreground flex-1"
+                                         @onclick="@(() => combinedTableState.Sorting.ToggleSort("email"))">
+                                        <span>Email</span>
+                                        @if (combinedTableState.Sorting.SortedColumn == "email")
+                                        {
+                                            @if (combinedTableState.Sorting.Direction == SortDirection.Ascending)
+                                            {
+                                                <span class="text-xs">↑</span>
+                                            }
+                                            else if (combinedTableState.Sorting.Direction == SortDirection.Descending)
+                                            {
+                                                <span class="text-xs">↓</span>
+                                            }
+                                        }
+                                    </div>
+                                    <Popover>
+                                        <PopoverTrigger>
+                                            <button class="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-accent @(combinedTableState.Filtering.IsColumnFiltered("email") ? "text-primary" : "text-muted-foreground")"
+                                                    aria-label="Filter email">
+                                                <LucideIcon Name="filter" Size="14" />
+                                            </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent Class="w-64 p-4 bg-popover text-popover-foreground rounded-md border shadow-md" Align="PopoverAlign.Start">
+                                            <div class="space-y-2">
+                                                <h4 class="font-medium text-sm">Filter by Email</h4>
+                                                <input type="text"
+                                                       @bind="combinedEmailFilter"
+                                                       @bind:event="oninput"
+                                                       @onchange="@((e) => { combinedTableState.Filtering.SetColumnFilter("email", combinedEmailFilter); StateHasChanged(); })"
+                                                       placeholder="Enter email..."
+                                                       class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                                                @if (!string.IsNullOrWhiteSpace(combinedEmailFilter))
+                                                {
+                                                    <button @onclick="@(() => { combinedEmailFilter = ""; combinedTableState.Filtering.ClearColumnFilter("email"); StateHasChanged(); })"
+                                                            class="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-3 border border-input bg-background hover:bg-accent hover:text-accent-foreground">
+                                                        Clear
+                                                    </button>
+                                                }
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+                            </TableHeaderCell>
+                            <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2 cursor-pointer select-none hover:text-foreground flex-1"
+                                         @onclick="@(() => combinedTableState.Sorting.ToggleSort("age"))">
+                                        <span>Age</span>
+                                        @if (combinedTableState.Sorting.SortedColumn == "age")
+                                        {
+                                            @if (combinedTableState.Sorting.Direction == SortDirection.Ascending)
+                                            {
+                                                <span class="text-xs">↑</span>
+                                            }
+                                            else if (combinedTableState.Sorting.Direction == SortDirection.Descending)
+                                            {
+                                                <span class="text-xs">↓</span>
+                                            }
+                                        }
+                                    </div>
+                                    <Popover>
+                                        <PopoverTrigger>
+                                            <button class="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-accent @(combinedTableState.Filtering.IsColumnFiltered("age") ? "text-primary" : "text-muted-foreground")"
+                                                    aria-label="Filter age">
+                                                <LucideIcon Name="filter" Size="14" />
+                                            </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent Class="w-64 p-4 bg-popover text-popover-foreground rounded-md border shadow-md" Align="PopoverAlign.Start">
+                                            <div class="space-y-2">
+                                                <h4 class="font-medium text-sm">Filter by Age</h4>
+                                                <input type="text"
+                                                       @bind="combinedAgeFilter"
+                                                       @bind:event="oninput"
+                                                       @onchange="@((e) => { combinedTableState.Filtering.SetColumnFilter("age", combinedAgeFilter); StateHasChanged(); })"
+                                                       placeholder="Enter age..."
+                                                       class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                                                @if (!string.IsNullOrWhiteSpace(combinedAgeFilter))
+                                                {
+                                                    <button @onclick="@(() => { combinedAgeFilter = ""; combinedTableState.Filtering.ClearColumnFilter("age"); StateHasChanged(); })"
+                                                            class="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-3 border border-input bg-background hover:bg-accent hover:text-accent-foreground">
+                                                        Clear
+                                                    </button>
+                                                }
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+                            </TableHeaderCell>
+                            <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2 cursor-pointer select-none hover:text-foreground flex-1"
+                                         @onclick="@(() => combinedTableState.Sorting.ToggleSort("department"))">
+                                        <span>Department</span>
+                                        @if (combinedTableState.Sorting.SortedColumn == "department")
+                                        {
+                                            @if (combinedTableState.Sorting.Direction == SortDirection.Ascending)
+                                            {
+                                                <span class="text-xs">↑</span>
+                                            }
+                                            else if (combinedTableState.Sorting.Direction == SortDirection.Descending)
+                                            {
+                                                <span class="text-xs">↓</span>
+                                            }
+                                        }
+                                    </div>
+                                    <Popover>
+                                        <PopoverTrigger>
+                                            <button class="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-accent @(combinedTableState.Filtering.IsColumnFiltered("department") ? "text-primary" : "text-muted-foreground")"
+                                                    aria-label="Filter department">
+                                                <LucideIcon Name="filter" Size="14" />
+                                            </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent Class="w-64 p-4 bg-popover text-popover-foreground rounded-md border shadow-md" Align="PopoverAlign.Start">
+                                            <div class="space-y-2">
+                                                <h4 class="font-medium text-sm">Filter by Department</h4>
+                                                <input type="text"
+                                                       @bind="combinedDepartmentFilter"
+                                                       @bind:event="oninput"
+                                                       @onchange="@((e) => { combinedTableState.Filtering.SetColumnFilter("department", combinedDepartmentFilter); StateHasChanged(); })"
+                                                       placeholder="Enter department..."
+                                                       class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                                                @if (!string.IsNullOrWhiteSpace(combinedDepartmentFilter))
+                                                {
+                                                    <button @onclick="@(() => { combinedDepartmentFilter = ""; combinedTableState.Filtering.ClearColumnFilter("department"); StateHasChanged(); })"
+                                                            class="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-3 border border-input bg-background hover:bg-accent hover:text-accent-foreground">
+                                                        Clear
+                                                    </button>
+                                                }
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+                            </TableHeaderCell>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody Class="[&_tr:last-child]:border-0">
+                        @foreach (var person in GetCombinedPageData())
+                        {
+                            var isSelected = combinedTableState.Selection.IsSelected(person);
+                            <TableRow TData="Person" Item="@person" Class="@($"border-b transition-colors hover:bg-muted/50 {(isSelected ? "bg-muted" : "")}")">
+                                <TableCell Class="w-12 px-4">
+                                    <input type="checkbox"
+                                           checked="@isSelected"
+                                           @onchange="@(() => ToggleCombinedRowSelection(person))"
+                                           @onclick:stopPropagation="true"
+                                           @onkeydown:stopPropagation="true"
+                                           tabindex="-1"
+                                           class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary"
+                                           aria-label="@($"Select {person.Name}")" />
+                                </TableCell>
+                                <TableCell Class="p-4 align-middle">@person.Name</TableCell>
+                                <TableCell Class="p-4 align-middle">@person.Email</TableCell>
+                                <TableCell Class="p-4 align-middle">@person.Age</TableCell>
+                                <TableCell Class="p-4 align-middle">@person.Department</TableCell>
+                            </TableRow>
+                        }
+                    </TableBody>
+                </Table>
+            </div>
+
+            <TablePagination TData="Person" State="@combinedTableState.Pagination"
+                             OnPageChange="@HandleCombinedPaginationChange"
+                             OnPageSizeChange="@HandleCombinedPaginationChange">
+                <PaginationTemplate Context="context">
+                    <div class="flex items-center justify-between px-2">
+                        <div class="flex-1 text-sm text-muted-foreground">
+                            @{
+                                var selectedOnPage = combinedTableState.Selection.SelectedCount;
+                                var pageInfo = context.GetPageInfoText();
+                            }
+                            @pageInfo
+                            @if (selectedOnPage > 0)
+                            {
+                                <span class="ml-2">(@selectedOnPage selected)</span>
+                            }
+                        </div>
+                        <div class="flex items-center space-x-6 lg:space-x-8">
+                            <div class="flex items-center space-x-2">
+                                <p class="text-sm font-medium">Rows per page</p>
+                                <select @onchange="@((e) => context.ChangePageSize(int.Parse(e.Value?.ToString() ?? "10")))"
+                                        class="h-8 w-[70px] rounded-md border border-input bg-background px-2 py-1 text-sm">
+                                    @foreach (var size in context.PageSizeOptions)
+                                    {
+                                        <option value="@size" selected="@(context.State.PageSize == size)">@size</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="flex w-[100px] items-center justify-center text-sm font-medium">
+                                Page @context.State.CurrentPage of @context.State.TotalPages
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <Button Variant="ButtonVariant.Outline"
+                                        Size="ButtonSize.Icon"
+                                        OnClick="@context.GoToFirstPage"
+                                        Disabled="@(!context.State.CanGoPrevious)"
+                                        AriaLabel="Go to first page">
+                                    <LucideIcon Name="chevrons-left" Size="16" />
+                                </Button>
+                                <Button Variant="ButtonVariant.Outline"
+                                        Size="ButtonSize.Icon"
+                                        OnClick="@context.GoToPreviousPage"
+                                        Disabled="@(!context.State.CanGoPrevious)"
+                                        AriaLabel="Go to previous page">
+                                    <LucideIcon Name="chevron-left" Size="16" />
+                                </Button>
+                                <Button Variant="ButtonVariant.Outline"
+                                        Size="ButtonSize.Icon"
+                                        OnClick="@context.GoToNextPage"
+                                        Disabled="@(!context.State.CanGoNext)"
+                                        AriaLabel="Go to next page">
+                                    <LucideIcon Name="chevron-right" Size="16" />
+                                </Button>
+                                <Button Variant="ButtonVariant.Outline"
+                                        Size="ButtonSize.Icon"
+                                        OnClick="@context.GoToLastPage"
+                                        Disabled="@(!context.State.CanGoNext)"
+                                        AriaLabel="Go to last page">
+                                    <LucideIcon Name="chevrons-right" Size="16" />
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </PaginationTemplate>
+            </TablePagination>
+
+            <div class="rounded-lg border bg-card p-4">
+                <h3 class="font-semibold mb-2">Current State</h3>
+                <div class="text-sm space-y-1">
+                    <p><span class="font-medium">Active Filters:</span> @combinedTableState.Filtering.ColumnFilters.Count(f => !string.IsNullOrWhiteSpace(f.Value))</p>
+                    <p><span class="font-medium">Sort Column:</span> @(combinedTableState.Sorting.SortedColumn ?? "None")</p>
+                    <p><span class="font-medium">Sort Direction:</span> @combinedTableState.Sorting.Direction</p>
+                    <p><span class="font-medium">Current Page:</span> @combinedTableState.Pagination.CurrentPage / @combinedTableState.Pagination.TotalPages</p>
+                    <p><span class="font-medium">Selected Rows:</span> @combinedTableState.Selection.SelectedCount</p>
+                    <p><span class="font-medium">Filtered Results:</span> @GetSortedCombinedData().Count() / @largePeopleDataset.Count</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* Column Filtering Example *@
+    <section class="space-y-4">
+        <div>
+            <h2 class="text-2xl font-semibold">Column Filtering</h2>
+            <p class="text-sm text-muted-foreground">Click filter icons in headers to filter by column</p>
+        </div>
+
+        <div class="space-y-4">
+            <div class="rounded-md border">
+                <Table TData="Person" Data="@GetFilteredPeople()" @bind-State="@filteredTableState"
+                       OnPageChange="@HandleFilteredPaginationChange"
+                       OnPageSizeChange="@HandleFilteredPaginationChange"
+                       Class="w-full caption-bottom text-sm">
+                    <TableHeader Class="[&_tr]:border-b">
+                        <TableRow TData="Person" Class="border-b transition-colors hover:bg-muted/50">
+                            <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                <div class="flex items-center gap-2">
+                                    <span>Name</span>
+                                    <Popover>
+                                        <PopoverTrigger>
+                                            <button class="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-accent @(filteredTableState.Filtering.IsColumnFiltered("name") ? "text-primary" : "text-muted-foreground")"
+                                                    aria-label="Filter name">
+                                                <LucideIcon Name="filter" Size="14" />
+                                            </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent Class="w-64 p-4 bg-popover text-popover-foreground rounded-md border shadow-md" Align="PopoverAlign.Start">
+                                            <div class="space-y-2">
+                                                <h4 class="font-medium text-sm">Filter by Name</h4>
+                                                <input type="text"
+                                                       @bind="nameFilter"
+                                                       @bind:event="oninput"
+                                                       @onchange="@((e) => { filteredTableState.Filtering.SetColumnFilter("name", nameFilter); filteredTableState.Pagination.Reset(); StateHasChanged(); })"
+                                                       placeholder="Enter name..."
+                                                       class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                                                @if (!string.IsNullOrWhiteSpace(nameFilter))
+                                                {
+                                                    <button @onclick="@(() => { nameFilter = ""; filteredTableState.Filtering.ClearColumnFilter("name"); filteredTableState.Pagination.Reset(); StateHasChanged(); })"
+                                                            class="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-3 border border-input bg-background hover:bg-accent hover:text-accent-foreground">
+                                                        Clear
+                                                    </button>
+                                                }
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+                            </TableHeaderCell>
+                            <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                <div class="flex items-center gap-2">
+                                    <span>Email</span>
+                                    <Popover>
+                                        <PopoverTrigger>
+                                            <button class="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-accent @(filteredTableState.Filtering.IsColumnFiltered("email") ? "text-primary" : "text-muted-foreground")"
+                                                    aria-label="Filter email">
+                                                <LucideIcon Name="filter" Size="14" />
+                                            </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent Class="w-64 p-4 bg-popover text-popover-foreground rounded-md border shadow-md" Align="PopoverAlign.Start">
+                                            <div class="space-y-2">
+                                                <h4 class="font-medium text-sm">Filter by Email</h4>
+                                                <input type="text"
+                                                       @bind="emailFilter"
+                                                       @bind:event="oninput"
+                                                       @onchange="@((e) => { filteredTableState.Filtering.SetColumnFilter("email", emailFilter); filteredTableState.Pagination.Reset(); StateHasChanged(); })"
+                                                       placeholder="Enter email..."
+                                                       class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                                                @if (!string.IsNullOrWhiteSpace(emailFilter))
+                                                {
+                                                    <button @onclick="@(() => { emailFilter = ""; filteredTableState.Filtering.ClearColumnFilter("email"); filteredTableState.Pagination.Reset(); StateHasChanged(); })"
+                                                            class="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-3 border border-input bg-background hover:bg-accent hover:text-accent-foreground">
+                                                        Clear
+                                                    </button>
+                                                }
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+                            </TableHeaderCell>
+                            <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                <div class="flex items-center gap-2">
+                                    <span>Department</span>
+                                    <Popover>
+                                        <PopoverTrigger>
+                                            <button class="inline-flex items-center justify-center h-6 w-6 rounded hover:bg-accent @(filteredTableState.Filtering.IsColumnFiltered("department") ? "text-primary" : "text-muted-foreground")"
+                                                    aria-label="Filter department">
+                                                <LucideIcon Name="filter" Size="14" />
+                                            </button>
+                                        </PopoverTrigger>
+                                        <PopoverContent Class="w-64 p-4 bg-popover text-popover-foreground rounded-md border shadow-md" Align="PopoverAlign.Start">
+                                            <div class="space-y-2">
+                                                <h4 class="font-medium text-sm">Filter by Department</h4>
+                                                <input type="text"
+                                                       @bind="departmentFilter"
+                                                       @bind:event="oninput"
+                                                       @onchange="@((e) => { filteredTableState.Filtering.SetColumnFilter("department", departmentFilter); filteredTableState.Pagination.Reset(); StateHasChanged(); })"
+                                                       placeholder="Enter department..."
+                                                       class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" />
+                                                @if (!string.IsNullOrWhiteSpace(departmentFilter))
+                                                {
+                                                    <button @onclick="@(() => { departmentFilter = ""; filteredTableState.Filtering.ClearColumnFilter("department"); filteredTableState.Pagination.Reset(); StateHasChanged(); })"
+                                                            class="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-3 border border-input bg-background hover:bg-accent hover:text-accent-foreground">
+                                                        Clear
+                                                    </button>
+                                                }
+                                            </div>
+                                        </PopoverContent>
+                                    </Popover>
+                                </div>
+                            </TableHeaderCell>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody Class="[&_tr:last-child]:border-0">
+                        @{
+                            var filteredPeople = GetFilteredPageData().ToList();
+                        }
+                        @if (filteredPeople.Any())
+                        {
+                            @foreach (var person in filteredPeople)
+                            {
+                                <TableRow TData="Person" Class="border-b transition-colors hover:bg-muted/50">
+                                    <TableCell Class="p-4 align-middle">@person.Name</TableCell>
+                                    <TableCell Class="p-4 align-middle">@person.Email</TableCell>
+                                    <TableCell Class="p-4 align-middle">@person.Department</TableCell>
+                                </TableRow>
+                            }
+                        }
+                        else
+                        {
+                            <TableRow TData="Person" Class="border-b">
+                                <TableCell Class="p-4 align-middle text-center text-muted-foreground" colspan="3">
+                                    No results found
+                                </TableCell>
+                            </TableRow>
+                        }
+                    </TableBody>
+                </Table>
+            </div>
+
+            <TablePagination TData="Person" State="@filteredTableState.Pagination"
+                             OnPageChange="@HandleFilteredPaginationChange"
+                             OnPageSizeChange="@HandleFilteredPaginationChange">
+                <PaginationTemplate Context="context">
+                    <div class="flex items-center justify-between px-2">
+                        <div class="flex-1 text-sm text-muted-foreground">
+                            @context.GetPageInfoText()
+                        </div>
+                        <div class="flex items-center space-x-6 lg:space-x-8">
+                            <div class="flex items-center space-x-2">
+                                <p class="text-sm font-medium">Rows per page</p>
+                                <select @onchange="@((e) => context.ChangePageSize(int.Parse(e.Value?.ToString() ?? "10")))"
+                                        class="h-8 w-[70px] rounded-md border border-input bg-background px-2 py-1 text-sm">
+                                    @foreach (var size in context.PageSizeOptions)
+                                    {
+                                        <option value="@size" selected="@(context.State.PageSize == size)">@size</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="flex w-[100px] items-center justify-center text-sm font-medium">
+                                Page @context.State.CurrentPage of @context.State.TotalPages
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <Button Variant="ButtonVariant.Outline"
+                                        Size="ButtonSize.Icon"
+                                        OnClick="@context.GoToFirstPage"
+                                        Disabled="@(!context.State.CanGoPrevious)"
+                                        AriaLabel="Go to first page">
+                                    <LucideIcon Name="chevrons-left" Size="16" />
+                                </Button>
+                                <Button Variant="ButtonVariant.Outline"
+                                        Size="ButtonSize.Icon"
+                                        OnClick="@context.GoToPreviousPage"
+                                        Disabled="@(!context.State.CanGoPrevious)"
+                                        AriaLabel="Go to previous page">
+                                    <LucideIcon Name="chevron-left" Size="16" />
+                                </Button>
+                                <Button Variant="ButtonVariant.Outline"
+                                        Size="ButtonSize.Icon"
+                                        OnClick="@context.GoToNextPage"
+                                        Disabled="@(!context.State.CanGoNext)"
+                                        AriaLabel="Go to next page">
+                                    <LucideIcon Name="chevron-right" Size="16" />
+                                </Button>
+                                <Button Variant="ButtonVariant.Outline"
+                                        Size="ButtonSize.Icon"
+                                        OnClick="@context.GoToLastPage"
+                                        Disabled="@(!context.State.CanGoNext)"
+                                        AriaLabel="Go to last page">
+                                    <LucideIcon Name="chevrons-right" Size="16" />
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </PaginationTemplate>
+            </TablePagination>
+
+            <div class="rounded-lg border bg-card p-4">
+                <h3 class="font-semibold mb-2">Filter State</h3>
+                <div class="text-sm space-y-1">
+                    <p><span class="font-medium">Active Filters:</span> @filteredTableState.Filtering.ColumnFilters.Count(f => !string.IsNullOrWhiteSpace(f.Value))</p>
+                    <p><span class="font-medium">Results:</span> @GetFilteredPeople().Count() / @people.Count</p>
+                    @if (filteredTableState.Filtering.HasColumnFilters)
+                    {
+                        <button @onclick="@(() => { nameFilter = ""; emailFilter = ""; departmentFilter = ""; filteredTableState.Filtering.ClearAllColumnFilters(); })"
+                                class="mt-2 inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-4">
+                            Clear Filters
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* Global Search Example *@
+    <section class="space-y-4">
+        <div>
+            <h2 class="text-2xl font-semibold">Global Search</h2>
+            <p class="text-sm text-muted-foreground">Search across all columns simultaneously</p>
+        </div>
+
+        <div class="space-y-4">
+            <div class="flex items-center gap-4">
+                <input type="text"
+                       @bind="globalSearchTableState.Filtering.GlobalFilter"
+                       @bind:event="oninput"
+                       @onchange="@(() => { globalSearchTableState.Pagination.Reset(); StateHasChanged(); })"
+                       placeholder="Search across all columns..."
+                       class="flex-1 h-10 px-3 rounded-md border border-input bg-background" />
+                @if (!string.IsNullOrWhiteSpace(globalSearchTableState.Filtering.GlobalFilter))
+                {
+                    <button @onclick="@(() => { globalSearchTableState.Filtering.GlobalFilter = null; globalSearchTableState.Pagination.Reset(); StateHasChanged(); })"
+                            class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4">
+                        Clear
+                    </button>
+                }
+            </div>
+
+            <div class="rounded-md border">
+                <Table TData="Person" Data="@GetGloballyFilteredPeople()" @bind-State="@globalSearchTableState"
+                       OnPageChange="@HandleGlobalSearchPaginationChange"
+                       OnPageSizeChange="@HandleGlobalSearchPaginationChange"
+                       Class="w-full caption-bottom text-sm">
+                    <TableHeader Class="[&_tr]:border-b">
+                        <TableRow TData="Person" Class="border-b transition-colors hover:bg-muted/50">
+                            <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Name</TableHeaderCell>
+                            <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Email</TableHeaderCell>
+                            <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Age</TableHeaderCell>
+                            <TableHeaderCell TData="Person" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Department</TableHeaderCell>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody Class="[&_tr:last-child]:border-0">
+                        @{
+                            var globalFilteredPeople = GetGlobalSearchPageData().ToList();
+                        }
+                        @if (globalFilteredPeople.Any())
+                        {
+                            @foreach (var person in globalFilteredPeople)
+                            {
+                                <TableRow TData="Person" Class="border-b transition-colors hover:bg-muted/50">
+                                    <TableCell Class="p-4 align-middle">@person.Name</TableCell>
+                                    <TableCell Class="p-4 align-middle">@person.Email</TableCell>
+                                    <TableCell Class="p-4 align-middle">@person.Age</TableCell>
+                                    <TableCell Class="p-4 align-middle">@person.Department</TableCell>
+                                </TableRow>
+                            }
+                        }
+                        else
+                        {
+                            <TableRow TData="Person" Class="border-b">
+                                <TableCell Class="p-4 align-middle text-center text-muted-foreground" colspan="4">
+                                    No results found for "@globalSearchTableState.Filtering.GlobalFilter"
+                                </TableCell>
+                            </TableRow>
+                        }
+                    </TableBody>
+                </Table>
+            </div>
+
+            <TablePagination TData="Person" State="@globalSearchTableState.Pagination"
+                             OnPageChange="@HandleGlobalSearchPaginationChange"
+                             OnPageSizeChange="@HandleGlobalSearchPaginationChange">
+                <PaginationTemplate Context="context">
+                    <div class="flex items-center justify-between px-2">
+                        <div class="flex-1 text-sm text-muted-foreground">
+                            @context.GetPageInfoText()
+                        </div>
+                        <div class="flex items-center space-x-6 lg:space-x-8">
+                            <div class="flex items-center space-x-2">
+                                <p class="text-sm font-medium">Rows per page</p>
+                                <select @onchange="@((e) => context.ChangePageSize(int.Parse(e.Value?.ToString() ?? "10")))"
+                                        class="h-8 w-[70px] rounded-md border border-input bg-background px-2 py-1 text-sm">
+                                    @foreach (var size in context.PageSizeOptions)
+                                    {
+                                        <option value="@size" selected="@(context.State.PageSize == size)">@size</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="flex w-[100px] items-center justify-center text-sm font-medium">
+                                Page @context.State.CurrentPage of @context.State.TotalPages
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <Button Variant="ButtonVariant.Outline"
+                                        Size="ButtonSize.Icon"
+                                        OnClick="@context.GoToFirstPage"
+                                        Disabled="@(!context.State.CanGoPrevious)"
+                                        AriaLabel="Go to first page">
+                                    <LucideIcon Name="chevrons-left" Size="16" />
+                                </Button>
+                                <Button Variant="ButtonVariant.Outline"
+                                        Size="ButtonSize.Icon"
+                                        OnClick="@context.GoToPreviousPage"
+                                        Disabled="@(!context.State.CanGoPrevious)"
+                                        AriaLabel="Go to previous page">
+                                    <LucideIcon Name="chevron-left" Size="16" />
+                                </Button>
+                                <Button Variant="ButtonVariant.Outline"
+                                        Size="ButtonSize.Icon"
+                                        OnClick="@context.GoToNextPage"
+                                        Disabled="@(!context.State.CanGoNext)"
+                                        AriaLabel="Go to next page">
+                                    <LucideIcon Name="chevron-right" Size="16" />
+                                </Button>
+                                <Button Variant="ButtonVariant.Outline"
+                                        Size="ButtonSize.Icon"
+                                        OnClick="@context.GoToLastPage"
+                                        Disabled="@(!context.State.CanGoNext)"
+                                        AriaLabel="Go to last page">
+                                    <LucideIcon Name="chevrons-right" Size="16" />
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </PaginationTemplate>
+            </TablePagination>
+
+            <div class="rounded-lg border bg-card p-4">
+                <h3 class="font-semibold mb-2">Search Results</h3>
+                <div class="text-sm space-y-1">
+                    <p><span class="font-medium">Query:</span> @(string.IsNullOrWhiteSpace(globalSearchTableState.Filtering.GlobalFilter) ? "None" : $"\"{globalSearchTableState.Filtering.GlobalFilter}\"")</p>
+                    <p><span class="font-medium">Results:</span> @GetGloballyFilteredPeople().Count() / @people.Count</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* Implementation Status *@
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Implementation Status</h2>
+        <div class="grid gap-4 md:grid-cols-2">
+            <div class="rounded-lg border bg-green-50 dark:bg-green-950 p-4">
+                <h3 class="font-semibold text-green-900 dark:text-green-100 mb-2">✅ Phase 1 Complete (MVP)</h3>
+                <ul class="text-sm space-y-1 text-green-800 dark:text-green-200">
+                    <li>• Core table state management</li>
+                    <li>• Radix UI component wrapper pattern</li>
+                    <li>• Single-column sorting (developer-controlled)</li>
+                    <li>• Pagination with page size selection</li>
+                    <li>• Row selection (single & multi-select)</li>
+                    <li>• Column-level filtering (developer-controlled)</li>
+                    <li>• Global search filtering</li>
+                    <li>• Keyboard navigation (Enter/Space)</li>
+                    <li>• ARIA attributes (aria-sort, aria-selected)</li>
+                    <li>• Controlled/uncontrolled modes</li>
+                    <li>• Three-state sort toggle</li>
+                </ul>
+            </div>
+            <div class="rounded-lg border bg-yellow-50 dark:bg-yellow-950 p-4">
+                <h3 class="font-semibold text-yellow-900 dark:text-yellow-100 mb-2">🚧 Coming in Phase 2</h3>
+                <ul class="text-sm space-y-1 text-yellow-800 dark:text-yellow-200">
+                    <li>• Multi-column sorting with priority</li>
+                    <li>• Column visibility toggle</li>
+                    <li>• Column resizing</li>
+                </ul>
+            </div>
+            <div class="rounded-lg border bg-blue-50 dark:bg-blue-950 p-4">
+                <h3 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">🔮 Phase 3 & Beyond</h3>
+                <ul class="text-sm space-y-1 text-blue-800 dark:text-blue-200">
+                    <li>• Column pinning (left/right)</li>
+                    <li>• Column reordering (drag & drop)</li>
+                    <li>• Row expansion/grouping</li>
+                    <li>• Virtual scrolling</li>
+                    <li>• Row pinning (top/bottom)</li>
+                    <li>• Faceted filtering</li>
+                    <li>• Server-side data handling</li>
+                    <li>• Export to CSV/Excel/JSON</li>
+                </ul>
+            </div>
+            <div class="rounded-lg border bg-purple-50 dark:bg-purple-950 p-4">
+                <h3 class="font-semibold text-purple-900 dark:text-purple-100 mb-2">🎯 Headless Design</h3>
+                <ul class="text-sm space-y-1 text-purple-800 dark:text-purple-200">
+                    <li>• Complete markup control</li>
+                    <li>• No built-in styles</li>
+                    <li>• Tailwind CSS compatible</li>
+                    <li>• Component wrapper pattern (Radix UI)</li>
+                    <li>• Type-safe with generics</li>
+                    <li>• Event-driven architecture</li>
+                    <li>• Developer-controlled sorting</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</div>
+
+@code {
+    private List<Person> people = new();
+    private List<Person> largePeopleDataset = new();
+
+    private TableState<Person> sortableTableState = new();
+    private TableState<Person> paginatedTableState = new() { Pagination = { PageSize = 5 } };
+    private TableState<Person> selectableTableState = new();
+    private TableState<Person> combinedTableState = new() { Pagination = { PageSize = 5 } };
+    private TableState<Person> filteredTableState = new();
+    private TableState<Person> globalSearchTableState = new();
+
+    private bool selectAllChecked = false;
+    private bool combinedSelectAllChecked = false;
+
+    // Filter input values
+    private string nameFilter = "";
+    private string emailFilter = "";
+    private string departmentFilter = "";
+
+    // Combined table filter values
+    private string combinedNameFilter = "";
+    private string combinedEmailFilter = "";
+    private string combinedAgeFilter = "";
+    private string combinedDepartmentFilter = "";
+
+    protected override void OnInitialized()
+    {
+        // Set selection modes on the selection state
+        selectableTableState.Selection.Mode = SelectionMode.Multiple;
+        combinedTableState.Selection.Mode = SelectionMode.Multiple;
+
+        // Generate sample data - small dataset
+        people = new List<Person>
+        {
+            new Person { Id = 1, Name = "John Doe", Email = "john@example.com", Age = 32, Department = "Engineering" },
+            new Person { Id = 2, Name = "Jane Smith", Email = "jane@example.com", Age = 28, Department = "Design" },
+            new Person { Id = 3, Name = "Bob Johnson", Email = "bob@example.com", Age = 45, Department = "Sales" },
+            new Person { Id = 4, Name = "Alice Williams", Email = "alice@example.com", Age = 35, Department = "Engineering" },
+            new Person { Id = 5, Name = "Charlie Brown", Email = "charlie@example.com", Age = 29, Department = "Marketing" },
+            new Person { Id = 6, Name = "Diana Prince", Email = "diana@example.com", Age = 31, Department = "Design" },
+            new Person { Id = 7, Name = "Eve Davis", Email = "eve@example.com", Age = 27, Department = "Sales" },
+            new Person { Id = 8, Name = "Frank Miller", Email = "frank@example.com", Age = 38, Department = "Engineering" },
+        };
+
+        // Generate larger dataset for pagination demo
+        largePeopleDataset = new List<Person>();
+        var firstNames = new[] { "Mathew", "John", "Jane", "Bob", "Alice", "Charlie", "Diana", "Eve", "Frank", "Grace", "Henry", "Ivy", "Jack", "Kate", "Leo", "Mary", "Nathan", "Olivia", "Paul", "Quinn", "Rachel", "Samuel", "Tina", "Uma", "Victor", "Wendy", "Xavier", "Yolanda", "Zachary", "Aria", "Blake", "Noah", "Liam", "Sophia", "Emma", "Mason", "Lucas", "Chloe", "Lily", "Owen", "Zoey" };
+        var lastNames = new[] { "Taylor", "Doe", "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Moore", "Jackson", "Martin", "Lee", "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson", "Bennett", "Graham", "Foster", "Coleman", "Hughes", "Cruz", "Reed", "Cook", "Morgan", "Bell" };
+        var departments = new[] { "Engineering", "Design", "Sales", "Marketing", "HR", "Finance", "Operations", "Support" };
+
+        for (int i = 0; i < 500; i++)
+        {
+            var firstNameIndex = i % firstNames.Length;
+            var lastNameIndex = (i / firstNames.Length + i) % lastNames.Length;
+            var firstName = firstNames[firstNameIndex];
+            var lastName = lastNames[lastNameIndex];
+
+            largePeopleDataset.Add(new Person
+            {
+                Id = i + 1,
+                Name = $"{firstName} {lastName}",
+                Email = $"{firstName.ToLower()}.{lastName.ToLower()}@example.com",
+                Age = 22 + (i % 40),
+                Department = departments[i % departments.Length]
+            });
+        }
+
+        // Explicitly set TotalItems for pagination to work correctly
+        paginatedTableState.Pagination.TotalItems = largePeopleDataset.Count;
+        combinedTableState.Pagination.TotalItems = largePeopleDataset.Count;
+    }
+
+    // Pagination change handlers
+    private void HandlePaginationChange(int page)
+    {
+        // Trigger re-render of the demo page so GetPaginatedData() is called again
+        StateHasChanged();
+    }
+
+    private void HandleCombinedPaginationChange(int page)
+    {
+        // Trigger re-render of the demo page
+        StateHasChanged();
+    }
+
+    // Selection change handlers
+    private void HandleSelectionChange(IReadOnlyCollection<Person> selectedItems)
+    {
+        UpdateSelectAllCheckbox();
+        StateHasChanged();
+    }
+
+    private void HandleCombinedSelectionChange(IReadOnlyCollection<Person> selectedItems)
+    {
+        UpdateCombinedSelectAllCheckbox();
+        StateHasChanged();
+    }
+
+    // Manual sorting for sortable table
+    private IEnumerable<Person> GetSortedPeople()
+    {
+        var data = people.AsEnumerable();
+        var sorting = sortableTableState.Sorting;
+
+        if (sorting.SortedColumn == null || sorting.Direction == SortDirection.None)
+            return data;
+
+        return sorting.SortedColumn switch
+        {
+            "name" => sorting.Direction == SortDirection.Ascending
+                ? data.OrderBy(p => p.Name)
+                : data.OrderByDescending(p => p.Name),
+            "email" => sorting.Direction == SortDirection.Ascending
+                ? data.OrderBy(p => p.Email)
+                : data.OrderByDescending(p => p.Email),
+            "age" => sorting.Direction == SortDirection.Ascending
+                ? data.OrderBy(p => p.Age)
+                : data.OrderByDescending(p => p.Age),
+            "department" => sorting.Direction == SortDirection.Ascending
+                ? data.OrderBy(p => p.Department)
+                : data.OrderByDescending(p => p.Department),
+            _ => data
+        };
+    }
+
+    // Manual pagination for paginated table
+    private IEnumerable<Person> GetPaginatedData()
+    {
+        var pagination = paginatedTableState.Pagination;
+        var skip = (pagination.CurrentPage - 1) * pagination.PageSize;
+        return largePeopleDataset.Skip(skip).Take(pagination.PageSize);
+    }
+
+    // Manual filtering and sorting for combined table
+    private IEnumerable<Person> GetSortedCombinedData()
+    {
+        var data = largePeopleDataset.AsEnumerable();
+
+        // Apply filters first
+        var nameFilterValue = combinedTableState.Filtering.GetColumnFilter("name");
+        if (!string.IsNullOrWhiteSpace(nameFilterValue))
+        {
+            data = data.Where(p => p.Name.Contains(nameFilterValue, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var emailFilterValue = combinedTableState.Filtering.GetColumnFilter("email");
+        if (!string.IsNullOrWhiteSpace(emailFilterValue))
+        {
+            data = data.Where(p => p.Email.Contains(emailFilterValue, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var ageFilterValue = combinedTableState.Filtering.GetColumnFilter("age");
+        if (!string.IsNullOrWhiteSpace(ageFilterValue))
+        {
+            data = data.Where(p => p.Age.ToString().Contains(ageFilterValue, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var departmentFilterValue = combinedTableState.Filtering.GetColumnFilter("department");
+        if (!string.IsNullOrWhiteSpace(departmentFilterValue))
+        {
+            data = data.Where(p => p.Department.Contains(departmentFilterValue, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Then apply sorting
+        var sorting = combinedTableState.Sorting;
+        if (sorting.SortedColumn == null || sorting.Direction == SortDirection.None)
+            return data;
+
+        return sorting.SortedColumn switch
+        {
+            "name" => sorting.Direction == SortDirection.Ascending
+                ? data.OrderBy(p => p.Name)
+                : data.OrderByDescending(p => p.Name),
+            "email" => sorting.Direction == SortDirection.Ascending
+                ? data.OrderBy(p => p.Email)
+                : data.OrderByDescending(p => p.Email),
+            "age" => sorting.Direction == SortDirection.Ascending
+                ? data.OrderBy(p => p.Age)
+                : data.OrderByDescending(p => p.Age),
+            "department" => sorting.Direction == SortDirection.Ascending
+                ? data.OrderBy(p => p.Department)
+                : data.OrderByDescending(p => p.Department),
+            _ => data
+        };
+    }
+
+    // Manual pagination for combined table
+    private IEnumerable<Person> GetCombinedPageData()
+    {
+        var sortedData = GetSortedCombinedData().ToList();
+        var pagination = combinedTableState.Pagination;
+
+        // Update total items based on filtered/sorted data
+        pagination.TotalItems = sortedData.Count;
+
+        var skip = (pagination.CurrentPage - 1) * pagination.PageSize;
+        return sortedData.Skip(skip).Take(pagination.PageSize);
+    }
+
+    // Selection handlers
+    private void ToggleRowSelection(Person person)
+    {
+        selectableTableState.Selection.Toggle(person);
+        UpdateSelectAllCheckbox();
+        StateHasChanged();
+    }
+
+    private void ToggleCombinedRowSelection(Person person)
+    {
+        combinedTableState.Selection.Toggle(person);
+        UpdateCombinedSelectAllCheckbox();
+        StateHasChanged();
+    }
+
+    private void HandleSelectAllChanged()
+    {
+        if (selectAllChecked)
+        {
+            selectableTableState.Selection.SelectAll(people);
+        }
+        else
+        {
+            selectableTableState.Selection.Clear();
+        }
+        StateHasChanged();
+    }
+
+    private void HandleCombinedSelectAllChanged()
+    {
+        var pageData = GetCombinedPageData().ToList();
+        if (combinedSelectAllChecked)
+        {
+            combinedTableState.Selection.SelectAll(pageData);
+        }
+        else
+        {
+            combinedTableState.Selection.DeselectAll(pageData);
+        }
+        StateHasChanged();
+    }
+
+    private void UpdateSelectAllCheckbox()
+    {
+        selectAllChecked = people.All(p => selectableTableState.Selection.IsSelected(p));
+    }
+
+    private void UpdateCombinedSelectAllCheckbox()
+    {
+        var pageData = GetCombinedPageData().ToList();
+        combinedSelectAllChecked = pageData.All(p => combinedTableState.Selection.IsSelected(p)) && pageData.Any();
+    }
+
+    // Column filtering
+    private IEnumerable<Person> GetFilteredPeople()
+    {
+        var data = largePeopleDataset.AsEnumerable();
+
+        // Apply column filters using AND logic
+        var nameFilterValue = filteredTableState.Filtering.GetColumnFilter("name");
+        if (!string.IsNullOrWhiteSpace(nameFilterValue))
+        {
+            data = data.Where(p => p.Name.Contains(nameFilterValue, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var emailFilterValue = filteredTableState.Filtering.GetColumnFilter("email");
+        if (!string.IsNullOrWhiteSpace(emailFilterValue))
+        {
+            data = data.Where(p => p.Email.Contains(emailFilterValue, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var departmentFilterValue = filteredTableState.Filtering.GetColumnFilter("department");
+        if (!string.IsNullOrWhiteSpace(departmentFilterValue))
+        {
+            data = data.Where(p => p.Department.Contains(departmentFilterValue, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return data;
+    }
+
+    // Manual pagination for filtered table
+    private IEnumerable<Person> GetFilteredPageData()
+    {
+        var filteredData = GetFilteredPeople().ToList();
+        var pagination = filteredTableState.Pagination;
+
+        // Update total items based on filtered data
+        pagination.TotalItems = filteredData.Count;
+
+        var skip = (pagination.CurrentPage - 1) * pagination.PageSize;
+        return filteredData.Skip(skip).Take(pagination.PageSize);
+    }
+
+    private void HandleFilteredPaginationChange()
+    {
+        StateHasChanged();
+    }
+
+    // Global search filtering
+    private IEnumerable<Person> GetGloballyFilteredPeople()
+    {
+        var data = largePeopleDataset.AsEnumerable();
+        var globalFilter = globalSearchTableState.Filtering.GlobalFilter;
+
+        if (string.IsNullOrWhiteSpace(globalFilter))
+        {
+            return data;
+        }
+
+        // Search across all text columns
+        return data.Where(p =>
+            p.Name.Contains(globalFilter, StringComparison.OrdinalIgnoreCase) ||
+            p.Email.Contains(globalFilter, StringComparison.OrdinalIgnoreCase) ||
+            p.Department.Contains(globalFilter, StringComparison.OrdinalIgnoreCase) ||
+            p.Age.ToString().Contains(globalFilter, StringComparison.OrdinalIgnoreCase)
+        );
+    }
+
+    // Manual pagination for global search table
+    private IEnumerable<Person> GetGlobalSearchPageData()
+    {
+        var filteredData = GetGloballyFilteredPeople().ToList();
+        var pagination = globalSearchTableState.Pagination;
+
+        // Update total items based on filtered data
+        pagination.TotalItems = filteredData.Count;
+
+        var skip = (pagination.CurrentPage - 1) * pagination.PageSize;
+        return filteredData.Skip(skip).Take(pagination.PageSize);
+    }
+
+    private void HandleGlobalSearchPaginationChange()
+    {
+        StateHasChanged();
+    }
+
+    public class Person
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public int Age { get; set; }
+        public string Department { get; set; } = string.Empty;
+    }
+}

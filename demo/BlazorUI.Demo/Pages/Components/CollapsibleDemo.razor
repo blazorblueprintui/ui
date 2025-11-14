@@ -1,0 +1,384 @@
+@page "/components/collapsible"
+@using BlazorUI.Components.Collapsible
+
+<PageTitle>Collapsible Component - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Collapsible Component</h1>
+        <p class="text-xl text-muted-foreground">
+            An interactive component which expands/collapses a panel.
+        </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+    </div>
+
+    <!-- Basic Usage -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-sm text-muted-foreground">
+                A simple collapsible with trigger and content.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <Collapsible Class="border rounded-lg">
+                <div class="px-4 py-3">
+                    <CollapsibleTrigger Class="flex w-full items-center justify-between rounded-md hover:bg-accent hover:text-accent-foreground">
+                        <span>Can I use this in my project?</span>
+                        <LucideIcon Name="chevron-down" Size="16" />
+                    </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent Class="px-4 pb-4">
+                    <div class="text-sm text-muted-foreground">
+                        Yes! This component is free to use in your projects.
+                    </div>
+                </CollapsibleContent>
+            </Collapsible>
+        </div>
+    </div>
+
+    <!-- Controlled Collapsible -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Controlled Mode</h2>
+            <p class="text-sm text-muted-foreground">
+                Control the open state programmatically.
+            </p>
+        </div>
+        <div class="max-w-md space-y-4">
+            <div class="flex gap-2">
+                <Button Size="ButtonSize.Small" @onclick="@(() => isControlledOpen = true)">Open</Button>
+                <Button Size="ButtonSize.Small" Variant="ButtonVariant.Outline" @onclick="@(() => isControlledOpen = false)">Close</Button>
+                <Button Size="ButtonSize.Small" Variant="ButtonVariant.Secondary" @onclick="@(() => isControlledOpen = !isControlledOpen)">Toggle</Button>
+            </div>
+            <Collapsible Open="@isControlledOpen"
+                         OpenChanged="@((bool open) => isControlledOpen = open)"
+                         Class="border rounded-lg">
+                <div class="px-4 py-3">
+                    <CollapsibleTrigger Class="flex w-full items-center justify-between rounded-md hover:bg-accent hover:text-accent-foreground">
+                        <span>Controlled Content (@(isControlledOpen ? "Open" : "Closed"))</span>
+                        <LucideIcon Name="@(isControlledOpen ? "chevron-up" : "chevron-down")" Size="16" />
+                    </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent Class="px-4 pb-4">
+                    <div class="text-sm">
+                        The parent component controls this collapsible's state.
+                    </div>
+                </CollapsibleContent>
+            </Collapsible>
+        </div>
+    </div>
+
+    <!-- Disabled State -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled State</h2>
+            <p class="text-sm text-muted-foreground">
+                Disable interaction with the collapsible.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <Collapsible Disabled Class="border rounded-lg opacity-50">
+                <div class="px-4 py-3">
+                    <CollapsibleTrigger Class="flex w-full items-center justify-between rounded-md hover:bg-accent hover:text-accent-foreground">
+                        <span>Disabled Collapsible</span>
+                        <LucideIcon Name="chevron-down" Size="16" />
+                    </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent Class="px-4 pb-4">
+                    <div class="text-sm">
+                        This content cannot be toggled.
+                    </div>
+                </CollapsibleContent>
+            </Collapsible>
+        </div>
+    </div>
+
+    <!-- Accordion Style -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Accordion Style (Multiple Collapsibles)</h2>
+            <p class="text-sm text-muted-foreground">
+                Multiple collapsibles working independently.
+            </p>
+        </div>
+        <div class="max-w-md space-y-2">
+            @foreach (var item in faqItems)
+            {
+                <Collapsible Class="border rounded-lg">
+                    <div class="px-4 py-3">
+                        <CollapsibleTrigger Class="flex w-full items-center justify-between text-left">
+                            <span class="font-medium">@item.Question</span>
+                            <LucideIcon Name="chevron-down" Size="16" />
+                        </CollapsibleTrigger>
+                    </div>
+                    <CollapsibleContent Class="px-4 pb-4 border-t">
+                        <div class="pt-4 text-sm text-muted-foreground">
+                            @item.Answer
+                        </div>
+                    </CollapsibleContent>
+                </Collapsible>
+            }
+        </div>
+    </div>
+
+    <!-- With Icons and Badges -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">With Icons and Badges</h2>
+            <p class="text-sm text-muted-foreground">
+                Enhance collapsibles with visual indicators.
+            </p>
+        </div>
+        <div class="max-w-md space-y-2">
+            <Collapsible Class="border rounded-lg">
+                <div class="px-4 py-3">
+                    <CollapsibleTrigger Class="flex w-full items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <LucideIcon Name="star" Size="16" />
+                            <span class="font-medium">Premium Features</span>
+                            <Badge Variant="BadgeVariant.Default" Class="text-[10px] px-1.5 py-0">New</Badge>
+                        </div>
+                        <LucideIcon Name="chevron-down" Size="16" />
+                    </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent Class="px-4 pb-4">
+                    <div class="space-y-2 text-sm">
+                        <div class="flex items-center gap-2">
+                            <LucideIcon Name="check" Size="14" Class="text-green-500" />
+                            <span>Advanced analytics</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <LucideIcon Name="check" Size="14" Class="text-green-500" />
+                            <span>Priority support</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <LucideIcon Name="check" Size="14" Class="text-green-500" />
+                            <span>Custom branding</span>
+                        </div>
+                    </div>
+                </CollapsibleContent>
+            </Collapsible>
+        </div>
+    </div>
+
+    <!-- Nested Collapsibles -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Nested Collapsibles</h2>
+            <p class="text-sm text-muted-foreground">
+                Collapsibles can contain other collapsibles for hierarchical content.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <Collapsible Class="border rounded-lg">
+                <div class="px-4 py-3">
+                    <CollapsibleTrigger Class="flex w-full items-center justify-between">
+                        <span class="font-medium">Parent Section</span>
+                        <LucideIcon Name="chevron-down" Size="16" />
+                    </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent Class="px-4 pb-4">
+                    <div class="space-y-2">
+                        <p class="text-sm text-muted-foreground mb-2">
+                            This parent contains nested collapsibles.
+                        </p>
+
+                        <Collapsible Class="border rounded-md">
+                            <div class="px-3 py-2 bg-muted/50">
+                                <CollapsibleTrigger Class="flex w-full items-center justify-between text-sm">
+                                    <span>Child Section 1</span>
+                                    <LucideIcon Name="chevron-down" Size="14" />
+                                </CollapsibleTrigger>
+                            </div>
+                            <CollapsibleContent Class="px-3 py-2 text-sm text-muted-foreground">
+                                Nested content for child section 1.
+                            </CollapsibleContent>
+                        </Collapsible>
+
+                        <Collapsible Class="border rounded-md">
+                            <div class="px-3 py-2 bg-muted/50">
+                                <CollapsibleTrigger Class="flex w-full items-center justify-between text-sm">
+                                    <span>Child Section 2</span>
+                                    <LucideIcon Name="chevron-down" Size="14" />
+                                </CollapsibleTrigger>
+                            </div>
+                            <CollapsibleContent Class="px-3 py-2 text-sm text-muted-foreground">
+                                Nested content for child section 2.
+                            </CollapsibleContent>
+                        </Collapsible>
+                    </div>
+                </CollapsibleContent>
+            </Collapsible>
+        </div>
+    </div>
+
+    <!-- With Animations -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">With Smooth Animations</h2>
+            <p class="text-sm text-muted-foreground">
+                Add CSS transitions for smooth expand/collapse effects.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <Collapsible Class="border rounded-lg overflow-hidden">
+                <div class="px-4 py-3">
+                    <CollapsibleTrigger Class="flex w-full items-center justify-between rounded-md hover:bg-accent hover:text-accent-foreground">
+                        <span>Animated Content</span>
+                        <LucideIcon Name="chevron-down" Size="16" />
+                    </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent Class="px-4 pb-4 transition-all duration-300 ease-in-out">
+                    <div class="text-sm animate-in fade-in duration-500">
+                        <p class="mb-2">This content animates smoothly when expanding and collapsing.</p>
+                        <p class="text-muted-foreground">CSS transitions create a polished user experience.</p>
+                    </div>
+                </CollapsibleContent>
+            </Collapsible>
+        </div>
+    </div>
+
+    <!-- Accessibility Notes -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Accessibility Notes</h2>
+            <p class="text-sm text-muted-foreground">
+                Best practices for accessible collapsibles.
+            </p>
+        </div>
+        <div class="border rounded-lg p-6 space-y-3 bg-muted/50">
+            <p class="text-sm">
+                ✓ <strong>Keyboard navigation:</strong> Trigger responds to Space and Enter keys.
+            </p>
+            <p class="text-sm">
+                ✓ <strong>ARIA attributes:</strong> aria-expanded reflects the current state.
+            </p>
+            <p class="text-sm">
+                ✓ <strong>Screen readers:</strong> Content uses region role and aria-hidden.
+            </p>
+            <p class="text-sm">
+                ✓ <strong>Focus management:</strong> Focus remains on trigger after expanding/collapsing.
+            </p>
+            <p class="text-sm">
+                ✓ <strong>Semantic HTML:</strong> Proper button elements for triggers.
+            </p>
+        </div>
+    </div>
+
+    <!-- API Reference -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-6">
+            <!-- Collapsible -->
+            <div>
+                <h3 class="text-lg font-semibold mb-3">Collapsible</h3>
+                <div class="space-y-3">
+                    <div>
+                        <p class="font-mono text-sm font-medium mb-1">Open</p>
+                        <p class="text-sm text-muted-foreground">
+                            Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">bool</code> |
+                            Default: <code class="text-xs bg-muted px-1 py-0.5 rounded">false</code>
+                        </p>
+                        <p class="text-sm text-muted-foreground mt-1">
+                            Controls whether the collapsible is expanded.
+                        </p>
+                    </div>
+                    <Separator />
+                    <div>
+                        <p class="font-mono text-sm font-medium mb-1">OpenChanged</p>
+                        <p class="text-sm text-muted-foreground">
+                            Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">EventCallback&lt;bool&gt;</code>
+                        </p>
+                        <p class="text-sm text-muted-foreground mt-1">
+                            Callback invoked when the open state changes.
+                        </p>
+                    </div>
+                    <Separator />
+                    <div>
+                        <p class="font-mono text-sm font-medium mb-1">Disabled</p>
+                        <p class="text-sm text-muted-foreground">
+                            Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">bool</code> |
+                            Default: <code class="text-xs bg-muted px-1 py-0.5 rounded">false</code>
+                        </p>
+                        <p class="text-sm text-muted-foreground mt-1">
+                            Prevents toggling when true.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <Separator />
+
+            <!-- CollapsibleTrigger -->
+            <div>
+                <h3 class="text-lg font-semibold mb-3">CollapsibleTrigger</h3>
+                <div>
+                    <p class="font-mono text-sm font-medium mb-1">Class</p>
+                    <p class="text-sm text-muted-foreground">
+                        Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string?</code>
+                    </p>
+                    <p class="text-sm text-muted-foreground mt-1">
+                        Additional CSS classes for the trigger button.
+                    </p>
+                </div>
+            </div>
+
+            <Separator />
+
+            <!-- CollapsibleContent -->
+            <div>
+                <h3 class="text-lg font-semibold mb-3">CollapsibleContent</h3>
+                <div>
+                    <p class="font-mono text-sm font-medium mb-1">Class</p>
+                    <p class="text-sm text-muted-foreground">
+                        Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string?</code>
+                    </p>
+                    <p class="text-sm text-muted-foreground mt-1">
+                        Additional CSS classes for the content container.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool isControlledOpen = false;
+
+    private List<FaqItem> faqItems = new()
+    {
+        new FaqItem
+        {
+            Question = "What is a collapsible component?",
+            Answer = "A collapsible is an interactive component that allows users to show or hide content by clicking a trigger element. It's commonly used for FAQs, accordion menus, and expandable sections."
+        },
+        new FaqItem
+        {
+            Question = "How is it different from an accordion?",
+            Answer = "While both use similar patterns, an accordion typically allows only one section to be open at a time, whereas individual collapsibles can all be open simultaneously. Collapsibles are the building blocks for creating accordions."
+        },
+        new FaqItem
+        {
+            Question = "Can I nest collapsibles?",
+            Answer = "Yes! Collapsibles can be nested to create hierarchical expandable content structures, perfect for navigation menus or multi-level FAQs."
+        },
+        new FaqItem
+        {
+            Question = "Is it accessible?",
+            Answer = "Absolutely. The component follows WCAG 2.1 guidelines with proper ARIA attributes, keyboard navigation support, and screen reader compatibility."
+        }
+    };
+
+    private class FaqItem
+    {
+        public string Question { get; set; } = string.Empty;
+        public string Answer { get; set; } = string.Empty;
+    }
+}

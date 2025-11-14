@@ -1,0 +1,40 @@
+@namespace BlazorUI.Components.Sidebar
+@using BlazorUI.Components.Utilities
+
+@*
+    SidebarHeaderContent component for header layout that responds to icon mode.
+    Handles padding, centering, and layout adjustments automatically.
+*@
+
+<div class="@GetClasses()" @attributes="AdditionalAttributes">
+    @ChildContent
+</div>
+
+@code {
+    /// <summary>
+    /// The content to render (typically SidebarHeaderIcon and SidebarHeaderInfo).
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string GetClasses()
+    {
+        return ClassNames.cn(
+            "flex items-center gap-2 px-2 py-2",
+            "group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-0 group-data-[collapsible=icon]:justify-center",
+            Class
+        );
+    }
+}

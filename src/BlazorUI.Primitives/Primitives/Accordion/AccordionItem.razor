@@ -1,0 +1,89 @@
+@namespace BlazorUI.Primitives.Accordion
+@implements IDisposable
+
+@* AccordionItem primitive - container for a single accordion item *@
+<div @attributes="AdditionalAttributes">
+    <CascadingValue Value="this" IsFixed="true">
+        @ChildContent
+    </CascadingValue>
+</div>
+
+@code {
+    /// <summary>
+    /// Cascading parameter to receive the accordion context.
+    /// </summary>
+    [CascadingParameter]
+    public AccordionContext Context { get; set; } = null!;
+
+    /// <summary>
+    /// The value that uniquely identifies this accordion item.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string Value { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Whether this accordion item is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// The child content to render within the accordion item.
+    /// Should contain AccordionTrigger and AccordionContent components.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the item container div element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Gets whether this item is currently open.
+    /// </summary>
+    public bool IsOpen => Context.IsItemOpen(Value);
+
+    /// <summary>
+    /// Gets the ID for this item's header.
+    /// </summary>
+    public string HeaderId => Context.GetHeaderId(Value);
+
+    /// <summary>
+    /// Gets the ID for this item's trigger button.
+    /// </summary>
+    public string TriggerId => Context.GetTriggerId(Value);
+
+    /// <summary>
+    /// Gets the ID for this item's content region.
+    /// </summary>
+    public string ContentId => Context.GetContentId(Value);
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException("AccordionItem must be used within an Accordion component.");
+        }
+
+        // Subscribe to context changes to update open state
+        Context.OnStateChanged += StateHasChanged;
+    }
+
+    /// <summary>
+    /// Toggles this accordion item open or closed.
+    /// </summary>
+    internal void Toggle()
+    {
+        if (!Disabled)
+        {
+            Context.ToggleItem(Value);
+        }
+    }
+
+    public void Dispose()
+    {
+        Context.OnStateChanged -= StateHasChanged;
+    }
+}

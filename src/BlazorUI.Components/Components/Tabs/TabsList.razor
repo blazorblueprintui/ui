@@ -1,0 +1,29 @@
+@namespace BlazorUI.Components.Tabs
+@using BlazorUI.Primitives.Tabs
+
+@*
+    Styled TabsList component.
+    Wraps the TabsList primitive with shadcn/ui styling.
+*@
+
+<BlazorUI.Primitives.Tabs.TabsList class="@CssClass">
+    @ChildContent
+</BlazorUI.Primitives.Tabs.TabsList>
+
+@code {
+    /// <summary>
+    /// The child content to render within the tabs list.
+    /// Should contain TabsTrigger components.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the tabs list.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    private string CssClass =>
+        $"inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground {Class}".Trim();
+}

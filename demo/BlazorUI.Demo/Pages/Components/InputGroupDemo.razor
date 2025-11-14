@@ -1,0 +1,451 @@
+@page "/components/input-group"
+@using BlazorUI.Primitives.Services
+@using BlazorUI.Components.InputGroup
+@using BlazorUI.Components.Input
+@using BlazorUI.Components.Label
+@using BlazorUI.Components.DropdownMenu
+
+<PageTitle>Input Group - BlazorUI</PageTitle>
+
+<div class="space-y-10 max-w-sm">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Input Group</h1>
+        <p class="text-xl text-muted-foreground">
+            Enhance inputs with icons, text, and action buttons.
+        </p>
+    </div>
+
+    <!-- Basic Examples -->
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Examples</h2>
+            <p class="text-muted-foreground">
+                Add icons and text to inputs for better context.
+            </p>
+        </div>
+
+        <div class="space-y-6">
+            <!-- Icon Start -->
+            <div class="space-y-2">
+                <Label>Search</Label>
+                <InputGroup>
+                    <InputGroupAddon Align="InputGroupAlign.InlineStart">
+                        <LucideIcon Name="search" Size="16" />
+                    </InputGroupAddon>
+                    <InputGroupInput Placeholder="Search..." />
+                </InputGroup>
+            </div>
+
+            <!-- Icon End -->
+            <div class="space-y-2">
+                <Label>Username</Label>
+                <InputGroup>
+                    <InputGroupInput Value="johndoe123" Placeholder="Enter username" />
+                    <InputGroupAddon Align="InputGroupAlign.InlineEnd" Class="text-sm text-muted-foreground">
+                        @@company.com
+                    </InputGroupAddon>
+                </InputGroup>
+            </div>
+
+            <!-- Icons on Both Sides -->
+            <div class="space-y-2">
+                <Label>Email</Label>
+                <InputGroup>
+                    <InputGroupAddon Align="InputGroupAlign.InlineStart">
+                        <LucideIcon Name="at-sign" Size="16" />
+                    </InputGroupAddon>
+                    <InputGroupInput Type="InputType.Email" Placeholder="name@example.com" />
+                    <InputGroupAddon Align="InputGroupAlign.InlineEnd">
+                        <LucideIcon Name="circle-check" Size="16" />
+                    </InputGroupAddon>
+                </InputGroup>
+            </div>
+
+            <!-- Icons on Both Sides and Rounded -->
+            <div class="space-y-2">
+                <Label>Website</Label>
+                <InputGroup Class="rounded-full">
+                    <InputGroupAddon Align="InputGroupAlign.InlineStart">
+                        <LucideIcon Name="circle-alert" Size="16" />
+                        <span class="font-semibold text-sm">https://</span>
+                    </InputGroupAddon>
+                    <InputGroupInput Type="InputType.Text" Placeholder="www.example.com" />
+                    <InputGroupAddon Align="InputGroupAlign.InlineEnd">
+                        <LucideIcon Name="star" Size="16" />
+                    </InputGroupAddon>
+                </InputGroup>
+            </div>
+        </div>
+    </section>
+
+    <!-- Text Addons -->
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Text Addons</h2>
+            <p class="text-muted-foreground">
+                Add text prefixes, suffixes, and labels to inputs.
+            </p>
+        </div>
+
+        <div class="space-y-6">
+            <!-- Currency -->
+            <div class="space-y-2">
+                <Label>Price</Label>
+                <InputGroup>
+                    <InputGroupAddon Align="InputGroupAlign.InlineStart">
+                        <InputGroupText>$</InputGroupText>
+                    </InputGroupAddon>
+                    <InputGroupInput Type="InputType.Number" Placeholder="0.00" />
+                    <InputGroupAddon Align="InputGroupAlign.InlineEnd">
+                        <InputGroupText>USD</InputGroupText>
+                    </InputGroupAddon>
+                </InputGroup>
+            </div>
+
+            <!-- URL -->
+            <div class="space-y-2">
+                <Label>Website</Label>
+                <InputGroup>
+                    <InputGroupAddon Align="InputGroupAlign.InlineStart">
+                        <InputGroupText>https://</InputGroupText>
+                    </InputGroupAddon>
+                    <InputGroupInput Placeholder="example.com" />
+                </InputGroup>
+            </div>
+
+            <!-- Weight -->
+            <div class="space-y-2">
+                <Label>Weight</Label>
+                <InputGroup>
+                    <InputGroupInput Type="InputType.Number" Placeholder="0" />
+                    <InputGroupAddon Align="InputGroupAlign.InlineEnd">
+                        <InputGroupText>kg</InputGroupText>
+                    </InputGroupAddon>
+                </InputGroup>
+            </div>
+        </div>
+    </section>
+
+    <!-- Action Buttons -->
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Action Buttons</h2>
+            <p class="text-muted-foreground">
+                Integrate action buttons directly into inputs.
+            </p>
+        </div>
+
+        <div class="space-y-6">
+            <!-- Search with Button -->
+            <div class="space-y-2">
+                <Label>Search</Label>
+                <InputGroup>
+                    <InputGroupInput Placeholder="Search products..." />
+                    <InputGroupAddon Align="InputGroupAlign.InlineEnd">
+                        <InputGroupButton Class="!px-2.5 !py-0.5 !rounded-sm">
+                            Search
+                        </InputGroupButton>
+                    </InputGroupAddon>
+                </InputGroup>
+            </div>
+
+            <!-- Icon Button -->
+            <div class="space-y-2">
+                <Label>API Key</Label>
+                <InputGroup>
+                    <InputGroupInput Value="sk-1234567890abcdef" />
+                    <InputGroupAddon Align="InputGroupAlign.InlineEnd">
+                        <InputGroupButton Variant="ButtonVariant.Ghost" Class="!px-1.5 !py-1.5 !rounded-md">
+                            <LucideIcon Name="copy" Size="16" />
+                        </InputGroupButton>
+                    </InputGroupAddon>
+                </InputGroup>
+            </div>
+
+            <!-- Icon + Button -->
+            <div class="space-y-2">
+                <Label>Newsletter</Label>
+                <InputGroup>
+                    <InputGroupAddon Align="InputGroupAlign.InlineStart">
+                        <LucideIcon Name="mail" Size="16" />
+                    </InputGroupAddon>
+                    <InputGroupInput Type="InputType.Email" Placeholder="Enter your email" />
+                    <InputGroupAddon Align="InputGroupAlign.InlineEnd">
+                        <InputGroupButton Class="!px-2.5 !py-0.5 !rounded-sm">
+                            Subscribe
+                        </InputGroupButton>
+                    </InputGroupAddon>
+                </InputGroup>
+            </div>
+        </div>
+    </section>
+
+    <!-- Form Validation -->
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Form Validation</h2>
+            <p class="text-muted-foreground">
+                Show validation states with icons and colors.
+            </p>
+        </div>
+
+        <div class="space-y-6">
+            <!-- Success State -->
+            <div class="space-y-2">
+                <Label>Username</Label>
+                <InputGroup>
+                    <InputGroupInput Value="johndoe" />
+                    <InputGroupAddon Align="InputGroupAlign.InlineEnd">
+                        <LucideIcon Name="circle-check" Size="16" Color="Green" />
+                    </InputGroupAddon>
+                </InputGroup>
+                <p class="text-sm text-green-600">Username is available</p>
+            </div>
+
+            <!-- Error State -->
+            <div class="space-y-2">
+                <Label>Email</Label>
+                <InputGroup>
+                    <InputGroupInput
+                        Type="InputType.Email"
+                        Value="invalid-email"
+                        AriaInvalid="true" />
+                    <InputGroupAddon Align="InputGroupAlign.InlineEnd">
+                        <LucideIcon Name="triangle-alert" Size="16" Class="text-destructive" />
+                    </InputGroupAddon>
+                </InputGroup>
+                <p class="text-sm text-destructive">Please enter a valid email address</p>
+            </div>
+
+            <!-- Loading State -->
+            <div class="space-y-2">
+                <Label>Verification Code</Label>
+                <InputGroup>
+                    <InputGroupInput Placeholder="Enter code..." />
+                    <InputGroupAddon Align="InputGroupAlign.InlineEnd">
+                        <LucideIcon Name="loader-circle" Size="16" Class="animate-spin" />
+                    </InputGroupAddon>
+                </InputGroup>
+                <p class="text-sm text-muted-foreground">Verifying...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Advanced Examples -->
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Advanced Examples</h2>
+            <p class="text-muted-foreground">
+                Combine multiple features for complex use cases.
+            </p>
+        </div>
+
+        <div class="space-y-6">
+            <!-- Search with Clear and Search Button -->
+            <div class="space-y-2">
+                <Label>Advanced Search</Label>
+                <InputGroup>
+                    <InputGroupAddon Align="InputGroupAlign.InlineStart">
+                        <LucideIcon Name="search" Size="16" />
+                    </InputGroupAddon>
+                    <InputGroupInput Placeholder="Search files and folders..." />
+                    <InputGroupAddon Align="InputGroupAlign.InlineEnd">
+                        <InputGroupButton Variant="ButtonVariant.Ghost" Class="!px-1.5 !py-1.5 !rounded-md">
+                            <LucideIcon Name="x" Size="16" />
+                        </InputGroupButton>
+                    </InputGroupAddon>
+                    <InputGroupAddon Align="InputGroupAlign.InlineEnd">
+                        <InputGroupButton Class="!px-2.5 !py-0.5 !rounded-sm">
+                            Search
+                        </InputGroupButton>
+                    </InputGroupAddon>
+                </InputGroup>
+            </div>
+
+            <!-- Amount with Currency Button -->
+            <div class="space-y-2">
+                <Label>Transfer Amount</Label>
+                <InputGroup>
+                    <InputGroupAddon Align="InputGroupAlign.InlineStart">
+                        <LucideIcon Name="circle-dollar-sign" Size="16" />
+                    </InputGroupAddon>
+                    <InputGroupInput Type="InputType.Number" Placeholder="0.00" />
+                    <InputGroupAddon Align="InputGroupAlign.InlineEnd">
+                        <InputGroupButton Variant="ButtonVariant.Outline" Class="!px-2.5 !py-0.5 !rounded-sm">
+                            USD <LucideIcon Name="chevron-down" Size="14" />
+                        </InputGroupButton>
+                    </InputGroupAddon>
+                </InputGroup>
+            </div>
+
+            <!-- Textarea with Action Buttons -->
+            <div class="space-y-2">
+                <Label>Comment</Label>
+                <InputGroup>
+                    <InputGroupTextarea Rows="4" Placeholder="Write your comment..." />
+                    <InputGroupAddon Align="InputGroupAlign.BlockEnd">
+                        <div class="flex items-center justify-between w-full">
+                            <p class="text-sm text-muted-foreground">Max 500 characters</p>
+                            <div class="flex gap-2">
+                                <InputGroupButton Variant="ButtonVariant.Ghost" Class="!px-2.5 !py-0.5 !rounded-sm">
+                                    Cancel
+                                </InputGroupButton>
+                                <InputGroupButton Class="!px-2.5 !py-0.5 !rounded-sm">
+                                    Post
+                                </InputGroupButton>
+                            </div>
+                        </div>
+                    </InputGroupAddon>
+                </InputGroup>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dropdown Menu Example -->
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Dropdown Menu</h2>
+            <p class="text-muted-foreground">
+                Integrate dropdown menus with input fields for context actions.
+            </p>
+        </div>
+
+        <div class="space-y-6">
+            <!-- Input with Dropdown Menu -->
+            <div class="space-y-2">
+                <Label>File Name</Label>
+                <DropdownMenu>
+                    <InputGroup>
+                        <InputGroupInput Placeholder="Enter file name" />
+                        <InputGroupAddon Align="InputGroupAlign.InlineEnd">
+                            <DropdownMenuTrigger AsChild="true">
+                                <InputGroupButton Variant="ButtonVariant.Ghost" Class="!px-1.5 !py-1.5 !rounded-md">
+                                    <LucideIcon Name="chevron-down" Size="16" />
+                                </InputGroupButton>
+                            </DropdownMenuTrigger>
+                        </InputGroupAddon>
+                    </InputGroup>
+                    <DropdownMenuContent Align="@PopoverAlign.End">
+                        <DropdownMenuItem OnClick="@(() => HandleMenuAction("Settings"))">Settings</DropdownMenuItem>
+                        <DropdownMenuItem OnClick="@(() => HandleMenuAction("Copy path"))">Copy path</DropdownMenuItem>
+                        <DropdownMenuItem OnClick="@(() => HandleMenuAction("Open location"))">Open location</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+
+            <!-- Input with Search Scope Dropdown -->
+            <div class="space-y-2">
+                <Label>Search</Label>
+                <DropdownMenu>
+                    <InputGroup Class="rounded-lg">
+                        <InputGroupInput Placeholder="Enter search query" />
+                        <InputGroupAddon Align="InputGroupAlign.InlineEnd">
+                            <DropdownMenuTrigger AsChild="true">
+                                <InputGroupButton Variant="ButtonVariant.Ghost" Class="!px-1 !py-1 !rounded-md">
+                                    Search In...
+                                    <LucideIcon Name="chevron-down" Size="16" />
+                                </InputGroupButton>
+                            </DropdownMenuTrigger>
+                        </InputGroupAddon>
+                    </InputGroup>
+                    <DropdownMenuContent Align="@PopoverAlign.End">
+                        <DropdownMenuItem OnClick="@(() => HandleSearchScope("Documentation"))">Documentation</DropdownMenuItem>
+                        <DropdownMenuItem OnClick="@(() => HandleSearchScope("Blog Posts"))">Blog Posts</DropdownMenuItem>
+                        <DropdownMenuItem OnClick="@(() => HandleSearchScope("Changelog"))">Changelog</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+        </div>
+    </section>
+
+    <!-- Code Editor Example -->
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Code Editor</h2>
+            <p class="text-muted-foreground">
+                Create code editor interfaces with header and footer toolbars.
+            </p>
+        </div>
+
+        <div class="space-y-6">
+            <!-- Code Editor with Toolbar -->
+            <div class="space-y-2">
+                <InputGroup>
+                    <InputGroupAddon Align="InputGroupAlign.BlockStart" Class="order-1 border-b !py-3">
+                        <InputGroupText Class="font-mono font-medium gap-1.5">
+                            <LucideIcon Name="file-code" Size="16" />
+                            script.js
+                        </InputGroupText>
+                        <InputGroupButton Variant="ButtonVariant.Ghost" Class="ml-auto !px-2 !py-2 !rounded-md">
+                            <LucideIcon Name="refresh-cw" Size="16" />
+                        </InputGroupButton>
+                        <InputGroupButton Variant="ButtonVariant.Ghost" Class="!px-2 !py-2 !rounded-md">
+                            <LucideIcon Name="copy" Size="16" />
+                        </InputGroupButton>
+                    </InputGroupAddon>
+                    <InputGroupTextarea
+                        Placeholder="console.log('Hello, world!');"
+                        Rows="8"
+                        Class="min-h-[200px] font-mono text-sm order-2 !border-0" />
+                    <InputGroupAddon Align="InputGroupAlign.BlockEnd" Class="order-3 border-t !py-3">
+                        <InputGroupText>Line 1, Column 1</InputGroupText>
+                        <InputGroupButton Class="ml-auto !px-3 !py-1.5 !rounded-md">
+                            Run <LucideIcon Name="corner-down-left" Size="16" />
+                        </InputGroupButton>
+                    </InputGroupAddon>
+                </InputGroup>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Code Example -->
+<section class="space-y-4 mt-10">
+    <h2 class="text-2xl font-semibold">Usage</h2>
+    <div class="rounded-lg border bg-muted/30 p-6">
+        <pre class="text-sm overflow-x-auto"><code>@@using BlazorUI.Components.InputGroup
+@@using BlazorUI.Components.Input
+
+&lt;!-- Icon at start --&gt;
+&lt;InputGroup&gt;
+    &lt;InputGroupAddon Align="InputGroupAlign.InlineStart"&gt;
+        &lt;SearchIcon Size="16" /&gt;
+    &lt;/InputGroupAddon&gt;
+    &lt;InputGroupInput Placeholder="Search..." /&gt;
+&lt;/InputGroup&gt;
+
+&lt;!-- Button at end --&gt;
+&lt;InputGroup&gt;
+    &lt;InputGroupInput Placeholder="Enter email" /&gt;
+    &lt;InputGroupAddon Align="InputGroupAlign.InlineEnd"&gt;
+        &lt;InputGroupButton&gt;Subscribe&lt;/InputGroupButton&gt;
+    &lt;/InputGroupAddon&gt;
+&lt;/InputGroup&gt;
+
+&lt;!-- Icons on both sides --&gt;
+&lt;InputGroup&gt;
+    &lt;InputGroupAddon Align="InputGroupAlign.InlineStart"&gt;
+        &lt;MailIcon Size="16" /&gt;
+    &lt;/InputGroupAddon&gt;
+    &lt;InputGroupInput Type="InputType.Email" Placeholder="name@example.com" /&gt;
+    &lt;InputGroupAddon Align="InputGroupAlign.InlineEnd"&gt;
+        &lt;CheckCircle2Icon Size="16" /&gt;
+    &lt;/InputGroupAddon&gt;
+&lt;/InputGroup&gt;</code></pre>
+    </div>
+</section>
+
+@code {
+    private void HandleMenuAction(string action)
+    {
+        // Handle menu action
+        // The dropdown menu closes automatically after clicking an item
+        Console.WriteLine($"Menu action: {action}");
+    }
+
+    private void HandleSearchScope(string scope)
+    {
+        // Handle search scope selection
+        Console.WriteLine($"Search scope: {scope}");
+    }
+}

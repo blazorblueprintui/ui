@@ -1,0 +1,81 @@
+@namespace BlazorUI.Primitives.Dialog
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@*
+    DialogOverlay provides a background overlay for modal dialogs.
+    Can handle click-outside-to-close if configured.
+*@
+
+@if (Context.IsOpen)
+{
+    <div @ref="_overlayRef"
+         id="@(Context.Id)-overlay"
+         @onclick="HandleClick"
+         @attributes="AdditionalAttributes"
+         data-state="@(Context.IsOpen ? "open" : "closed")">
+        @ChildContent
+    </div>
+}
+
+@code {
+    [CascadingParameter]
+    private DialogContext Context { get; set; } = null!;
+
+    /// <summary>
+    /// The content to render within the overlay (typically empty for a simple backdrop).
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the overlay div element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Whether clicking the overlay should close the dialog.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnClick { get; set; } = true;
+
+    /// <summary>
+    /// Event callback invoked when the overlay is clicked.
+    /// </summary>
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnClick { get; set; }
+
+    private ElementReference _overlayRef;
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "DialogOverlay must be used within a Dialog component. " +
+                "Ensure DialogOverlay is a child of a Dialog component.");
+        }
+    }
+
+    private async Task HandleClick(MouseEventArgs args)
+    {
+        // Invoke custom click handler if provided
+        if (OnClick.HasDelegate)
+        {
+            await OnClick.InvokeAsync(args);
+        }
+
+        // Close dialog if configured
+        if (CloseOnClick)
+        {
+            Context.Close();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await Task.CompletedTask;
+    }
+}

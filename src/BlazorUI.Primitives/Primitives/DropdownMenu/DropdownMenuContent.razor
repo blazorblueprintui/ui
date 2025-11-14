@@ -1,0 +1,639 @@
+@namespace BlazorUI.Primitives.DropdownMenu
+@using BlazorUI.Primitives.Services
+@inject IPositioningService PositioningService
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@*
+    DropdownMenuContent is the main content container for the dropdown menu.
+    Handles positioning, click-outside, escape key, keyboard navigation, and ARIA attributes.
+*@
+
+@if (Context.IsOpen)
+{
+    <div @ref="_contentRef"
+         id="@Context.ContentId"
+         role="menu"
+         tabindex="-1"
+         @onkeydown="HandleKeyDown"
+         @attributes="GetAttributesWithoutStyle()"
+         data-state="open"
+         style="@GetMergedStyle()">
+        <CascadingValue Value="this" IsFixed="false">
+            @ChildContent
+        </CascadingValue>
+    </div>
+}
+
+@code {
+    [CascadingParameter]
+    private DropdownMenuContext Context { get; set; } = null!;
+
+    /// <summary>
+    /// The content to render inside the dropdown menu.
+    /// Typically contains DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, etc.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the content container.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Whether pressing Escape should close the dropdown menu.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnEscape { get; set; } = true;
+
+    /// <summary>
+    /// Whether clicking outside should close the dropdown menu.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnClickOutside { get; set; } = true;
+
+    /// <summary>
+    /// Preferred side for positioning.
+    /// Default is Bottom.
+    /// </summary>
+    [Parameter]
+    public PopoverSide Side { get; set; } = PopoverSide.Bottom;
+
+    /// <summary>
+    /// Alignment relative to trigger.
+    /// Default is Start.
+    /// </summary>
+    [Parameter]
+    public PopoverAlign Align { get; set; } = PopoverAlign.Start;
+
+    /// <summary>
+    /// Offset distance from the trigger element in pixels.
+    /// Default is 4.
+    /// </summary>
+    [Parameter]
+    public int Offset { get; set; } = 4;
+
+    /// <summary>
+    /// Event callback invoked when Escape key is pressed.
+    /// </summary>
+    [Parameter]
+    public EventCallback<KeyboardEventArgs> OnEscapeKeyDown { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when clicking outside the dropdown menu.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnClickOutside { get; set; }
+
+    /// <summary>
+    /// Whether to enable keyboard loop navigation (wrapping from last to first item).
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool Loop { get; set; } = true;
+
+    /// <summary>
+    /// Z-index value for the dropdown menu.
+    /// Default is 50.
+    /// </summary>
+    [Parameter]
+    public int ZIndex { get; set; } = 50;
+
+    /// <summary>
+    /// Whether the dropdown content should match the trigger width.
+    /// Default is false.
+    /// </summary>
+    [Parameter]
+    public bool MatchTriggerWidth { get; set; } = false;
+
+    /// <summary>
+    /// Positioning strategy: "absolute" (default) or "fixed".
+    /// Use "fixed" when dropdown needs to escape parent stacking contexts (e.g., in sidebars).
+    /// Fixed strategy renders at document.body level.
+    /// </summary>
+    [Parameter]
+    public PositioningStrategy Strategy { get; set; } = PositioningStrategy.Absolute;
+
+    private ElementReference _contentRef;
+    private IJSObjectReference? _clickOutsideModule;
+    private IJSObjectReference? _clickOutsideCleanup;
+    private IJSObjectReference? _keyboardNavModule;
+    private IJSObjectReference? _keyboardNavCleanup;
+    private IJSObjectReference? _matchWidthModule;
+    private IJSObjectReference? _matchWidthCleanup;
+    private IJSObjectReference? _portalModule;
+    private IJSObjectReference? _portalCleanup;
+    private DotNetObjectReference<DropdownMenuContent>? _dotNetRef;
+    private IAsyncDisposable? _positioningCleanup;
+    private bool _isInitialized = false;
+
+    // Track menu items for keyboard navigation
+    private List<IDropdownMenuItem> _menuItems = new();
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "DropdownMenuContent must be used within a DropdownMenu component. " +
+                "Ensure DropdownMenuContent is a child of a DropdownMenu component.");
+        }
+
+        // Subscribe to context changes
+        Context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Context.IsOpen && !_isInitialized)
+        {
+            _isInitialized = true;
+
+            // Set up portal if using fixed strategy
+            if (Strategy == PositioningStrategy.Fixed)
+            {
+                await SetupPortalAsync();
+            }
+
+            // Set up positioning
+            await SetupPositioningAsync();
+
+            // Set up click-outside detection
+            if (CloseOnClickOutside)
+            {
+                await SetupClickOutsideAsync();
+            }
+
+            // Set up keyboard navigation (prevents scroll on arrow keys)
+            await SetupKeyboardNavAsync();
+
+            // Focus the content container for keyboard navigation
+            try
+            {
+                await _contentRef.FocusAsync();
+            }
+            catch (Exception ex)
+            {
+                // Focus may fail in some scenarios (e.g., element not yet in DOM, browser restrictions)
+                // This is expected and doesn't affect functionality, so we continue anyway
+                Console.WriteLine($"Could not focus dropdown menu: {ex.Message}");
+            }
+        }
+        else if (!Context.IsOpen && _isInitialized)
+        {
+            await CleanupAsync();
+        }
+    }
+
+    private async Task SetupPositioningAsync()
+    {
+        if (Context.State.TriggerElement == null)
+        {
+            Console.WriteLine("Warning: DropdownMenuContent - TriggerElement is null, positioning may not work correctly");
+            // Don't call StateHasChanged() - let JavaScript handle visibility
+            return;
+        }
+
+        try
+        {
+            // Construct placement string from Side and Align
+            var placement = Align == PopoverAlign.Center ? Side.ToValue() : $"{Side.ToValue()}-{Align.ToValue()}";
+
+            var options = new PositioningOptions
+            {
+                Placement = placement,
+                Offset = Offset,
+                Strategy = Strategy.ToValue()
+            };
+
+            // Compute and apply position
+            var position = await PositioningService.ComputePositionAsync(
+                Context.State.TriggerElement.Value,
+                _contentRef,
+                options);
+
+            // Apply position and make visible in one operation (no StateHasChanged needed)
+            // This prevents Blazor re-render that would cause sidebar layout recalculation
+            await PositioningService.ApplyPositionAsync(_contentRef, position, makeVisible: true);
+
+            // Set up width matching if needed
+            if (MatchTriggerWidth)
+            {
+                await SetupMatchTriggerWidthAsync();
+            }
+
+            // Set up auto-update for dynamic positioning
+            _positioningCleanup = await PositioningService.AutoUpdateAsync(
+                Context.State.TriggerElement.Value,
+                _contentRef,
+                options);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to set up positioning: {ex.Message}");
+            // Don't call StateHasChanged() - avoid triggering sidebar layout recalc
+        }
+    }
+
+    private async Task SetupClickOutsideAsync()
+    {
+        try
+        {
+            _clickOutsideModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorUI.Primitives/js/primitives/click-outside.js");
+
+            _dotNetRef = DotNetObjectReference.Create(this);
+
+            // Pass trigger element to exclude it from click-outside detection
+            _clickOutsideCleanup = await _clickOutsideModule.InvokeAsync<IJSObjectReference>(
+                "onClickOutside", _contentRef, _dotNetRef, "HandleClickOutside", Context.State.TriggerElement);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to set up click-outside: {ex.Message}");
+        }
+    }
+
+    private async Task SetupKeyboardNavAsync()
+    {
+        try
+        {
+            _keyboardNavModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorUI.Primitives/js/primitives/keyboard-nav.js");
+
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+
+            _keyboardNavCleanup = await _keyboardNavModule.InvokeAsync<IJSObjectReference>(
+                "setupKeyboardNav", _contentRef, _dotNetRef);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to set up keyboard navigation: {ex.Message}");
+        }
+    }
+
+    private async Task SetupMatchTriggerWidthAsync()
+    {
+        try
+        {
+            _matchWidthModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorUI.Primitives/js/primitives/match-trigger-width.js");
+
+            _matchWidthCleanup = await _matchWidthModule.InvokeAsync<IJSObjectReference>(
+                "matchTriggerWidth", Context.State.TriggerElement, _contentRef);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to set up trigger width matching: {ex.Message}");
+        }
+    }
+
+    private async Task SetupPortalAsync()
+    {
+        try
+        {
+            _portalModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorUI.Primitives/js/primitives/portal.js");
+
+            var portalId = "dropdown-portal-root";
+            _portalCleanup = await _portalModule.InvokeAsync<IJSObjectReference>(
+                "setupPortal", _contentRef, portalId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to set up portal: {ex.Message}");
+        }
+    }
+
+    [JSInvokable]
+    public async Task HandleClickOutside()
+    {
+        if (!Context.IsOpen) return;
+
+        // Invoke custom handler if provided
+        if (OnClickOutside.HasDelegate)
+        {
+            await OnClickOutside.InvokeAsync();
+        }
+
+        // Close dropdown menu if configured
+        if (CloseOnClickOutside)
+        {
+            Context.Close();
+        }
+    }
+
+    private string GetInitialStyle()
+    {
+        var baseStyle = $"z-index: {ZIndex};";
+
+        // Position offscreen initially - JavaScript will reposition and show
+        // Don't use display:none because Blazor re-renders will overwrite JS changes
+        // Using visibility:hidden + offscreen positioning prevents layout jumping
+        baseStyle += $" position: {Strategy}; top: -9999px; left: -9999px; visibility: hidden; opacity: 0; pointer-events: none;";
+
+        return baseStyle;
+    }
+
+    private string GetMergedStyle()
+    {
+        var baseStyle = GetInitialStyle();
+
+        // Check if AdditionalAttributes contains a style attribute
+        if (AdditionalAttributes != null && AdditionalAttributes.TryGetValue("style", out var userStyle))
+        {
+            // Merge user styles with base styles (user styles first, then base styles override)
+            return $"{userStyle}; {baseStyle}";
+        }
+
+        return baseStyle;
+    }
+
+    private Dictionary<string, object>? GetAttributesWithoutStyle()
+    {
+        if (AdditionalAttributes == null) return null;
+
+        // Create a copy without the style attribute
+        var attributes = new Dictionary<string, object>(AdditionalAttributes);
+        attributes.Remove("style");
+
+        return attributes.Count > 0 ? attributes : null;
+    }
+
+    private async void HandleContextStateChanged()
+    {
+        if (!Context.IsOpen && _isInitialized)
+        {
+            await InvokeAsync(async () =>
+            {
+                await CleanupAsync();
+                StateHasChanged();
+            });
+        }
+        else
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        // Escape key
+        if (args.Key == "Escape")
+        {
+            if (OnEscapeKeyDown.HasDelegate)
+            {
+                await OnEscapeKeyDown.InvokeAsync(args);
+            }
+
+            if (CloseOnEscape)
+            {
+                Context.Close();
+            }
+            return;
+        }
+
+        // Arrow navigation
+        var enabledItems = _menuItems.Where(item => !item.Disabled).ToList();
+        if (enabledItems.Count == 0) return;
+
+        var currentIndex = Context.FocusedIndex;
+
+        switch (args.Key)
+        {
+            case "ArrowDown":
+                await NavigateNext(enabledItems, currentIndex);
+                break;
+
+            case "ArrowUp":
+                await NavigatePrevious(enabledItems, currentIndex);
+                break;
+
+            case "Home":
+                await FocusItem(enabledItems, 0);
+                break;
+
+            case "End":
+                await FocusItem(enabledItems, enabledItems.Count - 1);
+                break;
+        }
+    }
+
+    private async Task NavigateNext(List<IDropdownMenuItem> enabledItems, int currentIndex)
+    {
+        int nextIndex;
+
+        if (currentIndex == -1)
+        {
+            // No item focused, focus first
+            nextIndex = 0;
+        }
+        else
+        {
+            // Find current item in enabled list
+            var currentEnabledIndex = GetEnabledItemIndex(enabledItems, currentIndex);
+
+            if (currentEnabledIndex == -1)
+            {
+                // Current item not in enabled list, focus first
+                nextIndex = 0;
+            }
+            else if (currentEnabledIndex == enabledItems.Count - 1)
+            {
+                // At last item
+                if (Loop)
+                {
+                    nextIndex = 0; // Wrap to first
+                }
+                else
+                {
+                    return; // Don't move
+                }
+            }
+            else
+            {
+                nextIndex = currentEnabledIndex + 1;
+            }
+        }
+
+        await FocusItem(enabledItems, nextIndex);
+    }
+
+    private async Task NavigatePrevious(List<IDropdownMenuItem> enabledItems, int currentIndex)
+    {
+        int prevIndex;
+
+        if (currentIndex == -1)
+        {
+            // No item focused, focus last
+            prevIndex = enabledItems.Count - 1;
+        }
+        else
+        {
+            // Find current item in enabled list
+            var currentEnabledIndex = GetEnabledItemIndex(enabledItems, currentIndex);
+
+            if (currentEnabledIndex == -1)
+            {
+                // Current item not in enabled list, focus last
+                prevIndex = enabledItems.Count - 1;
+            }
+            else if (currentEnabledIndex == 0)
+            {
+                // At first item
+                if (Loop)
+                {
+                    prevIndex = enabledItems.Count - 1; // Wrap to last
+                }
+                else
+                {
+                    return; // Don't move
+                }
+            }
+            else
+            {
+                prevIndex = currentEnabledIndex - 1;
+            }
+        }
+
+        await FocusItem(enabledItems, prevIndex);
+    }
+
+    private int GetEnabledItemIndex(List<IDropdownMenuItem> enabledItems, int absoluteIndex)
+    {
+        if (absoluteIndex < 0 || absoluteIndex >= _menuItems.Count) return -1;
+
+        var currentItem = _menuItems[absoluteIndex];
+        return enabledItems.IndexOf(currentItem);
+    }
+
+    private async Task FocusItem(List<IDropdownMenuItem> enabledItems, int enabledIndex)
+    {
+        if (enabledIndex < 0 || enabledIndex >= enabledItems.Count) return;
+
+        var item = enabledItems[enabledIndex];
+        var absoluteIndex = _menuItems.IndexOf(item);
+
+        Context.SetFocusedIndex(absoluteIndex);
+        await item.FocusAsync();
+    }
+
+    private async Task CleanupAsync()
+    {
+        if (_positioningCleanup != null)
+        {
+            await _positioningCleanup.DisposeAsync();
+            _positioningCleanup = null;
+        }
+
+        if (_clickOutsideCleanup != null)
+        {
+            try
+            {
+                await _clickOutsideCleanup.InvokeVoidAsync("dispose");
+                await _clickOutsideCleanup.DisposeAsync();
+            }
+            catch
+            {
+                // Cleanup may already be disposed
+            }
+            _clickOutsideCleanup = null;
+        }
+
+        if (_keyboardNavCleanup != null)
+        {
+            try
+            {
+                await _keyboardNavCleanup.InvokeVoidAsync("dispose");
+                await _keyboardNavCleanup.DisposeAsync();
+            }
+            catch
+            {
+                // Cleanup may already be disposed
+            }
+            _keyboardNavCleanup = null;
+        }
+
+        if (_matchWidthCleanup != null)
+        {
+            try
+            {
+                await _matchWidthCleanup.InvokeVoidAsync("dispose");
+                await _matchWidthCleanup.DisposeAsync();
+            }
+            catch
+            {
+                // Cleanup may already be disposed
+            }
+            _matchWidthCleanup = null;
+        }
+
+        if (_portalCleanup != null)
+        {
+            try
+            {
+                await _portalCleanup.InvokeVoidAsync("dispose");
+                await _portalCleanup.DisposeAsync();
+            }
+            catch
+            {
+                // Cleanup may already be disposed
+            }
+            _portalCleanup = null;
+        }
+
+        _isInitialized = false;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await CleanupAsync();
+
+        if (_clickOutsideModule != null)
+        {
+            await _clickOutsideModule.DisposeAsync();
+        }
+
+        if (_keyboardNavModule != null)
+        {
+            await _keyboardNavModule.DisposeAsync();
+        }
+
+        if (_matchWidthModule != null)
+        {
+            await _matchWidthModule.DisposeAsync();
+        }
+
+        if (_portalModule != null)
+        {
+            await _portalModule.DisposeAsync();
+        }
+
+        _dotNetRef?.Dispose();
+
+        if (Context != null)
+        {
+            Context.OnStateChanged -= HandleContextStateChanged;
+        }
+    }
+
+    // Menu item registration for keyboard navigation (to be used in subtask 27.4)
+    internal void RegisterMenuItem(IDropdownMenuItem item)
+    {
+        if (!_menuItems.Contains(item))
+        {
+            _menuItems.Add(item);
+        }
+    }
+
+    internal void UnregisterMenuItem(IDropdownMenuItem item)
+    {
+        _menuItems.Remove(item);
+    }
+
+    internal List<IDropdownMenuItem> GetMenuItems() => _menuItems;
+}

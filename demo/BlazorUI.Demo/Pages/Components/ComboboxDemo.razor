@@ -1,0 +1,254 @@
+@page "/components/combobox"
+@using BlazorUI.Components.Combobox
+
+<PageTitle>Combobox Component - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Combobox Component</h1>
+        <p class="text-xl text-muted-foreground">
+            A searchable select component that combines autocomplete with a dropdown interface.
+        </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+    </div>
+
+    <!-- Basic Combobox -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Basic Combobox</h2>
+        <p class="text-sm text-muted-foreground">
+            Select a framework from the searchable list. Click to deselect.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <Combobox TItem="Framework"
+                     Items="frameworks"
+                     @bind-Value="selectedFramework"
+                     ValueSelector="@(f => f.Value)"
+                     DisplaySelector="@(f => f.Label)"
+                     Placeholder="Select framework..."
+                     SearchPlaceholder="Search framework..."
+                     EmptyMessage="No framework found."
+                     PopoverWidth="w-[200px]" />
+            @if (!string.IsNullOrEmpty(selectedFramework))
+            {
+                <p class="text-sm">Selected: <strong>@GetFrameworkLabel(selectedFramework)</strong></p>
+            }
+        </div>
+    </section>
+
+    <!-- Language Selector -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Programming Language</h2>
+        <p class="text-sm text-muted-foreground">
+            Wider combobox with programming languages.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <Combobox TItem="ProgrammingLanguage"
+                     Items="languages"
+                     @bind-Value="selectedLanguage"
+                     ValueSelector="@(l => l.Value)"
+                     DisplaySelector="@(l => l.Label)"
+                     Placeholder="Select language..."
+                     SearchPlaceholder="Search language..."
+                     EmptyMessage="No language found."
+                     PopoverWidth="w-[250px]" />
+            @if (!string.IsNullOrEmpty(selectedLanguage))
+            {
+                <p class="text-sm">Selected: <strong>@GetLanguageLabel(selectedLanguage)</strong></p>
+            }
+        </div>
+    </section>
+
+    <!-- Country Selector -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Country Selector</h2>
+        <p class="text-sm text-muted-foreground">
+            Large dataset with search functionality.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <Combobox TItem="Country"
+                     Items="countries"
+                     @bind-Value="selectedCountry"
+                     ValueSelector="@(c => c.Code)"
+                     DisplaySelector="@(c => c.Name)"
+                     Placeholder="Select country..."
+                     SearchPlaceholder="Search country..."
+                     EmptyMessage="No country found."
+                     PopoverWidth="w-[280px]" />
+            @if (!string.IsNullOrEmpty(selectedCountry))
+            {
+                <p class="text-sm">Selected: <strong>@GetCountryName(selectedCountry)</strong> (@selectedCountry)</p>
+            }
+        </div>
+    </section>
+
+    <!-- Disabled State -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Disabled State</h2>
+        <p class="text-sm text-muted-foreground">
+            Combobox in disabled state.
+        </p>
+
+        <Combobox TItem="Framework"
+                 Items="frameworks"
+                 @bind-Value="disabledValue"
+                 ValueSelector="@(f => f.Value)"
+                 DisplaySelector="@(f => f.Label)"
+                 Placeholder="Disabled combobox"
+                 Disabled="true"
+                 PopoverWidth="w-[200px]" />
+    </section>
+
+    <!-- Form Example -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Form Integration</h2>
+        <p class="text-sm text-muted-foreground">
+            Example of comboboxes in a form layout.
+        </p>
+
+        <div class="space-y-4 max-w-md border rounded-lg p-6">
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Framework</label>
+                <Combobox TItem="Framework"
+                         Items="frameworks"
+                         @bind-Value="formFramework"
+                         ValueSelector="@(f => f.Value)"
+                         DisplaySelector="@(f => f.Label)"
+                         Placeholder="Select framework..."
+                         SearchPlaceholder="Search framework..."
+                         Class="w-full"
+                         PopoverWidth="w-[400px]" />
+                <p class="text-xs text-muted-foreground">Choose your preferred framework.</p>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Language</label>
+                <Combobox TItem="ProgrammingLanguage"
+                         Items="languages"
+                         @bind-Value="formLanguage"
+                         ValueSelector="@(l => l.Value)"
+                         DisplaySelector="@(l => l.Label)"
+                         Placeholder="Select language..."
+                         SearchPlaceholder="Search language..."
+                         Class="w-full"
+                         PopoverWidth="w-[400px]" />
+                <p class="text-xs text-muted-foreground">Choose your primary language.</p>
+            </div>
+
+            <div class="pt-4 border-t">
+                <Button Variant="ButtonVariant.Default" OnClick="HandleFormSubmit">
+                    Submit
+                </Button>
+                @if (formSubmitted)
+                {
+                    <p class="text-sm text-green-600 mt-2">
+                        ✓ Form submitted! Framework: <strong>@GetFrameworkLabel(formFramework)</strong>,
+                        Language: <strong>@GetLanguageLabel(formLanguage)</strong>
+                    </p>
+                }
+            </div>
+        </div>
+    </section>
+</div>
+
+@code {
+    // Basic example
+    private string? selectedFramework;
+
+    // Language example
+    private string? selectedLanguage;
+
+    // Country example
+    private string? selectedCountry;
+
+    // Disabled example
+    private string? disabledValue = "next.js";
+
+    // Form example
+    private string? formFramework;
+    private string? formLanguage;
+    private bool formSubmitted;
+
+    private readonly List<Framework> frameworks = new()
+    {
+        new Framework { Value = "next.js", Label = "Next.js" },
+        new Framework { Value = "sveltekit", Label = "SvelteKit" },
+        new Framework { Value = "nuxt.js", Label = "Nuxt.js" },
+        new Framework { Value = "remix", Label = "Remix" },
+        new Framework { Value = "astro", Label = "Astro" },
+        new Framework { Value = "gatsby", Label = "Gatsby" },
+        new Framework { Value = "blazor", Label = "Blazor" }
+    };
+
+    private readonly List<ProgrammingLanguage> languages = new()
+    {
+        new ProgrammingLanguage { Value = "csharp", Label = "C#" },
+        new ProgrammingLanguage { Value = "typescript", Label = "TypeScript" },
+        new ProgrammingLanguage { Value = "javascript", Label = "JavaScript" },
+        new ProgrammingLanguage { Value = "python", Label = "Python" },
+        new ProgrammingLanguage { Value = "java", Label = "Java" },
+        new ProgrammingLanguage { Value = "go", Label = "Go" },
+        new ProgrammingLanguage { Value = "rust", Label = "Rust" },
+        new ProgrammingLanguage { Value = "php", Label = "PHP" },
+        new ProgrammingLanguage { Value = "ruby", Label = "Ruby" },
+        new ProgrammingLanguage { Value = "swift", Label = "Swift" }
+    };
+
+    private readonly List<Country> countries = new()
+    {
+        new Country { Code = "US", Name = "United States" },
+        new Country { Code = "GB", Name = "United Kingdom" },
+        new Country { Code = "CA", Name = "Canada" },
+        new Country { Code = "AU", Name = "Australia" },
+        new Country { Code = "DE", Name = "Germany" },
+        new Country { Code = "FR", Name = "France" },
+        new Country { Code = "JP", Name = "Japan" },
+        new Country { Code = "CN", Name = "China" },
+        new Country { Code = "IN", Name = "India" },
+        new Country { Code = "BR", Name = "Brazil" },
+        new Country { Code = "MX", Name = "Mexico" },
+        new Country { Code = "ES", Name = "Spain" },
+        new Country { Code = "IT", Name = "Italy" },
+        new Country { Code = "NL", Name = "Netherlands" },
+        new Country { Code = "SE", Name = "Sweden" }
+    };
+
+    private string GetFrameworkLabel(string? value) =>
+        frameworks.FirstOrDefault(f => f.Value == value)?.Label ?? value ?? "";
+
+    private string GetLanguageLabel(string? value) =>
+        languages.FirstOrDefault(l => l.Value == value)?.Label ?? value ?? "";
+
+    private string GetCountryName(string? code) =>
+        countries.FirstOrDefault(c => c.Code == code)?.Name ?? code ?? "";
+
+    private void HandleFormSubmit()
+    {
+        formSubmitted = true;
+        StateHasChanged();
+    }
+
+    public class Framework
+    {
+        public required string Value { get; set; }
+        public required string Label { get; set; }
+    }
+
+    public class ProgrammingLanguage
+    {
+        public required string Value { get; set; }
+        public required string Label { get; set; }
+    }
+
+    public class Country
+    {
+        public required string Code { get; set; }
+        public required string Name { get; set; }
+    }
+}

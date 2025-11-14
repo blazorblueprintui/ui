@@ -1,0 +1,118 @@
+@namespace BlazorUI.Primitives.Sheet
+
+@* Sheet primitive root component - headless, unstyled behavior only *@
+<CascadingValue Value="@_context" IsFixed="false">
+    @ChildContent
+</CascadingValue>
+
+@code {
+    private SheetContext _context = new();
+    private UseControllableState<bool> _state = null!;
+
+    /// <summary>
+    /// The child content to render within the sheet context.
+    /// Typically includes SheetTrigger, SheetContent, SheetOverlay, and other sheet parts.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls whether the sheet is open (controlled mode).
+    /// When null, the sheet manages its own state (uncontrolled mode).
+    /// </summary>
+    [Parameter]
+    public bool? Open { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open state changes.
+    /// Use with @bind-Open for two-way binding.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// Default open state when in uncontrolled mode.
+    /// </summary>
+    [Parameter]
+    public bool DefaultOpen { get; set; } = false;
+
+    /// <summary>
+    /// Event callback invoked when the sheet open state changes.
+    /// Receives the new open state as a parameter.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OnOpenChange { get; set; }
+
+    /// <summary>
+    /// The side from which the sheet slides in.
+    /// Default is Right.
+    /// </summary>
+    [Parameter]
+    public SheetSide Side { get; set; } = SheetSide.Right;
+
+    /// <summary>
+    /// Whether the sheet can be dismissed by clicking the overlay or pressing Escape.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool Modal { get; set; } = true;
+
+    protected override void OnInitialized()
+    {
+        // Initialize controllable state
+        _state = new UseControllableState<bool>(DefaultOpen)
+        {
+            ControlledValue = Open.HasValue ? Open.Value : DefaultOpen,
+            OnValueChanged = OpenChanged,
+            IsControlled = OpenChanged.HasDelegate
+        };
+
+        // Sync initial state to context
+        _context.State.IsOpen = _state.Value;
+        _context.State.Side = Side;
+
+        // Subscribe to context state changes
+        _context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Update controlled value if it changed
+        if (_state.IsControlled && Open.HasValue)
+        {
+            _state.ControlledValue = Open.Value;
+            _context.State.IsOpen = Open.Value;
+        }
+
+        // Update side if it changed
+        if (_context.State.Side != Side)
+        {
+            _context.SetSide(Side);
+        }
+    }
+
+    private void HandleContextStateChanged()
+    {
+        // When context state changes (e.g., from SheetTrigger or SheetClose),
+        // update the controllable state
+        var newOpenState = _context.State.IsOpen;
+
+        if (_state.Value != newOpenState)
+        {
+            _ = _state.SetValueAsync(newOpenState);
+
+            // Invoke additional callback if provided
+            if (OnOpenChange.HasDelegate)
+            {
+                _ = OnOpenChange.InvokeAsync(newOpenState);
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        _context.OnStateChanged -= HandleContextStateChanged;
+    }
+}

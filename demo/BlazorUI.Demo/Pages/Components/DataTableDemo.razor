@@ -1,0 +1,249 @@
+@page "/components/datatable"
+@using BlazorUI.Components.DataTable
+@using BlazorUI.Components.Badge
+@using BlazorUI.Components.Button
+@using BlazorUI.Demo.Services
+@inject MockDataService MockDataService
+
+<PageTitle>Data Table Component - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-7xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Data Table Component</h1>
+            <p class="text-xl text-muted-foreground">
+                A powerful and flexible data table component with sorting, filtering, pagination, and row selection.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Table</h2>
+            <p class="text-sm text-muted-foreground">
+                A simple table with automatic sorting and pagination.
+            </p>
+        </div>
+        <DataTable TData="Person" Data="@people" InitialPageSize="5">
+            <Columns>
+                <DataTableColumn TData="Person" TValue="int" Property="@(p => p.Id)" Header="ID" Sortable />
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable />
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Email)" Header="Email" Sortable />
+                <DataTableColumn TData="Person" TValue="int" Property="@(p => p.Age)" Header="Age" Sortable />
+            </Columns>
+        </DataTable>
+    </div>
+
+    <!-- With Row Selection -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Row Selection</h2>
+            <p class="text-sm text-muted-foreground">
+                Table with multiple row selection using checkboxes.
+            </p>
+        </div>
+        <DataTable TData="Person"
+                   Data="@people"
+                   SelectionMode="DataTableSelectionMode.Multiple"
+                   @bind-SelectedItems="@selectedPeople"
+                   InitialPageSize="5">
+            <Columns>
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable />
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Email)" Header="Email" />
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Role)" Header="Role" />
+            </Columns>
+        </DataTable>
+        @if (selectedPeople.Any())
+        {
+            <div class="p-4 bg-muted rounded-md">
+                <p class="text-sm font-medium">Selected: @selectedPeople.Count people</p>
+                <div class="flex flex-wrap gap-2 mt-2">
+                    @foreach (var person in selectedPeople)
+                    {
+                        <Badge>@person.Name</Badge>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Custom Cell Templates -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Cell Templates</h2>
+            <p class="text-sm text-muted-foreground">
+                Use custom templates to render cells with badges, buttons, and other components.
+            </p>
+        </div>
+        <DataTable TData="Person" Data="@people" ShowPagination="false">
+            <Columns>
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable />
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Status)" Header="Status" Sortable>
+                    <CellTemplate Context="person">
+                        <Badge Variant="@(person.Status == "Active" ? BadgeVariant.Default : BadgeVariant.Outline)">
+                            @person.Status
+                        </Badge>
+                    </CellTemplate>
+                </DataTableColumn>
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Role)" Header="Role">
+                    <CellTemplate Context="person">
+                        <Badge Variant="BadgeVariant.Secondary">@person.Role</Badge>
+                    </CellTemplate>
+                </DataTableColumn>
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Email)" Header="Actions">
+                    <CellTemplate Context="person">
+                        <div class="flex gap-2">
+                            <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => ShowDetails(person))">
+                                View
+                            </Button>
+                            <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => EditPerson(person))">
+                                Edit
+                            </Button>
+                        </div>
+                    </CellTemplate>
+                </DataTableColumn>
+            </Columns>
+        </DataTable>
+    </div>
+
+    <!-- With Global Search -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Global Search & Column Visibility</h2>
+            <p class="text-sm text-muted-foreground">
+                Search across all columns and toggle column visibility.
+            </p>
+        </div>
+        <DataTable TData="Person" Data="@people" InitialPageSize="10">
+            <Columns>
+                <DataTableColumn TData="Person" TValue="int" Property="@(p => p.Id)" Header="ID" Sortable />
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable />
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Email)" Header="Email" />
+                <DataTableColumn TData="Person" TValue="int" Property="@(p => p.Age)" Header="Age" Sortable />
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Role)" Header="Role" />
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Status)" Header="Status">
+                    <CellTemplate Context="person">
+                        <Badge Variant="@(person.Status == "Active" ? BadgeVariant.Default : BadgeVariant.Destructive)">
+                            @person.Status
+                        </Badge>
+                    </CellTemplate>
+                </DataTableColumn>
+            </Columns>
+        </DataTable>
+    </div>
+
+    <!-- Empty State -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Empty State</h2>
+            <p class="text-sm text-muted-foreground">
+                Displays a message when there's no data to show.
+            </p>
+        </div>
+        <DataTable TData="Person" Data="@emptyPeople" InitialPageSize="5">
+            <Columns>
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Name)" Header="Name" />
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Email)" Header="Email" />
+            </Columns>
+        </DataTable>
+    </div>
+
+    <!-- Loading State -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Loading State</h2>
+            <p class="text-sm text-muted-foreground">
+                Shows a loading indicator while data is being fetched.
+            </p>
+        </div>
+        <div class="flex gap-2 mb-4">
+            <Button OnClick="@(() => isLoading = !isLoading)">
+                Toggle Loading
+            </Button>
+        </div>
+        <DataTable TData="Person" Data="@people" IsLoading="@isLoading" InitialPageSize="5">
+            <Columns>
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable />
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Email)" Header="Email" />
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Role)" Header="Role" />
+            </Columns>
+        </DataTable>
+    </div>
+
+    <!-- Without Toolbar -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Without Toolbar</h2>
+            <p class="text-sm text-muted-foreground">
+                A minimal table without the toolbar (no search or column visibility).
+            </p>
+        </div>
+        <DataTable TData="Person" Data="@people" ShowToolbar="false" InitialPageSize="5">
+            <Columns>
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable />
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Email)" Header="Email" />
+                <DataTableColumn TData="Person" TValue="int" Property="@(p => p.Age)" Header="Age" Sortable />
+            </Columns>
+        </DataTable>
+    </div>
+
+    <!-- Custom Toolbar Actions -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Toolbar Actions</h2>
+            <p class="text-sm text-muted-foreground">
+                Add custom action buttons to the toolbar.
+            </p>
+        </div>
+        <DataTable TData="Person" Data="@people" InitialPageSize="5">
+            <ToolbarActions>
+                <Button Variant="ButtonVariant.Default" Size="ButtonSize.Small" OnClick="@AddNewPerson">
+                    Add Person
+                </Button>
+                <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@ExportData">
+                    Export
+                </Button>
+            </ToolbarActions>
+            <Columns>
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable />
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Email)" Header="Email" />
+                <DataTableColumn TData="Person" TValue="string" Property="@(p => p.Role)" Header="Role" />
+            </Columns>
+        </DataTable>
+    </div>
+</div>
+
+@code {
+    private List<Person> people = new();
+    private List<Person> emptyPeople = new();
+    private IReadOnlyCollection<Person> selectedPeople = Array.Empty<Person>();
+    private bool isLoading = false;
+
+    protected override void OnInitialized()
+    {
+        // Generate 500 sample records using MockDataService
+        people = MockDataService.GeneratePersons(500);
+        Console.WriteLine($"Generated {people.Count} people");
+    }
+
+    private void ShowDetails(Person person)
+    {
+        Console.WriteLine($"Showing details for {person.Name}");
+    }
+
+    private void EditPerson(Person person)
+    {
+        Console.WriteLine($"Editing {person.Name}");
+    }
+
+    private void AddNewPerson()
+    {
+        Console.WriteLine("Adding new person");
+    }
+
+    private void ExportData()
+    {
+        Console.WriteLine("Exporting data");
+    }
+}

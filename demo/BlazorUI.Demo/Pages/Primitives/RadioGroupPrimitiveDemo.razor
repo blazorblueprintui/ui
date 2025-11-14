@@ -1,0 +1,335 @@
+@page "/primitives/radio-group"
+@using BlazorUI.Primitives.RadioGroup
+
+<PageTitle>RadioGroup Primitive - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">RadioGroup Primitive</h1>
+        <p class="text-xl text-muted-foreground">
+            Headless, unstyled radio group primitive with full keyboard navigation and accessibility.
+        </p>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Headless Primitive</h2>
+                <p class="text-muted-foreground">
+                    The primitive provides behavior, accessibility, and arrow key navigation.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 max-w-md">
+                <BlazorUI.Primitives.RadioGroup.RadioGroup @bind-Value="basicValue" AriaLabel="Basic radio group">
+                    @foreach (var option in new[] { "Option 1", "Option 2", "Option 3" })
+                    {
+                        <div class="flex items-center gap-3 mb-2">
+                            <BlazorUI.Primitives.RadioGroup.RadioGroupItem Value="@option" Id="@($"basic-{option}")"
+                                                     class="h-4 w-4 rounded-full border-2 border-input cursor-pointer data-[state=checked]:border-primary data-[state=checked]:bg-primary flex items-center justify-center">
+                                <span class="h-2 w-2 rounded-full bg-background data-[state=unchecked]:scale-0 transition-transform" data-state="@(basicValue == option ? "checked" : "unchecked")"></span>
+                            </BlazorUI.Primitives.RadioGroup.RadioGroupItem>
+                            <label for="@($"basic-{option}")" class="cursor-pointer">@option</label>
+                        </div>
+                    }
+                </BlazorUI.Primitives.RadioGroup.RadioGroup>
+                <p class="text-sm text-muted-foreground mt-3">Selected: @(basicValue ?? "None")</p>
+                <p class="text-xs text-muted-foreground mt-1">Try using arrow keys ↑↓ to navigate!</p>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Controlled State</h2>
+                <p class="text-muted-foreground">
+                    Control the primitive state externally with buttons.
+                </p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex gap-2">
+                    <button @onclick='@(() => controlledValue = "Small")' class="px-3 py-2 border rounded text-sm">
+                        Select Small
+                    </button>
+                    <button @onclick='@(() => controlledValue = "Medium")' class="px-3 py-2 border rounded text-sm">
+                        Select Medium
+                    </button>
+                    <button @onclick='@(() => controlledValue = "Large")' class="px-3 py-2 border rounded text-sm">
+                        Select Large
+                    </button>
+                </div>
+
+                <div class="rounded-lg border bg-card p-6 max-w-md">
+                    <BlazorUI.Primitives.RadioGroup.RadioGroup @bind-Value="controlledValue" AriaLabel="Size selection">
+                        @foreach (var size in new[] { "Small", "Medium", "Large" })
+                        {
+                            <div class="flex items-center gap-3 mb-2">
+                                <BlazorUI.Primitives.RadioGroup.RadioGroupItem Value="@size" Id="@($"size-{size}")"
+                                                         class="h-4 w-4 rounded-full border-2 border-input cursor-pointer data-[state=checked]:border-primary data-[state=checked]:bg-primary flex items-center justify-center">
+                                    <span class="h-2 w-2 rounded-full bg-background data-[state=unchecked]:scale-0 transition-transform" data-state="@(controlledValue == size ? "checked" : "unchecked")"></span>
+                                </BlazorUI.Primitives.RadioGroup.RadioGroupItem>
+                                <label for="@($"size-{size}")" class="cursor-pointer">@size</label>
+                            </div>
+                        }
+                    </BlazorUI.Primitives.RadioGroup.RadioGroup>
+                    <p class="text-sm text-muted-foreground mt-3">Selected size: @(controlledValue ?? "None")</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Arrow Key Navigation</h2>
+                <p class="text-muted-foreground">
+                    Built-in keyboard navigation with arrow keys.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 max-w-md">
+                <BlazorUI.Primitives.RadioGroup.RadioGroup @bind-Value="navValue" AriaLabel="Navigation demo" class="space-y-2">
+                    @foreach (var direction in new[] { "North", "East", "South", "West" })
+                    {
+                        <div class="flex items-center gap-3">
+                            <BlazorUI.Primitives.RadioGroup.RadioGroupItem Value="@direction" Id="@($"nav-{direction}")"
+                                                     class="h-4 w-4 rounded-full border-2 border-input cursor-pointer data-[state=checked]:border-primary data-[state=checked]:bg-primary flex items-center justify-center focus-visible:ring-2 focus-visible:ring-ring">
+                                <span class="h-2 w-2 rounded-full bg-background data-[state=unchecked]:scale-0 transition-transform" data-state="@(navValue == direction ? "checked" : "unchecked")"></span>
+                            </BlazorUI.Primitives.RadioGroup.RadioGroupItem>
+                            <label for="@($"nav-{direction}")" class="cursor-pointer">@direction</label>
+                        </div>
+                    }
+                </BlazorUI.Primitives.RadioGroup.RadioGroup>
+                <p class="text-sm text-muted-foreground mt-3">Click an option, then use ↑↓ or ←→ arrow keys to navigate</p>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Disabled State</h2>
+                <p class="text-muted-foreground">
+                    Disable the entire group or individual items.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 max-w-md space-y-4">
+                <div>
+                    <h3 class="text-sm font-semibold mb-2">Disabled Group:</h3>
+                    <BlazorUI.Primitives.RadioGroup.RadioGroup Value="@disabledValue" Disabled="true" AriaLabel="Disabled group" class="space-y-2 opacity-50">
+                        @foreach (var opt in new[] { "Option A", "Option B" })
+                        {
+                            <div class="flex items-center gap-3">
+                                <BlazorUI.Primitives.RadioGroup.RadioGroupItem Value="@opt" Id="@($"disabled-{opt}")"
+                                                         class="h-4 w-4 rounded-full border-2 border-input flex items-center justify-center cursor-not-allowed">
+                                    <span class="h-2 w-2 rounded-full bg-muted"></span>
+                                </BlazorUI.Primitives.RadioGroup.RadioGroupItem>
+                                <label for="@($"disabled-{opt}")" class="cursor-not-allowed">@opt</label>
+                            </div>
+                        }
+                    </BlazorUI.Primitives.RadioGroup.RadioGroup>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Accessibility Features</h2>
+                <p class="text-muted-foreground">
+                    Built-in accessibility features following WAI-ARIA design patterns.
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-6 space-y-3 bg-muted/50">
+                <div class="flex items-start gap-2">
+                    <span class="text-green-600 dark:text-green-400">✓</span>
+                    <span class="text-sm"><strong>ARIA attributes:</strong> role="radiogroup" and role="radio", aria-checked, aria-disabled automatically applied</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-green-600 dark:text-green-400">✓</span>
+                    <span class="text-sm"><strong>Arrow key navigation:</strong> ↑↓←→ keys navigate between options and auto-select</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-green-600 dark:text-green-400">✓</span>
+                    <span class="text-sm"><strong>Keyboard support:</strong> Space and Enter keys work out of the box</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-green-600 dark:text-green-400">✓</span>
+                    <span class="text-sm"><strong>Screen reader support:</strong> Proper role announcements and state changes</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-green-600 dark:text-green-400">✓</span>
+                    <span class="text-sm"><strong>Focus management:</strong> Roving tab index pattern built-in</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-green-600 dark:text-green-400">✓</span>
+                    <span class="text-sm"><strong>Disabled state:</strong> Proper disabled attribute and behavior for group and individual items</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Keyboard Shortcuts</h2>
+                <p class="text-muted-foreground">
+                    Navigate and interact with radio groups using keyboard.
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-6 space-y-3 bg-muted/50">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium">Navigate options</span>
+                    <kbd class="px-2 py-1 text-xs font-semibold bg-background border rounded">Arrow Keys</kbd>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium">Select option</span>
+                    <kbd class="px-2 py-1 text-xs font-semibold bg-background border rounded">Space / Enter</kbd>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium">Navigate to group</span>
+                    <kbd class="px-2 py-1 text-xs font-semibold bg-background border rounded">Tab</kbd>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">API Reference</h2>
+                <p class="text-muted-foreground">
+                    Component properties and parameters.
+                </p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="rounded-lg border p-4">
+                    <h3 class="font-semibold mb-3">RadioGroup&lt;TValue&gt;</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Value</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>TValue?</code><br/>
+                                The currently selected value. Supports two-way binding.
+                            </p>
+                        </div>
+                        <Separator />
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">ValueChanged</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>EventCallback&lt;TValue&gt;</code><br/>
+                                Callback invoked when the selected value changes.
+                            </p>
+                        </div>
+                        <Separator />
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Disabled</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>bool</code><br/>
+                                <strong>Default:</strong> <code>false</code><br/>
+                                Disables the entire radio group when true.
+                            </p>
+                        </div>
+                        <Separator />
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">AriaLabel</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>string?</code><br/>
+                                Accessible label for screen readers.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border p-4">
+                    <h3 class="font-semibold mb-3">RadioGroupItem&lt;TValue&gt;</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Value</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>TValue</code> (required)<br/>
+                                The value of this radio item.
+                            </p>
+                        </div>
+                        <Separator />
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Disabled</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>bool</code><br/>
+                                <strong>Default:</strong> <code>false</code><br/>
+                                Disables this individual radio item when true.
+                            </p>
+                        </div>
+                        <Separator />
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Additional Attributes</code>
+                            <p class="text-muted-foreground mt-1">
+                                Any additional attributes (class, style, Id, AriaLabel, etc.) are passed to the button element.
+                            </p>
+                            <p class="text-muted-foreground mt-2">
+                                <strong>Auto-applied attributes:</strong> data-state, aria-checked, disabled, tabindex
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">When to Use Primitives</h2>
+                <p class="text-muted-foreground">
+                    Choose between primitives and styled components based on your needs.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="rounded-lg border p-4 space-y-3">
+                    <h3 class="font-semibold text-primary">Use RadioGroup Primitive</h3>
+                    <ul class="space-y-2 text-sm text-muted-foreground">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Building a custom design system</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Need complete control over styling</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Want to apply your own CSS framework</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Creating unique visual designs</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="rounded-lg border p-4 space-y-3">
+                    <h3 class="font-semibold text-primary">Use Styled Component</h3>
+                    <ul class="space-y-2 text-sm text-muted-foreground">
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Want shadcn/ui design out of the box</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Need quick implementation</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Like the default styling</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Prefer convention over configuration</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+@code {
+    private string? basicValue = "Option 1";
+    private string? controlledValue = "Medium";
+    private string? navValue = "North";
+    private string? disabledValue = "Option A";
+}

@@ -1,0 +1,31 @@
+@namespace BlazorUI.Components.DropdownMenu
+
+<span class="@CssClass">
+    @ChildContent
+</span>
+
+@code {
+    /// <summary>
+    /// Gets or sets additional CSS classes to apply to the shortcut.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets the content to be rendered inside the shortcut (e.g., "⌘K", "Ctrl+S").
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets the computed CSS classes for the shortcut.
+    /// </summary>
+    private string CssClass
+    {
+        get
+        {
+            var baseClasses = "ms-auto text-xs tracking-widest opacity-60";
+            return string.IsNullOrWhiteSpace(Class) ? baseClasses : $"{baseClasses} {Class}";
+        }
+    }
+}

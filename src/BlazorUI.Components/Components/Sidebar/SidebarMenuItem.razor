@@ -1,0 +1,35 @@
+@namespace BlazorUI.Components.Sidebar
+@using BlazorUI.Components.Utilities
+
+@*
+    SidebarMenuItem component wrapping individual menu items.
+*@
+
+<li class="@GetClasses()" @attributes="AdditionalAttributes">
+    @ChildContent
+</li>
+
+@code {
+    /// <summary>
+    /// The menu item content (typically SidebarMenuButton).
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string GetClasses()
+    {
+        return ClassNames.cn("group/menu-item relative group-data-[collapsible=icon]:w-auto", Class);
+    }
+}

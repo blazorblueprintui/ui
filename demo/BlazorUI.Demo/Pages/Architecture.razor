@@ -1,0 +1,159 @@
+@page "/architecture"
+
+<PageTitle>Architecture - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Architecture</h1>
+        <p class="text-xl text-muted-foreground">
+            Understanding the two-tier primitives architecture
+        </p>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Overview</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                BlazorUI follows the proven architecture pattern of Radix UI + shadcn/ui, adapted for Blazor.
+                This separation between behavior and presentation provides maximum flexibility while maintaining
+                beautiful defaults.
+            </p>
+        </section>
+
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Two-Tier Architecture</h2>
+
+            <div class="space-y-4">
+                <div class="p-6 border rounded-lg space-y-3 bg-card">
+                    <div class="flex items-center gap-2">
+                        <div class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span class="text-primary font-semibold">1</span>
+                        </div>
+                        <h3 class="text-lg font-semibold">Primitives Layer</h3>
+                    </div>
+                    <p class="text-sm text-muted-foreground">
+                        Unstyled, headless components located in <code class="text-xs bg-muted px-1.5 py-0.5 rounded">Primitives/</code>.
+                    </p>
+                    <ul class="text-sm text-muted-foreground space-y-2 list-disc list-inside">
+                        <li>Handles all behavior and interaction logic</li>
+                        <li>Implements accessibility (ARIA, keyboard navigation)</li>
+                        <li>Manages component state</li>
+                        <li>Provides JavaScript interop where needed</li>
+                        <li>Zero styling - completely headless</li>
+                    </ul>
+                </div>
+
+                <div class="p-6 border rounded-lg space-y-3 bg-card">
+                    <div class="flex items-center gap-2">
+                        <div class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span class="text-primary font-semibold">2</span>
+                        </div>
+                        <h3 class="text-lg font-semibold">Components Layer</h3>
+                    </div>
+                    <p class="text-sm text-muted-foreground">
+                        Styled wrappers located in <code class="text-xs bg-muted px-1.5 py-0.5 rounded">Components/</code>.
+                    </p>
+                    <ul class="text-sm text-muted-foreground space-y-2 list-disc list-inside">
+                        <li>Wraps primitives with shadcn/ui styling</li>
+                        <li>Applies Tailwind utility classes</li>
+                        <li>Uses CSS variables for theming</li>
+                        <li>Provides beautiful defaults</li>
+                        <li>Zero behavioral logic</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">When to Use Each</h2>
+
+            <div class="grid gap-4 md:grid-cols-2">
+                <div class="p-5 border rounded-lg space-y-3">
+                    <h3 class="font-semibold text-primary">Use Primitives When:</h3>
+                    <ul class="text-sm text-muted-foreground space-y-2">
+                        <li>✓ Building a custom design system</li>
+                        <li>✓ Need complete control over styling</li>
+                        <li>✓ Want to apply your own CSS framework</li>
+                        <li>✓ Creating unique visual designs</li>
+                    </ul>
+                </div>
+
+                <div class="p-5 border rounded-lg space-y-3">
+                    <h3 class="font-semibold text-primary">Use Components When:</h3>
+                    <ul class="text-sm text-muted-foreground space-y-2">
+                        <li>✓ Want shadcn/ui design out of the box</li>
+                        <li>✓ Need quick implementation</li>
+                        <li>✓ Like the default styling</li>
+                        <li>✓ Prefer convention over configuration</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Infrastructure Services</h2>
+            <p class="text-muted-foreground">
+                Primitives are built on top of shared infrastructure services:
+            </p>
+
+            <div class="grid gap-3 sm:grid-cols-2">
+                <div class="p-4 border rounded-lg">
+                    <h4 class="font-medium mb-1">PortalService</h4>
+                    <p class="text-sm text-muted-foreground">Renders content outside DOM hierarchy</p>
+                </div>
+                <div class="p-4 border rounded-lg">
+                    <h4 class="font-medium mb-1">FocusManager</h4>
+                    <p class="text-sm text-muted-foreground">Focus trapping and restoration</p>
+                </div>
+                <div class="p-4 border rounded-lg">
+                    <h4 class="font-medium mb-1">PositioningService</h4>
+                    <p class="text-sm text-muted-foreground">Floating UI integration for positioning</p>
+                </div>
+                <div class="p-4 border rounded-lg">
+                    <h4 class="font-medium mb-1">IdGenerator</h4>
+                    <p class="text-sm text-muted-foreground">Unique IDs for ARIA relationships</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Key Patterns</h2>
+
+            <div class="space-y-3">
+                <div class="p-4 border-l-4 border-primary bg-primary/5 rounded-r-lg">
+                    <h4 class="font-medium mb-2">Controlled/Uncontrolled State</h4>
+                    <p class="text-sm text-muted-foreground">
+                        All primitives support both patterns - manage state internally or pass it from parent.
+                    </p>
+                </div>
+
+                <div class="p-4 border-l-4 border-primary bg-primary/5 rounded-r-lg">
+                    <h4 class="font-medium mb-2">Composition via RenderFragment</h4>
+                    <p class="text-sm text-muted-foreground">
+                        Flexible component composition using Blazor's RenderFragment for maximum flexibility.
+                    </p>
+                </div>
+
+                <div class="p-4 border-l-4 border-primary bg-primary/5 rounded-r-lg">
+                    <h4 class="font-medium mb-2">Context via CascadingValue</h4>
+                    <p class="text-sm text-muted-foreground">
+                        Component communication using Blazor's CascadingValue for clean parent-child relationships.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Accessibility</h2>
+            <p class="text-muted-foreground">
+                All primitives implement WCAG 2.1 AA standards by default:
+            </p>
+            <ul class="text-sm text-muted-foreground space-y-2 list-disc list-inside ml-4">
+                <li>Full keyboard navigation (Tab, Enter, Space, Escape, Arrow keys)</li>
+                <li>Automatic ARIA attributes (roles, labels, descriptions, states)</li>
+                <li>Focus management with visual indicators</li>
+                <li>Screen reader compatibility</li>
+            </ul>
+        </section>
+    </div>
+</div>

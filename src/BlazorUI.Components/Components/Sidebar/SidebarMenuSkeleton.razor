@@ -1,0 +1,42 @@
+@namespace BlazorUI.Components.Sidebar
+@using BlazorUI.Components.Utilities
+
+@*
+    SidebarMenuSkeleton component for loading states.
+*@
+
+<div class="@GetClasses()" @attributes="AdditionalAttributes">
+    <div class="h-4 flex-1 max-w-[--skeleton-width] rounded-md bg-sidebar-accent-foreground/10" />
+    @if (ShowIcon)
+    {
+        <div class="ml-auto h-4 w-4 rounded-md bg-sidebar-accent-foreground/10" />
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// Whether to show an icon skeleton.
+    /// </summary>
+    [Parameter]
+    public bool ShowIcon { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string GetClasses()
+    {
+        return ClassNames.cn(
+            "flex h-8 items-center gap-2 rounded-md px-2",
+            Class
+        );
+    }
+}

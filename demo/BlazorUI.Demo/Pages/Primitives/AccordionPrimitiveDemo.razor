@@ -1,0 +1,408 @@
+@page "/primitives/accordion"
+@using BlazorUI.Primitives.Accordion
+
+<PageTitle>Accordion Primitive - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Accordion Primitive</h1>
+            <p class="text-xl text-muted-foreground">
+                Headless, unstyled accordion primitive with full keyboard navigation and accessibility support.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Headless Primitive</h2>
+                <p class="text-muted-foreground">
+                    The most basic accordion with no styling. Demonstrates the raw, headless behavior.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 max-w-md">
+                <Accordion DefaultValue="@(new HashSet<string> { "item-1" })" class="border rounded">
+                    <AccordionItem Value="item-1" class="border-b last:border-0">
+                        <AccordionTrigger class="w-full p-4 text-left cursor-pointer hover:bg-muted/50">
+                            Is it accessible?
+                        </AccordionTrigger>
+                        <AccordionContent class="p-4 pt-0">
+                            Yes. It adheres to the WAI-ARIA design pattern with full keyboard navigation support.
+                        </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem Value="item-2" class="border-b last:border-0">
+                        <AccordionTrigger class="w-full p-4 text-left cursor-pointer hover:bg-muted/50">
+                            Is it styled?
+                        </AccordionTrigger>
+                        <AccordionContent class="p-4 pt-0">
+                            No. It's a headless primitive that provides behavior without any styling.
+                        </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem Value="item-3" class="border-b last:border-0">
+                        <AccordionTrigger class="w-full p-4 text-left cursor-pointer hover:bg-muted/50">
+                            Can it be animated?
+                        </AccordionTrigger>
+                        <AccordionContent class="p-4 pt-0">
+                            Yes! You can animate the open/close transition using CSS or JavaScript.
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Controlled State</h2>
+                <p class="text-muted-foreground">
+                    Control which items are open programmatically using @@bind-Value.
+                </p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex gap-2">
+                    <button @onclick="OpenFirstItem"
+                            class="px-3 py-2 border rounded text-sm">
+                        Open Item 1
+                    </button>
+                    <button @onclick="OpenSecondItem"
+                            class="px-3 py-2 border rounded text-sm">
+                        Open Item 2
+                    </button>
+                    <button @onclick="CloseAll"
+                            class="px-3 py-2 border rounded text-sm">
+                        Close All
+                    </button>
+                </div>
+
+                <p class="text-sm text-muted-foreground">
+                    Open items: <strong>@string.Join(", ", controlledValue)</strong>
+                </p>
+
+                <div class="rounded-lg border bg-card p-6 max-w-md">
+                    <Accordion @bind-Value="controlledValue" Type="AccordionType.Single" Collapsible="true" class="border rounded">
+                        <AccordionItem Value="controlled-1" class="border-b last:border-0">
+                            <AccordionTrigger class="w-full p-4 text-left cursor-pointer hover:bg-muted/50">
+                                Controlled Item 1
+                            </AccordionTrigger>
+                            <AccordionContent class="p-4 pt-0">
+                                This item's state is controlled externally.
+                            </AccordionContent>
+                        </AccordionItem>
+
+                        <AccordionItem Value="controlled-2" class="border-b last:border-0">
+                            <AccordionTrigger class="w-full p-4 text-left cursor-pointer hover:bg-muted/50">
+                                Controlled Item 2
+                            </AccordionTrigger>
+                            <AccordionContent class="p-4 pt-0">
+                                Use the buttons above to control which item is open.
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Single Mode (Collapsible)</h2>
+                <p class="text-muted-foreground">
+                    In single mode with collapsible enabled, clicking an open item closes it, leaving all items closed.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 max-w-md">
+                <Accordion Type="AccordionType.Single" Collapsible="true" class="border rounded">
+                    <AccordionItem Value="item-1" class="border-b last:border-0">
+                        <AccordionTrigger class="w-full p-4 text-left cursor-pointer hover:bg-muted/50">Item 1</AccordionTrigger>
+                        <AccordionContent class="p-4 pt-0">
+                            Content 1 - Click again to collapse.
+                        </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem Value="item-2" class="border-b last:border-0">
+                        <AccordionTrigger class="w-full p-4 text-left cursor-pointer hover:bg-muted/50">Item 2</AccordionTrigger>
+                        <AccordionContent class="p-4 pt-0">
+                            Content 2 - Click again to collapse.
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Multiple Mode</h2>
+                <p class="text-muted-foreground">
+                    In multiple mode, multiple items can be open at the same time.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 max-w-md">
+                <Accordion Type="AccordionType.Multiple" class="border rounded" DefaultValue="@(new HashSet<string> { "multiple-1" })">
+                    <AccordionItem Value="multiple-1" class="border-b last:border-0">
+                        <AccordionTrigger class="w-full p-4 text-left cursor-pointer hover:bg-muted/50">First Section</AccordionTrigger>
+                        <AccordionContent class="p-4 pt-0">
+                            This can be open alongside other sections.
+                        </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem Value="multiple-2" class="border-b last:border-0">
+                        <AccordionTrigger class="w-full p-4 text-left cursor-pointer hover:bg-muted/50">Second Section</AccordionTrigger>
+                        <AccordionContent class="p-4 pt-0">
+                            Open both sections at once to see them together.
+                        </AccordionContent>
+                    </AccordionItem>
+
+                    <AccordionItem Value="multiple-3" class="border-b last:border-0">
+                        <AccordionTrigger class="w-full p-4 text-left cursor-pointer hover:bg-muted/50">Third Section</AccordionTrigger>
+                        <AccordionContent class="p-4 pt-0">
+                            All three can be open simultaneously in multiple mode.
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Accessibility Features</h2>
+                <p class="text-muted-foreground">
+                    Built-in accessibility features following WAI-ARIA design patterns.
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-6 space-y-3 bg-muted/50">
+                <div>
+                    <h3 class="font-semibold mb-2">ARIA Attributes</h3>
+                    <ul class="space-y-2 text-sm text-muted-foreground">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span><code class="text-xs bg-muted px-1 py-0.5 rounded">role="region"</code> on content panels for screen readers</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span><code class="text-xs bg-muted px-1 py-0.5 rounded">aria-expanded</code> indicates open/closed state</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span><code class="text-xs bg-muted px-1 py-0.5 rounded">aria-controls</code> links trigger to content</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span><code class="text-xs bg-muted px-1 py-0.5 rounded">aria-labelledby</code> links content to trigger</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span><code class="text-xs bg-muted px-1 py-0.5 rounded">aria-disabled</code> on disabled items</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Keyboard Shortcuts</h2>
+                <p class="text-muted-foreground">
+                    Navigate and interact with the accordion using keyboard.
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-6 space-y-3 bg-muted/50">
+                <div class="grid gap-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium">Navigate to triggers</span>
+                        <kbd class="px-2 py-1 text-xs font-semibold bg-background border rounded">Tab</kbd>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium">Toggle accordion item</span>
+                        <div class="flex gap-1">
+                            <kbd class="px-2 py-1 text-xs font-semibold bg-background border rounded">Enter</kbd>
+                            <span class="text-muted-foreground">or</span>
+                            <kbd class="px-2 py-1 text-xs font-semibold bg-background border rounded">Space</kbd>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium">Navigate between triggers</span>
+                        <div class="flex gap-1">
+                            <kbd class="px-2 py-1 text-xs font-semibold bg-background border rounded">↑</kbd>
+                            <kbd class="px-2 py-1 text-xs font-semibold bg-background border rounded">↓</kbd>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">API Reference</h2>
+                <p class="text-muted-foreground">
+                    Component properties and parameters.
+                </p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="rounded-lg border p-4">
+                    <h3 class="font-semibold mb-3">Accordion</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Type</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>AccordionType</code> (Single | Multiple)<br/>
+                                <strong>Default:</strong> <code>AccordionType.Single</code><br/>
+                                Determines if one or multiple items can be open at once.
+                            </p>
+                        </div>
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Collapsible</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>bool</code><br/>
+                                <strong>Default:</strong> <code>false</code><br/>
+                                When true in Single mode, allows closing all items.
+                            </p>
+                        </div>
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">DefaultValue</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>HashSet&lt;string&gt;</code><br/>
+                                Initial open items (uncontrolled).
+                            </p>
+                        </div>
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Value / ValueChanged</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>HashSet&lt;string&gt;</code><br/>
+                                Controlled open items. Use with @@bind-Value.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border p-4">
+                    <h3 class="font-semibold mb-3">AccordionItem</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Value</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>string</code> (required)<br/>
+                                Unique identifier for this item.
+                            </p>
+                        </div>
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Disabled</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>bool</code><br/>
+                                <strong>Default:</strong> <code>false</code><br/>
+                                Prevents interaction with this item.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border p-4">
+                    <h3 class="font-semibold mb-3">AccordionTrigger</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">ChildContent</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>RenderFragment</code><br/>
+                                The trigger button content.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border p-4">
+                    <h3 class="font-semibold mb-3">AccordionContent</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">ChildContent</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>RenderFragment</code><br/>
+                                The panel content.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">When to Use Primitives</h2>
+                <p class="text-muted-foreground">
+                    Choose between primitives and styled components based on your needs.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="rounded-lg border p-4 space-y-3">
+                    <h3 class="font-semibold text-primary">Use Accordion Primitive</h3>
+                    <ul class="space-y-2 text-sm text-muted-foreground">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Building a custom design system</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Need complete control over styling</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Want to apply your own CSS framework</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Creating unique visual designs</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="rounded-lg border p-4 space-y-3">
+                    <h3 class="font-semibold text-primary">Use Styled Component</h3>
+                    <ul class="space-y-2 text-sm text-muted-foreground">
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Want shadcn/ui design out of the box</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Need quick implementation</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Like the default styling</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Prefer convention over configuration</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+@code {
+    private HashSet<string> controlledValue = new();
+
+    private void OpenFirstItem()
+    {
+        controlledValue = new HashSet<string> { "controlled-1" };
+    }
+
+    private void OpenSecondItem()
+    {
+        controlledValue = new HashSet<string> { "controlled-2" };
+    }
+
+    private void CloseAll()
+    {
+        controlledValue = new HashSet<string>();
+    }
+}

@@ -1,0 +1,48 @@
+@namespace BlazorUI.Components.Dialog
+@using BlazorUI.Primitives.Dialog
+
+@*
+    Styled DialogTitle component with shadcn/ui classes.
+*@
+
+<BlazorUI.Primitives.Dialog.DialogTitle class="@GetClassNames()" @attributes="AdditionalAttributes">
+    @ChildContent
+</BlazorUI.Primitives.Dialog.DialogTitle>
+
+@code {
+    /// <summary>
+    /// The title content to display.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the title.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the title element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string GetClassNames()
+    {
+        var classes = new List<string>
+        {
+            "text-lg",
+            "font-semibold",
+            "leading-none",
+            "tracking-tight"
+        };
+
+        if (!string.IsNullOrWhiteSpace(Class))
+        {
+            classes.Add(Class);
+        }
+
+        return string.Join(" ", classes);
+    }
+}

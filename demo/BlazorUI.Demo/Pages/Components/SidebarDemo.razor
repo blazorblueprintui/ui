@@ -1,0 +1,1165 @@
+@page "/components/sidebar"
+@using BlazorUI.Primitives.Services
+@using BlazorUI.Components.Sidebar
+@using BlazorUI.Components.Collapsible
+@using BlazorUI.Components.DropdownMenu
+@using BlazorUI.Components.Avatar
+@using BlazorUI.Icons
+
+<PageTitle>Sidebar Component - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Sidebar Component</h1>
+        <p class="text-xl text-muted-foreground">
+            A composable, themeable and customizable sidebar component.
+        </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+    </div>
+
+    <!-- Features Section -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">Features</h2>
+        <ul class="list-disc list-inside space-y-2 text-muted-foreground">
+            <li>Responsive design - Sheet overlay on mobile, persistent sidebar on desktop</li>
+            <li>Collapsible with icon-only mode</li>
+            <li>Three variants: Sidebar (default), Floating, and Inset</li>
+            <li>State persistence via cookies</li>
+            <li>Keyboard shortcuts (Ctrl/Cmd + B to toggle)</li>
+            <li>Automatic tooltips in collapsed state</li>
+            <li>Flexible composition with menu groups, submenus, and actions</li>
+            <li>Full shadcn/ui compatibility</li>
+        </ul>
+    </div>
+
+    <!-- Installation Section -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">Installation</h2>
+        <div class="bg-muted p-4 rounded-lg">
+            <p class="text-sm text-muted-foreground mb-2">The sidebar component requires the Sheet primitive for mobile functionality.</p>
+            <p class="text-sm text-muted-foreground">Add the SidebarProvider to your MainLayout.razor to enable sidebar functionality throughout your app.</p>
+        </div>
+    </div>
+
+    <!-- Collapse Mode Toggle -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">Menu Collapse Mode</h2>
+        <div class="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+            <span class="text-sm font-medium">Collapse Mode:</span>
+            <div class="flex items-center gap-2">
+                <button
+                    @onclick="() => isBasicCollapsible = true"
+                    class="@(isBasicCollapsible ? "bg-primary text-primary-foreground" : "bg-background text-foreground") px-3 py-1.5 rounded-md text-sm font-medium transition-colors hover:opacity-90">
+                    Shrink (Icon-only)
+                </button>
+                <button
+                    @onclick="() => isBasicCollapsible = false"
+                    class="@(!isBasicCollapsible ? "bg-primary text-primary-foreground" : "bg-background text-foreground") px-3 py-1.5 rounded-md text-sm font-medium transition-colors hover:opacity-90">
+                    Hide Completely
+                </button>
+            </div>
+            <span class="text-xs text-muted-foreground ml-auto">Click the trigger button to see the difference</span>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">Basic Sidebar</h2>
+        <p class="text-muted-foreground">A simple sidebar with menu items.</p>
+
+        <!-- Collapse Mode Toggle -->
+       
+
+        <div class="border rounded-lg p-6 bg-background">
+            <div class="h-[600px] w-full border rounded-lg overflow-hidden bg-background">
+                <SidebarProvider CookieKey="sidebar:demo-basic" HeightClass="h-full">
+                    <div class="flex h-full w-full">
+                        <Sidebar Collapsible="@isBasicCollapsible">
+                            <SidebarHeader>
+                                <SidebarHeaderContent>
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                                        <LucideIcon Name="command" Size="16" />
+                                    </div>
+                                    <SidebarHeaderInfo>
+                                        <span class="truncate font-semibold">Acme Inc</span>
+                                        <span class="truncate text-xs text-muted-foreground">Enterprise</span>
+                                    </SidebarHeaderInfo>
+                                </SidebarHeaderContent>
+                            </SidebarHeader>
+
+                            <SidebarContent>
+                                <SidebarMenu>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Home">
+                                            <LucideIcon Name="house" Size="16" />
+                                            <span>Home</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Inbox" IsActive="true">
+                                            <LucideIcon Name="inbox" Size="16" />
+                                            <span>Inbox</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Calendar">
+                                            <LucideIcon Name="calendar" Size="16" />
+                                            <span>Calendar</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Search">
+                                            <LucideIcon Name="search" Size="16" />
+                                            <span>Search</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Settings">
+                                            <LucideIcon Name="settings" Size="16" />
+                                            <span>Settings</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                </SidebarMenu>
+                            </SidebarContent>
+
+                            <SidebarFooter>
+                                <SidebarMenu>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="User Profile">
+                                            <LucideIcon Name="user" Size="16" />
+                                            <span>John Doe</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                </SidebarMenu>
+                            </SidebarFooter>
+                        </Sidebar>
+
+                        <SidebarInset>
+                            <header class="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                                <SidebarTrigger />
+                                <h1 class="text-lg font-semibold">Dashboard</h1>
+                            </header>
+                            <div class="flex flex-1 flex-col gap-4 p-4">
+                                <div class="grid auto-rows-min gap-4 md:grid-cols-3">
+                                    <div class="aspect-video rounded-xl bg-muted/50"></div>
+                                    <div class="aspect-video rounded-xl bg-muted/50"></div>
+                                    <div class="aspect-video rounded-xl bg-muted/50"></div>
+                                </div>
+                                <div class="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min"></div>
+                            </div>
+                        </SidebarInset>
+                    </div>
+                </SidebarProvider>
+            </div>
+        </div>
+    </div>
+
+    <!-- With Groups Example -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">With Menu Groups</h2>
+        <p class="text-muted-foreground">Organize menu items into logical groups.</p>
+
+        <div class="border rounded-lg p-6 bg-background">
+            <div class="h-[600px] w-full border rounded-lg overflow-hidden bg-background">
+                <SidebarProvider CookieKey="sidebar:demo-groups" HeightClass="h-full">
+                    <div class="flex h-full w-full">
+                        <Sidebar Collapsible="@isBasicCollapsible">
+                            <SidebarHeader>
+                                <SidebarHeaderContent>
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                                        <LucideIcon Name="layers" Size="16" />
+                                    </div>
+                                    <SidebarHeaderInfo>
+                                        <span class="truncate font-semibold">My Application</span>
+                                        <span class="truncate text-xs text-muted-foreground">v1.0.0</span>
+                                    </SidebarHeaderInfo>
+                                </SidebarHeaderContent>
+                            </SidebarHeader>
+
+                            <SidebarContent>
+                                <SidebarGroup>
+                                    <SidebarGroupLabel>Platform</SidebarGroupLabel>
+                                    <SidebarGroupContent>
+                                        <SidebarMenu>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton Tooltip="Dashboard">
+                                                    <LucideIcon Name="layout-dashboard" Size="16" />
+                                                    <span>Dashboard</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton Tooltip="Projects" IsActive="true">
+                                                    <LucideIcon Name="folder" Size="16" />
+                                                    <span>Projects</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton Tooltip="Tasks">
+                                                    <LucideIcon Name="square-check" Size="16" />
+                                                    <span>Tasks</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                        </SidebarMenu>
+                                    </SidebarGroupContent>
+                                </SidebarGroup>
+
+                                <SidebarSeparator />
+
+                                <SidebarGroup>
+                                    <SidebarGroupLabel>Settings</SidebarGroupLabel>
+                                    <SidebarGroupContent>
+                                        <SidebarMenu>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton Tooltip="Profile">
+                                                    <LucideIcon Name="user" Size="16" />
+                                                    <span>Profile</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton Tooltip="Preferences">
+                                                    <LucideIcon Name="settings" Size="16" />
+                                                    <span>Preferences</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                        </SidebarMenu>
+                                    </SidebarGroupContent>
+                                </SidebarGroup>
+                            </SidebarContent>
+
+                            <SidebarFooter>
+                                <SidebarMenu>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Help">
+                                            <LucideIcon Name="life-buoy" Size="16" />
+                                            <span>Help & Support</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                </SidebarMenu>
+                            </SidebarFooter>
+                        </Sidebar>
+
+                        <SidebarInset>
+                            <header class="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                                <SidebarTrigger />
+                                <h1 class="text-lg font-semibold">Projects</h1>
+                            </header>
+                            <div class="flex flex-1 flex-col gap-4 p-4">
+                                <div class="rounded-xl bg-muted/50 p-4">
+                                    <p class="text-sm text-muted-foreground">This example shows menu groups with separators.</p>
+                                </div>
+                            </div>
+                        </SidebarInset>
+                    </div>
+                </SidebarProvider>
+            </div>
+        </div>
+    </div>
+
+    <!-- With Submenus Example -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">With Submenus</h2>
+        <p class="text-muted-foreground">Nested navigation with submenu items.</p>
+
+        <div class="border rounded-lg p-6 bg-background">
+            <div class="h-[600px] w-full border rounded-lg overflow-hidden bg-background">
+                <SidebarProvider CookieKey="sidebar:demo-submenus" HeightClass="h-full">
+                    <div class="flex h-full w-full">
+                        <Sidebar Collapsible="@isBasicCollapsible">
+                            <SidebarHeader>
+                                <SidebarHeaderContent>
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                                        <LucideIcon Name="building" Size="16" />
+                                    </div>
+                                    <SidebarHeaderInfo>
+                                        <span class="truncate font-semibold">Company Portal</span>
+                                    </SidebarHeaderInfo>
+                                </SidebarHeaderContent>
+                            </SidebarHeader>
+
+                            <SidebarContent>
+                                <SidebarMenu>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Home">
+                                            <LucideIcon Name="house" Size="16" />
+                                            <span>Home</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Team">
+                                            <LucideIcon Name="users" Size="16" />
+                                            <span>Team</span>
+                                        </SidebarMenuButton>
+                                        <SidebarMenuSub>
+                                            <SidebarMenuSubItem>
+                                                <SidebarMenuSubButton>
+                                                    <span>Engineering</span>
+                                                </SidebarMenuSubButton>
+                                            </SidebarMenuSubItem>
+                                            <SidebarMenuSubItem>
+                                                <SidebarMenuSubButton>
+                                                    <span>Design</span>
+                                                </SidebarMenuSubButton>
+                                            </SidebarMenuSubItem>
+                                            <SidebarMenuSubItem>
+                                                <SidebarMenuSubButton>
+                                                    <span>Marketing</span>
+                                                </SidebarMenuSubButton>
+                                            </SidebarMenuSubItem>
+                                        </SidebarMenuSub>
+                                    </SidebarMenuItem>
+
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Projects">
+                                            <LucideIcon Name="folder" Size="16" />
+                                            <span>Projects</span>
+                                        </SidebarMenuButton>
+                                        <SidebarMenuSub>
+                                            <SidebarMenuSubItem>
+                                                <SidebarMenuSubButton>
+                                                    <span>Project Alpha</span>
+                                                </SidebarMenuSubButton>
+                                            </SidebarMenuSubItem>
+                                            <SidebarMenuSubItem>
+                                                <SidebarMenuSubButton>
+                                                    <span>Project Beta</span>
+                                                </SidebarMenuSubButton>
+                                            </SidebarMenuSubItem>
+                                        </SidebarMenuSub>
+                                    </SidebarMenuItem>
+                                </SidebarMenu>
+                            </SidebarContent>
+                        </Sidebar>
+
+                        <SidebarInset>
+                            <header class="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                                <SidebarTrigger />
+                                <h1 class="text-lg font-semibold">Team Portal</h1>
+                            </header>
+                            <div class="flex flex-1 flex-col gap-4 p-4">
+                                <div class="rounded-xl bg-muted/50 p-4">
+                                    <p class="text-sm text-muted-foreground">Click on Team or Projects to see submenu items.</p>
+                                </div>
+                            </div>
+                        </SidebarInset>
+                    </div>
+                </SidebarProvider>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Variant Example -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">Floating Variant</h2>
+        <p class="text-muted-foreground">Sidebar with floating appearance and rounded corners.</p>
+
+        <div class="border rounded-lg p-6 bg-background">
+            <div class="relative h-[600px] w-full border rounded-lg overflow-hidden bg-background">
+                <SidebarProvider Variant="SidebarVariant.Floating" CookieKey="sidebar:demo-floating" HeightClass="h-full">
+                    <div class="flex h-full w-full relative">
+                        <Sidebar Collapsible="@isBasicCollapsible" Class="!absolute !top-2 !bottom-2 !left-2 !right-2 !z-50">
+                            <SidebarHeader>
+                                <SidebarHeaderContent>
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                                        <LucideIcon Name="zap" Size="16" />
+                                    </div>
+                                    <SidebarHeaderInfo>
+                                        <span class="truncate font-semibold">Floating UI</span>
+                                    </SidebarHeaderInfo>
+                                </SidebarHeaderContent>
+                            </SidebarHeader>
+
+                            <SidebarContent>
+                                <SidebarMenu>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Dashboard">
+                                            <LucideIcon Name="layout-dashboard" Size="16" />
+                                            <span>Dashboard</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Analytics">
+                                            <LucideIcon Name="line-chart" Size="16" />
+                                            <span>Analytics</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Reports">
+                                            <LucideIcon Name="file-text" Size="16" />
+                                            <span>Reports</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                </SidebarMenu>
+                            </SidebarContent>
+                        </Sidebar>
+
+                        <SidebarInset>
+                            <header class="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                                <SidebarTrigger />
+                                <h1 class="text-lg font-semibold">Floating Sidebar</h1>
+                            </header>
+                            <div class="flex flex-1 flex-col gap-4 p-4">
+                                <div class="rounded-xl bg-muted/50 p-4">
+                                    <p class="text-sm text-muted-foreground">The floating variant adds visual separation with rounded corners.</p>
+                                </div>
+                            </div>
+                        </SidebarInset>
+                    </div>
+                </SidebarProvider>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inset Variant Example -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">Inset Variant</h2>
+        <p class="text-muted-foreground">Sidebar with inset content area.</p>
+
+        <div class="border rounded-lg p-6 bg-background">
+            <div class="h-[600px] w-full border rounded-lg overflow-hidden bg-sidebar">
+                <SidebarProvider Variant="SidebarVariant.Inset" CookieKey="sidebar:demo-inset" HeightClass="h-full">
+                    <div class="flex h-full w-full">
+                        <Sidebar Collapsible="@isBasicCollapsible">
+                            <SidebarHeader>
+                                <SidebarHeaderContent>
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                                        <LucideIcon Name="box" Size="16" />
+                                    </div>
+                                    <SidebarHeaderInfo>
+                                        <span class="truncate font-semibold">Inset Layout</span>
+                                    </SidebarHeaderInfo>
+                                </SidebarHeaderContent>
+                            </SidebarHeader>
+
+                            <SidebarContent>
+                                <SidebarMenu>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Overview">
+                                            <LucideIcon Name="eye" Size="16" />
+                                            <span>Overview</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Workspace">
+                                            <LucideIcon Name="briefcase" Size="16" />
+                                            <span>Workspace</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                </SidebarMenu>
+                            </SidebarContent>
+                        </Sidebar>
+
+                        <SidebarInset>
+                            <header class="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                                <SidebarTrigger />
+                                <h1 class="text-lg font-semibold">Inset Sidebar</h1>
+                            </header>
+                            <div class="flex flex-1 flex-col gap-4 p-4">
+                                <div class="rounded-xl bg-muted/50 p-4">
+                                    <p class="text-sm text-muted-foreground">The inset variant creates a contained layout with margins.</p>
+                                </div>
+                            </div>
+                        </SidebarInset>
+                    </div>
+                </SidebarProvider>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collapsible to Icons Example -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">Collapsible to Icons</h2>
+        <p class="text-muted-foreground">Sidebar that collapses to show only icons with tooltips.</p>
+
+        <div class="border rounded-lg p-6 bg-background">
+            <div class="h-[600px] w-full border rounded-lg overflow-hidden bg-background">
+                <SidebarProvider DefaultOpen="false" HeightClass="h-full">
+                    <div class="flex h-full w-full">
+                        <Sidebar Collapsible="@isBasicCollapsible">
+                            <SidebarHeader>
+                                <SidebarHeaderContent>
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                                        <LucideIcon Name="command" Size="16" />
+                                    </div>
+                                    <SidebarHeaderInfo>
+                                        <span class="truncate font-semibold">Icon Mode</span>
+                                        <span class="truncate text-xs text-muted-foreground">Collapsed</span>
+                                    </SidebarHeaderInfo>
+                                </SidebarHeaderContent>
+                            </SidebarHeader>
+
+                            <SidebarContent>
+                                <SidebarMenu>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Dashboard">
+                                            <LucideIcon Name="layout-dashboard" Size="16" />
+                                            <span>Dashboard</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Projects" IsActive="true">
+                                            <LucideIcon Name="folder" Size="16" />
+                                            <span>Projects</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Calendar">
+                                            <LucideIcon Name="calendar" Size="16" />
+                                            <span>Calendar</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Messages">
+                                            <LucideIcon Name="mail" Size="16" />
+                                            <span>Messages</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Settings">
+                                            <LucideIcon Name="settings" Size="16" />
+                                            <span>Settings</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                </SidebarMenu>
+                            </SidebarContent>
+                        </Sidebar>
+
+                        <SidebarInset>
+                            <header class="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                                <SidebarTrigger />
+                                <h1 class="text-lg font-semibold">Icon-Only Mode</h1>
+                            </header>
+                            <div class="flex flex-1 flex-col gap-4 p-4">
+                                <div class="rounded-xl bg-muted/50 p-4">
+                                    <p class="text-sm text-muted-foreground">Hover over icons to see tooltips. Click the trigger to expand.</p>
+                                </div>
+                            </div>
+                        </SidebarInset>
+                    </div>
+                </SidebarProvider>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tree View Example -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">Tree View</h2>
+        <p class="text-muted-foreground">Hierarchical file/folder structure with nested items.</p>
+
+        <div class="border rounded-lg p-6 bg-background">
+            <div class="h-[600px] w-full border rounded-lg overflow-hidden bg-background">
+                <SidebarProvider HeightClass="h-full">
+                    <div class="flex h-full w-full">
+                        <Sidebar Collapsible="@isBasicCollapsible">
+                            <SidebarHeader>
+                                <SidebarHeaderContent>
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                                        <LucideIcon Name="folder-tree" Size="16" />
+                                    </div>
+                                    <SidebarHeaderInfo>
+                                        <span class="truncate font-semibold">File Explorer</span>
+                                    </SidebarHeaderInfo>
+                                </SidebarHeaderContent>
+                            </SidebarHeader>
+
+                            <SidebarContent>
+                                <SidebarMenu>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="src">
+                                            <LucideIcon Name="folder" Size="16" />
+                                            <span>src</span>
+                                        </SidebarMenuButton>
+                                        <SidebarMenuSub>
+                                            <SidebarMenuSubItem>
+                                                <SidebarMenuSubButton>
+                                                    <LucideIcon Name="folder" Size="16" />
+                                                    <span>components</span>
+                                                </SidebarMenuSubButton>
+                                            </SidebarMenuSubItem>
+                                            <SidebarMenuSubItem>
+                                                <SidebarMenuSubButton>
+                                                    <LucideIcon Name="folder" Size="16" />
+                                                    <span>pages</span>
+                                                </SidebarMenuSubButton>
+                                            </SidebarMenuSubItem>
+                                            <SidebarMenuSubItem>
+                                                <SidebarMenuSubButton>
+                                                    <LucideIcon Name="file-code" Size="16" />
+                                                    <span>index.tsx</span>
+                                                </SidebarMenuSubButton>
+                                            </SidebarMenuSubItem>
+                                        </SidebarMenuSub>
+                                    </SidebarMenuItem>
+
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="public">
+                                            <LucideIcon Name="folder" Size="16" />
+                                            <span>public</span>
+                                        </SidebarMenuButton>
+                                        <SidebarMenuSub>
+                                            <SidebarMenuSubItem>
+                                                <SidebarMenuSubButton>
+                                                    <LucideIcon Name="image" Size="16" />
+                                                    <span>logo.png</span>
+                                                </SidebarMenuSubButton>
+                                            </SidebarMenuSubItem>
+                                        </SidebarMenuSub>
+                                    </SidebarMenuItem>
+
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="package.json">
+                                            <LucideIcon Name="file-json" Size="16" />
+                                            <span>package.json</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="README.md">
+                                            <LucideIcon Name="file-text" Size="16" />
+                                            <span>README.md</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                </SidebarMenu>
+                            </SidebarContent>
+                        </Sidebar>
+
+                        <SidebarInset>
+                            <header class="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                                <SidebarTrigger />
+                                <h1 class="text-lg font-semibold">File Explorer</h1>
+                            </header>
+                            <div class="flex flex-1 flex-col gap-4 p-4">
+                                <div class="rounded-xl bg-muted/50 p-4">
+                                    <p class="text-sm text-muted-foreground">Tree view showing hierarchical file structure.</p>
+                                </div>
+                            </div>
+                        </SidebarInset>
+                    </div>
+                </SidebarProvider>
+            </div>
+        </div>
+    </div>
+
+    <!-- With Sticky Header Example -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">With Sticky Header</h2>
+        <p class="text-muted-foreground">Site header above sidebar with coordinated layout.</p>
+
+        <div class="border rounded-lg p-6 bg-background">
+            <div class="h-[600px] w-full border rounded-lg overflow-hidden bg-background">
+                <SidebarProvider HeightClass="h-full">
+                    <div class="flex h-full w-full flex-col">
+                        <!-- Site Header -->
+                        <header class="flex h-14 shrink-0 items-center gap-4 border-b bg-background px-6">
+                            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                                <LucideIcon Name="building" Size="16" />
+                            </div>
+                            <span class="font-semibold">Company Name</span>
+                            <div class="ml-auto flex items-center gap-2">
+                                <button class="flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent">
+                                    <LucideIcon Name="bell" Size="16" />
+                                </button>
+                                <button class="flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent">
+                                    <LucideIcon Name="user" Size="16" />
+                                </button>
+                            </div>
+                        </header>
+
+                        <!-- Sidebar and Content -->
+                        <div class="flex flex-1 overflow-hidden">
+                            <Sidebar Collapsible="@isBasicCollapsible">
+                                <SidebarContent>
+                                    <SidebarMenu>
+                                        <SidebarMenuItem>
+                                            <SidebarMenuButton Tooltip="Overview">
+                                                <LucideIcon Name="layout-dashboard" Size="16" />
+                                                <span>Overview</span>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                        <SidebarMenuItem>
+                                            <SidebarMenuButton Tooltip="Analytics" IsActive="true">
+                                                <LucideIcon Name="chart-column-stacked" Size="16" />
+                                                <span>Analytics</span>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                        <SidebarMenuItem>
+                                            <SidebarMenuButton Tooltip="Reports">
+                                                <LucideIcon Name="file-text" Size="16" />
+                                                <span>Reports</span>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                    </SidebarMenu>
+                                </SidebarContent>
+
+                                <SidebarFooter>
+                                    <SidebarMenu>
+                                        <SidebarMenuItem>
+                                            <SidebarMenuButton Tooltip="Help">
+                                                <LucideIcon Name="hand-helping" Size="16" />
+                                                <span>Help</span>
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                    </SidebarMenu>
+                                </SidebarFooter>
+                            </Sidebar>
+
+                            <div class="flex flex-1 flex-col">
+                                <div class="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                                    <SidebarTrigger />
+                                    <h1 class="text-lg font-semibold">Analytics Dashboard</h1>
+                                </div>
+                                <div class="flex-1 p-4">
+                                    <div class="rounded-xl bg-muted/50 p-4">
+                                        <p class="text-sm text-muted-foreground">Site header stays fixed above the sidebar.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </SidebarProvider>
+            </div>
+        </div>
+    </div>
+
+    <!-- With Header Dropdown Example -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">With Header Dropdown</h2>
+        <p class="text-muted-foreground">Version selector dropdown in sidebar header.</p>
+
+        <div class="border rounded-lg p-6 bg-background">
+            <div class="h-[600px] w-full border rounded-lg overflow-hidden bg-background">
+                <SidebarProvider HeightClass="h-full">
+                    <div class="flex h-full w-full">
+                        <Sidebar Collapsible="@isBasicCollapsible">
+                            <SidebarHeader>
+                                <ResponsiveHeaderDropdown @bind-SelectedVersion="selectedVersion" />
+                            </SidebarHeader>
+
+                            <SidebarContent>
+                                <SidebarGroup>
+                                    <SidebarGroupLabel>Getting Started</SidebarGroupLabel>
+                                    <SidebarGroupContent>
+                                        <SidebarMenu>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton Tooltip="Installation">
+                                                    <LucideIcon Name="download" Size="16" />
+                                                    <span>Installation</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton Tooltip="Quick Start" IsActive="true">
+                                                    <LucideIcon Name="zap" Size="16" />
+                                                    <span>Quick Start</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                        </SidebarMenu>
+                                    </SidebarGroupContent>
+                                </SidebarGroup>
+
+                                <SidebarSeparator />
+
+                                <SidebarGroup>
+                                    <SidebarGroupLabel>Components</SidebarGroupLabel>
+                                    <SidebarGroupContent>
+                                        <SidebarMenu>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton Tooltip="Button">
+                                                    <LucideIcon Name="mouse-pointer-click" Size="16" />
+                                                    <span>Button</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                            <SidebarMenuItem>
+                                                <SidebarMenuButton Tooltip="Card">
+                                                    <LucideIcon Name="square" Size="16" />
+                                                    <span>Card</span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                        </SidebarMenu>
+                                    </SidebarGroupContent>
+                                </SidebarGroup>
+                            </SidebarContent>
+                        </Sidebar>
+
+                        <SidebarInset>
+                            <header class="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                                <SidebarTrigger />
+                                <div class="flex items-center gap-2">
+                                    <LucideIcon Name="book-open" Size="16" />
+                                    <span class="text-muted-foreground">&gt;</span>
+                                    <span>Quick Start</span>
+                                </div>
+                            </header>
+                            <div class="flex flex-1 flex-col gap-4 p-4">
+                                <div class="rounded-xl bg-muted/50 p-4">
+                                    <p class="text-sm text-muted-foreground">Sidebar header includes a version dropdown selector.</p>
+                                </div>
+                            </div>
+                        </SidebarInset>
+                    </div>
+                </SidebarProvider>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collapsible Submenus Example -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">Collapsible Submenus</h2>
+        <p class="text-muted-foreground">Expandable menu groups with chevron indicators.</p>
+
+        <div class="border rounded-lg p-6 bg-background">
+            <div class="h-[600px] w-full border rounded-lg overflow-hidden bg-background">
+                <SidebarProvider HeightClass="h-full">
+                    <div class="flex h-full w-full">
+                        <Sidebar Collapsible="@isBasicCollapsible">
+                            <SidebarHeader>
+                                <SidebarHeaderContent>
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                                        <LucideIcon Name="layout-grid" Size="16" />
+                                    </div>
+                                    <SidebarHeaderInfo>
+                                        <span class="truncate font-semibold">Dashboard</span>
+                                    </SidebarHeaderInfo>
+                                </SidebarHeaderContent>
+                            </SidebarHeader>
+
+                            <SidebarContent>
+                                <SidebarMenu>
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton Tooltip="Overview">
+                                            <LucideIcon Name="house" Size="16" />
+                                            <span>Overview</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+
+                                    <SidebarMenuItem>
+                                        <Collapsible>
+                                            <SidebarMenuButton Tooltip="Models">
+                                                <LucideIcon Name="box" Size="16" />
+                                                <span>Models</span>
+                                                <SidebarMenuChevron>
+                                                    <LucideIcon Name="chevron-right" Size="16" />
+                                                </SidebarMenuChevron>
+                                            </SidebarMenuButton>
+                                            <CollapsibleContent>
+                                                <SidebarMenuSub>
+                                                    <SidebarMenuSubItem>
+                                                        <SidebarMenuSubButton>
+                                                            <span>Genesis</span>
+                                                        </SidebarMenuSubButton>
+                                                    </SidebarMenuSubItem>
+                                                    <SidebarMenuSubItem>
+                                                        <SidebarMenuSubButton>
+                                                            <span>Explorer</span>
+                                                        </SidebarMenuSubButton>
+                                                    </SidebarMenuSubItem>
+                                                    <SidebarMenuSubItem>
+                                                        <SidebarMenuSubButton>
+                                                            <span>Quantum</span>
+                                                        </SidebarMenuSubButton>
+                                                    </SidebarMenuSubItem>
+                                                </SidebarMenuSub>
+                                            </CollapsibleContent>
+                                        </Collapsible>
+                                    </SidebarMenuItem>
+
+                                    <SidebarMenuItem>
+                                        <Collapsible>
+                                            <SidebarMenuButton Tooltip="Documentation">
+                                                <LucideIcon Name="book-open" Size="16" />
+                                                <span>Documentation</span>
+                                                <SidebarMenuChevron>
+                                                    <LucideIcon Name="chevron-right" Size="16" />
+                                                </SidebarMenuChevron>
+                                            </SidebarMenuButton>
+                                            <CollapsibleContent>
+                                                <SidebarMenuSub>
+                                                    <SidebarMenuSubItem>
+                                                        <SidebarMenuSubButton>
+                                                            <span>Introduction</span>
+                                                        </SidebarMenuSubButton>
+                                                    </SidebarMenuSubItem>
+                                                    <SidebarMenuSubItem>
+                                                        <SidebarMenuSubButton>
+                                                            <span>Get Started</span>
+                                                        </SidebarMenuSubButton>
+                                                    </SidebarMenuSubItem>
+                                                    <SidebarMenuSubItem>
+                                                        <SidebarMenuSubButton>
+                                                            <span>Tutorials</span>
+                                                        </SidebarMenuSubButton>
+                                                    </SidebarMenuSubItem>
+                                                </SidebarMenuSub>
+                                            </CollapsibleContent>
+                                        </Collapsible>
+                                    </SidebarMenuItem>
+
+                                    <SidebarMenuItem>
+                                        <Collapsible>
+                                            <SidebarMenuButton Tooltip="Settings">
+                                                <LucideIcon Name="settings" Size="16" />
+                                                <span>Settings</span>
+                                                <SidebarMenuChevron>
+                                                    <LucideIcon Name="chevron-right" Size="16" />
+                                                </SidebarMenuChevron>
+                                            </SidebarMenuButton>
+                                            <CollapsibleContent>
+                                                <SidebarMenuSub>
+                                                    <SidebarMenuSubItem>
+                                                        <SidebarMenuSubButton>
+                                                            <span>General</span>
+                                                        </SidebarMenuSubButton>
+                                                    </SidebarMenuSubItem>
+                                                    <SidebarMenuSubItem>
+                                                        <SidebarMenuSubButton>
+                                                            <span>Team</span>
+                                                        </SidebarMenuSubButton>
+                                                    </SidebarMenuSubItem>
+                                                </SidebarMenuSub>
+                                            </CollapsibleContent>
+                                        </Collapsible>
+                                    </SidebarMenuItem>
+                                </SidebarMenu>
+                            </SidebarContent>
+
+                            <SidebarFooter>
+                                <SidebarMenu>
+                                    <SidebarMenuItem>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger Class="flex w-full items-center gap-2 px-2 py-1.5 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-1.5 group-data-[collapsible=icon]:justify-center cursor-pointer hover:bg-sidebar-accent data-[state=open]:bg-sidebar-accent rounded-md transition-colors text-sm outline-none ring-sidebar-ring focus-visible:ring-2">
+                                                <Avatar Class="h-8 w-8 rounded-lg">
+                                                    <AvatarImage Source="/images/mathew-icon.png" alt="Mathew" />
+                                                    <AvatarFallback Class="rounded-lg">M</AvatarFallback>
+                                                </Avatar>
+                                                <div class="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
+                                                    <span class="truncate font-semibold">Mathew</span>
+                                                    <span class="truncate text-xs text-muted-foreground">mathew@example.com</span>
+                                                </div>
+                                                <LucideIcon Name="chevrons-up-down" Size="16" Class="ml-auto group-data-[collapsible=icon]:hidden" />
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent Align="@PopoverAlign.End" Class="w-[240px]">
+                                                <DropdownMenuLabel Class="font-normal">
+                                                    <div class="flex items-center gap-2 px-1 py-1.5">
+                                                        <Avatar Class="h-8 w-8 rounded-lg">
+                                                            <AvatarImage Source="/images/mathew-icon.png" alt="Mathew" />
+                                                            <AvatarFallback Class="rounded-lg">M</AvatarFallback>
+                                                        </Avatar>
+                                                        <div class="grid flex-1 text-left text-sm leading-tight">
+                                                            <span class="truncate font-semibold">Mathew</span>
+                                                            <span class="truncate text-xs text-muted-foreground">mathew@example.com</span>
+                                                        </div>
+                                                    </div>
+                                                </DropdownMenuLabel>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem>
+                                                    <LucideIcon Name="sparkles" Size="16" />
+                                                    <span class="ml-2">Upgrade to Pro</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem>
+                                                    <LucideIcon Name="user" Size="16" />
+                                                    <span class="ml-2">Account</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem>
+                                                    <LucideIcon Name="credit-card" Size="16" />
+                                                    <span class="ml-2">Billing</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem>
+                                                    <LucideIcon Name="bell" Size="16" />
+                                                    <span class="ml-2">Notifications</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem>
+                                                    <LucideIcon Name="log-out" Size="16" />
+                                                    <span class="ml-2">Log out</span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </SidebarMenuItem>
+                                </SidebarMenu>
+                            </SidebarFooter>
+                        </Sidebar>
+
+                        <SidebarInset>
+                            <header class="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                                <SidebarTrigger />
+                                <h1 class="text-lg font-semibold">Overview</h1>
+                            </header>
+                            <div class="flex flex-1 flex-col gap-4 p-4">
+                                <div class="rounded-xl bg-muted/50 p-4">
+                                    <p class="text-sm text-muted-foreground">Menu items with chevron icons indicate collapsible submenus.</p>
+                                </div>
+                            </div>
+                        </SidebarInset>
+                    </div>
+                </SidebarProvider>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcuts -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">Keyboard Shortcuts</h2>
+        <div class="rounded-lg border">
+            <table class="w-full">
+                <thead class="border-b bg-muted/50">
+                    <tr>
+                        <th class="p-3 text-left font-medium">Key</th>
+                        <th class="p-3 text-left font-medium">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-b">
+                        <td class="p-3"><code class="bg-muted px-1.5 py-0.5 rounded">Ctrl + B</code> / <code class="bg-muted px-1.5 py-0.5 rounded">Cmd + B</code></td>
+                        <td class="p-3">Toggle sidebar open/closed</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- API Reference -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">API Reference</h2>
+
+        <div class="space-y-6">
+            <div>
+                <h3 class="text-lg font-semibold mb-2">SidebarProvider</h3>
+                <p class="text-sm text-muted-foreground mb-3">The root provider component that manages sidebar state.</p>
+                <div class="rounded-lg border overflow-hidden">
+                    <table class="w-full">
+                        <thead class="border-b bg-muted/50">
+                            <tr>
+                                <th class="p-3 text-left font-medium">Prop</th>
+                                <th class="p-3 text-left font-medium">Type</th>
+                                <th class="p-3 text-left font-medium">Default</th>
+                                <th class="p-3 text-left font-medium">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">DefaultOpen</code></td>
+                                <td class="p-3 text-sm">bool</td>
+                                <td class="p-3 text-sm">true</td>
+                                <td class="p-3 text-sm">Initial open state</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">Variant</code></td>
+                                <td class="p-3 text-sm">SidebarVariant</td>
+                                <td class="p-3 text-sm">Sidebar</td>
+                                <td class="p-3 text-sm">Visual variant (Sidebar, Floating, Inset)</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">Side</code></td>
+                                <td class="p-3 text-sm">SidebarSide</td>
+                                <td class="p-3 text-sm">Left</td>
+                                <td class="p-3 text-sm">Side to render (Left, Right)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3"><code class="text-sm">CookieKey</code></td>
+                                <td class="p-3 text-sm">string</td>
+                                <td class="p-3 text-sm">"sidebar:state"</td>
+                                <td class="p-3 text-sm">Cookie key for persistence</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-semibold mb-2">SidebarMenuButton</h3>
+                <p class="text-sm text-muted-foreground mb-3">Clickable menu item with tooltip support.</p>
+                <div class="rounded-lg border overflow-hidden">
+                    <table class="w-full">
+                        <thead class="border-b bg-muted/50">
+                            <tr>
+                                <th class="p-3 text-left font-medium">Prop</th>
+                                <th class="p-3 text-left font-medium">Type</th>
+                                <th class="p-3 text-left font-medium">Default</th>
+                                <th class="p-3 text-left font-medium">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">Tooltip</code></td>
+                                <td class="p-3 text-sm">string?</td>
+                                <td class="p-3 text-sm">null</td>
+                                <td class="p-3 text-sm">Tooltip shown in collapsed state</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">Size</code></td>
+                                <td class="p-3 text-sm">string</td>
+                                <td class="p-3 text-sm">"default"</td>
+                                <td class="p-3 text-sm">Size variant (sm, default, lg)</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">Variant</code></td>
+                                <td class="p-3 text-sm">string</td>
+                                <td class="p-3 text-sm">"default"</td>
+                                <td class="p-3 text-sm">Style variant (default, outline)</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">IsActive</code></td>
+                                <td class="p-3 text-sm">bool</td>
+                                <td class="p-3 text-sm">false</td>
+                                <td class="p-3 text-sm">Active/selected state</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3"><code class="text-sm">AsChild</code></td>
+                                <td class="p-3 text-sm">string</td>
+                                <td class="p-3 text-sm">"button"</td>
+                                <td class="p-3 text-sm">Element type (button, a)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- When to Use -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">When to Use</h2>
+        <div class="grid gap-4 md:grid-cols-2">
+            <div class="rounded-lg border p-4 space-y-2">
+                <h3 class="font-semibold text-green-600">Use When</h3>
+                <ul class="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                    <li>Building multi-page applications with persistent navigation</li>
+                    <li>Creating dashboard layouts</li>
+                    <li>Need responsive navigation (mobile + desktop)</li>
+                    <li>Want collapsible sidebar for more screen space</li>
+                    <li>Building admin panels or SaaS applications</li>
+                </ul>
+            </div>
+            <div class="rounded-lg border p-4 space-y-2">
+                <h3 class="font-semibold text-red-600">Avoid When</h3>
+                <ul class="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                    <li>Building single-page marketing sites</li>
+                    <li>Simple websites with top navigation</li>
+                    <li>Mobile-first apps where drawer is preferred</li>
+                    <li>Very minimal UI requirements</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool isBasicCollapsible = true;
+    private string selectedVersion = "v1.0.1";
+
+    private string GetRandomIcon(int index)
+    {
+        var icons = new[] {
+            "house", "file", "folder", "users", "settings", "search",
+            "bell", "calendar", "mail", "star", "bookmark", "tag",
+            "database", "server", "cloud", "package", "square", "table",
+            "list", "inbox", "archive", "trash", "download", "upload",
+            "share", "copy", "pencil", "filter", "arrow-up-down", "rotate-cw"
+        };
+        return icons[index % icons.Length];
+    }
+}

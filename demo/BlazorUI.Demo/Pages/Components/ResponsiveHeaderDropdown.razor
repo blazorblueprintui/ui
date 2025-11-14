@@ -1,0 +1,81 @@
+@using BlazorUI.Components.Sidebar
+@using BlazorUI.Components.DropdownMenu
+@using BlazorUI.Icons
+@using BlazorUI.Primitives.Services
+
+<DropdownMenu>
+    <DropdownMenuTrigger Class="flex w-full items-center gap-2 px-2 py-2 group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-0 group-data-[collapsible=icon]:justify-center cursor-pointer hover:bg-sidebar-accent data-[state=open]:bg-sidebar-accent rounded-md transition-colors">
+        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <LucideIcon Name="book-open" Size="16" />
+        </div>
+        <div class="flex flex-1 items-center gap-2 group-data-[collapsible=icon]:hidden">
+            <div class="grid flex-1 text-left text-sm leading-tight">
+                <span class="truncate font-semibold">Documentation</span>
+                <span class="truncate text-xs text-muted-foreground">@SelectedVersion</span>
+            </div>
+            <div class="flex h-6 w-6 items-center justify-center rounded-md">
+                <LucideIcon Name="chevrons-up-down" Size="12" />
+            </div>
+        </div>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent Align="@GetAlign()" Side="@GetSide()" ZIndex="9999" MatchTriggerWidth="@(!IsIconMode)" Strategy="@GetStrategy()" style="@GetWidthStyle()">
+        <DropdownMenuLabel>Select Version</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem OnClick="@(() => SelectedVersion = "v1.0.1")">
+            <div class="flex items-center justify-between w-full">
+                <span>v1.0.1</span>
+                @if (SelectedVersion == "v1.0.1")
+                {
+                    <LucideIcon Name="check" Size="16" />
+                }
+            </div>
+        </DropdownMenuItem>
+        <DropdownMenuItem OnClick="@(() => SelectedVersion = "v1.1.0-alpha")">
+            <div class="flex items-center justify-between w-full">
+                <span>v1.1.0-alpha</span>
+                @if (SelectedVersion == "v1.1.0-alpha")
+                {
+                    <LucideIcon Name="check" Size="16" />
+                }
+            </div>
+        </DropdownMenuItem>
+        <DropdownMenuItem OnClick="@(() => SelectedVersion = "v2.0.0-beta1")">
+            <div class="flex items-center justify-between w-full">
+                <span>v2.0.0-beta1</span>
+                @if (SelectedVersion == "v2.0.0-beta1")
+                {
+                    <LucideIcon Name="check" Size="16" />
+                }
+            </div>
+        </DropdownMenuItem>
+    </DropdownMenuContent>
+</DropdownMenu>
+
+@code {
+    [CascadingParameter]
+    private SidebarContext? Context { get; set; }
+
+    [Parameter]
+    public string SelectedVersion { get; set; } = "v1.0.1";
+
+    [Parameter]
+    public EventCallback<string> SelectedVersionChanged { get; set; }
+
+    private bool IsIconMode => Context != null && !Context.Open;
+
+    private PopoverSide GetSide() => IsIconMode ? PopoverSide.Right : PopoverSide.Bottom;
+
+    private PopoverAlign GetAlign() => PopoverAlign.Start;
+
+    private PositioningStrategy GetStrategy() => IsIconMode ? PositioningStrategy.Fixed : PositioningStrategy.Absolute;
+
+    private string GetWidthStyle()
+    {
+        // In icon mode, use fixed width
+        if (IsIconMode)
+        {
+            return "width: 14rem !important;"; // w-56 equivalent (224px / 14rem)
+        }
+        return "";
+    }
+}

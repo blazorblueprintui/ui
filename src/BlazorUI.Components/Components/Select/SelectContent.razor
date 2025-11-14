@@ -1,0 +1,44 @@
+@typeparam TValue
+@namespace BlazorUI.Components.Select
+@using BlazorUI.Primitives.Select
+
+@* Styled SelectContent wrapper around SelectContent primitive *@
+<BlazorUI.Primitives.Select.SelectContent TValue="TValue"
+                                               class="@CssClass">
+    <div class="p-1">
+        @ChildContent
+    </div>
+</BlazorUI.Primitives.Select.SelectContent>
+
+@code {
+    /// <summary>
+    /// Cascading parameter to infer TValue from parent Select context.
+    /// </summary>
+    [CascadingParameter]
+    private SelectContext<TValue>? Context { get; set; }
+
+
+    /// <summary>
+    /// Gets or sets additional CSS classes to apply to the content container.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets the content to be rendered inside the dropdown.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets the computed CSS classes for the content container.
+    /// </summary>
+    private string CssClass => ClassNames.cn(
+        "absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border",
+        "bg-popover text-popover-foreground shadow-md",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out",
+        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+        Class
+    );
+}

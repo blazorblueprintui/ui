@@ -1,0 +1,109 @@
+@namespace BlazorUI.Primitives.DropdownMenu
+
+@* DropdownMenu trigger - opens the dropdown menu when clicked *@
+<button type="button"
+        id="@Context.TriggerId"
+        @ref="@_triggerRef"
+        @onclick="HandleClick"
+        @onkeydown="HandleKeyDown"
+        @attributes="AdditionalAttributes"
+        aria-haspopup="menu"
+        aria-expanded="@Context.IsOpen.ToString().ToLower()"
+        aria-controls="@Context.ContentId">
+    @ChildContent
+</button>
+
+@code {
+    [CascadingParameter]
+    private DropdownMenuContext Context { get; set; } = null!;
+
+    private ElementReference _triggerRef;
+
+    /// <summary>
+    /// The content to display inside the trigger button.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the trigger button element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Custom click handler. If provided, this is called in addition to the default toggle behavior.
+    /// </summary>
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnClick { get; set; }
+
+    /// <summary>
+    /// Whether the trigger is disabled.
+    /// Default is false.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; } = false;
+
+    /// <summary>
+    /// Whether to use custom click handling. When true, only OnClick is invoked.
+    /// Default is false (dropdown menu opens on click).
+    /// </summary>
+    [Parameter]
+    public bool CustomClickHandling { get; set; } = false;
+
+    private async Task HandleClick(MouseEventArgs args)
+    {
+        if (Disabled) return;
+
+        if (CustomClickHandling && OnClick.HasDelegate)
+        {
+            // Custom handling only
+            await OnClick.InvokeAsync(args);
+        }
+        else
+        {
+            // Default: toggle dropdown menu and store trigger element for positioning
+            Context.Toggle(_triggerRef);
+
+            // Also invoke custom handler if provided
+            if (OnClick.HasDelegate)
+            {
+                await OnClick.InvokeAsync(args);
+            }
+        }
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (Disabled) return;
+
+        // Enter or Space to toggle
+        if (args.Key == "Enter" || args.Key == " ")
+        {
+            Context.Toggle(_triggerRef);
+        }
+        // Arrow Down to open and focus first item
+        else if (args.Key == "ArrowDown" && !Context.IsOpen)
+        {
+            Context.Open(_triggerRef);
+            Context.SetFocusedIndex(0);
+        }
+        // Arrow Up to open and focus last item
+        else if (args.Key == "ArrowUp" && !Context.IsOpen)
+        {
+            Context.Open(_triggerRef);
+            // Will be set to last item by DropdownMenuContent
+            Context.SetFocusedIndex(-1);
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "DropdownMenuTrigger must be used within a DropdownMenu component. " +
+                "Ensure DropdownMenuTrigger is a child of a DropdownMenu component.");
+        }
+    }
+}

@@ -1,0 +1,60 @@
+@namespace BlazorUI.Components.Tooltip
+@using BlazorUI.Primitives.Tooltip
+@using BlazorUI.Primitives.Services
+
+@* Styled Tooltip component - thin wrapper around Tooltip primitive *@
+<BlazorUI.Primitives.Tooltip.Tooltip Open="@Open"
+                                          OpenChanged="@OpenChanged"
+                                          DefaultOpen="@DefaultOpen"
+                                          DelayDuration="@DelayDuration"
+                                          HideDelay="@HideDelay"
+                                          Placement="@Placement.ToValue()">
+    @ChildContent
+</BlazorUI.Primitives.Tooltip.Tooltip>
+
+@code {
+    /// <summary>
+    /// The child content to render within the tooltip.
+    /// Typically includes TooltipTrigger and TooltipContent.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls whether the tooltip is open (controlled mode).
+    /// When null, the tooltip manages its own state (uncontrolled mode).
+    /// </summary>
+    [Parameter]
+    public bool? Open { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open state changes.
+    /// Use with @bind-Open for two-way binding.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// Default open state when in uncontrolled mode.
+    /// </summary>
+    [Parameter]
+    public bool DefaultOpen { get; set; } = false;
+
+    /// <summary>
+    /// The delay in milliseconds before showing the tooltip. Default is 300ms.
+    /// </summary>
+    [Parameter]
+    public int DelayDuration { get; set; } = 300;
+
+    /// <summary>
+    /// The delay in milliseconds before hiding the tooltip after mouse leaves. Default is 0ms (immediate).
+    /// </summary>
+    [Parameter]
+    public int HideDelay { get; set; } = 0;
+
+    /// <summary>
+    /// The placement position for the tooltip. Default is PopoverPlacement.Top.
+    /// </summary>
+    [Parameter]
+    public PopoverPlacement Placement { get; set; } = PopoverPlacement.Top;
+}

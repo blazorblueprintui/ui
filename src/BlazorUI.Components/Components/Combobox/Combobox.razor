@@ -1,0 +1,70 @@
+@namespace BlazorUI.Components.Combobox
+@typeparam TItem
+@using BlazorUI.Components.Popover
+@using BlazorUI.Components.Command
+@using BlazorUI.Primitives.Services
+
+<CascadingValue Value="this" IsFixed="false">
+    <div class="@ContainerClass">
+        <Popover @bind-Open="_isOpen">
+            <PopoverTrigger>
+                <button type="button"
+                        role="combobox"
+                        aria-expanded="@GetIsOpen().ToString().ToLower()"
+                        aria-controls="@($"{Id}-listbox")"
+                        aria-haspopup="listbox"
+                        disabled="@Disabled"
+                        class="@($"{ButtonCssClass} {Class}")">
+                    <span class="@(string.IsNullOrWhiteSpace(Value) ? "text-muted-foreground" : "")">
+                        @SelectedDisplayText
+                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                         width="16"
+                         height="16"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="2"
+                         stroke-linecap="round"
+                         stroke-linejoin="round"
+                         class="ml-2 h-4 w-4 shrink-0 opacity-50">
+                        <path d="m6 9 6 6 6-6" />
+                    </svg>
+                </button>
+            </PopoverTrigger>
+            <PopoverContent Side="@PopoverSide.Bottom" Align="@PopoverAlign.Start" Width="@PopoverWidth" Class="!p-0">
+                <Command>
+                    <CommandInput Placeholder="@SearchPlaceholder" AutoFocus="@_isOpen" />
+                    <CommandList>
+                        <CommandEmpty>@EmptyMessage</CommandEmpty>
+                        <CommandGroup>
+                            @foreach (var item in Items)
+                            {
+                                var itemValue = ValueSelector(item);
+                                var displayText = DisplaySelector(item);
+                                var selected = IsSelected(item);
+
+                                <CommandItem Value="@itemValue" OnSelect="@(() => HandleSelect(item))" SearchText="@displayText" Class="!px-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                         width="16"
+                                         height="16"
+                                         viewBox="0 0 24 24"
+                                         fill="none"
+                                         stroke="currentColor"
+                                         stroke-width="2"
+                                         stroke-linecap="round"
+                                         stroke-linejoin="round"
+                                         class="@($"h-4 w-4 {(selected ? "mr-2 opacity-100" : "opacity-0")}")"
+                                         aria-label="@(selected ? "Selected" : "")">
+                                        <path d="M20 6 9 17l-5-5" />
+                                    </svg>
+                                    @displayText
+                                </CommandItem>
+                            }
+                        </CommandGroup>
+                    </CommandList>
+                </Command>
+            </PopoverContent>
+        </Popover>
+    </div>
+</CascadingValue>

@@ -1,0 +1,46 @@
+@namespace BlazorUI.Components.Dialog
+@using BlazorUI.Primitives.Dialog
+
+@*
+    Styled DialogDescription component with shadcn/ui classes.
+*@
+
+<BlazorUI.Primitives.Dialog.DialogDescription class="@GetClassNames()" @attributes="AdditionalAttributes">
+    @ChildContent
+</BlazorUI.Primitives.Dialog.DialogDescription>
+
+@code {
+    /// <summary>
+    /// The description content to display.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the description.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the description element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string GetClassNames()
+    {
+        var classes = new List<string>
+        {
+            "text-sm",
+            "text-muted-foreground"
+        };
+
+        if (!string.IsNullOrWhiteSpace(Class))
+        {
+            classes.Add(Class);
+        }
+
+        return string.Join(" ", classes);
+    }
+}

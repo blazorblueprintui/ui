@@ -1,0 +1,49 @@
+@namespace BlazorUI.Components.DropdownMenu
+@using BlazorUI.Primitives.DropdownMenu
+
+@* Styled DropdownMenuTrigger - passthrough wrapper without layout interference *@
+<BlazorUI.Primitives.DropdownMenu.DropdownMenuTrigger class="@Class"
+                                                            Disabled="@Disabled"
+                                                            OnClick="@OnClick"
+                                                            CustomClickHandling="@CustomClickHandling"
+                                                            @attributes="AdditionalAttributes">
+    @ChildContent
+</BlazorUI.Primitives.DropdownMenu.DropdownMenuTrigger>
+
+@code {
+    /// <summary>
+    /// The content to display inside the trigger button.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the wrapper.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Whether the trigger is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; } = false;
+
+    /// <summary>
+    /// Custom click handler.
+    /// </summary>
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnClick { get; set; }
+
+    /// <summary>
+    /// Whether to use custom click handling only.
+    /// </summary>
+    [Parameter]
+    public bool CustomClickHandling { get; set; } = false;
+
+    /// <summary>
+    /// Additional attributes to apply to the trigger element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+}

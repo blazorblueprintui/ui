@@ -1,0 +1,74 @@
+@namespace BlazorUI.Primitives.Table
+@typeparam TData where TData : class
+
+<th role="columnheader"
+    tabindex="@(IsSortable ? 0 : -1)"
+    aria-sort="@GetAriaSort()"
+    class="@Class"
+    @onclick="HandleClick"
+    @onkeydown="HandleKeyDown"
+    @attributes="AdditionalAttributes">
+    @ChildContent
+</th>
+
+@code {
+    [CascadingParameter]
+    private TableContext<TData> Context { get; set; } = default!;
+
+    /// <summary>
+    /// The column identifier for sorting. If provided, this header cell becomes sortable.
+    /// </summary>
+    [Parameter]
+    public string? ColumnId { get; set; }
+
+    /// <summary>
+    /// Child content for the header cell.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the th element.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the th element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private bool IsSortable => !string.IsNullOrEmpty(ColumnId);
+
+    private void HandleClick()
+    {
+        if (IsSortable && Context != null)
+        {
+            Context.ToggleSort(ColumnId!);
+        }
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (IsSortable && Context != null && (e.Key == "Enter" || e.Key == " "))
+        {
+            Context.ToggleSort(ColumnId!);
+        }
+    }
+
+    private string? GetAriaSort()
+    {
+        if (!IsSortable || Context == null) return null;
+
+        var sorting = Context.State.Sorting;
+        if (sorting.SortedColumn != ColumnId) return "none";
+
+        return sorting.Direction switch
+        {
+            SortDirection.Ascending => "ascending",
+            SortDirection.Descending => "descending",
+            _ => "none"
+        };
+    }
+}

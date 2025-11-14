@@ -1,0 +1,80 @@
+@namespace BlazorUI.Components.Sidebar
+@using BlazorUI.Components.Utilities
+@using BlazorUI.Primitives.Tooltip
+@using BlazorUI.Primitives.Services
+
+@*
+    SidebarGroupAction component for action buttons in group headers.
+*@
+
+@if (!string.IsNullOrEmpty(Tooltip))
+{
+    <BlazorUI.Primitives.Tooltip.Tooltip>
+        <BlazorUI.Primitives.Tooltip.TooltipTrigger>
+            @RenderButton()
+        </BlazorUI.Primitives.Tooltip.TooltipTrigger>
+        <BlazorUI.Primitives.Tooltip.TooltipContent Side="@PopoverSide.Right">
+            <span>@Tooltip</span>
+        </BlazorUI.Primitives.Tooltip.TooltipContent>
+    </BlazorUI.Primitives.Tooltip.Tooltip>
+}
+else
+{
+    @RenderButton()
+}
+
+@code {
+    /// <summary>
+    /// The button content (typically an icon).
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Tooltip text for the action.
+    /// </summary>
+    [Parameter]
+    public string? Tooltip { get; set; }
+
+    /// <summary>
+    /// The element tag to render (button or a).
+    /// </summary>
+    [Parameter]
+    public SidebarMenuButtonElement AsChild { get; set; } = SidebarMenuButtonElement.Button;
+
+    /// <summary>
+    /// Additional CSS classes.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private RenderFragment RenderButton() => __builder =>
+    {
+        if (AsChild == SidebarMenuButtonElement.Anchor)
+        {
+            <a class="@GetClasses()" data-sidebar="group-action" @attributes="AdditionalAttributes">
+                @ChildContent
+            </a>
+        }
+        else
+        {
+            <button type="button" class="@GetClasses()" data-sidebar="group-action" @attributes="AdditionalAttributes">
+                @ChildContent
+            </button>
+        }
+    };
+
+    private string GetClasses()
+    {
+        return ClassNames.cn(
+            "absolute right-3 top-3.5 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-sidebar-foreground outline-none ring-sidebar-ring transition-transform hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
+            Class
+        );
+    }
+}

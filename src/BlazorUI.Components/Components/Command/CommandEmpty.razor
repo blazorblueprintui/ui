@@ -1,0 +1,32 @@
+@namespace BlazorUI.Components.Command
+@using BlazorUI.Primitives.Combobox
+
+<ComboboxEmpty class="@CssClass">
+    @ChildContent
+</ComboboxEmpty>
+
+@code {
+    /// <summary>
+    /// Gets or sets additional CSS classes to apply to the empty state container.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets the content to be rendered when there are no results.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets the computed CSS classes for the empty state container.
+    /// </summary>
+    private string CssClass
+    {
+        get
+        {
+            var baseClasses = "py-6 text-center text-sm text-muted-foreground";
+            return string.IsNullOrWhiteSpace(Class) ? baseClasses : $"{baseClasses} {Class}";
+        }
+    }
+}

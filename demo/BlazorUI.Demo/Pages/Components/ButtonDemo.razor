@@ -1,0 +1,296 @@
+@page "/components/button"
+
+<PageTitle>Button Component - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Button Component</h1>
+        <p class="text-xl text-muted-foreground">
+            Displays a button or a component that looks like a button.
+        </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+    </div>
+
+    <!-- All Variants -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Variants</h2>
+            <p class="text-sm text-muted-foreground">
+                All six button variants matching shadcn/ui design system.
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-4">
+            <Button Variant="ButtonVariant.Default">Default</Button>
+            <Button Variant="ButtonVariant.Destructive">Destructive</Button>
+            <Button Variant="ButtonVariant.Outline">Outline</Button>
+            <Button Variant="ButtonVariant.Secondary">Secondary</Button>
+            <Button Variant="ButtonVariant.Ghost">Ghost</Button>
+            <Button Variant="ButtonVariant.Link">Link</Button>
+        </div>
+    </div>
+
+    <!-- All Sizes -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Sizes</h2>
+            <p class="text-sm text-muted-foreground">
+                Six size options including icon-only variants.
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-4 items-center">
+            <Button Size="ButtonSize.Small">Small</Button>
+            <Button Size="ButtonSize.Default">Default</Button>
+            <Button Size="ButtonSize.Large">Large</Button>
+            <Button Size="ButtonSize.Icon" AriaLabel="Icon button">
+                <LucideIcon Name="arrow-right" Size="16" />
+            </Button>
+            <Button Size="ButtonSize.IconSmall" AriaLabel="Small icon button">
+                <LucideIcon Name="minus" Size="14" />
+            </Button>
+            <Button Size="ButtonSize.IconLarge" AriaLabel="Large icon button">
+                <LucideIcon Name="arrow-right" Size="18" />
+            </Button>
+        </div>
+    </div>
+
+    <!-- Icon Buttons with Text -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Buttons with Icons</h2>
+            <p class="text-sm text-muted-foreground">
+                Buttons with icons at start or end position (RTL-aware).
+            </p>
+        </div>
+        <div class="space-y-4">
+            <div class="space-y-2">
+                <h3 class="text-lg font-medium">Icon at Start</h3>
+                <div class="flex flex-wrap gap-4">
+                    <Button IconPosition="IconPosition.Start">
+                        <Icon>
+                            <LucideIcon Name="arrow-left" Size="16" />
+                        </Icon>
+                        <ChildContent>Back</ChildContent>
+                    </Button>
+                    <Button IconPosition="IconPosition.Start" Variant="ButtonVariant.Outline">
+                        <Icon>
+                            <LucideIcon Name="search" Size="16" />
+                        </Icon>
+                        <ChildContent>Search</ChildContent>
+                    </Button>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-lg font-medium">Icon at End</h3>
+                <div class="flex flex-wrap gap-4">
+                    <Button IconPosition="IconPosition.End">
+                        <Icon>
+                            <LucideIcon Name="arrow-right" Size="16" />
+                        </Icon>
+                        <ChildContent>Next</ChildContent>
+                    </Button>
+                    <Button IconPosition="IconPosition.End" Variant="ButtonVariant.Secondary">
+                        <Icon>
+                            <LucideIcon Name="external-link" Size="16" />
+                        </Icon>
+                        <ChildContent>External Link</ChildContent>
+                    </Button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RTL Support -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">RTL (Right-to-Left) Support</h2>
+            <p class="text-sm text-muted-foreground">
+                Icon positioning automatically flips in RTL layouts.
+            </p>
+        </div>
+        <div class="flex gap-4 items-center mb-4">
+            <button @onclick="ToggleRTL" class="px-4 py-2 rounded border border-input bg-background hover:bg-accent">
+                Toggle RTL (@(isRTL ? "RTL" : "LTR"))
+            </button>
+        </div>
+        <div dir="@(isRTL ? "rtl" : "ltr")" class="p-6 bg-card rounded-lg border">
+            <div class="flex flex-wrap gap-4">
+                <Button IconPosition="IconPosition.Start">
+                    <Icon>
+                        <LucideIcon Name="arrow-left" Size="16" />
+                    </Icon>
+                    <ChildContent>Back (Start)</ChildContent>
+                </Button>
+                <Button IconPosition="IconPosition.End">
+                    <Icon>
+                        <LucideIcon Name="arrow-right" Size="16" />
+                    </Icon>
+                    <ChildContent>Next (End)</ChildContent>
+                </Button>
+            </div>
+            <p class="text-sm text-muted-foreground mt-4">
+                Note: In RTL mode, "Start" icons appear on the right, "End" icons on the left.
+            </p>
+        </div>
+    </div>
+
+    <!-- Disabled States -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled State</h2>
+            <p class="text-sm text-muted-foreground">
+                Buttons with reduced opacity and no pointer events.
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-4">
+            <Button Disabled="true">Default Disabled</Button>
+            <Button Variant="ButtonVariant.Destructive" Disabled="true">Destructive Disabled</Button>
+            <Button Variant="ButtonVariant.Outline" Disabled="true">Outline Disabled</Button>
+            <Button Variant="ButtonVariant.Secondary" Disabled="true">Secondary Disabled</Button>
+            <Button Variant="ButtonVariant.Ghost" Disabled="true">Ghost Disabled</Button>
+            <Button Variant="ButtonVariant.Link" Disabled="true">Link Disabled</Button>
+        </div>
+    </div>
+
+    <!-- Interactive Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Interactive</h2>
+            <p class="text-sm text-muted-foreground">
+                Click handlers and event callbacks.
+            </p>
+        </div>
+        <div class="space-y-4">
+            <div class="flex gap-4 items-center">
+                <Button OnClick="HandleClick">Click Me</Button>
+                <span class="text-sm">@clickMessage</span>
+            </div>
+            <div class="flex gap-4 items-center">
+                <Button OnClick="IncrementCounter">
+                    Clicked @counter times
+                </Button>
+                <Button Variant="ButtonVariant.Outline" OnClick="ResetCounter">Reset</Button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Button Types -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Button Types</h2>
+            <p class="text-sm text-muted-foreground">
+                Different HTML button type attributes (submit, reset, button).
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-4">
+            <Button Type="ButtonType.Button">Type: Button</Button>
+            <Button Type="ButtonType.Submit" Variant="ButtonVariant.Default">Type: Submit</Button>
+            <Button Type="ButtonType.Reset" Variant="ButtonVariant.Secondary">Type: Reset</Button>
+        </div>
+    </div>
+
+    <!-- Custom Styling -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Classes</h2>
+            <p class="text-sm text-muted-foreground">
+                Buttons with additional CSS classes via Class parameter.
+            </p>
+        </div>
+        <div class="space-y-2">
+            <Button Class="w-full">Full Width Button</Button>
+            <div class="flex flex-wrap gap-4">
+                <Button Class="shadow-lg">With Shadow</Button>
+                <Button Variant="ButtonVariant.Outline" Class="border-2 border-blue-500">Custom Border</Button>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Variants in Dark Mode -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Dark Mode</h2>
+            <p class="text-sm text-muted-foreground">
+                Toggle dark mode above to test all variants in dark theme.
+            </p>
+        </div>
+        <div class="p-6 bg-card rounded-lg border">
+            <div class="flex flex-wrap gap-4">
+                <Button Variant="ButtonVariant.Default">Default</Button>
+                <Button Variant="ButtonVariant.Destructive">Destructive</Button>
+                <Button Variant="ButtonVariant.Outline">Outline</Button>
+                <Button Variant="ButtonVariant.Secondary">Secondary</Button>
+                <Button Variant="ButtonVariant.Ghost">Ghost</Button>
+                <Button Variant="ButtonVariant.Link">Link</Button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Accessibility Notes -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Accessibility</h2>
+            <p class="text-sm text-muted-foreground">
+                Keyboard navigation and screen reader support.
+            </p>
+        </div>
+        <div class="space-y-2 text-sm">
+            <p>✓ Tab key focuses buttons in sequence</p>
+            <p>✓ Enter and Space keys activate focused buttons</p>
+            <p>✓ Disabled buttons are not focusable (tabindex="-1")</p>
+            <p>✓ ARIA attributes set correctly (aria-label, aria-disabled)</p>
+            <p>✓ Focus ring appears on keyboard focus (focus-visible:ring-2)</p>
+            <p>✓ Color contrast meets WCAG 2.1 AA standards</p>
+            <p>✓ Semantic HTML button element with proper role</p>
+            <p>✓ Screen readers announce button text and state correctly</p>
+        </div>
+    </div>
+
+    <!-- Browser Compatibility -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Browser Compatibility</h2>
+            <p class="text-sm text-muted-foreground">
+                Tested and verified across modern browsers.
+            </p>
+        </div>
+        <div class="space-y-2 text-sm">
+            <p>✓ Chrome 120+ (tested)</p>
+            <p>✓ Firefox 120+ (tested)</p>
+            <p>✓ Edge 120+ (tested)</p>
+            <p>✓ Safari 17+ (compatible)</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string clickMessage = "";
+    private int counter = 0;
+    private bool isRTL = false;
+
+    private Task HandleClick(MouseEventArgs e)
+    {
+        clickMessage = $"Button clicked at {DateTime.Now:HH:mm:ss}";
+        return Task.CompletedTask;
+    }
+
+    private Task IncrementCounter(MouseEventArgs e)
+    {
+        counter++;
+        return Task.CompletedTask;
+    }
+
+    private Task ResetCounter(MouseEventArgs e)
+    {
+        counter = 0;
+        return Task.CompletedTask;
+    }
+
+    private void ToggleRTL()
+    {
+        isRTL = !isRTL;
+    }
+}

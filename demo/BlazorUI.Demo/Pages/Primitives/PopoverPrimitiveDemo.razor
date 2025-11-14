@@ -1,0 +1,281 @@
+@page "/primitives/popover"
+@using BlazorUI.Primitives.Services
+
+<PageTitle>Popover Primitive - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Popover Primitive</h1>
+        <p class="text-xl text-muted-foreground">
+            Headless, unstyled popover primitive with full positioning control.
+        </p>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Headless Primitive</h2>
+                <p class="text-muted-foreground">
+                    The primitive provides behavior and accessibility without styling.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 max-w-md">
+                <BlazorUI.Primitives.Popover.Popover>
+                    <BlazorUI.Primitives.Popover.PopoverTrigger class="px-3 py-2 border rounded text-sm cursor-pointer hover:bg-accent">
+                        Open Popover
+                    </BlazorUI.Primitives.Popover.PopoverTrigger>
+                    <BlazorUI.Primitives.Popover.PopoverContent class="z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md">
+                        <div class="space-y-2">
+                            <h4 class="font-medium leading-none">Primitive Popover</h4>
+                            <p class="text-sm text-muted-foreground">
+                                This is a headless popover primitive with basic styling.
+                            </p>
+                        </div>
+                    </BlazorUI.Primitives.Popover.PopoverContent>
+                </BlazorUI.Primitives.Popover.Popover>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Controlled State</h2>
+                <p class="text-muted-foreground">
+                    Control the popover's open state from your component code.
+                </p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex gap-2">
+                    <button @onclick="() => isOpen = !isOpen"
+                            class="px-3 py-2 border rounded text-sm">
+                        Toggle Popover
+                    </button>
+                    <span class="text-sm text-muted-foreground self-center">
+                        State: @(isOpen ? "Open" : "Closed")
+                    </span>
+                </div>
+
+                <div class="rounded-lg border bg-card p-6 max-w-md">
+                    <BlazorUI.Primitives.Popover.Popover @bind-Open="isOpen">
+                        <BlazorUI.Primitives.Popover.PopoverTrigger class="px-3 py-2 border rounded text-sm cursor-pointer hover:bg-accent">
+                            @(isOpen ? "Close" : "Open") Controlled
+                        </BlazorUI.Primitives.Popover.PopoverTrigger>
+                        <BlazorUI.Primitives.Popover.PopoverContent class="z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md">
+                            <p class="text-sm">Controlled by parent state: @isOpen</p>
+                            <button @onclick="() => isOpen = false" class="mt-2 text-sm text-primary underline-offset-4 hover:underline">
+                                Close from content
+                            </button>
+                        </BlazorUI.Primitives.Popover.PopoverContent>
+                    </BlazorUI.Primitives.Popover.Popover>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Positioning Options</h2>
+                <p class="text-muted-foreground">
+                    Position the popover on different sides of the trigger.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <div class="flex gap-4">
+                    <BlazorUI.Primitives.Popover.Popover>
+                        <BlazorUI.Primitives.Popover.PopoverTrigger class="px-3 py-2 border rounded text-sm cursor-pointer hover:bg-accent">
+                            Top
+                        </BlazorUI.Primitives.Popover.PopoverTrigger>
+                        <BlazorUI.Primitives.Popover.PopoverContent Side="@PopoverSide.Top" class="z-50 w-64 rounded-md border bg-popover p-4 text-popover-foreground shadow-md">
+                            <p class="text-sm">Positioned on top</p>
+                        </BlazorUI.Primitives.Popover.PopoverContent>
+                    </BlazorUI.Primitives.Popover.Popover>
+
+                    <BlazorUI.Primitives.Popover.Popover>
+                        <BlazorUI.Primitives.Popover.PopoverTrigger class="px-3 py-2 border rounded text-sm cursor-pointer hover:bg-accent">
+                            Right
+                        </BlazorUI.Primitives.Popover.PopoverTrigger>
+                        <BlazorUI.Primitives.Popover.PopoverContent Side="@PopoverSide.Right" class="z-50 w-64 rounded-md border bg-popover p-4 text-popover-foreground shadow-md">
+                            <p class="text-sm">Positioned on right</p>
+                        </BlazorUI.Primitives.Popover.PopoverContent>
+                    </BlazorUI.Primitives.Popover.Popover>
+
+                    <BlazorUI.Primitives.Popover.Popover>
+                        <BlazorUI.Primitives.Popover.PopoverTrigger class="px-3 py-2 border rounded text-sm cursor-pointer hover:bg-accent">
+                            Left
+                        </BlazorUI.Primitives.Popover.PopoverTrigger>
+                        <BlazorUI.Primitives.Popover.PopoverContent Side="@PopoverSide.Left" class="z-50 w-64 rounded-md border bg-popover p-4 text-popover-foreground shadow-md">
+                            <p class="text-sm">Positioned on left</p>
+                        </BlazorUI.Primitives.Popover.PopoverContent>
+                    </BlazorUI.Primitives.Popover.Popover>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Accessibility Features</h2>
+                <p class="text-muted-foreground">
+                    Built-in accessibility features following WAI-ARIA design patterns.
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-6 space-y-3 bg-muted/50">
+                <div class="flex items-start gap-2">
+                    <span class="text-green-600 dark:text-green-400">✓</span>
+                    <span class="text-sm"><strong>ARIA attributes:</strong> Proper role and aria-expanded applied</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-green-600 dark:text-green-400">✓</span>
+                    <span class="text-sm"><strong>Keyboard navigation:</strong> Escape to close</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-green-600 dark:text-green-400">✓</span>
+                    <span class="text-sm"><strong>Click outside:</strong> Closes when clicking outside content</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-green-600 dark:text-green-400">✓</span>
+                    <span class="text-sm"><strong>Focus management:</strong> Automatic focus handling</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Keyboard Shortcuts</h2>
+                <p class="text-muted-foreground">
+                    Navigate and interact with popovers using keyboard.
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-6 space-y-3 bg-muted/50">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium">Open popover</span>
+                    <kbd class="px-2 py-1 text-xs font-semibold bg-background border rounded">Click / Enter</kbd>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium">Close popover</span>
+                    <kbd class="px-2 py-1 text-xs font-semibold bg-background border rounded">Escape</kbd>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium">Navigate to trigger</span>
+                    <kbd class="px-2 py-1 text-xs font-semibold bg-background border rounded">Tab</kbd>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">API Reference</h2>
+                <p class="text-muted-foreground">
+                    Component properties and parameters.
+                </p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="rounded-lg border p-4">
+                    <h3 class="font-semibold mb-3">Popover</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Open</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>bool?</code><br/>
+                                Controls whether the popover is open (controlled mode).
+                            </p>
+                        </div>
+                        <Separator />
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">OpenChanged</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>EventCallback&lt;bool&gt;</code><br/>
+                                Callback invoked when the open state changes.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border p-4">
+                    <h3 class="font-semibold mb-3">PopoverContent</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Side</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>"top" | "right" | "bottom" | "left"</code><br/>
+                                <strong>Default:</strong> <code>"bottom"</code><br/>
+                                Which side of the trigger to position the content.
+                            </p>
+                        </div>
+                        <Separator />
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Align</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>"start" | "center" | "end"</code><br/>
+                                <strong>Default:</strong> <code>"center"</code><br/>
+                                How to align the content relative to the trigger.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">When to Use Primitives</h2>
+                <p class="text-muted-foreground">
+                    Choose between primitives and styled components based on your needs.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="rounded-lg border p-4 space-y-3">
+                    <h3 class="font-semibold text-primary">Use Popover Primitive</h3>
+                    <ul class="space-y-2 text-sm text-muted-foreground">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Building a custom design system</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Need complete control over styling</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Want to apply your own CSS framework</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Creating unique visual designs</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="rounded-lg border p-4 space-y-3">
+                    <h3 class="font-semibold text-primary">Use Styled Component</h3>
+                    <ul class="space-y-2 text-sm text-muted-foreground">
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Want shadcn/ui design out of the box</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Need quick implementation</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Like the default styling</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Prefer convention over configuration</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+@code {
+    private bool isOpen = false;
+}

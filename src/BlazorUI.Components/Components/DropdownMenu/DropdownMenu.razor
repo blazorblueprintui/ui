@@ -1,0 +1,61 @@
+@namespace BlazorUI.Components.DropdownMenu
+@using BlazorUI.Primitives.DropdownMenu
+
+@* Styled DropdownMenu component - thin wrapper around DropdownMenu primitive *@
+<BlazorUI.Primitives.DropdownMenu.DropdownMenu Open="@Open"
+                                                      OpenChanged="@OpenChanged"
+                                                      DefaultOpen="@DefaultOpen"
+                                                      OnOpenChange="@OnOpenChange"
+                                                      Modal="@Modal"
+                                                      Dir="@Dir">
+    @ChildContent
+</BlazorUI.Primitives.DropdownMenu.DropdownMenu>
+
+@code {
+    /// <summary>
+    /// The child content to render within the dropdown menu.
+    /// Typically includes DropdownMenuTrigger and DropdownMenuContent.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls whether the dropdown menu is open (controlled mode).
+    /// When null, the dropdown menu manages its own state (uncontrolled mode).
+    /// </summary>
+    [Parameter]
+    public bool? Open { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open state changes.
+    /// Use with @bind-Open for two-way binding.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// Default open state when in uncontrolled mode.
+    /// </summary>
+    [Parameter]
+    public bool DefaultOpen { get; set; } = false;
+
+    /// <summary>
+    /// Event callback invoked when the dropdown menu open state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OnOpenChange { get; set; }
+
+    /// <summary>
+    /// Whether the dropdown menu can be dismissed by clicking outside or pressing Escape.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool Modal { get; set; } = true;
+
+    /// <summary>
+    /// Direction for the menu content layout ("ltr" or "rtl").
+    /// Default is "ltr".
+    /// </summary>
+    [Parameter]
+    public string Dir { get; set; } = "ltr";
+}

@@ -1,0 +1,64 @@
+@namespace BlazorUI.Components.Sheet
+@using BlazorUI.Primitives.Sheet
+
+@*
+    Styled Sheet component wrapper.
+    Wraps the Sheet primitive with shadcn/ui styling.
+*@
+
+<BlazorUI.Primitives.Sheet.Sheet Open="@Open"
+                 OpenChanged="@OpenChanged"
+                 DefaultOpen="@DefaultOpen"
+                 OnOpenChange="@OnOpenChange"
+                 Side="@Side"
+                 Modal="@Modal">
+    @ChildContent
+</BlazorUI.Primitives.Sheet.Sheet>
+
+@code {
+    /// <summary>
+    /// The child content to render within the sheet.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls whether the sheet is open (controlled mode).
+    /// When null, the sheet manages its own state (uncontrolled mode).
+    /// </summary>
+    [Parameter]
+    public bool? Open { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open state changes.
+    /// Use with @bind-Open for two-way binding.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// Default open state when in uncontrolled mode.
+    /// </summary>
+    [Parameter]
+    public bool DefaultOpen { get; set; } = false;
+
+    /// <summary>
+    /// Event callback invoked when the sheet open state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OnOpenChange { get; set; }
+
+    /// <summary>
+    /// The side from which the sheet slides in.
+    /// Default is Right.
+    /// </summary>
+    [Parameter]
+    public SheetSide Side { get; set; } = SheetSide.Right;
+
+    /// <summary>
+    /// Whether the sheet can be dismissed by clicking the overlay or pressing Escape.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool Modal { get; set; } = true;
+}

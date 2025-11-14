@@ -1,0 +1,38 @@
+@namespace BlazorUI.Primitives.Sheet
+
+@*
+    SheetDescription provides the description element for the sheet.
+    Used for accessibility (aria-describedby).
+*@
+
+<p id="@Context.DescriptionId"
+   @attributes="AdditionalAttributes">
+    @ChildContent
+</p>
+
+@code {
+    [CascadingParameter]
+    private SheetContext Context { get; set; } = null!;
+
+    /// <summary>
+    /// The description text or content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the description element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "SheetDescription must be used within a Sheet component. " +
+                "Ensure SheetDescription is a child of a Sheet component.");
+        }
+    }
+}

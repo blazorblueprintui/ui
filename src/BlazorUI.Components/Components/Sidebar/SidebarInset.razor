@@ -1,0 +1,59 @@
+@namespace BlazorUI.Components.Sidebar
+@using BlazorUI.Components.Utilities
+
+@*
+    SidebarInset component that provides the main content area.
+    Automatically adjusts margins based on sidebar state and variant.
+*@
+
+<main class="@GetClasses()" @attributes="AdditionalAttributes">
+    @ChildContent
+</main>
+
+@code {
+    [CascadingParameter]
+    private SidebarContext? Context { get; set; }
+
+    /// <summary>
+    /// The main content to render.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the inset.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the main element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string GetClasses()
+    {
+        var baseClasses = "relative flex h-full flex-1 flex-col bg-background focus:outline-none";
+
+        // Floating variant margins - push content when sidebar is visible
+        // When sidebar is closed (hidden), remove margins
+        var floatingClasses = Context?.Side == SidebarSide.Right
+            ? "md:peer-data-[variant=floating]:mr-2 md:peer-data-[variant=floating]:peer-data-[state=collapsed]:mr-[calc(var(--sidebar-width-icon)+0.5rem+0.5rem)] md:peer-data-[variant=floating]:peer-data-[state=expanded]:mr-[calc(var(--sidebar-width)+0.5rem+0.5rem)] md:peer-data-[variant=floating]:peer-data-[state=closed]:mr-0"
+            : "md:peer-data-[variant=floating]:ml-2 md:peer-data-[variant=floating]:peer-data-[state=collapsed]:ml-[calc(var(--sidebar-width-icon)+0.5rem+0.5rem)] md:peer-data-[variant=floating]:peer-data-[state=expanded]:ml-[calc(var(--sidebar-width)+0.5rem+0.5rem)] md:peer-data-[variant=floating]:peer-data-[state=closed]:ml-0";
+
+        // Add margin transitions
+        var transitionClasses = "transition-[margin] duration-200 ease-linear";
+
+        // Inset variant specific styling - margin on all sides, rounded corners, shadow, and calculated height for margins
+        var insetRoundingClasses = "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:h-[calc(100%-1rem)] md:peer-data-[variant=inset]:min-h-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow md:peer-data-[variant=inset]:bg-background";
+
+        return ClassNames.cn(
+            baseClasses,
+            floatingClasses,
+            transitionClasses,
+            insetRoundingClasses,
+            Class
+        );
+    }
+}

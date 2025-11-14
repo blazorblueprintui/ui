@@ -1,0 +1,75 @@
+@namespace BlazorUI.Primitives.Popover
+
+@* Popover trigger - opens the popover when clicked *@
+<button type="button"
+        id="@Context.TriggerId"
+        @ref="@_triggerRef"
+        @onclick="HandleClick"
+        @attributes="AdditionalAttributes"
+        aria-haspopup="true"
+        aria-expanded="@Context.IsOpen.ToString().ToLower()"
+        aria-controls="@Context.ContentId">
+    @ChildContent
+</button>
+
+@code {
+    [CascadingParameter]
+    private PopoverContext Context { get; set; } = null!;
+
+    private ElementReference _triggerRef;
+
+    /// <summary>
+    /// The content to display inside the trigger button.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the trigger button element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Custom click handler. If provided, this is called in addition to the default toggle behavior.
+    /// </summary>
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnClick { get; set; }
+
+    /// <summary>
+    /// Whether to use custom click handling. When true, only OnClick is invoked.
+    /// Default is false (popover opens on click).
+    /// </summary>
+    [Parameter]
+    public bool CustomClickHandling { get; set; } = false;
+
+    private async Task HandleClick(MouseEventArgs args)
+    {
+        if (CustomClickHandling && OnClick.HasDelegate)
+        {
+            // Custom handling only
+            await OnClick.InvokeAsync(args);
+        }
+        else
+        {
+            // Default: toggle popover and store trigger element for positioning
+            Context.Toggle(_triggerRef);
+
+            // Also invoke custom handler if provided
+            if (OnClick.HasDelegate)
+            {
+                await OnClick.InvokeAsync(args);
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "PopoverTrigger must be used within a Popover component. " +
+                "Ensure PopoverTrigger is a child of a Popover component.");
+        }
+    }
+}

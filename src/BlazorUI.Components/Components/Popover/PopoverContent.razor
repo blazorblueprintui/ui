@@ -1,0 +1,51 @@
+@using BlazorUI.Primitives.Services
+@namespace BlazorUI.Components.Popover
+@using BlazorUI.Primitives.Popover
+
+@* Styled PopoverContent with shadcn/ui classes *@
+
+<BlazorUI.Primitives.Popover.PopoverContent CloseOnEscape="@CloseOnEscape"
+                                                   CloseOnClickOutside="@CloseOnClickOutside"
+                                                   Side="@Side"
+                                                   Align="@Align"
+                                                   Offset="@Offset"
+                                                   OnEscapeKeyDown="@OnEscapeKeyDown"
+                                                   OnClickOutside="@OnClickOutside"
+                                                   class="@CssClass"
+                                                   @attributes="AdditionalAttributes">
+    @ChildContent
+</BlazorUI.Primitives.Popover.PopoverContent>
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public bool CloseOnEscape { get; set; } = true;
+
+    [Parameter]
+    public bool CloseOnClickOutside { get; set; } = true;
+
+    [Parameter]
+    public PopoverSide Side { get; set; } = PopoverSide.Bottom;
+
+    [Parameter]
+    public PopoverAlign Align { get; set; } = PopoverAlign.Center;
+
+    [Parameter]
+    public int Offset { get; set; } = 4;
+
+    [Parameter]
+    public EventCallback<KeyboardEventArgs> OnEscapeKeyDown { get; set; }
+
+    [Parameter]
+    public EventCallback OnClickOutside { get; set; }
+
+    [Parameter]
+    public string? Class { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string CssClass => $"z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 {Class}".Trim();
+}

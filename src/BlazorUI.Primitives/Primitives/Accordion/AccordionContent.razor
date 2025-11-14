@@ -1,0 +1,52 @@
+@namespace BlazorUI.Primitives.Accordion
+
+@* AccordionContent primitive - collapsible content region for accordion item *@
+@if (_shouldRender)
+{
+    <div id="@Item.ContentId"
+         role="region"
+         aria-labelledby="@Item.TriggerId"
+         data-state="@(Item.IsOpen ? "open" : "closed")"
+         hidden="@(!Item.IsOpen)"
+         @attributes="AdditionalAttributes">
+        @ChildContent
+    </div>
+}
+
+@code {
+    private bool _shouldRender => ForceMount || Item.IsOpen;
+
+    /// <summary>
+    /// Cascading parameter to receive the parent accordion item.
+    /// </summary>
+    [CascadingParameter]
+    public AccordionItem Item { get; set; } = null!;
+
+    /// <summary>
+    /// The child content to render when this accordion item is open.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Whether to force mount the content even when the item is closed.
+    /// When false (default), content is unmounted when closed.
+    /// When true, content remains mounted but hidden.
+    /// </summary>
+    [Parameter]
+    public bool ForceMount { get; set; } = false;
+
+    /// <summary>
+    /// Additional attributes to apply to the content region element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Item == null)
+        {
+            throw new InvalidOperationException("AccordionContent must be used within an AccordionItem component.");
+        }
+    }
+}

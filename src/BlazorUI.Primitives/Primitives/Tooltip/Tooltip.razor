@@ -1,0 +1,230 @@
+@namespace BlazorUI.Primitives.Tooltip
+@implements IDisposable
+
+@* Tooltip Primitive - Headless root component *@
+<CascadingValue Value="@_context" IsFixed="false">
+    <div class="@Class" style="position: relative; display: contents;" @attributes="AdditionalAttributes">
+        @ChildContent
+    </div>
+</CascadingValue>
+
+@code {
+    private TooltipContext _context = new();
+    private UseControllableState<bool> _state = null!;
+    private System.Timers.Timer? _showTimer;
+    private System.Timers.Timer? _hideTimer;
+    private bool _disposed;
+
+    /// <summary>
+    /// Additional attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the root element.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// The child content to render inside the tooltip container.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls whether the tooltip is open (controlled mode).
+    /// When null, the tooltip manages its own state (uncontrolled mode).
+    /// </summary>
+    [Parameter]
+    public bool? Open { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open state changes.
+    /// Use with @bind-Open for two-way binding.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// Default open state when in uncontrolled mode.
+    /// </summary>
+    [Parameter]
+    public bool DefaultOpen { get; set; } = false;
+
+    /// <summary>
+    /// The delay in milliseconds before showing the tooltip. Default is 700ms.
+    /// </summary>
+    [Parameter]
+    public int DelayDuration { get; set; } = 700;
+
+    /// <summary>
+    /// The delay in milliseconds before hiding the tooltip after mouse leaves. Default is 0ms (immediate).
+    /// </summary>
+    [Parameter]
+    public int HideDelay { get; set; } = 0;
+
+    /// <summary>
+    /// The placement position for the tooltip. Default is "top".
+    /// </summary>
+    [Parameter]
+    public string Placement { get; set; } = "top";
+
+    protected override void OnInitialized()
+    {
+        // Initialize controllable state
+        _state = new UseControllableState<bool>(DefaultOpen)
+        {
+            ControlledValue = Open.HasValue ? Open.Value : DefaultOpen,
+            OnValueChanged = OpenChanged,
+            IsControlled = OpenChanged.HasDelegate
+        };
+
+        // Initialize context with closed state (don't sync _state.Value yet)
+        _context.State.IsOpen = false;
+        _context.State.Placement = Placement;
+
+        // Subscribe to context state changes
+        _context.OnStateChanged += HandleContextStateChanged;
+
+        // If initial state is open, apply it with delay
+        if (_state.Value)
+        {
+            _ = SetOpenWithDelayAsync(true);
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Update controlled value if it changed
+        if (_state.IsControlled && Open.HasValue)
+        {
+            _state.ControlledValue = Open.Value;
+            _context.State.IsOpen = Open.Value;
+        }
+
+        // Update placement if changed
+        if (_context.State.Placement != Placement)
+        {
+            _context.SetPlacement(Placement);
+        }
+    }
+
+    private void HandleContextStateChanged()
+    {
+        // When context state changes (e.g., from TooltipTrigger),
+        // capture the intent and reset state immediately to prevent premature rendering
+        var intentOpen = _context.State.IsOpen;
+
+        // If closing and we have a pending show timer, cancel it immediately
+        if (!intentOpen && _showTimer != null)
+        {
+            CancelTimers();
+            return;
+        }
+
+        if (intentOpen != _state.Value)
+        {
+            // Reset context state immediately (delay will update it later)
+            _context.State.IsOpen = _state.Value;
+
+            // Apply delay before actually opening/closing
+            _ = SetOpenWithDelayAsync(intentOpen);
+        }
+    }
+
+    private async Task SetOpenWithDelayAsync(bool open)
+    {
+        // Cancel any pending timers
+        CancelTimers();
+
+        if (open)
+        {
+            // Apply delay for showing
+            if (DelayDuration > 0)
+            {
+                _showTimer = new System.Timers.Timer(DelayDuration);
+                _showTimer.Elapsed += async (sender, e) =>
+                {
+                    await InvokeAsync(async () =>
+                    {
+                        // Update both state and context
+                        _context.State.IsOpen = true;
+                        await _state.SetValueAsync(true);
+                        StateHasChanged();
+                    });
+
+                    _showTimer?.Dispose();
+                    _showTimer = null;
+                };
+                _showTimer.AutoReset = false;
+                _showTimer.Start();
+            }
+            else
+            {
+                // Show immediately
+                _context.State.IsOpen = true;
+                await _state.SetValueAsync(true);
+                StateHasChanged();
+            }
+        }
+        else
+        {
+            // Apply hide delay if configured
+            if (HideDelay > 0)
+            {
+                _hideTimer = new System.Timers.Timer(HideDelay);
+                _hideTimer.Elapsed += async (sender, e) =>
+                {
+                    await InvokeAsync(async () =>
+                    {
+                        // Update both state and context
+                        _context.State.IsOpen = false;
+                        await _state.SetValueAsync(false);
+                        StateHasChanged();
+                    });
+
+                    _hideTimer?.Dispose();
+                    _hideTimer = null;
+                };
+                _hideTimer.AutoReset = false;
+                _hideTimer.Start();
+            }
+            else
+            {
+                // Hide immediately
+                _context.State.IsOpen = false;
+                await _state.SetValueAsync(false);
+                StateHasChanged();
+            }
+        }
+    }
+
+    private void CancelTimers()
+    {
+        if (_showTimer != null)
+        {
+            _showTimer.Stop();
+            _showTimer.Dispose();
+            _showTimer = null;
+        }
+
+        if (_hideTimer != null)
+        {
+            _hideTimer.Stop();
+            _hideTimer.Dispose();
+            _hideTimer = null;
+        }
+    }
+
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            CancelTimers();
+            _context.OnStateChanged -= HandleContextStateChanged;
+            _disposed = true;
+        }
+    }
+}

@@ -1,0 +1,399 @@
+@page "/components/command"
+@using BlazorUI.Components.Command
+
+<PageTitle>Command Component - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Command Component</h1>
+        <p class="text-xl text-muted-foreground">
+            A fast, composable command menu with keyboard-driven search and selection.
+        </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+    </div>
+
+    <!-- Command Palette Overlay (Modal) -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Command Palette (Overlay)</h2>
+        <p class="text-sm text-muted-foreground">
+            A proper command palette that appears as an overlay on the screen. Click the button or press <kbd class="px-2 py-1 text-xs bg-muted rounded">Ctrl+K</kbd> to open.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <Button Variant="ButtonVariant.Outline" OnClick="@(() => isCommandPaletteOpen = true)">
+                <LucideIcon Name="command" Size="16" Class="mr-2" />
+                Open Command Palette
+                <span class="ml-auto text-xs text-muted-foreground">Ctrl+K</span>
+            </Button>
+            @if (!string.IsNullOrEmpty(paletteSelected))
+            {
+                <p class="text-sm">Last selected: <strong>@paletteSelected</strong></p>
+            }
+        </div>
+
+        <!-- Command Palette Overlay -->
+        @if (isCommandPaletteOpen)
+        {
+            <div class="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]" @onclick="@(() => isCommandPaletteOpen = false)">
+                <!-- Backdrop -->
+                <div class="fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
+
+                <!-- Command Palette -->
+                <div class="relative w-full max-w-lg mx-4" @onclick:stopPropagation="true">
+                    <div class="border rounded-lg shadow-2xl bg-background animate-in fade-in-0 zoom-in-95">
+                        <BlazorUI.Components.Command.Command OnSelect="@HandlePaletteSelect">
+                            <CommandInput Placeholder="Type a command or search..." />
+                            <CommandList>
+                                <CommandEmpty>No results found.</CommandEmpty>
+                                <CommandGroup Heading="Suggestions">
+                                    <CommandItem Value="calendar">
+                                        <LucideIcon Name="calendar" Size="16" Class="mr-2" />
+                                        Calendar
+                                    </CommandItem>
+                                    <CommandItem Value="search-emoji">
+                                        <LucideIcon Name="smile" Size="16" Class="mr-2" />
+                                        Search Emoji
+                                    </CommandItem>
+                                    <CommandItem Value="calculator">
+                                        <LucideIcon Name="calculator" Size="16" Class="mr-2" />
+                                        Calculator
+                                    </CommandItem>
+                                </CommandGroup>
+                                <CommandSeparator />
+                                <CommandGroup Heading="Settings">
+                                    <CommandItem Value="profile">
+                                        <LucideIcon Name="user" Size="16" Class="mr-2" />
+                                        Profile
+                                        <CommandShortcut>⌘P</CommandShortcut>
+                                    </CommandItem>
+                                    <CommandItem Value="billing">
+                                        <LucideIcon Name="credit-card" Size="16" Class="mr-2" />
+                                        Billing
+                                        <CommandShortcut>⌘B</CommandShortcut>
+                                    </CommandItem>
+                                    <CommandItem Value="settings">
+                                        <LucideIcon Name="settings" Size="16" Class="mr-2" />
+                                        Settings
+                                        <CommandShortcut>⌘S</CommandShortcut>
+                                    </CommandItem>
+                                </CommandGroup>
+                            </CommandList>
+                        </BlazorUI.Components.Command.Command>
+                    </div>
+                </div>
+            </div>
+        }
+    </section>
+
+    <!-- Basic Command -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Basic Command Menu</h2>
+        <p class="text-sm text-muted-foreground">
+            A simple command menu with search and selection. Try typing to filter items.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <div class="border rounded-lg shadow-sm max-w-md">
+                <BlazorUI.Components.Command.Command OnSelect="@HandleBasicSelect">
+                    <CommandInput Placeholder="Type a command or search..." />
+                    <CommandList>
+                        <CommandEmpty>No results found.</CommandEmpty>
+                        <CommandGroup>
+                            <CommandItem Value="calendar">Calendar</CommandItem>
+                            <CommandItem Value="search-emoji">Search Emoji</CommandItem>
+                            <CommandItem Value="calculator">Calculator</CommandItem>
+                            <CommandItem Value="settings">Settings</CommandItem>
+                        </CommandGroup>
+                    </CommandList>
+                </BlazorUI.Components.Command.Command>
+            </div>
+            @if (!string.IsNullOrEmpty(basicSelected))
+            {
+                <p class="text-sm">Selected: <strong>@basicSelected</strong></p>
+            }
+        </div>
+    </section>
+
+    <!-- With Groups -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Grouped Commands</h2>
+        <p class="text-sm text-muted-foreground">
+            Organize commands into logical groups with headings.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <div class="border rounded-lg shadow-sm max-w-md">
+                <BlazorUI.Components.Command.Command OnSelect="@HandleGroupSelect">
+                    <CommandInput Placeholder="Search commands..." />
+                    <CommandList>
+                        <CommandEmpty>No results found.</CommandEmpty>
+                        <CommandGroup Heading="Suggestions">
+                            <CommandItem Value="calendar">
+                                <LucideIcon Name="calendar" Size="16" Class="mr-2" />
+                                Calendar
+                            </CommandItem>
+                            <CommandItem Value="search-emoji">
+                                <LucideIcon Name="smile" Size="16" Class="mr-2" />
+                                Search Emoji
+                            </CommandItem>
+                            <CommandItem Value="calculator">
+                                <LucideIcon Name="calculator" Size="16" Class="mr-2" />
+                                Calculator
+                            </CommandItem>
+                        </CommandGroup>
+                        <CommandSeparator />
+                        <CommandGroup Heading="Settings">
+                            <CommandItem Value="profile">
+                                <LucideIcon Name="user" Size="16" Class="mr-2" />
+                                Profile
+                            </CommandItem>
+                            <CommandItem Value="billing">
+                                <LucideIcon Name="credit-card" Size="16" Class="mr-2" />
+                                Billing
+                            </CommandItem>
+                            <CommandItem Value="settings">
+                                <LucideIcon Name="settings" Size="16" Class="mr-2" />
+                                Settings
+                            </CommandItem>
+                        </CommandGroup>
+                    </CommandList>
+                </BlazorUI.Components.Command.Command>
+            </div>
+            @if (!string.IsNullOrEmpty(groupSelected))
+            {
+                <p class="text-sm">Selected: <strong>@groupSelected</strong></p>
+            }
+        </div>
+    </section>
+
+    <!-- With Keyboard Shortcuts -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">With Keyboard Shortcuts</h2>
+        <p class="text-sm text-muted-foreground">
+            Display keyboard shortcuts alongside commands (visual only). Use arrow keys to navigate and Enter to select.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <div class="border rounded-lg shadow-sm max-w-md">
+                <BlazorUI.Components.Command.Command OnSelect="@HandleShortcutSelect">
+                    <CommandInput Placeholder="Search commands..." />
+                    <CommandList>
+                        <CommandEmpty>No results found.</CommandEmpty>
+                        <CommandGroup Heading="File">
+                            <CommandItem Value="new">
+                                New File
+                                <CommandShortcut>⌘N</CommandShortcut>
+                            </CommandItem>
+                            <CommandItem Value="open">
+                                Open File
+                                <CommandShortcut>⌘O</CommandShortcut>
+                            </CommandItem>
+                            <CommandItem Value="save">
+                                Save File
+                                <CommandShortcut>⌘S</CommandShortcut>
+                            </CommandItem>
+                        </CommandGroup>
+                        <CommandSeparator />
+                        <CommandGroup Heading="Edit">
+                            <CommandItem Value="copy">
+                                Copy
+                                <CommandShortcut>⌘C</CommandShortcut>
+                            </CommandItem>
+                            <CommandItem Value="paste">
+                                Paste
+                                <CommandShortcut>⌘V</CommandShortcut>
+                            </CommandItem>
+                            <CommandItem Value="cut">
+                                Cut
+                                <CommandShortcut>⌘X</CommandShortcut>
+                            </CommandItem>
+                        </CommandGroup>
+                    </CommandList>
+                </BlazorUI.Components.Command.Command>
+            </div>
+            @if (!string.IsNullOrEmpty(shortcutSelected))
+            {
+                <p class="text-sm">Selected: <strong>@shortcutSelected</strong></p>
+            }
+        </div>
+    </section>
+
+    <!-- With Disabled Items -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Disabled Items</h2>
+        <p class="text-sm text-muted-foreground">
+            Items can be disabled to prevent selection.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <div class="border rounded-lg shadow-sm max-w-md">
+                <BlazorUI.Components.Command.Command OnSelect="@HandleDisabledSelect">
+                    <CommandInput Placeholder="Search commands..." />
+                    <CommandList>
+                        <CommandEmpty>No results found.</CommandEmpty>
+                        <CommandGroup>
+                            <CommandItem Value="cut">Cut</CommandItem>
+                            <CommandItem Value="copy">Copy</CommandItem>
+                            <CommandItem Value="paste" Disabled="true">Paste (Disabled)</CommandItem>
+                            <CommandItem Value="select-all">Select All</CommandItem>
+                            <CommandItem Value="delete" Disabled="true">Delete (Disabled)</CommandItem>
+                        </CommandGroup>
+                    </CommandList>
+                </BlazorUI.Components.Command.Command>
+            </div>
+            @if (!string.IsNullOrEmpty(disabledSelected))
+            {
+                <p class="text-sm">Selected: <strong>@disabledSelected</strong></p>
+            }
+        </div>
+    </section>
+
+    <!-- Empty State -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Empty State</h2>
+        <p class="text-sm text-muted-foreground">
+            Shows a custom message when no results match the search query. Try searching for "xyz".
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <div class="border rounded-lg shadow-sm max-w-md">
+                <BlazorUI.Components.Command.Command>
+                    <CommandInput Placeholder="Try searching for xyz..." />
+                    <CommandList>
+                        <CommandEmpty>
+                            <div class="flex flex-col items-center gap-2">
+                                <LucideIcon Name="search-x" Size="32" Class="text-muted-foreground" />
+                                <p class="text-sm">No results found for your query.</p>
+                            </div>
+                        </CommandEmpty>
+                        <CommandGroup>
+                            <CommandItem Value="apple">Apple</CommandItem>
+                            <CommandItem Value="banana">Banana</CommandItem>
+                            <CommandItem Value="cherry">Cherry</CommandItem>
+                        </CommandGroup>
+                    </CommandList>
+                </BlazorUI.Components.Command.Command>
+            </div>
+        </div>
+    </section>
+
+    <!-- Complex Example -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Complex Example</h2>
+        <p class="text-sm text-muted-foreground">
+            Combining all features: groups, icons, shortcuts, disabled items, and search filtering.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <div class="border rounded-lg shadow-sm max-w-lg">
+                <BlazorUI.Components.Command.Command OnSelect="@HandleComplexSelect">
+                    <CommandInput Placeholder="Type a command or search..." />
+                    <CommandList>
+                        <CommandEmpty>No results found.</CommandEmpty>
+                        <CommandGroup Heading="Suggestions">
+                            <CommandItem Value="calendar">
+                                <LucideIcon Name="calendar" Size="16" Class="mr-2" />
+                                Calendar
+                            </CommandItem>
+                            <CommandItem Value="search-emoji">
+                                <LucideIcon Name="smile" Size="16" Class="mr-2" />
+                                Search Emoji
+                            </CommandItem>
+                            <CommandItem Value="calculator">
+                                <LucideIcon Name="calculator" Size="16" Class="mr-2" />
+                                Calculator
+                            </CommandItem>
+                        </CommandGroup>
+                        <CommandSeparator />
+                        <CommandGroup Heading="File">
+                            <CommandItem Value="new-file">
+                                <LucideIcon Name="file-plus" Size="16" Class="mr-2" />
+                                New File
+                                <CommandShortcut>⌘N</CommandShortcut>
+                            </CommandItem>
+                            <CommandItem Value="open-file">
+                                <LucideIcon Name="folder-open" Size="16" Class="mr-2" />
+                                Open File
+                                <CommandShortcut>⌘O</CommandShortcut>
+                            </CommandItem>
+                            <CommandItem Value="save-file">
+                                <LucideIcon Name="save" Size="16" Class="mr-2" />
+                                Save File
+                                <CommandShortcut>⌘S</CommandShortcut>
+                            </CommandItem>
+                            <CommandItem Value="save-as" Disabled="true">
+                                <LucideIcon Name="save" Size="16" Class="mr-2" />
+                                Save As... (Disabled)
+                                <CommandShortcut>⇧⌘S</CommandShortcut>
+                            </CommandItem>
+                        </CommandGroup>
+                        <CommandSeparator />
+                        <CommandGroup Heading="Settings">
+                            <CommandItem Value="profile">
+                                <LucideIcon Name="user" Size="16" Class="mr-2" />
+                                Profile
+                                <CommandShortcut>⌘P</CommandShortcut>
+                            </CommandItem>
+                            <CommandItem Value="billing">
+                                <LucideIcon Name="credit-card" Size="16" Class="mr-2" />
+                                Billing
+                                <CommandShortcut>⌘B</CommandShortcut>
+                            </CommandItem>
+                            <CommandItem Value="settings">
+                                <LucideIcon Name="settings" Size="16" Class="mr-2" />
+                                Settings
+                                <CommandShortcut>⌘,</CommandShortcut>
+                            </CommandItem>
+                        </CommandGroup>
+                    </CommandList>
+                </BlazorUI.Components.Command.Command>
+            </div>
+            @if (!string.IsNullOrEmpty(complexSelected))
+            {
+                <p class="text-sm">Selected: <strong>@complexSelected</strong></p>
+            }
+        </div>
+    </section>
+
+    <!-- Keyboard Navigation Info -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Keyboard Navigation</h2>
+        <div class="rounded-lg border bg-card p-4 text-card-foreground shadow-sm">
+            <h3 class="font-medium mb-2">Available Keyboard Shortcuts:</h3>
+            <ul class="space-y-1 text-sm text-muted-foreground">
+                <li><kbd class="px-2 py-1 text-xs bg-muted rounded">↑</kbd> <kbd class="px-2 py-1 text-xs bg-muted rounded">↓</kbd> Navigate through items</li>
+                <li><kbd class="px-2 py-1 text-xs bg-muted rounded">Enter</kbd> Select the highlighted item</li>
+                <li><kbd class="px-2 py-1 text-xs bg-muted rounded">Esc</kbd> Clear search query</li>
+                <li><kbd class="px-2 py-1 text-xs bg-muted rounded">Type</kbd> Filter items in real-time</li>
+            </ul>
+        </div>
+    </section>
+</div>
+
+@code {
+    // Independent state for each section
+    private bool isCommandPaletteOpen;
+    private string? paletteSelected;
+    private string? basicSelected;
+    private string? groupSelected;
+    private string? shortcutSelected;
+    private string? disabledSelected;
+    private string? complexSelected;
+
+    // Individual handlers for each section
+    private void HandlePaletteSelect(string value)
+    {
+        paletteSelected = value;
+        isCommandPaletteOpen = false; // Close the palette after selection
+    }
+
+    private void HandleBasicSelect(string value) => basicSelected = value;
+    private void HandleGroupSelect(string value) => groupSelected = value;
+    private void HandleShortcutSelect(string value) => shortcutSelected = value;
+    private void HandleDisabledSelect(string value) => disabledSelected = value;
+    private void HandleComplexSelect(string value) => complexSelected = value;
+}

@@ -1,0 +1,227 @@
+@page "/primitives/tabs"
+@using BlazorUI.Primitives.Tabs
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <h1 class="text-4xl font-bold">Tabs Primitive</h1>
+        <p class="text-xl text-muted-foreground">
+            Headless, unstyled tabs primitive with full keyboard navigation and accessibility support.
+        </p>
+    </div>
+
+    <div class="space-y-6">
+        <h2 class="text-2xl font-semibold">Basic Usage</h2>
+        <p class="text-sm text-muted-foreground">
+            A simple tabs implementation with minimal inline styles. Use arrow keys to navigate between tabs.
+        </p>
+
+        <Tabs DefaultValue="tab1">
+            <TabsList class="flex gap-1 p-1 bg-muted rounded-md w-fit">
+                <TabsTrigger Value="tab1" class="px-4 py-2 border-none bg-transparent cursor-pointer rounded text-sm aria-[selected=true]:bg-background aria-[selected=true]:shadow-sm">
+                    Tab 1
+                </TabsTrigger>
+                <TabsTrigger Value="tab2" class="px-4 py-2 border-none bg-transparent cursor-pointer rounded text-sm aria-[selected=true]:bg-background aria-[selected=true]:shadow-sm">
+                    Tab 2
+                </TabsTrigger>
+                <TabsTrigger Value="tab3" class="px-4 py-2 border-none bg-transparent cursor-pointer rounded text-sm aria-[selected=true]:bg-background aria-[selected=true]:shadow-sm">
+                    Tab 3
+                </TabsTrigger>
+            </TabsList>
+
+            <TabsContent Value="tab1" class="p-4 mt-2 border border-border rounded-md">
+                <h3 class="font-semibold mb-2">Tab 1 Content</h3>
+                <p>This is the content for the first tab. Navigate using arrow keys or click to switch tabs.</p>
+            </TabsContent>
+
+            <TabsContent Value="tab2" class="p-4 mt-2 border border-border rounded-md">
+                <h3 class="font-semibold mb-2">Tab 2 Content</h3>
+                <p>This is the content for the second tab. The primitive handles all keyboard navigation automatically.</p>
+            </TabsContent>
+
+            <TabsContent Value="tab3" class="p-4 mt-2 border border-border rounded-md">
+                <h3 class="font-semibold mb-2">Tab 3 Content</h3>
+                <p>This is the content for the third tab. Press Home/End to jump to first/last tab.</p>
+            </TabsContent>
+        </Tabs>
+    </div>
+
+    <div class="space-y-6">
+        <h2 class="text-2xl font-semibold">Controlled Tabs</h2>
+        <p class="text-sm text-muted-foreground">
+            Control the active tab from your component code using @@bind-Value.
+        </p>
+
+        <div class="flex gap-2 mb-4">
+            <button @onclick='() => controlledValue = "account"'
+                    class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
+                Show Account
+            </button>
+            <button @onclick='() => controlledValue = "password"'
+                    class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
+                Show Password
+            </button>
+        </div>
+
+        <p class="text-xs text-muted-foreground">Current tab: <strong>@controlledValue</strong></p>
+
+        <Tabs @bind-Value="controlledValue">
+            <TabsList class="flex gap-1 p-1 bg-muted rounded-md w-fit">
+                <TabsTrigger Value="account" class="px-4 py-2 border-none bg-transparent cursor-pointer rounded text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                    Account
+                </TabsTrigger>
+                <TabsTrigger Value="password" class="px-4 py-2 border-none bg-transparent cursor-pointer rounded text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                    Password
+                </TabsTrigger>
+            </TabsList>
+
+            <TabsContent Value="account" class="p-4 mt-2 border border-border rounded-md">
+                <h3 class="font-semibold mb-2">Account Settings</h3>
+                <p>Make changes to your account here.</p>
+            </TabsContent>
+
+            <TabsContent Value="password" class="p-4 mt-2 border border-border rounded-md">
+                <h3 class="font-semibold mb-2">Password Settings</h3>
+                <p>Change your password here.</p>
+            </TabsContent>
+        </Tabs>
+    </div>
+
+    <div class="space-y-6">
+        <h2 class="text-2xl font-semibold">Vertical Tabs</h2>
+        <p class="text-sm text-muted-foreground">
+            Tabs can be arranged vertically. Use arrow up/down keys to navigate.
+        </p>
+
+        <Tabs DefaultValue="general" Orientation="TabsOrientation.Vertical">
+            <div class="flex gap-4">
+                <TabsList class="flex flex-col gap-1 p-1 bg-muted rounded-md w-[150px]">
+                    <TabsTrigger Value="general" class="px-4 py-2 border-none bg-transparent cursor-pointer rounded text-sm text-left data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                        General
+                    </TabsTrigger>
+                    <TabsTrigger Value="security" class="px-4 py-2 border-none bg-transparent cursor-pointer rounded text-sm text-left data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                        Security
+                    </TabsTrigger>
+                    <TabsTrigger Value="notifications" class="px-4 py-2 border-none bg-transparent cursor-pointer rounded text-sm text-left data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                        Notifications
+                    </TabsTrigger>
+                </TabsList>
+
+                <div class="flex-1">
+                    <TabsContent Value="general" class="p-4 border border-border rounded-md">
+                        <h3 class="font-semibold mb-2">General Settings</h3>
+                        <p>Configure general application settings.</p>
+                    </TabsContent>
+
+                    <TabsContent Value="security" class="p-4 border border-border rounded-md">
+                        <h3 class="font-semibold mb-2">Security Settings</h3>
+                        <p>Manage your security preferences.</p>
+                    </TabsContent>
+
+                    <TabsContent Value="notifications" class="p-4 border border-border rounded-md">
+                        <h3 class="font-semibold mb-2">Notification Settings</h3>
+                        <p>Control how you receive notifications.</p>
+                    </TabsContent>
+                </div>
+            </div>
+        </Tabs>
+    </div>
+
+    <div class="space-y-6">
+        <h2 class="text-2xl font-semibold">Manual Activation Mode</h2>
+        <p class="text-sm text-muted-foreground">
+            In manual mode, tabs must be clicked or activated with Enter/Space. Arrow keys only move focus.
+        </p>
+
+        <Tabs DefaultValue="overview" ActivationMode="TabsActivationMode.Manual">
+            <TabsList class="flex gap-1 p-1 bg-muted rounded-md w-fit">
+                <TabsTrigger Value="overview" class="px-4 py-2 border-none bg-transparent cursor-pointer rounded text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                    Overview
+                </TabsTrigger>
+                <TabsTrigger Value="analytics" class="px-4 py-2 border-none bg-transparent cursor-pointer rounded text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                    Analytics
+                </TabsTrigger>
+                <TabsTrigger Value="reports" class="px-4 py-2 border-none bg-transparent cursor-pointer rounded text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                    Reports
+                </TabsTrigger>
+            </TabsList>
+
+            <TabsContent Value="overview" class="p-4 mt-2 border border-border rounded-md">
+                <h3 class="font-semibold mb-2">Overview</h3>
+                <p>Use arrow keys to move focus, then press Enter or Space to activate a tab.</p>
+            </TabsContent>
+
+            <TabsContent Value="analytics" class="p-4 mt-2 border border-border rounded-md">
+                <h3 class="font-semibold mb-2">Analytics</h3>
+                <p>View your analytics data here.</p>
+            </TabsContent>
+
+            <TabsContent Value="reports" class="p-4 mt-2 border border-border rounded-md">
+                <h3 class="font-semibold mb-2">Reports</h3>
+                <p>Generate and download reports.</p>
+            </TabsContent>
+        </Tabs>
+    </div>
+
+    <div class="space-y-6">
+        <h2 class="text-2xl font-semibold">Disabled Tab</h2>
+        <p class="text-sm text-muted-foreground">
+            Tabs can be disabled. Keyboard navigation will skip over disabled tabs.
+        </p>
+
+        <Tabs DefaultValue="enabled1">
+            <TabsList class="flex gap-1 p-1 bg-muted rounded-md w-fit">
+                <TabsTrigger Value="enabled1" class="px-4 py-2 border-none bg-transparent cursor-pointer rounded text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                    Enabled 1
+                </TabsTrigger>
+                <TabsTrigger Value="disabled" Disabled="true" class="px-4 py-2 border-none bg-transparent cursor-not-allowed rounded text-sm opacity-50">
+                    Disabled
+                </TabsTrigger>
+                <TabsTrigger Value="enabled2" class="px-4 py-2 border-none bg-transparent cursor-pointer rounded text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                    Enabled 2
+                </TabsTrigger>
+            </TabsList>
+
+            <TabsContent Value="enabled1" class="p-4 mt-2 border border-border rounded-md">
+                <p>First enabled tab content. Try using arrow keys - they'll skip the disabled tab.</p>
+            </TabsContent>
+
+            <TabsContent Value="disabled" class="p-4 mt-2 border border-border rounded-md">
+                <p>This content won't be shown because the tab is disabled.</p>
+            </TabsContent>
+
+            <TabsContent Value="enabled2" class="p-4 mt-2 border border-border rounded-md">
+                <p>Second enabled tab content.</p>
+            </TabsContent>
+        </Tabs>
+    </div>
+
+    <div class="space-y-6">
+        <h2 class="text-2xl font-semibold">Accessibility Features</h2>
+        <div class="rounded-lg border bg-card text-card-foreground p-4">
+            <h3 class="font-semibold mb-2">Keyboard Navigation</h3>
+            <ul class="space-y-1 text-sm text-muted-foreground">
+                <li><kbd class="px-2 py-1 text-xs font-semibold bg-muted rounded">Tab</kbd> - Focus the tab list</li>
+                <li><kbd class="px-2 py-1 text-xs font-semibold bg-muted rounded">Arrow Left/Right</kbd> - Navigate between tabs (horizontal)</li>
+                <li><kbd class="px-2 py-1 text-xs font-semibold bg-muted rounded">Arrow Up/Down</kbd> - Navigate between tabs (vertical)</li>
+                <li><kbd class="px-2 py-1 text-xs font-semibold bg-muted rounded">Home</kbd> - Jump to first tab</li>
+                <li><kbd class="px-2 py-1 text-xs font-semibold bg-muted rounded">End</kbd> - Jump to last tab</li>
+                <li><kbd class="px-2 py-1 text-xs font-semibold bg-muted rounded">Enter/Space</kbd> - Activate focused tab (manual mode)</li>
+            </ul>
+
+            <h3 class="font-semibold mb-2 mt-4">ARIA Attributes</h3>
+            <ul class="space-y-1 text-sm text-muted-foreground">
+                <li><code>role="tablist"</code> on the tabs list</li>
+                <li><code>role="tab"</code> on each tab trigger</li>
+                <li><code>role="tabpanel"</code> on each tab content</li>
+                <li><code>aria-selected</code> indicates the active tab</li>
+                <li><code>aria-controls</code> links trigger to content panel</li>
+                <li><code>aria-labelledby</code> links content to trigger</li>
+                <li><code>aria-orientation</code> indicates horizontal or vertical layout</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string? controlledValue = "account";
+}

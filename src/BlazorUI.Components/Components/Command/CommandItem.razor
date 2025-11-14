@@ -1,0 +1,68 @@
+@namespace BlazorUI.Components.Command
+@using BlazorUI.Components.Utilities
+@using BlazorUI.Primitives.Combobox
+
+@* CommandItem - styled wrapper over ComboboxItem *@
+<ComboboxItem Value="@Value"
+              SearchText="@(SearchText ?? Value ?? string.Empty)"
+              Disabled="@Disabled"
+              OnSelect="@HandleSelect"
+              class="@CssClass">
+    @ChildContent
+</ComboboxItem>
+
+@code {
+    /// <summary>
+    /// Gets or sets additional CSS classes to apply to the item.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets the content to be rendered inside the item.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets the value associated with this item.
+    /// </summary>
+    [Parameter]
+    public string? Value { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether this item is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets the callback invoked when this item is selected.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnSelect { get; set; }
+
+    /// <summary>
+    /// Gets or sets the text used for search filtering. If not provided, uses Value.
+    /// </summary>
+    [Parameter]
+    public string? SearchText { get; set; }
+
+    /// <summary>
+    /// Gets the computed CSS classes for the item.
+    /// </summary>
+    private string CssClass => ClassNames.cn(
+        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
+        !Disabled ? "hover:bg-accent hover:text-accent-foreground" : null,
+        Disabled ? "opacity-50 cursor-not-allowed" : null,
+        Class
+    );
+
+    private async Task HandleSelect()
+    {
+        if (OnSelect.HasDelegate)
+        {
+            await OnSelect.InvokeAsync();
+        }
+    }
+}

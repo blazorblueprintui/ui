@@ -1,0 +1,38 @@
+@namespace BlazorUI.Primitives.Sheet
+
+@*
+    SheetTitle provides the title element for the sheet.
+    Used for accessibility (aria-labelledby).
+*@
+
+<h2 id="@Context.TitleId"
+    @attributes="AdditionalAttributes">
+    @ChildContent
+</h2>
+
+@code {
+    [CascadingParameter]
+    private SheetContext Context { get; set; } = null!;
+
+    /// <summary>
+    /// The title text or content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the title element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "SheetTitle must be used within a Sheet component. " +
+                "Ensure SheetTitle is a child of a Sheet component.");
+        }
+    }
+}

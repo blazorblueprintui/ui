@@ -1,0 +1,66 @@
+@typeparam TValue
+@namespace BlazorUI.Primitives.Select
+
+@* SelectTrigger primitive - headless button that opens the select dropdown *@
+@if (_context != null)
+{
+    <button type="button"
+            @ref="_buttonElement"
+            role="combobox"
+            aria-expanded="@_context.IsOpen.ToString().ToLower()"
+            aria-controls="@_context.ContentId"
+            aria-haspopup="listbox"
+            aria-disabled="@_context.Disabled.ToString().ToLower()"
+            disabled="@_context.Disabled"
+            data-state="@(_context.IsOpen ? "open" : "closed")"
+            @onclick="HandleClick"
+            @onkeydown="HandleKeyDown"
+            @attributes="AdditionalAttributes">
+        @ChildContent
+    </button>
+}
+
+@code {
+    [CascadingParameter]
+    private SelectContext<TValue>? _context { get; set; }
+
+    private ElementReference _buttonElement;
+
+    /// <summary>
+    /// Content to render inside the trigger button.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to be applied to the button element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private void HandleClick()
+    {
+        _context?.Toggle(_buttonElement);
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (_context == null || _context.Disabled) return;
+
+        switch (args.Key)
+        {
+            case "Enter":
+            case " ": // Space
+            case "ArrowDown":
+            case "ArrowUp":
+                _context.Open(_buttonElement);
+                break;
+            case "Escape":
+                if (_context.IsOpen)
+                {
+                    _context.Close();
+                }
+                break;
+        }
+    }
+}

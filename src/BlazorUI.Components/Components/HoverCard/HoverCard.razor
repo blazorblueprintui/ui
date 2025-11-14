@@ -1,0 +1,63 @@
+@namespace BlazorUI.Components.HoverCard
+@using BlazorUI.Primitives.HoverCard
+
+@*
+    Styled HoverCard component wrapper.
+    Wraps the HoverCard primitive with shadcn/ui styling.
+*@
+
+<BlazorUI.Primitives.HoverCard.HoverCard Open="@Open"
+                                              OpenChanged="@OpenChanged"
+                                              DefaultOpen="@DefaultOpen"
+                                              OnOpenChange="@OnOpenChange"
+                                              OpenDelay="@OpenDelay"
+                                              CloseDelay="@CloseDelay">
+    @ChildContent
+</BlazorUI.Primitives.HoverCard.HoverCard>
+
+@code {
+    /// <summary>
+    /// The child content to render within the hover card.
+    /// Should include HoverCardTrigger and HoverCardContent components.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls whether the hover card is open (controlled mode).
+    /// </summary>
+    [Parameter]
+    public bool? Open { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// Default open state when in uncontrolled mode.
+    /// </summary>
+    [Parameter]
+    public bool DefaultOpen { get; set; } = false;
+
+    /// <summary>
+    /// Event callback invoked when the hover card open state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OnOpenChange { get; set; }
+
+    /// <summary>
+    /// Delay in milliseconds before opening the hover card.
+    /// Default is 700ms.
+    /// </summary>
+    [Parameter]
+    public int OpenDelay { get; set; } = 700;
+
+    /// <summary>
+    /// Delay in milliseconds before closing the hover card.
+    /// Default is 300ms.
+    /// </summary>
+    [Parameter]
+    public int CloseDelay { get; set; } = 300;
+}

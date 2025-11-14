@@ -1,0 +1,44 @@
+@using BlazorUI.Demo.Services
+@using BlazorUI.Icons.Components
+@inject ThemeService ThemeService
+@implements IDisposable
+
+<div class="flex items-center gap-2">
+    <LucideIcon Name="sun" Class="h-4 w-4 text-muted-foreground" />
+    <Switch Checked="@_isDarkMode"
+            CheckedChanged="@OnCheckedChanged"
+            Size="SwitchSize.Small"
+            AriaLabel="Toggle dark mode" />
+    <LucideIcon Name="moon" Class="h-4 w-4 text-muted-foreground" />
+</div>
+
+@code {
+    private bool _isDarkMode;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Initialize theme service
+        await ThemeService.InitializeAsync();
+        _isDarkMode = ThemeService.IsDarkMode;
+
+        // Subscribe to theme changes
+        ThemeService.OnThemeChanged += HandleThemeChanged;
+    }
+
+    private async Task OnCheckedChanged(bool value)
+    {
+        _isDarkMode = value;
+        await ThemeService.SetThemeAsync(value);
+    }
+
+    private void HandleThemeChanged()
+    {
+        _isDarkMode = ThemeService.IsDarkMode;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        ThemeService.OnThemeChanged -= HandleThemeChanged;
+    }
+}

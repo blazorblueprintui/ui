@@ -1,0 +1,486 @@
+@page "/primitives/sheet"
+@using BlazorUI.Primitives.Sheet
+
+<PageTitle>Sheet Primitive - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Sheet Primitive</h1>
+        <p class="text-xl text-muted-foreground">
+            Headless, unstyled sheet primitive with slide-in animations and full accessibility support.
+        </p>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Headless Primitive</h2>
+                <p class="text-muted-foreground">
+                    The primitive provides behavior and accessibility without styling.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 max-w-md">
+                <Sheet>
+                    <SheetTrigger class="px-3 py-2 border rounded text-sm">
+                        Open Sheet
+                    </SheetTrigger>
+
+                    <SheetPortal>
+                        <SheetOverlay class="fixed inset-0 bg-black/50 z-50" />
+
+                        <SheetContent class="fixed right-0 top-0 z-50 h-full w-3/4 sm:max-w-sm bg-background p-6 border-l">
+                            <SheetTitle class="text-lg font-semibold mb-2">
+                                Sheet Title
+                            </SheetTitle>
+
+                            <SheetDescription class="text-sm text-muted-foreground mb-4">
+                                This is a basic sheet using the unstyled primitive components.
+                            </SheetDescription>
+
+                            <div class="flex justify-end gap-2">
+                                <SheetClose class="px-3 py-2 border rounded text-sm">
+                                    Close
+                                </SheetClose>
+                            </div>
+                        </SheetContent>
+                    </SheetPortal>
+                </Sheet>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Different Sides</h2>
+                <p class="text-muted-foreground">
+                    Sheets can slide in from any side: top, right, bottom, or left.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+                <Sheet Side="SheetSide.Top">
+                    <SheetTrigger class="px-3 py-2 border rounded text-sm">
+                        Top
+                    </SheetTrigger>
+                    <SheetPortal>
+                        <SheetOverlay class="fixed inset-0 bg-black/50 z-50" />
+                        <SheetContent class="fixed top-0 inset-x-0 z-50 border-b bg-background p-6">
+                            <SheetTitle class="text-lg font-semibold mb-2">Sheet from Top</SheetTitle>
+                            <SheetDescription class="text-sm text-muted-foreground">
+                                This sheet slides in from the top of the screen.
+                            </SheetDescription>
+                            <SheetClose class="px-3 py-2 border rounded text-sm mt-4">Close</SheetClose>
+                        </SheetContent>
+                    </SheetPortal>
+                </Sheet>
+
+                <Sheet Side="SheetSide.Right">
+                    <SheetTrigger class="px-3 py-2 border rounded text-sm">
+                        Right
+                    </SheetTrigger>
+                    <SheetPortal>
+                        <SheetOverlay class="fixed inset-0 bg-black/50 z-50" />
+                        <SheetContent class="fixed right-0 top-0 z-50 h-full w-3/4 sm:max-w-sm border-l bg-background p-6">
+                            <SheetTitle class="text-lg font-semibold mb-2">Sheet from Right</SheetTitle>
+                            <SheetDescription class="text-sm text-muted-foreground">
+                                This sheet slides in from the right side (default).
+                            </SheetDescription>
+                            <SheetClose class="px-3 py-2 border rounded text-sm mt-4">Close</SheetClose>
+                        </SheetContent>
+                    </SheetPortal>
+                </Sheet>
+
+                <Sheet Side="SheetSide.Bottom">
+                    <SheetTrigger class="px-3 py-2 border rounded text-sm">
+                        Bottom
+                    </SheetTrigger>
+                    <SheetPortal>
+                        <SheetOverlay class="fixed inset-0 bg-black/50 z-50" />
+                        <SheetContent class="fixed bottom-0 inset-x-0 z-50 border-t bg-background p-6">
+                            <SheetTitle class="text-lg font-semibold mb-2">Sheet from Bottom</SheetTitle>
+                            <SheetDescription class="text-sm text-muted-foreground">
+                                This sheet slides in from the bottom of the screen.
+                            </SheetDescription>
+                            <SheetClose class="px-3 py-2 border rounded text-sm mt-4">Close</SheetClose>
+                        </SheetContent>
+                    </SheetPortal>
+                </Sheet>
+
+                <Sheet Side="SheetSide.Left">
+                    <SheetTrigger class="px-3 py-2 border rounded text-sm">
+                        Left
+                    </SheetTrigger>
+                    <SheetPortal>
+                        <SheetOverlay class="fixed inset-0 bg-black/50 z-50" />
+                        <SheetContent class="fixed left-0 top-0 z-50 h-full w-3/4 sm:max-w-sm border-r bg-background p-6">
+                            <SheetTitle class="text-lg font-semibold mb-2">Sheet from Left</SheetTitle>
+                            <SheetDescription class="text-sm text-muted-foreground">
+                                This sheet slides in from the left side.
+                            </SheetDescription>
+                            <SheetClose class="px-3 py-2 border rounded text-sm mt-4">Close</SheetClose>
+                        </SheetContent>
+                    </SheetPortal>
+                </Sheet>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Controlled State</h2>
+                <p class="text-muted-foreground">
+                    Control the sheet's open state from your component code.
+                </p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex gap-2">
+                    <button @onclick="() => isControlledOpen = true"
+                            class="px-3 py-2 border rounded text-sm">
+                        Open Sheet
+                    </button>
+                    <button @onclick="() => isControlledOpen = false"
+                            class="px-3 py-2 border rounded text-sm"
+                            disabled="@(!isControlledOpen)">
+                        Close from Outside
+                    </button>
+                </div>
+
+                <div class="rounded-lg border bg-card p-6 max-w-md">
+                    <Sheet @bind-Open="isControlledOpen">
+                        <SheetPortal>
+                            <SheetOverlay class="fixed inset-0 bg-black/50 z-50" />
+
+                            <SheetContent class="fixed right-0 top-0 z-50 h-full w-3/4 sm:max-w-sm bg-background p-6 border-l">
+                                <SheetTitle class="text-lg font-semibold mb-2">
+                                    Controlled Sheet
+                                </SheetTitle>
+
+                                <SheetDescription class="text-sm text-muted-foreground mb-4">
+                                    This sheet's state is controlled by the parent component. The "Close from Outside" button demonstrates external state control.
+                                </SheetDescription>
+
+                                <p class="mb-4">Open state: <strong>@isControlledOpen</strong></p>
+
+                                <SheetClose class="px-3 py-2 border rounded text-sm">
+                                    Close
+                                </SheetClose>
+                            </SheetContent>
+                        </SheetPortal>
+                    </Sheet>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Modal Behavior</h2>
+                <p class="text-muted-foreground">
+                    By default, sheets are modal. Clicking overlay or pressing Escape closes the sheet.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 max-w-md">
+                <Sheet>
+                    <SheetTrigger class="px-3 py-2 border rounded text-sm">
+                        Open Modal Sheet
+                    </SheetTrigger>
+
+                    <SheetPortal>
+                        <SheetOverlay class="fixed inset-0 bg-black/50 z-50" />
+
+                        <SheetContent class="fixed right-0 top-0 z-50 h-full w-3/4 sm:max-w-sm bg-background p-6 border-l">
+                            <SheetTitle class="text-lg font-semibold mb-2">
+                                Modal Sheet
+                            </SheetTitle>
+
+                            <SheetDescription class="text-sm text-muted-foreground mb-4">
+                                Try clicking the overlay or pressing Escape to close this sheet.
+                            </SheetDescription>
+
+                            <ul class="text-sm space-y-1 mb-4">
+                                <li>✓ Click overlay to close</li>
+                                <li>✓ Press Escape to close</li>
+                                <li>✓ Click close button</li>
+                                <li>✓ Focus trapped inside sheet</li>
+                                <li>✓ Body scroll locked</li>
+                            </ul>
+
+                            <SheetClose class="px-3 py-2 border rounded text-sm">
+                                Close
+                            </SheetClose>
+                        </SheetContent>
+                    </SheetPortal>
+                </Sheet>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Accessibility Features</h2>
+                <p class="text-muted-foreground">
+                    Built-in accessibility features following WAI-ARIA design patterns.
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-6 space-y-3 bg-muted/50">
+                <div>
+                    <h3 class="font-semibold mb-2">ARIA Attributes</h3>
+                    <ul class="space-y-2 text-sm text-muted-foreground">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span><code class="text-xs bg-muted px-1 py-0.5 rounded">role="dialog"</code> for screen readers</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span><code class="text-xs bg-muted px-1 py-0.5 rounded">aria-labelledby</code> links title to sheet</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span><code class="text-xs bg-muted px-1 py-0.5 rounded">aria-describedby</code> links description to sheet</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Automatic focus trap and restoration</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Body scroll lock when sheet is open</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Portal rendering for proper z-index stacking</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Direction-aware slide animations</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Keyboard Shortcuts</h2>
+                <p class="text-muted-foreground">
+                    Navigate and interact with sheets using keyboard.
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-6 space-y-3 bg-muted/50">
+                <div class="grid gap-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium">Open sheet</span>
+                        <kbd class="px-2 py-1 text-xs font-semibold bg-background border rounded">Enter / Space</kbd>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium">Close sheet</span>
+                        <kbd class="px-2 py-1 text-xs font-semibold bg-background border rounded">Escape</kbd>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium">Navigate between elements</span>
+                        <kbd class="px-2 py-1 text-xs font-semibold bg-background border rounded">Tab</kbd>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">API Reference</h2>
+                <p class="text-muted-foreground">
+                    Component properties and parameters.
+                </p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="rounded-lg border p-4">
+                    <h3 class="font-semibold mb-3">Sheet</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Open</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>bool?</code><br/>
+                                Controls whether the sheet is open (controlled mode).
+                            </p>
+                        </div>
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">OpenChanged</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>EventCallback&lt;bool&gt;</code><br/>
+                                Callback invoked when the open state changes.
+                            </p>
+                        </div>
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">DefaultOpen</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>bool</code><br/>
+                                <strong>Default:</strong> <code>false</code><br/>
+                                Initial open state (uncontrolled mode).
+                            </p>
+                        </div>
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Side</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>SheetSide</code><br/>
+                                <strong>Default:</strong> <code>SheetSide.Right</code><br/>
+                                <strong>Options:</strong> Top, Right, Bottom, Left<br/>
+                                The side from which the sheet slides in.
+                            </p>
+                        </div>
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Modal</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>bool</code><br/>
+                                <strong>Default:</strong> <code>true</code><br/>
+                                Whether the sheet is modal (blocks interaction with rest of page).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border p-4">
+                    <h3 class="font-semibold mb-3">SheetTrigger</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">ChildContent</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>RenderFragment?</code><br/>
+                                Button content that opens the sheet.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border p-4">
+                    <h3 class="font-semibold mb-3">SheetPortal</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">ChildContent</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>RenderFragment?</code><br/>
+                                Content rendered at document body level for proper stacking.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border p-4">
+                    <h3 class="font-semibold mb-3">SheetOverlay</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">CloseOnClick</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>bool</code><br/>
+                                <strong>Default:</strong> <code>true</code><br/>
+                                Whether clicking the overlay closes the sheet.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border p-4">
+                    <h3 class="font-semibold mb-3">SheetContent</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">CloseOnEscape</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>bool</code><br/>
+                                <strong>Default:</strong> <code>true</code><br/>
+                                Whether pressing Escape closes the sheet.
+                            </p>
+                        </div>
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">TrapFocus</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>bool</code><br/>
+                                <strong>Default:</strong> <code>true</code><br/>
+                                Whether to trap focus inside the sheet.
+                            </p>
+                        </div>
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">LockScroll</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>bool</code><br/>
+                                <strong>Default:</strong> <code>true</code><br/>
+                                Whether to prevent body scroll when sheet is open.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border p-4">
+                    <h3 class="font-semibold mb-3">SheetTitle / SheetDescription / SheetClose</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">ChildContent</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>RenderFragment?</code><br/>
+                                Content rendered inside the component.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">When to Use Primitives</h2>
+                <p class="text-muted-foreground">
+                    Choose between primitives and styled components based on your needs.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="rounded-lg border p-4 space-y-3">
+                    <h3 class="font-semibold text-primary">Use Sheet Primitive</h3>
+                    <ul class="space-y-2 text-sm text-muted-foreground">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Building a custom design system</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Need complete control over styling</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Want to apply your own CSS framework</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Creating unique visual designs</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="rounded-lg border p-4 space-y-3">
+                    <h3 class="font-semibold text-primary">Use Styled Component</h3>
+                    <ul class="space-y-2 text-sm text-muted-foreground">
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Want shadcn/ui design out of the box</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Need quick implementation</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Like the default styling</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Prefer convention over configuration</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+@code {
+    private bool isControlledOpen = false;
+}

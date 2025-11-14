@@ -1,0 +1,56 @@
+@namespace BlazorUI.Components.Dialog
+@using BlazorUI.Primitives.Dialog
+
+@*
+    Styled Dialog component wrapper.
+    Wraps the Dialog primitive with shadcn/ui styling.
+*@
+
+<BlazorUI.Primitives.Dialog.Dialog Open="@Open"
+                                         OpenChanged="@OpenChanged"
+                                         DefaultOpen="@DefaultOpen"
+                                         OnOpenChange="@OnOpenChange"
+                                         Modal="@Modal">
+    @ChildContent
+</BlazorUI.Primitives.Dialog.Dialog>
+
+@code {
+    /// <summary>
+    /// The child content to render within the dialog.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls whether the dialog is open (controlled mode).
+    /// When null, the dialog manages its own state (uncontrolled mode).
+    /// </summary>
+    [Parameter]
+    public bool? Open { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open state changes.
+    /// Use with @bind-Open for two-way binding.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// Default open state when in uncontrolled mode.
+    /// </summary>
+    [Parameter]
+    public bool DefaultOpen { get; set; } = false;
+
+    /// <summary>
+    /// Event callback invoked when the dialog open state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OnOpenChange { get; set; }
+
+    /// <summary>
+    /// Whether the dialog can be dismissed by clicking outside or pressing Escape.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool Modal { get; set; } = true;
+}

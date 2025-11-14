@@ -1,0 +1,69 @@
+@using BlazorUI.Primitives.Services
+@namespace BlazorUI.Components.Tooltip
+@using BlazorUI.Primitives.Tooltip
+
+@* Styled TooltipContent - wrapper with shadcn Tailwind classes *@
+<BlazorUI.Primitives.Tooltip.TooltipContent class="@CssClass"
+                                                  Side="@Side"
+                                                  Align="@Align"
+                                                  Offset="@Offset">
+    @ChildContent
+</BlazorUI.Primitives.Tooltip.TooltipContent>
+
+@code {
+    /// <summary>
+    /// The content to render inside the tooltip.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the content container.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Preferred side for positioning: PopoverSide.Top, PopoverSide.Bottom, PopoverSide.Left, PopoverSide.Right.
+    /// Default is PopoverSide.Top.
+    /// </summary>
+    [Parameter]
+    public PopoverSide Side { get; set; } = PopoverSide.Top;
+
+    /// <summary>
+    /// Alignment relative to trigger: "@PopoverAlign.Start", "@PopoverAlign.Center", "@PopoverAlign.End".
+    /// Default is "@PopoverAlign.Center".
+    /// </summary>
+    [Parameter]
+    public PopoverAlign Align { get; set; } = PopoverAlign.Center;
+
+    /// <summary>
+    /// Offset distance from the trigger in pixels.
+    /// Default is 8.
+    /// </summary>
+    [Parameter]
+    public int Offset { get; set; } = 8;
+
+    private string CssClass
+    {
+        get
+        {
+            var baseClasses = "z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md " +
+                            "animate-in fade-in-0 zoom-in-95 max-w-md";
+
+            // Add slide animation based on side
+            var slideClass = Side switch
+            {
+                PopoverSide.Top => " slide-in-from-bottom-2",
+                PopoverSide.Bottom => " slide-in-from-top-2",
+                PopoverSide.Left => " slide-in-from-right-2",
+                PopoverSide.Right => " slide-in-from-left-2",
+                _ => " slide-in-from-bottom-2"
+            };
+
+            var result = baseClasses + slideClass;
+
+            return string.IsNullOrWhiteSpace(Class) ? result : $"{result} {Class}";
+        }
+    }
+}

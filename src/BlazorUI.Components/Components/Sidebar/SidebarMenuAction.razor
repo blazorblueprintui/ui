@@ -1,0 +1,89 @@
+@namespace BlazorUI.Components.Sidebar
+@using BlazorUI.Components.Utilities
+@using BlazorUI.Primitives.Tooltip
+@using BlazorUI.Primitives.Services
+
+@*
+    SidebarMenuAction component for action buttons/icons in menu items.
+*@
+
+@if (!string.IsNullOrEmpty(Tooltip))
+{
+    <BlazorUI.Primitives.Tooltip.Tooltip>
+        <BlazorUI.Primitives.Tooltip.TooltipTrigger>
+            @RenderButton()
+        </BlazorUI.Primitives.Tooltip.TooltipTrigger>
+        <BlazorUI.Primitives.Tooltip.TooltipContent Side="@PopoverSide.Right">
+            <span>@Tooltip</span>
+        </BlazorUI.Primitives.Tooltip.TooltipContent>
+    </BlazorUI.Primitives.Tooltip.Tooltip>
+}
+else
+{
+    @RenderButton()
+}
+
+@code {
+    /// <summary>
+    /// The button content (typically an icon).
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Tooltip text for the action.
+    /// </summary>
+    [Parameter]
+    public string? Tooltip { get; set; }
+
+    /// <summary>
+    /// Whether to show the action only on hover.
+    /// </summary>
+    [Parameter]
+    public bool ShowOnHover { get; set; }
+
+    /// <summary>
+    /// The element tag to render (button or a).
+    /// </summary>
+    [Parameter]
+    public SidebarMenuButtonElement AsChild { get; set; } = SidebarMenuButtonElement.Button;
+
+    /// <summary>
+    /// Additional CSS classes.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private RenderFragment RenderButton() => __builder =>
+    {
+        if (AsChild == SidebarMenuButtonElement.Anchor)
+        {
+            <a class="@GetClasses()" data-sidebar="menu-action" @attributes="AdditionalAttributes">
+                @ChildContent
+            </a>
+        }
+        else
+        {
+            <button type="button" class="@GetClasses()" data-sidebar="menu-action" @attributes="AdditionalAttributes">
+                @ChildContent
+            </button>
+        }
+    };
+
+    private string GetClasses()
+    {
+        var baseClasses = "absolute right-1 top-1.5 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-sidebar-foreground outline-none ring-sidebar-ring transition-transform hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 peer-hover/menu-button:text-sidebar-accent-foreground [&>svg]:size-4 [&>svg]:shrink-0";
+
+        var hoverClasses = ShowOnHover
+            ? "after:absolute after:-inset-2 after:md:hidden peer-data-[size=sm]/menu-button:top-1 peer-data-[size=default]/menu-button:top-1.5 peer-data-[size=lg]/menu-button:top-2.5 group-data-[collapsible=icon]:hidden"
+            : "";
+
+        return ClassNames.cn(baseClasses, hoverClasses, Class);
+    }
+}

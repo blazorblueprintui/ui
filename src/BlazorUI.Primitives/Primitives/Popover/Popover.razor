@@ -1,0 +1,105 @@
+@namespace BlazorUI.Primitives.Popover
+@implements IDisposable
+
+@* Popover primitive root component - headless, unstyled behavior only *@
+<CascadingValue Value="@_context" IsFixed="false">
+    @ChildContent
+</CascadingValue>
+
+@code {
+    private PopoverContext _context = new();
+    private UseControllableState<bool> _state = null!;
+
+    /// <summary>
+    /// The child content to render within the popover context.
+    /// Typically includes PopoverTrigger and PopoverContent.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls whether the popover is open (controlled mode).
+    /// When null, the popover manages its own state (uncontrolled mode).
+    /// </summary>
+    [Parameter]
+    public bool? Open { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open state changes.
+    /// Use with @bind-Open for two-way binding.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// Default open state when in uncontrolled mode.
+    /// </summary>
+    [Parameter]
+    public bool DefaultOpen { get; set; } = false;
+
+    /// <summary>
+    /// Event callback invoked when the popover open state changes.
+    /// Receives the new open state as a parameter.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OnOpenChange { get; set; }
+
+    /// <summary>
+    /// Whether the popover can be dismissed by clicking outside or pressing Escape.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool Modal { get; set; } = true;
+
+    protected override void OnInitialized()
+    {
+        // Initialize controllable state
+        _state = new UseControllableState<bool>(DefaultOpen)
+        {
+            ControlledValue = Open ?? DefaultOpen,
+            OnValueChanged = OpenChanged,
+            IsControlled = Open.HasValue
+        };
+
+        // Sync initial state to context
+        _context.State.IsOpen = _state.Value;
+
+        // Subscribe to context state changes
+        _context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Update controlled value if it changed
+        if (_state.IsControlled && Open.HasValue)
+        {
+            _state.ControlledValue = Open.Value;
+            _context.State.IsOpen = Open.Value;
+        }
+    }
+
+    private void HandleContextStateChanged()
+    {
+        // When context state changes (e.g., from PopoverTrigger or click outside),
+        // update the controllable state
+        var newOpenState = _context.State.IsOpen;
+
+        if (_state.Value != newOpenState)
+        {
+            _ = _state.SetValueAsync(newOpenState);
+
+            // Invoke additional callback if provided
+            if (OnOpenChange.HasDelegate)
+            {
+                _ = OnOpenChange.InvokeAsync(newOpenState);
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        _context.OnStateChanged -= HandleContextStateChanged;
+    }
+}

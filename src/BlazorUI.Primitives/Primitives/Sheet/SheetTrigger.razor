@@ -1,0 +1,72 @@
+@namespace BlazorUI.Primitives.Sheet
+
+@* Sheet trigger button - opens the sheet when clicked *@
+<button type="button"
+        id="@Context.TriggerId"
+        @onclick="HandleClick"
+        @attributes="AdditionalAttributes"
+        aria-haspopup="dialog"
+        aria-expanded="@Context.IsOpen.ToString().ToLower()"
+        aria-controls="@Context.ContentId">
+    @ChildContent
+</button>
+
+@code {
+    [CascadingParameter]
+    private SheetContext Context { get; set; } = null!;
+
+    /// <summary>
+    /// The content to display inside the trigger button.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the trigger button element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Custom click handler. If provided, this is called instead of the default toggle behavior.
+    /// </summary>
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnClick { get; set; }
+
+    /// <summary>
+    /// Whether to use custom click handling. When true, only OnClick is invoked.
+    /// Default is false (sheet opens on click).
+    /// </summary>
+    [Parameter]
+    public bool CustomClickHandling { get; set; } = false;
+
+    private async Task HandleClick(MouseEventArgs args)
+    {
+        if (CustomClickHandling && OnClick.HasDelegate)
+        {
+            // Custom handling only
+            await OnClick.InvokeAsync(args);
+        }
+        else
+        {
+            // Default: toggle sheet
+            Context.Toggle();
+
+            // Also invoke custom handler if provided
+            if (OnClick.HasDelegate)
+            {
+                await OnClick.InvokeAsync(args);
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "SheetTrigger must be used within a Sheet component. " +
+                "Ensure SheetTrigger is a child of a Sheet component.");
+        }
+    }
+}

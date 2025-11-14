@@ -1,0 +1,43 @@
+@namespace BlazorUI.Components.Tabs
+@using BlazorUI.Primitives.Tabs
+
+@*
+    Styled TabsTrigger component.
+    Wraps the TabsTrigger primitive with shadcn/ui styling.
+*@
+
+<BlazorUI.Primitives.Tabs.TabsTrigger Value="@Value"
+                                            Disabled="@Disabled"
+                                            class="@CssClass">
+    @ChildContent
+</BlazorUI.Primitives.Tabs.TabsTrigger>
+
+@code {
+    /// <summary>
+    /// The value that identifies this tab.
+    /// Used to match with TabsContent components.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string Value { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Whether this tab trigger is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// The child content to render within the tab trigger.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the tab trigger.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    private string CssClass =>
+        $"inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm {Class}".Trim();
+}

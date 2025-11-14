@@ -1,0 +1,356 @@
+@namespace BlazorUI.Primitives.Popover
+@using BlazorUI.Primitives.Services
+@inject IPositioningService PositioningService
+@inject IPortalService PortalService
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@*
+    PopoverContent is the main content container for the popover.
+    Handles positioning, click-outside, escape key, and ARIA attributes.
+    Renders through a portal to avoid z-index stacking issues.
+*@
+
+@* Hidden element to track DOM position for positioning calculations *@
+@if (Context.IsOpen)
+{
+    <span @ref="_contentRef" style="position: absolute; pointer-events: none; opacity: 0;"></span>
+}
+
+@code {
+    [CascadingParameter]
+    private PopoverContext Context { get; set; } = null!;
+
+    /// <summary>
+    /// The content to render inside the popover.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the content container.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Whether pressing Escape should close the popover.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnEscape { get; set; } = true;
+
+    /// <summary>
+    /// Whether clicking outside should close the popover.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnClickOutside { get; set; } = true;
+
+    /// <summary>
+    /// Preferred side for positioning.
+    /// Default is Bottom.
+    /// </summary>
+    [Parameter]
+    public PopoverSide Side { get; set; } = PopoverSide.Bottom;
+
+    /// <summary>
+    /// Alignment relative to trigger.
+    /// Default is Center.
+    /// </summary>
+    [Parameter]
+    public PopoverAlign Align { get; set; } = PopoverAlign.Center;
+
+    /// <summary>
+    /// Offset distance from the trigger element in pixels.
+    /// Default is 4.
+    /// </summary>
+    [Parameter]
+    public int Offset { get; set; } = 4;
+
+    /// <summary>
+    /// Event callback invoked when Escape key is pressed.
+    /// </summary>
+    [Parameter]
+    public EventCallback<KeyboardEventArgs> OnEscapeKeyDown { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when clicking outside the popover.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnClickOutside { get; set; }
+
+    private ElementReference _contentRef;
+    private IJSObjectReference? _clickOutsideModule;
+    private IJSObjectReference? _clickOutsideCleanup;
+    private DotNetObjectReference<PopoverContent>? _dotNetRef;
+    private IAsyncDisposable? _positioningCleanup;
+    private bool _isInitialized = false;
+    private bool _isPositioned = false;
+    private string _portalId = "";
+    private ElementReference _portalContentRef;
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "PopoverContent must be used within a Popover component. " +
+                "Ensure PopoverContent is a child of a Popover component.");
+        }
+
+        _portalId = $"popover-portal-{Context.ContentId}";
+
+        // Subscribe to context changes
+        Context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Context.IsOpen && !_isInitialized)
+        {
+            _isInitialized = true;
+            _isPositioned = false;
+
+            // Register popover content through portal
+            PortalService.RegisterPortal(_portalId, RenderPopoverContent());
+
+            // Set up positioning
+            await SetupPositioningAsync();
+
+            // Set up click-outside detection
+            if (CloseOnClickOutside)
+            {
+                await SetupClickOutsideAsync();
+            }
+        }
+        else if (!Context.IsOpen && _isInitialized)
+        {
+            await CleanupAsync();
+        }
+    }
+
+    private RenderFragment RenderPopoverContent() => __builder =>
+    {
+        <div @ref="_portalContentRef"
+             id="@Context.ContentId"
+             role="group"
+             tabindex="-1"
+             @onkeydown="HandleKeyDown"
+             @attributes="GetAttributesWithoutStyle()"
+             data-state="open"
+             style="@GetMergedStyle()">
+            @ChildContent
+        </div>
+    };
+
+    private async Task SetupPositioningAsync()
+    {
+        if (Context.State.TriggerElement == null)
+        {
+            Console.WriteLine("Warning: PopoverContent - TriggerElement is null, positioning may not work correctly");
+            _isPositioned = true;
+            PortalService.UpdatePortalContent(_portalId, RenderPopoverContent());
+            return;
+        }
+
+        // Wait a tick for portal to render
+        await Task.Delay(1);
+
+        try
+        {
+            // Construct placement string from Side and Align
+            var placement = Align == PopoverAlign.Center ? Side.ToValue() : $"{Side.ToValue()}-{Align.ToValue()}";
+
+            var options = new PositioningOptions
+            {
+                Placement = placement,
+                Offset = Offset
+            };
+
+            // Compute and apply position using the portal content ref
+            var position = await PositioningService.ComputePositionAsync(
+                Context.State.TriggerElement.Value,
+                _portalContentRef,
+                options);
+
+            await PositioningService.ApplyPositionAsync(_portalContentRef, position);
+
+            // Show the popover now that positioning is complete
+            _isPositioned = true;
+            PortalService.UpdatePortalContent(_portalId, RenderPopoverContent());
+
+            // Set up auto-update for dynamic positioning
+            _positioningCleanup = await PositioningService.AutoUpdateAsync(
+                Context.State.TriggerElement.Value,
+                _portalContentRef,
+                options);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to set up positioning: {ex.Message}");
+            _isPositioned = true;
+            PortalService.UpdatePortalContent(_portalId, RenderPopoverContent());
+        }
+    }
+
+    private async Task SetupClickOutsideAsync()
+    {
+        try
+        {
+            _clickOutsideModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorUI.Primitives/js/primitives/click-outside.js");
+
+            _dotNetRef = DotNetObjectReference.Create(this);
+
+            // onClickOutside returns a cleanup function
+            _clickOutsideCleanup = await _clickOutsideModule.InvokeAsync<IJSObjectReference>(
+                "onClickOutside", _portalContentRef, _dotNetRef);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to set up click-outside: {ex.Message}");
+        }
+    }
+
+    [JSInvokable]
+    public async Task HandleClickOutside()
+    {
+        if (!Context.IsOpen) return;
+
+        // Invoke custom handler if provided
+        if (OnClickOutside.HasDelegate)
+        {
+            await OnClickOutside.InvokeAsync();
+        }
+
+        // Close popover if configured
+        if (CloseOnClickOutside)
+        {
+            Context.Close();
+        }
+    }
+
+    /// <summary>
+    /// Gets the initial inline style for the portal content.
+    /// </summary>
+    private string GetInitialStyle()
+    {
+        var baseStyle = "position: absolute; z-index: 50;";
+
+        if (!_isPositioned)
+        {
+            baseStyle += " opacity: 0; pointer-events: none;";
+        }
+
+        return baseStyle;
+    }
+
+    private string GetMergedStyle()
+    {
+        var baseStyle = GetInitialStyle();
+
+        if (AdditionalAttributes != null && AdditionalAttributes.TryGetValue("style", out var userStyle))
+        {
+            return $"{userStyle}; {baseStyle}";
+        }
+
+        return baseStyle;
+    }
+
+    private Dictionary<string, object>? GetAttributesWithoutStyle()
+    {
+        if (AdditionalAttributes == null) return null;
+
+        var attributes = new Dictionary<string, object>(AdditionalAttributes);
+        attributes.Remove("style");
+
+        return attributes.Count > 0 ? attributes : null;
+    }
+
+    private async void HandleContextStateChanged()
+    {
+        if (!Context.IsOpen && _isInitialized)
+        {
+            // Popover closed, clean up
+            await InvokeAsync(async () =>
+            {
+                await CleanupAsync();
+                StateHasChanged();
+            });
+        }
+        else
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            // Invoke custom handler if provided
+            if (OnEscapeKeyDown.HasDelegate)
+            {
+                await OnEscapeKeyDown.InvokeAsync(args);
+            }
+
+            // Close popover if configured
+            if (CloseOnEscape)
+            {
+                Context.Close();
+            }
+        }
+    }
+
+    private async Task CleanupAsync()
+    {
+        // Dispose positioning auto-update
+        if (_positioningCleanup != null)
+        {
+            await _positioningCleanup.DisposeAsync();
+            _positioningCleanup = null;
+        }
+
+        // Remove click-outside listener by invoking dispose method
+        if (_clickOutsideCleanup != null)
+        {
+            try
+            {
+                await _clickOutsideCleanup.InvokeVoidAsync("dispose");
+                await _clickOutsideCleanup.DisposeAsync();
+            }
+            catch
+            {
+                // Cleanup may already be disposed
+            }
+            _clickOutsideCleanup = null;
+        }
+
+        // Unregister portal when popover closes
+        if (!string.IsNullOrEmpty(_portalId))
+        {
+            PortalService.UnregisterPortal(_portalId);
+        }
+
+        _isInitialized = false;
+        _isPositioned = false;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await CleanupAsync();
+
+        if (_clickOutsideModule != null)
+        {
+            await _clickOutsideModule.DisposeAsync();
+        }
+
+        _dotNetRef?.Dispose();
+
+        if (Context != null)
+        {
+            Context.OnStateChanged -= HandleContextStateChanged;
+        }
+    }
+}

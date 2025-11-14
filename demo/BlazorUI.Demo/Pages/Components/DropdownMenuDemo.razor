@@ -1,0 +1,330 @@
+@page "/components/dropdown-menu"
+@using BlazorUI.Primitives.Services
+@using BlazorUI.Components.DropdownMenu
+
+<PageTitle>Dropdown Menu Component - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Dropdown Menu Component</h1>
+        <p class="text-xl text-muted-foreground">
+            Displays a menu of actions or options triggered by a button.
+        </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+    </div>
+
+    <!-- Basic Dropdown -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Basic Dropdown Menu</h2>
+        <p class="text-sm text-muted-foreground">
+            A simple dropdown menu with items.
+        </p>
+
+        <div class="flex items-start gap-2">
+            <DropdownMenu>
+                <DropdownMenuTrigger Class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                    Open Menu
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuItem OnClick="@(() => HandleBasicAction("Profile"))">Profile</DropdownMenuItem>
+                    <DropdownMenuItem OnClick="@(() => HandleBasicAction("Settings"))">Settings</DropdownMenuItem>
+                    <DropdownMenuItem OnClick="@(() => HandleBasicAction("Billing"))">Billing</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            @if (!string.IsNullOrEmpty(basicAction))
+            {
+                <p class="text-sm">Last action: <strong>@basicAction</strong></p>
+            }
+        </div>
+    </section>
+
+    <!-- With Labels and Separators -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">With Labels and Separators</h2>
+        <p class="text-sm text-muted-foreground">
+            Organize menu items with labels and visual separators.
+        </p>
+
+        <div class="flex items-start gap-2">
+            <DropdownMenu>
+                <DropdownMenuTrigger Class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                    My Account
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem OnClick="@(() => HandleLabelsAction("Profile"))">Profile</DropdownMenuItem>
+                    <DropdownMenuItem OnClick="@(() => HandleLabelsAction("Billing"))">Billing</DropdownMenuItem>
+                    <DropdownMenuItem OnClick="@(() => HandleLabelsAction("Settings"))">Settings</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem OnClick="@(() => HandleLabelsAction("Logout"))">Logout</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            @if (!string.IsNullOrEmpty(labelsAction))
+            {
+                <p class="text-sm">Last action: <strong>@labelsAction</strong></p>
+            }
+        </div>
+    </section>
+
+    <!-- With Groups -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Grouped Items</h2>
+        <p class="text-sm text-muted-foreground">
+            Group related menu items together.
+        </p>
+
+        <div class="flex items-start gap-2">
+            <DropdownMenu>
+                <DropdownMenuTrigger Class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                    Actions
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuLabel>File Operations</DropdownMenuLabel>
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem OnClick="@(() => HandleGroupsAction("New File"))">New File</DropdownMenuItem>
+                        <DropdownMenuItem OnClick="@(() => HandleGroupsAction("Open"))">Open</DropdownMenuItem>
+                        <DropdownMenuItem OnClick="@(() => HandleGroupsAction("Save"))">Save</DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel>Edit Operations</DropdownMenuLabel>
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem OnClick="@(() => HandleGroupsAction("Cut"))">Cut</DropdownMenuItem>
+                        <DropdownMenuItem OnClick="@(() => HandleGroupsAction("Copy"))">Copy</DropdownMenuItem>
+                        <DropdownMenuItem OnClick="@(() => HandleGroupsAction("Paste"))">Paste</DropdownMenuItem>
+                    </DropdownMenuGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            @if (!string.IsNullOrEmpty(groupsAction))
+            {
+                <p class="text-sm">Last action: <strong>@groupsAction</strong></p>
+            }
+        </div>
+    </section>
+
+    <!-- With Keyboard Shortcuts -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">With Keyboard Shortcuts</h2>
+        <p class="text-sm text-muted-foreground">
+            Display keyboard shortcuts alongside menu items (visual only).
+        </p>
+
+        <div class="flex items-start gap-2">
+            <DropdownMenu>
+                <DropdownMenuTrigger Class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                    File Menu
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuItem OnClick="@(() => HandleShortcutsAction("New"))">
+                        New
+                        <DropdownMenuShortcut>⌘N</DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem OnClick="@(() => HandleShortcutsAction("Open"))">
+                        Open
+                        <DropdownMenuShortcut>⌘O</DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem OnClick="@(() => HandleShortcutsAction("Save"))">
+                        Save
+                        <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem OnClick="@(() => HandleShortcutsAction("Print"))">
+                        Print
+                        <DropdownMenuShortcut>⌘P</DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            @if (!string.IsNullOrEmpty(shortcutsAction))
+            {
+                <p class="text-sm">Last action: <strong>@shortcutsAction</strong></p>
+            }
+        </div>
+    </section>
+
+    <!-- Alignment Options -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Alignment Options</h2>
+        <p class="text-sm text-muted-foreground">
+            Control how the dropdown aligns relative to its trigger (Start, Center, End). Test with small icon buttons to see alignment clearly.
+        </p>
+
+        <div class="flex flex-wrap gap-4 items-start">
+            <div class="flex flex-col gap-2 items-start">
+                <DropdownMenu>
+                    <DropdownMenuTrigger Class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-10" aria-label="Start aligned menu">
+                        <LucideIcon Name="menu" Size="16" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent Align="@PopoverAlign.Start">
+                        <DropdownMenuLabel>Start Alignment</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem OnClick="@(() => HandleMenuAction("start", "Item 1"))">Item 1</DropdownMenuItem>
+                        <DropdownMenuItem OnClick="@(() => HandleMenuAction("start", "Item 2"))">Item 2</DropdownMenuItem>
+                        <DropdownMenuItem OnClick="@(() => HandleMenuAction("start", "Item 3"))">Item 3</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+                @if (GetMenuAction("start") != null)
+                {
+                    <p class="text-sm">Start: <strong>@GetMenuAction("start")</strong></p>
+                }
+            </div>
+
+            <div class="flex flex-col gap-2 items-start">
+                <DropdownMenu>
+                    <DropdownMenuTrigger Class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-10" aria-label="Center aligned menu">
+                        <LucideIcon Name="menu" Size="16" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent Align="@PopoverAlign.Center">
+                        <DropdownMenuLabel>Center Alignment</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem OnClick="@(() => HandleMenuAction("center", "Item 1"))">Item 1</DropdownMenuItem>
+                        <DropdownMenuItem OnClick="@(() => HandleMenuAction("center", "Item 2"))">Item 2</DropdownMenuItem>
+                        <DropdownMenuItem OnClick="@(() => HandleMenuAction("center", "Item 3"))">Item 3</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+                @if (GetMenuAction("center") != null)
+                {
+                    <p class="text-sm">Center: <strong>@GetMenuAction("center")</strong></p>
+                }
+            </div>
+
+            <div class="flex flex-col gap-2 items-start">
+                <DropdownMenu>
+                    <DropdownMenuTrigger Class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-10" aria-label="End aligned menu">
+                        <LucideIcon Name="menu" Size="16" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent Align="@PopoverAlign.End">
+                        <DropdownMenuLabel>End Alignment</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem OnClick="@(() => HandleMenuAction("end", "Item 1"))">Item 1</DropdownMenuItem>
+                        <DropdownMenuItem OnClick="@(() => HandleMenuAction("end", "Item 2"))">Item 2</DropdownMenuItem>
+                        <DropdownMenuItem OnClick="@(() => HandleMenuAction("end", "Item 3"))">Item 3</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+                @if (GetMenuAction("end") != null)
+                {
+                    <p class="text-sm">End: <strong>@GetMenuAction("end")</strong></p>
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- Disabled Items -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Disabled Items</h2>
+        <p class="text-sm text-muted-foreground">
+            Menu items can be disabled to prevent interaction.
+        </p>
+
+        <div class="flex items-start gap-2">
+            <DropdownMenu>
+                <DropdownMenuTrigger Class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                    Edit Menu
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuItem OnClick="@(() => HandleDisabledAction("Cut"))">Cut</DropdownMenuItem>
+                    <DropdownMenuItem OnClick="@(() => HandleDisabledAction("Copy"))">Copy</DropdownMenuItem>
+                    <DropdownMenuItem Disabled="true" OnClick="@(() => HandleDisabledAction("Paste"))">Paste (Disabled)</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem OnClick="@(() => HandleDisabledAction("Select All"))">Select All</DropdownMenuItem>
+                    <DropdownMenuItem Disabled="true" OnClick="@(() => HandleDisabledAction("Delete"))">Delete (Disabled)</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            @if (!string.IsNullOrEmpty(disabledAction))
+            {
+                <p class="text-sm">Last action: <strong>@disabledAction</strong></p>
+            }
+        </div>
+    </section>
+
+    <!-- Complex Example -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Complex Example</h2>
+        <p class="text-sm text-muted-foreground">
+            Combining all features: labels, separators, groups, shortcuts, and disabled items.
+        </p>
+
+        <div class="flex items-start gap-2">
+            <DropdownMenu>
+                <DropdownMenuTrigger Class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                    Complete Menu
+                </DropdownMenuTrigger>
+                <DropdownMenuContent Class="w-56">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem OnClick="@(() => HandleComplexAction("Profile"))">
+                            Profile
+                            <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem OnClick="@(() => HandleComplexAction("Billing"))">
+                            Billing
+                            <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem OnClick="@(() => HandleComplexAction("Settings"))">
+                            Settings
+                            <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem Disabled="true" OnClick="@(() => HandleComplexAction("Keyboard shortcuts"))">
+                            Keyboard shortcuts
+                            <DropdownMenuShortcut>⌘K</DropdownMenuShortcut>
+                        </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem OnClick="@(() => HandleComplexAction("Team"))">Team</DropdownMenuItem>
+                        <DropdownMenuItem OnClick="@(() => HandleComplexAction("Invite users"))">
+                            Invite users
+                            <DropdownMenuShortcut>⌘I</DropdownMenuShortcut>
+                        </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem OnClick="@(() => HandleComplexAction("GitHub"))">GitHub</DropdownMenuItem>
+                    <DropdownMenuItem Disabled="true" OnClick="@(() => HandleComplexAction("Support"))">Support</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem OnClick="@(() => HandleComplexAction("Log out"))">
+                        Log out
+                        <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            @if (!string.IsNullOrEmpty(complexAction))
+            {
+                <p class="text-sm">Last action: <strong>@complexAction</strong></p>
+            }
+        </div>
+    </section>
+</div>
+
+@code {
+    // Independent state for each menu section
+    private string? basicAction;
+    private string? labelsAction;
+    private string? groupsAction;
+    private string? shortcutsAction;
+    private string? disabledAction;
+    private string? complexAction;
+    private Dictionary<string, string?> menuActions = new();
+
+    // Individual handlers for each section
+    private void HandleBasicAction(string action) => basicAction = action;
+    private void HandleLabelsAction(string action) => labelsAction = action;
+    private void HandleGroupsAction(string action) => groupsAction = action;
+    private void HandleShortcutsAction(string action) => shortcutsAction = action;
+    private void HandleDisabledAction(string action) => disabledAction = action;
+    private void HandleComplexAction(string action) => complexAction = action;
+
+    // Alignment section uses dictionary approach
+    private void HandleMenuAction(string menuName, string action)
+    {
+        menuActions[menuName] = action;
+    }
+
+    private string? GetMenuAction(string menuName)
+    {
+        return menuActions.TryGetValue(menuName, out var action) ? action : null;
+    }
+}

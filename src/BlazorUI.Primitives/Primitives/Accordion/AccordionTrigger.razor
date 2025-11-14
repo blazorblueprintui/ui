@@ -1,0 +1,65 @@
+@namespace BlazorUI.Primitives.Accordion
+
+@* AccordionTrigger primitive - clickable trigger button for accordion item *@
+<h3 id="@Item.HeaderId">
+    <button id="@Item.TriggerId"
+            type="button"
+            aria-expanded="@_ariaExpanded"
+            aria-controls="@Item.ContentId"
+            data-state="@(Item.IsOpen ? "open" : "closed")"
+            disabled="@Item.Disabled"
+            @onclick="HandleClick"
+            @onkeydown="HandleKeyDown"
+            @attributes="AdditionalAttributes">
+        @ChildContent
+    </button>
+</h3>
+
+@code {
+    private string _ariaExpanded => Item.IsOpen ? "true" : "false";
+
+    /// <summary>
+    /// Cascading parameter to receive the parent accordion item.
+    /// </summary>
+    [CascadingParameter]
+    public AccordionItem Item { get; set; } = null!;
+
+    /// <summary>
+    /// The child content to render within the trigger button.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the trigger button element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Item == null)
+        {
+            throw new InvalidOperationException("AccordionTrigger must be used within an AccordionItem component.");
+        }
+    }
+
+    private void HandleClick()
+    {
+        if (!Item.Disabled)
+        {
+            Item.Toggle();
+        }
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (Item.Disabled) return;
+
+        // Space and Enter activate the trigger
+        if (e.Key == " " || e.Key == "Enter")
+        {
+            Item.Toggle();
+        }
+    }
+}

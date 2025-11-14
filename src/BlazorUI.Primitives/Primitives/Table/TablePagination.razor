@@ -1,0 +1,86 @@
+@namespace BlazorUI.Primitives.Table
+@typeparam TData
+
+@if (PaginationTemplate != null)
+{
+    @PaginationTemplate(Context)
+}
+else
+{
+    @* Default headless structure with navigation buttons *@
+    <nav role="navigation" aria-label="Pagination Navigation" class="@Class">
+        <div>
+            @* Navigation buttons *@
+            <button type="button"
+                    @onclick="Context.GoToFirstPage"
+                    disabled="@(!State.CanGoPrevious)"
+                    aria-label="Go to first page">
+                First
+            </button>
+
+            <button type="button"
+                    @onclick="Context.GoToPreviousPage"
+                    disabled="@(!State.CanGoPrevious)"
+                    aria-label="Go to previous page">
+                Previous
+            </button>
+
+            @* Page info *@
+            @if (ShowPageInfo)
+            {
+                <span aria-live="polite" aria-atomic="true">
+                    @Context.GetPageInfoText()
+                </span>
+                <span>
+                    Page @State.CurrentPage of @State.TotalPages
+                </span>
+            }
+
+            <button type="button"
+                    @onclick="Context.GoToNextPage"
+                    disabled="@(!State.CanGoNext)"
+                    aria-label="Go to next page">
+                Next
+            </button>
+
+            <button type="button"
+                    @onclick="Context.GoToLastPage"
+                    disabled="@(!State.CanGoNext)"
+                    aria-label="Go to last page">
+                Last
+            </button>
+
+            @* Page size selector *@
+            @if (ShowPageSizeSelector)
+            {
+                <label>
+                    Items per page:
+                    <select @onchange="HandlePageSizeChangeEvent"
+                            value="@State.PageSize"
+                            aria-label="Select page size">
+                        @foreach (var size in PageSizeOptions)
+                        {
+                            <option value="@size">@size</option>
+                        }
+                    </select>
+                </label>
+            }
+        </div>
+
+        @* Allow additional custom content *@
+        @ChildContent
+    </nav>
+}
+
+@code {
+    private async Task HandlePageSizeChangeEvent(ChangeEventArgs e)
+    {
+        if (_disposed) return;
+
+        if (int.TryParse(e.Value?.ToString(), out var newSize))
+        {
+            await Context.ChangePageSize(newSize);
+        }
+    }
+}
+

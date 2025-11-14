@@ -1,0 +1,58 @@
+@namespace BlazorUI.Components.Sidebar
+@using BlazorUI.Components.Utilities
+
+@*
+    SidebarGroupLabel component for group titles/headings.
+*@
+
+@if (AsChild == SidebarGroupLabelElement.Button)
+{
+    <button type="button" class="@GetClasses()" data-sidebar="group-label" @attributes="AdditionalAttributes">
+        @ChildContent
+    </button>
+}
+else
+{
+    <div class="@GetClasses()" data-sidebar="group-label" @attributes="AdditionalAttributes">
+        @ChildContent
+    </div>
+}
+
+@code {
+    /// <summary>
+    /// The label content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// The element tag to render (div or button for collapsible).
+    /// </summary>
+    [Parameter]
+    public SidebarGroupLabelElement AsChild { get; set; } = SidebarGroupLabelElement.Div;
+
+    /// <summary>
+    /// Additional CSS classes.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string GetClasses()
+    {
+        var baseClasses = "flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 outline-none ring-sidebar-ring transition-[margin,opa] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0";
+
+        var buttonClasses = AsChild == SidebarGroupLabelElement.Button
+            ? "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            : "";
+
+        var collapsibleClasses = "group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:px-0";
+
+        return ClassNames.cn(baseClasses, buttonClasses, collapsibleClasses, Class);
+    }
+}

@@ -1,0 +1,24 @@
+@namespace BlazorUI.Components.Popover
+@using BlazorUI.Primitives.Popover
+
+@* Styled PopoverTrigger wrapper - just passes through to primitive *@
+
+<BlazorUI.Primitives.Popover.PopoverTrigger OnClick="@OnClick"
+                                                   CustomClickHandling="@CustomClickHandling"
+                                                   @attributes="AdditionalAttributes">
+    @ChildContent
+</BlazorUI.Primitives.Popover.PopoverTrigger>
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnClick { get; set; }
+
+    [Parameter]
+    public bool CustomClickHandling { get; set; } = false;
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+}

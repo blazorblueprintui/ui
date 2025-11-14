@@ -1,0 +1,354 @@
+@typeparam TValue
+@namespace BlazorUI.Primitives.Select
+@using BlazorUI.Primitives.Services
+@inject IPositioningService PositioningService
+@inject IPortalService PortalService
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+@*
+    SelectContent primitive - headless dropdown container.
+    Renders through a portal to avoid z-index stacking issues and clipping.
+    Supports smart positioning with IPositioningService.
+*@
+
+@* Hidden element to track DOM position for positioning calculations *@
+@if (_context != null && _context.IsOpen)
+{
+    <span @ref="_contentRef" style="position: absolute; pointer-events: none; opacity: 0;"></span>
+}
+
+@code {
+    [CascadingParameter]
+    private SelectContext<TValue>? _context { get; set; }
+
+    private ElementReference _contentRef;
+    private ElementReference _portalContentRef;
+    private IJSObjectReference? _jsModule;
+    private IJSObjectReference? _matchWidthModule;
+    private IJSObjectReference? _matchWidthCleanup;
+    private IAsyncDisposable? _positioningCleanup;
+    private bool _isInitialized = false;
+    private bool _isPositioned = false;
+    private string _portalId = "";
+
+    /// <summary>
+    /// Content to render inside the select dropdown.
+    /// Typically contains SelectItem components.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to be applied to the content container.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Preferred side for positioning.
+    /// Default is Bottom.
+    /// </summary>
+    [Parameter]
+    public PopoverSide Side { get; set; } = PopoverSide.Bottom;
+
+    /// <summary>
+    /// Alignment relative to trigger.
+    /// Default is Start.
+    /// </summary>
+    [Parameter]
+    public PopoverAlign Align { get; set; } = PopoverAlign.Start;
+
+    /// <summary>
+    /// Offset distance from the trigger element in pixels.
+    /// Default is 4.
+    /// </summary>
+    [Parameter]
+    public int Offset { get; set; } = 4;
+
+    /// <summary>
+    /// Whether the select content should match the trigger width.
+    /// Default is true (common pattern for selects).
+    /// </summary>
+    [Parameter]
+    public bool MatchTriggerWidth { get; set; } = true;
+
+    protected override void OnInitialized()
+    {
+        if (_context != null)
+        {
+            _portalId = $"select-portal-{_context.ContentId}";
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && _jsModule == null)
+        {
+            _jsModule = await JS.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorUI.Primitives/js/primitives/select.js");
+        }
+
+        if (_context != null && _context.IsOpen && !_isInitialized)
+        {
+            _isInitialized = true;
+            _isPositioned = false;
+
+            // Register select content through portal
+            PortalService.RegisterPortal(_portalId, RenderSelectContent());
+
+            // Set up positioning
+            await SetupPositioningAsync();
+
+            // Focus the first item when opened
+            _context.FocusFirst();
+        }
+        else if (_context != null && !_context.IsOpen && _isInitialized)
+        {
+            await CleanupAsync();
+        }
+    }
+
+    private RenderFragment RenderSelectContent() => builder =>
+    {
+        // Re-cascade the context through the portal
+        builder.OpenComponent<CascadingValue<SelectContext<TValue>>>(0);
+        builder.AddAttribute(1, "Value", _context);
+        builder.AddAttribute(2, "IsFixed", false);
+        builder.AddAttribute(3, "ChildContent", (RenderFragment)(contentBuilder =>
+        {
+            contentBuilder.OpenElement(0, "div");
+            contentBuilder.AddAttribute(1, "id", _context!.ContentId);
+            contentBuilder.AddAttribute(2, "role", "listbox");
+            contentBuilder.AddAttribute(3, "aria-labelledby", _context.TriggerId);
+            contentBuilder.AddAttribute(4, "aria-activedescendant", GetActiveDescendantId());
+            contentBuilder.AddAttribute(5, "data-state", "open");
+            contentBuilder.AddAttribute(6, "tabindex", "-1");
+            contentBuilder.AddAttribute(7, "onkeydown", EventCallback.Factory.Create<KeyboardEventArgs>(this, HandleKeyDown));
+            contentBuilder.AddAttribute(8, "style", GetMergedStyle());
+            contentBuilder.AddMultipleAttributes(9, GetAttributesWithoutStyle());
+            contentBuilder.AddElementReferenceCapture(10, capturedRef => _portalContentRef = capturedRef);
+            contentBuilder.AddContent(11, ChildContent);
+            contentBuilder.CloseElement();
+        }));
+        builder.CloseComponent();
+    };
+
+    private async Task SetupPositioningAsync()
+    {
+        if (_context?.State.TriggerElement == null)
+        {
+            Console.WriteLine("Warning: SelectContent - TriggerElement is null, positioning may not work correctly");
+            _isPositioned = true;
+            PortalService.UpdatePortalContent(_portalId, RenderSelectContent());
+            return;
+        }
+
+        // Wait a tick for portal to render
+        await Task.Delay(1);
+
+        try
+        {
+            // Construct placement string from Side and Align
+            var placement = Align == PopoverAlign.Center ? Side.ToValue() : $"{Side.ToValue()}-{Align.ToValue()}";
+
+            var options = new PositioningOptions
+            {
+                Placement = placement,
+                Offset = Offset
+            };
+
+            // Compute and apply position using the portal content ref
+            var position = await PositioningService.ComputePositionAsync(
+                _context.State.TriggerElement.Value,
+                _portalContentRef,
+                options);
+
+            await PositioningService.ApplyPositionAsync(_portalContentRef, position);
+
+            // Show the select now that positioning is complete
+            _isPositioned = true;
+            PortalService.UpdatePortalContent(_portalId, RenderSelectContent());
+
+            // Set up width matching if needed
+            if (MatchTriggerWidth)
+            {
+                await SetupMatchTriggerWidthAsync();
+            }
+
+            // Set up auto-update for dynamic positioning
+            _positioningCleanup = await PositioningService.AutoUpdateAsync(
+                _context.State.TriggerElement.Value,
+                _portalContentRef,
+                options);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to set up positioning: {ex.Message}");
+            _isPositioned = true;
+            PortalService.UpdatePortalContent(_portalId, RenderSelectContent());
+        }
+    }
+
+    private async Task SetupMatchTriggerWidthAsync()
+    {
+        if (_context?.State.TriggerElement == null) return;
+
+        try
+        {
+            _matchWidthModule = await JS.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorUI.Primitives/js/primitives/match-trigger-width.js");
+
+            _matchWidthCleanup = await _matchWidthModule.InvokeAsync<IJSObjectReference>(
+                "matchTriggerWidth", _context.State.TriggerElement, _portalContentRef);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to set up trigger width matching: {ex.Message}");
+        }
+    }
+
+    private string? GetActiveDescendantId()
+    {
+        if (_context != null && _context.FocusedIndex >= 0)
+        {
+            return $"{_context.ContentId}-item-{_context.FocusedIndex}";
+        }
+        return null;
+    }
+
+    private string GetInitialStyle()
+    {
+        var baseStyle = "position: absolute; z-index: 50;";
+
+        if (!_isPositioned)
+        {
+            baseStyle += " opacity: 0; pointer-events: none;";
+        }
+
+        return baseStyle;
+    }
+
+    private string GetMergedStyle()
+    {
+        var baseStyle = GetInitialStyle();
+
+        if (AdditionalAttributes != null && AdditionalAttributes.TryGetValue("style", out var userStyle))
+        {
+            return $"{userStyle}; {baseStyle}";
+        }
+
+        return baseStyle;
+    }
+
+    private Dictionary<string, object>? GetAttributesWithoutStyle()
+    {
+        if (AdditionalAttributes == null) return null;
+
+        var attributes = new Dictionary<string, object>(AdditionalAttributes);
+        attributes.Remove("style");
+
+        return attributes.Count > 0 ? attributes : null;
+    }
+
+    private async Task CleanupAsync()
+    {
+        if (_positioningCleanup != null)
+        {
+            await _positioningCleanup.DisposeAsync();
+            _positioningCleanup = null;
+        }
+
+        if (_matchWidthCleanup != null)
+        {
+            try
+            {
+                await _matchWidthCleanup.InvokeVoidAsync("dispose");
+                await _matchWidthCleanup.DisposeAsync();
+            }
+            catch
+            {
+                // Cleanup may already be disposed
+            }
+            _matchWidthCleanup = null;
+        }
+
+        // Unregister portal when select closes
+        if (!string.IsNullOrEmpty(_portalId))
+        {
+            PortalService.UnregisterPortal(_portalId);
+        }
+
+        _isInitialized = false;
+        _isPositioned = false;
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (_context == null) return;
+
+        bool shouldScrollIntoView = false;
+
+        switch (args.Key)
+        {
+            case "ArrowDown":
+                _context.MoveFocus(1);
+                shouldScrollIntoView = true;
+                break;
+
+            case "ArrowUp":
+                _context.MoveFocus(-1);
+                shouldScrollIntoView = true;
+                break;
+
+            case "Home":
+                _context.FocusFirst();
+                shouldScrollIntoView = true;
+                break;
+
+            case "End":
+                _context.FocusLast();
+                shouldScrollIntoView = true;
+                break;
+
+            case "Enter":
+            case " ": // Space
+                _context.SelectFocusedItem();
+                break;
+
+            case "Escape":
+                _context.Close();
+                break;
+
+            case "Tab":
+                // Close on tab to allow normal tab navigation
+                _context.Close();
+                break;
+        }
+
+        // Scroll the focused item into view
+        if (shouldScrollIntoView && _jsModule != null)
+        {
+            var itemId = GetActiveDescendantId();
+            if (itemId != null)
+            {
+                await _jsModule.InvokeVoidAsync("scrollItemIntoView", itemId);
+            }
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await CleanupAsync();
+
+        if (_jsModule != null)
+        {
+            await _jsModule.DisposeAsync();
+        }
+
+        if (_matchWidthModule != null)
+        {
+            await _matchWidthModule.DisposeAsync();
+        }
+    }
+}

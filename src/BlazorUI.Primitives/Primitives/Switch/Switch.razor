@@ -1,0 +1,85 @@
+@namespace BlazorUI.Primitives.Switch
+
+<button type="button"
+        role="switch"
+        aria-checked="@Checked.ToString().ToLower()"
+        aria-disabled="@Disabled.ToString().ToLower()"
+        data-state="@(Checked ? "checked" : "unchecked")"
+        disabled="@Disabled"
+        tabindex="@(Disabled ? -1 : 0)"
+        @onclick="HandleClick"
+        @onkeydown="HandleKeyDown"
+        @onkeydown:preventDefault="@shouldPreventDefault"
+        @attributes="AdditionalAttributes">
+    @ChildContent
+</button>
+
+@code {
+    private bool shouldPreventDefault = false;
+
+    /// <summary>
+    /// Gets or sets whether the switch is checked (on).
+    /// </summary>
+    [Parameter]
+    public bool Checked { get; set; }
+
+    /// <summary>
+    /// Gets or sets the callback invoked when the checked state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> CheckedChanged { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the switch is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets the child content (typically the thumb element).
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional attributes to be applied to the switch element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Handles the switch click event.
+    /// </summary>
+    private async Task HandleClick(MouseEventArgs args)
+    {
+        if (!Disabled)
+        {
+            await ToggleChecked();
+        }
+    }
+
+    /// <summary>
+    /// Handles keyboard events for accessibility.
+    /// </summary>
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (!Disabled && (args.Key == " " || args.Key == "Enter"))
+        {
+            shouldPreventDefault = true;
+            await ToggleChecked();
+        }
+        else
+        {
+            shouldPreventDefault = false;
+        }
+    }
+
+    /// <summary>
+    /// Toggles the checked state and notifies listeners.
+    /// </summary>
+    private async Task ToggleChecked()
+    {
+        Checked = !Checked;
+        await CheckedChanged.InvokeAsync(Checked);
+    }
+}

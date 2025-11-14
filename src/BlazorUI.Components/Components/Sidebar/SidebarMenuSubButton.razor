@@ -1,0 +1,84 @@
+@namespace BlazorUI.Components.Sidebar
+@using BlazorUI.Components.Utilities
+@using Microsoft.AspNetCore.Components.Routing
+
+@*
+    SidebarMenuSubButton component for clickable submenu items.
+*@
+
+@if (AsChild == SidebarMenuButtonElement.Anchor)
+{
+    <NavLink href="@Href" class="@GetClasses()" data-active="@IsActive" aria-current="@(IsActive ? "page" : null)" Match="@Match" ActiveClass="data-[active=true]:bg-sidebar-accent" @attributes="AdditionalAttributes">
+        @ChildContent
+    </NavLink>
+}
+else
+{
+    <button type="button" class="@GetClasses()" data-active="@IsActive" aria-current="@(IsActive ? "page" : null)" @attributes="AdditionalAttributes">
+        @ChildContent
+    </button>
+}
+
+@code {
+    /// <summary>
+    /// The button content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// The element tag to render (button or a).
+    /// </summary>
+    [Parameter]
+    public SidebarMenuButtonElement AsChild { get; set; } = SidebarMenuButtonElement.Button;
+
+    /// <summary>
+    /// The URL to navigate to when AsChild is "a".
+    /// </summary>
+    [Parameter]
+    public string? Href { get; set; }
+
+    /// <summary>
+    /// How the link should match the current URL. Default is NavLinkMatch.Prefix.
+    /// </summary>
+    [Parameter]
+    public NavLinkMatch Match { get; set; } = NavLinkMatch.Prefix;
+
+    /// <summary>
+    /// Whether this submenu item is active/selected.
+    /// </summary>
+    [Parameter]
+    public bool IsActive { get; set; }
+
+    /// <summary>
+    /// Button size variant.
+    /// </summary>
+    [Parameter]
+    public SidebarMenuSubButtonSize Size { get; set; } = SidebarMenuSubButtonSize.Medium;
+
+    /// <summary>
+    /// Additional CSS classes.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string GetClasses()
+    {
+        var baseClasses = "flex w-full h-7 min-w-0 items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-muted-foreground hover:[&>svg]:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground";
+
+        var sizeClasses = Size.ToValue() switch
+        {
+            "sm" => "text-xs",
+            "md" => "text-sm",
+            _ => ""
+        };
+
+        return ClassNames.cn(baseClasses, sizeClasses, Class);
+    }
+}

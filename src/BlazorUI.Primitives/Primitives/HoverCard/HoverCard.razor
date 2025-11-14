@@ -1,0 +1,117 @@
+@namespace BlazorUI.Primitives.HoverCard
+@implements IDisposable
+
+@* HoverCard primitive root component - headless, unstyled behavior only *@
+<CascadingValue Value="@_context" IsFixed="false">
+    @ChildContent
+</CascadingValue>
+
+@code {
+    private HoverCardContext _context = new();
+    private UseControllableState<bool> _state = null!;
+
+    /// <summary>
+    /// The child content to render within the hover card context.
+    /// Typically includes HoverCardTrigger and HoverCardContent.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls whether the hover card is open (controlled mode).
+    /// When null, the hover card manages its own state (uncontrolled mode).
+    /// </summary>
+    [Parameter]
+    public bool? Open { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open state changes.
+    /// Use with @bind-Open for two-way binding.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// Default open state when in uncontrolled mode.
+    /// </summary>
+    [Parameter]
+    public bool DefaultOpen { get; set; } = false;
+
+    /// <summary>
+    /// Event callback invoked when the hover card open state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OnOpenChange { get; set; }
+
+    /// <summary>
+    /// Delay in milliseconds before opening the hover card.
+    /// Default is 700ms.
+    /// </summary>
+    [Parameter]
+    public int OpenDelay { get; set; } = 700;
+
+    /// <summary>
+    /// Delay in milliseconds before closing the hover card.
+    /// Default is 300ms.
+    /// </summary>
+    [Parameter]
+    public int CloseDelay { get; set; } = 300;
+
+    protected override void OnInitialized()
+    {
+        // Initialize controllable state
+        _state = new UseControllableState<bool>(DefaultOpen)
+        {
+            ControlledValue = Open ?? DefaultOpen,
+            OnValueChanged = OpenChanged,
+            IsControlled = OpenChanged.HasDelegate
+        };
+
+        // Sync initial state to context
+        _context.State.IsOpen = _state.Value;
+        _context.State.OpenDelay = OpenDelay;
+        _context.State.CloseDelay = CloseDelay;
+
+        // Subscribe to context state changes
+        _context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Update controlled value if it changed
+        if (_state.IsControlled && Open.HasValue && Open.Value != _state.ControlledValue)
+        {
+            _state.ControlledValue = Open.Value;
+            _context.State.IsOpen = Open.Value;
+        }
+
+        // Update delays
+        _context.State.OpenDelay = OpenDelay;
+        _context.State.CloseDelay = CloseDelay;
+    }
+
+    private void HandleContextStateChanged()
+    {
+        // When context state changes (e.g., from HoverCardTrigger),
+        // update the controllable state
+        var newOpenState = _context.State.IsOpen;
+
+        if (_state.Value != newOpenState)
+        {
+            _ = _state.SetValueAsync(newOpenState);
+
+            // Invoke additional callback if provided
+            if (OnOpenChange.HasDelegate)
+            {
+                _ = OnOpenChange.InvokeAsync(newOpenState);
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        _context.OnStateChanged -= HandleContextStateChanged;
+    }
+}

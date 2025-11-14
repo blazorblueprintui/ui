@@ -1,0 +1,71 @@
+@namespace BlazorUI.Components.Sidebar
+@using BlazorUI.Components.Utilities
+@using BlazorUI.Icons.Components
+
+@*
+    SidebarTrigger component for toggling the sidebar open/closed.
+*@
+
+<button type="button" class="@GetClasses()" data-sidebar="trigger" @onclick="HandleClick" @attributes="AdditionalAttributes">
+    @if (ChildContent != null)
+    {
+        @ChildContent
+    }
+    else
+    {
+        <LucideIcon Name="panel-left" Size="16" />
+        <span class="sr-only">Toggle Sidebar</span>
+    }
+</button>
+
+@code {
+    [CascadingParameter]
+    private SidebarContext? Context { get; set; }
+
+    /// <summary>
+    /// Custom content for the trigger button.
+    /// If not provided, defaults to a panel-left icon.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Click handler for custom behavior.
+    /// </summary>
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnClick { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private async Task HandleClick(MouseEventArgs e)
+    {
+        if (Context != null)
+        {
+            Context.ToggleSidebar();
+            StateHasChanged(); // Force re-render to update UI
+        }
+
+        if (OnClick.HasDelegate)
+        {
+            await OnClick.InvokeAsync(e);
+        }
+    }
+
+    private string GetClasses()
+    {
+        return ClassNames.cn(
+            "flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground outline-none ring-sidebar-ring transition-transform hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
+            Class
+        );
+    }
+}

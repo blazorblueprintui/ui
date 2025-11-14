@@ -1,0 +1,364 @@
+@page "/components/item"
+@using BlazorUI.Components.Item
+@using BlazorUI.Components.Button
+@using BlazorUI.Components.Avatar
+@using BlazorUI.Components.Badge
+@using BlazorUI.Icons
+
+<PageTitle>Item Component - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Item Component</h1>
+            <p class="text-xl text-muted-foreground">
+                A flexible, composable component for building list items with media, content, and actions.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+    </div>
+
+    <!-- Basic Examples -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Item</h2>
+            <p class="text-sm text-muted-foreground">
+                A simple item with title and description.
+            </p>
+        </div>
+        <Item Variant="ItemVariant.Outline">
+            <ItemContent>
+                <ItemTitle>Basic Item</ItemTitle>
+                <ItemDescription>
+                    A simple item with title and description.
+                </ItemDescription>
+            </ItemContent>
+            <ItemActions>
+                <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small">Action</Button>
+            </ItemActions>
+        </Item>
+    </div>
+
+    <!-- Notification List Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Notification List</h2>
+            <p class="text-sm text-muted-foreground">
+                Items displaying notifications with icons, titles, descriptions, and timestamps.
+            </p>
+        </div>
+        <ItemGroup>
+            <Item Variant="ItemVariant.Default">
+                <ItemMedia Variant="ItemMediaVariant.Icon">
+                    <LucideIcon Name="circle-check" Size="18" Class="text-green-600" />
+                </ItemMedia>
+                <ItemContent>
+                    <ItemTitle>Successfully saved</ItemTitle>
+                    <ItemDescription>Your changes have been saved to the database.</ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                    <span class="text-xs text-muted-foreground">2m ago</span>
+                </ItemActions>
+            </Item>
+            <ItemSeparator />
+            <Item Variant="ItemVariant.Default">
+                <ItemMedia Variant="ItemMediaVariant.Icon">
+                    <LucideIcon Name="info" Size="18" Class="text-blue-600" />
+                </ItemMedia>
+                <ItemContent>
+                    <ItemTitle>New update available</ItemTitle>
+                    <ItemDescription>Version 2.0 is now available for download.</ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                    <span class="text-xs text-muted-foreground">1h ago</span>
+                </ItemActions>
+            </Item>
+            <ItemSeparator />
+            <Item Variant="ItemVariant.Default">
+                <ItemMedia Variant="ItemMediaVariant.Icon">
+                    <LucideIcon Name="circle-alert" Size="18" Class="text-yellow-600" />
+                </ItemMedia>
+                <ItemContent>
+                    <ItemTitle>Warning: Storage limit</ItemTitle>
+                    <ItemDescription>You're approaching your storage limit. Consider upgrading your plan.</ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                    <span class="text-xs text-muted-foreground">3h ago</span>
+                </ItemActions>
+            </Item>
+            <ItemSeparator />
+            <Item Variant="ItemVariant.Default">
+                <ItemMedia Variant="ItemMediaVariant.Icon">
+                    <LucideIcon Name="circle-x" Size="18" Class="text-red-600" />
+                </ItemMedia>
+                <ItemContent>
+                    <ItemTitle>Error: Failed to sync</ItemTitle>
+                    <ItemDescription>Could not sync your data. Please check your connection.</ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                    <span class="text-xs text-muted-foreground">1d ago</span>
+                </ItemActions>
+            </Item>
+        </ItemGroup>
+    </div>
+
+    <!-- Settings Items Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Settings Items</h2>
+            <p class="text-sm text-muted-foreground">
+                Clickable settings rows with icons and descriptions using AsChild to render as links.
+            </p>
+        </div>
+        <ItemGroup>
+            <Item Variant="ItemVariant.Outline" Size="ItemSize.Sm" AsChild="a" Href="#profile">
+                <ItemMedia>
+                    <LucideIcon Name="user" Size="18" />
+                </ItemMedia>
+                <ItemContent>
+                    <ItemTitle>Profile Settings</ItemTitle>
+                </ItemContent>
+                <ItemActions>
+                    <LucideIcon Name="chevron-right" Size="16" />
+                </ItemActions>
+            </Item>
+            <Item Variant="ItemVariant.Outline" Size="ItemSize.Sm" AsChild="a" Href="#notifications">
+                <ItemMedia>
+                    <LucideIcon Name="bell" Size="18" />
+                </ItemMedia>
+                <ItemContent>
+                    <ItemTitle>Notification Settings</ItemTitle>
+                </ItemContent>
+                <ItemActions>
+                    <LucideIcon Name="chevron-right" Size="16" />
+                </ItemActions>
+            </Item>
+            <Item Variant="ItemVariant.Outline" Size="ItemSize.Sm" AsChild="a" Href="#security">
+                <ItemMedia>
+                    <LucideIcon Name="shield" Size="18" />
+                </ItemMedia>
+                <ItemContent>
+                    <ItemTitle>Security & Privacy</ItemTitle>
+                </ItemContent>
+                <ItemActions>
+                    <LucideIcon Name="chevron-right" Size="16" />
+                </ItemActions>
+            </Item>
+            <Item Variant="ItemVariant.Outline" Size="ItemSize.Sm" AsChild="a" Href="#billing">
+                <ItemMedia>
+                    <LucideIcon Name="credit-card" Size="18" />
+                </ItemMedia>
+                <ItemContent>
+                    <ItemTitle>Billing & Plans</ItemTitle>
+                </ItemContent>
+                <ItemActions>
+                    <LucideIcon Name="chevron-right" Size="16" />
+                </ItemActions>
+            </Item>
+        </ItemGroup>
+    </div>
+
+    <!-- User Profile Cards Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">User Profile Cards</h2>
+            <p class="text-sm text-muted-foreground">
+                User items with avatars, names, roles, and action buttons.
+            </p>
+        </div>
+        <ItemGroup>
+            <Item Variant="ItemVariant.Outline">
+                <ItemMedia Variant="ItemMediaVariant.Image">
+                    <Avatar>
+                        <AvatarFallback>JD</AvatarFallback>
+                    </Avatar>
+                </ItemMedia>
+                <ItemContent>
+                    <ItemTitle>
+                        John Doe
+                        <Badge Variant="BadgeVariant.Default">Admin</Badge>
+                    </ItemTitle>
+                    <ItemDescription>john.doe@example.com</ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small">View Profile</Button>
+                </ItemActions>
+            </Item>
+            <Item Variant="ItemVariant.Outline">
+                <ItemMedia Variant="ItemMediaVariant.Image">
+                    <Avatar>
+                        <AvatarFallback>SM</AvatarFallback>
+                    </Avatar>
+                </ItemMedia>
+                <ItemContent>
+                    <ItemTitle>
+                        Sarah Miller
+                        <Badge Variant="BadgeVariant.Secondary">Editor</Badge>
+                    </ItemTitle>
+                    <ItemDescription>sarah.miller@example.com</ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small">View Profile</Button>
+                </ItemActions>
+            </Item>
+            <Item Variant="ItemVariant.Outline">
+                <ItemMedia Variant="ItemMediaVariant.Image">
+                    <Avatar>
+                        <AvatarFallback>MJ</AvatarFallback>
+                    </Avatar>
+                </ItemMedia>
+                <ItemContent>
+                    <ItemTitle>
+                        Mike Johnson
+                        <Badge Variant="BadgeVariant.Outline">Viewer</Badge>
+                    </ItemTitle>
+                    <ItemDescription>mike.johnson@example.com</ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small">View Profile</Button>
+                </ItemActions>
+            </Item>
+        </ItemGroup>
+    </div>
+
+    <!-- Variants Showcase -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Variants</h2>
+            <p class="text-sm text-muted-foreground">
+                Three visual variants: default, outline, and muted.
+            </p>
+        </div>
+        <div class="space-y-3">
+            <div class="space-y-2">
+                <h3 class="text-lg font-medium">Default Variant</h3>
+                <Item Variant="ItemVariant.Default">
+                    <ItemContent>
+                        <ItemTitle>Default Item</ItemTitle>
+                        <ItemDescription>Hover to see the subtle background effect.</ItemDescription>
+                    </ItemContent>
+                </Item>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-lg font-medium">Outline Variant</h3>
+                <Item Variant="ItemVariant.Outline">
+                    <ItemContent>
+                        <ItemTitle>Outline Item</ItemTitle>
+                        <ItemDescription>Has a border and background on hover.</ItemDescription>
+                    </ItemContent>
+                </Item>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-lg font-medium">Muted Variant</h3>
+                <Item Variant="ItemVariant.Muted">
+                    <ItemContent>
+                        <ItemTitle>Muted Item</ItemTitle>
+                        <ItemDescription>Subtle background color with darker hover state.</ItemDescription>
+                    </ItemContent>
+                </Item>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sizes Showcase -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Sizes</h2>
+            <p class="text-sm text-muted-foreground">
+                Two size options: default and small.
+            </p>
+        </div>
+        <div class="space-y-3">
+            <div class="space-y-2">
+                <h3 class="text-lg font-medium">Default Size</h3>
+                <Item Variant="ItemVariant.Outline" Size="ItemSize.Default">
+                    <ItemContent>
+                        <ItemTitle>Default Size</ItemTitle>
+                        <ItemDescription>Standard padding for most use cases.</ItemDescription>
+                    </ItemContent>
+                </Item>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-lg font-medium">Small Size</h3>
+                <Item Variant="ItemVariant.Outline" Size="ItemSize.Sm">
+                    <ItemContent>
+                        <ItemTitle>Small Size</ItemTitle>
+                        <ItemDescription>Compact padding for dense layouts.</ItemDescription>
+                    </ItemContent>
+                </Item>
+            </div>
+        </div>
+    </div>
+
+    <!-- AsChild Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Polymorphic Rendering (AsChild)</h2>
+            <p class="text-sm text-muted-foreground">
+                Items can render as different HTML elements using the AsChild parameter.
+            </p>
+        </div>
+        <div class="space-y-3">
+            <div class="space-y-2">
+                <h3 class="text-lg font-medium">As Anchor Tag</h3>
+                <Item Variant="ItemVariant.Outline" AsChild="a" Href="https://github.com" target="_blank">
+                    <ItemMedia>
+                        <LucideIcon Name="github" Size="18" />
+                    </ItemMedia>
+                    <ItemContent>
+                        <ItemTitle>View on GitHub</ItemTitle>
+                        <ItemDescription>Opens in a new tab</ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
+                        <LucideIcon Name="external-link" Size="16" />
+                    </ItemActions>
+                </Item>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-lg font-medium">As Button</h3>
+                <Item Variant="ItemVariant.Outline" AsChild="button" @onclick="@(() => {})">
+                    <ItemMedia>
+                        <LucideIcon Name="star" Size="18" />
+                    </ItemMedia>
+                    <ItemContent>
+                        <ItemTitle>Mark as Favorite</ItemTitle>
+                        <ItemDescription>Click to toggle favorite status</ItemDescription>
+                    </ItemContent>
+                </Item>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complex Example with Header and Footer -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Complex Layout</h2>
+            <p class="text-sm text-muted-foreground">
+                Using ItemHeader and ItemFooter for advanced layouts.
+            </p>
+        </div>
+        <Item Variant="ItemVariant.Outline" Class="flex-wrap">
+            <ItemMedia Variant="ItemMediaVariant.Image">
+                <Avatar>
+                    <AvatarFallback>TR</AvatarFallback>
+                </Avatar>
+            </ItemMedia>
+            <ItemContent>
+                <ItemTitle>Task Report</ItemTitle>
+                <ItemDescription>Monthly summary of completed tasks and projects.</ItemDescription>
+            </ItemContent>
+            <ItemActions>
+                <Badge Variant="BadgeVariant.Default">New</Badge>
+            </ItemActions>
+            <ItemFooter Class="mt-3">
+                <div class="flex gap-2">
+                    <Button Variant="ButtonVariant.Default" Size="ButtonSize.Small">Download PDF</Button>
+                    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Small">Share</Button>
+                </div>
+                <span class="text-xs text-muted-foreground">Generated today</span>
+            </ItemFooter>
+        </Item>
+    </div>
+</div>

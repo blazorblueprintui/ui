@@ -1,0 +1,238 @@
+@typeparam TValue
+@namespace BlazorUI.Primitives.Select
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@inject BlazorUI.Primitives.Services.DropdownManagerService? DropdownManager
+
+@* Select root component - headless, unstyled behavior only *@
+<CascadingValue Value="@_context" IsFixed="false">
+    <div @attributes="AdditionalAttributes">
+        @ChildContent
+    </div>
+</CascadingValue>
+
+@code {
+    private SelectContext<TValue> _context = new();
+    private UseControllableState<TValue?> _state = null!;
+    private IJSObjectReference? _jsModule;
+    private DotNetObjectReference<Select<TValue>>? _dotNetRef;
+
+    /// <summary>
+    /// The child content to render within the select context.
+    /// Typically includes SelectTrigger and SelectContent.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// The currently selected value (controlled mode).
+    /// When null, the select manages its own state (uncontrolled mode).
+    /// </summary>
+    [Parameter]
+    public TValue? Value { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the selected value changes.
+    /// Use with @bind-Value for two-way binding.
+    /// </summary>
+    [Parameter]
+    public EventCallback<TValue?> ValueChanged { get; set; }
+
+    /// <summary>
+    /// Default value when in uncontrolled mode.
+    /// </summary>
+    [Parameter]
+    public TValue? DefaultValue { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the select value changes.
+    /// Receives the new value as a parameter.
+    /// </summary>
+    [Parameter]
+    public EventCallback<TValue?> OnValueChange { get; set; }
+
+    /// <summary>
+    /// Whether the select is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Controls whether the select dropdown is open (controlled mode).
+    /// When null, the select manages its own open state (uncontrolled mode).
+    /// </summary>
+    [Parameter]
+    public bool? Open { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open state changes.
+    /// Use with @bind-Open for two-way binding.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// Default open state when in uncontrolled mode.
+    /// </summary>
+    [Parameter]
+    public bool DefaultOpen { get; set; } = false;
+
+    protected override void OnInitialized()
+    {
+        // Initialize controllable state for value
+        _state = new UseControllableState<TValue?>(DefaultValue)
+        {
+            ControlledValue = Value,
+            OnValueChanged = ValueChanged,
+            IsControlled = ValueChanged.HasDelegate
+        };
+
+        // Sync initial value to context
+        _context.State.Value = _state.Value;
+        _context.State.Disabled = Disabled;
+
+        // Subscribe to context value changes
+        _context.OnValueChange = async (newValue) =>
+        {
+            await _state.SetValueAsync(newValue);
+
+            if (OnValueChange.HasDelegate)
+            {
+                await OnValueChange.InvokeAsync(newValue);
+            }
+
+            StateHasChanged();
+        };
+
+        // Subscribe to context state changes
+        _context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Update disabled state
+        if (_context.Disabled != Disabled)
+        {
+            _context.SetDisabled(Disabled);
+        }
+
+        // Update controlled value if it changed
+        if (_state.IsControlled)
+        {
+            _state.ControlledValue = Value;
+            _context.State.Value = Value;
+            // Update DisplayText to match the new value
+            _context.State.DisplayText = Value?.ToString();
+        }
+
+        // Handle controlled open state
+        if (Open.HasValue && _context.IsOpen != Open.Value)
+        {
+            if (Open.Value)
+            {
+                _context.Open();
+            }
+            else
+            {
+                _context.Close();
+            }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_jsModule == null)
+        {
+            _jsModule = await JS.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorUI.Primitives/js/primitives/select.js");
+        }
+
+        // Set up click-outside when dropdown opens
+        if (_context.IsOpen && _dotNetRef == null)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await _jsModule.InvokeVoidAsync("setupClickOutside", _dotNetRef, _dotNetRef, _context.ContentId);
+        }
+        else if (!_context.IsOpen && _dotNetRef != null)
+        {
+            await _jsModule.InvokeVoidAsync("removeClickOutside", _context.ContentId);
+            _dotNetRef?.Dispose();
+            _dotNetRef = null;
+        }
+    }
+
+    [JSInvokable]
+    public void HandleClickOutside()
+    {
+        if (_context.IsOpen)
+        {
+            _context.Close();
+            StateHasChanged();
+        }
+    }
+
+    private void HandleContextStateChanged()
+    {
+        // Register/unregister with dropdown manager when open state changes
+        if (DropdownManager != null)
+        {
+            if (_context.IsOpen)
+            {
+                // Register this dropdown as open; if another is open, it will be closed
+                DropdownManager.RegisterOpen(_context.ContentId, () =>
+                {
+                    _context.Close();
+                    InvokeAsync(StateHasChanged); // Ensure UI thread synchronization
+                });
+            }
+            else
+            {
+                // Unregister when closed naturally
+                DropdownManager.Unregister(_context.ContentId);
+            }
+        }
+
+        // When context state changes (e.g., from SelectTrigger or click outside),
+        // notify parent if Open is being controlled
+        if (OpenChanged.HasDelegate)
+        {
+            var newOpenState = _context.IsOpen;
+            if (!Open.HasValue || Open.Value != newOpenState)
+            {
+                _ = OpenChanged.InvokeAsync(newOpenState);
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _context.OnStateChanged -= HandleContextStateChanged;
+
+        // Unregister from dropdown manager on dispose
+        if (DropdownManager != null && _context?.IsOpen == true)
+        {
+            DropdownManager.Unregister(_context.ContentId);
+        }
+
+        if (_jsModule != null && _context != null)
+        {
+            try
+            {
+                await _jsModule.InvokeVoidAsync("removeClickOutside", _context.ContentId);
+            }
+            catch { }
+
+            await _jsModule.DisposeAsync();
+        }
+
+        _dotNetRef?.Dispose();
+    }
+}

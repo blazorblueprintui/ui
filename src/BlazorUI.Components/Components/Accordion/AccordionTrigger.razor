@@ -1,0 +1,49 @@
+@namespace BlazorUI.Components.Accordion
+@using BlazorUI.Components.Utilities
+@using BlazorUI.Primitives.Accordion
+
+@*
+    Styled AccordionTrigger component.
+    Wraps the AccordionTrigger primitive with shadcn/ui styling.
+*@
+
+<BlazorUI.Primitives.Accordion.AccordionTrigger class="@CssClass">
+    <div class="flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline">
+        @ChildContent
+        <svg class="h-4 w-4 shrink-0 transition-transform duration-200"
+             xmlns="http://www.w3.org/2000/svg"
+             width="24"
+             height="24"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+    </div>
+</BlazorUI.Primitives.Accordion.AccordionTrigger>
+
+@code {
+    /// <summary>
+    /// The child content to render within the trigger.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the trigger.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets the computed CSS classes for the accordion trigger.
+    /// Uses the cn() utility for intelligent class merging and Tailwind conflict resolution.
+    /// </summary>
+    private string CssClass => ClassNames.cn(
+        "flex w-full items-center justify-between text-sm font-medium transition-all [&[data-state=open]>svg]:rotate-180",
+        Class
+    );
+}

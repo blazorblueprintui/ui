@@ -1,0 +1,201 @@
+@namespace BlazorUI.Primitives.Dialog
+@inject IFocusManager FocusManager
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@*
+    DialogContent is the main content container for the dialog.
+    Handles focus trap, escape key, scroll lock, and ARIA attributes.
+*@
+
+@if (Context.IsOpen)
+{
+    <div @ref="_contentRef"
+         id="@Context.ContentId"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="@Context.TitleId"
+         aria-describedby="@Context.DescriptionId"
+         tabindex="-1"
+         @onkeydown="HandleKeyDown"
+         @attributes="AdditionalAttributes"
+         data-state="open">
+        @ChildContent
+    </div>
+}
+
+@code {
+    [CascadingParameter]
+    private DialogContext Context { get; set; } = null!;
+
+    /// <summary>
+    /// The content to render inside the dialog.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the content container.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Whether pressing Escape should close the dialog.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnEscape { get; set; } = true;
+
+    /// <summary>
+    /// Whether to trap focus within the dialog.
+    /// Default is true for modal dialogs.
+    /// </summary>
+    [Parameter]
+    public bool TrapFocus { get; set; } = true;
+
+    /// <summary>
+    /// Whether to lock body scroll when dialog is open.
+    /// Default is true for modal dialogs.
+    /// </summary>
+    [Parameter]
+    public bool LockScroll { get; set; } = true;
+
+    /// <summary>
+    /// Event callback invoked when Escape key is pressed.
+    /// </summary>
+    [Parameter]
+    public EventCallback<KeyboardEventArgs> OnEscapeKeyDown { get; set; }
+
+    private ElementReference _contentRef;
+    private IAsyncDisposable? _focusTrap;
+    private IJSObjectReference? _portalModule;
+    private IJSObjectReference? _scrollLockCleanup;
+    private bool _isInitialized = false;
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "DialogContent must be used within a Dialog component. " +
+                "Ensure DialogContent is a child of a Dialog component.");
+        }
+
+        // Subscribe to context changes
+        Context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Context.IsOpen && !_isInitialized)
+        {
+            _isInitialized = true;
+
+            // Set up focus trap
+            if (TrapFocus)
+            {
+                try
+                {
+                    _focusTrap = await FocusManager.TrapFocus(_contentRef);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to set up focus trap: {ex.Message}");
+                }
+            }
+
+            // Lock body scroll
+            if (LockScroll)
+            {
+                try
+                {
+                    _portalModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                        "import", "./_content/BlazorUI.Primitives/js/primitives/portal.js");
+                    _scrollLockCleanup = await _portalModule.InvokeAsync<IJSObjectReference>("lockBodyScroll");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to lock body scroll: {ex.Message}");
+                }
+            }
+        }
+        else if (!Context.IsOpen && _isInitialized)
+        {
+            await CleanupAsync();
+        }
+    }
+
+    private void HandleContextStateChanged()
+    {
+        if (!Context.IsOpen && _isInitialized)
+        {
+            // Dialog closed, clean up
+            _ = Task.Run(async () =>
+            {
+                await CleanupAsync();
+            });
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            // Invoke custom handler if provided
+            if (OnEscapeKeyDown.HasDelegate)
+            {
+                await OnEscapeKeyDown.InvokeAsync(args);
+            }
+
+            // Close dialog if configured
+            if (CloseOnEscape)
+            {
+                Context.Close();
+            }
+        }
+    }
+
+    private async Task CleanupAsync()
+    {
+        // Dispose focus trap
+        if (_focusTrap != null)
+        {
+            await _focusTrap.DisposeAsync();
+            _focusTrap = null;
+        }
+
+        // Unlock body scroll
+        if (_scrollLockCleanup != null)
+        {
+            try
+            {
+                await _scrollLockCleanup.InvokeVoidAsync("apply");
+            }
+            catch
+            {
+                // Cleanup may already be disposed
+            }
+            _scrollLockCleanup = null;
+        }
+
+        _isInitialized = false;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await CleanupAsync();
+
+        if (_portalModule != null)
+        {
+            await _portalModule.DisposeAsync();
+        }
+
+        if (Context != null)
+        {
+            Context.OnStateChanged -= HandleContextStateChanged;
+        }
+    }
+}

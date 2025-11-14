@@ -1,0 +1,119 @@
+@namespace BlazorUI.Components.Sheet
+@using BlazorUI.Components.Utilities
+@using BlazorUI.Primitives.Sheet
+@using BlazorUI.Icons.Components
+
+@*
+    Styled SheetContent component with shadcn/ui classes and side-specific animations.
+    Includes overlay, sheet panel, and close button.
+*@
+
+<SheetPortal>
+    <SheetOverlay class="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+
+    <BlazorUI.Primitives.Sheet.SheetContent
+        class="@GetClassNames()"
+        CloseOnEscape="@CloseOnEscape"
+        TrapFocus="@TrapFocus"
+        LockScroll="@LockScroll"
+        OnEscapeKeyDown="@OnEscapeKeyDown"
+        @attributes="AdditionalAttributes">
+        @ChildContent
+
+        @if (ShowClose)
+        {
+            <SheetClose class="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+                <LucideIcon Name="x" Class="h-4 w-4" />
+                <span class="sr-only">Close</span>
+            </SheetClose>
+        }
+    </BlazorUI.Primitives.Sheet.SheetContent>
+</SheetPortal>
+
+@code {
+    [CascadingParameter]
+    private SheetContext? Context { get; set; }
+
+    /// <summary>
+    /// The content to render inside the sheet.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the sheet content.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the sheet content.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// The side from which the sheet slides in.
+    /// When null, uses the side from the parent Sheet component.
+    /// </summary>
+    [Parameter]
+    public SheetSide? Side { get; set; }
+
+    /// <summary>
+    /// Whether to show the close button (X icon).
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool ShowClose { get; set; } = true;
+
+    /// <summary>
+    /// Whether pressing Escape should close the sheet.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnEscape { get; set; } = true;
+
+    /// <summary>
+    /// Whether to trap focus within the sheet.
+    /// Default is true for modal sheets.
+    /// </summary>
+    [Parameter]
+    public bool TrapFocus { get; set; } = true;
+
+    /// <summary>
+    /// Whether to lock body scroll when sheet is open.
+    /// Default is true for modal sheets.
+    /// </summary>
+    [Parameter]
+    public bool LockScroll { get; set; } = true;
+
+    /// <summary>
+    /// Event callback invoked when Escape key is pressed.
+    /// </summary>
+    [Parameter]
+    public EventCallback<KeyboardEventArgs> OnEscapeKeyDown { get; set; }
+
+    /// <summary>
+    /// Gets the computed CSS classes for the sheet content based on side.
+    /// Uses the cn() utility for intelligent class merging and Tailwind conflict resolution.
+    /// </summary>
+    private string GetClassNames()
+    {
+        var side = Side ?? Context?.Side ?? SheetSide.Right;
+
+        // Base classes shared by all sides
+        var baseClasses = "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500";
+
+        // Side-specific position, size, and animation classes
+        var sideClasses = side switch
+        {
+            SheetSide.Top => "inset-x-0 top-0 border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
+            SheetSide.Bottom => "inset-x-0 bottom-0 border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+            SheetSide.Left => "inset-y-0 left-0 h-full w-3/4 border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm",
+            SheetSide.Right => "inset-y-0 right-0 h-full w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm",
+            _ => "inset-y-0 right-0 h-full w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm"
+        };
+
+        return ClassNames.cn(baseClasses, sideClasses, Class);
+    }
+}

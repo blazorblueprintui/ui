@@ -1,0 +1,378 @@
+@page "/primitives/dropdown-menu"
+@using BlazorUI.Primitives.Services
+@using BlazorUI.Primitives.DropdownMenu
+
+<PageTitle>DropdownMenu Primitive - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">DropdownMenu Primitive</h1>
+        <p class="text-xl text-muted-foreground">
+            Headless, unstyled dropdown menu primitive with full accessibility support.
+        </p>
+    </div>
+
+    <div class="space-y-6">
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Headless Primitive</h2>
+                <p class="text-muted-foreground">
+                    The primitive provides behavior and accessibility without styling.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 max-w-md">
+                <DropdownMenu>
+                    <DropdownMenuTrigger class="px-3 py-2 border rounded text-sm cursor-pointer hover:bg-accent">
+                        Open Menu
+                    </DropdownMenuTrigger>
+
+                    <DropdownMenuContent class="min-w-48 p-1 border rounded-md bg-popover shadow-md">
+                        <DropdownMenuItem class="px-2 py-1.5 cursor-pointer rounded hover:bg-accent">
+                            Profile
+                        </DropdownMenuItem>
+                        <DropdownMenuItem class="px-2 py-1.5 cursor-pointer rounded hover:bg-accent">
+                            Settings
+                        </DropdownMenuItem>
+                        <Separator class="my-1" />
+                        <DropdownMenuItem class="px-2 py-1.5 cursor-pointer rounded hover:bg-accent">
+                            Logout
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Controlled State</h2>
+                <p class="text-muted-foreground">
+                    Control the menu's open state from your component code.
+                </p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex gap-2">
+                    <button @onclick="() => isOpen = !isOpen"
+                            class="px-3 py-2 border rounded text-sm">
+                        Toggle Menu
+                    </button>
+                    <span class="text-sm text-muted-foreground self-center">
+                        State: @(isOpen ? "Open" : "Closed")
+                    </span>
+                </div>
+
+                <div class="rounded-lg border bg-card p-6 max-w-md">
+                    <DropdownMenu @bind-Open="isOpen">
+                        <DropdownMenuTrigger class="px-3 py-2 border rounded text-sm cursor-pointer hover:bg-accent">
+                            Controlled Menu
+                        </DropdownMenuTrigger>
+
+                        <DropdownMenuContent class="min-w-48 p-1 border rounded-md bg-popover shadow-md">
+                            <DropdownMenuItem class="px-2 py-1.5 cursor-pointer rounded hover:bg-accent" OnClick="@(() => HandleItemClick("Item 1"))">
+                                Item 1
+                            </DropdownMenuItem>
+                            <DropdownMenuItem class="px-2 py-1.5 cursor-pointer rounded hover:bg-accent" OnClick="@(() => HandleItemClick("Item 2"))">
+                                Item 2
+                            </DropdownMenuItem>
+                            <DropdownMenuItem class="px-2 py-1.5 cursor-pointer rounded hover:bg-accent" OnClick="@(() => HandleItemClick("Item 3"))">
+                                Item 3
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    @if (!string.IsNullOrEmpty(lastClicked))
+                    {
+                        <p class="text-sm text-muted-foreground mt-3">Last clicked: @lastClicked</p>
+                    }
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Keyboard Navigation</h2>
+                <p class="text-muted-foreground">
+                    Full keyboard navigation with arrow keys, Home/End, Enter/Space, and Escape.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 max-w-md">
+                <DropdownMenu>
+                    <DropdownMenuTrigger class="px-3 py-2 border rounded text-sm cursor-pointer hover:bg-accent">
+                        Keyboard Test Menu
+                    </DropdownMenuTrigger>
+
+                    <DropdownMenuContent class="min-w-48 p-1 border rounded-md bg-popover shadow-md">
+                        <DropdownMenuItem class="px-2 py-1.5 cursor-pointer rounded hover:bg-accent">
+                            First Item
+                        </DropdownMenuItem>
+                        <DropdownMenuItem class="px-2 py-1.5 cursor-pointer rounded hover:bg-accent">
+                            Second Item
+                        </DropdownMenuItem>
+                        <DropdownMenuItem class="px-2 py-1.5 rounded opacity-50 cursor-not-allowed" Disabled="true">
+                            Disabled Item
+                        </DropdownMenuItem>
+                        <DropdownMenuItem class="px-2 py-1.5 cursor-pointer rounded hover:bg-accent">
+                            Third Item
+                        </DropdownMenuItem>
+                        <DropdownMenuItem class="px-2 py-1.5 cursor-pointer rounded hover:bg-accent">
+                            Last Item
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+                <p class="text-sm text-muted-foreground mt-3">Try keyboard navigation!</p>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Positioning Options</h2>
+                <p class="text-muted-foreground">
+                    Position the menu on different sides with alignment control.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <div class="flex gap-4 flex-wrap">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger class="px-3 py-2 border rounded text-sm cursor-pointer hover:bg-accent">
+                            Bottom Start
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent Side="@PopoverSide.Bottom" Align="@PopoverAlign.Start" class="min-w-32 p-1 border rounded-md bg-popover shadow-md">
+                            <DropdownMenuItem class="px-2 py-1.5 cursor-pointer rounded hover:bg-accent">Item 1</DropdownMenuItem>
+                            <DropdownMenuItem class="px-2 py-1.5 cursor-pointer rounded hover:bg-accent">Item 2</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger class="px-3 py-2 border rounded text-sm cursor-pointer hover:bg-accent">
+                            Top Center
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent Side="@PopoverSide.Top" Align="@PopoverAlign.Center" class="min-w-32 p-1 border rounded-md bg-popover shadow-md">
+                            <DropdownMenuItem class="px-2 py-1.5 cursor-pointer rounded hover:bg-accent">Item 1</DropdownMenuItem>
+                            <DropdownMenuItem class="px-2 py-1.5 cursor-pointer rounded hover:bg-accent">Item 2</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger class="px-3 py-2 border rounded text-sm cursor-pointer hover:bg-accent">
+                            Right End
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent Side="@PopoverSide.Right" Align="@PopoverAlign.End" class="min-w-32 p-1 border rounded-md bg-popover shadow-md">
+                            <DropdownMenuItem class="px-2 py-1.5 cursor-pointer rounded hover:bg-accent">Item 1</DropdownMenuItem>
+                            <DropdownMenuItem class="px-2 py-1.5 cursor-pointer rounded hover:bg-accent">Item 2</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Accessibility Features</h2>
+                <p class="text-muted-foreground">
+                    Built-in accessibility features following WAI-ARIA design patterns.
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-6 space-y-3 bg-muted/50">
+                <div class="flex items-start gap-2">
+                    <span class="text-green-600 dark:text-green-400">✓</span>
+                    <span class="text-sm"><strong>ARIA attributes:</strong> role="menu", aria-expanded, aria-orientation applied</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-green-600 dark:text-green-400">✓</span>
+                    <span class="text-sm"><strong>Keyboard navigation:</strong> Full arrow key support with Home/End</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-green-600 dark:text-green-400">✓</span>
+                    <span class="text-sm"><strong>Screen reader support:</strong> Proper menu role and item announcements</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-green-600 dark:text-green-400">✓</span>
+                    <span class="text-sm"><strong>Focus management:</strong> Roving tab index pattern</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-green-600 dark:text-green-400">✓</span>
+                    <span class="text-sm"><strong>Click outside:</strong> Auto-close when clicking outside</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Keyboard Shortcuts</h2>
+                <p class="text-muted-foreground">
+                    Navigate and interact with menus using keyboard.
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-6 space-y-3 bg-muted/50">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium">Open menu</span>
+                    <kbd class="px-2 py-1 text-xs font-semibold bg-background border rounded">Enter / Space</kbd>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium">Navigate items</span>
+                    <kbd class="px-2 py-1 text-xs font-semibold bg-background border rounded">Arrow Keys</kbd>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium">First / Last item</span>
+                    <kbd class="px-2 py-1 text-xs font-semibold bg-background border rounded">Home / End</kbd>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium">Select item</span>
+                    <kbd class="px-2 py-1 text-xs font-semibold bg-background border rounded">Enter</kbd>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium">Close menu</span>
+                    <kbd class="px-2 py-1 text-xs font-semibold bg-background border rounded">Escape</kbd>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">API Reference</h2>
+                <p class="text-muted-foreground">
+                    Component properties and parameters.
+                </p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="rounded-lg border p-4">
+                    <h3 class="font-semibold mb-3">DropdownMenu</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Open</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>bool?</code><br/>
+                                Controls whether the menu is open (controlled mode).
+                            </p>
+                        </div>
+                        <Separator />
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">OpenChanged</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>EventCallback&lt;bool&gt;</code><br/>
+                                Callback invoked when the open state changes.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border p-4">
+                    <h3 class="font-semibold mb-3">DropdownMenuContent</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Side</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>"top" | "right" | "bottom" | "left"</code><br/>
+                                <strong>Default:</strong> <code>"bottom"</code><br/>
+                                Which side of the trigger to position the content.
+                            </p>
+                        </div>
+                        <Separator />
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Align</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>"start" | "center" | "end"</code><br/>
+                                <strong>Default:</strong> <code>"start"</code><br/>
+                                How to align the content relative to the trigger.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border p-4">
+                    <h3 class="font-semibold mb-3">DropdownMenuItem</h3>
+                    <div class="space-y-3 text-sm">
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">OnClick</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>EventCallback</code><br/>
+                                Callback invoked when the item is clicked.
+                            </p>
+                        </div>
+                        <Separator />
+                        <div>
+                            <code class="text-xs bg-muted px-1 py-0.5 rounded">Disabled</code>
+                            <p class="text-muted-foreground mt-1">
+                                <strong>Type:</strong> <code>bool</code><br/>
+                                <strong>Default:</strong> <code>false</code><br/>
+                                Whether the item is disabled.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">When to Use Primitives</h2>
+                <p class="text-muted-foreground">
+                    Choose between primitives and styled components based on your needs.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="rounded-lg border p-4 space-y-3">
+                    <h3 class="font-semibold text-primary">Use DropdownMenu Primitive</h3>
+                    <ul class="space-y-2 text-sm text-muted-foreground">
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Building a custom design system</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Need complete control over styling</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Want to apply your own CSS framework</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-green-600 dark:text-green-400">✓</span>
+                            <span>Creating unique visual designs</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="rounded-lg border p-4 space-y-3">
+                    <h3 class="font-semibold text-primary">Use Styled Component</h3>
+                    <ul class="space-y-2 text-sm text-muted-foreground">
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Want shadcn/ui design out of the box</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Need quick implementation</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Like the default styling</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span class="text-blue-600 dark:text-blue-400">●</span>
+                            <span>Prefer convention over configuration</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+@code {
+    private bool isOpen = false;
+    private string? lastClicked;
+
+    private void HandleItemClick(string item)
+    {
+        lastClicked = item;
+    }
+}

@@ -1,0 +1,159 @@
+@namespace BlazorUI.Components.Sidebar
+@using BlazorUI.Components.Utilities
+@using BlazorUI.Components.Tooltip
+@using BlazorUI.Primitives.Tooltip
+@using BlazorUI.Primitives.Collapsible
+@using Microsoft.AspNetCore.Components.Routing
+@using BlazorUI.Primitives.Services
+
+@*
+    SidebarMenuButton component for clickable menu items with tooltip support.
+*@
+
+@if (ShouldShowTooltip())
+{
+    <BlazorUI.Primitives.Tooltip.Tooltip>
+        <BlazorUI.Primitives.Tooltip.TooltipTrigger>
+            @RenderButton()
+        </BlazorUI.Primitives.Tooltip.TooltipTrigger>
+        <BlazorUI.Components.Tooltip.TooltipContent Side="@(Context?.Side == SidebarSide.Right ? PopoverSide.Left : PopoverSide.Right)" Align="@PopoverAlign.Center">
+            @Tooltip
+        </BlazorUI.Components.Tooltip.TooltipContent>
+    </BlazorUI.Primitives.Tooltip.Tooltip>
+}
+else
+{
+    @RenderButton()
+}
+
+@code {
+    [CascadingParameter]
+    private SidebarContext? Context { get; set; }
+
+    [CascadingParameter]
+    private CollapsibleContext? CollapsibleContext { get; set; }
+
+    /// <summary>
+    /// The button content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Tooltip text to show when sidebar is collapsed (icon-only mode).
+    /// </summary>
+    [Parameter]
+    public string? Tooltip { get; set; }
+
+    /// <summary>
+    /// Size variant for the button.
+    /// </summary>
+    [Parameter]
+    public SidebarMenuButtonSize Size { get; set; } = SidebarMenuButtonSize.Default;
+
+    /// <summary>
+    /// Style variant for the button.
+    /// </summary>
+    [Parameter]
+    public SidebarMenuButtonVariant Variant { get; set; } = SidebarMenuButtonVariant.Default;
+
+    /// <summary>
+    /// Whether this menu item is active/selected.
+    /// </summary>
+    [Parameter]
+    public bool IsActive { get; set; }
+
+    /// <summary>
+    /// The element type to render.
+    /// </summary>
+    [Parameter]
+    public SidebarMenuButtonElement AsChild { get; set; } = SidebarMenuButtonElement.Button;
+
+    /// <summary>
+    /// The URL to navigate to when AsChild is "a".
+    /// </summary>
+    [Parameter]
+    public string? Href { get; set; }
+
+    /// <summary>
+    /// How the link should match the current URL. Default is NavLinkMatch.Prefix.
+    /// </summary>
+    [Parameter]
+    public NavLinkMatch Match { get; set; } = NavLinkMatch.Prefix;
+
+    /// <summary>
+    /// Additional CSS classes.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private bool ShouldShowTooltip()
+    {
+        return !string.IsNullOrEmpty(Tooltip) && Context != null && !Context.Open;
+    }
+
+    private RenderFragment RenderButton() => __builder =>
+    {
+        if (AsChild == SidebarMenuButtonElement.Anchor)
+        {
+            <NavLink href="@Href"
+                     class="@GetClasses()"
+                     data-active="@IsActive"
+                     data-state="@(CollapsibleContext?.Open ?? false ? "open" : "closed")"
+                     aria-current="@(IsActive ? "page" : null)"
+                     aria-expanded="@(CollapsibleContext?.Open ?? false)"
+                     Match="@Match"
+                     ActiveClass="data-[active=true]:bg-sidebar-accent"
+                     @attributes="AdditionalAttributes">
+                @ChildContent
+            </NavLink>
+        }
+        else
+        {
+            <button type="button"
+                    class="@GetClasses()"
+                    data-active="@IsActive"
+                    data-state="@(CollapsibleContext?.Open ?? false ? "open" : "closed")"
+                    aria-current="@(IsActive ? "page" : null)"
+                    aria-expanded="@(CollapsibleContext?.Open ?? false)"
+                    @onclick="HandleClick"
+                    @attributes="AdditionalAttributes">
+                @ChildContent
+            </button>
+        }
+    };
+
+    private async Task HandleClick(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
+    {
+        if (CollapsibleContext?.Toggle != null && !CollapsibleContext.Disabled)
+        {
+            await CollapsibleContext.Toggle.Invoke();
+        }
+    }
+
+    private string GetClasses()
+    {
+        var baseClasses = "group peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:[&>span]:hidden [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0";
+
+        var sizeClasses = Size.ToValue() switch
+        {
+            "small" => "text-xs",
+            "large" => "text-base group-data-[collapsible=icon]:!p-3",
+            _ => ""
+        };
+
+        var variantClasses = Variant.ToValue() switch
+        {
+            "outline" => "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
+            _ => ""
+        };
+
+        return ClassNames.cn(baseClasses, sizeClasses, variantClasses, Class);
+    }
+}
