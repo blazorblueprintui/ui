@@ -7,32 +7,29 @@
 <CascadingValue Value="this" IsFixed="false">
     <div class="@ContainerClass">
         <Popover @bind-Open="_isOpen">
-            <PopoverTrigger>
-                <button type="button"
-                        role="combobox"
-                        aria-expanded="@GetIsOpen().ToString().ToLower()"
-                        aria-controls="@($"{Id}-listbox")"
-                        aria-haspopup="listbox"
-                        disabled="@Disabled"
-                        class="@($"{ButtonCssClass} {Class}")">
-                    <span class="@(string.IsNullOrWhiteSpace(Value) ? "text-muted-foreground" : "")">
-                        @SelectedDisplayText
-                    </span>
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                         width="16"
-                         height="16"
-                         viewBox="0 0 24 24"
-                         fill="none"
-                         stroke="currentColor"
-                         stroke-width="2"
-                         stroke-linecap="round"
-                         stroke-linejoin="round"
-                         class="ml-2 h-4 w-4 shrink-0 opacity-50">
-                        <path d="m6 9 6 6 6-6" />
-                    </svg>
-                </button>
+            <PopoverTrigger role="combobox"
+                           aria-expanded="@GetIsOpen().ToString().ToLower()"
+                           aria-controls="@($"{Id}-listbox")"
+                           aria-haspopup="listbox"
+                           disabled="@Disabled"
+                           class="@($"{ButtonCssClass} {Class}")">
+                <span class="@(string.IsNullOrWhiteSpace(Value) ? "text-muted-foreground" : "")">
+                    @SelectedDisplayText
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     width="16"
+                     height="16"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2"
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                     class="ml-2 h-4 w-4 shrink-0 opacity-50">
+                    <path d="m6 9 6 6 6-6" />
+                </svg>
             </PopoverTrigger>
-            <PopoverContent Side="@PopoverSide.Bottom" Align="@PopoverAlign.Start" Width="@PopoverWidth" Class="!p-0">
+            <PopoverContent Side="@PopoverSide.Bottom" Align="@PopoverAlign.Start" Class="@($"{PopoverWidth} !p-0")">
                 <Command>
                     <CommandInput Placeholder="@SearchPlaceholder" AutoFocus="@_isOpen" />
                     <CommandList>

@@ -176,3 +176,45 @@ export function disposeAll() {
     });
     comboboxStates.clear();
 }
+
+/**
+ * Focuses an element with preventScroll option to avoid page jumping
+ * @param {HTMLElement} element - The element to focus
+ */
+export function focusElementWithPreventScroll(element) {
+    if (element) {
+        // Small delay to ensure element is ready
+        setTimeout(() => {
+            element.focus({ preventScroll: true });
+        }, 10);
+    }
+}
+
+/**
+ * Focuses an element by ID with preventScroll option to avoid page jumping
+ * Uses retry mechanism for Blazor Server-Side rendering delays
+ * @param {string} elementId - The ID of the element to focus
+ */
+export function focusElementByIdWithPreventScroll(elementId) {
+    let attempts = 0;
+    const maxAttempts = 10;
+    const retryDelay = 50; // Check every 50ms
+
+    const tryFocus = () => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.focus({ preventScroll: true });
+            return true;
+        }
+
+        attempts++;
+        if (attempts < maxAttempts) {
+            setTimeout(tryFocus, retryDelay);
+        } else {
+            console.warn(`focusElementByIdWithPreventScroll: Element with id "${elementId}" not found after ${maxAttempts} attempts`);
+        }
+    };
+
+    // Start with a small initial delay
+    setTimeout(tryFocus, 50);
+}

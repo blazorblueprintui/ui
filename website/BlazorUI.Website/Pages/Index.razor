@@ -1,0 +1,419 @@
+@page "/"
+
+<PageTitle>BlazorUI - Beautifully designed components for Blazor</PageTitle>
+
+<div class="relative">
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden border-b bg-gradient-to-b from-background to-muted/20">
+        <div class="container relative z-10 py-12 md:py-16 px-6 lg:px-8">
+            <div class="mx-auto max-w-[1600px]">
+                <!-- Header with Hero Text and Featured Component -->
+                <div class="flex flex-col lg:flex-row gap-8 lg:gap-12 mb-8 items-center">
+                    <!-- Left: Hero Text -->
+                    <div class="flex-1 lg:max-w-2xl space-y-6">
+                        <h1 class="text-5xl font-bold leading-tight tracking-tight md:text-6xl lg:text-7xl">
+                            Build faster with beautiful Blazor components
+                        </h1>
+
+                        <p class="text-lg text-muted-foreground leading-relaxed md:text-xl">
+                            An open source component library optimized for fast development, easy maintenance, and accessibility.
+                            Just import and go—no configuration required.
+                        </p>
+                    </div>
+
+                    <!-- Right: Featured Component -->
+                    <div class="w-full lg:w-auto lg:min-w-[400px] relative">
+                        <TeamManagementDemo />
+                    </div>
+                </div>
+
+                <!-- Buttons and Theme Switcher Row -->
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex flex-col gap-3 sm:flex-row">
+                        <Button Variant="ButtonVariant.Default" Size="ButtonSize.Large" OnClick="@(() => NavigationManager.NavigateTo("/docs/introduction"))">
+                            Get Started
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2">
+                                <path d="M5 12h14"/>
+                                <path d="m12 5 7 7-7 7"/>
+                            </svg>
+                        </Button>
+                        <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Large" OnClick="@(() => NavigationManager.NavigateTo("/components"))">
+                            Browse Components
+                        </Button>
+                    </div>
+                    <div class="hidden lg:block">
+                        <ThemeSwitcher />
+                    </div>
+                </div>
+
+                <!-- Live Examples - 4 Column Masonry Layout -->
+                <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    <!-- Column 1 -->
+                    <div class="flex flex-col gap-4">
+                        <SignUpFormDemo />
+                        <Card>
+                            <CardContent class="pt-6 space-y-3">
+                                <div class="space-y-1.5">
+                                    <Label>Framework</Label>
+                                    <Combobox TItem="FrameworkOption"
+                                             Items="frameworks"
+                                             @bind-Value="selectedFramework"
+                                             ValueSelector="@(f => f.Value)"
+                                             DisplaySelector="@(f => f.Label)"
+                                             Placeholder="Select framework..."
+                                             SearchPlaceholder="Search..."
+                                             EmptyMessage="No framework found."
+                                             Class="w-full"
+                                             PopoverWidth="w-[280px]" />
+                                </div>
+                                <div class="space-y-1.5">
+                                    <Label>Language</Label>
+                                    <Combobox TItem="LanguageOption"
+                                             Items="languages"
+                                             @bind-Value="selectedLanguage"
+                                             ValueSelector="@(l => l.Value)"
+                                             DisplaySelector="@(l => l.Label)"
+                                             Placeholder="Select language..."
+                                             SearchPlaceholder="Search..."
+                                             EmptyMessage="No language found."
+                                             Class="w-full"
+                                             PopoverWidth="w-[280px]" />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <!-- Column 2 -->
+                    <div class="flex flex-col gap-4">
+                        <DashboardMetricsDemo />
+                        <Card>
+                            <CardContent class="pt-6">
+                                <Tabs DefaultValue="@("account")">
+                                    <TabsList Class="grid w-full grid-cols-3">
+                                        <TabsTrigger Value="@("account")">Account</TabsTrigger>
+                                        <TabsTrigger Value="@("settings")">Settings</TabsTrigger>
+                                        <TabsTrigger Value="@("usage")">Usage</TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent Value="@("account")" Class="space-y-3 mt-3">
+                                        <div class="space-y-1.5">
+                                            <Label>Name</Label>
+                                            <Input Value="John Doe" />
+                                        </div>
+                                        <div class="space-y-1.5">
+                                            <Label>Email</Label>
+                                            <Input Value="john@example.com" Type="InputType.Email" />
+                                        </div>
+                                        <Button Size="ButtonSize.Small" Class="w-full">Save Changes</Button>
+                                    </TabsContent>
+                                    <TabsContent Value="@("settings")" Class="space-y-3 mt-3">
+                                        <div class="flex items-center justify-between">
+                                            <div class="space-y-0.5">
+                                                <Label>Email Notifications</Label>
+                                                <p class="text-xs text-muted-foreground">Receive email updates</p>
+                                            </div>
+                                            <Switch Checked="true" />
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <div class="space-y-0.5">
+                                                <Label>Dark Mode</Label>
+                                                <p class="text-xs text-muted-foreground">Use dark theme</p>
+                                            </div>
+                                            <Switch Checked="false" />
+                                        </div>
+                                    </TabsContent>
+                                    <TabsContent Value="@("usage")" Class="space-y-2 mt-3">
+                                        @foreach (var usage in usageStats)
+                                        {
+                                            <div class="space-y-1">
+                                                <div class="flex justify-between text-xs">
+                                                    <span class="font-medium">@usage.Label</span>
+                                                    <span class="text-muted-foreground">@usage.Value</span>
+                                                </div>
+                                                <div class="h-1.5 bg-muted rounded-full overflow-hidden">
+                                                    <div class="h-full bg-primary rounded-full" style="width: @usage.Percentage%"></div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </TabsContent>
+                                </Tabs>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <!-- Column 3 -->
+                    <div class="flex flex-col gap-4">
+                        <NotificationSettingsDemo />
+                        <Card>
+                            <CardContent class="pt-6">
+                                <RadioGroup @bind-Value="selectedPlan">
+                                    <div class="space-y-3">
+                                        <div class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors">
+                                            <RadioGroupItem Value="@("free")" Id="plan-free" />
+                                            <Label For="plan-free" Class="flex flex-col gap-1 cursor-pointer flex-1">
+                                                <span class="font-medium">Free Plan</span>
+                                                <span class="text-xs text-muted-foreground">Perfect for getting started. Includes basic features.</span>
+                                            </Label>
+                                        </div>
+                                        <div class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 transition-colors">
+                                            <RadioGroupItem Value="@("pro")" Id="plan-pro" />
+                                            <Label For="plan-pro" Class="flex flex-col gap-1 cursor-pointer flex-1">
+                                                <span class="font-medium">Pro Plan</span>
+                                                <span class="text-xs text-muted-foreground">For professionals. Unlimited features and priority support.</span>
+                                            </Label>
+                                        </div>
+                                    </div>
+                                </RadioGroup>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <!-- Column 4 -->
+                    <div class="flex flex-col gap-4">
+                        <Card>
+                            <CardContent class="pt-6 space-y-3 overflow-hidden">
+                                <!-- Advanced Search -->
+                                <div class="space-y-1.5">
+                                    <Label>Advanced Search</Label>
+                                    <InputGroup>
+                                        <InputGroupAddon Align="InputGroupAlign.InlineStart">
+                                            <LucideIcon Name="search" Size="16" />
+                                        </InputGroupAddon>
+                                        <InputGroupInput Placeholder="Search..." Class="min-w-0" />
+                                        <InputGroupAddon Align="InputGroupAlign.InlineEnd">
+                                            <InputGroupButton Variant="ButtonVariant.Ghost" Class="!px-1.5 !py-1 !rounded-md">
+                                                <LucideIcon Name="x" Size="16" />
+                                            </InputGroupButton>
+                                        </InputGroupAddon>
+                                        <InputGroupAddon Align="InputGroupAlign.InlineEnd">
+                                            <InputGroupButton Class="!px-3 !py-1 !rounded-sm !text-xs">
+                                                Search
+                                            </InputGroupButton>
+                                        </InputGroupAddon>
+                                    </InputGroup>
+                                </div>
+
+                                <!-- Transfer Amount -->
+                                <div class="space-y-1.5">
+                                    <Label>Transfer Amount</Label>
+                                    <InputGroup>
+                                        <InputGroupAddon Align="InputGroupAlign.InlineStart">
+                                            <LucideIcon Name="circle-dollar-sign" Size="16" />
+                                        </InputGroupAddon>
+                                        <InputGroupInput Type="InputType.Number" Placeholder="0.00" />
+                                        <InputGroupAddon Align="InputGroupAlign.InlineEnd">
+                                            <InputGroupButton Variant="ButtonVariant.Outline" Class="!px-2.5 !py-0.5 !rounded-sm">
+                                                USD <LucideIcon Name="chevron-down" Size="14" />
+                                            </InputGroupButton>
+                                        </InputGroupAddon>
+                                    </InputGroup>
+                                </div>
+
+                                <!-- Comment -->
+                                <div class="space-y-1.5">
+                                    <Label>Comment</Label>
+                                    <InputGroup>
+                                        <InputGroupTextarea Rows="4" Placeholder="Write your comment..." />
+                                        <InputGroupAddon Align="InputGroupAlign.BlockEnd">
+                                            <div class="flex items-center justify-between w-full">
+                                                <p class="text-sm text-muted-foreground">Max 500 characters</p>
+                                                <div class="flex gap-2">
+                                                    <InputGroupButton Variant="ButtonVariant.Ghost" Class="!px-2.5 !py-0.5 !rounded-sm">
+                                                        Cancel
+                                                    </InputGroupButton>
+                                                    <InputGroupButton Class="!px-2.5 !py-0.5 !rounded-sm">
+                                                        Post
+                                                    </InputGroupButton>
+                                                </div>
+                                            </div>
+                                        </InputGroupAddon>
+                                    </InputGroup>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardContent class="pt-6 space-y-3">
+                                @foreach (var task in progressTasks)
+                                {
+                                    <div class="space-y-1.5">
+                                        <div class="flex justify-between text-sm">
+                                            <span class="font-medium">@task.Name</span>
+                                            <span class="text-muted-foreground">@task.Progress%</span>
+                                        </div>
+                                        <div class="h-2 bg-muted rounded-full overflow-hidden">
+                                            <div class="h-full bg-primary rounded-full transition-all" style="width: @task.Progress%"></div>
+                                        </div>
+                                    </div>
+                                }
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    
+
+    <!-- Code Examples Section -->
+    
+
+    <!-- Primitives vs Components Section -->
+    <section class="container border-t py-20 md:py-24 px-4">
+        <div class="mx-auto flex max-w-[980px] flex-col items-center gap-4 text-center">
+            <h2 class="text-3xl font-bold leading-tight tracking-tighter md:text-5xl lg:leading-[1.1]">
+                Two-Tier Architecture
+            </h2>
+            <p class="max-w-[750px] text-lg text-muted-foreground sm:text-xl">
+                Choose between unstyled primitives for full control or pre-styled components for rapid development.
+            </p>
+        </div>
+
+        <div class="mx-auto grid max-w-5xl gap-8 mt-12 lg:grid-cols-2">
+            <div class="relative overflow-hidden rounded-lg border bg-card p-8">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                                <rect width="18" height="18" x="3" y="3" rx="2"/>
+                                <path d="M9 3v18"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Primitives</h3>
+                            <p class="text-sm text-muted-foreground">Unstyled & headless</p>
+                        </div>
+                    </div>
+                    <p class="text-muted-foreground">
+                        Unstyled, accessible components that provide behavior, accessibility, and state management.
+                        Perfect for building custom design systems from scratch.
+                    </p>
+                    <ul class="space-y-2 text-sm">
+                        <li class="flex items-center gap-2">
+                            <svg class="h-4 w-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span>Full styling control</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <svg class="h-4 w-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span>WAI-ARIA compliant</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <svg class="h-4 w-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span>Keyboard navigation</span>
+                        </li>
+                    </ul>
+                    <Button Variant="ButtonVariant.Outline" OnClick="@(() => NavigationManager.NavigateTo("/primitives"))">
+                        Explore Primitives
+                    </Button>
+                </div>
+            </div>
+
+            <div class="relative overflow-hidden rounded-lg border bg-card p-8">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary">
+                                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                                <path d="M17 8h4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h4"/>
+                                <path d="M12 15v5"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold">Components</h3>
+                            <p class="text-sm text-muted-foreground">Styled & ready to use</p>
+                        </div>
+                    </div>
+                    <p class="text-muted-foreground">
+                        Pre-styled components built on primitives with shadcn/ui design.
+                        Drop them in and use immediately with beautiful defaults.
+                    </p>
+                    <ul class="space-y-2 text-sm">
+                        <li class="flex items-center gap-2">
+                            <svg class="h-4 w-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span>Beautiful defaults</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <svg class="h-4 w-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span>Tailwind CSS styling</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <svg class="h-4 w-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span>Customizable themes</span>
+                        </li>
+                    </ul>
+                    <Button Variant="ButtonVariant.Default" OnClick="@(() => NavigationManager.NavigateTo("/components"))">
+                        Explore Components
+                    </Button>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+@code {
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    // Widget data for second row
+    private string? selectedFramework;
+    private string? selectedLanguage;
+
+    private readonly List<FrameworkOption> frameworks = new()
+    {
+        new FrameworkOption { Value = "next", Label = "Next.js" },
+        new FrameworkOption { Value = "react", Label = "React" },
+        new FrameworkOption { Value = "vue", Label = "Vue" },
+        new FrameworkOption { Value = "blazor", Label = "Blazor" },
+        new FrameworkOption { Value = "angular", Label = "Angular" }
+    };
+
+    private readonly List<LanguageOption> languages = new()
+    {
+        new LanguageOption { Value = "csharp", Label = "C#" },
+        new LanguageOption { Value = "typescript", Label = "TypeScript" },
+        new LanguageOption { Value = "python", Label = "Python" },
+        new LanguageOption { Value = "go", Label = "Go" }
+    };
+
+    private List<UsageStat> usageStats = new()
+    {
+        new("API Calls", "8.5K / 10K", 85),
+        new("Storage", "4.2 GB / 5 GB", 84),
+        new("Bandwidth", "120 GB / 200 GB", 60)
+    };
+
+    private List<ProgressTask> progressTasks = new()
+    {
+        new("Design", 100),
+        new("Development", 75),
+        new("Testing", 45)
+    };
+
+    private string selectedPlan = "free";
+    private string selectedCurrency = "usd";
+
+    private record UsageStat(string Label, string Value, int Percentage);
+    private record ProgressTask(string Name, int Progress);
+
+    public class FrameworkOption
+    {
+        public required string Value { get; set; }
+        public required string Label { get; set; }
+    }
+
+    public class LanguageOption
+    {
+        public required string Value { get; set; }
+        public required string Label { get; set; }
+    }
+}

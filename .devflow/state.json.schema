@@ -1,0 +1,178 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DevFlow State Schema",
+  "description": "Schema for DevFlow state.json file that tracks project initialization, features, and progress",
+  "type": "object",
+  "required": ["initialized", "active_feature", "features"],
+  "properties": {
+    "initialized": {
+      "type": "boolean",
+      "description": "Whether DevFlow has been initialized in this project"
+    },
+    "initialized_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when DevFlow was initialized"
+    },
+    "active_feature": {
+      "type": ["string", "null"],
+      "description": "Name of the currently active feature (null if none active)",
+      "pattern": "^\\d{8}-[a-z0-9-]+$"
+    },
+    "features": {
+      "type": "object",
+      "description": "Map of feature names to feature state objects",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "display_name",
+          "status",
+          "phase",
+          "workflow_type",
+          "current_task",
+          "concerns",
+          "created_at"
+        ],
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "description": "Human-readable feature name"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "active", "paused", "completed"],
+            "description": "Current status of the feature"
+          },
+          "phase": {
+            "type": "string",
+            "enum": ["SPEC", "PLAN", "TASKS", "EXECUTE", "VALIDATE", "DONE"],
+            "description": "Current phase of the feature workflow"
+          },
+          "workflow_type": {
+            "type": "string",
+            "enum": ["full", "build"],
+            "default": "full",
+            "description": "Workflow type: 'full' for standard SPEC→PLAN→TASKS→EXECUTE, 'build' for streamlined SPEC→EXECUTE"
+          },
+          "current_task": {
+            "oneOf": [
+              {
+                "type": "integer",
+                "const": 0,
+                "description": "Not started (initial value)"
+              },
+              {
+                "type": "string",
+                "pattern": "^\\d+\\.\\d+$",
+                "description": "Hierarchical subtask notation (e.g., '1.2', '2.1')"
+              }
+            ],
+            "description": "Current task: 0 when not started, or subtask notation like '1.2' during execution"
+          },
+          "concerns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of cross-cutting concerns relevant to this feature"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of when feature was created"
+          },
+          "completed_at": {
+            "type": ["string", "null"],
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of when feature was completed"
+          },
+          "snapshot": {
+            "type": ["string", "null"],
+            "description": "Path to snapshot file if feature was paused"
+          },
+          "validation": {
+            "type": ["object", "null"],
+            "description": "Validation phase tracking (populated when phase is VALIDATE)",
+            "properties": {
+              "started_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 timestamp when validation started"
+              },
+              "criteria_total": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Total number of acceptance criteria to validate"
+              },
+              "criteria_passed": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Number of criteria marked as passing"
+              },
+              "criteria_failed": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Number of criteria that failed (have open issues)"
+              },
+              "criteria_pending": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Number of criteria not yet tested"
+              },
+              "issues": {
+                "type": "array",
+                "description": "Issues found during validation",
+                "items": {
+                  "type": "object",
+                  "required": ["id", "description", "severity", "status", "found_at"],
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "Unique issue ID (increments per feature)"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Brief issue description (auto-generated from analysis)"
+                    },
+                    "severity": {
+                      "type": "string",
+                      "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"],
+                      "description": "Issue severity level"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": ["open", "fixing", "fixed", "closed"],
+                      "description": "Current issue status"
+                    },
+                    "criterion": {
+                      "type": ["integer", "null"],
+                      "description": "Acceptance criterion number this issue affects (null if general)"
+                    },
+                    "tasks": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Fix task IDs (e.g., ['1.1', '1.2', '1.3'])"
+                    },
+                    "found_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "ISO 8601 timestamp when issue was found"
+                    },
+                    "fixed_at": {
+                      "type": ["string", "null"],
+                      "format": "date-time",
+                      "description": "ISO 8601 timestamp when issue was fixed (null if not fixed)"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

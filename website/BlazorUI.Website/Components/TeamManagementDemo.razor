@@ -1,0 +1,55 @@
+@* Team Management Demo - Realistic UI example *@
+@using BlazorUI.Primitives.Services
+
+<Card>
+    <CardContent class="pt-6 space-y-2">
+        <div class="flex gap-2">
+            <Input Type="InputType.Email" Placeholder="Email address" Class="flex-1" />
+            <Button Variant="ButtonVariant.Default" Size="ButtonSize.Small">Invite</Button>
+        </div>
+
+        <div class="space-y-1">
+            @foreach (var member in teamMembers)
+            {
+                <div class="flex items-center justify-between p-2 rounded-md transition-colors">
+                    <div class="flex items-center gap-2">
+                        <Avatar Class="w-7 h-7">
+                            <AvatarFallback Class="@($"text-xs font-medium {member.BgClass} {member.TextClass}")">
+                                @member.Initials
+                            </AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p class="text-sm font-medium">@member.Name</p>
+                            <p class="text-xs text-muted-foreground">@member.Email</p>
+                        </div>
+                    </div>
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger AsChild>
+                            <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" Class="p-0">
+                                <LucideIcon Name="ellipsis" Size="16" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent Align="PopoverAlign.End">
+                            <DropdownMenuItem>View profile</DropdownMenuItem>
+                            <DropdownMenuItem>Send message</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem Class="text-destructive">Remove from team</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
+            }
+        </div>
+    </CardContent>
+</Card>
+
+@code {
+    private List<TeamMember> teamMembers = new()
+    {
+        new("Emmeline Labrie", "emmeline.labrie@example.com", "EL", "bg-indigo-100 dark:bg-indigo-950", "text-indigo-700 dark:text-indigo-300"),
+        new("Zac Wight", "zac.wight@example.com", "ZW", "bg-blue-100 dark:bg-blue-950", "text-blue-700 dark:text-blue-300"),
+        new("Poppy Nicholls", "poppy.nicholls@example.com", "PN", "bg-pink-100 dark:bg-pink-950", "text-pink-700 dark:text-pink-300")
+    };
+
+    private record TeamMember(string Name, string Email, string Initials, string BgClass, string TextClass);
+}

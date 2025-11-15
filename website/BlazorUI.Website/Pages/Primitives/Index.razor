@@ -1,0 +1,91 @@
+@page "/primitives"
+
+<PageTitle>Primitives - BlazorUI</PageTitle>
+
+<div class="container py-8 md:py-12 px-4">
+    <div class="mx-auto max-w-5xl">
+        <div class="space-y-4 mb-12">
+            <h1 class="text-4xl font-bold tracking-tight">Primitives</h1>
+            <p class="text-xl text-muted-foreground">
+                Unstyled, accessible components for building high-quality, custom design systems.
+                Full control over styling and behavior.
+            </p>
+        </div>
+
+        <div class="mb-8 rounded-lg border bg-card p-6">
+            <h2 class="text-lg font-semibold mb-2">What are Primitives?</h2>
+            <p class="text-muted-foreground mb-4">
+                Primitives are unstyled, headless components that provide:
+            </p>
+            <ul class="space-y-2 text-sm">
+                <li class="flex items-start gap-2">
+                    <svg class="h-5 w-5 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span><strong>Accessibility:</strong> WAI-ARIA compliant with keyboard navigation and screen reader support</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <svg class="h-5 w-5 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span><strong>Behavior:</strong> Complex interactions and state management handled for you</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <svg class="h-5 w-5 text-primary mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span><strong>Flexibility:</strong> Complete control over styling and markup structure</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            @foreach (var primitive in Primitives)
+            {
+                <div class="cursor-pointer" @onclick="@(() => NavigationManager.NavigateTo($"/primitives/{primitive.Route}"))">
+                    <Card class="overflow-hidden hover:border-primary/50 transition-colors">
+                        <CardHeader>
+                            <CardTitle>@primitive.Name</CardTitle>
+                            <CardDescription>@primitive.Description</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div class="flex items-center text-sm text-muted-foreground">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                    <path d="M5 12h14"/>
+                                    <path d="m12 5 7 7-7 7"/>
+                                </svg>
+                                View examples
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    private List<PrimitiveInfo> Primitives = new()
+    {
+        new("Accordion", "accordion", "A vertically stacked set of interactive headings."),
+        new("Checkbox", "checkbox", "A control for toggling checked state."),
+        new("Collapsible", "collapsible", "An interactive component for expandable content."),
+        new("Combobox", "combobox", "Combines an input with a listbox for autocomplete."),
+        new("Dialog", "dialog", "A modal window overlaid on the primary window."),
+        new("Dropdown Menu", "dropdown-menu", "A menu triggered by a button with various options."),
+        new("Hover Card", "hover-card", "A card that appears on hover for preview content."),
+        new("Label", "label", "An accessible label for form controls."),
+        new("Popover", "popover", "A portal-based popup triggered by user interaction."),
+        new("Radio Group", "radio-group", "A group of checkable radio buttons."),
+        new("Select", "select", "A control for selecting from a list of options."),
+        new("Sheet", "sheet", "A dialog variant for complementary content."),
+        new("Switch", "switch", "A control for toggling on/off state."),
+        new("Table", "table", "Accessible table components with pagination."),
+        new("Tabs", "tabs", "Layered sections of content displayed one at a time."),
+        new("Tooltip", "tooltip", "A popup with informational content on hover/focus."),
+    };
+
+    private record PrimitiveInfo(string Name, string Route, string Description);
+}

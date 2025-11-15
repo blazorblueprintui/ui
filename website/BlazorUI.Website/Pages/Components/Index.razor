@@ -1,0 +1,78 @@
+@page "/components"
+
+<PageTitle>Components - BlazorUI</PageTitle>
+
+<div class="container py-8 md:py-12 px-4">
+    <div class="mx-auto max-w-5xl">
+        <div class="space-y-4 mb-12">
+            <h1 class="text-4xl font-bold tracking-tight">Components</h1>
+            <p class="text-xl text-muted-foreground">
+                Beautifully designed components built on primitives. Ready to use in your Blazor applications.
+                Copy and paste, or install via NuGet.
+            </p>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            @foreach (var component in Components)
+            {
+                <div class="cursor-pointer" @onclick="@(() => NavigationManager.NavigateTo($"/components/{component.Route}"))">
+                    <Card class="overflow-hidden hover:border-primary/50 transition-colors">
+                        <CardHeader>
+                            <CardTitle>@component.Name</CardTitle>
+                            <CardDescription>@component.Description</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div class="flex items-center text-sm text-muted-foreground">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2">
+                                    <path d="M5 12h14"/>
+                                    <path d="m12 5 7 7-7 7"/>
+                                </svg>
+                                View examples
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    private List<ComponentInfo> Components = new()
+    {
+        new("Accordion", "accordion", "A vertically stacked set of interactive headings that each reveal a section of content."),
+        new("Avatar", "avatar", "An image element with a fallback for representing the user."),
+        new("Badge", "badge", "Displays a badge or a component that looks like a badge."),
+        new("Button", "button", "Displays a button or a component that looks like a button."),
+        new("Button Group", "button-group", "A group of buttons that work together with optional popover and select integration."),
+        new("Card", "card", "Displays a card with header, content, and footer."),
+        new("Checkbox", "checkbox", "A control that allows the user to toggle between checked and not checked."),
+        new("Collapsible", "collapsible", "An interactive component which expands/collapses a panel."),
+        new("Combobox", "combobox", "Autocomplete input with a list of suggestions."),
+        new("Command", "command", "Fast, composable, unstyled command menu for Blazor."),
+        new("Data Table", "data-table", "Powerful table and datagrids built using primitives."),
+        new("Dialog", "dialog", "A window overlaid on either the primary window or another dialog window."),
+        new("Dropdown Menu", "dropdown-menu", "Displays a menu to the user with a list of options."),
+        new("Field", "field", "Form field with label, description, and error message support."),
+        new("Hover Card", "hover-card", "For sighted users to preview content available behind a link."),
+        new("Input", "input", "Displays a form input field or a component that looks like an input field."),
+        new("Input Group", "input-group", "Input with prefix and suffix elements."),
+        new("Item", "item", "A flexible item component for lists and menus."),
+        new("Label", "label", "Renders an accessible label associated with controls."),
+        new("Popover", "popover", "Displays rich content in a portal, triggered by a button."),
+        new("Radio Group", "radio-group", "A set of checkable buttons where no more than one can be checked at a time."),
+        new("Select", "select", "Displays a list of options for the user to pick from."),
+        new("Separator", "separator", "Visually or semantically separates content."),
+        new("Sheet", "sheet", "Extends the Dialog component to display content that complements the main content."),
+        new("Sidebar", "sidebar", "A collapsible sidebar component with navigation menu."),
+        new("Skeleton", "skeleton", "Use to show a placeholder while content is loading."),
+        new("Switch", "switch", "A control that allows the user to toggle between checked and not checked."),
+        new("Tabs", "tabs", "A set of layered sections of content that are displayed one at a time."),
+        new("Textarea", "textarea", "Displays a form textarea or a component that looks like a textarea."),
+        new("Tooltip", "tooltip", "A popup that displays information related to an element when the element receives keyboard focus or the mouse hovers over it."),
+    };
+
+    private record ComponentInfo(string Name, string Route, string Description);
+}

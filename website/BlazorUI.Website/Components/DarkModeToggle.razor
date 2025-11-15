@@ -1,0 +1,66 @@
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+<button type="button"
+        @onclick="ToggleDarkMode"
+        class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground h-9 w-9"
+        title="Toggle dark mode"
+        aria-label="Toggle dark mode">
+    @if (_isDark)
+    {
+        <LucideIcon Name="sun" Size="20" />
+    }
+    else
+    {
+        <LucideIcon Name="moon" Size="20" />
+    }
+</button>
+
+@code {
+    private IJSObjectReference? _darkModeModule;
+    private bool _isDark = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                _darkModeModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import", "./js/dark-mode.js");
+
+                // Get initial dark mode state
+                _isDark = await _darkModeModule.InvokeAsync<bool>("isDarkMode");
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to load dark-mode module: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task ToggleDarkMode()
+    {
+        if (_darkModeModule != null)
+        {
+            try
+            {
+                await _darkModeModule.InvokeVoidAsync("toggleDarkMode");
+                _isDark = !_isDark;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to toggle dark mode: {ex.Message}");
+            }
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_darkModeModule != null)
+        {
+            await _darkModeModule.DisposeAsync();
+        }
+    }
+}

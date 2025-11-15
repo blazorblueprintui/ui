@@ -1,0 +1,32 @@
+@* Dashboard Metrics Demo - Financial performance example *@
+
+<Card>
+    <CardContent class="pt-6 space-y-2">
+        @foreach (var metric in metrics)
+        {
+            <div class="flex items-center justify-between p-2.5 rounded-md border">
+                <div class="space-y-0.5">
+                    <p class="text-xs text-muted-foreground">@metric.Label</p>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-lg font-semibold">@metric.Value</span>
+                        <span class="text-xs @(metric.Change >= 0 ? "text-green-600" : "text-red-600")">
+                            @(metric.Change >= 0 ? "↑" : "↓") @Math.Abs(metric.Change)%
+                        </span>
+                    </div>
+                </div>
+            </div>
+        }
+    </CardContent>
+</Card>
+
+@code {
+    private List<Metric> metrics = new()
+    {
+        new("MRR", "$350K", 3.2m),
+        new("GPM", "44.6%", -1.2m),
+        new("CAC", "$146", 11.0m),
+        new("ARR", "$4.2M", 8.5m)
+    };
+
+    private record Metric(string Label, string Value, decimal Change);
+}

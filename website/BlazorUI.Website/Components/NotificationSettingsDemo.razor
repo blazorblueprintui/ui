@@ -1,0 +1,51 @@
+@* Notification Settings Demo - Settings panel example *@
+
+<Card>
+    <CardContent class="pt-6 space-y-3">
+        @foreach (var group in notificationGroups)
+        {
+            <div class="space-y-1.5">
+                <div>
+                    <h4 class="text-xs font-semibold">@group.Title</h4>
+                    <p class="text-xs text-muted-foreground">@group.Description</p>
+                </div>
+
+                <div class="space-y-1.5 pl-3 border-l">
+                    @foreach (var setting in group.Settings)
+                    {
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs">@setting.Label</span>
+                            <div class="flex items-center gap-2">
+                                @foreach (var channel in setting.Channels)
+                                {
+                                    <div class="flex items-center gap-1.5">
+                                        <Switch Checked="@channel.Enabled" />
+                                        <span class="text-xs text-muted-foreground">@channel.Name</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </CardContent>
+</Card>
+
+@code {
+    private List<NotificationGroup> notificationGroups = new()
+    {
+        new("Comments", "Receive notifications when someone comments.", new()
+        {
+            new("Comments", new() { new("Push", true), new("Email", true) })
+        }),
+        new("Favorites", "Receive notifications when there is activity.", new()
+        {
+            new("Activity", new() { new("Push", true), new("Email", false) })
+        })
+    };
+
+    private record NotificationGroup(string Title, string Description, List<NotificationSetting> Settings);
+    private record NotificationSetting(string Label, List<Channel> Channels);
+    private record Channel(string Name, bool Enabled);
+}

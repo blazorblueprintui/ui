@@ -14,11 +14,8 @@
 export function positionPopover(containerElement, popoverId, side, align) {
     if (!containerElement || !popoverId) return;
 
-    // Find the popover content element
-    const popoverContainer = document.getElementById(popoverId);
-    if (!popoverContainer) return;
-
-    const popoverContent = popoverContainer.querySelector('[role="dialog"]');
+    // Find the popover content element (the popoverId IS the content element)
+    const popoverContent = document.getElementById(popoverId);
     if (!popoverContent) return;
 
     // Find the trigger button
@@ -109,12 +106,22 @@ export function positionPopover(containerElement, popoverId, side, align) {
     popoverContent.classList.remove('opacity-0', 'invisible');
     popoverContent.classList.add('opacity-100', 'visible');
 
-    // Focus the popover content for accessibility
+    // Focus management for accessibility
+    // If there's a combobox input inside, focus it directly instead of the container
     setTimeout(() => {
         if (popoverContent) {
-            popoverContent.focus();
+            // Check if there's a combobox input that should receive focus
+            const comboboxInput = popoverContent.querySelector('input[role="combobox"][type="text"]');
+
+            if (comboboxInput) {
+                // Focus the input directly for combobox pattern
+                comboboxInput.focus({ preventScroll: true });
+            } else {
+                // Focus the container for other popovers
+                popoverContent.focus({ preventScroll: true });
+            }
         }
-    }, 0);
+    }, 100); // Increased delay to let Blazor render complete
 }
 
 /**

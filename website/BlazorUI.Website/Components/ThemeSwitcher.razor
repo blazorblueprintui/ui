@@ -1,0 +1,93 @@
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@* Theme Switcher - Colored circles for switching between themes *@
+
+<div class="flex gap-2">
+    @foreach (var theme in themes)
+    {
+        <button type="button"
+                @onclick="@(() => SwitchTheme(theme.Name))"
+                class="@GetCircleClasses(theme.Name)"
+                style="@GetCircleStyle(theme)"
+                title="@($"{theme.DisplayName} theme")"
+                aria-label="@($"Switch to {theme.DisplayName} theme")">
+        </button>
+    }
+</div>
+
+@code {
+    private IJSObjectReference? _themeModule;
+    private string _activeTheme = "default";
+
+    private List<ThemeInfo> themes = new()
+    {
+        new("default", "Default", "#64748b"), // Slate-500
+        new("blue", "Blue", "#3b82f6"),       // Blue-500
+        new("orange", "Orange", "#f97316"),   // Orange-500
+        new("purple", "Purple", "#a855f7"),   // Purple-500
+        new("rose", "Rose", "#f43f5e"),       // Rose-500
+        new("yellow", "Yellow", "#eab308"),   // Yellow-500
+        new("green", "Green", "#22c55e")      // Green-500
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                _themeModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import", "./js/theme-switcher.js");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to load theme-switcher module: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task SwitchTheme(string themeName)
+    {
+        if (_themeModule != null)
+        {
+            try
+            {
+                await _themeModule.InvokeVoidAsync("switchTheme", themeName);
+                _activeTheme = themeName;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to switch theme: {ex.Message}");
+            }
+        }
+    }
+
+    private string GetCircleClasses(string themeName)
+    {
+        return "w-6 h-6 rounded-full cursor-pointer transition-all hover:scale-110";
+    }
+
+    private string GetCircleStyle(ThemeInfo theme)
+    {
+        var backgroundColor = $"background-color: {theme.Color};";
+
+        if (theme.Name == _activeTheme)
+        {
+            // Add a ring with the same color as the circle
+            return $"{backgroundColor} box-shadow: 0 0 0 2px white, 0 0 0 4px {theme.Color};";
+        }
+
+        return backgroundColor;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_themeModule != null)
+        {
+            await _themeModule.DisposeAsync();
+        }
+    }
+
+    private record ThemeInfo(string Name, string DisplayName, string Color);
+}

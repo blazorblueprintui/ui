@@ -34,7 +34,7 @@ export function setupClickOutside(elementRef, dotNetHelper, contentId) {
             clickOutsideHandlers.set(contentId + '-key', keyHandler);
 
             // Focus the content element so keyboard events work
-            contentElement.focus();
+            contentElement.focus({ preventScroll: true });
         }
     }, 100);
 }
@@ -42,7 +42,7 @@ export function setupClickOutside(elementRef, dotNetHelper, contentId) {
 export function focusContent(contentId) {
     const contentElement = document.getElementById(contentId);
     if (contentElement) {
-        contentElement.focus();
+        contentElement.focus({ preventScroll: true });
     }
 }
 
@@ -54,6 +54,15 @@ export function scrollItemIntoView(itemId) {
             inline: 'nearest',
             behavior: 'smooth'
         });
+    }
+}
+
+export function focusElementWithPreventScroll(element) {
+    if (element) {
+        // Small delay to ensure element is ready
+        setTimeout(() => {
+            element.focus({ preventScroll: true });
+        }, 10);
     }
 }
 

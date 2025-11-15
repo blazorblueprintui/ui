@@ -24,6 +24,7 @@
     private bool _hasVisibleItems;
     private IJSObjectReference? _jsModule;
     private DotNetObjectReference<ComboboxInput>? _dotNetRef;
+    private bool _previousAutoFocus;
 
     /// <summary>
     /// Additional attributes to apply to the input element.
@@ -71,20 +72,25 @@
                 // JS module not critical, log and continue
                 Console.WriteLine($"Failed to setup combobox keyboard handler: {ex.Message}");
             }
+        }
 
-            // Auto-focus if requested
-            if (AutoFocus)
+        // Auto-focus when AutoFocus changes from false to true (combobox opens)
+        if (AutoFocus && !_previousAutoFocus && _jsModule != null)
+        {
+            try
             {
-                try
-                {
-                    await _inputElement.FocusAsync();
-                }
-                catch
-                {
-                    // Ignore focus errors
-                }
+                // Use custom focus function with preventScroll to avoid page jumping
+                // Pass element ID instead of ElementReference for better setTimeout compatibility
+                await _jsModule.InvokeVoidAsync("focusElementByIdWithPreventScroll", Context.InputId);
+            }
+            catch
+            {
+                // Ignore focus errors
             }
         }
+
+        // Update previous state for next render
+        _previousAutoFocus = AutoFocus;
     }
 
     private void HandleInput(ChangeEventArgs e)

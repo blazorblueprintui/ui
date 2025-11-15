@@ -1,0 +1,33 @@
+@* CodeBlock component for displaying syntax-highlighted code *@
+
+<div class="relative group">
+    <div class="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <CopyButton TextToCopy="@Code" />
+    </div>
+
+    <pre class="@GetContainerClasses()"><code class="@GetCodeClasses()">@Code</code></pre>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Code { get; set; } = string.Empty;
+
+    [Parameter]
+    public string Language { get; set; } = "csharp";
+
+    [Parameter]
+    public bool ShowLineNumbers { get; set; } = false;
+
+    [Parameter]
+    public string Class { get; set; } = string.Empty;
+
+    private string GetContainerClasses()
+    {
+        return $"rounded-lg border bg-muted/50 p-4 overflow-x-auto font-mono text-sm {Class}";
+    }
+
+    private string GetCodeClasses()
+    {
+        return $"language-{Language.ToLower()}";
+    }
+}

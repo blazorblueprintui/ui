@@ -1,0 +1,47 @@
+@* DemoSection - Shows UI preview with code toggle *@
+
+<div class="relative rounded-xl border overflow-hidden" style="background: var(--card);">
+    <!-- Header with toggle -->
+    <div class="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
+        <h3 class="text-sm font-semibold">@Title</h3>
+        <div class="flex items-center gap-2">
+            <button
+                class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors @(!showCode ? "bg-primary text-primary-foreground" : "hover:bg-muted")"
+                @onclick="@(() => showCode = false)">
+                Preview
+            </button>
+            <button
+                class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors @(showCode ? "bg-primary text-primary-foreground" : "hover:bg-muted")"
+                @onclick="@(() => showCode = true)">
+                Code
+            </button>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="relative">
+        @if (showCode)
+        {
+            <CodeBlock Language="razor" Code="@Code" Class="border-0 shadow-none max-h-[600px] overflow-auto" />
+        }
+        else
+        {
+            <div class="p-6">
+                @PreviewContent
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public string Code { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public RenderFragment PreviewContent { get; set; } = null!;
+
+    private bool showCode = false;
+}
