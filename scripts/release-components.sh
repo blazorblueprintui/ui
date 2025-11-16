@@ -53,6 +53,45 @@ if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
     exit 1
 fi
 
+# Rebuild Tailwind CSS to ensure it's up-to-date
+echo ""
+echo -e "${COLOR_YELLOW}Building Tailwind CSS...${COLOR_RESET}"
+cd "$PROJECT_PATH"
+
+# Detect OS and use appropriate Tailwind CLI
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
+    # Windows (Git Bash/MSYS)
+    ../../tools/tailwindcss.exe -i wwwroot/css/blazorui-input.css -o wwwroot/blazorui.css --minify
+else
+    # Linux/macOS
+    npx --yes @tailwindcss/cli@4.1.16 -i wwwroot/css/blazorui-input.css -o wwwroot/blazorui.css --minify
+fi
+
+cd - > /dev/null
+
+# Check if CSS was updated (indicates it was out-of-date)
+if ! git diff --quiet -- "$PROJECT_PATH/wwwroot/blazorui.css"; then
+    echo ""
+    echo -e "${COLOR_RED}═══════════════════════════════════════════════════${COLOR_RESET}"
+    echo -e "${COLOR_RED}Error: blazorui.css was out-of-date!${COLOR_RESET}"
+    echo -e "${COLOR_RED}═══════════════════════════════════════════════════${COLOR_RESET}"
+    echo ""
+    echo "The CSS has been rebuilt and differs from what's committed."
+    echo "Please review the changes, commit them, and run the release script again."
+    echo ""
+    echo -e "${COLOR_YELLOW}Changes detected:${COLOR_RESET}"
+    git diff "$PROJECT_PATH/wwwroot/blazorui.css" | head -30
+    echo ""
+    echo "To commit the updated CSS:"
+    echo "  git add $PROJECT_PATH/wwwroot/blazorui.css"
+    echo "  git commit -m 'chore: rebuild blazorui.css for v${VERSION}'"
+    echo ""
+    exit 1
+fi
+
+echo -e "${COLOR_GREEN}✓ CSS is up-to-date${COLOR_RESET}"
+echo ""
+
 # Show what we're about to do
 echo -e "${COLOR_YELLOW}═══════════════════════════════════════════════════${COLOR_RESET}"
 echo -e "${COLOR_YELLOW}Release Summary${COLOR_RESET}"
