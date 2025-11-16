@@ -192,7 +192,7 @@ This project is part of the BlazorUI library. See the main repository for licens
 - **NuGet Packages**:
   - BlazorUI.Primitives
   - BlazorUI.Components
-  - BlazorUI.Icons
+  - BlazorUI.Icons.Lucide
 
 ## Support
 
