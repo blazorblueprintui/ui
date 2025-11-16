@@ -1,0 +1,531 @@
+# Button Component
+
+Interactive button with multiple visual variants, sizes, and states following the shadcn/ui design system.
+
+---
+
+## Overview
+
+The Button component provides a customizable, accessible button that supports multiple visual styles, sizes, and states. It follows WCAG 2.1 AA standards for accessibility and integrates seamlessly with Blazor's event system.
+
+**Features:**
+- 6 visual variants (Default, Destructive, Outline, Secondary, Ghost, Link)
+- 6 size options (Small, Default, Large, Icon, IconSmall, IconLarge)
+- Disabled state support
+- Icon support with configurable position
+- Full keyboard navigation (Tab, Enter, Space)
+- ARIA attributes for screen readers
+- Dark mode compatible via CSS variables
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.Button
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/Button
+
+---
+
+## Installation
+
+```bash
+dotnet add package BlazorUI.Components
+```
+
+Add to `_Imports.razor`:
+
+```razor
+@using BlazorUI.Components
+@using BlazorUI.Components.Button
+```
+
+---
+
+## API Reference
+
+### `<Button>`
+
+**Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Variant` | `ButtonVariant` | `Default` | Visual style (Default, Destructive, Outline, Secondary, Ghost, Link) |
+| `Size` | `ButtonSize` | `Default` | Size (Small, Default, Large, Icon, IconSmall, IconLarge) |
+| `Type` | `ButtonType` | `Button` | HTML type (Button, Submit, Reset) |
+| `Disabled` | `bool` | `false` | Whether button is disabled |
+| `Class` | `string?` | `null` | Additional CSS classes |
+| `OnClick` | `EventCallback<MouseEventArgs>` | - | Click event handler |
+| `ChildContent` | `RenderFragment?` | `null` | Button content (text, icons, markup) |
+| `AriaLabel` | `string?` | `null` | ARIA label for accessibility (required for icon-only buttons) |
+| `Icon` | `RenderFragment?` | `null` | Icon to display in button |
+| `IconPosition` | `IconPosition` | `Start` | Icon position (Start or End) |
+
+### Enums
+
+**ButtonVariant:**
+- `Default` - Primary action button with primary color
+- `Destructive` - Dangerous/destructive actions (red)
+- `Outline` - Secondary action with border
+- `Secondary` - Less prominent actions
+- `Ghost` - Minimal styling, transparent background
+- `Link` - Link-styled button with underline on hover
+
+**ButtonSize:**
+- `Small` - Compact button (h-9, text-xs)
+- `Default` - Standard button (h-10)
+- `Large` - Larger button (h-11, px-8)
+- `Icon` - Square icon button (h-10 w-10)
+- `IconSmall` - Small square icon button (h-9 w-9)
+- `IconLarge` - Large square icon button (h-11 w-11)
+
+**ButtonType:**
+- `Button` - Standard button (default, prevents form submission)
+- `Submit` - Form submit button
+- `Reset` - Form reset button
+
+---
+
+## Basic Usage
+
+```razor
+<Button>Click me</Button>
+```
+
+---
+
+## Examples
+
+### Variants
+
+```razor
+<Button Variant="ButtonVariant.Default">Default</Button>
+<Button Variant="ButtonVariant.Destructive">Destructive</Button>
+<Button Variant="ButtonVariant.Outline">Outline</Button>
+<Button Variant="ButtonVariant.Secondary">Secondary</Button>
+<Button Variant="ButtonVariant.Ghost">Ghost</Button>
+<Button Variant="ButtonVariant.Link">Link</Button>
+```
+
+### Sizes
+
+```razor
+<Button Size="ButtonSize.Small">Small</Button>
+<Button Size="ButtonSize.Default">Default</Button>
+<Button Size="ButtonSize.Large">Large</Button>
+```
+
+### Icon Buttons
+
+```razor
+@using BlazorUI.Icons
+
+@* Icon button with size variants *@
+<Button Size="ButtonSize.IconSmall">
+    <LucideIcon Name="plus" Size="16" />
+</Button>
+
+<Button Size="ButtonSize.Icon">
+    <LucideIcon Name="plus" Size="20" />
+</Button>
+
+<Button Size="ButtonSize.IconLarge">
+    <LucideIcon Name="plus" Size="24" />
+</Button>
+
+@* Icon-only button with aria-label for accessibility *@
+<Button Size="ButtonSize.Icon" AriaLabel="Add item">
+    <LucideIcon Name="plus" Size="20" />
+</Button>
+```
+
+### Buttons with Icons
+
+```razor
+@using BlazorUI.Icons
+
+@* Icon before text (default) *@
+<Button>
+    <Icon>
+        <LucideIcon Name="download" Size="16" />
+    </Icon>
+    <ChildContent>
+        Download
+    </ChildContent>
+</Button>
+
+@* Icon after text *@
+<Button IconPosition="IconPosition.End">
+    <ChildContent>
+        Next
+    </ChildContent>
+    <Icon>
+        <LucideIcon Name="arrow-right" Size="16" />
+    </Icon>
+</Button>
+
+@* Alternative: Icons inside ChildContent *@
+<Button>
+    <LucideIcon Name="save" Size="16" />
+    Save
+</Button>
+```
+
+### Disabled State
+
+```razor
+<Button Disabled="true">Disabled Button</Button>
+
+<Button Variant="ButtonVariant.Outline" Disabled="true">
+    Disabled Outline
+</Button>
+```
+
+### Loading State
+
+```razor
+<Button Disabled="@isLoading">
+    @if (isLoading)
+    {
+        <LucideIcon Name="loader-2" Size="16" Class="animate-spin" />
+    }
+    else
+    {
+        <LucideIcon Name="save" Size="16" />
+    }
+    @(isLoading ? "Saving..." : "Save")
+</Button>
+
+@code {
+    private bool isLoading = false;
+
+    private async Task HandleSave()
+    {
+        isLoading = true;
+        // Perform save operation
+        await Task.Delay(2000);
+        isLoading = false;
+    }
+}
+```
+
+### Form Submit Button
+
+```razor
+<EditForm Model="@model" OnValidSubmit="@HandleSubmit">
+    <DataAnnotationsValidator />
+
+    <Field>
+        <FieldLabel>Email</FieldLabel>
+        <FieldContent>
+            <Input @bind-Value="model.Email" Type="email" />
+        </FieldContent>
+    </Field>
+
+    @* Submit button - uses Type="Submit" *@
+    <Button Type="ButtonType.Submit">
+        Submit Form
+    </Button>
+</EditForm>
+
+@code {
+    private FormModel model = new();
+
+    private async Task HandleSubmit()
+    {
+        // Handle form submission
+    }
+
+    public class FormModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = "";
+    }
+}
+```
+
+### With Click Handler
+
+```razor
+<Button OnClick="HandleClick">
+    Click Me
+</Button>
+
+<Button Variant="ButtonVariant.Destructive" OnClick="HandleDelete">
+    <LucideIcon Name="trash" Size="16" />
+    Delete
+</Button>
+
+@code {
+    private void HandleClick(MouseEventArgs e)
+    {
+        // Handle click
+        Console.WriteLine("Button clicked!");
+    }
+
+    private async Task HandleDelete(MouseEventArgs e)
+    {
+        // Handle delete
+        await Task.CompletedTask;
+    }
+}
+```
+
+### Custom Styling
+
+```razor
+@* Additional CSS classes *@
+<Button Class="w-full">
+    Full Width Button
+</Button>
+
+<Button Class="rounded-full">
+    Rounded Button
+</Button>
+
+<Button Class="shadow-lg">
+    Shadow Button
+</Button>
+
+@* Combine with Tailwind classes *@
+<Button Class="bg-gradient-to-r from-purple-500 to-pink-500">
+    Gradient Button
+</Button>
+```
+
+---
+
+## Composition Patterns
+
+### Button Group
+
+```razor
+<div class="flex space-x-2">
+    <Button Variant="ButtonVariant.Outline">Left</Button>
+    <Button Variant="ButtonVariant.Outline">Center</Button>
+    <Button Variant="ButtonVariant.Outline">Right</Button>
+</div>
+```
+
+### Dialog Actions
+
+```razor
+<Dialog>
+    <DialogTrigger AsChild>
+        <Button>Open Dialog</Button>
+    </DialogTrigger>
+    <DialogContent>
+        <DialogHeader>
+            <DialogTitle>Confirm Action</DialogTitle>
+        </DialogHeader>
+        <DialogFooter>
+            <DialogClose AsChild>
+                <Button Variant="ButtonVariant.Outline">Cancel</Button>
+            </DialogClose>
+            <Button Variant="ButtonVariant.Destructive">Confirm</Button>
+        </DialogFooter>
+    </DialogContent>
+</Dialog>
+```
+
+### With Dropdown Menu
+
+```razor
+<DropdownMenu>
+    <DropdownMenuTrigger AsChild>
+        <Button Variant="ButtonVariant.Outline">
+            Actions
+            <LucideIcon Name="chevron-down" Size="16" />
+        </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent>
+        <DropdownMenuItem>Edit</DropdownMenuItem>
+        <DropdownMenuItem>Delete</DropdownMenuItem>
+    </DropdownMenuContent>
+</DropdownMenu>
+```
+
+### Card Actions
+
+```razor
+<Card>
+    <CardHeader>
+        <CardTitle>Card Title</CardTitle>
+    </CardHeader>
+    <CardContent>
+        Card content goes here
+    </CardContent>
+    <CardFooter Class="flex justify-between">
+        <Button Variant="ButtonVariant.Outline">Cancel</Button>
+        <Button>Save</Button>
+    </CardFooter>
+</Card>
+```
+
+---
+
+## Accessibility
+
+### Keyboard Navigation
+- **Tab**: Focus button
+- **Enter/Space**: Activate button
+- **Tab** (when focused): Move to next focusable element
+
+### ARIA Attributes
+- `aria-label`: Set via `AriaLabel` parameter (required for icon-only buttons)
+- `aria-disabled`: Automatically set when `Disabled="true"`
+- `tabindex`: Automatically set to `-1` when disabled
+
+### Screen Reader Support
+
+```razor
+@* Text button - accessible by default *@
+<Button>Save Changes</Button>
+
+@* Icon-only button - requires aria-label *@
+<Button Size="ButtonSize.Icon" AriaLabel="Close dialog">
+    <LucideIcon Name="x" Size="20" />
+</Button>
+
+@* Button with icon and text - aria-label optional *@
+<Button>
+    <LucideIcon Name="download" Size="16" />
+    Download
+</Button>
+```
+
+### Focus Management
+
+```razor
+@* Visible focus ring (built-in) *@
+<Button>Click me</Button>
+
+@* Custom focus styling *@
+<Button Class="focus-visible:ring-4">
+    Enhanced Focus
+</Button>
+```
+
+---
+
+## Common Patterns
+
+### Confirm/Cancel Actions
+
+```razor
+<div class="flex space-x-2">
+    <Button Variant="ButtonVariant.Outline" OnClick="Cancel">
+        Cancel
+    </Button>
+    <Button OnClick="Confirm">
+        Confirm
+    </Button>
+</div>
+```
+
+### Async Actions with Loading
+
+```razor
+<Button
+    Disabled="@isProcessing"
+    OnClick="ProcessAction">
+    @if (isProcessing)
+    {
+        <LucideIcon Name="loader-2" Size="16" Class="animate-spin" />
+        <span>Processing...</span>
+    }
+    else
+    {
+        <LucideIcon Name="check" Size="16" />
+        <span>Process</span>
+    }
+</Button>
+
+@code {
+    private bool isProcessing = false;
+
+    private async Task ProcessAction()
+    {
+        isProcessing = true;
+        try
+        {
+            // Perform async operation
+            await Task.Delay(2000);
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+}
+```
+
+### Navigation Button
+
+```razor
+@inject NavigationManager Navigation
+
+<Button OnClick="@(() => Navigation.NavigateTo("/dashboard"))">
+    <LucideIcon Name="home" Size="16" />
+    Go to Dashboard
+</Button>
+```
+
+---
+
+## Troubleshooting
+
+### Issue: Button doesn't submit form
+
+**Solution:** Use `Type="ButtonType.Submit"` for form submission buttons. Default type is `Button` to prevent accidental submissions.
+
+```razor
+<EditForm Model="@model" OnValidSubmit="@HandleSubmit">
+    <Button Type="ButtonType.Submit">Submit</Button>
+</EditForm>
+```
+
+### Issue: OnClick not firing when disabled
+
+**Solution:** This is expected behavior. The `OnClick` callback is not invoked when `Disabled="true"`. Remove the disabled state to enable clicking.
+
+### Issue: Icon button has no visible label
+
+**Solution:** Use `AriaLabel` for accessibility:
+
+```razor
+<Button Size="ButtonSize.Icon" AriaLabel="Add item">
+    <LucideIcon Name="plus" Size="20" />
+</Button>
+```
+
+### Issue: Custom classes not applying
+
+**Solution:** Make sure classes are added via the `Class` parameter, not as attributes:
+
+```razor
+@* Correct *@
+<Button Class="w-full">Button</Button>
+
+@* Incorrect *@
+<Button class="w-full">Button</Button>
+```
+
+---
+
+## Related Components
+
+- **Dialog** - llms/components/dialog.txt - Use buttons in dialog actions
+- **DropdownMenu** - llms/components/dropdown-menu.txt - Button as trigger
+- **Card** - llms/components/card.txt - Buttons in card footers
+- **ButtonGroup** - llms/components/button-group.txt - Group related buttons
+
+## Related Patterns
+
+- **Dialog with Form** - llms/patterns.txt - Buttons in dialog footers
+- **Confirmation Dialog** - llms/patterns.txt - Destructive button patterns
+
+---
+
+**Last Updated:** 2025-11-16

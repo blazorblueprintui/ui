@@ -1,0 +1,267 @@
+# Checkbox Component
+
+Binary selection control supporting checked, unchecked, and indeterminate states with full accessibility.
+
+---
+
+## Overview
+
+The Checkbox component provides a customizable, accessible checkbox with two-way data binding, form validation integration, and indeterminate state support for "select all" scenarios.
+
+**Features:**
+- Two-way binding (@bind-Checked)
+- Indeterminate state (for partial selections)
+- Form validation integration (EditContext)
+- Disabled state
+- Keyboard navigation (Space to toggle)
+- ARIA attributes
+- Dark mode compatible
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.Checkbox
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/Checkbox
+
+---
+
+## API Reference
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Checked` | `bool` | `false` | Whether checkbox is checked (supports @bind-Checked) |
+| `CheckedChanged` | `EventCallback<bool>` | - | Callback when checked state changes |
+| `Indeterminate` | `bool` | `false` | Indeterminate state (shows dash icon) |
+| `IndeterminateChanged` | `EventCallback<bool>` | - | Callback when indeterminate state changes |
+| `Disabled` | `bool` | `false` | Whether checkbox is disabled |
+| `Class` | `string?` | `null` | Additional CSS classes |
+| `AriaLabel` | `string?` | `null` | ARIA label for accessibility |
+| `Id` | `string?` | `null` | HTML id for label association |
+| `CheckedExpression` | `Expression<Func<bool>>?` | `null` | Expression for form validation |
+
+---
+
+## Basic Usage
+
+```razor
+<Checkbox @bind-Checked="isAccepted" />
+
+@code {
+    private bool isAccepted = false;
+}
+```
+
+---
+
+## Examples
+
+### Checkbox with Label
+
+```razor
+<div class="flex items-center space-x-2">
+    <Checkbox Id="terms" @bind-Checked="acceptTerms" />
+    <Label For="terms">I accept the terms and conditions</Label>
+</div>
+
+@code {
+    private bool acceptTerms = false;
+}
+```
+
+### Disabled Checkbox
+
+```razor
+<Checkbox Checked="true" Disabled="true" />
+<Checkbox Checked="false" Disabled="true" />
+```
+
+### Indeterminate State
+
+```razor
+<div class="space-y-2">
+    <div class="flex items-center space-x-2">
+        <Checkbox
+            @bind-Checked="selectAll"
+            Indeterminate="@isIndeterminate"
+            @onclick="HandleSelectAll" />
+        <Label>Select All</Label>
+    </div>
+
+    <div class="ml-6 space-y-2">
+        <div class="flex items-center space-x-2">
+            <Checkbox @bind-Checked="option1" @onclick="UpdateSelectAll" />
+            <Label>Option 1</Label>
+        </div>
+        <div class="flex items-center space-x-2">
+            <Checkbox @bind-Checked="option2" @onclick="UpdateSelectAll" />
+            <Label>Option 2</Label>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool selectAll = false;
+    private bool option1 = false;
+    private bool option2 = false;
+    private bool isIndeterminate = false;
+
+    private void HandleSelectAll()
+    {
+        selectAll = !selectAll;
+        option1 = selectAll;
+        option2 = selectAll;
+        isIndeterminate = false;
+    }
+
+    private void UpdateSelectAll()
+    {
+        if (option1 && option2)
+        {
+            selectAll = true;
+            isIndeterminate = false;
+        }
+        else if (!option1 && !option2)
+        {
+            selectAll = false;
+            isIndeterminate = false;
+        }
+        else
+        {
+            selectAll = false;
+            isIndeterminate = true;
+        }
+    }
+}
+```
+
+### Form Validation
+
+```razor
+<EditForm Model="@model" OnValidSubmit="@HandleSubmit">
+    <DataAnnotationsValidator />
+
+    <div class="flex items-center space-x-2">
+        <Checkbox
+            Id="terms"
+            @bind-Checked="model.AcceptTerms"
+            CheckedExpression="@(() => model.AcceptTerms)" />
+        <Label For="terms">I accept the terms</Label>
+    </div>
+
+    <ValidationMessage For="@(() => model.AcceptTerms)" />
+
+    <Button Type="ButtonType.Submit">Submit</Button>
+</EditForm>
+
+@code {
+    private FormModel model = new();
+
+    private void HandleSubmit()
+    {
+        // Handle submission
+    }
+
+    public class FormModel
+    {
+        [Range(typeof(bool), "true", "true", ErrorMessage = "You must accept the terms")]
+        public bool AcceptTerms { get; set; }
+    }
+}
+```
+
+### Custom Styling
+
+```razor
+<Checkbox
+    @bind-Checked="customStyled"
+    Class="border-blue-500 data-[state=checked]:bg-blue-500" />
+```
+
+---
+
+## Accessibility
+
+### Keyboard Navigation
+- **Space**: Toggle checkbox
+
+### With Label
+
+```razor
+<div class="flex items-center space-x-2">
+    <Checkbox Id="notifications" />
+    <Label For="notifications">Enable notifications</Label>
+</div>
+```
+
+### Without Visible Label
+
+```razor
+<Checkbox AriaLabel="Accept terms and conditions" />
+```
+
+---
+
+## Common Patterns
+
+### Settings Toggle
+
+```razor
+<div class="space-y-4">
+    <div class="flex items-center space-x-2">
+        <Checkbox Id="email-notif" @bind-Checked="emailNotifications" />
+        <Label For="email-notif">Email notifications</Label>
+    </div>
+    <div class="flex items-center space-x-2">
+        <Checkbox Id="push-notif" @bind-Checked="pushNotifications" />
+        <Label For="push-notif">Push notifications</Label>
+    </div>
+</div>
+
+@code {
+    private bool emailNotifications = true;
+    private bool pushNotifications = false;
+}
+```
+
+### Multi-Select List
+
+```razor
+<div class="space-y-2">
+    @foreach (var item in items)
+    {
+        <div class="flex items-center space-x-2">
+            <Checkbox @bind-Checked="item.Selected" />
+            <Label>@item.Name</Label>
+        </div>
+    }
+</div>
+
+@code {
+    private List<SelectableItem> items = new()
+    {
+        new("Item 1"),
+        new("Item 2"),
+        new("Item 3")
+    };
+
+    record SelectableItem(string Name, bool Selected = false);
+}
+```
+
+---
+
+## Related Components
+
+- **Label** - llms/components/label.txt
+- **Switch** - llms/components/switch.txt
+- **RadioGroup** - llms/components/radio-group.txt
+
+## Related Patterns
+
+- **Form with Validation** - llms/patterns.txt
+
+---
+
+**Last Updated:** 2025-11-16

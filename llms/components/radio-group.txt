@@ -1,0 +1,255 @@
+# Radio Group Component
+
+Mutually exclusive selection control with keyboard navigation.
+
+---
+
+## Overview
+
+The RadioGroup component provides a set of radio buttons where only one option can be selected at a time. Features keyboard navigation, two-way binding, and full accessibility.
+
+**Features:**
+- Mutually exclusive selection
+- Two-way binding (@bind-Value)
+- Keyboard navigation (Arrow keys)
+- Disabled state (group and individual items)
+- ARIA attributes
+- Form validation integration
+- Dark mode compatible
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.RadioGroup
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/RadioGroup
+
+---
+
+## API Reference
+
+### `<RadioGroup>`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Value` | `string?` | `null` | Selected value (supports @bind-Value) |
+| `ValueChanged` | `EventCallback<string?>` | - | Callback when selection changes |
+| `Disabled` | `bool` | `false` | Whether entire group is disabled |
+| `Class` | `string?` | `null` | Additional CSS classes |
+| `ChildContent` | `RenderFragment?` | `null` | Radio items |
+
+### `<RadioGroupItem>`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Value` | `string` | **Required** | Value for this radio button |
+| `Disabled` | `bool` | `false` | Whether this item is disabled |
+| `Id` | `string?` | `null` | HTML id for label association |
+
+---
+
+## Basic Usage
+
+```razor
+<RadioGroup @bind-Value="selectedOption">
+    <RadioGroupItem Value="option1" Id="opt1" />
+    <RadioGroupItem Value="option2" Id="opt2" />
+    <RadioGroupItem Value="option3" Id="opt3" />
+</RadioGroup>
+
+@code {
+    private string selectedOption = "option1";
+}
+```
+
+---
+
+## Examples
+
+### Radio Group with Labels
+
+```razor
+<RadioGroup @bind-Value="plan">
+    <div class="flex items-center space-x-2">
+        <RadioGroupItem Value="free" Id="plan-free" />
+        <Label For="plan-free">Free</Label>
+    </div>
+    <div class="flex items-center space-x-2">
+        <RadioGroupItem Value="pro" Id="plan-pro" />
+        <Label For="plan-pro">Pro</Label>
+    </div>
+    <div class="flex items-center space-x-2">
+        <RadioGroupItem Value="enterprise" Id="plan-enterprise" />
+        <Label For="plan-enterprise">Enterprise</Label>
+    </div>
+</RadioGroup>
+
+@code {
+    private string plan = "free";
+}
+```
+
+### With Descriptions
+
+```razor
+<RadioGroup @bind-Value="subscription">
+    <div class="space-y-2">
+        <div class="flex items-start space-x-2">
+            <RadioGroupItem Value="monthly" Id="monthly" />
+            <div class="grid gap-1.5">
+                <Label For="monthly">Monthly</Label>
+                <p class="text-sm text-muted-foreground">
+                    Billed monthly at $9.99/month
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-start space-x-2">
+            <RadioGroupItem Value="yearly" Id="yearly" />
+            <div class="grid gap-1.5">
+                <Label For="yearly">Yearly</Label>
+                <p class="text-sm text-muted-foreground">
+                    Billed annually at $99.99/year (Save 17%)
+                </p>
+            </div>
+        </div>
+    </div>
+</RadioGroup>
+
+@code {
+    private string subscription = "monthly";
+}
+```
+
+### Disabled Options
+
+```razor
+<RadioGroup @bind-Value="choice">
+    <div class="flex items-center space-x-2">
+        <RadioGroupItem Value="option1" Id="choice1" />
+        <Label For="choice1">Available Option</Label>
+    </div>
+    <div class="flex items-center space-x-2">
+        <RadioGroupItem Value="option2" Id="choice2" Disabled="true" />
+        <Label For="choice2">Disabled Option</Label>
+    </div>
+</RadioGroup>
+
+@code {
+    private string choice = "option1";
+}
+```
+
+### Entire Group Disabled
+
+```razor
+<RadioGroup @bind-Value="selection" Disabled="true">
+    <div class="flex items-center space-x-2">
+        <RadioGroupItem Value="a" Id="a" />
+        <Label For="a">Option A</Label>
+    </div>
+    <div class="flex items-center space-x-2">
+        <RadioGroupItem Value="b" Id="b" />
+        <Label For="b">Option B</Label>
+    </div>
+</RadioGroup>
+```
+
+### Form Integration
+
+```razor
+<EditForm Model="@model" OnValidSubmit="@HandleSubmit">
+    <DataAnnotationsValidator />
+
+    <Field>
+        <FieldLabel>Select Plan</FieldLabel>
+        <FieldContent>
+            <RadioGroup @bind-Value="model.Plan">
+                <div class="flex items-center space-x-2">
+                    <RadioGroupItem Value="free" Id="free" />
+                    <Label For="free">Free</Label>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <RadioGroupItem Value="pro" Id="pro" />
+                    <Label For="pro">Pro</Label>
+                </div>
+            </RadioGroup>
+        </FieldContent>
+        <FieldError>
+            <ValidationMessage For="@(() => model.Plan)" />
+        </FieldError>
+    </Field>
+
+    <Button Type="ButtonType.Submit">Continue</Button>
+</EditForm>
+
+@code {
+    private PlanModel model = new();
+
+    private void HandleSubmit() { }
+
+    public class PlanModel
+    {
+        [Required]
+        public string Plan { get; set; } = "";
+    }
+}
+```
+
+---
+
+## Accessibility
+
+### Keyboard Navigation
+- **Arrow Up/Down**: Navigate between options
+- **Arrow Left/Right**: Navigate between options
+- **Space**: Select focused option
+- **Tab**: Exit radio group
+
+---
+
+## Common Patterns
+
+### Card-Based Selection
+
+```razor
+<RadioGroup @bind-Value="selectedPlan" Class="grid gap-4">
+    <div class="relative">
+        <RadioGroupItem Value="starter" Id="starter" Class="peer sr-only" />
+        <Label
+            For="starter"
+            Class="flex flex-col p-4 rounded-lg border-2 cursor-pointer peer-checked:border-primary">
+            <span class="font-semibold">Starter</span>
+            <span class="text-sm text-muted-foreground">$9/month</span>
+        </Label>
+    </div>
+
+    <div class="relative">
+        <RadioGroupItem Value="professional" Id="professional" Class="peer sr-only" />
+        <Label
+            For="professional"
+            Class="flex flex-col p-4 rounded-lg border-2 cursor-pointer peer-checked:border-primary">
+            <span class="font-semibold">Professional</span>
+            <span class="text-sm text-muted-foreground">$29/month</span>
+        </Label>
+    </div>
+</RadioGroup>
+
+@code {
+    private string selectedPlan = "starter";
+}
+```
+
+---
+
+## Related Components
+
+- **Checkbox** - llms/components/checkbox.txt
+- **Switch** - llms/components/switch.txt
+- **Label** - llms/components/label.txt
+- **Select** - llms/components/select.txt
+
+---
+
+**Last Updated:** 2025-11-16

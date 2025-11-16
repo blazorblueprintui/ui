@@ -1,0 +1,131 @@
+# Skeleton Component
+
+Animated loading placeholder for content and images during data fetching.
+
+---
+
+## Overview
+
+The Skeleton component provides animated loading placeholders that mimic the structure of content being loaded. Perfect for improving perceived performance during data fetching.
+
+**Features:**
+- Pulse animation
+- Customizable shapes and sizes
+- Dark mode compatible
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.Skeleton
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/Skeleton
+
+---
+
+## API Reference
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Class` | `string?` | `null` | Additional CSS classes for sizing/shape |
+
+---
+
+## Basic Usage
+
+```razor
+<Skeleton Class="h-12 w-12 rounded-full" />
+<Skeleton Class="h-4 w-[250px]" />
+<Skeleton Class="h-4 w-[200px]" />
+```
+
+---
+
+## Examples
+
+### Card Skeleton
+
+```razor
+<Card>
+    <CardHeader>
+        <Skeleton Class="h-4 w-[250px]" />
+        <Skeleton Class="h-4 w-[200px]" />
+    </CardHeader>
+    <CardContent Class="space-y-2">
+        <Skeleton Class="h-4 w-full" />
+        <Skeleton Class="h-4 w-full" />
+        <Skeleton Class="h-4 w-2/3" />
+    </CardContent>
+</Card>
+```
+
+### Profile Skeleton
+
+```razor
+<div class="flex items-center space-x-4">
+    <Skeleton Class="h-12 w-12 rounded-full" />
+    <div class="space-y-2">
+        <Skeleton Class="h-4 w-[250px]" />
+        <Skeleton Class="h-4 w-[200px]" />
+    </div>
+</div>
+```
+
+### List Skeleton
+
+```razor
+<div class="space-y-4">
+    @for (int i = 0; i < 5; i++)
+    {
+        <div class="flex items-center space-x-4">
+            <Skeleton Class="h-12 w-12 rounded-full" />
+            <div class="space-y-2 flex-1">
+                <Skeleton Class="h-4 w-full" />
+                <Skeleton Class="h-4 w-4/5" />
+            </div>
+        </div>
+    }
+</div>
+```
+
+### Conditional Loading
+
+```razor
+@if (isLoading)
+{
+    <div class="space-y-2">
+        <Skeleton Class="h-4 w-full" />
+        <Skeleton Class="h-4 w-full" />
+        <Skeleton Class="h-4 w-2/3" />
+    </div>
+}
+else
+{
+    <div>
+        <p>@content</p>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private string content = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(2000);
+        content = "Loaded content";
+        isLoading = false;
+    }
+}
+```
+
+---
+
+## Related Components
+
+- **Card** - llms/components/card.txt
+- **Avatar** - llms/components/avatar.txt
+
+---
+
+**Last Updated:** 2025-11-16

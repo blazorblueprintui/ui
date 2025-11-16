@@ -1,0 +1,143 @@
+# Field Component
+
+Combines labels, controls, help text, and error messages for accessible, structured forms.
+
+---
+
+## Overview
+
+The Field component provides a complete form field structure combining label, control, description text, and error messages. Ensures proper accessibility and consistent spacing.
+
+**Features:**
+- Complete form field structure
+- Label, content, description, error sections
+- Automatic spacing and layout
+- Accessibility built-in
+- Integrates with form validation
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.Field
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/Field
+
+---
+
+## API Reference
+
+### Sub-components
+
+- `<Field>` - Main container
+- `<FieldLabel>` - Label text
+- `<FieldContent>` - Form control (input, textarea, select, etc.)
+- `<FieldDescription>` - Help text
+- `<FieldError>` - Error message
+
+---
+
+## Basic Usage
+
+```razor
+<Field>
+    <FieldLabel>Email</FieldLabel>
+    <FieldContent>
+        <Input Type="InputType.Email" @bind-Value="email" />
+    </FieldContent>
+    <FieldDescription>We'll never share your email.</FieldDescription>
+</Field>
+
+@code {
+    private string email = "";
+}
+```
+
+---
+
+## Examples
+
+### With Validation
+
+```razor
+<EditForm Model="@model" OnValidSubmit="@HandleSubmit">
+    <DataAnnotationsValidator />
+
+    <Field>
+        <FieldLabel>Username</FieldLabel>
+        <FieldContent>
+            <Input @bind-Value="model.Username" />
+        </FieldContent>
+        <FieldDescription>Choose a unique username.</FieldDescription>
+        <FieldError>
+            <ValidationMessage For="@(() => model.Username)" />
+        </FieldError>
+    </Field>
+
+    <Button Type="ButtonType.Submit">Submit</Button>
+</EditForm>
+
+@code {
+    private FormModel model = new();
+
+    private void HandleSubmit() { }
+
+    public class FormModel
+    {
+        [Required]
+        [MinLength(3)]
+        public string Username { get; set; } = "";
+    }
+}
+```
+
+### Complete Form
+
+```razor
+<div class="space-y-4">
+    <Field>
+        <FieldLabel>Full Name</FieldLabel>
+        <FieldContent>
+            <Input @bind-Value="name" />
+        </FieldContent>
+    </Field>
+
+    <Field>
+        <FieldLabel>Email</FieldLabel>
+        <FieldContent>
+            <Input Type="InputType.Email" @bind-Value="email" />
+        </FieldContent>
+        <FieldDescription>Your email address</FieldDescription>
+    </Field>
+
+    <Field>
+        <FieldLabel>Bio</FieldLabel>
+        <FieldContent>
+            <Textarea @bind-Value="bio" />
+        </FieldContent>
+        <FieldDescription>Brief description (max 160 characters)</FieldDescription>
+    </Field>
+</div>
+
+@code {
+    private string name = "";
+    private string email = "";
+    private string bio = "";
+}
+```
+
+---
+
+## Related Components
+
+- **Input** - llms/components/input.txt
+- **Label** - llms/components/label.txt
+- **Textarea** - llms/components/textarea.txt
+
+## Related Patterns
+
+- **Form with Validation** - llms/patterns.txt
+
+---
+
+**Last Updated:** 2025-11-16

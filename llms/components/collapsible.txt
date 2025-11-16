@@ -1,0 +1,133 @@
+# Collapsible Component
+
+Expandable content area with trigger control for showing/hiding content.
+
+---
+
+## Overview
+
+The Collapsible component provides an expandable/collapsible content area with smooth transitions. Supports controlled and uncontrolled modes, disabled state, and full accessibility.
+
+**Features:**
+- Controlled and uncontrolled modes
+- Smooth expand/collapse animations
+- Keyboard navigation (Space, Enter)
+- Disabled state
+- ARIA attributes
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.Collapsible
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/Collapsible
+
+---
+
+## API Reference
+
+### `<Collapsible>`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Open` | `bool` | `false` | Whether content is expanded (supports @bind-Open) |
+| `OpenChanged` | `EventCallback<bool>` | - | Callback when open state changes |
+| `DefaultOpen` | `bool` | `false` | Default open state (uncontrolled) |
+| `Disabled` | `bool` | `false` | Whether collapsible is disabled |
+| `ChildContent` | `RenderFragment?` | `null` | Trigger and content |
+
+### `<CollapsibleTrigger>`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `AsChild` | `bool` | `false` | Whether to use child as trigger |
+| `ChildContent` | `RenderFragment?` | `null` | Trigger content |
+
+### `<CollapsibleContent>`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `ChildContent` | `RenderFragment?` | `null` | Collapsible content |
+
+---
+
+## Basic Usage
+
+```razor
+<Collapsible>
+    <CollapsibleTrigger AsChild>
+        <Button Variant="ButtonVariant.Outline">
+            Toggle
+        </Button>
+    </CollapsibleTrigger>
+    <CollapsibleContent>
+        <div class="p-4">
+            This content can be collapsed
+        </div>
+    </CollapsibleContent>
+</Collapsible>
+```
+
+---
+
+## Examples
+
+### Controlled Collapsible
+
+```razor
+<Collapsible @bind-Open="isOpen">
+    <CollapsibleTrigger AsChild>
+        <Button Variant="ButtonVariant.Ghost">
+            <LucideIcon Name="@(isOpen ? "chevron-down" : "chevron-right")" Size="16" />
+            @(isOpen ? "Hide" : "Show") Details
+        </Button>
+    </CollapsibleTrigger>
+    <CollapsibleContent>
+        <div class="p-4 space-y-2">
+            <p>Additional details go here</p>
+            <p>More information...</p>
+        </div>
+    </CollapsibleContent>
+</Collapsible>
+
+@code {
+    private bool isOpen = false;
+}
+```
+
+### Sidebar Code Block
+
+```razor
+<Collapsible DefaultOpen="true">
+    <div class="flex items-center justify-between">
+        <h4 class="text-sm font-semibold">@stargazers starred repositories</h4>
+        <CollapsibleTrigger AsChild>
+            <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon">
+                <LucideIcon Name="chevron-down" Size="16" />
+            </Button>
+        </CollapsibleTrigger>
+    </div>
+    <CollapsibleContent>
+        <div class="space-y-2 pt-2">
+            <div class="rounded-md border px-4 py-2">Repository 1</div>
+            <div class="rounded-md border px-4 py-2">Repository 2</div>
+            <div class="rounded-md border px-4 py-2">Repository 3</div>
+        </div>
+    </CollapsibleContent>
+</Collapsible>
+
+@code {
+    private int stargazers = 1234;
+}
+```
+
+---
+
+## Related Components
+
+- **Accordion** - llms/components/accordion.txt
+
+---
+
+**Last Updated:** 2025-11-16

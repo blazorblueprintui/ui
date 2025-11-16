@@ -1,0 +1,177 @@
+# Label Component
+
+Semantic HTML label element for accessible form field labeling.
+
+---
+
+## Overview
+
+The Label component provides accessible labeling for form controls with automatic association and disabled state styling. Clicking a label focuses/activates its associated form control.
+
+**Features:**
+- Explicit form control association via `For` attribute
+- Automatic disabled state styling (peer-disabled utilities)
+- Required field indicators
+- Accessible checkbox/radio labels
+- Interactive label behavior
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.Label
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/Label
+
+---
+
+## API Reference
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `For` | `string?` | `null` | ID of associated form control (maps to HTML `for` attribute) |
+| `Class` | `string?` | `null` | Additional CSS classes |
+| `ChildContent` | `RenderFragment?` | `null` | Label content (text, icons, indicators) |
+
+---
+
+## Basic Usage
+
+```razor
+<Label For="email">Email Address</Label>
+<Input Id="email" Type="InputType.Email" />
+```
+
+---
+
+## Examples
+
+### Basic Label
+
+```razor
+<Label For="username">Username</Label>
+<Input Id="username" @bind-Value="username" />
+
+@code {
+    private string username = "";
+}
+```
+
+### Required Field Indicator
+
+```razor
+<Label For="email">
+    Email <span class="text-destructive">*</span>
+</Label>
+<Input Id="email" Type="InputType.Email" Required="true" />
+```
+
+### Checkbox Label
+
+```razor
+<div class="flex items-center space-x-2">
+    <Checkbox Id="terms" @bind-Checked="acceptTerms" />
+    <Label For="terms">I accept the terms and conditions</Label>
+</div>
+
+@code {
+    private bool acceptTerms = false;
+}
+```
+
+### Radio Group Labels
+
+```razor
+<div class="space-y-2">
+    <div class="flex items-center space-x-2">
+        <input type="radio" id="option1" name="choice" />
+        <Label For="option1">Option 1</Label>
+    </div>
+    <div class="flex items-center space-x-2">
+        <input type="radio" id="option2" name="choice" />
+        <Label For="option2">Option 2</Label>
+    </div>
+</div>
+```
+
+### Custom Styling
+
+```razor
+<Label For="bio" Class="text-lg font-bold">Biography</Label>
+<Textarea Id="bio" @bind-Value="bio" />
+```
+
+### With Icon
+
+```razor
+<Label For="password">
+    <LucideIcon Name="lock" Size="14" Class="inline mr-1" />
+    Password
+</Label>
+<Input Id="password" Type="InputType.Password" />
+```
+
+---
+
+## Accessibility
+
+### Label Association
+
+Always associate labels with form controls using matching `For` and `Id`:
+
+```razor
+@* Correct *@
+<Label For="email">Email</Label>
+<Input Id="email" />
+
+@* Incorrect - no association *@
+<Label>Email</Label>
+<Input />
+```
+
+### Disabled State
+
+Labels automatically style when associated control is disabled (using peer-disabled utilities):
+
+```razor
+<Label For="disabled-input">Disabled Field</Label>
+<Input Id="disabled-input" Disabled="true" Class="peer" />
+```
+
+---
+
+## Common Patterns
+
+### Form Field with Label
+
+```razor
+<div class="space-y-2">
+    <Label For="fullname">Full Name</Label>
+    <Input Id="fullname" @bind-Value="fullName" />
+</div>
+```
+
+### With Field Component
+
+```razor
+<Field>
+    <FieldLabel>Email Address</FieldLabel>
+    <FieldContent>
+        <Input Type="InputType.Email" @bind-Value="email" />
+    </FieldContent>
+    <FieldDescription>We'll never share your email.</FieldDescription>
+</Field>
+```
+
+---
+
+## Related Components
+
+- **Input** - llms/components/input.txt
+- **Checkbox** - llms/components/checkbox.txt
+- **Field** - llms/components/field.txt
+- **Textarea** - llms/components/textarea.txt
+
+---
+
+**Last Updated:** 2025-11-16

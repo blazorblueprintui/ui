@@ -1,0 +1,525 @@
+# Input Component
+
+Text input field with multiple types, validation states, and full accessibility support.
+
+---
+
+## Overview
+
+The Input component provides a customizable, accessible form input that supports multiple input types (text, email, password, number, etc.) and states. It follows WCAG 2.1 AA standards for accessibility and integrates seamlessly with Blazor's data binding and form validation.
+
+**Features:**
+- 10 input types (text, email, password, number, tel, url, file, search, date, time)
+- Two-way data binding with @bind-Value
+- Error state visualization via aria-invalid
+- Disabled and required states
+- Placeholder text support
+- Full ARIA attribute support
+- File input styling
+- Dark mode compatible
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.Input
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/Input
+
+---
+
+## Installation
+
+```bash
+dotnet add package BlazorUI.Components
+```
+
+Add to `_Imports.razor`:
+
+```razor
+@using BlazorUI.Components
+@using BlazorUI.Components.Input
+```
+
+---
+
+## API Reference
+
+### `<Input>`
+
+**Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Type` | `InputType` | `Text` | Input type (Text, Email, Password, Number, Tel, Url, File, Search, Date, Time) |
+| `Value` | `string?` | `null` | Current input value (supports @bind-Value) |
+| `ValueChanged` | `EventCallback<string?>` | - | Callback invoked on input change |
+| `Placeholder` | `string?` | `null` | Placeholder text |
+| `Disabled` | `bool` | `false` | Whether input is disabled |
+| `Required` | `bool` | `false` | Whether input is required (HTML5 validation) |
+| `Class` | `string?` | `null` | Additional CSS classes |
+| `Id` | `string?` | `null` | HTML id attribute (for label association) |
+| `AriaLabel` | `string?` | `null` | ARIA label for accessibility |
+| `AriaDescribedBy` | `string?` | `null` | ID of element describing the input |
+| `AriaInvalid` | `bool?` | `null` | Whether input value is invalid |
+
+### Enums
+
+**InputType:**
+- `Text` - Standard text input
+- `Email` - Email address input
+- `Password` - Password input (masked)
+- `Number` - Numeric input
+- `Tel` - Telephone number input
+- `Url` - URL input
+- `File` - File upload input
+- `Search` - Search input
+- `Date` - Date picker input
+- `Time` - Time picker input
+
+---
+
+## Basic Usage
+
+```razor
+<Input @bind-Value="username" Placeholder="Enter your username" />
+
+@code {
+    private string username = "";
+}
+```
+
+---
+
+## Examples
+
+### Input Types
+
+```razor
+@* Text input *@
+<Input Type="InputType.Text" @bind-Value="name" Placeholder="Full name" />
+
+@* Email input *@
+<Input Type="InputType.Email" @bind-Value="email" Placeholder="name@example.com" />
+
+@* Password input *@
+<Input Type="InputType.Password" @bind-Value="password" Placeholder="Enter password" />
+
+@* Number input *@
+<Input Type="InputType.Number" @bind-Value="age" Placeholder="Age" />
+
+@* Phone input *@
+<Input Type="InputType.Tel" @bind-Value="phone" Placeholder="+1 (555) 123-4567" />
+
+@* URL input *@
+<Input Type="InputType.Url" @bind-Value="website" Placeholder="https://example.com" />
+
+@* Search input *@
+<Input Type="InputType.Search" @bind-Value="searchTerm" Placeholder="Search..." />
+
+@* Date input *@
+<Input Type="InputType.Date" @bind-Value="birthDate" />
+
+@* Time input *@
+<Input Type="InputType.Time" @bind-Value="appointmentTime" />
+
+@* File input *@
+<Input Type="InputType.File" />
+
+@code {
+    private string name = "";
+    private string email = "";
+    private string password = "";
+    private string age = "";
+    private string phone = "";
+    private string website = "";
+    private string searchTerm = "";
+    private string birthDate = "";
+    private string appointmentTime = "";
+}
+```
+
+### With Label
+
+```razor
+<div class="space-y-2">
+    <Label For="email">Email Address</Label>
+    <Input Id="email" Type="InputType.Email" @bind-Value="email" Placeholder="name@example.com" />
+</div>
+
+@code {
+    private string email = "";
+}
+```
+
+### Required Field
+
+```razor
+<Input
+    Type="InputType.Email"
+    @bind-Value="email"
+    Placeholder="Email (required)"
+    Required="true" />
+
+@code {
+    private string email = "";
+}
+```
+
+### Disabled State
+
+```razor
+<Input
+    Type="InputType.Text"
+    Value="Disabled input"
+    Disabled="true" />
+```
+
+### Error State
+
+```razor
+<Input
+    Type="InputType.Email"
+    @bind-Value="email"
+    AriaInvalid="@(!IsValidEmail(email))"
+    AriaDescribedBy="email-error" />
+
+@if (!IsValidEmail(email))
+{
+    <p id="email-error" class="text-sm text-destructive">
+        Please enter a valid email address
+    </p>
+}
+
+@code {
+    private string email = "";
+
+    private bool IsValidEmail(string email)
+    {
+        return string.IsNullOrEmpty(email) ||
+               email.Contains("@");
+    }
+}
+```
+
+### With Value Changed Handler
+
+```razor
+<Input
+    Type="InputType.Text"
+    Value="@searchTerm"
+    ValueChanged="@HandleSearchChange"
+    Placeholder="Search..." />
+
+<p>You typed: @searchTerm</p>
+
+@code {
+    private string searchTerm = "";
+
+    private void HandleSearchChange(string? value)
+    {
+        searchTerm = value ?? "";
+        // Perform search logic
+    }
+}
+```
+
+### Custom Styling
+
+```razor
+<Input
+    @bind-Value="username"
+    Class="border-2 border-blue-500 focus-visible:ring-blue-500"
+    Placeholder="Custom styled input" />
+```
+
+---
+
+## Composition Patterns
+
+### With Field Component
+
+```razor
+<Field>
+    <FieldLabel>Email Address</FieldLabel>
+    <FieldContent>
+        <Input
+            Type="InputType.Email"
+            @bind-Value="email"
+            Placeholder="name@example.com" />
+    </FieldContent>
+    <FieldDescription>We'll never share your email.</FieldDescription>
+</Field>
+
+@code {
+    private string email = "";
+}
+```
+
+### Form Validation with EditForm
+
+```razor
+<EditForm Model="@model" OnValidSubmit="@HandleSubmit">
+    <DataAnnotationsValidator />
+
+    <Field>
+        <FieldLabel>Email</FieldLabel>
+        <FieldContent>
+            <Input
+                Type="InputType.Email"
+                @bind-Value="model.Email"
+                AriaInvalid="@(!string.IsNullOrEmpty(model.Email) && !IsValidEmail(model.Email))" />
+        </FieldContent>
+        <FieldError>
+            <ValidationMessage For="@(() => model.Email)" />
+        </FieldError>
+    </Field>
+
+    <Field>
+        <FieldLabel>Password</FieldLabel>
+        <FieldContent>
+            <Input
+                Type="InputType.Password"
+                @bind-Value="model.Password" />
+        </FieldContent>
+        <FieldError>
+            <ValidationMessage For="@(() => model.Password)" />
+        </FieldError>
+    </Field>
+
+    <Button Type="ButtonType.Submit">Sign In</Button>
+</EditForm>
+
+@code {
+    private LoginModel model = new();
+
+    private async Task HandleSubmit()
+    {
+        // Handle form submission
+    }
+
+    public class LoginModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = "";
+
+        [Required]
+        [MinLength(8)]
+        public string Password { get; set; } = "";
+    }
+}
+```
+
+### With InputGroup (Icons and Buttons)
+
+```razor
+<InputGroup>
+    <InputGroupIcon>
+        <LucideIcon Name="search" Size="16" />
+    </InputGroupIcon>
+    <Input
+        Type="InputType.Search"
+        @bind-Value="searchTerm"
+        Placeholder="Search..." />
+    <InputGroupButton>
+        <Button Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon">
+            <LucideIcon Name="x" Size="16" />
+        </Button>
+    </InputGroupButton>
+</InputGroup>
+
+@code {
+    private string searchTerm = "";
+}
+```
+
+---
+
+## Accessibility
+
+### Label Association
+
+```razor
+@* Correct - input associated with label *@
+<Label For="username">Username</Label>
+<Input Id="username" @bind-Value="username" />
+
+@* If no visible label, use AriaLabel *@
+<Input
+    @bind-Value="search"
+    AriaLabel="Search products"
+    Placeholder="Search..." />
+```
+
+### Error Messages
+
+```razor
+<Input
+    Id="email"
+    Type="InputType.Email"
+    @bind-Value="email"
+    AriaInvalid="@hasError"
+    AriaDescribedBy="email-error" />
+
+@if (hasError)
+{
+    <p id="email-error" class="text-sm text-destructive">
+        Invalid email address
+    </p>
+}
+
+@code {
+    private string email = "";
+    private bool hasError = false;
+}
+```
+
+### Help Text
+
+```razor
+<Input
+    Id="password"
+    Type="InputType.Password"
+    @bind-Value="password"
+    AriaDescribedBy="password-help" />
+
+<p id="password-help" class="text-sm text-muted-foreground">
+    Password must be at least 8 characters long
+</p>
+
+@code {
+    private string password = "";
+}
+```
+
+---
+
+## Common Patterns
+
+### Search Input with Icon
+
+```razor
+<div class="relative">
+    <div class="absolute left-3 top-1/2 -translate-y-1/2">
+        <LucideIcon Name="search" Size="16" Class="text-muted-foreground" />
+    </div>
+    <Input
+        Type="InputType.Search"
+        @bind-Value="searchTerm"
+        Class="pl-10"
+        Placeholder="Search..." />
+</div>
+
+@code {
+    private string searchTerm = "";
+}
+```
+
+### Password with Toggle Visibility
+
+```razor
+<div class="relative">
+    <Input
+        Type="@(showPassword ? InputType.Text : InputType.Password)"
+        @bind-Value="password"
+        Class="pr-10"
+        Placeholder="Enter password" />
+    <button
+        type="button"
+        @onclick="() => showPassword = !showPassword"
+        class="absolute right-3 top-1/2 -translate-y-1/2">
+        <LucideIcon Name="@(showPassword ? "eye-off" : "eye")" Size="16" />
+    </button>
+</div>
+
+@code {
+    private string password = "";
+    private bool showPassword = false;
+}
+```
+
+### Full Width Input
+
+```razor
+<Input
+    @bind-Value="email"
+    Class="w-full"
+    Placeholder="Enter email" />
+```
+
+### Input with Character Count
+
+```razor
+<div class="space-y-1">
+    <Input
+        @bind-Value="bio"
+        Placeholder="Tell us about yourself..."
+        AriaDescribedBy="bio-count" />
+    <p id="bio-count" class="text-sm text-muted-foreground text-right">
+        @bio.Length / 160 characters
+    </p>
+</div>
+
+@code {
+    private string bio = "";
+}
+```
+
+---
+
+## Troubleshooting
+
+### Issue: Two-way binding not working
+
+**Solution:** Use `@bind-Value`, not `Value` alone:
+
+```razor
+@* Correct *@
+<Input @bind-Value="username" />
+
+@* Incorrect *@
+<Input Value="@username" />
+```
+
+### Issue: Validation not showing
+
+**Solution:** Set `AriaInvalid` based on validation state:
+
+```razor
+<Input
+    @bind-Value="email"
+    AriaInvalid="@(!IsValid(email))" />
+```
+
+### Issue: File input doesn't look styled
+
+**Solution:** File inputs have custom styling via `file:` pseudo-selectors. The styling is built-in.
+
+### Issue: Label doesn't focus input when clicked
+
+**Solution:** Use matching `Id` and `For` attributes:
+
+```razor
+<Label For="email">Email</Label>
+<Input Id="email" @bind-Value="email" />
+```
+
+---
+
+## Related Components
+
+- **Label** - llms/components/label.txt - Label for inputs
+- **Field** - llms/components/field.txt - Complete form field with label, input, help text, errors
+- **InputGroup** - llms/components/input-group.txt - Enhanced inputs with icons and buttons
+- **Textarea** - llms/components/textarea.txt - Multi-line text input
+- **Button** - llms/components/button.txt - Form submit buttons
+
+## Related Patterns
+
+- **Form with Validation** - llms/patterns.txt - Complete form example
+- **Dialog with Form** - llms/patterns.txt - Forms in dialogs
+
+---
+
+**Last Updated:** 2025-11-16

@@ -1,0 +1,155 @@
+# Avatar Component
+
+User profile image component with fallback support for initials and icons.
+
+---
+
+## Overview
+
+The Avatar component displays user profile images with automatic fallback to initials or icons when images fail to load or are unavailable.
+
+**Features:**
+- Image display
+- Fallback to initials
+- Fallback to icons
+- Multiple sizes
+- Rounded styling
+- Dark mode compatible
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.Avatar
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/Avatar
+
+---
+
+## API Reference
+
+### Components
+
+- `<Avatar>` - Container
+- `<AvatarImage>` - Image element
+- `<AvatarFallback>` - Fallback content (initials/icon)
+
+All components accept `Class` parameter for sizing and styling.
+
+---
+
+## Basic Usage
+
+```razor
+<Avatar>
+    <AvatarImage Src="/avatar.jpg" Alt="User Avatar" />
+    <AvatarFallback>JD</AvatarFallback>
+</Avatar>
+```
+
+---
+
+## Examples
+
+### With Initials Fallback
+
+```razor
+<Avatar>
+    <AvatarImage Src="@user.AvatarUrl" Alt="@user.Name" />
+    <AvatarFallback>@user.Initials</AvatarFallback>
+</Avatar>
+
+@code {
+    private User user = new("John Doe", "JD", "/avatar.jpg");
+
+    record User(string Name, string Initials, string AvatarUrl);
+}
+```
+
+### With Icon Fallback
+
+```razor
+<Avatar>
+    <AvatarImage Src="@imageUrl" />
+    <AvatarFallback>
+        <LucideIcon Name="user" Size="20" />
+    </AvatarFallback>
+</Avatar>
+
+@code {
+    private string imageUrl = "";
+}
+```
+
+### Different Sizes
+
+```razor
+<Avatar Class="h-8 w-8">
+    <AvatarFallback Class="text-xs">SM</AvatarFallback>
+</Avatar>
+
+<Avatar Class="h-10 w-10">
+    <AvatarFallback>MD</AvatarFallback>
+</Avatar>
+
+<Avatar Class="h-16 w-16">
+    <AvatarFallback Class="text-lg">LG</AvatarFallback>
+</Avatar>
+```
+
+### Avatar Group
+
+```razor
+<div class="flex -space-x-4">
+    <Avatar Class="border-2 border-background">
+        <AvatarImage Src="/avatar1.jpg" />
+        <AvatarFallback>JD</AvatarFallback>
+    </Avatar>
+    <Avatar Class="border-2 border-background">
+        <AvatarImage Src="/avatar2.jpg" />
+        <AvatarFallback>SM</AvatarFallback>
+    </Avatar>
+    <Avatar Class="border-2 border-background">
+        <AvatarImage Src="/avatar3.jpg" />
+        <AvatarFallback>AK</AvatarFallback>
+    </Avatar>
+</div>
+```
+
+### In Dropdown Menu
+
+```razor
+<DropdownMenu>
+    <DropdownMenuTrigger AsChild>
+        <Button Variant="ButtonVariant.Ghost" Class="relative h-10 w-10 rounded-full">
+            <Avatar>
+                <AvatarImage Src="@currentUser.Avatar" />
+                <AvatarFallback>@currentUser.Initials</AvatarFallback>
+            </Avatar>
+        </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent>
+        <DropdownMenuItem>Profile</DropdownMenuItem>
+        <DropdownMenuItem>Settings</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>Sign out</DropdownMenuItem>
+    </DropdownMenuContent>
+</DropdownMenu>
+
+@code {
+    private User currentUser = new("JD", "/avatar.jpg");
+
+    record User(string Initials, string Avatar);
+}
+```
+
+---
+
+## Related Components
+
+- **HoverCard** - llms/components/hover-card.txt
+- **Item** - llms/components/item.txt
+
+---
+
+**Last Updated:** 2025-11-16

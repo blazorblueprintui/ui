@@ -1,0 +1,181 @@
+# Button Group Component
+
+Visually groups related buttons with connected styling.
+
+---
+
+## Overview
+
+The ButtonGroup component groups related buttons together with connected borders and optional separators, creating a cohesive visual unit for related actions.
+
+**Features:**
+- Connected button styling
+- Optional separators
+- Supports all button variants
+- Horizontal and vertical layouts
+- Dark mode compatible
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.ButtonGroup
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/ButtonGroup
+
+---
+
+## API Reference
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Orientation` | `Orientation` | `Horizontal` | Layout direction (Horizontal or Vertical) |
+| `Class` | `string?` | `null` | Additional CSS classes |
+| `ChildContent` | `RenderFragment?` | `null` | Button group content |
+
+---
+
+## Basic Usage
+
+```razor
+<ButtonGroup>
+    <Button Variant="ButtonVariant.Outline">Left</Button>
+    <Button Variant="ButtonVariant.Outline">Center</Button>
+    <Button Variant="ButtonVariant.Outline">Right</Button>
+</ButtonGroup>
+```
+
+---
+
+## Examples
+
+### Horizontal Group
+
+```razor
+<ButtonGroup>
+    <Button Variant="ButtonVariant.Outline">
+        <LucideIcon Name="align-left" Size="16" />
+    </Button>
+    <Button Variant="ButtonVariant.Outline">
+        <LucideIcon Name="align-center" Size="16" />
+    </Button>
+    <Button Variant="ButtonVariant.Outline">
+        <LucideIcon Name="align-right" Size="16" />
+    </Button>
+</ButtonGroup>
+```
+
+### Vertical Group
+
+```razor
+<ButtonGroup Orientation="Orientation.Vertical">
+    <Button Variant="ButtonVariant.Outline">Top</Button>
+    <Button Variant="ButtonVariant.Outline">Middle</Button>
+    <Button Variant="ButtonVariant.Outline">Bottom</Button>
+</ButtonGroup>
+```
+
+### Text Formatting Toolbar
+
+```razor
+<ButtonGroup>
+    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Icon">
+        <LucideIcon Name="bold" Size="16" />
+    </Button>
+    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Icon">
+        <LucideIcon Name="italic" Size="16" />
+    </Button>
+    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Icon">
+        <LucideIcon Name="underline" Size="16" />
+    </Button>
+    <Button Variant="ButtonVariant.Outline" Size="ButtonSize.Icon">
+        <LucideIcon Name="strikethrough" Size="16" />
+    </Button>
+</ButtonGroup>
+```
+
+### View Switcher
+
+```razor
+<ButtonGroup>
+    <Button
+        Variant="@(view == "grid" ? ButtonVariant.Default : ButtonVariant.Outline)"
+        OnClick="@(() => view = "grid")">
+        <LucideIcon Name="grid" Size="16" />
+        Grid
+    </Button>
+    <Button
+        Variant="@(view == "list" ? ButtonVariant.Default : ButtonVariant.Outline)"
+        OnClick="@(() => view = "list")">
+        <LucideIcon Name="list" Size="16" />
+        List
+    </Button>
+</ButtonGroup>
+
+@code {
+    private string view = "grid";
+}
+```
+
+---
+
+## Common Patterns
+
+### Pagination Controls
+
+```razor
+<ButtonGroup>
+    <Button Variant="ButtonVariant.Outline" OnClick="PreviousPage" Disabled="@(currentPage == 1)">
+        <LucideIcon Name="chevron-left" Size="16" />
+        Previous
+    </Button>
+    <Button Variant="ButtonVariant.Outline" Disabled="true">
+        Page @currentPage
+    </Button>
+    <Button Variant="ButtonVariant.Outline" OnClick="NextPage">
+        Next
+        <LucideIcon Name="chevron-right" Size="16" />
+    </Button>
+</ButtonGroup>
+
+@code {
+    private int currentPage = 1;
+
+    private void PreviousPage() => currentPage--;
+    private void NextPage() => currentPage++;
+}
+```
+
+### Toolbar Actions
+
+```razor
+<div class="flex items-center justify-between">
+    <h2>Documents</h2>
+
+    <ButtonGroup>
+        <Button Variant="ButtonVariant.Outline">
+            <LucideIcon Name="download" Size="16" />
+            Export
+        </Button>
+        <Button Variant="ButtonVariant.Outline">
+            <LucideIcon Name="upload" Size="16" />
+            Import
+        </Button>
+        <Button>
+            <LucideIcon Name="plus" Size="16" />
+            New
+        </Button>
+    </ButtonGroup>
+</div>
+```
+
+---
+
+## Related Components
+
+- **Button** - llms/components/button.txt
+- **Separator** - llms/components/separator.txt
+
+---
+
+**Last Updated:** 2025-11-16

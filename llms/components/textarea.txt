@@ -1,0 +1,314 @@
+# Textarea Component
+
+Multi-line text input with automatic content-based sizing and validation support.
+
+---
+
+## Overview
+
+The Textarea component provides a customizable, accessible multi-line text input with automatic height adjustment, character limits, and error states. It follows WCAG 2.1 AA standards and integrates with Blazor's data binding.
+
+**Features:**
+- Automatic content-based sizing (field-sizing-content)
+- Two-way data binding (@bind-Value)
+- Character limit support (MaxLength)
+- Error state visualization (aria-invalid)
+- Smooth transitions
+- Disabled and required states
+- Placeholder text
+- Dark mode compatible
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.Textarea
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/Textarea
+
+---
+
+## API Reference
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Value` | `string?` | `null` | Current value (supports @bind-Value) |
+| `ValueChanged` | `EventCallback<string?>` | - | Callback on value change |
+| `Placeholder` | `string?` | `null` | Placeholder text |
+| `Disabled` | `bool` | `false` | Whether textarea is disabled |
+| `Required` | `bool` | `false` | Whether textarea is required |
+| `MaxLength` | `int?` | `null` | Maximum character limit |
+| `Class` | `string?` | `null` | Additional CSS classes |
+| `Id` | `string?` | `null` | HTML id (for label association) |
+| `AriaLabel` | `string?` | `null` | ARIA label |
+| `AriaDescribedBy` | `string?` | `null` | ID of describing element |
+| `AriaInvalid` | `bool?` | `null` | Whether value is invalid |
+
+---
+
+## Basic Usage
+
+```razor
+<Textarea @bind-Value="description" Placeholder="Enter description..." />
+
+@code {
+    private string description = "";
+}
+```
+
+---
+
+## Examples
+
+### With Label
+
+```razor
+<div class="space-y-2">
+    <Label For="bio">Biography</Label>
+    <Textarea
+        Id="bio"
+        @bind-Value="bio"
+        Placeholder="Tell us about yourself..." />
+</div>
+
+@code {
+    private string bio = "";
+}
+```
+
+### With Character Count
+
+```razor
+<div class="space-y-1">
+    <Textarea
+        @bind-Value="message"
+        MaxLength="500"
+        Placeholder="Your message..."
+        AriaDescribedBy="char-count" />
+    <p id="char-count" class="text-sm text-muted-foreground text-right">
+        @message.Length / 500 characters
+    </p>
+</div>
+
+@code {
+    private string message = "";
+}
+```
+
+### With Error State
+
+```razor
+<Textarea
+    @bind-Value="comment"
+    AriaInvalid="@(!IsValid(comment))"
+    AriaDescribedBy="comment-error"
+    Placeholder="Enter your comment..." />
+
+@if (!IsValid(comment))
+{
+    <p id="comment-error" class="text-sm text-destructive">
+        Comment must be at least 10 characters
+    </p>
+}
+
+@code {
+    private string comment = "";
+
+    private bool IsValid(string value) =>
+        string.IsNullOrEmpty(value) || value.Length >= 10;
+}
+```
+
+### Disabled State
+
+```razor
+<Textarea
+    Value="This textarea is disabled"
+    Disabled="true" />
+```
+
+### Required Field
+
+```razor
+<Textarea
+    @bind-Value="feedback"
+    Required="true"
+    Placeholder="Feedback (required)" />
+```
+
+### Custom Styling
+
+```razor
+<Textarea
+    @bind-Value="notes"
+    Class="min-h-32 border-blue-500"
+    Placeholder="Your notes..." />
+```
+
+---
+
+## Form Integration
+
+### With Field Component
+
+```razor
+<Field>
+    <FieldLabel>Feedback</FieldLabel>
+    <FieldContent>
+        <Textarea
+            @bind-Value="feedback"
+            Placeholder="Share your thoughts..."
+            MaxLength="1000" />
+    </FieldContent>
+    <FieldDescription>
+        Your feedback helps us improve.
+    </FieldDescription>
+</Field>
+
+@code {
+    private string feedback = "";
+}
+```
+
+### Form Validation
+
+```razor
+<EditForm Model="@model" OnValidSubmit="@HandleSubmit">
+    <DataAnnotationsValidator />
+
+    <Field>
+        <FieldLabel>Description</FieldLabel>
+        <FieldContent>
+            <Textarea
+                @bind-Value="model.Description"
+                Placeholder="Describe your issue..." />
+        </FieldContent>
+        <FieldError>
+            <ValidationMessage For="@(() => model.Description)" />
+        </FieldError>
+    </Field>
+
+    <Button Type="ButtonType.Submit">Submit</Button>
+</EditForm>
+
+@code {
+    private FormModel model = new();
+
+    private void HandleSubmit() { }
+
+    public class FormModel
+    {
+        [Required]
+        [MinLength(20, ErrorMessage = "Description must be at least 20 characters")]
+        [MaxLength(500)]
+        public string Description { get; set; } = "";
+    }
+}
+```
+
+---
+
+## Accessibility
+
+### Label Association
+
+```razor
+<Label For="comments">Comments</Label>
+<Textarea Id="comments" @bind-Value="comments" />
+```
+
+### Help Text
+
+```razor
+<Textarea
+    Id="bio"
+    @bind-Value="bio"
+    AriaDescribedBy="bio-help" />
+<p id="bio-help" class="text-sm text-muted-foreground">
+    Share a brief professional biography
+</p>
+```
+
+---
+
+## Common Patterns
+
+### Full Width Textarea
+
+```razor
+<Textarea
+    @bind-Value="content"
+    Class="w-full"
+    Placeholder="Enter content..." />
+```
+
+### Multi-line Input in Dialog
+
+```razor
+<Dialog>
+    <DialogTrigger AsChild>
+        <Button>Add Comment</Button>
+    </DialogTrigger>
+    <DialogContent>
+        <DialogHeader>
+            <DialogTitle>Add Comment</DialogTitle>
+        </DialogHeader>
+
+        <Textarea
+            @bind-Value="newComment"
+            Placeholder="Write your comment..."
+            MaxLength="500" />
+
+        <DialogFooter>
+            <Button OnClick="SaveComment">Save</Button>
+        </DialogFooter>
+    </DialogContent>
+</Dialog>
+
+@code {
+    private string newComment = "";
+
+    private void SaveComment()
+    {
+        // Save logic
+    }
+}
+```
+
+---
+
+## Troubleshooting
+
+### Issue: Height doesn't adjust automatically
+
+**Solution:** The component uses `field-sizing-content` which is supported in modern browsers. If needed, set a fixed min-height:
+
+```razor
+<Textarea Class="min-h-24" />
+```
+
+### Issue: Character count doesn't update
+
+**Solution:** Use `@bind-Value` for two-way binding:
+
+```razor
+<Textarea @bind-Value="text" />
+<p>@text.Length characters</p>
+```
+
+---
+
+## Related Components
+
+- **Input** - llms/components/input.txt
+- **Label** - llms/components/label.txt
+- **Field** - llms/components/field.txt
+
+## Related Patterns
+
+- **Form with Validation** - llms/patterns.txt
+- **Dialog with Form** - llms/patterns.txt
+
+---
+
+**Last Updated:** 2025-11-16

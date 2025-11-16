@@ -1,0 +1,267 @@
+# Input Group Component
+
+Enhanced inputs with icons, buttons, and addons for complex input compositions.
+
+---
+
+## Overview
+
+The InputGroup component enhances standard inputs by adding icons, buttons, and text addons before or after the input field. Perfect for search boxes, URL inputs, and actions-enabled fields.
+
+**Features:**
+- Icon addons (InputGroupIcon)
+- Button addons (InputGroupButton)
+- Text addons (InputGroupText)
+- Start and end positioning
+- Seamless integration with Input component
+- Dark mode compatible
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.InputGroup
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/InputGroup
+
+---
+
+## API Reference
+
+### `<InputGroup>`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Class` | `string?` | `null` | Additional CSS classes |
+| `ChildContent` | `RenderFragment?` | `null` | Input and addons |
+
+### Sub-components
+
+- `<InputGroupIcon>` - Icon addon
+- `<InputGroupButton>` - Button addon
+- `<InputGroupText>` - Text addon
+
+---
+
+## Basic Usage
+
+```razor
+<InputGroup>
+    <InputGroupIcon>
+        <LucideIcon Name="search" Size="16" />
+    </InputGroupIcon>
+    <Input Placeholder="Search..." />
+</InputGroup>
+```
+
+---
+
+## Examples
+
+### Search with Icon
+
+```razor
+<InputGroup>
+    <InputGroupIcon>
+        <LucideIcon Name="search" Size="16" />
+    </InputGroupIcon>
+    <Input
+        Type="InputType.Search"
+        @bind-Value="searchTerm"
+        Placeholder="Search..." />
+</InputGroup>
+
+@code {
+    private string searchTerm = "";
+}
+```
+
+### Search with Clear Button
+
+```razor
+<InputGroup>
+    <InputGroupIcon>
+        <LucideIcon Name="search" Size="16" />
+    </InputGroupIcon>
+    <Input
+        Type="InputType.Search"
+        @bind-Value="query"
+        Placeholder="Search..." />
+    @if (!string.IsNullOrEmpty(query))
+    {
+        <InputGroupButton>
+            <Button
+                Variant="ButtonVariant.Ghost"
+                Size="ButtonSize.Icon"
+                OnClick="@(() => query = "")">
+                <LucideIcon Name="x" Size="16" />
+            </Button>
+        </InputGroupButton>
+    }
+</InputGroup>
+
+@code {
+    private string query = "";
+}
+```
+
+### Email Input with Icon
+
+```razor
+<InputGroup>
+    <InputGroupIcon>
+        <LucideIcon Name="mail" Size="16" />
+    </InputGroupIcon>
+    <Input
+        Type="InputType.Email"
+        @bind-Value="email"
+        Placeholder="name@example.com" />
+</InputGroup>
+
+@code {
+    private string email = "";
+}
+```
+
+### URL Input with Protocol
+
+```razor
+<InputGroup>
+    <InputGroupText>
+        https://
+    </InputGroupText>
+    <Input
+        @bind-Value="domain"
+        Placeholder="example.com" />
+</InputGroup>
+
+@code {
+    private string domain = "";
+}
+```
+
+### Price Input with Currency
+
+```razor
+<InputGroup>
+    <InputGroupText>
+        $
+    </InputGroupText>
+    <Input
+        Type="InputType.Number"
+        @bind-Value="price"
+        Placeholder="0.00" />
+</InputGroup>
+
+@code {
+    private string price = "";
+}
+```
+
+### Password with Toggle Visibility
+
+```razor
+<InputGroup>
+    <InputGroupIcon>
+        <LucideIcon Name="lock" Size="16" />
+    </InputGroupIcon>
+    <Input
+        Type="@(showPassword ? InputType.Text : InputType.Password)"
+        @bind-Value="password"
+        Placeholder="Enter password" />
+    <InputGroupButton>
+        <Button
+            Variant="ButtonVariant.Ghost"
+            Size="ButtonSize.Icon"
+            OnClick="@(() => showPassword = !showPassword)">
+            <LucideIcon Name="@(showPassword ? "eye-off" : "eye")" Size="16" />
+        </Button>
+    </InputGroupButton>
+</InputGroup>
+
+@code {
+    private string password = "";
+    private bool showPassword = false;
+}
+```
+
+### Copy to Clipboard
+
+```razor
+<InputGroup>
+    <Input Value="@shareUrl" Disabled="true" />
+    <InputGroupButton>
+        <Button OnClick="CopyToClipboard">
+            <LucideIcon Name="copy" Size="16" />
+            Copy
+        </Button>
+    </InputGroupButton>
+</InputGroup>
+
+@code {
+    private string shareUrl = "https://example.com/share/abc123";
+
+    private async Task CopyToClipboard()
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", shareUrl);
+    }
+}
+```
+
+---
+
+## Common Patterns
+
+### Command Search
+
+```razor
+<InputGroup>
+    <InputGroupIcon>
+        <LucideIcon Name="search" Size="16" />
+    </InputGroupIcon>
+    <Input
+        @bind-Value="command"
+        Placeholder="Type a command..."
+        @onkeydown="HandleKeyDown" />
+    <InputGroupText Class="text-xs text-muted-foreground">
+        <kbd>⌘K</kbd>
+    </InputGroupText>
+</InputGroup>
+
+@code {
+    private string command = "";
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            // Execute command
+        }
+    }
+}
+```
+
+### File Upload with Browse
+
+```razor
+<InputGroup>
+    <Input Type="InputType.File" />
+    <InputGroupButton>
+        <Button Variant="ButtonVariant.Secondary">
+            Browse
+        </Button>
+    </InputGroupButton>
+</InputGroup>
+```
+
+---
+
+## Related Components
+
+- **Input** - llms/components/input.txt
+- **Button** - llms/components/button.txt
+- **Icons** - llms/icons.txt
+
+---
+
+**Last Updated:** 2025-11-16

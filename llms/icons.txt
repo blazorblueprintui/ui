@@ -1,0 +1,567 @@
+# BlazorUI Icons - LucideIcon Component
+
+The BlazorUI.Icons package provides access to 1,640+ beautiful, customizable Lucide icons as Blazor components.
+
+---
+
+## Installation
+
+```bash
+dotnet add package BlazorUI.Icons
+```
+
+## Setup
+
+Add to your `_Imports.razor`:
+
+```razor
+@using BlazorUI.Icons
+```
+
+---
+
+## Basic Usage
+
+Render icons using the `<LucideIcon>` component with the `Name` parameter:
+
+```razor
+<LucideIcon Name="icon-name" />
+```
+
+**Icon names use kebab-case** (e.g., `"camera"`, `"chevron-down"`, `"arrow-right"`).
+
+### Examples
+
+```razor
+@* Basic icons *@
+<LucideIcon Name="house" />
+<LucideIcon Name="settings" />
+<LucideIcon Name="user" />
+
+@* Icons with custom size *@
+<LucideIcon Name="search" Size="20" />
+<LucideIcon Name="bell" Size="24" />
+
+@* Icons with custom color *@
+<LucideIcon Name="heart" Color="red" />
+<LucideIcon Name="star" Color="#FFD700" />
+
+@* Icons with CSS classes (Tailwind) *@
+<LucideIcon Name="check" Class="text-green-500" />
+<LucideIcon Name="x" Class="text-red-500" />
+```
+
+---
+
+## API Reference
+
+### Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Name` | `string` | **Required** | Icon name in kebab-case (e.g., "camera", "chevron-down") |
+| `Size` | `int` | `24` | Icon size in pixels (width and height) |
+| `Color` | `string` | `"currentColor"` | CSS color value (hex, rgb, named color, or "currentColor") |
+| `StrokeWidth` | `double` | `2.0` | SVG stroke width (line thickness) |
+| `Class` | `string` | `""` | Additional CSS classes to apply |
+| `AriaLabel` | `string` | `null` | Accessibility label for screen readers |
+| `AdditionalAttributes` | `Dictionary<string, object>` | `null` | Any additional SVG attributes |
+
+### Examples
+
+```razor
+@* Full parameter usage *@
+<LucideIcon
+    Name="settings"
+    Size="20"
+    Color="#3B82F6"
+    StrokeWidth="1.5"
+    Class="rotate-90"
+    AriaLabel="Settings icon" />
+```
+
+---
+
+## Common Use Cases
+
+### Icons in Buttons
+
+```razor
+@using BlazorUI.Components
+
+<Button>
+    <LucideIcon Name="plus" Size="16" />
+    Add Item
+</Button>
+
+<Button Variant="outline">
+    <LucideIcon Name="download" Size="16" />
+    Download
+</Button>
+
+<Button Variant="destructive">
+    <LucideIcon Name="trash" Size="16" />
+    Delete
+</Button>
+
+@* Icon-only button *@
+<Button Size="icon" Variant="ghost">
+    <LucideIcon Name="more-horizontal" Size="20" />
+</Button>
+```
+
+### Icons in Navigation
+
+```razor
+<nav class="space-y-2">
+    <a href="/" class="flex items-center space-x-2">
+        <LucideIcon Name="home" Size="20" />
+        <span>Dashboard</span>
+    </a>
+
+    <a href="/projects" class="flex items-center space-x-2">
+        <LucideIcon Name="folder" Size="20" />
+        <span>Projects</span>
+    </a>
+
+    <a href="/settings" class="flex items-center space-x-2">
+        <LucideIcon Name="settings" Size="20" />
+        <span>Settings</span>
+    </a>
+</nav>
+```
+
+### Icons in Dropdown Menus
+
+```razor
+<DropdownMenu>
+    <DropdownMenuTrigger AsChild>
+        <Button Variant="outline">
+            Actions
+            <LucideIcon Name="chevron-down" Size="16" />
+        </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent>
+        <DropdownMenuItem>
+            <LucideIcon Name="edit" Size="16" />
+            Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+            <LucideIcon Name="copy" Size="16" />
+            Duplicate
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>
+            <LucideIcon Name="trash" Size="16" />
+            Delete
+        </DropdownMenuItem>
+    </DropdownMenuContent>
+</DropdownMenu>
+```
+
+### Icons in Alerts and Messages
+
+```razor
+<div class="flex items-start space-x-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+    <LucideIcon Name="check-circle" Size="20" Class="text-green-600" />
+    <div>
+        <h4 class="font-medium text-green-900">Success</h4>
+        <p class="text-sm text-green-700">Your changes have been saved.</p>
+    </div>
+</div>
+
+<div class="flex items-start space-x-3 p-4 bg-red-50 border border-red-200 rounded-lg">
+    <LucideIcon Name="alert-circle" Size="20" Class="text-red-600" />
+    <div>
+        <h4 class="font-medium text-red-900">Error</h4>
+        <p class="text-sm text-red-700">Something went wrong. Please try again.</p>
+    </div>
+</div>
+
+<div class="flex items-start space-x-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+    <LucideIcon Name="alert-triangle" Size="20" Class="text-yellow-600" />
+    <div>
+        <h4 class="font-medium text-yellow-900">Warning</h4>
+        <p class="text-sm text-yellow-700">This action cannot be undone.</p>
+    </div>
+</div>
+
+<div class="flex items-start space-x-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+    <LucideIcon Name="info" Size="20" Class="text-blue-600" />
+    <div>
+        <h4 class="font-medium text-blue-900">Info</h4>
+        <p class="text-sm text-blue-700">New features are now available.</p>
+    </div>
+</div>
+```
+
+### Icons in Form Fields
+
+```razor
+<Field>
+    <FieldLabel>
+        <LucideIcon Name="mail" Size="16" Class="inline mr-1" />
+        Email Address
+    </FieldLabel>
+    <FieldContent>
+        <InputGroup>
+            <InputGroupIcon>
+                <LucideIcon Name="mail" Size="16" />
+            </InputGroupIcon>
+            <Input Type="email" Placeholder="name@example.com" />
+        </InputGroup>
+    </FieldContent>
+</Field>
+
+<Field>
+    <FieldLabel>
+        <LucideIcon Name="lock" Size="16" Class="inline mr-1" />
+        Password
+    </FieldLabel>
+    <FieldContent>
+        <InputGroup>
+            <InputGroupIcon>
+                <LucideIcon Name="lock" Size="16" />
+            </InputGroupIcon>
+            <Input Type="password" />
+            <InputGroupButton>
+                <Button Variant="ghost" Size="icon">
+                    <LucideIcon Name="eye" Size="16" />
+                </Button>
+            </InputGroupButton>
+        </InputGroup>
+    </FieldContent>
+</Field>
+```
+
+### Loading State Icons
+
+```razor
+@* Spinner animation *@
+<Button Disabled="@isLoading">
+    @if (isLoading)
+    {
+        <LucideIcon Name="loader-2" Size="16" Class="animate-spin" />
+    }
+    else
+    {
+        <LucideIcon Name="save" Size="16" />
+    }
+    Save
+</Button>
+
+@code {
+    private bool isLoading = false;
+}
+```
+
+### Status Indicators
+
+```razor
+<div class="flex items-center space-x-2">
+    <LucideIcon Name="circle" Size="12" Class="text-green-500 fill-green-500" />
+    <span>Online</span>
+</div>
+
+<div class="flex items-center space-x-2">
+    <LucideIcon Name="circle" Size="12" Class="text-yellow-500 fill-yellow-500" />
+    <span>Away</span>
+</div>
+
+<div class="flex items-center space-x-2">
+    <LucideIcon Name="circle" Size="12" Class="text-red-500 fill-red-500" />
+    <span>Offline</span>
+</div>
+```
+
+### Icons in Badges
+
+```razor
+<Badge>
+    <LucideIcon Name="check" Size="14" Class="mr-1" />
+    Verified
+</Badge>
+
+<Badge Variant="destructive">
+    <LucideIcon Name="x" Size="14" Class="mr-1" />
+    Failed
+</Badge>
+
+<Badge Variant="outline">
+    <LucideIcon Name="clock" Size="14" Class="mr-1" />
+    Pending
+</Badge>
+```
+
+---
+
+## Popular Icon Names
+
+### Navigation
+- `home`, `menu`, `x`, `chevron-left`, `chevron-right`, `chevron-down`, `chevron-up`
+- `arrow-left`, `arrow-right`, `arrow-up`, `arrow-down`
+- `more-horizontal`, `more-vertical`
+
+### Actions
+- `plus`, `minus`, `edit`, `trash`, `save`, `download`, `upload`
+- `copy`, `clipboard`, `scissors`, `refresh-cw`
+- `search`, `filter`, `settings`, `sliders`
+
+### Communication
+- `mail`, `message-square`, `message-circle`, `send`, `bell`, `phone`
+- `video`, `mic`, `mic-off`, `volume`, `volume-x`
+
+### Status & Alerts
+- `check`, `check-circle`, `x-circle`, `alert-circle`, `alert-triangle`, `info`
+- `help-circle`, `loader`, `loader-2` (spinner)
+
+### Media & Files
+- `image`, `file`, `file-text`, `folder`, `folder-open`
+- `camera`, `video`, `music`, `film`, `paperclip`
+
+### User & Profile
+- `user`, `user-plus`, `user-minus`, `user-check`, `users`
+- `log-in`, `log-out`, `lock`, `unlock`, `shield`, `eye`, `eye-off`
+
+### UI Elements
+- `calendar`, `clock`, `star`, `heart`, `bookmark`, `tag`
+- `grid`, `list`, `layout`, `maximize`, `minimize`, `external-link`
+
+### Social & Sharing
+- `share`, `share-2`, `link`, `link-2`, `trending-up`, `trending-down`
+- `thumbs-up`, `thumbs-down`, `heart`, `star`
+
+### Development
+- `code`, `terminal`, `github`, `gitlab`, `git-branch`, `git-commit`
+- `database`, `server`, `cpu`, `hard-drive`
+
+---
+
+## Finding Icon Names
+
+### Online Resources
+
+1. **Lucide Icon Library**: https://lucide.dev/icons
+   - Browse all 1,640+ icons
+   - Search by keyword
+   - Copy icon names directly
+
+2. **Icon Name Format**
+   - All icon names use **kebab-case**
+   - Examples: `chevron-down`, `arrow-right`, `user-plus`
+   - **NOT**: `ChevronDown`, `arrowRight`, `UserPlus`
+
+### Common Naming Patterns
+
+```razor
+@* Directional icons: name-direction *@
+<LucideIcon Name="arrow-left" />
+<LucideIcon Name="arrow-right" />
+<LucideIcon Name="chevron-up" />
+<LucideIcon Name="chevron-down" />
+
+@* Action icons: verb or verb-noun *@
+<LucideIcon Name="edit" />
+<LucideIcon Name="save" />
+<LucideIcon Name="log-out" />
+<LucideIcon Name="user-plus" />
+
+@* Status icons: noun-state *@
+<LucideIcon Name="check-circle" />
+<LucideIcon Name="x-circle" />
+<LucideIcon Name="alert-triangle" />
+
+@* Numbered variants *@
+<LucideIcon Name="loader" />
+<LucideIcon Name="loader-2" />
+<LucideIcon Name="share" />
+<LucideIcon Name="share-2" />
+```
+
+---
+
+## Styling Icons
+
+### Using Tailwind CSS Classes
+
+```razor
+@* Color *@
+<LucideIcon Name="heart" Class="text-red-500" />
+<LucideIcon Name="star" Class="text-yellow-400" />
+<LucideIcon Name="check" Class="text-green-600" />
+
+@* Size (alternative to Size parameter) *@
+<LucideIcon Name="home" Class="w-4 h-4" />
+<LucideIcon Name="home" Class="w-6 h-6" />
+<LucideIcon Name="home" Class="w-8 h-8" />
+
+@* Rotation *@
+<LucideIcon Name="arrow-right" Class="rotate-45" />
+<LucideIcon Name="settings" Class="rotate-90" />
+
+@* Animation *@
+<LucideIcon Name="loader-2" Class="animate-spin" />
+<LucideIcon Name="bell" Class="animate-bounce" />
+
+@* Hover effects *@
+<LucideIcon Name="heart" Class="hover:text-red-500 transition-colors" />
+```
+
+### Using Custom CSS
+
+```css
+/* Custom icon styles */
+.icon-primary {
+    color: var(--primary);
+}
+
+.icon-destructive {
+    color: var(--destructive);
+}
+
+.icon-lg {
+    width: 32px;
+    height: 32px;
+}
+
+.icon-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+```
+
+```razor
+<LucideIcon Name="settings" Class="icon-primary" />
+<LucideIcon Name="trash" Class="icon-destructive" />
+<LucideIcon Name="home" Class="icon-lg" />
+<LucideIcon Name="loader-2" Class="icon-spin" />
+```
+
+---
+
+## Accessibility
+
+### Adding ARIA Labels
+
+For icons that convey meaning (not just decoration), add `AriaLabel`:
+
+```razor
+@* Button with icon only - needs aria-label *@
+<Button Size="icon" AriaLabel="Close">
+    <LucideIcon Name="x" Size="20" AriaLabel="Close" />
+</Button>
+
+@* Icon with text - no aria-label needed *@
+<Button>
+    <LucideIcon Name="save" Size="16" />
+    Save
+</Button>
+```
+
+### Decorative vs. Meaningful Icons
+
+```razor
+@* Decorative (icon + text) - no aria-label needed *@
+<Button>
+    <LucideIcon Name="download" Size="16" />
+    Download
+</Button>
+
+@* Meaningful (icon only) - aria-label required *@
+<Button Size="icon">
+    <LucideIcon Name="download" Size="20" AriaLabel="Download file" />
+</Button>
+
+@* Status indicator - add context *@
+<div class="flex items-center space-x-2">
+    <LucideIcon Name="check-circle" Size="16" Class="text-green-500" AriaLabel="Success" />
+    <span>Operation completed</span>
+</div>
+```
+
+---
+
+## Performance Tips
+
+1. **Icon Size**: Use appropriate sizes for context
+   - Small UI elements: 12-16px
+   - Buttons: 16-20px
+   - Headers: 20-24px
+   - Hero sections: 32px+
+
+2. **Color**: Prefer `currentColor` or CSS classes over inline colors for better themability
+
+3. **Reusability**: Create wrapper components for frequently used icon combinations
+
+```razor
+@* IconButton.razor - Reusable icon button component *@
+<Button Size="icon" Variant="@Variant" @onclick="OnClick">
+    <LucideIcon Name="@IconName" Size="20" AriaLabel="@AriaLabel" />
+</Button>
+
+@code {
+    [Parameter] public string IconName { get; set; } = "";
+    [Parameter] public string Variant { get; set; } = "ghost";
+    [Parameter] public string AriaLabel { get; set; } = "";
+    [Parameter] public EventCallback OnClick { get; set; }
+}
+```
+
+---
+
+## Troubleshooting
+
+### Icon doesn't appear
+
+**Cause:** Icon name is incorrect or not in kebab-case
+
+**Solution:**
+- Check icon name at https://lucide.dev/icons
+- Ensure name is kebab-case: `"chevron-down"` not `"ChevronDown"`
+- Verify BlazorUI.Icons package is installed
+
+### Icon is too large/small
+
+**Cause:** Size parameter or CSS classes affecting dimensions
+
+**Solution:**
+```razor
+@* Use Size parameter *@
+<LucideIcon Name="home" Size="20" />
+
+@* OR use Tailwind classes *@
+<LucideIcon Name="home" Class="w-5 h-5" />
+
+@* Don't mix both - choose one approach *@
+```
+
+### Icon color doesn't change
+
+**Cause:** Using `Color` parameter with CSS color classes
+
+**Solution:**
+```razor
+@* Option 1: Use Color parameter *@
+<LucideIcon Name="heart" Color="red" />
+
+@* Option 2: Use CSS class (preferred for theming) *@
+<LucideIcon Name="heart" Class="text-red-500" />
+
+@* Don't use both simultaneously *@
+```
+
+---
+
+## Related Documentation
+
+- **Buttons**: llms/components/button.txt
+- **Dropdown Menu**: llms/components/dropdown-menu.txt
+- **Navigation**: llms/components/sidebar.txt
+
+---
+
+**Last Updated:** 2025-11-16

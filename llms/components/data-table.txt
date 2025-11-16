@@ -1,0 +1,91 @@
+# Data Table Component
+
+Powerful table component with sorting, filtering, pagination, and row selection built on Table Primitive.
+
+---
+
+## Overview
+
+The DataTable component provides a full-featured data table with sorting, filtering, pagination, row selection, and customizable columns. Built on the Table Primitive with shadcn/ui design.
+
+**Features:**
+- Column sorting
+- Filtering
+- Pagination
+- Row selection
+- Custom cell templates
+- Responsive design
+- Dark mode compatible
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.DataTable
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/DataTable
+
+---
+
+## API Reference
+
+### `<DataTable>`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Data` | `IEnumerable<TData>` | **Required** | Data source |
+| `State` | `TableState` | - | Table state (supports @bind-State) |
+| `ChildContent` | `RenderFragment?` | `null` | Column definitions |
+
+### `<DataTableColumn>`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Property` | `Expression<Func<TData, object>>` | **Required** | Data property |
+| `Title` | `string?` | `null` | Column header title |
+| `Sortable` | `bool` | `false` | Enable sorting |
+| `Filterable` | `bool` | `false` | Enable filtering |
+| `Template` | `RenderFragment<TData>?` | `null` | Custom cell template |
+
+---
+
+## Basic Usage
+
+```razor
+<DataTable Data="@users" @bind-State="tableState">
+    <DataTableColumn TData="User" Property="u => u.Name" Title="Name" Sortable="true" />
+    <DataTableColumn TData="User" Property="u => u.Email" Title="Email" />
+    <DataTableColumn TData="User" Property="u => u.Role" Title="Role" />
+</DataTable>
+
+<TablePagination State="@tableState" />
+
+@code {
+    private List<User> users = new();
+    private TableState tableState = new();
+
+    record User(string Name, string Email, string Role);
+}
+```
+
+---
+
+## Examples
+
+See **llms/patterns.txt** - Data Table with Sorting and Pagination for complete examples.
+
+---
+
+## Related Components
+
+- **Button** - llms/components/button.txt
+- **Badge** - llms/components/badge.txt
+- **DropdownMenu** - llms/components/dropdown-menu.txt
+
+## Related Patterns
+
+- **Data Table with Sorting and Pagination** - llms/patterns.txt
+
+---
+
+**Last Updated:** 2025-11-16

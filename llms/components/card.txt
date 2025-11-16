@@ -1,0 +1,242 @@
+# Card Component
+
+Container component for grouped content with header, body, and footer sections.
+
+---
+
+## Overview
+
+The Card component provides a flexible container for grouping related content with optional header, title, description, content, and footer sections. Perfect for displaying information, forms, or actions in a visually distinct container.
+
+**Features:**
+- Flexible composition (header, content, footer)
+- Built-in typography components
+- Supports custom styling
+- Dark mode compatible
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.Card
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/Card
+
+---
+
+## API Reference
+
+### Sub-components
+
+- `<Card>` - Main container
+- `<CardHeader>` - Header section
+- `<CardTitle>` - Title text
+- `<CardDescription>` - Description text
+- `<CardContent>` - Main content area
+- `<CardFooter>` - Footer section
+
+All components accept `Class` parameter for custom styling.
+
+---
+
+## Basic Usage
+
+```razor
+<Card>
+    <CardHeader>
+        <CardTitle>Card Title</CardTitle>
+        <CardDescription>Card description goes here</CardDescription>
+    </CardHeader>
+    <CardContent>
+        Main content
+    </CardContent>
+    <CardFooter>
+        Footer content
+    </CardFooter>
+</Card>
+```
+
+---
+
+## Examples
+
+### Simple Card
+
+```razor
+<Card>
+    <CardHeader>
+        <CardTitle>Notifications</CardTitle>
+        <CardDescription>You have 3 unread messages</CardDescription>
+    </CardHeader>
+    <CardContent>
+        <div class="space-y-2">
+            <p class="text-sm">Message 1</p>
+            <p class="text-sm">Message 2</p>
+            <p class="text-sm">Message 3</p>
+        </div>
+    </CardContent>
+</Card>
+```
+
+### Card with Form
+
+```razor
+<Card>
+    <CardHeader>
+        <CardTitle>Create Account</CardTitle>
+        <CardDescription>Enter your details to sign up</CardDescription>
+    </CardHeader>
+    <CardContent Class="space-y-4">
+        <Field>
+            <FieldLabel>Email</FieldLabel>
+            <Input Type="InputType.Email" @bind-Value="email" />
+        </Field>
+
+        <Field>
+            <FieldLabel>Password</FieldLabel>
+            <Input Type="InputType.Password" @bind-Value="password" />
+        </Field>
+    </CardContent>
+    <CardFooter Class="flex justify-between">
+        <Button Variant="ButtonVariant.Outline">Cancel</Button>
+        <Button>Sign Up</Button>
+    </CardFooter>
+</Card>
+
+@code {
+    private string email = "";
+    private string password = "";
+}
+```
+
+### Card with Actions
+
+```razor
+<Card>
+    <CardHeader>
+        <CardTitle>Project Alpha</CardTitle>
+        <CardDescription>Last updated 2 hours ago</CardDescription>
+    </CardHeader>
+    <CardContent>
+        <p class="text-sm">Project status: In Progress</p>
+        <p class="text-sm text-muted-foreground">Due date: Dec 31, 2024</p>
+    </CardContent>
+    <CardFooter Class="flex gap-2">
+        <Button Size="ButtonSize.Small">View Details</Button>
+        <Button Size="ButtonSize.Small" Variant="ButtonVariant.Outline">Edit</Button>
+    </CardFooter>
+</Card>
+```
+
+### Stat Card
+
+```razor
+<Card>
+    <CardHeader Class="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle Class="text-sm font-medium">Total Revenue</CardTitle>
+        <LucideIcon Name="dollar-sign" Size="16" Class="text-muted-foreground" />
+    </CardHeader>
+    <CardContent>
+        <div class="text-2xl font-bold">$45,231.89</div>
+        <p class="text-xs text-muted-foreground">
+            +20.1% from last month
+        </p>
+    </CardContent>
+</Card>
+```
+
+### Card Grid
+
+```razor
+<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <Card>
+        <CardHeader>
+            <CardTitle>Card 1</CardTitle>
+        </CardHeader>
+        <CardContent>Content 1</CardContent>
+    </Card>
+
+    <Card>
+        <CardHeader>
+            <CardTitle>Card 2</CardTitle>
+        </CardHeader>
+        <CardContent>Content 2</CardContent>
+    </Card>
+
+    <Card>
+        <CardHeader>
+            <CardTitle>Card 3</CardTitle>
+        </CardHeader>
+        <CardContent>Content 3</CardContent>
+    </Card>
+</div>
+```
+
+---
+
+## Common Patterns
+
+### Dashboard Stats
+
+```razor
+<div class="grid gap-4 md:grid-cols-4">
+    <Card>
+        <CardHeader>
+            <CardTitle Class="text-sm">Total Users</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <div class="text-2xl font-bold">2,543</div>
+            <p class="text-xs text-green-600">+12%</p>
+        </CardContent>
+    </Card>
+
+    <Card>
+        <CardHeader>
+            <CardTitle Class="text-sm">Revenue</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <div class="text-2xl font-bold">$12,345</div>
+            <p class="text-xs text-green-600">+8%</p>
+        </CardContent>
+    </Card>
+</div>
+```
+
+### Profile Card
+
+```razor
+<Card>
+    <CardContent Class="pt-6">
+        <div class="flex flex-col items-center space-y-4">
+            <Avatar Class="h-24 w-24">
+                <AvatarImage Src="/avatar.jpg" />
+                <AvatarFallback>JD</AvatarFallback>
+            </Avatar>
+
+            <div class="text-center">
+                <CardTitle>John Doe</CardTitle>
+                <CardDescription>john@example.com</CardDescription>
+            </div>
+
+            <Button Class="w-full">Edit Profile</Button>
+        </div>
+    </CardContent>
+</Card>
+```
+
+---
+
+## Related Components
+
+- **Avatar** - llms/components/avatar.txt
+- **Badge** - llms/components/badge.txt
+- **Button** - llms/components/button.txt
+- **Separator** - llms/components/separator.txt
+
+## Related Patterns
+
+- **Settings Page with Tabs and Forms** - llms/patterns.txt
+
+---
+
+**Last Updated:** 2025-11-16

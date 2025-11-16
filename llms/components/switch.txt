@@ -1,0 +1,208 @@
+# Switch Component
+
+Toggle control for binary on/off states with smooth animations.
+
+---
+
+## Overview
+
+The Switch component provides a toggle control for binary states with smooth animations, accessibility support, and form integration. Perfect for settings, preferences, and feature toggles.
+
+**Features:**
+- Two-way binding (@bind-Checked)
+- Smooth toggle animations
+- Disabled state
+- Keyboard navigation (Space to toggle)
+- ARIA attributes
+- Form validation integration
+- Dark mode compatible
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.Switch
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/Switch
+
+---
+
+## API Reference
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Checked` | `bool` | `false` | Whether switch is on (supports @bind-Checked) |
+| `CheckedChanged` | `EventCallback<bool>` | - | Callback when state changes |
+| `Disabled` | `bool` | `false` | Whether switch is disabled |
+| `Class` | `string?` | `null` | Additional CSS classes |
+| `Id` | `string?` | `null` | HTML id for label association |
+| `AriaLabel` | `string?` | `null` | ARIA label |
+
+---
+
+## Basic Usage
+
+```razor
+<Switch @bind-Checked="isEnabled" />
+
+@code {
+    private bool isEnabled = false;
+}
+```
+
+---
+
+## Examples
+
+### Switch with Label
+
+```razor
+<div class="flex items-center space-x-2">
+    <Switch Id="notifications" @bind-Checked="notificationsEnabled" />
+    <Label For="notifications">Enable notifications</Label>
+</div>
+
+@code {
+    private bool notificationsEnabled = true;
+}
+```
+
+### Settings Page
+
+```razor
+<div class="space-y-4">
+    <div class="flex items-center justify-between">
+        <div>
+            <Label>Email Notifications</Label>
+            <p class="text-sm text-muted-foreground">
+                Receive email updates about your account
+            </p>
+        </div>
+        <Switch @bind-Checked="emailNotifications" />
+    </div>
+
+    <Separator />
+
+    <div class="flex items-center justify-between">
+        <div>
+            <Label>Push Notifications</Label>
+            <p class="text-sm text-muted-foreground">
+                Receive push notifications on your device
+            </p>
+        </div>
+        <Switch @bind-Checked="pushNotifications" />
+    </div>
+</div>
+
+@code {
+    private bool emailNotifications = true;
+    private bool pushNotifications = false;
+}
+```
+
+### Disabled State
+
+```razor
+<Switch Checked="true" Disabled="true" />
+<Switch Checked="false" Disabled="true" />
+```
+
+### With Change Handler
+
+```razor
+<Switch
+    Checked="@darkMode"
+    CheckedChanged="@HandleDarkModeToggle" />
+
+@code {
+    private bool darkMode = false;
+
+    private async Task HandleDarkModeToggle(bool value)
+    {
+        darkMode = value;
+        // Apply dark mode logic
+        await JS.InvokeVoidAsync("toggleDarkMode", value);
+    }
+}
+```
+
+---
+
+## Accessibility
+
+### Keyboard Navigation
+- **Space**: Toggle switch
+
+### With Label
+
+```razor
+<div class="flex items-center space-x-2">
+    <Switch Id="airplane-mode" />
+    <Label For="airplane-mode">Airplane Mode</Label>
+</div>
+```
+
+### Without Visible Label
+
+```razor
+<Switch AriaLabel="Toggle dark mode" />
+```
+
+---
+
+## Common Patterns
+
+### Feature Toggles
+
+```razor
+<Card>
+    <CardHeader>
+        <CardTitle>Features</CardTitle>
+    </CardHeader>
+    <CardContent Class="space-y-4">
+        <div class="flex items-center justify-between">
+            <Label>Two-Factor Authentication</Label>
+            <Switch @bind-Checked="twoFactorEnabled" />
+        </div>
+        <div class="flex items-center justify-between">
+            <Label>Marketing Emails</Label>
+            <Switch @bind-Checked="marketingEmails" />
+        </div>
+    </CardContent>
+</Card>
+
+@code {
+    private bool twoFactorEnabled = false;
+    private bool marketingEmails = true;
+}
+```
+
+### Dark Mode Toggle
+
+```razor
+<div class="flex items-center space-x-2">
+    <LucideIcon Name="sun" Size="16" />
+    <Switch @bind-Checked="isDarkMode" />
+    <LucideIcon Name="moon" Size="16" />
+</div>
+
+@code {
+    private bool isDarkMode = false;
+}
+```
+
+---
+
+## Related Components
+
+- **Checkbox** - llms/components/checkbox.txt
+- **RadioGroup** - llms/components/radio-group.txt
+- **Label** - llms/components/label.txt
+
+## Related Patterns
+
+- **Settings Page with Tabs and Forms** - llms/patterns.txt
+
+---
+
+**Last Updated:** 2025-11-16

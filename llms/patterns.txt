@@ -1,0 +1,725 @@
+# BlazorUI Common Patterns & Multi-Component Examples
+
+This guide shows real-world patterns for using multiple BlazorUI components together.
+
+---
+
+## Form with Validation
+
+Combine Field, Label, Input, and error handling for accessible forms:
+
+```razor
+@using BlazorUI.Components
+
+<EditForm Model="@model" OnValidSubmit="@HandleSubmit">
+    <DataAnnotationsValidator />
+
+    <Field>
+        <FieldLabel>Email</FieldLabel>
+        <FieldContent>
+            <Input @bind-Value="model.Email" Type="email" Placeholder="name@example.com" />
+        </FieldContent>
+        <FieldDescription>We'll never share your email with anyone else.</FieldDescription>
+        <FieldError>
+            <ValidationMessage For="@(() => model.Email)" />
+        </FieldError>
+    </Field>
+
+    <Field>
+        <FieldLabel>Password</FieldLabel>
+        <FieldContent>
+            <Input @bind-Value="model.Password" Type="password" />
+        </FieldContent>
+        <FieldDescription>Must be at least 8 characters long.</FieldDescription>
+        <FieldError>
+            <ValidationMessage For="@(() => model.Password)" />
+        </FieldError>
+    </Field>
+
+    <div class="flex items-center space-x-2">
+        <Checkbox Id="remember" @bind-Checked="model.RememberMe" />
+        <Label For="remember">Remember me</Label>
+    </div>
+
+    <Button Type="submit" Class="w-full">Sign In</Button>
+</EditForm>
+
+@code {
+    private LoginModel model = new();
+
+    private async Task HandleSubmit()
+    {
+        // Handle form submission
+    }
+
+    public class LoginModel
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = "";
+
+        [Required]
+        [MinLength(8)]
+        public string Password { get; set; } = "";
+
+        public bool RememberMe { get; set; }
+    }
+}
+```
+
+---
+
+## Dialog with Form
+
+Use Dialog to create modal forms for editing or creating data:
+
+```razor
+@using BlazorUI.Components
+
+<Dialog>
+    <DialogTrigger AsChild>
+        <Button>Edit Profile</Button>
+    </DialogTrigger>
+    <DialogContent>
+        <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogDescription>
+                Make changes to your profile here. Click save when you're done.
+            </DialogDescription>
+        </DialogHeader>
+
+        <div class="space-y-4 py-4">
+            <Field>
+                <FieldLabel>Name</FieldLabel>
+                <FieldContent>
+                    <Input @bind-Value="name" Placeholder="John Doe" />
+                </FieldContent>
+            </Field>
+
+            <Field>
+                <FieldLabel>Email</FieldLabel>
+                <FieldContent>
+                    <Input @bind-Value="email" Type="email" Placeholder="john@example.com" />
+                </FieldContent>
+            </Field>
+
+            <Field>
+                <FieldLabel>Bio</FieldLabel>
+                <FieldContent>
+                    <Textarea @bind-Value="bio" Placeholder="Tell us about yourself..." />
+                </FieldContent>
+                <FieldDescription>Brief description for your profile.</FieldDescription>
+            </Field>
+        </div>
+
+        <DialogFooter>
+            <DialogClose AsChild>
+                <Button Variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button OnClick="SaveProfile">Save Changes</Button>
+        </DialogFooter>
+    </DialogContent>
+</Dialog>
+
+@code {
+    private string name = "John Doe";
+    private string email = "john@example.com";
+    private string bio = "";
+
+    private async Task SaveProfile()
+    {
+        // Save profile changes
+        await Task.CompletedTask;
+    }
+}
+```
+
+---
+
+## Data Table with Sorting and Pagination
+
+Build powerful data tables with sorting, filtering, and pagination:
+
+```razor
+@using BlazorUI.Components
+
+<div class="space-y-4">
+    <div class="flex items-center justify-between">
+        <Input
+            @bind-Value="searchTerm"
+            Placeholder="Search users..."
+            Class="max-w-sm"
+            @oninput="FilterUsers" />
+
+        <Button OnClick="AddUser">
+            <LucideIcon Name="plus" Size="16" />
+            Add User
+        </Button>
+    </div>
+
+    <DataTable Data="@filteredUsers" @bind-State="tableState">
+        <DataTableColumn TData="User" Property="u => u.Name" Title="Name" Sortable="true" />
+        <DataTableColumn TData="User" Property="u => u.Email" Title="Email" Sortable="true" />
+        <DataTableColumn TData="User" Property="u => u.Role" Title="Role" Filterable="true">
+            <Template Context="user">
+                <Badge Variant="@GetRoleBadgeVariant(user.Role)">
+                    @user.Role
+                </Badge>
+            </Template>
+        </DataTableColumn>
+        <DataTableColumn TData="User" Property="u => u.Status" Title="Status">
+            <Template Context="user">
+                <div class="flex items-center space-x-2">
+                    <span class="@GetStatusColor(user.Status)"></span>
+                    <span>@user.Status</span>
+                </div>
+            </Template>
+        </DataTableColumn>
+        <DataTableColumn TData="User" Title="Actions">
+            <Template Context="user">
+                <DropdownMenu>
+                    <DropdownMenuTrigger AsChild>
+                        <Button Variant="ghost" Size="icon">
+                            <LucideIcon Name="more-horizontal" Size="16" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        <DropdownMenuItem OnClick="() => EditUser(user)">
+                            <LucideIcon Name="edit" Size="16" />
+                            Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem OnClick="() => DeleteUser(user)">
+                            <LucideIcon Name="trash" Size="16" />
+                            Delete
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </Template>
+        </DataTableColumn>
+    </DataTable>
+
+    <TablePagination State="@tableState" />
+</div>
+
+@code {
+    private List<User> users = new();
+    private List<User> filteredUsers = new();
+    private string searchTerm = "";
+    private TableState tableState = new();
+
+    protected override void OnInitialized()
+    {
+        users = GetUsers();
+        filteredUsers = users;
+    }
+
+    private void FilterUsers(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? "";
+        filteredUsers = users.Where(u =>
+            u.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+            u.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+        ).ToList();
+    }
+
+    private string GetRoleBadgeVariant(string role) => role switch
+    {
+        "Admin" => "destructive",
+        "Manager" => "default",
+        _ => "secondary"
+    };
+}
+```
+
+---
+
+## Sidebar Navigation
+
+Create a responsive sidebar with collapsible menus and keyboard shortcuts:
+
+```razor
+@using BlazorUI.Components
+
+<SidebarProvider>
+    <Sidebar>
+        <SidebarHeader>
+            <SidebarHeaderContent>
+                <div class="flex items-center space-x-2">
+                    <LucideIcon Name="zap" Size="20" />
+                    <span class="font-bold">My App</span>
+                </div>
+            </SidebarHeaderContent>
+        </SidebarHeader>
+
+        <SidebarContent>
+            <SidebarMenu>
+                <SidebarMenuItem>
+                    <SidebarMenuButton Href="/">
+                        <LucideIcon Name="home" Size="16" />
+                        <span>Dashboard</span>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+
+                <SidebarMenuItem>
+                    <SidebarMenuButton Href="/projects">
+                        <LucideIcon Name="folder" Size="16" />
+                        <span>Projects</span>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+
+                <SidebarMenuGroup>
+                    <SidebarMenuGroupLabel>Settings</SidebarMenuGroupLabel>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton Href="/settings/profile">
+                            <LucideIcon Name="user" Size="16" />
+                            <span>Profile</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton Href="/settings/security">
+                            <LucideIcon Name="shield" Size="16" />
+                            <span>Security</span>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenuGroup>
+            </SidebarMenu>
+        </SidebarContent>
+
+        <SidebarFooter>
+            <SidebarMenu>
+                <SidebarMenuItem>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger AsChild>
+                            <SidebarMenuButton>
+                                <Avatar>
+                                    <AvatarImage Src="@currentUser.AvatarUrl" />
+                                    <AvatarFallback>@currentUser.Initials</AvatarFallback>
+                                </Avatar>
+                                <span>@currentUser.Name</span>
+                            </SidebarMenuButton>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem>
+                                <LucideIcon Name="user" Size="16" />
+                                Profile
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                                <LucideIcon Name="settings" Size="16" />
+                                Settings
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem OnClick="SignOut">
+                                <LucideIcon Name="log-out" Size="16" />
+                                Sign Out
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </SidebarMenuItem>
+            </SidebarMenu>
+        </SidebarFooter>
+    </Sidebar>
+
+    <SidebarInset>
+        <header class="flex h-16 items-center gap-2 border-b px-4">
+            <SidebarTrigger />
+            <Separator Orientation="vertical" Class="h-6" />
+            <h1 class="text-xl font-semibold">@pageTitle</h1>
+        </header>
+
+        <main class="flex-1 p-6">
+            @Body
+        </main>
+    </SidebarInset>
+</SidebarProvider>
+
+@code {
+    private string pageTitle = "Dashboard";
+    private User currentUser = new() { Name = "John Doe", Initials = "JD" };
+
+    private void SignOut()
+    {
+        // Handle sign out
+    }
+}
+```
+
+**Note:** Sidebar supports keyboard shortcuts - press `Ctrl/Cmd+B` to toggle!
+
+---
+
+## Command Palette
+
+Build a searchable command palette for quick actions:
+
+```razor
+@using BlazorUI.Components
+
+<Dialog @bind-Open="isOpen">
+    <DialogTrigger AsChild>
+        <Button Variant="outline" Class="w-full justify-start">
+            <LucideIcon Name="search" Size="16" />
+            Search commands...
+            <kbd class="ml-auto pointer-events-none">⌘K</kbd>
+        </Button>
+    </DialogTrigger>
+    <DialogContent Class="p-0">
+        <Command>
+            <CommandInput Placeholder="Type a command or search..." />
+            <CommandList>
+                <CommandEmpty>No results found.</CommandEmpty>
+
+                <CommandGroup Heading="Suggestions">
+                    <CommandItem OnSelect="() => Navigate('/')">
+                        <LucideIcon Name="home" Size="16" />
+                        <span>Dashboard</span>
+                    </CommandItem>
+                    <CommandItem OnSelect="() => Navigate('/projects')">
+                        <LucideIcon Name="folder" Size="16" />
+                        <span>Projects</span>
+                    </CommandItem>
+                    <CommandItem OnSelect="() => Navigate('/settings')">
+                        <LucideIcon Name="settings" Size="16" />
+                        <span>Settings</span>
+                    </CommandItem>
+                </CommandGroup>
+
+                <CommandSeparator />
+
+                <CommandGroup Heading="Actions">
+                    <CommandItem OnSelect="CreateProject">
+                        <LucideIcon Name="plus" Size="16" />
+                        <span>Create Project</span>
+                        <kbd class="ml-auto">⌘N</kbd>
+                    </CommandItem>
+                    <CommandItem OnSelect="InviteUser">
+                        <LucideIcon Name="user-plus" Size="16" />
+                        <span>Invite User</span>
+                    </CommandItem>
+                </CommandGroup>
+
+                <CommandSeparator />
+
+                <CommandGroup Heading="Theme">
+                    <CommandItem OnSelect="() => SetTheme('light')">
+                        <LucideIcon Name="sun" Size="16" />
+                        <span>Light Mode</span>
+                    </CommandItem>
+                    <CommandItem OnSelect="() => SetTheme('dark')">
+                        <LucideIcon Name="moon" Size="16" />
+                        <span>Dark Mode</span>
+                    </CommandItem>
+                    <CommandItem OnSelect="() => SetTheme('system')">
+                        <LucideIcon Name="monitor" Size="16" />
+                        <span>System</span>
+                    </CommandItem>
+                </CommandGroup>
+            </CommandList>
+        </Command>
+    </DialogContent>
+</Dialog>
+
+@code {
+    private bool isOpen = false;
+
+    protected override void OnInitialized()
+    {
+        // Listen for Cmd/Ctrl+K to open command palette
+        // Implementation depends on your JS interop setup
+    }
+
+    private void Navigate(string url)
+    {
+        NavigationManager.NavigateTo(url);
+        isOpen = false;
+    }
+
+    private void CreateProject()
+    {
+        // Handle create project
+        isOpen = false;
+    }
+
+    private void InviteUser()
+    {
+        // Handle invite user
+        isOpen = false;
+    }
+
+    private void SetTheme(string theme)
+    {
+        // Handle theme change
+        isOpen = false;
+    }
+}
+```
+
+---
+
+## Settings Page with Tabs and Forms
+
+Organize complex settings using Tabs, Cards, and Forms:
+
+```razor
+@using BlazorUI.Components
+
+<div class="container max-w-4xl py-8">
+    <h1 class="text-3xl font-bold mb-8">Settings</h1>
+
+    <Tabs DefaultValue="profile">
+        <TabsList>
+            <TabsTrigger Value="profile">Profile</TabsTrigger>
+            <TabsTrigger Value="account">Account</TabsTrigger>
+            <TabsTrigger Value="notifications">Notifications</TabsTrigger>
+        </TabsList>
+
+        <TabsContent Value="profile">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Profile Information</CardTitle>
+                    <CardDescription>
+                        Update your profile information and public display.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent Class="space-y-4">
+                    <Field>
+                        <FieldLabel>Display Name</FieldLabel>
+                        <FieldContent>
+                            <Input @bind-Value="displayName" />
+                        </FieldContent>
+                    </Field>
+
+                    <Field>
+                        <FieldLabel>Email</FieldLabel>
+                        <FieldContent>
+                            <Input @bind-Value="email" Type="email" />
+                        </FieldContent>
+                        <FieldDescription>
+                            This email will be used for account notifications.
+                        </FieldDescription>
+                    </Field>
+
+                    <Field>
+                        <FieldLabel>Bio</FieldLabel>
+                        <FieldContent>
+                            <Textarea @bind-Value="bio" Rows="4" />
+                        </FieldContent>
+                        <FieldDescription>
+                            Brief description for your profile. Max 160 characters.
+                        </FieldDescription>
+                    </Field>
+                </CardContent>
+                <CardFooter>
+                    <Button OnClick="SaveProfile">Save Changes</Button>
+                </CardFooter>
+            </Card>
+        </TabsContent>
+
+        <TabsContent Value="account">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Account Settings</CardTitle>
+                    <CardDescription>
+                        Manage your account security and preferences.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent Class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <Label>Two-Factor Authentication</Label>
+                            <p class="text-sm text-muted-foreground">
+                                Add an extra layer of security to your account.
+                            </p>
+                        </div>
+                        <Switch @bind-Checked="twoFactorEnabled" />
+                    </div>
+
+                    <Separator />
+
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <Label>Email Notifications</Label>
+                            <p class="text-sm text-muted-foreground">
+                                Receive email updates about your account.
+                            </p>
+                        </div>
+                        <Switch @bind-Checked="emailNotifications" />
+                    </div>
+                </CardContent>
+            </Card>
+        </TabsContent>
+
+        <TabsContent Value="notifications">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Notification Preferences</CardTitle>
+                    <CardDescription>
+                        Choose what notifications you want to receive.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent Class="space-y-4">
+                    <div class="flex items-center space-x-2">
+                        <Checkbox Id="marketing" @bind-Checked="marketingEmails" />
+                        <Label For="marketing">Marketing emails</Label>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <Checkbox Id="updates" @bind-Checked="productUpdates" />
+                        <Label For="updates">Product updates</Label>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <Checkbox Id="security" @bind-Checked="securityAlerts" />
+                        <Label For="security">Security alerts</Label>
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <Button OnClick="SaveNotifications">Save Preferences</Button>
+                </CardFooter>
+            </Card>
+        </TabsContent>
+    </Tabs>
+</div>
+
+@code {
+    private string displayName = "John Doe";
+    private string email = "john@example.com";
+    private string bio = "";
+    private bool twoFactorEnabled = false;
+    private bool emailNotifications = true;
+    private bool marketingEmails = false;
+    private bool productUpdates = true;
+    private bool securityAlerts = true;
+
+    private void SaveProfile() { /* Save logic */ }
+    private void SaveNotifications() { /* Save logic */ }
+}
+```
+
+---
+
+## Confirmation Dialog
+
+Create reusable confirmation dialogs for destructive actions:
+
+```razor
+@using BlazorUI.Components
+
+<Dialog @bind-Open="isOpen">
+    <DialogContent>
+        <DialogHeader>
+            <DialogTitle>Are you absolutely sure?</DialogTitle>
+            <DialogDescription>
+                This action cannot be undone. This will permanently delete your
+                account and remove your data from our servers.
+            </DialogDescription>
+        </DialogHeader>
+
+        <div class="bg-destructive/10 border border-destructive/20 rounded-lg p-4 my-4">
+            <div class="flex items-start space-x-2">
+                <LucideIcon Name="alert-triangle" Size="20" Class="text-destructive mt-0.5" />
+                <div>
+                    <p class="font-medium text-destructive">Warning</p>
+                    <p class="text-sm text-muted-foreground">
+                        All of your data will be permanently deleted.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <DialogFooter>
+            <DialogClose AsChild>
+                <Button Variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button Variant="destructive" OnClick="ConfirmDelete">
+                Delete Account
+            </Button>
+        </DialogFooter>
+    </DialogContent>
+</Dialog>
+
+<Button Variant="destructive" OnClick="() => isOpen = true">
+    Delete Account
+</Button>
+
+@code {
+    private bool isOpen = false;
+
+    private async Task ConfirmDelete()
+    {
+        // Handle deletion
+        isOpen = false;
+    }
+}
+```
+
+---
+
+## Multi-Select with Popover
+
+Create a multi-select dropdown using Popover and Checkbox:
+
+```razor
+@using BlazorUI.Components
+
+<Popover>
+    <PopoverTrigger AsChild>
+        <Button Variant="outline" Class="w-64 justify-between">
+            @GetSelectedText()
+            <LucideIcon Name="chevron-down" Size="16" />
+        </Button>
+    </PopoverTrigger>
+    <PopoverContent Class="w-64 p-0">
+        <Command>
+            <CommandInput Placeholder="Search..." />
+            <CommandList>
+                <CommandEmpty>No results found.</CommandEmpty>
+                <CommandGroup>
+                    @foreach (var option in options)
+                    {
+                        <CommandItem OnSelect="() => ToggleOption(option)">
+                            <Checkbox
+                                Checked="selectedOptions.Contains(option)"
+                                Class="mr-2" />
+                            @option.Label
+                        </CommandItem>
+                    }
+                </CommandGroup>
+            </CommandList>
+        </Command>
+    </PopoverContent>
+</Popover>
+
+@code {
+    private List<Option> options = new()
+    {
+        new("React", "react"),
+        new("Vue", "vue"),
+        new("Angular", "angular"),
+        new("Svelte", "svelte"),
+        new("Blazor", "blazor")
+    };
+
+    private HashSet<Option> selectedOptions = new();
+
+    private void ToggleOption(Option option)
+    {
+        if (selectedOptions.Contains(option))
+            selectedOptions.Remove(option);
+        else
+            selectedOptions.Add(option);
+    }
+
+    private string GetSelectedText()
+    {
+        return selectedOptions.Any()
+            ? string.Join(", ", selectedOptions.Select(o => o.Label))
+            : "Select frameworks...";
+    }
+
+    record Option(string Label, string Value);
+}
+```
+
+---
+
+**Last Updated:** 2025-11-16

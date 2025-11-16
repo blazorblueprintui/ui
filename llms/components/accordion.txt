@@ -1,0 +1,244 @@
+# Accordion Component
+
+Vertically stacked collapsible content sections with smooth animations.
+
+---
+
+## Overview
+
+The Accordion component displays collapsible content sections that expand/collapse with smooth animations. Supports single or multiple open panels, keyboard navigation, and controlled/uncontrolled modes.
+
+**Features:**
+- Single or multiple panel expansion
+- Smooth expand/collapse animations
+- Keyboard navigation (Arrow keys, Home, End)
+- Controlled and uncontrolled modes
+- Disabled panels
+- ARIA attributes
+- Dark mode compatible
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.Accordion
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/Accordion
+
+---
+
+## API Reference
+
+### `<Accordion>`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Type` | `AccordionType` | `Single` | Single (one open) or Multiple (many open) |
+| `Value` | `string?` | `null` | Currently open panel(s) - supports @bind-Value |
+| `ValueChanged` | `EventCallback<string?>` | - | Callback when open panels change |
+| `DefaultValue` | `string?` | `null` | Default open panel (uncontrolled mode) |
+| `Collapsible` | `bool` | `true` | Whether panels can be collapsed (Single type only) |
+| `Disabled` | `bool` | `false` | Whether entire accordion is disabled |
+| `Class` | `string?` | `null` | Additional CSS classes |
+| `ChildContent` | `RenderFragment?` | `null` | Accordion items |
+
+### `<AccordionItem>`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Value` | `string` | **Required** | Unique identifier for this panel |
+| `Disabled` | `bool` | `false` | Whether this panel is disabled |
+
+### `<AccordionTrigger>`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `ChildContent` | `RenderFragment?` | `null` | Trigger content (usually panel title) |
+
+### `<AccordionContent>`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `ChildContent` | `RenderFragment?` | `null` | Panel content |
+
+---
+
+## Basic Usage
+
+```razor
+<Accordion>
+    <AccordionItem Value="item-1">
+        <AccordionTrigger>Is it accessible?</AccordionTrigger>
+        <AccordionContent>
+            Yes. It adheres to WCAG 2.1 AA standards.
+        </AccordionContent>
+    </AccordionItem>
+
+    <AccordionItem Value="item-2">
+        <AccordionTrigger>Is it styled?</AccordionTrigger>
+        <AccordionContent>
+            Yes. It comes with default shadcn/ui styles.
+        </AccordionContent>
+    </AccordionItem>
+</Accordion>
+```
+
+---
+
+## Examples
+
+### FAQ Accordion
+
+```razor
+<Accordion Type="AccordionType.Single" Collapsible="true">
+    <AccordionItem Value="faq-1">
+        <AccordionTrigger>What is BlazorUI?</AccordionTrigger>
+        <AccordionContent>
+            BlazorUI is a comprehensive UI component library for Blazor applications,
+            inspired by shadcn/ui design system.
+        </AccordionContent>
+    </AccordionItem>
+
+    <AccordionItem Value="faq-2">
+        <AccordionTrigger>How do I install it?</AccordionTrigger>
+        <AccordionContent>
+            Install via NuGet: dotnet add package BlazorUI.Components
+        </AccordionContent>
+    </AccordionItem>
+
+    <AccordionItem Value="faq-3">
+        <AccordionTrigger>Does it support dark mode?</AccordionTrigger>
+        <AccordionContent>
+            Yes! All components support dark mode via CSS variables.
+        </AccordionContent>
+    </AccordionItem>
+</Accordion>
+```
+
+### Multiple Panels Open
+
+```razor
+<Accordion Type="AccordionType.Multiple">
+    <AccordionItem Value="features">
+        <AccordionTrigger>Features</AccordionTrigger>
+        <AccordionContent>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>30+ styled components</li>
+                <li>Dark mode support</li>
+                <li>Fully accessible</li>
+            </ul>
+        </AccordionContent>
+    </AccordionItem>
+
+    <AccordionItem Value="installation">
+        <AccordionTrigger>Installation</AccordionTrigger>
+        <AccordionContent>
+            Run: dotnet add package BlazorUI.Components
+        </AccordionContent>
+    </AccordionItem>
+</Accordion>
+```
+
+### Controlled Accordion
+
+```razor
+<Accordion @bind-Value="openPanel">
+    <AccordionItem Value="panel-1">
+        <AccordionTrigger>Panel 1</AccordionTrigger>
+        <AccordionContent>Content 1</AccordionContent>
+    </AccordionItem>
+
+    <AccordionItem Value="panel-2">
+        <AccordionTrigger>Panel 2</AccordionTrigger>
+        <AccordionContent>Content 2</AccordionContent>
+    </AccordionItem>
+</Accordion>
+
+<p>Currently open: @openPanel</p>
+
+<Button OnClick="@(() => openPanel = "panel-2")">
+    Open Panel 2
+</Button>
+
+@code {
+    private string openPanel = "panel-1";
+}
+```
+
+### Disabled Panel
+
+```razor
+<Accordion>
+    <AccordionItem Value="enabled">
+        <AccordionTrigger>Enabled Panel</AccordionTrigger>
+        <AccordionContent>This panel can be opened</AccordionContent>
+    </AccordionItem>
+
+    <AccordionItem Value="disabled" Disabled="true">
+        <AccordionTrigger>Disabled Panel</AccordionTrigger>
+        <AccordionContent>This content is hidden</AccordionContent>
+    </AccordionItem>
+</Accordion>
+```
+
+---
+
+## Accessibility
+
+### Keyboard Navigation
+- **Tab**: Focus next trigger
+- **Shift+Tab**: Focus previous trigger
+- **Enter/Space**: Toggle panel
+- **Arrow Down**: Focus next trigger
+- **Arrow Up**: Focus previous trigger
+- **Home**: Focus first trigger
+- **End**: Focus last trigger
+
+---
+
+## Common Patterns
+
+### Settings Sections
+
+```razor
+<Accordion Type="AccordionType.Single">
+    <AccordionItem Value="profile">
+        <AccordionTrigger>Profile Settings</AccordionTrigger>
+        <AccordionContent>
+            <div class="space-y-4">
+                <Field>
+                    <FieldLabel>Name</FieldLabel>
+                    <Input @bind-Value="name" />
+                </Field>
+            </div>
+        </AccordionContent>
+    </AccordionItem>
+
+    <AccordionItem Value="security">
+        <AccordionTrigger>Security</AccordionTrigger>
+        <AccordionContent>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <Label>Two-Factor Authentication</Label>
+                    <Switch @bind-Checked="twoFactor" />
+                </div>
+            </div>
+        </AccordionContent>
+    </AccordionItem>
+</Accordion>
+```
+
+---
+
+## Related Components
+
+- **Collapsible** - llms/components/collapsible.txt
+- **Tabs** - llms/components/tabs.txt
+
+## Related Patterns
+
+- **Settings Page with Tabs and Forms** - llms/patterns.txt
+
+---
+
+**Last Updated:** 2025-11-16

@@ -1,0 +1,196 @@
+# Tabs Component
+
+Tabbed interface for organizing related content with keyboard navigation.
+
+---
+
+## Overview
+
+The Tabs component organizes content into multiple panels with tab controls. Supports controlled and uncontrolled modes, keyboard navigation, and full accessibility.
+
+**Features:**
+- Controlled and uncontrolled modes
+- Keyboard navigation (Arrow keys)
+- Disabled tabs
+- ARIA attributes
+- Horizontal orientation
+- Dark mode compatible
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.Tabs
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/Tabs
+
+---
+
+## API Reference
+
+### `<Tabs>`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Value` | `string?` | `null` | Active tab value (supports @bind-Value) |
+| `ValueChanged` | `EventCallback<string?>` | - | Callback when active tab changes |
+| `DefaultValue` | `string?` | `null` | Default active tab (uncontrolled) |
+| `ChildContent` | `RenderFragment?` | `null` | Tabs list and content |
+
+### `<TabsList>`
+
+Container for tab triggers.
+
+### `<TabsTrigger>`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Value` | `string` | **Required** | Unique value for this tab |
+| `Disabled` | `bool` | `false` | Whether tab is disabled |
+| `ChildContent` | `RenderFragment?` | `null` | Tab label |
+
+### `<TabsContent>`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Value` | `string` | **Required** | Value matching TabsTrigger |
+| `ChildContent` | `RenderFragment?` | `null` | Tab panel content |
+
+---
+
+## Basic Usage
+
+```razor
+<Tabs DefaultValue="tab1">
+    <TabsList>
+        <TabsTrigger Value="tab1">Tab 1</TabsTrigger>
+        <TabsTrigger Value="tab2">Tab 2</TabsTrigger>
+        <TabsTrigger Value="tab3">Tab 3</TabsTrigger>
+    </TabsList>
+
+    <TabsContent Value="tab1">
+        <p>Content for Tab 1</p>
+    </TabsContent>
+
+    <TabsContent Value="tab2">
+        <p>Content for Tab 2</p>
+    </TabsContent>
+
+    <TabsContent Value="tab3">
+        <p>Content for Tab 3</p>
+    </TabsContent>
+</Tabs>
+```
+
+---
+
+## Examples
+
+### Settings Tabs
+
+```razor
+<Tabs DefaultValue="profile">
+    <TabsList>
+        <TabsTrigger Value="profile">Profile</TabsTrigger>
+        <TabsTrigger Value="account">Account</TabsTrigger>
+        <TabsTrigger Value="notifications">Notifications</TabsTrigger>
+    </TabsList>
+
+    <TabsContent Value="profile">
+        <Card>
+            <CardHeader>
+                <CardTitle>Profile</CardTitle>
+                <CardDescription>Manage your profile settings</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Field>
+                    <FieldLabel>Name</FieldLabel>
+                    <Input @bind-Value="name" />
+                </Field>
+            </CardContent>
+        </Card>
+    </TabsContent>
+
+    <TabsContent Value="account">
+        <Card>
+            <CardHeader>
+                <CardTitle>Account</CardTitle>
+            </CardHeader>
+            <CardContent>
+                Account settings...
+            </CardContent>
+        </Card>
+    </TabsContent>
+
+    <TabsContent Value="notifications">
+        <Card>
+            <CardHeader>
+                <CardTitle>Notifications</CardTitle>
+            </CardHeader>
+            <CardContent>
+                Notification preferences...
+            </CardContent>
+        </Card>
+    </TabsContent>
+</Tabs>
+
+@code {
+    private string name = "";
+}
+```
+
+### Controlled Tabs
+
+```razor
+<Tabs @bind-Value="activeTab">
+    <TabsList>
+        <TabsTrigger Value="overview">Overview</TabsTrigger>
+        <TabsTrigger Value="analytics">Analytics</TabsTrigger>
+        <TabsTrigger Value="reports">Reports</TabsTrigger>
+    </TabsList>
+
+    <TabsContent Value="overview">
+        Overview content
+    </TabsContent>
+
+    <TabsContent Value="analytics">
+        Analytics content
+    </TabsContent>
+
+    <TabsContent Value="reports">
+        Reports content
+    </TabsContent>
+</Tabs>
+
+<p>Active tab: @activeTab</p>
+
+@code {
+    private string activeTab = "overview";
+}
+```
+
+---
+
+## Accessibility
+
+### Keyboard Navigation
+- **Tab**: Focus tab list
+- **Arrow Left/Right**: Navigate between tabs
+- **Home**: First tab
+- **End**: Last tab
+- **Space/Enter**: Activate focused tab
+
+---
+
+## Related Components
+
+- **Card** - llms/components/card.txt
+- **Accordion** - llms/components/accordion.txt
+
+## Related Patterns
+
+- **Settings Page with Tabs and Forms** - llms/patterns.txt
+
+---
+
+**Last Updated:** 2025-11-16

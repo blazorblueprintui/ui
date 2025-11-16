@@ -1,0 +1,75 @@
+# Combobox Component
+
+Styled autocomplete input with searchable dropdown and keyboard navigation.
+
+---
+
+## Overview
+
+The Combobox component provides an autocomplete input with searchable dropdown suggestions, keyboard navigation, and selection management.
+
+**Features:**
+- Searchable dropdown
+- Keyboard navigation
+- Single and multi-select
+- Filtering
+- Portal rendering
+- ARIA attributes
+- Dark mode compatible
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.Combobox
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/Combobox
+
+**Note:** Requires `<PortalHost />` in your layout.
+
+---
+
+## Basic Usage
+
+```razor
+<Combobox @bind-Value="selectedValue" Items="@items">
+    <ComboboxTrigger>
+        <ComboboxValue Placeholder="Select item..." />
+    </ComboboxTrigger>
+    <ComboboxContent>
+        <ComboboxInput Placeholder="Search..." />
+        <ComboboxList>
+            <ComboboxEmpty>No results found.</ComboboxEmpty>
+            @foreach (var item in items)
+            {
+                <ComboboxItem Value="@item.Value">
+                    @item.Label
+                </ComboboxItem>
+            }
+        </ComboboxList>
+    </ComboboxContent>
+</Combobox>
+
+@code {
+    private string selectedValue = "";
+    private List<SelectItem> items = new()
+    {
+        new("apple", "Apple"),
+        new("banana", "Banana"),
+        new("orange", "Orange")
+    };
+
+    record SelectItem(string Value, string Label);
+}
+```
+
+---
+
+## Related Components
+
+- **Select** - llms/components/select.txt
+- **Command** - llms/components/command.txt
+
+---
+
+**Last Updated:** 2025-11-16
