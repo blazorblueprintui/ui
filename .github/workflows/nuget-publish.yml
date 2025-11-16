@@ -96,16 +96,33 @@ jobs:
           echo "🏷️  Version: $VERSION"
 
       - name: Restore dependencies
-        run: dotnet restore ${{ steps.package-info.outputs.project_path }}
+        run: |
+          # For components package, use NuGet package references instead of project references
+          if [ "${{ steps.package-info.outputs.package }}" = "components" ]; then
+            dotnet restore ${{ steps.package-info.outputs.project_path }} -p:UsePackageReferences=true
+          else
+            dotnet restore ${{ steps.package-info.outputs.project_path }}
+          fi
 
       - name: Build
         run: |
-          dotnet build ${{ steps.package-info.outputs.project_path }} --configuration Release --no-restore
+          # For components package, use NuGet package references instead of project references
+          if [ "${{ steps.package-info.outputs.package }}" = "components" ]; then
+            dotnet build ${{ steps.package-info.outputs.project_path }} --configuration Release --no-restore -p:UsePackageReferences=true
+          else
+            dotnet build ${{ steps.package-info.outputs.project_path }} --configuration Release --no-restore
+          fi
           echo "Checking MinVer calculated version..."
           dotnet msbuild ${{ steps.package-info.outputs.project_path }} -getProperty:Version -p:Configuration=Release
 
       - name: Pack
-        run: dotnet pack ${{ steps.package-info.outputs.project_path }} --configuration Release --no-build --output ./packages
+        run: |
+          # For components package, use NuGet package references instead of project references
+          if [ "${{ steps.package-info.outputs.package }}" = "components" ]; then
+            dotnet pack ${{ steps.package-info.outputs.project_path }} --configuration Release --no-build --output ./packages -p:UsePackageReferences=true
+          else
+            dotnet pack ${{ steps.package-info.outputs.project_path }} --configuration Release --no-build --output ./packages
+          fi
 
       - name: Verify package version
         shell: bash
