@@ -55,7 +55,10 @@
   <!-- Build Tailwind CSS before packing -->
   <Target Name="BuildBlazorUICSS" BeforeTargets="BeforeBuild;BeforeRebuild;Pack">
     <Message Text="Building BlazorUI Tailwind CSS..." Importance="high" />
-    <Exec Command="$(MSBuildProjectDirectory)\..\..\tools\tailwindcss.exe -i wwwroot/css/blazorui-input.css -o wwwroot/blazorui.css --minify" />
+    <!-- Windows: Use local tailwindcss.exe -->
+    <Exec Condition="'$(OS)' == 'Windows_NT'" Command="$(MSBuildProjectDirectory)\..\..\tools\tailwindcss.exe -i wwwroot/css/blazorui-input.css -o wwwroot/blazorui.css --minify" />
+    <!-- Linux/macOS: Use @tailwindcss/cli via npx -->
+    <Exec Condition="'$(OS)' != 'Windows_NT'" Command="npx --yes @tailwindcss/cli@4.1.16 -i wwwroot/css/blazorui-input.css -o wwwroot/blazorui.css --minify" WorkingDirectory="$(MSBuildProjectDirectory)" />
   </Target>
 
 </Project>
