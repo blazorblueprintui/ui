@@ -2,18 +2,9 @@
 module.exports = {
   darkMode: ["class"],
   content: [
-    './Pages/**/*.{razor,html,cs}',
-    './Shared/**/*.{razor,html,cs}',
     './Components/**/*.{razor,html,cs}',
   ],
   theme: {
-    container: {
-      center: true,
-      padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
-    },
     extend: {
       colors: {
         border: "var(--border)",
@@ -49,11 +40,26 @@ module.exports = {
           DEFAULT: "var(--card)",
           foreground: "var(--card-foreground)",
         },
+        sidebar: {
+          DEFAULT: "var(--sidebar)",
+          foreground: "var(--sidebar-foreground)",
+          primary: "var(--sidebar-primary)",
+          "primary-foreground": "var(--sidebar-primary-foreground)",
+          accent: "var(--sidebar-accent)",
+          "accent-foreground": "var(--sidebar-accent-foreground)",
+          border: "var(--sidebar-border)",
+          ring: "var(--sidebar-ring)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      width: {
+        "sidebar": "var(--sidebar-width)",
+        "sidebar-mobile": "var(--sidebar-width-mobile)",
+        "sidebar-icon": "var(--sidebar-width-icon)",
       },
     },
   },
