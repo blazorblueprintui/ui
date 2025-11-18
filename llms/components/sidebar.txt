@@ -166,14 +166,14 @@ public enum SidebarVariant
         <SidebarContent>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton Href="/">
+                    <SidebarMenuButton Href="/" Match="NavLinkMatch.All">
                         <LucideIcon Name="house" Size="16" />
                         <span>Home</span>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
 
                 <SidebarMenuItem>
-                    <SidebarMenuButton Href="/settings">
+                    <SidebarMenuButton Href="/settings" Match="NavLinkMatch.All">
                         <LucideIcon Name="settings" Size="16" />
                         <span>Settings</span>
                     </SidebarMenuButton>
@@ -188,6 +188,80 @@ public enum SidebarVariant
         </main>
     </SidebarInset>
 </SidebarProvider>
+```
+
+---
+
+## Navigation
+
+### SidebarMenuButton Navigation
+
+The `SidebarMenuButton` component automatically detects when you want to use it for navigation:
+
+**Simple Navigation (Recommended):**
+```razor
+<SidebarMenuButton Href="/dashboard">
+    <LucideIcon Name="layout-dashboard" Size="16" />
+    <span>Dashboard</span>
+</SidebarMenuButton>
+```
+
+When you provide an `Href` property, the component automatically renders as a Blazor `NavLink` instead of a button. This enables:
+- ✅ Proper navigation behavior
+- ✅ Automatic active state detection
+- ✅ Browser history integration
+- ✅ No need to set `AsChild` parameter
+
+**Controlling Active State Matching:**
+
+Use the `Match` parameter to control how URLs are matched for active state:
+
+```razor
+<!-- Exact match - only active when URL is exactly "/" -->
+<SidebarMenuButton Href="/" Match="NavLinkMatch.All">
+    <span>Home</span>
+</SidebarMenuButton>
+
+<!-- Prefix match (default) - active when URL starts with "/settings" -->
+<SidebarMenuButton Href="/settings" Match="NavLinkMatch.Prefix">
+    <span>Settings</span>
+</SidebarMenuButton>
+```
+
+**Action Buttons (No Navigation):**
+
+If you need a button that performs an action instead of navigating, simply omit the `Href`:
+
+```razor
+<SidebarMenuButton @onclick="HandleClick">
+    <LucideIcon Name="log-out" Size="16" />
+    <span>Logout</span>
+</SidebarMenuButton>
+```
+
+### SidebarMenuSubButton Navigation
+
+The same auto-detection works for submenu buttons:
+
+```razor
+<SidebarMenuSub>
+    <SidebarMenuSubItem>
+        <SidebarMenuSubButton Href="/projects/active">
+            <span>Active Projects</span>
+        </SidebarMenuSubButton>
+    </SidebarMenuSubItem>
+</SidebarMenuSub>
+```
+
+### Advanced: Explicit AsChild Control
+
+In rare cases where you need to force button behavior even with an Href (not recommended), you can explicitly set `AsChild`:
+
+```razor
+<!-- Forces button rendering even though Href is provided -->
+<SidebarMenuButton Href="/somewhere" AsChild="SidebarMenuButtonElement.Button">
+    <span>This won't navigate</span>
+</SidebarMenuButton>
 ```
 
 ---
@@ -215,4 +289,4 @@ See **llms/patterns.txt** - Sidebar Navigation for complete examples.
 
 ---
 
-**Last Updated:** 2025-11-17
+**Last Updated:** 2025-11-18

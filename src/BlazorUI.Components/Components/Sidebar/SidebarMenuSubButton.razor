@@ -6,7 +6,13 @@
     SidebarMenuSubButton component for clickable submenu items.
 *@
 
-@if (AsChild == SidebarMenuButtonElement.Anchor)
+@{
+    // Auto-detect: if Href is provided and AsChild wasn't explicitly set to Button, render as Anchor
+    var shouldRenderAsAnchor = AsChild == SidebarMenuButtonElement.Anchor ||
+                               (!string.IsNullOrEmpty(Href) && AsChild == SidebarMenuButtonElement.Button);
+}
+
+@if (shouldRenderAsAnchor)
 {
     <NavLink href="@Href" class="@GetClasses()" data-active="@IsActive" aria-current="@(IsActive ? "page" : null)" Match="@Match" ActiveClass="data-[active=true]:bg-sidebar-accent" @attributes="AdditionalAttributes">
         @ChildContent
@@ -27,13 +33,13 @@ else
     public RenderFragment? ChildContent { get; set; }
 
     /// <summary>
-    /// The element tag to render (button or a).
+    /// The element tag to render. Defaults to Button, but automatically switches to Anchor if Href is provided.
     /// </summary>
     [Parameter]
     public SidebarMenuButtonElement AsChild { get; set; } = SidebarMenuButtonElement.Button;
 
     /// <summary>
-    /// The URL to navigate to when AsChild is "a".
+    /// The URL to navigate to. When provided, the button automatically renders as a NavLink (unless AsChild is explicitly set to Button).
     /// </summary>
     [Parameter]
     public string? Href { get; set; }
