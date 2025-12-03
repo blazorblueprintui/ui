@@ -93,11 +93,12 @@
         _context = new OtpContext(Length);
 
         // Initialize controllable state
+        // A component is controlled if it has a ValueChanged callback (for @bind-Value)
         _state = new UseControllableState<string>(DefaultValue)
         {
             ControlledValue = Value ?? DefaultValue,
             OnValueChanged = ValueChanged,
-            IsControlled = ValueChanged.HasDelegate || !string.IsNullOrEmpty(Value)
+            IsControlled = ValueChanged.HasDelegate
         };
 
         // Set initial value

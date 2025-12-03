@@ -235,26 +235,25 @@
             return;
         }
 
-        // Arrow navigation
-        var enabledItems = _menuItems.Where(item => !item.Disabled).ToList();
-        if (enabledItems.Count == 0) return;
+        // Handle navigation keys only if we have items
+        if (_menuItems.Count == 0) return;
 
         switch (args.Key)
         {
             case "ArrowDown":
-                await NavigateNext(enabledItems);
+                await NavigateNext();
                 break;
 
             case "ArrowUp":
-                await NavigatePrevious(enabledItems);
+                await NavigatePrevious();
                 break;
 
             case "Home":
-                await FocusItem(enabledItems, 0);
+                await FocusFirstEnabled();
                 break;
 
             case "End":
-                await FocusItem(enabledItems, enabledItems.Count - 1);
+                await FocusLastEnabled();
                 break;
 
             case "ArrowRight":
@@ -269,63 +268,73 @@
         }
     }
 
-    private async Task NavigateNext(List<IMenubarItem> enabledItems)
+    private async Task NavigateNext()
     {
-        if (_focusedItemIndex == -1)
+        var startIndex = _focusedItemIndex == -1 ? 0 : _focusedItemIndex + 1;
+        
+        // Search forward for next enabled item
+        for (int i = 0; i < _menuItems.Count; i++)
         {
-            await FocusItem(enabledItems, 0);
-        }
-        else
-        {
-            var currentEnabledIndex = GetEnabledItemIndex(enabledItems, _focusedItemIndex);
-            var nextIndex = currentEnabledIndex + 1;
-
-            if (nextIndex >= enabledItems.Count)
+            var index = (startIndex + i) % _menuItems.Count;
+            if (!_menuItems[index].Disabled)
             {
-                nextIndex = Loop ? 0 : enabledItems.Count - 1;
+                _focusedItemIndex = index;
+                await _menuItems[index].FocusAsync();
+                return;
             }
-
-            await FocusItem(enabledItems, nextIndex);
+            
+            // If we've wrapped around and loop is disabled, stop at last enabled
+            if (!Loop && index < startIndex) break;
         }
     }
 
-    private async Task NavigatePrevious(List<IMenubarItem> enabledItems)
+    private async Task NavigatePrevious()
     {
-        if (_focusedItemIndex == -1)
+        var startIndex = _focusedItemIndex == -1 ? _menuItems.Count - 1 : _focusedItemIndex - 1;
+        if (startIndex < 0) startIndex = _menuItems.Count - 1;
+        
+        // Search backward for previous enabled item
+        for (int i = 0; i < _menuItems.Count; i++)
         {
-            await FocusItem(enabledItems, enabledItems.Count - 1);
-        }
-        else
-        {
-            var currentEnabledIndex = GetEnabledItemIndex(enabledItems, _focusedItemIndex);
-            var prevIndex = currentEnabledIndex - 1;
-
-            if (prevIndex < 0)
+            var index = startIndex - i;
+            if (index < 0) index = _menuItems.Count + index;
+            
+            if (!_menuItems[index].Disabled)
             {
-                prevIndex = Loop ? enabledItems.Count - 1 : 0;
+                _focusedItemIndex = index;
+                await _menuItems[index].FocusAsync();
+                return;
             }
-
-            await FocusItem(enabledItems, prevIndex);
+            
+            // If we've wrapped around and loop is disabled, stop at first enabled
+            if (!Loop && index > startIndex) break;
         }
     }
 
-    private int GetEnabledItemIndex(List<IMenubarItem> enabledItems, int absoluteIndex)
+    private async Task FocusFirstEnabled()
     {
-        if (absoluteIndex < 0 || absoluteIndex >= _menuItems.Count) return -1;
-
-        var currentItem = _menuItems[absoluteIndex];
-        return enabledItems.IndexOf(currentItem);
+        for (int i = 0; i < _menuItems.Count; i++)
+        {
+            if (!_menuItems[i].Disabled)
+            {
+                _focusedItemIndex = i;
+                await _menuItems[i].FocusAsync();
+                return;
+            }
+        }
     }
 
-    private async Task FocusItem(List<IMenubarItem> enabledItems, int enabledIndex)
+    private async Task FocusLastEnabled()
     {
-        if (enabledIndex < 0 || enabledIndex >= enabledItems.Count) return;
-
-        var item = enabledItems[enabledIndex];
-        var absoluteIndex = _menuItems.IndexOf(item);
-
-        _focusedItemIndex = absoluteIndex;
-        await item.FocusAsync();
+        for (int i = _menuItems.Count - 1; i >= 0; i--)
+        {
+            if (!_menuItems[i].Disabled)
+            {
+                _focusedItemIndex = i;
+                await _menuItems[i].FocusAsync();
+                return;
+            }
+        }
     }
 
     private async Task CleanupAsync()
