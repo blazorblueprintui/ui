@@ -126,8 +126,9 @@ export function initResizeHandle(handleElement, groupElement, dotNetRef, handleI
             e.preventDefault();
             try {
                 if (dotNetRef && !dotNetRef._disposed) {
-                    dotNetRef.invokeMethodAsync('HandleDrag', handleIndex, delta);
-                    dotNetRef.invokeMethodAsync('HandleDragEnd', handleIndex);
+                    // Chain the calls to avoid race conditions
+                    dotNetRef.invokeMethodAsync('HandleDrag', handleIndex, delta)
+                        .then(() => dotNetRef.invokeMethodAsync('HandleDragEnd', handleIndex));
                 }
             } catch (error) {
                 console.error('resizable keyboard callback error:', error);
