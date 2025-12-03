@@ -1,0 +1,247 @@
+@namespace BlazorUI.Primitives.ContextMenu
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@* ContextMenuContent - the dropdown content for the context menu *@
+@if (Context.IsOpen)
+{
+    <div @ref="_contentRef"
+         id="@Context.ContentId"
+         role="menu"
+         tabindex="-1"
+         @onkeydown="HandleKeyDown"
+         @attributes="GetAttributes()"
+         aria-labelledby="@Context.TriggerId"
+         data-state="open"
+         style="@GetStyle()">
+        <CascadingValue Value="this" IsFixed="false">
+            @ChildContent
+        </CascadingValue>
+    </div>
+}
+
+@code {
+    [CascadingParameter]
+    private ContextMenuContext Context { get; set; } = null!;
+
+    private ElementReference _contentRef;
+    private IJSObjectReference? _clickOutsideModule;
+    private IJSObjectReference? _clickOutsideCleanup;
+    private DotNetObjectReference<ContextMenuContent>? _dotNetRef;
+    private bool _isInitialized = false;
+
+    /// <summary>
+    /// The content to render inside the menu.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the content container.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Whether pressing Escape should close the menu.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnEscape { get; set; } = true;
+
+    /// <summary>
+    /// Whether clicking outside should close the menu.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnClickOutside { get; set; } = true;
+
+    /// <summary>
+    /// Z-index value for the menu content.
+    /// </summary>
+    [Parameter]
+    public int ZIndex { get; set; } = 50;
+
+    // Track menu items for keyboard navigation
+    private readonly List<IContextMenuItem> _menuItems = new();
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "ContextMenuContent must be used within a ContextMenuRoot component.");
+        }
+
+        Context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Context.IsOpen && !_isInitialized)
+        {
+            _isInitialized = true;
+
+            if (CloseOnClickOutside)
+            {
+                await SetupClickOutsideAsync();
+            }
+
+            try
+            {
+                await _contentRef.FocusAsync();
+            }
+            catch
+            {
+                // Focus may fail in some scenarios
+            }
+        }
+        else if (!Context.IsOpen && _isInitialized)
+        {
+            await CleanupAsync();
+        }
+    }
+
+    private async Task SetupClickOutsideAsync()
+    {
+        try
+        {
+            _clickOutsideModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorUI.Primitives/js/primitives/click-outside.js");
+
+            _dotNetRef = DotNetObjectReference.Create(this);
+
+            _clickOutsideCleanup = await _clickOutsideModule.InvokeAsync<IJSObjectReference>(
+                "onClickOutside", _contentRef, _dotNetRef, "HandleClickOutside");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to set up click-outside: {ex.Message}");
+        }
+    }
+
+    [JSInvokable]
+    public Task HandleClickOutside()
+    {
+        if (!Context.IsOpen) return Task.CompletedTask;
+
+        if (CloseOnClickOutside)
+        {
+            Context.Close();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async void HandleContextStateChanged()
+    {
+        if (!Context.IsOpen && _isInitialized)
+        {
+            await InvokeAsync(async () =>
+            {
+                await CleanupAsync();
+                StateHasChanged();
+            });
+        }
+        else
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs args)
+    {
+        switch (args.Key)
+        {
+            case "Escape":
+                if (CloseOnEscape)
+                {
+                    Context.Close();
+                }
+                break;
+
+            case "ArrowDown":
+                Context.FocusNext();
+                break;
+
+            case "ArrowUp":
+                Context.FocusPrevious();
+                break;
+
+            case "Home":
+                Context.FocusFirst();
+                break;
+
+            case "End":
+                Context.FocusLast();
+                break;
+        }
+    }
+
+    private string GetStyle()
+    {
+        return $"position: fixed; left: {Context.X}px; top: {Context.Y}px; z-index: {ZIndex};";
+    }
+
+    private Dictionary<string, object>? GetAttributes()
+    {
+        if (AdditionalAttributes == null) return null;
+
+        var attributes = new Dictionary<string, object>(AdditionalAttributes);
+        attributes.Remove("style");
+
+        return attributes.Count > 0 ? attributes : null;
+    }
+
+    /// <summary>
+    /// Registers a menu item for keyboard navigation.
+    /// </summary>
+    public void RegisterItem(IContextMenuItem item)
+    {
+        if (!_menuItems.Contains(item))
+        {
+            _menuItems.Add(item);
+        }
+    }
+
+    /// <summary>
+    /// Unregisters a menu item.
+    /// </summary>
+    public void UnregisterItem(IContextMenuItem item)
+    {
+        _menuItems.Remove(item);
+    }
+
+    private async Task CleanupAsync()
+    {
+        _isInitialized = false;
+
+        if (_clickOutsideCleanup != null)
+        {
+            try
+            {
+                await _clickOutsideCleanup.InvokeVoidAsync("cleanup");
+                await _clickOutsideCleanup.DisposeAsync();
+            }
+            catch { }
+            _clickOutsideCleanup = null;
+        }
+
+        if (_clickOutsideModule != null)
+        {
+            try
+            {
+                await _clickOutsideModule.DisposeAsync();
+            }
+            catch { }
+            _clickOutsideModule = null;
+        }
+
+        _dotNetRef?.Dispose();
+        _dotNetRef = null;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        Context.OnStateChanged -= HandleContextStateChanged;
+        await CleanupAsync();
+    }
+}

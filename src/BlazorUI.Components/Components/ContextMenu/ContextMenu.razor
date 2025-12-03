@@ -1,0 +1,42 @@
+@namespace BlazorUI.Components.ContextMenu
+@using BlazorUI.Primitives.ContextMenu
+
+@* ContextMenu - styled context menu wrapper *@
+<ContextMenuRoot Open="@Open"
+                 OpenChanged="OpenChanged"
+                 OnOpen="OnOpen"
+                 OnClose="OnClose">
+    @ChildContent
+</ContextMenuRoot>
+
+@code {
+    /// <summary>
+    /// The child content to render.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls whether the context menu is open.
+    /// </summary>
+    [Parameter]
+    public bool? Open { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the context menu opens.
+    /// </summary>
+    [Parameter]
+    public EventCallback<(double X, double Y)> OnOpen { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the context menu closes.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+}

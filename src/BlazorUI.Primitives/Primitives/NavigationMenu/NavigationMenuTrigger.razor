@@ -1,0 +1,89 @@
+@namespace BlazorUI.Primitives.NavigationMenu
+
+@* NavigationMenuTrigger - button that opens the content panel *@
+<button type="button"
+        id="@ItemContext.TriggerId"
+        @onclick="HandleClick"
+        @onmouseenter="HandleMouseEnter"
+        @onkeydown="HandleKeyDown"
+        @attributes="AdditionalAttributes"
+        role="menuitem"
+        aria-haspopup="true"
+        aria-expanded="@IsActive.ToString().ToLowerInvariant()"
+        aria-controls="@ItemContext.ContentId"
+        data-state="@(IsActive ? "open" : "closed")">
+    @ChildContent
+</button>
+
+@code {
+    [CascadingParameter]
+    private NavigationMenuContext Context { get; set; } = null!;
+
+    [CascadingParameter]
+    private NavigationMenuItemContext ItemContext { get; set; } = null!;
+
+    /// <summary>
+    /// The child content to render within the trigger.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the button element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private bool IsActive => Context?.IsItemActive(ItemContext?.Value ?? string.Empty) ?? false;
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "NavigationMenuTrigger must be used within a NavigationMenuRoot component.");
+        }
+
+        if (ItemContext == null)
+        {
+            throw new InvalidOperationException(
+                "NavigationMenuTrigger must be used within a NavigationMenuItem component.");
+        }
+
+        Context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    private void HandleContextStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleClick()
+    {
+        if (IsActive)
+        {
+            Context.ClearActiveItem();
+        }
+        else
+        {
+            Context.SetActiveItem(ItemContext.Value);
+        }
+    }
+
+    private void HandleMouseEnter()
+    {
+        Context.SetActiveItem(ItemContext.Value);
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter" || args.Key == " ")
+        {
+            HandleClick();
+        }
+        else if (args.Key == "ArrowDown" && !IsActive)
+        {
+            Context.SetActiveItem(ItemContext.Value);
+        }
+    }
+}

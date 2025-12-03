@@ -1,0 +1,140 @@
+@namespace BlazorUI.Components.Toast
+
+@* Toast - individual toast notification *@
+<div @attributes="GetAttributes()">
+    <div class="grid gap-1">
+        @if (!string.IsNullOrEmpty(Title))
+        {
+            <ToastTitle>@Title</ToastTitle>
+        }
+        @if (!string.IsNullOrEmpty(Description))
+        {
+            <ToastDescription>@Description</ToastDescription>
+        }
+    </div>
+    @if (!string.IsNullOrEmpty(ActionLabel))
+    {
+        <ToastAction Label="@ActionLabel" OnClick="HandleAction" />
+    }
+    <ToastClose OnClick="HandleDismiss" />
+</div>
+
+@code {
+    /// <summary>
+    /// The unique identifier for this toast.
+    /// </summary>
+    [Parameter]
+    public string? Id { get; set; }
+
+    /// <summary>
+    /// The title of the toast.
+    /// </summary>
+    [Parameter]
+    public string? Title { get; set; }
+
+    /// <summary>
+    /// The description of the toast.
+    /// </summary>
+    [Parameter]
+    public string? Description { get; set; }
+
+    /// <summary>
+    /// The variant/style of the toast.
+    /// </summary>
+    [Parameter]
+    public ToastVariant Variant { get; set; } = ToastVariant.Default;
+
+    /// <summary>
+    /// The label for the action button.
+    /// </summary>
+    [Parameter]
+    public string? ActionLabel { get; set; }
+
+    /// <summary>
+    /// Callback when action button is clicked.
+    /// </summary>
+    [Parameter]
+    public Action? OnAction { get; set; }
+
+    /// <summary>
+    /// Callback when the toast is dismissed.
+    /// </summary>
+    [Parameter]
+    public Action? OnDismiss { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the toast.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the toast element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private void HandleAction()
+    {
+        OnAction?.Invoke();
+    }
+
+    private void HandleDismiss()
+    {
+        OnDismiss?.Invoke();
+    }
+
+    private string GetVariantClass()
+    {
+        return Variant switch
+        {
+            ToastVariant.Success => "border-green-500 bg-green-50 text-green-900 dark:bg-green-900 dark:text-green-50",
+            ToastVariant.Warning => "border-yellow-500 bg-yellow-50 text-yellow-900 dark:bg-yellow-900 dark:text-yellow-50",
+            ToastVariant.Destructive => "destructive group border-destructive bg-destructive text-destructive-foreground",
+            ToastVariant.Info => "border-blue-500 bg-blue-50 text-blue-900 dark:bg-blue-900 dark:text-blue-50",
+            _ => "border bg-background text-foreground"
+        };
+    }
+
+    private Dictionary<string, object> GetAttributes()
+    {
+        var baseClass = "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all " +
+                       "data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] " +
+                       "data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none " +
+                       "data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out " +
+                       "data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full " +
+                       "data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full";
+
+        var variantClass = GetVariantClass();
+        var classValue = string.IsNullOrEmpty(Class) 
+            ? $"{baseClass} {variantClass}" 
+            : $"{baseClass} {variantClass} {Class}";
+
+        var attributes = new Dictionary<string, object>
+        {
+            ["class"] = classValue,
+            ["role"] = "status",
+            ["aria-live"] = "polite",
+            ["aria-atomic"] = "true",
+            ["data-state"] = "open"
+        };
+
+        if (!string.IsNullOrEmpty(Id))
+        {
+            attributes["data-toast-id"] = Id;
+        }
+
+        if (AdditionalAttributes != null)
+        {
+            foreach (var kvp in AdditionalAttributes)
+            {
+                if (kvp.Key != "class")
+                {
+                    attributes[kvp.Key] = kvp.Value;
+                }
+            }
+        }
+
+        return attributes;
+    }
+}

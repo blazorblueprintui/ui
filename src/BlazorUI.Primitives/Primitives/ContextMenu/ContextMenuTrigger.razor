@@ -1,0 +1,49 @@
+@namespace BlazorUI.Primitives.ContextMenu
+
+@* ContextMenuTrigger - element that triggers the context menu on right-click *@
+<div @oncontextmenu="HandleContextMenu"
+     @oncontextmenu:preventDefault
+     @attributes="AdditionalAttributes"
+     id="@Context.TriggerId"
+     data-state="@(Context.IsOpen ? "open" : "closed")">
+    @ChildContent
+</div>
+
+@code {
+    [CascadingParameter]
+    private ContextMenuContext Context { get; set; } = null!;
+
+    /// <summary>
+    /// The child content that triggers the context menu.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Whether the trigger is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; } = false;
+
+    /// <summary>
+    /// Additional attributes to apply to the trigger element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "ContextMenuTrigger must be used within a ContextMenuRoot component.");
+        }
+    }
+
+    private void HandleContextMenu(MouseEventArgs args)
+    {
+        if (Disabled) return;
+
+        Context.Open(args.ClientX, args.ClientY);
+    }
+}

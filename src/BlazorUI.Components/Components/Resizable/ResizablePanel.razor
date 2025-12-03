@@ -1,0 +1,117 @@
+@namespace BlazorUI.Components.Resizable
+@implements IDisposable
+
+@* ResizablePanel - individual panel within a ResizablePanelGroup *@
+<div @attributes="GetAttributes()">
+    @ChildContent
+</div>
+
+@code {
+    [CascadingParameter]
+    private ResizablePanelGroup? Group { get; set; }
+
+    private int _index = -1;
+
+    /// <summary>
+    /// The content to render within the panel.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// The default size of the panel as a percentage.
+    /// </summary>
+    [Parameter]
+    public double? DefaultSize { get; set; }
+
+    /// <summary>
+    /// The minimum size of the panel as a percentage.
+    /// </summary>
+    [Parameter]
+    public double? MinSize { get; set; }
+
+    /// <summary>
+    /// The maximum size of the panel as a percentage.
+    /// </summary>
+    [Parameter]
+    public double? MaxSize { get; set; }
+
+    /// <summary>
+    /// Whether the panel is collapsible.
+    /// </summary>
+    [Parameter]
+    public bool Collapsible { get; set; } = false;
+
+    /// <summary>
+    /// Additional CSS classes to apply to the panel.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the panel element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Group == null)
+        {
+            throw new InvalidOperationException(
+                "ResizablePanel must be used within a ResizablePanelGroup component.");
+        }
+
+        _index = Group.RegisterPanel(this);
+    }
+
+    private double GetSize()
+    {
+        if (Group != null)
+        {
+            return Group.GetPanelSize(_index);
+        }
+        return DefaultSize ?? 50;
+    }
+
+    private string GetFlexStyle()
+    {
+        var size = GetSize();
+        return $"flex: {size} 1 0%; overflow: hidden;";
+    }
+
+    private Dictionary<string, object> GetAttributes()
+    {
+        var classValue = string.IsNullOrEmpty(Class) ? "" : Class;
+
+        var attributes = new Dictionary<string, object>
+        {
+            ["style"] = GetFlexStyle(),
+            ["data-panel"] = "",
+            ["data-panel-id"] = _index.ToString()
+        };
+
+        if (!string.IsNullOrEmpty(classValue))
+        {
+            attributes["class"] = classValue;
+        }
+
+        if (AdditionalAttributes != null)
+        {
+            foreach (var kvp in AdditionalAttributes)
+            {
+                if (kvp.Key != "style")
+                {
+                    attributes[kvp.Key] = kvp.Value;
+                }
+            }
+        }
+
+        return attributes;
+    }
+
+    public void Dispose()
+    {
+        Group?.UnregisterPanel(this);
+    }
+}

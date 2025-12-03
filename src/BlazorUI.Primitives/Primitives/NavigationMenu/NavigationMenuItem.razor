@@ -1,0 +1,62 @@
+@namespace BlazorUI.Primitives.NavigationMenu
+@implements IDisposable
+
+@* NavigationMenuItem - container for trigger and content *@
+<li role="none" @attributes="AdditionalAttributes">
+    <CascadingValue Value="@_itemContext" IsFixed="false">
+        @ChildContent
+    </CascadingValue>
+</li>
+
+@code {
+    [CascadingParameter]
+    private NavigationMenuContext Context { get; set; } = null!;
+
+    private NavigationMenuItemContext _itemContext = null!;
+
+    /// <summary>
+    /// The unique value for this item.
+    /// </summary>
+    [Parameter]
+    public string Value { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The child content to render within the item.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the list item element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "NavigationMenuItem must be used within a NavigationMenuRoot component.");
+        }
+
+        if (string.IsNullOrEmpty(Value))
+        {
+            Value = Guid.NewGuid().ToString();
+        }
+
+        Context.RegisterItem(Value);
+
+        _itemContext = new NavigationMenuItemContext
+        {
+            Value = Value,
+            TriggerId = Context.GetTriggerId(Value),
+            ContentId = Context.GetContentId(Value)
+        };
+    }
+
+    public void Dispose()
+    {
+        Context.UnregisterItem(Value);
+    }
+}

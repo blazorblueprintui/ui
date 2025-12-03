@@ -1,0 +1,47 @@
+@namespace BlazorUI.Components.Toast
+@implements IDisposable
+
+@* ToastProvider - provides toast context and renders the viewport *@
+@ChildContent
+
+<ToastViewport Position="Position" />
+
+@code {
+    [Inject]
+    private IToastService ToastService { get; set; } = null!;
+
+    /// <summary>
+    /// The content to render within the provider.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// The position of the toast viewport.
+    /// Default is BottomRight.
+    /// </summary>
+    [Parameter]
+    public ToastPosition Position { get; set; } = ToastPosition.BottomRight;
+
+    /// <summary>
+    /// Maximum number of toasts to display at once.
+    /// Default is 5.
+    /// </summary>
+    [Parameter]
+    public int MaxToasts { get; set; } = 5;
+
+    protected override void OnInitialized()
+    {
+        ToastService.OnChange += HandleToastChange;
+    }
+
+    private void HandleToastChange()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        ToastService.OnChange -= HandleToastChange;
+    }
+}

@@ -1,0 +1,101 @@
+@namespace BlazorUI.Primitives.ContextMenu
+@implements IContextMenuItem
+@implements IDisposable
+
+@* ContextMenuItem - an individual menu action *@
+<div @ref="_itemRef"
+     role="menuitem"
+     tabindex="-1"
+     @onclick="HandleClick"
+     @onkeydown="HandleKeyDown"
+     @attributes="AdditionalAttributes"
+     aria-disabled="@Disabled.ToString().ToLowerInvariant()"
+     data-disabled="@(Disabled ? "true" : null)">
+    @ChildContent
+</div>
+
+@code {
+    [CascadingParameter]
+    private ContextMenuContext Context { get; set; } = null!;
+
+    [CascadingParameter]
+    private ContextMenuContent? ContentContainer { get; set; }
+
+    private ElementReference _itemRef;
+
+    /// <summary>
+    /// The child content to render within the item.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Whether the item is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; } = false;
+
+    /// <summary>
+    /// Event callback invoked when the item is clicked.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the item element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    bool IContextMenuItem.Disabled => Disabled;
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "ContextMenuItem must be used within a ContextMenuRoot component.");
+        }
+
+        ContentContainer?.RegisterItem(this);
+        Context.RegisterItem(this);
+    }
+
+    private async Task HandleClick()
+    {
+        if (Disabled) return;
+
+        if (OnClick.HasDelegate)
+        {
+            await OnClick.InvokeAsync();
+        }
+
+        Context.Close();
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter" || args.Key == " ")
+        {
+            await HandleClick();
+        }
+    }
+
+    public async Task FocusAsync()
+    {
+        try
+        {
+            await _itemRef.FocusAsync();
+        }
+        catch
+        {
+            // Focus may fail
+        }
+    }
+
+    public void Dispose()
+    {
+        ContentContainer?.UnregisterItem(this);
+        Context.UnregisterItem(this);
+    }
+}

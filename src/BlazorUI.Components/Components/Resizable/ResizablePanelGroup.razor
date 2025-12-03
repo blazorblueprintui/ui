@@ -1,0 +1,168 @@
+@namespace BlazorUI.Components.Resizable
+
+@* ResizablePanelGroup - container for resizable panels *@
+<div @attributes="GetAttributes()">
+    <CascadingValue Value="this" IsFixed="false">
+        @ChildContent
+    </CascadingValue>
+</div>
+
+@code {
+    private readonly List<ResizablePanel> _panels = new();
+    private readonly List<double> _sizes = new();
+    private int _panelCount = 0;
+
+    /// <summary>
+    /// The content to render within the panel group.
+    /// Should contain ResizablePanel and ResizableHandle components.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// The direction of the panel layout.
+    /// Default is Horizontal.
+    /// </summary>
+    [Parameter]
+    public ResizableDirection Direction { get; set; } = ResizableDirection.Horizontal;
+
+    /// <summary>
+    /// The initial sizes of the panels as percentages (must sum to 100).
+    /// If not provided, panels will be sized equally.
+    /// </summary>
+    [Parameter]
+    public double[]? DefaultSizes { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when panel sizes change.
+    /// </summary>
+    [Parameter]
+    public EventCallback<double[]> OnLayoutChange { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the container.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the container element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    internal ResizableDirection GetDirection() => Direction;
+
+    internal int RegisterPanel(ResizablePanel panel)
+    {
+        var index = _panelCount++;
+        _panels.Add(panel);
+        
+        if (DefaultSizes != null && index < DefaultSizes.Length)
+        {
+            _sizes.Add(DefaultSizes[index]);
+        }
+        else
+        {
+            _sizes.Add(0); // Will be calculated in OnAfterRender
+        }
+        
+        return index;
+    }
+
+    internal void UnregisterPanel(ResizablePanel panel)
+    {
+        _panels.Remove(panel);
+    }
+
+    internal double GetPanelSize(int index)
+    {
+        if (DefaultSizes != null && index < DefaultSizes.Length)
+        {
+            return DefaultSizes[index];
+        }
+        
+        // Equal distribution if no default sizes
+        var panelCount = _panels.Count;
+        return panelCount > 0 ? 100.0 / panelCount : 100.0;
+    }
+
+    internal async Task ResizePanels(int handleIndex, double delta)
+    {
+        if (handleIndex < 0 || handleIndex >= _panels.Count - 1)
+            return;
+
+        var currentPanel = _panels[handleIndex];
+        var nextPanel = _panels[handleIndex + 1];
+
+        var currentSize = GetPanelSize(handleIndex);
+        var nextSize = GetPanelSize(handleIndex + 1);
+
+        var newCurrentSize = currentSize + delta;
+        var newNextSize = nextSize - delta;
+
+        // Apply min/max constraints
+        if (newCurrentSize < (currentPanel.MinSize ?? 0))
+        {
+            newCurrentSize = currentPanel.MinSize ?? 0;
+            newNextSize = currentSize + nextSize - newCurrentSize;
+        }
+        if (currentPanel.MaxSize.HasValue && newCurrentSize > currentPanel.MaxSize.Value)
+        {
+            newCurrentSize = currentPanel.MaxSize.Value;
+            newNextSize = currentSize + nextSize - newCurrentSize;
+        }
+        if (newNextSize < (nextPanel.MinSize ?? 0))
+        {
+            newNextSize = nextPanel.MinSize ?? 0;
+            newCurrentSize = currentSize + nextSize - newNextSize;
+        }
+        if (nextPanel.MaxSize.HasValue && newNextSize > nextPanel.MaxSize.Value)
+        {
+            newNextSize = nextPanel.MaxSize.Value;
+            newCurrentSize = currentSize + nextSize - newNextSize;
+        }
+
+        // Update sizes
+        if (_sizes.Count > handleIndex)
+            _sizes[handleIndex] = newCurrentSize;
+        if (_sizes.Count > handleIndex + 1)
+            _sizes[handleIndex + 1] = newNextSize;
+
+        if (OnLayoutChange.HasDelegate)
+        {
+            await OnLayoutChange.InvokeAsync(_sizes.ToArray());
+        }
+
+        StateHasChanged();
+    }
+
+    private Dictionary<string, object> GetAttributes()
+    {
+        var baseClass = Direction == ResizableDirection.Horizontal
+            ? "flex h-full w-full"
+            : "flex h-full w-full flex-col";
+
+        var classValue = string.IsNullOrEmpty(Class) ? baseClass : $"{baseClass} {Class}";
+
+        var attributes = new Dictionary<string, object>
+        {
+            ["class"] = classValue,
+            ["data-panel-group"] = "",
+            ["data-panel-group-direction"] = Direction.ToString().ToLowerInvariant()
+        };
+
+        if (AdditionalAttributes != null)
+        {
+            foreach (var kvp in AdditionalAttributes)
+            {
+                if (kvp.Key != "class")
+                {
+                    attributes[kvp.Key] = kvp.Value;
+                }
+            }
+        }
+
+        return attributes;
+    }
+}

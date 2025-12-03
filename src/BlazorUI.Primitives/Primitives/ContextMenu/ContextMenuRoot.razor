@@ -1,0 +1,91 @@
+@namespace BlazorUI.Primitives.ContextMenu
+@implements IDisposable
+
+@* ContextMenuRoot primitive component - headless context menu behavior *@
+<CascadingValue Value="@_context" IsFixed="false">
+    @ChildContent
+</CascadingValue>
+
+@code {
+    private readonly ContextMenuContext _context = new();
+
+    /// <summary>
+    /// The child content to render within the context menu context.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls whether the context menu is open (controlled mode).
+    /// </summary>
+    [Parameter]
+    public bool? Open { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the context menu opens.
+    /// </summary>
+    [Parameter]
+    public EventCallback<(double X, double Y)> OnOpen { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the context menu closes.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Open.HasValue)
+        {
+            if (Open.Value)
+            {
+                _context.Open(0, 0);
+            }
+        }
+
+        _context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Open.HasValue && _context.IsOpen != Open.Value)
+        {
+            if (Open.Value)
+            {
+                _context.Open(_context.X, _context.Y);
+            }
+            else
+            {
+                _context.Close();
+            }
+        }
+    }
+
+    private async void HandleContextStateChanged()
+    {
+        if (OpenChanged.HasDelegate)
+        {
+            await OpenChanged.InvokeAsync(_context.IsOpen);
+        }
+
+        if (_context.IsOpen && OnOpen.HasDelegate)
+        {
+            await OnOpen.InvokeAsync((_context.X, _context.Y));
+        }
+        else if (!_context.IsOpen && OnClose.HasDelegate)
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
+
+    public void Dispose()
+    {
+        _context.OnStateChanged -= HandleContextStateChanged;
+    }
+}

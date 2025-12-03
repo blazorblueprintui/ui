@@ -1,0 +1,67 @@
+@namespace BlazorUI.Components.AspectRatio
+
+@* AspectRatio - maintains a fixed aspect ratio for its children *@
+<div @attributes="GetAttributes()" style="@GetStyle()">
+    @ChildContent
+</div>
+
+@code {
+    /// <summary>
+    /// The content to render within the aspect ratio container.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// The desired aspect ratio (width / height).
+    /// Default is 1 (square). Common values: 16/9 = 1.778, 4/3 = 1.333, 1/1 = 1.
+    /// </summary>
+    [Parameter]
+    public double Ratio { get; set; } = 1.0;
+
+    /// <summary>
+    /// Additional CSS classes to apply to the container.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the container element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string GetStyle()
+    {
+        var ratioStyle = $"aspect-ratio: {Ratio.ToString(System.Globalization.CultureInfo.InvariantCulture)};";
+        
+        if (AdditionalAttributes?.TryGetValue("style", out var userStyle) == true)
+        {
+            return $"{userStyle}; {ratioStyle}";
+        }
+        
+        return ratioStyle;
+    }
+
+    private Dictionary<string, object>? GetAttributes()
+    {
+        var classValue = string.IsNullOrEmpty(Class) 
+            ? "relative w-full" 
+            : $"relative w-full {Class}";
+
+        var attributes = new Dictionary<string, object> { ["class"] = classValue };
+
+        if (AdditionalAttributes != null)
+        {
+            foreach (var kvp in AdditionalAttributes)
+            {
+                if (kvp.Key != "style" && kvp.Key != "class")
+                {
+                    attributes[kvp.Key] = kvp.Value;
+                }
+            }
+        }
+
+        return attributes;
+    }
+}

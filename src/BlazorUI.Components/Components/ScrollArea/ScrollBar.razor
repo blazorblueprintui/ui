@@ -1,0 +1,72 @@
+@namespace BlazorUI.Components.ScrollArea
+
+@* ScrollBar - styled scrollbar component *@
+<div @attributes="GetAttributes()">
+    <div class="@GetThumbClass()"></div>
+</div>
+
+@code {
+    /// <summary>
+    /// The orientation of the scrollbar.
+    /// Default is Vertical.
+    /// </summary>
+    [Parameter]
+    public Orientation Orientation { get; set; } = Orientation.Vertical;
+
+    /// <summary>
+    /// Additional CSS classes to apply to the scrollbar.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the scrollbar element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string GetBaseClass()
+    {
+        var orientationClass = Orientation == Orientation.Vertical
+            ? "h-full w-2.5 border-l border-l-transparent p-[1px]"
+            : "h-2.5 w-full border-t border-t-transparent p-[1px]";
+
+        return $"flex touch-none select-none transition-colors {orientationClass}";
+    }
+
+    private string GetThumbClass()
+    {
+        return "relative flex-1 rounded-full bg-border";
+    }
+
+    private Dictionary<string, object> GetAttributes()
+    {
+        var baseClass = GetBaseClass();
+        var classValue = string.IsNullOrEmpty(Class) ? baseClass : $"{baseClass} {Class}";
+
+        var position = Orientation == Orientation.Vertical
+            ? "absolute right-0 top-0 bottom-0"
+            : "absolute left-0 right-0 bottom-0";
+
+        classValue = $"{position} {classValue}";
+
+        var attributes = new Dictionary<string, object>
+        {
+            ["class"] = classValue,
+            ["data-orientation"] = Orientation.ToString().ToLowerInvariant()
+        };
+
+        if (AdditionalAttributes != null)
+        {
+            foreach (var kvp in AdditionalAttributes)
+            {
+                if (kvp.Key != "class")
+                {
+                    attributes[kvp.Key] = kvp.Value;
+                }
+            }
+        }
+
+        return attributes;
+    }
+}

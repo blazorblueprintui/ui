@@ -1,0 +1,117 @@
+@namespace BlazorUI.Primitives.NavigationMenu
+@implements IDisposable
+
+@* NavigationMenuRoot primitive component - headless navigation behavior *@
+<nav @attributes="AdditionalAttributes"
+     @onkeydown="HandleKeyDown"
+     role="navigation"
+     aria-label="@AriaLabel">
+    <CascadingValue Value="@_context" IsFixed="false">
+        @ChildContent
+    </CascadingValue>
+</nav>
+
+@code {
+    private readonly NavigationMenuContext _context = new();
+
+    /// <summary>
+    /// The child content to render within the navigation context.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls which item is active/open (controlled mode).
+    /// When null, the navigation manages its own state (uncontrolled mode).
+    /// </summary>
+    [Parameter]
+    public string? Value { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the active item changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    /// <summary>
+    /// The orientation of the navigation menu.
+    /// Default is Horizontal.
+    /// </summary>
+    [Parameter]
+    public NavigationMenuOrientation Orientation { get; set; } = NavigationMenuOrientation.Horizontal;
+
+    /// <summary>
+    /// The accessible label for the navigation.
+    /// Default is "Main".
+    /// </summary>
+    [Parameter]
+    public string AriaLabel { get; set; } = "Main";
+
+    /// <summary>
+    /// Delay in milliseconds before showing content on hover.
+    /// Default is 200.
+    /// </summary>
+    [Parameter]
+    public int DelayDuration { get; set; } = 200;
+
+    /// <summary>
+    /// Additional attributes to apply to the nav element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _context.State.Orientation = Orientation;
+        
+        if (!string.IsNullOrEmpty(Value))
+        {
+            _context.State.ActiveValue = Value;
+        }
+
+        _context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        _context.State.Orientation = Orientation;
+
+        if (Value != null && _context.ActiveValue != Value)
+        {
+            _context.State.ActiveValue = Value;
+        }
+    }
+
+    private async void HandleContextStateChanged()
+    {
+        if (ValueChanged.HasDelegate)
+        {
+            await ValueChanged.InvokeAsync(_context.ActiveValue);
+        }
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs args)
+    {
+        switch (args.Key)
+        {
+            case "ArrowRight" when Orientation == NavigationMenuOrientation.Horizontal:
+            case "ArrowDown" when Orientation == NavigationMenuOrientation.Vertical:
+                _context.NavigateNext();
+                break;
+
+            case "ArrowLeft" when Orientation == NavigationMenuOrientation.Horizontal:
+            case "ArrowUp" when Orientation == NavigationMenuOrientation.Vertical:
+                _context.NavigatePrevious();
+                break;
+
+            case "Escape":
+                _context.ClearActiveItem();
+                break;
+        }
+    }
+
+    public void Dispose()
+    {
+        _context.OnStateChanged -= HandleContextStateChanged;
+    }
+}

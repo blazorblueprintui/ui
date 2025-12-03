@@ -1,0 +1,32 @@
+@namespace BlazorUI.Components.ContextMenu
+
+@* ContextMenuShortcut - keyboard shortcut hint *@
+<span class="@GetClass()" @attributes="AdditionalAttributes">
+    @ChildContent
+</span>
+
+@code {
+    /// <summary>
+    /// The shortcut text (e.g., "⌘C" or "Ctrl+C").
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string GetClass()
+    {
+        var baseClass = "ml-auto text-xs tracking-widest text-muted-foreground";
+        return string.IsNullOrEmpty(Class) ? baseClass : $"{baseClass} {Class}";
+    }
+}

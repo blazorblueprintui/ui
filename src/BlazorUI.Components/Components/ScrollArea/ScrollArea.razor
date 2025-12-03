@@ -1,0 +1,92 @@
+@namespace BlazorUI.Components.ScrollArea
+
+@* ScrollArea - styled scrollable region with custom scrollbars *@
+<div @attributes="GetRootAttributes()">
+    <div class="h-full w-full rounded-[inherit]" style="overflow: scroll;">
+        <div style="min-width: 100%; display: table;">
+            @ChildContent
+        </div>
+    </div>
+    @if (ShowVerticalScrollbar)
+    {
+        <ScrollBar Orientation="Orientation.Vertical" />
+    }
+    @if (ShowHorizontalScrollbar)
+    {
+        <ScrollBar Orientation="Orientation.Horizontal" />
+    }
+    @if (ShowVerticalScrollbar && ShowHorizontalScrollbar)
+    {
+        <div class="absolute right-0 bottom-0 h-2.5 w-2.5 bg-transparent"></div>
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// The content to render within the scrollable area.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// The type of scrollbar to show.
+    /// Default is Auto (scrollbars visible when content overflows).
+    /// </summary>
+    [Parameter]
+    public ScrollAreaType Type { get; set; } = ScrollAreaType.Auto;
+
+    /// <summary>
+    /// Controls the visibility delay of scrollbars in milliseconds.
+    /// Only applies when Type is Scroll or Hover.
+    /// Default is 600ms.
+    /// </summary>
+    [Parameter]
+    public int ScrollHideDelay { get; set; } = 600;
+
+    /// <summary>
+    /// Whether to show the vertical scrollbar.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool ShowVerticalScrollbar { get; set; } = true;
+
+    /// <summary>
+    /// Whether to show the horizontal scrollbar.
+    /// Default is false.
+    /// </summary>
+    [Parameter]
+    public bool ShowHorizontalScrollbar { get; set; } = false;
+
+    /// <summary>
+    /// Additional CSS classes to apply to the root element.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private Dictionary<string, object> GetRootAttributes()
+    {
+        var baseClass = "relative overflow-hidden";
+        var classValue = string.IsNullOrEmpty(Class) ? baseClass : $"{baseClass} {Class}";
+
+        var attributes = new Dictionary<string, object> { ["class"] = classValue };
+
+        if (AdditionalAttributes != null)
+        {
+            foreach (var kvp in AdditionalAttributes)
+            {
+                if (kvp.Key != "class")
+                {
+                    attributes[kvp.Key] = kvp.Value;
+                }
+            }
+        }
+
+        return attributes;
+    }
+}

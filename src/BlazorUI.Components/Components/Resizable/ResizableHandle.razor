@@ -1,0 +1,112 @@
+@namespace BlazorUI.Components.Resizable
+
+@* ResizableHandle - draggable handle between panels *@
+<div @attributes="GetAttributes()"
+     @onmousedown="HandleMouseDown"
+     @onmousedown:stopPropagation>
+    @if (WithHandle)
+    {
+        <div class="z-10 flex h-4 w-3 items-center justify-center rounded-sm border bg-border">
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="@GetGripIconClass()">
+                <circle cx="12" cy="5" r="1"></circle>
+                <circle cx="12" cy="12" r="1"></circle>
+                <circle cx="12" cy="19" r="1"></circle>
+                <circle cx="19" cy="5" r="1"></circle>
+                <circle cx="19" cy="12" r="1"></circle>
+                <circle cx="19" cy="19" r="1"></circle>
+                <circle cx="5" cy="5" r="1"></circle>
+                <circle cx="5" cy="12" r="1"></circle>
+                <circle cx="5" cy="19" r="1"></circle>
+            </svg>
+        </div>
+    }
+</div>
+
+@code {
+    [CascadingParameter]
+    private ResizablePanelGroup? Group { get; set; }
+
+    /// <summary>
+    /// The index of the handle (zero-based, between panels).
+    /// </summary>
+    [Parameter]
+    public int Index { get; set; }
+
+    /// <summary>
+    /// Whether to show a visual grip handle.
+    /// Default is false.
+    /// </summary>
+    [Parameter]
+    public bool WithHandle { get; set; } = false;
+
+    /// <summary>
+    /// Additional CSS classes to apply to the handle.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the handle element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    // Note: _isDragging and _startPosition are used for drag operations
+    // Full drag implementation would require JS interop for mouse move events
+    private bool _isDragging = false;
+
+    private string GetGripIconClass()
+    {
+        if (Group?.GetDirection() == ResizableDirection.Vertical)
+        {
+            return "rotate-90";
+        }
+        return "";
+    }
+
+    private Dictionary<string, object> GetAttributes()
+    {
+        var direction = Group?.GetDirection() ?? ResizableDirection.Horizontal;
+        var baseClass = "relative flex w-px items-center justify-center bg-border " +
+                       "after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2 " +
+                       "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 " +
+                       "data-[panel-group-direction=vertical]:h-px data-[panel-group-direction=vertical]:w-full " +
+                       "data-[panel-group-direction=vertical]:after:left-0 data-[panel-group-direction=vertical]:after:h-1 " +
+                       "data-[panel-group-direction=vertical]:after:w-full data-[panel-group-direction=vertical]:after:-translate-y-1/2 " +
+                       "data-[panel-group-direction=vertical]:after:translate-x-0 " +
+                       "[&[data-panel-group-direction=vertical]>div]:rotate-90";
+
+        var classValue = string.IsNullOrEmpty(Class) ? baseClass : $"{baseClass} {Class}";
+
+        var attributes = new Dictionary<string, object>
+        {
+            ["class"] = classValue,
+            ["role"] = "separator",
+            ["tabindex"] = "0",
+            ["data-panel-resize-handle-enabled"] = "true",
+            ["data-panel-resize-handle-id"] = Index.ToString(),
+            ["data-panel-group-direction"] = direction.ToString().ToLowerInvariant(),
+            ["style"] = "cursor: " + (direction == ResizableDirection.Horizontal ? "col-resize" : "row-resize") + ";"
+        };
+
+        if (AdditionalAttributes != null)
+        {
+            foreach (var kvp in AdditionalAttributes)
+            {
+                if (kvp.Key != "class" && kvp.Key != "style")
+                {
+                    attributes[kvp.Key] = kvp.Value;
+                }
+            }
+        }
+
+        return attributes;
+    }
+
+    private void HandleMouseDown(MouseEventArgs e)
+    {
+        _isDragging = true;
+        // Full drag implementation would require JS interop for mouse move/up events
+        // to track the delta and call Group?.ResizePanels()
+    }
+}

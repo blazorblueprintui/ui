@@ -1,0 +1,26 @@
+@namespace BlazorUI.Components.Toast
+
+@* ToastTitle - title text of a toast *@
+<div class="@GetClass()">
+    @ChildContent
+</div>
+
+@code {
+    /// <summary>
+    /// The title content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    private string GetClass()
+    {
+        var baseClass = "text-sm font-semibold";
+        return string.IsNullOrEmpty(Class) ? baseClass : $"{baseClass} {Class}";
+    }
+}

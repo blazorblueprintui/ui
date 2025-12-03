@@ -1,0 +1,63 @@
+@namespace BlazorUI.Primitives.NavigationMenu
+
+@* NavigationMenuContent - dropdown content panel *@
+@if (IsActive)
+{
+    <div id="@ItemContext.ContentId"
+         @onmouseleave="HandleMouseLeave"
+         @attributes="AdditionalAttributes"
+         role="menu"
+         aria-labelledby="@ItemContext.TriggerId"
+         data-state="open">
+        @ChildContent
+    </div>
+}
+
+@code {
+    [CascadingParameter]
+    private NavigationMenuContext Context { get; set; } = null!;
+
+    [CascadingParameter]
+    private NavigationMenuItemContext ItemContext { get; set; } = null!;
+
+    /// <summary>
+    /// The child content to render within the content panel.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the content element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private bool IsActive => Context?.IsItemActive(ItemContext?.Value ?? string.Empty) ?? false;
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "NavigationMenuContent must be used within a NavigationMenuRoot component.");
+        }
+
+        if (ItemContext == null)
+        {
+            throw new InvalidOperationException(
+                "NavigationMenuContent must be used within a NavigationMenuItem component.");
+        }
+
+        Context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    private void HandleContextStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleMouseLeave()
+    {
+        Context.ClearActiveItem();
+    }
+}

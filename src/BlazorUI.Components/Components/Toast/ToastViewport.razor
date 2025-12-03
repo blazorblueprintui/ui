@@ -1,0 +1,95 @@
+@namespace BlazorUI.Components.Toast
+@implements IDisposable
+
+@* ToastViewport - container that displays active toasts *@
+<div @attributes="GetAttributes()">
+    @foreach (var toast in ToastService.Toasts)
+    {
+        <Toast 
+            Id="@toast.Id"
+            Title="@toast.Title"
+            Description="@toast.Description"
+            Variant="@toast.Variant"
+            ActionLabel="@toast.ActionLabel"
+            OnAction="@toast.OnAction"
+            OnDismiss="@(() => ToastService.Dismiss(toast.Id))" />
+    }
+</div>
+
+@code {
+    [Inject]
+    private IToastService ToastService { get; set; } = null!;
+
+    /// <summary>
+    /// The position of the viewport.
+    /// Default is BottomRight.
+    /// </summary>
+    [Parameter]
+    public ToastPosition Position { get; set; } = ToastPosition.BottomRight;
+
+    /// <summary>
+    /// Additional CSS classes to apply to the viewport.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the viewport element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override void OnInitialized()
+    {
+        ToastService.OnChange += HandleToastChange;
+    }
+
+    private void HandleToastChange()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private string GetPositionClass()
+    {
+        return Position switch
+        {
+            ToastPosition.TopLeft => "top-0 left-0",
+            ToastPosition.TopCenter => "top-0 left-1/2 -translate-x-1/2",
+            ToastPosition.TopRight => "top-0 right-0",
+            ToastPosition.BottomLeft => "bottom-0 left-0",
+            ToastPosition.BottomCenter => "bottom-0 left-1/2 -translate-x-1/2",
+            ToastPosition.BottomRight => "bottom-0 right-0",
+            _ => "bottom-0 right-0"
+        };
+    }
+
+    private Dictionary<string, object> GetAttributes()
+    {
+        var baseClass = $"fixed z-[100] flex max-h-screen w-full flex-col-reverse p-4 sm:flex-col md:max-w-[420px] {GetPositionClass()}";
+        var classValue = string.IsNullOrEmpty(Class) ? baseClass : $"{baseClass} {Class}";
+
+        var attributes = new Dictionary<string, object>
+        {
+            ["class"] = classValue,
+            ["data-toast-viewport"] = ""
+        };
+
+        if (AdditionalAttributes != null)
+        {
+            foreach (var kvp in AdditionalAttributes)
+            {
+                if (kvp.Key != "class")
+                {
+                    attributes[kvp.Key] = kvp.Value;
+                }
+            }
+        }
+
+        return attributes;
+    }
+
+    public void Dispose()
+    {
+        ToastService.OnChange -= HandleToastChange;
+    }
+}

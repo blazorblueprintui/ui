@@ -1,0 +1,317 @@
+@namespace BlazorUI.Components.Calendar
+@using System.Globalization
+
+@* Calendar - accessible month/day grid for date selection *@
+<div @attributes="GetAttributes()" role="application" aria-label="Calendar">
+    @* Header with navigation *@
+    <div class="flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
+        <div class="space-y-4">
+            @* Month navigation *@
+            <div class="relative flex w-full items-center justify-between pt-1">
+                <button type="button"
+                        @onclick="PreviousMonth"
+                        disabled="@(!CanNavigatePrevious)"
+                        class="@GetNavButtonClass()"
+                        aria-label="Go to previous month">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m15 18-6-6 6-6"/>
+                    </svg>
+                </button>
+                <div class="text-sm font-medium" aria-live="polite">
+                    @DisplayedMonth.ToString("MMMM yyyy", Culture)
+                </div>
+                <button type="button"
+                        @onclick="NextMonth"
+                        disabled="@(!CanNavigateNext)"
+                        class="@GetNavButtonClass()"
+                        aria-label="Go to next month">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m9 18 6-6-6-6"/>
+                    </svg>
+                </button>
+            </div>
+
+            @* Day grid *@
+            <table class="w-full border-collapse space-y-1" role="grid" aria-label="@DisplayedMonth.ToString("MMMM yyyy", Culture)">
+                <thead>
+                    <tr class="flex">
+                        @foreach (var dayName in GetDayNames())
+                        {
+                            <th scope="col" class="text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]">
+                                @dayName
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var week in GetWeeks())
+                    {
+                        <tr class="flex w-full mt-2">
+                            @foreach (var day in week)
+                            {
+                                <td class="relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md">
+                                    @if (day.HasValue)
+                                    {
+                                        <button type="button"
+                                                @onclick="@(() => SelectDate(day.Value))"
+                                                disabled="@(!IsDateEnabled(day.Value))"
+                                                class="@GetDayClass(day.Value)"
+                                                aria-label="@day.Value.ToString("D", Culture)"
+                                                aria-selected="@IsSelected(day.Value)">
+                                            @day.Value.Day
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="h-9 w-9"></span>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    private DateOnly _displayedMonth;
+    
+    /// <summary>
+    /// The currently selected date.
+    /// </summary>
+    [Parameter]
+    public DateOnly? SelectedDate { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the selected date changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<DateOnly?> SelectedDateChanged { get; set; }
+
+    /// <summary>
+    /// The minimum selectable date.
+    /// </summary>
+    [Parameter]
+    public DateOnly? MinDate { get; set; }
+
+    /// <summary>
+    /// The maximum selectable date.
+    /// </summary>
+    [Parameter]
+    public DateOnly? MaxDate { get; set; }
+
+    /// <summary>
+    /// The culture to use for formatting.
+    /// Default is the current culture.
+    /// </summary>
+    [Parameter]
+    public CultureInfo Culture { get; set; } = CultureInfo.CurrentCulture;
+
+    /// <summary>
+    /// The initial month to display.
+    /// Defaults to the selected date's month or current month.
+    /// </summary>
+    [Parameter]
+    public DateOnly? InitialMonth { get; set; }
+
+    /// <summary>
+    /// Function to determine if a specific date is disabled.
+    /// </summary>
+    [Parameter]
+    public Func<DateOnly, bool>? IsDateDisabled { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the calendar.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the calendar element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private DateOnly DisplayedMonth => _displayedMonth;
+
+    protected override void OnInitialized()
+    {
+        _displayedMonth = InitialMonth ?? SelectedDate ?? DateOnly.FromDateTime(DateTime.Today);
+        _displayedMonth = new DateOnly(_displayedMonth.Year, _displayedMonth.Month, 1);
+    }
+
+    protected override void OnParametersSet()
+    {
+        // If selected date changes and is in a different month, navigate to it
+        if (SelectedDate.HasValue)
+        {
+            var selectedMonth = new DateOnly(SelectedDate.Value.Year, SelectedDate.Value.Month, 1);
+            if (selectedMonth != _displayedMonth)
+            {
+                _displayedMonth = selectedMonth;
+            }
+        }
+    }
+
+    private bool CanNavigatePrevious =>
+        !MinDate.HasValue || 
+        new DateOnly(_displayedMonth.Year, _displayedMonth.Month, 1).AddMonths(-1) >= new DateOnly(MinDate.Value.Year, MinDate.Value.Month, 1);
+
+    private bool CanNavigateNext =>
+        !MaxDate.HasValue ||
+        new DateOnly(_displayedMonth.Year, _displayedMonth.Month, 1).AddMonths(1) <= new DateOnly(MaxDate.Value.Year, MaxDate.Value.Month, 1);
+
+    private void PreviousMonth()
+    {
+        if (CanNavigatePrevious)
+        {
+            _displayedMonth = _displayedMonth.AddMonths(-1);
+        }
+    }
+
+    private void NextMonth()
+    {
+        if (CanNavigateNext)
+        {
+            _displayedMonth = _displayedMonth.AddMonths(1);
+        }
+    }
+
+    private async Task SelectDate(DateOnly date)
+    {
+        if (!IsDateEnabled(date)) return;
+
+        await SelectedDateChanged.InvokeAsync(date);
+    }
+
+    private bool IsSelected(DateOnly date) => SelectedDate.HasValue && SelectedDate.Value == date;
+
+    private bool IsToday(DateOnly date) => date == DateOnly.FromDateTime(DateTime.Today);
+
+    private bool IsCurrentMonth(DateOnly date) => 
+        date.Year == _displayedMonth.Year && date.Month == _displayedMonth.Month;
+
+    private bool IsDateEnabled(DateOnly date)
+    {
+        if (MinDate.HasValue && date < MinDate.Value) return false;
+        if (MaxDate.HasValue && date > MaxDate.Value) return false;
+        if (IsDateDisabled != null && IsDateDisabled(date)) return false;
+        return true;
+    }
+
+    private IEnumerable<string> GetDayNames()
+    {
+        var firstDayOfWeek = Culture.DateTimeFormat.FirstDayOfWeek;
+        var dayNames = Culture.DateTimeFormat.AbbreviatedDayNames;
+        
+        for (int i = 0; i < 7; i++)
+        {
+            var index = ((int)firstDayOfWeek + i) % 7;
+            yield return dayNames[index].Substring(0, 2);
+        }
+    }
+
+    private IEnumerable<DateOnly?[]> GetWeeks()
+    {
+        var firstDayOfWeek = Culture.DateTimeFormat.FirstDayOfWeek;
+        var firstOfMonth = new DateOnly(_displayedMonth.Year, _displayedMonth.Month, 1);
+        var daysInMonth = DateTime.DaysInMonth(_displayedMonth.Year, _displayedMonth.Month);
+
+        var currentDate = firstOfMonth;
+        var dayOfWeek = (int)currentDate.DayOfWeek;
+        var firstDayOffset = (dayOfWeek - (int)firstDayOfWeek + 7) % 7;
+
+        var weeks = new List<DateOnly?[]>();
+        var week = new DateOnly?[7];
+
+        // Fill in empty days before the first of the month
+        for (int i = 0; i < firstDayOffset; i++)
+        {
+            week[i] = null;
+        }
+
+        // Fill in the days of the month
+        for (int day = 1; day <= daysInMonth; day++)
+        {
+            var date = new DateOnly(_displayedMonth.Year, _displayedMonth.Month, day);
+            var position = (firstDayOffset + day - 1) % 7;
+
+            if (position == 0 && day > 1)
+            {
+                weeks.Add(week);
+                week = new DateOnly?[7];
+            }
+
+            week[position] = date;
+        }
+
+        // Add the last week
+        weeks.Add(week);
+
+        return weeks;
+    }
+
+    private string GetNavButtonClass()
+    {
+        return "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors " +
+               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 " +
+               "disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground " +
+               "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 absolute left-1";
+    }
+
+    private string GetDayClass(DateOnly date)
+    {
+        var baseClass = "inline-flex h-9 w-9 items-center justify-center whitespace-nowrap rounded-md text-sm font-normal ring-offset-background transition-colors " +
+                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 " +
+                       "disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground";
+
+        var classes = new List<string> { baseClass };
+
+        if (IsSelected(date))
+        {
+            classes.Add("bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground");
+        }
+        else if (IsToday(date))
+        {
+            classes.Add("bg-accent text-accent-foreground");
+        }
+
+        if (!IsCurrentMonth(date))
+        {
+            classes.Add("text-muted-foreground opacity-50");
+        }
+
+        if (!IsDateEnabled(date))
+        {
+            classes.Add("text-muted-foreground opacity-50");
+        }
+
+        return string.Join(" ", classes);
+    }
+
+    private Dictionary<string, object> GetAttributes()
+    {
+        var baseClass = "p-3";
+        var classValue = string.IsNullOrEmpty(Class) ? baseClass : $"{baseClass} {Class}";
+
+        var attributes = new Dictionary<string, object>
+        {
+            ["class"] = classValue
+        };
+
+        if (AdditionalAttributes != null)
+        {
+            foreach (var kvp in AdditionalAttributes)
+            {
+                if (kvp.Key != "class")
+                {
+                    attributes[kvp.Key] = kvp.Value;
+                }
+            }
+        }
+
+        return attributes;
+    }
+}

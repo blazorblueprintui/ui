@@ -1,0 +1,73 @@
+@namespace BlazorUI.Primitives.NavigationMenu
+
+@* NavigationMenuLink - a link within a navigation menu *@
+<a @attributes="GetAttributes()"
+   role="menuitem"
+   @onclick="HandleClick"
+   data-active="@Active.ToString().ToLowerInvariant()">
+    @ChildContent
+</a>
+
+@code {
+    [CascadingParameter]
+    private NavigationMenuContext? Context { get; set; }
+
+    /// <summary>
+    /// The href for the link.
+    /// </summary>
+    [Parameter]
+    public string Href { get; set; } = "#";
+
+    /// <summary>
+    /// Whether the link is currently active.
+    /// </summary>
+    [Parameter]
+    public bool Active { get; set; } = false;
+
+    /// <summary>
+    /// The child content to render within the link.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the link is clicked.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the anchor element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private async Task HandleClick()
+    {
+        // Close the menu when a link is clicked
+        Context?.ClearActiveItem();
+        
+        if (OnClick.HasDelegate)
+        {
+            await OnClick.InvokeAsync();
+        }
+    }
+
+    private Dictionary<string, object> GetAttributes()
+    {
+        var attributes = new Dictionary<string, object>
+        {
+            ["href"] = Href
+        };
+
+        if (AdditionalAttributes != null)
+        {
+            foreach (var kvp in AdditionalAttributes)
+            {
+                attributes[kvp.Key] = kvp.Value;
+            }
+        }
+
+        return attributes;
+    }
+}
