@@ -204,14 +204,7 @@ public class OtpContext : PrimitiveContextWithEvents<OtpState>
         {
             for (int i = 0; i < state.Slots.Length; i++)
             {
-                if (i < value.Length)
-                {
-                    state.Slots[i] = value[i];
-                }
-                else
-                {
-                    state.Slots[i] = '\0';
-                }
+                state.Slots[i] = (i < value.Length) ? value[i] : '\0';
             }
             // Focus the next empty slot or the last slot
             state.FocusedIndex = Math.Min(value.Length, state.Slots.Length - 1);

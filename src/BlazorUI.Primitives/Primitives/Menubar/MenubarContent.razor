@@ -100,7 +100,7 @@
     private bool _isInitialized = false;
 
     // Track menu items for keyboard navigation
-    private List<IMenubarItem> _menuItems = new();
+    private readonly List<IMenubarItem> _menuItems = new();
     private int _focusedItemIndex = -1;
 
     protected override void OnInitialized()
@@ -283,8 +283,10 @@
                 return;
             }
             
-            // If we've wrapped around and loop is disabled, stop at last enabled
-            if (!Loop && index < startIndex) break;
+            // Wrap-around detection: if loop is disabled and we've moved past our start point
+            // (meaning we've searched all items after startIndex and wrapped to beginning),
+            // stop to prevent infinite looping
+            if (!Loop && i > 0 && index <= startIndex) break;
         }
     }
 
@@ -306,8 +308,17 @@
                 return;
             }
             
-            // If we've wrapped around and loop is disabled, stop at first enabled
+            // Wrap-around detection: if loop is disabled and we've moved past our start point
+            // (meaning we've searched all items before startIndex and wrapped to end),
+            // stop to prevent infinite looping
             if (!Loop && index > startIndex) break;
+        }
+        
+        // Fallback: if no enabled item was found in the search direction,
+        // keep focus on current item if it's valid and enabled
+        if (_focusedItemIndex >= 0 && _focusedItemIndex < _menuItems.Count && !_menuItems[_focusedItemIndex].Disabled)
+        {
+            await _menuItems[_focusedItemIndex].FocusAsync();
         }
     }
 

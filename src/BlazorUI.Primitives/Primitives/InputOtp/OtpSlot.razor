@@ -199,15 +199,16 @@
 
     private async Task HandlePastedValue(string value)
     {
-        // Filter to valid characters only
-        var filtered = "";
+        // Filter to valid characters only using StringBuilder for efficiency
+        var sb = new System.Text.StringBuilder();
         foreach (var c in value)
         {
             if (Root == null || Root.IsValidChar(c))
             {
-                filtered += c;
+                sb.Append(c);
             }
         }
+        var filtered = sb.ToString();
 
         if (!string.IsNullOrEmpty(filtered))
         {

@@ -12,7 +12,7 @@
 </CascadingValue>
 
 @code {
-    private MenubarContext _context = new();
+    private readonly MenubarContext _context = new();
     private UseControllableState<int> _state = null!;
 
     /// <summary>
@@ -131,7 +131,9 @@
 
             case "ArrowDown":
                 // Open the focused menu if not already open
-                if (_context.ActiveIndex < 0 && _context.Menus.Count > 0)
+                if (_context.ActiveIndex < 0
+                    && _context.FocusedTriggerIndex >= 0
+                    && _context.FocusedTriggerIndex < _context.Menus.Count)
                 {
                     _context.OpenMenu(_context.FocusedTriggerIndex);
                 }

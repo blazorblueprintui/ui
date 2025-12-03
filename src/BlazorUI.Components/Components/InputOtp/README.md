@@ -68,7 +68,8 @@ A one-time password (OTP) input component with individual slots for each charact
     <InputOtpGroup>
         @for (int i = 0; i < 6; i++)
         {
-            <InputOtpSlot Index="i" />
+            var index = i;
+            <InputOtpSlot Index="index" />
         }
     </InputOtpGroup>
 </InputOtp>
@@ -99,7 +100,8 @@ A one-time password (OTP) input component with individual slots for each charact
     <InputOtpGroup>
         @for (int i = 0; i < 6; i++)
         {
-            <InputOtpSlot Index="i" />
+            var index = i;
+            <InputOtpSlot Index="index" />
         }
     </InputOtpGroup>
 </InputOtp>
@@ -112,7 +114,8 @@ A one-time password (OTP) input component with individual slots for each charact
     <InputOtpGroup>
         @for (int i = 0; i < 6; i++)
         {
-            <InputOtpSlot Index="i" />
+            var index = i;
+            <InputOtpSlot Index="index" />
         }
     </InputOtpGroup>
 </InputOtp>
