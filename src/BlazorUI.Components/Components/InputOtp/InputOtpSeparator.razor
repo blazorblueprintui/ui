@@ -1,0 +1,37 @@
+@namespace BlazorUI.Components.InputOtp
+
+@* InputOtpSeparator - visual separator between OTP slot groups *@
+<div role="separator" class="@CssClass">
+    @if (ChildContent != null)
+    {
+        @ChildContent
+    }
+    else
+    {
+        <span>-</span>
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// Optional custom content for the separator.
+    /// If not provided, displays a dash "-".
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the separator.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    private string CssClass
+    {
+        get
+        {
+            var baseClasses = "flex items-center justify-center text-muted-foreground";
+            return string.IsNullOrWhiteSpace(Class) ? baseClasses : $"{baseClasses} {Class}";
+        }
+    }
+}

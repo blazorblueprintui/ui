@@ -1,0 +1,36 @@
+@namespace BlazorUI.Components.InputOtp
+@using BlazorUI.Primitives.InputOtp
+
+@* Styled InputOtpSlot - wrapper with shadcn Tailwind classes *@
+<BlazorUI.Primitives.InputOtp.OtpSlot class="@CssClass"
+                                        Index="@Index" />
+
+@code {
+    /// <summary>
+    /// The index of this slot (0-based).
+    /// </summary>
+    [Parameter]
+    public int Index { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the slot.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    private string CssClass
+    {
+        get
+        {
+            var baseClasses = "relative flex h-10 w-10 items-center justify-center " +
+                            "border-y border-r border-input text-sm " +
+                            "transition-all " +
+                            "first:rounded-l-md first:border-l " +
+                            "last:rounded-r-md " +
+                            "focus:z-10 focus:ring-2 focus:ring-ring focus:ring-offset-background " +
+                            "disabled:cursor-not-allowed disabled:opacity-50 " +
+                            "data-[active=true]:ring-2 data-[active=true]:ring-ring";
+            return string.IsNullOrWhiteSpace(Class) ? baseClasses : $"{baseClasses} {Class}";
+        }
+    }
+}

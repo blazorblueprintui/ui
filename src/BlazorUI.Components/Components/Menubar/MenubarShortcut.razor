@@ -1,0 +1,29 @@
+@namespace BlazorUI.Components.Menubar
+
+@* Styled MenubarShortcut - displays keyboard shortcut hint *@
+<span class="@CssClass">
+    @ChildContent
+</span>
+
+@code {
+    /// <summary>
+    /// Additional CSS classes to apply to the shortcut.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// The content to be rendered inside the shortcut (e.g., "⌘K", "Ctrl+S").
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private string CssClass
+    {
+        get
+        {
+            var baseClasses = "ml-auto text-xs tracking-widest text-muted-foreground";
+            return string.IsNullOrWhiteSpace(Class) ? baseClasses : $"{baseClasses} {Class}";
+        }
+    }
+}

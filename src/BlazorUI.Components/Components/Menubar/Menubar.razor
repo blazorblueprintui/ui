@@ -1,0 +1,69 @@
+@namespace BlazorUI.Components.Menubar
+@using BlazorUI.Primitives.Menubar
+
+@* Styled Menubar component - thin wrapper around Menubar primitive *@
+<BlazorUI.Primitives.Menubar.MenubarRoot class="@CssClass"
+                                          ActiveIndex="@ActiveIndex"
+                                          ActiveIndexChanged="@ActiveIndexChanged"
+                                          DefaultActiveIndex="@DefaultActiveIndex"
+                                          OnActiveIndexChange="@OnActiveIndexChange"
+                                          Loop="@Loop">
+    @ChildContent
+</BlazorUI.Primitives.Menubar.MenubarRoot>
+
+@code {
+    /// <summary>
+    /// The child content to render within the menubar.
+    /// Typically includes MenubarMenu components.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the menubar.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Controls which menu is active/open (controlled mode).
+    /// When null, the menubar manages its own state.
+    /// </summary>
+    [Parameter]
+    public int? ActiveIndex { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the active index changes.
+    /// Use with @bind-ActiveIndex for two-way binding.
+    /// </summary>
+    [Parameter]
+    public EventCallback<int> ActiveIndexChanged { get; set; }
+
+    /// <summary>
+    /// Default active index when in uncontrolled mode.
+    /// </summary>
+    [Parameter]
+    public int DefaultActiveIndex { get; set; } = -1;
+
+    /// <summary>
+    /// Event callback invoked when the active menu changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<int> OnActiveIndexChange { get; set; }
+
+    /// <summary>
+    /// Whether keyboard loop navigation is enabled.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool Loop { get; set; } = true;
+
+    private string CssClass
+    {
+        get
+        {
+            var baseClasses = "flex h-10 items-center space-x-1 rounded-md border bg-background p-1";
+            return string.IsNullOrWhiteSpace(Class) ? baseClasses : $"{baseClasses} {Class}";
+        }
+    }
+}

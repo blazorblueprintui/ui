@@ -1,0 +1,29 @@
+@namespace BlazorUI.Components.InputOtp
+
+@* InputOtpGroup - groups slots together with optional separator styling *@
+<div class="@CssClass">
+    @ChildContent
+</div>
+
+@code {
+    /// <summary>
+    /// The child content, typically InputOtpSlot components.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the group.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    private string CssClass
+    {
+        get
+        {
+            var baseClasses = "flex items-center";
+            return string.IsNullOrWhiteSpace(Class) ? baseClasses : $"{baseClasses} {Class}";
+        }
+    }
+}

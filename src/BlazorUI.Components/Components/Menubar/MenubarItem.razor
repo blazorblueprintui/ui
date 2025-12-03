@@ -1,0 +1,71 @@
+@namespace BlazorUI.Components.Menubar
+@using BlazorUI.Primitives.Menubar
+
+@* Styled MenubarItem - wrapper with shadcn Tailwind classes *@
+<BlazorUI.Primitives.Menubar.MenubarItem class="@CssClass"
+                                          Disabled="@Disabled"
+                                          OnClick="@OnClick"
+                                          CloseOnSelect="@CloseOnSelect">
+    @ChildContent
+</BlazorUI.Primitives.Menubar.MenubarItem>
+
+@code {
+    /// <summary>
+    /// The content to display inside the menu item.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the menu item.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Whether the menu item is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; } = false;
+
+    /// <summary>
+    /// Custom click handler.
+    /// </summary>
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnClick { get; set; }
+
+    /// <summary>
+    /// Whether to close the menu when this item is selected.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnSelect { get; set; } = true;
+
+    /// <summary>
+    /// Whether this menu item represents an inset item (has additional left padding).
+    /// </summary>
+    [Parameter]
+    public bool Inset { get; set; } = false;
+
+    private string CssClass
+    {
+        get
+        {
+            var baseClasses = "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 " +
+                            "text-sm outline-none " +
+                            "focus:bg-accent focus:text-accent-foreground " +
+                            "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50";
+
+            if (Inset)
+            {
+                baseClasses += " pl-8";
+            }
+
+            if (!Disabled)
+            {
+                baseClasses += " hover:bg-accent hover:text-accent-foreground";
+            }
+
+            return string.IsNullOrWhiteSpace(Class) ? baseClasses : $"{baseClasses} {Class}";
+        }
+    }
+}

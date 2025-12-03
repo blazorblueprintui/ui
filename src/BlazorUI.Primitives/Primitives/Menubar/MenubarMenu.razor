@@ -1,0 +1,44 @@
+@namespace BlazorUI.Primitives.Menubar
+@implements IDisposable
+
+@* MenubarMenu - groups a trigger and content as a single menu entry *@
+<CascadingValue Value="@_menuContext" IsFixed="false">
+    @ChildContent
+</CascadingValue>
+
+@code {
+    [CascadingParameter]
+    private MenubarContext Context { get; set; } = null!;
+
+    private MenubarMenuContext _menuContext = null!;
+    private static int _menuCounter = 0;
+
+    /// <summary>
+    /// The child content, typically MenubarTrigger and MenubarContent.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "MenubarMenu must be used within a MenubarRoot component. " +
+                "Ensure MenubarMenu is a child of a MenubarRoot component.");
+        }
+
+        // Create a unique context for this menu
+        var menuId = Interlocked.Increment(ref _menuCounter).ToString();
+        _menuContext = new MenubarMenuContext(Context, menuId);
+        
+        // Register with parent and get index
+        Context.RegisterMenu(_menuContext);
+        _menuContext.Index = Context.Menus.Count - 1;
+    }
+
+    public void Dispose()
+    {
+        Context?.UnregisterMenu(_menuContext);
+    }
+}

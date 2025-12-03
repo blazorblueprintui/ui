@@ -1,0 +1,224 @@
+@page "/components/input-otp"
+@using BlazorUI.Components.InputOtp
+
+<PageTitle>Input OTP Component - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Input OTP Component</h1>
+            <p class="text-xl text-muted-foreground">
+                A one-time password input with individual character slots. Commonly used for verification codes and two-factor authentication.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic 6-Digit OTP -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Basic 6-Digit OTP</h2>
+        <p class="text-sm text-muted-foreground">
+            A standard 6-digit OTP input with two groups of 3 digits separated by a dash.
+        </p>
+
+        <div class="flex flex-col gap-4">
+            <InputOtp Length="6" @bind-Value="basicOtp" OnComplete="HandleBasicComplete">
+                <InputOtpGroup>
+                    <InputOtpSlot Index="0" />
+                    <InputOtpSlot Index="1" />
+                    <InputOtpSlot Index="2" />
+                </InputOtpGroup>
+                <InputOtpSeparator />
+                <InputOtpGroup>
+                    <InputOtpSlot Index="3" />
+                    <InputOtpSlot Index="4" />
+                    <InputOtpSlot Index="5" />
+                </InputOtpGroup>
+            </InputOtp>
+
+            <div class="text-sm space-y-1">
+                <p>Current value: <strong>@(string.IsNullOrEmpty(basicOtp) ? "(empty)" : basicOtp)</strong></p>
+                @if (basicComplete)
+                {
+                    <p class="text-green-600">✓ OTP Complete!</p>
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- 4-Digit PIN -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">4-Digit PIN</h2>
+        <p class="text-sm text-muted-foreground">
+            A simple 4-digit PIN input without separators.
+        </p>
+
+        <div class="flex flex-col gap-4">
+            <InputOtp Length="4" @bind-Value="pinValue">
+                <InputOtpGroup>
+                    <InputOtpSlot Index="0" />
+                    <InputOtpSlot Index="1" />
+                    <InputOtpSlot Index="2" />
+                    <InputOtpSlot Index="3" />
+                </InputOtpGroup>
+            </InputOtp>
+
+            <p class="text-sm">PIN value: <strong>@(string.IsNullOrEmpty(pinValue) ? "(empty)" : pinValue)</strong></p>
+        </div>
+    </section>
+
+    <!-- With Pattern Validation -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Alphanumeric Code</h2>
+        <p class="text-sm text-muted-foreground">
+            This OTP input accepts both letters and numbers using a custom pattern.
+        </p>
+
+        <div class="flex flex-col gap-4">
+            <InputOtp Length="6" Pattern="[A-Za-z0-9]" @bind-Value="alphaOtp">
+                <InputOtpGroup>
+                    <InputOtpSlot Index="0" />
+                    <InputOtpSlot Index="1" />
+                    <InputOtpSlot Index="2" />
+                </InputOtpGroup>
+                <InputOtpSeparator />
+                <InputOtpGroup>
+                    <InputOtpSlot Index="3" />
+                    <InputOtpSlot Index="4" />
+                    <InputOtpSlot Index="5" />
+                </InputOtpGroup>
+            </InputOtp>
+
+            <p class="text-sm">Alphanumeric code: <strong>@(string.IsNullOrEmpty(alphaOtp) ? "(empty)" : alphaOtp)</strong></p>
+        </div>
+    </section>
+
+    <!-- Disabled State -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Disabled State</h2>
+        <p class="text-sm text-muted-foreground">
+            The OTP input can be disabled to prevent user interaction.
+        </p>
+
+        <div class="flex flex-col gap-4">
+            <InputOtp Length="6" Disabled="true" Value="123456">
+                <InputOtpGroup>
+                    <InputOtpSlot Index="0" />
+                    <InputOtpSlot Index="1" />
+                    <InputOtpSlot Index="2" />
+                </InputOtpGroup>
+                <InputOtpSeparator />
+                <InputOtpGroup>
+                    <InputOtpSlot Index="3" />
+                    <InputOtpSlot Index="4" />
+                    <InputOtpSlot Index="5" />
+                </InputOtpGroup>
+            </InputOtp>
+
+            <p class="text-sm text-muted-foreground">This input is disabled and cannot be edited.</p>
+        </div>
+    </section>
+
+    <!-- Controlled with Callback -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Controlled with Verification</h2>
+        <p class="text-sm text-muted-foreground">
+            This example shows controlled mode with a simulated verification process when the OTP is complete.
+        </p>
+
+        <div class="flex flex-col gap-4">
+            <InputOtp Length="6" 
+                      @bind-Value="controlledOtp" 
+                      OnComplete="HandleVerification">
+                <InputOtpGroup>
+                    <InputOtpSlot Index="0" />
+                    <InputOtpSlot Index="1" />
+                    <InputOtpSlot Index="2" />
+                </InputOtpGroup>
+                <InputOtpSeparator />
+                <InputOtpGroup>
+                    <InputOtpSlot Index="3" />
+                    <InputOtpSlot Index="4" />
+                    <InputOtpSlot Index="5" />
+                </InputOtpGroup>
+            </InputOtp>
+
+            <div class="text-sm space-y-1">
+                <p>Current value: <strong>@(string.IsNullOrEmpty(controlledOtp) ? "(empty)" : controlledOtp)</strong></p>
+                @if (isVerifying)
+                {
+                    <p class="text-yellow-600">Verifying...</p>
+                }
+                else if (verificationResult != null)
+                {
+                    <p class="@(verificationResult.Value ? "text-green-600" : "text-red-600")">
+                        @(verificationResult.Value ? "✓ Verification successful!" : "✗ Invalid code. Try '123456'")
+                    </p>
+                }
+            </div>
+
+            <p class="text-xs text-muted-foreground">
+                Hint: Enter <strong>123456</strong> for successful verification.
+            </p>
+        </div>
+    </section>
+
+    <!-- Keyboard Navigation -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Keyboard Navigation</h2>
+        <p class="text-sm text-muted-foreground">
+            The OTP input supports full keyboard navigation:
+        </p>
+        <ul class="text-sm text-muted-foreground list-disc list-inside space-y-1">
+            <li><kbd class="px-1 py-0.5 bg-muted rounded text-xs">←</kbd> / <kbd class="px-1 py-0.5 bg-muted rounded text-xs">→</kbd> to navigate between slots</li>
+            <li><kbd class="px-1 py-0.5 bg-muted rounded text-xs">Backspace</kbd> to clear and move to previous slot</li>
+            <li><kbd class="px-1 py-0.5 bg-muted rounded text-xs">Delete</kbd> to clear current slot</li>
+            <li><kbd class="px-1 py-0.5 bg-muted rounded text-xs">Home</kbd> / <kbd class="px-1 py-0.5 bg-muted rounded text-xs">End</kbd> to jump to first/last slot</li>
+            <li>Paste a complete code to auto-fill all slots</li>
+        </ul>
+
+        <InputOtp Length="6" @bind-Value="keyboardOtp">
+            <InputOtpGroup>
+                <InputOtpSlot Index="0" />
+                <InputOtpSlot Index="1" />
+                <InputOtpSlot Index="2" />
+                <InputOtpSlot Index="3" />
+                <InputOtpSlot Index="4" />
+                <InputOtpSlot Index="5" />
+            </InputOtpGroup>
+        </InputOtp>
+
+        <p class="text-sm">Value: <strong>@(string.IsNullOrEmpty(keyboardOtp) ? "(empty)" : keyboardOtp)</strong></p>
+    </section>
+</div>
+
+@code {
+    private string basicOtp = "";
+    private bool basicComplete = false;
+    
+    private string pinValue = "";
+    private string alphaOtp = "";
+    private string keyboardOtp = "";
+    
+    private string controlledOtp = "";
+    private bool isVerifying = false;
+    private bool? verificationResult = null;
+
+    private void HandleBasicComplete(string value)
+    {
+        basicComplete = true;
+    }
+
+    private async Task HandleVerification(string value)
+    {
+        isVerifying = true;
+        verificationResult = null;
+        StateHasChanged();
+
+        // Simulate API call
+        await Task.Delay(1000);
+
+        // Verify (123456 is the "correct" code)
+        verificationResult = value == "123456";
+        isVerifying = false;
+    }
+}

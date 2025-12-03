@@ -1,0 +1,190 @@
+@namespace BlazorUI.Primitives.InputOtp
+@implements IDisposable
+
+@* OtpRoot primitive component - headless, unstyled OTP input behavior *@
+<CascadingValue Value="this">
+    <CascadingValue Value="@_context" IsFixed="false">
+        <div role="group"
+             id="@_context.ContainerId"
+             aria-label="@AriaLabel"
+             @attributes="AdditionalAttributes">
+            @ChildContent
+        </div>
+    </CascadingValue>
+</CascadingValue>
+
+@code {
+    private OtpContext _context = null!;
+    private UseControllableState<string> _state = null!;
+
+    /// <summary>
+    /// The child content to render within the OTP context.
+    /// Typically includes OtpSlot components.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// The number of OTP slots.
+    /// Default is 6.
+    /// </summary>
+    [Parameter]
+    public int Length { get; set; } = 6;
+
+    /// <summary>
+    /// Controls the OTP value (controlled mode).
+    /// When null, the component manages its own state (uncontrolled mode).
+    /// </summary>
+    [Parameter]
+    public string? Value { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the OTP value changes.
+    /// Use with @bind-Value for two-way binding.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    /// <summary>
+    /// Default value when in uncontrolled mode.
+    /// </summary>
+    [Parameter]
+    public string DefaultValue { get; set; } = "";
+
+    /// <summary>
+    /// Event callback invoked when the OTP value changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> OnValueChange { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the OTP is complete (all slots filled).
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> OnComplete { get; set; }
+
+    /// <summary>
+    /// Pattern for input validation (e.g., "[0-9]" for digits only).
+    /// Default is digits only.
+    /// </summary>
+    [Parameter]
+    public string Pattern { get; set; } = "[0-9]";
+
+    /// <summary>
+    /// Whether the OTP input is disabled.
+    /// Default is false.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; } = false;
+
+    /// <summary>
+    /// ARIA label for the OTP input group.
+    /// </summary>
+    [Parameter]
+    public string AriaLabel { get; set; } = "One-time password";
+
+    /// <summary>
+    /// Additional attributes to apply to the container element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override void OnInitialized()
+    {
+        // Initialize context with the specified length
+        _context = new OtpContext(Length);
+
+        // Initialize controllable state
+        // A component is controlled if it has a ValueChanged callback (for @bind-Value)
+        _state = new UseControllableState<string>(DefaultValue)
+        {
+            ControlledValue = Value ?? DefaultValue,
+            OnValueChanged = ValueChanged,
+            IsControlled = ValueChanged.HasDelegate
+        };
+
+        // Set initial value
+        if (!string.IsNullOrEmpty(_state.Value))
+        {
+            _context.SetValue(_state.Value);
+        }
+
+        // Set disabled state
+        _context.SetDisabled(Disabled);
+
+        // Subscribe to context state changes
+        _context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Update controlled value if it changed
+        if (_state.IsControlled && Value != null && Value != _state.ControlledValue)
+        {
+            _state.ControlledValue = Value;
+            _context.SetValue(Value);
+        }
+
+        // Update disabled state
+        if (_context.IsDisabled != Disabled)
+        {
+            _context.SetDisabled(Disabled);
+        }
+    }
+
+    private async void HandleContextStateChanged()
+    {
+        var newValue = _context.Value;
+
+        if (_state.Value != newValue)
+        {
+            await InvokeAsync(async () =>
+            {
+                await _state.SetValueAsync(newValue);
+
+                // Invoke additional callback if provided
+                if (OnValueChange.HasDelegate)
+                {
+                    await OnValueChange.InvokeAsync(newValue);
+                }
+
+                // Check if complete
+                if (_context.IsComplete && OnComplete.HasDelegate)
+                {
+                    await OnComplete.InvokeAsync(newValue);
+                }
+
+                StateHasChanged();
+            });
+        }
+        else
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    /// <summary>
+    /// Validates if a character matches the pattern.
+    /// </summary>
+    internal bool IsValidChar(char c)
+    {
+        if (string.IsNullOrEmpty(Pattern))
+        {
+            return true;
+        }
+
+        try
+        {
+            return System.Text.RegularExpressions.Regex.IsMatch(c.ToString(), Pattern);
+        }
+        catch
+        {
+            return true; // If pattern is invalid, accept all characters
+        }
+    }
+
+    public void Dispose()
+    {
+        _context.OnStateChanged -= HandleContextStateChanged;
+    }
+}

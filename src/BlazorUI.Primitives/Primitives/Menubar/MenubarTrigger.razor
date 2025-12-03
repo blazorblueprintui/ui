@@ -1,0 +1,101 @@
+@namespace BlazorUI.Primitives.Menubar
+
+@* MenubarTrigger - opens the associated menu when clicked *@
+<button type="button"
+        id="@MenuContext.TriggerId"
+        @ref="@_triggerRef"
+        @onclick="HandleClick"
+        @onkeydown="HandleKeyDown"
+        @onfocus="HandleFocus"
+        @attributes="AdditionalAttributes"
+        role="menuitem"
+        aria-haspopup="menu"
+        aria-expanded="@MenuContext.IsOpen.ToString().ToLower()"
+        aria-controls="@MenuContext.ContentId"
+        data-state="@(MenuContext.IsOpen ? "open" : "closed")"
+        tabindex="@(IsFocused ? 0 : -1)"
+        disabled="@Disabled"
+        aria-disabled="@Disabled.ToString().ToLower()">
+    @ChildContent
+</button>
+
+@code {
+    [CascadingParameter]
+    private MenubarContext Context { get; set; } = null!;
+
+    [CascadingParameter]
+    private MenubarMenuContext MenuContext { get; set; } = null!;
+
+    private ElementReference _triggerRef;
+
+    /// <summary>
+    /// The content to display inside the trigger button.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the trigger button element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Whether the trigger is disabled.
+    /// Default is false.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; } = false;
+
+    /// <summary>
+    /// Gets whether this trigger is currently focused.
+    /// </summary>
+    private bool IsFocused => Context.FocusedTriggerIndex == MenuContext.Index;
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "MenubarTrigger must be used within a MenubarRoot component. " +
+                "Ensure MenubarTrigger is a child of a MenubarMenu within a MenubarRoot.");
+        }
+
+        if (MenuContext == null)
+        {
+            throw new InvalidOperationException(
+                "MenubarTrigger must be used within a MenubarMenu component. " +
+                "Ensure MenubarTrigger is a child of a MenubarMenu component.");
+        }
+    }
+
+    private void HandleClick(MouseEventArgs args)
+    {
+        if (Disabled) return;
+        MenuContext.Toggle();
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (Disabled) return;
+
+        switch (args.Key)
+        {
+            case "Enter":
+            case " ":
+                MenuContext.Toggle();
+                break;
+            case "ArrowDown":
+                if (!MenuContext.IsOpen)
+                {
+                    MenuContext.Open();
+                }
+                break;
+        }
+    }
+
+    private void HandleFocus()
+    {
+        Context.SetFocusedTriggerIndex(MenuContext.Index);
+    }
+}

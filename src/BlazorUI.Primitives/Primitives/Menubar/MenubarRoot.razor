@@ -1,0 +1,152 @@
+@namespace BlazorUI.Primitives.Menubar
+@implements IDisposable
+
+@* MenubarRoot primitive component - headless, unstyled behavior only *@
+<CascadingValue Value="@_context" IsFixed="false">
+    <div role="menubar"
+         id="@_context.MenubarId"
+         @onkeydown="HandleKeyDown"
+         @attributes="AdditionalAttributes">
+        @ChildContent
+    </div>
+</CascadingValue>
+
+@code {
+    private readonly MenubarContext _context = new();
+    private UseControllableState<int> _state = null!;
+
+    /// <summary>
+    /// The child content to render within the menubar context.
+    /// Typically includes MenubarMenu components.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls which menu is active/open (controlled mode).
+    /// When null, the menubar manages its own state (uncontrolled mode).
+    /// -1 means no menu is open.
+    /// </summary>
+    [Parameter]
+    public int? ActiveIndex { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the active index changes.
+    /// Use with @bind-ActiveIndex for two-way binding.
+    /// </summary>
+    [Parameter]
+    public EventCallback<int> ActiveIndexChanged { get; set; }
+
+    /// <summary>
+    /// Default active index when in uncontrolled mode.
+    /// Default is -1 (no menu open).
+    /// </summary>
+    [Parameter]
+    public int DefaultActiveIndex { get; set; } = -1;
+
+    /// <summary>
+    /// Event callback invoked when the active menu changes.
+    /// Receives the new active index as a parameter (-1 means closed).
+    /// </summary>
+    [Parameter]
+    public EventCallback<int> OnActiveIndexChange { get; set; }
+
+    /// <summary>
+    /// Whether keyboard loop navigation is enabled (wrap from last to first menu).
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool Loop { get; set; } = true;
+
+    /// <summary>
+    /// Additional attributes to apply to the menubar container element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override void OnInitialized()
+    {
+        // Initialize controllable state
+        _state = new UseControllableState<int>(DefaultActiveIndex)
+        {
+            ControlledValue = ActiveIndex ?? DefaultActiveIndex,
+            OnValueChanged = ActiveIndexChanged,
+            IsControlled = ActiveIndex.HasValue
+        };
+
+        // Sync initial state to context
+        _context.State.ActiveIndex = _state.Value;
+
+        // Subscribe to context state changes
+        _context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Update controlled value if it changed
+        if (_state.IsControlled && ActiveIndex.HasValue)
+        {
+            _state.ControlledValue = ActiveIndex.Value;
+            _context.State.ActiveIndex = ActiveIndex.Value;
+        }
+    }
+
+    private void HandleContextStateChanged()
+    {
+        // When context state changes (e.g., from menu interaction),
+        // update the controllable state
+        var newActiveIndex = _context.State.ActiveIndex;
+
+        if (_state.Value != newActiveIndex)
+        {
+            _ = _state.SetValueAsync(newActiveIndex);
+
+            // Invoke additional callback if provided
+            if (OnActiveIndexChange.HasDelegate)
+            {
+                _ = OnActiveIndexChange.InvokeAsync(newActiveIndex);
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs args)
+    {
+        switch (args.Key)
+        {
+            case "ArrowRight":
+                if (Loop || _context.FocusedTriggerIndex < _context.Menus.Count - 1)
+                {
+                    _context.FocusNextTrigger();
+                }
+                break;
+
+            case "ArrowLeft":
+                if (Loop || _context.FocusedTriggerIndex > 0)
+                {
+                    _context.FocusPreviousTrigger();
+                }
+                break;
+
+            case "ArrowDown":
+                // Open the focused menu if not already open
+                if (_context.ActiveIndex < 0
+                    && _context.FocusedTriggerIndex >= 0
+                    && _context.FocusedTriggerIndex < _context.Menus.Count)
+                {
+                    _context.OpenMenu(_context.FocusedTriggerIndex);
+                }
+                break;
+
+            case "Escape":
+                _context.CloseMenu();
+                break;
+        }
+    }
+
+    public void Dispose()
+    {
+        _context.OnStateChanged -= HandleContextStateChanged;
+    }
+}

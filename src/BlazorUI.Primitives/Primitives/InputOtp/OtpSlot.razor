@@ -1,0 +1,238 @@
+@namespace BlazorUI.Primitives.InputOtp
+
+@* OtpSlot - individual input slot for a single OTP character *@
+<input @ref="_inputRef"
+       type="text"
+       inputmode="numeric"
+       autocomplete="one-time-code"
+       id="@Context.GetSlotId(Index)"
+       maxlength="@(Index == 0 ? Context.Length : 1)"
+       value="@DisplayValue"
+       disabled="@Context.IsDisabled"
+       @oninput="HandleInput"
+       @onkeydown="HandleKeyDown"
+       @onfocus="HandleFocus"
+       @onpaste="HandlePaste"
+       @attributes="AdditionalAttributes"
+       aria-label="@AriaLabel"
+       data-slot="@Index"
+       data-active="@IsActive.ToString().ToLower()"
+       data-filled="@IsFilled.ToString().ToLower()" />
+
+@code {
+    [CascadingParameter]
+    private OtpContext Context { get; set; } = null!;
+
+    [CascadingParameter]
+    private OtpRoot? Root { get; set; }
+
+    private ElementReference _inputRef;
+
+    /// <summary>
+    /// The index of this slot (0-based).
+    /// </summary>
+    [Parameter]
+    public int Index { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the input element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Gets the display value for this slot.
+    /// </summary>
+    private string DisplayValue
+    {
+        get
+        {
+            var c = Context.GetSlotValue(Index);
+            return c == '\0' ? "" : c.ToString();
+        }
+    }
+
+    /// <summary>
+    /// Gets whether this slot is currently active (focused).
+    /// </summary>
+    private bool IsActive => Context.FocusedIndex == Index;
+
+    /// <summary>
+    /// Gets whether this slot has a value.
+    /// </summary>
+    private bool IsFilled => Context.GetSlotValue(Index) != '\0';
+
+    /// <summary>
+    /// Gets the ARIA label for this slot.
+    /// </summary>
+    private string AriaLabel => $"Digit {Index + 1} of {Context.Length}";
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "OtpSlot must be used within an OtpRoot component. " +
+                "Ensure OtpSlot is a child of an OtpRoot component.");
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Register this slot's element reference
+            Context.RegisterSlot(Index, _inputRef);
+        }
+    }
+
+    private async Task HandleInput(ChangeEventArgs args)
+    {
+        if (Context.IsDisabled) return;
+
+        var input = args.Value?.ToString() ?? "";
+        
+        // Handle paste (multiple characters)
+        if (input.Length > 1 && Index == 0)
+        {
+            // This is a paste operation on the first slot
+            await HandlePastedValue(input);
+            return;
+        }
+
+        // Single character input
+        if (input.Length > 0)
+        {
+            var lastChar = input[^1]; // Take the last character
+            
+            // Validate character if pattern is set
+            if (Root != null && !Root.IsValidChar(lastChar))
+            {
+                // Invalid character, don't accept
+                return;
+            }
+
+            Context.SetSlotValue(Index, lastChar);
+            
+            // Move to next slot if not at the end
+            if (Index < Context.Length - 1)
+            {
+                Context.FocusNext();
+                await FocusSlot(Index + 1);
+            }
+        }
+        else
+        {
+            // Input was cleared
+            Context.SetSlotValue(Index, '\0');
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (Context.IsDisabled) return;
+
+        switch (args.Key)
+        {
+            case "Backspace":
+                if (Context.GetSlotValue(Index) == '\0')
+                {
+                    // Slot is empty, move to previous and clear it
+                    if (Index > 0)
+                    {
+                        Context.SetSlotValue(Index - 1, '\0');
+                        Context.FocusPrevious();
+                        await FocusSlot(Index - 1);
+                    }
+                }
+                else
+                {
+                    // Clear current slot
+                    Context.SetSlotValue(Index, '\0');
+                }
+                break;
+
+            case "Delete":
+                Context.SetSlotValue(Index, '\0');
+                break;
+
+            case "ArrowLeft":
+                if (Index > 0)
+                {
+                    Context.FocusPrevious();
+                    await FocusSlot(Index - 1);
+                }
+                break;
+
+            case "ArrowRight":
+                if (Index < Context.Length - 1)
+                {
+                    Context.FocusNext();
+                    await FocusSlot(Index + 1);
+                }
+                break;
+
+            case "Home":
+                Context.SetFocusedIndex(0);
+                await FocusSlot(0);
+                break;
+
+            case "End":
+                Context.SetFocusedIndex(Context.Length - 1);
+                await FocusSlot(Context.Length - 1);
+                break;
+        }
+    }
+
+    private void HandleFocus()
+    {
+        Context.SetFocusedIndex(Index);
+    }
+
+    private async Task HandlePaste(ClipboardEventArgs args)
+    {
+        // Note: ClipboardEventArgs doesn't provide the paste data directly in Blazor
+        // The paste content will be handled through oninput event
+        // This handler is mainly for preventing default behavior if needed
+        await Task.CompletedTask;
+    }
+
+    private async Task HandlePastedValue(string value)
+    {
+        // Filter to valid characters only using StringBuilder for efficiency
+        var sb = new System.Text.StringBuilder();
+        foreach (var c in value)
+        {
+            if (Root == null || Root.IsValidChar(c))
+            {
+                sb.Append(c);
+            }
+        }
+        var filtered = sb.ToString();
+
+        if (!string.IsNullOrEmpty(filtered))
+        {
+            Context.SetValue(filtered);
+            
+            // Focus the appropriate slot after paste
+            var focusIndex = Math.Min(filtered.Length, Context.Length - 1);
+            await FocusSlot(focusIndex);
+        }
+    }
+
+    private async Task FocusSlot(int index)
+    {
+        var slotRef = Context.GetSlotRef(index);
+        if (slotRef.HasValue)
+        {
+            try
+            {
+                await slotRef.Value.FocusAsync();
+            }
+            catch
+            {
+                // Ignore focus errors
+            }
+        }
+    }
+}

@@ -1,0 +1,412 @@
+@namespace BlazorUI.Primitives.Menubar
+@using BlazorUI.Primitives.Services
+@inject IPositioningService PositioningService
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@* MenubarContent - the dropdown content for a menu entry *@
+
+@if (MenuContext.IsOpen)
+{
+    <div @ref="_contentRef"
+         id="@MenuContext.ContentId"
+         role="menu"
+         tabindex="-1"
+         @onkeydown="HandleKeyDown"
+         @attributes="GetAttributesWithoutStyle()"
+         data-state="open"
+         aria-labelledby="@MenuContext.TriggerId"
+         style="@GetMergedStyle()">
+        <CascadingValue Value="this" IsFixed="false">
+            @ChildContent
+        </CascadingValue>
+    </div>
+}
+
+@code {
+    [CascadingParameter]
+    private MenubarContext Context { get; set; } = null!;
+
+    [CascadingParameter]
+    private MenubarMenuContext MenuContext { get; set; } = null!;
+
+    /// <summary>
+    /// The content to render inside the menu.
+    /// Typically contains MenubarItem, MenubarSeparator, etc.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the content container.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Whether pressing Escape should close the menu.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnEscape { get; set; } = true;
+
+    /// <summary>
+    /// Whether clicking outside should close the menu.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnClickOutside { get; set; } = true;
+
+    /// <summary>
+    /// Preferred side for positioning.
+    /// Default is Bottom.
+    /// </summary>
+    [Parameter]
+    public PopoverSide Side { get; set; } = PopoverSide.Bottom;
+
+    /// <summary>
+    /// Alignment relative to trigger.
+    /// Default is Start.
+    /// </summary>
+    [Parameter]
+    public PopoverAlign Align { get; set; } = PopoverAlign.Start;
+
+    /// <summary>
+    /// Offset distance from the trigger element in pixels.
+    /// Default is 4.
+    /// </summary>
+    [Parameter]
+    public int Offset { get; set; } = 4;
+
+    /// <summary>
+    /// Whether to enable keyboard loop navigation.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool Loop { get; set; } = true;
+
+    /// <summary>
+    /// Z-index value for the menu content.
+    /// Default is 50.
+    /// </summary>
+    [Parameter]
+    public int ZIndex { get; set; } = 50;
+
+    private ElementReference _contentRef;
+    private IJSObjectReference? _clickOutsideModule;
+    private IJSObjectReference? _clickOutsideCleanup;
+    private DotNetObjectReference<MenubarContent>? _dotNetRef;
+    private IAsyncDisposable? _positioningCleanup;
+    private bool _isInitialized = false;
+
+    // Track menu items for keyboard navigation
+    private readonly List<IMenubarItem> _menuItems = new();
+    private int _focusedItemIndex = -1;
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "MenubarContent must be used within a MenubarRoot component.");
+        }
+
+        if (MenuContext == null)
+        {
+            throw new InvalidOperationException(
+                "MenubarContent must be used within a MenubarMenu component.");
+        }
+
+        // Subscribe to context changes
+        Context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (MenuContext.IsOpen && !_isInitialized)
+        {
+            _isInitialized = true;
+
+            // Set up click-outside detection
+            if (CloseOnClickOutside)
+            {
+                await SetupClickOutsideAsync();
+            }
+
+            // Focus the content container for keyboard navigation
+            try
+            {
+                await _contentRef.FocusAsync();
+            }
+            catch
+            {
+                // Focus may fail in some scenarios, continue anyway
+            }
+        }
+        else if (!MenuContext.IsOpen && _isInitialized)
+        {
+            await CleanupAsync();
+        }
+    }
+
+    private async Task SetupClickOutsideAsync()
+    {
+        try
+        {
+            _clickOutsideModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorUI.Primitives/js/primitives/click-outside.js");
+
+            _dotNetRef = DotNetObjectReference.Create(this);
+
+            _clickOutsideCleanup = await _clickOutsideModule.InvokeAsync<IJSObjectReference>(
+                "onClickOutside", _contentRef, _dotNetRef, "HandleClickOutside");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to set up click-outside: {ex.Message}");
+        }
+    }
+
+    [JSInvokable]
+    public Task HandleClickOutside()
+    {
+        if (!MenuContext.IsOpen) return Task.CompletedTask;
+
+        if (CloseOnClickOutside)
+        {
+            Context.CloseMenu();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private string GetInitialStyle()
+    {
+        var baseStyle = $"z-index: {ZIndex}; position: absolute;";
+        return baseStyle;
+    }
+
+    private string GetMergedStyle()
+    {
+        var baseStyle = GetInitialStyle();
+
+        if (AdditionalAttributes != null && AdditionalAttributes.TryGetValue("style", out var userStyle))
+        {
+            return $"{userStyle}; {baseStyle}";
+        }
+
+        return baseStyle;
+    }
+
+    private Dictionary<string, object>? GetAttributesWithoutStyle()
+    {
+        if (AdditionalAttributes == null) return null;
+
+        var attributes = new Dictionary<string, object>(AdditionalAttributes);
+        attributes.Remove("style");
+
+        return attributes.Count > 0 ? attributes : null;
+    }
+
+    private async void HandleContextStateChanged()
+    {
+        if (!MenuContext.IsOpen && _isInitialized)
+        {
+            await InvokeAsync(async () =>
+            {
+                await CleanupAsync();
+                StateHasChanged();
+            });
+        }
+        else
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Escape")
+        {
+            if (CloseOnEscape)
+            {
+                Context.CloseMenu();
+            }
+            return;
+        }
+
+        // Handle navigation keys only if we have items
+        if (_menuItems.Count == 0) return;
+
+        switch (args.Key)
+        {
+            case "ArrowDown":
+                await NavigateNext();
+                break;
+
+            case "ArrowUp":
+                await NavigatePrevious();
+                break;
+
+            case "Home":
+                await FocusFirstEnabled();
+                break;
+
+            case "End":
+                await FocusLastEnabled();
+                break;
+
+            case "ArrowRight":
+                // Move to next menu in menubar
+                Context.FocusNextTrigger();
+                break;
+
+            case "ArrowLeft":
+                // Move to previous menu in menubar
+                Context.FocusPreviousTrigger();
+                break;
+        }
+    }
+
+    private async Task NavigateNext()
+    {
+        var startIndex = _focusedItemIndex == -1 ? 0 : _focusedItemIndex + 1;
+        
+        // Search forward for next enabled item
+        for (int i = 0; i < _menuItems.Count; i++)
+        {
+            var index = (startIndex + i) % _menuItems.Count;
+            if (!_menuItems[index].Disabled)
+            {
+                _focusedItemIndex = index;
+                await _menuItems[index].FocusAsync();
+                return;
+            }
+            
+            // Wrap-around detection: if loop is disabled and we've moved past our start point
+            // (meaning we've searched all items after startIndex and wrapped to beginning),
+            // stop to prevent infinite looping
+            if (!Loop && i > 0 && index <= startIndex) break;
+        }
+    }
+
+    private async Task NavigatePrevious()
+    {
+        var startIndex = _focusedItemIndex == -1 ? _menuItems.Count - 1 : _focusedItemIndex - 1;
+        if (startIndex < 0) startIndex = _menuItems.Count - 1;
+        
+        // Search backward for previous enabled item
+        for (int i = 0; i < _menuItems.Count; i++)
+        {
+            var index = startIndex - i;
+            if (index < 0) index = _menuItems.Count + index;
+            
+            if (!_menuItems[index].Disabled)
+            {
+                _focusedItemIndex = index;
+                await _menuItems[index].FocusAsync();
+                return;
+            }
+            
+            // Wrap-around detection: if loop is disabled and we've moved past our start point
+            // (meaning we've searched all items before startIndex and wrapped to end),
+            // stop to prevent infinite looping
+            if (!Loop && index > startIndex) break;
+        }
+        
+        // Fallback: if no enabled item was found in the search direction,
+        // keep focus on current item if it's valid and enabled
+        if (_focusedItemIndex >= 0 && _focusedItemIndex < _menuItems.Count && !_menuItems[_focusedItemIndex].Disabled)
+        {
+            await _menuItems[_focusedItemIndex].FocusAsync();
+        }
+    }
+
+    private async Task FocusFirstEnabled()
+    {
+        for (int i = 0; i < _menuItems.Count; i++)
+        {
+            if (!_menuItems[i].Disabled)
+            {
+                _focusedItemIndex = i;
+                await _menuItems[i].FocusAsync();
+                return;
+            }
+        }
+    }
+
+    private async Task FocusLastEnabled()
+    {
+        for (int i = _menuItems.Count - 1; i >= 0; i--)
+        {
+            if (!_menuItems[i].Disabled)
+            {
+                _focusedItemIndex = i;
+                await _menuItems[i].FocusAsync();
+                return;
+            }
+        }
+    }
+
+    private async Task CleanupAsync()
+    {
+        if (_positioningCleanup != null)
+        {
+            await _positioningCleanup.DisposeAsync();
+            _positioningCleanup = null;
+        }
+
+        if (_clickOutsideCleanup != null)
+        {
+            try
+            {
+                await _clickOutsideCleanup.InvokeVoidAsync("dispose");
+                await _clickOutsideCleanup.DisposeAsync();
+            }
+            catch
+            {
+                // Cleanup may already be disposed
+            }
+            _clickOutsideCleanup = null;
+        }
+
+        _isInitialized = false;
+        _focusedItemIndex = -1;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await CleanupAsync();
+
+        if (_clickOutsideModule != null)
+        {
+            await _clickOutsideModule.DisposeAsync();
+        }
+
+        _dotNetRef?.Dispose();
+
+        if (Context != null)
+        {
+            Context.OnStateChanged -= HandleContextStateChanged;
+        }
+    }
+
+    /// <summary>
+    /// Registers a menu item for keyboard navigation.
+    /// </summary>
+    internal void RegisterMenuItem(IMenubarItem item)
+    {
+        if (!_menuItems.Contains(item))
+        {
+            _menuItems.Add(item);
+        }
+    }
+
+    /// <summary>
+    /// Unregisters a menu item.
+    /// </summary>
+    internal void UnregisterMenuItem(IMenubarItem item)
+    {
+        _menuItems.Remove(item);
+    }
+}
