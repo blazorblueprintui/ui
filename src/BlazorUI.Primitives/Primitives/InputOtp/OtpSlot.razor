@@ -3,7 +3,7 @@
 @* OtpSlot - individual input slot for a single OTP character *@
 <input @ref="_inputRef"
        type="text"
-       inputmode="numeric"
+       inputmode="text"
        autocomplete="one-time-code"
        id="@Context.GetSlotId(Index)"
        maxlength="@(Index == 0 ? Context.Length : 1)"
@@ -232,8 +232,9 @@
     private void HandleBlur()
     {
         // Mark that the OTP control lost focus
+        // Note: Don't reset IsKeyboardNavigation here because blur fires before the new slot's focus
+        // The flag will be reset in HandleFocus after it's been checked
         Context.SetHasFocus(false);
-        Context.SetKeyboardNavigation(false); // Reset keyboard navigation flag
     }
 
     private async Task HandlePaste(ClipboardEventArgs args)
