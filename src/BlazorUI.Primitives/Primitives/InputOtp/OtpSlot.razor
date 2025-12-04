@@ -163,6 +163,7 @@
             case "ArrowLeft":
                 if (Index > 0)
                 {
+                    Context.SetKeyboardNavigation(true);
                     Context.FocusPrevious();
                     await FocusSlot(Index - 1);
                 }
@@ -171,17 +172,20 @@
             case "ArrowRight":
                 if (Index < Context.Length - 1)
                 {
+                    Context.SetKeyboardNavigation(true);
                     Context.FocusNext();
                     await FocusSlot(Index + 1);
                 }
                 break;
 
             case "Home":
+                Context.SetKeyboardNavigation(true);
                 Context.SetFocusedIndex(0);
                 await FocusSlot(0);
                 break;
 
             case "End":
+                Context.SetKeyboardNavigation(true);
                 Context.SetFocusedIndex(Context.Length - 1);
                 await FocusSlot(Context.Length - 1);
                 break;
@@ -193,7 +197,15 @@
         // Mark that the OTP control has focus
         Context.SetHasFocus(true);
         
-        // For OTP UX: always focus on the first empty slot or last slot if all filled
+        // If this focus is from keyboard navigation, allow it without redirecting
+        if (Context.IsKeyboardNavigation)
+        {
+            Context.SetKeyboardNavigation(false); // Reset the flag
+            Context.SetFocusedIndex(Index);
+            return;
+        }
+        
+        // For OTP UX: on click/tab, focus on the first empty slot or last slot if all filled
         // Find the first empty slot index
         int targetIndex = Context.Length - 1; // Default to last slot if all filled
         for (int i = 0; i < Context.Length; i++)
@@ -221,6 +233,7 @@
     {
         // Mark that the OTP control lost focus
         Context.SetHasFocus(false);
+        Context.SetKeyboardNavigation(false); // Reset keyboard navigation flag
     }
 
     private async Task HandlePaste(ClipboardEventArgs args)
