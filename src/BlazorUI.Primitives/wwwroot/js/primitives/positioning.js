@@ -104,9 +104,9 @@ export function applyPosition(floating, position, makeVisible = false) {
     });
 
     // If makeVisible is true, show the element after positioning
+    // Note: We don't set opacity here - let CSS animations (animate-in, fade-in) handle it
     if (makeVisible) {
         floating.style.visibility = 'visible';
-        floating.style.opacity = '1';
         floating.style.pointerEvents = 'auto';
     }
 }
