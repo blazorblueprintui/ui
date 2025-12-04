@@ -190,7 +190,7 @@
     {
         // For OTP UX: always focus on the first empty slot
         // Find the first empty slot index
-        int targetIndex = Context.Length - 1; // Default to last slot
+        int targetIndex = -1;
         for (int i = 0; i < Context.Length; i++)
         {
             if (Context.GetSlotValue(i) == '\0')
@@ -198,6 +198,13 @@
                 targetIndex = i;
                 break;
             }
+        }
+
+        // If all slots are filled, stay on current slot (allow editing)
+        if (targetIndex == -1)
+        {
+            Context.SetFocusedIndex(Index);
+            return;
         }
 
         // If user clicked on a different slot than the target, redirect focus
