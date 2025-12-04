@@ -6,7 +6,7 @@
 <div @ref="_itemRef"
      role="menuitemcheckbox"
      tabindex="-1"
-     aria-checked="@Checked.ToString().ToLower()"
+     aria-checked="@Checked.ToString().ToLowerInvariant()"
      aria-disabled="@Disabled.ToString().ToLowerInvariant()"
      @onclick="HandleClick"
      @onkeydown="HandleKeyDown"
@@ -104,6 +104,8 @@
 
     private async Task HandleKeyDown(KeyboardEventArgs args)
     {
+        if (Disabled) return;
+
         if (args.Key == "Enter" || args.Key == " ")
         {
             await HandleClick();

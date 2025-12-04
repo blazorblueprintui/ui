@@ -7,7 +7,7 @@
 <div @ref="_itemRef"
      role="menuitemradio"
      tabindex="-1"
-     aria-checked="@IsSelected.ToString().ToLower()"
+     aria-checked="@IsSelected.ToString().ToLowerInvariant()"
      aria-disabled="@Disabled.ToString().ToLowerInvariant()"
      @onclick="HandleClick"
      @onkeydown="HandleKeyDown"
@@ -100,6 +100,8 @@
 
     private async Task HandleKeyDown(KeyboardEventArgs args)
     {
+        if (Disabled) return;
+
         if (args.Key == "Enter" || args.Key == " ")
         {
             await HandleClick();
