@@ -160,12 +160,40 @@
                 break;
 
             case "ArrowDown":
-                // Navigate to next item
+                FocusNextItem();
                 break;
 
             case "ArrowUp":
-                // Navigate to previous item
+                FocusPreviousItem();
                 break;
+        }
+    }
+
+    private void FocusNextItem()
+    {
+        if (_menuItems.Count == 0) return;
+
+        for (int i = 0; i < _menuItems.Count; i++)
+        {
+            if (!_menuItems[i].Disabled)
+            {
+                _ = _menuItems[i].FocusAsync();
+                return;
+            }
+        }
+    }
+
+    private void FocusPreviousItem()
+    {
+        if (_menuItems.Count == 0) return;
+
+        for (int i = _menuItems.Count - 1; i >= 0; i--)
+        {
+            if (!_menuItems[i].Disabled)
+            {
+                _ = _menuItems[i].FocusAsync();
+                return;
+            }
         }
     }
 

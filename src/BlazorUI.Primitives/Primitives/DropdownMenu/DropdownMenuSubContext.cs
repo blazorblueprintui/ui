@@ -33,6 +33,7 @@ public class DropdownMenuSubContext
         }
         IsOpen = true;
         OnOpenChange?.Invoke(true);
+        NotifyStateChanged();
     }
 
     /// <summary>
@@ -42,6 +43,7 @@ public class DropdownMenuSubContext
     {
         IsOpen = false;
         OnOpenChange?.Invoke(false);
+        NotifyStateChanged();
     }
 
     /// <summary>

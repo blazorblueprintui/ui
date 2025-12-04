@@ -33,6 +33,7 @@ public class MenubarSubContext
         }
         IsOpen = true;
         OnOpenChange?.Invoke(true);
+        NotifyStateChanged();
     }
 
     /// <summary>
@@ -42,6 +43,7 @@ public class MenubarSubContext
     {
         IsOpen = false;
         OnOpenChange?.Invoke(false);
+        NotifyStateChanged();
     }
 
     /// <summary>

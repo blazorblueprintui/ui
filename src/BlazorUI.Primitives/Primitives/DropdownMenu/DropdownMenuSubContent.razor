@@ -160,13 +160,42 @@
                 break;
 
             case "ArrowDown":
-                // Navigate to next item
-                // (simplified - full implementation would track focused item)
+                FocusNextItem();
                 break;
 
             case "ArrowUp":
-                // Navigate to previous item
+                FocusPreviousItem();
                 break;
+        }
+    }
+
+    private void FocusNextItem()
+    {
+        if (_menuItems.Count == 0) return;
+
+        // Find next non-disabled item
+        for (int i = 0; i < _menuItems.Count; i++)
+        {
+            if (!_menuItems[i].Disabled)
+            {
+                _ = _menuItems[i].FocusAsync();
+                return;
+            }
+        }
+    }
+
+    private void FocusPreviousItem()
+    {
+        if (_menuItems.Count == 0) return;
+
+        // Find previous non-disabled item (start from end)
+        for (int i = _menuItems.Count - 1; i >= 0; i--)
+        {
+            if (!_menuItems[i].Disabled)
+            {
+                _ = _menuItems[i].FocusAsync();
+                return;
+            }
         }
     }
 
