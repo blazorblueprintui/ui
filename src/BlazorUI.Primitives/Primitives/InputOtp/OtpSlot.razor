@@ -1,4 +1,5 @@
 @namespace BlazorUI.Primitives.InputOtp
+@inject IJSRuntime JS
 
 @* OtpSlot - individual input slot for a single OTP character *@
 <input @ref="_inputRef"
@@ -112,11 +113,8 @@
             // Validate character if pattern is set
             if (Root != null && !Root.IsValidChar(lastChar))
             {
-                // Invalid character, don't accept - force re-render to clear the displayed value
-                // Setting to current value triggers StateHasChanged to reset the display
-                var currentValue = Context.GetSlotValue(Index);
-                Context.SetSlotValue(Index, '\0'); // Clear first
-                Context.SetSlotValue(Index, currentValue); // Restore to trigger update
+                // Invalid character - use JS interop to clear the input display
+                await ClearInputValue();
                 return;
             }
 
@@ -133,6 +131,20 @@
         {
             // Input was cleared
             // Context.SetSlotValue(Index, '\0'); // Already handled in key down
+        }
+    }
+
+    private async Task ClearInputValue()
+    {
+        try
+        {
+            // Use JS interop to set the input value to the current valid slot value
+            var validValue = DisplayValue;
+            await JS.InvokeVoidAsync("eval", $"document.getElementById('{Context.GetSlotId(Index)}').value = '{validValue}'");
+        }
+        catch
+        {
+            // Ignore JS errors
         }
     }
 
