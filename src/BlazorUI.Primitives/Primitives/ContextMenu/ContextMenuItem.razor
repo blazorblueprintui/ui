@@ -21,6 +21,9 @@
 
     [CascadingParameter]
     private ContextMenuContent? ContentContainer { get; set; }
+    
+    [CascadingParameter(Name = "ParentSubContext")]
+    private ContextMenuSubContext? ParentSubContext { get; set; }
 
     private ElementReference _itemRef;
 
@@ -85,7 +88,18 @@
     private void HandleMouseEnter(MouseEventArgs args)
     {
         // Close any active submenu when hovering over this item
-        Context?.CloseActiveSubMenu();
+        // If we're inside a submenu (ParentSubContext exists), close nested submenus of that parent
+        // If we're at root level, close any active submenu from the root context
+        if (ParentSubContext != null)
+        {
+            // We're inside a submenu - close any nested submenus
+            ParentSubContext.CloseActiveSubMenu();
+        }
+        else
+        {
+            // We're at root level - close active submenu from root context
+            Context?.CloseActiveSubMenu();
+        }
     }
 
     public async Task FocusAsync()

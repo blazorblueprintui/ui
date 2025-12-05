@@ -62,6 +62,14 @@
 
         // Register this item with the content for keyboard navigation
         ContentContext?.RegisterMenuItem(this);
+        
+        // Subscribe to state changes to update aria-expanded when submenu is closed externally
+        SubContext.OnStateChanged += HandleStateChanged;
+    }
+    
+    private void HandleStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
     }
 
     protected override void OnAfterRender(bool firstRender)
@@ -146,5 +154,6 @@
     public void Dispose()
     {
         ContentContext?.UnregisterMenuItem(this);
+        SubContext.OnStateChanged -= HandleStateChanged;
     }
 }
