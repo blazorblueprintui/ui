@@ -103,18 +103,23 @@
         }
     }
 
-    private void HandleMouseEnter(MouseEventArgs args)
+    private async void HandleMouseEnter(MouseEventArgs args)
     {
         if (Disabled) return;
 
+        // Track if there was an active submenu that we're closing
+        bool hadActiveSubmenu = false;
+        
         // Close any other active submenu first (either from root menu or parent submenu)
         if (ParentSubContext != null)
         {
+            hadActiveSubmenu = ParentSubContext.ActiveSubMenu != null && ParentSubContext.ActiveSubMenu != SubContext;
             ParentSubContext.CloseActiveSubMenu();
             ParentSubContext.ActiveSubMenu = SubContext;
         }
         else
         {
+            hadActiveSubmenu = MenuContext?.ActiveSubMenu != null && MenuContext?.ActiveSubMenu != SubContext;
             MenuContext?.CloseActiveSubMenu();
             if (MenuContext != null)
             {
@@ -124,6 +129,12 @@
 
         // Open submenu on hover
         SubContext.Open(_triggerRef);
+        
+        // Focus this trigger only if we closed another submenu (for keyboard navigation to work)
+        if (hadActiveSubmenu)
+        {
+            await FocusAsync();
+        }
     }
 
     private void HandleMouseLeave(MouseEventArgs args)

@@ -23,6 +23,9 @@
     
     [CascadingParameter(Name = "ParentSubContext")]
     private DropdownMenuSubContext? ParentSubContext { get; set; }
+    
+    [CascadingParameter]
+    private DropdownMenuSubContent? SubContentContext { get; set; }
 
     private ElementReference _itemRef;
 
@@ -67,8 +70,17 @@
                 "Ensure DropdownMenuItem is a child of a DropdownMenu component.");
         }
 
-        // Register this item with the content for keyboard navigation
-        ContentContext?.RegisterMenuItem(this);
+        // Register this item with the appropriate content for keyboard navigation
+        // If we're inside a submenu, register with the submenu content
+        // Otherwise, register with the root menu content
+        if (SubContentContext != null)
+        {
+            SubContentContext.RegisterMenuItem(this);
+        }
+        else
+        {
+            ContentContext?.RegisterMenuItem(this);
+        }
     }
 
     private async Task HandleClick(MouseEventArgs args)
@@ -99,20 +111,31 @@
         }
     }
 
-    private void HandleMouseEnter(MouseEventArgs args)
+    private async void HandleMouseEnter(MouseEventArgs args)
     {
+        // Track if there was an active submenu that we're closing
+        bool hadActiveSubmenu = false;
+        
         // Close any active submenu when hovering over this item
         // If we're inside a submenu (ParentSubContext exists), close nested submenus of that parent
         // If we're at root level, close any active submenu from the root context
         if (ParentSubContext != null)
         {
             // We're inside a submenu - close any nested submenus
+            hadActiveSubmenu = ParentSubContext.ActiveSubMenu != null;
             ParentSubContext.CloseActiveSubMenu();
         }
         else
         {
             // We're at root level - close active submenu from root context
+            hadActiveSubmenu = Context?.ActiveSubMenu != null;
             Context?.CloseActiveSubMenu();
+        }
+        
+        // Restore focus to this item only when we closed a submenu (for keyboard navigation to work)
+        if (hadActiveSubmenu && !Disabled)
+        {
+            await FocusAsync();
         }
     }
 
@@ -138,6 +161,13 @@
     public void Dispose()
     {
         // Unregister this item when disposed
-        ContentContext?.UnregisterMenuItem(this);
+        if (SubContentContext != null)
+        {
+            SubContentContext.UnregisterMenuItem(this);
+        }
+        else
+        {
+            ContentContext?.UnregisterMenuItem(this);
+        }
     }
 }

@@ -17,7 +17,7 @@
          @attributes="GetAttributesWithoutStyle()"
          data-state="open"
          style="@GetMergedStyle()">
-        <CascadingValue Value="@_subMenuContent" IsFixed="false">
+        <CascadingValue Value="@this" IsFixed="false">
             <CascadingValue Value="@SubContext" Name="ParentSubContext" IsFixed="false">
                 @ChildContent
             </CascadingValue>
@@ -32,7 +32,6 @@
     [CascadingParameter]
     private MenubarSubContext SubContext { get; set; } = null!;
 
-    private MenubarSubContent _subMenuContent = null!;
     private ElementReference _contentRef;
     private IAsyncDisposable? _positioningCleanup;
     private bool _isInitialized = false;
@@ -81,7 +80,6 @@
                 "MenubarSubContent must be used within a MenubarSub component.");
         }
 
-        _subMenuContent = this;
         SubContext.OnStateChanged += HandleContextStateChanged;
     }
 
