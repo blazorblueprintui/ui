@@ -2,7 +2,9 @@
 @using System.Globalization
 
 @* Calendar - accessible month/day grid for date selection *@
-<div @ref="_calendarRef" @attributes="GetAttributes()" role="application" aria-label="Calendar" tabindex="0" @onkeydown="HandleKeyDown" @onkeydown:preventDefault="@_shouldPreventDefault">
+<div @ref="_calendarRef" @attributes="GetAttributes()" role="application" aria-label="Calendar" tabindex="0" 
+     @onkeydown="HandleKeyDown" @onkeydown:preventDefault="@_shouldPreventDefault"
+     @onfocus="OnFocus" @onblur="OnBlur" @onfocusin="OnFocusIn" @onfocusout="OnFocusOut">
     @* Header with navigation *@
     <div class="flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
         <div class="space-y-4">
@@ -85,7 +87,7 @@
                                     }
                                     else
                                     {
-                                        <span class="h-9 w-9"></span>
+                                        <span class="inline-flex h-9 w-9"></span>
                                     }
                                 </td>
                             }
@@ -104,6 +106,7 @@
     private ElementReference _calendarRef;
     private bool _shouldPreventDefault;
     private bool _isDropdownFocused;
+    private bool _hasFocus;
     
     /// <summary>
     /// The currently selected date.
@@ -374,8 +377,18 @@
 
     /// <summary>
     /// Checks if the date is the currently focused date (for keyboard navigation).
+    /// Only shows focus ring when the calendar container has focus.
     /// </summary>
-    private bool IsFocused(DateOnly date) => date == _focusedDate;
+    private bool IsFocused(DateOnly date) => _hasFocus && date == _focusedDate;
+
+    private void OnFocus() => _hasFocus = true;
+    private void OnBlur() => _hasFocus = false;
+    private void OnFocusIn() => _hasFocus = true;
+    private void OnFocusOut(FocusEventArgs e) 
+    {
+        // Don't lose focus when clicking on child elements like dropdowns
+        // The blur will be handled by OnBlur when focus leaves the container entirely
+    }
 
     private bool CanNavigatePrevious =>
         !MinDate.HasValue || 
@@ -537,8 +550,8 @@
 
     private Dictionary<string, object> GetAttributes()
     {
-        // Apply border, shadow, and default cursor at container level to avoid text selection cursor
-        var baseClass = "p-3 rounded-md border shadow-sm cursor-default";
+        // Apply border, shadow, default cursor, and intrinsic width at container level
+        var baseClass = "p-3 rounded-md border shadow-sm cursor-default w-fit";
         var classValue = string.IsNullOrEmpty(Class) ? baseClass : $"{baseClass} {Class}";
 
         var attributes = new Dictionary<string, object>
