@@ -1,35 +1,37 @@
 @namespace BlazorUI.Components.ContextMenu
 
-@* ContextMenuContent - styled content panel *@
-<BlazorUI.Primitives.ContextMenu.ContextMenuContent CloseOnEscape="@CloseOnEscape"
-                    CloseOnClickOutside="@CloseOnClickOutside"
-                    ZIndex="@ZIndex"
-                    class="@GetClass()"
-                    @attributes="AdditionalAttributes">
-    @ChildContent
-</BlazorUI.Primitives.ContextMenu.ContextMenuContent>
+@* ContextMenuSubContent - styled submenu content *@
+<BlazorUI.Primitives.ContextMenu.ContextMenuSubContent CloseOnEscape="@CloseOnEscape"
+                                                        Offset="@Offset"
+                                                        ZIndex="@ZIndex"
+                                                        class="@GetClass()"
+                                                        @attributes="AdditionalAttributes">
+    <div class="p-1">
+        @ChildContent
+    </div>
+</BlazorUI.Primitives.ContextMenu.ContextMenuSubContent>
 
 @code {
     /// <summary>
-    /// The content to render inside the menu.
+    /// The content to render inside the submenu.
     /// </summary>
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
     /// <summary>
-    /// Whether pressing Escape should close the menu.
+    /// Whether pressing Escape should close the submenu.
     /// </summary>
     [Parameter]
     public bool CloseOnEscape { get; set; } = true;
 
     /// <summary>
-    /// Whether clicking outside should close the menu.
+    /// Offset distance from the trigger in pixels.
     /// </summary>
     [Parameter]
-    public bool CloseOnClickOutside { get; set; } = true;
+    public int Offset { get; set; } = -4;
 
     /// <summary>
-    /// Z-index value for the menu content.
+    /// Z-index for the submenu content.
     /// </summary>
     [Parameter]
     public int ZIndex { get; set; } = 50;
@@ -48,10 +50,11 @@
 
     private string GetClass()
     {
-        var baseClass = "z-50 min-w-[8rem] no-focus-ring overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md " +
-                       "animate-in fade-in-80 data-[state=open]:animate-in data-[state=closed]:animate-out " +
+        var baseClass = "z-50 min-w-[8rem] no-focus-ring overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg " +
+                       "data-[state=open]:animate-in data-[state=closed]:animate-out " +
                        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 " +
                        "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95";
+
         return string.IsNullOrEmpty(Class) ? baseClass : $"{baseClass} {Class}";
     }
 }

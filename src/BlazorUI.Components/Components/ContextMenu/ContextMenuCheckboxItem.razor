@@ -1,0 +1,89 @@
+@namespace BlazorUI.Components.ContextMenu
+
+@* ContextMenuCheckboxItem - styled checkbox menu item *@
+<BlazorUI.Primitives.ContextMenu.ContextMenuCheckboxItem Disabled="@Disabled"
+                                                         Checked="@Checked"
+                                                         CheckedChanged="@CheckedChanged"
+                                                         OnCheckedChange="@OnCheckedChange"
+                                                         CloseOnSelect="@CloseOnSelect"
+                                                         class="@GetClass()"
+                                                         @attributes="AdditionalAttributes">
+    <span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+        @if (Checked)
+        {
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="16"
+                 height="16"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 class="h-4 w-4">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        }
+    </span>
+    <span>@ChildContent</span>
+</BlazorUI.Primitives.ContextMenu.ContextMenuCheckboxItem>
+
+@code {
+    /// <summary>
+    /// The content to display inside the checkbox item.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Whether the checkbox item is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; } = false;
+
+    /// <summary>
+    /// Whether the checkbox is checked.
+    /// </summary>
+    [Parameter]
+    public bool Checked { get; set; } = false;
+
+    /// <summary>
+    /// Event callback invoked when the checked state changes (for two-way binding).
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> CheckedChanged { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the checkbox state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OnCheckedChange { get; set; }
+
+    /// <summary>
+    /// Whether to close the context menu when this item is selected.
+    /// Default is false for checkbox items.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnSelect { get; set; } = false;
+
+    /// <summary>
+    /// Additional CSS classes to apply.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string GetClass()
+    {
+        var baseClass = "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none " +
+                       "focus:bg-accent focus:text-accent-foreground " +
+                       "data-[disabled]:pointer-events-none data-[disabled]:opacity-50";
+
+        return string.IsNullOrEmpty(Class) ? baseClass : $"{baseClass} {Class}";
+    }
+}

@@ -140,6 +140,110 @@
         </div>
     </section>
 
+    <!-- With Icons -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">With Icons</h2>
+        <p class="text-sm text-muted-foreground">
+            Add Lucide icons to menu items for better visual hierarchy.
+        </p>
+
+        <div class="flex flex-col gap-4">
+            <Menubar>
+                <MenubarMenu>
+                    <MenubarTrigger>
+                        <LucideIcon Name="file" Size="16" Class="mr-2" />
+                        File
+                    </MenubarTrigger>
+                    <MenubarContent>
+                        <MenubarItem OnClick="@(() => HandleIconsAction("New File"))">
+                            <LucideIcon Name="file-plus" Size="16" Class="mr-2" />
+                            New File
+                            <MenubarShortcut>⌘N</MenubarShortcut>
+                        </MenubarItem>
+                        <MenubarItem OnClick="@(() => HandleIconsAction("Open"))">
+                            <LucideIcon Name="folder-open" Size="16" Class="mr-2" />
+                            Open
+                            <MenubarShortcut>⌘O</MenubarShortcut>
+                        </MenubarItem>
+                        <MenubarItem OnClick="@(() => HandleIconsAction("Save"))">
+                            <LucideIcon Name="save" Size="16" Class="mr-2" />
+                            Save
+                            <MenubarShortcut>⌘S</MenubarShortcut>
+                        </MenubarItem>
+                        <MenubarSeparator />
+                        <MenubarItem OnClick="@(() => HandleIconsAction("Print"))">
+                            <LucideIcon Name="printer" Size="16" Class="mr-2" />
+                            Print
+                            <MenubarShortcut>⌘P</MenubarShortcut>
+                        </MenubarItem>
+                    </MenubarContent>
+                </MenubarMenu>
+
+                <MenubarMenu>
+                    <MenubarTrigger>
+                        <LucideIcon Name="pencil" Size="16" Class="mr-2" />
+                        Edit
+                    </MenubarTrigger>
+                    <MenubarContent>
+                        <MenubarItem OnClick="@(() => HandleIconsAction("Undo"))">
+                            <LucideIcon Name="undo" Size="16" Class="mr-2" />
+                            Undo
+                            <MenubarShortcut>⌘Z</MenubarShortcut>
+                        </MenubarItem>
+                        <MenubarItem OnClick="@(() => HandleIconsAction("Redo"))">
+                            <LucideIcon Name="redo" Size="16" Class="mr-2" />
+                            Redo
+                            <MenubarShortcut>⇧⌘Z</MenubarShortcut>
+                        </MenubarItem>
+                        <MenubarSeparator />
+                        <MenubarItem OnClick="@(() => HandleIconsAction("Cut"))">
+                            <LucideIcon Name="scissors" Size="16" Class="mr-2" />
+                            Cut
+                            <MenubarShortcut>⌘X</MenubarShortcut>
+                        </MenubarItem>
+                        <MenubarItem OnClick="@(() => HandleIconsAction("Copy"))">
+                            <LucideIcon Name="copy" Size="16" Class="mr-2" />
+                            Copy
+                            <MenubarShortcut>⌘C</MenubarShortcut>
+                        </MenubarItem>
+                        <MenubarItem OnClick="@(() => HandleIconsAction("Paste"))">
+                            <LucideIcon Name="clipboard" Size="16" Class="mr-2" />
+                            Paste
+                            <MenubarShortcut>⌘V</MenubarShortcut>
+                        </MenubarItem>
+                    </MenubarContent>
+                </MenubarMenu>
+
+                <MenubarMenu>
+                    <MenubarTrigger>
+                        <LucideIcon Name="settings" Size="16" Class="mr-2" />
+                        Settings
+                    </MenubarTrigger>
+                    <MenubarContent>
+                        <MenubarItem OnClick="@(() => HandleIconsAction("Preferences"))">
+                            <LucideIcon Name="sliders-horizontal" Size="16" Class="mr-2" />
+                            Preferences
+                        </MenubarItem>
+                        <MenubarItem OnClick="@(() => HandleIconsAction("Account"))">
+                            <LucideIcon Name="user" Size="16" Class="mr-2" />
+                            Account
+                        </MenubarItem>
+                        <MenubarSeparator />
+                        <MenubarItem OnClick="@(() => HandleIconsAction("Help"))">
+                            <LucideIcon Name="circle-help" Size="16" Class="mr-2" />
+                            Help
+                        </MenubarItem>
+                    </MenubarContent>
+                </MenubarMenu>
+            </Menubar>
+
+            @if (!string.IsNullOrEmpty(iconsAction))
+            {
+                <p class="text-sm">Last action: <strong>@iconsAction</strong></p>
+            }
+        </div>
+    </section>
+
     <!-- With Disabled Menu Items -->
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">With Disabled Items</h2>
@@ -217,14 +321,132 @@
             <p class="text-sm">Last keyboard action: <strong>@keyboardAction</strong></p>
         }
     </section>
+
+    <!-- Checkbox and Radio Items -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Checkbox and Radio Items</h2>
+        <p class="text-sm text-muted-foreground">
+            Menu items that toggle state (checkbox) or allow single selection (radio).
+        </p>
+
+        <div class="flex flex-col gap-4">
+            <Menubar>
+                <MenubarMenu>
+                    <MenubarTrigger>View</MenubarTrigger>
+                    <MenubarContent>
+                        <MenubarLabel>Panels</MenubarLabel>
+                        <MenubarSeparator />
+                        <MenubarCheckboxItem @bind-Checked="@showToolbar">
+                            Show Toolbar
+                        </MenubarCheckboxItem>
+                        <MenubarCheckboxItem @bind-Checked="@showStatusbar">
+                            Show Status Bar
+                        </MenubarCheckboxItem>
+                        <MenubarCheckboxItem @bind-Checked="@showSidebar" Disabled="true">
+                            Show Sidebar (Disabled)
+                        </MenubarCheckboxItem>
+                    </MenubarContent>
+                </MenubarMenu>
+
+                <MenubarMenu>
+                    <MenubarTrigger>Zoom</MenubarTrigger>
+                    <MenubarContent>
+                        <MenubarLabel>Zoom Level</MenubarLabel>
+                        <MenubarSeparator />
+                        <MenubarRadioGroup TValue="string" @bind-Value="@zoomLevel">
+                            <MenubarRadioItem TValue="string" Value="@("50%")">50%</MenubarRadioItem>
+                            <MenubarRadioItem TValue="string" Value="@("100%")">100%</MenubarRadioItem>
+                            <MenubarRadioItem TValue="string" Value="@("150%")">150%</MenubarRadioItem>
+                            <MenubarRadioItem TValue="string" Value="@("200%")">200%</MenubarRadioItem>
+                        </MenubarRadioGroup>
+                    </MenubarContent>
+                </MenubarMenu>
+            </Menubar>
+
+            <div class="text-sm space-x-4">
+                <span>Toolbar: <strong>@(showToolbar ? "Visible" : "Hidden")</strong></span>
+                <span>Status Bar: <strong>@(showStatusbar ? "Visible" : "Hidden")</strong></span>
+                <span>Zoom: <strong>@zoomLevel</strong></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Submenus -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Submenus</h2>
+        <p class="text-sm text-muted-foreground">
+            Nested menus for organizing complex menu structures.
+        </p>
+
+        <div class="flex flex-col gap-4">
+            <Menubar>
+                <MenubarMenu>
+                    <MenubarTrigger>Insert</MenubarTrigger>
+                    <MenubarContent>
+                        <MenubarItem OnClick="@(() => HandleSubmenuAction("Text"))">
+                            Text
+                            <MenubarShortcut>⌘T</MenubarShortcut>
+                        </MenubarItem>
+                        <MenubarItem OnClick="@(() => HandleSubmenuAction("Image"))">
+                            Image
+                        </MenubarItem>
+                        <MenubarSeparator />
+                        <MenubarSub>
+                            <MenubarSubTrigger>Shape</MenubarSubTrigger>
+                            <MenubarSubContent>
+                                <MenubarItem OnClick="@(() => HandleSubmenuAction("Rectangle"))">Rectangle</MenubarItem>
+                                <MenubarItem OnClick="@(() => HandleSubmenuAction("Circle"))">Circle</MenubarItem>
+                                <MenubarItem OnClick="@(() => HandleSubmenuAction("Triangle"))">Triangle</MenubarItem>
+                                <MenubarSeparator />
+                                <MenubarSub>
+                                    <MenubarSubTrigger>Arrows</MenubarSubTrigger>
+                                    <MenubarSubContent>
+                                        <MenubarItem OnClick="@(() => HandleSubmenuAction("Arrow Right"))">Right Arrow</MenubarItem>
+                                        <MenubarItem OnClick="@(() => HandleSubmenuAction("Arrow Left"))">Left Arrow</MenubarItem>
+                                        <MenubarItem OnClick="@(() => HandleSubmenuAction("Arrow Up"))">Up Arrow</MenubarItem>
+                                        <MenubarItem OnClick="@(() => HandleSubmenuAction("Arrow Down"))">Down Arrow</MenubarItem>
+                                    </MenubarSubContent>
+                                </MenubarSub>
+                            </MenubarSubContent>
+                        </MenubarSub>
+                        <MenubarSub>
+                            <MenubarSubTrigger>Chart</MenubarSubTrigger>
+                            <MenubarSubContent>
+                                <MenubarItem OnClick="@(() => HandleSubmenuAction("Bar Chart"))">Bar Chart</MenubarItem>
+                                <MenubarItem OnClick="@(() => HandleSubmenuAction("Line Chart"))">Line Chart</MenubarItem>
+                                <MenubarItem OnClick="@(() => HandleSubmenuAction("Pie Chart"))">Pie Chart</MenubarItem>
+                            </MenubarSubContent>
+                        </MenubarSub>
+                    </MenubarContent>
+                </MenubarMenu>
+            </Menubar>
+
+            @if (!string.IsNullOrEmpty(submenuAction))
+            {
+                <p class="text-sm">Last insert action: <strong>@submenuAction</strong></p>
+            }
+        </div>
+    </section>
 </div>
 
 @code {
     private string? lastAction;
+    private string? iconsAction;
     private string? disabledAction;
     private string? keyboardAction;
+    private string? submenuAction;
+
+    // Checkbox state
+    private bool showToolbar = true;
+    private bool showStatusbar = true;
+    private bool showSidebar = false;
+
+    // Radio state
+    private string? zoomLevel = "100%";
 
     private void HandleAction(string action) => lastAction = action;
+    private void HandleIconsAction(string action) => iconsAction = action;
     private void HandleDisabledAction(string action) => disabledAction = action;
     private void HandleKeyboardAction(string action) => keyboardAction = action;
+    private void HandleSubmenuAction(string action) => submenuAction = action;
 }

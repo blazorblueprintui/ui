@@ -53,6 +53,61 @@
 
         <section class="space-y-4">
             <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">With Icons</h2>
+                <p class="text-muted-foreground">
+                    Add Lucide icons to menu items for better visual hierarchy.
+                </p>
+            </div>
+
+            <ContextMenu>
+                <ContextMenuTrigger>
+                    <div class="flex h-[150px] w-[300px] items-center justify-center rounded-md border border-dashed text-sm">
+                        Right click for icon menu
+                    </div>
+                </ContextMenuTrigger>
+                <ContextMenuContent Class="w-64">
+                    <ContextMenuLabel>Actions</ContextMenuLabel>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem OnClick="@(() => HandleIconsAction("Edit"))">
+                        <LucideIcon Name="pencil" Size="16" Class="mr-2" />
+                        Edit
+                        <ContextMenuShortcut>⌘E</ContextMenuShortcut>
+                    </ContextMenuItem>
+                    <ContextMenuItem OnClick="@(() => HandleIconsAction("Duplicate"))">
+                        <LucideIcon Name="copy" Size="16" Class="mr-2" />
+                        Duplicate
+                        <ContextMenuShortcut>⌘D</ContextMenuShortcut>
+                    </ContextMenuItem>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem OnClick="@(() => HandleIconsAction("Share"))">
+                        <LucideIcon Name="share" Size="16" Class="mr-2" />
+                        Share
+                    </ContextMenuItem>
+                    <ContextMenuItem OnClick="@(() => HandleIconsAction("Download"))">
+                        <LucideIcon Name="download" Size="16" Class="mr-2" />
+                        Download
+                    </ContextMenuItem>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem OnClick="@(() => HandleIconsAction("Archive"))">
+                        <LucideIcon Name="archive" Size="16" Class="mr-2" />
+                        Archive
+                    </ContextMenuItem>
+                    <ContextMenuItem OnClick="@(() => HandleIconsAction("Delete"))" Class="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950">
+                        <LucideIcon Name="trash-2" Size="16" Class="mr-2" />
+                        Delete
+                        <ContextMenuShortcut>⌫</ContextMenuShortcut>
+                    </ContextMenuItem>
+                </ContextMenuContent>
+            </ContextMenu>
+
+            @if (!string.IsNullOrEmpty(iconsAction))
+            {
+                <p class="text-sm">Last action: <strong>@iconsAction</strong></p>
+            }
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
                 <h2 class="text-2xl font-semibold">With Labels and Groups</h2>
                 <p class="text-muted-foreground">
                     Organize menu items into groups with labels.
@@ -255,8 +310,144 @@
 &lt;/ContextMenu&gt;</code></pre>
             </div>
         </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">With Checkbox Items</h2>
+                <p class="text-muted-foreground">
+                    Toggle preferences directly from the context menu.
+                </p>
+            </div>
+
+            <ContextMenu>
+                <ContextMenuTrigger>
+                    <div class="flex h-[150px] w-[300px] items-center justify-center rounded-md border border-dashed text-sm">
+                        Right click for view options
+                    </div>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                    <ContextMenuLabel>View Options</ContextMenuLabel>
+                    <ContextMenuSeparator />
+                    <ContextMenuCheckboxItem @bind-Checked="@showHidden">
+                        Show Hidden Files
+                    </ContextMenuCheckboxItem>
+                    <ContextMenuCheckboxItem @bind-Checked="@showExtensions">
+                        Show File Extensions
+                    </ContextMenuCheckboxItem>
+                    <ContextMenuCheckboxItem @bind-Checked="@compactView">
+                        Compact View
+                    </ContextMenuCheckboxItem>
+                </ContextMenuContent>
+            </ContextMenu>
+
+            <div class="text-sm space-x-4">
+                <span>Hidden: <strong>@(showHidden ? "Shown" : "Hidden")</strong></span>
+                <span>Extensions: <strong>@(showExtensions ? "Shown" : "Hidden")</strong></span>
+                <span>Compact: <strong>@(compactView ? "Yes" : "No")</strong></span>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">With Radio Items</h2>
+                <p class="text-muted-foreground">
+                    Select from mutually exclusive options.
+                </p>
+            </div>
+
+            <ContextMenu>
+                <ContextMenuTrigger>
+                    <div class="flex h-[150px] w-[300px] items-center justify-center rounded-md border border-dashed text-sm">
+                        Right click to select sort order
+                    </div>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                    <ContextMenuLabel>Sort By</ContextMenuLabel>
+                    <ContextMenuSeparator />
+                    <ContextMenuRadioGroup TValue="string" @bind-Value="@sortOrder">
+                        <ContextMenuRadioItem TValue="string" Value="@("name")">Name</ContextMenuRadioItem>
+                        <ContextMenuRadioItem TValue="string" Value="@("date")">Date Modified</ContextMenuRadioItem>
+                        <ContextMenuRadioItem TValue="string" Value="@("size")">Size</ContextMenuRadioItem>
+                        <ContextMenuRadioItem TValue="string" Value="@("type")">Type</ContextMenuRadioItem>
+                    </ContextMenuRadioGroup>
+                </ContextMenuContent>
+            </ContextMenu>
+
+            <p class="text-sm">Sort order: <strong>@sortOrder</strong></p>
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">With Submenus</h2>
+                <p class="text-muted-foreground">
+                    Organize complex options in nested menus.
+                </p>
+            </div>
+
+            <ContextMenu>
+                <ContextMenuTrigger>
+                    <div class="flex h-[150px] w-[300px] items-center justify-center rounded-md border border-dashed text-sm">
+                        Right click for share options
+                    </div>
+                </ContextMenuTrigger>
+                <ContextMenuContent Class="w-64">
+                    <ContextMenuItem OnClick="@(() => HandleContextAction("Copy"))">
+                        Copy
+                        <ContextMenuShortcut>⌘C</ContextMenuShortcut>
+                    </ContextMenuItem>
+                    <ContextMenuSeparator />
+                    <ContextMenuSub>
+                        <ContextMenuSubTrigger>Share</ContextMenuSubTrigger>
+                        <ContextMenuSubContent>
+                            <ContextMenuItem OnClick="@(() => HandleContextAction("Share: Email"))">
+                                Email
+                            </ContextMenuItem>
+                            <ContextMenuItem OnClick="@(() => HandleContextAction("Share: Slack"))">
+                                Slack
+                            </ContextMenuItem>
+                            <ContextMenuItem OnClick="@(() => HandleContextAction("Share: Teams"))">
+                                Microsoft Teams
+                            </ContextMenuItem>
+                            <ContextMenuSeparator />
+                            <ContextMenuSub>
+                                <ContextMenuSubTrigger>Social</ContextMenuSubTrigger>
+                                <ContextMenuSubContent>
+                                    <ContextMenuItem OnClick="@(() => HandleContextAction("Share: Twitter"))">Twitter</ContextMenuItem>
+                                    <ContextMenuItem OnClick="@(() => HandleContextAction("Share: Facebook"))">Facebook</ContextMenuItem>
+                                    <ContextMenuItem OnClick="@(() => HandleContextAction("Share: LinkedIn"))">LinkedIn</ContextMenuItem>
+                                </ContextMenuSubContent>
+                            </ContextMenuSub>
+                        </ContextMenuSubContent>
+                    </ContextMenuSub>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem OnClick="@(() => HandleContextAction("Delete"))" Class="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950">
+                        Delete
+                        <ContextMenuShortcut>⌫</ContextMenuShortcut>
+                    </ContextMenuItem>
+                </ContextMenuContent>
+            </ContextMenu>
+
+            @if (!string.IsNullOrEmpty(contextAction))
+            {
+                <p class="text-sm">Last action: <strong>@contextAction</strong></p>
+            }
+        </section>
     </div>
 </div>
 
 @code {
+    // Checkbox state
+    private bool showHidden = false;
+    private bool showExtensions = true;
+    private bool compactView = false;
+
+    // Radio state
+    private string? sortOrder = "name";
+
+    // Action tracking
+    private string? iconsAction;
+    private string? contextAction;
+
+    private void HandleIconsAction(string action) => iconsAction = action;
+    private void HandleContextAction(string action) => contextAction = action;
 }

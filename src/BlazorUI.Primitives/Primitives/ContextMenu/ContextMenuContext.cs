@@ -66,6 +66,12 @@ public class ContextMenuContext : PrimitiveContextWithEvents<ContextMenuState>
     public double Y => State.Y;
 
     /// <summary>
+    /// Gets or sets the currently active submenu context.
+    /// Used to close submenus when hovering over other items.
+    /// </summary>
+    public ContextMenuSubContext? ActiveSubMenu { get; set; }
+
+    /// <summary>
     /// Gets the registered menu items.
     /// </summary>
     public IReadOnlyList<IContextMenuItem> Items
@@ -105,6 +111,10 @@ public class ContextMenuContext : PrimitiveContextWithEvents<ContextMenuState>
     /// </summary>
     public void Close()
     {
+        // Close any active submenu first
+        ActiveSubMenu?.Close();
+        ActiveSubMenu = null;
+
         UpdateState(state =>
         {
             state.IsOpen = false;
@@ -137,6 +147,26 @@ public class ContextMenuContext : PrimitiveContextWithEvents<ContextMenuState>
         {
             _items.Remove(item);
         }
+    }
+
+    /// <summary>
+    /// Closes any active submenu. Called when hovering over sibling menu items.
+    /// </summary>
+    public void CloseActiveSubMenu()
+    {
+        if (ActiveSubMenu != null)
+        {
+            ActiveSubMenu.Close();
+            ActiveSubMenu = null;
+        }
+    }
+
+    /// <summary>
+    /// Sets the focused item index.
+    /// </summary>
+    public void SetFocusedIndex(int index)
+    {
+        _focusedItemIndex = index;
     }
 
     /// <summary>

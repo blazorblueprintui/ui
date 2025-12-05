@@ -1,0 +1,185 @@
+@namespace BlazorUI.Primitives.ContextMenu
+@implements IContextMenuItem
+@implements IDisposable
+
+@* ContextMenuSubTrigger - triggers opening of a submenu *@
+<div @ref="_triggerRef"
+     role="menuitem"
+     tabindex="-1"
+     aria-haspopup="menu"
+     aria-expanded="@SubContext.IsOpen.ToString().ToLower()"
+     aria-disabled="@Disabled.ToString().ToLower()"
+     @onclick="HandleClick"
+     @onkeydown="HandleKeyDown"
+     @onmouseenter="HandleMouseEnter"
+     @onmouseleave="HandleMouseLeave"
+     data-state="@(SubContext.IsOpen ? "open" : "closed")"
+     data-disabled="@(Disabled ? "true" : null)"
+     @attributes="AdditionalAttributes">
+    @ChildContent
+</div>
+
+@code {
+    [CascadingParameter]
+    private ContextMenuContext? MenuContext { get; set; }
+
+    [CascadingParameter]
+    private ContextMenuSubContext SubContext { get; set; } = null!;
+
+    [CascadingParameter]
+    private ContextMenuContent? ContentContainer { get; set; }
+    
+    [CascadingParameter(Name = "ParentSubContext")]
+    private ContextMenuSubContext? ParentSubContext { get; set; }
+    
+    [CascadingParameter]
+    private ContextMenuSubContent? SubContentContext { get; set; }
+
+    private ElementReference _triggerRef;
+
+    /// <summary>
+    /// The content to display inside the trigger.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the trigger element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Whether the trigger is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; } = false;
+
+    protected override void OnInitialized()
+    {
+        if (SubContext == null)
+        {
+            throw new InvalidOperationException(
+                "ContextMenuSubTrigger must be used within a ContextMenuSub component.");
+        }
+
+        // Register this item with the appropriate content for keyboard navigation
+        // If we're inside a submenu, register with the submenu content
+        // Otherwise, register with the root menu content
+        if (SubContentContext != null)
+        {
+            SubContentContext.RegisterItem(this);
+        }
+        else
+        {
+            ContentContainer?.RegisterItem(this);
+            MenuContext?.RegisterItem(this);
+        }
+        
+        // Subscribe to state changes to update aria-expanded when submenu is closed externally
+        SubContext.OnStateChanged += HandleStateChanged;
+    }
+    
+    private void HandleStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        // Always update the trigger element reference
+        SubContext.TriggerElement = _triggerRef;
+    }
+
+    private void HandleClick()
+    {
+        if (Disabled) return;
+
+        if (SubContext.IsOpen)
+        {
+            SubContext.Close();
+        }
+        else
+        {
+            SubContext.Open(_triggerRef);
+        }
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (Disabled) return;
+
+        // Arrow Right or Enter opens submenu
+        if (args.Key == "ArrowRight" || args.Key == "Enter")
+        {
+            SubContext.Open(_triggerRef);
+        }
+    }
+
+    private async void HandleMouseEnter(MouseEventArgs args)
+    {
+        if (Disabled) return;
+
+        // Track if there was an active submenu that we're closing
+        bool hadActiveSubmenu = false;
+        
+        // Close any other active submenu first (either from root menu or parent submenu)
+        if (ParentSubContext != null)
+        {
+            hadActiveSubmenu = ParentSubContext.ActiveSubMenu != null && ParentSubContext.ActiveSubMenu != SubContext;
+            ParentSubContext.CloseActiveSubMenu();
+            ParentSubContext.ActiveSubMenu = SubContext;
+        }
+        else
+        {
+            hadActiveSubmenu = MenuContext?.ActiveSubMenu != null && MenuContext?.ActiveSubMenu != SubContext;
+            MenuContext?.CloseActiveSubMenu();
+            if (MenuContext != null)
+            {
+                MenuContext.ActiveSubMenu = SubContext;
+            }
+        }
+
+        // Open submenu on hover
+        SubContext.Open(_triggerRef);
+        
+        // Focus this trigger only if we closed another submenu (for keyboard navigation to work)
+        if (hadActiveSubmenu)
+        {
+            await FocusAsync();
+        }
+    }
+
+    private void HandleMouseLeave(MouseEventArgs args)
+    {
+        // Don't close on mouse leave - let the content handle that
+    }
+
+    // IContextMenuItem implementation
+    public async Task FocusAsync()
+    {
+        try
+        {
+            await _triggerRef.FocusAsync();
+        }
+        catch
+        {
+            // Ignore focus errors
+        }
+    }
+
+    public void Dispose()
+    {
+        // Unregister this item when disposed
+        if (SubContentContext != null)
+        {
+            SubContentContext.UnregisterItem(this);
+        }
+        else
+        {
+            ContentContainer?.UnregisterItem(this);
+            MenuContext?.UnregisterItem(this);
+        }
+        SubContext.OnStateChanged -= HandleStateChanged;
+    }
+}

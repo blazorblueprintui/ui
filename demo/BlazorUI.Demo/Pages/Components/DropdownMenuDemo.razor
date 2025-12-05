@@ -42,6 +42,66 @@
         </div>
     </section>
 
+    <!-- With Icons -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">With Icons</h2>
+        <p class="text-sm text-muted-foreground">
+            Add Lucide icons to menu items for better visual hierarchy.
+        </p>
+
+        <div class="flex items-start gap-2">
+            <DropdownMenu>
+                <DropdownMenuTrigger Class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                    <LucideIcon Name="settings" Size="16" Class="mr-2" />
+                    Settings
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem OnClick="@(() => HandleIconsAction("Profile"))">
+                        <LucideIcon Name="user" Size="16" Class="mr-2" />
+                        Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem OnClick="@(() => HandleIconsAction("Settings"))">
+                        <LucideIcon Name="settings" Size="16" Class="mr-2" />
+                        Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem OnClick="@(() => HandleIconsAction("Keyboard"))">
+                        <LucideIcon Name="keyboard" Size="16" Class="mr-2" />
+                        Keyboard shortcuts
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem OnClick="@(() => HandleIconsAction("Team"))">
+                        <LucideIcon Name="users" Size="16" Class="mr-2" />
+                        Team
+                    </DropdownMenuItem>
+                    <DropdownMenuItem OnClick="@(() => HandleIconsAction("New Team"))">
+                        <LucideIcon Name="user-plus" Size="16" Class="mr-2" />
+                        Invite users
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem OnClick="@(() => HandleIconsAction("GitHub"))">
+                        <LucideIcon Name="github" Size="16" Class="mr-2" />
+                        GitHub
+                    </DropdownMenuItem>
+                    <DropdownMenuItem OnClick="@(() => HandleIconsAction("Support"))">
+                        <LucideIcon Name="life-buoy" Size="16" Class="mr-2" />
+                        Support
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem OnClick="@(() => HandleIconsAction("Log out"))">
+                        <LucideIcon Name="log-out" Size="16" Class="mr-2" />
+                        Log out
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            @if (!string.IsNullOrEmpty(iconsAction))
+            {
+                <p class="text-sm">Last action: <strong>@iconsAction</strong></p>
+            }
+        </div>
+    </section>
+
     <!-- With Labels and Separators -->
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">With Labels and Separators</h2>
@@ -297,25 +357,150 @@
             }
         </div>
     </section>
+
+    <!-- Checkbox Items -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Checkbox Items</h2>
+        <p class="text-sm text-muted-foreground">
+            Menu items that toggle a boolean state. Useful for preferences and settings.
+        </p>
+
+        <div class="flex items-start gap-4">
+            <DropdownMenu>
+                <DropdownMenuTrigger Class="@buttonOutlineClass">
+                    View Options
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuLabel>Appearance</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuCheckboxItem @bind-Checked="@showStatusBar">
+                        Status Bar
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem @bind-Checked="@showActivityBar">
+                        Activity Bar
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem @bind-Checked="@showPanel" Disabled="true">
+                        Panel (Disabled)
+                    </DropdownMenuCheckboxItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            <div class="text-sm space-y-1">
+                <p>Status Bar: <strong>@(showStatusBar ? "Visible" : "Hidden")</strong></p>
+                <p>Activity Bar: <strong>@(showActivityBar ? "Visible" : "Hidden")</strong></p>
+                <p>Panel: <strong>@(showPanel ? "Visible" : "Hidden")</strong></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Radio Items -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Radio Items</h2>
+        <p class="text-sm text-muted-foreground">
+            A group of menu items where only one can be selected at a time.
+        </p>
+
+        <div class="flex items-start gap-4">
+            <DropdownMenu>
+                <DropdownMenuTrigger Class="@buttonOutlineClass">
+                    Select Position
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuLabel>Panel Position</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuRadioGroup TValue="string" @bind-Value="@position">
+                        <DropdownMenuRadioItem TValue="string" Value="@("top")">Top</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem TValue="string" Value="@("bottom")">Bottom</DropdownMenuRadioItem>
+                        <DropdownMenuRadioItem TValue="string" Value="@("right")">Right</DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            <p class="text-sm">Selected position: <strong>@position</strong></p>
+        </div>
+    </section>
+
+    <!-- Submenus -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Submenus</h2>
+        <p class="text-sm text-muted-foreground">
+            Nested menus for organizing complex options. Hover or use arrow keys to open submenus.
+        </p>
+
+        <div class="flex items-start gap-2">
+            <DropdownMenu>
+                <DropdownMenuTrigger Class="@buttonOutlineClass">
+                    Share
+                </DropdownMenuTrigger>
+                <DropdownMenuContent Class="w-56">
+                    <DropdownMenuItem OnClick="@(() => HandleSubmenuAction("Email"))">
+                        Email
+                    </DropdownMenuItem>
+                    <DropdownMenuItem OnClick="@(() => HandleSubmenuAction("Message"))">
+                        Message
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>
+                            Invite users
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent>
+                            <DropdownMenuItem OnClick="@(() => HandleSubmenuAction("Invite: Email"))">
+                                Email
+                            </DropdownMenuItem>
+                            <DropdownMenuItem OnClick="@(() => HandleSubmenuAction("Invite: Message"))">
+                                Message
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem OnClick="@(() => HandleSubmenuAction("Invite: More..."))">
+                                More...
+                            </DropdownMenuItem>
+                        </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem OnClick="@(() => HandleSubmenuAction("Copy Link"))">
+                        Copy Link
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            @if (!string.IsNullOrEmpty(submenuAction))
+            {
+                <p class="text-sm">Last action: <strong>@submenuAction</strong></p>
+            }
+        </div>
+    </section>
 </div>
 
 @code {
+    // Common button class for trigger styling (shadcn/ui outline variant)
+    private const string buttonOutlineClass = "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2";
+
     // Independent state for each menu section
     private string? basicAction;
+    private string? iconsAction;
     private string? labelsAction;
     private string? groupsAction;
     private string? shortcutsAction;
     private string? disabledAction;
     private string? complexAction;
+    private string? submenuAction;
     private Dictionary<string, string?> menuActions = new();
+
+    // Checkbox state
+    private bool showStatusBar = true;
+    private bool showActivityBar = true;
+    private bool showPanel = false;
+
+    // Radio state
+    private string? position = "bottom";
 
     // Individual handlers for each section
     private void HandleBasicAction(string action) => basicAction = action;
+    private void HandleIconsAction(string action) => iconsAction = action;
     private void HandleLabelsAction(string action) => labelsAction = action;
     private void HandleGroupsAction(string action) => groupsAction = action;
     private void HandleShortcutsAction(string action) => shortcutsAction = action;
     private void HandleDisabledAction(string action) => disabledAction = action;
     private void HandleComplexAction(string action) => complexAction = action;
+    private void HandleSubmenuAction(string action) => submenuAction = action;
 
     // Alignment section uses dictionary approach
     private void HandleMenuAction(string menuName, string action)

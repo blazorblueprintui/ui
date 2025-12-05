@@ -210,6 +210,22 @@
         _menuItems.Remove(item);
     }
 
+    /// <summary>
+    /// Focuses the content container for keyboard navigation.
+    /// </summary>
+    public async Task FocusContainerAsync()
+    {
+        try
+        {
+            await _contentRef.FocusAsync();
+            Context.SetFocusedIndex(-1);
+        }
+        catch
+        {
+            // Focus may fail
+        }
+    }
+
     private async Task CleanupAsync()
     {
         _isInitialized = false;
@@ -218,7 +234,7 @@
         {
             try
             {
-                await _clickOutsideCleanup.InvokeVoidAsync("cleanup");
+                await _clickOutsideCleanup.InvokeVoidAsync("dispose");
                 await _clickOutsideCleanup.DisposeAsync();
             }
             catch (JSDisconnectedException)

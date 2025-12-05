@@ -1,0 +1,67 @@
+@namespace BlazorUI.Primitives.ContextMenu
+
+@* ContextMenuSub - container for a submenu within a context menu *@
+<CascadingValue Value="@_context" IsFixed="false">
+    @ChildContent
+</CascadingValue>
+
+@code {
+    private readonly ContextMenuSubContext _context = new();
+
+    [CascadingParameter]
+    private ContextMenuContext? MenuContext { get; set; }
+
+    /// <summary>
+    /// The content to render inside the submenu.
+    /// Typically contains ContextMenuSubTrigger and ContextMenuSubContent.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls whether the submenu is open (controlled mode).
+    /// </summary>
+    [Parameter]
+    public bool? Open { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the submenu open state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OnOpenChange { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Open.HasValue)
+        {
+            _context.IsOpen = Open.Value;
+        }
+
+        _context.OnOpenChange = HandleOpenChange;
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Open.HasValue && _context.IsOpen != Open.Value)
+        {
+            _context.IsOpen = Open.Value;
+        }
+    }
+
+    private async Task HandleOpenChange(bool isOpen)
+    {
+        _context.IsOpen = isOpen;
+
+        await OpenChanged.InvokeAsync(isOpen);
+        if (OnOpenChange.HasDelegate)
+        {
+            await OnOpenChange.InvokeAsync(isOpen);
+        }
+    }
+}

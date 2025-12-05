@@ -1,0 +1,132 @@
+@namespace BlazorUI.Primitives.ContextMenu
+@implements IContextMenuItem
+@implements IDisposable
+
+@* ContextMenuCheckboxItem - a menu item that toggles a boolean state *@
+<div @ref="_itemRef"
+     role="menuitemcheckbox"
+     tabindex="-1"
+     aria-checked="@Checked.ToString().ToLowerInvariant()"
+     aria-disabled="@Disabled.ToString().ToLowerInvariant()"
+     @onclick="HandleClick"
+     @onkeydown="HandleKeyDown"
+     data-state="@(Checked ? "checked" : "unchecked")"
+     data-disabled="@(Disabled ? "true" : null)"
+     @attributes="AdditionalAttributes">
+    @ChildContent
+</div>
+
+@code {
+    [CascadingParameter]
+    private ContextMenuContext Context { get; set; } = null!;
+
+    [CascadingParameter]
+    private ContextMenuContent? ContentContainer { get; set; }
+
+    private ElementReference _itemRef;
+
+    /// <summary>
+    /// The content to display inside the checkbox item.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the checkbox item element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Whether the checkbox item is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; } = false;
+
+    /// <summary>
+    /// Whether the checkbox is checked.
+    /// </summary>
+    [Parameter]
+    public bool Checked { get; set; } = false;
+
+    /// <summary>
+    /// Event callback invoked when the checked state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> CheckedChanged { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the checkbox checked state changes.
+    /// Receives the new checked state as a parameter.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OnCheckedChange { get; set; }
+
+    /// <summary>
+    /// Whether to close the context menu when this item is selected.
+    /// Default is false for checkbox items.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnSelect { get; set; } = false;
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "ContextMenuCheckboxItem must be used within a ContextMenuRoot component.");
+        }
+
+        ContentContainer?.RegisterItem(this);
+        Context.RegisterItem(this);
+    }
+
+    private async Task HandleClick()
+    {
+        if (Disabled) return;
+
+        // Toggle checked state
+        Checked = !Checked;
+
+        // Invoke callbacks
+        await CheckedChanged.InvokeAsync(Checked);
+        if (OnCheckedChange.HasDelegate)
+        {
+            await OnCheckedChange.InvokeAsync(Checked);
+        }
+
+        // Close the context menu if configured
+        if (CloseOnSelect)
+        {
+            Context.Close();
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (Disabled) return;
+
+        if (args.Key == "Enter" || args.Key == " ")
+        {
+            await HandleClick();
+        }
+    }
+
+    public async Task FocusAsync()
+    {
+        try
+        {
+            await _itemRef.FocusAsync();
+        }
+        catch
+        {
+            // Focus may fail
+        }
+    }
+
+    public void Dispose()
+    {
+        ContentContainer?.UnregisterItem(this);
+        Context.UnregisterItem(this);
+    }
+}

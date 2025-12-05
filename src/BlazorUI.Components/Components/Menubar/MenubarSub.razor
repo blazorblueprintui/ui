@@ -1,0 +1,35 @@
+@namespace BlazorUI.Components.Menubar
+
+@* Styled MenubarSub - container for a submenu *@
+<BlazorUI.Primitives.Menubar.MenubarSub Open="@Open"
+                                         OpenChanged="@OpenChanged"
+                                         OnOpenChange="@OnOpenChange">
+    @ChildContent
+</BlazorUI.Primitives.Menubar.MenubarSub>
+
+@code {
+    /// <summary>
+    /// The content to render inside the submenu.
+    /// Typically contains MenubarSubTrigger and MenubarSubContent.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls whether the submenu is open (controlled mode).
+    /// </summary>
+    [Parameter]
+    public bool? Open { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open state changes (for two-way binding).
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the submenu open state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OnOpenChange { get; set; }
+}

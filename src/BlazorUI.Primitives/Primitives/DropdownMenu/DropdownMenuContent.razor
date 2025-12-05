@@ -636,4 +636,21 @@
     }
 
     internal List<IDropdownMenuItem> GetMenuItems() => _menuItems;
+
+    /// <summary>
+    /// Focuses the content container for keyboard navigation.
+    /// </summary>
+    internal async Task FocusContainerAsync()
+    {
+        try
+        {
+            await _contentRef.FocusAsync();
+            // Reset focused index since we're focusing the container
+            Context.SetFocusedIndex(-1);
+        }
+        catch
+        {
+            // Focus may fail
+        }
+    }
 }

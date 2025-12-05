@@ -1,0 +1,76 @@
+@namespace BlazorUI.Primitives.Menubar
+@typeparam TValue
+
+@* MenubarRadioGroup - a group of radio items where only one can be selected *@
+<CascadingValue Value="@_context" IsFixed="false">
+    <div role="group" @attributes="AdditionalAttributes">
+        @ChildContent
+    </div>
+</CascadingValue>
+
+@code {
+    private readonly MenubarRadioGroupContext<TValue> _context = new();
+
+    [CascadingParameter]
+    private MenubarContext MenuContext { get; set; } = null!;
+
+    /// <summary>
+    /// The content to render inside the radio group.
+    /// Typically contains MenubarRadioItem components.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the radio group element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// The currently selected value.
+    /// </summary>
+    [Parameter]
+    public TValue? Value { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the selected value changes (for two-way binding).
+    /// </summary>
+    [Parameter]
+    public EventCallback<TValue?> ValueChanged { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the selection changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<TValue?> OnValueChange { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (MenuContext == null)
+        {
+            throw new InvalidOperationException(
+                "MenubarRadioGroup must be used within a MenubarRoot component.");
+        }
+
+        _context.Value = Value;
+        _context.SelectValue = HandleSelectValue;
+    }
+
+    protected override void OnParametersSet()
+    {
+        _context.Value = Value;
+    }
+
+    private async Task HandleSelectValue(TValue? value)
+    {
+        Value = value;
+        _context.Value = value;
+
+        await ValueChanged.InvokeAsync(value);
+        if (OnValueChange.HasDelegate)
+        {
+            await OnValueChange.InvokeAsync(value);
+        }
+    }
+}

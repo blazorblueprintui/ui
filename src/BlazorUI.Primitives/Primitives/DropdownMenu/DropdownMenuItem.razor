@@ -5,10 +5,12 @@
 @* Dropdown menu item - represents an individual menu action *@
 <div @ref="_itemRef"
      role="menuitem"
-     tabindex="@(Disabled ? -1 : -1)"
-     aria-disabled="@Disabled.ToString().ToLower()"
+     tabindex="-1"
+     aria-disabled="@Disabled.ToString().ToLowerInvariant()"
+     data-disabled="@Disabled.ToString().ToLowerInvariant()"
      @onclick="HandleClick"
      @onkeydown="HandleKeyDown"
+     @onmouseenter="HandleMouseEnter"
      @attributes="AdditionalAttributes">
     @ChildContent
 </div>
@@ -19,6 +21,12 @@
 
     [CascadingParameter]
     private DropdownMenuContent? ContentContext { get; set; }
+    
+    [CascadingParameter(Name = "ParentSubContext")]
+    private DropdownMenuSubContext? ParentSubContext { get; set; }
+    
+    [CascadingParameter]
+    private DropdownMenuSubContent? SubContentContext { get; set; }
 
     private ElementReference _itemRef;
 
@@ -63,8 +71,17 @@
                 "Ensure DropdownMenuItem is a child of a DropdownMenu component.");
         }
 
-        // Register this item with the content for keyboard navigation
-        ContentContext?.RegisterMenuItem(this);
+        // Register this item with the appropriate content for keyboard navigation
+        // If we're inside a submenu, register with the submenu content
+        // Otherwise, register with the root menu content
+        if (SubContentContext != null)
+        {
+            SubContentContext.RegisterMenuItem(this);
+        }
+        else
+        {
+            ContentContext?.RegisterMenuItem(this);
+        }
     }
 
     private async Task HandleClick(MouseEventArgs args)
@@ -95,6 +112,43 @@
         }
     }
 
+    private async void HandleMouseEnter(MouseEventArgs args)
+    {
+        // Track if there was an active submenu that we're closing
+        bool hadActiveSubmenu = false;
+        
+        // Close any active submenu when hovering over this item
+        // If we're inside a submenu (ParentSubContext exists), close nested submenus of that parent
+        // If we're at root level, close any active submenu from the root context
+        if (ParentSubContext != null)
+        {
+            // We're inside a submenu - close any nested submenus
+            hadActiveSubmenu = ParentSubContext.ActiveSubMenu != null;
+            ParentSubContext.CloseActiveSubMenu();
+        }
+        else
+        {
+            // We're at root level - close active submenu from root context
+            hadActiveSubmenu = Context?.ActiveSubMenu != null;
+            Context?.CloseActiveSubMenu();
+        }
+        
+        // Restore focus to the menu container (not the item) when we closed a submenu
+        // This enables keyboard navigation without showing focus ring on a specific item
+        if (hadActiveSubmenu)
+        {
+            // Focus the content container - if in submenu, focus SubContentContext, else ContentContext
+            if (SubContentContext != null)
+            {
+                await SubContentContext.FocusContainerAsync();
+            }
+            else if (ContentContext != null)
+            {
+                await ContentContext.FocusContainerAsync();
+            }
+        }
+    }
+
     // IDropdownMenuItem implementation
     public async Task FocusAsync()
     {
@@ -117,6 +171,13 @@
     public void Dispose()
     {
         // Unregister this item when disposed
-        ContentContext?.UnregisterMenuItem(this);
+        if (SubContentContext != null)
+        {
+            SubContentContext.UnregisterMenuItem(this);
+        }
+        else
+        {
+            ContentContext?.UnregisterMenuItem(this);
+        }
     }
 }

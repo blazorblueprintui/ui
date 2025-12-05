@@ -8,6 +8,7 @@
      tabindex="-1"
      @onclick="HandleClick"
      @onkeydown="HandleKeyDown"
+     @onmouseenter="HandleMouseEnter"
      @attributes="AdditionalAttributes"
      aria-disabled="@Disabled.ToString().ToLowerInvariant()"
      data-disabled="@(Disabled ? "true" : null)">
@@ -20,6 +21,12 @@
 
     [CascadingParameter]
     private ContextMenuContent? ContentContainer { get; set; }
+    
+    [CascadingParameter(Name = "ParentSubContext")]
+    private ContextMenuSubContext? ParentSubContext { get; set; }
+    
+    [CascadingParameter]
+    private ContextMenuSubContent? SubContentContext { get; set; }
 
     private ElementReference _itemRef;
 
@@ -57,7 +64,17 @@
                 "ContextMenuItem must be used within a ContextMenuRoot component.");
         }
 
-        ContentContainer?.RegisterItem(this);
+        // Register this item with the appropriate content for keyboard navigation
+        // If we're inside a submenu, register with the submenu content
+        // Otherwise, register with the root menu content
+        if (SubContentContext != null)
+        {
+            SubContentContext.RegisterItem(this);
+        }
+        else
+        {
+            ContentContainer?.RegisterItem(this);
+        }
         Context.RegisterItem(this);
     }
 
@@ -81,6 +98,43 @@
         }
     }
 
+    private async void HandleMouseEnter(MouseEventArgs args)
+    {
+        // Track if there was an active submenu that we're closing
+        bool hadActiveSubmenu = false;
+        
+        // Close any active submenu when hovering over this item
+        // If we're inside a submenu (ParentSubContext exists), close nested submenus of that parent
+        // If we're at root level, close any active submenu from the root context
+        if (ParentSubContext != null)
+        {
+            // We're inside a submenu - close any nested submenus
+            hadActiveSubmenu = ParentSubContext.ActiveSubMenu != null;
+            ParentSubContext.CloseActiveSubMenu();
+        }
+        else
+        {
+            // We're at root level - close active submenu from root context
+            hadActiveSubmenu = Context?.ActiveSubMenu != null;
+            Context?.CloseActiveSubMenu();
+        }
+        
+        // Restore focus to the menu container (not the item) when we closed a submenu
+        // This enables keyboard navigation without showing focus ring on a specific item
+        if (hadActiveSubmenu)
+        {
+            // Focus the content container - if in submenu, focus SubContentContext, else ContentContainer
+            if (SubContentContext != null)
+            {
+                await SubContentContext.FocusContainerAsync();
+            }
+            else if (ContentContainer != null)
+            {
+                await ContentContainer.FocusContainerAsync();
+            }
+        }
+    }
+
     public async Task FocusAsync()
     {
         try
@@ -95,7 +149,14 @@
 
     public void Dispose()
     {
-        ContentContainer?.UnregisterItem(this);
+        if (SubContentContext != null)
+        {
+            SubContentContext.UnregisterItem(this);
+        }
+        else
+        {
+            ContentContainer?.UnregisterItem(this);
+        }
         Context.UnregisterItem(this);
     }
 }

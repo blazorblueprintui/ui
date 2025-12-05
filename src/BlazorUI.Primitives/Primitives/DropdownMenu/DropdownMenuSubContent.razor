@@ -1,0 +1,357 @@
+@namespace BlazorUI.Primitives.DropdownMenu
+@using BlazorUI.Primitives.Services
+@inject IPositioningService PositioningService
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@* DropdownMenuSubContent - the content panel for a submenu *@
+
+@if (SubContext.IsOpen)
+{
+    <div @ref="_contentRef"
+         role="menu"
+         tabindex="-1"
+         @onkeydown="HandleKeyDown"
+         @onkeydown:stopPropagation="true"
+         @onmouseleave="HandleMouseLeave"
+         @attributes="GetAttributesWithoutStyle()"
+         data-state="open"
+         style="@GetMergedStyle()">
+        <CascadingValue Value="@this" IsFixed="false">
+            <CascadingValue Value="@SubContext" Name="ParentSubContext" IsFixed="false">
+                @ChildContent
+            </CascadingValue>
+        </CascadingValue>
+    </div>
+}
+
+@code {
+    [CascadingParameter]
+    private DropdownMenuContext? MenuContext { get; set; }
+
+    [CascadingParameter]
+    private DropdownMenuSubContext SubContext { get; set; } = null!;
+
+    private ElementReference _contentRef;
+    private IAsyncDisposable? _positioningCleanup;
+    private bool _isInitialized = false;
+
+    // Track menu items for keyboard navigation
+    private readonly List<IDropdownMenuItem> _menuItems = new();
+    private int _focusedIndex = -1;
+
+    /// <summary>
+    /// The content to render inside the submenu.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the content container.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Whether pressing Escape should close the submenu.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnEscape { get; set; } = true;
+
+    /// <summary>
+    /// Offset distance from the trigger element in pixels.
+    /// Default is -4 (slight overlap with parent).
+    /// </summary>
+    [Parameter]
+    public int Offset { get; set; } = -4;
+
+    /// <summary>
+    /// Z-index value for the submenu content.
+    /// Default is 50.
+    /// </summary>
+    [Parameter]
+    public int ZIndex { get; set; } = 50;
+
+    protected override void OnInitialized()
+    {
+        if (SubContext == null)
+        {
+            throw new InvalidOperationException(
+                "DropdownMenuSubContent must be used within a DropdownMenuSub component.");
+        }
+
+        SubContext.OnStateChanged += HandleContextStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (SubContext.IsOpen && !_isInitialized)
+        {
+            _isInitialized = true;
+
+            // Set up positioning
+            await SetupPositioningAsync();
+
+            // Focus the content container
+            try
+            {
+                await _contentRef.FocusAsync();
+            }
+            catch
+            {
+                // Focus may fail
+            }
+        }
+        else if (!SubContext.IsOpen && _isInitialized)
+        {
+            await CleanupAsync();
+        }
+    }
+
+    private async Task SetupPositioningAsync()
+    {
+        if (SubContext.TriggerElement == null) return;
+
+        try
+        {
+            var options = new PositioningOptions
+            {
+                Placement = "right-start",
+                Offset = Offset,
+                Strategy = "fixed"
+            };
+
+            var position = await PositioningService.ComputePositionAsync(
+                SubContext.TriggerElement.Value,
+                _contentRef,
+                options);
+
+            await PositioningService.ApplyPositionAsync(_contentRef, position, makeVisible: true);
+
+            _positioningCleanup = await PositioningService.AutoUpdateAsync(
+                SubContext.TriggerElement.Value,
+                _contentRef,
+                options);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to set up submenu positioning: {ex.Message}");
+        }
+    }
+
+    private void HandleContextStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async void HandleKeyDown(KeyboardEventArgs args)
+    {
+        switch (args.Key)
+        {
+            case "Escape":
+                if (CloseOnEscape)
+                {
+                    // Close ALL menus including root when Escape is pressed
+                    MenuContext?.Close();
+                }
+                break;
+
+            case "ArrowLeft":
+                // Close submenu and return focus to trigger
+                SubContext.Close();
+                // Restore focus to the trigger element
+                if (SubContext.TriggerElement.HasValue)
+                {
+                    try
+                    {
+                        await SubContext.TriggerElement.Value.FocusAsync();
+                    }
+                    catch
+                    {
+                        // Focus may fail
+                    }
+                }
+                break;
+
+            case "ArrowDown":
+                await FocusNextItem();
+                break;
+
+            case "ArrowUp":
+                await FocusPreviousItem();
+                break;
+        }
+    }
+
+    private async Task FocusNextItem()
+    {
+        if (_menuItems.Count == 0) return;
+
+        var enabledItems = _menuItems.Where(item => !item.Disabled).ToList();
+        if (enabledItems.Count == 0) return;
+
+        int nextIndex;
+        if (_focusedIndex == -1)
+        {
+            // No item focused, focus first
+            nextIndex = 0;
+        }
+        else
+        {
+            var currentEnabledIndex = GetEnabledItemIndex(enabledItems, _focusedIndex);
+            if (currentEnabledIndex == -1)
+            {
+                nextIndex = 0;
+            }
+            else if (currentEnabledIndex >= enabledItems.Count - 1)
+            {
+                nextIndex = 0; // Wrap to first
+            }
+            else
+            {
+                nextIndex = currentEnabledIndex + 1;
+            }
+        }
+
+        await FocusItem(enabledItems, nextIndex);
+    }
+
+    private async Task FocusPreviousItem()
+    {
+        if (_menuItems.Count == 0) return;
+
+        var enabledItems = _menuItems.Where(item => !item.Disabled).ToList();
+        if (enabledItems.Count == 0) return;
+
+        int prevIndex;
+        if (_focusedIndex == -1)
+        {
+            // No item focused, focus last
+            prevIndex = enabledItems.Count - 1;
+        }
+        else
+        {
+            var currentEnabledIndex = GetEnabledItemIndex(enabledItems, _focusedIndex);
+            if (currentEnabledIndex == -1)
+            {
+                prevIndex = enabledItems.Count - 1;
+            }
+            else if (currentEnabledIndex <= 0)
+            {
+                prevIndex = enabledItems.Count - 1; // Wrap to last
+            }
+            else
+            {
+                prevIndex = currentEnabledIndex - 1;
+            }
+        }
+
+        await FocusItem(enabledItems, prevIndex);
+    }
+
+    private int GetEnabledItemIndex(List<IDropdownMenuItem> enabledItems, int absoluteIndex)
+    {
+        if (absoluteIndex < 0 || absoluteIndex >= _menuItems.Count) return -1;
+        var currentItem = _menuItems[absoluteIndex];
+        return enabledItems.IndexOf(currentItem);
+    }
+
+    private async Task FocusItem(List<IDropdownMenuItem> enabledItems, int enabledIndex)
+    {
+        if (enabledIndex < 0 || enabledIndex >= enabledItems.Count) return;
+        var item = enabledItems[enabledIndex];
+        _focusedIndex = _menuItems.IndexOf(item);
+        await item.FocusAsync();
+    }
+
+    private void HandleMouseLeave(MouseEventArgs args)
+    {
+        // Don't close on mouse leave - closing is handled by:
+        // 1. Hovering sibling menu items (which call CloseActiveSubMenu)
+        // 2. Keyboard navigation (ArrowLeft, Escape)
+        // This prevents the submenu from closing when moving mouse to its own items
+    }
+
+    private string GetInitialStyle()
+    {
+        var baseStyle = $"z-index: {ZIndex};";
+        baseStyle += " position: fixed; top: -9999px; left: -9999px; pointer-events: none;";
+        return baseStyle;
+    }
+
+    private string GetMergedStyle()
+    {
+        var baseStyle = GetInitialStyle();
+
+        if (AdditionalAttributes != null && AdditionalAttributes.TryGetValue("style", out var userStyle))
+        {
+            return $"{userStyle}; {baseStyle}";
+        }
+
+        return baseStyle;
+    }
+
+    private Dictionary<string, object>? GetAttributesWithoutStyle()
+    {
+        if (AdditionalAttributes == null) return null;
+
+        var attributes = new Dictionary<string, object>(AdditionalAttributes);
+        attributes.Remove("style");
+
+        return attributes.Count > 0 ? attributes : null;
+    }
+
+    private async Task CleanupAsync()
+    {
+        if (_positioningCleanup != null)
+        {
+            await _positioningCleanup.DisposeAsync();
+            _positioningCleanup = null;
+        }
+
+        _isInitialized = false;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await CleanupAsync();
+        SubContext.OnStateChanged -= HandleContextStateChanged;
+    }
+
+    /// <summary>
+    /// Registers a menu item for keyboard navigation.
+    /// </summary>
+    internal void RegisterMenuItem(IDropdownMenuItem item)
+    {
+        if (!_menuItems.Contains(item))
+        {
+            _menuItems.Add(item);
+        }
+    }
+
+    /// <summary>
+    /// Unregisters a menu item.
+    /// </summary>
+    internal void UnregisterMenuItem(IDropdownMenuItem item)
+    {
+        _menuItems.Remove(item);
+    }
+
+    /// <summary>
+    /// Focuses the content container for keyboard navigation.
+    /// </summary>
+    internal async Task FocusContainerAsync()
+    {
+        try
+        {
+            await _contentRef.FocusAsync();
+            // Reset focused index since we're focusing the container
+            _focusedIndex = -1;
+        }
+        catch
+        {
+            // Focus may fail
+        }
+    }
+}

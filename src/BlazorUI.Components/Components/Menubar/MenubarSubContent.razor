@@ -1,0 +1,57 @@
+@namespace BlazorUI.Components.Menubar
+
+@* Styled MenubarSubContent - wrapper with shadcn Tailwind classes *@
+<BlazorUI.Primitives.Menubar.MenubarSubContent class="@CssClass"
+                                                 CloseOnEscape="@CloseOnEscape"
+                                                 Offset="@Offset"
+                                                 ZIndex="@ZIndex">
+    <div class="p-1">
+        @ChildContent
+    </div>
+</BlazorUI.Primitives.Menubar.MenubarSubContent>
+
+@code {
+    /// <summary>
+    /// The content to render inside the submenu.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the content container.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Whether pressing Escape should close the submenu.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnEscape { get; set; } = true;
+
+    /// <summary>
+    /// Offset distance from the trigger in pixels.
+    /// </summary>
+    [Parameter]
+    public int Offset { get; set; } = -4;
+
+    /// <summary>
+    /// Z-index for the submenu content.
+    /// </summary>
+    [Parameter]
+    public int ZIndex { get; set; } = 50;
+
+    private string CssClass
+    {
+        get
+        {
+            var baseClasses = "z-50 min-w-[8rem] no-focus-ring overflow-hidden rounded-md border bg-popover " +
+                            "text-popover-foreground shadow-lg " +
+                            "data-[state=open]:animate-in data-[state=closed]:animate-out " +
+                            "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 " +
+                            "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95";
+
+            return string.IsNullOrWhiteSpace(Class) ? baseClasses : $"{baseClasses} {Class}";
+        }
+    }
+}

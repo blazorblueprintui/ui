@@ -1,0 +1,44 @@
+@namespace BlazorUI.Components.DropdownMenu
+@typeparam TValue
+
+@* Styled DropdownMenuRadioGroup - wrapper for radio items *@
+<BlazorUI.Primitives.DropdownMenu.DropdownMenuRadioGroup TValue="TValue"
+                                                         Value="@Value"
+                                                         ValueChanged="@ValueChanged"
+                                                         OnValueChange="@OnValueChange"
+                                                         class="@Class">
+    @ChildContent
+</BlazorUI.Primitives.DropdownMenu.DropdownMenuRadioGroup>
+
+@code {
+    /// <summary>
+    /// The content to render inside the radio group.
+    /// Typically contains DropdownMenuRadioItem components.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the radio group.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// The currently selected value.
+    /// </summary>
+    [Parameter]
+    public TValue? Value { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the selected value changes (for two-way binding).
+    /// </summary>
+    [Parameter]
+    public EventCallback<TValue?> ValueChanged { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the selection changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<TValue?> OnValueChange { get; set; }
+}

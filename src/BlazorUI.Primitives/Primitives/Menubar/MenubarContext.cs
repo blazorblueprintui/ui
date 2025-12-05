@@ -57,6 +57,12 @@ public class MenubarContext : PrimitiveContextWithEvents<MenubarState>
     public IReadOnlyList<MenubarMenuContext> Menus => _menus;
 
     /// <summary>
+    /// Gets or sets the currently active submenu context.
+    /// Used to close submenus when hovering over other items.
+    /// </summary>
+    public MenubarSubContext? ActiveSubMenu { get; set; }
+
+    /// <summary>
     /// Registers a menu with the menubar.
     /// </summary>
     /// <param name="menu">The menu context to register.</param>
@@ -98,6 +104,10 @@ public class MenubarContext : PrimitiveContextWithEvents<MenubarState>
     /// </summary>
     public void CloseMenu()
     {
+        // Close any active submenu first
+        ActiveSubMenu?.Close();
+        ActiveSubMenu = null;
+
         UpdateState(state =>
         {
             state.ActiveIndex = -1;
@@ -183,6 +193,18 @@ public class MenubarContext : PrimitiveContextWithEvents<MenubarState>
     public bool IsMenuOpen(int index)
     {
         return State.ActiveIndex == index;
+    }
+
+    /// <summary>
+    /// Closes any active submenu. Called when hovering over sibling menu items.
+    /// </summary>
+    public void CloseActiveSubMenu()
+    {
+        if (ActiveSubMenu != null)
+        {
+            ActiveSubMenu.Close();
+            ActiveSubMenu = null;
+        }
     }
 }
 

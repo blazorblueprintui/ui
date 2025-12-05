@@ -1,0 +1,128 @@
+@namespace BlazorUI.Primitives.ContextMenu
+@typeparam TValue
+@implements IContextMenuItem
+@implements IDisposable
+
+@* ContextMenuRadioItem - a radio item within a radio group *@
+<div @ref="_itemRef"
+     role="menuitemradio"
+     tabindex="-1"
+     aria-checked="@IsSelected.ToString().ToLowerInvariant()"
+     aria-disabled="@Disabled.ToString().ToLowerInvariant()"
+     @onclick="HandleClick"
+     @onkeydown="HandleKeyDown"
+     data-state="@(IsSelected ? "checked" : "unchecked")"
+     data-disabled="@(Disabled ? "true" : null)"
+     @attributes="AdditionalAttributes">
+    @ChildContent
+</div>
+
+@code {
+    [CascadingParameter]
+    private ContextMenuContext MenuContext { get; set; } = null!;
+
+    [CascadingParameter]
+    private ContextMenuRadioGroupContext<TValue>? RadioGroupContext { get; set; }
+
+    [CascadingParameter]
+    private ContextMenuContent? ContentContainer { get; set; }
+
+    private ElementReference _itemRef;
+
+    /// <summary>
+    /// The content to display inside the radio item.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the radio item element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Whether the radio item is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; } = false;
+
+    /// <summary>
+    /// The value associated with this radio item.
+    /// </summary>
+    [Parameter]
+    public TValue? Value { get; set; }
+
+    /// <summary>
+    /// Whether to close the context menu when this item is selected.
+    /// Default is true for radio items.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnSelect { get; set; } = true;
+
+    private bool IsSelected => RadioGroupContext != null &&
+                               EqualityComparer<TValue?>.Default.Equals(RadioGroupContext.Value, Value);
+
+    protected override void OnInitialized()
+    {
+        if (MenuContext == null)
+        {
+            throw new InvalidOperationException(
+                "ContextMenuRadioItem must be used within a ContextMenuRoot component.");
+        }
+
+        if (RadioGroupContext == null)
+        {
+            throw new InvalidOperationException(
+                "ContextMenuRadioItem must be used within a ContextMenuRadioGroup component.");
+        }
+
+        ContentContainer?.RegisterItem(this);
+        MenuContext.RegisterItem(this);
+    }
+
+    private async Task HandleClick()
+    {
+        if (Disabled) return;
+
+        // Select this item
+        if (RadioGroupContext?.SelectValue != null)
+        {
+            await RadioGroupContext.SelectValue(Value);
+        }
+
+        // Close the context menu if configured
+        if (CloseOnSelect)
+        {
+            MenuContext.Close();
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (Disabled) return;
+
+        if (args.Key == "Enter" || args.Key == " ")
+        {
+            await HandleClick();
+        }
+    }
+
+    public async Task FocusAsync()
+    {
+        try
+        {
+            await _itemRef.FocusAsync();
+        }
+        catch
+        {
+            // Focus may fail
+        }
+    }
+
+    public void Dispose()
+    {
+        ContentContainer?.UnregisterItem(this);
+        MenuContext.UnregisterItem(this);
+    }
+}

@@ -1,0 +1,76 @@
+@namespace BlazorUI.Primitives.DropdownMenu
+@typeparam TValue
+
+@* DropdownMenuRadioGroup - a group of radio items where only one can be selected *@
+<CascadingValue Value="@_context" IsFixed="false">
+    <div role="group" @attributes="AdditionalAttributes">
+        @ChildContent
+    </div>
+</CascadingValue>
+
+@code {
+    private readonly DropdownMenuRadioGroupContext<TValue> _context = new();
+
+    [CascadingParameter]
+    private DropdownMenuContext MenuContext { get; set; } = null!;
+
+    /// <summary>
+    /// The content to render inside the radio group.
+    /// Typically contains DropdownMenuRadioItem components.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the radio group element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// The currently selected value.
+    /// </summary>
+    [Parameter]
+    public TValue? Value { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the selected value changes (for two-way binding).
+    /// </summary>
+    [Parameter]
+    public EventCallback<TValue?> ValueChanged { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the selection changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<TValue?> OnValueChange { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (MenuContext == null)
+        {
+            throw new InvalidOperationException(
+                "DropdownMenuRadioGroup must be used within a DropdownMenu component.");
+        }
+
+        _context.Value = Value;
+        _context.SelectValue = HandleSelectValue;
+    }
+
+    protected override void OnParametersSet()
+    {
+        _context.Value = Value;
+    }
+
+    private async Task HandleSelectValue(TValue? value)
+    {
+        Value = value;
+        _context.Value = value;
+
+        await ValueChanged.InvokeAsync(value);
+        if (OnValueChange.HasDelegate)
+        {
+            await OnValueChange.InvokeAsync(value);
+        }
+    }
+}
