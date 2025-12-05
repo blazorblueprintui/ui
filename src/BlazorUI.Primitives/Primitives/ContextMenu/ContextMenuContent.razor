@@ -20,7 +20,7 @@
          @attributes="GetAttributes()"
          aria-labelledby="@Context.TriggerId"
          data-state="open"
-         style="@GetStyle()">
+         style="@GetInitialStyle()">
         <CascadingValue Value="this" IsFixed="false">
             @ChildContent
         </CascadingValue>
@@ -39,6 +39,8 @@
     private IJSObjectReference? _keyboardNavCleanup;
     private IJSObjectReference? _portalModule;
     private IJSObjectReference? _scrollLockCleanup;
+    private IJSObjectReference? _positionModule;
+    private IJSObjectReference? _positionCleanup;
     private DotNetObjectReference<ContextMenuContent>? _dotNetRef;
     private bool _isInitialized = false;
 
@@ -96,6 +98,13 @@
     [Parameter]
     public bool LockScroll { get; set; } = true;
 
+    /// <summary>
+    /// Padding from viewport edges when repositioning the menu.
+    /// Default is 8 pixels.
+    /// </summary>
+    [Parameter]
+    public int ViewportPadding { get; set; } = 8;
+
     protected override void OnInitialized()
     {
         if (Context == null)
@@ -112,6 +121,9 @@
         if (Context.IsOpen && !_isInitialized)
         {
             _isInitialized = true;
+
+            // Set up viewport-aware positioning (adjusts if menu would overflow)
+            await SetupPositioningAsync();
 
             if (CloseOnClickOutside)
             {
@@ -191,6 +203,22 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Failed to set up scroll lock: {ex.Message}");
+        }
+    }
+
+    private async Task SetupPositioningAsync()
+    {
+        try
+        {
+            _positionModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorUI.Primitives/js/primitives/context-menu-position.js");
+
+            _positionCleanup = await _positionModule.InvokeAsync<IJSObjectReference>(
+                "setupContextMenuPosition", _contentRef, Context.X, Context.Y, ViewportPadding);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to set up context menu positioning: {ex.Message}");
         }
     }
 
@@ -363,8 +391,9 @@
         return $"position: fixed; inset: 0; z-index: {overlayZIndex};";
     }
 
-    private string GetStyle()
+    private string GetInitialStyle()
     {
+        // Initial position at mouse coordinates - JS will adjust if needed for viewport bounds
         return $"position: fixed; left: {Context.X}px; top: {Context.Y}px; z-index: {ZIndex};";
     }
 
@@ -473,6 +502,25 @@
             _scrollLockCleanup = null;
         }
 
+        // Clean up position cleanup object
+        if (_positionCleanup != null)
+        {
+            try
+            {
+                await _positionCleanup.InvokeVoidAsync("dispose");
+                await _positionCleanup.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // Expected during circuit disconnection, ignore
+            }
+            catch (ObjectDisposedException)
+            {
+                // Already disposed, ignore
+            }
+            _positionCleanup = null;
+        }
+
         if (_clickOutsideModule != null)
         {
             try
@@ -522,6 +570,23 @@
                 // Already disposed, ignore
             }
             _portalModule = null;
+        }
+
+        if (_positionModule != null)
+        {
+            try
+            {
+                await _positionModule.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // Expected during circuit disconnection, ignore
+            }
+            catch (ObjectDisposedException)
+            {
+                // Already disposed, ignore
+            }
+            _positionModule = null;
         }
 
         _dotNetRef?.Dispose();
