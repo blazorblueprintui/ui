@@ -78,7 +78,7 @@
                                     {
                                         <button type="button"
                                                 tabindex="-1"
-                                                @onclick="@(() => SelectDate(day.Value))"
+                                                @onclick="@(() => { SelectDate(day.Value); _calendarRef.FocusAsync(); })"
                                                 disabled="@(!IsDateEnabled(day.Value))"
                                                 class="@GetDayClass(day.Value)"
                                                 data-focused="@IsFocused(day.Value)"
@@ -558,7 +558,7 @@
         // Add focus ring for keyboard navigation
         if (IsFocused(date) && !IsSelected(date))
         {
-            classes.Add("ring-2 ring-ring ring-offset-2");
+            classes.Add("ring-2 ring-ring/50 ring-offset-2");
         }
 
         if (!IsCurrentMonth(date))
