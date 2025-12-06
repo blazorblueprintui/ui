@@ -412,7 +412,12 @@
     }
 
     private void OnFocus() => _hasFocus = true;
-    private void OnBlur() => _hasFocus = false;
+    private void OnBlur()
+    {
+        _hasFocus = false;
+        // Trigger re-render to remove focus ring when focus leaves the calendar
+        StateHasChanged();
+    }
     private void OnFocusIn() => _hasFocus = true;
 
     private bool CanNavigatePrevious =>
