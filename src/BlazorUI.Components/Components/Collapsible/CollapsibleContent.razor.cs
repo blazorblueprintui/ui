@@ -88,10 +88,12 @@ public partial class CollapsibleContent : ComponentBase
     public RenderFragment? ChildContent { get; set; }
 
     /// <summary>
-    /// Gets the computed CSS class string for the content container element.
+    /// Gets the CSS classes for the grid container (for animation).
     /// </summary>
-    /// <value>
-    /// A string containing all CSS classes to be applied to the content div element.
-    /// </value>
-    private string CssClass => Class ?? string.Empty;
+    /// <remarks>
+    /// These classes are applied to the outer container to enable smooth height transitions.
+    /// User's custom classes are applied to an inner wrapper to avoid padding affecting the grid collapse.
+    /// </remarks>
+    private string GridCssClass =>
+        "grid grid-rows-[0fr] transition-[grid-template-rows] duration-200 ease-out data-[state=open]:grid-rows-[1fr]";
 }

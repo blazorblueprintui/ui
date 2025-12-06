@@ -67,6 +67,8 @@ namespace BlazorUI.Primitives.Collapsible;
 /// </example>
 public partial class CollapsibleContent : ComponentBase
 {
+    private bool _shouldRender => ForceMount || (Context?.Open ?? false);
+
     /// <summary>
     /// Gets the cascaded collapsible context from the parent Collapsible component.
     /// </summary>
@@ -85,6 +87,14 @@ public partial class CollapsibleContent : ComponentBase
     /// </value>
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Whether to force mount the content even when the collapsible is closed.
+    /// When true, content remains mounted (useful for CSS animations when styled).
+    /// When false (default), content is unmounted when closed.
+    /// </summary>
+    [Parameter]
+    public bool ForceMount { get; set; } = false;
 
     /// <summary>
     /// Gets or sets additional attributes to be applied to the content container element.

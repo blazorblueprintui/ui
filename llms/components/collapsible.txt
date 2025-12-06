@@ -10,10 +10,16 @@ The Collapsible component provides an expandable/collapsible content area with s
 
 **Features:**
 - Controlled and uncontrolled modes
-- Smooth expand/collapse animations
+- Smooth expand/collapse animations (built-in CSS grid transition)
 - Keyboard navigation (Space, Enter)
 - Disabled state
 - ARIA attributes
+
+**Animations:**
+- **Content:** Smooth height animation using CSS grid-template-rows transition
+- **Chevron:** Add rotation via CSS classes on trigger (see examples below)
+- Animations work automatically via CSS data-state attributes
+- No JavaScript required for animations
 
 ---
 
@@ -42,12 +48,14 @@ The Collapsible component provides an expandable/collapsible content area with s
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `AsChild` | `bool` | `false` | Whether to use child as trigger |
+| `Class` | `string?` | `null` | Additional CSS classes (use for chevron animation) |
 | `ChildContent` | `RenderFragment?` | `null` | Trigger content |
 
 ### `<CollapsibleContent>`
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
+| `Class` | `string?` | `null` | Additional CSS classes |
 | `ChildContent` | `RenderFragment?` | `null` | Collapsible content |
 
 ---
@@ -124,10 +132,47 @@ The Collapsible component provides an expandable/collapsible content area with s
 
 ---
 
+## Chevron Animation
+
+Add animated chevron rotation using CSS classes on `CollapsibleTrigger`:
+
+```razor
+<Collapsible Class="border rounded-lg">
+    <div class="px-4 py-3">
+        <CollapsibleTrigger Class="flex w-full items-center justify-between [&_svg]:transition-transform [&_svg]:duration-200 data-[state=open]:[&_svg]:rotate-180">
+            <span>Click to expand</span>
+            <LucideIcon Name="chevron-down" Size="16" />
+        </CollapsibleTrigger>
+    </div>
+    <CollapsibleContent Class="px-4 pb-4">
+        Content with animated chevron
+    </CollapsibleContent>
+</Collapsible>
+```
+
+**Key CSS classes:**
+- `[&_svg]:transition-transform` - Enable transition on SVG icons
+- `[&_svg]:duration-200` - 200ms animation duration
+- `data-[state=open]:[&_svg]:rotate-180` - Rotate 180° when open
+
+---
+
+## Primitive Usage
+
+When using the primitive directly (`BlazorUI.Primitives.Collapsible`), content unmounts when closed by default. Set `ForceMount="true"` to keep content in DOM for CSS animations:
+
+```razor
+<BlazorUI.Primitives.Collapsible.CollapsibleContent ForceMount="true" class="...">
+    Content stays mounted for animation
+</BlazorUI.Primitives.Collapsible.CollapsibleContent>
+```
+
+---
+
 ## Related Components
 
 - **Accordion** - llms/components/accordion.txt
 
 ---
 
-**Last Updated:** 2025-11-16
+**Last Updated:** 2025-12-07

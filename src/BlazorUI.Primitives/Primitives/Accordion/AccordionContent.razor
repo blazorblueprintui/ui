@@ -7,9 +7,10 @@
          role="region"
          aria-labelledby="@Item.TriggerId"
          data-state="@(Item.IsOpen ? "open" : "closed")"
-         hidden="@(!Item.IsOpen)"
          @attributes="AdditionalAttributes">
-        @ChildContent
+        <div class="overflow-hidden min-h-0">
+            @ChildContent
+        </div>
     </div>
 }
 
@@ -30,8 +31,8 @@
 
     /// <summary>
     /// Whether to force mount the content even when the item is closed.
+    /// When true, content remains mounted (useful for CSS animations when styled).
     /// When false (default), content is unmounted when closed.
-    /// When true, content remains mounted but hidden.
     /// </summary>
     [Parameter]
     public bool ForceMount { get; set; } = false;

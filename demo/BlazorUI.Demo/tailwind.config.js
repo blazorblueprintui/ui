@@ -66,6 +66,30 @@ module.exports = {
         "sidebar-mobile": "var(--sidebar-width-mobile)",
         "sidebar-icon": "var(--sidebar-width-icon)",
       },
+      keyframes: {
+        "accordion-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height, auto)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height, auto)" },
+          to: { height: "0" },
+        },
+        "collapsible-down": {
+          from: { height: "0" },
+          to: { height: "var(--radix-collapsible-content-height, auto)" },
+        },
+        "collapsible-up": {
+          from: { height: "var(--radix-collapsible-content-height, auto)" },
+          to: { height: "0" },
+        },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
+        "collapsible-down": "collapsible-down 0.2s ease-out",
+        "collapsible-up": "collapsible-up 0.2s ease-out",
+      },
     },
   },
   plugins: [],

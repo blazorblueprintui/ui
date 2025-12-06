@@ -7,10 +7,11 @@
     Wraps the AccordionTrigger primitive with shadcn/ui styling.
 *@
 
-<BlazorUI.Primitives.Accordion.AccordionTrigger class="@CssClass">
+<BlazorUI.Primitives.Accordion.AccordionTrigger Class="@CssClass">
     <div class="flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline">
         @ChildContent
-        <svg class="h-4 w-4 shrink-0 transition-transform duration-200"
+        <svg class="h-4 w-4 shrink-0 transition-transform duration-200 data-[state=open]:rotate-180"
+             data-state="@(Item?.IsOpen == true ? "open" : "closed")"
              xmlns="http://www.w3.org/2000/svg"
              width="24"
              height="24"
@@ -26,6 +27,12 @@
 </BlazorUI.Primitives.Accordion.AccordionTrigger>
 
 @code {
+    /// <summary>
+    /// Cascading parameter to receive the parent accordion item for state access.
+    /// </summary>
+    [CascadingParameter]
+    public BlazorUI.Primitives.Accordion.AccordionItem? Item { get; set; }
+
     /// <summary>
     /// The child content to render within the trigger.
     /// </summary>
@@ -43,7 +50,7 @@
     /// Uses the cn() utility for intelligent class merging and Tailwind conflict resolution.
     /// </summary>
     private string CssClass => ClassNames.cn(
-        "flex w-full items-center justify-between text-sm font-medium transition-all [&[data-state=open]>svg]:rotate-180",
+        "flex w-full items-center justify-between text-sm font-medium transition-all",
         Class
     );
 }

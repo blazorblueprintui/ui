@@ -10,12 +10,18 @@ The Accordion component displays collapsible content sections that expand/collap
 
 **Features:**
 - Single or multiple panel expansion
-- Smooth expand/collapse animations
+- Smooth expand/collapse animations (chevron rotates, content slides)
 - Keyboard navigation (Arrow keys, Home, End)
 - Controlled and uncontrolled modes
 - Disabled panels
 - ARIA attributes
 - Dark mode compatible
+
+**Animations:**
+- **Chevron:** Rotates 180° when panel opens/closes (CSS transition)
+- **Content:** Smooth height animation using CSS grid-template-rows transition
+- Animations are enabled by default (`ForceMount="true"`)
+- Set `ForceMount="false"` to disable animations (content unmounts when closed)
 
 ---
 
@@ -59,6 +65,8 @@ The Accordion component displays collapsible content sections that expand/collap
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
+| `ForceMount` | `bool` | `true` | Keep content mounted in DOM for animations |
+| `Class` | `string?` | `null` | Additional CSS classes |
 | `ChildContent` | `RenderFragment?` | `null` | Panel content |
 
 ---
@@ -230,6 +238,20 @@ The Accordion component displays collapsible content sections that expand/collap
 
 ---
 
+## Primitive Usage
+
+When using the primitive directly (`BlazorUI.Primitives.Accordion`), content unmounts when closed by default. Set `ForceMount="true"` to keep content in DOM for CSS animations:
+
+```razor
+<BlazorUI.Primitives.Accordion.AccordionContent ForceMount="true">
+    Content stays mounted for animation
+</BlazorUI.Primitives.Accordion.AccordionContent>
+```
+
+The styled component sets `ForceMount="true"` by default for smooth animations.
+
+---
+
 ## Related Components
 
 - **Collapsible** - llms/components/collapsible.txt
@@ -241,4 +263,4 @@ The Accordion component displays collapsible content sections that expand/collap
 
 ---
 
-**Last Updated:** 2025-11-16
+**Last Updated:** 2025-12-07
