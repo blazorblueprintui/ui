@@ -6,7 +6,7 @@
  * @param {string} id - The portal container ID
  * @returns {HTMLElement} The portal container element
  */
-export function ensurePortalContainer(id = 'shadcn-portal-root') {
+export function ensurePortalContainer(id = 'blazorui-portal-root') {
     let container = document.getElementById(id);
 
     if (!container) {
@@ -27,7 +27,7 @@ export function ensurePortalContainer(id = 'shadcn-portal-root') {
  * Removes a portal container if it's empty.
  * @param {string} id - The portal container ID
  */
-export function cleanupPortalContainer(id = 'shadcn-portal-root') {
+export function cleanupPortalContainer(id = 'blazorui-portal-root') {
     const container = document.getElementById(id);
 
     if (container && container.children.length === 0) {
@@ -42,7 +42,7 @@ export function cleanupPortalContainer(id = 'shadcn-portal-root') {
  * @param {string} portalId - The portal container ID
  * @returns {Object} Disposable object with dispose() method
  */
-export function setupPortal(element, portalId = 'shadcn-portal-root') {
+export function setupPortal(element, portalId = 'blazorui-portal-root') {
     if (!element) {
         console.warn('setupPortal: element is null');
         return { dispose: () => {} };
