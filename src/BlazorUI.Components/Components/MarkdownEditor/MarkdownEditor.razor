@@ -1,0 +1,140 @@
+@namespace BlazorUI.Components.MarkdownEditor
+@using BlazorUI.Components.Tabs
+@using BlazorUI.Components.Button
+@using BlazorUI.Components.ButtonGroup
+@using BlazorUI.Components.DropdownMenu
+@using BlazorUI.Icons.Lucide.Components
+@using BlazorUI.Primitives.Services
+
+@*
+    Markdown Editor component with toolbar and preview functionality.
+    Inspired by GitHub's comment editor design.
+*@
+
+<div class="@ContainerCssClass" data-slot="markdown-editor">
+    <Tabs DefaultValue="write" OnValueChange="HandleTabChange">
+        @* Header with tabs and toolbar *@
+        <div class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b border-input bg-muted/40">
+            @* Write/Preview tabs - GitHub style boxed tabs *@
+            <div class="inline-flex items-center rounded-md border border-input bg-muted/60 p-0.5">
+                <TabsTrigger Value="write"
+                             Class="@GetTabClass("write")"
+                             Disabled="@Disabled">Write</TabsTrigger>
+                <TabsTrigger Value="preview"
+                             Class="@GetTabClass("preview")"
+                             Disabled="@Disabled">Preview</TabsTrigger>
+            </div>
+
+            @* Toolbar - only visible in Write mode *@
+            @if (_activeTab == "write")
+            {
+                <div class="flex items-center gap-1 ml-auto">
+                    @* Heading dropdown *@
+                    <DropdownMenu>
+                        <DropdownMenuTrigger AsChild>
+                            <Button Variant="ButtonVariant.Ghost"
+                                    Size="ButtonSize.IconSmall"
+                                    AriaLabel="Select heading level"
+                                    Disabled="@Disabled"
+                                    Class="h-7 w-7">
+                                <LucideIcon Name="pilcrow" Size="14" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent Align="PopoverAlign.Start" Class="w-40">
+                            <DropdownMenuLabel>Text Style</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem OnClick="@(() => ApplyHeading(0))">
+                                <LucideIcon Name="pilcrow" Size="14" Class="mr-2" />
+                                Normal
+                            </DropdownMenuItem>
+                            <DropdownMenuItem OnClick="@(() => ApplyHeading(1))">
+                                <LucideIcon Name="heading-1" Size="14" Class="mr-2" />
+                                Heading 1
+                            </DropdownMenuItem>
+                            <DropdownMenuItem OnClick="@(() => ApplyHeading(2))">
+                                <LucideIcon Name="heading-2" Size="14" Class="mr-2" />
+                                Heading 2
+                            </DropdownMenuItem>
+                            <DropdownMenuItem OnClick="@(() => ApplyHeading(3))">
+                                <LucideIcon Name="heading-3" Size="14" Class="mr-2" />
+                                Heading 3
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    @* Text formatting buttons *@
+                    <ButtonGroup>
+                        <Button Variant="ButtonVariant.Ghost"
+                                Size="ButtonSize.IconSmall"
+                                AriaLabel="Bold (Ctrl+B)"
+                                OnClick="ApplyBold"
+                                Disabled="@Disabled"
+                                Class="h-7 w-7">
+                            <LucideIcon Name="bold" Size="14" />
+                        </Button>
+                        <Button Variant="ButtonVariant.Ghost"
+                                Size="ButtonSize.IconSmall"
+                                AriaLabel="Italic (Ctrl+I)"
+                                OnClick="ApplyItalic"
+                                Disabled="@Disabled"
+                                Class="h-7 w-7">
+                            <LucideIcon Name="italic" Size="14" />
+                        </Button>
+                        <Button Variant="ButtonVariant.Ghost"
+                                Size="ButtonSize.IconSmall"
+                                AriaLabel="Underline (Ctrl+U)"
+                                OnClick="ApplyUnderline"
+                                Disabled="@Disabled"
+                                Class="h-7 w-7">
+                            <LucideIcon Name="underline" Size="14" />
+                        </Button>
+                    </ButtonGroup>
+
+                    <ButtonGroupSeparator />
+
+                    @* List formatting buttons *@
+                    <ButtonGroup>
+                        <Button Variant="ButtonVariant.Ghost"
+                                Size="ButtonSize.IconSmall"
+                                AriaLabel="Bullet list"
+                                OnClick="ApplyBulletList"
+                                Disabled="@Disabled"
+                                Class="h-7 w-7">
+                            <LucideIcon Name="list" Size="14" />
+                        </Button>
+                        <Button Variant="ButtonVariant.Ghost"
+                                Size="ButtonSize.IconSmall"
+                                AriaLabel="Numbered list"
+                                OnClick="ApplyNumberedList"
+                                Disabled="@Disabled"
+                                Class="h-7 w-7">
+                            <LucideIcon Name="list-ordered" Size="14" />
+                        </Button>
+                    </ButtonGroup>
+                </div>
+            }
+        </div>
+
+        @* Content area *@
+        <TabsContent Value="write" Class="mt-0">
+            <textarea @ref="_textareaRef"
+                      id="@Id"
+                      class="@TextareaCssClass"
+                      value="@Value"
+                      placeholder="@Placeholder"
+                      disabled="@Disabled"
+                      aria-label="@AriaLabel"
+                      aria-describedby="@AriaDescribedBy"
+                      aria-invalid="@(AriaInvalid?.ToString().ToLower())"
+                      @oninput="HandleInput"
+                      @onkeydown="HandleKeyDown"
+                      @onkeydown:preventDefault="_shouldPreventKeydown"></textarea>
+        </TabsContent>
+
+        <TabsContent Value="preview" Class="mt-0">
+            <div class="@PreviewCssClass">
+                @((MarkupString)RenderedHtml)
+            </div>
+        </TabsContent>
+    </Tabs>
+</div>

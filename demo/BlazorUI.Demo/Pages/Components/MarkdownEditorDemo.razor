@@ -1,0 +1,228 @@
+@page "/components/markdown-editor"
+@using BlazorUI.Components.MarkdownEditor
+@using BlazorUI.Components.Card
+@using BlazorUI.Components.Button
+@using BlazorUI.Components.Label
+
+<PageTitle>Markdown Editor - BlazorUI</PageTitle>
+
+<div class="space-y-10 max-w-4xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Markdown Editor</h1>
+        <p class="text-xl text-muted-foreground">
+            A rich text editor with markdown support, toolbar formatting, and live preview.
+        </p>
+    </div>
+
+    @* Basic Example *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-muted-foreground">
+                A simple markdown editor with two-way data binding. Click the Preview tab to see rendered output.
+            </p>
+        </div>
+
+        <div class="space-y-4">
+            <MarkdownEditor @bind-Value="basicValue" Placeholder="Write something amazing..." />
+
+            @if (!string.IsNullOrEmpty(basicValue))
+            {
+                <Card>
+                    <CardHeader>
+                        <CardTitle Class="text-sm">Raw Markdown</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <pre class="text-xs bg-muted p-3 rounded-md overflow-auto">@basicValue</pre>
+                    </CardContent>
+                </Card>
+            }
+        </div>
+    </section>
+
+    @* With Label *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">With Label</h2>
+            <p class="text-muted-foreground">
+                Associate a label with the editor for better accessibility.
+            </p>
+        </div>
+
+        <div class="space-y-2">
+            <Label For="description-editor">Description</Label>
+            <MarkdownEditor @bind-Value="labeledValue"
+                            Id="description-editor"
+                            Placeholder="Enter a description..." />
+        </div>
+    </section>
+
+    @* Toolbar Features Demo *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Toolbar Features</h2>
+            <p class="text-muted-foreground">
+                The toolbar provides quick access to formatting options. You can also use keyboard shortcuts.
+            </p>
+        </div>
+
+        <div class="rounded-lg border p-6 space-y-4">
+            <div class="space-y-3">
+                <h3 class="font-semibold">Available Formatting</h3>
+                <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+                    <li><strong>Bold</strong> - Select text and click B or press <kbd class="px-1.5 py-0.5 bg-muted rounded text-xs">Ctrl+B</kbd></li>
+                    <li><em>Italic</em> - Select text and click I or press <kbd class="px-1.5 py-0.5 bg-muted rounded text-xs">Ctrl+I</kbd></li>
+                    <li><u>Underline</u> - Select text and click U or press <kbd class="px-1.5 py-0.5 bg-muted rounded text-xs">Ctrl+U</kbd></li>
+                    <li>Headings - Use the heading dropdown to set H1, H2, H3, or normal text</li>
+                    <li>Bullet List - Click the bullet list icon to add list items</li>
+                    <li>Numbered List - Click the numbered list icon for ordered lists</li>
+                </ul>
+            </div>
+        </div>
+
+        <MarkdownEditor @bind-Value="toolbarDemoValue"
+                        Placeholder="Try out the toolbar features..." />
+    </section>
+
+    @* Pre-populated Content *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Pre-populated Content</h2>
+            <p class="text-muted-foreground">
+                The editor can be initialized with existing markdown content.
+            </p>
+        </div>
+
+        <MarkdownEditor @bind-Value="prePopulatedValue" />
+    </section>
+
+    @* Disabled State *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled State</h2>
+            <p class="text-muted-foreground">
+                The editor can be disabled to prevent user input.
+            </p>
+        </div>
+
+        <MarkdownEditor Value="This editor is disabled and cannot be edited."
+                        Disabled="true" />
+    </section>
+
+    @* Form Integration *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Form Integration</h2>
+            <p class="text-muted-foreground">
+                Use the editor within forms for content submission.
+            </p>
+        </div>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Submit Feedback</CardTitle>
+                <CardDescription>Share your thoughts with us using markdown formatting.</CardDescription>
+            </CardHeader>
+            <CardContent Class="space-y-4">
+                <div class="space-y-2">
+                    <Label For="feedback-editor">Your Feedback</Label>
+                    <MarkdownEditor @bind-Value="feedbackValue"
+                                    Id="feedback-editor"
+                                    Placeholder="What's on your mind?" />
+                </div>
+            </CardContent>
+            <CardFooter>
+                <Button OnClick="HandleSubmit" Disabled="@string.IsNullOrWhiteSpace(feedbackValue)">
+                    Submit Feedback
+                </Button>
+            </CardFooter>
+        </Card>
+
+        @if (submitted)
+        {
+            <div class="p-4 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 rounded-md">
+                Feedback submitted successfully!
+            </div>
+        }
+    </section>
+
+    @* Usage Notes *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Usage Notes</h2>
+        </div>
+
+        <div class="rounded-lg border p-6 space-y-4">
+            <div class="space-y-3">
+                <h3 class="font-semibold">Key Features</h3>
+                <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+                    <li>Write/Preview tabs for editing and viewing rendered output</li>
+                    <li>Toolbar with formatting buttons for common markdown syntax</li>
+                    <li>Keyboard shortcuts for bold, italic, and underline</li>
+                    <li>Heading dropdown for H1, H2, H3, and normal paragraph</li>
+                    <li>Bullet and numbered list support</li>
+                    <li>Two-way data binding with @("@bind-Value")</li>
+                    <li>Markdown rendering powered by Markdig</li>
+                </ul>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="font-semibold">Markdown Syntax</h3>
+                <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+                    <li><code class="bg-muted px-1 rounded">**bold**</code> - Bold text</li>
+                    <li><code class="bg-muted px-1 rounded">*italic*</code> - Italic text</li>
+                    <li><code class="bg-muted px-1 rounded">&lt;u&gt;underline&lt;/u&gt;</code> - Underlined text</li>
+                    <li><code class="bg-muted px-1 rounded"># Heading 1</code> - Large heading</li>
+                    <li><code class="bg-muted px-1 rounded">## Heading 2</code> - Medium heading</li>
+                    <li><code class="bg-muted px-1 rounded">### Heading 3</code> - Small heading</li>
+                    <li><code class="bg-muted px-1 rounded">- item</code> - Bullet list item</li>
+                    <li><code class="bg-muted px-1 rounded">1. item</code> - Numbered list item</li>
+                </ul>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="font-semibold">Accessibility</h3>
+                <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+                    <li>Supports ARIA labels and descriptions</li>
+                    <li>Keyboard navigation for toolbar</li>
+                    <li>Associate with Label component using Id parameter</li>
+                    <li>Supports disabled state</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</div>
+
+@code {
+    private string? basicValue;
+    private string? labeledValue;
+    private string? toolbarDemoValue;
+    private string? feedbackValue;
+    private bool submitted;
+
+    private string prePopulatedValue = @"# Welcome to the Markdown Editor
+
+This is a **bold** statement and this is *italic* text.
+
+## Features
+
+- Write markdown with toolbar assistance
+- Preview rendered output instantly
+- Use keyboard shortcuts for quick formatting
+
+### Code Example
+
+Here's how you might use this component:
+
+1. Add the component to your page
+2. Bind to a string property
+3. Use the toolbar or keyboard shortcuts
+
+Enjoy writing!";
+
+    private void HandleSubmit()
+    {
+        submitted = true;
+        StateHasChanged();
+    }
+}
