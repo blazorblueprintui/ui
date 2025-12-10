@@ -12,6 +12,24 @@ COLOR_GREEN='\033[0;32m'
 COLOR_RED='\033[0;31m'
 COLOR_YELLOW='\033[1;33m'
 COLOR_RESET='\033[0m'
+CSPROJ="$PROJECT_PATH/BlazorUI.Components.csproj"
+
+# Get latest Primitives version from NuGet
+get_latest_primitives_version() {
+  local URL="https://api.nuget.org/v3-flatcontainer/blazorui.primitives/index.json"
+  curl -s "$URL" | grep -o '"[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*"' | tail -1 | tr -d '"'
+}
+
+# Get current Primitives version from Components.csproj
+get_current_primitives_version() {
+  grep 'Include="BlazorUI.Primitives"' "$CSPROJ" | grep -o 'Version="[^"]*"' | cut -d'"' -f2
+}
+
+# Update Primitives version in Components.csproj
+update_primitives_version() {
+  local NEW_VERSION=$1
+  sed -i "s/Include=\"BlazorUI.Primitives\" Version=\"[^\"]*\"/Include=\"BlazorUI.Primitives\" Version=\"$NEW_VERSION\"/" "$CSPROJ"
+}
 
 # Check if version argument is provided
 if [ -z "$1" ]; then
@@ -36,6 +54,38 @@ if [ ! -d "$PROJECT_PATH" ]; then
     echo -e "${COLOR_RED}Error: Project directory not found: $PROJECT_PATH${COLOR_RESET}"
     echo "Make sure you're running this script from the repository root"
     exit 1
+fi
+
+# Check Primitives version
+echo ""
+echo "Checking BlazorUI.Primitives version..."
+LATEST_PRIMITIVES=$(get_latest_primitives_version)
+CURRENT_PRIMITIVES=$(get_current_primitives_version)
+
+echo ""
+echo -e "${COLOR_YELLOW}BlazorUI.Primitives Dependency${COLOR_RESET}"
+echo "   Current (in csproj): $CURRENT_PRIMITIVES"
+echo "   Latest (on NuGet):   $LATEST_PRIMITIVES"
+echo ""
+
+if [ "$LATEST_PRIMITIVES" != "$CURRENT_PRIMITIVES" ]; then
+  echo -e "${COLOR_YELLOW}⚠️  Newer version available on NuGet${COLOR_RESET}"
+  read -p "Update to $LATEST_PRIMITIVES? (y/N) " update_confirm
+  if [[ "$update_confirm" =~ ^[Yy]$ ]]; then
+    update_primitives_version "$LATEST_PRIMITIVES"
+    git add "$CSPROJ"
+    git commit -m "chore: bump BlazorUI.Primitives to $LATEST_PRIMITIVES"
+    echo -e "${COLOR_GREEN}✓ Updated and committed Primitives version${COLOR_RESET}"
+    CURRENT_PRIMITIVES=$LATEST_PRIMITIVES
+  fi
+fi
+
+# Always confirm the version being used
+echo ""
+read -p "Continue with BlazorUI.Primitives v$CURRENT_PRIMITIVES? (y/N) " version_confirm
+if [[ ! $version_confirm =~ ^[Yy]$ ]]; then
+  echo -e "${COLOR_YELLOW}Release cancelled${COLOR_RESET}"
+  exit 0
 fi
 
 # Check for uncommitted changes
