@@ -231,34 +231,45 @@ Primitives give you complete control over styling while handling all the complex
 
 ## Components
 
-BlazorUI includes **24 styled components** with full shadcn/ui design compatibility:
+BlazorUI includes **33 styled components** with full shadcn/ui design compatibility:
 
 ### Form Components
 - **Button** - Multiple variants (default, destructive, outline, secondary, ghost, link) with icon support
+- **Button Group** - Visually group related buttons with connected styling
 - **Checkbox** - Accessible checkbox with indeterminate state
+- **Combobox** - Searchable autocomplete dropdown
+- **Field** - Combine labels, controls, and help text for accessible forms
 - **Input** - Text input with multiple types and validation support
 - **Input Group** - Enhanced inputs with icons, buttons, and addons
 - **Label** - Accessible form labels
+- **MultiSelect** - Searchable multi-selection with tags and checkboxes
 - **RadioGroup** - Radio button groups with keyboard navigation
 - **Select** - Dropdown select with search and keyboard navigation
 - **Switch** - Toggle switch component
-- **Combobox** - Searchable autocomplete dropdown
+- **Textarea** - Multi-line text input with automatic sizing
 
 ### Layout & Navigation
 - **Accordion** - Collapsible content sections
+- **Card** - Container for grouped content with header and footer
 - **Collapsible** - Expandable/collapsible panels
+- **Item** - Flexible list items with media, content, and actions
 - **Separator** - Visual dividers
 - **Sidebar** - Responsive sidebar with collapsible icon mode, variants (default, floating, inset), and mobile sheet integration
 - **Tabs** - Tabbed interfaces with controlled/uncontrolled modes
 
 ### Overlay Components
-- **Dialog** - Modal dialogs
-- **Sheet** - Slide-out panels (top, right, bottom, left)
-- **Popover** - Floating content containers
-- **Tooltip** - Contextual hover tooltips
-- **HoverCard** - Rich hover previews
-- **DropdownMenu** - Context menus with nested submenus
 - **Command** - Command palette with keyboard navigation
+- **Dialog** - Modal dialogs
+- **DropdownMenu** - Context menus with nested submenus
+- **HoverCard** - Rich hover previews
+- **Popover** - Floating content containers
+- **Sheet** - Slide-out panels (top, right, bottom, left)
+- **Tooltip** - Contextual hover tooltips
+
+### Data & Content
+- **DataTable** - Powerful tables with sorting, filtering, pagination, and selection
+- **MarkdownEditor** - Rich text editor with toolbar formatting and live preview
+- **RichTextEditor** - WYSIWYG editor with formatting toolbar and HTML output
 
 ### Display Components
 - **Avatar** - User avatars with fallback support
@@ -286,7 +297,7 @@ BlazorUI offers **three icon library packages** to suit different design prefere
 
 ## Primitives
 
-BlazorUI also includes **15 headless primitive components** for building custom UI:
+BlazorUI also includes **17 headless primitive components** for building custom UI:
 
 - Accordion Primitive
 - Checkbox Primitive
@@ -296,11 +307,13 @@ BlazorUI also includes **15 headless primitive components** for building custom 
 - Dropdown Menu Primitive
 - Hover Card Primitive
 - Label Primitive
+- MultiSelect Primitive
 - Popover Primitive
 - Radio Group Primitive
 - Select Primitive
 - Sheet Primitive
 - Switch Primitive
+- Table Primitive
 - Tabs Primitive
 - Tooltip Primitive
 

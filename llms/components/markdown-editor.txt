@@ -1,0 +1,517 @@
+# Markdown Editor Component
+
+GitHub-style Markdown editor with Write/Preview tabs and formatting toolbar.
+
+---
+
+## Overview
+
+The MarkdownEditor component provides a text-based Markdown editing experience with a live preview tab, similar to GitHub's comment editor. It's ideal for developers and technical users who prefer writing in Markdown syntax.
+
+**Features:**
+- Two-tab interface (Write/Preview)
+- Live Markdown preview with Markdig rendering
+- Formatting toolbar with common Markdown actions
+- Two-way data binding (@bind-Value)
+- Keyboard shortcuts (Ctrl+B, Ctrl+I, Ctrl+U)
+- Undo/Redo support (Ctrl+Z, Ctrl+Y)
+- Heading level dropdown (H1, H2, H3)
+- Bullet and numbered list insertion
+- Automatic list continuation on Enter
+- Advanced Markdown extensions (task lists, auto-links, etc.)
+- Dark mode compatible
+- Full accessibility support
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.MarkdownEditor
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/MarkdownEditor
+
+---
+
+## Installation
+
+```bash
+dotnet add package BlazorUI.Components
+```
+
+Add to `_Imports.razor`:
+
+```razor
+@using BlazorUI.Components.MarkdownEditor
+```
+
+---
+
+## API Reference
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Value` | `string?` | `null` | Markdown content value (supports @bind-Value) |
+| `ValueChanged` | `EventCallback<string?>` | - | Callback on value change |
+| `Placeholder` | `string?` | `null` | Placeholder text in textarea |
+| `Disabled` | `bool` | `false` | Whether the editor is disabled |
+| `Class` | `string?` | `null` | Additional CSS classes for container |
+| `Id` | `string?` | `null` | HTML id for the textarea element |
+| `AriaLabel` | `string?` | `null` | ARIA label for accessibility |
+| `AriaDescribedBy` | `string?` | `null` | ID of element describing the editor |
+| `AriaInvalid` | `bool?` | `null` | Whether the editor value is invalid |
+
+---
+
+## Basic Usage
+
+```razor
+@using BlazorUI.Components.MarkdownEditor
+
+<MarkdownEditor @bind-Value="markdown" Placeholder="Write something..." />
+
+@code {
+    private string? markdown;
+}
+```
+
+---
+
+## Examples
+
+### With Label
+
+```razor
+@using BlazorUI.Components.MarkdownEditor
+@using BlazorUI.Components.Label
+
+<div class="space-y-2">
+    <Label For="readme-editor">README Content</Label>
+    <MarkdownEditor
+        Id="readme-editor"
+        @bind-Value="readme"
+        Placeholder="# Project Title\n\nDescribe your project here..." />
+</div>
+
+@code {
+    private string? readme;
+}
+```
+
+### Pre-populated Content
+
+```razor
+<MarkdownEditor @bind-Value="content" />
+
+@code {
+    private string content = @"# Welcome
+
+This is a **Markdown** editor with *live preview*.
+
+## Features
+
+- Write in Markdown syntax
+- Preview rendered HTML
+- Keyboard shortcuts
+
+## Code Example
+
+```csharp
+var message = ""Hello, World!"";
+Console.WriteLine(message);
+```";
+}
+```
+
+### Disabled State
+
+```razor
+<MarkdownEditor
+    Value="# Read Only\n\nThis editor is **disabled**."
+    Disabled="true" />
+```
+
+### With Output Display
+
+```razor
+@using BlazorUI.Components.MarkdownEditor
+@using BlazorUI.Components.Card
+
+<MarkdownEditor @bind-Value="markdown" Placeholder="Write Markdown here..." />
+
+@if (!string.IsNullOrEmpty(markdown))
+{
+    <Card>
+        <CardHeader>
+            <CardTitle Class="text-sm">Markdown Source</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <pre class="text-xs bg-muted p-3 rounded-md overflow-auto whitespace-pre-wrap">@markdown</pre>
+        </CardContent>
+    </Card>
+}
+
+@code {
+    private string? markdown;
+}
+```
+
+### Form Integration
+
+```razor
+@using BlazorUI.Components.MarkdownEditor
+@using BlazorUI.Components.Card
+@using BlazorUI.Components.Button
+@using BlazorUI.Components.Input
+@using BlazorUI.Components.Label
+
+<Card>
+    <CardHeader>
+        <CardTitle>Create Issue</CardTitle>
+        <CardDescription>Describe the issue using Markdown.</CardDescription>
+    </CardHeader>
+    <CardContent Class="space-y-4">
+        <div class="space-y-2">
+            <Label For="issue-title">Title</Label>
+            <Input Id="issue-title" @bind-Value="title" Placeholder="Issue title..." />
+        </div>
+        <div class="space-y-2">
+            <Label For="issue-body">Description</Label>
+            <MarkdownEditor
+                @bind-Value="body"
+                Id="issue-body"
+                Placeholder="Describe the issue..." />
+        </div>
+    </CardContent>
+    <CardFooter>
+        <Button OnClick="SubmitIssue" Disabled="@string.IsNullOrWhiteSpace(title)">
+            Submit Issue
+        </Button>
+    </CardFooter>
+</Card>
+
+@code {
+    private string? title;
+    private string? body;
+
+    private void SubmitIssue()
+    {
+        // Process Markdown content
+    }
+}
+```
+
+---
+
+## Toolbar Features
+
+The editor includes a toolbar (visible in Write mode only):
+
+### Heading Dropdown
+- Normal (no heading)
+- Heading 1 (`# `)
+- Heading 2 (`## `)
+- Heading 3 (`### `)
+
+### Text Formatting Buttons
+| Button | Action | Keyboard Shortcut | Output |
+|--------|--------|-------------------|--------|
+| **B** | Bold | Ctrl+B | `**text**` |
+| *I* | Italic | Ctrl+I | `*text*` |
+| <u>U</u> | Underline | Ctrl+U | `<u>text</u>` |
+
+### Undo/Redo
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+Z | Undo |
+| Ctrl+Y | Redo |
+| Ctrl+Shift+Z | Redo (alternative) |
+
+### List Buttons
+| Button | Action | Output |
+|--------|--------|--------|
+| Bullet | Unordered list | `- item` |
+| Number | Ordered list | `1. item` |
+
+### Smart List Continuation
+When pressing Enter at the end of a list item, the next line automatically includes the list prefix:
+- In bullet list: Adds `- ` prefix
+- In numbered list: Adds `1. ` prefix (auto-increments)
+
+---
+
+## Tabs Interface
+
+The editor has two tabs:
+
+### Write Tab
+- Plain text textarea for Markdown input
+- Formatting toolbar available
+- Keyboard shortcuts active
+
+### Preview Tab
+- Live rendered HTML preview
+- Toolbar hidden
+- Read-only display
+
+```razor
+@* The user switches between tabs to write and preview *@
+<MarkdownEditor @bind-Value="content" />
+```
+
+---
+
+## Supported Markdown Syntax
+
+The editor uses Markdig with advanced extensions:
+
+### Basic Formatting
+| Syntax | Renders As |
+|--------|------------|
+| `**bold**` | **bold** |
+| `*italic*` | *italic* |
+| `~~strikethrough~~` | ~~strikethrough~~ |
+| `<u>underline</u>` | <u>underline</u> |
+
+### Headings
+```markdown
+# Heading 1
+## Heading 2
+### Heading 3
+#### Heading 4
+```
+
+### Lists
+```markdown
+- Bullet item 1
+- Bullet item 2
+  - Nested item
+
+1. Numbered item 1
+2. Numbered item 2
+```
+
+### Task Lists
+```markdown
+- [ ] Unchecked task
+- [x] Completed task
+```
+
+### Links and Images
+```markdown
+[Link text](https://example.com)
+![Alt text](image.png)
+```
+
+### Code
+````markdown
+Inline `code` text
+
+```csharp
+// Code block
+var x = 1;
+```
+````
+
+### Blockquotes
+```markdown
+> This is a quote
+> Multiple lines
+```
+
+### Horizontal Rule
+```markdown
+---
+```
+
+### Auto-links
+URLs are automatically converted to links:
+```markdown
+Visit https://example.com for more info.
+```
+
+---
+
+## Accessibility
+
+### Label Association
+
+```razor
+<Label For="editor">Description</Label>
+<MarkdownEditor Id="editor" @bind-Value="content" AriaLabel="Description editor" />
+```
+
+### Help Text
+
+```razor
+<MarkdownEditor
+    @bind-Value="content"
+    AriaDescribedBy="markdown-help" />
+<p id="markdown-help" class="text-sm text-muted-foreground">
+    Supports Markdown syntax. Use **bold** for bold text.
+</p>
+```
+
+### Error State
+
+```razor
+<MarkdownEditor
+    @bind-Value="content"
+    AriaInvalid="@hasError"
+    AriaDescribedBy="editor-error" />
+@if (hasError)
+{
+    <p id="editor-error" class="text-sm text-destructive">
+        Content is required
+    </p>
+}
+```
+
+### Keyboard Navigation
+
+- **Tab**: Navigate between toolbar buttons and tabs
+- **Enter/Space**: Activate buttons
+- **Ctrl+B/I/U**: Apply formatting to selected text
+- **Ctrl+Z**: Undo
+- **Ctrl+Y** or **Ctrl+Shift+Z**: Redo
+- **Enter in list**: Auto-continue list
+
+---
+
+## Common Patterns
+
+### Documentation Editor
+
+```razor
+@using BlazorUI.Components.MarkdownEditor
+@using BlazorUI.Components.Button
+
+<div class="space-y-4">
+    <MarkdownEditor
+        @bind-Value="documentation"
+        Placeholder="# Documentation Title
+
+## Overview
+Describe the feature here...
+
+## Usage
+```csharp
+// Code example
+```
+
+## API Reference
+| Parameter | Type | Description |
+|-----------|------|-------------|" />
+
+    <div class="flex gap-2">
+        <Button OnClick="SaveDraft" Variant="ButtonVariant.Outline">
+            Save Draft
+        </Button>
+        <Button OnClick="Publish">Publish</Button>
+    </div>
+</div>
+
+@code {
+    private string? documentation;
+
+    private void SaveDraft() { }
+    private void Publish() { }
+}
+```
+
+### GitHub-style Comment
+
+```razor
+<div class="border rounded-md">
+    <MarkdownEditor
+        @bind-Value="comment"
+        Placeholder="Leave a comment..." />
+    <div class="flex justify-between items-center p-2 border-t bg-muted/50">
+        <span class="text-xs text-muted-foreground">
+            Supports Markdown
+        </span>
+        <Button Size="ButtonSize.Small" OnClick="PostComment">
+            Comment
+        </Button>
+    </div>
+</div>
+
+@code {
+    private string? comment;
+
+    private void PostComment()
+    {
+        // Submit comment
+        comment = null;
+    }
+}
+```
+
+### Release Notes Editor
+
+```razor
+<MarkdownEditor
+    @bind-Value="releaseNotes"
+    Placeholder="## What's New
+
+### Features
+- Feature 1
+- Feature 2
+
+### Bug Fixes
+- Fixed issue #123
+
+### Breaking Changes
+- None" />
+
+@code {
+    private string? releaseNotes;
+}
+```
+
+---
+
+## Troubleshooting
+
+### Issue: Preview not rendering correctly
+
+**Solution:** The preview uses server-side Markdig rendering. Ensure the Markdown syntax is valid. Check for unclosed code blocks or invalid nesting.
+
+### Issue: List continuation not working
+
+**Solution:** The auto-continue feature requires the cursor to be at the end of a list line. It won't trigger mid-line.
+
+### Issue: Toolbar buttons not applying formatting
+
+**Solution:** Select the text first, then click the toolbar button. For heading, place the cursor on the line you want to format.
+
+### Issue: HTML in preview looks unstyled
+
+**Solution:** The preview applies prose-like styling. If you need custom styles, wrap the preview in a container with appropriate CSS classes.
+
+---
+
+## Related Components
+
+- **RichTextEditor** - llms/components/rich-text-editor.txt (for WYSIWYG editing)
+- **Textarea** - llms/components/textarea.txt (for plain text)
+- **Input** - llms/components/input.txt (for single-line text)
+- **Label** - llms/components/label.txt (for accessibility)
+- **Tabs** - llms/components/tabs.txt (used internally for Write/Preview)
+
+## Comparison with RichTextEditor
+
+| Feature | MarkdownEditor | RichTextEditor |
+|---------|----------------|----------------|
+| Input Style | Plain text + Preview | WYSIWYG |
+| Output | Markdown | HTML |
+| Preview | Separate tab | Live (inline) |
+| Font Colors | No | Yes (12 colors) |
+| Font Sizes | No | Yes (5 sizes) |
+| Text Alignment | No | Yes |
+| Code Blocks | Yes | No |
+| Tables | Yes (Markdown) | No |
+| Best For | Developers | Non-technical users |
+
+---
+
+**Last Updated:** 2024-12-10

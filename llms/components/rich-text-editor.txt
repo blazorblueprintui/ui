@@ -1,0 +1,461 @@
+# Rich Text Editor Component
+
+WYSIWYG rich text editor with formatting toolbar and HTML output.
+
+---
+
+## Overview
+
+The RichTextEditor component provides a visual rich text editing experience where formatting appears directly as users type. It uses a contenteditable element with a comprehensive toolbar for text formatting, making it ideal for non-technical users who prefer visual feedback over markup syntax.
+
+**Features:**
+- WYSIWYG editing (What You See Is What You Get)
+- Formatting toolbar with text styles, lists, colors, and alignment
+- Two-way data binding (@bind-Value)
+- Keyboard shortcuts (Ctrl+B, Ctrl+I, Ctrl+U, Ctrl+Z, Ctrl+Y)
+- Font size selection (5 sizes)
+- Font color picker (12 colors)
+- Bullet and numbered lists
+- Text alignment (left, center, right, justify)
+- Configurable height (min, max, or fixed)
+- Undo/Redo support
+- Outputs clean HTML
+- Dark mode compatible
+- Full accessibility support
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Components
+- **Namespace:** BlazorUI.Components.RichTextEditor
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Components/Components/RichTextEditor
+
+---
+
+## Installation
+
+```bash
+dotnet add package BlazorUI.Components
+```
+
+Add to `_Imports.razor`:
+
+```razor
+@using BlazorUI.Components.RichTextEditor
+```
+
+---
+
+## API Reference
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Value` | `string?` | `null` | HTML content value (supports @bind-Value) |
+| `ValueChanged` | `EventCallback<string?>` | - | Callback on value change |
+| `Placeholder` | `string?` | `null` | Placeholder text when editor is empty |
+| `Disabled` | `bool` | `false` | Whether the editor is disabled |
+| `Class` | `string?` | `null` | Additional CSS classes for container |
+| `Id` | `string?` | `null` | HTML id for the contenteditable element |
+| `AriaLabel` | `string?` | `null` | ARIA label for accessibility |
+| `AriaDescribedBy` | `string?` | `null` | ID of element describing the editor |
+| `AriaInvalid` | `bool?` | `null` | Whether the editor value is invalid |
+| `MinHeight` | `string` | `"150px"` | Minimum height of content area |
+| `MaxHeight` | `string?` | `null` | Maximum height before scrollbar appears |
+| `Height` | `string?` | `null` | Fixed height (overrides Min/MaxHeight) |
+
+### Public Methods
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `FocusAsync()` | `Task` | Programmatically focus the editor |
+
+---
+
+## Basic Usage
+
+```razor
+@using BlazorUI.Components.RichTextEditor
+
+<RichTextEditor @bind-Value="content" Placeholder="Start typing..." />
+
+@code {
+    private string? content;
+}
+```
+
+---
+
+## Examples
+
+### With Label
+
+```razor
+@using BlazorUI.Components.RichTextEditor
+@using BlazorUI.Components.Label
+
+<div class="space-y-2">
+    <Label For="description-editor">Description</Label>
+    <RichTextEditor
+        Id="description-editor"
+        @bind-Value="description"
+        Placeholder="Enter a description..." />
+</div>
+
+@code {
+    private string? description;
+}
+```
+
+### Pre-populated Content
+
+```razor
+<RichTextEditor @bind-Value="content" />
+
+@code {
+    private string content = @"<h2>Welcome</h2>
+<p>This is <strong>bold</strong> and this is <em>italic</em> text.</p>
+<ul>
+<li>First item</li>
+<li>Second item</li>
+</ul>";
+}
+```
+
+### Height Control
+
+```razor
+@* Maximum height with scrollbar *@
+<RichTextEditor
+    @bind-Value="content1"
+    MaxHeight="200px"
+    Placeholder="Content will scroll after 200px..." />
+
+@* Fixed height *@
+<RichTextEditor
+    @bind-Value="content2"
+    Height="150px"
+    Placeholder="Fixed height editor..." />
+
+@* Custom minimum height *@
+<RichTextEditor
+    @bind-Value="content3"
+    MinHeight="300px"
+    Placeholder="Taller editor..." />
+
+@code {
+    private string? content1, content2, content3;
+}
+```
+
+### Disabled State
+
+```razor
+<RichTextEditor
+    Value="<p>This editor is <strong>disabled</strong> and cannot be edited.</p>"
+    Disabled="true" />
+```
+
+### With HTML Output Display
+
+```razor
+@using BlazorUI.Components.RichTextEditor
+@using BlazorUI.Components.Card
+
+<RichTextEditor @bind-Value="htmlContent" Placeholder="Type and format text..." />
+
+@if (!string.IsNullOrEmpty(htmlContent))
+{
+    <Card>
+        <CardHeader>
+            <CardTitle Class="text-sm">HTML Output</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <pre class="text-xs bg-muted p-3 rounded-md overflow-auto">@htmlContent</pre>
+        </CardContent>
+    </Card>
+}
+
+@code {
+    private string? htmlContent;
+}
+```
+
+### Form Integration
+
+```razor
+@using BlazorUI.Components.RichTextEditor
+@using BlazorUI.Components.Card
+@using BlazorUI.Components.Button
+@using BlazorUI.Components.Label
+
+<Card>
+    <CardHeader>
+        <CardTitle>Submit Feedback</CardTitle>
+        <CardDescription>Share your thoughts using rich text formatting.</CardDescription>
+    </CardHeader>
+    <CardContent Class="space-y-4">
+        <div class="space-y-2">
+            <Label For="feedback-editor">Your Feedback</Label>
+            <RichTextEditor
+                @bind-Value="feedback"
+                Id="feedback-editor"
+                Placeholder="What's on your mind?" />
+        </div>
+    </CardContent>
+    <CardFooter>
+        <Button OnClick="HandleSubmit" Disabled="@string.IsNullOrWhiteSpace(feedback)">
+            Submit Feedback
+        </Button>
+    </CardFooter>
+</Card>
+
+@code {
+    private string? feedback;
+
+    private void HandleSubmit()
+    {
+        // Process feedback HTML
+    }
+}
+```
+
+---
+
+## Toolbar Features
+
+The editor includes a comprehensive toolbar with the following options:
+
+### Font Size Dropdown
+- Small (12px)
+- Normal (14px)
+- Medium (18px)
+- Large (24px)
+- Extra Large (32px)
+
+### Text Formatting Buttons
+| Button | Action | Keyboard Shortcut |
+|--------|--------|-------------------|
+| **B** | Bold | Ctrl+B |
+| *I* | Italic | Ctrl+I |
+| <u>U</u> | Underline | Ctrl+U |
+| ~~S~~ | Strikethrough | - |
+
+### List Buttons
+- Bullet list (unordered)
+- Numbered list (ordered)
+
+### Font Color Picker
+12 color palette:
+- Black, Dark Gray, Gray, Light Gray
+- Red, Orange, Yellow, Green
+- Blue, Indigo, Purple, Pink
+
+### Text Alignment Buttons
+- Align Left
+- Align Center
+- Align Right
+- Justify
+
+### Undo/Redo
+| Shortcut | Action |
+|----------|--------|
+| Ctrl+Z | Undo |
+| Ctrl+Y | Redo |
+| Ctrl+Shift+Z | Redo (alternative) |
+
+---
+
+## HTML Output
+
+The editor generates semantic HTML tags:
+
+| Formatting | HTML Output |
+|------------|-------------|
+| Bold | `<strong>text</strong>` |
+| Italic | `<em>text</em>` |
+| Underline | `<u>text</u>` |
+| Strikethrough | `<s>text</s>` |
+| Font Size | `<span style="font-size: 18px;">text</span>` |
+| Font Color | `<span style="color: #3B82F6;">text</span>` |
+| Bullet List | `<ul><li>item</li></ul>` |
+| Numbered List | `<ol><li>item</li></ol>` |
+| Alignment | `<div style="text-align: center;">text</div>` |
+
+---
+
+## Accessibility
+
+### Label Association
+
+```razor
+<Label For="editor">Content</Label>
+<RichTextEditor Id="editor" @bind-Value="content" AriaLabel="Content editor" />
+```
+
+### Help Text
+
+```razor
+<RichTextEditor
+    @bind-Value="content"
+    AriaDescribedBy="editor-help" />
+<p id="editor-help" class="text-sm text-muted-foreground">
+    Use the toolbar to format your text or keyboard shortcuts (Ctrl+B for bold).
+</p>
+```
+
+### Error State
+
+```razor
+<RichTextEditor
+    @bind-Value="content"
+    AriaInvalid="@hasError"
+    AriaDescribedBy="editor-error" />
+@if (hasError)
+{
+    <p id="editor-error" class="text-sm text-destructive">
+        Content is required
+    </p>
+}
+```
+
+### Keyboard Navigation
+
+- **Tab**: Navigate between toolbar buttons
+- **Enter/Space**: Activate toolbar buttons
+- **Arrow keys**: Navigate within dropdowns
+- **Escape**: Close open dropdowns
+- **Ctrl+B/I/U**: Apply formatting
+- **Ctrl+Z/Y**: Undo/Redo
+
+### ARIA Attributes
+
+The editor uses:
+- `role="textbox"` on the content area
+- `aria-multiline="true"` to indicate multi-line input
+- `aria-label` for screen reader description
+- `aria-describedby` for help text association
+- `aria-invalid` for error states
+
+---
+
+## Common Patterns
+
+### Blog Post Editor
+
+```razor
+@using BlazorUI.Components.RichTextEditor
+@using BlazorUI.Components.Input
+@using BlazorUI.Components.Label
+@using BlazorUI.Components.Button
+
+<div class="space-y-4">
+    <div class="space-y-2">
+        <Label For="title">Post Title</Label>
+        <Input Id="title" @bind-Value="title" Placeholder="Enter title..." />
+    </div>
+
+    <div class="space-y-2">
+        <Label For="content">Content</Label>
+        <RichTextEditor
+            Id="content"
+            @bind-Value="content"
+            MinHeight="300px"
+            Placeholder="Write your post..." />
+    </div>
+
+    <Button OnClick="SavePost">Publish</Button>
+</div>
+
+@code {
+    private string? title;
+    private string? content;
+
+    private void SavePost()
+    {
+        // Save title and HTML content
+    }
+}
+```
+
+### Comment System
+
+```razor
+<RichTextEditor
+    @bind-Value="comment"
+    Height="100px"
+    Placeholder="Write a comment..." />
+<div class="flex justify-end mt-2">
+    <Button Size="ButtonSize.Small" OnClick="PostComment">
+        Post Comment
+    </Button>
+</div>
+
+@code {
+    private string? comment;
+
+    private void PostComment()
+    {
+        // Submit comment
+        comment = null;
+    }
+}
+```
+
+---
+
+## Troubleshooting
+
+### Issue: Content not updating
+
+**Solution:** Ensure you're using `@bind-Value` for two-way binding:
+
+```razor
+<RichTextEditor @bind-Value="content" />
+```
+
+### Issue: Editor height not respecting MaxHeight
+
+**Solution:** Make sure you're not also setting `Height` which takes precedence:
+
+```razor
+@* Correct - only MaxHeight *@
+<RichTextEditor MaxHeight="200px" />
+
+@* Incorrect - Height overrides MaxHeight *@
+<RichTextEditor MaxHeight="200px" Height="300px" />
+```
+
+### Issue: Placeholder not showing
+
+**Solution:** The placeholder only shows when the editor is completely empty. Check that `Value` is null or empty string.
+
+### Issue: Formatting lost on server round-trip
+
+**Solution:** Ensure you're storing and retrieving the full HTML string. The editor outputs HTML that should be preserved exactly.
+
+---
+
+## Related Components
+
+- **MarkdownEditor** - llms/components/markdown-editor.txt (for Markdown syntax editing)
+- **Textarea** - llms/components/textarea.txt (for plain text)
+- **Input** - llms/components/input.txt (for single-line text)
+- **Label** - llms/components/label.txt (for accessibility)
+- **Field** - llms/components/field.txt (for form layouts)
+
+## Comparison with MarkdownEditor
+
+| Feature | RichTextEditor | MarkdownEditor |
+|---------|----------------|----------------|
+| Input Style | WYSIWYG | Plain text + Preview |
+| Output | HTML | Markdown |
+| Font Colors | Yes (12 colors) | No |
+| Font Sizes | Yes (5 sizes) | No |
+| Text Alignment | Yes | No |
+| Preview Tab | No (live preview) | Yes |
+| Best For | Non-technical users | Developers |
+
+---
+
+**Last Updated:** 2024-12-10

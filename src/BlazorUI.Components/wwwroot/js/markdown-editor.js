@@ -1,7 +1,10 @@
 /**
  * Markdown Editor JavaScript module
- * Handles textarea text selection, cursor positioning, and text insertion
+ * Handles textarea text selection, cursor positioning, text insertion, and undo/redo
  */
+
+// Store references for editor data (history, dotNetRef, etc.)
+const editorMap = new WeakMap();
 
 /**
  * Scroll textarea to ensure cursor is visible
@@ -40,6 +43,100 @@ function scrollToCursor(textarea) {
         // Cursor is above visible area - scroll up
         textarea.scrollTop = cursorTop - paddingTop;
     }
+}
+
+/**
+ * Save current state to history for undo/redo
+ * @param {HTMLTextAreaElement} textarea - The textarea element
+ */
+function saveState(textarea) {
+    const data = editorMap.get(textarea);
+    if (!data) return;
+
+    const value = textarea.value;
+    const selection = {
+        start: textarea.selectionStart,
+        end: textarea.selectionEnd
+    };
+
+    // If we're not at the end of history, truncate forward history (discard redo states)
+    if (data.historyIndex < data.history.length - 1) {
+        data.history = data.history.slice(0, data.historyIndex + 1);
+    }
+
+    // Don't save duplicate consecutive states (compare value only)
+    if (data.history.length > 0 && data.history[data.historyIndex].value === value) {
+        return;
+    }
+
+    data.history.push({ value, selection });
+    data.historyIndex = data.history.length - 1;
+
+    // Limit history size
+    if (data.history.length > data.maxHistory) {
+        data.history.shift();
+        data.historyIndex--;
+    }
+}
+
+/**
+ * Notify Blazor of content changes (without saving state - for undo/redo)
+ * @param {HTMLTextAreaElement} textarea - The textarea element
+ */
+function notifyBlazor(textarea) {
+    const data = editorMap.get(textarea);
+    if (data && data.dotNetRef) {
+        data.dotNetRef.invokeMethodAsync('OnContentChanged', textarea.value);
+    }
+}
+
+/**
+ * Notify Blazor of content changes and save state for undo
+ * @param {HTMLTextAreaElement} textarea - The textarea element
+ */
+function notifyContentChanged(textarea) {
+    notifyBlazor(textarea);
+    saveState(textarea);
+}
+
+/**
+ * Undo the last action
+ * @param {HTMLTextAreaElement} textarea - The textarea element
+ * @returns {boolean} True if undo was performed
+ */
+export function undo(textarea) {
+    const data = editorMap.get(textarea);
+    if (!data || data.historyIndex <= 0) {
+        return false;
+    }
+
+    data.historyIndex--;
+    const state = data.history[data.historyIndex];
+    textarea.value = state.value;
+    textarea.setSelectionRange(state.selection.start, state.selection.end);
+    // Only notify Blazor, don't save state (would corrupt history)
+    notifyBlazor(textarea);
+    return true;
+}
+
+/**
+ * Redo the last undone action
+ * @param {HTMLTextAreaElement} textarea - The textarea element
+ * @returns {boolean} True if redo was performed
+ */
+export function redo(textarea) {
+    const data = editorMap.get(textarea);
+    if (!data || data.historyIndex >= data.history.length - 1) {
+        return false;
+    }
+
+    data.historyIndex++;
+    const state = data.history[data.historyIndex];
+    textarea.value = state.value;
+    textarea.setSelectionRange(state.selection.start, state.selection.end);
+    // Only notify Blazor, don't save state (would corrupt history)
+    notifyBlazor(textarea);
+    return true;
 }
 
 /**
@@ -258,14 +355,43 @@ const listenerMap = new WeakMap();
 const inputListenerMap = new WeakMap();
 
 /**
- * Initialize list continuation behavior on textarea
+ * Initialize list continuation behavior and undo/redo on textarea
  * @param {HTMLTextAreaElement} textarea - The textarea element
  * @param {DotNetObjectReference} dotNetRef - Reference to Blazor component
  */
 export function initializeListContinuation(textarea, dotNetRef) {
-    if (!textarea || listenerMap.has(textarea)) return;
+    if (!textarea || editorMap.has(textarea)) return;
+
+    // Initialize editor data for history/undo
+    const data = {
+        dotNetRef,
+        history: [],
+        historyIndex: -1,
+        maxHistory: 100
+    };
+    editorMap.set(textarea, data);
+
+    // Save initial state
+    saveState(textarea);
 
     const handler = (e) => {
+        // Intercept Ctrl+Z/Y for undo/redo (prevent browser's native undo)
+        if (e.ctrlKey || e.metaKey) {
+            if (e.key === 'z' || e.key === 'Z') {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    redo(textarea);
+                } else {
+                    undo(textarea);
+                }
+                return;
+            } else if (e.key === 'y' || e.key === 'Y') {
+                e.preventDefault();
+                redo(textarea);
+                return;
+            }
+        }
+
         // Only handle Enter without Shift
         if (e.key !== 'Enter' || e.shiftKey) return;
 
@@ -342,17 +468,21 @@ export function initializeListContinuation(textarea, dotNetRef) {
     textarea.addEventListener('keydown', handler);
     listenerMap.set(textarea, handler);
 
-    // Add input listener for auto-scroll on normal typing
+    // Add input listener for auto-scroll and state saving on typing
     const inputHandler = () => {
         // Use requestAnimationFrame to ensure scroll happens after DOM update
-        requestAnimationFrame(() => scrollToCursor(textarea));
+        requestAnimationFrame(() => {
+            scrollToCursor(textarea);
+            // Save state for undo after each input
+            saveState(textarea);
+        });
     };
     textarea.addEventListener('input', inputHandler);
     inputListenerMap.set(textarea, inputHandler);
 }
 
 /**
- * Cleanup list continuation listener
+ * Cleanup list continuation listener and editor data
  * @param {HTMLTextAreaElement} textarea - The textarea element
  */
 export function disposeListContinuation(textarea) {
@@ -367,4 +497,6 @@ export function disposeListContinuation(textarea) {
         textarea.removeEventListener('input', inputHandler);
         inputListenerMap.delete(textarea);
     }
+    // Clean up editor data (history, dotNetRef)
+    editorMap.delete(textarea);
 }

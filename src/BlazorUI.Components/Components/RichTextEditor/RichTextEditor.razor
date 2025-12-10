@@ -1,0 +1,183 @@
+@namespace BlazorUI.Components.RichTextEditor
+@using BlazorUI.Components.Button
+@using BlazorUI.Components.ButtonGroup
+@using BlazorUI.Components.DropdownMenu
+@using BlazorUI.Icons.Lucide.Components
+@using BlazorUI.Primitives.Services
+
+@*
+    Rich Text Editor component with WYSIWYG editing.
+    Uses contenteditable for true rich text editing where formatting appears directly as user types.
+*@
+
+<div class="@ContainerCssClass" data-slot="rich-text-editor">
+    @* Toolbar *@
+    <div class="@ToolbarCssClass border-b border-input">
+        @* Font Size dropdown *@
+        <DropdownMenu>
+            <DropdownMenuTrigger AsChild>
+                <Button Variant="ButtonVariant.Ghost"
+                        Size="ButtonSize.Small"
+                        AriaLabel="Select font size"
+                        Disabled="@Disabled"
+                        Class="h-7 px-2 !gap-1">
+                    <LucideIcon Name="a-large-small" Size="16" />
+                    <LucideIcon Name="chevron-down" Size="10" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent Align="PopoverAlign.Start" Class="w-32">
+                <DropdownMenuLabel>Font Size</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                @foreach (var fontSize in FontSizes)
+                {
+                    <DropdownMenuItem OnClick="@(() => SetFontSize(fontSize.Size))">
+                        @fontSize.Name
+                    </DropdownMenuItem>
+                }
+            </DropdownMenuContent>
+        </DropdownMenu>
+
+        <ButtonGroupSeparator />
+
+        @* Text formatting buttons *@
+        <ButtonGroup>
+            <Button Variant="ButtonVariant.Ghost"
+                    Size="ButtonSize.IconSmall"
+                    AriaLabel="Bold (Ctrl+B)"
+                    OnClick="ApplyBold"
+                    Disabled="@Disabled"
+                    Class="h-7 w-7">
+                <LucideIcon Name="bold" Size="14" />
+            </Button>
+            <Button Variant="ButtonVariant.Ghost"
+                    Size="ButtonSize.IconSmall"
+                    AriaLabel="Italic (Ctrl+I)"
+                    OnClick="ApplyItalic"
+                    Disabled="@Disabled"
+                    Class="h-7 w-7">
+                <LucideIcon Name="italic" Size="14" />
+            </Button>
+            <Button Variant="ButtonVariant.Ghost"
+                    Size="ButtonSize.IconSmall"
+                    AriaLabel="Underline (Ctrl+U)"
+                    OnClick="ApplyUnderline"
+                    Disabled="@Disabled"
+                    Class="h-7 w-7">
+                <LucideIcon Name="underline" Size="14" />
+            </Button>
+            <Button Variant="ButtonVariant.Ghost"
+                    Size="ButtonSize.IconSmall"
+                    AriaLabel="Strikethrough"
+                    OnClick="ApplyStrikethrough"
+                    Disabled="@Disabled"
+                    Class="h-7 w-7">
+                <LucideIcon Name="strikethrough" Size="14" />
+            </Button>
+        </ButtonGroup>
+
+        <ButtonGroupSeparator />
+
+        @* List formatting buttons *@
+        <ButtonGroup>
+            <Button Variant="ButtonVariant.Ghost"
+                    Size="ButtonSize.IconSmall"
+                    AriaLabel="Bullet list"
+                    OnClick="InsertUnorderedList"
+                    Disabled="@Disabled"
+                    Class="h-7 w-7">
+                <LucideIcon Name="list" Size="14" />
+            </Button>
+            <Button Variant="ButtonVariant.Ghost"
+                    Size="ButtonSize.IconSmall"
+                    AriaLabel="Numbered list"
+                    OnClick="InsertOrderedList"
+                    Disabled="@Disabled"
+                    Class="h-7 w-7">
+                <LucideIcon Name="list-ordered" Size="14" />
+            </Button>
+        </ButtonGroup>
+
+        <ButtonGroupSeparator />
+
+        @* Font Color dropdown *@
+        <DropdownMenu @bind-Open="_colorPickerOpen">
+            <DropdownMenuTrigger AsChild>
+                <Button Variant="ButtonVariant.Ghost"
+                        Size="ButtonSize.Small"
+                        AriaLabel="Select font color"
+                        Disabled="@Disabled"
+                        Class="h-7 px-2 !gap-1">
+                    <LucideIcon Name="palette" Size="16" />
+                    <LucideIcon Name="chevron-down" Size="10" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent Align="PopoverAlign.Start" Class="w-auto p-2">
+                <div class="grid grid-cols-4 gap-1">
+                    @foreach (var color in ColorPalette)
+                    {
+                        <button type="button"
+                                class="@ColorSwatchCssClass"
+                                style="background-color: @color.Value"
+                                title="@color.Name"
+                                @onclick="@(() => SelectFontColor(color.Value))">
+                        </button>
+                    }
+                </div>
+            </DropdownMenuContent>
+        </DropdownMenu>
+
+        <ButtonGroupSeparator />
+
+        @* Text alignment buttons *@
+        <ButtonGroup>
+            <Button Variant="ButtonVariant.Ghost"
+                    Size="ButtonSize.IconSmall"
+                    AriaLabel="Align left"
+                    OnClick="@(() => SetAlignment("left"))"
+                    Disabled="@Disabled"
+                    Class="h-7 w-7">
+                <LucideIcon Name="align-left" Size="14" />
+            </Button>
+            <Button Variant="ButtonVariant.Ghost"
+                    Size="ButtonSize.IconSmall"
+                    AriaLabel="Align center"
+                    OnClick="@(() => SetAlignment("center"))"
+                    Disabled="@Disabled"
+                    Class="h-7 w-7">
+                <LucideIcon Name="align-center" Size="14" />
+            </Button>
+            <Button Variant="ButtonVariant.Ghost"
+                    Size="ButtonSize.IconSmall"
+                    AriaLabel="Align right"
+                    OnClick="@(() => SetAlignment("right"))"
+                    Disabled="@Disabled"
+                    Class="h-7 w-7">
+                <LucideIcon Name="align-right" Size="14" />
+            </Button>
+            <Button Variant="ButtonVariant.Ghost"
+                    Size="ButtonSize.IconSmall"
+                    AriaLabel="Justify"
+                    OnClick="@(() => SetAlignment("justify"))"
+                    Disabled="@Disabled"
+                    Class="h-7 w-7">
+                <LucideIcon Name="align-justify" Size="14" />
+            </Button>
+        </ButtonGroup>
+    </div>
+
+    @* Content area (contenteditable) *@
+    <div @ref="_editorRef"
+         id="@Id"
+         contenteditable="@(!Disabled)"
+         class="@ContentCssClass"
+         style="@ContentStyle"
+         data-placeholder="@Placeholder"
+         role="textbox"
+         aria-multiline="true"
+         aria-label="@AriaLabel"
+         aria-describedby="@AriaDescribedBy"
+         aria-invalid="@(AriaInvalid?.ToString().ToLower())"
+         @onkeydown="HandleKeyDown"
+         @onkeydown:preventDefault="_shouldPreventKeydown">
+    </div>
+</div>

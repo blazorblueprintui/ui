@@ -13,6 +13,7 @@ namespace BlazorUI.Components.MarkdownEditor;
 public partial class MarkdownEditor : ComponentBase, IAsyncDisposable
 {
     private IJSObjectReference? _module;
+    private DotNetObjectReference<MarkdownEditor>? _dotNetRef;
     private ElementReference _textareaRef;
     private string _activeTab = "write";
     private bool _shouldPreventKeydown;
@@ -129,16 +130,31 @@ public partial class MarkdownEditor : ComponentBase, IAsyncDisposable
         {
             try
             {
+                _dotNetRef = DotNetObjectReference.Create(this);
                 _module = await JSRuntime.InvokeAsync<IJSObjectReference>(
                     "import", "./_content/BlazorUI.Components/js/markdown-editor.js");
 
-                // Initialize list continuation behavior
-                await _module.InvokeVoidAsync("initializeListContinuation", _textareaRef);
+                // Initialize list continuation behavior and undo/redo
+                await _module.InvokeVoidAsync("initializeListContinuation", _textareaRef, _dotNetRef);
             }
             catch (JSException)
             {
                 // JS module not available, continue without JS features
             }
+        }
+    }
+
+    /// <summary>
+    /// Called from JavaScript when content changes via undo/redo.
+    /// </summary>
+    [JSInvokable]
+    public async Task OnContentChanged(string value)
+    {
+        Value = value;
+
+        if (ValueChanged.HasDelegate)
+        {
+            await ValueChanged.InvokeAsync(value);
         }
     }
 
@@ -368,7 +384,7 @@ public partial class MarkdownEditor : ComponentBase, IAsyncDisposable
         {
             try
             {
-                // Clean up the list continuation listener
+                // Clean up the list continuation listener and editor data
                 await _module.InvokeVoidAsync("disposeListContinuation", _textareaRef);
                 await _module.DisposeAsync();
             }
@@ -382,6 +398,7 @@ public partial class MarkdownEditor : ComponentBase, IAsyncDisposable
             }
         }
 
+        _dotNetRef?.Dispose();
         GC.SuppressFinalize(this);
     }
 }

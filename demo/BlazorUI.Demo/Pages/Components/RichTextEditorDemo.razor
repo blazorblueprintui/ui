@@ -1,0 +1,268 @@
+@page "/components/rich-text-editor"
+@using BlazorUI.Components.RichTextEditor
+@using BlazorUI.Components.Card
+@using BlazorUI.Components.Button
+@using BlazorUI.Components.Label
+
+<PageTitle>Rich Text Editor - BlazorUI</PageTitle>
+
+<div class="space-y-10 max-w-4xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Rich Text Editor</h1>
+        <p class="text-xl text-muted-foreground">
+            A WYSIWYG rich text editor with toolbar formatting. Text is formatted directly as you type.
+        </p>
+    </div>
+
+    @* Basic Example *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-muted-foreground">
+                A simple rich text editor with two-way data binding. Formatting appears directly as you type.
+            </p>
+        </div>
+
+        <div class="space-y-4">
+            <RichTextEditor @bind-Value="basicValue" Placeholder="Start typing here..." />
+
+            @if (!string.IsNullOrEmpty(basicValue))
+            {
+                <Card>
+                    <CardHeader>
+                        <CardTitle Class="text-sm">HTML Output</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <pre class="text-xs bg-muted p-3 rounded-md overflow-auto whitespace-pre-wrap">@basicValue</pre>
+                    </CardContent>
+                </Card>
+            }
+        </div>
+    </section>
+
+    @* With Label *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">With Label</h2>
+            <p class="text-muted-foreground">
+                Associate a label with the editor for better accessibility.
+            </p>
+        </div>
+
+        <div class="space-y-2">
+            <Label For="description-editor">Description</Label>
+            <RichTextEditor @bind-Value="labeledValue"
+                            Id="description-editor"
+                            Placeholder="Enter a description..." />
+        </div>
+    </section>
+
+    @* Toolbar Features Demo *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Toolbar Features</h2>
+            <p class="text-muted-foreground">
+                The toolbar provides quick access to formatting options. You can also use keyboard shortcuts.
+            </p>
+        </div>
+
+        <div class="rounded-lg border p-6 space-y-4">
+            <div class="space-y-3">
+                <h3 class="font-semibold">Available Formatting</h3>
+                <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+                    <li><strong>Bold</strong> - Select text and click B or press <kbd class="px-1.5 py-0.5 bg-muted rounded text-xs">Ctrl+B</kbd></li>
+                    <li><em>Italic</em> - Select text and click I or press <kbd class="px-1.5 py-0.5 bg-muted rounded text-xs">Ctrl+I</kbd></li>
+                    <li><u>Underline</u> - Select text and click U or press <kbd class="px-1.5 py-0.5 bg-muted rounded text-xs">Ctrl+U</kbd></li>
+                    <li><s>Strikethrough</s> - Select text and click S button</li>
+                    <li><span class="text-red-500">Font Color</span> - Choose from 12 colors using the palette dropdown</li>
+                    <li><span style="font-size: 18px">Font Size</span> - Select from 5 size options</li>
+                    <li>Bullet List - Click the bullet list icon to add unordered lists</li>
+                    <li>Numbered List - Click the numbered list icon for ordered lists</li>
+                    <li>Text Alignment - Left, center, right, or justify</li>
+                </ul>
+            </div>
+        </div>
+
+        <RichTextEditor @bind-Value="toolbarDemoValue"
+                        Placeholder="Try out the toolbar features..." />
+    </section>
+
+    @* Pre-populated Content *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Pre-populated Content</h2>
+            <p class="text-muted-foreground">
+                The editor can be initialized with existing HTML content.
+            </p>
+        </div>
+
+        <RichTextEditor @bind-Value="prePopulatedValue" />
+    </section>
+
+    @* Height Control *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Height Control</h2>
+            <p class="text-muted-foreground">
+                Control the editor height with MaxHeight or fixed Height properties.
+            </p>
+        </div>
+
+        <div class="grid gap-6">
+            <div class="space-y-2">
+                <Label>MaxHeight="200px" (scrollbar appears after 200px)</Label>
+                <RichTextEditor @bind-Value="maxHeightValue"
+                                MaxHeight="200px"
+                                Placeholder="Type a lot of content to see the scrollbar..." />
+            </div>
+
+            <div class="space-y-2">
+                <Label>Height="150px" (fixed height, always shows scrollbar when needed)</Label>
+                <RichTextEditor @bind-Value="fixedHeightValue"
+                                Height="150px"
+                                Placeholder="Fixed height editor..." />
+            </div>
+        </div>
+    </section>
+
+    @* Disabled State *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled State</h2>
+            <p class="text-muted-foreground">
+                The editor can be disabled to prevent user input.
+            </p>
+        </div>
+
+        <RichTextEditor Value="<p>This editor is <strong>disabled</strong> and cannot be edited.</p>"
+                        Disabled="true" />
+    </section>
+
+    @* Form Integration *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Form Integration</h2>
+            <p class="text-muted-foreground">
+                Use the editor within forms for content submission.
+            </p>
+        </div>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Submit Feedback</CardTitle>
+                <CardDescription>Share your thoughts with us using rich text formatting.</CardDescription>
+            </CardHeader>
+            <CardContent Class="space-y-4">
+                <div class="space-y-2">
+                    <Label For="feedback-editor">Your Feedback</Label>
+                    <RichTextEditor @bind-Value="feedbackValue"
+                                    Id="feedback-editor"
+                                    Placeholder="What's on your mind?" />
+                </div>
+            </CardContent>
+            <CardFooter>
+                <Button OnClick="HandleSubmit" Disabled="@string.IsNullOrWhiteSpace(feedbackValue)">
+                    Submit Feedback
+                </Button>
+            </CardFooter>
+        </Card>
+
+        @if (submitted)
+        {
+            <div class="p-4 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 rounded-md">
+                Feedback submitted successfully!
+            </div>
+        }
+    </section>
+
+    @* Usage Notes *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Usage Notes</h2>
+        </div>
+
+        <div class="rounded-lg border p-6 space-y-4">
+            <div class="space-y-3">
+                <h3 class="font-semibold">Key Features</h3>
+                <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+                    <li>WYSIWYG editing - formatting appears directly as you type</li>
+                    <li>Toolbar with formatting buttons for text styles, colors, and more</li>
+                    <li>Keyboard shortcuts for bold, italic, and underline</li>
+                    <li>Font size selection with 5 preset sizes</li>
+                    <li>Font color picker with 12 color options</li>
+                    <li>Bullet and numbered list support</li>
+                    <li>Text alignment options (left, center, right, justify)</li>
+                    <li>Two-way data binding with @("@bind-Value")</li>
+                    <li>Outputs HTML for easy storage and display</li>
+                </ul>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="font-semibold">HTML Output</h3>
+                <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+                    <li><code class="bg-muted px-1 rounded">&lt;strong&gt;</code> - Bold text</li>
+                    <li><code class="bg-muted px-1 rounded">&lt;em&gt;</code> - Italic text</li>
+                    <li><code class="bg-muted px-1 rounded">&lt;u&gt;</code> - Underlined text</li>
+                    <li><code class="bg-muted px-1 rounded">&lt;s&gt;</code> - Strikethrough text</li>
+                    <li><code class="bg-muted px-1 rounded">&lt;span style="..."&gt;</code> - Font size and color</li>
+                    <li><code class="bg-muted px-1 rounded">&lt;ul&gt;&lt;li&gt;</code> - Bullet list</li>
+                    <li><code class="bg-muted px-1 rounded">&lt;ol&gt;&lt;li&gt;</code> - Numbered list</li>
+                    <li><code class="bg-muted px-1 rounded">&lt;div style="text-align: ..."&gt;</code> - Aligned content</li>
+                </ul>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="font-semibold">Accessibility</h3>
+                <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+                    <li>Supports ARIA labels and descriptions</li>
+                    <li>Keyboard shortcuts for common formatting</li>
+                    <li>Associate with Label component using Id parameter</li>
+                    <li>Supports disabled state</li>
+                    <li>Role="textbox" with aria-multiline="true"</li>
+                </ul>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="font-semibold">Comparison with Markdown Editor</h3>
+                <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+                    <li><strong>Rich Text Editor</strong>: WYSIWYG, outputs HTML, visual formatting</li>
+                    <li><strong>Markdown Editor</strong>: Write/Preview tabs, outputs markdown, text-based syntax</li>
+                    <li>Choose Rich Text for users who prefer visual formatting</li>
+                    <li>Choose Markdown for developers or technical content</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</div>
+
+@code {
+    private string? basicValue;
+    private string? labeledValue;
+    private string? toolbarDemoValue;
+    private string? feedbackValue;
+    private string? maxHeightValue;
+    private string? fixedHeightValue;
+    private bool submitted;
+
+    private string prePopulatedValue = @"<h2>Welcome to the Rich Text Editor</h2>
+<p>This is a <strong>bold</strong> statement and this is <em>italic</em> text.</p>
+<h3>Features</h3>
+<ul>
+<li>Write with visual formatting</li>
+<li>See your changes immediately</li>
+<li>Use keyboard shortcuts for quick formatting</li>
+</ul>
+<p>You can also use <span style=""color: #3B82F6"">colored text</span> and <span style=""font-size: 18px"">different sizes</span>.</p>
+<ol>
+<li>Select some text</li>
+<li>Click a toolbar button</li>
+<li>See the formatting applied instantly</li>
+</ol>
+<p>Enjoy writing!</p>";
+
+    private void HandleSubmit()
+    {
+        submitted = true;
+        StateHasChanged();
+    }
+}
