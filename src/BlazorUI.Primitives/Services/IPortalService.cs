@@ -14,6 +14,19 @@ public interface IPortalService
     event Action? OnPortalsChanged;
 
     /// <summary>
+    /// Event raised when a specific portal has been rendered in the DOM.
+    /// Used for synchronization between content components and PortalHost.
+    /// </summary>
+    event Action<string>? OnPortalRendered;
+
+    /// <summary>
+    /// Notifies that a portal has been rendered in the DOM.
+    /// Called by PortalHost after rendering portal content.
+    /// </summary>
+    /// <param name="portalId">The ID of the portal that was rendered.</param>
+    void NotifyPortalRendered(string portalId);
+
+    /// <summary>
     /// Registers a new portal with the specified ID and content.
     /// </summary>
     /// <param name="id">Unique identifier for the portal.</param>

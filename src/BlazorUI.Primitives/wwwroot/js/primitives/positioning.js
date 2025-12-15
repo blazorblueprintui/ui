@@ -32,6 +32,38 @@ async function loadFloatingUI() {
 }
 
 /**
+ * Checks if an element is ready for positioning (exists in DOM and is valid).
+ * @param {HTMLElement} element - Element to check
+ * @returns {boolean} True if element is ready
+ */
+export function isElementReady(element) {
+    return element &&
+           element instanceof Element &&
+           document.body.contains(element);
+}
+
+/**
+ * Waits for an element to be ready in the DOM.
+ * @param {string} elementId - ID of the element to wait for
+ * @param {number} maxWaitMs - Maximum time to wait in milliseconds
+ * @param {number} intervalMs - Check interval in milliseconds
+ * @returns {Promise<boolean>} True if element found, false otherwise
+ */
+export async function waitForElement(elementId, maxWaitMs = 100, intervalMs = 10) {
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < maxWaitMs) {
+        const element = document.getElementById(elementId);
+        if (element && document.body.contains(element)) {
+            return true;
+        }
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
+    }
+
+    return false;
+}
+
+/**
  * Computes the optimal position for a floating element.
  * @param {HTMLElement} reference - Reference element
  * @param {HTMLElement} floating - Floating element to position
@@ -39,6 +71,14 @@ async function loadFloatingUI() {
  * @returns {Promise<Object>} Position result with x, y, placement
  */
 export async function computePosition(reference, floating, options = {}) {
+    // Validate elements before proceeding
+    if (!isElementReady(reference)) {
+        throw new Error('Reference element is not ready or not in DOM');
+    }
+    if (!isElementReady(floating)) {
+        throw new Error('Floating element is not ready or not in DOM');
+    }
+
     try {
         const lib = await loadFloatingUI();
 
@@ -176,4 +216,61 @@ function getTransformOrigin(placement) {
     };
 
     return placements[placement] || 'center';
+}
+
+/**
+ * Sets up positioning using element IDs. Waits for elements to appear in DOM before positioning.
+ * This decouples C# timing from portal rendering - JS handles all waiting.
+ * @param {string} referenceId - ID of the reference (trigger) element
+ * @param {string} floatingId - ID of the floating (content) element
+ * @param {Object} options - Positioning options (placement, offset, flip, shift, padding, strategy, maxWaitMs)
+ * @returns {Promise<Object>} Disposable object with cleanup method, or no-op if elements not found
+ */
+export async function setupPositioningById(referenceId, floatingId, options = {}) {
+    const maxWaitMs = options.maxWaitMs || 200;
+
+    // Wait for both elements to appear in DOM
+    const [refReady, floatReady] = await Promise.all([
+        waitForElement(referenceId, maxWaitMs),
+        waitForElement(floatingId, maxWaitMs)
+    ]);
+
+    if (!refReady || !floatReady) {
+        console.warn(`setupPositioningById: Elements not found within ${maxWaitMs}ms - ref: ${refReady}, float: ${floatReady}`);
+        return {
+            _cleanupId: -1,
+            apply: function() {}
+        };
+    }
+
+    const reference = document.getElementById(referenceId);
+    const floating = document.getElementById(floatingId);
+
+    // Use existing autoUpdate logic
+    return await autoUpdate(reference, floating, options);
+}
+
+/**
+ * Focuses an element by ID, waiting for it to appear in DOM if necessary.
+ * @param {string} elementId - ID of the element to focus
+ * @param {number} maxWaitMs - Maximum time to wait in milliseconds
+ * @returns {Promise<boolean>} True if focus succeeded, false otherwise
+ */
+export async function focusById(elementId, maxWaitMs = 200) {
+    const ready = await waitForElement(elementId, maxWaitMs);
+    if (!ready) {
+        return false;
+    }
+
+    const element = document.getElementById(elementId);
+    if (element) {
+        try {
+            element.focus();
+            return true;
+        } catch (e) {
+            console.warn(`focusById: Could not focus element ${elementId}:`, e);
+            return false;
+        }
+    }
+    return false;
 }

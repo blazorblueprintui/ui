@@ -5,6 +5,27 @@ const cleanupRegistry = new Map();
 let cleanupIdCounter = 0;
 
 /**
+ * Waits for an element to appear in the DOM by ID.
+ * @param {string} elementId - ID of the element to wait for
+ * @param {number} maxWaitMs - Maximum time to wait in milliseconds
+ * @param {number} intervalMs - Check interval in milliseconds
+ * @returns {Promise<HTMLElement|null>} The element if found, null otherwise
+ */
+async function waitForElementById(elementId, maxWaitMs = 200, intervalMs = 10) {
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < maxWaitMs) {
+        const element = document.getElementById(elementId);
+        if (element && document.body.contains(element)) {
+            return element;
+        }
+        await new Promise(resolve => setTimeout(resolve, intervalMs));
+    }
+
+    return null;
+}
+
+/**
  * Sets up click-outside detection for an element.
  * @param {HTMLElement} element - The element to monitor
  * @param {Object} dotNetRef - DotNet object reference for callback
@@ -196,4 +217,30 @@ export function onInteractOutside(element, dotNetRef, methodName = 'HandleIntera
             }
         }
     };
+}
+
+/**
+ * Sets up click-outside detection using element IDs. Waits for elements to appear in DOM.
+ * This decouples C# timing from portal rendering - JS handles all waiting.
+ * @param {string} elementId - ID of the element to monitor
+ * @param {Object} dotNetRef - DotNet object reference for callback
+ * @param {string} methodName - The method name to invoke on click outside
+ * @param {string} excludeElementId - Optional ID of element to exclude from outside detection (e.g., trigger button)
+ * @param {number} maxWaitMs - Maximum time to wait for elements in milliseconds
+ * @returns {Promise<Object>} Disposable object with dispose() method, or no-op if element not found
+ */
+export async function onClickOutsideById(elementId, dotNetRef, methodName = 'HandleClickOutside', excludeElementId = null, maxWaitMs = 200) {
+    const element = await waitForElementById(elementId, maxWaitMs);
+    if (!element) {
+        console.warn(`onClickOutsideById: Element ${elementId} not found within ${maxWaitMs}ms`);
+        return {
+            _cleanupId: -1,
+            dispose: function() {}
+        };
+    }
+
+    // Get exclude element if ID provided (no wait - it should already exist as it's the trigger)
+    const excludeElement = excludeElementId ? document.getElementById(excludeElementId) : null;
+
+    return onClickOutside(element, dotNetRef, methodName, excludeElement);
 }

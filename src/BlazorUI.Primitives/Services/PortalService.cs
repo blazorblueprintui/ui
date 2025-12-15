@@ -15,6 +15,15 @@ public class PortalService : IPortalService
     public event Action? OnPortalsChanged;
 
     /// <inheritdoc />
+    public event Action<string>? OnPortalRendered;
+
+    /// <inheritdoc />
+    public void NotifyPortalRendered(string portalId)
+    {
+        OnPortalRendered?.Invoke(portalId);
+    }
+
+    /// <inheritdoc />
     public void RegisterPortal(string id, RenderFragment content)
     {
         if (string.IsNullOrWhiteSpace(id))

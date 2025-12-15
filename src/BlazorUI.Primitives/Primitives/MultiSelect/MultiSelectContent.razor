@@ -95,6 +95,7 @@ else
     private bool _isInitialized = false;
     private bool _isPositioned = false;
     private string _portalId = "";
+    private TaskCompletionSource<bool>? _portalReadyTcs;
 
     protected override void OnInitialized()
     {
@@ -108,8 +109,19 @@ else
         // Subscribe to context state changes
         Context.OnStateChanged += HandleContextStateChanged;
 
+        // Subscribe to portal ready events for synchronization
+        PortalService.OnPortalRendered += HandlePortalRendered;
+
         // Determine initial render state
         UpdateShouldRender();
+    }
+
+    private void HandlePortalRendered(string portalId)
+    {
+        if (portalId == _portalId)
+        {
+            _portalReadyTcs?.TrySetResult(true);
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -132,10 +144,32 @@ else
             _isInitialized = true;
             _isPositioned = false;
 
-            // Register multiselect content through portal
+            // Create completion source BEFORE registering portal
+            _portalReadyTcs = new TaskCompletionSource<bool>();
+
+            // Register multiselect content through portal - this triggers PortalHost to re-render
             PortalService.RegisterPortal(_portalId, RenderMultiSelectContent());
 
-            // Set up positioning
+            // Wait for PortalHost to signal it's done rendering our portal
+            // Use timeout to prevent hanging if something goes wrong
+            var timeoutTask = Task.Delay(500);
+            var completedTask = await Task.WhenAny(_portalReadyTcs.Task, timeoutTask);
+
+            if (completedTask == timeoutTask)
+            {
+                Console.WriteLine($"Warning: Portal {_portalId} render timeout");
+            }
+
+            // Yield to ensure any pending re-renders complete and _portalContentRef is up-to-date
+            await Task.Yield();
+
+            // Check if still should render (user might have closed during wait)
+            if (!_shouldRender)
+            {
+                return;
+            }
+
+            // NOW _portalContentRef is guaranteed to be valid!
             await SetupPositioningAsync();
         }
         else if (!_shouldRender && _isInitialized && UsePortal)
@@ -187,13 +221,8 @@ else
         if (Context.State.TriggerElement == null)
         {
             Console.WriteLine("Warning: MultiSelectContent - TriggerElement is null, positioning may not work correctly");
-            _isPositioned = true;
-            PortalService.UpdatePortalContent(_portalId, RenderMultiSelectContent());
             return;
         }
-
-        // Wait a tick for portal to render
-        await Task.Delay(1);
 
         try
         {
@@ -212,17 +241,17 @@ else
                 _portalContentRef,
                 options);
 
-            await PositioningService.ApplyPositionAsync(_portalContentRef, position);
-
-            // Show the multiselect now that positioning is complete
-            _isPositioned = true;
-            PortalService.UpdatePortalContent(_portalId, RenderMultiSelectContent());
-
-            // Set up width matching if needed
+            // Set up width matching BEFORE making visible to prevent flash
             if (MatchTriggerWidth)
             {
                 await SetupMatchTriggerWidthAsync();
             }
+
+            // Apply position AND make visible via JS (don't rely on Blazor re-render which would overwrite position)
+            await PositioningService.ApplyPositionAsync(_portalContentRef, position, makeVisible: true);
+
+            // Mark as positioned for any future Blazor re-renders
+            _isPositioned = true;
 
             // Set up auto-update for dynamic positioning
             _positioningCleanup = await PositioningService.AutoUpdateAsync(
@@ -234,7 +263,6 @@ else
         {
             Console.WriteLine($"Failed to set up positioning: {ex.Message}");
             _isPositioned = true;
-            PortalService.UpdatePortalContent(_portalId, RenderMultiSelectContent());
         }
     }
 
@@ -289,7 +317,9 @@ else
 
         if (!_isPositioned)
         {
-            baseStyle += " opacity: 0; pointer-events: none;";
+            // Position off-screen initially to prevent focus-induced scroll
+            // opacity: 0 alone doesn't prevent browser from scrolling to focused element
+            baseStyle += " top: -9999px; left: -9999px; opacity: 0; pointer-events: none;";
         }
 
         return baseStyle;
@@ -351,6 +381,9 @@ else
 
     public async ValueTask DisposeAsync()
     {
+        // Unsubscribe from portal ready events
+        PortalService.OnPortalRendered -= HandlePortalRendered;
+
         await CleanupAsync();
 
         if (Context != null)

@@ -82,6 +82,7 @@
     private bool _isPositioned = false;
     private string _portalId = "";
     private ElementReference _portalContentRef;
+    private TaskCompletionSource<bool>? _portalReadyTcs;
 
     protected override void OnInitialized()
     {
@@ -96,6 +97,17 @@
 
         // Subscribe to context changes
         Context.OnStateChanged += HandleContextStateChanged;
+
+        // Subscribe to portal ready events for synchronization
+        PortalService.OnPortalRendered += HandlePortalRendered;
+    }
+
+    private void HandlePortalRendered(string portalId)
+    {
+        if (portalId == _portalId)
+        {
+            _portalReadyTcs?.TrySetResult(true);
+        }
     }
 
     protected override void OnParametersSet()
@@ -117,11 +129,54 @@
             _isInitialized = true;
             _isPositioned = false;
 
-            // Register popover content through portal
+            // Create completion source BEFORE registering portal
+            _portalReadyTcs = new TaskCompletionSource<bool>();
+
+            // Register popover content through portal - this triggers PortalHost to re-render
             PortalService.RegisterPortal(_portalId, RenderPopoverContent());
 
-            // Set up positioning
+            // Wait for PortalHost to signal it's done rendering our portal
+            // Use timeout to prevent hanging if something goes wrong
+            var timeoutTask = Task.Delay(500);
+            var completedTask = await Task.WhenAny(_portalReadyTcs.Task, timeoutTask);
+
+            if (completedTask == timeoutTask)
+            {
+                Console.WriteLine($"Warning: Portal {_portalId} render timeout");
+            }
+
+            // Yield to ensure any pending re-renders complete and _portalContentRef is up-to-date
+            // This is critical when multiple portals are opening/closing simultaneously
+            await Task.Yield();
+
+            // Check if still open (user might have closed during wait)
+            if (!Context.IsOpen)
+            {
+                return;
+            }
+
+            // NOW _portalContentRef is guaranteed to be valid!
+            await SetupAsync();
+        }
+        else if (!Context.IsOpen && _isInitialized)
+        {
+            await CleanupAsync();
+        }
+    }
+
+    /// <summary>
+    /// Sets up all popover functionality after portal has rendered.
+    /// </summary>
+    private async Task SetupAsync()
+    {
+        try
+        {
+            // Set up positioning and make visible via JS
+            // IMPORTANT: Don't call UpdatePortalContent after this - it would overwrite the JS-applied position
             await SetupPositioningAsync();
+
+            // Mark as positioned for any future Blazor re-renders
+            _isPositioned = true;
 
             // Set up click-outside detection
             if (CloseOnClickOutside)
@@ -129,9 +184,16 @@
                 await SetupClickOutsideAsync();
             }
         }
-        else if (!Context.IsOpen && _isInitialized)
+        catch (Exception ex)
         {
-            await CleanupAsync();
+            Console.WriteLine($"Popover setup failed: {ex.Message}");
+            // Mark as positioned and show via JS even if setup fails
+            _isPositioned = true;
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("eval", $"document.getElementById('{Context.ContentId}').style.opacity = '1'; document.getElementById('{Context.ContentId}').style.pointerEvents = 'auto';");
+            }
+            catch { /* ignore */ }
         }
     }
 
@@ -154,13 +216,8 @@
         if (Context.State.TriggerElement == null)
         {
             Console.WriteLine("Warning: PopoverContent - TriggerElement is null, positioning may not work correctly");
-            _isPositioned = true;
-            PortalService.UpdatePortalContent(_portalId, RenderPopoverContent());
             return;
         }
-
-        // Wait a tick for portal to render
-        await Task.Delay(1);
 
         try
         {
@@ -179,11 +236,8 @@
                 _portalContentRef,
                 options);
 
-            await PositioningService.ApplyPositionAsync(_portalContentRef, position);
-
-            // Show the popover now that positioning is complete
-            _isPositioned = true;
-            PortalService.UpdatePortalContent(_portalId, RenderPopoverContent());
+            // Apply position AND make visible via JS (don't rely on Blazor re-render which would overwrite position)
+            await PositioningService.ApplyPositionAsync(_portalContentRef, position, makeVisible: true);
 
             // Set up auto-update for dynamic positioning
             _positioningCleanup = await PositioningService.AutoUpdateAsync(
@@ -194,8 +248,6 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Failed to set up positioning: {ex.Message}");
-            _isPositioned = true;
-            PortalService.UpdatePortalContent(_portalId, RenderPopoverContent());
         }
     }
 
@@ -210,7 +262,7 @@
 
             // onClickOutside returns a cleanup function
             _clickOutsideCleanup = await _clickOutsideModule.InvokeAsync<IJSObjectReference>(
-                "onClickOutside", _portalContentRef, _dotNetRef);
+                "onClickOutside", _portalContentRef, _dotNetRef, "HandleClickOutside", Context.State.TriggerElement);
         }
         catch (Exception ex)
         {
@@ -245,7 +297,9 @@
 
         if (!_isPositioned)
         {
-            baseStyle += " opacity: 0; pointer-events: none;";
+            // Position off-screen initially to prevent focus-induced scroll
+            // opacity: 0 alone doesn't prevent browser from scrolling to focused element
+            baseStyle += " top: -9999px; left: -9999px; opacity: 0; pointer-events: none;";
         }
 
         return baseStyle;
@@ -332,6 +386,13 @@
             _clickOutsideCleanup = null;
         }
 
+        // Dispose DotNetObjectReference to prevent stale callbacks
+        if (_dotNetRef != null)
+        {
+            _dotNetRef.Dispose();
+            _dotNetRef = null;
+        }
+
         // Unregister portal when popover closes
         if (!string.IsNullOrEmpty(_portalId))
         {
@@ -344,6 +405,9 @@
 
     public async ValueTask DisposeAsync()
     {
+        // Unsubscribe from portal ready events
+        PortalService.OnPortalRendered -= HandlePortalRendered;
+
         await CleanupAsync();
 
         if (_clickOutsideModule != null)

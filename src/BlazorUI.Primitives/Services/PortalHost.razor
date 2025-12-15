@@ -3,17 +3,34 @@
 @inject IPortalService PortalService
 
 @* Renders all registered portals at the document body level *@
+@{
+    // Track which portals are being rendered in this cycle
+    _renderedThisCycle.Clear();
+}
 @foreach (var portal in PortalService.GetPortals())
 {
-    <div data-portal-id="@portal.Key" class="blazorui-portal" style="display: contents;">
+    _renderedThisCycle.Add(portal.Key);
+    <div @key="portal.Key" data-portal-id="@portal.Key" class="blazorui-portal" style="display: contents;">
         @portal.Value
     </div>
 }
 
 @code {
+    private HashSet<string> _renderedThisCycle = new();
+
     protected override void OnInitialized()
     {
         PortalService.OnPortalsChanged += StateHasChanged;
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        // Notify all portals that were rendered this cycle
+        // This signals to content components that their ElementRef is now valid
+        foreach (var portalId in _renderedThisCycle)
+        {
+            PortalService.NotifyPortalRendered(portalId);
+        }
     }
 
     public void Dispose()
