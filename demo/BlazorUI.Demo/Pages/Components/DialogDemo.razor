@@ -1,5 +1,6 @@
 @page "/components/dialog"
 @using BlazorUI.Components.Dialog
+@using BlazorUI.Components.Combobox
 
 <PageTitle>Dialog Component - BlazorUI</PageTitle>
 
@@ -274,6 +275,53 @@
     </div>
 
     <div class="space-y-4">
+        <h2 class="text-2xl font-semibold">Combobox in Dialog</h2>
+        <p class="text-sm text-muted-foreground">
+            Dialog containing a Combobox for selecting items. Tests nested portal behavior.
+        </p>
+
+        <Dialog>
+            <DialogTrigger class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                Open Dialog with Combobox
+            </DialogTrigger>
+
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Select a Framework</DialogTitle>
+                    <DialogDescription>
+                        Use the combobox below to search and select a framework.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div class="py-4">
+                    <Combobox TItem="ComboboxFramework"
+                             Items="comboboxFrameworks"
+                             @bind-Value="selectedComboboxFramework"
+                             ValueSelector="@(f => f.Value)"
+                             DisplaySelector="@(f => f.Label)"
+                             Placeholder="Select framework..."
+                             SearchPlaceholder="Search framework..."
+                             EmptyMessage="No framework found."
+                             PopoverWidth="w-[300px]" />
+                    @if (!string.IsNullOrEmpty(selectedComboboxFramework))
+                    {
+                        <p class="text-sm mt-2">Selected: <strong>@GetComboboxFrameworkLabel(selectedComboboxFramework)</strong></p>
+                    }
+                </div>
+
+                <DialogFooter>
+                    <BlazorUI.Primitives.Dialog.DialogClose class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                        Cancel
+                    </BlazorUI.Primitives.Dialog.DialogClose>
+                    <button class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                        Confirm Selection
+                    </button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    </div>
+
+    <div class="space-y-4">
         <h2 class="text-2xl font-semibold">Features</h2>
         <ul class="list-disc list-inside space-y-2 text-sm">
             <li>Full keyboard navigation support</li>
@@ -317,10 +365,31 @@
 
 @code {
     private bool isDialogOpen = false;
+    private string? selectedComboboxFramework;
+
+    private readonly List<ComboboxFramework> comboboxFrameworks = new()
+    {
+        new ComboboxFramework { Value = "blazor", Label = "Blazor" },
+        new ComboboxFramework { Value = "react", Label = "React" },
+        new ComboboxFramework { Value = "vue", Label = "Vue" },
+        new ComboboxFramework { Value = "angular", Label = "Angular" },
+        new ComboboxFramework { Value = "svelte", Label = "Svelte" },
+        new ComboboxFramework { Value = "nextjs", Label = "Next.js" },
+        new ComboboxFramework { Value = "nuxt", Label = "Nuxt" }
+    };
 
     private void HandleSave()
     {
         // Handle save logic
         isDialogOpen = false;
+    }
+
+    private string GetComboboxFrameworkLabel(string? value) =>
+        comboboxFrameworks.FirstOrDefault(f => f.Value == value)?.Label ?? value ?? "";
+
+    public class ComboboxFramework
+    {
+        public required string Value { get; set; }
+        public required string Label { get; set; }
     }
 }

@@ -114,12 +114,10 @@
     {
         base.OnParametersSet();
 
-        // Update portal content when parameters change (e.g., ChildContent)
-        // This ensures the portal reflects the latest content from the parent
-        if (_isInitialized && Context.IsOpen && !string.IsNullOrEmpty(_portalId))
-        {
-            PortalService.UpdatePortalContent(_portalId, RenderPopoverContent());
-        }
+        // Note: We do NOT call UpdatePortalContent() here because it would cause infinite loops
+        // when nested portals (like Combobox inside Dialog) are used. The RenderFragment
+        // returned by RenderPopoverContent() captures ChildContent by reference, so when
+        // PortalHost renders, it will always use the latest content.
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
