@@ -96,6 +96,12 @@ public partial class InputGroupButton : ComponentBase
     public string? Class { get; set; }
 
     /// <summary>
+    /// Gets or sets additional attributes to be applied to the button element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
     /// Gets the computed CSS classes for the button.
     /// </summary>
     /// <remarks>

@@ -1,17 +1,27 @@
 @namespace BlazorUI.Components.Command
 @using BlazorUI.Components.Utilities
-@using BlazorUI.Primitives.Combobox
+@implements IDisposable
 
-@* CommandItem - styled wrapper over ComboboxItem *@
-<ComboboxItem Value="@Value"
-              SearchText="@(SearchText ?? Value ?? string.Empty)"
-              Disabled="@Disabled"
-              OnSelect="@HandleSelect"
-              class="@CssClass">
-    @ChildContent
-</ComboboxItem>
+@* CommandItem - selectable item in the command list *@
+@if (_isVisible)
+{
+    <div id="@_itemId"
+         role="option"
+         aria-selected="@(_isFocused ? "true" : "false")"
+         aria-disabled="@(Disabled ? "true" : "false")"
+         data-focused="@(_isFocused ? "true" : "false")"
+         data-disabled="@(Disabled ? "true" : "false")"
+         @onclick="HandleClick"
+         @onmouseenter="HandleMouseEnter"
+         class="@CssClass">
+        @ChildContent
+    </div>
+}
 
 @code {
+    [CascadingParameter]
+    public CommandContext? Context { get; set; }
+
     /// <summary>
     /// Gets or sets additional CSS classes to apply to the item.
     /// </summary>
@@ -48,21 +58,146 @@
     [Parameter]
     public string? SearchText { get; set; }
 
+    private int _index = -1;
+    private string _itemId = string.Empty;
+    private bool _isFocused;
+    private bool _isVisible = true;
+
     /// <summary>
     /// Gets the computed CSS classes for the item.
     /// </summary>
     private string CssClass => ClassNames.cn(
-        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
+        "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
         !Disabled ? "hover:bg-accent hover:text-accent-foreground" : null,
         Disabled ? "opacity-50 cursor-not-allowed" : null,
+        _isFocused ? "bg-accent text-accent-foreground" : null,
         Class
     );
 
-    private async Task HandleSelect()
+    protected override void OnInitialized()
     {
-        if (OnSelect.HasDelegate)
+        if (Context == null)
         {
-            await OnSelect.InvokeAsync();
+            throw new InvalidOperationException($"{nameof(CommandItem)} must be used within a {nameof(Command)} component.");
+        }
+
+        // Register with context
+        _index = Context.RegisterItem(
+            value: Value,
+            searchText: SearchText ?? Value ?? string.Empty,
+            disabled: Disabled,
+            onSelect: OnSelect
+        );
+
+        _itemId = Context.GetItemId(_index);
+
+        // Subscribe to context state changes
+        Context.OnStateChanged += HandleContextStateChanged;
+
+        // Initial visibility check
+        UpdateVisibility();
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        // Update registration when parameters change
+        if (_index >= 0 && Context != null)
+        {
+            Context.UpdateItem(
+                index: _index,
+                value: Value,
+                searchText: SearchText ?? Value ?? string.Empty,
+                disabled: Disabled,
+                onSelect: OnSelect
+            );
+        }
+    }
+
+    private async Task HandleClick()
+    {
+        if (Disabled || Context == null) return;
+
+        await Context.SelectItemByValueAsync(Value ?? string.Empty);
+    }
+
+    private void HandleMouseEnter()
+    {
+        if (Disabled || Context == null) return;
+
+        // Set focus when mouse enters
+        var filteredItems = Context.GetFilteredItems();
+        var thisItem = Context.GetItemByIndex(_index);
+
+        if (thisItem != null)
+        {
+            var indexInFiltered = filteredItems.IndexOf(thisItem);
+            if (indexInFiltered >= 0)
+            {
+                Context.SetFocusedIndex(indexInFiltered);
+            }
+        }
+    }
+
+    private void HandleContextStateChanged()
+    {
+        // Update focused state
+        var filteredItems = Context?.GetFilteredItems();
+        var thisItem = Context?.GetItemByIndex(_index);
+
+        if (thisItem != null && filteredItems != null)
+        {
+            var indexInFiltered = filteredItems.IndexOf(thisItem);
+            _isFocused = indexInFiltered >= 0 && Context?.FocusedIndex == indexInFiltered;
+        }
+        else
+        {
+            _isFocused = false;
+        }
+
+        // Update visibility
+        UpdateVisibility();
+
+        StateHasChanged();
+    }
+
+    private void UpdateVisibility()
+    {
+        if (Context == null)
+        {
+            _isVisible = false;
+            return;
+        }
+
+        var thisItem = Context.GetItemByIndex(_index);
+        if (thisItem == null)
+        {
+            _isVisible = false;
+            return;
+        }
+
+        // Check if item passes filter
+        if (string.IsNullOrWhiteSpace(Context.SearchQuery))
+        {
+            _isVisible = true;
+        }
+        else if (Context.FilterFunction != null)
+        {
+            _isVisible = Context.FilterFunction(thisItem, Context.SearchQuery);
+        }
+        else
+        {
+            _isVisible = thisItem.SearchText?.Contains(Context.SearchQuery, StringComparison.OrdinalIgnoreCase) ?? false;
+        }
+    }
+
+    public void Dispose()
+    {
+        if (Context != null && _index >= 0)
+        {
+            Context.UnregisterItem(_index);
+            Context.OnStateChanged -= HandleContextStateChanged;
         }
     }
 }

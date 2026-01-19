@@ -2,9 +2,11 @@
 @implements IDisposable
 
 @* Tabs primitive root component - headless, unstyled behavior only *@
-<CascadingValue Value="@_context" IsFixed="false">
-    @ChildContent
-</CascadingValue>
+<div @attributes="AdditionalAttributes">
+    <CascadingValue Value="@_context" IsFixed="false">
+        @ChildContent
+    </CascadingValue>
+</div>
 
 @code {
     private TabsContext _context = new();
@@ -57,6 +59,12 @@
     /// </summary>
     [Parameter]
     public TabsActivationMode ActivationMode { get; set; } = TabsActivationMode.Automatic;
+
+    /// <summary>
+    /// Additional attributes to apply to the root div element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     protected override void OnInitialized()
     {

@@ -4,7 +4,8 @@
 
 @* Styled SelectTrigger wrapper around SelectTrigger primitive *@
 <BlazorUI.Primitives.Select.SelectTrigger TValue="TValue"
-                                               class="@CssClass">
+                                               class="@CssClass"
+                                               @attributes="AdditionalAttributes">
     @ChildContent
     <svg class="ms-2 h-4 w-4 opacity-50" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="6 9 12 15 18 9"></polyline>
@@ -18,7 +19,6 @@
     [CascadingParameter]
     private SelectContext<TValue>? Context { get; set; }
 
-
     /// <summary>
     /// Gets or sets additional CSS classes to apply to the trigger button.
     /// </summary>
@@ -30,6 +30,12 @@
     /// </summary>
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional attributes to be applied to the trigger button.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     /// <summary>
     /// Gets the computed CSS classes for the trigger button.

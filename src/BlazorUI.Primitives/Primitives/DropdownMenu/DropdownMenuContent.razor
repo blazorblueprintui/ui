@@ -373,16 +373,17 @@
 
     private string GetInitialStyle()
     {
-        var baseStyle = $"position: absolute; z-index: {ZIndex};";
-
         if (!_isPositioned)
         {
-            // Position off-screen initially to prevent focus-induced scroll
-            // opacity: 0 alone doesn't prevent browser from scrolling to focused element
-            baseStyle += " top: -9999px; left: -9999px; opacity: 0; pointer-events: none;";
+            // Use position: fixed with off-screen coordinates to prevent:
+            // 1. Flash at wrong position (fixed doesn't depend on parent context)
+            // 2. Scroll jump (visibility: hidden prevents browser from scrolling to element)
+            // 3. Layout interference (pointer-events: none prevents interaction)
+            return $"position: fixed; z-index: {ZIndex}; top: -9999px; left: -9999px; visibility: hidden; opacity: 0; pointer-events: none;";
         }
 
-        return baseStyle;
+        // After positioning, JS will apply the correct styles
+        return $"position: absolute; z-index: {ZIndex};";
     }
 
     private string GetMergedStyle()

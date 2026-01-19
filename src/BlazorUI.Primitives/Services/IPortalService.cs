@@ -47,6 +47,13 @@ public interface IPortalService
     void UpdatePortalContent(string id, RenderFragment content);
 
     /// <summary>
+    /// Refreshes a portal without replacing its RenderFragment.
+    /// Triggers a re-render that uses updated captured values without creating new DOM elements.
+    /// </summary>
+    /// <param name="id">The portal ID to refresh.</param>
+    void RefreshPortal(string id);
+
+    /// <summary>
     /// Gets all registered portals.
     /// </summary>
     /// <returns>Dictionary of portal IDs to their render fragments.</returns>

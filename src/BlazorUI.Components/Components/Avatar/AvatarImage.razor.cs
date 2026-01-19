@@ -74,7 +74,8 @@ public partial class AvatarImage : ComponentBase
             var builder = new StringBuilder();
 
             // Base image styles (from shadcn/ui)
-            builder.Append("aspect-square h-full w-full object-cover ");
+            // Use absolute positioning to overlay the fallback
+            builder.Append("absolute inset-0 aspect-square h-full w-full object-cover ");
 
             // Custom classes (if provided)
             if (!string.IsNullOrWhiteSpace(Class))

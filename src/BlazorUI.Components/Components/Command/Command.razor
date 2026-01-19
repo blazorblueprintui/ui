@@ -1,14 +1,21 @@
 @namespace BlazorUI.Components.Command
 @using BlazorUI.Components.Utilities
-@using BlazorUI.Primitives.Combobox
+@implements IDisposable
 
-@* Command - styled wrapper over Combobox *@
-<Combobox class="@CssClass"
-                   @attributes="AdditionalAttributes">
-    @ChildContent
-</Combobox>
+@* Command - self-contained searchable/filterable list component *@
+<CascadingValue Value="_context" IsFixed="false">
+    <div class="@CssClass"
+         role="listbox"
+         aria-label="Command menu"
+         @attributes="AdditionalAttributes">
+        @ChildContent
+    </div>
+</CascadingValue>
 
 @code {
+    private CommandContext _context = new();
+    private string _searchQuery = string.Empty;
+
     /// <summary>
     /// Gets or sets additional CSS classes to apply to the command container.
     /// </summary>
@@ -20,6 +27,55 @@
     /// </summary>
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets the current search query.
+    /// </summary>
+    [Parameter]
+    public string SearchQuery
+    {
+        get => _searchQuery;
+        set
+        {
+            if (_searchQuery != value)
+            {
+                _searchQuery = value;
+                _context.SetSearchQuery(value);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Event callback invoked when the search query changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> SearchQueryChanged { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when an item is selected.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> OnValueChange { get; set; }
+
+    /// <summary>
+    /// Custom filter function for items.
+    /// </summary>
+    [Parameter]
+    public Func<CommandItemMetadata, string, bool>? FilterFunction { get; set; }
+
+    /// <summary>
+    /// Whether the command is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Whether to close the dropdown after an item is selected.
+    /// Default is true (standard command behavior).
+    /// Set to false for multi-select scenarios.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnSelect { get; set; } = true;
 
     /// <summary>
     /// Gets or sets additional attributes to apply to the component.
@@ -34,4 +90,46 @@
         "flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground",
         Class
     );
+
+    protected override void OnInitialized()
+    {
+        _context.OnValueChange = OnValueChange;
+        _context.FilterFunction = FilterFunction;
+        _context.CloseOnSelect = CloseOnSelect;
+        _context.Disabled = Disabled;
+        _context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        _context.OnValueChange = OnValueChange;
+        _context.FilterFunction = FilterFunction;
+        _context.CloseOnSelect = CloseOnSelect;
+        _context.Disabled = Disabled;
+
+        // Sync search query from parameter
+        if (_context.SearchQuery != _searchQuery)
+        {
+            _context.SetSearchQuery(_searchQuery);
+        }
+    }
+
+    private async void HandleContextStateChanged()
+    {
+        // Sync search query back to parameter
+        if (_searchQuery != _context.SearchQuery)
+        {
+            _searchQuery = _context.SearchQuery;
+            if (SearchQueryChanged.HasDelegate)
+            {
+                await InvokeAsync(async () => await SearchQueryChanged.InvokeAsync(_searchQuery));
+            }
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        _context.OnStateChanged -= HandleContextStateChanged;
+    }
 }

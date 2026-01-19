@@ -1,189 +1,159 @@
 @namespace BlazorUI.Components.MultiSelect
 @typeparam TItem
 @using BlazorUI.Components.Popover
-@using BlazorUI.Components.Command
-@using BlazorUI.Components.Checkbox
+@using BlazorUI.Components.Badge
+@using BlazorUI.Components.Separator
+@using BlazorUI.Components.InputGroup
+@using BlazorUI.Components.Input
 @using BlazorUI.Primitives.Services
+@using BlazorUI.Primitives.Checkbox
+@using BlazorUI.Icons.Lucide.Components
 
-<CascadingValue Value="this" IsFixed="false">
-    <div class="@ContainerClass">
-        <Popover @bind-Open="_isOpen">
-            <PopoverTrigger role="combobox"
-                           aria-expanded="@_isOpen.ToString().ToLower()"
-                           aria-controls="@($"{Id}-listbox")"
-                           aria-haspopup="listbox"
-                           aria-multiselectable="true"
-                           disabled="@Disabled"
-                           class="@TriggerCssClass">
-                <div class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
-                    @if (HasSelectedItems)
+<div class="@ContainerClass">
+    <Popover @bind-Open="_isOpen">
+        <PopoverTrigger role="combobox"
+                        aria-expanded="@_isOpen.ToString().ToLower()"
+                        aria-controls="@($"{Id}-listbox")"
+                        aria-haspopup="listbox"
+                        aria-multiselectable="true"
+                        disabled="@Disabled"
+                        class="@TriggerCssClass">
+            <div class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
+                @if (HasSelectedItems)
+                {
+                    @foreach (var value in SelectedValues.Take(MaxDisplayTags))
                     {
-                        @foreach (var value in SelectedValues.Take(MaxDisplayTags))
-                        {
-                            <span class="@TagCssClass">
-                                @GetDisplayText(value)
-                                <button type="button"
-                                        class="@TagRemoveButtonCssClass"
-                                        aria-label="@($"Remove {GetDisplayText(value)}")"
-                                        @onclick="@(() => RemoveValue(value))"
-                                        @onclick:stopPropagation="true">
-                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                         width="12"
-                                         height="12"
-                                         viewBox="0 0 24 24"
-                                         fill="none"
-                                         stroke="currentColor"
-                                         stroke-width="2"
-                                         stroke-linecap="round"
-                                         stroke-linejoin="round"
-                                         class="h-3 w-3">
-                                        <path d="M18 6 6 18" />
-                                        <path d="m6 6 12 12" />
-                                    </svg>
-                                </button>
-                            </span>
-                        }
-                        @if (OverflowCount > 0)
-                        {
-                            <span class="text-xs text-muted-foreground">+@OverflowCount more</span>
-                        }
+                        <Badge Variant="BadgeVariant.Secondary" Class="gap-1">
+                            @GetDisplayText(value)
+                            <button type="button"
+                                    class="@TagRemoveButtonCssClass"
+                                    aria-label="@($"Remove {GetDisplayText(value)}")"
+                                    @onclick="@(() => RemoveValue(value))"
+                                    @onclick:stopPropagation="true">
+                                <LucideIcon Name="x" Size="12" Class="h-3 w-3" />
+                            </button>
+                        </Badge>
                     }
-                    else
+                    @if (OverflowCount > 0)
                     {
-                        <span class="text-muted-foreground">@Placeholder</span>
+                        <span class="text-xs text-muted-foreground">+@OverflowCount more</span>
                     }
-                </div>
-                <div class="flex items-center gap-1 ml-2">
-                    @if (HasSelectedItems)
-                    {
-                        <button type="button"
-                                class="rounded-sm opacity-70 hover:opacity-100 focus:outline-none focus:ring-1 focus:ring-ring"
-                                aria-label="Clear all"
-                                @onclick="ClearAll"
-                                @onclick:stopPropagation="true">
-                            <svg xmlns="http://www.w3.org/2000/svg"
-                                 width="14"
-                                 height="14"
-                                 viewBox="0 0 24 24"
-                                 fill="none"
-                                 stroke="currentColor"
-                                 stroke-width="2"
-                                 stroke-linecap="round"
-                                 stroke-linejoin="round"
-                                 class="h-3.5 w-3.5">
-                                <path d="M18 6 6 18" />
-                                <path d="m6 6 12 12" />
-                            </svg>
-                        </button>
-                    }
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                         width="16"
-                         height="16"
-                         viewBox="0 0 24 24"
-                         fill="none"
-                         stroke="currentColor"
-                         stroke-width="2"
-                         stroke-linecap="round"
-                         stroke-linejoin="round"
-                         class="h-4 w-4 shrink-0 opacity-50">
-                        <path d="m6 9 6 6 6-6" />
-                    </svg>
-                </div>
-            </PopoverTrigger>
-            <PopoverContent Side="@PopoverSide.Bottom" Align="@PopoverAlign.Start" Class="@($"{PopoverWidth} !p-0")">
-                <Command>
-                    <CommandInput Placeholder="@SearchPlaceholder" AutoFocus="@_isOpen" />
-                    <CommandList>
-                        <CommandEmpty>@EmptyMessage</CommandEmpty>
-                        <CommandGroup>
-                            @if (ShowSelectAll)
-                            {
-                                var selectAllState = GetSelectAllState();
-                                <div class="@ItemCssClass"
-                                     role="option"
-                                     aria-selected="@(selectAllState == SelectAllState.All ? "true" : selectAllState == SelectAllState.Indeterminate ? "mixed" : "false")"
-                                     @onclick="HandleSelectAllToggle">
-                                    <div class="@(selectAllState != SelectAllState.None ? CheckboxCheckedCssClass : CheckboxUncheckedCssClass) flex items-center justify-center">
-                                        @if (selectAllState == SelectAllState.All)
-                                        {
-                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                 width="16"
-                                                 height="16"
-                                                 viewBox="0 0 24 24"
-                                                 fill="none"
-                                                 stroke="currentColor"
-                                                 stroke-width="2"
-                                                 stroke-linecap="round"
-                                                 stroke-linejoin="round"
-                                                 class="h-3.5 w-3.5">
-                                                <path d="M20 6 9 17l-5-5" />
-                                            </svg>
-                                        }
-                                        else if (selectAllState == SelectAllState.Indeterminate)
-                                        {
-                                            <svg xmlns="http://www.w3.org/2000/svg"
-                                                 width="16"
-                                                 height="16"
-                                                 viewBox="0 0 24 24"
-                                                 fill="none"
-                                                 stroke="currentColor"
-                                                 stroke-width="2"
-                                                 stroke-linecap="round"
-                                                 stroke-linejoin="round"
-                                                 class="h-3.5 w-3.5">
-                                                <path d="M5 12h14" />
-                                            </svg>
-                                        }
-                                    </div>
-                                    <span class="font-medium">@SelectAllLabel</span>
-                                </div>
-                                <div class="my-1 h-px bg-border" role="separator"></div>
-                            }
-                            @foreach (var item in Items)
-                            {
-                                var itemValue = ValueSelector(item);
-                                var displayText = DisplaySelector(item);
-                                var selected = IsSelected(item);
+                }
+                else
+                {
+                    <span class="text-muted-foreground">@Placeholder</span>
+                }
+            </div>
+            <div class="flex items-center gap-1 ml-2">
+                @if (HasSelectedItems)
+                {
+                    <button type="button"
+                            class="rounded-sm opacity-70 hover:opacity-100 focus:outline-none focus:ring-1 focus:ring-ring"
+                            aria-label="Clear all"
+                            @onclick="ClearAll"
+                            @onclick:stopPropagation="true">
+                        <LucideIcon Name="x" Size="14" Class="h-3.5 w-3.5" />
+                    </button>
+                }
+                <LucideIcon Name="chevron-down" Size="16" Class="h-4 w-4 shrink-0 opacity-50" />
+            </div>
+        </PopoverTrigger>
 
-                                <CommandItem Value="@itemValue" OnSelect="@(() => HandleToggle(item))" SearchText="@displayText" Class="!px-0">
-                                    <div class="flex items-center gap-2 px-2 w-full">
-                                        <div class="@(selected ? CheckboxCheckedCssClass : CheckboxUncheckedCssClass) flex items-center justify-center">
-                                            @if (selected)
-                                            {
-                                                <svg xmlns="http://www.w3.org/2000/svg"
-                                                     width="16"
-                                                     height="16"
-                                                     viewBox="0 0 24 24"
-                                                     fill="none"
-                                                     stroke="currentColor"
-                                                     stroke-width="2"
-                                                     stroke-linecap="round"
-                                                     stroke-linejoin="round"
-                                                     class="h-3.5 w-3.5">
-                                                    <path d="M20 6 9 17l-5-5" />
-                                                </svg>
-                                            }
-                                        </div>
-                                        <span>@displayText</span>
-                                    </div>
-                                </CommandItem>
-                            }
-                        </CommandGroup>
-                    </CommandList>
-                </Command>
-                <div class="flex items-center justify-between border-t p-2">
-                    <button type="button"
-                            class="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                            @onclick="ClearAll">
-                        @ClearLabel
-                    </button>
-                    <button type="button"
-                            class="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                            @onclick="Close">
-                        @CloseLabel
-                    </button>
-                </div>
-            </PopoverContent>
-        </Popover>
-    </div>
-</CascadingValue>
+        <PopoverContent Side="@PopoverSide.Bottom"
+                        Align="@PopoverAlign.Start"
+                        CloseOnClickOutside="false"
+                        CloseOnEscape="false"
+                        Class="@($"{PopoverWidth} !p-0")">
+            @* Search input section *@
+            <InputGroup Class="!border-0 !border-b !border-border !rounded-none !shadow-none !ring-0 !ring-offset-0">
+                <InputGroupAddon>
+                    <LucideIcon Name="search" Size="16" Class="h-4 w-4 shrink-0 opacity-50" />
+                </InputGroupAddon>
+                <InputGroupInput Id="@($"{Id}-search")"
+                                 Type="InputType.Search"
+                                 Placeholder="@SearchPlaceholder"
+                                 Value="@_searchQuery"
+                                 ValueChanged="HandleSearchInputChanged"
+                                 OnInputRef="HandleInputRefAsync"
+                                 Class="h-11 py-3" />
+            </InputGroup>
+
+            @* Items list section *@
+            <div id="@($"{Id}-listbox")" role="listbox" aria-multiselectable="true" class="max-h-[300px] overflow-y-auto p-1">
+                @if (!HasFilteredItems)
+                {
+                    <div class="py-6 text-center text-sm text-muted-foreground">@EmptyMessage</div>
+                }
+                else
+                {
+                    @* Select All option *@
+                    @if (ShowSelectAll)
+                    {
+                        var selectAllState = GetSelectAllState();
+                        <div role="option"
+                             aria-selected="@(selectAllState == SelectAllState.All ? "true" : "false")"
+                             @onclick="HandleSelectAllToggle"
+                             @onclick:stopPropagation="true"
+                             class="@ItemCssClass">
+                            <Checkbox Checked="@(selectAllState == SelectAllState.All)"
+                                      Indeterminate="@(selectAllState == SelectAllState.Indeterminate)"
+                                      class="@CheckboxCssClass"
+                                      AriaLabel="@SelectAllLabel">
+                                @if (selectAllState == SelectAllState.All)
+                                {
+                                    <LucideIcon Name="check" Size="14" Class="h-3.5 w-3.5 stroke-current" />
+                                }
+                                else if (selectAllState == SelectAllState.Indeterminate)
+                                {
+                                    <LucideIcon Name="minus" Size="14" Class="h-3.5 w-3.5 stroke-current" />
+                                }
+                            </Checkbox>
+                            <span class="font-medium">@SelectAllLabel</span>
+                        </div>
+                        <Separator Decorative="false" Class="my-1" />
+                    }
+
+                    @* Individual items *@
+                    @foreach (var item in FilteredItems)
+                    {
+                        var itemValue = ValueSelector(item);
+                        var displayText = DisplaySelector(item);
+                        var isSelected = IsSelected(item);
+
+                        <div role="option"
+                             aria-selected="@isSelected.ToString().ToLower()"
+                             @onclick="@(() => HandleToggle(item))"
+                             @onclick:stopPropagation="true"
+                             class="@ItemCssClass">
+                            <Checkbox Checked="@isSelected"
+                                      class="@CheckboxCssClass"
+                                      AriaLabel="@displayText">
+                                @if (isSelected)
+                                {
+                                    <LucideIcon Name="check" Size="14" Class="h-3.5 w-3.5 stroke-current" />
+                                }
+                            </Checkbox>
+                            <span>@displayText</span>
+                        </div>
+                    }
+                }
+            </div>
+
+            @* Footer section *@
+            <div class="flex items-center justify-between border-t p-2">
+                <button type="button"
+                        class="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        @onclick="ClearAll"
+                        @onclick:stopPropagation="true">
+                    @ClearLabel
+                </button>
+                <button type="button"
+                        class="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        @onclick="Close"
+                        @onclick:stopPropagation="true">
+                    @CloseLabel
+                </button>
+            </div>
+        </PopoverContent>
+    </Popover>
+</div>

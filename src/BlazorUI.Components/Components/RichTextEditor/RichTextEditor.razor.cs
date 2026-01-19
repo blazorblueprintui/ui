@@ -89,6 +89,36 @@ public partial class RichTextEditor : ComponentBase, IAsyncDisposable
     public string? MaxHeight { get; set; }
 
     /// <summary>
+    /// Gets or sets whether to show the font size dropdown in the toolbar.
+    /// </summary>
+    [Parameter]
+    public bool ShowFontSize { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether to show the text formatting buttons (Bold, Italic, Underline, Strikethrough).
+    /// </summary>
+    [Parameter]
+    public bool ShowFormatting { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether to show the list buttons (Ordered and Unordered lists).
+    /// </summary>
+    [Parameter]
+    public bool ShowLists { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether to show the text alignment buttons.
+    /// </summary>
+    [Parameter]
+    public bool ShowAlignment { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether to show the color picker.
+    /// </summary>
+    [Parameter]
+    public bool ShowColorPicker { get; set; } = true;
+
+    /// <summary>
     /// Gets or sets a fixed height for the editor content area.
     /// When set, the editor will not auto-expand and will show scrollbar when content overflows.
     /// Takes precedence over MinHeight/MaxHeight when set.

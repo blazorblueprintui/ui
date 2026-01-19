@@ -78,6 +78,9 @@ namespace BlazorUI.Components.Collapsible;
 /// </example>
 public partial class Collapsible : ComponentBase
 {
+    private bool _isOpen;
+    private bool _isInitialized;
+
     /// <summary>
     /// Gets or sets a value indicating whether the collapsible is currently expanded.
     /// </summary>
@@ -100,6 +103,16 @@ public partial class Collapsible : ComponentBase
     /// </value>
     [Parameter]
     public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// Gets or sets the default open state for uncontrolled mode.
+    /// </summary>
+    /// <value>
+    /// <c>true</c> if the collapsible should be open by default; otherwise, <c>false</c>.
+    /// Default is <c>false</c>.
+    /// </value>
+    [Parameter]
+    public bool DefaultOpen { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the collapsible is disabled.
@@ -145,4 +158,32 @@ public partial class Collapsible : ComponentBase
     /// </remarks>
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+
+    /// <inheritdoc />
+    protected override void OnInitialized()
+    {
+        // Initialize with DefaultOpen if not controlled
+        _isOpen = OpenChanged.HasDelegate ? Open : DefaultOpen;
+        _isInitialized = true;
+    }
+
+    /// <inheritdoc />
+    protected override void OnParametersSet()
+    {
+        // If controlled (has callback), sync with Open parameter
+        if (OpenChanged.HasDelegate)
+        {
+            _isOpen = Open;
+        }
+    }
+
+    private async Task HandleOpenChanged(bool newValue)
+    {
+        _isOpen = newValue;
+
+        if (OpenChanged.HasDelegate)
+        {
+            await OpenChanged.InvokeAsync(newValue);
+        }
+    }
 }

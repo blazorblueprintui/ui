@@ -84,6 +84,10 @@
     private ElementReference _portalContentRef;
     private TaskCompletionSource<bool>? _portalReadyTcs;
 
+    // Store computed position so it survives Blazor re-renders
+    private double _positionLeft = 0;
+    private double _positionTop = 0;
+
     protected override void OnInitialized()
     {
         if (Context == null)
@@ -114,10 +118,13 @@
     {
         base.OnParametersSet();
 
-        // Note: We do NOT call UpdatePortalContent() here because it would cause infinite loops
-        // when nested portals (like Combobox inside Dialog) are used. The RenderFragment
-        // returned by RenderPopoverContent() captures ChildContent by reference, so when
-        // PortalHost renders, it will always use the latest content.
+        // Refresh portal to re-render with updated ChildContent
+        // Now safe because GetInitialStyle() includes the stored position,
+        // so re-renders won't lose the position styling
+        if (_isInitialized && Context.IsOpen && !string.IsNullOrEmpty(_portalId))
+        {
+            PortalService.RefreshPortal(_portalId);
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -170,7 +177,6 @@
         try
         {
             // Set up positioning and make visible via JS
-            // IMPORTANT: Don't call UpdatePortalContent after this - it would overwrite the JS-applied position
             await SetupPositioningAsync();
 
             // Mark as positioned for any future Blazor re-renders
@@ -228,16 +234,20 @@
                 Offset = Offset
             };
 
-            // Compute and apply position using the portal content ref
+            // Compute position using the portal content ref
             var position = await PositioningService.ComputePositionAsync(
                 Context.State.TriggerElement.Value,
                 _portalContentRef,
                 options);
 
-            // Apply position AND make visible via JS (don't rely on Blazor re-render which would overwrite position)
+            // Store position in Blazor state so it survives re-renders
+            _positionLeft = position.X;
+            _positionTop = position.Y;
+
+            // Apply position via JS for initial display
             await PositioningService.ApplyPositionAsync(_portalContentRef, position, makeVisible: true);
 
-            // Set up auto-update for dynamic positioning
+            // Set up auto-update for dynamic positioning (scroll, resize)
             _positioningCleanup = await PositioningService.AutoUpdateAsync(
                 Context.State.TriggerElement.Value,
                 _portalContentRef,
@@ -258,9 +268,15 @@
 
             _dotNetRef = DotNetObjectReference.Create(this);
 
-            // onClickOutside returns a cleanup function
+            // Use ID-based lookup instead of ElementReference
+            // This ensures we always reference the current DOM element, not a stale one
+            // that may have been replaced during Blazor re-renders
             _clickOutsideCleanup = await _clickOutsideModule.InvokeAsync<IJSObjectReference>(
-                "onClickOutside", _portalContentRef, _dotNetRef, "HandleClickOutside", Context.State.TriggerElement);
+                "onClickOutsideByIds",
+                Context.ContentId,      // Element ID (not ElementReference)
+                _dotNetRef,
+                "HandleClickOutside",
+                Context.TriggerId);     // Trigger ID (not ElementReference)
         }
         catch (Exception ex)
         {
@@ -291,16 +307,18 @@
     /// </summary>
     private string GetInitialStyle()
     {
-        var baseStyle = "position: absolute; z-index: 50;";
-
         if (!_isPositioned)
         {
-            // Position off-screen initially to prevent focus-induced scroll
-            // opacity: 0 alone doesn't prevent browser from scrolling to focused element
-            baseStyle += " top: -9999px; left: -9999px; opacity: 0; pointer-events: none;";
+            // Use position: fixed with off-screen coordinates to prevent:
+            // 1. Flash at wrong position (fixed doesn't depend on parent context)
+            // 2. Scroll jump (visibility: hidden prevents browser from scrolling to element)
+            // 3. Layout interference (pointer-events: none prevents interaction)
+            return "position: fixed; z-index: 50; top: -9999px; left: -9999px; visibility: hidden; opacity: 0; pointer-events: none;";
         }
 
-        return baseStyle;
+        // After positioning, include stored position so it survives Blazor re-renders
+        // This prevents the popover from "closing" when parent components re-render
+        return $"position: absolute; z-index: 50; left: {_positionLeft}px; top: {_positionTop}px; opacity: 1; visibility: visible;";
     }
 
     private string GetMergedStyle()

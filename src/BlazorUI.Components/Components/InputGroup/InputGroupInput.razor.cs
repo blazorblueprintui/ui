@@ -32,6 +32,8 @@ namespace BlazorUI.Components.InputGroup;
 /// </example>
 public partial class InputGroupInput : ComponentBase
 {
+    private ElementReference _inputRef;
+
     /// <summary>
     /// Gets or sets the type of input.
     /// </summary>
@@ -105,6 +107,13 @@ public partial class InputGroupInput : ComponentBase
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     /// <summary>
+    /// Callback invoked after first render with the input's ElementReference.
+    /// Use this for JS interop operations like focusing or event setup.
+    /// </summary>
+    [Parameter]
+    public Action<ElementReference>? OnInputRef { get; set; }
+
+    /// <summary>
     /// Gets the computed CSS classes for the input element.
     /// </summary>
     /// <remarks>
@@ -164,5 +173,16 @@ public partial class InputGroupInput : ComponentBase
     private async Task HandleChange(ChangeEventArgs args)
     {
         await Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Invokes the OnInputRef callback after first render.
+    /// </summary>
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && OnInputRef != null)
+        {
+            OnInputRef.Invoke(_inputRef);
+        }
     }
 }
