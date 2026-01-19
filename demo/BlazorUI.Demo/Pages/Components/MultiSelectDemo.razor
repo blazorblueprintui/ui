@@ -118,6 +118,31 @@
         </div>
     </section>
 
+    <!-- Prevent Auto Close -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Prevent Auto Close</h2>
+        <p class="text-sm text-muted-foreground">
+            With <code class="bg-muted px-1 py-0.5 rounded text-sm">AutoClose="false"</code>, the dropdown stays open when you click outside.
+            Use the Close button or press Escape to close it.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <MultiSelect TItem="Framework"
+                        Items="frameworks"
+                        @bind-Values="autoCloseFrameworks"
+                        ValueSelector="@(f => f.Value)"
+                        DisplaySelector="@(f => f.Label)"
+                        Placeholder="Select frameworks..."
+                        SearchPlaceholder="Search..."
+                        AutoClose="false"
+                        PopoverWidth="w-[280px]" />
+            @if (autoCloseFrameworks?.Any() == true)
+            {
+                <p class="text-sm">Selected: <strong>@string.Join(", ", autoCloseFrameworks.Select(GetFrameworkLabel))</strong></p>
+            }
+        </div>
+    </section>
+
     <!-- Disabled State -->
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">Disabled State</h2>
@@ -200,6 +225,9 @@
 
     // Framework example
     private IEnumerable<string>? selectedFrameworks;
+
+    // Auto close example
+    private IEnumerable<string>? autoCloseFrameworks;
 
     // Disabled example
     private IEnumerable<string> disabledValues = new[] { "csharp", "typescript" };
