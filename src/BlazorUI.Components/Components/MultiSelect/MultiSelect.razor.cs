@@ -232,35 +232,8 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_isOpen && !_jsSetupDone)
-        {
-            _jsSetupDone = true;
-
-            try
-            {
-                // Load JS module and setup keyboard handling
-                _multiSelectModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorUI.Primitives/js/primitives/multiselect.js");
-
-                _dotNetRef = DotNetObjectReference.Create(this);
-
-                await _multiSelectModule.InvokeVoidAsync(
-                    "setupMultiSelectInput",
-                    _searchInputRef,
-                    _dotNetRef,
-                    $"{Id}-search",
-                    $"{Id}-listbox");
-
-                // Focus search input
-                await _multiSelectModule.InvokeVoidAsync(
-                    "focusElementByIdWithPreventScroll", $"{Id}-search");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"MultiSelect JS setup failed: {ex.Message}");
-            }
-        }
-        else if (!_isOpen && _jsSetupDone)
+        // Cleanup JS when popover closes
+        if (!_isOpen && _jsSetupDone)
         {
             await CleanupJsAsync();
         }
@@ -301,11 +274,50 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
     }
 
     /// <summary>
-    /// Handles search input changes.
+    /// Captures the ElementReference from InputGroupInput and sets up JS interop.
+    /// This is called when the InputGroupInput renders, ensuring the ref is valid.
     /// </summary>
-    private void HandleSearchInput(ChangeEventArgs args)
+    private async void HandleInputRefAsync(ElementReference inputRef)
     {
-        _searchQuery = args.Value?.ToString() ?? string.Empty;
+        _searchInputRef = inputRef;
+
+        // Only setup JS if popover is open and not already setup
+        if (_isOpen && !_jsSetupDone)
+        {
+            _jsSetupDone = true;
+
+            try
+            {
+                // Load JS module and setup keyboard handling
+                _multiSelectModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import", "./_content/BlazorUI.Primitives/js/primitives/multiselect.js");
+
+                _dotNetRef = DotNetObjectReference.Create(this);
+
+                await _multiSelectModule.InvokeVoidAsync(
+                    "setupMultiSelectInput",
+                    _searchInputRef,
+                    _dotNetRef,
+                    $"{Id}-search",
+                    $"{Id}-listbox");
+
+                // Focus search input
+                await _multiSelectModule.InvokeVoidAsync(
+                    "focusElementByIdWithPreventScroll", $"{Id}-search");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"MultiSelect JS setup failed: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Handles search input changes from InputGroupInput.
+    /// </summary>
+    private void HandleSearchInputChanged(string? value)
+    {
+        _searchQuery = value ?? string.Empty;
     }
 
     /// <summary>
