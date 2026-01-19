@@ -96,7 +96,7 @@ public partial class InputGroup : ComponentBase
         // Base container styles
         "group/input-group relative flex w-full",
         "border border-input rounded-md shadow-sm",
-        "bg-background",
+        "bg-background overflow-hidden",
         "transition-colors outline-none",
 
         // Default height and alignment for inputs

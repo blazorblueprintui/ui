@@ -6,14 +6,16 @@
     Wraps the Tabs primitive with shadcn/ui styling.
 *@
 
-<BlazorUI.Primitives.Tabs.Tabs Value="@Value"
-                                      ValueChanged="@ValueChanged"
-                                      DefaultValue="@DefaultValue"
-                                      OnValueChange="@OnValueChange"
-                                      Orientation="@Orientation"
-                                      ActivationMode="@ActivationMode">
-    @ChildContent
-</BlazorUI.Primitives.Tabs.Tabs>
+<div class="@Class" @attributes="AdditionalAttributes">
+    <BlazorUI.Primitives.Tabs.Tabs Value="@Value"
+                                   ValueChanged="@ValueChanged"
+                                   DefaultValue="@DefaultValue"
+                                   OnValueChange="@OnValueChange"
+                                   Orientation="@Orientation"
+                                   ActivationMode="@ActivationMode">
+        @ChildContent
+    </BlazorUI.Primitives.Tabs.Tabs>
+</div>
 
 @code {
     /// <summary>
@@ -62,4 +64,16 @@
     /// </summary>
     [Parameter]
     public TabsActivationMode ActivationMode { get; set; } = TabsActivationMode.Automatic;
+
+    /// <summary>
+    /// Additional CSS classes to apply to the tabs container.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the tabs container.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 }

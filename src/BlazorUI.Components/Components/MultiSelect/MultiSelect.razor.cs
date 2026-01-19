@@ -161,6 +161,11 @@ public partial class MultiSelect<TItem> : ComponentBase
     private bool _isOpen { get; set; } = false;
 
     /// <summary>
+    /// Tracks the current search query for filtering.
+    /// </summary>
+    private string _searchQuery = string.Empty;
+
+    /// <summary>
     /// Gets a unique identifier for this multiselect instance.
     /// </summary>
     private string Id { get; set; } = $"multiselect-{Guid.NewGuid():N}";
@@ -179,6 +184,25 @@ public partial class MultiSelect<TItem> : ComponentBase
     /// Gets whether any items are selected.
     /// </summary>
     private bool HasSelectedItems => SelectedValues.Count > 0;
+
+    /// <summary>
+    /// Gets whether there are any items visible after filtering.
+    /// </summary>
+    private bool HasFilteredItems => GetFilteredItems().Any();
+
+    /// <summary>
+    /// Gets the items that match the current search query.
+    /// </summary>
+    private IEnumerable<TItem> GetFilteredItems()
+    {
+        if (string.IsNullOrWhiteSpace(_searchQuery))
+        {
+            return Items;
+        }
+
+        return Items.Where(item =>
+            DisplaySelector(item).Contains(_searchQuery, StringComparison.OrdinalIgnoreCase));
+    }
 
     /// <summary>
     /// Gets whether the multiselect is in an invalid state (for validation).
@@ -240,6 +264,15 @@ public partial class MultiSelect<TItem> : ComponentBase
     private void Close()
     {
         _isOpen = false;
+        _searchQuery = string.Empty;
+    }
+
+    /// <summary>
+    /// Handles search query changes from the Command component.
+    /// </summary>
+    private void HandleSearchQueryChanged(string query)
+    {
+        _searchQuery = query;
     }
 
     /// <summary>

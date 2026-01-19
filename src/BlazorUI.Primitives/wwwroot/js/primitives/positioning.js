@@ -2,6 +2,33 @@
 // CDN: https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.5.3/+esm
 
 let floatingUI = null;
+let stylesInjected = false;
+
+/**
+ * Injects required CSS for positioning primitives.
+ * This ensures the library works without requiring manual CSS imports.
+ */
+function injectRequiredStyles() {
+    if (stylesInjected) return;
+
+    const css = `
+        /* BlazorUI Primitives - Auto-injected positioning styles */
+        [data-positioned="false"] {
+            position: absolute !important;
+            top: -9999px !important;
+            left: -9999px !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            z-index: 50;
+        }
+    `;
+
+    const style = document.createElement('style');
+    style.setAttribute('data-blazorui-primitives', 'positioning');
+    style.textContent = css;
+    document.head.appendChild(style);
+    stylesInjected = true;
+}
 
 // Store cleanup functions with unique IDs to avoid passing functions through JS interop
 const cleanupRegistry = new Map();
@@ -71,6 +98,9 @@ export async function waitForElement(elementId, maxWaitMs = 100, intervalMs = 10
  * @returns {Promise<Object>} Position result with x, y, placement
  */
 export async function computePosition(reference, floating, options = {}) {
+    // Inject required CSS on first use
+    injectRequiredStyles();
+
     // Validate elements before proceeding
     if (!isElementReady(reference)) {
         throw new Error('Reference element is not ready or not in DOM');
@@ -136,18 +166,24 @@ export async function computePosition(reference, floating, options = {}) {
 export function applyPosition(floating, position, makeVisible = false) {
     if (!floating || !position) return;
 
+    // Apply all positioning styles atomically to prevent flash
     Object.assign(floating.style, {
         position: position.strategy || 'absolute',
         left: `${position.x}px`,
         top: `${position.y}px`,
+        zIndex: '50',
         transformOrigin: position.transformOrigin || ''
     });
 
     // If makeVisible is true, show the element after positioning
+    // Set all visibility-related properties to ensure the element is fully visible
     if (makeVisible) {
-        floating.style.visibility = 'visible';
-        floating.style.opacity = '1';
-        floating.style.pointerEvents = 'auto';
+        // Use requestAnimationFrame to ensure position is applied before visibility
+        requestAnimationFrame(() => {
+            floating.style.visibility = 'visible';
+            floating.style.opacity = '1';
+            floating.style.pointerEvents = 'auto';
+        });
     }
 }
 

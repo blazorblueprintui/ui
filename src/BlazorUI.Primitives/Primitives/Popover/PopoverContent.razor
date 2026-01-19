@@ -114,10 +114,13 @@
     {
         base.OnParametersSet();
 
-        // Note: We do NOT call UpdatePortalContent() here because it would cause infinite loops
-        // when nested portals (like Combobox inside Dialog) are used. The RenderFragment
-        // returned by RenderPopoverContent() captures ChildContent by reference, so when
-        // PortalHost renders, it will always use the latest content.
+        // Refresh portal to re-render with updated ChildContent
+        // Use RefreshPortal (not UpdatePortalContent) to avoid replacing the RenderFragment
+        // This preserves the DOM element and keeps ElementReference valid for click-outside detection
+        if (_isInitialized && Context.IsOpen && !string.IsNullOrEmpty(_portalId))
+        {
+            PortalService.RefreshPortal(_portalId);
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -258,9 +261,15 @@
 
             _dotNetRef = DotNetObjectReference.Create(this);
 
-            // onClickOutside returns a cleanup function
+            // Use ID-based lookup instead of ElementReference
+            // This ensures we always reference the current DOM element, not a stale one
+            // that may have been replaced during Blazor re-renders
             _clickOutsideCleanup = await _clickOutsideModule.InvokeAsync<IJSObjectReference>(
-                "onClickOutside", _portalContentRef, _dotNetRef, "HandleClickOutside", Context.State.TriggerElement);
+                "onClickOutsideByIds",
+                Context.ContentId,      // Element ID (not ElementReference)
+                _dotNetRef,
+                "HandleClickOutside",
+                Context.TriggerId);     // Trigger ID (not ElementReference)
         }
         catch (Exception ex)
         {
@@ -291,16 +300,17 @@
     /// </summary>
     private string GetInitialStyle()
     {
-        var baseStyle = "position: absolute; z-index: 50;";
-
         if (!_isPositioned)
         {
-            // Position off-screen initially to prevent focus-induced scroll
-            // opacity: 0 alone doesn't prevent browser from scrolling to focused element
-            baseStyle += " top: -9999px; left: -9999px; opacity: 0; pointer-events: none;";
+            // Use position: fixed with off-screen coordinates to prevent:
+            // 1. Flash at wrong position (fixed doesn't depend on parent context)
+            // 2. Scroll jump (visibility: hidden prevents browser from scrolling to element)
+            // 3. Layout interference (pointer-events: none prevents interaction)
+            return "position: fixed; z-index: 50; top: -9999px; left: -9999px; visibility: hidden; opacity: 0; pointer-events: none;";
         }
 
-        return baseStyle;
+        // After positioning, JS will apply the correct styles
+        return "position: absolute; z-index: 50;";
     }
 
     private string GetMergedStyle()

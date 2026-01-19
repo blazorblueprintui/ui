@@ -26,7 +26,6 @@ export function initialize(editorElement, dotNetRef) {
     const handlers = {
         input: () => {
             // Notify Blazor and save state for undo
-            console.log('Input event fired, content:', editorElement.innerHTML, 'history length:', data.history.length);
             notifyContentChanged(editorElement);
         },
         keydown: (e) => {
@@ -410,14 +409,11 @@ export function dispose(editorElement) {
 export function undo(editorElement) {
     const data = editorMap.get(editorElement);
     if (!data || data.historyIndex <= 0) {
-        console.log('Undo: cannot undo, historyIndex:', data?.historyIndex, 'history:', data?.history.map(h => h.html));
         return false;
     }
 
-    console.log('Undo: before - historyIndex:', data.historyIndex, 'history:', data.history.map(h => h.html));
     data.historyIndex--;
     const state = data.history[data.historyIndex];
-    console.log('Undo: restoring to index', data.historyIndex, 'content:', state.html);
     editorElement.innerHTML = state.html;
     restoreSelectionOffsets(editorElement, state.selection);
     // Only notify Blazor, don't save state (would corrupt history)
@@ -543,7 +539,6 @@ function restoreSelectionOffsets(editorElement, offsets) {
 function saveState(editorElement) {
     const data = editorMap.get(editorElement);
     if (!data) {
-        console.log('saveState: no data found');
         return;
     }
 
@@ -552,17 +547,14 @@ function saveState(editorElement) {
 
     // If we're not at the end of history, truncate forward history (discard redo states)
     if (data.historyIndex < data.history.length - 1) {
-        console.log('saveState: truncating history from', data.history.length, 'to', data.historyIndex + 1);
         data.history = data.history.slice(0, data.historyIndex + 1);
     }
 
     // Don't save duplicate consecutive states (compare HTML only)
     if (data.history.length > 0 && data.history[data.historyIndex].html === html) {
-        console.log('saveState: skipping duplicate state');
         return;
     }
 
-    console.log('saveState: saving state', html, 'at index', data.history.length);
     data.history.push({ html, selection });
     data.historyIndex = data.history.length - 1;
 

@@ -91,12 +91,12 @@
                 </div>
             </PopoverTrigger>
             <PopoverContent Side="@PopoverSide.Bottom" Align="@PopoverAlign.Start" Class="@($"{PopoverWidth} !p-0")">
-                <Command>
+                <Command CloseOnSelect="false" SearchQueryChanged="HandleSearchQueryChanged">
                     <CommandInput Placeholder="@SearchPlaceholder" AutoFocus="@_isOpen" />
                     <CommandList>
                         <CommandEmpty>@EmptyMessage</CommandEmpty>
                         <CommandGroup>
-                            @if (ShowSelectAll)
+                            @if (ShowSelectAll && HasFilteredItems)
                             {
                                 var selectAllState = GetSelectAllState();
                                 <div class="@ItemCssClass"

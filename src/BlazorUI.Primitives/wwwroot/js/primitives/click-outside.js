@@ -244,3 +244,103 @@ export async function onClickOutsideById(elementId, dotNetRef, methodName = 'Han
 
     return onClickOutside(element, dotNetRef, methodName, excludeElement);
 }
+
+/**
+ * Sets up click-outside detection using element IDs with pointerdown+pointerup pair validation.
+ * CRITICAL: Only triggers close if BOTH pointerdown AND pointerup were outside.
+ * This prevents spurious second pointerdown events (from Blazor Server re-renders) from
+ * closing the popover, since they have no corresponding pointerup event.
+ * @param {string} elementId - ID of the element to monitor
+ * @param {Object} dotNetRef - DotNet object reference for callback
+ * @param {string} methodName - The method name to invoke on click outside
+ * @param {string} excludeElementId - Optional ID of element to exclude from outside detection (e.g., trigger button)
+ * @returns {Object} Disposable object with dispose() method
+ */
+export function onClickOutsideByIds(elementId, dotNetRef, methodName = 'HandleClickOutside', excludeElementId = null) {
+    if (!elementId || !dotNetRef) {
+        console.warn('click-outside: elementId or dotNetRef is null');
+        return {
+            _cleanupId: -1,
+            dispose: function() {}
+        };
+    }
+
+    let isEnabled = false;
+    let isPointerDownInside = false;
+
+    const handlePointerDown = (e) => {
+        if (!isEnabled) return;
+
+        let target = e.target;
+        if (target && target.nodeType === Node.TEXT_NODE) {
+            target = target.parentElement;
+        }
+
+        const element = document.getElementById(elementId);
+        const excludeElement = excludeElementId ? document.getElementById(excludeElementId) : null;
+
+        const isInsideContent = element && element.contains(target);
+        const isInsideTrigger = excludeElement && excludeElement.contains(target);
+
+        // Track whether pointerdown was inside
+        isPointerDownInside = isInsideContent || isInsideTrigger;
+    };
+
+    const handlePointerUp = (e) => {
+        if (!isEnabled) return;
+
+        let target = e.target;
+        if (target && target.nodeType === Node.TEXT_NODE) {
+            target = target.parentElement;
+        }
+
+        const element = document.getElementById(elementId);
+        const excludeElement = excludeElementId ? document.getElementById(excludeElementId) : null;
+
+        const isInsideContent = element && element.contains(target);
+        const isInsideTrigger = excludeElement && excludeElement.contains(target);
+        const isOutside = !isInsideContent && !isInsideTrigger;
+
+        // Only close if BOTH pointerdown AND pointerup were outside
+        // This prevents spurious second pointerdown (without pointerup) from closing
+        if (!isPointerDownInside && isOutside) {
+            try {
+                dotNetRef.invokeMethodAsync(methodName);
+            } catch (error) {
+                console.error('click-outside callback error:', error);
+            }
+        }
+
+        // Reset for next interaction
+        isPointerDownInside = false;
+    };
+
+    // Use capture phase to catch events before they're stopped
+    document.addEventListener('pointerdown', handlePointerDown, true);
+    document.addEventListener('pointerup', handlePointerUp, true);
+
+    // Enable after current event loop to avoid triggering on opening click
+    setTimeout(() => {
+        isEnabled = true;
+    }, 0);
+
+    const cleanupFunc = () => {
+        isEnabled = false;
+        document.removeEventListener('pointerdown', handlePointerDown, true);
+        document.removeEventListener('pointerup', handlePointerUp, true);
+    };
+
+    const id = cleanupIdCounter++;
+    cleanupRegistry.set(id, cleanupFunc);
+
+    return {
+        _cleanupId: id,
+        dispose: function() {
+            const cleanup = cleanupRegistry.get(this._cleanupId);
+            if (cleanup) {
+                cleanup();
+                cleanupRegistry.delete(this._cleanupId);
+            }
+        }
+    };
+}
