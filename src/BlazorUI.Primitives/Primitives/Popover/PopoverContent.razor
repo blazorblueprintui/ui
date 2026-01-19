@@ -84,6 +84,10 @@
     private ElementReference _portalContentRef;
     private TaskCompletionSource<bool>? _portalReadyTcs;
 
+    // Store computed position so it survives Blazor re-renders
+    private double _positionLeft = 0;
+    private double _positionTop = 0;
+
     protected override void OnInitialized()
     {
         if (Context == null)
@@ -115,8 +119,8 @@
         base.OnParametersSet();
 
         // Refresh portal to re-render with updated ChildContent
-        // Use RefreshPortal (not UpdatePortalContent) to avoid replacing the RenderFragment
-        // This preserves the DOM element and keeps ElementReference valid for click-outside detection
+        // Now safe because GetInitialStyle() includes the stored position,
+        // so re-renders won't lose the position styling
         if (_isInitialized && Context.IsOpen && !string.IsNullOrEmpty(_portalId))
         {
             PortalService.RefreshPortal(_portalId);
@@ -173,7 +177,6 @@
         try
         {
             // Set up positioning and make visible via JS
-            // IMPORTANT: Don't call UpdatePortalContent after this - it would overwrite the JS-applied position
             await SetupPositioningAsync();
 
             // Mark as positioned for any future Blazor re-renders
@@ -231,16 +234,20 @@
                 Offset = Offset
             };
 
-            // Compute and apply position using the portal content ref
+            // Compute position using the portal content ref
             var position = await PositioningService.ComputePositionAsync(
                 Context.State.TriggerElement.Value,
                 _portalContentRef,
                 options);
 
-            // Apply position AND make visible via JS (don't rely on Blazor re-render which would overwrite position)
+            // Store position in Blazor state so it survives re-renders
+            _positionLeft = position.X;
+            _positionTop = position.Y;
+
+            // Apply position via JS for initial display
             await PositioningService.ApplyPositionAsync(_portalContentRef, position, makeVisible: true);
 
-            // Set up auto-update for dynamic positioning
+            // Set up auto-update for dynamic positioning (scroll, resize)
             _positioningCleanup = await PositioningService.AutoUpdateAsync(
                 Context.State.TriggerElement.Value,
                 _portalContentRef,
@@ -309,8 +316,9 @@
             return "position: fixed; z-index: 50; top: -9999px; left: -9999px; visibility: hidden; opacity: 0; pointer-events: none;";
         }
 
-        // After positioning, JS will apply the correct styles
-        return "position: absolute; z-index: 50;";
+        // After positioning, include stored position so it survives Blazor re-renders
+        // This prevents the popover from "closing" when parent components re-render
+        return $"position: absolute; z-index: 50; left: {_positionLeft}px; top: {_positionTop}px; opacity: 1; visibility: visible;";
     }
 
     private string GetMergedStyle()
