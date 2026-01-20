@@ -1,0 +1,99 @@
+@namespace BlazorUI.Components.Toast
+@using BlazorUI.Components.Utilities
+@implements IDisposable
+@inject ToastService ToastService
+
+@*
+    Toast Provider - renders the toast container and manages toast lifecycle.
+    Place this component once at the root of your application (e.g., in MainLayout).
+*@
+
+<div class="@ContainerCssClass">
+    @foreach (var toast in ToastService.Toasts)
+    {
+        <Toast Data="@toast" OnDismiss="@(() => HandleDismiss(toast.Id))" />
+    }
+</div>
+
+@code {
+    private System.Timers.Timer? _autoCloseTimer;
+
+    /// <summary>
+    /// The position of the toast container on the screen.
+    /// </summary>
+    [Parameter]
+    public ToastPosition Position { get; set; } = ToastPosition.BottomRight;
+
+    /// <summary>
+    /// Maximum number of toasts to display at once.
+    /// Older toasts are removed when limit is reached.
+    /// </summary>
+    [Parameter]
+    public int MaxToasts { get; set; } = 5;
+
+    /// <summary>
+    /// Additional CSS classes to apply to the container.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    protected override void OnInitialized()
+    {
+        ToastService.OnChange += HandleToastsChanged;
+        StartAutoCloseTimer();
+    }
+
+    private void HandleToastsChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleDismiss(string id)
+    {
+        ToastService.Dismiss(id);
+    }
+
+    private void StartAutoCloseTimer()
+    {
+        _autoCloseTimer = new System.Timers.Timer(1000);
+        _autoCloseTimer.Elapsed += (sender, args) =>
+        {
+            var now = DateTime.Now;
+            var toastsToRemove = ToastService.Toasts
+                .Where(t => t.Duration > 0 && (now - t.CreatedAt).TotalMilliseconds >= t.Duration)
+                .Select(t => t.Id)
+                .ToList();
+
+            foreach (var id in toastsToRemove)
+            {
+                ToastService.Dismiss(id);
+            }
+        };
+        _autoCloseTimer.Start();
+    }
+
+    /// <summary>
+    /// Gets the computed CSS classes for the toast container.
+    /// </summary>
+    private string ContainerCssClass => ClassNames.cn(
+        "fixed z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:flex-col md:max-w-[420px]",
+        Position switch
+        {
+            ToastPosition.TopRight => "top-0 right-0",
+            ToastPosition.TopLeft => "top-0 left-0",
+            ToastPosition.TopCenter => "top-0 left-1/2 -translate-x-1/2",
+            ToastPosition.BottomRight => "bottom-0 right-0",
+            ToastPosition.BottomLeft => "bottom-0 left-0",
+            ToastPosition.BottomCenter => "bottom-0 left-1/2 -translate-x-1/2",
+            _ => "bottom-0 right-0"
+        },
+        Class
+    );
+
+    public void Dispose()
+    {
+        ToastService.OnChange -= HandleToastsChanged;
+        _autoCloseTimer?.Stop();
+        _autoCloseTimer?.Dispose();
+    }
+}

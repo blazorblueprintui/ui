@@ -1,0 +1,50 @@
+@namespace BlazorUI.Components.AlertDialog
+@using BlazorUI.Primitives.Dialog
+
+@*
+    Alert Dialog component - a modal requiring acknowledgement.
+    Wraps the Dialog primitive with specific accessibility for confirmations.
+    Prevents dismissal via click-outside or Escape by default.
+*@
+
+<BlazorUI.Primitives.Dialog.Dialog Open="@Open"
+                                   OpenChanged="@OpenChanged"
+                                   DefaultOpen="@DefaultOpen"
+                                   OnOpenChange="@OnOpenChange"
+                                   Modal="true">
+    @ChildContent
+</BlazorUI.Primitives.Dialog.Dialog>
+
+@code {
+    /// <summary>
+    /// The child content to render within the alert dialog.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls whether the alert dialog is open (controlled mode).
+    /// When null, the dialog manages its own state (uncontrolled mode).
+    /// </summary>
+    [Parameter]
+    public bool? Open { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open state changes.
+    /// Use with @bind-Open for two-way binding.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// Default open state when in uncontrolled mode.
+    /// </summary>
+    [Parameter]
+    public bool DefaultOpen { get; set; } = false;
+
+    /// <summary>
+    /// Event callback invoked when the dialog open state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OnOpenChange { get; set; }
+}

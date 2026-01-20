@@ -1,0 +1,185 @@
+@page "/components/alert-dialog"
+@using BlazorUI.Components.AlertDialog
+@using BlazorUI.Components.Button
+@using BlazorUI.Components.Separator
+
+<PageTitle>Alert Dialog Component - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Alert Dialog Component</h1>
+            <p class="text-xl text-muted-foreground">
+                A modal dialog that interrupts the user with important content and expects a response.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Example</h2>
+            <p class="text-sm text-muted-foreground">
+                Alert dialogs are used for critical confirmations that require user acknowledgement.
+            </p>
+        </div>
+        <AlertDialog>
+            <AlertDialogTrigger>
+                <Button Variant="ButtonVariant.Outline">Show Dialog</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete your
+                        account and remove your data from our servers.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>
+                        <Button Variant="ButtonVariant.Outline">Cancel</Button>
+                    </AlertDialogCancel>
+                    <AlertDialogAction>
+                        <Button>Continue</Button>
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    </div>
+
+    <!-- Destructive Action -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Destructive Action</h2>
+            <p class="text-sm text-muted-foreground">
+                Use destructive button variant for dangerous actions.
+            </p>
+        </div>
+        <AlertDialog>
+            <AlertDialogTrigger>
+                <Button Variant="ButtonVariant.Destructive">Delete Account</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Account</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Are you sure you want to delete your account? All of your data will be
+                        permanently removed. This action cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>
+                        <Button Variant="ButtonVariant.Outline">Cancel</Button>
+                    </AlertDialogCancel>
+                    <AlertDialogAction>
+                        <Button Variant="ButtonVariant.Destructive">Yes, delete account</Button>
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    </div>
+
+    <!-- Controlled State -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Controlled State</h2>
+            <p class="text-sm text-muted-foreground">
+                Control the open state programmatically with @@bind-Open.
+            </p>
+        </div>
+        <div class="flex items-center gap-4">
+            <Button OnClick="@(() => _isControlledOpen = true)">Open Dialog</Button>
+            <span class="text-sm text-muted-foreground">
+                Dialog is: @(_isControlledOpen ? "Open" : "Closed")
+            </span>
+        </div>
+        <AlertDialog @bind-Open="_isControlledOpen">
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Controlled Dialog</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This dialog's open state is controlled by a parent component.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>
+                        <Button Variant="ButtonVariant.Outline">Close</Button>
+                    </AlertDialogCancel>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    </div>
+
+    <!-- Key Differences from Dialog -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Alert Dialog vs Dialog</h2>
+            <p class="text-sm text-muted-foreground">
+                Key differences between Alert Dialog and regular Dialog.
+            </p>
+        </div>
+        <div class="border rounded-lg p-6 space-y-3 bg-muted/50">
+            <p class="text-sm">
+                <strong>Alert Dialog:</strong>
+            </p>
+            <ul class="text-sm space-y-2 ml-4">
+                <li>• Cannot be dismissed by clicking outside</li>
+                <li>• Cannot be dismissed by pressing Escape</li>
+                <li>• Must be acknowledged with an action button</li>
+                <li>• Uses role="alertdialog" for accessibility</li>
+                <li>• Use for destructive or critical confirmations</li>
+            </ul>
+            <p class="text-sm mt-4">
+                <strong>Regular Dialog:</strong>
+            </p>
+            <ul class="text-sm space-y-2 ml-4">
+                <li>• Can be dismissed by clicking outside</li>
+                <li>• Can be dismissed by pressing Escape</li>
+                <li>• More flexible for general content</li>
+                <li>• Use for forms, settings, and non-critical content</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- API Reference -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Open</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">bool?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Controls the open state in controlled mode.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">DefaultOpen</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">bool</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Initial open state for uncontrolled mode. Default: false.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">OnOpenChange</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">EventCallback&lt;bool&gt;</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Callback when the open state changes.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool _isControlledOpen;
+}

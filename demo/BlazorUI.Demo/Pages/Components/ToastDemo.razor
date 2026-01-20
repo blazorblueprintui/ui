@@ -1,0 +1,234 @@
+@page "/components/toast"
+@using BlazorUI.Components.Toast
+@using BlazorUI.Components.Button
+@using BlazorUI.Components.Separator
+@inject ToastService ToastService
+
+<PageTitle>Toast Component - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Toast Component</h1>
+            <p class="text-xl text-muted-foreground">
+                A succinct message that is displayed temporarily to notify users.
+            </p>
+        </div>
+    </div>
+
+    <!-- Setup Instructions -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Setup</h2>
+            <p class="text-sm text-muted-foreground">
+                To use toasts, you need to add the ToastProvider and register the ToastService.
+            </p>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4 bg-muted/50">
+            <p class="text-sm font-medium">1. Register the service in Program.cs:</p>
+            <pre class="text-sm bg-muted p-3 rounded overflow-x-auto"><code>builder.Services.AddScoped&lt;ToastService&gt;();</code></pre>
+            <p class="text-sm font-medium">2. Add ToastProvider to your layout:</p>
+            <pre class="text-sm bg-muted p-3 rounded overflow-x-auto"><code>&lt;ToastProvider Position="ToastPosition.BottomRight" /&gt;</code></pre>
+        </div>
+    </div>
+
+    <!-- Basic Examples -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Examples</h2>
+            <p class="text-sm text-muted-foreground">
+                Click the buttons to trigger different toast messages.
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-4">
+            <Button OnClick="@ShowDefaultToast">
+                Show Toast
+            </Button>
+            <Button Variant="ButtonVariant.Outline" OnClick="@ShowTitleToast">
+                With Title
+            </Button>
+            <Button Variant="ButtonVariant.Destructive" OnClick="@ShowErrorToast">
+                Error Toast
+            </Button>
+        </div>
+    </div>
+
+    <!-- Toast Variants -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Variants</h2>
+            <p class="text-sm text-muted-foreground">
+                Toasts come in default and destructive variants.
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-4">
+            <Button Variant="ButtonVariant.Secondary" OnClick="@(() => ToastService.Success("Your changes have been saved.", "Success"))">
+                Success
+            </Button>
+            <Button Variant="ButtonVariant.Destructive" OnClick="@(() => ToastService.Error("Something went wrong.", "Error"))">
+                Error
+            </Button>
+        </div>
+    </div>
+
+    <!-- With Action -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">With Action</h2>
+            <p class="text-sm text-muted-foreground">
+                Toasts can include an action button.
+            </p>
+        </div>
+        <Button OnClick="@ShowActionToast">
+            Show with Action
+        </Button>
+    </div>
+
+    <!-- Position Options -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Position</h2>
+            <p class="text-sm text-muted-foreground">
+                Configure where toasts appear on the screen via the ToastProvider.
+            </p>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4 bg-muted/50">
+            <p class="text-sm font-medium">Available positions:</p>
+            <div class="grid grid-cols-3 gap-2 text-center text-sm">
+                <code class="bg-background border rounded p-2">TopLeft</code>
+                <code class="bg-background border rounded p-2">TopCenter</code>
+                <code class="bg-background border rounded p-2">TopRight</code>
+                <code class="bg-background border rounded p-2">BottomLeft</code>
+                <code class="bg-background border rounded p-2">BottomCenter</code>
+                <code class="bg-primary text-primary-foreground rounded p-2">BottomRight (default)</code>
+            </div>
+            <p class="text-sm font-medium mt-4">Example:</p>
+            <pre class="text-sm bg-muted p-3 rounded overflow-x-auto"><code>&lt;ToastProvider Position="ToastPosition.TopRight" /&gt;</code></pre>
+        </div>
+    </div>
+
+    <!-- Custom Duration -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Duration</h2>
+            <p class="text-sm text-muted-foreground">
+                Control how long the toast is displayed.
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-4">
+            <Button Variant="ButtonVariant.Outline" OnClick="@(() => ToastService.Show("This disappears quickly!", duration: 2000))">
+                2 seconds
+            </Button>
+            <Button Variant="ButtonVariant.Outline" OnClick="@(() => ToastService.Show("This stays longer.", duration: 10000))">
+                10 seconds
+            </Button>
+            <Button Variant="ButtonVariant.Outline" OnClick="@ShowPersistentToast">
+                Persistent (no auto-dismiss)
+            </Button>
+        </div>
+    </div>
+
+    <!-- Programmatic Control -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Programmatic Control</h2>
+            <p class="text-sm text-muted-foreground">
+                Dismiss toasts programmatically.
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-4">
+            <Button Variant="ButtonVariant.Outline" OnClick="@ShowMultipleToasts">
+                Show 3 Toasts
+            </Button>
+            <Button Variant="ButtonVariant.Secondary" OnClick="@(() => ToastService.DismissAll())">
+                Dismiss All
+            </Button>
+        </div>
+    </div>
+
+    <!-- API Reference -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-semibold mb-2">ToastService Methods</h3>
+                <div class="space-y-2 text-sm">
+                    <p><code class="bg-muted px-1 py-0.5 rounded">Show(ToastData toast)</code> - Show a toast with full control</p>
+                    <p><code class="bg-muted px-1 py-0.5 rounded">Show(description, title?, variant?, duration?)</code> - Quick toast</p>
+                    <p><code class="bg-muted px-1 py-0.5 rounded">Success(description, title?)</code> - Show success toast</p>
+                    <p><code class="bg-muted px-1 py-0.5 rounded">Error(description, title?)</code> - Show error toast</p>
+                    <p><code class="bg-muted px-1 py-0.5 rounded">Dismiss(id)</code> - Dismiss specific toast</p>
+                    <p><code class="bg-muted px-1 py-0.5 rounded">DismissAll()</code> - Dismiss all toasts</p>
+                </div>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-semibold mb-2">ToastProvider Parameters</h3>
+                <div class="space-y-2 text-sm">
+                    <p><strong>Position:</strong> <code class="bg-muted px-1 py-0.5 rounded">ToastPosition</code> - Where toasts appear (TopRight, TopLeft, TopCenter, BottomRight, BottomLeft, BottomCenter)</p>
+                    <p><strong>MaxToasts:</strong> <code class="bg-muted px-1 py-0.5 rounded">int</code> - Maximum visible toasts. Default: 5</p>
+                </div>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-semibold mb-2">ToastData Properties</h3>
+                <div class="space-y-2 text-sm">
+                    <p><strong>Title:</strong> Optional title text</p>
+                    <p><strong>Description:</strong> Main message content</p>
+                    <p><strong>Variant:</strong> Default or Destructive</p>
+                    <p><strong>Duration:</strong> Auto-dismiss time in ms (0 for no auto-dismiss). Default: 5000</p>
+                    <p><strong>ShowClose:</strong> Show close button. Default: true</p>
+                    <p><strong>ActionText:</strong> Optional action button text</p>
+                    <p><strong>OnAction:</strong> Action button callback</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private void ShowDefaultToast()
+    {
+        ToastService.Show("Your message has been sent.");
+    }
+
+    private void ShowTitleToast()
+    {
+        ToastService.Show("Friday, February 10, 2023 at 5:57 PM", "Scheduled: Catch up");
+    }
+
+    private void ShowErrorToast()
+    {
+        ToastService.Error("There was a problem with your request.", "Uh oh! Something went wrong.");
+    }
+
+    private void ShowActionToast()
+    {
+        ToastService.Show(new ToastData
+        {
+            Title = "Undo action",
+            Description = "Your post has been deleted.",
+            ActionText = "Undo",
+            OnAction = () => ToastService.Success("Post restored!")
+        });
+    }
+
+    private void ShowPersistentToast()
+    {
+        ToastService.Show(new ToastData
+        {
+            Title = "Persistent Toast",
+            Description = "This toast won't auto-dismiss. Click X to close.",
+            Duration = 0
+        });
+    }
+
+    private void ShowMultipleToasts()
+    {
+        ToastService.Show("First notification");
+        ToastService.Show("Second notification", "Alert");
+        ToastService.Error("Third notification is an error");
+    }
+}

@@ -1,0 +1,46 @@
+@namespace BlazorUI.Components.NavigationMenu
+@using BlazorUI.Components.Utilities
+
+@*
+    Navigation Menu Viewport - container for dropdown content with border and shadow.
+    Used to provide consistent styling for all dropdown panels.
+*@
+
+<div class="@OuterCssClass">
+    <div class="@InnerCssClass">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// The content to render inside the viewport.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the outer container.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets the computed CSS classes for the outer container.
+    /// </summary>
+    private string OuterCssClass => ClassNames.cn(
+        "absolute left-0 top-full flex justify-center",
+        Class
+    );
+
+    /// <summary>
+    /// Gets the computed CSS classes for the inner container.
+    /// </summary>
+    private string InnerCssClass => ClassNames.cn(
+        "origin-top-center relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full",
+        "overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-lg",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out",
+        "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-90",
+        "md:w-[var(--radix-navigation-menu-viewport-width)]"
+    );
+}

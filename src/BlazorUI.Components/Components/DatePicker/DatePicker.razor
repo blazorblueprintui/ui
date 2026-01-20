@@ -1,0 +1,124 @@
+@namespace BlazorUI.Components.DatePicker
+@using BlazorUI.Components.Utilities
+@using BlazorUI.Components.Button
+@using BlazorUI.Components.Popover
+@using BlazorUI.Components.Calendar
+@using BlazorUI.Primitives.Services
+@using BlazorUI.Icons.Lucide.Components
+
+@*
+    Date Picker component - combines a button trigger with a calendar popover.
+*@
+
+<Popover @bind-Open="_isOpen">
+    <PopoverTrigger AsChild="true">
+        <Button Variant="ButtonVariant.Outline"
+                Class="@ButtonCssClass">
+            <LucideIcon Name="calendar" Class="mr-2 h-4 w-4" />
+            @if (Value.HasValue)
+            {
+                <span>@Value.Value.ToString(DateFormat)</span>
+            }
+            else
+            {
+                <span class="text-muted-foreground">@Placeholder</span>
+            }
+        </Button>
+    </PopoverTrigger>
+    <PopoverContent Class="w-auto p-0" Align="PopoverAlign.Start">
+        <Calendar Selected="@Value"
+                  SelectedChanged="@HandleDateSelected"
+                  MinDate="@MinDate"
+                  MaxDate="@MaxDate"
+                  DisabledDates="@DisabledDates"
+                  FirstDayOfWeek="@FirstDayOfWeek" />
+    </PopoverContent>
+</Popover>
+
+@code {
+    private bool _isOpen;
+
+    /// <summary>
+    /// The selected date value.
+    /// </summary>
+    [Parameter]
+    public DateTime? Value { get; set; }
+
+    /// <summary>
+    /// Callback when the selected date changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<DateTime?> ValueChanged { get; set; }
+
+    /// <summary>
+    /// The date format to display.
+    /// Default is "PPP" style (e.g., "January 20, 2026").
+    /// </summary>
+    [Parameter]
+    public string DateFormat { get; set; } = "MMMM d, yyyy";
+
+    /// <summary>
+    /// Placeholder text when no date is selected.
+    /// </summary>
+    [Parameter]
+    public string Placeholder { get; set; } = "Pick a date";
+
+    /// <summary>
+    /// The minimum selectable date.
+    /// </summary>
+    [Parameter]
+    public DateTime? MinDate { get; set; }
+
+    /// <summary>
+    /// The maximum selectable date.
+    /// </summary>
+    [Parameter]
+    public DateTime? MaxDate { get; set; }
+
+    /// <summary>
+    /// Function to determine if a date is disabled.
+    /// </summary>
+    [Parameter]
+    public Func<DateTime, bool>? DisabledDates { get; set; }
+
+    /// <summary>
+    /// The first day of the week.
+    /// </summary>
+    [Parameter]
+    public DayOfWeek FirstDayOfWeek { get; set; } = DayOfWeek.Sunday;
+
+    /// <summary>
+    /// Whether the date picker is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the trigger button.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the date picker.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private async Task HandleDateSelected(DateTime? date)
+    {
+        Value = date;
+        await ValueChanged.InvokeAsync(date);
+        _isOpen = false;
+    }
+
+    /// <summary>
+    /// Gets the computed CSS classes for the trigger button.
+    /// </summary>
+    private string ButtonCssClass => ClassNames.cn(
+        "w-[280px] justify-start text-left font-normal",
+        !Value.HasValue ? "text-muted-foreground" : null,
+        Disabled ? "opacity-50 pointer-events-none" : null,
+        Class
+    );
+}

@@ -1,0 +1,98 @@
+@namespace BlazorUI.Components.Toast
+@using BlazorUI.Components.Utilities
+@using BlazorUI.Icons.Lucide.Components
+
+@*
+    Individual Toast component - displays a single toast notification.
+*@
+
+<div class="@CssClass" role="alert">
+    <div class="grid gap-1">
+        @if (!string.IsNullOrEmpty(Data.Title))
+        {
+            <div class="text-sm font-semibold">@Data.Title</div>
+        }
+        @if (!string.IsNullOrEmpty(Data.Description))
+        {
+            <div class="text-sm opacity-90">@Data.Description</div>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(Data.ActionText) && Data.OnAction != null)
+    {
+        <button type="button"
+                class="inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+                @onclick="HandleAction">
+            @Data.ActionText
+        </button>
+    }
+
+    @if (Data.ShowClose)
+    {
+        <button type="button"
+                class="@CloseCssClass"
+                @onclick="HandleClose">
+            <LucideIcon Name="x" Class="h-4 w-4" />
+            <span class="sr-only">Close</span>
+        </button>
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// The toast data to display.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public ToastData Data { get; set; } = default!;
+
+    /// <summary>
+    /// Callback when the toast should be dismissed.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnDismiss { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the toast.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    private async Task HandleClose()
+    {
+        await OnDismiss.InvokeAsync();
+    }
+
+    private async Task HandleAction()
+    {
+        Data.OnAction?.Invoke();
+        await OnDismiss.InvokeAsync();
+    }
+
+    /// <summary>
+    /// Gets the computed CSS classes for the toast.
+    /// </summary>
+    private string CssClass => ClassNames.cn(
+        "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-80",
+        "data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full",
+        "data-[state=open]:sm:slide-in-from-bottom-full",
+        Data.Variant switch
+        {
+            ToastVariant.Default => "border bg-background text-foreground",
+            ToastVariant.Destructive => "destructive group border-destructive bg-destructive text-destructive-foreground",
+            _ => "border bg-background text-foreground"
+        },
+        Class
+    );
+
+    /// <summary>
+    /// Gets the computed CSS classes for the close button.
+    /// </summary>
+    private string CloseCssClass => ClassNames.cn(
+        "absolute right-2 top-2 rounded-md p-1 opacity-0 transition-opacity",
+        "hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100",
+        Data.Variant == ToastVariant.Destructive
+            ? "text-red-300 hover:text-red-50 focus:ring-red-400 focus:ring-offset-red-600"
+            : "text-foreground/50 hover:text-foreground focus:ring-ring"
+    );
+}

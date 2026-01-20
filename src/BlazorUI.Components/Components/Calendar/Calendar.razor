@@ -1,0 +1,291 @@
+@namespace BlazorUI.Components.Calendar
+@using BlazorUI.Components.Utilities
+@using BlazorUI.Components.Button
+@using BlazorUI.Icons.Lucide.Components
+
+@*
+    Calendar component - displays a month view with selectable dates.
+*@
+
+<div class="@CssClass" @attributes="AdditionalAttributes">
+    @* Calendar Header with Navigation *@
+    <div class="flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
+        <div class="space-y-4">
+            @* Month Navigation *@
+            <div class="flex items-center justify-between pt-1">
+                <Button Variant="ButtonVariant.Outline"
+                        Size="ButtonSize.Icon"
+                        Class="h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+                        OnClick="@PreviousMonth"
+                        AriaLabel="Go to previous month">
+                    <LucideIcon Name="chevron-left" Class="h-4 w-4" />
+                </Button>
+                <div class="text-sm font-medium">
+                    @DisplayDate.ToString("MMMM yyyy")
+                </div>
+                <Button Variant="ButtonVariant.Outline"
+                        Size="ButtonSize.Icon"
+                        Class="h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+                        OnClick="@NextMonth"
+                        AriaLabel="Go to next month">
+                    <LucideIcon Name="chevron-right" Class="h-4 w-4" />
+                </Button>
+            </div>
+
+            @* Calendar Grid *@
+            <table class="w-full border-collapse space-y-1" role="grid">
+                <thead>
+                    <tr class="flex">
+                        @foreach (var dayName in DayNames)
+                        {
+                            <th scope="col" class="text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]">
+                                @dayName
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var week in GetWeeksInMonth())
+                    {
+                        <tr class="flex w-full mt-2">
+                            @foreach (var day in week)
+                            {
+                                <td class="@GetCellClasses(day)"
+                                    role="gridcell"
+                                    aria-selected="@IsSelected(day)">
+                                    @if (day.HasValue)
+                                    {
+                                        <button type="button"
+                                                class="@GetDayClasses(day.Value)"
+                                                disabled="@IsDisabled(day.Value)"
+                                                @onclick="@(() => SelectDate(day.Value))">
+                                            @day.Value.Day
+                                        </button>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    private DateTime _displayDate;
+
+    /// <summary>
+    /// The currently displayed month.
+    /// </summary>
+    private DateTime DisplayDate
+    {
+        get => _displayDate;
+        set
+        {
+            _displayDate = value;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// The selected date (for single mode).
+    /// </summary>
+    [Parameter]
+    public DateTime? Selected { get; set; }
+
+    /// <summary>
+    /// Callback when the selected date changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<DateTime?> SelectedChanged { get; set; }
+
+    /// <summary>
+    /// The selection mode of the calendar.
+    /// </summary>
+    [Parameter]
+    public CalendarMode Mode { get; set; } = CalendarMode.Single;
+
+    /// <summary>
+    /// The minimum selectable date.
+    /// </summary>
+    [Parameter]
+    public DateTime? MinDate { get; set; }
+
+    /// <summary>
+    /// The maximum selectable date.
+    /// </summary>
+    [Parameter]
+    public DateTime? MaxDate { get; set; }
+
+    /// <summary>
+    /// Function to determine if a date is disabled.
+    /// </summary>
+    [Parameter]
+    public Func<DateTime, bool>? DisabledDates { get; set; }
+
+    /// <summary>
+    /// The first day of the week.
+    /// </summary>
+    [Parameter]
+    public DayOfWeek FirstDayOfWeek { get; set; } = DayOfWeek.Sunday;
+
+    /// <summary>
+    /// Additional CSS classes to apply to the calendar.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the calendar.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Callback when a date is selected.
+    /// </summary>
+    [Parameter]
+    public EventCallback<DateTime> OnSelect { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _displayDate = Selected ?? DateTime.Today;
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Selected.HasValue && (Selected.Value.Year != _displayDate.Year || Selected.Value.Month != _displayDate.Month))
+        {
+            _displayDate = Selected.Value;
+        }
+    }
+
+    private string[] DayNames
+    {
+        get
+        {
+            var names = new[] { "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa" };
+            var start = (int)FirstDayOfWeek;
+            var result = new string[7];
+            for (int i = 0; i < 7; i++)
+            {
+                result[i] = names[(start + i) % 7];
+            }
+            return result;
+        }
+    }
+
+    private void PreviousMonth()
+    {
+        DisplayDate = DisplayDate.AddMonths(-1);
+    }
+
+    private void NextMonth()
+    {
+        DisplayDate = DisplayDate.AddMonths(1);
+    }
+
+    private async Task SelectDate(DateTime date)
+    {
+        if (IsDisabled(date)) return;
+
+        Selected = date;
+        await SelectedChanged.InvokeAsync(date);
+        await OnSelect.InvokeAsync(date);
+    }
+
+    private bool IsSelected(DateTime? day)
+    {
+        if (!day.HasValue || !Selected.HasValue) return false;
+        return day.Value.Date == Selected.Value.Date;
+    }
+
+    private bool IsDisabled(DateTime date)
+    {
+        if (MinDate.HasValue && date < MinDate.Value.Date) return true;
+        if (MaxDate.HasValue && date > MaxDate.Value.Date) return true;
+        if (DisabledDates != null && DisabledDates(date)) return true;
+        return false;
+    }
+
+    private bool IsToday(DateTime date) => date.Date == DateTime.Today;
+
+    private bool IsOutsideMonth(DateTime date) => date.Month != DisplayDate.Month;
+
+    private List<List<DateTime?>> GetWeeksInMonth()
+    {
+        var weeks = new List<List<DateTime?>>();
+        var firstOfMonth = new DateTime(DisplayDate.Year, DisplayDate.Month, 1);
+        var lastOfMonth = firstOfMonth.AddMonths(1).AddDays(-1);
+
+        // Find the start date (first day of the first week)
+        var startDate = firstOfMonth;
+        while (startDate.DayOfWeek != FirstDayOfWeek)
+        {
+            startDate = startDate.AddDays(-1);
+        }
+
+        var currentDate = startDate;
+        while (currentDate <= lastOfMonth || weeks.Count < 6)
+        {
+            var week = new List<DateTime?>();
+            for (int i = 0; i < 7; i++)
+            {
+                if (currentDate.Month == DisplayDate.Month)
+                {
+                    week.Add(currentDate);
+                }
+                else
+                {
+                    week.Add(null); // Days outside the month shown as empty
+                }
+                currentDate = currentDate.AddDays(1);
+            }
+            weeks.Add(week);
+
+            // Stop if we've gone past the last of the month and filled at least 5 weeks
+            if (currentDate.Month != DisplayDate.Month && weeks.Count >= 5)
+            {
+                break;
+            }
+        }
+
+        return weeks;
+    }
+
+    private string GetCellClasses(DateTime? day)
+    {
+        return ClassNames.cn(
+            "h-9 w-9 text-center text-sm p-0 relative",
+            day.HasValue && IsSelected(day) ? "[&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md" : null,
+            !day.HasValue ? "text-muted-foreground opacity-50" : null
+        );
+    }
+
+    private string GetDayClasses(DateTime date)
+    {
+        var isSelectedDate = Selected.HasValue && date.Date == Selected.Value.Date;
+        var isTodayDate = IsToday(date);
+        var isDisabledDate = IsDisabled(date);
+
+        return ClassNames.cn(
+            "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal",
+            "ring-offset-background transition-colors",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+            "disabled:pointer-events-none disabled:opacity-50",
+            "hover:bg-accent hover:text-accent-foreground",
+            isSelectedDate ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground" : null,
+            isTodayDate && !isSelectedDate ? "bg-accent text-accent-foreground" : null,
+            isDisabledDate ? "text-muted-foreground opacity-50" : null
+        );
+    }
+
+    /// <summary>
+    /// Gets the computed CSS classes for the calendar container.
+    /// </summary>
+    private string CssClass => ClassNames.cn(
+        "p-3",
+        Class
+    );
+}

@@ -1,0 +1,199 @@
+@page "/components/spinner"
+@using BlazorUI.Components.Spinner
+@using BlazorUI.Components.Button
+@using BlazorUI.Components.Separator
+
+<PageTitle>Spinner Component - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Spinner Component</h1>
+            <p class="text-xl text-muted-foreground">
+                A loading indicator that shows an operation is in progress.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Example</h2>
+            <p class="text-sm text-muted-foreground">
+                A simple spinning loading indicator.
+            </p>
+        </div>
+        <Spinner />
+    </div>
+
+    <!-- Sizes -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Sizes</h2>
+            <p class="text-sm text-muted-foreground">
+                Spinners come in three sizes for different contexts.
+            </p>
+        </div>
+        <div class="flex items-center gap-8">
+            <div class="flex flex-col items-center gap-2">
+                <Spinner Size="SpinnerSize.Small" />
+                <span class="text-sm text-muted-foreground">Small</span>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+                <Spinner Size="SpinnerSize.Default" />
+                <span class="text-sm text-muted-foreground">Default</span>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+                <Spinner Size="SpinnerSize.Large" />
+                <span class="text-sm text-muted-foreground">Large</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- In Buttons -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Loading Buttons</h2>
+            <p class="text-sm text-muted-foreground">
+                Use spinners inside buttons to indicate loading states.
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-4">
+            <Button Disabled="true">
+                <Spinner Size="SpinnerSize.Small" Class="mr-2" />
+                Please wait
+            </Button>
+            <Button Variant="ButtonVariant.Outline" Disabled="true">
+                <Spinner Size="SpinnerSize.Small" Class="mr-2" />
+                Loading...
+            </Button>
+            <Button Variant="ButtonVariant.Secondary" Disabled="true">
+                <Spinner Size="SpinnerSize.Small" Class="mr-2" />
+                Saving
+            </Button>
+        </div>
+    </div>
+
+    <!-- Interactive Button -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Interactive Example</h2>
+            <p class="text-sm text-muted-foreground">
+                Click the button to simulate a loading operation.
+            </p>
+        </div>
+        <Button Disabled="@_isLoading" OnClick="@SimulateLoading">
+            @if (_isLoading)
+            {
+                <Spinner Size="SpinnerSize.Small" Class="mr-2" />
+                <span>Processing...</span>
+            }
+            else
+            {
+                <span>Submit</span>
+            }
+        </Button>
+    </div>
+
+    <!-- Custom Colors -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Colors</h2>
+            <p class="text-sm text-muted-foreground">
+                Override the spinner color with custom classes.
+            </p>
+        </div>
+        <div class="flex items-center gap-8">
+            <div class="flex flex-col items-center gap-2">
+                <Spinner Class="text-blue-500" />
+                <span class="text-sm text-muted-foreground">Blue</span>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+                <Spinner Class="text-green-500" />
+                <span class="text-sm text-muted-foreground">Green</span>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+                <Spinner Class="text-red-500" />
+                <span class="text-sm text-muted-foreground">Red</span>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+                <Spinner Class="text-purple-500" />
+                <span class="text-sm text-muted-foreground">Purple</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading States -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Loading States</h2>
+            <p class="text-sm text-muted-foreground">
+                Common patterns for displaying loading states.
+            </p>
+        </div>
+        <div class="space-y-4">
+            <!-- Centered Loading -->
+            <div class="border rounded-lg p-8 flex items-center justify-center">
+                <div class="flex flex-col items-center gap-2">
+                    <Spinner Size="SpinnerSize.Large" />
+                    <span class="text-sm text-muted-foreground">Loading content...</span>
+                </div>
+            </div>
+
+            <!-- Inline Loading -->
+            <div class="border rounded-lg p-4 flex items-center gap-3">
+                <Spinner Size="SpinnerSize.Small" />
+                <span class="text-sm">Fetching data from server...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Reference -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Size</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">SpinnerSize</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    The size of the spinner. Options: Small (16px), Default (24px), Large (40px).
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Class</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Additional CSS classes to apply. Use text-* classes to change color.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">AriaLabel</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Accessible label for screen readers. Default: "Loading".
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool _isLoading;
+
+    private async Task SimulateLoading()
+    {
+        _isLoading = true;
+        await Task.Delay(2000);
+        _isLoading = false;
+    }
+}

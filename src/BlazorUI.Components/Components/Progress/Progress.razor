@@ -1,0 +1,71 @@
+@namespace BlazorUI.Components.Progress
+@using BlazorUI.Components.Utilities
+
+@*
+    Progress component - displays a progress bar indicator.
+*@
+
+<div role="progressbar"
+     aria-valuemin="0"
+     aria-valuemax="@Max"
+     aria-valuenow="@Value"
+     class="@ContainerCssClass"
+     @attributes="AdditionalAttributes">
+    <div class="@IndicatorCssClass"
+         style="transform: translateX(-@((100 - ProgressPercentage))%)">
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// The current progress value.
+    /// </summary>
+    [Parameter]
+    public double Value { get; set; } = 0;
+
+    /// <summary>
+    /// The maximum value for the progress bar.
+    /// Default is 100.
+    /// </summary>
+    [Parameter]
+    public double Max { get; set; } = 100;
+
+    /// <summary>
+    /// Additional CSS classes to apply to the progress container.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the progress indicator.
+    /// </summary>
+    [Parameter]
+    public string? IndicatorClass { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the progress bar.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Gets the progress percentage (0-100).
+    /// </summary>
+    private double ProgressPercentage => Max > 0 ? Math.Min(100, Math.Max(0, (Value / Max) * 100)) : 0;
+
+    /// <summary>
+    /// Gets the computed CSS classes for the progress container.
+    /// </summary>
+    private string ContainerCssClass => ClassNames.cn(
+        "relative h-4 w-full overflow-hidden rounded-full bg-secondary",
+        Class
+    );
+
+    /// <summary>
+    /// Gets the computed CSS classes for the progress indicator.
+    /// </summary>
+    private string IndicatorCssClass => ClassNames.cn(
+        "h-full w-full flex-1 bg-primary transition-all",
+        IndicatorClass
+    );
+}

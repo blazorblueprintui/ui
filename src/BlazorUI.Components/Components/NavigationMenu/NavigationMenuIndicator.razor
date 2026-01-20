@@ -1,0 +1,28 @@
+@namespace BlazorUI.Components.NavigationMenu
+@using BlazorUI.Components.Utilities
+
+@*
+    Navigation Menu Indicator - visual indicator for active menu item.
+*@
+
+<div class="@CssClass">
+    <div class="relative top-[60%] h-2 w-2 rotate-45 rounded-tl-sm bg-border shadow-md"></div>
+</div>
+
+@code {
+    /// <summary>
+    /// Additional CSS classes to apply to the indicator.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets the computed CSS classes for the indicator.
+    /// </summary>
+    private string CssClass => ClassNames.cn(
+        "top-full z-[1] flex h-1.5 items-end justify-center overflow-hidden",
+        "data-[state=visible]:animate-in data-[state=hidden]:animate-out",
+        "data-[state=hidden]:fade-out data-[state=visible]:fade-in",
+        Class
+    );
+}

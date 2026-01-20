@@ -1,0 +1,192 @@
+@page "/components/calendar"
+@using BlazorUI.Components.Calendar
+@using BlazorUI.Components.Separator
+
+<PageTitle>Calendar Component - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Calendar Component</h1>
+            <p class="text-xl text-muted-foreground">
+                A date field component that allows users to select a date from a calendar view.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Example</h2>
+            <p class="text-sm text-muted-foreground">
+                A simple calendar for date selection.
+            </p>
+        </div>
+        <div class="border rounded-lg w-fit">
+            <Calendar @bind-Selected="_selectedDate" />
+        </div>
+        <p class="text-sm text-muted-foreground">
+            Selected: @(_selectedDate?.ToString("MMMM d, yyyy") ?? "None")
+        </p>
+    </div>
+
+    <!-- With Preselected Date -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Preselected Date</h2>
+            <p class="text-sm text-muted-foreground">
+                Calendar can start with a preselected date.
+            </p>
+        </div>
+        <div class="border rounded-lg w-fit">
+            <Calendar @bind-Selected="_preselectedDate" />
+        </div>
+        <p class="text-sm text-muted-foreground">
+            Selected: @(_preselectedDate?.ToString("MMMM d, yyyy") ?? "None")
+        </p>
+    </div>
+
+    <!-- Date Constraints -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Date Constraints</h2>
+            <p class="text-sm text-muted-foreground">
+                Limit selectable dates with MinDate and MaxDate.
+            </p>
+        </div>
+        <div class="border rounded-lg w-fit">
+            <Calendar @bind-Selected="_constrainedDate"
+                      MinDate="@_minDate"
+                      MaxDate="@_maxDate" />
+        </div>
+        <p class="text-sm text-muted-foreground">
+            Only dates between @_minDate.ToString("MMM d") and @_maxDate.ToString("MMM d, yyyy") are selectable.
+        </p>
+    </div>
+
+    <!-- Disabled Dates -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled Dates</h2>
+            <p class="text-sm text-muted-foreground">
+                Disable specific dates using a custom function (e.g., weekends).
+            </p>
+        </div>
+        <div class="border rounded-lg w-fit">
+            <Calendar @bind-Selected="_noWeekendsDate"
+                      DisabledDates="@IsWeekend" />
+        </div>
+        <p class="text-sm text-muted-foreground">
+            Weekends are disabled. Selected: @(_noWeekendsDate?.ToString("MMMM d, yyyy") ?? "None")
+        </p>
+    </div>
+
+    <!-- First Day of Week -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Week Start Day</h2>
+            <p class="text-sm text-muted-foreground">
+                Configure which day the week starts on.
+            </p>
+        </div>
+        <div class="flex gap-8">
+            <div>
+                <p class="text-sm font-medium mb-2">Sunday (default)</p>
+                <div class="border rounded-lg w-fit">
+                    <Calendar @bind-Selected="_sundayStart" FirstDayOfWeek="DayOfWeek.Sunday" />
+                </div>
+            </div>
+            <div>
+                <p class="text-sm font-medium mb-2">Monday</p>
+                <div class="border rounded-lg w-fit">
+                    <Calendar @bind-Selected="_mondayStart" FirstDayOfWeek="DayOfWeek.Monday" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Reference -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Selected</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">DateTime?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    The currently selected date. Use @@bind-Selected for two-way binding.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">MinDate</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">DateTime?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    The minimum selectable date. Dates before this are disabled.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">MaxDate</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">DateTime?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    The maximum selectable date. Dates after this are disabled.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">DisabledDates</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">Func&lt;DateTime, bool&gt;?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Function to determine if a date should be disabled.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">FirstDayOfWeek</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">DayOfWeek</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Which day the week starts on. Default: Sunday.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">OnSelect</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">EventCallback&lt;DateTime&gt;</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Callback when a date is selected.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private DateTime? _selectedDate;
+    private DateTime? _preselectedDate = DateTime.Today;
+    private DateTime? _constrainedDate;
+    private DateTime? _noWeekendsDate;
+    private DateTime? _sundayStart;
+    private DateTime? _mondayStart;
+
+    private DateTime _minDate = DateTime.Today;
+    private DateTime _maxDate = DateTime.Today.AddDays(30);
+
+    private bool IsWeekend(DateTime date)
+    {
+        return date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday;
+    }
+}

@@ -1,0 +1,75 @@
+@namespace BlazorUI.Components.NavigationMenu
+@using BlazorUI.Components.Utilities
+@using BlazorUI.Icons.Lucide.Components
+
+@*
+    Navigation Menu Trigger - opens a dropdown content panel.
+*@
+
+<button type="button"
+        class="@CssClass"
+        data-state="@(MenuItem?.IsOpen == true ? "open" : "closed")"
+        @onclick="HandleClick"
+        @onmouseenter="HandleMouseEnter"
+        @onmouseleave="HandleMouseLeave">
+    @ChildContent
+    <LucideIcon Name="chevron-down"
+                Class="@ChevronCssClass" />
+</button>
+
+@code {
+    /// <summary>
+    /// Reference to the parent menu item.
+    /// </summary>
+    [CascadingParameter]
+    public NavigationMenuItem? MenuItem { get; set; }
+
+    /// <summary>
+    /// The content of the trigger button.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the trigger.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    private void HandleClick()
+    {
+        MenuItem?.Toggle();
+    }
+
+    private void HandleMouseEnter()
+    {
+        if (MenuItem != null)
+        {
+            MenuItem.IsOpen = true;
+        }
+    }
+
+    private void HandleMouseLeave()
+    {
+        // Content handles its own mouse leave
+    }
+
+    /// <summary>
+    /// Gets the computed CSS classes for the trigger.
+    /// </summary>
+    private string CssClass => ClassNames.cn(
+        "group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium",
+        "transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none",
+        "disabled:pointer-events-none disabled:opacity-50",
+        "data-[state=open]:bg-accent/50",
+        Class
+    );
+
+    /// <summary>
+    /// Gets the computed CSS classes for the chevron icon.
+    /// </summary>
+    private string ChevronCssClass => ClassNames.cn(
+        "relative top-[1px] ml-1 h-3 w-3 transition duration-200",
+        MenuItem?.IsOpen == true ? "rotate-180" : null
+    );
+}

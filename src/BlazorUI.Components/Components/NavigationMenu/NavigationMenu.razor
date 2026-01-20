@@ -1,0 +1,57 @@
+@namespace BlazorUI.Components.NavigationMenu
+@using BlazorUI.Components.Utilities
+
+@*
+    Navigation Menu component - primary site navigation.
+    Provides a horizontal navigation bar with dropdown support.
+*@
+
+<nav class="@CssClass" @attributes="AdditionalAttributes">
+    <CascadingValue Value="@this" IsFixed="true">
+        @ChildContent
+    </CascadingValue>
+</nav>
+
+@code {
+    private string? _activeItem;
+
+    /// <summary>
+    /// The content to render inside the navigation menu.
+    /// Typically contains NavigationMenuList components.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the navigation menu.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the navigation menu.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Gets or sets the currently active/open menu item.
+    /// </summary>
+    internal string? ActiveItem
+    {
+        get => _activeItem;
+        set
+        {
+            _activeItem = value;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Gets the computed CSS classes for the navigation menu.
+    /// </summary>
+    private string CssClass => ClassNames.cn(
+        "relative z-10 flex max-w-max flex-1 items-center justify-center",
+        Class
+    );
+}

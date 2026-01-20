@@ -1,0 +1,63 @@
+@namespace BlazorUI.Components.NavigationMenu
+@using BlazorUI.Components.Utilities
+
+@*
+    Navigation Menu Content - the dropdown content panel.
+*@
+
+@if (MenuItem?.IsOpen == true)
+{
+    <div class="@CssClass"
+         data-state="@(MenuItem?.IsOpen == true ? "open" : "closed")"
+         @onmouseenter="HandleMouseEnter"
+         @onmouseleave="HandleMouseLeave">
+        @ChildContent
+    </div>
+}
+
+@code {
+    /// <summary>
+    /// Reference to the parent menu item.
+    /// </summary>
+    [CascadingParameter]
+    public NavigationMenuItem? MenuItem { get; set; }
+
+    /// <summary>
+    /// The content to render in the dropdown.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the content.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    private void HandleMouseEnter()
+    {
+        if (MenuItem != null)
+        {
+            MenuItem.IsOpen = true;
+        }
+    }
+
+    private void HandleMouseLeave()
+    {
+        if (MenuItem != null)
+        {
+            MenuItem.IsOpen = false;
+        }
+    }
+
+    /// <summary>
+    /// Gets the computed CSS classes for the content panel.
+    /// </summary>
+    private string CssClass => ClassNames.cn(
+        "absolute left-0 top-full mt-1.5 w-max",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out",
+        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+        Class
+    );
+}

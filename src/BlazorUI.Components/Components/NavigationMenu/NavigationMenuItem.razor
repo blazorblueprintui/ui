@@ -1,0 +1,70 @@
+@namespace BlazorUI.Components.NavigationMenu
+@using BlazorUI.Components.Utilities
+
+@*
+    Navigation Menu Item - a single item in the navigation menu.
+    Can contain a trigger (for dropdowns) or a link.
+*@
+
+<li class="@CssClass">
+    <CascadingValue Value="@this" IsFixed="true">
+        @ChildContent
+    </CascadingValue>
+</li>
+
+@code {
+    /// <summary>
+    /// Reference to the parent navigation menu.
+    /// </summary>
+    [CascadingParameter]
+    public NavigationMenu? Menu { get; set; }
+
+    /// <summary>
+    /// The content of the menu item.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Unique identifier for this menu item.
+    /// </summary>
+    [Parameter]
+    public string? Value { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the item.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets whether this item is currently open.
+    /// </summary>
+    internal bool IsOpen
+    {
+        get => Menu?.ActiveItem == Value;
+        set
+        {
+            if (Menu != null)
+            {
+                Menu.ActiveItem = value ? Value : null;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Toggles the open state of this menu item.
+    /// </summary>
+    internal void Toggle()
+    {
+        IsOpen = !IsOpen;
+    }
+
+    /// <summary>
+    /// Gets the computed CSS classes for the item.
+    /// </summary>
+    private string CssClass => ClassNames.cn(
+        "relative",
+        Class
+    );
+}

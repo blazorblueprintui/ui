@@ -1,0 +1,222 @@
+@page "/components/date-picker"
+@using BlazorUI.Components.DatePicker
+@using BlazorUI.Components.Separator
+
+<PageTitle>Date Picker Component - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Date Picker Component</h1>
+            <p class="text-xl text-muted-foreground">
+                A date picker component with a popover calendar.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Example</h2>
+            <p class="text-sm text-muted-foreground">
+                Click the button to open the calendar popover and select a date.
+            </p>
+        </div>
+        <DatePicker @bind-Value="_basicDate" />
+        <p class="text-sm text-muted-foreground">
+            Selected: @(_basicDate?.ToString("MMMM d, yyyy") ?? "None")
+        </p>
+    </div>
+
+    <!-- With Preselected Date -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Preselected Date</h2>
+            <p class="text-sm text-muted-foreground">
+                Date picker with an initial value.
+            </p>
+        </div>
+        <DatePicker @bind-Value="_preselectedDate" />
+    </div>
+
+    <!-- Custom Placeholder -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Placeholder</h2>
+            <p class="text-sm text-muted-foreground">
+                Customize the placeholder text when no date is selected.
+            </p>
+        </div>
+        <DatePicker @bind-Value="_customPlaceholder" Placeholder="Select birth date" />
+    </div>
+
+    <!-- Custom Date Format -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Date Format</h2>
+            <p class="text-sm text-muted-foreground">
+                Customize how the selected date is displayed.
+            </p>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <p class="text-sm mb-2">Long format (default):</p>
+                <DatePicker @bind-Value="_formatDate1" DateFormat="MMMM d, yyyy" />
+            </div>
+            <div>
+                <p class="text-sm mb-2">Short format:</p>
+                <DatePicker @bind-Value="_formatDate2" DateFormat="MM/dd/yyyy" />
+            </div>
+            <div>
+                <p class="text-sm mb-2">ISO format:</p>
+                <DatePicker @bind-Value="_formatDate3" DateFormat="yyyy-MM-dd" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Constraints -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Date Constraints</h2>
+            <p class="text-sm text-muted-foreground">
+                Limit the selectable date range.
+            </p>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <p class="text-sm mb-2">Future dates only (from today):</p>
+                <DatePicker @bind-Value="_futureDate" MinDate="@DateTime.Today" />
+            </div>
+            <div>
+                <p class="text-sm mb-2">Past dates only (until today):</p>
+                <DatePicker @bind-Value="_pastDate" MaxDate="@DateTime.Today" />
+            </div>
+            <div>
+                <p class="text-sm mb-2">Next 30 days only:</p>
+                <DatePicker @bind-Value="_rangeDate" MinDate="@DateTime.Today" MaxDate="@DateTime.Today.AddDays(30)" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Disabled Weekends -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled Dates</h2>
+            <p class="text-sm text-muted-foreground">
+                Disable specific dates using a custom function.
+            </p>
+        </div>
+        <div>
+            <p class="text-sm mb-2">No weekends:</p>
+            <DatePicker @bind-Value="_noWeekendsDate" DisabledDates="@IsWeekend" />
+        </div>
+    </div>
+
+    <!-- Week Start Day -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Week Start Day</h2>
+            <p class="text-sm text-muted-foreground">
+                Configure which day the week starts on.
+            </p>
+        </div>
+        <div class="flex gap-8">
+            <div>
+                <p class="text-sm mb-2">Sunday (default):</p>
+                <DatePicker @bind-Value="_sundayStart" FirstDayOfWeek="DayOfWeek.Sunday" />
+            </div>
+            <div>
+                <p class="text-sm mb-2">Monday:</p>
+                <DatePicker @bind-Value="_mondayStart" FirstDayOfWeek="DayOfWeek.Monday" />
+            </div>
+        </div>
+    </div>
+
+    <!-- API Reference -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Value</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">DateTime?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    The selected date. Use @@bind-Value for two-way binding.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">DateFormat</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Format string for displaying the date. Default: "MMMM d, yyyy".
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Placeholder</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Placeholder text when no date is selected. Default: "Pick a date".
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">MinDate / MaxDate</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">DateTime?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Minimum and maximum selectable dates.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">DisabledDates</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">Func&lt;DateTime, bool&gt;?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Function to determine if a date should be disabled.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Disabled</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">bool</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Whether the date picker is disabled.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private DateTime? _basicDate;
+    private DateTime? _preselectedDate = DateTime.Today;
+    private DateTime? _customPlaceholder;
+    private DateTime? _formatDate1;
+    private DateTime? _formatDate2;
+    private DateTime? _formatDate3;
+    private DateTime? _futureDate;
+    private DateTime? _pastDate;
+    private DateTime? _rangeDate;
+    private DateTime? _noWeekendsDate;
+    private DateTime? _sundayStart;
+    private DateTime? _mondayStart;
+
+    private bool IsWeekend(DateTime date)
+    {
+        return date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday;
+    }
+}
