@@ -1,19 +1,26 @@
 @namespace BlazorUI.Components.Command
+@implements IDisposable
 
-<div class="@CssClass"
-     role="group"
-     aria-labelledby="@(string.IsNullOrWhiteSpace(Heading) ? null : $"command-group-{Id}")">
-    @if (!string.IsNullOrWhiteSpace(Heading))
-    {
-        <div id="@($"command-group-{Id}")"
-             class="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-            @Heading
-        </div>
-    }
-    @ChildContent
-</div>
+<CascadingValue Value="Id" Name="CommandGroupId">
+    <div class="@CssClass"
+         style="@(_isVisible ? null : "display: none")"
+         role="group"
+         aria-labelledby="@(string.IsNullOrWhiteSpace(Heading) ? null : $"command-group-{Id}")">
+        @if (!string.IsNullOrWhiteSpace(Heading))
+        {
+            <div id="@($"command-group-{Id}")"
+                 class="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                @Heading
+            </div>
+        }
+        @ChildContent
+    </div>
+</CascadingValue>
 
 @code {
+    [CascadingParameter]
+    public CommandContext? Context { get; set; }
+
     /// <summary>
     /// Gets or sets additional CSS classes to apply to the group container.
     /// </summary>
@@ -37,6 +44,8 @@
     /// </summary>
     private string Id { get; } = Guid.NewGuid().ToString("N");
 
+    private bool _isVisible = true;
+
     /// <summary>
     /// Gets the computed CSS classes for the group container.
     /// </summary>
@@ -46,6 +55,31 @@
         {
             var baseClasses = "overflow-hidden p-1 text-foreground [&_[data-command-group-heading]]:px-2 [&_[data-command-group-heading]]:py-1.5 [&_[data-command-group-heading]]:text-xs [&_[data-command-group-heading]]:font-medium [&_[data-command-group-heading]]:text-muted-foreground";
             return string.IsNullOrWhiteSpace(Class) ? baseClasses : $"{baseClasses} {Class}";
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (Context != null)
+        {
+            Context.OnStateChanged += HandleContextStateChanged;
+        }
+    }
+
+    private void HandleContextStateChanged()
+    {
+        if (Context == null) return;
+
+        // Show the group only if it has visible items (items that pass the current filter)
+        _isVisible = Context.GroupHasVisibleItems(Id);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        if (Context != null)
+        {
+            Context.OnStateChanged -= HandleContextStateChanged;
         }
     }
 }

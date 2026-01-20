@@ -1,0 +1,53 @@
+@namespace BlazorUI.Components.Kbd
+
+<kbd class="@CssClass">
+    @if (ChildContent != null)
+    {
+        @ChildContent
+    }
+    else
+    {
+        @Keys
+    }
+</kbd>
+
+@code {
+    /// <summary>
+    /// The keyboard keys to display (e.g., "Ctrl+C", "Shift+Enter").
+    /// Used when ChildContent is not provided.
+    /// </summary>
+    [Parameter]
+    public string? Keys { get; set; }
+
+    /// <summary>
+    /// Custom content for the keyboard shortcut display.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Size variant of the kbd element.
+    /// </summary>
+    [Parameter]
+    public KbdSize Size { get; set; } = KbdSize.Default;
+
+    private string SizeClasses => Size switch
+    {
+        KbdSize.Small => "text-[10px] px-1 py-0.5",
+        KbdSize.Default => "text-xs px-1.5 py-0.5",
+        KbdSize.Large => "text-sm px-2 py-1",
+        _ => "text-xs px-1.5 py-0.5"
+    };
+
+    private string CssClass => BlazorUI.Components.Utilities.ClassNames.cn(
+        "pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted font-mono font-medium text-muted-foreground",
+        SizeClasses,
+        Class
+    );
+}

@@ -1,0 +1,105 @@
+@namespace BlazorUI.Components.Empty
+
+<div class="@CssClass">
+    @if (Icon != null)
+    {
+        <div class="@IconContainerClass">
+            @Icon
+        </div>
+    }
+    @if (!string.IsNullOrEmpty(Title))
+    {
+        <h3 class="@TitleClass">@Title</h3>
+    }
+    @if (!string.IsNullOrEmpty(Description))
+    {
+        <p class="@DescriptionClass">@Description</p>
+    }
+    @if (ChildContent != null)
+    {
+        <div class="mt-4">
+            @ChildContent
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// The title to display in the empty state.
+    /// </summary>
+    [Parameter]
+    public string? Title { get; set; }
+
+    /// <summary>
+    /// The description text to display below the title.
+    /// </summary>
+    [Parameter]
+    public string? Description { get; set; }
+
+    /// <summary>
+    /// Optional icon to display above the title.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? Icon { get; set; }
+
+    /// <summary>
+    /// Additional content such as action buttons.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the container.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Size variant for the empty state.
+    /// </summary>
+    [Parameter]
+    public EmptySize Size { get; set; } = EmptySize.Default;
+
+    private string SizeClasses => Size switch
+    {
+        EmptySize.Small => "py-6",
+        EmptySize.Default => "py-12",
+        EmptySize.Large => "py-20",
+        _ => "py-12"
+    };
+
+    private string IconSizeClasses => Size switch
+    {
+        EmptySize.Small => "h-8 w-8",
+        EmptySize.Default => "h-12 w-12",
+        EmptySize.Large => "h-16 w-16",
+        _ => "h-12 w-12"
+    };
+
+    private string TitleSizeClasses => Size switch
+    {
+        EmptySize.Small => "text-sm",
+        EmptySize.Default => "text-lg",
+        EmptySize.Large => "text-xl",
+        _ => "text-lg"
+    };
+
+    private string CssClass => BlazorUI.Components.Utilities.ClassNames.cn(
+        "flex flex-col items-center justify-center text-center",
+        SizeClasses,
+        Class
+    );
+
+    private string IconContainerClass => BlazorUI.Components.Utilities.ClassNames.cn(
+        "text-muted-foreground mb-4",
+        IconSizeClasses,
+        "[&>svg]:h-full [&>svg]:w-full"
+    );
+
+    private string TitleClass => BlazorUI.Components.Utilities.ClassNames.cn(
+        "font-semibold text-foreground",
+        TitleSizeClasses
+    );
+
+    private string DescriptionClass => "text-sm text-muted-foreground mt-1 max-w-sm";
+}

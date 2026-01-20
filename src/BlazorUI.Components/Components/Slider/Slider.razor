@@ -1,6 +1,7 @@
 @namespace BlazorUI.Components.Slider
 @using Microsoft.JSInterop
 @inject IJSRuntime JS
+@implements IAsyncDisposable
 
 <div @ref="_trackRef"
      role="slider"
@@ -10,7 +11,6 @@
      aria-disabled="@Disabled"
      tabindex="@(Disabled ? -1 : 0)"
      class="@CssClass"
-     @onmousedown="HandleMouseDown"
      @onkeydown="HandleKeyDown">
     <div class="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
         <div class="absolute h-full bg-primary"
@@ -18,9 +18,7 @@
         </div>
     </div>
     <div class="@ThumbClass"
-         style="left: @(Percentage)%;"
-         @onmousedown="HandleThumbMouseDown"
-         @onmousedown:stopPropagation="true">
+         style="left: @(Percentage)%;">
     </div>
 </div>
 
@@ -54,7 +52,11 @@
 
     private ElementReference _trackRef;
     private double _internalValue;
-    private bool _isDragging;
+    private IJSObjectReference? _jsModule;
+    private DotNetObjectReference<Slider>? _dotNetRef;
+    private string _sliderId = Guid.NewGuid().ToString("N");
+    private bool _jsInitialized;
+
     private bool IsControlled => ValueChanged.HasDelegate;
     private double CurrentValue => IsControlled ? Value : _internalValue;
     private double Percentage => ((CurrentValue - Min) / (Max - Min)) * 100;
@@ -62,6 +64,41 @@
     protected override void OnInitialized()
     {
         _internalValue = DefaultValue;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !Disabled)
+        {
+            await InitializeJsAsync();
+        }
+    }
+
+    private async Task InitializeJsAsync()
+    {
+        if (_jsInitialized) return;
+
+        try
+        {
+            _jsModule = await JS.InvokeAsync<IJSObjectReference>("import",
+                "./_content/BlazorUI.Components/js/slider.js");
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await _jsModule.InvokeVoidAsync("initializeSlider", _trackRef, _dotNetRef, _sliderId);
+            _jsInitialized = true;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Failed to initialize slider JS: {ex.Message}");
+        }
+    }
+
+    [JSInvokable]
+    public async Task UpdateValueFromPercentage(double percentage)
+    {
+        if (Disabled) return;
+
+        var newValue = Min + (percentage * (Max - Min));
+        await SetValue(newValue);
     }
 
     private async Task SetValue(double value)
@@ -78,32 +115,6 @@
             _internalValue = value;
             StateHasChanged();
         }
-    }
-
-    private async Task HandleMouseDown(MouseEventArgs e)
-    {
-        if (Disabled) return;
-        await UpdateValueFromMouse(e.ClientX);
-    }
-
-    private async Task HandleThumbMouseDown(MouseEventArgs e)
-    {
-        if (Disabled) return;
-        _isDragging = true;
-    }
-
-    private async Task UpdateValueFromMouse(double clientX)
-    {
-        try
-        {
-            var rect = await JS.InvokeAsync<BoundingClientRect>("eval",
-                $"(function() {{ var el = document.querySelector('[aria-valuenow=\"{CurrentValue}\"]'); if (el) {{ var rect = el.getBoundingClientRect(); return {{ left: rect.left, width: rect.width }}; }} return {{ left: 0, width: 100 }}; }})()");
-
-            var percentage = (clientX - rect.Left) / rect.Width;
-            var newValue = Min + (percentage * (Max - Min));
-            await SetValue(newValue);
-        }
-        catch { }
     }
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
@@ -148,8 +159,21 @@
         "absolute block h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         "disabled:pointer-events-none disabled:opacity-50",
-        "-translate-x-1/2 top-1/2 -translate-y-1/2"
+        "-translate-x-1/2 top-1/2 -translate-y-1/2",
+        Disabled ? "" : "cursor-grab active:cursor-grabbing"
     );
 
-    private record BoundingClientRect(double Left, double Width);
+    public async ValueTask DisposeAsync()
+    {
+        if (_jsModule != null && _jsInitialized)
+        {
+            try
+            {
+                await _jsModule.InvokeVoidAsync("disposeSlider", _sliderId);
+                await _jsModule.DisposeAsync();
+            }
+            catch { }
+        }
+        _dotNetRef?.Dispose();
+    }
 }

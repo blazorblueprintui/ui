@@ -1,0 +1,229 @@
+@namespace BlazorUI.Components.InputOTP
+@inject IJSRuntime JSRuntime
+
+<div class="@ContainerClass" @onpaste="HandlePaste">
+    @for (int i = 0; i < Length; i++)
+    {
+        var index = i;
+        <input @ref="_inputRefs[index]"
+               type="text"
+               inputmode="numeric"
+               maxlength="1"
+               class="@InputClass"
+               value="@GetValueAt(index)"
+               disabled="@Disabled"
+               @oninput="@(e => HandleInput(index, e))"
+               @onkeydown="@(e => HandleKeyDown(index, e))"
+               @onfocus="@(() => HandleFocus(index))" />
+        @if (ShowSeparator && index < Length - 1 && (index + 1) % GroupSize == 0)
+        {
+            <div class="@SeparatorClass">
+                @if (Separator != null)
+                {
+                    @Separator
+                }
+                else
+                {
+                    <span>-</span>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// The number of OTP digits.
+    /// </summary>
+    [Parameter]
+    public int Length { get; set; } = 6;
+
+    /// <summary>
+    /// The current OTP value.
+    /// </summary>
+    [Parameter]
+    public string? Value { get; set; }
+
+    /// <summary>
+    /// Event callback when the value changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    /// <summary>
+    /// Event callback when all digits are filled.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> OnComplete { get; set; }
+
+    /// <summary>
+    /// Whether the input is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Whether to show separators between groups.
+    /// </summary>
+    [Parameter]
+    public bool ShowSeparator { get; set; } = true;
+
+    /// <summary>
+    /// Number of digits per group (for separator placement).
+    /// </summary>
+    [Parameter]
+    public int GroupSize { get; set; } = 3;
+
+    /// <summary>
+    /// Custom separator content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? Separator { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes for the container.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Size variant for the input boxes.
+    /// </summary>
+    [Parameter]
+    public InputOTPSize Size { get; set; } = InputOTPSize.Default;
+
+    private ElementReference[] _inputRefs = Array.Empty<ElementReference>();
+    private string[] _values = Array.Empty<string>();
+
+    protected override void OnInitialized()
+    {
+        _inputRefs = new ElementReference[Length];
+        _values = new string[Length];
+
+        if (!string.IsNullOrEmpty(Value))
+        {
+            for (int i = 0; i < Math.Min(Value.Length, Length); i++)
+            {
+                _values[i] = Value[i].ToString();
+            }
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (_values.Length != Length)
+        {
+            _inputRefs = new ElementReference[Length];
+            _values = new string[Length];
+        }
+
+        if (!string.IsNullOrEmpty(Value))
+        {
+            for (int i = 0; i < Length; i++)
+            {
+                _values[i] = i < Value.Length ? Value[i].ToString() : "";
+            }
+        }
+    }
+
+    private string GetValueAt(int index)
+    {
+        return index < _values.Length ? _values[index] ?? "" : "";
+    }
+
+    private async Task HandleInput(int index, ChangeEventArgs e)
+    {
+        var inputValue = e.Value?.ToString() ?? "";
+
+        // Only accept digits
+        if (!string.IsNullOrEmpty(inputValue) && !char.IsDigit(inputValue[0]))
+        {
+            return;
+        }
+
+        _values[index] = inputValue.Length > 0 ? inputValue[0].ToString() : "";
+
+        var newValue = string.Join("", _values);
+        await ValueChanged.InvokeAsync(newValue);
+
+        // Move to next input if value entered
+        if (!string.IsNullOrEmpty(_values[index]) && index < Length - 1)
+        {
+            await FocusInput(index + 1);
+        }
+
+        // Check if complete
+        if (newValue.Length == Length && !newValue.Contains(""))
+        {
+            var completeValue = string.Join("", _values.Where(v => !string.IsNullOrEmpty(v)));
+            if (completeValue.Length == Length)
+            {
+                await OnComplete.InvokeAsync(completeValue);
+            }
+        }
+    }
+
+    private async Task HandleKeyDown(int index, KeyboardEventArgs e)
+    {
+        if (e.Key == "Backspace" && string.IsNullOrEmpty(_values[index]) && index > 0)
+        {
+            // Move to previous input on backspace when current is empty
+            await FocusInput(index - 1);
+        }
+        else if (e.Key == "ArrowLeft" && index > 0)
+        {
+            await FocusInput(index - 1);
+        }
+        else if (e.Key == "ArrowRight" && index < Length - 1)
+        {
+            await FocusInput(index + 1);
+        }
+    }
+
+    private async Task HandlePaste(ClipboardEventArgs e)
+    {
+        // Handle paste - filled in via JS interop if needed
+    }
+
+    private void HandleFocus(int index)
+    {
+        // Select content on focus
+    }
+
+    private async Task FocusInput(int index)
+    {
+        if (index >= 0 && index < _inputRefs.Length)
+        {
+            try
+            {
+                await _inputRefs[index].FocusAsync();
+            }
+            catch
+            {
+                // Ignore focus errors
+            }
+        }
+    }
+
+    private string SizeClasses => Size switch
+    {
+        InputOTPSize.Small => "h-8 w-8 text-sm",
+        InputOTPSize.Default => "h-10 w-10 text-base",
+        InputOTPSize.Large => "h-12 w-12 text-lg",
+        _ => "h-10 w-10 text-base"
+    };
+
+    private string ContainerClass => BlazorUI.Components.Utilities.ClassNames.cn(
+        "flex items-center gap-2",
+        Class
+    );
+
+    private string InputClass => BlazorUI.Components.Utilities.ClassNames.cn(
+        "flex items-center justify-center rounded-md border border-input bg-background text-center font-medium",
+        "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+        "disabled:cursor-not-allowed disabled:opacity-50",
+        SizeClasses
+    );
+
+    private string SeparatorClass => "flex items-center justify-center text-muted-foreground";
+}

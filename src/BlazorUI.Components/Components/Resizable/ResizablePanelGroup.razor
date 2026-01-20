@@ -1,0 +1,145 @@
+@namespace BlazorUI.Components.Resizable
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div @ref="_groupRef" class="@CssClass" style="@Style">
+    <CascadingValue Value="this" IsFixed="false">
+        @ChildContent
+    </CascadingValue>
+</div>
+
+@code {
+    /// <summary>
+    /// The panels to display.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// The direction of the panels.
+    /// </summary>
+    [Parameter]
+    public ResizableDirection Direction { get; set; } = ResizableDirection.Horizontal;
+
+    /// <summary>
+    /// Additional CSS classes to apply.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    private ElementReference _groupRef;
+    private IJSObjectReference? _jsModule;
+    private DotNetObjectReference<ResizablePanelGroup>? _dotNetRef;
+    private string _groupId = Guid.NewGuid().ToString("N");
+    private bool _jsInitialized;
+
+    private List<double> _panelSizes = new();
+    private List<double> _panelDefaultSizes = new();
+    private List<double> _panelMinSizes = new();
+    private List<double> _panelMaxSizes = new();
+    private int _panelCount = 0;
+    private int _handleCount = 0;
+
+    internal ResizableDirection GetDirection() => Direction;
+
+    internal int RegisterPanel(double defaultSize, double minSize, double maxSize)
+    {
+        var index = _panelCount++;
+        _panelDefaultSizes.Add(defaultSize);
+        _panelMinSizes.Add(minSize);
+        _panelMaxSizes.Add(maxSize);
+
+        if (_panelSizes.Count <= index)
+        {
+            _panelSizes.Add(defaultSize);
+        }
+
+        return index;
+    }
+
+    internal double GetPanelSize(int index)
+    {
+        if (index >= 0 && index < _panelSizes.Count)
+        {
+            return _panelSizes[index];
+        }
+        return index < _panelDefaultSizes.Count ? _panelDefaultSizes[index] : 50;
+    }
+
+    internal int RegisterHandle()
+    {
+        return _handleCount++;
+    }
+
+    internal async Task StartResize(int handleIndex, double clientX, double clientY)
+    {
+        if (_jsModule != null && _jsInitialized)
+        {
+            await _jsModule.InvokeVoidAsync("startResize", _groupId, handleIndex, clientX, clientY, _panelSizes.ToArray());
+        }
+    }
+
+    [JSInvokable]
+    public void UpdatePanelSizes(double[] newSizes)
+    {
+        for (int i = 0; i < newSizes.Length && i < _panelSizes.Count; i++)
+        {
+            // Apply min/max constraints
+            var size = Math.Max(_panelMinSizes[i], Math.Min(_panelMaxSizes[i], newSizes[i]));
+            _panelSizes[i] = size;
+        }
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await InitializeJsAsync();
+        }
+    }
+
+    private async Task InitializeJsAsync()
+    {
+        if (_jsInitialized) return;
+
+        try
+        {
+            _jsModule = await JS.InvokeAsync<IJSObjectReference>("import",
+                "./_content/BlazorUI.Components/js/resizable.js");
+            _dotNetRef = DotNetObjectReference.Create(this);
+
+            var isHorizontal = Direction == ResizableDirection.Horizontal;
+            await _jsModule.InvokeVoidAsync("initializeResizable", _groupRef, _dotNetRef, _groupId, isHorizontal);
+            _jsInitialized = true;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Failed to initialize resizable JS: {ex.Message}");
+        }
+    }
+
+    private string Style => Direction == ResizableDirection.Horizontal
+        ? "display: flex; flex-direction: row; height: 100%; width: 100%;"
+        : "display: flex; flex-direction: column; height: 100%; width: 100%;";
+
+    private string CssClass => BlazorUI.Components.Utilities.ClassNames.cn(
+        "overflow-hidden",
+        Class
+    );
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_jsModule != null && _jsInitialized)
+        {
+            try
+            {
+                await _jsModule.InvokeVoidAsync("disposeResizable", _groupId);
+                await _jsModule.DisposeAsync();
+            }
+            catch { }
+        }
+        _dotNetRef?.Dispose();
+    }
+}

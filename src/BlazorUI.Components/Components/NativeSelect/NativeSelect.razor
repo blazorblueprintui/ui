@@ -1,0 +1,98 @@
+@namespace BlazorUI.Components.NativeSelect
+@typeparam TValue
+
+<select class="@CssClass"
+        value="@Value"
+        disabled="@Disabled"
+        @onchange="HandleChange">
+    @if (!string.IsNullOrEmpty(Placeholder))
+    {
+        <option value="" disabled selected="@(Value == null || Value.Equals(default(TValue)))">@Placeholder</option>
+    }
+    @ChildContent
+</select>
+
+@code {
+    /// <summary>
+    /// The currently selected value.
+    /// </summary>
+    [Parameter]
+    public TValue? Value { get; set; }
+
+    /// <summary>
+    /// Event callback when the value changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<TValue?> ValueChanged { get; set; }
+
+    /// <summary>
+    /// Placeholder text shown when no value is selected.
+    /// </summary>
+    [Parameter]
+    public string? Placeholder { get; set; }
+
+    /// <summary>
+    /// Whether the select is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// The option elements to display.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Size variant for the select.
+    /// </summary>
+    [Parameter]
+    public NativeSelectSize Size { get; set; } = NativeSelectSize.Default;
+
+    private async Task HandleChange(ChangeEventArgs e)
+    {
+        var stringValue = e.Value?.ToString();
+
+        if (string.IsNullOrEmpty(stringValue))
+        {
+            await ValueChanged.InvokeAsync(default);
+        }
+        else
+        {
+            try
+            {
+                var convertedValue = (TValue)Convert.ChangeType(stringValue, typeof(TValue));
+                await ValueChanged.InvokeAsync(convertedValue);
+            }
+            catch
+            {
+                await ValueChanged.InvokeAsync(default);
+            }
+        }
+    }
+
+    private string SizeClasses => Size switch
+    {
+        NativeSelectSize.Small => "h-8 text-xs px-2",
+        NativeSelectSize.Default => "h-10 text-sm px-3",
+        NativeSelectSize.Large => "h-12 text-base px-4",
+        _ => "h-10 text-sm px-3"
+    };
+
+    private string CssClass => BlazorUI.Components.Utilities.ClassNames.cn(
+        "flex w-full rounded-md border border-input bg-background py-2 ring-offset-background",
+        "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+        "disabled:cursor-not-allowed disabled:opacity-50",
+        "appearance-none bg-no-repeat",
+        "bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')]",
+        "bg-[length:1rem] bg-[right_0.5rem_center] pr-8",
+        SizeClasses,
+        Class
+    );
+}

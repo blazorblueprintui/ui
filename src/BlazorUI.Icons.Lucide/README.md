@@ -98,7 +98,7 @@ Add to `_Imports.razor`:
 
 **Icon with Custom CSS Classes:**
 ```razor
-<LucideIcon Name="alert-circle" Class="text-destructive hover:text-destructive/80" />
+<LucideIcon Name="circle-alert" Class="text-destructive hover:text-destructive/80" />
 ```
 
 **Accessible Icon-Only Button:**

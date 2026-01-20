@@ -26,6 +26,11 @@ public class CommandItemMetadata
     /// Gets or sets the callback invoked when this item is selected.
     /// </summary>
     public EventCallback OnSelect { get; set; }
+
+    /// <summary>
+    /// Gets or sets the group ID this item belongs to.
+    /// </summary>
+    public string? GroupId { get; set; }
 }
 
 /// <summary>
@@ -122,14 +127,15 @@ public class CommandContext
     /// Registers an item with the command context.
     /// </summary>
     /// <returns>The index of the registered item.</returns>
-    public int RegisterItem(string? value, string? searchText, bool disabled, EventCallback onSelect)
+    public int RegisterItem(string? value, string? searchText, bool disabled, EventCallback onSelect, string? groupId = null)
     {
         var metadata = new CommandItemMetadata
         {
             Value = value,
             SearchText = searchText ?? value,
             Disabled = disabled,
-            OnSelect = onSelect
+            OnSelect = onSelect,
+            GroupId = groupId
         };
         _items.Add(metadata);
         _hasRegisteredItems = true;
@@ -140,7 +146,7 @@ public class CommandContext
     /// <summary>
     /// Updates an existing item's metadata.
     /// </summary>
-    public void UpdateItem(int index, string? value, string? searchText, bool disabled, EventCallback onSelect)
+    public void UpdateItem(int index, string? value, string? searchText, bool disabled, EventCallback onSelect, string? groupId = null)
     {
         if (index >= 0 && index < _items.Count)
         {
@@ -148,6 +154,7 @@ public class CommandContext
             _items[index].SearchText = searchText ?? value;
             _items[index].Disabled = disabled;
             _items[index].OnSelect = onSelect;
+            _items[index].GroupId = groupId;
         }
     }
 
@@ -210,6 +217,17 @@ public class CommandContext
             return true;
 
         return GetFilteredItems().Any(i => !i.Disabled);
+    }
+
+    /// <summary>
+    /// Gets whether a specific group has any visible items.
+    /// </summary>
+    /// <param name="groupId">The group ID to check.</param>
+    /// <returns>True if the group has visible items, false otherwise.</returns>
+    public bool GroupHasVisibleItems(string groupId)
+    {
+        var filteredItems = GetFilteredItems();
+        return filteredItems.Any(i => i.GroupId == groupId);
     }
 
     /// <summary>

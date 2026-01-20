@@ -1,13 +1,9 @@
 @namespace BlazorUI.Components.ScrollArea
 
-<div class="@CssClass">
-    <div class="@ViewportClass" style="@ViewportStyle">
+<div class="@CssClass" style="@ContainerStyle">
+    <div class="@ComputedViewportClass">
         @ChildContent
     </div>
-    @if (ShowScrollbar)
-    {
-        <ScrollBar Orientation="@Orientation" />
-    }
 </div>
 
 @code {
@@ -32,9 +28,7 @@
     [Parameter]
     public string? MaxHeight { get; set; }
 
-    private bool ShowScrollbar => Type != ScrollAreaType.Hidden;
-
-    private string ViewportStyle
+    private string ContainerStyle
     {
         get
         {
@@ -48,9 +42,17 @@
     }
 
     private string CssClass => BlazorUI.Components.Utilities.ClassNames.cn(
-        "relative overflow-hidden",
+        "relative",
         Class
     );
+
+    private string ScrollbarClass => Type switch
+    {
+        ScrollAreaType.Always => "[&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border",
+        ScrollAreaType.Hover => "[&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:opacity-0 hover:[&::-webkit-scrollbar-thumb]:opacity-100",
+        ScrollAreaType.Hidden => "scrollbar-none [&::-webkit-scrollbar]:hidden",
+        _ => "[&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border"
+    };
 
     private string ComputedViewportClass => BlazorUI.Components.Utilities.ClassNames.cn(
         "h-full w-full rounded-[inherit]",
@@ -61,7 +63,7 @@
             ScrollAreaOrientation.Both => "overflow-auto",
             _ => "overflow-y-auto overflow-x-hidden"
         },
-        Type == ScrollAreaType.Always ? "scrollbar-always" : "scrollbar-auto",
+        ScrollbarClass,
         ViewportClass
     );
 }

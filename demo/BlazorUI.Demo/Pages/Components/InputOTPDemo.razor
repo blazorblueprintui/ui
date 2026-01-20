@@ -1,0 +1,155 @@
+@page "/components/input-otp"
+@using BlazorUI.Components.InputOTP
+@using BlazorUI.Components.Button
+
+<PageTitle>Input OTP Component - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Input OTP Component</h1>
+            <p class="text-xl text-muted-foreground">
+                A one-time password input with individual digit boxes.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Example</h2>
+            <p class="text-sm text-muted-foreground">
+                A 6-digit OTP input with separators.
+            </p>
+        </div>
+        <InputOTP @bind-Value="_otpValue" OnComplete="HandleComplete" />
+        <p class="text-sm text-muted-foreground">Value: @(_otpValue ?? "empty")</p>
+        @if (_isComplete)
+        {
+            <p class="text-sm text-green-600">OTP Complete!</p>
+        }
+    </div>
+
+    <!-- Without Separator -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Without Separator</h2>
+            <p class="text-sm text-muted-foreground">
+                OTP input without separators.
+            </p>
+        </div>
+        <InputOTP Length="4" ShowSeparator="false" />
+    </div>
+
+    <!-- Custom Separator -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Separator</h2>
+            <p class="text-sm text-muted-foreground">
+                OTP input with a custom separator.
+            </p>
+        </div>
+        <InputOTP Length="6" GroupSize="2">
+            <Separator>
+                <span class="text-muted-foreground">:</span>
+            </Separator>
+        </InputOTP>
+    </div>
+
+    <!-- Different Lengths -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Different Lengths</h2>
+            <p class="text-sm text-muted-foreground">
+                OTP inputs with different digit counts.
+            </p>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <p class="text-sm text-muted-foreground mb-2">4 digits:</p>
+                <InputOTP Length="4" ShowSeparator="false" />
+            </div>
+            <div>
+                <p class="text-sm text-muted-foreground mb-2">6 digits:</p>
+                <InputOTP Length="6" />
+            </div>
+            <div>
+                <p class="text-sm text-muted-foreground mb-2">8 digits:</p>
+                <InputOTP Length="8" GroupSize="4" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Sizes -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Sizes</h2>
+            <p class="text-sm text-muted-foreground">
+                OTP inputs come in different sizes.
+            </p>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <p class="text-sm text-muted-foreground mb-2">Small:</p>
+                <InputOTP Length="4" ShowSeparator="false" Size="InputOTPSize.Small" />
+            </div>
+            <div>
+                <p class="text-sm text-muted-foreground mb-2">Default:</p>
+                <InputOTP Length="4" ShowSeparator="false" Size="InputOTPSize.Default" />
+            </div>
+            <div>
+                <p class="text-sm text-muted-foreground mb-2">Large:</p>
+                <InputOTP Length="4" ShowSeparator="false" Size="InputOTPSize.Large" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Disabled -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">
+                A disabled OTP input.
+            </p>
+        </div>
+        <InputOTP Length="6" Disabled="true" Value="123456" />
+    </div>
+
+    <!-- Verification Flow -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Verification Flow</h2>
+            <p class="text-sm text-muted-foreground">
+                Example verification flow with submit button.
+            </p>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4 max-w-sm">
+            <div class="text-center space-y-2">
+                <h3 class="text-lg font-semibold">Verify your phone</h3>
+                <p class="text-sm text-muted-foreground">
+                    Enter the 6-digit code sent to your phone.
+                </p>
+            </div>
+            <div class="flex justify-center">
+                <InputOTP @bind-Value="_verifyOtp" Length="6" />
+            </div>
+            <Button Class="w-full" Disabled="@(_verifyOtp?.Length != 6)">
+                Verify
+            </Button>
+            <p class="text-center text-sm text-muted-foreground">
+                Didn't receive a code? <a href="#" class="text-primary underline">Resend</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string? _otpValue;
+    private string? _verifyOtp;
+    private bool _isComplete;
+
+    private void HandleComplete(string value)
+    {
+        _isComplete = true;
+    }
+}

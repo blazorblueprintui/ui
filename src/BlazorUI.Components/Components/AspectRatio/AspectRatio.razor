@@ -1,0 +1,34 @@
+@namespace BlazorUI.Components.AspectRatio
+
+<div class="@CssClass" style="@Style">
+    @ChildContent
+</div>
+
+@code {
+    /// <summary>
+    /// The aspect ratio to maintain (width / height).
+    /// Common values: 16/9, 4/3, 1/1, 21/9
+    /// Default is 1 (square).
+    /// </summary>
+    [Parameter]
+    public double Ratio { get; set; } = 1;
+
+    /// <summary>
+    /// The content to display within the aspect ratio container.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the container.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    private string Style => $"position: relative; width: 100%; padding-bottom: {100 / Ratio:F4}%;";
+
+    private string CssClass => BlazorUI.Components.Utilities.ClassNames.cn(
+        "[&>*]:absolute [&>*]:inset-0 [&>*]:h-full [&>*]:w-full",
+        Class
+    );
+}

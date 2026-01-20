@@ -1,6 +1,12 @@
 # BlazorUI
 
+[![Website](https://img.shields.io/badge/Website-blazorui.net-blue)](https://blazorui.net)
+[![NuGet](https://img.shields.io/nuget/v/BlazorUI.Components)](https://www.nuget.org/packages/BlazorUI.Components)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+
 A comprehensive UI component library for Blazor inspired by [shadcn/ui](https://ui.shadcn.com/).
+
+**[View Documentation & Live Demo](https://blazorui.net)**
 
 ## Overview
 
@@ -103,6 +109,7 @@ dotnet add package BlazorUI.Icons.Feather     # 286 icons - minimalist, stroke-b
 
 ### Learn More
 
+- **Documentation & Demos**: Visit [blazorui.net](https://blazorui.net) for full documentation and interactive examples
 - **Contributing**: See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines
 
 ## Theming
@@ -231,7 +238,7 @@ Primitives give you complete control over styling while handling all the complex
 
 ## Components
 
-BlazorUI includes **51 styled components** with full shadcn/ui design compatibility:
+BlazorUI includes **60+ styled components** with full shadcn/ui design compatibility:
 
 ### Form Components
 - **Button** - Multiple variants (default, destructive, outline, secondary, ghost, link) with icon support
@@ -241,26 +248,30 @@ BlazorUI includes **51 styled components** with full shadcn/ui design compatibil
 - **Field** - Combine labels, controls, and help text for accessible forms
 - **Input** - Text input with multiple types and validation support
 - **Input Group** - Enhanced inputs with icons, buttons, and addons
+- **Input OTP** - One-time password input with individual digit fields
 - **Label** - Accessible form labels
 - **MultiSelect** - Searchable multi-selection with tags and checkboxes
+- **Native Select** - Browser-native select dropdown with consistent styling
 - **RadioGroup** - Radio button groups with keyboard navigation
 - **Select** - Dropdown select with search and keyboard navigation
 - **Switch** - Toggle switch component
 - **Textarea** - Multi-line text input with automatic sizing
 - **Calendar** - Interactive calendar for date selection with constraints
 - **Date Picker** - Date picker with popover calendar and formatting options
-- **Slider** - Range input for selecting numeric values
+- **Slider** - Range input for selecting numeric values with drag support
 - **Toggle** - Two-state button for toggleable options
 - **Toggle Group** - Group of toggles with single or multiple selection
 
 ### Layout & Navigation
 - **Accordion** - Collapsible content sections
+- **Aspect Ratio** - Maintain width/height ratio for responsive content
 - **Breadcrumb** - Navigation trail showing hierarchical location
 - **Card** - Container for grouped content with header and footer
 - **Carousel** - Slideshow component for cycling through content
 - **Collapsible** - Expandable/collapsible panels
 - **Item** - Flexible list items with media, content, and actions
 - **Pagination** - Page navigation with previous/next controls
+- **Resizable** - Resizable panels with drag handles
 - **Scroll Area** - Custom scrollable area with styled scrollbars
 - **Separator** - Visual dividers
 - **Sidebar** - Responsive sidebar with collapsible icon mode, variants (default, floating, inset), and mobile sheet integration
@@ -268,7 +279,7 @@ BlazorUI includes **51 styled components** with full shadcn/ui design compatibil
 - **Navigation Menu** - Horizontal navigation with dropdown menus
 
 ### Overlay Components
-- **Command** - Command palette with keyboard navigation
+- **Command** - Command palette with keyboard navigation and filtering
 - **Context Menu** - Right-click menu with customizable items
 - **Dialog** - Modal dialogs
 - **Drawer** - Mobile-friendly panel sliding from screen edge
@@ -290,9 +301,12 @@ BlazorUI includes **51 styled components** with full shadcn/ui design compatibil
 - **Alert Dialog** - Modal requiring user acknowledgement
 - **Avatar** - User avatars with fallback support
 - **Badge** - Status badges and labels
+- **Empty** - Empty state placeholder with icon, title, and description
+- **Kbd** - Keyboard shortcut display component
 - **Progress** - Progress bar indicator
 - **Skeleton** - Loading placeholders
 - **Spinner** - Loading spinner with size variants
+- **Typography** - Consistent text styling (headings, paragraphs, lists, etc.)
 
 ### Icons
 
