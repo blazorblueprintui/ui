@@ -11,69 +11,133 @@
     @* Calendar Header with Navigation *@
     <div class="flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
         <div class="space-y-4">
-            @* Month Navigation *@
+            @* Month/Year Navigation *@
             <div class="flex items-center justify-between pt-1">
                 <Button Variant="ButtonVariant.Outline"
                         Size="ButtonSize.Icon"
                         Class="h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
-                        OnClick="@PreviousMonth"
-                        AriaLabel="Go to previous month">
+                        OnClick="@NavigatePrevious"
+                        AriaLabel="@GetPreviousAriaLabel()">
                     <LucideIcon Name="chevron-left" Class="h-4 w-4" />
                 </Button>
-                <div class="text-sm font-medium">
-                    @DisplayDate.ToString("MMMM yyyy")
+                <div class="flex items-center gap-1">
+                    @if (_viewMode == CalendarViewMode.Days)
+                    {
+                        <Button Variant="ButtonVariant.Ghost"
+                                Size="ButtonSize.Small"
+                                Class="text-sm font-medium hover:bg-accent"
+                                OnClick="@ShowMonthSelector">
+                            @DisplayDate.ToString("MMMM")
+                        </Button>
+                        <Button Variant="ButtonVariant.Ghost"
+                                Size="ButtonSize.Small"
+                                Class="text-sm font-medium hover:bg-accent"
+                                OnClick="@ShowYearSelector">
+                            @DisplayDate.ToString("yyyy")
+                        </Button>
+                    }
+                    else if (_viewMode == CalendarViewMode.Months)
+                    {
+                        <Button Variant="ButtonVariant.Ghost"
+                                Size="ButtonSize.Small"
+                                Class="text-sm font-medium hover:bg-accent"
+                                OnClick="@ShowYearSelector">
+                            @DisplayDate.ToString("yyyy")
+                        </Button>
+                    }
+                    else
+                    {
+                        <span class="text-sm font-medium">
+                            @GetYearRangeDisplay()
+                        </span>
+                    }
                 </div>
                 <Button Variant="ButtonVariant.Outline"
                         Size="ButtonSize.Icon"
                         Class="h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
-                        OnClick="@NextMonth"
-                        AriaLabel="Go to next month">
+                        OnClick="@NavigateNext"
+                        AriaLabel="@GetNextAriaLabel()">
                     <LucideIcon Name="chevron-right" Class="h-4 w-4" />
                 </Button>
             </div>
 
-            @* Calendar Grid *@
-            <table class="w-full border-collapse space-y-1" role="grid">
-                <thead>
-                    <tr class="flex">
-                        @foreach (var dayName in DayNames)
-                        {
-                            <th scope="col" class="text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]">
-                                @dayName
-                            </th>
-                        }
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var week in GetWeeksInMonth())
-                    {
-                        <tr class="flex w-full mt-2">
-                            @foreach (var day in week)
+            @* Days View - Calendar Grid *@
+            @if (_viewMode == CalendarViewMode.Days)
+            {
+                <table class="w-full border-collapse space-y-1" role="grid">
+                    <thead>
+                        <tr class="flex">
+                            @foreach (var dayName in DayNames)
                             {
-                                <td class="@GetCellClasses(day)"
-                                    role="gridcell"
-                                    aria-selected="@IsSelected(day)">
-                                    @if (day.HasValue)
-                                    {
-                                        <button type="button"
-                                                class="@GetDayClasses(day.Value)"
-                                                disabled="@IsDisabled(day.Value)"
-                                                @onclick="@(() => SelectDate(day.Value))">
-                                            @day.Value.Day
-                                        </button>
-                                    }
-                                </td>
+                                <th scope="col" class="text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]">
+                                    @dayName
+                                </th>
                             }
                         </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var week in GetWeeksInMonth())
+                        {
+                            <tr class="flex w-full mt-2">
+                                @foreach (var day in week)
+                                {
+                                    <td class="@GetCellClasses(day)"
+                                        role="gridcell"
+                                        aria-selected="@IsSelected(day)">
+                                        @if (day.HasValue)
+                                        {
+                                            <button type="button"
+                                                    class="@GetDayClasses(day.Value)"
+                                                    disabled="@IsDisabled(day.Value)"
+                                                    @onclick="@(() => SelectDate(day.Value))">
+                                                @day.Value.Day
+                                            </button>
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+            @* Months View - Month Grid *@
+            @if (_viewMode == CalendarViewMode.Months)
+            {
+                <div class="grid grid-cols-3 gap-2" role="grid">
+                    @foreach (var month in GetMonths())
+                    {
+                        <button type="button"
+                                class="@GetMonthClasses(month.Number)"
+                                @onclick="@(() => SelectMonth(month.Number))">
+                            @month.ShortName
+                        </button>
                     }
-                </tbody>
-            </table>
+                </div>
+            }
+
+            @* Years View - Year Grid *@
+            @if (_viewMode == CalendarViewMode.Years)
+            {
+                <div class="grid grid-cols-3 gap-2" role="grid">
+                    @foreach (var year in GetYears())
+                    {
+                        <button type="button"
+                                class="@GetYearClasses(year)"
+                                @onclick="@(() => SelectYear(year))">
+                            @year
+                        </button>
+                    }
+                </div>
+            }
         </div>
     </div>
 </div>
 
 @code {
     private DateTime _displayDate;
+    private CalendarViewMode _viewMode = CalendarViewMode.Days;
+    private int _yearRangeStart;
 
     /// <summary>
     /// The currently displayed month.
@@ -151,6 +215,7 @@
     protected override void OnInitialized()
     {
         _displayDate = Selected ?? DateTime.Today;
+        _yearRangeStart = (_displayDate.Year / 12) * 12;
     }
 
     protected override void OnParametersSet()
@@ -176,15 +241,155 @@
         }
     }
 
-    private void PreviousMonth()
+    #region Navigation
+
+    private void NavigatePrevious()
     {
-        DisplayDate = DisplayDate.AddMonths(-1);
+        switch (_viewMode)
+        {
+            case CalendarViewMode.Days:
+                DisplayDate = DisplayDate.AddMonths(-1);
+                break;
+            case CalendarViewMode.Months:
+                DisplayDate = DisplayDate.AddYears(-1);
+                break;
+            case CalendarViewMode.Years:
+                _yearRangeStart -= 12;
+                StateHasChanged();
+                break;
+        }
     }
 
-    private void NextMonth()
+    private void NavigateNext()
     {
-        DisplayDate = DisplayDate.AddMonths(1);
+        switch (_viewMode)
+        {
+            case CalendarViewMode.Days:
+                DisplayDate = DisplayDate.AddMonths(1);
+                break;
+            case CalendarViewMode.Months:
+                DisplayDate = DisplayDate.AddYears(1);
+                break;
+            case CalendarViewMode.Years:
+                _yearRangeStart += 12;
+                StateHasChanged();
+                break;
+        }
     }
+
+    private string GetPreviousAriaLabel() => _viewMode switch
+    {
+        CalendarViewMode.Days => "Go to previous month",
+        CalendarViewMode.Months => "Go to previous year",
+        CalendarViewMode.Years => "Go to previous decade",
+        _ => "Go to previous"
+    };
+
+    private string GetNextAriaLabel() => _viewMode switch
+    {
+        CalendarViewMode.Days => "Go to next month",
+        CalendarViewMode.Months => "Go to next year",
+        CalendarViewMode.Years => "Go to next decade",
+        _ => "Go to next"
+    };
+
+    private void ShowMonthSelector()
+    {
+        _viewMode = CalendarViewMode.Months;
+        StateHasChanged();
+    }
+
+    private void ShowYearSelector()
+    {
+        _yearRangeStart = (DisplayDate.Year / 12) * 12;
+        _viewMode = CalendarViewMode.Years;
+        StateHasChanged();
+    }
+
+    private void ShowDaySelector()
+    {
+        _viewMode = CalendarViewMode.Days;
+        StateHasChanged();
+    }
+
+    #endregion
+
+    #region Month Selection
+
+    private IEnumerable<(int Number, string ShortName)> GetMonths()
+    {
+        var monthNames = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+        for (int i = 1; i <= 12; i++)
+        {
+            yield return (i, monthNames[i - 1]);
+        }
+    }
+
+    private void SelectMonth(int month)
+    {
+        DisplayDate = new DateTime(DisplayDate.Year, month, 1);
+        _viewMode = CalendarViewMode.Days;
+        StateHasChanged();
+    }
+
+    private string GetMonthClasses(int month)
+    {
+        var isCurrentMonth = month == DisplayDate.Month;
+        var isSelectedMonth = Selected.HasValue && month == Selected.Value.Month && DisplayDate.Year == Selected.Value.Year;
+
+        return ClassNames.cn(
+            "inline-flex h-9 items-center justify-center rounded-md text-sm font-normal px-3 py-2",
+            "ring-offset-background transition-colors",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+            "hover:bg-accent hover:text-accent-foreground",
+            isSelectedMonth ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground" : null,
+            isCurrentMonth && !isSelectedMonth ? "bg-accent text-accent-foreground" : null
+        );
+    }
+
+    #endregion
+
+    #region Year Selection
+
+    private string GetYearRangeDisplay()
+    {
+        return $"{_yearRangeStart} - {_yearRangeStart + 11}";
+    }
+
+    private IEnumerable<int> GetYears()
+    {
+        for (int i = 0; i < 12; i++)
+        {
+            yield return _yearRangeStart + i;
+        }
+    }
+
+    private void SelectYear(int year)
+    {
+        DisplayDate = new DateTime(year, DisplayDate.Month, 1);
+        _viewMode = CalendarViewMode.Months;
+        StateHasChanged();
+    }
+
+    private string GetYearClasses(int year)
+    {
+        var isCurrentYear = year == DateTime.Today.Year;
+        var isSelectedYear = Selected.HasValue && year == Selected.Value.Year;
+        var isDisplayYear = year == DisplayDate.Year;
+
+        return ClassNames.cn(
+            "inline-flex h-9 items-center justify-center rounded-md text-sm font-normal px-3 py-2",
+            "ring-offset-background transition-colors",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+            "hover:bg-accent hover:text-accent-foreground",
+            isSelectedYear || isDisplayYear ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground" : null,
+            isCurrentYear && !isSelectedYear && !isDisplayYear ? "bg-accent text-accent-foreground" : null
+        );
+    }
+
+    #endregion
+
+    #region Date Selection
 
     private async Task SelectDate(DateTime date)
     {
@@ -280,6 +485,8 @@
             isDisabledDate ? "text-muted-foreground opacity-50" : null
         );
     }
+
+    #endregion
 
     /// <summary>
     /// Gets the computed CSS classes for the calendar container.
