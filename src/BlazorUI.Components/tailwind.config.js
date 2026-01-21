@@ -50,6 +50,28 @@ module.exports = {
           border: "var(--sidebar-border)",
           ring: "var(--sidebar-ring)",
         },
+        alert: {
+          success: {
+            DEFAULT: "var(--alert-success)",
+            foreground: "var(--alert-success-foreground)",
+            bg: "var(--alert-success-bg)",
+          },
+          info: {
+            DEFAULT: "var(--alert-info)",
+            foreground: "var(--alert-info-foreground)",
+            bg: "var(--alert-info-bg)",
+          },
+          warning: {
+            DEFAULT: "var(--alert-warning)",
+            foreground: "var(--alert-warning-foreground)",
+            bg: "var(--alert-warning-bg)",
+          },
+          danger: {
+            DEFAULT: "var(--alert-danger)",
+            foreground: "var(--alert-danger-foreground)",
+            bg: "var(--alert-danger-bg)",
+          },
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

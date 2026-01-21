@@ -13,7 +13,8 @@ namespace BlazorUI.Components.Alert;
 /// </para>
 /// <para>
 /// Features:
-/// - 2 visual variants (Default, Destructive)
+/// - 5 visual variants (Default, Success, Info, Warning, Danger)
+/// - Optional left accent border with subtle tinted background
 /// - Optional icon support
 /// - Semantic HTML with role="alert"
 /// - Dark mode compatible via CSS variables
@@ -69,18 +70,41 @@ public partial class Alert : ComponentBase
     public RenderFragment? Icon { get; set; }
 
     /// <summary>
+    /// Gets or sets whether to show a thick left accent border.
+    /// </summary>
+    /// <remarks>
+    /// When true, displays a 4px left border in the variant's accent color.
+    /// When false (default), displays a standard 1px border on all sides.
+    /// </remarks>
+    [Parameter]
+    public bool AccentBorder { get; set; } = false;
+
+    /// <summary>
     /// Gets the computed CSS classes for the alert element.
     /// </summary>
     private string CssClass => ClassNames.cn(
         // Base alert styles
-        "relative w-full rounded-lg border p-4",
+        "relative w-full rounded-lg border p-4 text-foreground",
+        // Accent border style (thick left border)
+        AccentBorder ? "border-l-4" : null,
         Icon != null ? "[&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&:has(svg)]:pl-11" : null,
-        // Variant-specific styles
+        // Variant-specific styles (border color, background tint, icon color)
         Variant switch
         {
-            AlertVariant.Default => "bg-background text-foreground [&>svg]:text-foreground",
-            AlertVariant.Destructive => "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive",
-            _ => "bg-background text-foreground [&>svg]:text-foreground"
+            AlertVariant.Default => "bg-muted/30 [&>svg]:text-muted-foreground",
+            AlertVariant.Success => AccentBorder
+                ? "border-l-alert-success bg-alert-success-bg border-alert-success/30 [&>svg]:text-alert-success"
+                : "border-alert-success/30 bg-alert-success-bg [&>svg]:text-alert-success",
+            AlertVariant.Info => AccentBorder
+                ? "border-l-alert-info bg-alert-info-bg border-alert-info/30 [&>svg]:text-alert-info"
+                : "border-alert-info/30 bg-alert-info-bg [&>svg]:text-alert-info",
+            AlertVariant.Warning => AccentBorder
+                ? "border-l-alert-warning bg-alert-warning-bg border-alert-warning/30 [&>svg]:text-alert-warning"
+                : "border-alert-warning/30 bg-alert-warning-bg [&>svg]:text-alert-warning",
+            AlertVariant.Danger => AccentBorder
+                ? "border-l-alert-danger bg-alert-danger-bg border-alert-danger/30 [&>svg]:text-alert-danger"
+                : "border-alert-danger/30 bg-alert-danger-bg [&>svg]:text-alert-danger",
+            _ => "bg-muted/30 [&>svg]:text-muted-foreground"
         },
         // Custom classes (if provided)
         Class
