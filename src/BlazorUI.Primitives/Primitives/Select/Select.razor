@@ -15,6 +15,8 @@
     private SelectContext<TValue> _context = new();
     private UseControllableState<TValue?> _state = null!;
     private IJSObjectReference? _jsModule;
+    private IJSObjectReference? _clickOutsideModule;
+    private IJSObjectReference? _clickOutsideCleanup;
     private DotNetObjectReference<Select<TValue>>? _dotNetRef;
 
     /// <summary>
@@ -153,15 +155,41 @@
                 "import", "./_content/BlazorUI.Primitives/js/primitives/select.js");
         }
 
-        // Set up click-outside when dropdown opens
+        // Set up click-outside when dropdown opens using the unified click-outside.js
+        // This uses pointerdown/pointerup events for better coordination with nested portals
         if (_context.IsOpen && _dotNetRef == null)
         {
             _dotNetRef = DotNetObjectReference.Create(this);
-            await _jsModule.InvokeVoidAsync("setupClickOutside", _dotNetRef, _dotNetRef, _context.ContentId);
+
+            // Import click-outside module if not already imported
+            if (_clickOutsideModule == null)
+            {
+                _clickOutsideModule = await JS.InvokeAsync<IJSObjectReference>(
+                    "import", "./_content/BlazorUI.Primitives/js/primitives/click-outside.js");
+            }
+
+            // Use onClickOutsideByIds for unified detection with nested portal awareness
+            _clickOutsideCleanup = await _clickOutsideModule.InvokeAsync<IJSObjectReference>(
+                "onClickOutsideByIds",
+                _context.ContentId,
+                _dotNetRef,
+                "HandleClickOutside",
+                _context.TriggerId);
         }
         else if (!_context.IsOpen && _dotNetRef != null)
         {
-            await _jsModule.InvokeVoidAsync("removeClickOutside", _context.ContentId);
+            // Clean up click-outside detection
+            if (_clickOutsideCleanup != null)
+            {
+                try
+                {
+                    await _clickOutsideCleanup.InvokeVoidAsync("dispose");
+                    await _clickOutsideCleanup.DisposeAsync();
+                }
+                catch { }
+                _clickOutsideCleanup = null;
+            }
+
             _dotNetRef?.Dispose();
             _dotNetRef = null;
         }
@@ -222,15 +250,36 @@
             DropdownManager.Unregister(_context.ContentId);
         }
 
-        if (_jsModule != null && _context != null)
+        // Clean up click-outside detection
+        if (_clickOutsideCleanup != null)
         {
             try
             {
-                await _jsModule.InvokeVoidAsync("removeClickOutside", _context.ContentId);
+                await _clickOutsideCleanup.InvokeVoidAsync("dispose");
+                await _clickOutsideCleanup.DisposeAsync();
             }
             catch { }
+            _clickOutsideCleanup = null;
+        }
 
-            await _jsModule.DisposeAsync();
+        if (_clickOutsideModule != null)
+        {
+            try
+            {
+                await _clickOutsideModule.DisposeAsync();
+            }
+            catch { }
+            _clickOutsideModule = null;
+        }
+
+        if (_jsModule != null)
+        {
+            try
+            {
+                await _jsModule.DisposeAsync();
+            }
+            catch { }
+            _jsModule = null;
         }
 
         _dotNetRef?.Dispose();

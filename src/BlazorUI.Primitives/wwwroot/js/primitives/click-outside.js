@@ -250,6 +250,12 @@ export async function onClickOutsideById(elementId, dotNetRef, methodName = 'Han
  * CRITICAL: Only triggers close if BOTH pointerdown AND pointerup were outside.
  * This prevents spurious second pointerdown events (from Blazor Server re-renders) from
  * closing the popover, since they have no corresponding pointerup event.
+ *
+ * Handles nested portal scenarios (e.g., DatePicker → Calendar → Select dropdowns):
+ * - Uses data-portal-content attribute for generic portal detection
+ * - Tracks portal ID on pointerdown to handle portal removal before pointerup fires
+ *   (event-based state tracking, not time-based grace periods)
+ *
  * @param {string} elementId - ID of the element to monitor
  * @param {Object} dotNetRef - DotNet object reference for callback
  * @param {string} methodName - The method name to invoke on click outside
@@ -267,6 +273,22 @@ export function onClickOutsideByIds(elementId, dotNetRef, methodName = 'HandleCl
 
     let isEnabled = false;
     let isPointerDownInside = false;
+    // Track which portal (by ID) the interaction started in, not just a boolean
+    // This allows verification even after the portal is removed from DOM
+    let nestedPortalIdOnPointerDown = null;
+
+    // Check if target is inside a nested portal (Select, Combobox, etc.)
+    // Uses data-portal-content attribute for generic, future-proof detection
+    // Returns the portal ID if inside a nested portal, null otherwise
+    const getNestedPortalId = (target) => {
+        // Check if click is inside ANY portal content using the data-portal-content attribute
+        const portalContent = target.closest('[data-portal-content]');
+        if (portalContent && portalContent.id !== elementId) {
+            // It's a nested portal content, not our main element - return its ID
+            return portalContent.id;
+        }
+        return null;
+    };
 
     const handlePointerDown = (e) => {
         if (!isEnabled) return;
@@ -282,12 +304,28 @@ export function onClickOutsideByIds(elementId, dotNetRef, methodName = 'HandleCl
         const isInsideContent = element && element.contains(target);
         const isInsideTrigger = excludeElement && excludeElement.contains(target);
 
+        // Only check for nested portals if click is NOT on our trigger and NOT in our content
+        // If click is on trigger/content, any parent portal (like Popover containing Select) is irrelevant
+        const nestedPortalId = (isInsideContent || isInsideTrigger) ? null : getNestedPortalId(target);
+
         // Track whether pointerdown was inside
-        isPointerDownInside = isInsideContent || isInsideTrigger;
+        isPointerDownInside = isInsideContent || isInsideTrigger || nestedPortalId !== null;
+
+        // Store the portal ID (or null) - this allows us to know the interaction
+        // started in a nested portal even after that portal is removed from DOM
+        nestedPortalIdOnPointerDown = nestedPortalId;
     };
 
     const handlePointerUp = (e) => {
         if (!isEnabled) return;
+
+        // If pointerdown was in a nested portal, don't close - even if portal is now gone
+        // We tracked the interaction by ID, not by DOM presence
+        if (nestedPortalIdOnPointerDown !== null) {
+            isPointerDownInside = false;
+            nestedPortalIdOnPointerDown = null;
+            return;
+        }
 
         let target = e.target;
         if (target && target.nodeType === Node.TEXT_NODE) {
@@ -299,7 +337,10 @@ export function onClickOutsideByIds(elementId, dotNetRef, methodName = 'HandleCl
 
         const isInsideContent = element && element.contains(target);
         const isInsideTrigger = excludeElement && excludeElement.contains(target);
-        const isOutside = !isInsideContent && !isInsideTrigger;
+
+        // Only check for nested portals if click is NOT on our trigger and NOT in our content
+        const nestedPortalId = (isInsideContent || isInsideTrigger) ? null : getNestedPortalId(target);
+        const isOutside = !isInsideContent && !isInsideTrigger && nestedPortalId === null;
 
         // Only close if BOTH pointerdown AND pointerup were outside
         // This prevents spurious second pointerdown (without pointerup) from closing
@@ -313,6 +354,7 @@ export function onClickOutsideByIds(elementId, dotNetRef, methodName = 'HandleCl
 
         // Reset for next interaction
         isPointerDownInside = false;
+        nestedPortalIdOnPointerDown = null;
     };
 
     // Use capture phase to catch events before they're stopped

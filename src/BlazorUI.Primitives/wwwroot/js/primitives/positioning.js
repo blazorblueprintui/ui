@@ -167,11 +167,13 @@ export function applyPosition(floating, position, makeVisible = false) {
     if (!floating || !position) return;
 
     // Apply all positioning styles atomically to prevent flash
+    // Use higher z-index for fixed positioning (nested dropdowns) to ensure they appear above parent popovers
+    const zIndex = position.strategy === 'fixed' ? '9999' : '50';
     Object.assign(floating.style, {
         position: position.strategy || 'absolute',
         left: `${position.x}px`,
         top: `${position.y}px`,
-        zIndex: '50',
+        zIndex: zIndex,
         transformOrigin: position.transformOrigin || ''
     });
 
@@ -180,9 +182,13 @@ export function applyPosition(floating, position, makeVisible = false) {
     if (makeVisible) {
         // Use requestAnimationFrame to ensure position is applied before visibility
         requestAnimationFrame(() => {
-            floating.style.visibility = 'visible';
-            floating.style.opacity = '1';
-            floating.style.pointerEvents = 'auto';
+            // Use setProperty with 'important' to override any CSS animations/transitions
+            floating.style.setProperty('visibility', 'visible', 'important');
+            floating.style.setProperty('opacity', '1', 'important');
+            floating.style.setProperty('pointer-events', 'auto', 'important');
+            // Also ensure position is not being reset by CSS
+            floating.style.setProperty('top', floating.style.top, 'important');
+            floating.style.setProperty('left', floating.style.left, 'important');
 
             // Dispatch event to signal element is now visible and positioned
             floating.dispatchEvent(new CustomEvent('blazorui:visible', { bubbles: true }));

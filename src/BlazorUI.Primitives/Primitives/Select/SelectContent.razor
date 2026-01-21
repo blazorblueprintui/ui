@@ -110,11 +110,6 @@
             var timeoutTask = Task.Delay(500);
             var completedTask = await Task.WhenAny(_portalReadyTcs.Task, timeoutTask);
 
-            if (completedTask == timeoutTask)
-            {
-                Console.WriteLine($"Warning: Portal {_portalId} render timeout");
-            }
-
             // Yield to ensure any pending re-renders complete and _portalContentRef is up-to-date
             await Task.Yield();
 
@@ -124,11 +119,18 @@
                 return;
             }
 
-            // NOW _portalContentRef is guaranteed to be valid!
-            await SetupPositioningAsync();
+            // Focus the selected item BEFORE positioning (so we can scroll before visible)
+            _context.FocusSelectedOrFirst();
 
-            // Focus the first item when opened
-            _context.FocusFirst();
+            // Scroll the focused item into view instantly BEFORE making visible
+            if (_jsModule != null && _context.FocusedIndex >= 0)
+            {
+                var itemId = $"{_context.ContentId}-item-{_context.FocusedIndex}";
+                await _jsModule.InvokeVoidAsync("scrollItemIntoView", itemId, true);
+            }
+
+            // NOW set up positioning and make visible
+            await SetupPositioningAsync();
         }
         else if (_context != null && !_context.IsOpen && _isInitialized)
         {
@@ -150,12 +152,13 @@
             contentBuilder.AddAttribute(3, "aria-labelledby", _context.TriggerId);
             contentBuilder.AddAttribute(4, "aria-activedescendant", GetActiveDescendantId());
             contentBuilder.AddAttribute(5, "data-state", "open");
-            contentBuilder.AddAttribute(6, "tabindex", "-1");
-            contentBuilder.AddAttribute(7, "onkeydown", EventCallback.Factory.Create<KeyboardEventArgs>(this, HandleKeyDown));
-            contentBuilder.AddAttribute(8, "style", GetMergedStyle());
-            contentBuilder.AddMultipleAttributes(9, GetAttributesWithoutStyle());
-            contentBuilder.AddElementReferenceCapture(10, capturedRef => _portalContentRef = capturedRef);
-            contentBuilder.AddContent(11, ChildContent);
+            contentBuilder.AddAttribute(6, "data-portal-content", "true");
+            contentBuilder.AddAttribute(7, "tabindex", "-1");
+            contentBuilder.AddAttribute(8, "onkeydown", EventCallback.Factory.Create<KeyboardEventArgs>(this, HandleKeyDown));
+            contentBuilder.AddAttribute(9, "style", GetMergedStyle());
+            contentBuilder.AddMultipleAttributes(10, GetAttributesWithoutStyle());
+            contentBuilder.AddElementReferenceCapture(11, capturedRef => _portalContentRef = capturedRef);
+            contentBuilder.AddContent(12, ChildContent);
             contentBuilder.CloseElement();
         }));
         builder.CloseComponent();
@@ -177,7 +180,8 @@
             var options = new PositioningOptions
             {
                 Placement = placement,
-                Offset = Offset
+                Offset = Offset,
+                Strategy = "fixed"  // Use fixed positioning to avoid stacking context issues when nested in portals
             };
 
             // Compute and apply position using the portal content ref
@@ -249,8 +253,9 @@
             return "position: fixed; z-index: 50; top: -9999px; left: -9999px; visibility: hidden; opacity: 0; pointer-events: none;";
         }
 
-        // After positioning, JS will apply the correct styles
-        return "position: absolute; z-index: 50;";
+        // After positioning, use fixed positioning to ensure it renders relative to viewport
+        // This avoids issues with stacking contexts and positioned ancestors
+        return "position: fixed; z-index: 9999;";
     }
 
     private string GetMergedStyle()

@@ -288,6 +288,28 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
     }
 
     /// <summary>
+    /// Moves focus to the currently selected item, or the first enabled item if none is selected.
+    /// </summary>
+    public void FocusSelectedOrFirst()
+    {
+        // Try to find and focus the selected item
+        if (State.Value != null)
+        {
+            for (int i = 0; i < Items.Count; i++)
+            {
+                if (!Items[i].Disabled && EqualityComparer<TValue>.Default.Equals(Items[i].Value, State.Value))
+                {
+                    SetFocusedIndex(i);
+                    return;
+                }
+            }
+        }
+
+        // Fall back to focusing the first item
+        FocusFirst();
+    }
+
+    /// <summary>
     /// Moves focus to the last enabled item.
     /// </summary>
     public void FocusLast()
