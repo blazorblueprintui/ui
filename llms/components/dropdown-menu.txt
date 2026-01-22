@@ -46,6 +46,19 @@ The DropdownMenu component displays context menus with items, separators, keyboa
 - `<DropdownMenuRadioItem>` - Radio item
 - `<DropdownMenuSub>` - Submenu
 
+### `<DropdownMenuCheckboxItem>`
+
+A menu item with a checkbox that can be toggled.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Checked` | `bool` | `false` | Whether the checkbox is checked |
+| `CheckedChanged` | `EventCallback<bool>` | - | Callback when checked state changes |
+| `Disabled` | `bool` | `false` | Whether the item is disabled |
+| `CloseOnSelect` | `bool` | `false` | Whether to close the menu when toggled |
+| `Class` | `string?` | `null` | Additional CSS classes |
+| `ChildContent` | `RenderFragment?` | - | Item content |
+
 ---
 
 ## Basic Usage
@@ -101,7 +114,38 @@ Use `AsChild` on `DropdownMenuTrigger` to use your own element (like a styled Bu
 
 ## Examples
 
-See **llms/patterns.txt** - Data Table with Sorting and Pagination for complete examples.
+### Example 1: Checkbox Items
+
+```razor
+<DropdownMenu>
+    <DropdownMenuTrigger AsChild>
+        <Button Variant="ButtonVariant.Outline">
+            View Options
+        </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent>
+        <DropdownMenuLabel>Display Settings</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuCheckboxItem @bind-Checked="_showStatusBar">
+            Status Bar
+        </DropdownMenuCheckboxItem>
+        <DropdownMenuCheckboxItem @bind-Checked="_showLineNumbers">
+            Line Numbers
+        </DropdownMenuCheckboxItem>
+        <DropdownMenuCheckboxItem @bind-Checked="_wordWrap" Disabled="true">
+            Word Wrap
+        </DropdownMenuCheckboxItem>
+    </DropdownMenuContent>
+</DropdownMenu>
+
+@code {
+    private bool _showStatusBar = true;
+    private bool _showLineNumbers = true;
+    private bool _wordWrap = false;
+}
+```
+
+See **llms/patterns.txt** - Data Table with Sorting and Pagination for more examples.
 
 ---
 
@@ -112,4 +156,4 @@ See **llms/patterns.txt** - Data Table with Sorting and Pagination for complete 
 
 ---
 
-**Last Updated:** 2025-11-16
+**Last Updated:** 2026-01-22

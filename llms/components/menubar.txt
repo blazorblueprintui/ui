@@ -114,6 +114,18 @@ Keyboard shortcut hint.
 | `Class` | `string?` | `null` | Additional CSS classes |
 | `ChildContent` | `RenderFragment?` | - | Shortcut text |
 
+#### `<MenubarCheckboxItem>`
+
+A menu item with a checkbox that can be toggled.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Checked` | `bool` | `false` | Whether the checkbox is checked |
+| `CheckedChanged` | `EventCallback<bool>` | - | Callback when checked state changes |
+| `Disabled` | `bool` | `false` | Whether the item is disabled |
+| `Class` | `string?` | `null` | Additional CSS classes |
+| `ChildContent` | `RenderFragment?` | - | Item content |
+
 ---
 
 ## Basic Usage
@@ -216,6 +228,39 @@ Keyboard shortcut hint.
 </Menubar>
 ```
 
+### Example 3: With Checkbox Items
+
+```razor
+<Menubar>
+    <MenubarMenu>
+        <MenubarTrigger>View</MenubarTrigger>
+        <MenubarContent>
+            <MenubarCheckboxItem @bind-Checked="_showToolbar">
+                Toolbar
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem @bind-Checked="_showSidebar">
+                Sidebar
+            </MenubarCheckboxItem>
+            <MenubarCheckboxItem @bind-Checked="_showStatusBar">
+                Status Bar
+            </MenubarCheckboxItem>
+            <MenubarSeparator />
+            <MenubarCheckboxItem @bind-Checked="_fullScreen">
+                Full Screen
+                <MenubarShortcut>F11</MenubarShortcut>
+            </MenubarCheckboxItem>
+        </MenubarContent>
+    </MenubarMenu>
+</Menubar>
+
+@code {
+    private bool _showToolbar = true;
+    private bool _showSidebar = true;
+    private bool _showStatusBar = true;
+    private bool _fullScreen = false;
+}
+```
+
 ---
 
 ## Behavior
@@ -244,4 +289,4 @@ Keyboard shortcut hint.
 
 ---
 
-**Last Updated:** 2025-01-20
+**Last Updated:** 2026-01-22

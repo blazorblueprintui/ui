@@ -1,12 +1,21 @@
 # Pagination Component
 
-Page navigation with previous/next controls and page number links.
+Page navigation with previous/next controls, page number links, and state-based automatic management.
 
 ---
 
 ## Overview
 
-The Pagination component provides navigation controls for multi-page content. It includes previous/next buttons, page number links, and ellipsis indicators for large page ranges.
+The Pagination component provides navigation controls for multi-page content. It includes previous/next buttons, first/last buttons, page number links, ellipsis indicators, page info display, and page size selection. Supports both manual control and automatic state management via `PaginationState`.
+
+**Features:**
+- Automatic state management with `PaginationState`
+- First/Last page navigation buttons
+- Page info display ("Showing X-Y of Z")
+- Page number display ("Page X of Y")
+- Page size selector dropdown
+- Customizable text labels
+- Manual control mode for custom implementations
 
 ---
 
@@ -28,6 +37,7 @@ Add to `_Imports.razor`:
 
 ```razor
 @using BlazorUI.Components.Pagination
+@using BlazorUI.Primitives.Table
 ```
 
 ---
@@ -42,8 +52,12 @@ Navigation container for pagination controls.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
+| `State` | `PaginationState?` | `null` | Optional state for automatic management |
+| `PageSizes` | `int[]` | `[10, 20, 50, 100]` | Available page size options |
+| `OnPageChanged` | `EventCallback<int>` | - | Callback when page changes |
+| `OnPageSizeChanged` | `EventCallback<int>` | - | Callback when page size changes |
 | `Class` | `string?` | `null` | Additional CSS classes |
-| `ChildContent` | `RenderFragment?` | - | PaginationContent |
+| `ChildContent` | `RenderFragment?` | - | PaginationContent and other elements |
 
 ### Sub-components
 
@@ -78,13 +92,26 @@ Page number link.
 | `Class` | `string?` | `null` | Additional CSS classes |
 | `ChildContent` | `RenderFragment?` | - | Page number |
 
+#### `<PaginationFirst>`
+
+Go to first page button (chevrons-left icon).
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Disabled` | `bool?` | `null` | Disables the button (auto-determined from state when null) |
+| `OnClick` | `EventCallback` | - | Click handler |
+| `Class` | `string?` | `null` | Additional CSS classes |
+
 #### `<PaginationPrevious>`
 
 Previous page button.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `Disabled` | `bool` | `false` | Disables the button |
+| `Disabled` | `bool?` | `null` | Disables the button (auto-determined from state when null) |
+| `ShowText` | `bool` | `true` | Whether to show text label |
+| `Text` | `string` | `"Previous"` | Custom button text |
+| `Size` | `PaginationLinkSize` | `Default` | Size variant |
 | `OnClick` | `EventCallback` | - | Click handler |
 | `Class` | `string?` | `null` | Additional CSS classes |
 
@@ -94,7 +121,20 @@ Next page button.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `Disabled` | `bool` | `false` | Disables the button |
+| `Disabled` | `bool?` | `null` | Disables the button (auto-determined from state when null) |
+| `ShowText` | `bool` | `true` | Whether to show text label |
+| `Text` | `string` | `"Next"` | Custom button text |
+| `Size` | `PaginationLinkSize` | `Default` | Size variant |
+| `OnClick` | `EventCallback` | - | Click handler |
+| `Class` | `string?` | `null` | Additional CSS classes |
+
+#### `<PaginationLast>`
+
+Go to last page button (chevrons-right icon).
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Disabled` | `bool?` | `null` | Disables the button (auto-determined from state when null) |
 | `OnClick` | `EventCallback` | - | Click handler |
 | `Class` | `string?` | `null` | Additional CSS classes |
 
@@ -106,6 +146,68 @@ Ellipsis indicator for skipped pages.
 |-----------|------|---------|-------------|
 | `Class` | `string?` | `null` | Additional CSS classes |
 
+#### `<PaginationInfo>`
+
+Display "Showing X-Y of Z" information.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Format` | `string` | `"Showing {0}-{1} of {2}"` | Format string ({0}=start, {1}=end, {2}=total) |
+| `EmptyText` | `string` | `"No items"` | Text when no items |
+| `Class` | `string?` | `null` | Additional CSS classes |
+| `ChildContent` | `RenderFragment?` | - | Custom content (when not using state) |
+
+#### `<PaginationPageDisplay>`
+
+Display "Page X of Y" information.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `Format` | `string` | `"Page {0} of {1}"` | Format string ({0}=current, {1}=total) |
+| `Class` | `string?` | `null` | Additional CSS classes |
+| `ChildContent` | `RenderFragment?` | - | Custom content (when not using state) |
+
+#### `<PaginationPageSizeSelector>`
+
+Dropdown for page size selection.
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `ShowLabel` | `bool` | `true` | Whether to show the label |
+| `Label` | `string` | `"Rows per page"` | Label text |
+| `PageSizes` | `int[]?` | `null` | Override page sizes from context |
+| `TriggerClass` | `string?` | `null` | CSS class for Select trigger |
+| `OnPageSizeChanged` | `EventCallback<int>` | - | Custom callback |
+| `Class` | `string?` | `null` | Additional CSS classes |
+
+### Class: `PaginationState`
+
+State object for automatic pagination management.
+
+**Properties:**
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `CurrentPage` | `int` | Current page number (1-based) |
+| `PageSize` | `int` | Items per page |
+| `TotalItems` | `int` | Total number of items |
+| `TotalPages` | `int` | Calculated total pages |
+| `CanGoNext` | `bool` | Whether next page exists |
+| `CanGoPrevious` | `bool` | Whether previous page exists |
+| `FirstItemIndex` | `int` | 1-based index of first item on page |
+| `LastItemIndex` | `int` | 1-based index of last item on page |
+
+**Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `NextPage()` | Navigate to next page |
+| `PreviousPage()` | Navigate to previous page |
+| `FirstPage()` | Navigate to first page |
+| `LastPage()` | Navigate to last page |
+| `GoToPage(int page)` | Navigate to specific page |
+| `Reset()` | Reset to first page |
+
 ### Enum: `PaginationLinkSize`
 
 | Value | Description |
@@ -116,6 +218,46 @@ Ellipsis indicator for skipped pages.
 ---
 
 ## Basic Usage
+
+### With PaginationState (Recommended)
+
+```razor
+<Pagination State="@_paginationState" OnPageChanged="HandlePageChanged">
+    <div class="flex w-full items-center justify-between">
+        <PaginationInfo />
+        <PaginationContent>
+            <PaginationItem>
+                <PaginationFirst />
+            </PaginationItem>
+            <PaginationItem>
+                <PaginationPrevious ShowText="false" />
+            </PaginationItem>
+            <PaginationItem>
+                <PaginationPageDisplay />
+            </PaginationItem>
+            <PaginationItem>
+                <PaginationNext ShowText="false" />
+            </PaginationItem>
+            <PaginationItem>
+                <PaginationLast />
+            </PaginationItem>
+        </PaginationContent>
+        <PaginationPageSizeSelector />
+    </div>
+</Pagination>
+
+@code {
+    private PaginationState _paginationState = new() { TotalItems = 100, PageSize = 10 };
+
+    private void HandlePageChanged(int page)
+    {
+        // Fetch data for new page
+        Console.WriteLine($"Page changed to: {page}");
+    }
+}
+```
+
+### Manual Control
 
 ```razor
 <Pagination>
@@ -156,7 +298,44 @@ Ellipsis indicator for skipped pages.
 
 ## Examples
 
-### Example 1: With Ellipsis
+### Example 1: Full Featured Pagination
+
+```razor
+<Pagination State="@_state" OnPageChanged="LoadData" OnPageSizeChanged="LoadData">
+    <div class="flex w-full items-center justify-between gap-4">
+        <PaginationInfo Format="Showing {0} to {1} of {2} results" />
+        <PaginationContent>
+            <PaginationItem>
+                <PaginationFirst />
+            </PaginationItem>
+            <PaginationItem>
+                <PaginationPrevious ShowText="false" />
+            </PaginationItem>
+            <PaginationItem>
+                <PaginationPageDisplay />
+            </PaginationItem>
+            <PaginationItem>
+                <PaginationNext ShowText="false" />
+            </PaginationItem>
+            <PaginationItem>
+                <PaginationLast />
+            </PaginationItem>
+        </PaginationContent>
+        <PaginationPageSizeSelector Label="Items per page" />
+    </div>
+</Pagination>
+
+@code {
+    private PaginationState _state = new() { TotalItems = 250, PageSize = 20 };
+
+    private void LoadData(int _)
+    {
+        // Reload data based on _state.CurrentPage and _state.PageSize
+    }
+}
+```
+
+### Example 2: With Ellipsis
 
 ```razor
 <Pagination>
@@ -186,19 +365,32 @@ Ellipsis indicator for skipped pages.
 </Pagination>
 ```
 
-### Example 2: Simple Previous/Next
+### Example 3: Compact Icon-Only Navigation
 
 ```razor
-<Pagination>
+<Pagination State="@_state">
     <PaginationContent>
         <PaginationItem>
-            <PaginationPrevious Disabled="@(page == 1)" />
+            <PaginationFirst />
         </PaginationItem>
         <PaginationItem>
-            <PaginationNext Disabled="@(page == totalPages)" />
+            <PaginationPrevious ShowText="false" />
+        </PaginationItem>
+        <PaginationItem>
+            <PaginationPageDisplay />
+        </PaginationItem>
+        <PaginationItem>
+            <PaginationNext ShowText="false" />
+        </PaginationItem>
+        <PaginationItem>
+            <PaginationLast />
         </PaginationItem>
     </PaginationContent>
 </Pagination>
+
+@code {
+    private PaginationState _state = new() { TotalItems = 100 };
+}
 ```
 
 ---
@@ -209,6 +401,7 @@ Ellipsis indicator for skipped pages.
 - Previous/Next buttons have descriptive labels
 - Current page has `aria-current="page"`
 - Ellipsis is hidden from screen readers with `aria-hidden`
+- First/Last buttons include screen reader text
 
 ---
 
@@ -219,4 +412,4 @@ Ellipsis indicator for skipped pages.
 
 ---
 
-**Last Updated:** 2025-01-20
+**Last Updated:** 2026-01-22

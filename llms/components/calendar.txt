@@ -8,6 +8,13 @@ A date field component that allows users to select a date from a calendar view.
 
 The Calendar component provides an interactive calendar for date selection. It supports date constraints, disabled dates, configurable week start day, and various selection modes.
 
+**Features:**
+- Month and year can be quickly changed via dropdown selects in the header
+- Configurable display of outside days (days from previous/next months)
+- Keyboard navigation support
+- Min/max date constraints
+- Custom disabled dates function
+
 ---
 
 ## Package
@@ -46,6 +53,7 @@ Add to `_Imports.razor`:
 | `MaxDate` | `DateTime?` | `null` | Maximum selectable date |
 | `DisabledDates` | `Func<DateTime, bool>?` | `null` | Function to determine disabled dates |
 | `FirstDayOfWeek` | `DayOfWeek` | `Sunday` | Which day starts the week |
+| `ShowOutsideDays` | `bool` | `true` | Whether to show days from previous/next months (displayed faded and non-interactive) |
 | `Class` | `string?` | `null` | Additional CSS classes |
 | `OnSelect` | `EventCallback<DateTime>` | - | Callback when a date is selected |
 
@@ -167,6 +175,18 @@ Add to `_Imports.razor`:
 }
 ```
 
+### Example 7: Hide Outside Days
+
+Hide days from previous/next months for a cleaner appearance:
+
+```razor
+<Calendar @bind-Selected="_date" ShowOutsideDays="false" />
+
+@code {
+    private DateTime? _date;
+}
+```
+
 ---
 
 ## State Management
@@ -271,4 +291,4 @@ Add to `_Imports.razor`:
 
 ---
 
-**Last Updated:** 2025-01-20
+**Last Updated:** 2026-01-22

@@ -52,13 +52,38 @@ The DataTable component provides a full-featured data table with sorting, filter
 ## Basic Usage
 
 ```razor
+@using BlazorUI.Components.Pagination
+@using BlazorUI.Primitives.Table
+
 <DataTable Data="@users" @bind-State="tableState">
     <DataTableColumn TData="User" Property="u => u.Name" Title="Name" Sortable="true" />
     <DataTableColumn TData="User" Property="u => u.Email" Title="Email" />
     <DataTableColumn TData="User" Property="u => u.Role" Title="Role" />
 </DataTable>
 
-<TablePagination State="@tableState" />
+<Pagination State="@tableState.Pagination">
+    <div class="flex w-full items-center justify-between py-4">
+        <PaginationInfo />
+        <PaginationContent>
+            <PaginationItem>
+                <PaginationFirst />
+            </PaginationItem>
+            <PaginationItem>
+                <PaginationPrevious ShowText="false" />
+            </PaginationItem>
+            <PaginationItem>
+                <PaginationPageDisplay />
+            </PaginationItem>
+            <PaginationItem>
+                <PaginationNext ShowText="false" />
+            </PaginationItem>
+            <PaginationItem>
+                <PaginationLast />
+            </PaginationItem>
+        </PaginationContent>
+        <PaginationPageSizeSelector />
+    </div>
+</Pagination>
 
 @code {
     private List<User> users = new();
@@ -67,6 +92,8 @@ The DataTable component provides a full-featured data table with sorting, filter
     record User(string Name, string Email, string Role);
 }
 ```
+
+**Note:** DataTable uses the enhanced Pagination component instead of the deprecated TablePagination. The `TableState.Pagination` property provides a `PaginationState` that integrates with the Pagination component's automatic state management.
 
 ---
 
@@ -78,6 +105,7 @@ See **llms/patterns.txt** - Data Table with Sorting and Pagination for complete 
 
 ## Related Components
 
+- **Pagination** - llms/components/pagination.txt - Page navigation with state management
 - **Button** - llms/components/button.txt
 - **Badge** - llms/components/badge.txt
 - **DropdownMenu** - llms/components/dropdown-menu.txt
@@ -88,4 +116,4 @@ See **llms/patterns.txt** - Data Table with Sorting and Pagination for complete 
 
 ---
 
-**Last Updated:** 2025-11-16
+**Last Updated:** 2026-01-22
