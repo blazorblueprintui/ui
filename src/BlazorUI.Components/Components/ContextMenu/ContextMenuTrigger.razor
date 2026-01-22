@@ -1,6 +1,6 @@
 @namespace BlazorUI.Components.ContextMenu
 
-<div class="@CssClass" @oncontextmenu="HandleContextMenu" @oncontextmenu:preventDefault>
+<div class="@CssClass" style="@TriggerStyle" @oncontextmenu="HandleContextMenu" @oncontextmenu:preventDefault>
     @ChildContent
 </div>
 
@@ -26,4 +26,8 @@
         "w-fit",
         Class
     );
+
+    private string? TriggerStyle => Context?.IsOpen == true
+        ? "position: relative; z-index: 41;"
+        : null;
 }
