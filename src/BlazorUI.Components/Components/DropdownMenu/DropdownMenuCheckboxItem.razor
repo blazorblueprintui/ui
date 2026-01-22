@@ -1,0 +1,93 @@
+@namespace BlazorUI.Components.DropdownMenu
+@using BlazorUI.Primitives.DropdownMenu
+
+@* Styled DropdownMenuCheckboxItem - wrapper with shadcn Tailwind classes *@
+<BlazorUI.Primitives.DropdownMenu.DropdownMenuCheckboxItem class="@CssClass"
+                                                           Checked="@Checked"
+                                                           CheckedChanged="@HandleCheckedChanged"
+                                                           Disabled="@Disabled"
+                                                           CloseOnSelect="@CloseOnSelect">
+    <span class="@IndicatorClass">
+        @if (Checked)
+        {
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="16"
+                 height="16"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 class="h-4 w-4">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        }
+    </span>
+    @ChildContent
+</BlazorUI.Primitives.DropdownMenu.DropdownMenuCheckboxItem>
+
+@code {
+    /// <summary>
+    /// The content to display inside the menu item.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the menu item.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Whether the checkbox is checked.
+    /// </summary>
+    [Parameter]
+    public bool Checked { get; set; }
+
+    /// <summary>
+    /// Event callback for when the checked state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> CheckedChanged { get; set; }
+
+    /// <summary>
+    /// Whether the menu item is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; } = false;
+
+    /// <summary>
+    /// Whether to close the dropdown menu when this item is toggled.
+    /// Default is false.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnSelect { get; set; } = false;
+
+    private async Task HandleCheckedChanged(bool value)
+    {
+        Checked = value;
+        await CheckedChanged.InvokeAsync(value);
+    }
+
+    private string CssClass
+    {
+        get
+        {
+            var baseClasses = "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 " +
+                            "text-sm outline-none transition-colors " +
+                            "focus:bg-accent focus:text-accent-foreground " +
+                            "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50";
+
+            if (!Disabled)
+            {
+                baseClasses += " hover:bg-accent hover:text-accent-foreground";
+            }
+
+            return string.IsNullOrWhiteSpace(Class) ? baseClasses : $"{baseClasses} {Class}";
+        }
+    }
+
+    private const string IndicatorClass = "absolute left-2 flex h-3.5 w-3.5 items-center justify-center";
+}

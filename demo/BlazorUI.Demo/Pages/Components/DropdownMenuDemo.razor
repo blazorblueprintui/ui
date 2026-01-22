@@ -240,6 +240,49 @@
         </div>
     </section>
 
+    <!-- Checkbox Items -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Checkbox Items</h2>
+        <p class="text-sm text-muted-foreground">
+            Toggle menu items that maintain checked state. The menu stays open when toggling checkboxes.
+        </p>
+
+        <div class="flex items-start gap-4">
+            <DropdownMenu>
+                <DropdownMenuTrigger Class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                    View Options
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuLabel>Appearance</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuCheckboxItem @bind-Checked="showStatusBar">
+                        Status Bar
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem @bind-Checked="showActivityBar">
+                        Activity Bar
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem @bind-Checked="showPanel">
+                        Panel
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuCheckboxItem @bind-Checked="fullScreen">
+                        Full Screen
+                    </DropdownMenuCheckboxItem>
+                    <DropdownMenuCheckboxItem Disabled="true" Checked="false">
+                        Word Wrap (Disabled)
+                    </DropdownMenuCheckboxItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            <div class="text-sm space-y-1">
+                <p>Status Bar: <strong>@(showStatusBar ? "Visible" : "Hidden")</strong></p>
+                <p>Activity Bar: <strong>@(showActivityBar ? "Visible" : "Hidden")</strong></p>
+                <p>Panel: <strong>@(showPanel ? "Visible" : "Hidden")</strong></p>
+                <p>Full Screen: <strong>@(fullScreen ? "On" : "Off")</strong></p>
+            </div>
+        </div>
+    </section>
+
     <!-- AsChild Pattern -->
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">AsChild Pattern</h2>
@@ -384,6 +427,12 @@
     private string? disabledAction;
     private string? complexAction;
     private Dictionary<string, string?> menuActions = new();
+
+    // Checkbox items state
+    private bool showStatusBar = true;
+    private bool showActivityBar = true;
+    private bool showPanel = false;
+    private bool fullScreen = false;
 
     // Individual handlers for each section
     private void HandleBasicAction(string action) => basicAction = action;

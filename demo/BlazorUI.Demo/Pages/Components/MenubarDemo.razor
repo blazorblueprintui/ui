@@ -72,10 +72,16 @@
             <MenubarMenu>
                 <MenubarTrigger>View</MenubarTrigger>
                 <MenubarContent>
+                    <MenubarLabel>Appearance</MenubarLabel>
+                    <MenubarCheckboxItem @bind-Checked="_showStatusBar">Status Bar</MenubarCheckboxItem>
+                    <MenubarCheckboxItem @bind-Checked="_showActivityBar">Activity Bar</MenubarCheckboxItem>
+                    <MenubarCheckboxItem @bind-Checked="_showSidebar">Sidebar</MenubarCheckboxItem>
+                    <MenubarSeparator />
+                    <MenubarLabel>Zoom</MenubarLabel>
                     <MenubarItem OnClick="@(() => HandleAction("Zoom In"))">Zoom In</MenubarItem>
                     <MenubarItem OnClick="@(() => HandleAction("Zoom Out"))">Zoom Out</MenubarItem>
                     <MenubarSeparator />
-                    <MenubarItem OnClick="@(() => HandleAction("Toggle Fullscreen"))">Toggle Fullscreen</MenubarItem>
+                    <MenubarCheckboxItem @bind-Checked="_fullScreen">Full Screen</MenubarCheckboxItem>
                 </MenubarContent>
             </MenubarMenu>
             <MenubarMenu>
@@ -107,6 +113,7 @@
                     <p><code class="bg-muted px-1 py-0.5 rounded">MenubarTrigger</code> - Menu button</p>
                     <p><code class="bg-muted px-1 py-0.5 rounded">MenubarContent</code> - Dropdown content</p>
                     <p><code class="bg-muted px-1 py-0.5 rounded">MenubarItem</code> - Menu item</p>
+                    <p><code class="bg-muted px-1 py-0.5 rounded">MenubarCheckboxItem</code> - Toggleable menu item</p>
                     <p><code class="bg-muted px-1 py-0.5 rounded">MenubarLabel</code> - Section label</p>
                     <p><code class="bg-muted px-1 py-0.5 rounded">MenubarSeparator</code> - Visual divider</p>
                     <p><code class="bg-muted px-1 py-0.5 rounded">MenubarShortcut</code> - Keyboard shortcut hint</p>
@@ -121,12 +128,27 @@
                     <p><strong>Inset:</strong> <code class="bg-muted px-1 py-0.5 rounded">bool</code> - Adds left padding</p>
                 </div>
             </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">MenubarCheckboxItem Parameters</h3>
+                <div class="space-y-2 text-sm">
+                    <p><strong>Checked:</strong> <code class="bg-muted px-1 py-0.5 rounded">bool</code> - Whether the item is checked</p>
+                    <p><strong>CheckedChanged:</strong> <code class="bg-muted px-1 py-0.5 rounded">EventCallback&lt;bool&gt;</code> - Callback when checked state changes</p>
+                    <p><strong>Disabled:</strong> <code class="bg-muted px-1 py-0.5 rounded">bool</code> - Disables the item</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 @code {
     private string? _lastAction;
+
+    // View menu checkbox states
+    private bool _showStatusBar = true;
+    private bool _showActivityBar = true;
+    private bool _showSidebar = false;
+    private bool _fullScreen = false;
 
     private void HandleAction(string action)
     {

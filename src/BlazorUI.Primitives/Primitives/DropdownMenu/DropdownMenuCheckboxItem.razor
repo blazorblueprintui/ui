@@ -1,0 +1,130 @@
+@namespace BlazorUI.Primitives.DropdownMenu
+@implements IDropdownMenuItem
+@implements IDisposable
+
+@* Dropdown menu checkbox item - represents a toggleable menu item *@
+<div @ref="_itemRef"
+     role="menuitemcheckbox"
+     tabindex="@(Disabled ? -1 : -1)"
+     aria-checked="@Checked.ToString().ToLower()"
+     aria-disabled="@Disabled.ToString().ToLower()"
+     data-disabled="@(Disabled ? "true" : null)"
+     data-state="@(Checked ? "checked" : "unchecked")"
+     @onclick="HandleClick"
+     @onkeydown="HandleKeyDown"
+     @onkeydown:preventDefault="true"
+     @attributes="AdditionalAttributes">
+    @ChildContent
+</div>
+
+@code {
+    [CascadingParameter]
+    private DropdownMenuContext Context { get; set; } = null!;
+
+    [CascadingParameter(Name = "DropdownMenuContentContext")]
+    private DropdownMenuContent? ContentContext { get; set; }
+
+    private ElementReference _itemRef;
+
+    /// <summary>
+    /// The content to display inside the menu item.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the menu item element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Whether the checkbox is checked.
+    /// </summary>
+    [Parameter]
+    public bool Checked { get; set; }
+
+    /// <summary>
+    /// Event callback for when the checked state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> CheckedChanged { get; set; }
+
+    /// <summary>
+    /// Whether the menu item is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; } = false;
+
+    /// <summary>
+    /// Whether to close the dropdown menu when this item is toggled.
+    /// Default is false (checkbox items typically keep menu open).
+    /// </summary>
+    [Parameter]
+    public bool CloseOnSelect { get; set; } = false;
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "DropdownMenuCheckboxItem must be used within a DropdownMenu component. " +
+                "Ensure DropdownMenuCheckboxItem is a child of a DropdownMenu component.");
+        }
+
+        // Register this item with the content for keyboard navigation
+        ContentContext?.RegisterMenuItem(this);
+    }
+
+    private async Task HandleClick(MouseEventArgs args)
+    {
+        if (Disabled) return;
+
+        // Toggle the checked state
+        var newChecked = !Checked;
+        Checked = newChecked;
+        await CheckedChanged.InvokeAsync(newChecked);
+
+        // Close the dropdown menu if configured
+        if (CloseOnSelect && Context != null)
+        {
+            Context.Close();
+        }
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (Disabled) return;
+
+        // Enter or Space to toggle
+        if (args.Key == "Enter" || args.Key == " ")
+        {
+            _ = ClickAsync();
+        }
+    }
+
+    // IDropdownMenuItem implementation
+    public async Task FocusAsync()
+    {
+        try
+        {
+            await _itemRef.FocusAsync();
+        }
+        catch
+        {
+            // Ignore focus errors (element might not be mounted yet)
+        }
+    }
+
+    public async Task ClickAsync()
+    {
+        if (Disabled) return;
+        await HandleClick(new MouseEventArgs());
+    }
+
+    public void Dispose()
+    {
+        // Unregister this item when disposed
+        ContentContext?.UnregisterMenuItem(this);
+    }
+}

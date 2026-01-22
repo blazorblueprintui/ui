@@ -17,14 +17,14 @@
     internal bool IsOpen => Context?.ActiveMenu == MenuId;
     internal int FocusedIndex { get; private set; } = -1;
 
-    private List<MenubarItem> _menuItems = new();
+    private List<IMenubarItem> _menuItems = new();
 
     protected override void OnInitialized()
     {
         Context?.RegisterMenu(this);
     }
 
-    internal void RegisterMenuItem(MenubarItem item)
+    internal void RegisterMenuItem(IMenubarItem item)
     {
         if (!_menuItems.Contains(item))
         {
@@ -32,12 +32,12 @@
         }
     }
 
-    internal void UnregisterMenuItem(MenubarItem item)
+    internal void UnregisterMenuItem(IMenubarItem item)
     {
         _menuItems.Remove(item);
     }
 
-    internal List<MenubarItem> GetMenuItems() => _menuItems;
+    internal List<IMenubarItem> GetMenuItems() => _menuItems;
 
     internal void SetFocusedIndex(int index)
     {

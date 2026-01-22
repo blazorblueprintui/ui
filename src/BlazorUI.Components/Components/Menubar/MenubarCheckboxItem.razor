@@ -3,12 +3,31 @@
 @implements IDisposable
 
 <div @ref="_itemRef"
-     role="menuitem"
+     role="menuitemcheckbox"
      class="@CssClass"
      tabindex="-1"
+     aria-checked="@Checked.ToString().ToLower()"
+     data-state="@(Checked ? "checked" : "unchecked")"
      @onclick="HandleClick"
      @onkeydown="HandleKeyDown"
      @onkeydown:preventDefault="true">
+    <span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+        @if (Checked)
+        {
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="16"
+                 height="16"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 class="h-4 w-4">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        }
+    </span>
     @ChildContent
 </div>
 
@@ -26,10 +45,10 @@
     public bool Disabled { get; set; }
 
     [Parameter]
-    public bool Inset { get; set; }
+    public bool Checked { get; set; }
 
     [Parameter]
-    public EventCallback OnClick { get; set; }
+    public EventCallback<bool> CheckedChanged { get; set; }
 
     private ElementReference _itemRef;
 
@@ -56,8 +75,10 @@
     {
         if (!Disabled)
         {
-            await OnClick.InvokeAsync();
-            Menu?.Close();
+            var newChecked = !Checked;
+            Checked = newChecked;
+            await CheckedChanged.InvokeAsync(newChecked);
+            // Checkbox items don't close the menu by default
         }
     }
 
@@ -77,11 +98,10 @@
     }
 
     private string CssClass => BlazorUI.Components.Utilities.ClassNames.cn(
-        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
+        "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none",
         "focus:bg-accent focus:text-accent-foreground",
         "hover:bg-accent hover:text-accent-foreground",
         Disabled ? "pointer-events-none opacity-50" : null,
-        Inset ? "pl-8" : null,
         Class
     );
 }

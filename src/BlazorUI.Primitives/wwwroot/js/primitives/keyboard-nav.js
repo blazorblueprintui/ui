@@ -25,12 +25,13 @@ export function setupKeyboardNav(element, dotNetRef) {
 
 /**
  * Gets menu items in DOM order within a container.
+ * Includes menuitem, menuitemcheckbox, and menuitemradio roles.
  * @param {HTMLElement} container - The menu container element
  * @returns {HTMLElement[]} Array of menu item elements in DOM order
  */
 function getMenuItemsInDomOrder(container) {
     if (!container) return [];
-    return Array.from(container.querySelectorAll('[role="menuitem"]'));
+    return Array.from(container.querySelectorAll('[role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"]'));
 }
 
 /**
