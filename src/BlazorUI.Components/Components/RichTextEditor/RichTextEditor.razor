@@ -1,0 +1,21 @@
+@namespace BlazorUI.Components.RichTextEditor
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div class="@ContainerCssClass" data-slot="rich-text-editor" id="@Id">
+    @if (ToolbarContent != null)
+    {
+        <div class="@ToolbarCssClass" data-slot="toolbar">
+            @ToolbarContent
+        </div>
+    }
+    <div @ref="_editorRef"
+         class="@EditorCssClass"
+         style="@EditorStyle"
+         aria-label="@AriaLabel"
+         aria-describedby="@AriaDescribedBy"
+         aria-invalid="@(AriaInvalid?.ToString()?.ToLower())"
+         data-slot="editor">
+    </div>
+</div>

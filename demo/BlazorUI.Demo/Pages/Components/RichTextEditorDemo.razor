@@ -11,7 +11,7 @@
     <div class="space-y-3">
         <h1 class="text-4xl font-bold tracking-tight">Rich Text Editor</h1>
         <p class="text-xl text-muted-foreground">
-            A WYSIWYG rich text editor with toolbar formatting. Text is formatted directly as you type.
+            A WYSIWYG rich text editor built on Quill.js with toolbar formatting. Text is formatted directly as you type.
         </p>
     </div>
 
@@ -58,6 +58,46 @@
         </div>
     </section>
 
+    @* Toolbar Presets *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Toolbar Presets</h2>
+            <p class="text-muted-foreground">
+                Choose from preset toolbar configurations to match your needs.
+            </p>
+        </div>
+
+        <div class="grid gap-6">
+            <div class="space-y-2">
+                <Label>Simple Toolbar</Label>
+                <RichTextEditor @bind-Value="simpleValue"
+                                Toolbar="ToolbarPreset.Simple"
+                                Placeholder="Basic formatting only..." />
+            </div>
+
+            <div class="space-y-2">
+                <Label>Standard Toolbar (Default)</Label>
+                <RichTextEditor @bind-Value="standardValue"
+                                Toolbar="ToolbarPreset.Standard"
+                                Placeholder="Common formatting options..." />
+            </div>
+
+            <div class="space-y-2">
+                <Label>Full Toolbar</Label>
+                <RichTextEditor @bind-Value="fullValue"
+                                Toolbar="ToolbarPreset.Full"
+                                Placeholder="All formatting options..." />
+            </div>
+
+            <div class="space-y-2">
+                <Label>No Toolbar</Label>
+                <RichTextEditor @bind-Value="noToolbarValue"
+                                Toolbar="ToolbarPreset.None"
+                                Placeholder="Plain editor without toolbar..." />
+            </div>
+        </div>
+    </section>
+
     @* Toolbar Features Demo *@
     <section class="space-y-6">
         <div class="space-y-2">
@@ -69,22 +109,27 @@
 
         <div class="rounded-lg border p-6 space-y-4">
             <div class="space-y-3">
-                <h3 class="font-semibold">Available Formatting</h3>
+                <h3 class="font-semibold">Available Formatting (Full Toolbar)</h3>
                 <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
                     <li><strong>Bold</strong> - Select text and click B or press <Kbd>Ctrl+B</Kbd></li>
                     <li><em>Italic</em> - Select text and click I or press <Kbd>Ctrl+I</Kbd></li>
                     <li><u>Underline</u> - Select text and click U or press <Kbd>Ctrl+U</Kbd></li>
-                    <li><s>Strikethrough</s> - Select text and click S button</li>
-                    <li><span class="text-red-500">Font Color</span> - Choose from 12 colors using the palette dropdown</li>
-                    <li><span style="font-size: 18px">Font Size</span> - Select from 5 size options</li>
+                    <li><s>Strikethrough</s> - Select text and click the strikethrough button</li>
+                    <li>Headers - H1 through H6 heading levels</li>
+                    <li><span class="text-red-500">Font Color</span> - Choose text color from the color picker</li>
+                    <li>Background Color - Highlight text with background colors</li>
                     <li>Bullet List - Click the bullet list icon to add unordered lists</li>
                     <li>Numbered List - Click the numbered list icon for ordered lists</li>
-                    <li>Text Alignment - Left, center, right, or justify</li>
+                    <li>Text Alignment - Left, center, right alignment options</li>
+                    <li>Blockquote - Add quoted text blocks</li>
+                    <li>Code Block - Add code snippets</li>
+                    <li>Links and Images - Insert hyperlinks and images</li>
                 </ul>
             </div>
         </div>
 
         <RichTextEditor @bind-Value="toolbarDemoValue"
+                        Toolbar="ToolbarPreset.Full"
                         Placeholder="Try out the toolbar features..." />
     </section>
 
@@ -184,31 +229,39 @@
 
         <div class="rounded-lg border p-6 space-y-4">
             <div class="space-y-3">
-                <h3 class="font-semibold">Key Features</h3>
+                <h3 class="font-semibold">Setup Requirements</h3>
+                <p class="text-sm text-muted-foreground">
+                    Add Quill.js CSS to your <code class="bg-muted px-1 rounded">&lt;head&gt;</code>:
+                </p>
+                <pre class="text-xs bg-muted p-3 rounded-md overflow-auto">&lt;link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.snow.css" rel="stylesheet" /&gt;</pre>
+                <p class="text-sm text-muted-foreground mt-2">
+                    Add Quill.js script before the closing <code class="bg-muted px-1 rounded">&lt;/body&gt;</code> tag:
+                </p>
+                <pre class="text-xs bg-muted p-3 rounded-md overflow-auto">&lt;script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"&gt;&lt;/script&gt;</pre>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="font-semibold">Toolbar Presets</h3>
                 <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
-                    <li>WYSIWYG editing - formatting appears directly as you type</li>
-                    <li>Toolbar with formatting buttons for text styles, colors, and more</li>
-                    <li>Keyboard shortcuts for bold, italic, and underline</li>
-                    <li>Font size selection with 5 preset sizes</li>
-                    <li>Font color picker with 12 color options</li>
-                    <li>Bullet and numbered list support</li>
-                    <li>Text alignment options (left, center, right, justify)</li>
-                    <li>Two-way data binding with @("@bind-Value")</li>
-                    <li>Outputs HTML for easy storage and display</li>
+                    <li><strong>None</strong> - No toolbar, plain editing area</li>
+                    <li><strong>Simple</strong> - Bold, italic, underline, and lists</li>
+                    <li><strong>Standard</strong> - Headers, basic formatting, lists, links (default)</li>
+                    <li><strong>Full</strong> - All formatting options including colors, alignment, code blocks, and images</li>
+                    <li><strong>Custom</strong> - Use ToolbarContent to provide your own toolbar</li>
                 </ul>
             </div>
 
             <div class="space-y-3">
-                <h3 class="font-semibold">HTML Output</h3>
+                <h3 class="font-semibold">Key Features</h3>
                 <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
-                    <li><code class="bg-muted px-1 rounded">&lt;strong&gt;</code> - Bold text</li>
-                    <li><code class="bg-muted px-1 rounded">&lt;em&gt;</code> - Italic text</li>
-                    <li><code class="bg-muted px-1 rounded">&lt;u&gt;</code> - Underlined text</li>
-                    <li><code class="bg-muted px-1 rounded">&lt;s&gt;</code> - Strikethrough text</li>
-                    <li><code class="bg-muted px-1 rounded">&lt;span style="..."&gt;</code> - Font size and color</li>
-                    <li><code class="bg-muted px-1 rounded">&lt;ul&gt;&lt;li&gt;</code> - Bullet list</li>
-                    <li><code class="bg-muted px-1 rounded">&lt;ol&gt;&lt;li&gt;</code> - Numbered list</li>
-                    <li><code class="bg-muted px-1 rounded">&lt;div style="text-align: ..."&gt;</code> - Aligned content</li>
+                    <li>WYSIWYG editing powered by Quill.js v2</li>
+                    <li>Toolbar presets for different use cases</li>
+                    <li>Keyboard shortcuts for bold, italic, and underline</li>
+                    <li>Two-way data binding with @("@bind-Value")</li>
+                    <li>Delta (JSON) binding available via @("@bind-DeltaValue")</li>
+                    <li>Outputs clean HTML for storage and display</li>
+                    <li>Height control via MinHeight, MaxHeight, and Height</li>
+                    <li>Disabled and ReadOnly states</li>
                 </ul>
             </div>
 
@@ -218,18 +271,8 @@
                     <li>Supports ARIA labels and descriptions</li>
                     <li>Keyboard shortcuts for common formatting</li>
                     <li>Associate with Label component using Id parameter</li>
-                    <li>Supports disabled state</li>
-                    <li>Role="textbox" with aria-multiline="true"</li>
-                </ul>
-            </div>
-
-            <div class="space-y-3">
-                <h3 class="font-semibold">Comparison with Markdown Editor</h3>
-                <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
-                    <li><strong>Rich Text Editor</strong>: WYSIWYG, outputs HTML, visual formatting</li>
-                    <li><strong>Markdown Editor</strong>: Write/Preview tabs, outputs markdown, text-based syntax</li>
-                    <li>Choose Rich Text for users who prefer visual formatting</li>
-                    <li>Choose Markdown for developers or technical content</li>
+                    <li>Supports disabled and read-only states</li>
+                    <li>Focus and blur event callbacks</li>
                 </ul>
             </div>
         </div>
@@ -239,6 +282,10 @@
 @code {
     private string? basicValue;
     private string? labeledValue;
+    private string? simpleValue;
+    private string? standardValue;
+    private string? fullValue;
+    private string? noToolbarValue;
     private string? toolbarDemoValue;
     private string? feedbackValue;
     private string? maxHeightValue;
@@ -253,12 +300,6 @@
 <li>See your changes immediately</li>
 <li>Use keyboard shortcuts for quick formatting</li>
 </ul>
-<p>You can also use <span style=""color: #3B82F6"">colored text</span> and <span style=""font-size: 18px"">different sizes</span>.</p>
-<ol>
-<li>Select some text</li>
-<li>Click a toolbar button</li>
-<li>See the formatting applied instantly</li>
-</ol>
 <p>Enjoy writing!</p>";
 
     private void HandleSubmit()
