@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-01-23
+
+### Changed
+- RichTextEditor rewritten to use Quill.js v2 in headless mode with custom Blazor toolbar
+- RichTextEditor now uses BlazorUI components (NativeSelect, Dialog, Toggle, Button) instead of raw HTML elements
+- Link insertion uses BlazorUI Dialog instead of browser prompt for consistent UX
+
+### Fixed
+- RichTextEditor block format removal now preserves inline formatting (bold, italic, etc.)
+- RichTextEditor uses Quill's getSemanticHTML() for normalized cross-browser HTML output
+- RichTextEditor callback suppression prevents update loops during programmatic content changes
+
+### Added
+- RichTextEditor SetDeltaAsync/GetDeltaAsync methods for native Quill Delta format support
+- RichTextEditor toolbar presets (None, Simple, Standard, Full, Custom)
+
+---
+
 ## 2026-01-22
 
 ### Added
