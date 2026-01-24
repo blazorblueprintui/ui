@@ -28,6 +28,9 @@ public static class ServiceCollectionExtensions
         // Register DropdownManagerService as scoped (ensures only one dropdown open at a time per user session)
         services.AddScoped<DropdownManagerService>();
 
+        // Register KeyboardShortcutService as scoped (per user session for global keyboard shortcuts)
+        services.AddScoped<IKeyboardShortcutService, KeyboardShortcutService>();
+
         return services;
     }
 }

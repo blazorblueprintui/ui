@@ -1,0 +1,251 @@
+# Keyboard Shortcut Service
+
+Global keyboard shortcut management for Blazor applications.
+
+---
+
+## Overview
+
+The KeyboardShortcutService provides a centralized way to register and manage global keyboard shortcuts. Shortcuts work application-wide and fire even when menus are closed, making them ideal for application-level commands.
+
+**Features:**
+- Global keyboard listening via JavaScript interop
+- Automatic skip for input/textarea elements (doesn't fire while typing)
+- Cross-platform Ctrl/Cmd normalization
+- IDisposable pattern for automatic cleanup
+- Suspend/Resume for modal dialogs
+
+---
+
+## Package
+
+- **Package:** BlazorUI.Primitives
+- **Namespace:** BlazorUI.Primitives.Services
+- **Source:** https://github.com/blazorui-net/ui/tree/main/src/BlazorUI.Primitives/Services
+
+---
+
+## Installation
+
+The service is automatically registered when you call `AddBlazorUIPrimitives()`:
+
+```csharp
+// Program.cs
+builder.Services.AddBlazorUIPrimitives();
+```
+
+---
+
+## API Reference
+
+### `IKeyboardShortcutService`
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `RegisterAsync(string shortcut, Func<Task> callback)` | `Task<IDisposable>` | Registers a shortcut with auto-generated ID |
+| `RegisterAsync(string shortcut, Func<Task> callback, string id)` | `Task<IDisposable>` | Registers a shortcut with custom ID |
+| `Unregister(string id)` | `void` | Unregisters a shortcut by ID |
+| `Suspend()` | `void` | Temporarily disables all shortcuts |
+| `Resume()` | `void` | Re-enables shortcuts after suspension |
+| `IsSuspended` | `bool` | Whether shortcuts are currently suspended |
+
+### Shortcut String Format
+
+Shortcuts are specified as strings with modifiers and a key separated by `+`:
+
+- **Modifiers:** `Ctrl`, `Shift`, `Alt`, `Meta` (case-insensitive)
+- **Keys:** Any key name (e.g., `N`, `S`, `F1`, `Delete`, `Enter`)
+
+**Examples:**
+- `"Ctrl+S"` - Save
+- `"Ctrl+Shift+N"` - New (avoids browser's Ctrl+N)
+- `"Alt+F4"` - Close
+- `"F1"` - Help
+
+**Note:** `Ctrl` and `Cmd` (Mac) are treated as equivalent for cross-platform support.
+
+---
+
+## Basic Usage
+
+```razor
+@inject IKeyboardShortcutService KeyboardShortcuts
+@implements IAsyncDisposable
+
+<p>Press Ctrl+S to save, Ctrl+Shift+N for new file</p>
+
+@if (!string.IsNullOrEmpty(_message))
+{
+    <div class="text-green-600">@_message</div>
+}
+
+@code {
+    private string? _message;
+    private IDisposable? _shortcutSave;
+    private IDisposable? _shortcutNew;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _shortcutSave = await KeyboardShortcuts.RegisterAsync("Ctrl+S", HandleSave);
+            _shortcutNew = await KeyboardShortcuts.RegisterAsync("Ctrl+Shift+N", HandleNew);
+        }
+    }
+
+    private async Task HandleSave()
+    {
+        _message = "Saved!";
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleNew()
+    {
+        _message = "New file created!";
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _shortcutSave?.Dispose();
+        _shortcutNew?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}
+```
+
+---
+
+## Examples
+
+### Example 1: With Menu Components
+
+Combine keyboard shortcuts with DropdownMenu or Menubar for a complete desktop-like experience:
+
+```razor
+@inject IKeyboardShortcutService KeyboardShortcuts
+@implements IAsyncDisposable
+
+<DropdownMenu>
+    <DropdownMenuTrigger AsChild>
+        <Button Variant="ButtonVariant.Outline">File</Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent>
+        <DropdownMenuItem OnClick="HandleNew">
+            New File
+            <DropdownMenuShortcut>Ctrl+Shift+N</DropdownMenuShortcut>
+        </DropdownMenuItem>
+        <DropdownMenuItem OnClick="HandleSave">
+            Save
+            <DropdownMenuShortcut>Ctrl+S</DropdownMenuShortcut>
+        </DropdownMenuItem>
+    </DropdownMenuContent>
+</DropdownMenu>
+
+@code {
+    private IDisposable? _shortcutNew;
+    private IDisposable? _shortcutSave;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _shortcutNew = await KeyboardShortcuts.RegisterAsync("Ctrl+Shift+N", HandleNewAsync);
+            _shortcutSave = await KeyboardShortcuts.RegisterAsync("Ctrl+S", HandleSaveAsync);
+        }
+    }
+
+    private void HandleNew() => _ = HandleNewAsync();
+    private void HandleSave() => _ = HandleSaveAsync();
+
+    private Task HandleNewAsync()
+    {
+        // Create new file logic
+        return Task.CompletedTask;
+    }
+
+    private Task HandleSaveAsync()
+    {
+        // Save file logic
+        return Task.CompletedTask;
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _shortcutNew?.Dispose();
+        _shortcutSave?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}
+```
+
+### Example 2: Suspend During Modal
+
+```razor
+@inject IKeyboardShortcutService KeyboardShortcuts
+
+<Dialog @bind-Open="_dialogOpen">
+    <DialogTrigger AsChild>
+        <Button OnClick="OpenDialog">Open Dialog</Button>
+    </DialogTrigger>
+    <DialogContent>
+        <DialogHeader>
+            <DialogTitle>Modal Dialog</DialogTitle>
+        </DialogHeader>
+        <p>Shortcuts are suspended while this dialog is open.</p>
+    </DialogContent>
+</Dialog>
+
+@code {
+    private bool _dialogOpen;
+
+    private void OpenDialog()
+    {
+        KeyboardShortcuts.Suspend();
+        _dialogOpen = true;
+    }
+
+    private void CloseDialog()
+    {
+        _dialogOpen = false;
+        KeyboardShortcuts.Resume();
+    }
+}
+```
+
+---
+
+## Browser Shortcut Conflicts
+
+Some keyboard shortcuts are reserved by browsers and cannot be intercepted:
+
+| Shortcut | Browser Action |
+|----------|---------------|
+| `Ctrl+N` | New window |
+| `Ctrl+T` | New tab |
+| `Ctrl+W` | Close tab |
+| `Ctrl+P` | Print |
+
+**Workaround:** Use `Ctrl+Shift+` variants for these actions (e.g., `Ctrl+Shift+N` instead of `Ctrl+N`).
+
+---
+
+## Behavior
+
+- Shortcuts are registered globally on the document
+- Automatically skipped when focus is in `<input>`, `<textarea>`, or `contenteditable`
+- Multiple shortcuts can be registered for the same key combination (last registered wins)
+- Disposing the returned `IDisposable` unregisters the shortcut
+- Service is scoped (per-user in Blazor Server)
+
+---
+
+## Related Components
+
+- **DropdownMenu** - llms/components/dropdown-menu.txt - Display shortcuts with `<DropdownMenuShortcut>`
+- **Menubar** - llms/components/menubar.txt - Display shortcuts with `<MenubarShortcut>`
+- **Kbd** - Display keyboard keys visually
+
+---
+
+**Last Updated:** 2026-01-24

@@ -281,12 +281,70 @@ A menu item with a checkbox that can be toggled.
 
 ---
 
+## Functional Keyboard Shortcuts
+
+The `<MenubarShortcut>` component displays keyboard shortcuts visually. To make them actually work, use the `IKeyboardShortcutService`:
+
+```razor
+@inject IKeyboardShortcutService KeyboardShortcuts
+@implements IAsyncDisposable
+
+<Menubar>
+    <MenubarMenu>
+        <MenubarTrigger>File</MenubarTrigger>
+        <MenubarContent>
+            <MenubarItem OnClick="HandleSave">
+                Save
+                <MenubarShortcut>Ctrl+S</MenubarShortcut>
+            </MenubarItem>
+            <MenubarItem OnClick="HandleNew">
+                New
+                <MenubarShortcut>Ctrl+Shift+N</MenubarShortcut>
+            </MenubarItem>
+        </MenubarContent>
+    </MenubarMenu>
+</Menubar>
+
+@code {
+    private IDisposable? _shortcutSave;
+    private IDisposable? _shortcutNew;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _shortcutSave = await KeyboardShortcuts.RegisterAsync("Ctrl+S", HandleSaveAsync);
+            _shortcutNew = await KeyboardShortcuts.RegisterAsync("Ctrl+Shift+N", HandleNewAsync);
+        }
+    }
+
+    private void HandleSave() => _ = HandleSaveAsync();
+    private void HandleNew() => _ = HandleNewAsync();
+    private Task HandleSaveAsync() => Task.CompletedTask;
+    private Task HandleNewAsync() => Task.CompletedTask;
+
+    public ValueTask DisposeAsync()
+    {
+        _shortcutSave?.Dispose();
+        _shortcutNew?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}
+```
+
+**Note:** Use `Ctrl+Shift+` variants for shortcuts that conflict with browser defaults (Ctrl+N, Ctrl+T, Ctrl+W, Ctrl+P).
+
+For full documentation, see: **llms/components/keyboard-shortcut-service.txt**
+
+---
+
 ## Related Components
 
 - **DropdownMenu** - llms/components/dropdown-menu.txt - Single dropdown menu
 - **ContextMenu** - llms/components/context-menu.txt - Right-click menu
 - **NavigationMenu** - llms/components/navigation-menu.txt - Site navigation
+- **Keyboard Shortcut Service** - llms/components/keyboard-shortcut-service.txt
 
 ---
 
-**Last Updated:** 2026-01-22
+**Last Updated:** 2026-01-24

@@ -149,11 +149,58 @@ See **llms/patterns.txt** - Data Table with Sorting and Pagination for more exam
 
 ---
 
+## Functional Keyboard Shortcuts
+
+The `<DropdownMenuShortcut>` component displays keyboard shortcuts visually, but to make them actually work, use the `IKeyboardShortcutService`:
+
+```razor
+@inject IKeyboardShortcutService KeyboardShortcuts
+@implements IAsyncDisposable
+
+<DropdownMenu>
+    <DropdownMenuTrigger AsChild>
+        <Button>File</Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent>
+        <DropdownMenuItem OnClick="HandleSave">
+            Save
+            <DropdownMenuShortcut>Ctrl+S</DropdownMenuShortcut>
+        </DropdownMenuItem>
+    </DropdownMenuContent>
+</DropdownMenu>
+
+@code {
+    private IDisposable? _shortcut;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _shortcut = await KeyboardShortcuts.RegisterAsync("Ctrl+S", HandleSaveAsync);
+        }
+    }
+
+    private void HandleSave() => _ = HandleSaveAsync();
+    private Task HandleSaveAsync() => Task.CompletedTask;
+
+    public ValueTask DisposeAsync()
+    {
+        _shortcut?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}
+```
+
+For full documentation, see: **llms/components/keyboard-shortcut-service.txt**
+
+---
+
 ## Related Components
 
 - **Button** - llms/components/button.txt
 - **Popover** - llms/components/popover.txt
+- **Keyboard Shortcut Service** - llms/components/keyboard-shortcut-service.txt
 
 ---
 
-**Last Updated:** 2026-01-22
+**Last Updated:** 2026-01-24

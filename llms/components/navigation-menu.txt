@@ -40,8 +40,14 @@ Add to `_Imports.razor`:
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
+| `EnableKeyboardNavigation` | `bool` | `false` | Enables arrow key navigation within dropdown menus |
 | `Class` | `string?` | `null` | Additional CSS classes |
 | `ChildContent` | `RenderFragment?` | - | Navigation content |
+
+**Behavior:**
+- Menu automatically closes when navigation occurs (listens to `LocationChanged`)
+- Dropdowns open on hover and close when mouse leaves
+- When `EnableKeyboardNavigation="true"`, arrow keys navigate between items in dropdowns
 
 ### Sub-components
 
@@ -231,6 +237,35 @@ Container for dropdown content with animations.
 </NavigationMenu>
 ```
 
+### Example 5: With Keyboard Navigation Enabled
+
+```razor
+<NavigationMenu EnableKeyboardNavigation="true">
+    <NavigationMenuList>
+        <NavigationMenuItem Value="products">
+            <NavigationMenuTrigger>Products</NavigationMenuTrigger>
+            <NavigationMenuContent>
+                <div class="grid gap-3 p-4 w-[400px]">
+                    <a href="/products/analytics" class="block p-3 rounded-lg hover:bg-accent">
+                        <div class="font-medium">Analytics</div>
+                        <p class="text-sm text-muted-foreground">Track your data</p>
+                    </a>
+                    <a href="/products/automation" class="block p-3 rounded-lg hover:bg-accent">
+                        <div class="font-medium">Automation</div>
+                        <p class="text-sm text-muted-foreground">Automate tasks</p>
+                    </a>
+                </div>
+            </NavigationMenuContent>
+        </NavigationMenuItem>
+        <NavigationMenuItem>
+            <NavigationMenuLink Href="/pricing">Pricing</NavigationMenuLink>
+        </NavigationMenuItem>
+    </NavigationMenuList>
+</NavigationMenu>
+```
+
+**Note:** When using keyboard navigation with custom content (not `NavigationMenuLink`), ensure your links have `href` attributes or `role="menuitem"` for proper focus handling.
+
 ---
 
 ## Styling
@@ -257,9 +292,19 @@ Container for dropdown content with animations.
 
 ## Keyboard Navigation
 
-The NavigationMenu component provides comprehensive keyboard navigation for accessibility.
+Keyboard navigation within dropdown content is **opt-in** via the `EnableKeyboardNavigation` parameter.
 
-### At Trigger Level (when focused on a menu trigger)
+### Enabling Keyboard Navigation
+
+```razor
+<NavigationMenu EnableKeyboardNavigation="true">
+    <NavigationMenuList>
+        <!-- Menu items -->
+    </NavigationMenuList>
+</NavigationMenu>
+```
+
+### At Trigger Level (always available)
 
 | Key | Action |
 |-----|--------|
@@ -269,7 +314,7 @@ The NavigationMenu component provides comprehensive keyboard navigation for acce
 | `Enter` / `Space` | Toggle dropdown open/closed |
 | `Escape` | Close dropdown |
 
-### Within Dropdown Content (when focused inside dropdown)
+### Within Dropdown Content (requires `EnableKeyboardNavigation="true"`)
 
 | Key | Action |
 |-----|--------|
@@ -283,9 +328,10 @@ The NavigationMenu component provides comprehensive keyboard navigation for acce
 ### Focus Behavior
 
 - Dropdown opens on hover (mouse) or `ArrowDown`/`Enter` (keyboard)
-- Keyboard navigation shows a focus ring around the focused item
+- When keyboard navigation is enabled, focus ring appears around focused items
 - Focus wraps from last item to first (and vice versa)
 - Closing dropdown returns focus to the trigger button
+- Menu automatically closes when a link is clicked and navigation occurs
 
 ---
 

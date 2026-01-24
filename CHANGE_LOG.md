@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-01-24
+
+### Added
+- KeyboardShortcutService for global keyboard shortcut management
+- Functional keyboard shortcuts in DropdownMenu and Menubar demo pages
+- KeyboardShortcut utility class for parsing shortcut strings (e.g., "Ctrl+Shift+N")
+
+### Changed
+- DropdownMenu demo updated to show functional shortcuts with visual feedback
+- Menubar demo updated to show functional shortcuts with visual feedback
+
+---
+
 ## 2026-01-23
 
 ### Changed

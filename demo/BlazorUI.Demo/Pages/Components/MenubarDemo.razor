@@ -1,6 +1,10 @@
 @page "/components/menubar"
 @using BlazorUI.Components.Menubar
 @using BlazorUI.Components.Separator
+@using BlazorUI.Components.Kbd
+@using BlazorUI.Primitives.Services
+@inject IKeyboardShortcutService KeyboardShortcuts
+@implements IAsyncDisposable
 
 <PageTitle>Menubar Component - BlazorUI</PageTitle>
 
@@ -14,89 +18,128 @@
         </div>
     </div>
 
-    <!-- Basic Example -->
+    <!-- Example with Keyboard Shortcuts -->
     <div class="space-y-4">
         <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Basic Example</h2>
+            <h2 class="text-2xl font-semibold">Example</h2>
             <p class="text-sm text-muted-foreground">
-                A simple menubar with dropdown menus.
+                A menubar with working keyboard shortcuts. Press shortcuts anywhere on the page - they work even when menus are closed.
             </p>
         </div>
-        <Menubar>
-            <MenubarMenu>
-                <MenubarTrigger>File</MenubarTrigger>
-                <MenubarContent>
-                    <MenubarItem OnClick="@(() => HandleAction("New Tab"))">
-                        New Tab
-                        <MenubarShortcut>Ctrl+T</MenubarShortcut>
-                    </MenubarItem>
-                    <MenubarItem OnClick="@(() => HandleAction("New Window"))">
-                        New Window
-                        <MenubarShortcut>Ctrl+N</MenubarShortcut>
-                    </MenubarItem>
-                    <MenubarSeparator />
-                    <MenubarItem OnClick="@(() => HandleAction("Share"))">Share</MenubarItem>
-                    <MenubarSeparator />
-                    <MenubarItem OnClick="@(() => HandleAction("Print"))">
-                        Print...
-                        <MenubarShortcut>Ctrl+P</MenubarShortcut>
-                    </MenubarItem>
-                </MenubarContent>
-            </MenubarMenu>
-            <MenubarMenu>
-                <MenubarTrigger>Edit</MenubarTrigger>
-                <MenubarContent>
-                    <MenubarItem OnClick="@(() => HandleAction("Undo"))">
-                        Undo
-                        <MenubarShortcut>Ctrl+Z</MenubarShortcut>
-                    </MenubarItem>
-                    <MenubarItem OnClick="@(() => HandleAction("Redo"))">
-                        Redo
-                        <MenubarShortcut>Ctrl+Y</MenubarShortcut>
-                    </MenubarItem>
-                    <MenubarSeparator />
-                    <MenubarItem OnClick="@(() => HandleAction("Cut"))">
-                        Cut
-                        <MenubarShortcut>Ctrl+X</MenubarShortcut>
-                    </MenubarItem>
-                    <MenubarItem OnClick="@(() => HandleAction("Copy"))">
-                        Copy
-                        <MenubarShortcut>Ctrl+C</MenubarShortcut>
-                    </MenubarItem>
-                    <MenubarItem OnClick="@(() => HandleAction("Paste"))">
-                        Paste
-                        <MenubarShortcut>Ctrl+V</MenubarShortcut>
-                    </MenubarItem>
-                </MenubarContent>
-            </MenubarMenu>
-            <MenubarMenu>
-                <MenubarTrigger>View</MenubarTrigger>
-                <MenubarContent>
-                    <MenubarLabel>Appearance</MenubarLabel>
-                    <MenubarCheckboxItem @bind-Checked="_showStatusBar">Status Bar</MenubarCheckboxItem>
-                    <MenubarCheckboxItem @bind-Checked="_showActivityBar">Activity Bar</MenubarCheckboxItem>
-                    <MenubarCheckboxItem @bind-Checked="_showSidebar">Sidebar</MenubarCheckboxItem>
-                    <MenubarSeparator />
-                    <MenubarLabel>Zoom</MenubarLabel>
-                    <MenubarItem OnClick="@(() => HandleAction("Zoom In"))">Zoom In</MenubarItem>
-                    <MenubarItem OnClick="@(() => HandleAction("Zoom Out"))">Zoom Out</MenubarItem>
-                    <MenubarSeparator />
-                    <MenubarCheckboxItem @bind-Checked="_fullScreen">Full Screen</MenubarCheckboxItem>
-                </MenubarContent>
-            </MenubarMenu>
-            <MenubarMenu>
-                <MenubarTrigger>Help</MenubarTrigger>
-                <MenubarContent>
-                    <MenubarItem OnClick="@(() => HandleAction("Documentation"))">Documentation</MenubarItem>
-                    <MenubarSeparator />
-                    <MenubarItem OnClick="@(() => HandleAction("About"))">About</MenubarItem>
-                </MenubarContent>
-            </MenubarMenu>
-        </Menubar>
-        @if (!string.IsNullOrEmpty(_lastAction))
-        {
-            <p class="text-sm text-muted-foreground">Last action: @_lastAction</p>
-        }
+
+        <div class="flex items-start gap-4">
+            <Menubar>
+                <MenubarMenu>
+                    <MenubarTrigger>File</MenubarTrigger>
+                    <MenubarContent>
+                        <MenubarItem OnClick="@(() => HandleShortcutAction("New Tab"))">
+                            New Tab
+                            <MenubarShortcut>Ctrl+Shift+T</MenubarShortcut>
+                        </MenubarItem>
+                        <MenubarItem OnClick="@(() => HandleShortcutAction("New Window"))">
+                            New Window
+                            <MenubarShortcut>Ctrl+Shift+N</MenubarShortcut>
+                        </MenubarItem>
+                        <MenubarSeparator />
+                        <MenubarItem OnClick="@(() => HandleShortcutAction("Share"))">Share</MenubarItem>
+                        <MenubarSeparator />
+                        <MenubarItem OnClick="@(() => HandleShortcutAction("Print"))">
+                            Print...
+                            <MenubarShortcut>Ctrl+Shift+P</MenubarShortcut>
+                        </MenubarItem>
+                    </MenubarContent>
+                </MenubarMenu>
+                <MenubarMenu>
+                    <MenubarTrigger>Edit</MenubarTrigger>
+                    <MenubarContent>
+                        <MenubarItem OnClick="@(() => HandleShortcutAction("Undo"))">
+                            Undo
+                            <MenubarShortcut>Ctrl+Z</MenubarShortcut>
+                        </MenubarItem>
+                        <MenubarItem OnClick="@(() => HandleShortcutAction("Redo"))">
+                            Redo
+                            <MenubarShortcut>Ctrl+Y</MenubarShortcut>
+                        </MenubarItem>
+                        <MenubarSeparator />
+                        <MenubarItem OnClick="@(() => HandleShortcutAction("Find"))">
+                            Find
+                            <MenubarShortcut>Ctrl+F</MenubarShortcut>
+                        </MenubarItem>
+                        <MenubarItem OnClick="@(() => HandleShortcutAction("Replace"))">
+                            Replace
+                            <MenubarShortcut>Ctrl+H</MenubarShortcut>
+                        </MenubarItem>
+                    </MenubarContent>
+                </MenubarMenu>
+                <MenubarMenu>
+                    <MenubarTrigger>View</MenubarTrigger>
+                    <MenubarContent>
+                        <MenubarLabel>Appearance</MenubarLabel>
+                        <MenubarCheckboxItem @bind-Checked="_showStatusBar">Status Bar</MenubarCheckboxItem>
+                        <MenubarCheckboxItem @bind-Checked="_showActivityBar">Activity Bar</MenubarCheckboxItem>
+                        <MenubarCheckboxItem @bind-Checked="_showSidebar">Sidebar</MenubarCheckboxItem>
+                        <MenubarSeparator />
+                        <MenubarLabel>Zoom</MenubarLabel>
+                        <MenubarItem OnClick="@(() => HandleShortcutAction("Zoom In"))">
+                            Zoom In
+                            <MenubarShortcut>Ctrl+=</MenubarShortcut>
+                        </MenubarItem>
+                        <MenubarItem OnClick="@(() => HandleShortcutAction("Zoom Out"))">
+                            Zoom Out
+                            <MenubarShortcut>Ctrl+-</MenubarShortcut>
+                        </MenubarItem>
+                        <MenubarSeparator />
+                        <MenubarCheckboxItem @bind-Checked="_fullScreen">Full Screen</MenubarCheckboxItem>
+                    </MenubarContent>
+                </MenubarMenu>
+                <MenubarMenu>
+                    <MenubarTrigger>Help</MenubarTrigger>
+                    <MenubarContent>
+                        <MenubarItem OnClick="@(() => HandleShortcutAction("Documentation"))">
+                            Documentation
+                            <MenubarShortcut>F1</MenubarShortcut>
+                        </MenubarItem>
+                        <MenubarSeparator />
+                        <MenubarItem OnClick="@(() => HandleShortcutAction("About"))">About</MenubarItem>
+                    </MenubarContent>
+                </MenubarMenu>
+            </Menubar>
+
+            @if (!string.IsNullOrEmpty(_shortcutAction))
+            {
+                <div class="flex items-center gap-2 p-3 bg-primary/10 text-primary rounded-md animate-pulse">
+                    <LucideIcon Name="check-circle" Size="16" />
+                    <span>Shortcut triggered: <strong>@_shortcutAction</strong></span>
+                </div>
+            }
+        </div>
+
+        <div class="mt-4 p-4 bg-muted rounded-lg">
+            <p class="font-medium mb-3">Available shortcuts:</p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                <div class="flex items-center gap-2">
+                    <Kbd Keys="Ctrl+Shift+T" Size="KbdSize.Small" /> <span class="text-muted-foreground">New Tab</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <Kbd Keys="Ctrl+Shift+N" Size="KbdSize.Small" /> <span class="text-muted-foreground">New Window</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <Kbd Keys="Ctrl+Z" Size="KbdSize.Small" /> <span class="text-muted-foreground">Undo</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <Kbd Keys="Ctrl+Y" Size="KbdSize.Small" /> <span class="text-muted-foreground">Redo</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <Kbd Keys="Ctrl+F" Size="KbdSize.Small" /> <span class="text-muted-foreground">Find</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <Kbd Keys="Ctrl+H" Size="KbdSize.Small" /> <span class="text-muted-foreground">Replace</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <Kbd Keys="F1" Size="KbdSize.Small" /> <span class="text-muted-foreground">Documentation</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- API Reference -->
@@ -142,7 +185,7 @@
 </div>
 
 @code {
-    private string? _lastAction;
+    private string? _shortcutAction;
 
     // View menu checkbox states
     private bool _showStatusBar = true;
@@ -150,8 +193,72 @@
     private bool _showSidebar = false;
     private bool _fullScreen = false;
 
-    private void HandleAction(string action)
+    // Keyboard shortcut registrations
+    private IDisposable? _shortcutNewTab;
+    private IDisposable? _shortcutNewWindow;
+    private IDisposable? _shortcutPrint;
+    private IDisposable? _shortcutUndo;
+    private IDisposable? _shortcutRedo;
+    private IDisposable? _shortcutFind;
+    private IDisposable? _shortcutReplace;
+    private IDisposable? _shortcutDocs;
+    private CancellationTokenSource? _clearCts;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        _lastAction = action;
+        if (firstRender)
+        {
+            // Register keyboard shortcuts
+            _shortcutNewTab = await KeyboardShortcuts.RegisterAsync("Ctrl+Shift+T", () => HandleShortcutAsync("New Tab"));
+            _shortcutNewWindow = await KeyboardShortcuts.RegisterAsync("Ctrl+Shift+N", () => HandleShortcutAsync("New Window"));
+            _shortcutPrint = await KeyboardShortcuts.RegisterAsync("Ctrl+Shift+P", () => HandleShortcutAsync("Print"));
+            _shortcutUndo = await KeyboardShortcuts.RegisterAsync("Ctrl+Z", () => HandleShortcutAsync("Undo"));
+            _shortcutRedo = await KeyboardShortcuts.RegisterAsync("Ctrl+Y", () => HandleShortcutAsync("Redo"));
+            _shortcutFind = await KeyboardShortcuts.RegisterAsync("Ctrl+F", () => HandleShortcutAsync("Find"));
+            _shortcutReplace = await KeyboardShortcuts.RegisterAsync("Ctrl+H", () => HandleShortcutAsync("Replace"));
+            _shortcutDocs = await KeyboardShortcuts.RegisterAsync("F1", () => HandleShortcutAsync("Documentation"));
+        }
+    }
+
+    private async Task HandleShortcutAsync(string action)
+    {
+        _shortcutAction = action;
+        await InvokeAsync(StateHasChanged);
+
+        // Cancel any previous clear timer
+        _clearCts?.Cancel();
+        _clearCts = new CancellationTokenSource();
+
+        // Clear after 2 seconds
+        try
+        {
+            await Task.Delay(2000, _clearCts.Token);
+            _shortcutAction = null;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (TaskCanceledException)
+        {
+            // Timer was cancelled, ignore
+        }
+    }
+
+    private void HandleShortcutAction(string action)
+    {
+        _ = HandleShortcutAsync(action);
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _clearCts?.Cancel();
+        _clearCts?.Dispose();
+        _shortcutNewTab?.Dispose();
+        _shortcutNewWindow?.Dispose();
+        _shortcutPrint?.Dispose();
+        _shortcutUndo?.Dispose();
+        _shortcutRedo?.Dispose();
+        _shortcutFind?.Dispose();
+        _shortcutReplace?.Dispose();
+        _shortcutDocs?.Dispose();
+        return ValueTask.CompletedTask;
     }
 }

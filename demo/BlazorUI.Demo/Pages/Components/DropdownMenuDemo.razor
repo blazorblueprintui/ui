@@ -1,6 +1,9 @@
 @page "/components/dropdown-menu"
 @using BlazorUI.Primitives.Services
 @using BlazorUI.Components.DropdownMenu
+@using BlazorUI.Components.Kbd
+@inject IKeyboardShortcutService KeyboardShortcuts
+@implements IAsyncDisposable
 
 <PageTitle>Dropdown Menu Component - BlazorUI</PageTitle>
 
@@ -106,42 +109,96 @@
         </div>
     </section>
 
-    <!-- With Keyboard Shortcuts -->
+    <!-- With Keyboard Shortcuts (Functional) -->
     <section class="space-y-4">
-        <h2 class="text-2xl font-semibold">With Keyboard Shortcuts</h2>
+        <h2 class="text-2xl font-semibold">Functional Keyboard Shortcuts</h2>
         <p class="text-sm text-muted-foreground">
-            Display keyboard shortcuts alongside menu items (visual only).
+            Keyboard shortcuts that actually work! Press the shortcut keys anywhere on this page
+            (even when the menu is closed) to trigger the action.
         </p>
 
-        <div class="flex items-start gap-2">
+        <div class="flex items-start gap-4">
             <DropdownMenu>
                 <DropdownMenuTrigger Class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
                     File Menu
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                    <DropdownMenuItem OnClick="@(() => HandleShortcutsAction("New"))">
-                        New
-                        <DropdownMenuShortcut>⌘N</DropdownMenuShortcut>
+                    <DropdownMenuItem OnClick="@(() => HandleShortcutsAction("New File"))">
+                        New File
+                        <DropdownMenuShortcut>Ctrl+Shift+N</DropdownMenuShortcut>
                     </DropdownMenuItem>
                     <DropdownMenuItem OnClick="@(() => HandleShortcutsAction("Open"))">
                         Open
-                        <DropdownMenuShortcut>⌘O</DropdownMenuShortcut>
+                        <DropdownMenuShortcut>Ctrl+O</DropdownMenuShortcut>
                     </DropdownMenuItem>
                     <DropdownMenuItem OnClick="@(() => HandleShortcutsAction("Save"))">
                         Save
-                        <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+                        <DropdownMenuShortcut>Ctrl+S</DropdownMenuShortcut>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem OnClick="@(() => HandleShortcutsAction("Print"))">
-                        Print
-                        <DropdownMenuShortcut>⌘P</DropdownMenuShortcut>
+                    <DropdownMenuItem OnClick="@(() => HandleShortcutsAction("Save As"))">
+                        Save As...
+                        <DropdownMenuShortcut>Ctrl+Shift+S</DropdownMenuShortcut>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
+
             @if (!string.IsNullOrEmpty(shortcutsAction))
             {
-                <p class="text-sm">Last action: <strong>@shortcutsAction</strong></p>
+                <div class="flex items-center gap-2 p-3 bg-primary/10 text-primary rounded-md animate-pulse">
+                    <LucideIcon Name="check-circle" Size="16" />
+                    <span>Shortcut triggered: <strong>@shortcutsAction</strong></span>
+                </div>
             }
+        </div>
+
+        <div class="mt-4 p-4 bg-muted rounded-lg">
+            <p class="font-medium mb-3">Try these shortcuts (even with the menu closed):</p>
+            <div class="grid grid-cols-2 gap-2 text-sm">
+                <div class="flex items-center gap-2">
+                    <Kbd Keys="Ctrl+Shift+N" /> <span class="text-muted-foreground">New File</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <Kbd Keys="Ctrl+O" /> <span class="text-muted-foreground">Open</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <Kbd Keys="Ctrl+S" /> <span class="text-muted-foreground">Save</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <Kbd Keys="Ctrl+Shift+S" /> <span class="text-muted-foreground">Save As</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-muted p-4 rounded-md">
+            <p class="text-sm font-medium mb-2">Usage with KeyboardShortcutService:</p>
+            <pre class="text-sm overflow-x-auto"><code>@@inject IKeyboardShortcutService KeyboardShortcuts
+@@implements IAsyncDisposable
+
+@@code {
+    private IDisposable? _shortcutNew;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _shortcutNew = await KeyboardShortcuts.RegisterAsync(
+                "Ctrl+Shift+N", HandleNewFile);
+        }
+    }
+
+    private Task HandleNewFile()
+    {
+        // Handle the shortcut action
+        return Task.CompletedTask;
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _shortcutNew?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}</code></pre>
         </div>
     </section>
 
@@ -434,11 +491,52 @@
     private bool showPanel = false;
     private bool fullScreen = false;
 
+    // Keyboard shortcut registrations
+    private IDisposable? _shortcutNew;
+    private IDisposable? _shortcutOpen;
+    private IDisposable? _shortcutSave;
+    private IDisposable? _shortcutSaveAs;
+    private CancellationTokenSource? _clearCts;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Register keyboard shortcuts
+            _shortcutNew = await KeyboardShortcuts.RegisterAsync("Ctrl+Shift+N", () => HandleShortcutAsync("New File"));
+            _shortcutOpen = await KeyboardShortcuts.RegisterAsync("Ctrl+O", () => HandleShortcutAsync("Open"));
+            _shortcutSave = await KeyboardShortcuts.RegisterAsync("Ctrl+S", () => HandleShortcutAsync("Save"));
+            _shortcutSaveAs = await KeyboardShortcuts.RegisterAsync("Ctrl+Shift+S", () => HandleShortcutAsync("Save As"));
+        }
+    }
+
+    private async Task HandleShortcutAsync(string action)
+    {
+        shortcutsAction = action;
+        await InvokeAsync(StateHasChanged);
+
+        // Cancel any previous clear timer
+        _clearCts?.Cancel();
+        _clearCts = new CancellationTokenSource();
+
+        // Clear after 2 seconds
+        try
+        {
+            await Task.Delay(2000, _clearCts.Token);
+            shortcutsAction = null;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (TaskCanceledException)
+        {
+            // Timer was cancelled, ignore
+        }
+    }
+
     // Individual handlers for each section
     private void HandleBasicAction(string action) => basicAction = action;
     private void HandleLabelsAction(string action) => labelsAction = action;
     private void HandleGroupsAction(string action) => groupsAction = action;
-    private void HandleShortcutsAction(string action) => shortcutsAction = action;
+    private void HandleShortcutsAction(string action) => _ = HandleShortcutAsync(action);
     private void HandleDisabledAction(string action) => disabledAction = action;
     private void HandleComplexAction(string action) => complexAction = action;
 
@@ -451,5 +549,16 @@
     private string? GetMenuAction(string menuName)
     {
         return menuActions.TryGetValue(menuName, out var action) ? action : null;
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _clearCts?.Cancel();
+        _clearCts?.Dispose();
+        _shortcutNew?.Dispose();
+        _shortcutOpen?.Dispose();
+        _shortcutSave?.Dispose();
+        _shortcutSaveAs?.Dispose();
+        return ValueTask.CompletedTask;
     }
 }
