@@ -1,15 +1,21 @@
 @namespace BlazorUI.Components.NavigationMenu
 @using BlazorUI.Components.Utilities
 @using BlazorUI.Icons.Lucide.Components
+@inject IJSRuntime JSRuntime
 
 @*
     Navigation Menu Trigger - opens a dropdown content panel.
 *@
 
-<button type="button"
+<button @ref="_buttonRef"
+        type="button"
         class="@CssClass"
         data-state="@(MenuItem?.IsOpen == true ? "open" : "closed")"
+        aria-haspopup="menu"
+        aria-expanded="@(MenuItem?.IsOpen == true ? "true" : "false")"
         @onclick="HandleClick"
+        @onkeydown="HandleKeyDown"
+        @onkeydown:preventDefault="_preventKeyDefault"
         @onmouseenter="HandleMouseEnter"
         @onmouseleave="HandleMouseLeave">
     @ChildContent
@@ -18,11 +24,22 @@
 </button>
 
 @code {
+    private ElementReference _buttonRef;
+    private int _triggerIndex = -1;
+    private bool _preventKeyDefault = false;
+    private IJSObjectReference? _navModule;
+
     /// <summary>
     /// Reference to the parent menu item.
     /// </summary>
     [CascadingParameter]
     public NavigationMenuItem? MenuItem { get; set; }
+
+    /// <summary>
+    /// Reference to the parent navigation menu.
+    /// </summary>
+    [CascadingParameter]
+    public NavigationMenu? Menu { get; set; }
 
     /// <summary>
     /// The content of the trigger button.
@@ -36,9 +53,116 @@
     [Parameter]
     public string? Class { get; set; }
 
+    /// <summary>
+    /// Gets the element reference for focus management.
+    /// </summary>
+    internal ElementReference ButtonRef => _buttonRef;
+
+    protected override void OnInitialized()
+    {
+        if (Menu != null)
+        {
+            _triggerIndex = Menu.RegisterTrigger(_buttonRef);
+        }
+        MenuItem?.RegisterTrigger(this);
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && Menu != null && _triggerIndex >= 0)
+        {
+            // Re-register with the actual element reference after render
+            var triggers = typeof(NavigationMenu)
+                .GetField("_triggerRefs", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?
+                .GetValue(Menu) as List<ElementReference>;
+            if (triggers != null && _triggerIndex < triggers.Count)
+            {
+                triggers[_triggerIndex] = _buttonRef;
+            }
+        }
+    }
+
     private void HandleClick()
     {
-        MenuItem?.Toggle();
+        // Only open, don't toggle closed (clicking an open menu keeps it open)
+        if (MenuItem != null && !MenuItem.IsOpen)
+        {
+            MenuItem.IsOpen = true;
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        _preventKeyDefault = false;
+
+        switch (args.Key)
+        {
+            case "ArrowRight":
+                _preventKeyDefault = true;
+                await FocusTriggerAtOffset(1);
+                break;
+            case "ArrowLeft":
+                _preventKeyDefault = true;
+                await FocusTriggerAtOffset(-1);
+                break;
+            case "ArrowDown":
+                _preventKeyDefault = true;
+                if (MenuItem != null)
+                {
+                    MenuItem.CancelCloseTimer();
+                    MenuItem.IsOpen = true;
+                    await Task.Delay(50);
+                    await MenuItem.FocusFirstContentItemAsync();
+                }
+                break;
+            case "ArrowUp":
+                _preventKeyDefault = true;
+                break;
+            case "Enter":
+            case " ":
+                _preventKeyDefault = true;
+                MenuItem?.Toggle();
+                break;
+            case "Escape":
+                _preventKeyDefault = true;
+                if (MenuItem != null)
+                {
+                    MenuItem.IsOpen = false;
+                }
+                break;
+        }
+    }
+
+    private async Task FocusTriggerAtOffset(int offset)
+    {
+        if (Menu == null || _triggerIndex < 0) return;
+
+        var newIndex = _triggerIndex + offset;
+        if (newIndex < 0) newIndex = Menu.TriggerCount - 1;
+        if (newIndex >= Menu.TriggerCount) newIndex = 0;
+
+        var targetRef = Menu.GetTriggerAt(newIndex);
+        if (targetRef.HasValue)
+        {
+            await EnsureModuleLoaded();
+            if (_navModule != null)
+            {
+                await _navModule.InvokeVoidAsync("focusElement", targetRef.Value);
+            }
+        }
+    }
+
+    private async Task EnsureModuleLoaded()
+    {
+        if (_navModule == null)
+        {
+            try
+            {
+                _navModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import", "./_content/BlazorUI.Components/js/navigation-menu.js");
+            }
+            catch { }
+        }
     }
 
     private void HandleMouseEnter()
@@ -56,11 +180,24 @@
     }
 
     /// <summary>
+    /// Focuses this trigger element.
+    /// </summary>
+    internal async Task FocusAsync()
+    {
+        await EnsureModuleLoaded();
+        if (_navModule != null)
+        {
+            await _navModule.InvokeVoidAsync("focusElement", _buttonRef);
+        }
+    }
+
+    /// <summary>
     /// Gets the computed CSS classes for the trigger.
     /// </summary>
     private string CssClass => ClassNames.cn(
         "group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium",
-        "transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none",
+        "transition-colors hover:bg-accent hover:text-accent-foreground",
+        "focus:bg-accent focus:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         "disabled:pointer-events-none disabled:opacity-50",
         "data-[state=open]:bg-accent/50",
         Class

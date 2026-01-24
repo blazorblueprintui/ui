@@ -13,6 +13,9 @@
 </li>
 
 @code {
+    private NavigationMenuTrigger? _trigger;
+    private NavigationMenuContent? _content;
+
     /// <summary>
     /// Reference to the parent navigation menu.
     /// </summary>
@@ -37,8 +40,6 @@
     [Parameter]
     public string? Class { get; set; }
 
-    private CancellationTokenSource? _closeTimerCts;
-
     /// <summary>
     /// Gets whether this item is currently open.
     /// </summary>
@@ -55,6 +56,44 @@
     }
 
     /// <summary>
+    /// Registers the trigger component for focus management.
+    /// </summary>
+    internal void RegisterTrigger(NavigationMenuTrigger trigger)
+    {
+        _trigger = trigger;
+    }
+
+    /// <summary>
+    /// Registers the content component for focus management.
+    /// </summary>
+    internal void RegisterContent(NavigationMenuContent content)
+    {
+        _content = content;
+    }
+
+    /// <summary>
+    /// Focuses the trigger element.
+    /// </summary>
+    internal async Task FocusTriggerAsync()
+    {
+        if (_trigger != null)
+        {
+            await _trigger.FocusAsync();
+        }
+    }
+
+    /// <summary>
+    /// Focuses the first item in the content.
+    /// </summary>
+    internal async Task FocusFirstContentItemAsync()
+    {
+        if (_content != null)
+        {
+            await _content.FocusFirstItemAsync();
+        }
+    }
+
+    /// <summary>
     /// Toggles the open state of this menu item.
     /// </summary>
     internal void Toggle()
@@ -64,33 +103,20 @@
 
     /// <summary>
     /// Starts a timer to close the menu after a short delay.
-    /// This allows the user time to move from trigger to content.
+    /// Delegates to the parent menu's shared timer.
     /// </summary>
-    internal async void StartCloseTimer()
+    internal void StartCloseTimer()
     {
-        CancelCloseTimer();
-        _closeTimerCts = new CancellationTokenSource();
-
-        try
-        {
-            await Task.Delay(150, _closeTimerCts.Token);
-            IsOpen = false;
-            StateHasChanged();
-        }
-        catch (TaskCanceledException)
-        {
-            // Timer was cancelled, do nothing
-        }
+        Menu?.StartCloseTimer();
     }
 
     /// <summary>
     /// Cancels any pending close timer.
+    /// Delegates to the parent menu's shared timer.
     /// </summary>
     internal void CancelCloseTimer()
     {
-        _closeTimerCts?.Cancel();
-        _closeTimerCts?.Dispose();
-        _closeTimerCts = null;
+        Menu?.CancelCloseTimer();
     }
 
     /// <summary>

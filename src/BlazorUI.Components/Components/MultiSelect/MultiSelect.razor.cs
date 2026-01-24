@@ -120,9 +120,17 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
 
     /// <summary>
     /// Gets or sets the width of the popover content.
+    /// Ignored when MatchTriggerWidth is true.
     /// </summary>
     [Parameter]
     public string PopoverWidth { get; set; } = "w-[300px]";
+
+    /// <summary>
+    /// Gets or sets whether to match the dropdown width to the trigger element width.
+    /// When true, PopoverWidth is ignored.
+    /// </summary>
+    [Parameter]
+    public bool MatchTriggerWidth { get; set; } = false;
 
     /// <summary>
     /// Gets or sets whether clicking outside the dropdown should close it.

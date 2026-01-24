@@ -118,7 +118,8 @@ export async function computePosition(reference, floating, options = {}) {
         flip = true,
         shift = true,
         padding = 8,
-        strategy = 'absolute'
+        strategy = 'absolute',
+        matchReferenceWidth = false
     } = options;
 
     const middleware = [
@@ -136,6 +137,19 @@ export async function computePosition(reference, floating, options = {}) {
     // Add arrow middleware if arrow element provided
     if (options.arrow) {
         middleware.push(lib.arrow({ element: options.arrow }));
+    }
+
+    // Add size middleware to match floating element width to reference element
+    if (matchReferenceWidth) {
+        middleware.push(lib.size({
+            apply({ rects, elements }) {
+                Object.assign(elements.floating.style, {
+                    width: `${rects.reference.width}px`,
+                    minWidth: `${rects.reference.width}px`,
+                    maxWidth: `${rects.reference.width}px`
+                });
+            }
+        }));
     }
 
     const result = await lib.computePosition(reference, floating, {

@@ -145,6 +145,44 @@
         </div>
     </section>
 
+    <!-- Match Trigger Width -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Match Trigger Width</h2>
+        <p class="text-sm text-muted-foreground">
+            With <code class="bg-muted px-1 py-0.5 rounded text-sm">MatchTriggerWidth="true"</code>,
+            the dropdown automatically matches the width of the trigger element.
+        </p>
+
+        <div class="flex flex-col gap-4">
+            <div class="w-72">
+                <label class="text-sm font-medium mb-2 block">Fixed width container (w-72)</label>
+                <MultiSelect TItem="Language"
+                            Items="languages"
+                            @bind-Values="matchWidthLanguages"
+                            ValueSelector="@(l => l.Value)"
+                            DisplaySelector="@(l => l.Label)"
+                            Placeholder="Select languages..."
+                            SearchPlaceholder="Search..."
+                            MatchTriggerWidth="true"
+                            Class="w-full" />
+            </div>
+
+            <div class="w-[500px]">
+                <label class="text-sm font-medium mb-2 block">Wider container (500px)</label>
+                <MultiSelect TItem="Technology"
+                            Items="technologies"
+                            @bind-Values="matchWidthTechnologies"
+                            ValueSelector="@(t => t.Value)"
+                            DisplaySelector="@(t => t.Label)"
+                            Placeholder="Select technologies..."
+                            SearchPlaceholder="Search..."
+                            ShowSelectAll="true"
+                            MatchTriggerWidth="true"
+                            Class="w-full" />
+            </div>
+        </div>
+    </section>
+
     <!-- Disabled State -->
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">Disabled State</h2>
@@ -180,7 +218,7 @@
                             Placeholder="Select your skills..."
                             SearchPlaceholder="Search skills..."
                             ShowSelectAll="true"
-                            PopoverWidth="w-[350px]" />
+                            MatchTriggerWidth="true" />
                 <p class="text-xs text-muted-foreground">Select all programming languages you know.</p>
             </div>
 
@@ -194,7 +232,7 @@
                             Placeholder="Select frameworks..."
                             SearchPlaceholder="Search frameworks..."
                             MaxDisplayTags="2"
-                            PopoverWidth="w-[350px]" />
+                            MatchTriggerWidth="true" />
                 <p class="text-xs text-muted-foreground">Choose your preferred frameworks.</p>
             </div>
 
@@ -233,6 +271,10 @@
 
     // Disabled example
     private IEnumerable<string> disabledValues = new[] { "csharp", "typescript" };
+
+    // Match trigger width examples
+    private IEnumerable<string>? matchWidthLanguages;
+    private IEnumerable<string>? matchWidthTechnologies;
 
     // Form example
     private IEnumerable<string>? formSkills;

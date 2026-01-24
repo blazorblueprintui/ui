@@ -112,9 +112,17 @@ public partial class Combobox<TItem> : ComponentBase
     /// </summary>
     /// <remarks>
     /// Defaults to "w-[200px]". Can be overridden with Tailwind classes.
+    /// Ignored when MatchTriggerWidth is true.
     /// </remarks>
     [Parameter]
     public string PopoverWidth { get; set; } = "w-[200px]";
+
+    /// <summary>
+    /// Gets or sets whether to match the dropdown width to the trigger element width.
+    /// When true, PopoverWidth is ignored.
+    /// </summary>
+    [Parameter]
+    public bool MatchTriggerWidth { get; set; } = false;
 
     /// <summary>
     /// Tracks whether the popover is currently open.

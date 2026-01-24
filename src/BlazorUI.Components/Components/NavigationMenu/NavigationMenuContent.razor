@@ -1,5 +1,7 @@
 @namespace BlazorUI.Components.NavigationMenu
 @using BlazorUI.Components.Utilities
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
 
 @*
     Navigation Menu Content - the dropdown content panel.
@@ -7,7 +9,10 @@
 
 @if (MenuItem?.IsOpen == true)
 {
-    <div class="@CssClass"
+    <div @ref="_contentRef"
+         class="@CssClass"
+         role="menu"
+         tabindex="-1"
          data-state="@(MenuItem?.IsOpen == true ? "open" : "closed")"
          @onmouseenter="HandleMouseEnter"
          @onmouseleave="HandleMouseLeave">
@@ -16,6 +21,13 @@
 }
 
 @code {
+    private ElementReference _contentRef;
+    private IJSObjectReference? _navModule;
+    private IJSObjectReference? _keyboardCleanup;
+    private DotNetObjectReference<NavigationMenuContent>? _dotNetRef;
+    private bool _moduleLoaded = false;
+    private bool _wasOpen = false;
+
     /// <summary>
     /// Reference to the parent menu item.
     /// </summary>
@@ -33,6 +45,107 @@
     /// </summary>
     [Parameter]
     public string? Class { get; set; }
+
+    protected override void OnInitialized()
+    {
+        MenuItem?.RegisterContent(this);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var isOpen = MenuItem?.IsOpen == true;
+
+        // Load module if not loaded
+        if (isOpen && !_moduleLoaded)
+        {
+            try
+            {
+                _navModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import", "./_content/BlazorUI.Components/js/navigation-menu.js");
+                _moduleLoaded = true;
+            }
+            catch
+            {
+                // Module loading failed
+            }
+        }
+
+        // Set up keyboard navigation when menu opens
+        if (isOpen && !_wasOpen && _navModule != null)
+        {
+            try
+            {
+                _dotNetRef = DotNetObjectReference.Create(this);
+                _keyboardCleanup = await _navModule.InvokeAsync<IJSObjectReference>(
+                    "setupKeyboardNavigation", _contentRef, _dotNetRef);
+
+                // Focus the container so it can receive keyboard events
+                await _navModule.InvokeVoidAsync("focusElement", _contentRef);
+            }
+            catch
+            {
+                // Keyboard navigation setup failed
+            }
+        }
+
+        // Clean up keyboard navigation when menu closes
+        if (!isOpen && _wasOpen && _keyboardCleanup != null)
+        {
+            try
+            {
+                await _keyboardCleanup.InvokeVoidAsync("dispose");
+                await _keyboardCleanup.DisposeAsync();
+                _keyboardCleanup = null;
+                _dotNetRef?.Dispose();
+                _dotNetRef = null;
+            }
+            catch
+            {
+                // Cleanup failed
+            }
+        }
+
+        _wasOpen = isOpen;
+    }
+
+    /// <summary>
+    /// Focuses the first focusable item in the content.
+    /// </summary>
+    internal async Task FocusFirstItemAsync()
+    {
+        // Ensure module is loaded
+        if (!_moduleLoaded)
+        {
+            try
+            {
+                _navModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import", "./_content/BlazorUI.Components/js/navigation-menu.js");
+                _moduleLoaded = true;
+            }
+            catch
+            {
+                return;
+            }
+        }
+
+        if (_navModule != null)
+        {
+            await _navModule.InvokeVoidAsync("navigateFirst", _contentRef);
+        }
+    }
+
+    /// <summary>
+    /// Called from JavaScript when Escape key is pressed.
+    /// </summary>
+    [JSInvokable]
+    public async Task HandleEscapeKey()
+    {
+        if (MenuItem != null)
+        {
+            MenuItem.IsOpen = false;
+            await MenuItem.FocusTriggerAsync();
+        }
+    }
 
     private void HandleMouseEnter()
     {
@@ -59,4 +172,24 @@
         "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
         Class
     );
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_keyboardCleanup != null)
+        {
+            try
+            {
+                await _keyboardCleanup.InvokeVoidAsync("dispose");
+                await _keyboardCleanup.DisposeAsync();
+            }
+            catch { }
+        }
+
+        _dotNetRef?.Dispose();
+
+        if (_navModule != null)
+        {
+            await _navModule.DisposeAsync();
+        }
+    }
 }

@@ -14,6 +14,8 @@
 
 @code {
     private string? _activeItem;
+    private CancellationTokenSource? _closeTimerCts;
+    private List<ElementReference> _triggerRefs = new();
 
     /// <summary>
     /// The content to render inside the navigation menu.
@@ -45,6 +47,62 @@
             _activeItem = value;
             StateHasChanged();
         }
+    }
+
+    /// <summary>
+    /// Registers a trigger element for keyboard navigation.
+    /// </summary>
+    internal int RegisterTrigger(ElementReference triggerRef)
+    {
+        _triggerRefs.Add(triggerRef);
+        return _triggerRefs.Count - 1;
+    }
+
+    /// <summary>
+    /// Gets the trigger element at the specified index.
+    /// </summary>
+    internal ElementReference? GetTriggerAt(int index)
+    {
+        if (index >= 0 && index < _triggerRefs.Count)
+        {
+            return _triggerRefs[index];
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Gets the total number of registered triggers.
+    /// </summary>
+    internal int TriggerCount => _triggerRefs.Count;
+
+    /// <summary>
+    /// Starts a shared timer to close the menu after a short delay.
+    /// This is shared across all menu items to prevent race conditions.
+    /// </summary>
+    internal async void StartCloseTimer()
+    {
+        CancelCloseTimer();
+        _closeTimerCts = new CancellationTokenSource();
+
+        try
+        {
+            await Task.Delay(150, _closeTimerCts.Token);
+            ActiveItem = null;
+        }
+        catch (TaskCanceledException)
+        {
+            // Timer was cancelled, do nothing
+        }
+    }
+
+    /// <summary>
+    /// Cancels any pending close timer.
+    /// </summary>
+    internal void CancelCloseTimer()
+    {
+        _closeTimerCts?.Cancel();
+        _closeTimerCts?.Dispose();
+        _closeTimerCts = null;
     }
 
     /// <summary>

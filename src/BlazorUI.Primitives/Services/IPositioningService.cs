@@ -77,6 +77,11 @@ public class PositioningOptions
     /// Absolute positions relative to offset parent, fixed relative to viewport.
     /// </summary>
     public string Strategy { get; set; } = "absolute";
+
+    /// <summary>
+    /// Whether to match the floating element width to the reference element width.
+    /// </summary>
+    public bool MatchReferenceWidth { get; set; } = false;
 }
 
 /// <summary>
