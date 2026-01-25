@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## 2026-01-25
 
+### Fixed
+- Menubar now switches between menus with a single click (previously required double-click due to overlay blocking)
+
 ### Added
 - DisplayTextSelector parameter for Select component - allows deriving display text from the selected value without waiting for dropdown items to render
 - DayClass and CellClass parameters for Calendar component - allows custom styling of day buttons and cells
