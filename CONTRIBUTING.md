@@ -131,12 +131,12 @@ Before submitting a pull request, please:
 
 ## License
 
-By contributing to BlazorUI, you agree that your contributions will be licensed under the [MIT License](LICENSE).
+By contributing to BlazorUI, you agree that your contributions will be licensed under the [Apache License 2.0](LICENSE).
 
 This means:
 - Your contributions will be freely available to everyone
 - You retain copyright to your contributions
-- You grant BlazorUI and its users the rights specified in the MIT License
+- You grant BlazorUI and its users the rights specified in the Apache License 2.0
 
 ## Code of Conduct
 

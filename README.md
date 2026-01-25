@@ -2,7 +2,7 @@
 
 [![Website](https://img.shields.io/badge/Website-blazorui.net-blue)](https://blazorui.net)
 [![NuGet](https://img.shields.io/nuget/v/BlazorUI.Components)](https://www.nuget.org/packages/BlazorUI.Components)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
 
 A comprehensive UI component library for Blazor inspired by [shadcn/ui](https://ui.shadcn.com/).
 
@@ -392,7 +392,9 @@ BlazorUI uses a **two-layer architecture**:
 
 ## License
 
-BlazorUI is open source software licensed under the [MIT License](LICENSE).
+BlazorUI is open source software licensed under the [Apache License 2.0](LICENSE).
+
+If you create derivative works, you must include the contents of the [NOTICE](NOTICE) file in your distribution, as required by the Apache License 2.0.
 
 
 ## Acknowledgments

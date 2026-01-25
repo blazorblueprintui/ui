@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const jsonPath = path.join(__dirname, '../../src/heroicons-temp.json');
+const jsonPath = path.join(__dirname, '../../tools/icon-generation/data/heroicons.json');
 const outputPath = path.join(__dirname, 'Data/HeroIconData.cs');
 
 console.log('Reading Heroicons icon data from', jsonPath);

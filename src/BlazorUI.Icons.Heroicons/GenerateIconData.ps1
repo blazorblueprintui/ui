@@ -1,7 +1,7 @@
 # PowerShell script to convert heroicons.json (IconifyJSON format) to C# dictionary code
 # Heroicons have 4 variants: outline (default), solid, mini (20-solid), micro (16-solid)
 
-$jsonPath = "C:\Users\mathe\Workspace\Projects\Blazcn\src\heroicons-temp.json"
+$jsonPath = Join-Path $PSScriptRoot "..\..\tools\icon-generation\data\heroicons.json"
 $outputPath = Join-Path $PSScriptRoot "Data\HeroIconData.cs"
 
 Write-Host "Reading Heroicons icon data from $jsonPath..."

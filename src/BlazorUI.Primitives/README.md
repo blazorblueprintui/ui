@@ -304,7 +304,7 @@ For full documentation, examples, and API reference, visit:
 
 ## License
 
-MIT License - see [LICENSE](https://github.com/blazorui-net/ui/blob/main/LICENSE) for details.
+Apache License 2.0 - see [LICENSE](https://github.com/blazorui-net/ui/blob/main/LICENSE) for details.
 
 ## Contributing
 

@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const jsonPath = path.join(__dirname, '../../src/feather-temp.json');
+const jsonPath = path.join(__dirname, '../../tools/icon-generation/data/feather-icons.json');
 const outputPath = path.join(__dirname, 'Data/FeatherIconData.cs');
 
 console.log('Reading Feather icon data from', jsonPath);
