@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using System.Linq.Expressions;
 using System.Text;
@@ -249,8 +250,32 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        // Setup JS when popover opens
+        if (_isOpen && !_jsSetupDone)
+        {
+            _jsSetupDone = true;
+
+            try
+            {
+                _multiSelectModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import", "./_content/BlazorUI.Components/js/multiselect.js");
+
+                _dotNetRef = DotNetObjectReference.Create(this);
+
+                await _multiSelectModule.InvokeVoidAsync(
+                    "setupMultiSelectInput",
+                    _searchInputRef,
+                    _dotNetRef,
+                    $"{Id}-search",
+                    $"{Id}-listbox");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"MultiSelect JS setup failed: {ex.Message}");
+            }
+        }
         // Cleanup JS when popover closes
-        if (!_isOpen && _jsSetupDone)
+        else if (!_isOpen && _jsSetupDone)
         {
             await CleanupJsAsync();
         }
@@ -325,42 +350,6 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
     }
 
     /// <summary>
-    /// Captures the ElementReference from InputGroupInput and sets up JS interop.
-    /// This is called when the InputGroupInput renders, ensuring the ref is valid.
-    /// </summary>
-    private async void HandleInputRefAsync(ElementReference inputRef)
-    {
-        _searchInputRef = inputRef;
-
-        // Only setup JS if popover is open and not already setup
-        if (_isOpen && !_jsSetupDone)
-        {
-            _jsSetupDone = true;
-
-            try
-            {
-                // Load JS module and setup keyboard handling
-                // Note: Focus is handled by HandleContentReady via OnContentReady event
-                _multiSelectModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorUI.Components/js/multiselect.js");
-
-                _dotNetRef = DotNetObjectReference.Create(this);
-
-                await _multiSelectModule.InvokeVoidAsync(
-                    "setupMultiSelectInput",
-                    _searchInputRef,
-                    _dotNetRef,
-                    $"{Id}-search",
-                    $"{Id}-listbox");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"MultiSelect JS setup failed: {ex.Message}");
-            }
-        }
-    }
-
-    /// <summary>
     /// Handles the popover content ready event to focus the search input.
     /// This is called when the popover is fully positioned and visible.
     /// </summary>
@@ -369,8 +358,6 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
         // Guard against multiple calls per open
         if (_focusDone) return;
         _focusDone = true;
-
-        if (string.IsNullOrEmpty(_searchInputRef.Id)) return;
 
         try
         {
@@ -385,11 +372,27 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
     }
 
     /// <summary>
-    /// Handles search input changes from InputGroupInput.
+    /// Handles search input changes.
     /// </summary>
-    private void HandleSearchInputChanged(string? value)
+    private void HandleSearchInput(ChangeEventArgs args)
     {
-        _searchQuery = value ?? string.Empty;
+        _searchQuery = args.Value?.ToString() ?? string.Empty;
+    }
+
+    /// <summary>
+    /// Handles keyboard events on the search input.
+    /// </summary>
+    private void HandleSearchKeyDown(KeyboardEventArgs args)
+    {
+        switch (args.Key)
+        {
+            case "Enter":
+                HandleEnter();
+                break;
+            case "Escape":
+                HandleEscape();
+                break;
+        }
     }
 
     /// <summary>

@@ -3,8 +3,6 @@
 @using BlazorUI.Components.Popover
 @using BlazorUI.Components.Badge
 @using BlazorUI.Components.Separator
-@using BlazorUI.Components.InputGroup
-@using BlazorUI.Components.Input
 @using BlazorUI.Primitives.Services
 @using BlazorUI.Primitives.Checkbox
 @using BlazorUI.Icons.Lucide.Components
@@ -67,19 +65,30 @@
                         OnContentReady="@HandleContentReady"
                         MatchTriggerWidth="@MatchTriggerWidth"
                         Class="@(MatchTriggerWidth ? "!p-0" : $"{PopoverWidth} !p-0")">
-            @* Search input section *@
-            <InputGroup Class="!border-0 !border-b !border-border !rounded-none !shadow-none !ring-0 !ring-offset-0">
-                <InputGroupAddon>
-                    <LucideIcon Name="search" Size="16" Class="h-4 w-4 shrink-0 opacity-50" />
-                </InputGroupAddon>
-                <InputGroupInput Id="@($"{Id}-search")"
-                                 Type="InputType.Search"
-                                 Placeholder="@SearchPlaceholder"
-                                 Value="@_searchQuery"
-                                 ValueChanged="HandleSearchInputChanged"
-                                 OnInputRef="HandleInputRefAsync"
-                                 Class="h-11 py-3" />
-            </InputGroup>
+            @* Search input section - matches CommandInput styling *@
+            <div class="flex items-center border-b border-border px-3">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     width="24"
+                     height="24"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2"
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                     class="mr-2 h-4 w-4 shrink-0 opacity-50">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                <input @ref="_searchInputRef"
+                       id="@($"{Id}-search")"
+                       type="text"
+                       placeholder="@SearchPlaceholder"
+                       value="@_searchQuery"
+                       @oninput="HandleSearchInput"
+                       @onkeydown="HandleSearchKeyDown"
+                       class="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 ml-2" />
+            </div>
 
             @* Items list section *@
             <div id="@($"{Id}-listbox")" role="listbox" aria-multiselectable="true" class="max-h-[300px] overflow-y-auto p-1">
