@@ -60,12 +60,22 @@ if [ ! -d "$PROJECT_PATH" ]; then
     exit 1
 fi
 
-# Check for uncommitted changes
-if ! git diff-index --quiet HEAD --; then
+# Check for uncommitted changes (excluding blazorui.css which we handle automatically)
+CSS_FILE="$PROJECT_PATH/wwwroot/blazorui.css"
+OTHER_CHANGES=$(git diff-index --name-only HEAD -- | grep -v "^$CSS_FILE$" || true)
+
+if [ -n "$OTHER_CHANGES" ]; then
     echo -e "${COLOR_RED}Error: You have uncommitted changes${COLOR_RESET}"
     echo "Please commit or stash your changes before creating a release"
-    git status --short
+    echo ""
+    echo "Uncommitted files (excluding blazorui.css which is handled automatically):"
+    echo "$OTHER_CHANGES" | sed 's/^/  /'
     exit 1
+fi
+
+# If CSS has uncommitted changes, note it (will be handled during release)
+if ! git diff --quiet -- "$CSS_FILE" 2>/dev/null; then
+    echo -e "${COLOR_YELLOW}Note: blazorui.css has uncommitted changes - will be rebuilt and committed during release${COLOR_RESET}"
 fi
 
 # Check if tag already exists
@@ -159,8 +169,8 @@ fi
 
 cd - > /dev/null
 
-# Check if CSS was updated and commit if needed
-if ! git diff --quiet -- "$PROJECT_PATH/wwwroot/blazorui.css"; then
+# Check if CSS differs from HEAD and commit if needed
+if ! git diff HEAD --quiet -- "$PROJECT_PATH/wwwroot/blazorui.css"; then
     echo ""
     echo -e "${COLOR_YELLOW}CSS was out-of-date, committing updated version...${COLOR_RESET}"
     git add "$PROJECT_PATH/wwwroot/blazorui.css"
