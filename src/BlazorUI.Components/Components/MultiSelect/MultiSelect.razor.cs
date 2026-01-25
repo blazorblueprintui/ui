@@ -21,6 +21,7 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
     private DotNetObjectReference<MultiSelect<TItem>>? _dotNetRef;
     private ElementReference _searchInputRef;
     private bool _jsSetupDone = false;
+    private bool _focusDone = false;
 
     /// <summary>
     /// Gets or sets the cascaded EditContext from a parent EditForm.
@@ -269,6 +270,21 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
             }
         }
         _jsSetupDone = false;
+        _focusDone = false;
+    }
+
+    /// <summary>
+    /// Handles the open state change of the popover.
+    /// Resets focus tracking when the popover closes.
+    /// </summary>
+    /// <param name="isOpen">Whether the popover is now open.</param>
+    private void HandleOpenChanged(bool isOpen)
+    {
+        _isOpen = isOpen;
+        if (!isOpen)
+        {
+            _focusDone = false; // Reset for next open
+        }
     }
 
     /// <summary>
@@ -324,6 +340,7 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
             try
             {
                 // Load JS module and setup keyboard handling
+                // Note: Focus is handled by HandleContentReady via OnContentReady event
                 _multiSelectModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
                     "import", "./_content/BlazorUI.Components/js/multiselect.js");
 
@@ -335,15 +352,35 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
                     _dotNetRef,
                     $"{Id}-search",
                     $"{Id}-listbox");
-
-                // Focus search input
-                await _multiSelectModule.InvokeVoidAsync(
-                    "focusElementByIdWithPreventScroll", $"{Id}-search");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"MultiSelect JS setup failed: {ex.Message}");
             }
+        }
+    }
+
+    /// <summary>
+    /// Handles the popover content ready event to focus the search input.
+    /// This is called when the popover is fully positioned and visible.
+    /// </summary>
+    private async Task HandleContentReady()
+    {
+        // Guard against multiple calls per open
+        if (_focusDone) return;
+        _focusDone = true;
+
+        if (string.IsNullOrEmpty(_searchInputRef.Id)) return;
+
+        try
+        {
+            // Small delay to let browser finish processing DOM changes
+            await Task.Delay(50);
+            await _searchInputRef.FocusAsync();
+        }
+        catch
+        {
+            // Ignore focus errors
         }
     }
 

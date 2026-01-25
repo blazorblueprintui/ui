@@ -87,4 +87,18 @@ public class PopoverContext : PrimitiveContextWithEvents<PopoverState>
             Open(triggerElement);
         }
     }
+
+    /// <summary>
+    /// Event fired when the popover content is fully ready (positioned and visible).
+    /// </summary>
+    public event Action? OnContentReady;
+
+    /// <summary>
+    /// Notifies subscribers that the popover content is fully ready.
+    /// Called by PopoverContent after setup completes.
+    /// </summary>
+    public void NotifyContentReady()
+    {
+        OnContentReady?.Invoke();
+    }
 }

@@ -6,7 +6,7 @@
 
 <CascadingValue Value="this" IsFixed="false">
     <div class="@ContainerClass">
-        <Popover @bind-Open="_isOpen">
+        <Popover Open="_isOpen" OpenChanged="HandleOpenChanged">
             <PopoverTrigger role="combobox"
                            aria-expanded="@GetIsOpen().ToString().ToLower()"
                            aria-controls="@($"{Id}-listbox")"
@@ -29,9 +29,9 @@
                     <path d="m6 9 6 6 6-6" />
                 </svg>
             </PopoverTrigger>
-            <PopoverContent Side="@PopoverSide.Bottom" Align="@PopoverAlign.Start" MatchTriggerWidth="@MatchTriggerWidth" Class="@(MatchTriggerWidth ? "!p-0" : $"{PopoverWidth} !p-0")">
+            <PopoverContent Side="@PopoverSide.Bottom" Align="@PopoverAlign.Start" MatchTriggerWidth="@MatchTriggerWidth" OnContentReady="@HandleContentReady" Class="@(MatchTriggerWidth ? "!p-0" : $"{PopoverWidth} !p-0")">
                 <Command>
-                    <CommandInput Placeholder="@SearchPlaceholder" AutoFocus="@_isOpen" />
+                    <CommandInput @ref="_commandInputRef" Placeholder="@SearchPlaceholder" />
                     <CommandList>
                         <CommandEmpty>@EmptyMessage</CommandEmpty>
                         <CommandGroup>

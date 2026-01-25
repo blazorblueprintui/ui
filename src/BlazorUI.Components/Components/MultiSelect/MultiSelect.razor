@@ -10,7 +10,7 @@
 @using BlazorUI.Icons.Lucide.Components
 
 <div class="@ContainerClass">
-    <Popover @bind-Open="_isOpen">
+    <Popover Open="_isOpen" OpenChanged="HandleOpenChanged">
         <PopoverTrigger role="combobox"
                         aria-expanded="@_isOpen.ToString().ToLower()"
                         aria-controls="@($"{Id}-listbox")"
@@ -64,6 +64,7 @@
                         CloseOnClickOutside="@AutoClose"
                         CloseOnEscape="false"
                         OnClickOutside="@GetClickOutsideHandler()"
+                        OnContentReady="@HandleContentReady"
                         MatchTriggerWidth="@MatchTriggerWidth"
                         Class="@(MatchTriggerWidth ? "!p-0" : $"{PopoverWidth} !p-0")">
             @* Search input section *@

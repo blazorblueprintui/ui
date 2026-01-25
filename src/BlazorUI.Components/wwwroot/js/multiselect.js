@@ -168,6 +168,8 @@ export function setupMultiSelectInput(inputElement, dotNetRef, inputId, contentI
         inputHandler,
         inputElement
     });
+
+    // Note: Focus is handled by Blazor's OnContentReady event, not here
 }
 
 /**
@@ -206,30 +208,3 @@ export function focusElementWithPreventScroll(element) {
     }
 }
 
-/**
- * Focuses an element by ID with preventScroll option to avoid page jumping
- * Uses retry mechanism for Blazor Server-Side rendering delays
- * @param {string} elementId - The ID of the element to focus
- */
-export function focusElementByIdWithPreventScroll(elementId) {
-    let attempts = 0;
-    const maxAttempts = 10;
-    const retryDelay = 50;
-
-    const tryFocus = () => {
-        const element = document.getElementById(elementId);
-        if (element) {
-            element.focus({ preventScroll: true });
-            return true;
-        }
-
-        attempts++;
-        if (attempts < maxAttempts) {
-            setTimeout(tryFocus, retryDelay);
-        } else {
-            console.warn(`focusElementByIdWithPreventScroll: Element with id "${elementId}" not found after ${maxAttempts} attempts`);
-        }
-    };
-
-    setTimeout(tryFocus, 50);
-}

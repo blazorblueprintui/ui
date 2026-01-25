@@ -81,6 +81,13 @@
     [Parameter]
     public EventCallback OnClickOutside { get; set; }
 
+    /// <summary>
+    /// Event callback invoked when the popover content is fully ready (positioned and visible).
+    /// Useful for focus management.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnContentReady { get; set; }
+
     private IJSObjectReference? _clickOutsideModule;
     private IJSObjectReference? _clickOutsideCleanup;
     private DotNetObjectReference<PopoverContent>? _dotNetRef;
@@ -193,6 +200,15 @@
             if (CloseOnClickOutside)
             {
                 await SetupClickOutsideAsync();
+            }
+
+            // Notify subscribers that content is ready (for focus management, etc.)
+            Context.NotifyContentReady();
+
+            // Also invoke the parameter callback if provided
+            if (OnContentReady.HasDelegate)
+            {
+                await OnContentReady.InvokeAsync();
             }
         }
         catch (Exception ex)
