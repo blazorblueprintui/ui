@@ -169,10 +169,12 @@ fi
 
 cd - > /dev/null
 
-# Check if CSS differs from HEAD and commit if needed
-if ! git diff HEAD --quiet -- "$PROJECT_PATH/wwwroot/blazorui.css"; then
+# Check if CSS has any changes (content or line endings) and commit if needed
+# Use git status instead of git diff to catch line-ending changes
+CSS_STATUS=$(git status --porcelain -- "$PROJECT_PATH/wwwroot/blazorui.css")
+if [ -n "$CSS_STATUS" ]; then
     echo ""
-    echo -e "${COLOR_YELLOW}CSS was out-of-date, committing updated version...${COLOR_RESET}"
+    echo -e "${COLOR_YELLOW}CSS needs updating, committing...${COLOR_RESET}"
     git add "$PROJECT_PATH/wwwroot/blazorui.css"
     git commit -m "chore: rebuild blazorui.css for v${VERSION}"
     COMMITS_MADE=$((COMMITS_MADE + 1))
