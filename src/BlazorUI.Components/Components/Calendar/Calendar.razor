@@ -74,14 +74,16 @@
                         <tr class="flex w-full mt-2">
                             @foreach (var day in week)
                             {
-                                <td class="@GetCellClasses(day)"
+                                var isSelected = day.HasValue && Selected.HasValue && day.Value.Date == Selected.Value.Date;
+                                var isDisabled = day.HasValue && (IsDisabled(day.Value) || day.Value.Month != DisplayDate.Month);
+                                <td class="@GetCellClasses(day, isSelected)"
                                     role="gridcell"
-                                    aria-selected="@IsSelected(day)">
+                                    aria-selected="@isSelected">
                                     @if (day.HasValue)
                                     {
                                         <button type="button"
-                                                class="@GetDayClasses(day.Value)"
-                                                disabled="@(IsDisabled(day.Value) || IsOutsideMonth(day.Value))"
+                                                class="@GetDayClasses(day.Value, isSelected, isDisabled)"
+                                                disabled="@isDisabled"
                                                 @onclick="@(() => SelectDate(day.Value))">
                                             @day.Value.Day
                                         </button>
@@ -100,6 +102,12 @@
     private DateTime _displayDate;
     private DateTime? _previousSelected;
 
+    // Caching fields
+    private DayOfWeek _cachedFirstDayOfWeek;
+    private bool _cachedShowOutsideDays;
+    private string[]? _cachedDayNames;
+    private List<List<DateTime?>>? _cachedWeeks;
+
     /// <summary>
     /// The currently displayed month.
     /// </summary>
@@ -108,8 +116,9 @@
         get => _displayDate;
         set
         {
+            if (_displayDate.Year != value.Year || _displayDate.Month != value.Month)
+                _cachedWeeks = null;
             _displayDate = value;
-            StateHasChanged();
         }
     }
 
@@ -168,6 +177,18 @@
     public string? Class { get; set; }
 
     /// <summary>
+    /// Additional CSS classes to apply to day buttons.
+    /// </summary>
+    [Parameter]
+    public string? DayClass { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to day cells (td elements).
+    /// </summary>
+    [Parameter]
+    public string? CellClass { get; set; }
+
+    /// <summary>
     /// Additional attributes to apply to the calendar.
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
@@ -197,21 +218,35 @@
                 _displayDate = Selected.Value;
             }
         }
+
+        // Invalidate caches when relevant parameters change
+        if (_cachedFirstDayOfWeek != FirstDayOfWeek)
+        {
+            _cachedFirstDayOfWeek = FirstDayOfWeek;
+            _cachedDayNames = null;
+            _cachedWeeks = null;
+        }
+
+        if (_cachedShowOutsideDays != ShowOutsideDays)
+        {
+            _cachedShowOutsideDays = ShowOutsideDays;
+            _cachedWeeks = null;
+        }
     }
 
-    private string[] DayNames
+    private static readonly string[] BaseDayNames = { "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa" };
+
+    private string[] DayNames => _cachedDayNames ??= BuildDayNames();
+
+    private string[] BuildDayNames()
     {
-        get
+        var start = (int)FirstDayOfWeek;
+        var result = new string[7];
+        for (int i = 0; i < 7; i++)
         {
-            var names = new[] { "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa" };
-            var start = (int)FirstDayOfWeek;
-            var result = new string[7];
-            for (int i = 0; i < 7; i++)
-            {
-                result[i] = names[(start + i) % 7];
-            }
-            return result;
+            result[i] = BaseDayNames[(start + i) % 7];
         }
+        return result;
     }
 
     #region Navigation
@@ -242,6 +277,16 @@
 
     private static readonly string[] MonthNames = { "January", "February", "March", "April", "May", "June",
                                                      "July", "August", "September", "October", "November", "December" };
+
+    // Cached CSS class constants for performance
+    private const string CellBaseClasses = "h-9 w-9 text-center text-sm p-0 relative";
+    private const string CellSelectedClasses = "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md";
+    private const string CellEmptyClasses = "h-9 w-9 text-center text-sm p-0 relative text-muted-foreground opacity-50";
+
+    private const string DayBaseClasses = "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground";
+    private const string DaySelectedClasses = "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground";
+    private const string DayTodayClasses = "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground bg-accent text-accent-foreground";
+    private const string DayDisabledClasses = "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground text-muted-foreground opacity-50";
 
     private string GetMonthName(int month) => MonthNames[month - 1];
 
@@ -276,12 +321,6 @@
         await OnSelect.InvokeAsync(date);
     }
 
-    private bool IsSelected(DateTime? day)
-    {
-        if (!day.HasValue || !Selected.HasValue) return false;
-        return day.Value.Date == Selected.Value.Date;
-    }
-
     private bool IsDisabled(DateTime date)
     {
         if (MinDate.HasValue && date < MinDate.Value.Date) return true;
@@ -290,11 +329,16 @@
         return false;
     }
 
-    private bool IsToday(DateTime date) => date.Date == DateTime.Today;
-
-    private bool IsOutsideMonth(DateTime date) => date.Month != DisplayDate.Month;
-
     private List<List<DateTime?>> GetWeeksInMonth()
+    {
+        if (_cachedWeeks != null)
+            return _cachedWeeks;
+
+        _cachedWeeks = BuildWeeksInMonth();
+        return _cachedWeeks;
+    }
+
+    private List<List<DateTime?>> BuildWeeksInMonth()
     {
         var weeks = new List<List<DateTime?>>();
         var firstOfMonth = new DateTime(DisplayDate.Year, DisplayDate.Month, 1);
@@ -336,33 +380,32 @@
         return weeks;
     }
 
-    private string GetCellClasses(DateTime? day)
+    private string GetCellClasses(DateTime? day, bool isSelected)
     {
-        return ClassNames.cn(
-            "h-9 w-9 text-center text-sm p-0 relative",
-            day.HasValue && IsSelected(day) ? "[&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md" : null,
-            !day.HasValue ? "text-muted-foreground opacity-50" : null
-        );
+        string baseClass;
+        if (!day.HasValue)
+            baseClass = CellEmptyClasses;
+        else if (isSelected)
+            baseClass = CellSelectedClasses;
+        else
+            baseClass = CellBaseClasses;
+
+        return string.IsNullOrEmpty(CellClass) ? baseClass : ClassNames.cn(baseClass, CellClass);
     }
 
-    private string GetDayClasses(DateTime date)
+    private string GetDayClasses(DateTime date, bool isSelected, bool isDisabled)
     {
-        var isSelectedDate = Selected.HasValue && date.Date == Selected.Value.Date;
-        var isTodayDate = IsToday(date);
-        var isDisabledDate = IsDisabled(date);
-        var isOutsideDate = IsOutsideMonth(date);
+        string baseClass;
+        if (isSelected)
+            baseClass = DaySelectedClasses;
+        else if (isDisabled)
+            baseClass = DayDisabledClasses;
+        else if (date.Date == DateTime.Today)
+            baseClass = DayTodayClasses;
+        else
+            baseClass = DayBaseClasses;
 
-        return ClassNames.cn(
-            "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal",
-            "ring-offset-background transition-colors",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-            "disabled:pointer-events-none disabled:opacity-50",
-            "hover:bg-accent hover:text-accent-foreground",
-            isSelectedDate ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground" : null,
-            isTodayDate && !isSelectedDate ? "bg-accent text-accent-foreground" : null,
-            isDisabledDate ? "text-muted-foreground opacity-50" : null,
-            isOutsideDate ? "text-muted-foreground opacity-50" : null
-        );
+        return string.IsNullOrEmpty(DayClass) ? baseClass : ClassNames.cn(baseClass, DayClass);
     }
 
     #endregion

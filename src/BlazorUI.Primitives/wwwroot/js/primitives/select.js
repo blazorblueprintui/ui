@@ -42,8 +42,9 @@ function getFocusedIndex(container) {
  * Sets focus visual indicator on an option.
  * @param {HTMLElement} container - The select content container
  * @param {number} index - Index of the option to focus
+ * @param {boolean} center - Whether to center the item in the viewport (for initial selection)
  */
-function setFocusedOption(container, index) {
+function setFocusedOption(container, index, center = false) {
     const items = getEnabledOptions(container);
 
     // Remove focus from all items
@@ -52,7 +53,7 @@ function setFocusedOption(container, index) {
     // Set focus on target item
     if (index >= 0 && index < items.length) {
         items[index].setAttribute('data-focused', 'true');
-        items[index].scrollIntoView({ block: 'nearest', behavior: 'instant' });
+        items[index].scrollIntoView({ block: center ? 'center' : 'nearest', behavior: 'instant' });
     }
 }
 
@@ -250,12 +251,13 @@ export function focusContent(contentId) {
  * Scrolls an item into view.
  * @param {string} itemId - The ID of the item element
  * @param {boolean} instant - Whether to scroll instantly (no animation)
+ * @param {boolean} center - Whether to center the item in the viewport
  */
-export function scrollItemIntoView(itemId, instant = false) {
+export function scrollItemIntoView(itemId, instant = false, center = true) {
     const itemElement = document.getElementById(itemId);
     if (itemElement) {
         itemElement.scrollIntoView({
-            block: 'nearest',
+            block: center ? 'center' : 'nearest',
             inline: 'nearest',
             behavior: instant ? 'instant' : 'smooth'
         });
@@ -286,16 +288,15 @@ export function focusInitialOption(contentId, selectedValue) {
     const items = getEnabledOptions(container);
     if (items.length === 0) return;
 
-    // Try to find and focus the selected item
+    // Try to find and focus the selected item by aria-selected attribute
     let targetIndex = 0;
-    if (selectedValue) {
-        const selectedIndex = items.findIndex(item =>
-            item.getAttribute('data-value') === selectedValue
-        );
-        if (selectedIndex >= 0) {
-            targetIndex = selectedIndex;
-        }
+    const selectedIndex = items.findIndex(item =>
+        item.getAttribute('aria-selected') === 'true'
+    );
+    if (selectedIndex >= 0) {
+        targetIndex = selectedIndex;
     }
 
-    setFocusedOption(container, targetIndex);
+    // Use center=true to show context around the selected item
+    setFocusedOption(container, targetIndex, true);
 }
