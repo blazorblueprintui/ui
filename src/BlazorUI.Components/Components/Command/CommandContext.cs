@@ -57,6 +57,13 @@ public interface IVirtualizedGroupHandler
     /// Notifies the group to re-render.
     /// </summary>
     void NotifyStateChanged();
+
+    /// <summary>
+    /// Scrolls to a specific index and sets focus. Used for wrap-around navigation
+    /// when the target item may not be loaded yet in lazy loading mode.
+    /// </summary>
+    /// <param name="index">The index to scroll to and focus.</param>
+    Task ScrollToIndexAsync(int index);
 }
 
 /// <summary>
@@ -397,7 +404,7 @@ public class CommandContext
     /// Moves focus to the next/previous item, including virtualized groups.
     /// </summary>
     /// <param name="direction">1 for next, -1 for previous.</param>
-    public void MoveFocus(int direction)
+    public async Task MoveFocusAsync(int direction)
     {
         // Suppress mouse hover while keyboard navigating
         if (!_isKeyboardNavigating)
@@ -451,8 +458,8 @@ public class CommandContext
                         // Move to next virtualized group
                         _focusedVirtualizedGroupIndex++;
                         var nextGroup = activeVirtualizedGroups[_focusedVirtualizedGroupIndex];
-                        nextGroup.FocusedIndex = 0;
-                        nextGroup.NotifyStateChanged();
+                        // Use ScrollToIndexAsync for consistency
+                        await nextGroup.ScrollToIndexAsync(0);
                     }
                     else
                     {
@@ -467,8 +474,8 @@ public class CommandContext
                             // No regular items, wrap to first virtualized group
                             _focusedVirtualizedGroupIndex = 0;
                             var firstGroup = activeVirtualizedGroups[0];
-                            firstGroup.FocusedIndex = 0;
-                            firstGroup.NotifyStateChanged();
+                            // Use ScrollToIndexAsync to ensure scroll position is updated
+                            await firstGroup.ScrollToIndexAsync(0);
                         }
                     }
                     return;
@@ -484,8 +491,8 @@ public class CommandContext
                         // Move to previous virtualized group (last item)
                         _focusedVirtualizedGroupIndex--;
                         var prevGroup = activeVirtualizedGroups[_focusedVirtualizedGroupIndex];
-                        prevGroup.FocusedIndex = prevGroup.VisibleItemCount - 1;
-                        prevGroup.NotifyStateChanged();
+                        // Use ScrollToIndexAsync for potentially unloaded items
+                        await prevGroup.ScrollToIndexAsync(prevGroup.VisibleItemCount - 1);
                     }
                     else
                     {
@@ -500,8 +507,8 @@ public class CommandContext
                             // No regular items, wrap to last virtualized group
                             _focusedVirtualizedGroupIndex = activeVirtualizedGroups.Count - 1;
                             var lastGroup = activeVirtualizedGroups[_focusedVirtualizedGroupIndex];
-                            lastGroup.FocusedIndex = lastGroup.VisibleItemCount - 1;
-                            lastGroup.NotifyStateChanged();
+                            // Use ScrollToIndexAsync for potentially unloaded items
+                            await lastGroup.ScrollToIndexAsync(lastGroup.VisibleItemCount - 1);
                         }
                     }
                     return;
@@ -527,8 +534,8 @@ public class CommandContext
 
                     _focusedVirtualizedGroupIndex = 0;
                     var firstGroup = activeVirtualizedGroups[0];
-                    firstGroup.FocusedIndex = 0;
-                    firstGroup.NotifyStateChanged();
+                    // Use ScrollToIndexAsync to ensure scroll position is updated
+                    await firstGroup.ScrollToIndexAsync(0);
                     return;
                 }
                 else
@@ -555,8 +562,8 @@ public class CommandContext
 
                     _focusedVirtualizedGroupIndex = 0;
                     var firstGroup = activeVirtualizedGroups[0];
-                    firstGroup.FocusedIndex = 0;
-                    firstGroup.NotifyStateChanged();
+                    // Use ScrollToIndexAsync to ensure scroll position is updated
+                    await firstGroup.ScrollToIndexAsync(0);
                     return;
                 }
                 newIndex = 0;
@@ -577,8 +584,8 @@ public class CommandContext
 
                     _focusedVirtualizedGroupIndex = activeVirtualizedGroups.Count - 1;
                     var lastGroup = activeVirtualizedGroups[_focusedVirtualizedGroupIndex];
-                    lastGroup.FocusedIndex = lastGroup.VisibleItemCount - 1;
-                    lastGroup.NotifyStateChanged();
+                    // Use ScrollToIndexAsync for potentially unloaded items
+                    await lastGroup.ScrollToIndexAsync(lastGroup.VisibleItemCount - 1);
                     return;
                 }
                 else
@@ -605,8 +612,8 @@ public class CommandContext
 
                     _focusedVirtualizedGroupIndex = activeVirtualizedGroups.Count - 1;
                     var lastGroup = activeVirtualizedGroups[_focusedVirtualizedGroupIndex];
-                    lastGroup.FocusedIndex = lastGroup.VisibleItemCount - 1;
-                    lastGroup.NotifyStateChanged();
+                    // Use ScrollToIndexAsync for potentially unloaded items
+                    await lastGroup.ScrollToIndexAsync(lastGroup.VisibleItemCount - 1);
                     return;
                 }
                 newIndex = totalRegularItems - 1;
@@ -647,12 +654,66 @@ public class CommandContext
     }
 
     /// <summary>
-    /// Moves focus to the first enabled item.
+    /// Moves focus to the first enabled item (regular items first, then virtualized groups).
     /// </summary>
-    public void FocusFirst()
+    public async Task FocusFirstAsync()
     {
+        // Suppress mouse hover while keyboard navigating
+        if (!_isKeyboardNavigating)
+        {
+            _isKeyboardNavigating = true;
+            OnKeyboardNavigationChanged?.Invoke(true);
+        }
+
+        // First try regular items
         var filteredItems = GetFilteredItems();
         for (int i = 0; i < filteredItems.Count; i++)
+        {
+            if (!filteredItems[i].Disabled)
+            {
+                // Clear virtualized group focus
+                ClearVirtualizedGroupFocus();
+                SetFocusedIndex(i);
+                return;
+            }
+        }
+
+        // Then try first virtualized group
+        var activeGroups = _virtualizedGroups.Where(g => g.VisibleItemCount > 0).ToList();
+        if (activeGroups.Count > 0)
+        {
+            ClearVirtualizedGroupFocus();
+            _focusedVirtualizedGroupIndex = 0;
+            await activeGroups[0].ScrollToIndexAsync(0);
+        }
+    }
+
+    /// <summary>
+    /// Moves focus to the last enabled item (last virtualized group first, then regular items).
+    /// </summary>
+    public async Task FocusLastAsync()
+    {
+        // Suppress mouse hover while keyboard navigating
+        if (!_isKeyboardNavigating)
+        {
+            _isKeyboardNavigating = true;
+            OnKeyboardNavigationChanged?.Invoke(true);
+        }
+
+        // First try last virtualized group
+        var activeGroups = _virtualizedGroups.Where(g => g.VisibleItemCount > 0).ToList();
+        if (activeGroups.Count > 0)
+        {
+            ClearVirtualizedGroupFocus();
+            _focusedVirtualizedGroupIndex = activeGroups.Count - 1;
+            var lastGroup = activeGroups[_focusedVirtualizedGroupIndex];
+            await lastGroup.ScrollToIndexAsync(lastGroup.VisibleItemCount - 1);
+            return;
+        }
+
+        // Then try regular items
+        var filteredItems = GetFilteredItems();
+        for (int i = filteredItems.Count - 1; i >= 0; i--)
         {
             if (!filteredItems[i].Disabled)
             {
@@ -663,17 +724,16 @@ public class CommandContext
     }
 
     /// <summary>
-    /// Moves focus to the last enabled item.
+    /// Clears focus from all virtualized groups.
     /// </summary>
-    public void FocusLast()
+    private void ClearVirtualizedGroupFocus()
     {
-        var filteredItems = GetFilteredItems();
-        for (int i = filteredItems.Count - 1; i >= 0; i--)
+        foreach (var group in _virtualizedGroups)
         {
-            if (!filteredItems[i].Disabled)
+            if (group.FocusedIndex >= 0)
             {
-                SetFocusedIndex(i);
-                return;
+                group.FocusedIndex = -1;
+                group.NotifyStateChanged();
             }
         }
     }

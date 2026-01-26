@@ -1,6 +1,11 @@
 @page "/components/command"
 @using BlazorUI.Components.Command
 @using BlazorUI.Components.Kbd
+@using BlazorUI.Icons.Lucide.Data
+@using BlazorUI.Icons.Feather.Data
+@using BlazorUI.Icons.Heroicons.Data
+@using BlazorUI.Icons.Feather.Components
+@using BlazorUI.Icons.Heroicons.Components
 
 <PageTitle>Command Component - BlazorUI</PageTitle>
 
@@ -360,6 +365,68 @@
         </div>
     </section>
 
+    <!-- Lazy Loading (Large Lists) -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Lazy Loading (Large Lists)</h2>
+        <p class="text-sm text-muted-foreground">
+            Efficiently handle large datasets with lazy loading. Items are loaded on-demand as you scroll.
+            This example contains <strong>@TotalIconCount icons</strong> across three libraries: Lucide (@_lucideIcons.Length), Feather (@_featherIcons.Length), and Heroicons (@_heroIcons.Length).
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <div class="border rounded-lg shadow-sm max-w-md">
+                <BlazorUI.Components.Command.Command OnSelect="@HandleLazySelect">
+                    <CommandInput Placeholder="@($"Search {TotalIconCount} icons...")" />
+                    <CommandList Class="max-h-[300px]">
+                        <CommandEmpty>No icons found.</CommandEmpty>
+                        <CommandVirtualizedGroup TItem="(string Name, int Index)"
+                            Heading="Lucide"
+                            Items="_lucideIcons"
+                            ItemValue="@(icon => icon.Name)"
+                            ItemSearchText="@(icon => icon.Name)"
+                            EnableLazyLoading="true">
+                            <ItemTemplate Context="icon">
+                                <LucideIcon Name="@icon.Name" Size="16" Class="mr-2" />
+                                <span class="flex-1">@icon.Name</span>
+                                <span class="text-xs text-muted-foreground ml-2">#@icon.Index</span>
+                            </ItemTemplate>
+                        </CommandVirtualizedGroup>
+                        <CommandSeparator />
+                        <CommandVirtualizedGroup TItem="(string Name, int Index)"
+                            Heading="Feather"
+                            Items="_featherIcons"
+                            ItemValue="@(icon => icon.Name)"
+                            ItemSearchText="@(icon => icon.Name)"
+                            EnableLazyLoading="true">
+                            <ItemTemplate Context="icon">
+                                <FeatherIcon Name="@icon.Name" Size="16" Class="mr-2" />
+                                <span class="flex-1">@icon.Name</span>
+                                <span class="text-xs text-muted-foreground ml-2">#@icon.Index</span>
+                            </ItemTemplate>
+                        </CommandVirtualizedGroup>
+                        <CommandSeparator />
+                        <CommandVirtualizedGroup TItem="(string Name, int Index)"
+                            Heading="Heroicons"
+                            Items="_heroIcons"
+                            ItemValue="@(icon => icon.Name)"
+                            ItemSearchText="@(icon => icon.Name)"
+                            EnableLazyLoading="true">
+                            <ItemTemplate Context="icon">
+                                <HeroIcon Name="@icon.Name" Size="16" Class="mr-2" />
+                                <span class="flex-1">@icon.Name</span>
+                                <span class="text-xs text-muted-foreground ml-2">#@icon.Index</span>
+                            </ItemTemplate>
+                        </CommandVirtualizedGroup>
+                    </CommandList>
+                </BlazorUI.Components.Command.Command>
+            </div>
+            @if (!string.IsNullOrEmpty(lazySelected))
+            {
+                <p class="text-sm">Selected: <strong>@lazySelected</strong></p>
+            }
+        </div>
+    </section>
+
     <!-- Keyboard Navigation Info -->
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">Keyboard Navigation</h2>
@@ -376,6 +443,18 @@
 </div>
 
 @code {
+    // Icon data for lazy loading demo - all three libraries
+    private static readonly (string Name, int Index)[] _lucideIcons = LucideIconData.GetAvailableIcons()
+        .Select((name, index) => (name, index))
+        .ToArray();
+    private static readonly (string Name, int Index)[] _featherIcons = FeatherIconData.GetAvailableIcons()
+        .Select((name, index) => (name, index))
+        .ToArray();
+    private static readonly (string Name, int Index)[] _heroIcons = HeroIconData.GetAvailableIcons(HeroIconVariant.Outline)
+        .Select((name, index) => (name, index))
+        .ToArray();
+    private static int TotalIconCount => _lucideIcons.Length + _featherIcons.Length + _heroIcons.Length;
+
     // Independent state for each section
     private bool isCommandPaletteOpen;
     private string? paletteSelected;
@@ -384,6 +463,7 @@
     private string? shortcutSelected;
     private string? disabledSelected;
     private string? complexSelected;
+    private string? lazySelected;
 
     // Individual handlers for each section
     private void HandlePaletteSelect(string value)
@@ -397,4 +477,5 @@
     private void HandleShortcutSelect(string value) => shortcutSelected = value;
     private void HandleDisabledSelect(string value) => disabledSelected = value;
     private void HandleComplexSelect(string value) => complexSelected = value;
+    private void HandleLazySelect(string value) => lazySelected = value;
 }
