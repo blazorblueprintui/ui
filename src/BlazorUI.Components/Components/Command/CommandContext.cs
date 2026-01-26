@@ -74,6 +74,7 @@ public class CommandContext
     private bool _closeOnSelect = true;
     private bool _disabled;
     private bool _hasRegisteredItems = false;
+    private bool _isKeyboardNavigating = false; // Flag to suppress hover during keyboard nav
 
     /// <summary>
     /// Event that is raised when the state changes.
@@ -89,6 +90,11 @@ public class CommandContext
     /// Event that is raised when the search query changes.
     /// </summary>
     public event Action? OnSearchChanged;
+
+    /// <summary>
+    /// Event that is raised when keyboard navigation state changes.
+    /// </summary>
+    public event Action<bool>? OnKeyboardNavigationChanged;
 
     /// <summary>
     /// Gets or sets the callback invoked when an item is selected.
@@ -153,6 +159,23 @@ public class CommandContext
     public int FocusedVirtualizedGroupIndex => _focusedVirtualizedGroupIndex;
 
     /// <summary>
+    /// Gets whether keyboard navigation is currently active (suppresses mouse hover).
+    /// </summary>
+    public bool IsKeyboardNavigating => _isKeyboardNavigating;
+
+    /// <summary>
+    /// Called when the mouse actually moves to re-enable hover focus.
+    /// </summary>
+    public void OnMouseMove()
+    {
+        if (_isKeyboardNavigating)
+        {
+            _isKeyboardNavigating = false;
+            OnKeyboardNavigationChanged?.Invoke(false);
+        }
+    }
+
+    /// <summary>
     /// Registers a virtualized group handler for navigation.
     /// </summary>
     public void RegisterVirtualizedGroup(IVirtualizedGroupHandler handler)
@@ -169,6 +192,46 @@ public class CommandContext
     public void UnregisterVirtualizedGroup(IVirtualizedGroupHandler handler)
     {
         _virtualizedGroups.Remove(handler);
+    }
+
+    /// <summary>
+    /// Gets the list of registered virtualized groups.
+    /// </summary>
+    public IReadOnlyList<IVirtualizedGroupHandler> GetVirtualizedGroups()
+    {
+        return _virtualizedGroups.AsReadOnly();
+    }
+
+    /// <summary>
+    /// Sets focus on a specific virtualized group and clears focus from all other groups and regular items.
+    /// This ensures only one item is focused at a time across the entire command.
+    /// </summary>
+    public void SetVirtualizedGroupFocus(IVirtualizedGroupHandler group, int indexInGroup)
+    {
+        // Clear focus from regular items
+        if (_focusedIndex >= 0)
+        {
+            var previousIndex = _focusedIndex;
+            _focusedIndex = -1;
+            OnFocusChanged?.Invoke(previousIndex, -1);
+        }
+
+        // Find the group index and set it
+        var groupIndex = _virtualizedGroups.IndexOf(group);
+        if (groupIndex >= 0)
+        {
+            _focusedVirtualizedGroupIndex = groupIndex;
+        }
+
+        // Clear focus from all other virtualized groups
+        foreach (var otherGroup in _virtualizedGroups)
+        {
+            if (otherGroup != group && otherGroup.FocusedIndex >= 0)
+            {
+                otherGroup.FocusedIndex = -1;
+                otherGroup.NotifyStateChanged();
+            }
+        }
     }
 
     /// <summary>
@@ -302,7 +365,7 @@ public class CommandContext
     }
 
     /// <summary>
-    /// Sets the focused index within filtered items.
+    /// Sets the focused index within filtered items and clears virtualized group focus.
     /// </summary>
     public void SetFocusedIndex(int index)
     {
@@ -310,6 +373,21 @@ public class CommandContext
         {
             var previousIndex = _focusedIndex;
             _focusedIndex = index;
+
+            // Clear focus from all virtualized groups when focusing a regular item
+            if (index >= 0)
+            {
+                _focusedVirtualizedGroupIndex = -1;
+                foreach (var group in _virtualizedGroups)
+                {
+                    if (group.FocusedIndex >= 0)
+                    {
+                        group.FocusedIndex = -1;
+                        group.NotifyStateChanged();
+                    }
+                }
+            }
+
             // Use targeted focus notification instead of global state change
             OnFocusChanged?.Invoke(previousIndex, index);
         }
@@ -321,6 +399,13 @@ public class CommandContext
     /// <param name="direction">1 for next, -1 for previous.</param>
     public void MoveFocus(int direction)
     {
+        // Suppress mouse hover while keyboard navigating
+        if (!_isKeyboardNavigating)
+        {
+            _isKeyboardNavigating = true;
+            OnKeyboardNavigationChanged?.Invoke(true);
+        }
+
         var allFiltered = GetFilteredItems();
         var enabledFilteredItems = allFiltered.Where(i => !i.Disabled).ToList();
 

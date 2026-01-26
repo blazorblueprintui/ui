@@ -37,6 +37,7 @@
                  data-focused="@(IsItemFocusedByIndex(itemIndex) ? "true" : "false")"
                  @onclick="@(() => SelectItem(item))"
                  @onmouseenter="@(() => FocusItemByIndex(itemIndex))"
+                 @onmousemove="HandleMouseMove"
                  class="@GetItemCssClassByIndex(itemIndex)">
                 @ItemTemplate(item)
             </div>
@@ -141,6 +142,7 @@
         if (Context != null)
         {
             Context.OnSearchChanged += HandleSearchChanged;
+            Context.OnKeyboardNavigationChanged += HandleKeyboardNavigationChanged;
             Context.RegisterVirtualizedGroup(this);
         }
         UpdateFilteredItems();
@@ -160,13 +162,32 @@
             var elementId = GetItemId(_focusedIndex);
             try
             {
-                await JS.InvokeVoidAsync("eval", $"document.getElementById('{elementId}')?.scrollIntoView({{block: 'nearest', behavior: 'instant'}})");
+                // Use 'start' for first item in first group to show group heading
+                var isFirstGroupFirstItem = _focusedIndex == 0 && Context != null && IsFirstVisibleGroup();
+                var scrollBlock = isFirstGroupFirstItem ? "start" : "nearest";
+                await JS.InvokeVoidAsync("eval", $"document.getElementById('{elementId}')?.scrollIntoView({{block: '{scrollBlock}', behavior: 'instant'}})");
             }
             catch
             {
                 // Ignore JS errors during scroll
             }
         }
+    }
+
+    private bool IsFirstVisibleGroup()
+    {
+        if (Context == null) return false;
+
+        // Check if this is the first virtualized group with visible items
+        var groups = Context.GetVirtualizedGroups();
+        foreach (var group in groups)
+        {
+            if (group.VisibleItemCount > 0)
+            {
+                return group == this;
+            }
+        }
+        return false;
     }
 
     private void UpdateFilteredItems()
@@ -211,16 +232,33 @@
         StateHasChanged();
     }
 
+    private void HandleKeyboardNavigationChanged(bool isKeyboardNavigating)
+    {
+        // Re-render to update hover classes
+        StateHasChanged();
+    }
+
     private bool IsItemFocusedByIndex(int index)
     {
         return _focusedIndex >= 0 && _focusedIndex == index;
     }
 
+    private void HandleMouseMove()
+    {
+        // Re-enable hover focus when mouse actually moves
+        Context?.OnMouseMove();
+    }
+
     private void FocusItemByIndex(int index)
     {
+        // Ignore hover during keyboard navigation
+        if (Context?.IsKeyboardNavigating == true) return;
+
         if (index >= 0 && index != _focusedIndex)
         {
             _focusedIndex = index;
+            // Notify context to clear focus from other groups
+            Context?.SetVirtualizedGroupFocus(this, index);
             // Don't scroll on mouse hover
             StateHasChanged();
         }
@@ -241,7 +279,11 @@
     private string GetItemCssClassByIndex(int index)
     {
         var isFocused = IsItemFocusedByIndex(index);
-        return $"relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground{(isFocused ? " bg-accent text-accent-foreground" : "")}";
+        var isKeyboardNav = Context?.IsKeyboardNavigating == true;
+        var baseClasses = "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none";
+        var hoverClasses = isKeyboardNav ? "" : " hover:bg-accent hover:text-accent-foreground";
+        var focusClasses = isFocused ? " bg-accent text-accent-foreground" : "";
+        return $"{baseClasses}{hoverClasses}{focusClasses}";
     }
 
     public void Dispose()
@@ -249,6 +291,7 @@
         if (Context != null)
         {
             Context.OnSearchChanged -= HandleSearchChanged;
+            Context.OnKeyboardNavigationChanged -= HandleKeyboardNavigationChanged;
             Context.UnregisterVirtualizedGroup(this);
         }
     }

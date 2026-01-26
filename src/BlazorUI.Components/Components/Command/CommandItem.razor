@@ -14,6 +14,7 @@
          data-disabled="@(Disabled ? "true" : "false")"
          @onclick="HandleClick"
          @onmouseenter="HandleMouseEnter"
+         @onmousemove="HandleMouseMove"
          class="@CssClass">
         @ChildContent
     </div>
@@ -74,7 +75,7 @@
     /// </summary>
     private string CssClass => ClassNames.cn(
         "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
-        !Disabled ? "hover:bg-accent hover:text-accent-foreground" : null,
+        !Disabled && Context?.IsKeyboardNavigating != true ? "hover:bg-accent hover:text-accent-foreground" : null,
         Disabled ? "opacity-50 cursor-not-allowed" : null,
         _isFocused ? "bg-accent text-accent-foreground" : null,
         Class
@@ -101,6 +102,7 @@
         // Subscribe to targeted events for better performance
         Context.OnFocusChanged += HandleFocusChanged;
         Context.OnSearchChanged += HandleSearchChanged;
+        Context.OnKeyboardNavigationChanged += HandleKeyboardNavigationChanged;
 
         // Initial visibility check
         UpdateVisibilityAndFilteredIndex();
@@ -131,8 +133,17 @@
         await Context.SelectItemByValueAsync(Value ?? string.Empty);
     }
 
+    private void HandleMouseMove()
+    {
+        // Re-enable hover focus when mouse actually moves
+        Context?.OnMouseMove();
+    }
+
     private void HandleMouseEnter()
     {
+        // Ignore hover during keyboard navigation
+        if (Context?.IsKeyboardNavigating == true) return;
+
         if (Disabled || Context == null || !_isVisible) return;
 
         // Use cached filtered index if available, otherwise calculate it
@@ -189,6 +200,12 @@
         StateHasChanged();
     }
 
+    private void HandleKeyboardNavigationChanged(bool isKeyboardNavigating)
+    {
+        // Re-render to update hover classes
+        StateHasChanged();
+    }
+
     private void UpdateVisibilityAndFilteredIndex()
     {
         if (Context == null)
@@ -239,6 +256,7 @@
             Context.UnregisterItem(_index);
             Context.OnFocusChanged -= HandleFocusChanged;
             Context.OnSearchChanged -= HandleSearchChanged;
+            Context.OnKeyboardNavigationChanged -= HandleKeyboardNavigationChanged;
         }
     }
 }
