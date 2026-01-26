@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-01-26
+
+### Added
+- CommandVirtualizedGroup component for efficient rendering of large item lists using Blazor's Virtualize
+- EnableLazyLoading parameter for CommandVirtualizedGroup - loads items progressively as user scrolls
+- Wrap-around keyboard navigation for virtualized groups (Up at first item jumps to last, Down at last jumps to first)
+- ScrollToIndexAsync method for programmatic scrolling to any item in virtualized groups
+- Global search feature in demo header with Ctrl+K keyboard shortcut
+- OnKeyboardNavigationChanged event for coordinating focus state across components
+- OnFocusChanged and OnSearchChanged targeted events for O(1) performance updates
+- Calendar keyboard navigation (arrow keys, Home/End, PageUp/PageDown, Enter/Space to select)
+- ShowMonthYearDropdowns parameter for Calendar - option to show simple text header instead of dropdowns
+
+### Changed
+- Command component now supports both regular CommandItem and virtualized groups
+- Keyboard navigation unified across regular items and virtualized groups with proper wrapping
+- CommandSearch updated to use lazy loading for all icon groups (Lucide, Heroicons, Feather)
+
+### Fixed
+- Command component performance improved from O(n) to O(1) re-renders on focus change
+- CommandVirtualizedGroup virtualization fixed - removed overflow-hidden that clipped Virtualize spacer elements
+- Hover/keyboard navigation conflict resolved - CSS hover suppressed during keyboard navigation
+- CommandItem no longer causes page jump on keyboard navigation (affected Combobox)
+- Scroll-into-view only triggers during keyboard navigation, not mouse hover
+- Select dropdown scrollbar appearance fixed for Edge browser
+
+---
+
 ## 2026-01-25
 
 ### Fixed

@@ -1,0 +1,294 @@
+@using BlazorUI.Components.Command
+@using BlazorUI.Components.Kbd
+@using BlazorUI.Icons.Lucide
+@using BlazorUI.Icons.Lucide.Data
+@using BlazorUI.Icons.Heroicons
+@using BlazorUI.Icons.Heroicons.Data
+@using BlazorUI.Icons.Feather
+@using BlazorUI.Icons.Feather.Data
+@using Microsoft.AspNetCore.Components.Web
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<button type="button"
+        class="inline-flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground border rounded-md hover:bg-accent"
+        @onclick="OpenModal">
+    <LucideIcon Name="search" Size="16" />
+    <span class="hidden sm:inline">Search...</span>
+    <span class="hidden md:flex items-center gap-1 text-xs">
+        <Kbd>Ctrl</Kbd>
+        <Kbd>K</Kbd>
+    </span>
+</button>
+
+@if (_isOpen)
+{
+    <div class="fixed inset-0 z-50 flex items-start justify-center pt-[10vh]" @onkeydown="HandleKeyDown">
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm" @onclick="CloseModal"></div>
+
+        <div class="relative w-full max-w-2xl mx-4 z-10">
+            <BlazorUI.Components.Command.Command Class="border rounded-lg shadow-2xl bg-background" OnValueChange="HandleCommandSelect">
+                <BlazorUI.Components.Command.CommandInput Placeholder="Search primitives, components, and icons..." AutoFocus="true" />
+                <BlazorUI.Components.Command.CommandList Class="max-h-[400px]">
+                    <BlazorUI.Components.Command.CommandEmpty>
+                        <div class="flex flex-col items-center gap-2 py-6">
+                            <LucideIcon Name="search-x" Size="32" Class="text-muted-foreground" />
+                            <p class="text-sm text-muted-foreground">No items found.</p>
+                        </div>
+                    </BlazorUI.Components.Command.CommandEmpty>
+
+                    <BlazorUI.Components.Command.CommandVirtualizedGroup TItem="LibraryItem"
+                        Heading="Primitives"
+                        Items="Primitives"
+                        ItemValue="@(item => item.Url)"
+                        ItemSearchText="@(item => item.Name)"
+                        MaxDisplayCount="0">
+                        <ItemTemplate Context="item">
+                            <LucideIcon Name="@item.Icon" Size="16" Class="mr-2 text-muted-foreground" />
+                            @item.Name
+                            <span class="ml-auto text-xs text-muted-foreground">Headless</span>
+                        </ItemTemplate>
+                    </BlazorUI.Components.Command.CommandVirtualizedGroup>
+
+                    <BlazorUI.Components.Command.CommandSeparator />
+
+                    <BlazorUI.Components.Command.CommandVirtualizedGroup TItem="LibraryItem"
+                        Heading="Components"
+                        Items="Components"
+                        ItemValue="@(item => item.Url)"
+                        ItemSearchText="@(item => item.Name)"
+                        MaxDisplayCount="0">
+                        <ItemTemplate Context="item">
+                            <LucideIcon Name="@item.Icon" Size="16" Class="mr-2 text-primary" />
+                            @item.Name
+                            <span class="ml-auto text-xs text-muted-foreground">Styled</span>
+                        </ItemTemplate>
+                    </BlazorUI.Components.Command.CommandVirtualizedGroup>
+
+                    <BlazorUI.Components.Command.CommandSeparator />
+
+                    <BlazorUI.Components.Command.CommandVirtualizedGroup TItem="string"
+                        Heading="Lucide Icons"
+                        Items="AllLucideIcons"
+                        ItemValue="@(name => $"/icons/lucide?search={name}")"
+                        ItemSearchText="@(name => name)"
+                        MaxDisplayCount="0"
+                        EnableLazyLoading="true">
+                        <ItemTemplate Context="iconName">
+                            <LucideIcon Name="@iconName" Size="16" Class="mr-2 text-blue-500" />
+                            @FormatIconName(iconName)
+                            <span class="ml-auto text-xs text-muted-foreground">Lucide</span>
+                        </ItemTemplate>
+                    </BlazorUI.Components.Command.CommandVirtualizedGroup>
+
+                    <BlazorUI.Components.Command.CommandSeparator />
+
+                    <BlazorUI.Components.Command.CommandVirtualizedGroup TItem="string"
+                        Heading="Heroicons"
+                        Items="AllHeroIcons"
+                        ItemValue="@(name => $"/icons/heroicons?search={name}")"
+                        ItemSearchText="@(name => name)"
+                        MaxDisplayCount="0"
+                        EnableLazyLoading="true">
+                        <ItemTemplate Context="iconName">
+                            <HeroIcon Name="@iconName" Size="16" Class="mr-2 text-indigo-500" />
+                            @FormatIconName(iconName)
+                            <span class="ml-auto text-xs text-muted-foreground">Heroicons</span>
+                        </ItemTemplate>
+                    </BlazorUI.Components.Command.CommandVirtualizedGroup>
+
+                    <BlazorUI.Components.Command.CommandSeparator />
+
+                    <BlazorUI.Components.Command.CommandVirtualizedGroup TItem="string"
+                        Heading="Feather Icons"
+                        Items="AllFeatherIcons"
+                        ItemValue="@(name => $"/icons/feather?search={name}")"
+                        ItemSearchText="@(name => name)"
+                        MaxDisplayCount="0"
+                        EnableLazyLoading="true">
+                        <ItemTemplate Context="iconName">
+                            <FeatherIcon Name="@iconName" Size="16" Class="mr-2 text-cyan-500" />
+                            @FormatIconName(iconName)
+                            <span class="ml-auto text-xs text-muted-foreground">Feather</span>
+                        </ItemTemplate>
+                    </BlazorUI.Components.Command.CommandVirtualizedGroup>
+                </BlazorUI.Components.Command.CommandList>
+            </BlazorUI.Components.Command.Command>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _isOpen;
+    private DotNetObjectReference<CommandSearch>? _dotNetRef;
+
+    // Primitives list
+    private static readonly LibraryItem[] Primitives = new[]
+    {
+        new LibraryItem("Accordion", "/primitives/accordion", "layers"),
+        new LibraryItem("Checkbox", "/primitives/checkbox", "square-check"),
+        new LibraryItem("Collapsible", "/primitives/collapsible", "chevrons-up-down"),
+        new LibraryItem("Combobox", "/primitives/combobox", "text-cursor-input"),
+        new LibraryItem("Dialog", "/primitives/dialog", "app-window"),
+        new LibraryItem("Dropdown Menu", "/primitives/dropdown-menu", "chevron-down"),
+        new LibraryItem("Hover Card", "/primitives/hovercard", "square-mouse-pointer"),
+        new LibraryItem("Label", "/primitives/label", "tag"),
+        new LibraryItem("Popover", "/primitives/popover", "message-square"),
+        new LibraryItem("Radio Group", "/primitives/radio-group", "circle-dot"),
+        new LibraryItem("Select", "/primitives/select", "list"),
+        new LibraryItem("Sheet", "/primitives/sheet", "panel-right"),
+        new LibraryItem("Switch", "/primitives/switch", "toggle-left"),
+        new LibraryItem("Table", "/primitives/table", "table"),
+        new LibraryItem("Tabs", "/primitives/tabs", "folder"),
+        new LibraryItem("Tooltip", "/primitives/tooltip", "info"),
+    };
+
+    // Components list
+    private static readonly LibraryItem[] Components = new[]
+    {
+        new LibraryItem("Accordion", "/components/accordion", "layers"),
+        new LibraryItem("Alert", "/components/alert", "circle-alert"),
+        new LibraryItem("Alert Dialog", "/components/alert-dialog", "triangle-alert"),
+        new LibraryItem("Aspect Ratio", "/components/aspect-ratio", "ratio"),
+        new LibraryItem("Avatar", "/components/avatar", "circle-user"),
+        new LibraryItem("Badge", "/components/badge", "badge"),
+        new LibraryItem("Breadcrumb", "/components/breadcrumb", "chevrons-right"),
+        new LibraryItem("Button", "/components/button", "mouse-pointer-click"),
+        new LibraryItem("Button Group", "/components/button-group", "group"),
+        new LibraryItem("Calendar", "/components/calendar", "calendar"),
+        new LibraryItem("Card", "/components/card", "square"),
+        new LibraryItem("Carousel", "/components/carousel", "gallery-horizontal"),
+        new LibraryItem("Checkbox", "/components/checkbox", "square-check"),
+        new LibraryItem("Collapsible", "/components/collapsible", "chevrons-up-down"),
+        new LibraryItem("Combobox", "/components/combobox", "text-cursor-input"),
+        new LibraryItem("Command", "/components/command", "command"),
+        new LibraryItem("Context Menu", "/components/context-menu", "menu"),
+        new LibraryItem("Data Table", "/components/datatable", "table-2"),
+        new LibraryItem("Date Picker", "/components/date-picker", "calendar-days"),
+        new LibraryItem("Dialog", "/components/dialog", "app-window"),
+        new LibraryItem("Dropdown Menu", "/components/dropdown-menu", "chevron-down"),
+        new LibraryItem("Drawer", "/components/drawer", "panel-bottom"),
+        new LibraryItem("Empty", "/components/empty", "inbox"),
+        new LibraryItem("Field", "/components/field", "pencil-line"),
+        new LibraryItem("Hover Card", "/components/hovercard", "square-mouse-pointer"),
+        new LibraryItem("Input", "/components/input", "text-cursor"),
+        new LibraryItem("Input Group", "/components/input-group", "layout-list"),
+        new LibraryItem("Input OTP", "/components/input-otp", "key-round"),
+        new LibraryItem("Item", "/components/item", "list"),
+        new LibraryItem("Kbd", "/components/kbd", "keyboard"),
+        new LibraryItem("Label", "/components/label", "tag"),
+        new LibraryItem("Markdown Editor", "/components/markdown-editor", "file-text"),
+        new LibraryItem("Menubar", "/components/menubar", "square-menu"),
+        new LibraryItem("Multi Select", "/components/multiselect", "list-checks"),
+        new LibraryItem("Native Select", "/components/native-select", "square-chevron-down"),
+        new LibraryItem("Navigation Menu", "/components/navigation-menu", "navigation"),
+        new LibraryItem("Pagination", "/components/pagination", "arrow-left-right"),
+        new LibraryItem("Popover", "/components/popover", "message-square"),
+        new LibraryItem("Progress", "/components/progress", "loader"),
+        new LibraryItem("Radio Group", "/components/radio-group", "circle-dot"),
+        new LibraryItem("Resizable", "/components/resizable", "move"),
+        new LibraryItem("Rich Text Editor", "/components/rich-text-editor", "file-type"),
+        new LibraryItem("Scroll Area", "/components/scroll-area", "scroll"),
+        new LibraryItem("Select", "/components/select", "list"),
+        new LibraryItem("Separator", "/components/separator", "minus"),
+        new LibraryItem("Sheet", "/components/sheet", "panel-right"),
+        new LibraryItem("Sidebar", "/components/sidebar", "panel-left"),
+        new LibraryItem("Slider", "/components/slider", "sliders-horizontal"),
+        new LibraryItem("Spinner", "/components/spinner", "loader"),
+        new LibraryItem("Skeleton", "/components/skeleton", "box"),
+        new LibraryItem("Switch", "/components/switch", "toggle-left"),
+        new LibraryItem("Tabs", "/components/tabs", "folder"),
+        new LibraryItem("Textarea", "/components/textarea", "align-left"),
+        new LibraryItem("Toast", "/components/toast", "bell"),
+        new LibraryItem("Toggle", "/components/toggle", "toggle-right"),
+        new LibraryItem("Toggle Group", "/components/toggle-group", "layout-grid"),
+        new LibraryItem("Tooltip", "/components/tooltip", "info"),
+        new LibraryItem("Typography", "/components/typography", "type"),
+    };
+
+    // Icon data (loaded once)
+    private static readonly string[] AllLucideIcons = LucideIconData.GetAvailableIcons().OrderBy(x => x).ToArray();
+    private static readonly string[] AllHeroIcons = HeroIconData.GetAvailableIcons(HeroIconVariant.Outline).OrderBy(x => x).ToArray();
+    private static readonly string[] AllFeatherIcons = FeatherIconData.GetAvailableIcons().OrderBy(x => x).ToArray();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+
+            await JS.InvokeVoidAsync("eval", @"
+                if (window.globalSearchKeyHandler) {
+                    document.removeEventListener('keydown', window.globalSearchKeyHandler);
+                }
+                window.registerGlobalSearchRef = function(dotNetRef) {
+                    window.globalSearchDotNetRef = dotNetRef;
+                    window.globalSearchKeyHandler = function(e) {
+                        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                            e.preventDefault();
+                            if (window.globalSearchDotNetRef) {
+                                window.globalSearchDotNetRef.invokeMethodAsync('OpenSearch');
+                            }
+                        }
+                    };
+                    document.addEventListener('keydown', window.globalSearchKeyHandler);
+                };
+            ");
+
+            await JS.InvokeVoidAsync("registerGlobalSearchRef", _dotNetRef);
+        }
+    }
+
+    [JSInvokable]
+    public void OpenSearch()
+    {
+        _isOpen = true;
+        StateHasChanged();
+    }
+
+    private void OpenModal()
+    {
+        _isOpen = true;
+    }
+
+    private void CloseModal()
+    {
+        _isOpen = false;
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            _isOpen = false;
+        }
+    }
+
+    private void HandleCommandSelect(string value)
+    {
+        if (!string.IsNullOrEmpty(value))
+        {
+            _isOpen = false;
+            NavigationManager.NavigateTo(value);
+        }
+    }
+
+    private static string FormatIconName(string iconName)
+    {
+        return string.Join(" ", iconName.Split('-').Select(word =>
+            char.ToUpper(word[0]) + word.Substring(1)));
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("eval", "document.removeEventListener('keydown', window.globalSearchKeyHandler);");
+        }
+        catch { }
+        _dotNetRef?.Dispose();
+    }
+
+    private record LibraryItem(string Name, string Url, string Icon);
+}

@@ -1,0 +1,570 @@
+@namespace BlazorUI.Components.Command
+@typeparam TItem
+@implements IDisposable
+@implements IVirtualizedGroupHandler
+@inject IJSRuntime JS
+
+@* CommandVirtualizedGroup - A virtualized group for efficiently rendering large item collections *@
+<div id="@($"vgroup-container-{_id}")"
+     class="@CssClass"
+     style="@(_hasVisibleItems ? null : "display: none")"
+     role="group"
+     aria-labelledby="@(string.IsNullOrWhiteSpace(Heading) ? null : $"command-group-{_id}")">
+    @if (!string.IsNullOrWhiteSpace(Heading))
+    {
+        <div id="@($"command-group-{_id}")"
+             class="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+            @Heading
+            @if (_totalCount > 0)
+            {
+                var displayedCount = EnableLazyLoading ? _filteredCount : (_filteredItems?.Count ?? 0);
+                @if (displayedCount != _totalCount)
+                {
+                    <span class="ml-1 opacity-70">(@displayedCount of @_totalCount)</span>
+                }
+            }
+        </div>
+    }
+
+    @if (_hasVisibleItems)
+    {
+        @if (EnableLazyLoading)
+        {
+            <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize
+                @ref="_virtualizeRef"
+                ItemsProvider="LoadItemsAsync"
+                ItemSize="32"
+                OverscanCount="5">
+                <ItemContent Context="indexed">
+                    <div id="@GetItemId(indexed.Index)"
+                         role="option"
+                         aria-selected="@(IsItemFocusedByIndex(indexed.Index) ? "true" : "false")"
+                         data-focused="@(IsItemFocusedByIndex(indexed.Index) ? "true" : "false")"
+                         @onclick="@(() => SelectItem(indexed.Item))"
+                         @onmouseenter="@(() => FocusItemByIndex(indexed.Index))"
+                         @onmousemove="HandleMouseMove"
+                         class="@GetItemCssClassByIndex(indexed.Index)">
+                        @ItemTemplate(indexed.Item)
+                    </div>
+                </ItemContent>
+                <Placeholder>
+                    <div class="px-2 py-1.5 text-sm text-muted-foreground animate-pulse">Loading...</div>
+                </Placeholder>
+            </Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize>
+        }
+        else if (_indexedItems != null && _indexedItems.Count > 0)
+        {
+            <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize
+                Items="_indexedItems"
+                ItemSize="32"
+                OverscanCount="5">
+                <ItemContent Context="indexed">
+                    <div id="@GetItemId(indexed.Index)"
+                         role="option"
+                         aria-selected="@(IsItemFocusedByIndex(indexed.Index) ? "true" : "false")"
+                         data-focused="@(IsItemFocusedByIndex(indexed.Index) ? "true" : "false")"
+                         @onclick="@(() => SelectItem(indexed.Item))"
+                         @onmouseenter="@(() => FocusItemByIndex(indexed.Index))"
+                         @onmousemove="HandleMouseMove"
+                         class="@GetItemCssClassByIndex(indexed.Index)">
+                        @ItemTemplate(indexed.Item)
+                    </div>
+                </ItemContent>
+            </Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize>
+        }
+    }
+</div>
+
+@code {
+    [CascadingParameter]
+    public CommandContext? Context { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional CSS classes to apply to the group container.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets the heading text for this group (optional).
+    /// </summary>
+    [Parameter]
+    public string? Heading { get; set; }
+
+    /// <summary>
+    /// Gets or sets the collection of items to display.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public IReadOnlyList<TItem> Items { get; set; } = Array.Empty<TItem>();
+
+    /// <summary>
+    /// Gets or sets the template for rendering each item.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public RenderFragment<TItem> ItemTemplate { get; set; } = default!;
+
+    /// <summary>
+    /// Gets or sets the function to extract the value from an item.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public Func<TItem, string> ItemValue { get; set; } = default!;
+
+    /// <summary>
+    /// Gets or sets the function to extract search text from an item.
+    /// If not provided, ItemValue is used.
+    /// </summary>
+    [Parameter]
+    public Func<TItem, string>? ItemSearchText { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum number of items to display after filtering.
+    /// Default is 100. Set to 0 for unlimited.
+    /// Only applies when EnableLazyLoading is false.
+    /// </summary>
+    [Parameter]
+    public int MaxDisplayCount { get; set; } = 100;
+
+    /// <summary>
+    /// Gets or sets whether to enable lazy loading (infinite scroll).
+    /// When true, items are loaded progressively as the user scrolls.
+    /// Default is false.
+    /// </summary>
+    [Parameter]
+    public bool EnableLazyLoading { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of items to load per batch when lazy loading.
+    /// Default is 50.
+    /// </summary>
+    [Parameter]
+    public int LazyLoadBatchSize { get; set; } = 50;
+
+    private readonly string _id = Guid.NewGuid().ToString("N");
+    private List<TItem>? _filteredItems;
+    private List<IndexedItem>? _indexedItems;
+    private int _totalCount;
+    private int _filteredCount; // Total count after filtering (for lazy loading)
+    private bool _hasVisibleItems = true;
+    private int _focusedIndex = -1;
+    private bool _shouldScrollIntoView;
+    private Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize<IndexedItem>? _virtualizeRef;
+
+    // Caching to avoid expensive re-computation in WASM
+    private IReadOnlyList<TItem>? _cachedItems;
+    private string? _cachedSearchQuery;
+    private List<TItem>? _lazyFilteredSource; // Full filtered list for lazy loading
+    private int _lazyLoadedCount; // How many items currently loaded for lazy loading
+
+    private readonly struct IndexedItem
+    {
+        public readonly TItem Item;
+        public readonly int Index;
+        public IndexedItem(TItem item, int index) { Item = item; Index = index; }
+    }
+
+    // IVirtualizedGroupHandler implementation
+    int IVirtualizedGroupHandler.VisibleItemCount => EnableLazyLoading ? _filteredCount : (_indexedItems?.Count ?? 0);
+
+    int IVirtualizedGroupHandler.FocusedIndex
+    {
+        get => _focusedIndex;
+        set
+        {
+            if (_focusedIndex != value)
+            {
+                _focusedIndex = value;
+                _shouldScrollIntoView = value >= 0; // Scroll when focus is set via keyboard
+            }
+        }
+    }
+
+    void IVirtualizedGroupHandler.NotifyStateChanged() => StateHasChanged();
+
+    async Task IVirtualizedGroupHandler.SelectFocusedItemAsync()
+    {
+        if (EnableLazyLoading)
+        {
+            var source = _lazyFilteredSource ?? (IReadOnlyList<TItem>)Items;
+            if (source != null && _focusedIndex >= 0 && _focusedIndex < source.Count)
+            {
+                await SelectItem(source[_focusedIndex]);
+            }
+        }
+        else if (_indexedItems != null && _focusedIndex >= 0 && _focusedIndex < _indexedItems.Count)
+        {
+            await SelectItem(_indexedItems[_focusedIndex].Item);
+        }
+    }
+
+    async Task IVirtualizedGroupHandler.ScrollToIndexAsync(int index)
+    {
+        if (index < 0) return;
+
+        var totalItems = EnableLazyLoading ? _filteredCount : (_indexedItems?.Count ?? 0);
+        if (index >= totalItems) index = totalItems - 1;
+        if (index < 0) return;
+
+        // Set the focused index
+        _focusedIndex = index;
+        _shouldScrollIntoView = true;
+
+        // Scroll the container to bring the target item into view
+        // This is needed for both lazy loading AND regular virtualization
+        // because Virtualize only renders visible items
+        if (Context != null)
+        {
+            try
+            {
+                var listId = Context.ListId;
+                var containerId = $"vgroup-container-{_id}";
+
+                // Scroll using the group container's actual position in the DOM
+                // This accounts for all previous groups' heights
+                await JS.InvokeVoidAsync("eval", $@"
+                    (function() {{
+                        var list = document.getElementById('{listId}');
+                        var container = document.getElementById('{containerId}');
+                        if (list && container) {{
+                            // Get the container's position relative to the list
+                            var containerTop = container.offsetTop - list.offsetTop;
+                            var headingHeight = 32;
+                            var itemHeight = 32;
+                            var targetScroll;
+                            if ({index} === 0) {{
+                                // For first item, scroll to show the group heading
+                                targetScroll = containerTop;
+                            }} else {{
+                                // For other items, scroll to show the item
+                                targetScroll = containerTop + headingHeight + ({index} * itemHeight);
+                            }}
+                            // Clamp to valid scroll range
+                            var maxScroll = list.scrollHeight - list.clientHeight;
+                            list.scrollTop = Math.max(0, Math.min(targetScroll, maxScroll));
+                        }}
+                    }})()
+                ");
+
+                // Give Virtualize a moment to render items at the new scroll position
+                await Task.Delay(50);
+            }
+            catch
+            {
+                // Ignore JS errors
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private string CssClass
+    {
+        get
+        {
+            var baseClasses = "p-1 text-foreground";
+            return string.IsNullOrWhiteSpace(Class) ? baseClasses : $"{baseClasses} {Class}";
+        }
+    }
+
+    private string GetItemId(int index) => $"vgroup-{_id}-item-{index}";
+
+    protected override void OnInitialized()
+    {
+        if (Context != null)
+        {
+            Context.OnSearchChanged += HandleSearchChanged;
+            Context.OnKeyboardNavigationChanged += HandleKeyboardNavigationChanged;
+            Context.RegisterVirtualizedGroup(this);
+        }
+        _cachedItems = Items;
+
+        if (EnableLazyLoading)
+        {
+            UpdateLazyFilteredSource();
+        }
+        else
+        {
+            UpdateFilteredItems();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Only re-filter if Items reference actually changed
+        if (!ReferenceEquals(Items, _cachedItems))
+        {
+            _cachedItems = Items;
+            _cachedSearchQuery = null; // Force rebuild
+
+            if (EnableLazyLoading)
+            {
+                UpdateLazyFilteredSource();
+                _lazyLoadedCount = 0;
+                if (_virtualizeRef != null)
+                {
+                    await _virtualizeRef.RefreshDataAsync();
+                }
+            }
+            else
+            {
+                UpdateFilteredItems();
+            }
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_shouldScrollIntoView && _focusedIndex >= 0)
+        {
+            _shouldScrollIntoView = false;
+            var elementId = GetItemId(_focusedIndex);
+            try
+            {
+                // Use 'start' for first item in first group to show group heading
+                var isFirstGroupFirstItem = _focusedIndex == 0 && Context != null && IsFirstVisibleGroup();
+                var scrollBlock = isFirstGroupFirstItem ? "start" : "nearest";
+                await JS.InvokeVoidAsync("eval", $"document.getElementById('{elementId}')?.scrollIntoView({{block: '{scrollBlock}', behavior: 'instant'}})");
+            }
+            catch
+            {
+                // Ignore JS errors during scroll
+            }
+        }
+    }
+
+    private bool IsFirstVisibleGroup()
+    {
+        if (Context == null) return false;
+
+        // Check if this is the first virtualized group with visible items
+        var groups = Context.GetVirtualizedGroups();
+        foreach (var group in groups)
+        {
+            if (group.VisibleItemCount > 0)
+            {
+                return group == this;
+            }
+        }
+        return false;
+    }
+
+    private void UpdateFilteredItems()
+    {
+        if (Items == null || Items.Count == 0)
+        {
+            _filteredItems = new List<TItem>();
+            _indexedItems = new List<IndexedItem>();
+            _totalCount = 0;
+            _hasVisibleItems = false;
+            _cachedSearchQuery = null;
+            return;
+        }
+
+        var searchQuery = Context?.SearchQuery ?? "";
+
+        // Skip if search query hasn't changed (cache hit)
+        if (string.Equals(_cachedSearchQuery, searchQuery, StringComparison.Ordinal) && _indexedItems != null)
+        {
+            return;
+        }
+
+        _cachedSearchQuery = searchQuery;
+        _totalCount = Items.Count;
+
+        if (string.IsNullOrWhiteSpace(searchQuery))
+        {
+            // No search - show first MaxDisplayCount items
+            var count = MaxDisplayCount > 0 ? Math.Min(MaxDisplayCount, Items.Count) : Items.Count;
+            _filteredItems = new List<TItem>(count);
+            _indexedItems = new List<IndexedItem>(count);
+
+            for (int i = 0; i < count; i++)
+            {
+                _filteredItems.Add(Items[i]);
+                _indexedItems.Add(new IndexedItem(Items[i], i));
+            }
+        }
+        else
+        {
+            // Filter by search query - use pre-sized lists to avoid resizing
+            var searchTextFunc = ItemSearchText ?? ItemValue;
+            _filteredItems = new List<TItem>();
+            _indexedItems = new List<IndexedItem>();
+            var index = 0;
+
+            foreach (var item in Items)
+            {
+                if (searchTextFunc(item).Contains(searchQuery, StringComparison.OrdinalIgnoreCase))
+                {
+                    _filteredItems.Add(item);
+                    _indexedItems.Add(new IndexedItem(item, index));
+                    index++;
+
+                    if (MaxDisplayCount > 0 && index >= MaxDisplayCount)
+                        break;
+                }
+            }
+        }
+
+        _hasVisibleItems = _indexedItems.Count > 0;
+    }
+
+    private void UpdateLazyFilteredSource()
+    {
+        if (Items == null || Items.Count == 0)
+        {
+            _lazyFilteredSource = new List<TItem>();
+            _filteredCount = 0;
+            _totalCount = 0;
+            _hasVisibleItems = false;
+                        return;
+        }
+
+        _totalCount = Items.Count;
+        var searchQuery = Context?.SearchQuery ?? "";
+
+        if (string.IsNullOrWhiteSpace(searchQuery))
+        {
+            // No search - use all items (lazy loaded on demand)
+            _lazyFilteredSource = null; // null means use Items directly
+            _filteredCount = Items.Count;
+                    }
+        else
+        {
+            // Filter by search query
+            var searchTextFunc = ItemSearchText ?? ItemValue;
+            _lazyFilteredSource = new List<TItem>();
+
+            foreach (var item in Items)
+            {
+                if (searchTextFunc(item).Contains(searchQuery, StringComparison.OrdinalIgnoreCase))
+                {
+                    _lazyFilteredSource.Add(item);
+                }
+            }
+            _filteredCount = _lazyFilteredSource.Count;
+                    }
+
+        _hasVisibleItems = _filteredCount > 0;
+    }
+
+    private ValueTask<Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<IndexedItem>> LoadItemsAsync(
+        Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderRequest request)
+    {
+        // Determine the source list
+        var source = _lazyFilteredSource ?? (IReadOnlyList<TItem>)Items;
+        var totalItems = source.Count;
+
+        // Calculate the range to return
+        var startIndex = request.StartIndex;
+        var count = Math.Min(request.Count, totalItems - startIndex);
+
+        // Debug: Log lazy loading requests
+        
+        if (count <= 0)
+        {
+                        return ValueTask.FromResult(new Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<IndexedItem>(
+                Array.Empty<IndexedItem>(), totalItems));
+        }
+
+        // Build the items for this batch
+        var items = new IndexedItem[count];
+        for (int i = 0; i < count; i++)
+        {
+            var index = startIndex + i;
+            items[i] = new IndexedItem(source[index], index);
+        }
+
+        // Track loaded count for keyboard navigation
+        _lazyLoadedCount = Math.Max(_lazyLoadedCount, startIndex + count);
+
+        
+        return ValueTask.FromResult(new Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<IndexedItem>(
+            items, totalItems));
+    }
+
+    private async void HandleSearchChanged()
+    {
+        _cachedSearchQuery = null; // Force rebuild
+
+        if (EnableLazyLoading)
+        {
+            UpdateLazyFilteredSource();
+            _lazyLoadedCount = 0;
+            if (_virtualizeRef != null)
+            {
+                await _virtualizeRef.RefreshDataAsync();
+            }
+        }
+        else
+        {
+            UpdateFilteredItems();
+        }
+
+        _focusedIndex = -1;
+        StateHasChanged();
+    }
+
+    private void HandleKeyboardNavigationChanged(bool isKeyboardNavigating)
+    {
+        // Re-render to update hover classes
+        StateHasChanged();
+    }
+
+    private bool IsItemFocusedByIndex(int index)
+    {
+        return _focusedIndex >= 0 && _focusedIndex == index;
+    }
+
+    private void HandleMouseMove()
+    {
+        // Re-enable hover focus when mouse actually moves
+        Context?.OnMouseMove();
+    }
+
+    private void FocusItemByIndex(int index)
+    {
+        // Ignore hover during keyboard navigation
+        if (Context?.IsKeyboardNavigating == true) return;
+
+        if (index >= 0 && index != _focusedIndex)
+        {
+            _focusedIndex = index;
+            // Notify context to clear focus from other groups
+            Context?.SetVirtualizedGroupFocus(this, index);
+            // Don't scroll on mouse hover
+            StateHasChanged();
+        }
+    }
+
+    private async Task SelectItem(TItem item)
+    {
+        if (Context != null)
+        {
+            var value = ItemValue(item);
+            if (Context.OnValueChange.HasDelegate)
+            {
+                await Context.OnValueChange.InvokeAsync(value);
+            }
+        }
+    }
+
+    private string GetItemCssClassByIndex(int index)
+    {
+        var isFocused = IsItemFocusedByIndex(index);
+        var isKeyboardNav = Context?.IsKeyboardNavigating == true;
+        var baseClasses = "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none";
+        var hoverClasses = isKeyboardNav ? "" : " hover:bg-accent hover:text-accent-foreground";
+        var focusClasses = isFocused ? " bg-accent text-accent-foreground" : "";
+        return $"{baseClasses}{hoverClasses}{focusClasses}";
+    }
+
+    public void Dispose()
+    {
+        if (Context != null)
+        {
+            Context.OnSearchChanged -= HandleSearchChanged;
+            Context.OnKeyboardNavigationChanged -= HandleKeyboardNavigationChanged;
+            Context.UnregisterVirtualizedGroup(this);
+        }
+    }
+}

@@ -1,6 +1,7 @@
 @namespace BlazorUI.Components.Command
 @using BlazorUI.Components.Utilities
 @implements IDisposable
+@inject IJSRuntime JS
 
 @* CommandItem - selectable item in the command list *@
 @if (_isVisible)
@@ -13,6 +14,7 @@
          data-disabled="@(Disabled ? "true" : "false")"
          @onclick="HandleClick"
          @onmouseenter="HandleMouseEnter"
+         @onmousemove="HandleMouseMove"
          class="@CssClass">
         @ChildContent
     </div>
@@ -62,16 +64,18 @@
     public string? SearchText { get; set; }
 
     private int _index = -1;
+    private int _filteredIndex = -1;
     private string _itemId = string.Empty;
     private bool _isFocused;
     private bool _isVisible = true;
+    private bool _shouldScrollIntoView;
 
     /// <summary>
     /// Gets the computed CSS classes for the item.
     /// </summary>
     private string CssClass => ClassNames.cn(
         "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
-        !Disabled ? "hover:bg-accent hover:text-accent-foreground" : null,
+        !Disabled && Context?.IsKeyboardNavigating != true ? "hover:bg-accent hover:text-accent-foreground" : null,
         Disabled ? "opacity-50 cursor-not-allowed" : null,
         _isFocused ? "bg-accent text-accent-foreground" : null,
         Class
@@ -95,11 +99,13 @@
 
         _itemId = Context.GetItemId(_index);
 
-        // Subscribe to context state changes
-        Context.OnStateChanged += HandleContextStateChanged;
+        // Subscribe to targeted events for better performance
+        Context.OnFocusChanged += HandleFocusChanged;
+        Context.OnSearchChanged += HandleSearchChanged;
+        Context.OnKeyboardNavigationChanged += HandleKeyboardNavigationChanged;
 
         // Initial visibility check
-        UpdateVisibility();
+        UpdateVisibilityAndFilteredIndex();
     }
 
     protected override void OnParametersSet()
@@ -127,51 +133,84 @@
         await Context.SelectItemByValueAsync(Value ?? string.Empty);
     }
 
+    private void HandleMouseMove()
+    {
+        // Re-enable hover focus when mouse actually moves
+        Context?.OnMouseMove();
+    }
+
     private void HandleMouseEnter()
     {
-        if (Disabled || Context == null) return;
+        // Ignore hover during keyboard navigation
+        if (Context?.IsKeyboardNavigating == true) return;
 
-        // Set focus when mouse enters
-        var filteredItems = Context.GetFilteredItems();
-        var thisItem = Context.GetItemByIndex(_index);
+        if (Disabled || Context == null || !_isVisible) return;
 
-        if (thisItem != null)
+        // Use cached filtered index if available, otherwise calculate it
+        if (_filteredIndex >= 0)
         {
-            var indexInFiltered = filteredItems.IndexOf(thisItem);
-            if (indexInFiltered >= 0)
+            Context.SetFocusedIndex(_filteredIndex);
+        }
+    }
+
+    private void HandleFocusChanged(int previousIndex, int newIndex)
+    {
+        // Only re-render if this item is affected by the focus change
+        if (_filteredIndex == previousIndex || _filteredIndex == newIndex)
+        {
+            var wasFocused = _isFocused;
+            _isFocused = _filteredIndex == newIndex;
+
+            // Scroll into view only during keyboard navigation, not mouse hover
+            if (_isFocused && !wasFocused && Context?.IsKeyboardNavigating == true)
             {
-                Context.SetFocusedIndex(indexInFiltered);
+                _shouldScrollIntoView = true;
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_shouldScrollIntoView && _isFocused)
+        {
+            _shouldScrollIntoView = false;
+            try
+            {
+                // Use 'nearest' to scroll only if item is out of view, avoiding page jumps
+                await JS.InvokeVoidAsync("eval", $"document.getElementById('{_itemId}')?.scrollIntoView({{block: 'nearest', behavior: 'instant'}})");
+            }
+            catch
+            {
+                // Ignore JS errors during scroll
             }
         }
     }
 
-    private void HandleContextStateChanged()
+    private void HandleSearchChanged()
     {
-        // Update focused state
-        var filteredItems = Context?.GetFilteredItems();
-        var thisItem = Context?.GetItemByIndex(_index);
+        // Update visibility and filtered index when search changes
+        UpdateVisibilityAndFilteredIndex();
 
-        if (thisItem != null && filteredItems != null)
-        {
-            var indexInFiltered = filteredItems.IndexOf(thisItem);
-            _isFocused = indexInFiltered >= 0 && Context?.FocusedIndex == indexInFiltered;
-        }
-        else
-        {
-            _isFocused = false;
-        }
-
-        // Update visibility
-        UpdateVisibility();
+        // Reset focused state since search changed
+        _isFocused = false;
 
         StateHasChanged();
     }
 
-    private void UpdateVisibility()
+    private void HandleKeyboardNavigationChanged(bool isKeyboardNavigating)
+    {
+        // Re-render to update hover classes
+        StateHasChanged();
+    }
+
+    private void UpdateVisibilityAndFilteredIndex()
     {
         if (Context == null)
         {
             _isVisible = false;
+            _filteredIndex = -1;
             return;
         }
 
@@ -179,6 +218,7 @@
         if (thisItem == null)
         {
             _isVisible = false;
+            _filteredIndex = -1;
             return;
         }
 
@@ -195,6 +235,17 @@
         {
             _isVisible = thisItem.SearchText?.Contains(Context.SearchQuery, StringComparison.OrdinalIgnoreCase) ?? false;
         }
+
+        // Update filtered index for efficient focus handling
+        if (_isVisible)
+        {
+            var filteredItems = Context.GetFilteredItems();
+            _filteredIndex = filteredItems.IndexOf(thisItem);
+        }
+        else
+        {
+            _filteredIndex = -1;
+        }
     }
 
     public void Dispose()
@@ -202,7 +253,9 @@
         if (Context != null && _index >= 0)
         {
             Context.UnregisterItem(_index);
-            Context.OnStateChanged -= HandleContextStateChanged;
+            Context.OnFocusChanged -= HandleFocusChanged;
+            Context.OnSearchChanged -= HandleSearchChanged;
+            Context.OnKeyboardNavigationChanged -= HandleKeyboardNavigationChanged;
         }
     }
 }

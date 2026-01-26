@@ -1,5 +1,6 @@
 @page "/components/calendar"
 @using BlazorUI.Components.Calendar
+@using BlazorUI.Components.Kbd
 @using BlazorUI.Components.Separator
 
 <PageTitle>Calendar Component - BlazorUI</PageTitle>
@@ -19,7 +20,7 @@
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">Basic Example</h2>
             <p class="text-sm text-muted-foreground">
-                A simple calendar for date selection.
+                A simple calendar for date selection. Supports full keyboard navigation.
             </p>
         </div>
         <div class="border rounded-lg w-fit">
@@ -27,6 +28,65 @@
         </div>
         <p class="text-sm text-muted-foreground">
             Selected: @(_selectedDate?.ToString("MMMM d, yyyy") ?? "None")
+        </p>
+    </div>
+
+    <!-- Keyboard Navigation -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Keyboard Navigation</h2>
+            <p class="text-sm text-muted-foreground">
+                The calendar is fully accessible via keyboard. Click on the calendar below and try the keyboard shortcuts.
+            </p>
+        </div>
+        <div class="flex flex-col lg:flex-row gap-6">
+            <div class="border rounded-lg w-fit">
+                <Calendar @bind-Selected="_keyboardDate" />
+            </div>
+            <div class="border rounded-lg p-4 space-y-3 flex-1">
+                <h3 class="font-semibold text-sm">Keyboard Shortcuts</h3>
+                <div class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                    <div class="flex items-center gap-2">
+                        <Kbd Keys="Arrow Keys" />
+                        <span class="text-muted-foreground">Navigate days</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <Kbd Keys="Enter" />
+                        <span class="text-muted-foreground">Select date</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <Kbd Keys="Home" />
+                        <span class="text-muted-foreground">First day of month</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <Kbd Keys="End" />
+                        <span class="text-muted-foreground">Last day of month</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <Kbd Keys="Page Up" />
+                        <span class="text-muted-foreground">Previous month</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <Kbd Keys="Page Down" />
+                        <span class="text-muted-foreground">Next month</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <Kbd Keys="Shift" />
+                        <span class="text-muted-foreground">+</span>
+                        <Kbd Keys="Page Up" />
+                        <span class="text-muted-foreground ml-1">Previous year</span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <Kbd Keys="Shift" />
+                        <span class="text-muted-foreground">+</span>
+                        <Kbd Keys="Page Down" />
+                        <span class="text-muted-foreground ml-1">Next year</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <p class="text-sm text-muted-foreground">
+            Selected: @(_keyboardDate?.ToString("MMMM d, yyyy") ?? "None")
         </p>
     </div>
 
@@ -43,6 +103,22 @@
         </div>
         <p class="text-sm text-muted-foreground">
             Selected: @(_preselectedDate?.ToString("MMMM d, yyyy") ?? "None")
+        </p>
+    </div>
+
+    <!-- Simple Header -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Simple Header</h2>
+            <p class="text-sm text-muted-foreground">
+                Hide the month/year dropdowns for a cleaner look. Navigation still works via arrow buttons and keyboard.
+            </p>
+        </div>
+        <div class="border rounded-lg w-fit">
+            <Calendar @bind-Selected="_simpleHeaderDate" ShowMonthYearDropdowns="false" />
+        </div>
+        <p class="text-sm text-muted-foreground">
+            Selected: @(_simpleHeaderDate?.ToString("MMMM d, yyyy") ?? "None")
         </p>
     </div>
 
@@ -162,6 +238,16 @@
             </div>
             <Separator />
             <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">ShowMonthYearDropdowns</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">bool</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Whether to show month/year dropdown selectors. When false, displays a simple text header. Default: true.
+                </p>
+            </div>
+            <Separator />
+            <div>
                 <h3 class="font-mono text-sm font-semibold mb-2">OnSelect</h3>
                 <p class="text-sm text-muted-foreground mb-2">
                     Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">EventCallback&lt;DateTime&gt;</code>
@@ -176,7 +262,9 @@
 
 @code {
     private DateTime? _selectedDate;
+    private DateTime? _keyboardDate;
     private DateTime? _preselectedDate = DateTime.Today;
+    private DateTime? _simpleHeaderDate;
     private DateTime? _constrainedDate;
     private DateTime? _noWeekendsDate;
     private DateTime? _sundayStart;
