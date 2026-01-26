@@ -3,6 +3,7 @@
 @using BlazorUI.Components.Button
 @using BlazorUI.Components.Select
 @using BlazorUI.Icons.Lucide.Components
+@inject IJSRuntime JS
 
 @*
     Calendar component - displays a month view with selectable dates.
@@ -22,30 +23,38 @@
                     <LucideIcon Name="chevron-left" Class="h-4 w-4" />
                 </Button>
                 <div class="flex items-center gap-1">
-                    @* Month Select *@
-                    <Select TValue="int" Value="@DisplayDate.Month" ValueChanged="@OnMonthChanged" Class="w-[120px]">
-                        <SelectTrigger Class="h-8 border-0 bg-transparent px-2 text-sm font-medium hover:bg-accent focus:ring-0 focus:ring-offset-0">
-                            <span>@GetMonthName(DisplayDate.Month)</span>
-                        </SelectTrigger>
-                        <SelectContent>
-                            @foreach (var month in GetMonths())
-                            {
-                                <SelectItem TValue="int" Value="@month.Number" Text="@month.Name">@month.Name</SelectItem>
-                            }
-                        </SelectContent>
-                    </Select>
-                    @* Year Select *@
-                    <Select TValue="int" Value="@DisplayDate.Year" ValueChanged="@OnYearChanged" Class="w-[80px]">
-                        <SelectTrigger Class="h-8 border-0 bg-transparent px-2 text-sm font-medium hover:bg-accent focus:ring-0 focus:ring-offset-0">
-                            <span>@DisplayDate.Year</span>
-                        </SelectTrigger>
-                        <SelectContent>
-                            @foreach (var year in GetYears())
-                            {
-                                <SelectItem TValue="int" Value="@year" Text="@year.ToString()">@year</SelectItem>
-                            }
-                        </SelectContent>
-                    </Select>
+                    @if (ShowMonthYearDropdowns)
+                    {
+                        @* Month Select *@
+                        <Select TValue="int" Value="@DisplayDate.Month" ValueChanged="@OnMonthChanged" Class="w-[120px]">
+                            <SelectTrigger Class="h-8 border-0 bg-transparent px-2 text-sm font-medium hover:bg-accent focus:ring-0 focus:ring-offset-0">
+                                <span>@GetMonthName(DisplayDate.Month)</span>
+                            </SelectTrigger>
+                            <SelectContent>
+                                @foreach (var month in GetMonths())
+                                {
+                                    <SelectItem TValue="int" Value="@month.Number" Text="@month.Name">@month.Name</SelectItem>
+                                }
+                            </SelectContent>
+                        </Select>
+                        @* Year Select *@
+                        <Select TValue="int" Value="@DisplayDate.Year" ValueChanged="@OnYearChanged" Class="w-[80px]">
+                            <SelectTrigger Class="h-8 border-0 bg-transparent px-2 text-sm font-medium hover:bg-accent focus:ring-0 focus:ring-offset-0">
+                                <span>@DisplayDate.Year</span>
+                            </SelectTrigger>
+                            <SelectContent>
+                                @foreach (var year in GetYears())
+                                {
+                                    <SelectItem TValue="int" Value="@year" Text="@year.ToString()">@year</SelectItem>
+                                }
+                            </SelectContent>
+                        </Select>
+                    }
+                    else
+                    {
+                        @* Simple month/year text header *@
+                        <span class="text-sm font-medium">@GetMonthName(DisplayDate.Month) @DisplayDate.Year</span>
+                    }
                 </div>
                 <Button Variant="ButtonVariant.Outline"
                         Size="ButtonSize.Icon"
@@ -57,7 +66,9 @@
             </div>
 
             @* Calendar Grid *@
-            <table class="w-full border-collapse space-y-1" role="grid">
+            <table class="w-full border-collapse space-y-1" role="grid"
+                   @onkeydown="HandleKeyDown"
+                   @onkeydown:preventDefault="@ShouldPreventKeyDefault">
                 <thead>
                     <tr class="flex">
                         @foreach (var dayName in DayNames)
@@ -76,15 +87,20 @@
                             {
                                 var isSelected = day.HasValue && Selected.HasValue && day.Value.Date == Selected.Value.Date;
                                 var isDisabled = day.HasValue && (IsDisabled(day.Value) || day.Value.Month != DisplayDate.Month);
+                                var isFocused = day.HasValue && _focusedDate.HasValue && day.Value.Date == _focusedDate.Value.Date;
                                 <td class="@GetCellClasses(day, isSelected)"
                                     role="gridcell"
                                     aria-selected="@isSelected">
                                     @if (day.HasValue)
                                     {
                                         <button type="button"
-                                                class="@GetDayClasses(day.Value, isSelected, isDisabled)"
+                                                id="@GetDayId(day.Value)"
+                                                class="@GetDayClasses(day.Value, isSelected, isDisabled, isFocused)"
                                                 disabled="@isDisabled"
-                                                @onclick="@(() => SelectDate(day.Value))">
+                                                tabindex="@(isFocused ? 0 : -1)"
+                                                @onclick="@(() => SelectDate(day.Value))"
+                                                @onclick:stopPropagation="true"
+                                                @onfocus="@(() => HandleDayFocus(day.Value))">
                                             @day.Value.Day
                                         </button>
                                     }
@@ -101,6 +117,11 @@
 @code {
     private DateTime _displayDate;
     private DateTime? _previousSelected;
+
+    // Keyboard navigation fields
+    private DateTime? _focusedDate;
+    private bool _isKeyboardNavigating;
+    private readonly string _calendarId = $"calendar-{Guid.NewGuid():N}";
 
     // Caching fields
     private DayOfWeek _cachedFirstDayOfWeek;
@@ -171,6 +192,13 @@
     public bool ShowOutsideDays { get; set; } = true;
 
     /// <summary>
+    /// Whether to show month and year dropdown selectors.
+    /// When false, displays a simple text header instead.
+    /// </summary>
+    [Parameter]
+    public bool ShowMonthYearDropdowns { get; set; } = true;
+
+    /// <summary>
     /// Additional CSS classes to apply to the calendar.
     /// </summary>
     [Parameter]
@@ -204,6 +232,7 @@
     {
         _displayDate = Selected ?? DateTime.Today;
         _previousSelected = Selected;
+        InitializeFocusedDate();
     }
 
     protected override void OnParametersSet()
@@ -216,6 +245,7 @@
             if (Selected.HasValue)
             {
                 _displayDate = Selected.Value;
+                _focusedDate = Selected.Value;
             }
         }
 
@@ -232,6 +262,47 @@
             _cachedShowOutsideDays = ShowOutsideDays;
             _cachedWeeks = null;
         }
+    }
+
+    private void InitializeFocusedDate()
+    {
+        // Priority: Selected date > Today (if in current month) > First day of month
+        if (Selected.HasValue && Selected.Value.Month == DisplayDate.Month &&
+            Selected.Value.Year == DisplayDate.Year)
+        {
+            _focusedDate = Selected.Value.Date;
+        }
+        else if (DateTime.Today.Month == DisplayDate.Month &&
+                 DateTime.Today.Year == DisplayDate.Year)
+        {
+            _focusedDate = DateTime.Today;
+        }
+        else
+        {
+            _focusedDate = GetFirstEnabledDayOfMonth();
+        }
+    }
+
+    private DateTime GetFirstEnabledDayOfMonth()
+    {
+        var date = new DateTime(DisplayDate.Year, DisplayDate.Month, 1);
+        var lastDay = date.AddMonths(1).AddDays(-1);
+        while (date <= lastDay && IsDisabled(date))
+        {
+            date = date.AddDays(1);
+        }
+        return date <= lastDay ? date : new DateTime(DisplayDate.Year, DisplayDate.Month, 1);
+    }
+
+    private DateTime GetLastEnabledDayOfMonth()
+    {
+        var date = new DateTime(DisplayDate.Year, DisplayDate.Month, 1).AddMonths(1).AddDays(-1);
+        var firstDay = new DateTime(DisplayDate.Year, DisplayDate.Month, 1);
+        while (date >= firstDay && IsDisabled(date))
+        {
+            date = date.AddDays(-1);
+        }
+        return date >= firstDay ? date : new DateTime(DisplayDate.Year, DisplayDate.Month, 1).AddMonths(1).AddDays(-1);
     }
 
     private static readonly string[] BaseDayNames = { "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa" };
@@ -254,21 +325,175 @@
     private void PreviousMonth()
     {
         DisplayDate = DisplayDate.AddMonths(-1);
+        InitializeFocusedDate();
     }
 
     private void NextMonth()
     {
         DisplayDate = DisplayDate.AddMonths(1);
+        InitializeFocusedDate();
     }
 
     private void OnMonthChanged(int month)
     {
         DisplayDate = new DateTime(DisplayDate.Year, month, 1);
+        InitializeFocusedDate();
     }
 
     private void OnYearChanged(int year)
     {
         DisplayDate = new DateTime(year, DisplayDate.Month, 1);
+        InitializeFocusedDate();
+    }
+
+    #endregion
+
+    #region Keyboard Navigation
+
+    // Always prevent default for navigation keys to stop page scrolling
+    private bool ShouldPreventKeyDefault => true;
+
+    private string GetDayId(DateTime date) => $"{_calendarId}-day-{date:yyyyMMdd}";
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        // Determine if we should handle this key
+        var shouldHandle = e.Key is "ArrowLeft" or "ArrowRight" or "ArrowUp" or "ArrowDown"
+            or "Home" or "End" or "PageUp" or "PageDown" or "Enter" or " ";
+
+        if (!shouldHandle) return;
+
+        _isKeyboardNavigating = true;
+
+        switch (e.Key)
+        {
+            case "ArrowLeft":
+                await NavigateDay(-1);
+                break;
+            case "ArrowRight":
+                await NavigateDay(1);
+                break;
+            case "ArrowUp":
+                await NavigateDay(-7);
+                break;
+            case "ArrowDown":
+                await NavigateDay(7);
+                break;
+            case "Home":
+                await NavigateToFirstOfMonth();
+                break;
+            case "End":
+                await NavigateToLastOfMonth();
+                break;
+            case "PageUp":
+                await NavigateMonth(e.ShiftKey ? -12 : -1);
+                break;
+            case "PageDown":
+                await NavigateMonth(e.ShiftKey ? 12 : 1);
+                break;
+            case "Enter":
+            case " ":
+                await SelectFocusedDate();
+                break;
+        }
+    }
+
+    private async Task NavigateDay(int days)
+    {
+        var currentFocus = _focusedDate ?? Selected ?? DateTime.Today;
+        var newDate = currentFocus.AddDays(days);
+
+        // Skip disabled dates in the navigation direction
+        var direction = days > 0 ? 1 : -1;
+        var maxIterations = 365; // Prevent infinite loops
+        var iterations = 0;
+        while (IsDisabled(newDate) && iterations < maxIterations)
+        {
+            newDate = newDate.AddDays(direction);
+            iterations++;
+        }
+
+        // Check if we're still within valid bounds
+        if (MinDate.HasValue && newDate < MinDate.Value.Date) return;
+        if (MaxDate.HasValue && newDate > MaxDate.Value.Date) return;
+        if (IsDisabled(newDate)) return;
+
+        // Handle month boundary - auto-navigate
+        if (newDate.Month != DisplayDate.Month || newDate.Year != DisplayDate.Year)
+        {
+            DisplayDate = new DateTime(newDate.Year, newDate.Month, 1);
+        }
+
+        _focusedDate = newDate;
+        await FocusCurrentButton();
+    }
+
+    private async Task NavigateToFirstOfMonth()
+    {
+        _focusedDate = GetFirstEnabledDayOfMonth();
+        await FocusCurrentButton();
+    }
+
+    private async Task NavigateToLastOfMonth()
+    {
+        _focusedDate = GetLastEnabledDayOfMonth();
+        await FocusCurrentButton();
+    }
+
+    private async Task NavigateMonth(int months)
+    {
+        var currentFocus = _focusedDate ?? Selected ?? DateTime.Today;
+        var targetMonth = DisplayDate.AddMonths(months);
+        DisplayDate = new DateTime(targetMonth.Year, targetMonth.Month, 1);
+
+        // Try to maintain the same day number if possible
+        var targetDay = Math.Min(currentFocus.Day, DateTime.DaysInMonth(targetMonth.Year, targetMonth.Month));
+        var newDate = new DateTime(targetMonth.Year, targetMonth.Month, targetDay);
+
+        // Find nearest enabled date if the target is disabled
+        if (IsDisabled(newDate))
+        {
+            _focusedDate = GetFirstEnabledDayOfMonth();
+        }
+        else
+        {
+            _focusedDate = newDate;
+        }
+
+        await FocusCurrentButton();
+    }
+
+    private async Task SelectFocusedDate()
+    {
+        if (_focusedDate.HasValue && !IsDisabled(_focusedDate.Value))
+        {
+            await SelectDate(_focusedDate.Value);
+        }
+    }
+
+    private async Task FocusCurrentButton()
+    {
+        if (!_focusedDate.HasValue) return;
+
+        StateHasChanged();
+        await Task.Yield(); // Allow render to complete
+
+        try
+        {
+            var elementId = GetDayId(_focusedDate.Value);
+            await JS.InvokeVoidAsync("eval", $"document.getElementById('{elementId}')?.focus()");
+        }
+        catch
+        {
+            // Ignore focus errors (element may not exist yet)
+        }
+    }
+
+    private void HandleDayFocus(DateTime date)
+    {
+        // Sync focused date when user clicks/tabs to a day
+        _focusedDate = date;
+        // Don't reset _isKeyboardNavigating here - let it persist until mouse click
     }
 
     #endregion
@@ -315,6 +540,10 @@
     private async Task SelectDate(DateTime date)
     {
         if (IsDisabled(date)) return;
+
+        // Reset keyboard navigation mode on click selection
+        _isKeyboardNavigating = false;
+        _focusedDate = date;
 
         Selected = date;
         await SelectedChanged.InvokeAsync(date);
@@ -393,7 +622,7 @@
         return string.IsNullOrEmpty(CellClass) ? baseClass : ClassNames.cn(baseClass, CellClass);
     }
 
-    private string GetDayClasses(DateTime date, bool isSelected, bool isDisabled)
+    private string GetDayClasses(DateTime date, bool isSelected, bool isDisabled, bool isFocused)
     {
         string baseClass;
         if (isSelected)
@@ -404,6 +633,12 @@
             baseClass = DayTodayClasses;
         else
             baseClass = DayBaseClasses;
+
+        // Add keyboard focus ring (distinct from :focus-visible for programmatic focus)
+        if (isFocused && _isKeyboardNavigating && !isSelected)
+        {
+            baseClass = ClassNames.cn(baseClass, "ring-2 ring-ring ring-offset-2");
+        }
 
         return string.IsNullOrEmpty(DayClass) ? baseClass : ClassNames.cn(baseClass, DayClass);
     }
