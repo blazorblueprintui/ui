@@ -1,8 +1,10 @@
 @namespace BlazorUI.Components.DataTable
 @typeparam TData where TData : class
 @using BlazorUI.Primitives.Table
+@using BlazorUI.Primitives.Services
 @using BlazorUI.Components.Utilities
 @using BlazorUI.Components.Checkbox
+@using BlazorUI.Components.DropdownMenu
 @using BlazorUI.Components.Empty
 @using BlazorUI.Components.Pagination
 
@@ -62,10 +64,38 @@
                             {
                                 <TableHeaderCell TData="TData" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-12" role="columnheader">
                                     <div @onclick:stopPropagation="true">
-                                        <Checkbox Checked="@IsAllSelected()"
-                                                  CheckedChanged="@(async (bool isChecked) => await HandleSelectAllChanged(isChecked))"
-                                                  Indeterminate="@IsSomeSelected()"
-                                                  AriaLabel="Select all rows on this page" />
+                                        @if (ShouldShowSelectAllPrompt())
+                                        {
+                                            <DropdownMenu @bind-Open="_selectAllDropdownOpen">
+                                                <DropdownMenuTrigger Class="inline-flex items-center justify-center p-0 bg-transparent border-0 hover:bg-transparent focus:outline-none">
+                                                    <Checkbox Checked="@IsAllSelected()"
+                                                              Indeterminate="@IsSomeSelected()"
+                                                              AriaLabel="Select rows - click to see options" />
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent Side="PopoverSide.Bottom" Align="PopoverAlign.Start">
+                                                    <DropdownMenuItem OnClick="@HandleSelectAllOnCurrentPage">
+                                                        Select all on this page (@_processedData.Count() items)
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem OnClick="@HandleSelectAllItems">
+                                                        Select all @GetTotalFilteredItemCount() items
+                                                    </DropdownMenuItem>
+                                                    @if (_tableState.Selection.HasSelection)
+                                                    {
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem OnClick="@HandleClearSelection">
+                                                            Clear selection
+                                                        </DropdownMenuItem>
+                                                    }
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        }
+                                        else
+                                        {
+                                            <Checkbox Checked="@IsAllSelected()"
+                                                      CheckedChanged="@(async (bool isChecked) => await HandleSelectAllChanged(isChecked))"
+                                                      Indeterminate="@IsSomeSelected()"
+                                                      AriaLabel="Select all rows" />
+                                        }
                                     </div>
                                 </TableHeaderCell>
                             }

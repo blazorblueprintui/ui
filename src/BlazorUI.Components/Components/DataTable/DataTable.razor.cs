@@ -64,6 +64,7 @@ public partial class DataTable<TData> : ComponentBase where TData : class
     private IEnumerable<TData> _filteredData = Array.Empty<TData>();
     private string _globalSearchValue = string.Empty;
     private int _columnsVersion = 0;
+    private bool _selectAllDropdownOpen = false;
 
     // ShouldRender tracking fields
     private IEnumerable<TData>? _lastData;
@@ -454,25 +455,91 @@ public partial class DataTable<TData> : ComponentBase where TData : class
     }
 
     /// <summary>
+    /// Determines whether to show the select-all dropdown prompt.
+    /// Returns true when total items exceed the current page count.
+    /// </summary>
+    private bool ShouldShowSelectAllPrompt()
+    {
+        return _tableState.Pagination.TotalItems > _processedData.Count();
+    }
+
+    /// <summary>
+    /// Gets the total count of filtered items across all pages.
+    /// </summary>
+    private int GetTotalFilteredItemCount()
+    {
+        return _filteredData.Count();
+    }
+
+    /// <summary>
+    /// Opens the select-all dropdown menu.
+    /// </summary>
+    private void OpenSelectAllDropdown()
+    {
+        _selectAllDropdownOpen = true;
+        StateHasChanged();
+    }
+
+    /// <summary>
     /// Handles select all checkbox changes.
+    /// When multiple pages exist, opens a dropdown for user to choose scope.
     /// </summary>
     private async Task HandleSelectAllChanged(bool isChecked)
     {
-        if (isChecked)
+        if (!isChecked)
         {
-            // Select all items on current page
-            foreach (var item in _processedData)
-            {
-                _tableState.Selection.Select(item);
-            }
-        }
-        else
-        {
-            // Deselect all
-            _tableState.Selection.Clear();
+            await HandleClearSelection();
+            return;
         }
 
-        _selectionVersion++;  // Track selection change for ShouldRender
+        if (ShouldShowSelectAllPrompt())
+        {
+            _selectAllDropdownOpen = true;
+            StateHasChanged();
+            return;
+        }
+
+        await HandleSelectAllOnCurrentPage();
+    }
+
+    /// <summary>
+    /// Selects all items on the current page only.
+    /// </summary>
+    private async Task HandleSelectAllOnCurrentPage()
+    {
+        foreach (var item in _processedData)
+        {
+            _tableState.Selection.Select(item);
+        }
+        _selectAllDropdownOpen = false;
+        _selectionVersion++;
+        await HandleSelectionChange(_tableState.Selection.SelectedItems);
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Selects all items across all pages (entire filtered dataset).
+    /// </summary>
+    private async Task HandleSelectAllItems()
+    {
+        foreach (var item in _filteredData)
+        {
+            _tableState.Selection.Select(item);
+        }
+        _selectAllDropdownOpen = false;
+        _selectionVersion++;
+        await HandleSelectionChange(_tableState.Selection.SelectedItems);
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Clears all selected items.
+    /// </summary>
+    private async Task HandleClearSelection()
+    {
+        _tableState.Selection.Clear();
+        _selectAllDropdownOpen = false;
+        _selectionVersion++;
         await HandleSelectionChange(_tableState.Selection.SelectedItems);
         StateHasChanged();
     }

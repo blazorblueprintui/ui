@@ -6,6 +6,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-01-27
+
+### Added
+- DataTable select-all dropdown - when total items exceed current page, clicking select-all checkbox shows dropdown with options to "Select all on this page" or "Select all X items" across all pages
+- EnableKeyboardNavigation parameter for Table and DataTable components
+- CSS custom properties for typography (`--tracking-*` letter-spacing variables, `--font-sans/serif/mono` font family variables)
+- New JS modules for better code organization: `element-utils.js`, `table-row-nav.js`, `virtualization-scroll.js`
+- IDropdownManagerService interface for improved testability
+
+### Changed
+- Table Primitive refactored - removed unused FilteringState and ColumnFilter classes (filtering is now solely DataTable's responsibility)
+- OnFilter callback signature changed from `EventCallback<(string?, Dictionary<string, string>)>` to `EventCallback<string?>` (BREAKING CHANGE)
+- DataTable default PageSizes updated to include 5, InitialPageSize changed to 5
+
+### Fixed
+- **Security**: Replaced all `eval()` calls with proper JS modules across 6 components
+- **Security**: Fixed cssText injection vulnerability in `match-trigger-width.js`
+- **Security**: Added HtmlSanitizer to MarkdownEditor to prevent XSS attacks
+- **Security**: Added input validation to DropdownManagerService, TailwindMerge, KeyboardShortcutService, Slider, and ResizablePanelGroup
+- **Security**: Added CSS class pattern validation to reject dangerous patterns
+- DataTable selection tracking and reference aliasing bug resolved
+- DataTable checkbox double-toggle issue fixed with stopPropagation
+- Table focus ring styles added for keyboard navigation visibility
+- Table arrow keys no longer scroll page during row navigation
+- Bare catch blocks replaced with specific exception types
+- Null-forgiving operators replaced with null-coalescing fallbacks
+
+### Performance
+- PortalHost optimized with portal key change tracking to avoid unnecessary re-renders
+- MultiSelect cached TriggerCssClass and added delegate caching for event handlers
+- RichTextEditor added ShouldRender() optimization to prevent unnecessary renders
+- RadioGroup cached enabled items list to avoid LINQ allocations
+- DataTable optimized search filtering with extracted MatchesSearch() method
+- Calendar cached JS module reference and implemented proper IAsyncDisposable
+- TailwindMerge added ConcurrentDictionary cache for regex lookups, fixed double regex evaluation
+- TableDataExtensions optimized pagination with GetRange() instead of Skip().Take()
+
+---
+
 ## 2026-01-26
 
 ### Added

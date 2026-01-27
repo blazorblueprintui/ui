@@ -137,6 +137,8 @@
     private DateTime? _lastMinDate;
     private DateTime? _lastMaxDate;
     private bool _lastShowMonthYearDropdowns;
+    private DateTime? _lastFocusedDate;
+    private bool _lastIsKeyboardNavigating;
 
     /// <summary>
     /// The currently displayed month.
@@ -682,14 +684,19 @@
         var minDateChanged = _lastMinDate != MinDate;
         var maxDateChanged = _lastMaxDate != MaxDate;
         var dropdownsChanged = _lastShowMonthYearDropdowns != ShowMonthYearDropdowns;
+        var focusedDateChanged = _lastFocusedDate != _focusedDate;
+        var keyboardNavigatingChanged = _lastIsKeyboardNavigating != _isKeyboardNavigating;
 
-        if (selectedChanged || displayDateChanged || minDateChanged || maxDateChanged || dropdownsChanged)
+        if (selectedChanged || displayDateChanged || minDateChanged || maxDateChanged ||
+            dropdownsChanged || focusedDateChanged || keyboardNavigatingChanged)
         {
             _lastSelected = Selected;
             _lastDisplayDate = _displayDate;
             _lastMinDate = MinDate;
             _lastMaxDate = MaxDate;
             _lastShowMonthYearDropdowns = ShowMonthYearDropdowns;
+            _lastFocusedDate = _focusedDate;
+            _lastIsKeyboardNavigating = _isKeyboardNavigating;
             return true;
         }
 
