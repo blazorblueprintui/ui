@@ -35,6 +35,11 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
     private readonly Dictionary<string, Func<Task>> _toggleHandlerCache = new();
     private readonly Dictionary<string, Func<Task>> _removeHandlerCache = new();
 
+    // Cached CSS class strings to avoid recomputation on every render
+    private string? _cachedTriggerCssClass;
+    private string? _lastPopoverWidth;
+    private string? _lastClass;
+
     /// <summary>
     /// Gets or sets the cascaded EditContext from a parent EditForm.
     /// </summary>
@@ -620,11 +625,20 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
 
     /// <summary>
     /// Gets the CSS class for the trigger button.
+    /// Uses caching to avoid recomputation on every render.
     /// </summary>
     private string TriggerCssClass
     {
         get
         {
+            // Return cached value if inputs haven't changed
+            if (_cachedTriggerCssClass != null &&
+                _lastPopoverWidth == PopoverWidth &&
+                _lastClass == Class)
+            {
+                return _cachedTriggerCssClass;
+            }
+
             var builder = new StringBuilder();
 
             // Base button styles
@@ -649,7 +663,12 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
                 builder.Append(Class);
             }
 
-            return builder.ToString().Trim();
+            // Cache the result
+            _cachedTriggerCssClass = builder.ToString().Trim();
+            _lastPopoverWidth = PopoverWidth;
+            _lastClass = Class;
+
+            return _cachedTriggerCssClass;
         }
     }
 

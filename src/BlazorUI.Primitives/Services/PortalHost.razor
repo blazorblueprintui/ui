@@ -19,11 +19,28 @@
 
 @code {
     private HashSet<string> _renderedThisCycle = new();
+    private HashSet<string> _lastPortalKeys = new();
     private IJSObjectReference? _portalModule;
 
     protected override void OnInitialized()
     {
-        PortalService.OnPortalsChanged += StateHasChanged;
+        PortalService.OnPortalsChanged += HandlePortalsChanged;
+    }
+
+    /// <summary>
+    /// Handles portal changes with optimization to avoid unnecessary re-renders.
+    /// Only triggers StateHasChanged if the portal keys actually changed.
+    /// </summary>
+    private void HandlePortalsChanged()
+    {
+        var currentKeys = PortalService.GetPortals().Select(p => p.Key).ToHashSet();
+
+        // Only re-render if portals actually changed
+        if (!currentKeys.SetEquals(_lastPortalKeys))
+        {
+            _lastPortalKeys = currentKeys;
+            StateHasChanged();
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -57,11 +74,18 @@
 
     public async ValueTask DisposeAsync()
     {
-        PortalService.OnPortalsChanged -= StateHasChanged;
+        PortalService.OnPortalsChanged -= HandlePortalsChanged;
 
         if (_portalModule != null)
         {
-            await _portalModule.DisposeAsync();
+            try
+            {
+                await _portalModule.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+                // Expected during circuit disconnect
+            }
         }
     }
 }

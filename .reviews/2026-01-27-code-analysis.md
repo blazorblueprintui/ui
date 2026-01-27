@@ -14,7 +14,7 @@ This report provides a comprehensive analysis of the BlazorUI Primitives and Com
 | Category | Critical | High | Medium | Low |
 |----------|----------|------|--------|-----|
 | Security | ~~3~~ 0 | ~~5~~ 2 | ~~4~~ 1 | 3 |
-| Performance | ~~1~~ 0 | ~~5~~ 0 | ~~8~~ 3 | 4 |
+| Performance | ~~1~~ 0 | ~~5~~ 0 | ~~8~~ 1 | 4 |
 | Best Practices | 0 | 0 | ~~4~~ 1 | 12 |
 
 **Overall Assessment:** The codebase demonstrates professional-quality implementation with several areas requiring attention, particularly around JavaScript interop security and render optimization.
@@ -347,9 +347,12 @@ The following critical issues have been **FIXED**:
 
 ##### 2.1.6 PortalHost Re-renders on Every Portal Change
 - **Severity:** MEDIUM
+- **Status:** ✅ **FIXED**
 - **File:** `src/BlazorUI.Primitives/Services/PortalHost.razor` (Lines 11-17, 25)
 
 - **Description:** `StateHasChanged()` directly subscribed to portal changes causes full re-render of entire portal list.
+
+- **Fix Applied:** Added `HandlePortalsChanged()` method that tracks `_lastPortalKeys` and only calls `StateHasChanged()` when portal keys actually change (using `SetEquals`).
 
 ##### 2.1.7 Accordion HashSet Allocation on Every Change
 - **Severity:** MEDIUM
@@ -468,9 +471,12 @@ The following critical issues have been **FIXED**:
 
 ##### 2.2.8 Expensive CSS Computation in Properties
 - **Severity:** MEDIUM
+- **Status:** ✅ **FIXED**
 - **File:** `src/BlazorUI.Components/Components/MultiSelect/MultiSelect.razor.cs` (Lines 555-585)
 
 - **Description:** `TriggerCssClass` property recomputes entire string every render.
+
+- **Fix Applied:** Added `_cachedTriggerCssClass`, `_lastPopoverWidth`, and `_lastClass` fields. Property now returns cached value when inputs haven't changed.
 
 ##### 2.2.9 DataTable Filtering O(n*m*k) Complexity
 - **Severity:** MEDIUM
@@ -644,4 +650,4 @@ The codebase demonstrates professional-quality implementation with strong adhere
 **Report Generated:** 2026-01-27
 **Analyzer:** Claude Code Analysis
 **Version:** 1.0
-**Last Updated:** 2026-01-27 (Round 5: Security & Best Practices MEDIUM fixes - IDropdownManagerService, input validation, CSS sanitization, specific exception handling)
+**Last Updated:** 2026-01-27 (Round 6: Final MEDIUM performance fixes - PortalHost render optimization, MultiSelect CSS caching)
