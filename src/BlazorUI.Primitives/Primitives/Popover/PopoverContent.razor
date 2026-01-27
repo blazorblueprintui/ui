@@ -218,7 +218,10 @@
             _isPositioned = true;
             try
             {
-                await JSRuntime.InvokeVoidAsync("eval", $"document.getElementById('{Context.ContentId}').style.opacity = '1'; document.getElementById('{Context.ContentId}').style.pointerEvents = 'auto';");
+                var elementUtilsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import", "./_content/BlazorUI.Primitives/js/primitives/element-utils.js");
+                await elementUtilsModule.InvokeVoidAsync("showElement", Context.ContentId);
+                await elementUtilsModule.DisposeAsync();
             }
             catch { /* ignore */ }
         }

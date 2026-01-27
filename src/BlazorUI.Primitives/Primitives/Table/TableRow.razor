@@ -1,6 +1,7 @@
 @namespace BlazorUI.Primitives.Table
 @typeparam TData where TData : class
 @inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
 
 <tr @ref="_elementRef"
     role="row"
@@ -16,6 +17,8 @@
 @code {
     private ElementReference _elementRef;
     private bool _spaceKeyHandlerAttached = false;
+    private IJSObjectReference? _tableRowNavModule;
+    private IJSObjectReference? _spaceKeyCleanup;
 
     [CascadingParameter]
     private TableContext<TData> Context { get; set; } = default!;
@@ -54,18 +57,14 @@
         {
             try
             {
+                // Lazy-load the table row navigation module
+                _tableRowNavModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import", "./_content/BlazorUI.Primitives/js/primitives/table-row-nav.js");
+
                 // Attach event listener in capture phase to prevent Space from scrolling
                 // This runs before Blazor's event handler, allowing us to preventDefault
-                await JSRuntime.InvokeVoidAsync("eval", @"
-                    (function(element) {
-                        element.addEventListener('keydown', function(e) {
-                            // Check both modern and legacy key identifiers
-                            if (e.key === ' ' || e.keyCode === 32) {
-                                e.preventDefault();
-                            }
-                        }, { capture: true });
-                    })(arguments[0])
-                ", _elementRef);
+                _spaceKeyCleanup = await _tableRowNavModule.InvokeAsync<IJSObjectReference>(
+                    "preventSpaceKeyScroll", _elementRef);
                 _spaceKeyHandlerAttached = true;
             }
             catch
@@ -111,17 +110,9 @@
     {
         try
         {
-            await JSRuntime.InvokeVoidAsync("eval", @"
-                (function(element) {
-                    let prevRow = element.previousElementSibling;
-                    while (prevRow && prevRow.getAttribute('tabindex') === '-1') {
-                        prevRow = prevRow.previousElementSibling;
-                    }
-                    if (prevRow && prevRow.getAttribute('tabindex') === '0') {
-                        prevRow.focus();
-                    }
-                })(arguments[0])
-            ", _elementRef);
+            _tableRowNavModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorUI.Primitives/js/primitives/table-row-nav.js");
+            await _tableRowNavModule.InvokeVoidAsync("moveFocusToPreviousRow", _elementRef);
         }
         catch
         {
@@ -133,21 +124,41 @@
     {
         try
         {
-            await JSRuntime.InvokeVoidAsync("eval", @"
-                (function(element) {
-                    let nextRow = element.nextElementSibling;
-                    while (nextRow && nextRow.getAttribute('tabindex') === '-1') {
-                        nextRow = nextRow.nextElementSibling;
-                    }
-                    if (nextRow && nextRow.getAttribute('tabindex') === '0') {
-                        nextRow.focus();
-                    }
-                })(arguments[0])
-            ", _elementRef);
+            _tableRowNavModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorUI.Primitives/js/primitives/table-row-nav.js");
+            await _tableRowNavModule.InvokeVoidAsync("moveFocusToNextRow", _elementRef);
         }
         catch
         {
             // Ignore JS interop errors (e.g., during prerendering)
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_spaceKeyCleanup != null)
+        {
+            try
+            {
+                await _spaceKeyCleanup.InvokeVoidAsync("dispose");
+                await _spaceKeyCleanup.DisposeAsync();
+            }
+            catch
+            {
+                // Ignore disposal errors
+            }
+        }
+
+        if (_tableRowNavModule != null)
+        {
+            try
+            {
+                await _tableRowNavModule.DisposeAsync();
+            }
+            catch
+            {
+                // Ignore disposal errors
+            }
         }
     }
 }

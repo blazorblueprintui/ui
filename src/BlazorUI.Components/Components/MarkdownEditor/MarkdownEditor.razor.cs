@@ -1,4 +1,5 @@
 using BlazorUI.Components.Utilities;
+using Ganss.Xss;
 using Markdig;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
@@ -84,11 +85,17 @@ public partial class MarkdownEditor : ComponentBase, IAsyncDisposable
         .Build();
 
     /// <summary>
+    /// HTML sanitizer for XSS prevention. Thread-safe for static usage.
+    /// </summary>
+    private static readonly HtmlSanitizer Sanitizer = new();
+
+    /// <summary>
     /// Gets the rendered HTML from the markdown content.
+    /// HTML is sanitized to prevent XSS attacks.
     /// </summary>
     private string RenderedHtml => string.IsNullOrWhiteSpace(Value)
         ? "<p class=\"text-muted-foreground italic\">Nothing to preview</p>"
-        : Markdown.ToHtml(Value, Pipeline);
+        : Sanitizer.Sanitize(Markdown.ToHtml(Value, Pipeline));
 
     /// <summary>
     /// Gets the CSS classes for the editor container.

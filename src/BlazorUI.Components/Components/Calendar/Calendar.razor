@@ -481,7 +481,10 @@
         try
         {
             var elementId = GetDayId(_focusedDate.Value);
-            await JS.InvokeVoidAsync("eval", $"document.getElementById('{elementId}')?.focus()");
+            var elementUtilsModule = await JS.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorUI.Primitives/js/primitives/element-utils.js");
+            await elementUtilsModule.InvokeVoidAsync("focusElement", elementId);
+            await elementUtilsModule.DisposeAsync();
         }
         catch
         {

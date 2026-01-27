@@ -108,17 +108,17 @@ public partial class DataTable<TData> : ComponentBase where TData : class
 
     /// <summary>
     /// Gets or sets the available page size options.
-    /// Default is [10, 20, 50, 100].
+    /// Default is [5, 10, 20, 50, 100].
     /// </summary>
     [Parameter]
-    public int[] PageSizes { get; set; } = { 10, 20, 50, 100 };
+    public int[] PageSizes { get; set; } = { 5, 10, 20, 50, 100 };
 
     /// <summary>
     /// Gets or sets the initial page size.
-    /// Default is 10.
+    /// Default is 5.
     /// </summary>
     [Parameter]
-    public int InitialPageSize { get; set; } = 10;
+    public int InitialPageSize { get; set; } = 5;
 
     /// <summary>
     /// Gets or sets custom toolbar actions (buttons, etc.).
@@ -385,7 +385,7 @@ public partial class DataTable<TData> : ComponentBase where TData : class
         _tableState.Pagination.CurrentPage = 1;
 
         await ProcessDataAsync();
-        StateHasChanged();
+        // StateHasChanged() not needed - Blazor auto-renders after async event handlers
     }
 
     /// <summary>
@@ -507,7 +507,7 @@ public partial class DataTable<TData> : ComponentBase where TData : class
     private async Task HandlePageChanged(int newPage)
     {
         await ProcessDataAsync();
-        StateHasChanged();
+        // StateHasChanged() not needed - Blazor auto-renders after async event handlers
     }
 
     /// <summary>
@@ -516,6 +516,6 @@ public partial class DataTable<TData> : ComponentBase where TData : class
     private async Task HandlePageSizeChanged(int newPageSize)
     {
         await ProcessDataAsync();
-        StateHasChanged();
+        // StateHasChanged() not needed - Blazor auto-renders after async event handlers
     }
 }

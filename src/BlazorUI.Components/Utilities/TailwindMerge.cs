@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 
 namespace BlazorUI.Components.Utilities;
@@ -138,6 +139,9 @@ public static class TailwindMerge
     private static readonly Regex GridColsRegex = new(@"^grid-cols-(\d+|none)$", RegexOptions.Compiled);
     private static readonly Regex GridRowsRegex = new(@"^grid-rows-(\d+|none)$", RegexOptions.Compiled);
 
+    // Cache for utility group lookups to avoid repeated regex evaluation
+    private static readonly ConcurrentDictionary<string, string?> _utilityGroupCache = new();
+
     /// <summary>
     /// Merges an array of CSS class strings, resolving Tailwind utility conflicts.
     /// Later classes in the array take precedence over earlier ones when conflicts occur.
@@ -185,34 +189,44 @@ public static class TailwindMerge
     /// <summary>
     /// Identifies which utility group a class belongs to.
     /// Returns null if the class doesn't match any known Tailwind utility pattern.
+    /// Results are cached for performance.
     /// </summary>
     private static string? GetUtilityGroup(string className)
+    {
+        return _utilityGroupCache.GetOrAdd(className, ComputeUtilityGroup);
+    }
+
+    /// <summary>
+    /// Computes the utility group for a class name.
+    /// This is the uncached implementation called by GetUtilityGroup.
+    /// </summary>
+    private static string? ComputeUtilityGroup(string className)
     {
         // Check exact matches first (display, position, etc.)
         if (TailwindGroups.TryGetValue(className, out var group))
             return group;
 
-        // Check spacing utilities (padding, margin)
-        if (SpacingRegex.IsMatch(className))
+        // Check spacing utilities (padding, margin) - use Match directly to avoid double evaluation
+        var spacingMatch = SpacingRegex.Match(className);
+        if (spacingMatch.Success)
         {
-            var match = SpacingRegex.Match(className);
-            var prefix = match.Groups[1].Value;
+            var prefix = spacingMatch.Groups[1].Value;
             return TailwindGroups.TryGetValue(prefix, out var spacingGroup) ? spacingGroup : null;
         }
 
         // Check sizing utilities (width, height, min/max)
-        if (SizingRegex.IsMatch(className))
+        var sizingMatch = SizingRegex.Match(className);
+        if (sizingMatch.Success)
         {
-            var match = SizingRegex.Match(className);
-            var prefix = match.Groups[1].Value;
+            var prefix = sizingMatch.Groups[1].Value;
             return TailwindGroups.TryGetValue(prefix, out var sizingGroup) ? sizingGroup : null;
         }
 
         // Check gap utilities
-        if (GapRegex.IsMatch(className))
+        var gapMatch = GapRegex.Match(className);
+        if (gapMatch.Success)
         {
-            var match = GapRegex.Match(className);
-            var prefix = match.Groups[1].Value;
+            var prefix = gapMatch.Groups[1].Value;
             return TailwindGroups.TryGetValue(prefix, out var gapGroup) ? gapGroup : null;
         }
 
