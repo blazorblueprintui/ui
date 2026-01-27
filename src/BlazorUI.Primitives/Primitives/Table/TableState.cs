@@ -23,19 +23,9 @@ public class TableState<TData> where TData : class
     public SelectionState<TData> Selection { get; } = new();
 
     /// <summary>
-    /// Gets the filtering state for the table.
-    /// </summary>
-    public FilteringState Filtering { get; } = new();
-
-    /// <summary>
     /// Gets whether the table has any active sorting.
     /// </summary>
     public bool HasSorting => Sorting.Direction != SortDirection.None;
-
-    /// <summary>
-    /// Gets whether the table has any active filters.
-    /// </summary>
-    public bool HasFiltering => Filtering.HasAnyFilter;
 
     /// <summary>
     /// Gets whether the table has any selected items.
@@ -54,19 +44,18 @@ public class TableState<TData> where TData : class
 
     /// <summary>
     /// Resets all state to default values.
-    /// Clears sorting, filtering, resets to first page, and clears selection.
+    /// Clears sorting, resets to first page, and clears selection.
     /// </summary>
     public void Reset()
     {
         Sorting.ClearSort();
-        Filtering.ClearAllFilters();
         Pagination.Reset();
         Selection.Clear();
     }
 
     /// <summary>
-    /// Resets only the pagination state while preserving sorting, filtering, and selection.
-    /// Useful when data or filters change.
+    /// Resets only the pagination state while preserving sorting and selection.
+    /// Useful when data changes.
     /// </summary>
     public void ResetPagination()
     {

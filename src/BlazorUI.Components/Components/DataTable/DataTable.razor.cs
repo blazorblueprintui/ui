@@ -193,11 +193,11 @@ public partial class DataTable<TData> : ComponentBase where TData : class
     public EventCallback<(string ColumnId, SortDirection Direction)> OnSort { get; set; }
 
     /// <summary>
-    /// Event callback invoked when filtering changes.
+    /// Event callback invoked when the global search value changes.
     /// Use for custom filtering logic (hybrid mode).
     /// </summary>
     [Parameter]
-    public EventCallback<(string? GlobalSearch, Dictionary<string, string> ColumnFilters)> OnFilter { get; set; }
+    public EventCallback<string?> OnFilter { get; set; }
 
     /// <summary>
     /// Gets or sets a function to preprocess data before automatic processing.
@@ -318,58 +318,32 @@ public partial class DataTable<TData> : ComponentBase where TData : class
     }
 
     /// <summary>
-    /// Applies filtering to the data (column filters + global search).
+    /// Applies global search filtering to the data.
     /// </summary>
     private IEnumerable<TData> ApplyFiltering(IEnumerable<TData> data)
     {
-        var filtered = data;
-
-        // Apply column filters
-        foreach (var filter in _tableState.Filtering.ColumnFilters)
+        if (string.IsNullOrWhiteSpace(_globalSearchValue))
         {
-            var column = _columns.FirstOrDefault(c => c.Id == filter.Key);
-            if (column != null && !string.IsNullOrWhiteSpace(filter.Value))
-            {
-                filtered = filtered.Where(item =>
-                {
-                    try
-                    {
-                        var value = column.Property(item);
-                        var stringValue = value?.ToString();
-                        return !string.IsNullOrEmpty(stringValue) &&
-                               stringValue.Contains(filter.Value, StringComparison.OrdinalIgnoreCase);
-                    }
-                    catch
-                    {
-                        return false; // Skip items that cause errors during property access
-                    }
-                });
-            }
+            return data;
         }
 
-        // Apply global search
-        if (!string.IsNullOrWhiteSpace(_globalSearchValue))
+        return data.Where(item =>
         {
-            filtered = filtered.Where(item =>
+            return _columns.Any(column =>
             {
-                return _columns.Any(column =>
+                try
                 {
-                    try
-                    {
-                        var value = column.Property(item);
-                        var stringValue = value?.ToString();
-                        return !string.IsNullOrEmpty(stringValue) &&
-                               stringValue.Contains(_globalSearchValue, StringComparison.OrdinalIgnoreCase);
-                    }
-                    catch
-                    {
-                        return false; // Skip columns that cause errors during property access
-                    }
-                });
+                    var value = column.Property(item);
+                    var stringValue = value?.ToString();
+                    return !string.IsNullOrEmpty(stringValue) &&
+                           stringValue.Contains(_globalSearchValue, StringComparison.OrdinalIgnoreCase);
+                }
+                catch
+                {
+                    return false; // Skip columns that cause errors during property access
+                }
             });
-        }
-
-        return filtered;
+        });
     }
 
     /// <summary>
@@ -417,7 +391,7 @@ public partial class DataTable<TData> : ComponentBase where TData : class
         // Invoke custom callback if provided
         if (OnFilter.HasDelegate)
         {
-            await OnFilter.InvokeAsync((_globalSearchValue, _tableState.Filtering.ColumnFilters.ToDictionary(f => f.Key, f => f.Value ?? string.Empty)));
+            await OnFilter.InvokeAsync(_globalSearchValue);
         }
 
         // Reset to first page when filtering
