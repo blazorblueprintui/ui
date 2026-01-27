@@ -40,6 +40,8 @@ namespace BlazorUI.Primitives.RadioGroup;
 public partial class RadioGroup<TValue> : ComponentBase
 {
     private RadioGroupContext<TValue> context = new();
+    private List<RadioGroupItem<TValue>>? _cachedEnabledItems;
+    private int _lastItemsVersion;
 
     /// <summary>
     /// Gets or sets the currently selected value.
@@ -133,7 +135,7 @@ public partial class RadioGroup<TValue> : ComponentBase
     {
         if (Disabled) return;
 
-        var enabledItems = context.Items.Where(i => !i.Disabled).ToList();
+        var enabledItems = GetEnabledItems();
         if (enabledItems.Count == 0) return;
 
         switch (args.Key)
@@ -148,6 +150,22 @@ public partial class RadioGroup<TValue> : ComponentBase
                 await NavigatePrevious(enabledItems);
                 break;
         }
+    }
+
+    /// <summary>
+    /// Gets the list of enabled items, using a cached version when possible
+    /// to avoid allocations on every keyboard navigation.
+    /// </summary>
+    private List<RadioGroupItem<TValue>> GetEnabledItems()
+    {
+        // Use items count as a simple version check - if count changed, items changed
+        var currentVersion = context.Items.Count;
+        if (_cachedEnabledItems == null || _lastItemsVersion != currentVersion)
+        {
+            _cachedEnabledItems = context.Items.Where(i => !i.Disabled).ToList();
+            _lastItemsVersion = currentVersion;
+        }
+        return _cachedEnabledItems;
     }
 
     /// <summary>

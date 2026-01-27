@@ -3,6 +3,7 @@
 @using BlazorUI.Components.Button
 @using BlazorUI.Components.Select
 @using BlazorUI.Icons.Lucide.Components
+@implements IAsyncDisposable
 @inject IJSRuntime JS
 
 @*
@@ -117,6 +118,7 @@
 @code {
     private DateTime _displayDate;
     private DateTime? _previousSelected;
+    private IJSObjectReference? _elementUtilsModule;
 
     // Keyboard navigation fields
     private DateTime? _focusedDate;
@@ -488,14 +490,28 @@
         try
         {
             var elementId = GetDayId(_focusedDate.Value);
-            var elementUtilsModule = await JS.InvokeAsync<IJSObjectReference>(
+            _elementUtilsModule ??= await JS.InvokeAsync<IJSObjectReference>(
                 "import", "./_content/BlazorUI.Primitives/js/primitives/element-utils.js");
-            await elementUtilsModule.InvokeVoidAsync("focusElement", elementId);
-            await elementUtilsModule.DisposeAsync();
+            await _elementUtilsModule.InvokeVoidAsync("focusElement", elementId);
         }
         catch
         {
             // Ignore focus errors (element may not exist yet)
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_elementUtilsModule != null)
+        {
+            try
+            {
+                await _elementUtilsModule.DisposeAsync();
+            }
+            catch
+            {
+                // Module may already be disposed
+            }
         }
     }
 

@@ -9,6 +9,8 @@ public partial class Sidebar : IDisposable
     [CascadingParameter]
     private SidebarContext? Context { get; set; }
 
+    private SidebarContext? _subscribedContext;
+
     /// <summary>
     /// The content to render inside the sidebar.
     /// </summary>
@@ -129,11 +131,22 @@ public partial class Sidebar : IDisposable
     {
         base.OnParametersSet();
 
-        // Subscribe to state changes when context is available
-        if (Context != null)
+        // Only resubscribe if context reference changed
+        if (Context != _subscribedContext)
         {
-            Context.StateChanged -= OnContextStateChanged;
-            Context.StateChanged += OnContextStateChanged;
+            // Unsubscribe from old context
+            if (_subscribedContext != null)
+            {
+                _subscribedContext.StateChanged -= OnContextStateChanged;
+            }
+
+            // Subscribe to new context
+            if (Context != null)
+            {
+                Context.StateChanged += OnContextStateChanged;
+            }
+
+            _subscribedContext = Context;
         }
     }
 
@@ -145,9 +158,10 @@ public partial class Sidebar : IDisposable
 
     public void Dispose()
     {
-        if (Context != null)
+        if (_subscribedContext != null)
         {
-            Context.StateChanged -= OnContextStateChanged;
+            _subscribedContext.StateChanged -= OnContextStateChanged;
+            _subscribedContext = null;
         }
     }
 }

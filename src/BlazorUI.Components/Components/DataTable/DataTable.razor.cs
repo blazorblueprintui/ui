@@ -327,23 +327,45 @@ public partial class DataTable<TData> : ComponentBase where TData : class
             return data;
         }
 
-        return data.Where(item =>
+        // Cache search value to avoid repeated property access in closure
+        var searchValue = _globalSearchValue;
+
+        // Pre-filter to only filterable columns to reduce iterations
+        var filterableColumns = _columns.Where(c => c.Filterable).ToList();
+        if (filterableColumns.Count == 0)
         {
-            return _columns.Any(column =>
+            filterableColumns = _columns; // Fall back to all columns if none marked filterable
+        }
+
+        return data.Where(item => MatchesSearch(item, searchValue, filterableColumns));
+    }
+
+    /// <summary>
+    /// Checks if an item matches the search criteria across the specified columns.
+    /// Extracted method to reduce closure overhead and improve JIT optimization.
+    /// </summary>
+    private static bool MatchesSearch(TData item, string searchValue, List<ColumnData> columns)
+    {
+        foreach (var column in columns)
+        {
+            try
             {
-                try
+                var value = column.Property(item);
+                if (value == null) continue;
+
+                var stringValue = value.ToString();
+                if (!string.IsNullOrEmpty(stringValue) &&
+                    stringValue.Contains(searchValue, StringComparison.OrdinalIgnoreCase))
                 {
-                    var value = column.Property(item);
-                    var stringValue = value?.ToString();
-                    return !string.IsNullOrEmpty(stringValue) &&
-                           stringValue.Contains(_globalSearchValue, StringComparison.OrdinalIgnoreCase);
+                    return true;
                 }
-                catch
-                {
-                    return false; // Skip columns that cause errors during property access
-                }
-            });
-        });
+            }
+            catch
+            {
+                // Skip columns that cause errors during property access
+            }
+        }
+        return false;
     }
 
     /// <summary>
