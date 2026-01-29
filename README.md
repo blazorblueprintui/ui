@@ -4,15 +4,31 @@
 [![NuGet](https://img.shields.io/nuget/v/BlazorUI.Components)](https://www.nuget.org/packages/BlazorUI.Components)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
 
-A comprehensive UI component library for Blazor inspired by [shadcn/ui](https://ui.shadcn.com/).
+Beautiful, accessible UI components for Blazor. Inspired by [shadcn/ui](https://ui.shadcn.com/).
 
-**[View Documentation & Live Demo](https://blazorui.net)**
+<p align="center">
+  <a href="https://blazorui.net">
+    <img src=".github/assets/hero.png" alt="BlazorUI - Beautiful Components for Blazor" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://blazorui.net"><strong>Documentation</strong></a> ·
+  <a href="https://blazorui.net/components"><strong>Components</strong></a> ·
+  <a href="https://blazorui.net/primitives"><strong>Primitives</strong></a>
+</p>
 
 ## Overview
 
-BlazorUI brings the beautiful design system of shadcn/ui to Blazor applications. This library provides **zero-config, plug-and-play UI components** with full shadcn/ui compatibility, featuring pre-built CSS, styled components, and headless primitives that work across all Blazor hosting models (Server, WebAssembly, and Hybrid).
+BlazorUI brings the elegant design system of shadcn/ui to Blazor applications. Build modern, responsive interfaces with **60+ styled components** and **17 headless primitives** that work across all Blazor hosting models—Server, WebAssembly, and Hybrid.
 
-**No Tailwind CSS setup required** - just install the NuGet package and start building!
+### Why BlazorUI?
+
+- **Zero Configuration** — Pre-built CSS included. No Tailwind setup, no Node.js, no build tools required.
+- **Full shadcn/ui Compatibility** — Use themes from [shadcn/ui](https://ui.shadcn.com/themes) or [tweakcn](https://tweakcn.com) directly.
+- **Accessibility First** — WCAG 2.1 AA compliant with keyboard navigation and screen reader support.
+- **Dark Mode Built-in** — Light and dark themes with CSS variables, ready out of the box.
+- **Pure Blazor** — No JavaScript dependencies. Just C# and Razor components.
 
 ## Getting Started
 
