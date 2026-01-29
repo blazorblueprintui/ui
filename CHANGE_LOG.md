@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-01-29
+
+### Added
+- 9 new input and selection components:
+  - **ColorPicker**: Visual color selection with hex/RGB input, preset colors, and alpha channel support
+  - **CurrencyInput**: Locale-aware currency input with 40+ currencies, automatic formatting, and symbol placement
+  - **DateRangePicker**: Date range selection with dual calendar view, preset ranges, and min/max constraints
+  - **FileUpload**: Drag-and-drop file upload with image previews, validation, progress tracking, and size limits
+  - **MaskedInput**: Structured input formats (phone, SSN, credit card, custom masks)
+  - **NumericInput**: Numeric input with increment/decrement buttons, min/max constraints, and step configuration
+  - **RangeSlider**: Dual-handle slider for value ranges with vertical/horizontal orientation
+  - **Rating**: Star rating with half-value support, custom icons, and read-only mode
+  - **TimePicker**: Time selection with 12/24-hour format, minute stepping, and keyboard navigation
+- Field and InputGroup wrapper components for form layouts
+
+### Fixed
+- DataTable select-all checkbox no longer toggles before user selects an option from dropdown
+- CurrencyInput and NumericInput focus ring moved to container level for better visibility
+- PortalHost always re-renders on portal changes to fix content updates for dynamic components
+- PopoverContent re-registers portal with updated content for proper ChildContent reflection
+
+### Performance
+- DataTable optimized for large datasets (2000+ items):
+  - Materialized `_filteredData` and `_processedData` as `List<T>` for O(1) Count operations
+  - Cached visible columns to avoid LINQ filter per row during render
+  - Optimized `IsSomeSelected()` with early-exit logic
+  - Replaced `.Count()` and `.Any()` with `.Count` property for List types
+
+### Changed
+- Version bump to 1.9.0
+
+---
+
 ## 2026-01-27
 
 ### Added
