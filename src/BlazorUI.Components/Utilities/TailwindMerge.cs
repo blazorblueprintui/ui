@@ -142,9 +142,9 @@ public static class TailwindMerge
     // Cache for utility group lookups to avoid repeated regex evaluation
     private static readonly ConcurrentDictionary<string, string?> _utilityGroupCache = new();
 
-    // Regex to validate CSS class names - allows alphanumeric, hyphens, underscores, colons, slashes, brackets, dots, and percentages
-    // This covers Tailwind classes like "w-1/2", "hover:bg-blue-500", "data-[state=open]:block", "text-[14px]"
-    private static readonly Regex ValidClassNameRegex = new(@"^[a-zA-Z0-9_\-:/.[\]()%!@#]+$", RegexOptions.Compiled);
+    // Regex to validate CSS class names - allows alphanumeric, hyphens, underscores, colons, slashes, brackets, dots, percentages, and CSS combinator characters
+    // This covers Tailwind classes like "w-1/2", "hover:bg-blue-500", "data-[state=open]:block", "text-[14px]", "[&>svg]:absolute"
+    private static readonly Regex ValidClassNameRegex = new(@"^[a-zA-Z0-9_\-:/.[\]()%!@#&>+~=]+$", RegexOptions.Compiled);
 
     /// <summary>
     /// Validates that a CSS class name contains only safe characters.
