@@ -6,6 +6,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-01-30
+
+### Added
+- ResponsiveNav component set for mobile-friendly navigation:
+  - ResponsiveNavProvider: Context provider with JS interop for mobile detection
+  - ResponsiveNavTrigger: Hamburger menu button (visible only on mobile, below 768px)
+  - ResponsiveNavContent: Mobile Sheet content wrapper with auto-close on navigate
+- NavigationMenuDemo updated with responsive example showing search and notification icons
+
+---
+
+## 2026-01-29
+
+### Added
+- 9 new input and selection components:
+  - ColorPicker: Visual color selection with hex/RGB input, preset colors, and optional alpha channel
+  - CurrencyInput: Locale-aware currency input with 40+ currencies and automatic formatting
+  - DateRangePicker: Date range selection with dual calendar view and preset ranges
+  - FileUpload: Drag-and-drop file upload with image previews, validation, and progress tracking
+  - MaskedInput: Input with structured formats (phone, SSN, credit card, custom masks)
+  - NumericInput: Numeric input with increment/decrement buttons and min/max constraints
+  - RangeSlider: Dual-handle slider for selecting value ranges
+  - Rating: Star rating component with half-value support and custom icons
+  - TimePicker: Time selection with 12/24-hour format and keyboard navigation
+
+### Fixed
+- TailwindMerge validation now supports CSS combinator characters (`>`, `+`, `~`)
+- DataTable select-all checkbox no longer toggles before dropdown option is selected
+- CurrencyInput and NumericInput focus ring moved to container level
+
+### Performance
+- DataTable selection optimized for large datasets
+
+### Docs
+- README updated with hero image and improved intro
+
+---
+
 ## 2026-01-27
 
 ### Added
