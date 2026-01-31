@@ -1,32 +1,43 @@
 @typeparam TValue
 @namespace BlazorUI.Primitives.Select
+@using BlazorUI.Primitives.Floating
 @using BlazorUI.Primitives.Services
 @using Microsoft.JSInterop
-@inject IPositioningService PositioningService
-@inject IPortalService PortalService
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 
 @*
     SelectContent primitive - headless dropdown container.
-    Renders through a portal to avoid z-index stacking issues and clipping.
-    Supports smart positioning with IPositioningService.
+    Uses FloatingPortal for portal/positioning infrastructure.
+    Maintains Select-specific behavior: keyboard navigation, item focus, ARIA attributes.
 *@
+
+@if (_context?.IsOpen == true)
+{
+    <FloatingPortal IsOpen="true"
+                    AnchorElement="@_context.State.TriggerElement"
+                    PortalId="@_portalId"
+                    Side="@Side"
+                    Align="@Align"
+                    Offset="@Offset"
+                    MatchAnchorWidth="@MatchTriggerWidth"
+                    Strategy="fixed"
+                    ZIndex="9999"
+                    OnReady="@HandleFloatingReady">
+        @RenderSelectListbox()
+    </FloatingPortal>
+}
 
 @code {
     [CascadingParameter]
     private SelectContext<TValue>? _context { get; set; }
 
-    private ElementReference _portalContentRef;
     private IJSObjectReference? _jsModule;
-    private IJSObjectReference? _matchWidthModule;
-    private IJSObjectReference? _matchWidthCleanup;
-    private IAsyncDisposable? _positioningCleanup;
+    private IJSObjectReference? _clickOutsideModule;
+    private IJSObjectReference? _clickOutsideCleanup;
     private DotNetObjectReference<SelectContent<TValue>>? _dotNetRef;
-    private bool _isInitialized = false;
-    private bool _isPositioned = false;
+    private bool _isKeyboardSetup = false;
     private string _portalId = "";
-    private TaskCompletionSource<bool>? _portalReadyTcs;
 
     /// <summary>
     /// Content to render inside the select dropdown.
@@ -71,21 +82,17 @@
 
     protected override void OnInitialized()
     {
-        if (_context != null)
+        if (_context == null)
         {
-            _portalId = $"select-portal-{_context.ContentId}";
-
-            // Subscribe to portal ready events for synchronization
-            PortalService.OnPortalRendered += HandlePortalRendered;
+            throw new InvalidOperationException(
+                "SelectContent must be used within a Select component. " +
+                "Ensure SelectContent is a child of a Select component.");
         }
-    }
 
-    private void HandlePortalRendered(string portalId)
-    {
-        if (portalId == _portalId)
-        {
-            _portalReadyTcs?.TrySetResult(true);
-        }
+        _portalId = $"select-portal-{_context.ContentId}";
+
+        // Subscribe to context state changes for cleanup
+        _context.OnStateChanged += HandleContextStateChanged;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -95,65 +102,11 @@
             _jsModule = await JS.InvokeAsync<IJSObjectReference>(
                 "import", "./_content/BlazorUI.Primitives/js/primitives/select.js");
         }
-
-        if (_context != null && _context.IsOpen && !_isInitialized)
-        {
-            _isInitialized = true;
-            _isPositioned = false;
-
-            // Create completion source BEFORE registering portal
-            _portalReadyTcs = new TaskCompletionSource<bool>();
-
-            // Register select content through portal - this triggers PortalHost to re-render
-            PortalService.RegisterPortal(_portalId, RenderSelectContent());
-
-            // Wait for PortalHost to signal it's done rendering our portal
-            // Use timeout to prevent hanging if something goes wrong
-            var timeoutTask = Task.Delay(500);
-            var completedTask = await Task.WhenAny(_portalReadyTcs.Task, timeoutTask);
-
-            // Yield to ensure any pending re-renders complete and _portalContentRef is up-to-date
-            await Task.Yield();
-
-            // Check if still open (user might have closed during wait)
-            if (!_context.IsOpen)
-            {
-                return;
-            }
-
-            // Focus the selected item BEFORE positioning (so we can scroll before visible)
-            _context.FocusSelectedOrFirst();
-
-            // Scroll the focused item into view instantly BEFORE making visible
-            if (_jsModule != null && _context.FocusedIndex >= 0)
-            {
-                var itemId = $"{_context.ContentId}-item-{_context.FocusedIndex}";
-                await _jsModule.InvokeVoidAsync("scrollItemIntoView", itemId, true);
-            }
-
-            // NOW set up positioning and make visible
-            await SetupPositioningAsync();
-
-            // Set up JavaScript-based keyboard navigation (more reliable than Blazor event handlers)
-            if (_jsModule != null)
-            {
-                _dotNetRef = DotNetObjectReference.Create(this);
-                await _jsModule.InvokeVoidAsync("setupKeyboardNavigation", _context.ContentId, _dotNetRef);
-
-                // Focus the initially selected option
-                var selectedValue = _context.State.Value?.ToString();
-                await _jsModule.InvokeVoidAsync("focusInitialOption", _context.ContentId, selectedValue);
-            }
-        }
-        else if (_context != null && !_context.IsOpen && _isInitialized)
-        {
-            await CleanupAsync();
-        }
     }
 
-    private RenderFragment RenderSelectContent() => builder =>
+    private RenderFragment RenderSelectListbox() => builder =>
     {
-        // Re-cascade the context through the portal
+        // Re-cascade the SelectContext through the portal so SelectItem components can access it
         builder.OpenComponent<CascadingValue<SelectContext<TValue>>>(0);
         builder.AddAttribute(1, "Value", _context);
         builder.AddAttribute(2, "IsFixed", false);
@@ -164,84 +117,76 @@
             contentBuilder.AddAttribute(2, "role", "listbox");
             contentBuilder.AddAttribute(3, "aria-labelledby", _context.TriggerId);
             contentBuilder.AddAttribute(4, "aria-activedescendant", GetActiveDescendantId());
-            contentBuilder.AddAttribute(5, "data-state", "open");
-            contentBuilder.AddAttribute(6, "data-portal-content", "true");
-            contentBuilder.AddAttribute(7, "tabindex", "-1");
-            contentBuilder.AddAttribute(8, "style", GetMergedStyle());
-            contentBuilder.AddMultipleAttributes(9, GetAttributesWithoutStyle());
-            contentBuilder.AddElementReferenceCapture(10, capturedRef => _portalContentRef = capturedRef);
-            contentBuilder.AddContent(11, ChildContent);
+            contentBuilder.AddAttribute(5, "data-select-content", "true");
+            contentBuilder.AddAttribute(6, "tabindex", "-1");
+            contentBuilder.AddMultipleAttributes(7, AdditionalAttributes);
+            contentBuilder.AddContent(8, ChildContent);
             contentBuilder.CloseElement();
         }));
         builder.CloseComponent();
     };
 
-    private async Task SetupPositioningAsync()
+    private async Task HandleFloatingReady()
     {
-        if (_context?.State.TriggerElement == null)
+        if (_context == null || _jsModule == null) return;
+
+        // Focus the selected item or first item (updates Blazor state)
+        _context.FocusSelectedOrFirst();
+
+        // Set up click-outside detection
+        await SetupClickOutsideAsync();
+
+        // Set up JavaScript-based keyboard navigation
+        if (!_isKeyboardSetup)
         {
-            Console.WriteLine("Warning: SelectContent - TriggerElement is null, positioning may not work correctly");
-            return;
-        }
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await _jsModule.InvokeVoidAsync("setupKeyboardNavigation", _context.ContentId, _dotNetRef);
+            _isKeyboardSetup = true;
 
-        try
-        {
-            // Construct placement string from Side and Align
-            var placement = Align == PopoverAlign.Center ? Side.ToValue() : $"{Side.ToValue()}-{Align.ToValue()}";
-
-            var options = new PositioningOptions
-            {
-                Placement = placement,
-                Offset = Offset,
-                Strategy = "fixed"  // Use fixed positioning to avoid stacking context issues when nested in portals
-            };
-
-            // Compute and apply position using the portal content ref
-            var position = await PositioningService.ComputePositionAsync(
-                _context.State.TriggerElement.Value,
-                _portalContentRef,
-                options);
-
-            // Set up width matching BEFORE making visible to prevent flash
-            if (MatchTriggerWidth)
-            {
-                await SetupMatchTriggerWidthAsync();
-            }
-
-            // Apply position AND make visible via JS (don't rely on Blazor re-render which would overwrite position)
-            await PositioningService.ApplyPositionAsync(_portalContentRef, position, makeVisible: true);
-
-            // Mark as positioned for any future Blazor re-renders
-            _isPositioned = true;
-
-            // Set up auto-update for dynamic positioning
-            _positioningCleanup = await PositioningService.AutoUpdateAsync(
-                _context.State.TriggerElement.Value,
-                _portalContentRef,
-                options);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to set up positioning: {ex.Message}");
-            _isPositioned = true;
+            // Focus the initially selected option (handles scroll within dropdown)
+            var selectedValue = _context.State.Value?.ToString();
+            await _jsModule.InvokeVoidAsync("focusInitialOption", _context.ContentId, selectedValue);
         }
     }
 
-    private async Task SetupMatchTriggerWidthAsync()
+    private async Task SetupClickOutsideAsync()
     {
-        if (_context?.State.TriggerElement == null) return;
+        if (_context == null) return;
 
         try
         {
-            _matchWidthModule = await JS.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorUI.Primitives/js/primitives/match-trigger-width.js");
+            _clickOutsideModule = await JS.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorUI.Primitives/js/primitives/click-outside.js");
 
-            _matchWidthCleanup = await _matchWidthModule.InvokeAsync<IJSObjectReference>(
-                "matchTriggerWidth", _context.State.TriggerElement, _portalContentRef);
+            if (_dotNetRef == null)
+            {
+                _dotNetRef = DotNetObjectReference.Create(this);
+            }
+
+            // Use ID-based lookup instead of ElementReference
+            _clickOutsideCleanup = await _clickOutsideModule.InvokeAsync<IJSObjectReference>(
+                "onClickOutsideByIds",
+                _context.ContentId,      // Element ID (not ElementReference)
+                _dotNetRef,
+                "HandleClickOutside",
+                _context.TriggerId);     // Trigger ID (not ElementReference)
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to set up trigger width matching: {ex.Message}");
+            Console.WriteLine($"Failed to set up click-outside: {ex.Message}");
+        }
+    }
+
+    private async void HandleContextStateChanged()
+    {
+        // When context closes, clean up
+        if (_context?.IsOpen == false && _isKeyboardSetup)
+        {
+            await InvokeAsync(async () =>
+            {
+                await CleanupSelectAsync();
+                StateHasChanged();
+            });
         }
     }
 
@@ -254,48 +199,10 @@
         return null;
     }
 
-    private string GetInitialStyle()
-    {
-        if (!_isPositioned)
-        {
-            // Use position: fixed with off-screen coordinates to prevent:
-            // 1. Flash at wrong position (fixed doesn't depend on parent context)
-            // 2. Scroll jump (visibility: hidden prevents browser from scrolling to element)
-            // 3. Layout interference (pointer-events: none prevents interaction)
-            return "position: fixed; z-index: 50; top: -9999px; left: -9999px; visibility: hidden; opacity: 0; pointer-events: none;";
-        }
-
-        // After positioning, use fixed positioning to ensure it renders relative to viewport
-        // This avoids issues with stacking contexts and positioned ancestors
-        return "position: fixed; z-index: 9999;";
-    }
-
-    private string GetMergedStyle()
-    {
-        var baseStyle = GetInitialStyle();
-
-        if (AdditionalAttributes != null && AdditionalAttributes.TryGetValue("style", out var userStyle))
-        {
-            return $"{userStyle}; {baseStyle}";
-        }
-
-        return baseStyle;
-    }
-
-    private Dictionary<string, object>? GetAttributesWithoutStyle()
-    {
-        if (AdditionalAttributes == null) return null;
-
-        var attributes = new Dictionary<string, object>(AdditionalAttributes);
-        attributes.Remove("style");
-
-        return attributes.Count > 0 ? attributes : null;
-    }
-
-    private async Task CleanupAsync()
+    private async Task CleanupSelectAsync()
     {
         // Clean up keyboard navigation
-        if (_jsModule != null && _context != null)
+        if (_jsModule != null && _context != null && _isKeyboardSetup)
         {
             try
             {
@@ -305,40 +212,32 @@
             {
                 // JS module may be disposed
             }
+            _isKeyboardSetup = false;
         }
 
-        // Dispose DotNet reference
-        _dotNetRef?.Dispose();
-        _dotNetRef = null;
-
-        if (_positioningCleanup != null)
-        {
-            await _positioningCleanup.DisposeAsync();
-            _positioningCleanup = null;
-        }
-
-        if (_matchWidthCleanup != null)
+        // Clean up click-outside listener
+        if (_clickOutsideCleanup != null)
         {
             try
             {
-                await _matchWidthCleanup.InvokeVoidAsync("dispose");
-                await _matchWidthCleanup.DisposeAsync();
+                await _clickOutsideCleanup.InvokeVoidAsync("dispose");
+                await _clickOutsideCleanup.DisposeAsync();
             }
             catch
             {
                 // Cleanup may already be disposed
             }
-            _matchWidthCleanup = null;
+            _clickOutsideCleanup = null;
         }
+    }
 
-        // Unregister portal when select closes
-        if (!string.IsNullOrEmpty(_portalId))
-        {
-            PortalService.UnregisterPortal(_portalId);
-        }
-
-        _isInitialized = false;
-        _isPositioned = false;
+    /// <summary>
+    /// Called from JavaScript when clicking outside the select.
+    /// </summary>
+    [JSInvokable]
+    public void HandleClickOutside()
+    {
+        _context?.Close();
     }
 
     /// <summary>
@@ -361,19 +260,23 @@
 
     public async ValueTask DisposeAsync()
     {
-        // Unsubscribe from portal ready events
-        PortalService.OnPortalRendered -= HandlePortalRendered;
+        if (_context != null)
+        {
+            _context.OnStateChanged -= HandleContextStateChanged;
+        }
 
-        await CleanupAsync();
+        await CleanupSelectAsync();
+
+        if (_clickOutsideModule != null)
+        {
+            await _clickOutsideModule.DisposeAsync();
+        }
 
         if (_jsModule != null)
         {
             await _jsModule.DisposeAsync();
         }
 
-        if (_matchWidthModule != null)
-        {
-            await _matchWidthModule.DisposeAsync();
-        }
+        _dotNetRef?.Dispose();
     }
 }
