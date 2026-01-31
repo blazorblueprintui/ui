@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-01-31
+
+### Added
+- FloatingPortal component for unified floating content infrastructure (portal registration, positioning, lifecycle management)
+
+### Changed
+- PopoverContent, TooltipContent, HoverCardContent, and DropdownMenuContent primitives refactored to use FloatingPortal (~600 lines of duplicated code removed)
+
+### Fixed
+- Select dropdown positioning flash on open
+- Controlled state support for all floating components (Popover, Tooltip, HoverCard, DropdownMenu)
+- Tooltip positioning now correctly derives Side/Align from context Placement
+- PopoverContent MatchTriggerWidth not working in Combobox and MultiSelect
+- Duplicate margin in Select dropdown causing inconsistent spacing with other dropdowns
+
+---
+
 ## 2026-01-30
 
 ### Added
