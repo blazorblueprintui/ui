@@ -1,15 +1,30 @@
 @namespace BlazorUI.Primitives.Popover
+@using BlazorUI.Primitives.Floating
 @using BlazorUI.Primitives.Services
-@inject IPositioningService PositioningService
-@inject IPortalService PortalService
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
 
 @*
     PopoverContent is the main content container for the popover.
-    Handles positioning, click-outside, escape key, and ARIA attributes.
-    Renders through a portal to avoid z-index stacking issues.
+    Uses FloatingPortal for portal/positioning infrastructure.
+    Maintains Popover-specific behavior: click-outside, escape key, ARIA attributes.
 *@
+
+@if (Context.IsOpen && Context.State.TriggerElement.HasValue)
+{
+    <FloatingPortal IsOpen="true"
+                    AnchorElement="@Context.State.TriggerElement"
+                    PortalId="@_portalId"
+                    Side="@Side"
+                    Align="@Align"
+                    Offset="@Offset"
+                    MatchAnchorWidth="@MatchTriggerWidth"
+                    Strategy="@Strategy"
+                    ZIndex="@ZIndex"
+                    OnReady="@HandleFloatingReady">
+        @RenderPopoverContent()
+    </FloatingPortal>
+}
 
 @code {
     [CascadingParameter]
@@ -70,6 +85,21 @@
     public bool MatchTriggerWidth { get; set; } = false;
 
     /// <summary>
+    /// CSS positioning strategy: "absolute" or "fixed".
+    /// Use "fixed" for dropdowns that need to escape stacking contexts.
+    /// Default is "absolute".
+    /// </summary>
+    [Parameter]
+    public string Strategy { get; set; } = "absolute";
+
+    /// <summary>
+    /// CSS z-index value for the popover content.
+    /// Default is 50.
+    /// </summary>
+    [Parameter]
+    public int ZIndex { get; set; } = 50;
+
+    /// <summary>
     /// Event callback invoked when Escape key is pressed.
     /// </summary>
     [Parameter]
@@ -91,17 +121,8 @@
     private IJSObjectReference? _clickOutsideModule;
     private IJSObjectReference? _clickOutsideCleanup;
     private DotNetObjectReference<PopoverContent>? _dotNetRef;
-    private IAsyncDisposable? _positioningCleanup;
-    private bool _isInitialized = false;
-    private bool _isPositioned = false;
     private bool _disposed = false;
     private string _portalId = "";
-    private ElementReference _portalContentRef;
-    private TaskCompletionSource<bool>? _portalReadyTcs;
-
-    // Store computed position so it survives Blazor re-renders
-    private double _positionLeft = 0;
-    private double _positionTop = 0;
 
     protected override void OnInitialized()
     {
@@ -116,176 +137,35 @@
 
         // Subscribe to context changes
         Context.OnStateChanged += HandleContextStateChanged;
-
-        // Subscribe to portal ready events for synchronization
-        PortalService.OnPortalRendered += HandlePortalRendered;
-    }
-
-    private void HandlePortalRendered(string portalId)
-    {
-        if (portalId == _portalId)
-        {
-            _portalReadyTcs?.TrySetResult(true);
-        }
-    }
-
-    protected override void OnParametersSet()
-    {
-        base.OnParametersSet();
-
-        // Re-register portal with updated ChildContent to ensure content updates are reflected
-        // Now safe because GetInitialStyle() includes the stored position,
-        // so re-renders won't lose the position styling
-        if (_isInitialized && Context.IsOpen && !string.IsNullOrEmpty(_portalId))
-        {
-            // Re-register with the new RenderFragment to capture updated ChildContent
-            PortalService.RegisterPortal(_portalId, RenderPopoverContent());
-        }
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (Context.IsOpen && !_isInitialized)
-        {
-            _isInitialized = true;
-            _isPositioned = false;
-
-            // Create completion source BEFORE registering portal
-            _portalReadyTcs = new TaskCompletionSource<bool>();
-
-            // Register popover content through portal - this triggers PortalHost to re-render
-            PortalService.RegisterPortal(_portalId, RenderPopoverContent());
-
-            // Wait for PortalHost to signal it's done rendering our portal
-            // Use timeout to prevent hanging if something goes wrong
-            var timeoutTask = Task.Delay(500);
-            var completedTask = await Task.WhenAny(_portalReadyTcs.Task, timeoutTask);
-
-            if (completedTask == timeoutTask)
-            {
-                Console.WriteLine($"Warning: Portal {_portalId} render timeout");
-            }
-
-            // Yield to ensure any pending re-renders complete and _portalContentRef is up-to-date
-            // This is critical when multiple portals are opening/closing simultaneously
-            await Task.Yield();
-
-            // Check if still open (user might have closed during wait)
-            if (!Context.IsOpen)
-            {
-                return;
-            }
-
-            // NOW _portalContentRef is guaranteed to be valid!
-            await SetupAsync();
-        }
-        else if (!Context.IsOpen && _isInitialized)
-        {
-            await CleanupAsync();
-        }
-    }
-
-    /// <summary>
-    /// Sets up all popover functionality after portal has rendered.
-    /// </summary>
-    private async Task SetupAsync()
-    {
-        try
-        {
-            // Set up positioning and make visible via JS
-            await SetupPositioningAsync();
-
-            // Mark as positioned for any future Blazor re-renders
-            _isPositioned = true;
-
-            // Set up click-outside detection
-            if (CloseOnClickOutside)
-            {
-                await SetupClickOutsideAsync();
-            }
-
-            // Notify subscribers that content is ready (for focus management, etc.)
-            Context.NotifyContentReady();
-
-            // Also invoke the parameter callback if provided
-            if (OnContentReady.HasDelegate)
-            {
-                await OnContentReady.InvokeAsync();
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Popover setup failed: {ex.Message}");
-            // Mark as positioned and show via JS even if setup fails
-            _isPositioned = true;
-            try
-            {
-                var elementUtilsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorUI.Primitives/js/primitives/element-utils.js");
-                await elementUtilsModule.InvokeVoidAsync("showElement", Context.ContentId);
-                await elementUtilsModule.DisposeAsync();
-            }
-            catch { /* ignore */ }
-        }
     }
 
     private RenderFragment RenderPopoverContent() => __builder =>
     {
-        <div @ref="_portalContentRef"
-             id="@Context.ContentId"
+        <div id="@Context.ContentId"
              role="group"
              tabindex="-1"
              @onkeydown="HandleKeyDown"
-             @attributes="GetAttributesWithoutStyle()"
-             data-state="open"
-             data-portal-content="true"
-             style="@GetMergedStyle()">
+             @attributes="AdditionalAttributes"
+             data-state="open">
             @ChildContent
         </div>
     };
 
-    private async Task SetupPositioningAsync()
+    private async Task HandleFloatingReady()
     {
-        if (Context.State.TriggerElement == null)
+        // Set up click-outside detection
+        if (CloseOnClickOutside)
         {
-            Console.WriteLine("Warning: PopoverContent - TriggerElement is null, positioning may not work correctly");
-            return;
+            await SetupClickOutsideAsync();
         }
 
-        try
+        // Notify subscribers that content is ready (for focus management, etc.)
+        Context.NotifyContentReady();
+
+        // Also invoke the parameter callback if provided
+        if (OnContentReady.HasDelegate)
         {
-            // Construct placement string from Side and Align
-            var placement = Align == PopoverAlign.Center ? Side.ToValue() : $"{Side.ToValue()}-{Align.ToValue()}";
-
-            var options = new PositioningOptions
-            {
-                Placement = placement,
-                Offset = Offset,
-                MatchReferenceWidth = MatchTriggerWidth
-            };
-
-            // Compute position using the portal content ref
-            var position = await PositioningService.ComputePositionAsync(
-                Context.State.TriggerElement.Value,
-                _portalContentRef,
-                options);
-
-            // Store position in Blazor state so it survives re-renders
-            _positionLeft = position.X;
-            _positionTop = position.Y;
-
-            // Apply position via JS for initial display
-            await PositioningService.ApplyPositionAsync(_portalContentRef, position, makeVisible: true);
-
-            // Set up auto-update for dynamic positioning (scroll, resize)
-            _positioningCleanup = await PositioningService.AutoUpdateAsync(
-                Context.State.TriggerElement.Value,
-                _portalContentRef,
-                options);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to set up positioning: {ex.Message}");
+            await OnContentReady.InvokeAsync();
         }
     }
 
@@ -333,50 +213,9 @@
         }
     }
 
-    /// <summary>
-    /// Gets the initial inline style for the portal content.
-    /// </summary>
-    private string GetInitialStyle()
-    {
-        if (!_isPositioned)
-        {
-            // Use position: fixed with off-screen coordinates to prevent:
-            // 1. Flash at wrong position (fixed doesn't depend on parent context)
-            // 2. Scroll jump (visibility: hidden prevents browser from scrolling to element)
-            // 3. Layout interference (pointer-events: none prevents interaction)
-            return "position: fixed; z-index: 50; top: -9999px; left: -9999px; visibility: hidden; opacity: 0; pointer-events: none;";
-        }
-
-        // After positioning, include stored position so it survives Blazor re-renders
-        // This prevents the popover from "closing" when parent components re-render
-        return $"position: absolute; z-index: 50; left: {_positionLeft}px; top: {_positionTop}px; opacity: 1; visibility: visible;";
-    }
-
-    private string GetMergedStyle()
-    {
-        var baseStyle = GetInitialStyle();
-
-        if (AdditionalAttributes != null && AdditionalAttributes.TryGetValue("style", out var userStyle))
-        {
-            return $"{userStyle}; {baseStyle}";
-        }
-
-        return baseStyle;
-    }
-
-    private Dictionary<string, object>? GetAttributesWithoutStyle()
-    {
-        if (AdditionalAttributes == null) return null;
-
-        var attributes = new Dictionary<string, object>(AdditionalAttributes);
-        attributes.Remove("style");
-
-        return attributes.Count > 0 ? attributes : null;
-    }
-
     private async void HandleContextStateChanged()
     {
-        if (!Context.IsOpen && _isInitialized)
+        if (!Context.IsOpen)
         {
             // Popover closed, clean up
             await InvokeAsync(async () =>
@@ -411,13 +250,6 @@
 
     private async Task CleanupAsync()
     {
-        // Dispose positioning auto-update
-        if (_positioningCleanup != null)
-        {
-            await _positioningCleanup.DisposeAsync();
-            _positioningCleanup = null;
-        }
-
         // Remove click-outside listener by invoking dispose method
         if (_clickOutsideCleanup != null)
         {
@@ -439,24 +271,12 @@
             _dotNetRef.Dispose();
             _dotNetRef = null;
         }
-
-        // Unregister portal when popover closes
-        if (!string.IsNullOrEmpty(_portalId))
-        {
-            PortalService.UnregisterPortal(_portalId);
-        }
-
-        _isInitialized = false;
-        _isPositioned = false;
     }
 
     public async ValueTask DisposeAsync()
     {
         // Set disposed flag first to prevent JSInvokable callbacks during cleanup
         _disposed = true;
-
-        // Unsubscribe from portal ready events
-        PortalService.OnPortalRendered -= HandlePortalRendered;
 
         await CleanupAsync();
 

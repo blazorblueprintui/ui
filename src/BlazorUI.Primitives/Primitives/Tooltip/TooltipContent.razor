@@ -1,14 +1,28 @@
 @namespace BlazorUI.Primitives.Tooltip
+@using BlazorUI.Primitives.Floating
 @using BlazorUI.Primitives.Services
-@inject IPositioningService PositioningService
-@inject IPortalService PortalService
 @implements IAsyncDisposable
 
 @*
     TooltipContent is the content container for the tooltip.
-    Handles positioning and ARIA attributes for accessibility.
-    Renders through a portal to avoid clipping by overflow:hidden containers.
+    Uses FloatingPortal for portal/positioning infrastructure.
+    Maintains ARIA attributes for accessibility.
 *@
+
+@if (Context.IsOpen && Context.State.TriggerElement.HasValue)
+{
+    <FloatingPortal IsOpen="true"
+                    AnchorElement="@Context.State.TriggerElement"
+                    PortalId="@_portalId"
+                    Side="@EffectiveSide"
+                    Align="@EffectiveAlign"
+                    Offset="@Offset"
+                    Strategy="absolute"
+                    ZIndex="50"
+                    OnReady="@HandleFloatingReady">
+        @RenderTooltipContent()
+    </FloatingPortal>
+}
 
 @code {
     [CascadingParameter]
@@ -28,17 +42,19 @@
 
     /// <summary>
     /// Preferred side for positioning.
+    /// If not set, uses the Placement from the parent Tooltip context.
     /// Default is Top.
     /// </summary>
     [Parameter]
-    public PopoverSide Side { get; set; } = PopoverSide.Top;
+    public PopoverSide? Side { get; set; }
 
     /// <summary>
     /// Alignment relative to trigger.
+    /// If not set, uses the Placement from the parent Tooltip context.
     /// Default is Center.
     /// </summary>
     [Parameter]
-    public PopoverAlign Align { get; set; } = PopoverAlign.Center;
+    public PopoverAlign? Align { get; set; }
 
     /// <summary>
     /// Offset distance from the trigger element in pixels.
@@ -47,12 +63,68 @@
     [Parameter]
     public int Offset { get; set; } = 8;
 
-    private IAsyncDisposable? _positioningCleanup;
-    private bool _isInitialized = false;
-    private bool _isPositioned = false;
     private string _portalId = "";
-    private ElementReference _portalContentRef;
-    private TaskCompletionSource<bool>? _portalReadyTcs;
+
+    /// <summary>
+    /// Gets the effective side for positioning.
+    /// Uses the explicit Side parameter if set, otherwise derives from context's Placement.
+    /// </summary>
+    private PopoverSide EffectiveSide
+    {
+        get
+        {
+            // If Side was explicitly set, use it
+            if (Side.HasValue)
+            {
+                return Side.Value;
+            }
+
+            // Otherwise, derive from context's Placement
+            var placement = Context?.Placement ?? "top";
+            var basePlacement = placement.Split('-')[0];
+
+            return basePlacement switch
+            {
+                "top" => PopoverSide.Top,
+                "bottom" => PopoverSide.Bottom,
+                "left" => PopoverSide.Left,
+                "right" => PopoverSide.Right,
+                _ => PopoverSide.Top
+            };
+        }
+    }
+
+    /// <summary>
+    /// Gets the effective alignment for positioning.
+    /// Uses the explicit Align parameter if set, otherwise derives from context's Placement.
+    /// </summary>
+    private PopoverAlign EffectiveAlign
+    {
+        get
+        {
+            // If Align was explicitly set, use it
+            if (Align.HasValue)
+            {
+                return Align.Value;
+            }
+
+            // Otherwise, derive from context's Placement
+            var placement = Context?.Placement ?? "top";
+            var parts = placement.Split('-');
+
+            if (parts.Length < 2)
+            {
+                return PopoverAlign.Center;
+            }
+
+            return parts[1] switch
+            {
+                "start" => PopoverAlign.Start,
+                "end" => PopoverAlign.End,
+                _ => PopoverAlign.Center
+            };
+        }
+    }
 
     protected override void OnInitialized()
     {
@@ -67,202 +139,38 @@
 
         // Subscribe to context changes
         Context.OnStateChanged += HandleContextStateChanged;
-
-        // Subscribe to portal ready events for synchronization
-        PortalService.OnPortalRendered += HandlePortalRendered;
-    }
-
-    private void HandlePortalRendered(string portalId)
-    {
-        if (portalId == _portalId)
-        {
-            _portalReadyTcs?.TrySetResult(true);
-        }
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (Context.IsOpen && !_isInitialized)
-        {
-            _isInitialized = true;
-            _isPositioned = false;
-
-            // Create completion source BEFORE registering portal
-            _portalReadyTcs = new TaskCompletionSource<bool>();
-
-            // Register tooltip content through portal - this triggers PortalHost to re-render
-            PortalService.RegisterPortal(_portalId, RenderTooltipContent());
-
-            // Wait for PortalHost to signal it's done rendering our portal
-            // Use timeout to prevent hanging if something goes wrong
-            var timeoutTask = Task.Delay(500);
-            var completedTask = await Task.WhenAny(_portalReadyTcs.Task, timeoutTask);
-
-            if (completedTask == timeoutTask)
-            {
-                Console.WriteLine($"Warning: Portal {_portalId} render timeout");
-            }
-
-            // Yield to ensure any pending re-renders complete and _portalContentRef is up-to-date
-            await Task.Yield();
-
-            // Check if still open (user might have closed during wait)
-            if (!Context.IsOpen)
-            {
-                return;
-            }
-
-            // NOW _portalContentRef is guaranteed to be valid!
-            await SetupPositioningAsync();
-        }
-        else if (!Context.IsOpen && _isInitialized)
-        {
-            await CleanupAsync();
-        }
     }
 
     private RenderFragment RenderTooltipContent() => __builder =>
     {
-        <div @ref="_portalContentRef"
-             id="@Context.TooltipId"
+        <div id="@Context.TooltipId"
              role="tooltip"
-             @attributes="GetAttributesWithoutStyle()"
-             data-state="open"
-             style="@GetMergedStyle()">
+             @attributes="AdditionalAttributes"
+             data-state="open">
             @ChildContent
         </div>
     };
 
-    private async Task SetupPositioningAsync()
+    private Task HandleFloatingReady()
     {
-        if (Context.State.TriggerElement == null)
-        {
-            Console.WriteLine("Warning: TooltipContent - TriggerElement is null, positioning may not work correctly");
-            return;
-        }
-
-        try
-        {
-            // Construct placement string from Side and Align
-            var placement = Align == PopoverAlign.Center ? Side.ToValue() : $"{Side.ToValue()}-{Align.ToValue()}";
-
-            var options = new PositioningOptions
-            {
-                Placement = placement,
-                Offset = Offset
-            };
-
-            // Compute and apply position using the portal content ref
-            var position = await PositioningService.ComputePositionAsync(
-                Context.State.TriggerElement.Value,
-                _portalContentRef,
-                options);
-
-            // Apply position AND make visible via JS (don't rely on Blazor re-render which would overwrite position)
-            await PositioningService.ApplyPositionAsync(_portalContentRef, position, makeVisible: true);
-
-            // Mark as positioned for any future Blazor re-renders
-            _isPositioned = true;
-
-            // Set up auto-update for dynamic positioning
-            _positioningCleanup = await PositioningService.AutoUpdateAsync(
-                Context.State.TriggerElement.Value,
-                _portalContentRef,
-                options);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to set up positioning: {ex.Message}");
-            _isPositioned = true;
-        }
+        // Tooltip doesn't need any special setup after positioning
+        // (no click-outside or keyboard handling)
+        return Task.CompletedTask;
     }
 
     private void HandleContextStateChanged()
     {
         // When tooltip state changes, trigger re-render
-        if (!Context.IsOpen && _isInitialized)
-        {
-            // Cleanup will happen in OnAfterRenderAsync
-            _ = InvokeAsync(async () =>
-            {
-                await CleanupAsync();
-                StateHasChanged();
-            });
-        }
-        else
-        {
-            _ = InvokeAsync(StateHasChanged);
-        }
+        _ = InvokeAsync(StateHasChanged);
     }
 
-    private string GetInitialStyle()
+    public ValueTask DisposeAsync()
     {
-        if (!_isPositioned)
-        {
-            // Use position: fixed with off-screen coordinates to prevent:
-            // 1. Flash at wrong position (fixed doesn't depend on parent context)
-            // 2. Scroll jump (visibility: hidden prevents browser from scrolling to element)
-            // 3. Layout interference (pointer-events: none prevents interaction)
-            return "position: fixed; z-index: 50; top: -9999px; left: -9999px; visibility: hidden; opacity: 0; pointer-events: none;";
-        }
-
-        // After positioning, JS will apply the correct styles
-        return "position: absolute; z-index: 50;";
-    }
-
-    private string GetMergedStyle()
-    {
-        var baseStyle = GetInitialStyle();
-
-        // Check if AdditionalAttributes contains a style attribute
-        if (AdditionalAttributes != null && AdditionalAttributes.TryGetValue("style", out var userStyle))
-        {
-            // Merge user styles with base styles (user styles first, then base styles override)
-            return $"{userStyle}; {baseStyle}";
-        }
-
-        return baseStyle;
-    }
-
-    private Dictionary<string, object>? GetAttributesWithoutStyle()
-    {
-        if (AdditionalAttributes == null) return null;
-
-        // Create a copy without the style attribute
-        var attributes = new Dictionary<string, object>(AdditionalAttributes);
-        attributes.Remove("style");
-
-        return attributes.Count > 0 ? attributes : null;
-    }
-
-    private async Task CleanupAsync()
-    {
-        if (_positioningCleanup != null)
-        {
-            await _positioningCleanup.DisposeAsync();
-            _positioningCleanup = null;
-        }
-
-        // Unregister portal when tooltip closes
-        if (!string.IsNullOrEmpty(_portalId))
-        {
-            PortalService.UnregisterPortal(_portalId);
-        }
-
-        _isInitialized = false;
-        _isPositioned = false;
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        // Unsubscribe from portal ready events
-        PortalService.OnPortalRendered -= HandlePortalRendered;
-
-        await CleanupAsync();
-
         if (Context != null)
         {
             Context.OnStateChanged -= HandleContextStateChanged;
         }
+
+        return ValueTask.CompletedTask;
     }
 }

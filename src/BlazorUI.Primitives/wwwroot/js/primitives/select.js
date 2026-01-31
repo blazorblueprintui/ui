@@ -39,10 +39,44 @@ function getFocusedIndex(container) {
 }
 
 /**
+ * Scrolls an element into view within a scrollable container, without scrolling the page.
+ * @param {HTMLElement} element - The element to scroll into view
+ * @param {HTMLElement} container - The scroll container
+ * @param {boolean} center - Whether to center the item in the container
+ */
+function scrollIntoContainerView(element, container, center = false) {
+    if (!element || !container) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const elementRect = element.getBoundingClientRect();
+
+    // Calculate the element's position relative to the container's scroll position
+    const elementTop = element.offsetTop;
+    const elementHeight = element.offsetHeight;
+    const containerScrollTop = container.scrollTop;
+    const containerHeight = container.clientHeight;
+
+    if (center) {
+        // Center the element in the container
+        const targetScrollTop = elementTop - (containerHeight / 2) + (elementHeight / 2);
+        container.scrollTop = Math.max(0, targetScrollTop);
+    } else {
+        // Scroll only if element is outside visible area
+        if (elementTop < containerScrollTop) {
+            // Element is above visible area
+            container.scrollTop = elementTop;
+        } else if (elementTop + elementHeight > containerScrollTop + containerHeight) {
+            // Element is below visible area
+            container.scrollTop = elementTop + elementHeight - containerHeight;
+        }
+    }
+}
+
+/**
  * Sets focus visual indicator on an option.
  * @param {HTMLElement} container - The select content container
  * @param {number} index - Index of the option to focus
- * @param {boolean} center - Whether to center the item in the viewport (for initial selection)
+ * @param {boolean} center - Whether to center the item in the container (for initial selection)
  */
 function setFocusedOption(container, index, center = false) {
     const items = getEnabledOptions(container);
@@ -53,7 +87,8 @@ function setFocusedOption(container, index, center = false) {
     // Set focus on target item
     if (index >= 0 && index < items.length) {
         items[index].setAttribute('data-focused', 'true');
-        items[index].scrollIntoView({ block: center ? 'center' : 'nearest', behavior: 'instant' });
+        // Use container-aware scrolling to avoid scrolling the page
+        scrollIntoContainerView(items[index], container, center);
     }
 }
 
@@ -248,19 +283,19 @@ export function focusContent(contentId) {
 }
 
 /**
- * Scrolls an item into view.
+ * Scrolls an item into view within its scroll container (not the page).
  * @param {string} itemId - The ID of the item element
- * @param {boolean} instant - Whether to scroll instantly (no animation)
- * @param {boolean} center - Whether to center the item in the viewport
+ * @param {boolean} instant - Whether to scroll instantly (no animation) - unused, kept for API compatibility
+ * @param {boolean} center - Whether to center the item in the container
  */
 export function scrollItemIntoView(itemId, instant = false, center = true) {
     const itemElement = document.getElementById(itemId);
-    if (itemElement) {
-        itemElement.scrollIntoView({
-            block: center ? 'center' : 'nearest',
-            inline: 'nearest',
-            behavior: instant ? 'instant' : 'smooth'
-        });
+    if (!itemElement) return;
+
+    // Find the scroll container (the listbox or its scrollable parent)
+    const container = itemElement.closest('[role="listbox"]') || itemElement.parentElement;
+    if (container) {
+        scrollIntoContainerView(itemElement, container, center);
     }
 }
 

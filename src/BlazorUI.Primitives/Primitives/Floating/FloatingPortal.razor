@@ -1,0 +1,344 @@
+@namespace BlazorUI.Primitives.Floating
+@using BlazorUI.Primitives.Services
+@inject IPositioningService PositioningService
+@inject IPortalService PortalService
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@*
+    FloatingPortal - Unified infrastructure for floating content.
+    Handles ONLY: portal registration, positioning, and lifecycle management.
+    Does NOT handle: click-outside, keyboard navigation, or any behavior.
+
+    Use this as the base layer for Select, Popover, DropdownMenu, Tooltip, etc.
+*@
+
+@code {
+    /// <summary>
+    /// The content to render in the floating portal.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Whether the floating content is currently visible.
+    /// </summary>
+    [Parameter]
+    public bool IsOpen { get; set; }
+
+    /// <summary>
+    /// The element to position the floating content relative to.
+    /// </summary>
+    [Parameter]
+    public ElementReference? AnchorElement { get; set; }
+
+    /// <summary>
+    /// Unique identifier for this portal instance.
+    /// Required to prevent conflicts when multiple floating elements exist.
+    /// </summary>
+    [Parameter]
+    public string PortalId { get; set; } = "";
+
+    /// <summary>
+    /// Preferred side for positioning.
+    /// Default is Bottom.
+    /// </summary>
+    [Parameter]
+    public PopoverSide Side { get; set; } = PopoverSide.Bottom;
+
+    /// <summary>
+    /// Alignment relative to anchor element.
+    /// Default is Center.
+    /// </summary>
+    [Parameter]
+    public PopoverAlign Align { get; set; } = PopoverAlign.Center;
+
+    /// <summary>
+    /// Offset distance from the anchor element in pixels.
+    /// Default is 4.
+    /// </summary>
+    [Parameter]
+    public int Offset { get; set; } = 4;
+
+    /// <summary>
+    /// Whether to match the floating content width to the anchor element width.
+    /// Default is false.
+    /// </summary>
+    [Parameter]
+    public bool MatchAnchorWidth { get; set; } = false;
+
+    /// <summary>
+    /// CSS positioning strategy: "absolute" or "fixed".
+    /// Use "fixed" for dropdowns that need to escape stacking contexts.
+    /// Default is "absolute".
+    /// </summary>
+    [Parameter]
+    public string Strategy { get; set; } = "absolute";
+
+    /// <summary>
+    /// CSS z-index value for the floating content.
+    /// Default is 50.
+    /// </summary>
+    [Parameter]
+    public int ZIndex { get; set; } = 50;
+
+    /// <summary>
+    /// Event callback invoked when the floating content is positioned and visible.
+    /// Use this to set up keyboard navigation, focus management, etc.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnReady { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the portal container.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private IAsyncDisposable? _positioningCleanup;
+    private bool _isInitialized = false;
+    private bool _isPositioned = false;
+    private ElementReference _portalContentRef;
+    private TaskCompletionSource<bool>? _portalReadyTcs;
+
+    // Store computed position so it survives Blazor re-renders
+    private double _positionLeft = 0;
+    private double _positionTop = 0;
+
+    protected override void OnInitialized()
+    {
+        if (string.IsNullOrEmpty(PortalId))
+        {
+            throw new InvalidOperationException(
+                "FloatingPortal requires a PortalId to be specified. " +
+                "Each floating element must have a unique identifier.");
+        }
+
+        // Subscribe to portal ready events for synchronization
+        PortalService.OnPortalRendered += HandlePortalRendered;
+    }
+
+    private void HandlePortalRendered(string portalId)
+    {
+        if (portalId == PortalId)
+        {
+            _portalReadyTcs?.TrySetResult(true);
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        // Re-register portal with updated ChildContent to ensure content updates are reflected
+        // Safe because GetInitialStyle() includes the stored position,
+        // so re-renders won't lose the position styling
+        if (_isInitialized && IsOpen && !string.IsNullOrEmpty(PortalId))
+        {
+            PortalService.RegisterPortal(PortalId, RenderPortalContent());
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (IsOpen && !_isInitialized)
+        {
+            _isInitialized = true;
+            _isPositioned = false;
+
+            // Create completion source BEFORE registering portal
+            _portalReadyTcs = new TaskCompletionSource<bool>();
+
+            // Register content through portal - this triggers PortalHost to re-render
+            PortalService.RegisterPortal(PortalId, RenderPortalContent());
+
+            // Wait for PortalHost to signal it's done rendering our portal
+            // Use timeout to prevent hanging if something goes wrong
+            var timeoutTask = Task.Delay(500);
+            var completedTask = await Task.WhenAny(_portalReadyTcs.Task, timeoutTask);
+
+            if (completedTask == timeoutTask)
+            {
+                Console.WriteLine($"Warning: Portal {PortalId} render timeout");
+            }
+
+            // Yield to ensure any pending re-renders complete and _portalContentRef is up-to-date
+            // This is critical when multiple portals are opening/closing simultaneously
+            await Task.Yield();
+
+            // Check if still open (user might have closed during wait)
+            if (!IsOpen)
+            {
+                return;
+            }
+
+            // NOW _portalContentRef is guaranteed to be valid!
+            await SetupAsync();
+        }
+        else if (!IsOpen && _isInitialized)
+        {
+            await CleanupAsync();
+        }
+    }
+
+    /// <summary>
+    /// Sets up positioning after portal has rendered.
+    /// </summary>
+    private async Task SetupAsync()
+    {
+        try
+        {
+            // Set up positioning and make visible via JS
+            await SetupPositioningAsync();
+
+            // Mark as positioned for any future Blazor re-renders
+            _isPositioned = true;
+
+            // Notify consumers that content is ready (for focus management, keyboard handlers, etc.)
+            if (OnReady.HasDelegate)
+            {
+                await OnReady.InvokeAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"FloatingPortal setup failed: {ex.Message}");
+            // Mark as positioned and show via JS even if setup fails
+            _isPositioned = true;
+            try
+            {
+                var elementUtilsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import", "./_content/BlazorUI.Primitives/js/primitives/element-utils.js");
+                await elementUtilsModule.InvokeVoidAsync("showElement", PortalId);
+                await elementUtilsModule.DisposeAsync();
+            }
+            catch { /* ignore */ }
+        }
+    }
+
+    private RenderFragment RenderPortalContent() => __builder =>
+    {
+        <div @ref="_portalContentRef"
+             @attributes="GetAttributesWithoutStyle()"
+             data-portal-content="true"
+             style="@GetMergedStyle()">
+            @ChildContent
+        </div>
+    };
+
+    private async Task SetupPositioningAsync()
+    {
+        if (AnchorElement == null || !AnchorElement.HasValue)
+        {
+            Console.WriteLine("Warning: FloatingPortal - AnchorElement is null, positioning may not work correctly");
+            return;
+        }
+
+        try
+        {
+            // Construct placement string from Side and Align
+            var placement = Align == PopoverAlign.Center ? Side.ToValue() : $"{Side.ToValue()}-{Align.ToValue()}";
+
+            var options = new PositioningOptions
+            {
+                Placement = placement,
+                Offset = Offset,
+                MatchReferenceWidth = MatchAnchorWidth,
+                Strategy = Strategy,
+                Flip = true,  // Enable flip to opposite side when not enough space
+                Shift = true  // Enable shift to keep in viewport
+            };
+
+            // Compute position using the portal content ref
+            var position = await PositioningService.ComputePositionAsync(
+                AnchorElement.Value,
+                _portalContentRef,
+                options);
+
+            // Store position in Blazor state so it survives re-renders
+            _positionLeft = position.X;
+            _positionTop = position.Y;
+
+            // Apply position via JS for initial display
+            await PositioningService.ApplyPositionAsync(_portalContentRef, position, makeVisible: true);
+
+            // Set up auto-update for dynamic positioning (scroll, resize)
+            _positioningCleanup = await PositioningService.AutoUpdateAsync(
+                AnchorElement.Value,
+                _portalContentRef,
+                options);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to set up positioning: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Gets the initial inline style for the portal content.
+    /// </summary>
+    private string GetInitialStyle()
+    {
+        if (!_isPositioned)
+        {
+            // Use position: fixed with off-screen coordinates to prevent:
+            // 1. Flash at wrong position (fixed doesn't depend on parent context)
+            // 2. Scroll jump (visibility: hidden prevents browser from scrolling to element)
+            // 3. Layout interference (pointer-events: none prevents interaction)
+            return $"position: fixed; z-index: {ZIndex}; top: -9999px; left: -9999px; visibility: hidden; opacity: 0; pointer-events: none;";
+        }
+
+        // After positioning, include stored position so it survives Blazor re-renders
+        // This prevents the content from "closing" when parent components re-render
+        return $"position: {Strategy}; z-index: {ZIndex}; left: {_positionLeft}px; top: {_positionTop}px; opacity: 1; visibility: visible;";
+    }
+
+    private string GetMergedStyle()
+    {
+        var baseStyle = GetInitialStyle();
+
+        if (AdditionalAttributes != null && AdditionalAttributes.TryGetValue("style", out var userStyle))
+        {
+            return $"{userStyle}; {baseStyle}";
+        }
+
+        return baseStyle;
+    }
+
+    private Dictionary<string, object>? GetAttributesWithoutStyle()
+    {
+        if (AdditionalAttributes == null) return null;
+
+        var attributes = new Dictionary<string, object>(AdditionalAttributes);
+        attributes.Remove("style");
+
+        return attributes.Count > 0 ? attributes : null;
+    }
+
+    private async Task CleanupAsync()
+    {
+        // Dispose positioning auto-update
+        if (_positioningCleanup != null)
+        {
+            await _positioningCleanup.DisposeAsync();
+            _positioningCleanup = null;
+        }
+
+        // Unregister portal when content closes
+        if (!string.IsNullOrEmpty(PortalId))
+        {
+            PortalService.UnregisterPortal(PortalId);
+        }
+
+        _isInitialized = false;
+        _isPositioned = false;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        // Unsubscribe from portal ready events
+        PortalService.OnPortalRendered -= HandlePortalRendered;
+
+        await CleanupAsync();
+    }
+}

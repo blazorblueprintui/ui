@@ -39,22 +39,22 @@
             </div>
             <div class="rounded-lg border border-border bg-card p-6">
                 <div class="w-[280px]">
-                    <BlazorUI.Primitives.Select.Select TValue="string" @bind-Value="basicValue" style="position: relative;">
+                    <BlazorUI.Primitives.Select.Select TValue="string" @bind-Value="basicValue" DisplayTextSelector="@GetFruitDisplayText" style="position: relative;">
                         <BlazorUI.Primitives.Select.SelectTrigger TValue="string" class="flex items-center justify-between w-full px-3 py-2 border border-input rounded-md bg-background">
-                            <span>Selected: @basicValue</span>
+                            <span>Selected: @GetFruitDisplayText(basicValue)</span>
                             <span>▼</span>
                         </BlazorUI.Primitives.Select.SelectTrigger>
-                        <BlazorUI.Primitives.Select.SelectContent TValue="string" class="absolute z-50 mt-1 w-full border border-border rounded-md bg-popover shadow-md">
-                            <BlazorUI.Primitives.Select.SelectItem TValue="string" Value="@("apple")" class="px-3 py-2 cursor-pointer hover:bg-accent">
+                        <BlazorUI.Primitives.Select.SelectContent TValue="string" class="z-50 mt-1 w-full border border-border rounded-md bg-popover shadow-md">
+                            <BlazorUI.Primitives.Select.SelectItem TValue="string" Value="@("apple")" TextValue="Apple" class="px-3 py-2 cursor-pointer hover:bg-accent">
                                 Apple
                             </BlazorUI.Primitives.Select.SelectItem>
-                            <BlazorUI.Primitives.Select.SelectItem TValue="string" Value="@("banana")" class="px-3 py-2 cursor-pointer hover:bg-accent">
+                            <BlazorUI.Primitives.Select.SelectItem TValue="string" Value="@("banana")" TextValue="Banana" class="px-3 py-2 cursor-pointer hover:bg-accent">
                                 Banana
                             </BlazorUI.Primitives.Select.SelectItem>
-                            <BlazorUI.Primitives.Select.SelectItem TValue="string" Value="@("orange")" class="px-3 py-2 cursor-pointer hover:bg-accent">
+                            <BlazorUI.Primitives.Select.SelectItem TValue="string" Value="@("orange")" TextValue="Orange" class="px-3 py-2 cursor-pointer hover:bg-accent">
                                 Orange
                             </BlazorUI.Primitives.Select.SelectItem>
-                            <BlazorUI.Primitives.Select.SelectItem TValue="string" Value="@("grape")" class="px-3 py-2 cursor-pointer hover:bg-accent">
+                            <BlazorUI.Primitives.Select.SelectItem TValue="string" Value="@("grape")" TextValue="Grape" class="px-3 py-2 cursor-pointer hover:bg-accent">
                                 Grape
                             </BlazorUI.Primitives.Select.SelectItem>
                         </BlazorUI.Primitives.Select.SelectContent>
@@ -79,7 +79,7 @@
                                 <span>@(string.IsNullOrEmpty(controlledValue) ? "Select a fruit" : controlledValue)</span>
                                 <span>▼</span>
                             </BlazorUI.Primitives.Select.SelectTrigger>
-                            <BlazorUI.Primitives.Select.SelectContent TValue="string" class="absolute z-50 mt-1 w-full max-h-60 overflow-auto border border-border rounded-md bg-popover shadow-md">
+                            <BlazorUI.Primitives.Select.SelectContent TValue="string" class="z-50 mt-1 w-full max-h-60 overflow-auto border border-border rounded-md bg-popover shadow-md">
                                 <BlazorUI.Primitives.Select.SelectItem TValue="string" Value="@("Strawberry")" class="px-3 py-2 cursor-pointer hover:bg-accent">
                                     🍓 Strawberry
                                 </BlazorUI.Primitives.Select.SelectItem>
@@ -120,7 +120,7 @@
                             <span>Disabled Select</span>
                             <span>▼</span>
                         </BlazorUI.Primitives.Select.SelectTrigger>
-                        <BlazorUI.Primitives.Select.SelectContent TValue="string" class="absolute z-50 mt-1 w-full border border-border rounded-md bg-popover shadow-md">
+                        <BlazorUI.Primitives.Select.SelectContent TValue="string" class="z-50 mt-1 w-full border border-border rounded-md bg-popover shadow-md">
                             <BlazorUI.Primitives.Select.SelectItem TValue="string" Value="@("disabled")" class="px-3 py-2">
                                 This won't open
                             </BlazorUI.Primitives.Select.SelectItem>
@@ -146,7 +146,7 @@
                                 <span>Item @keyboardValue</span>
                                 <span>▼</span>
                             </BlazorUI.Primitives.Select.SelectTrigger>
-                            <BlazorUI.Primitives.Select.SelectContent TValue="int" class="absolute z-50 mt-1 w-full max-h-60 overflow-auto border border-border rounded-md bg-popover shadow-md">
+                            <BlazorUI.Primitives.Select.SelectContent TValue="int" class="z-50 mt-1 w-full max-h-60 overflow-auto border border-border rounded-md bg-popover shadow-md">
                                 @for (int i = 1; i <= 10; i++)
                                 {
                                     var value = i;
@@ -200,4 +200,13 @@
     private string? basicValue = "apple";
     private string? controlledValue = "";
     private int keyboardValue = 1;
+
+    private string GetFruitDisplayText(string? value) => value switch
+    {
+        "apple" => "Apple",
+        "banana" => "Banana",
+        "orange" => "Orange",
+        "grape" => "Grape",
+        _ => value ?? ""
+    };
 }

@@ -102,4 +102,24 @@ public class HoverCardContext : PrimitiveContextWithEvents<HoverCardState>
             state.IsOpen = isOpen;
         });
     }
+
+    /// <summary>
+    /// Sets the trigger element reference for positioning.
+    /// This is called by HoverCardTrigger to ensure the element is available
+    /// even when the hover card is opened programmatically.
+    /// </summary>
+    /// <param name="triggerElement">The trigger element reference.</param>
+    public void SetTriggerElement(ElementReference triggerElement)
+    {
+        // Only update and notify if the element reference actually changed
+        // This prevents infinite re-render loops while ensuring the content
+        // gets notified when the trigger element becomes available
+        if (State.TriggerElement?.Id != triggerElement.Id)
+        {
+            UpdateState(state =>
+            {
+                state.TriggerElement = triggerElement;
+            });
+        }
+    }
 }

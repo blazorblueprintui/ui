@@ -1,7 +1,6 @@
 @typeparam TValue
 @namespace BlazorUI.Primitives.Select
-@implements IAsyncDisposable
-@inject IJSRuntime JS
+@implements IDisposable
 @inject BlazorUI.Primitives.Services.DropdownManagerService? DropdownManager
 
 @* Select root component - headless, unstyled behavior only *@
@@ -14,10 +13,6 @@
 @code {
     private SelectContext<TValue> _context = new();
     private UseControllableState<TValue?> _state = null!;
-    private IJSObjectReference? _jsModule;
-    private IJSObjectReference? _clickOutsideModule;
-    private IJSObjectReference? _clickOutsideCleanup;
-    private DotNetObjectReference<Select<TValue>>? _dotNetRef;
 
     /// <summary>
     /// The child content to render within the select context.
@@ -160,64 +155,6 @@
         }
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (_jsModule == null)
-        {
-            _jsModule = await JS.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorUI.Primitives/js/primitives/select.js");
-        }
-
-        // Set up click-outside when dropdown opens using the unified click-outside.js
-        // This uses pointerdown/pointerup events for better coordination with nested portals
-        if (_context.IsOpen && _dotNetRef == null)
-        {
-            _dotNetRef = DotNetObjectReference.Create(this);
-
-            // Import click-outside module if not already imported
-            if (_clickOutsideModule == null)
-            {
-                _clickOutsideModule = await JS.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorUI.Primitives/js/primitives/click-outside.js");
-            }
-
-            // Use onClickOutsideByIds for unified detection with nested portal awareness
-            _clickOutsideCleanup = await _clickOutsideModule.InvokeAsync<IJSObjectReference>(
-                "onClickOutsideByIds",
-                _context.ContentId,
-                _dotNetRef,
-                "HandleClickOutside",
-                _context.TriggerId);
-        }
-        else if (!_context.IsOpen && _dotNetRef != null)
-        {
-            // Clean up click-outside detection
-            if (_clickOutsideCleanup != null)
-            {
-                try
-                {
-                    await _clickOutsideCleanup.InvokeVoidAsync("dispose");
-                    await _clickOutsideCleanup.DisposeAsync();
-                }
-                catch { }
-                _clickOutsideCleanup = null;
-            }
-
-            _dotNetRef?.Dispose();
-            _dotNetRef = null;
-        }
-    }
-
-    [JSInvokable]
-    public void HandleClickOutside()
-    {
-        if (_context.IsOpen)
-        {
-            _context.Close();
-            StateHasChanged();
-        }
-    }
-
     private void HandleContextStateChanged()
     {
         // Register/unregister with dropdown manager when open state changes
@@ -264,7 +201,7 @@
         return value.ToString();
     }
 
-    public async ValueTask DisposeAsync()
+    public void Dispose()
     {
         _context.OnStateChanged -= HandleContextStateChanged;
 
@@ -273,39 +210,5 @@
         {
             DropdownManager.Unregister(_context.ContentId);
         }
-
-        // Clean up click-outside detection
-        if (_clickOutsideCleanup != null)
-        {
-            try
-            {
-                await _clickOutsideCleanup.InvokeVoidAsync("dispose");
-                await _clickOutsideCleanup.DisposeAsync();
-            }
-            catch { }
-            _clickOutsideCleanup = null;
-        }
-
-        if (_clickOutsideModule != null)
-        {
-            try
-            {
-                await _clickOutsideModule.DisposeAsync();
-            }
-            catch { }
-            _clickOutsideModule = null;
-        }
-
-        if (_jsModule != null)
-        {
-            try
-            {
-                await _jsModule.DisposeAsync();
-            }
-            catch { }
-            _jsModule = null;
-        }
-
-        _dotNetRef?.Dispose();
     }
 }
