@@ -86,4 +86,18 @@ public abstract class PrimitiveContextWithEvents<TState> : PrimitiveContext<TSta
         updateAction(State);
         NotifyStateChanged();
     }
+
+    /// <summary>
+    /// Updates the state with optional notification.
+    /// </summary>
+    /// <param name="updateAction">Action that updates the state.</param>
+    /// <param name="notifyChanged">Whether to notify subscribers of the change. Default is true.</param>
+    protected void UpdateState(Action<TState> updateAction, bool notifyChanged)
+    {
+        updateAction(State);
+        if (notifyChanged)
+        {
+            NotifyStateChanged();
+        }
+    }
 }

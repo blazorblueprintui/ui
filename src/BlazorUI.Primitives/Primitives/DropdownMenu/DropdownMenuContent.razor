@@ -1,15 +1,30 @@
 @namespace BlazorUI.Primitives.DropdownMenu
+@using BlazorUI.Primitives.Floating
 @using BlazorUI.Primitives.Services
-@inject IPositioningService PositioningService
-@inject IPortalService PortalService
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
 
 @*
     DropdownMenuContent is the main content container for the dropdown menu.
-    Handles positioning, click-outside, escape key, keyboard navigation, and ARIA attributes.
-    Renders through a portal to avoid z-index stacking issues and clipping.
+    Uses FloatingPortal for portal/positioning infrastructure.
+    Maintains DropdownMenu-specific behavior: click-outside, keyboard navigation, focus management.
 *@
+
+@if (Context.IsOpen && Context.State.TriggerElement.HasValue)
+{
+    <FloatingPortal IsOpen="true"
+                    AnchorElement="@Context.State.TriggerElement"
+                    PortalId="@_portalId"
+                    Side="@Side"
+                    Align="@Align"
+                    Offset="@Offset"
+                    MatchAnchorWidth="@MatchTriggerWidth"
+                    Strategy="@Strategy.ToValue()"
+                    ZIndex="@ZIndex"
+                    OnReady="@HandleFloatingReady">
+        @RenderDropdownContent()
+    </FloatingPortal>
+}
 
 @code {
     [CascadingParameter]
@@ -112,12 +127,8 @@
     private IJSObjectReference? _matchWidthModule;
     private IJSObjectReference? _matchWidthCleanup;
     private DotNetObjectReference<DropdownMenuContent>? _dotNetRef;
-    private IAsyncDisposable? _positioningCleanup;
-    private bool _isInitialized = false;
-    private bool _isPositioned = false;
     private bool _disposed = false;
     private string _portalId = "";
-    private TaskCompletionSource<bool>? _portalReadyTcs;
 
     // Track menu items for keyboard navigation
     private List<IDropdownMenuItem> _menuItems = new();
@@ -135,98 +146,6 @@
 
         // Subscribe to context changes
         Context.OnStateChanged += HandleContextStateChanged;
-
-        // Subscribe to portal ready events for synchronization
-        PortalService.OnPortalRendered += HandlePortalRendered;
-    }
-
-    private void HandlePortalRendered(string portalId)
-    {
-        if (portalId == _portalId)
-        {
-            _portalReadyTcs?.TrySetResult(true);
-        }
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (Context.IsOpen && !_isInitialized)
-        {
-            _isInitialized = true;
-            _isPositioned = false;
-
-            // Create completion source BEFORE registering portal
-            _portalReadyTcs = new TaskCompletionSource<bool>();
-
-            // Register dropdown content through portal - this triggers PortalHost to re-render
-            PortalService.RegisterPortal(_portalId, RenderDropdownContent());
-
-            // Wait for PortalHost to signal it's done rendering our portal
-            // Use timeout to prevent hanging if something goes wrong
-            var timeoutTask = Task.Delay(500);
-            var completedTask = await Task.WhenAny(_portalReadyTcs.Task, timeoutTask);
-
-            if (completedTask == timeoutTask)
-            {
-                Console.WriteLine($"Warning: Portal {_portalId} render timeout");
-            }
-
-            // Yield to ensure any pending re-renders complete and _contentRef is up-to-date
-            // This is critical when multiple portals are opening/closing simultaneously
-            await Task.Yield();
-
-            // Check if still open (user might have closed during wait)
-            if (!Context.IsOpen)
-            {
-                return;
-            }
-
-            // NOW _contentRef is guaranteed to be valid!
-            await SetupAsync();
-        }
-        else if (!Context.IsOpen && _isInitialized)
-        {
-            await CleanupAsync();
-        }
-    }
-
-    /// <summary>
-    /// Sets up all dropdown functionality after portal has rendered.
-    /// </summary>
-    private async Task SetupAsync()
-    {
-        try
-        {
-            // Set up positioning and make visible via JS
-            // IMPORTANT: Don't call UpdatePortalContent after this - it would overwrite the JS-applied position
-            await SetupPositioningAsync();
-
-            // Mark as positioned for any future Blazor re-renders
-            _isPositioned = true;
-
-            // Set up click-outside detection
-            if (CloseOnClickOutside)
-            {
-                await SetupClickOutsideAsync();
-            }
-
-            // Set up keyboard navigation
-            await SetupKeyboardNavAsync();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Dropdown setup failed: {ex.Message}");
-            // Mark as positioned and show via JS even if setup fails
-            _isPositioned = true;
-            try
-            {
-                var elementUtilsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorUI.Primitives/js/primitives/element-utils.js");
-                await elementUtilsModule.InvokeVoidAsync("showElement", Context.ContentId);
-                await elementUtilsModule.DisposeAsync();
-            }
-            catch { /* ignore */ }
-        }
     }
 
     private RenderFragment RenderDropdownContent() => __builder =>
@@ -239,8 +158,7 @@
              @onkeydown="HandleKeyDown"
              @onkeydown:preventDefault="true"
              @attributes="GetAttributesWithoutStyle()"
-             data-state="open"
-             style="@GetMergedStyle()">
+             data-state="open">
             <CascadingValue Value="Context" IsFixed="false">
                 <CascadingValue Value="this" Name="DropdownMenuContentContext" IsFixed="false">
                     @ChildContent
@@ -249,50 +167,21 @@
         </div>
     };
 
-    private async Task SetupPositioningAsync()
+    private async Task HandleFloatingReady()
     {
-        if (Context.State.TriggerElement == null)
+        // Set up click-outside detection
+        if (CloseOnClickOutside)
         {
-            Console.WriteLine("Warning: DropdownMenuContent - TriggerElement is null, positioning may not work correctly");
-            return;
+            await SetupClickOutsideAsync();
         }
 
-        try
+        // Set up keyboard navigation
+        await SetupKeyboardNavAsync();
+
+        // Set up width matching if needed
+        if (MatchTriggerWidth)
         {
-            // Construct placement string from Side and Align
-            var placement = Align == PopoverAlign.Center ? Side.ToValue() : $"{Side.ToValue()}-{Align.ToValue()}";
-
-            var options = new PositioningOptions
-            {
-                Placement = placement,
-                Offset = Offset,
-                Strategy = Strategy.ToValue()
-            };
-
-            // Compute and apply position using the portal content ref
-            var position = await PositioningService.ComputePositionAsync(
-                Context.State.TriggerElement.Value,
-                _contentRef,
-                options);
-
-            // Apply position AND make visible via JS (don't rely on Blazor re-render which would overwrite position)
-            await PositioningService.ApplyPositionAsync(_contentRef, position, makeVisible: true);
-
-            // Set up width matching if needed
-            if (MatchTriggerWidth)
-            {
-                await SetupMatchTriggerWidthAsync();
-            }
-
-            // Set up auto-update for dynamic positioning
-            _positioningCleanup = await PositioningService.AutoUpdateAsync(
-                Context.State.TriggerElement.Value,
-                _contentRef,
-                options);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to set up positioning: {ex.Message}");
+            await SetupMatchTriggerWidthAsync();
         }
     }
 
@@ -368,35 +257,6 @@
         }
     }
 
-    private string GetInitialStyle()
-    {
-        if (!_isPositioned)
-        {
-            // Use position: fixed with off-screen coordinates to prevent:
-            // 1. Flash at wrong position (fixed doesn't depend on parent context)
-            // 2. Scroll jump (visibility: hidden prevents browser from scrolling to element)
-            // 3. Layout interference (pointer-events: none prevents interaction)
-            return $"position: fixed; z-index: {ZIndex}; top: -9999px; left: -9999px; visibility: hidden; opacity: 0; pointer-events: none;";
-        }
-
-        // After positioning, JS will apply the correct styles
-        return $"position: absolute; z-index: {ZIndex};";
-    }
-
-    private string GetMergedStyle()
-    {
-        var baseStyle = GetInitialStyle();
-
-        // Check if AdditionalAttributes contains a style attribute
-        if (AdditionalAttributes != null && AdditionalAttributes.TryGetValue("style", out var userStyle))
-        {
-            // Merge user styles with base styles (user styles first, then base styles override)
-            return $"{userStyle}; {baseStyle}";
-        }
-
-        return baseStyle;
-    }
-
     private Dictionary<string, object>? GetAttributesWithoutStyle()
     {
         if (AdditionalAttributes == null) return null;
@@ -410,7 +270,7 @@
 
     private async void HandleContextStateChanged()
     {
-        if (!Context.IsOpen && _isInitialized)
+        if (!Context.IsOpen)
         {
             await InvokeAsync(async () =>
             {
@@ -473,12 +333,6 @@
 
     private async Task CleanupAsync()
     {
-        if (_positioningCleanup != null)
-        {
-            await _positioningCleanup.DisposeAsync();
-            _positioningCleanup = null;
-        }
-
         if (_clickOutsideCleanup != null)
         {
             try
@@ -527,24 +381,12 @@
             _dotNetRef.Dispose();
             _dotNetRef = null;
         }
-
-        // Unregister portal when dropdown closes
-        if (!string.IsNullOrEmpty(_portalId))
-        {
-            PortalService.UnregisterPortal(_portalId);
-        }
-
-        _isInitialized = false;
-        _isPositioned = false;
     }
 
     public async ValueTask DisposeAsync()
     {
         // Set disposed flag first to prevent JSInvokable callbacks during cleanup
         _disposed = true;
-
-        // Unsubscribe from portal ready events
-        PortalService.OnPortalRendered -= HandlePortalRendered;
 
         await CleanupAsync();
 

@@ -133,6 +133,23 @@ else
         }
     }
 
+    protected override void OnAfterRender(bool firstRender)
+    {
+        // Proactively set the trigger element reference so it's available
+        // even when the hover card is opened programmatically (via @bind-Open)
+        if (!AsChild)
+        {
+            Context.SetTriggerElement(_triggerRef);
+        }
+        else if (_asChildTriggerRef.HasValue)
+        {
+            // When using AsChild pattern, the child component (e.g., Button) sets
+            // _asChildTriggerRef via TriggerContext.SetTriggerElement. We need to
+            // propagate this to the context so Content can position relative to it.
+            Context.SetTriggerElement(_asChildTriggerRef.Value);
+        }
+    }
+
     private void HandleMouseEnter()
     {
         CancelCloseTimer();

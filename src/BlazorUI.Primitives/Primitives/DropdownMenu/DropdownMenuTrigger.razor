@@ -170,4 +170,22 @@ else
                 "Ensure DropdownMenuTrigger is a child of a DropdownMenu component.");
         }
     }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        // Proactively set the trigger element reference so it's available
+        // even when the dropdown is opened programmatically (via @bind-Open)
+        // This runs after every render to ensure the reference stays current
+        if (!AsChild)
+        {
+            Context.SetTriggerElement(_triggerRef);
+        }
+        else if (_asChildTriggerRef.HasValue)
+        {
+            // When using AsChild pattern, the child component (e.g., Button) sets
+            // _asChildTriggerRef via TriggerContext.SetTriggerElement. We need to
+            // propagate this to the context so Content can position relative to it.
+            Context.SetTriggerElement(_asChildTriggerRef.Value);
+        }
+    }
 }

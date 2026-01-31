@@ -11,6 +11,9 @@
 </BlazorUI.Primitives.Tooltip.TooltipContent>
 
 @code {
+    [CascadingParameter]
+    private TooltipContext? Context { get; set; }
+
     /// <summary>
     /// The content to render inside the tooltip.
     /// </summary>
@@ -24,18 +27,18 @@
     public string? Class { get; set; }
 
     /// <summary>
-    /// Preferred side for positioning: PopoverSide.Top, PopoverSide.Bottom, PopoverSide.Left, PopoverSide.Right.
-    /// Default is PopoverSide.Top.
+    /// Preferred side for positioning.
+    /// If not set, uses the Placement from the parent Tooltip context.
     /// </summary>
     [Parameter]
-    public PopoverSide Side { get; set; } = PopoverSide.Top;
+    public PopoverSide? Side { get; set; }
 
     /// <summary>
-    /// Alignment relative to trigger: "@PopoverAlign.Start", "@PopoverAlign.Center", "@PopoverAlign.End".
-    /// Default is "@PopoverAlign.Center".
+    /// Alignment relative to trigger.
+    /// If not set, uses the Placement from the parent Tooltip context.
     /// </summary>
     [Parameter]
-    public PopoverAlign Align { get; set; } = PopoverAlign.Center;
+    public PopoverAlign? Align { get; set; }
 
     /// <summary>
     /// Offset distance from the trigger in pixels.
@@ -44,6 +47,33 @@
     [Parameter]
     public int Offset { get; set; } = 8;
 
+    /// <summary>
+    /// Gets the effective side for CSS class computation.
+    /// Uses Side parameter if set, otherwise derives from context's Placement.
+    /// </summary>
+    private PopoverSide EffectiveSide
+    {
+        get
+        {
+            if (Side.HasValue)
+            {
+                return Side.Value;
+            }
+
+            var placement = Context?.Placement ?? "top";
+            var basePlacement = placement.Split('-')[0];
+
+            return basePlacement switch
+            {
+                "top" => PopoverSide.Top,
+                "bottom" => PopoverSide.Bottom,
+                "left" => PopoverSide.Left,
+                "right" => PopoverSide.Right,
+                _ => PopoverSide.Top
+            };
+        }
+    }
+
     private string CssClass
     {
         get
@@ -51,8 +81,8 @@
             var baseClasses = "z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md " +
                             "animate-in fade-in-0 zoom-in-95 max-w-md";
 
-            // Add slide animation based on side
-            var slideClass = Side switch
+            // Add slide animation based on effective side
+            var slideClass = EffectiveSide switch
             {
                 PopoverSide.Top => " slide-in-from-bottom-2",
                 PopoverSide.Bottom => " slide-in-from-top-2",
