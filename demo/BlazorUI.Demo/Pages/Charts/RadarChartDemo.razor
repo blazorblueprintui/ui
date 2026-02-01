@@ -1,0 +1,199 @@
+@page "/charts/radar"
+@using ApexCharts
+@using BlazorUI.Components.Chart
+
+<PageTitle>Radar Chart - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Radar Chart</h1>
+            <p class="text-xl text-muted-foreground">
+                Compare multiple variables across entities with spider/web visualizations.
+            </p>
+        </div>
+    </div>
+
+    <!-- Default Radar -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Default</h2>
+            <p class="text-sm text-muted-foreground">
+                Standard radar chart with lines connecting points.
+            </p>
+        </div>
+        <div class="max-w-lg mx-auto">
+            <ChartContainer>
+                <RadarChart TItem="SkillScore"
+                            Items="@_skillData"
+                            Variant="RadarChartVariant.Default"
+                            Height="350px">
+                    <ApexPointSeries TItem="SkillScore"
+                                     Items="@_skillData"
+                                     Name="Score"
+                                     SeriesType="SeriesType.Radar"
+                                     XValue="@(item => item.Skill)"
+                                     YValue="@(item => (decimal)item.Score)" />
+                </RadarChart>
+            </ChartContainer>
+        </div>
+    </div>
+
+    <!-- Polygon Fill -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Polygon Fill</h2>
+            <p class="text-sm text-muted-foreground">
+                Radar chart with filled polygon area.
+            </p>
+        </div>
+        <div class="max-w-lg mx-auto">
+            <ChartContainer>
+                <RadarChart TItem="SkillScore"
+                            Items="@_skillData"
+                            Variant="RadarChartVariant.PolygonFill"
+                            Height="350px">
+                    <ApexPointSeries TItem="SkillScore"
+                                     Items="@_skillData"
+                                     Name="Score"
+                                     SeriesType="SeriesType.Radar"
+                                     XValue="@(item => item.Skill)"
+                                     YValue="@(item => (decimal)item.Score)" />
+                </RadarChart>
+            </ChartContainer>
+        </div>
+    </div>
+
+    <!-- Multi Series -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Multi Series</h2>
+            <p class="text-sm text-muted-foreground">
+                Compare multiple entities across the same dimensions.
+            </p>
+        </div>
+        <div class="max-w-lg mx-auto">
+            <ChartContainer>
+                <RadarChart TItem="SkillScore"
+                            Items="@_skillData"
+                            Variant="RadarChartVariant.MultiSeries"
+                            Height="350px">
+                    <ApexPointSeries TItem="SkillScore"
+                                     Items="@_skillData"
+                                     Name="Developer A"
+                                     SeriesType="SeriesType.Radar"
+                                     XValue="@(item => item.Skill)"
+                                     YValue="@(item => (decimal)item.Score)" />
+                    <ApexPointSeries TItem="SkillScore"
+                                     Items="@_skillDataB"
+                                     Name="Developer B"
+                                     SeriesType="SeriesType.Radar"
+                                     XValue="@(item => item.Skill)"
+                                     YValue="@(item => (decimal)item.Score)" />
+                </RadarChart>
+            </ChartContainer>
+        </div>
+    </div>
+
+    <!-- Without Markers -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Without Markers</h2>
+            <p class="text-sm text-muted-foreground">
+                Clean radar without vertex markers.
+            </p>
+        </div>
+        <div class="max-w-lg mx-auto">
+            <ChartContainer>
+                <RadarChart TItem="SkillScore"
+                            Items="@_skillData"
+                            Variant="RadarChartVariant.PolygonFill"
+                            ShowMarkers="false"
+                            Height="350px">
+                    <ApexPointSeries TItem="SkillScore"
+                                     Items="@_skillData"
+                                     Name="Score"
+                                     SeriesType="SeriesType.Radar"
+                                     XValue="@(item => item.Skill)"
+                                     YValue="@(item => (decimal)item.Score)" />
+                </RadarChart>
+            </ChartContainer>
+        </div>
+    </div>
+
+    <!-- API Reference -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Variant</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">RadarChartVariant</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Options: Default, PolygonFill, MultiSeries
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">ShowMarkers</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">bool</code> (default: true)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Whether to show markers at polygon vertices.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">MarkerSize</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">int</code> (default: 4)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Size of markers in pixels.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">FillOpacity</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">double</code> (default: 0.25)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Opacity of the fill area for filled variants.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public class SkillScore
+    {
+        public string Skill { get; set; } = "";
+        public int Score { get; set; }
+    }
+
+    private List<SkillScore> _skillData =
+    [
+        new() { Skill = "HTML", Score = 90 },
+        new() { Skill = "CSS", Score = 85 },
+        new() { Skill = "JavaScript", Score = 80 },
+        new() { Skill = "TypeScript", Score = 75 },
+        new() { Skill = "React", Score = 70 },
+        new() { Skill = "Node.js", Score = 65 }
+    ];
+
+    private List<SkillScore> _skillDataB =
+    [
+        new() { Skill = "HTML", Score = 75 },
+        new() { Skill = "CSS", Score = 90 },
+        new() { Skill = "JavaScript", Score = 70 },
+        new() { Skill = "TypeScript", Score = 85 },
+        new() { Skill = "React", Score = 80 },
+        new() { Skill = "Node.js", Score = 75 }
+    ];
+}

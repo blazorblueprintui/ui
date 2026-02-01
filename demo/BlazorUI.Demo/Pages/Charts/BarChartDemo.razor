@@ -1,0 +1,212 @@
+@page "/charts/bar"
+@using ApexCharts
+@using BlazorUI.Components.Chart
+
+<PageTitle>Bar Chart - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Bar Chart</h1>
+            <p class="text-xl text-muted-foreground">
+                Display data with vertical or horizontal bars for comparing values across categories.
+            </p>
+        </div>
+    </div>
+
+    <!-- Vertical Bar -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Vertical</h2>
+            <p class="text-sm text-muted-foreground">
+                Default grouped vertical bars.
+            </p>
+        </div>
+        <ChartContainer>
+            <BarChart TItem="SalesData"
+                      Items="@_salesData"
+                      Variant="BarChartVariant.Vertical"
+                      Height="300px">
+                <ApexPointSeries TItem="SalesData"
+                                 Items="@_salesData"
+                                 Name="Desktop"
+                                 SeriesType="SeriesType.Bar"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Desktop)" />
+                <ApexPointSeries TItem="SalesData"
+                                 Items="@_salesData"
+                                 Name="Mobile"
+                                 SeriesType="SeriesType.Bar"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Mobile)" />
+            </BarChart>
+        </ChartContainer>
+    </div>
+
+    <!-- Horizontal Bar -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Horizontal</h2>
+            <p class="text-sm text-muted-foreground">
+                Horizontal bars, ideal for long category labels.
+            </p>
+        </div>
+        <ChartContainer>
+            <BarChart TItem="SalesData"
+                      Items="@_salesData"
+                      Variant="BarChartVariant.Horizontal"
+                      Height="300px">
+                <ApexPointSeries TItem="SalesData"
+                                 Items="@_salesData"
+                                 Name="Desktop"
+                                 SeriesType="SeriesType.Bar"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Desktop)" />
+            </BarChart>
+        </ChartContainer>
+    </div>
+
+    <!-- Stacked Bar -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Stacked</h2>
+            <p class="text-sm text-muted-foreground">
+                Stacked bars showing part-to-whole relationships.
+            </p>
+        </div>
+        <ChartContainer>
+            <BarChart TItem="SalesData"
+                      Items="@_salesData"
+                      Variant="BarChartVariant.Stacked"
+                      Height="300px">
+                <ApexPointSeries TItem="SalesData"
+                                 Items="@_salesData"
+                                 Name="Desktop"
+                                 SeriesType="SeriesType.Bar"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Desktop)" />
+                <ApexPointSeries TItem="SalesData"
+                                 Items="@_salesData"
+                                 Name="Mobile"
+                                 SeriesType="SeriesType.Bar"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Mobile)" />
+            </BarChart>
+        </ChartContainer>
+    </div>
+
+    <!-- 100% Stacked -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">100% Stacked</h2>
+            <p class="text-sm text-muted-foreground">
+                Each bar totals to 100%, showing percentage contribution.
+            </p>
+        </div>
+        <ChartContainer>
+            <BarChart TItem="SalesData"
+                      Items="@_salesData"
+                      Variant="BarChartVariant.FullStacked"
+                      Height="300px">
+                <ApexPointSeries TItem="SalesData"
+                                 Items="@_salesData"
+                                 Name="Desktop"
+                                 SeriesType="SeriesType.Bar"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Desktop)" />
+                <ApexPointSeries TItem="SalesData"
+                                 Items="@_salesData"
+                                 Name="Mobile"
+                                 SeriesType="SeriesType.Bar"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Mobile)" />
+            </BarChart>
+        </ChartContainer>
+    </div>
+
+    <!-- Stacked Horizontal -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Stacked Horizontal</h2>
+            <p class="text-sm text-muted-foreground">
+                Combines stacking with horizontal orientation.
+            </p>
+        </div>
+        <ChartContainer>
+            <BarChart TItem="SalesData"
+                      Items="@_salesData"
+                      Variant="BarChartVariant.StackedHorizontal"
+                      Height="300px">
+                <ApexPointSeries TItem="SalesData"
+                                 Items="@_salesData"
+                                 Name="Desktop"
+                                 SeriesType="SeriesType.Bar"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Desktop)" />
+                <ApexPointSeries TItem="SalesData"
+                                 Items="@_salesData"
+                                 Name="Mobile"
+                                 SeriesType="SeriesType.Bar"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Mobile)" />
+            </BarChart>
+        </ChartContainer>
+    </div>
+
+    <!-- API Reference -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Variant</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">BarChartVariant</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Options: Vertical, Horizontal, Stacked, StackedHorizontal, FullStacked, FullStackedHorizontal, Grouped
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">BorderRadius</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">int</code> (default: 4)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Corner radius for bars in pixels.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">BarWidth</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">int</code> (default: 70)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Width of bars as a percentage of available space (0-100).
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public class SalesData
+    {
+        public string Month { get; set; } = "";
+        public int Desktop { get; set; }
+        public int Mobile { get; set; }
+    }
+
+    private List<SalesData> _salesData =
+    [
+        new() { Month = "Jan", Desktop = 186, Mobile = 80 },
+        new() { Month = "Feb", Desktop = 305, Mobile = 200 },
+        new() { Month = "Mar", Desktop = 237, Mobile = 120 },
+        new() { Month = "Apr", Desktop = 73, Mobile = 190 },
+        new() { Month = "May", Desktop = 209, Mobile = 130 },
+        new() { Month = "Jun", Desktop = 214, Mobile = 140 }
+    ];
+}

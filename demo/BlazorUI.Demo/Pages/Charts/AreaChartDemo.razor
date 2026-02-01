@@ -1,0 +1,177 @@
+@page "/charts/area"
+@using ApexCharts
+@using BlazorUI.Components.Chart
+
+<PageTitle>Area Chart - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Area Chart</h1>
+            <p class="text-xl text-muted-foreground">
+                Visualize data with filled areas that emphasize volume and magnitude over time.
+            </p>
+        </div>
+    </div>
+
+    <!-- Default Area -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Default</h2>
+            <p class="text-sm text-muted-foreground">
+                Standard area chart with gradient fill.
+            </p>
+        </div>
+        <ChartContainer>
+            <AreaChart TItem="TrendData"
+                       Items="@_trendData"
+                       Variant="AreaChartVariant.Default"
+                       Height="300px">
+                <ApexPointSeries TItem="TrendData"
+                                 Items="@_trendData"
+                                 Name="Desktop"
+                                 SeriesType="SeriesType.Area"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Desktop)" />
+            </AreaChart>
+        </ChartContainer>
+    </div>
+
+    <!-- Spline Area -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Spline</h2>
+            <p class="text-sm text-muted-foreground">
+                Smooth curved area using spline interpolation.
+            </p>
+        </div>
+        <ChartContainer>
+            <AreaChart TItem="TrendData"
+                       Items="@_trendData"
+                       Variant="AreaChartVariant.Spline"
+                       Height="300px">
+                <ApexPointSeries TItem="TrendData"
+                                 Items="@_trendData"
+                                 Name="Desktop"
+                                 SeriesType="SeriesType.Area"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Desktop)" />
+                <ApexPointSeries TItem="TrendData"
+                                 Items="@_trendData"
+                                 Name="Mobile"
+                                 SeriesType="SeriesType.Area"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Mobile)" />
+            </AreaChart>
+        </ChartContainer>
+    </div>
+
+    <!-- Stacked Area -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Stacked</h2>
+            <p class="text-sm text-muted-foreground">
+                Multiple series stacked showing part-to-whole relationships.
+            </p>
+        </div>
+        <ChartContainer>
+            <AreaChart TItem="TrendData"
+                       Items="@_trendData"
+                       Variant="AreaChartVariant.Stacked"
+                       Height="300px">
+                <ApexPointSeries TItem="TrendData"
+                                 Items="@_trendData"
+                                 Name="Desktop"
+                                 SeriesType="SeriesType.Area"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Desktop)" />
+                <ApexPointSeries TItem="TrendData"
+                                 Items="@_trendData"
+                                 Name="Mobile"
+                                 SeriesType="SeriesType.Area"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Mobile)" />
+            </AreaChart>
+        </ChartContainer>
+    </div>
+
+    <!-- Step Area -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Stepline</h2>
+            <p class="text-sm text-muted-foreground">
+                Step area chart showing discrete value changes.
+            </p>
+        </div>
+        <ChartContainer>
+            <AreaChart TItem="TrendData"
+                       Items="@_trendData"
+                       Variant="AreaChartVariant.Stepline"
+                       Height="300px">
+                <ApexPointSeries TItem="TrendData"
+                                 Items="@_trendData"
+                                 Name="Desktop"
+                                 SeriesType="SeriesType.Area"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Desktop)" />
+            </AreaChart>
+        </ChartContainer>
+    </div>
+
+    <!-- API Reference -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Variant</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">AreaChartVariant</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Options: Default, Spline, Stacked, Stepline
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">StrokeWidth</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">int</code> (default: 2)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Width of the area border line in pixels.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">FillOpacity</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">double</code> (default: 0.4)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Opacity of the area fill (0.0 to 1.0).
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public class TrendData
+    {
+        public string Month { get; set; } = "";
+        public int Desktop { get; set; }
+        public int Mobile { get; set; }
+    }
+
+    private List<TrendData> _trendData =
+    [
+        new() { Month = "Jan", Desktop = 186, Mobile = 80 },
+        new() { Month = "Feb", Desktop = 305, Mobile = 200 },
+        new() { Month = "Mar", Desktop = 237, Mobile = 120 },
+        new() { Month = "Apr", Desktop = 73, Mobile = 190 },
+        new() { Month = "May", Desktop = 209, Mobile = 130 },
+        new() { Month = "Jun", Desktop = 214, Mobile = 140 }
+    ];
+}

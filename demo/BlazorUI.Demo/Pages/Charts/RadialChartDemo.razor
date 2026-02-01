@@ -1,0 +1,255 @@
+@page "/charts/radial"
+@using ApexCharts
+@using BlazorUI.Components.Chart
+
+<PageTitle>Radial Chart - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Radial Chart</h1>
+            <p class="text-xl text-muted-foreground">
+                Display progress and percentages with circular gauges and radial bars.
+            </p>
+        </div>
+    </div>
+
+    <!-- Default Radial -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Default</h2>
+            <p class="text-sm text-muted-foreground">
+                Full circle radial bar.
+            </p>
+        </div>
+        <div class="max-w-sm mx-auto">
+            <ChartContainer>
+                <RadialChart TItem="ProgressData"
+                             Items="@_progressData"
+                             Variant="RadialChartVariant.Default"
+                             CenterLabel="Progress"
+                             CenterValue="75%"
+                             Height="300px">
+                    <ApexPointSeries TItem="ProgressData"
+                                     Items="@_progressData"
+                                     Name="Progress"
+                                     SeriesType="SeriesType.RadialBar"
+                                     XValue="@(item => item.Label)"
+                                     YValue="@(item => (decimal)item.Value)" />
+                </RadialChart>
+            </ChartContainer>
+        </div>
+    </div>
+
+    <!-- Semi Circle -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Semi Circle</h2>
+            <p class="text-sm text-muted-foreground">
+                Half-circle gauge style.
+            </p>
+        </div>
+        <div class="max-w-sm mx-auto">
+            <ChartContainer>
+                <RadialChart TItem="ProgressData"
+                             Items="@_progressData"
+                             Variant="RadialChartVariant.SemiCircle"
+                             CenterLabel="Complete"
+                             CenterValue="75%"
+                             Height="250px">
+                    <ApexPointSeries TItem="ProgressData"
+                                     Items="@_progressData"
+                                     Name="Progress"
+                                     SeriesType="SeriesType.RadialBar"
+                                     XValue="@(item => item.Label)"
+                                     YValue="@(item => (decimal)item.Value)" />
+                </RadialChart>
+            </ChartContainer>
+        </div>
+    </div>
+
+    <!-- Gauge -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Gauge</h2>
+            <p class="text-sm text-muted-foreground">
+                Speedometer-style gauge.
+            </p>
+        </div>
+        <div class="max-w-sm mx-auto">
+            <ChartContainer>
+                <RadialChart TItem="ProgressData"
+                             Items="@_progressData"
+                             Variant="RadialChartVariant.Gauge"
+                             CenterLabel="Speed"
+                             CenterValue="75"
+                             Height="300px">
+                    <ApexPointSeries TItem="ProgressData"
+                                     Items="@_progressData"
+                                     Name="Speed"
+                                     SeriesType="SeriesType.RadialBar"
+                                     XValue="@(item => item.Label)"
+                                     YValue="@(item => (decimal)item.Value)" />
+                </RadialChart>
+            </ChartContainer>
+        </div>
+    </div>
+
+    <!-- Gradient -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Gradient</h2>
+            <p class="text-sm text-muted-foreground">
+                Radial bar with gradient fill.
+            </p>
+        </div>
+        <div class="max-w-sm mx-auto">
+            <ChartContainer>
+                <RadialChart TItem="ProgressData"
+                             Items="@_progressData"
+                             Variant="RadialChartVariant.Gradient"
+                             CenterLabel="Score"
+                             CenterValue="75"
+                             Height="300px">
+                    <ApexPointSeries TItem="ProgressData"
+                                     Items="@_progressData"
+                                     Name="Score"
+                                     SeriesType="SeriesType.RadialBar"
+                                     XValue="@(item => item.Label)"
+                                     YValue="@(item => (decimal)item.Value)" />
+                </RadialChart>
+            </ChartContainer>
+        </div>
+    </div>
+
+    <!-- Multiple Radial Bars -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Multiple Values</h2>
+            <p class="text-sm text-muted-foreground">
+                Compare multiple progress values.
+            </p>
+        </div>
+        <div class="max-w-sm mx-auto">
+            <ChartContainer>
+                <RadialChart TItem="ProgressData"
+                             Items="@_multiProgressData"
+                             Variant="RadialChartVariant.Default"
+                             Height="300px">
+                    <ApexPointSeries TItem="ProgressData"
+                                     Items="@_multiProgressData"
+                                     Name="Progress"
+                                     SeriesType="SeriesType.RadialBar"
+                                     XValue="@(item => item.Label)"
+                                     YValue="@(item => (decimal)item.Value)" />
+                </RadialChart>
+            </ChartContainer>
+        </div>
+    </div>
+
+    <!-- Custom Angles -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Angles</h2>
+            <p class="text-sm text-muted-foreground">
+                Customize start and end angles.
+            </p>
+        </div>
+        <div class="max-w-sm mx-auto">
+            <ChartContainer>
+                <RadialChart TItem="ProgressData"
+                             Items="@_progressData"
+                             StartAngle="-180"
+                             EndAngle="0"
+                             CenterLabel="Battery"
+                             CenterValue="75%"
+                             Height="250px">
+                    <ApexPointSeries TItem="ProgressData"
+                                     Items="@_progressData"
+                                     Name="Battery"
+                                     SeriesType="SeriesType.RadialBar"
+                                     XValue="@(item => item.Label)"
+                                     YValue="@(item => (decimal)item.Value)" />
+                </RadialChart>
+            </ChartContainer>
+        </div>
+    </div>
+
+    <!-- API Reference -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Variant</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">RadialChartVariant</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Options: Default, SemiCircle, Gauge, Gradient
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">CenterLabel / CenterValue</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Text to display in the chart center.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">StartAngle / EndAngle</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">int?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Custom start and end angles in degrees.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">HollowSize</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">int</code> (default: 55)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Size of the hollow center as a percentage.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">TrackBackground</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string</code> (default: "var(--muted)")
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Color of the unfilled portion.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public class ProgressData
+    {
+        public string Label { get; set; } = "";
+        public int Value { get; set; }
+    }
+
+    private List<ProgressData> _progressData =
+    [
+        new() { Label = "Progress", Value = 75 }
+    ];
+
+    private List<ProgressData> _multiProgressData =
+    [
+        new() { Label = "Tasks", Value = 85 },
+        new() { Label = "Goals", Value = 65 },
+        new() { Label = "Revenue", Value = 90 }
+    ];
+}
