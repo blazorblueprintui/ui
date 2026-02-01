@@ -20,7 +20,7 @@ Beautiful, accessible UI components for Blazor. Inspired by [shadcn/ui](https://
 
 ## Overview
 
-BlazorUI brings the elegant design system of shadcn/ui to Blazor applications. Build modern, responsive interfaces with **60+ styled components** and **17 headless primitives** that work across all Blazor hosting models—Server, WebAssembly, and Hybrid.
+BlazorUI brings the elegant design system of shadcn/ui to Blazor applications. Build modern, responsive interfaces with **65+ styled components** and **15 headless primitives** that work across all Blazor hosting models—Server, WebAssembly, and Hybrid.
 
 ### Why BlazorUI?
 
@@ -44,7 +44,7 @@ dotnet add package BlazorUI.Primitives
 dotnet add package BlazorUI.Components
 
 # Icon libraries (choose one or more)
-dotnet add package BlazorUI.Icons.Lucide      # 1,640 icons - stroke-based, consistent
+dotnet add package BlazorUI.Icons.Lucide      # 1,665 icons - stroke-based, consistent
 dotnet add package BlazorUI.Icons.Heroicons   # 1,288 icons - 4 variants (outline, solid, mini, micro)
 dotnet add package BlazorUI.Icons.Feather     # 286 icons - minimalist, stroke-based
 ```
@@ -55,6 +55,7 @@ dotnet add package BlazorUI.Icons.Feather     # 286 icons - minimalist, stroke-b
 
 ```razor
 @using BlazorUI.Components
+@using BlazorUI.Primitives.Services
 ```
 
 2. **Add PortalHost to your layout:**
@@ -254,27 +255,36 @@ Primitives give you complete control over styling while handling all the complex
 
 ## Components
 
-BlazorUI includes **60+ styled components** with full shadcn/ui design compatibility:
+BlazorUI includes **65+ styled components** with full shadcn/ui design compatibility:
 
 ### Form Components
 - **Button** - Multiple variants (default, destructive, outline, secondary, ghost, link) with icon support
 - **Button Group** - Visually group related buttons with connected styling
 - **Checkbox** - Accessible checkbox with indeterminate state
+- **Color Picker** - Color selection with swatches and custom input
 - **Combobox** - Searchable autocomplete dropdown
+- **Currency Input** - Currency-formatted numeric input with locale support
 - **Field** - Combine labels, controls, and help text for accessible forms
+- **File Upload** - Drag-and-drop file upload with preview
 - **Input** - Text input with multiple types and validation support
 - **Input Group** - Enhanced inputs with icons, buttons, and addons
 - **Input OTP** - One-time password input with individual digit fields
 - **Label** - Accessible form labels
+- **Masked Input** - Input with format masks (phone, SSN, etc.)
 - **MultiSelect** - Searchable multi-selection with tags and checkboxes
 - **Native Select** - Browser-native select dropdown with consistent styling
+- **Numeric Input** - Numeric input with increment/decrement controls
 - **RadioGroup** - Radio button groups with keyboard navigation
+- **Rating** - Star/icon rating input component
 - **Select** - Dropdown select with search and keyboard navigation
 - **Switch** - Toggle switch component
 - **Textarea** - Multi-line text input with automatic sizing
 - **Calendar** - Interactive calendar for date selection with constraints
 - **Date Picker** - Date picker with popover calendar and formatting options
+- **Date Range Picker** - Select a range of dates with dual calendars
+- **Time Picker** - Time selection with hour/minute controls
 - **Slider** - Range input for selecting numeric values with drag support
+- **Range Slider** - Dual-handle slider for selecting value ranges
 - **Toggle** - Two-state button for toggleable options
 - **Toggle Group** - Group of toggles with single or multiple selection
 
@@ -286,13 +296,14 @@ BlazorUI includes **60+ styled components** with full shadcn/ui design compatibi
 - **Carousel** - Slideshow component for cycling through content
 - **Collapsible** - Expandable/collapsible panels
 - **Item** - Flexible list items with media, content, and actions
+- **Navigation Menu** - Horizontal navigation with dropdown menus
 - **Pagination** - Page navigation with previous/next controls
 - **Resizable** - Resizable panels with drag handles
+- **Responsive Nav** - Adaptive navigation that switches between desktop and mobile layouts
 - **Scroll Area** - Custom scrollable area with styled scrollbars
 - **Separator** - Visual dividers
 - **Sidebar** - Responsive sidebar with collapsible icon mode, variants (default, floating, inset), and mobile sheet integration
 - **Tabs** - Tabbed interfaces with controlled/uncontrolled modes
-- **Navigation Menu** - Horizontal navigation with dropdown menus
 
 ### Overlay Components
 - **Command** - Command palette with keyboard navigation and filtering
@@ -328,7 +339,7 @@ BlazorUI includes **60+ styled components** with full shadcn/ui design compatibi
 
 BlazorUI offers **three icon library packages** to suit different design preferences:
 
-- **Lucide Icons** (`BlazorUI.Icons.Lucide`) - 1,640 beautiful, consistent stroke-based icons
+- **Lucide Icons** (`BlazorUI.Icons.Lucide`) - 1,665 beautiful, consistent stroke-based icons
   - ISC licensed
   - 24x24 viewBox, 2px stroke width
   - Perfect for: Modern, clean interfaces
@@ -345,17 +356,15 @@ BlazorUI offers **three icon library packages** to suit different design prefere
 
 ## Primitives
 
-BlazorUI also includes **17 headless primitive components** for building custom UI:
+BlazorUI also includes **15 headless primitive components** for building custom UI:
 
 - Accordion Primitive
 - Checkbox Primitive
 - Collapsible Primitive
-- Combobox Primitive
 - Dialog Primitive
 - Dropdown Menu Primitive
 - Hover Card Primitive
 - Label Primitive
-- MultiSelect Primitive
 - Popover Primitive
 - Radio Group Primitive
 - Select Primitive
