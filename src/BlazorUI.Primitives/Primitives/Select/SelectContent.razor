@@ -130,6 +130,12 @@
     {
         if (_context == null || _jsModule == null) return;
 
+        // CRITICAL: Scroll to selected item FIRST, before any awaits.
+        // This ensures the scroll position is set before the rAF visibility callback
+        // from FloatingPortal's ApplyPositionAsync can paint the visible content.
+        var selectedValue = _context.State.Value?.ToString();
+        await _jsModule.InvokeVoidAsync("focusInitialOption", _context.ContentId, selectedValue);
+
         // Focus the selected item or first item (updates Blazor state)
         _context.FocusSelectedOrFirst();
 
@@ -142,10 +148,6 @@
             _dotNetRef = DotNetObjectReference.Create(this);
             await _jsModule.InvokeVoidAsync("setupKeyboardNavigation", _context.ContentId, _dotNetRef);
             _isKeyboardSetup = true;
-
-            // Focus the initially selected option (handles scroll within dropdown)
-            var selectedValue = _context.State.Value?.ToString();
-            await _jsModule.InvokeVoidAsync("focusInitialOption", _context.ContentId, selectedValue);
         }
     }
 
