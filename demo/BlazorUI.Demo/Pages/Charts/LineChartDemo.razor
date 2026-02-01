@@ -1,0 +1,217 @@
+@page "/charts/line"
+@using ApexCharts
+@using BlazorUI.Components.Chart
+
+<PageTitle>Line Chart - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Line Chart</h1>
+            <p class="text-xl text-muted-foreground">
+                Visualize trends and changes over time with connected data points.
+            </p>
+        </div>
+    </div>
+
+    <!-- Default Line -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Default</h2>
+            <p class="text-sm text-muted-foreground">
+                Straight lines connecting data points.
+            </p>
+        </div>
+        <ChartContainer>
+            <LineChart TItem="TrendData"
+                       Items="@_trendData"
+                       Variant="LineChartVariant.Default"
+                       Height="300px">
+                <ApexPointSeries TItem="TrendData"
+                                 Items="@_trendData"
+                                 Name="Desktop"
+                                 SeriesType="SeriesType.Line"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Desktop)" />
+                <ApexPointSeries TItem="TrendData"
+                                 Items="@_trendData"
+                                 Name="Mobile"
+                                 SeriesType="SeriesType.Line"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Mobile)" />
+            </LineChart>
+        </ChartContainer>
+    </div>
+
+    <!-- Spline Line -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Spline</h2>
+            <p class="text-sm text-muted-foreground">
+                Smooth curved lines using spline interpolation.
+            </p>
+        </div>
+        <ChartContainer>
+            <LineChart TItem="TrendData"
+                       Items="@_trendData"
+                       Variant="LineChartVariant.Spline"
+                       Height="300px">
+                <ApexPointSeries TItem="TrendData"
+                                 Items="@_trendData"
+                                 Name="Desktop"
+                                 SeriesType="SeriesType.Line"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Desktop)" />
+                <ApexPointSeries TItem="TrendData"
+                                 Items="@_trendData"
+                                 Name="Mobile"
+                                 SeriesType="SeriesType.Line"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Mobile)" />
+            </LineChart>
+        </ChartContainer>
+    </div>
+
+    <!-- Stepline -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Stepline</h2>
+            <p class="text-sm text-muted-foreground">
+                Step lines for discrete data or constant values between points.
+            </p>
+        </div>
+        <ChartContainer>
+            <LineChart TItem="TrendData"
+                       Items="@_trendData"
+                       Variant="LineChartVariant.Stepline"
+                       Height="300px">
+                <ApexPointSeries TItem="TrendData"
+                                 Items="@_trendData"
+                                 Name="Desktop"
+                                 SeriesType="SeriesType.Line"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Desktop)" />
+            </LineChart>
+        </ChartContainer>
+    </div>
+
+    <!-- Gradient -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Gradient</h2>
+            <p class="text-sm text-muted-foreground">
+                Lines with gradient fill beneath for visual emphasis.
+            </p>
+        </div>
+        <ChartContainer>
+            <LineChart TItem="TrendData"
+                       Items="@_trendData"
+                       Variant="LineChartVariant.Gradient"
+                       Height="300px">
+                <ApexPointSeries TItem="TrendData"
+                                 Items="@_trendData"
+                                 Name="Desktop"
+                                 SeriesType="SeriesType.Line"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Desktop)" />
+            </LineChart>
+        </ChartContainer>
+    </div>
+
+    <!-- Without Markers -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Without Markers</h2>
+            <p class="text-sm text-muted-foreground">
+                Clean lines without data point markers.
+            </p>
+        </div>
+        <ChartContainer>
+            <LineChart TItem="TrendData"
+                       Items="@_trendData"
+                       Variant="LineChartVariant.Spline"
+                       ShowMarkers="false"
+                       Height="300px">
+                <ApexPointSeries TItem="TrendData"
+                                 Items="@_trendData"
+                                 Name="Desktop"
+                                 SeriesType="SeriesType.Line"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Desktop)" />
+                <ApexPointSeries TItem="TrendData"
+                                 Items="@_trendData"
+                                 Name="Mobile"
+                                 SeriesType="SeriesType.Line"
+                                 XValue="@(item => item.Month)"
+                                 YValue="@(item => (decimal)item.Mobile)" />
+            </LineChart>
+        </ChartContainer>
+    </div>
+
+    <!-- API Reference -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Variant</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">LineChartVariant</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Options: Default, Spline, Stepline, Dashed, Gradient
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">StrokeWidth</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">int</code> (default: 2)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Width of the line in pixels.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">ShowMarkers</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">bool</code> (default: true)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Whether to show markers at data points.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">MarkerSize</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">int</code> (default: 4)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Size of markers in pixels.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public class TrendData
+    {
+        public string Month { get; set; } = "";
+        public int Desktop { get; set; }
+        public int Mobile { get; set; }
+    }
+
+    private List<TrendData> _trendData =
+    [
+        new() { Month = "Jan", Desktop = 186, Mobile = 80 },
+        new() { Month = "Feb", Desktop = 305, Mobile = 200 },
+        new() { Month = "Mar", Desktop = 237, Mobile = 120 },
+        new() { Month = "Apr", Desktop = 73, Mobile = 190 },
+        new() { Month = "May", Desktop = 209, Mobile = 130 },
+        new() { Month = "Jun", Desktop = 214, Mobile = 140 }
+    ];
+}

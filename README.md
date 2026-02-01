@@ -438,3 +438,5 @@ BlazorUI is an independent project and is not affiliated with or endorsed by sha
 - [Lucide Icons](https://lucide.dev/) - Beautiful stroke-based icon library (ISC License)
 - [Heroicons](https://heroicons.com/) - Icon library by Tailwind Labs (MIT License)
 - [Feather Icons](https://feathericons.com/) - Minimalist icon library (MIT License)
+- [ApexCharts.js](https://apexcharts.com/) - Modern charting library (MIT License)
+- [Blazor-ApexCharts](https://github.com/apexcharts/Blazor-ApexCharts) - Blazor wrapper for ApexCharts (MIT License)

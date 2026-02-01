@@ -6,7 +6,7 @@
 
 <PageTitle>BlazorUI Demo</PageTitle>
 
-<SidebarProvider DefaultOpen="true">
+<SidebarProvider DefaultOpen="true" HeightClass="h-screen">
     <Sidebar Collapsible="true">
         <SidebarHeader>
             <SidebarMenu>
@@ -531,6 +531,57 @@
                 </SidebarMenu>
             </SidebarGroup>
 
+            <!-- Charts Section with Collapsible Submenu -->
+            <SidebarGroup>
+                <SidebarMenu>
+                    <SidebarMenuItem>
+                        <Collapsible Open="@_chartsMenuOpen" OpenChanged="@OnChartsMenuOpenChanged">
+                            <SidebarMenuButton Tooltip="Charts">
+                                <LucideIcon Name="bar-chart-3" Size="18" />
+                                <span>Charts</span>
+                                <SidebarMenuChevron>
+                                    <LucideIcon Name="chevron-right" Size="16" />
+                                </SidebarMenuChevron>
+                            </SidebarMenuButton>
+                            <CollapsibleContent>
+                                <SidebarMenuSub>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="charts/area">
+                                            <span>Area Chart</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="charts/bar">
+                                            <span>Bar Chart</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="charts/line">
+                                            <span>Line Chart</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="charts/pie">
+                                            <span>Pie Chart</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="charts/radar">
+                                            <span>Radar Chart</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                    <SidebarMenuSubItem>
+                                        <SidebarMenuSubButton AsChild="@SidebarMenuButtonElement.Anchor" Href="charts/radial">
+                                            <span>Radial Chart</span>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                </SidebarMenuSub>
+                            </CollapsibleContent>
+                        </Collapsible>
+                    </SidebarMenuItem>
+                </SidebarMenu>
+            </SidebarGroup>
+
             <!-- Icons Section with Collapsible Submenu -->
             <SidebarGroup>
                 <SidebarMenu>
@@ -569,8 +620,8 @@
         </SidebarContent>
     </Sidebar>
 
-    <SidebarInset>
-        <header class="sticky top-0 flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 z-10 focus:outline-none">
+    <SidebarInset Class="overflow-hidden">
+        <header class="flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 z-10 focus:outline-none">
             <SidebarTrigger />
             <div class="ml-auto flex items-center gap-2">
                 <CommandSearch />
@@ -578,7 +629,7 @@
             </div>
         </header>
 
-        <div class="flex-1 p-6 md:p-8">
+        <div class="flex-1 overflow-auto p-6 md:p-8">
             @Body
         </div>
     </SidebarInset>

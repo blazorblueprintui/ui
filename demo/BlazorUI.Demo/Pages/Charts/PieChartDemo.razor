@@ -1,0 +1,186 @@
+@page "/charts/pie"
+@using ApexCharts
+@using BlazorUI.Components.Chart
+
+<PageTitle>Pie Chart - BlazorUI</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Pie Chart</h1>
+            <p class="text-xl text-muted-foreground">
+                Show proportions and part-to-whole relationships with circular visualizations.
+            </p>
+        </div>
+    </div>
+
+    <!-- Pie -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Pie</h2>
+            <p class="text-sm text-muted-foreground">
+                Standard pie chart showing proportional slices.
+            </p>
+        </div>
+        <div class="max-w-md mx-auto">
+            <ChartContainer>
+                <PieChart TItem="BrowserShare"
+                          Items="@_browserData"
+                          Variant="PieChartVariant.Pie"
+                          Height="350px">
+                    <ApexPointSeries TItem="BrowserShare"
+                                     Items="@_browserData"
+                                     Name="Share"
+                                     SeriesType="SeriesType.Pie"
+                                     XValue="@(item => item.Browser)"
+                                     YValue="@(item => (decimal)item.Percentage)" />
+                </PieChart>
+            </ChartContainer>
+        </div>
+    </div>
+
+    <!-- Donut -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Donut</h2>
+            <p class="text-sm text-muted-foreground">
+                Donut chart with hollow center for summary content.
+            </p>
+        </div>
+        <div class="max-w-md mx-auto">
+            <ChartContainer>
+                <PieChart TItem="BrowserShare"
+                          Items="@_browserData"
+                          Variant="PieChartVariant.Donut"
+                          CenterLabel="Browsers"
+                          CenterValue="5"
+                          Height="350px">
+                    <ApexPointSeries TItem="BrowserShare"
+                                     Items="@_browserData"
+                                     Name="Share"
+                                     SeriesType="SeriesType.Donut"
+                                     XValue="@(item => item.Browser)"
+                                     YValue="@(item => (decimal)item.Percentage)" />
+                </PieChart>
+            </ChartContainer>
+        </div>
+    </div>
+
+    <!-- Gradient Donut -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Gradient Donut</h2>
+            <p class="text-sm text-muted-foreground">
+                Donut chart with gradient fills for visual depth.
+            </p>
+        </div>
+        <div class="max-w-md mx-auto">
+            <ChartContainer>
+                <PieChart TItem="BrowserShare"
+                          Items="@_browserData"
+                          Variant="PieChartVariant.GradientDonut"
+                          Height="350px">
+                    <ApexPointSeries TItem="BrowserShare"
+                                     Items="@_browserData"
+                                     Name="Share"
+                                     SeriesType="SeriesType.Donut"
+                                     XValue="@(item => item.Browser)"
+                                     YValue="@(item => (decimal)item.Percentage)" />
+                </PieChart>
+            </ChartContainer>
+        </div>
+    </div>
+
+    <!-- Custom Donut Size -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Donut Size</h2>
+            <p class="text-sm text-muted-foreground">
+                Donut with larger center hole (75%).
+            </p>
+        </div>
+        <div class="max-w-md mx-auto">
+            <ChartContainer>
+                <PieChart TItem="BrowserShare"
+                          Items="@_browserData"
+                          Variant="PieChartVariant.Donut"
+                          DonutSize="75"
+                          CenterLabel="Total"
+                          CenterValue="100%"
+                          Height="350px">
+                    <ApexPointSeries TItem="BrowserShare"
+                                     Items="@_browserData"
+                                     Name="Share"
+                                     SeriesType="SeriesType.Donut"
+                                     XValue="@(item => item.Browser)"
+                                     YValue="@(item => (decimal)item.Percentage)" />
+                </PieChart>
+            </ChartContainer>
+        </div>
+    </div>
+
+    <!-- API Reference -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Variant</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">PieChartVariant</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Options: Pie, Donut, GradientDonut
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">DonutSize</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">int</code> (default: 55)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Size of the center hole as a percentage (0-100).
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">CenterLabel</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Text label to display in the donut center.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">CenterValue</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Value to display in the donut center (larger than label).
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public class BrowserShare
+    {
+        public string Browser { get; set; } = "";
+        public double Percentage { get; set; }
+    }
+
+    private List<BrowserShare> _browserData =
+    [
+        new() { Browser = "Chrome", Percentage = 63 },
+        new() { Browser = "Safari", Percentage = 19 },
+        new() { Browser = "Firefox", Percentage = 8 },
+        new() { Browser = "Edge", Percentage = 6 },
+        new() { Browser = "Other", Percentage = 4 }
+    ];
+}

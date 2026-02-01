@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-02-01
+
+### Added
+- Chart Components Library with 6 chart types built on Blazor-ApexCharts:
+  - AreaChart (Default, Spline, Stacked, Stepline variants)
+  - BarChart (Vertical, Horizontal, Stacked, StackedHorizontal, FullStacked, FullStackedHorizontal, Grouped variants)
+  - LineChart (Default, Spline, Stepline, Dashed, Gradient variants)
+  - PieChart (Pie, Donut, GradientDonut variants)
+  - RadarChart (Default, PolygonFill, MultiSeries variants)
+  - RadialChart (Default, SemiCircle, Gauge, Gradient variants)
+- ChartContainer wrapper component for consistent card-like styling
+- ChartConfig for series-to-label/color mapping with CSS variable integration
+
+### Fixed
+- Select dropdown scroll flash when opening with a selected item
+
+### Docs
+- Comprehensive theming guide (THEMING.md) covering CSS variables, dark mode, and customization
+- Chart components README with architecture explanation and usage examples
+- ApexCharts.js and Blazor-ApexCharts added to acknowledgments (MIT License)
+- README updated with accurate component (65+) and primitive (15) counts
+
+---
+
 ## 2026-01-31
 
 ### Added
