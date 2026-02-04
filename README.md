@@ -146,6 +146,53 @@ This creates a fully configured Blazor project with Blazor Blueprint components,
 - **Documentation & Demos**: Visit [blazorblueprintui.com](https://blazorblueprintui.com) for full documentation and interactive examples
 - **Contributing**: See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines
 
+## Demo Applications
+
+Blazor Blueprint includes demo applications for all three Blazor hosting models, allowing you to see the components in action and test compatibility with your preferred hosting approach.
+
+### Available Demos
+
+| Demo | Hosting Model | Description |
+|------|---------------|-------------|
+| **Server** | Blazor Server | Runs on server with SignalR for real-time UI updates. Fast initial load, requires constant connection. |
+| **WASM** | WebAssembly Standalone | Runs entirely in the browser after downloading the .NET runtime. Works offline after initial load. |
+| **Auto** | Auto Render Mode | Hybrid approach - uses Server for fast initial render, then downloads WASM for subsequent interactions. |
+
+### Running the Demos
+
+Use the included script to run any demo:
+
+```bash
+# Run a specific demo directly
+./scripts/run-demo.sh server   # Blazor Server (port 7172)
+./scripts/run-demo.sh wasm     # WebAssembly Standalone (port 7173)
+./scripts/run-demo.sh auto     # Auto render mode (port 7174)
+
+# Or use the interactive menu
+./scripts/run-demo.sh
+```
+
+Alternatively, run with `dotnet` directly:
+
+```bash
+dotnet run --project demos/BlazorBlueprint.Demo.Server
+dotnet run --project demos/BlazorBlueprint.Demo.Wasm
+dotnet run --project demos/BlazorBlueprint.Demo.Auto
+```
+
+### Demo Project Structure
+
+```
+demos/
+├── BlazorBlueprint.Demo.Shared/     # Shared pages, layouts, and services
+├── BlazorBlueprint.Demo.Server/     # Blazor Server host
+├── BlazorBlueprint.Demo.Wasm/       # WebAssembly Standalone host
+└── BlazorBlueprint.Demo.Auto/       # Auto render mode host
+    └── BlazorBlueprint.Demo.Auto.Client/
+```
+
+The demos use a shared Razor Class Library (`BlazorBlueprint.Demo.Shared`) containing all pages and components, with thin hosting projects for each render mode. This architecture demonstrates how Blazor Blueprint components work identically across all hosting models.
+
 ## Theming
 
 Blazor Blueprint is **100% compatible with shadcn/ui themes**, making it easy to customize your application's appearance.
