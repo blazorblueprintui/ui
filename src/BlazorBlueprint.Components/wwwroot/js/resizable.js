@@ -1,5 +1,5 @@
 // Resizable panel drag handler
-// Handles mouse drag events at document level for smooth resize interaction
+// Handles pointer drag events at document level for smooth resize interaction
 
 let resizableStates = new Map();
 
@@ -23,7 +23,8 @@ export function initializeResizable(groupElement, dotNetRef, groupId, isHorizont
         isDragging: false,
         activeHandleIndex: -1,
         startPosition: 0,
-        startSizes: []
+        startSizes: [],
+        pointerId: null
     };
 
     resizableStates.set(groupId, state);
@@ -33,37 +34,47 @@ export function initializeResizable(groupElement, dotNetRef, groupId, isHorizont
  * Starts a resize operation
  * @param {string} groupId - The group identifier
  * @param {number} handleIndex - Index of the handle being dragged
- * @param {number} clientX - Mouse X position
- * @param {number} clientY - Mouse Y position
+ * @param {number} clientX - Pointer X position
+ * @param {number} clientY - Pointer Y position
  * @param {number[]} currentSizes - Current panel sizes as percentages
+ * @param {number} pointerId - The pointer ID for this resize operation
  */
-export function startResize(groupId, handleIndex, clientX, clientY, currentSizes) {
+export function startResize(groupId, handleIndex, clientX, clientY, currentSizes, pointerId) {
     const state = resizableStates.get(groupId);
     if (!state) return;
+
+    if (state.isDragging) return; // Ignore secondary touches
 
     state.isDragging = true;
     state.activeHandleIndex = handleIndex;
     state.startPosition = state.isHorizontal ? clientX : clientY;
     state.startSizes = [...currentSizes];
+    state.pointerId = pointerId;
 
     // Prevent text selection while dragging
     document.body.style.userSelect = 'none';
     document.body.style.cursor = state.isHorizontal ? 'col-resize' : 'row-resize';
 
     // Add document-level listeners
-    const handleMouseMove = (e) => onMouseMove(groupId, e);
-    const handleMouseUp = () => onMouseUp(groupId);
+    const handlePointerMove = (e) => onPointerMove(groupId, e);
+    const handlePointerUp = (e) => onPointerUp(groupId, e);
+    const handlePointerCancel = (e) => onPointerCancel(groupId, e);
 
-    state.handleMouseMove = handleMouseMove;
-    state.handleMouseUp = handleMouseUp;
+    state.handlePointerMove = handlePointerMove;
+    state.handlePointerUp = handlePointerUp;
+    state.handlePointerCancel = handlePointerCancel;
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('pointermove', handlePointerMove);
+    document.addEventListener('pointerup', handlePointerUp);
+    document.addEventListener('pointercancel', handlePointerCancel);
+
+    // Set pointer capture on group element for reliable drag tracking
+    state.groupElement.setPointerCapture(pointerId);
 }
 
-function onMouseMove(groupId, e) {
+function onPointerMove(groupId, e) {
     const state = resizableStates.get(groupId);
-    if (!state || !state.isDragging) return;
+    if (!state || !state.isDragging || e.pointerId !== state.pointerId) return;
 
     e.preventDefault();
 
@@ -96,21 +107,42 @@ function onMouseMove(groupId, e) {
     }
 }
 
-function onMouseUp(groupId) {
+function onPointerUp(groupId, e) {
     const state = resizableStates.get(groupId);
-    if (!state) return;
+    if (!state || e.pointerId !== state.pointerId) return;
 
+    cleanupResize(state, e.pointerId);
+}
+
+function onPointerCancel(groupId, e) {
+    const state = resizableStates.get(groupId);
+    if (!state || e.pointerId !== state.pointerId) return;
+
+    cleanupResize(state, e.pointerId);
+}
+
+function cleanupResize(state, pointerId) {
     state.isDragging = false;
     state.activeHandleIndex = -1;
+    state.pointerId = null;
 
     document.body.style.userSelect = '';
     document.body.style.cursor = '';
 
-    if (state.handleMouseMove) {
-        document.removeEventListener('mousemove', state.handleMouseMove);
+    if (state.handlePointerMove) {
+        document.removeEventListener('pointermove', state.handlePointerMove);
     }
-    if (state.handleMouseUp) {
-        document.removeEventListener('mouseup', state.handleMouseUp);
+    if (state.handlePointerUp) {
+        document.removeEventListener('pointerup', state.handlePointerUp);
+    }
+    if (state.handlePointerCancel) {
+        document.removeEventListener('pointercancel', state.handlePointerCancel);
+    }
+
+    try {
+        state.groupElement.releasePointerCapture(pointerId);
+    } catch (err) {
+        // Pointer capture may already be released
     }
 }
 
@@ -121,11 +153,14 @@ function onMouseUp(groupId) {
 export function disposeResizable(groupId) {
     const state = resizableStates.get(groupId);
     if (state) {
-        if (state.handleMouseMove) {
-            document.removeEventListener('mousemove', state.handleMouseMove);
+        if (state.handlePointerMove) {
+            document.removeEventListener('pointermove', state.handlePointerMove);
         }
-        if (state.handleMouseUp) {
-            document.removeEventListener('mouseup', state.handleMouseUp);
+        if (state.handlePointerUp) {
+            document.removeEventListener('pointerup', state.handlePointerUp);
+        }
+        if (state.handlePointerCancel) {
+            document.removeEventListener('pointercancel', state.handlePointerCancel);
         }
         resizableStates.delete(groupId);
     }

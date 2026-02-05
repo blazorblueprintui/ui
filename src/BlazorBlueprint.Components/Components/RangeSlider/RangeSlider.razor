@@ -25,7 +25,7 @@
          tabindex="@(Disabled ? -1 : 0)"
          class="@StartThumbClass"
          style="left: @(StartPercentage)%;"
-         @onmousedown="@(e => StartThumbDrag(e))"
+         @onpointerdown="@(e => StartThumbDrag(e))"
          @onkeydown="@(e => HandleStartKeyDown(e))">
         @if (ShowTooltips)
         {
@@ -44,7 +44,7 @@
          tabindex="@(Disabled ? -1 : 0)"
          class="@EndThumbClass"
          style="left: @(EndPercentage)%;"
-         @onmousedown="@(e => EndThumbDrag(e))"
+         @onpointerdown="@(e => EndThumbDrag(e))"
          @onkeydown="@(e => HandleEndKeyDown(e))">
         @if (ShowTooltips)
         {
@@ -215,16 +215,16 @@
         }
     }
 
-    private async Task StartThumbDrag(MouseEventArgs e)
+    private async Task StartThumbDrag(PointerEventArgs e)
     {
         if (Disabled || _jsModule == null) return;
-        await _jsModule.InvokeVoidAsync("startDrag", _sliderId, "start");
+        await _jsModule.InvokeVoidAsync("startDrag", _sliderId, "start", e.PointerId);
     }
 
-    private async Task EndThumbDrag(MouseEventArgs e)
+    private async Task EndThumbDrag(PointerEventArgs e)
     {
         if (Disabled || _jsModule == null) return;
-        await _jsModule.InvokeVoidAsync("startDrag", _sliderId, "end");
+        await _jsModule.InvokeVoidAsync("startDrag", _sliderId, "end", e.PointerId);
     }
 
     [JSInvokable]

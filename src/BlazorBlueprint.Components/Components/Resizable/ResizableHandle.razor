@@ -1,6 +1,6 @@
 @namespace BlazorBlueprint.Components.Resizable
 
-<div class="@CssClass" @onmousedown="HandleMouseDown">
+<div class="@CssClass" @onpointerdown="HandlePointerDown">
     @if (WithHandle)
     {
         <div class="@HandleIconClass">
@@ -39,11 +39,11 @@
         }
     }
 
-    private async Task HandleMouseDown(MouseEventArgs e)
+    private async Task HandlePointerDown(PointerEventArgs e)
     {
         if (Group != null && _handleIndex >= 0)
         {
-            await Group.StartResize(_handleIndex, e.ClientX, e.ClientY);
+            await Group.StartResize(_handleIndex, e.ClientX, e.ClientY, e.PointerId);
         }
     }
 

@@ -19,12 +19,13 @@
     <PopoverContent Class="w-[280px] p-4" Align="@PopoverAlign.Start">
         <div class="space-y-4">
             @* Color Area (Saturation/Brightness) *@
-            <div class="relative h-[150px] w-full rounded-md cursor-crosshair overflow-hidden"
+            <div class="relative h-[150px] w-full rounded-md cursor-crosshair overflow-hidden touch-none"
                  style="background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(@_hue, 100%, 50%));"
-                 @onmousedown="HandleAreaMouseDown"
-                 @onmousemove="HandleAreaMouseMove"
-                 @onmouseup="HandleAreaMouseUp"
-                 @onmouseleave="HandleAreaMouseUp">
+                 @onpointerdown="HandleAreaPointerDown"
+                 @onpointermove="HandleAreaPointerMove"
+                 @onpointerup="HandleAreaPointerUp"
+                 @onpointerleave="HandleAreaPointerLeave"
+                 @onpointercancel="HandleAreaPointerCancel">
                 <div class="absolute h-4 w-4 border-2 border-white rounded-full shadow-md -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                      style="left: @(_saturation * 100)%; top: @((1 - _brightness) * 100)%;">
                 </div>
@@ -32,12 +33,13 @@
 
             @* Hue Slider *@
             <div class="space-y-2">
-                <div class="relative h-3 w-full rounded-md cursor-pointer"
+                <div class="relative h-3 w-full rounded-md cursor-pointer touch-none"
                      style="background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);"
-                     @onmousedown="HandleHueMouseDown"
-                     @onmousemove="HandleHueMouseMove"
-                     @onmouseup="HandleHueMouseUp"
-                     @onmouseleave="HandleHueMouseUp">
+                     @onpointerdown="HandleHuePointerDown"
+                     @onpointermove="HandleHuePointerMove"
+                     @onpointerup="HandleHuePointerUp"
+                     @onpointerleave="HandleHuePointerLeave"
+                     @onpointercancel="HandleHuePointerCancel">
                     <div class="absolute top-1/2 h-5 w-2 bg-white border border-input rounded shadow-sm -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                          style="left: @(_hue / 360 * 100)%;">
                     </div>
@@ -48,12 +50,13 @@
             @if (ShowAlpha)
             {
                 <div class="space-y-2">
-                    <div class="relative h-3 w-full rounded-md cursor-pointer"
+                    <div class="relative h-3 w-full rounded-md cursor-pointer touch-none"
                          style="background: linear-gradient(to right, transparent, @CurrentColorWithoutAlpha), url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 fill-opacity=%22.1%22><rect x=%220%22 y=%220%22 width=%228%22 height=%228%22 fill=%22%23000%22/><rect x=%228%22 y=%228%22 width=%228%22 height=%228%22 fill=%22%23000%22/></svg>');"
-                         @onmousedown="HandleAlphaMouseDown"
-                         @onmousemove="HandleAlphaMouseMove"
-                         @onmouseup="HandleAlphaMouseUp"
-                         @onmouseleave="HandleAlphaMouseUp">
+                         @onpointerdown="HandleAlphaPointerDown"
+                         @onpointermove="HandleAlphaPointerMove"
+                         @onpointerup="HandleAlphaPointerUp"
+                         @onpointerleave="HandleAlphaPointerLeave"
+                         @onpointercancel="HandleAlphaPointerCancel">
                         <div class="absolute top-1/2 h-5 w-2 bg-white border border-input rounded shadow-sm -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                              style="left: @(_alpha * 100)%;">
                         </div>
@@ -129,9 +132,9 @@
     private double _alpha = 1;
     private int _r, _g, _b;
     private string _hexInput = "#000000";
-    private bool _isDraggingArea;
-    private bool _isDraggingHue;
-    private bool _isDraggingAlpha;
+    private long? _activeAreaPointerId;
+    private long? _activeHuePointerId;
+    private long? _activeAlphaPointerId;
 
     private static readonly string[] DefaultPresets = {
         "#000000", "#FFFFFF", "#FF0000", "#00FF00", "#0000FF",
@@ -249,24 +252,45 @@
         StateHasChanged();
     }
 
-    private async Task HandleAreaMouseDown(MouseEventArgs e)
+    // Area (Saturation/Brightness) handlers
+    private async Task HandleAreaPointerDown(PointerEventArgs e)
     {
-        _isDraggingArea = true;
+        if (_activeAreaPointerId.HasValue) return; // Ignore multi-touch
+        _activeAreaPointerId = e.PointerId;
         await UpdateAreaPosition(e);
     }
 
-    private async Task HandleAreaMouseMove(MouseEventArgs e)
+    private async Task HandleAreaPointerMove(PointerEventArgs e)
     {
-        if (!_isDraggingArea) return;
+        if (_activeAreaPointerId != e.PointerId) return;
         await UpdateAreaPosition(e);
     }
 
-    private void HandleAreaMouseUp(MouseEventArgs e)
+    private void HandleAreaPointerUp(PointerEventArgs e)
     {
-        _isDraggingArea = false;
+        if (_activeAreaPointerId == e.PointerId)
+        {
+            _activeAreaPointerId = null;
+        }
     }
 
-    private async Task UpdateAreaPosition(MouseEventArgs e)
+    private void HandleAreaPointerLeave(PointerEventArgs e)
+    {
+        if (_activeAreaPointerId == e.PointerId)
+        {
+            _activeAreaPointerId = null;
+        }
+    }
+
+    private void HandleAreaPointerCancel(PointerEventArgs e)
+    {
+        if (_activeAreaPointerId == e.PointerId)
+        {
+            _activeAreaPointerId = null;
+        }
+    }
+
+    private async Task UpdateAreaPosition(PointerEventArgs e)
     {
         // Approximate position based on offset
         _saturation = Math.Max(0, Math.Min(1, e.OffsetX / 248)); // Account for padding
@@ -274,47 +298,89 @@
         await UpdateColor();
     }
 
-    private async Task HandleHueMouseDown(MouseEventArgs e)
+    // Hue slider handlers
+    private async Task HandleHuePointerDown(PointerEventArgs e)
     {
-        _isDraggingHue = true;
+        if (_activeHuePointerId.HasValue) return; // Ignore multi-touch
+        _activeHuePointerId = e.PointerId;
         await UpdateHuePosition(e);
     }
 
-    private async Task HandleHueMouseMove(MouseEventArgs e)
+    private async Task HandleHuePointerMove(PointerEventArgs e)
     {
-        if (!_isDraggingHue) return;
+        if (_activeHuePointerId != e.PointerId) return;
         await UpdateHuePosition(e);
     }
 
-    private void HandleHueMouseUp(MouseEventArgs e)
+    private void HandleHuePointerUp(PointerEventArgs e)
     {
-        _isDraggingHue = false;
+        if (_activeHuePointerId == e.PointerId)
+        {
+            _activeHuePointerId = null;
+        }
     }
 
-    private async Task UpdateHuePosition(MouseEventArgs e)
+    private void HandleHuePointerLeave(PointerEventArgs e)
+    {
+        if (_activeHuePointerId == e.PointerId)
+        {
+            _activeHuePointerId = null;
+        }
+    }
+
+    private void HandleHuePointerCancel(PointerEventArgs e)
+    {
+        if (_activeHuePointerId == e.PointerId)
+        {
+            _activeHuePointerId = null;
+        }
+    }
+
+    private async Task UpdateHuePosition(PointerEventArgs e)
     {
         _hue = Math.Max(0, Math.Min(360, (e.OffsetX / 248) * 360));
         await UpdateColor();
     }
 
-    private async Task HandleAlphaMouseDown(MouseEventArgs e)
+    // Alpha slider handlers
+    private async Task HandleAlphaPointerDown(PointerEventArgs e)
     {
-        _isDraggingAlpha = true;
+        if (_activeAlphaPointerId.HasValue) return; // Ignore multi-touch
+        _activeAlphaPointerId = e.PointerId;
         await UpdateAlphaPosition(e);
     }
 
-    private async Task HandleAlphaMouseMove(MouseEventArgs e)
+    private async Task HandleAlphaPointerMove(PointerEventArgs e)
     {
-        if (!_isDraggingAlpha) return;
+        if (_activeAlphaPointerId != e.PointerId) return;
         await UpdateAlphaPosition(e);
     }
 
-    private void HandleAlphaMouseUp(MouseEventArgs e)
+    private void HandleAlphaPointerUp(PointerEventArgs e)
     {
-        _isDraggingAlpha = false;
+        if (_activeAlphaPointerId == e.PointerId)
+        {
+            _activeAlphaPointerId = null;
+        }
     }
 
-    private async Task UpdateAlphaPosition(MouseEventArgs e)
+    private void HandleAlphaPointerLeave(PointerEventArgs e)
+    {
+        if (_activeAlphaPointerId == e.PointerId)
+        {
+            _activeAlphaPointerId = null;
+        }
+    }
+
+    private void HandleAlphaPointerCancel(PointerEventArgs e)
+    {
+        if (_activeAlphaPointerId == e.PointerId)
+        {
+            _activeAlphaPointerId = null;
+        }
+    }
+
+    private async Task UpdateAlphaPosition(PointerEventArgs e)
     {
         _alpha = Math.Max(0, Math.Min(1, e.OffsetX / 248));
         await UpdateColor();

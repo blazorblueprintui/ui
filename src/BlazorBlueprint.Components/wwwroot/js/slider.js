@@ -1,5 +1,5 @@
 // Slider drag handler
-// Handles mouse drag events at document level for smooth slider interaction
+// Handles pointer drag events at document level for smooth slider interaction
 
 let sliderStates = new Map();
 
@@ -18,7 +18,8 @@ export function initializeSlider(trackElement, dotNetRef, sliderId) {
     const state = {
         trackElement,
         dotNetRef,
-        isDragging: false
+        isDragging: false,
+        pointerId: null
     };
 
     const calculateValue = (clientX) => {
@@ -27,8 +28,8 @@ export function initializeSlider(trackElement, dotNetRef, sliderId) {
         return percentage;
     };
 
-    const handleMouseMove = (e) => {
-        if (!state.isDragging) return;
+    const handlePointerMove = (e) => {
+        if (!state.isDragging || e.pointerId !== state.pointerId) return;
         e.preventDefault();
 
         const percentage = calculateValue(e.clientX);
@@ -37,44 +38,56 @@ export function initializeSlider(trackElement, dotNetRef, sliderId) {
         });
     };
 
-    const handleMouseUp = () => {
+    const handlePointerUp = (e) => {
+        if (e.pointerId !== state.pointerId) return;
         if (state.isDragging) {
             state.isDragging = false;
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
+            state.pointerId = null;
+            trackElement.releasePointerCapture(e.pointerId);
             document.body.style.userSelect = '';
             document.body.style.cursor = '';
         }
     };
 
-    const handleTrackMouseDown = (e) => {
+    const handlePointerCancel = (e) => {
+        if (e.pointerId !== state.pointerId) return;
+        state.isDragging = false;
+        state.pointerId = null;
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+    };
+
+    const handleTrackPointerDown = (e) => {
+        if (state.isDragging) return; // Ignore secondary touches
         e.preventDefault();
         state.isDragging = true;
+        state.pointerId = e.pointerId;
+        trackElement.setPointerCapture(e.pointerId);
 
         // Prevent text selection while dragging
         document.body.style.userSelect = 'none';
         document.body.style.cursor = 'grabbing';
 
-        // Calculate initial value from click position
+        // Calculate initial value from click/touch position
         const percentage = calculateValue(e.clientX);
         dotNetRef.invokeMethodAsync('UpdateValueFromPercentage', percentage).catch(err => {
             console.error('Error updating slider value:', err);
         });
-
-        // Add document-level listeners for drag
-        document.addEventListener('mousemove', handleMouseMove);
-        document.addEventListener('mouseup', handleMouseUp);
     };
 
-    // Attach mousedown to the track element
-    trackElement.addEventListener('mousedown', handleTrackMouseDown);
+    // Attach pointer events to the track element
+    trackElement.addEventListener('pointerdown', handleTrackPointerDown);
+    trackElement.addEventListener('pointermove', handlePointerMove);
+    trackElement.addEventListener('pointerup', handlePointerUp);
+    trackElement.addEventListener('pointercancel', handlePointerCancel);
 
     // Store for cleanup
     sliderStates.set(sliderId, {
         state,
-        handleTrackMouseDown,
-        handleMouseMove,
-        handleMouseUp,
+        handleTrackPointerDown,
+        handlePointerMove,
+        handlePointerUp,
+        handlePointerCancel,
         trackElement
     });
 }
@@ -86,9 +99,10 @@ export function initializeSlider(trackElement, dotNetRef, sliderId) {
 export function disposeSlider(sliderId) {
     const stored = sliderStates.get(sliderId);
     if (stored) {
-        stored.trackElement.removeEventListener('mousedown', stored.handleTrackMouseDown);
-        document.removeEventListener('mousemove', stored.handleMouseMove);
-        document.removeEventListener('mouseup', stored.handleMouseUp);
+        stored.trackElement.removeEventListener('pointerdown', stored.handleTrackPointerDown);
+        stored.trackElement.removeEventListener('pointermove', stored.handlePointerMove);
+        stored.trackElement.removeEventListener('pointerup', stored.handlePointerUp);
+        stored.trackElement.removeEventListener('pointercancel', stored.handlePointerCancel);
         sliderStates.delete(sliderId);
     }
 }
