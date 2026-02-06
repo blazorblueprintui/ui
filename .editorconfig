@@ -35,24 +35,122 @@ indent_size = 2
 [*.md]
 trim_trailing_whitespace = false
 
-# C# naming conventions
+####################################
+# C# Coding Conventions
+####################################
 [*.cs]
-# Pascal case for public members
-dotnet_naming_rule.public_members_must_be_capitalized.severity = warning
+
+## Naming Rules (error severity - enforced at build time)
+
+# PascalCase style
+dotnet_naming_style.pascal_case_style.capitalization = pascal_case
+
+# camelCase style
+dotnet_naming_style.camel_case_style.capitalization = camel_case
+
+# Interface style (I prefix + PascalCase)
+dotnet_naming_style.interface_style.capitalization = pascal_case
+dotnet_naming_style.interface_style.required_prefix = I
+
+# Rule: Interfaces must start with I
+dotnet_naming_rule.interfaces_must_begin_with_i.severity = error
+dotnet_naming_rule.interfaces_must_begin_with_i.symbols = interface_symbols
+dotnet_naming_rule.interfaces_must_begin_with_i.style = interface_style
+
+dotnet_naming_symbols.interface_symbols.applicable_kinds = interface
+dotnet_naming_symbols.interface_symbols.applicable_accessibilities = *
+
+# Rule: Types (classes, structs, enums, delegates) must be PascalCase
+dotnet_naming_rule.types_must_be_pascal_case.severity = error
+dotnet_naming_rule.types_must_be_pascal_case.symbols = type_symbols
+dotnet_naming_rule.types_must_be_pascal_case.style = pascal_case_style
+
+dotnet_naming_symbols.type_symbols.applicable_kinds = class, struct, enum, delegate
+dotnet_naming_symbols.type_symbols.applicable_accessibilities = *
+
+# Rule: Public/internal members must be PascalCase
+dotnet_naming_rule.public_members_must_be_capitalized.severity = error
 dotnet_naming_rule.public_members_must_be_capitalized.symbols = public_symbols
 dotnet_naming_rule.public_members_must_be_capitalized.style = pascal_case_style
 
-dotnet_naming_symbols.public_symbols.applicable_kinds = property,method,field,event,delegate
-dotnet_naming_symbols.public_symbols.applicable_accessibilities = public,internal,protected,protected_internal,private_protected
+dotnet_naming_symbols.public_symbols.applicable_kinds = property, method, field, event, delegate
+dotnet_naming_symbols.public_symbols.applicable_accessibilities = public, internal, protected, protected_internal, private_protected
 
-dotnet_naming_style.pascal_case_style.capitalization = pascal_case
+# Rule: Constants must be PascalCase
+dotnet_naming_rule.constants_must_be_pascal_case.severity = error
+dotnet_naming_rule.constants_must_be_pascal_case.symbols = constant_symbols
+dotnet_naming_rule.constants_must_be_pascal_case.style = pascal_case_style
 
-# Camel case for private fields (no underscore prefix)
-dotnet_naming_rule.private_fields_should_be_camel_case.severity = warning
+dotnet_naming_symbols.constant_symbols.applicable_kinds = field
+dotnet_naming_symbols.constant_symbols.applicable_accessibilities = *
+dotnet_naming_symbols.constant_symbols.required_modifiers = const
+
+# Rule: Private fields must be camelCase (no underscore prefix)
+dotnet_naming_rule.private_fields_should_be_camel_case.severity = error
 dotnet_naming_rule.private_fields_should_be_camel_case.symbols = private_fields
 dotnet_naming_rule.private_fields_should_be_camel_case.style = camel_case_style
 
 dotnet_naming_symbols.private_fields.applicable_kinds = field
 dotnet_naming_symbols.private_fields.applicable_accessibilities = private
 
-dotnet_naming_style.camel_case_style.capitalization = camel_case
+# Rule: Local variables and parameters must be camelCase
+dotnet_naming_rule.locals_must_be_camel_case.severity = error
+dotnet_naming_rule.locals_must_be_camel_case.symbols = local_symbols
+dotnet_naming_rule.locals_must_be_camel_case.style = camel_case_style
+
+dotnet_naming_symbols.local_symbols.applicable_kinds = local, parameter
+
+## Nullable reference types
+dotnet_diagnostic.CS8600.severity = error
+dotnet_diagnostic.CS8601.severity = error
+dotnet_diagnostic.CS8602.severity = error
+dotnet_diagnostic.CS8603.severity = error
+dotnet_diagnostic.CS8604.severity = error
+dotnet_diagnostic.CS8618.severity = error
+dotnet_diagnostic.CS8625.severity = error
+
+## Style Rules (warning severity - guidance, not blocking)
+
+# var preferences
+csharp_style_var_for_built_in_types = true:warning
+csharp_style_var_when_type_is_apparent = true:warning
+csharp_style_var_elsewhere = true:warning
+
+# Expression body preferences
+csharp_style_expression_bodied_methods = when_on_single_line:warning
+csharp_style_expression_bodied_constructors = false:warning
+csharp_style_expression_bodied_properties = true:warning
+csharp_style_expression_bodied_accessors = true:warning
+csharp_style_expression_bodied_lambdas = true:warning
+csharp_style_expression_bodied_local_functions = when_on_single_line:warning
+
+# using directive placement
+csharp_using_directive_placement = outside_namespace:warning
+
+# Null-checking preferences
+csharp_style_conditional_delegate_call = true:warning
+dotnet_style_coalesce_expression = true:warning
+dotnet_style_null_propagation = true:warning
+csharp_style_pattern_matching_over_is_with_cast_check = true:warning
+csharp_style_prefer_is_null_check_over_reference_equality_method = true:warning
+
+# Braces
+csharp_prefer_braces = true:warning
+
+# Newline preferences
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+
+# Indentation preferences
+csharp_indent_case_contents = true
+csharp_indent_switch_labels = true
+
+# Modifier preferences
+dotnet_style_require_accessibility_modifiers = always:warning
+
+# Parentheses preferences
+dotnet_style_parentheses_in_arithmetic_binary_operators = always_for_clarity:warning
+dotnet_style_parentheses_in_relational_binary_operators = always_for_clarity:warning
+dotnet_style_parentheses_in_other_binary_operators = always_for_clarity:warning
