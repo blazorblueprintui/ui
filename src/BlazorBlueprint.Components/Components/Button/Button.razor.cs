@@ -140,6 +140,18 @@ public partial class Button : ComponentBase
     public IconPosition IconPosition { get; set; } = IconPosition.Start;
 
     /// <summary>
+    /// Gets or sets the URL to navigate to. When set, the component renders as an &lt;a&gt; element instead of &lt;button&gt;.
+    /// </summary>
+    [Parameter]
+    public string? Href { get; set; }
+
+    /// <summary>
+    /// Gets or sets the anchor target attribute (e.g., "_blank"). Only applies when <see cref="Href"/> is set.
+    /// </summary>
+    [Parameter]
+    public string? Target { get; set; }
+
+    /// <summary>
     /// Gets or sets additional HTML attributes to apply to the button element.
     /// </summary>
     /// <remarks>
@@ -164,6 +176,16 @@ public partial class Button : ComponentBase
     /// Reference to the button element for positioning support when used with AsChild.
     /// </summary>
     private ElementReference _buttonRef;
+
+    /// <summary>
+    /// Gets whether the component should render as an anchor element.
+    /// </summary>
+    private bool HasHref => !string.IsNullOrEmpty(Href);
+
+    /// <summary>
+    /// Gets the rel attribute value. Returns "noopener noreferrer" when Target is "_blank" for security.
+    /// </summary>
+    private string? Rel => Target == "_blank" ? "noopener noreferrer" : null;
 
     /// <summary>
     /// Gets the computed CSS classes for the button element.
@@ -204,6 +226,8 @@ public partial class Button : ComponentBase
             ButtonSize.IconLarge => "h-11 w-11",
             _ => "h-10 px-4 py-2"
         },
+        // Disabled anchor styles (`:disabled` pseudo-class doesn't work on `<a>` elements)
+        HasHref && Disabled ? "pointer-events-none opacity-50" : null,
         // Custom classes (if provided)
         Class
     );
