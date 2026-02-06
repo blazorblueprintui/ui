@@ -149,10 +149,8 @@ public partial class TooltipProvider : ComponentBase
     /// Creates the <see cref="TooltipProviderContext"/> with the configured delay values.
     /// This context is then cascaded to all descendant components.
     /// </remarks>
-    protected override void OnInitialized()
-    {
+    protected override void OnInitialized() =>
         providerContext = new TooltipProviderContext(DelayDuration, SkipDelayDuration);
-    }
 
     /// <summary>
     /// Updates the provider context when parameters change.

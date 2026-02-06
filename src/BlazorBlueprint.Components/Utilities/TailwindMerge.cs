@@ -153,7 +153,9 @@ public static class TailwindMerge
     private static bool IsValidClassName(string className)
     {
         if (string.IsNullOrWhiteSpace(className) || className.Length > 200)
+        {
             return false;
+        }
 
         // Check for potentially dangerous patterns
         if (className.Contains("expression", StringComparison.OrdinalIgnoreCase) ||
@@ -176,21 +178,27 @@ public static class TailwindMerge
     public static string Merge(string[] classes)
     {
         if (classes == null || classes.Length == 0)
+        {
             return string.Empty;
+        }
 
         // Dictionary to track the last occurrence of each utility group
         var groupedClasses = new Dictionary<string, (string className, int index)>();
         var unGroupedClasses = new List<(string className, int index)>();
 
-        for (int i = 0; i < classes.Length; i++)
+        for (var i = 0; i < classes.Length; i++)
         {
             var className = classes[i];
             if (string.IsNullOrWhiteSpace(className))
+            {
                 continue;
+            }
 
             // Skip potentially dangerous class names
             if (!IsValidClassName(className))
+            {
                 continue;
+            }
 
             var group = GetUtilityGroup(className);
             if (!string.IsNullOrEmpty(group))
@@ -220,10 +228,8 @@ public static class TailwindMerge
     /// Returns null if the class doesn't match any known Tailwind utility pattern.
     /// Results are cached for performance.
     /// </summary>
-    private static string? GetUtilityGroup(string className)
-    {
-        return _utilityGroupCache.GetOrAdd(className, ComputeUtilityGroup);
-    }
+    private static string? GetUtilityGroup(string className) =>
+        _utilityGroupCache.GetOrAdd(className, ComputeUtilityGroup);
 
     /// <summary>
     /// Computes the utility group for a class name.
@@ -233,7 +239,9 @@ public static class TailwindMerge
     {
         // Check exact matches first (display, position, etc.)
         if (TailwindGroups.TryGetValue(className, out var group))
+        {
             return group;
+        }
 
         // Check spacing utilities (padding, margin) - use Match directly to avoid double evaluation
         var spacingMatch = SpacingRegex.Match(className);
@@ -261,35 +269,51 @@ public static class TailwindMerge
 
         // Check text colors
         if (TextColorRegex.IsMatch(className))
+        {
             return "text-color";
+        }
 
         // Check background colors
         if (BgColorRegex.IsMatch(className))
+        {
             return "background-color";
+        }
 
         // Check border colors
         if (BorderColorRegex.IsMatch(className))
+        {
             return "border-color";
+        }
 
         // Check border width
         if (BorderWidthRegex.IsMatch(className))
+        {
             return "border-width";
+        }
 
         // Check opacity
         if (OpacityRegex.IsMatch(className))
+        {
             return "opacity";
+        }
 
         // Check z-index
         if (ZIndexRegex.IsMatch(className))
+        {
             return "z-index";
+        }
 
         // Check grid columns
         if (GridColsRegex.IsMatch(className))
+        {
             return "grid-cols";
+        }
 
         // Check grid rows
         if (GridRowsRegex.IsMatch(className))
+        {
             return "grid-rows";
+        }
 
         // Unknown utility
         return null;

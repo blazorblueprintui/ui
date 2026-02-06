@@ -254,7 +254,10 @@ public partial class Button : ComponentBase
     /// </remarks>
     private async Task HandleClick(MouseEventArgs args)
     {
-        if (Disabled) return;
+        if (Disabled)
+        {
+            return;
+        }
 
         // Handle trigger context behavior (from AsChild pattern)
         if (TriggerContext != null)
@@ -262,12 +265,12 @@ public partial class Button : ComponentBase
             // For close buttons (no Toggle, only Close)
             if (TriggerContext.Toggle == null && TriggerContext.Close != null)
             {
-                TriggerContext.Close.Invoke();
+                TriggerContext.Close?.Invoke();
             }
             // For trigger buttons (have Toggle)
-            else if (TriggerContext.Toggle != null)
+            else
             {
-                TriggerContext.Toggle.Invoke();
+                TriggerContext.Toggle?.Invoke();
             }
         }
 
@@ -283,7 +286,10 @@ public partial class Button : ComponentBase
     /// </summary>
     private async Task HandleKeyDown(KeyboardEventArgs args)
     {
-        if (Disabled) return;
+        if (Disabled)
+        {
+            return;
+        }
 
         if (TriggerContext?.OnKeyDown != null)
         {
@@ -294,34 +300,26 @@ public partial class Button : ComponentBase
     /// <summary>
     /// Handles mouse enter events for hover-triggered components (Tooltip, HoverCard).
     /// </summary>
-    private void HandleMouseEnter()
-    {
+    private void HandleMouseEnter() =>
         TriggerContext?.OnMouseEnter?.Invoke();
-    }
 
     /// <summary>
     /// Handles mouse leave events for hover-triggered components.
     /// </summary>
-    private void HandleMouseLeave()
-    {
+    private void HandleMouseLeave() =>
         TriggerContext?.OnMouseLeave?.Invoke();
-    }
 
     /// <summary>
     /// Handles focus events for focus-triggered components.
     /// </summary>
-    private void HandleFocus()
-    {
+    private void HandleFocus() =>
         TriggerContext?.OnFocus?.Invoke();
-    }
 
     /// <summary>
     /// Handles blur events for focus-triggered components.
     /// </summary>
-    private void HandleBlur()
-    {
+    private void HandleBlur() =>
         TriggerContext?.OnBlur?.Invoke();
-    }
 
     /// <summary>
     /// Registers the button element reference with the trigger context for positioning.

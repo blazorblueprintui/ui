@@ -168,8 +168,6 @@ public partial class PieChart<TItem> : ChartBase<TItem> where TItem : class
         };
     }
 
-    private bool IsDonut()
-    {
-        return Variant is PieChartVariant.Donut or PieChartVariant.GradientDonut;
-    }
+    private bool IsDonut() =>
+        Variant is PieChartVariant.Donut or PieChartVariant.GradientDonut;
 }

@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace BlazorBlueprint.Primitives.Table;
 
 /// <summary>
@@ -13,6 +15,7 @@ public enum SelectionMode
     /// <summary>
     /// Only one row can be selected at a time.
     /// </summary>
+    [SuppressMessage("Naming", "CA1720:Identifier contains type name", Justification = "Single is a domain term for selection mode")]
     Single = 1,
 
     /// <summary>

@@ -64,10 +64,8 @@ public static class CurrencyCatalog
     /// <summary>
     /// Gets a currency by its ISO code, or USD as fallback.
     /// </summary>
-    public static CurrencyDefinition GetCurrency(string code)
-    {
-        return Currencies.TryGetValue(code, out var currency) ? currency : Currencies["USD"];
-    }
+    public static CurrencyDefinition GetCurrency(string code) =>
+        Currencies.TryGetValue(code, out var currency) ? currency : Currencies["USD"];
 
     /// <summary>
     /// Gets all available currency codes.

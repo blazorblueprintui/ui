@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace BlazorBlueprint.Demo.Services;
 
 /// <summary>
@@ -52,10 +54,10 @@ public class MockDataService
     /// </summary>
     /// <param name="count">Number of records to generate.</param>
     /// <returns>List of person records with randomized data.</returns>
-    public List<Person> GeneratePersons(int count)
+    public static List<Person> GeneratePersons(int count)
     {
         var persons = new List<Person>();
-        for (int i = 0; i < count; i++)
+        for (var i = 0; i < count; i++)
         {
             persons.Add(new Person
             {
@@ -74,17 +76,17 @@ public class MockDataService
         return persons;
     }
 
-    private string GenerateFullName()
+    private static string GenerateFullName()
     {
         var firstName = _firstNames[_random.Next(_firstNames.Length)];
         var lastName = _lastNames[_random.Next(_lastNames.Length)];
         return $"{firstName} {lastName}";
     }
 
-    private string GenerateEmail()
+    private static string GenerateEmail()
     {
-        var firstName = _firstNames[_random.Next(_firstNames.Length)].ToLower();
-        var lastName = _lastNames[_random.Next(_lastNames.Length)].ToLower();
+        var firstName = _firstNames[_random.Next(_firstNames.Length)].ToLower(CultureInfo.InvariantCulture);
+        var lastName = _lastNames[_random.Next(_lastNames.Length)].ToLower(CultureInfo.InvariantCulture);
         var domain = _random.Next(5) switch
         {
             0 => "example.com",
@@ -93,7 +95,7 @@ public class MockDataService
             3 => "enterprise.net",
             _ => "organization.com"
         };
-        var suffix = _random.Next(100) > 70 ? _random.Next(1, 999).ToString() : "";
+        var suffix = _random.Next(100) > 70 ? _random.Next(1, 999).ToString(CultureInfo.InvariantCulture) : "";
         return $"{firstName}.{lastName}{suffix}@{domain}";
     }
 }

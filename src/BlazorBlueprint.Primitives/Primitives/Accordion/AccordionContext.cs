@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using BlazorBlueprint.Primitives.Contexts;
 
 namespace BlazorBlueprint.Primitives.Accordion;
@@ -20,7 +21,7 @@ public class AccordionState
     /// <summary>
     /// Gets or sets whether items can be collapsed in single mode.
     /// </summary>
-    public bool Collapsible { get; set; } = false;
+    public bool Collapsible { get; set; }
 }
 
 /// <summary>
@@ -31,6 +32,7 @@ public enum AccordionType
     /// <summary>
     /// Only one item can be open at a time.
     /// </summary>
+    [SuppressMessage("Naming", "CA1720:Identifier contains type name", Justification = "Single is a domain term for selection mode")]
     Single,
 
     /// <summary>
@@ -82,10 +84,8 @@ public class AccordionContext : PrimitiveContextWithEvents<AccordionState>
     /// </summary>
     /// <param name="value">The item value to check.</param>
     /// <returns>True if the item is open, otherwise false.</returns>
-    public bool IsItemOpen(string value)
-    {
-        return State.OpenValues.Contains(value);
-    }
+    public bool IsItemOpen(string value) =>
+        State.OpenValues.Contains(value);
 
     /// <summary>
     /// Toggles an accordion item open or closed.
@@ -115,11 +115,7 @@ public class AccordionContext : PrimitiveContextWithEvents<AccordionState>
             else
             {
                 // Multiple mode: toggle independently
-                if (state.OpenValues.Contains(value))
-                {
-                    state.OpenValues.Remove(value);
-                }
-                else
+                if (!state.OpenValues.Remove(value))
                 {
                     state.OpenValues.Add(value);
                 }
@@ -131,11 +127,6 @@ public class AccordionContext : PrimitiveContextWithEvents<AccordionState>
     /// Sets the open items. Used for controlled state.
     /// </summary>
     /// <param name="values">The set of open item values.</param>
-    public void SetOpenItems(HashSet<string> values)
-    {
-        UpdateState(state =>
-        {
-            state.OpenValues = new HashSet<string>(values);
-        });
-    }
+    public void SetOpenItems(HashSet<string> values) =>
+        UpdateState(state => state.OpenValues = new HashSet<string>(values));
 }

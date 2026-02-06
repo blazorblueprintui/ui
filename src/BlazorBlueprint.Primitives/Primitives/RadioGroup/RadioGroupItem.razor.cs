@@ -46,7 +46,7 @@ namespace BlazorBlueprint.Primitives.RadioGroup;
 public partial class RadioGroupItem<TValue> : ComponentBase, IDisposable
 {
     private ElementReference buttonElement;
-    private bool shouldPreventDefault = false;
+    private bool shouldPreventDefault;
 
     /// <summary>
     /// Gets or sets the parent RadioGroup context.
@@ -111,7 +111,11 @@ public partial class RadioGroupItem<TValue> : ComponentBase, IDisposable
     {
         get
         {
-            if (Context == null) return false;
+            if (Context == null)
+            {
+                return false;
+            }
+
             return EqualityComparer<TValue?>.Default.Equals(Context.Value, Value);
         }
     }
@@ -193,6 +197,7 @@ public partial class RadioGroupItem<TValue> : ComponentBase, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
+        GC.SuppressFinalize(this);
         // Unregister from parent RadioGroup
         Context?.Items.Remove(this);
     }

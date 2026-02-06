@@ -37,7 +37,9 @@ public class SelectionState<TData> where TData : class
     public bool IsSelected(TData item)
     {
         if (item == null)
+        {
             return false;
+        }
 
         return selectedItems.Contains(item);
     }
@@ -51,14 +53,17 @@ public class SelectionState<TData> where TData : class
     /// <exception cref="ArgumentNullException">Thrown when item is null.</exception>
     public void Select(TData item)
     {
-        if (item == null)
-            throw new ArgumentNullException(nameof(item));
+        ArgumentNullException.ThrowIfNull(item);
 
         if (Mode == SelectionMode.None)
+        {
             return;
+        }
 
         if (Mode == SelectionMode.Single)
+        {
             selectedItems.Clear();
+        }
 
         selectedItems.Add(item);
     }
@@ -70,8 +75,7 @@ public class SelectionState<TData> where TData : class
     /// <exception cref="ArgumentNullException">Thrown when item is null.</exception>
     public void Deselect(TData item)
     {
-        if (item == null)
-            throw new ArgumentNullException(nameof(item));
+        ArgumentNullException.ThrowIfNull(item);
 
         selectedItems.Remove(item);
     }
@@ -84,13 +88,16 @@ public class SelectionState<TData> where TData : class
     /// <exception cref="ArgumentNullException">Thrown when item is null.</exception>
     public void Toggle(TData item)
     {
-        if (item == null)
-            throw new ArgumentNullException(nameof(item));
+        ArgumentNullException.ThrowIfNull(item);
 
         if (IsSelected(item))
+        {
             Deselect(item);
+        }
         else
+        {
             Select(item);
+        }
     }
 
     /// <summary>
@@ -101,12 +108,16 @@ public class SelectionState<TData> where TData : class
     public void SelectAll(IEnumerable<TData> items)
     {
         if (Mode != SelectionMode.Multiple)
+        {
             return;
+        }
 
         foreach (var item in items)
         {
             if (item != null)
+            {
                 selectedItems.Add(item);
+            }
         }
     }
 
@@ -117,26 +128,22 @@ public class SelectionState<TData> where TData : class
     public void DeselectAll(IEnumerable<TData> items)
     {
         foreach (var item in items)
+        {
             selectedItems.Remove(item);
+        }
     }
 
     /// <summary>
     /// Clears all selections.
     /// </summary>
-    public void Clear()
-    {
-        selectedItems.Clear();
-    }
+    public void Clear() => selectedItems.Clear();
 
     /// <summary>
     /// Checks if all items in a collection are selected.
     /// </summary>
     /// <param name="items">The items to check.</param>
     /// <returns>True if all items are selected, false otherwise.</returns>
-    public bool AreAllSelected(IEnumerable<TData> items)
-    {
-        return items.All(item => IsSelected(item));
-    }
+    public bool AreAllSelected(IEnumerable<TData> items) => items.All(item => IsSelected(item));
 
     /// <summary>
     /// Checks if some (but not all) items in a collection are selected.
@@ -153,7 +160,9 @@ public class SelectionState<TData> where TData : class
         foreach (var item in itemsList)
         {
             if (IsSelected(item))
+            {
                 selectedCount++;
+            }
         }
 
         return selectedCount > 0 && selectedCount < totalCount;
@@ -167,8 +176,12 @@ public class SelectionState<TData> where TData : class
     public void SetSelection(IEnumerable<TData> items, bool selected)
     {
         if (selected)
+        {
             SelectAll(items);
+        }
         else
+        {
             DeselectAll(items);
+        }
     }
 }

@@ -107,7 +107,10 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
     /// <param name="triggerElement">Optional element that triggered the dropdown.</param>
     public void Open(ElementReference? triggerElement = null)
     {
-        if (State.Disabled) return;
+        if (State.Disabled)
+        {
+            return;
+        }
 
         // Clear items so they can re-register when the dropdown opens
         ClearItems();
@@ -138,7 +141,10 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
     /// <param name="triggerElement">Optional element that triggered the toggle.</param>
     public void Toggle(ElementReference? triggerElement = null)
     {
-        if (State.Disabled) return;
+        if (State.Disabled)
+        {
+            return;
+        }
 
         if (State.IsOpen)
         {
@@ -189,13 +195,7 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
     /// Sets the focused item index for keyboard navigation.
     /// </summary>
     /// <param name="index">The index of the item to focus.</param>
-    public void SetFocusedIndex(int index)
-    {
-        UpdateState(state =>
-        {
-            state.FocusedIndex = index;
-        });
-    }
+    public void SetFocusedIndex(int index) => UpdateState(state => state.FocusedIndex = index);
 
     /// <summary>
     /// Gets the list of registered items for keyboard navigation.
@@ -244,10 +244,7 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
     /// <summary>
     /// Clears all registered items.
     /// </summary>
-    public void ClearItems()
-    {
-        Items.Clear();
-    }
+    public void ClearItems() => Items.Clear();
 
     /// <summary>
     /// Moves focus to the next item that is not disabled.
@@ -255,10 +252,13 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
     /// <param name="direction">1 for next, -1 for previous.</param>
     public void MoveFocus(int direction)
     {
-        if (Items.Count == 0) return;
+        if (Items.Count == 0)
+        {
+            return;
+        }
 
-        int startIndex = State.FocusedIndex;
-        int newIndex = startIndex;
+        var startIndex = State.FocusedIndex;
+        var newIndex = startIndex;
 
         // Find next non-disabled item
         do
@@ -267,13 +267,21 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
 
             // Wrap around
             if (newIndex < 0)
+            {
                 newIndex = Items.Count - 1;
+            }
             else if (newIndex >= Items.Count)
+            {
                 newIndex = 0;
+            }
+
 
             // Avoid infinite loop if all items are disabled
             if (newIndex == startIndex)
+            {
                 break;
+            }
+
 
         } while (newIndex >= 0 && newIndex < Items.Count && Items[newIndex].Disabled);
 
@@ -285,7 +293,7 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
     /// </summary>
     public void FocusFirst()
     {
-        for (int i = 0; i < Items.Count; i++)
+        for (var i = 0; i < Items.Count; i++)
         {
             if (!Items[i].Disabled)
             {
@@ -303,7 +311,7 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
         // Try to find and focus the selected item
         if (State.Value != null)
         {
-            for (int i = 0; i < Items.Count; i++)
+            for (var i = 0; i < Items.Count; i++)
             {
                 if (!Items[i].Disabled && EqualityComparer<TValue>.Default.Equals(Items[i].Value, State.Value))
                 {
@@ -322,7 +330,7 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
     /// </summary>
     public void FocusLast()
     {
-        for (int i = Items.Count - 1; i >= 0; i--)
+        for (var i = Items.Count - 1; i >= 0; i--)
         {
             if (!Items[i].Disabled)
             {
@@ -354,7 +362,11 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
     /// <returns>The display text if found, otherwise null.</returns>
     public string? GetDisplayTextForValue(TValue? value)
     {
-        if (value == null) return null;
+        if (value == null)
+        {
+            return null;
+        }
+
 
         var item = Items.FirstOrDefault(i => EqualityComparer<TValue>.Default.Equals(i.Value, value));
         return item?.DisplayText;

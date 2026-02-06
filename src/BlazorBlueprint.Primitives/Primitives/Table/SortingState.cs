@@ -26,7 +26,10 @@ public class SortingState
     public void SetSort(string columnId, SortDirection direction)
     {
         if (string.IsNullOrWhiteSpace(columnId))
+        {
             throw new ArgumentException("Column ID cannot be null or whitespace.", nameof(columnId));
+        }
+
 
         SortedColumn = columnId;
         Direction = direction;
@@ -46,7 +49,10 @@ public class SortingState
     public void ToggleSort(string columnId)
     {
         if (string.IsNullOrWhiteSpace(columnId))
+        {
             throw new ArgumentException("Column ID cannot be null or whitespace.", nameof(columnId));
+        }
+
 
         if (SortedColumn == columnId)
         {
@@ -61,7 +67,10 @@ public class SortingState
 
             // Clear column when returning to None for clean state management
             if (Direction == SortDirection.None)
+            {
                 SortedColumn = null;
+            }
+
         }
         else
         {
@@ -85,18 +94,12 @@ public class SortingState
     /// </summary>
     /// <param name="columnId">The column ID to check.</param>
     /// <returns>True if the column is being sorted, false otherwise.</returns>
-    public bool IsSorted(string columnId)
-    {
-        return SortedColumn == columnId && Direction != SortDirection.None;
-    }
+    public bool IsSorted(string columnId) => SortedColumn == columnId && Direction != SortDirection.None;
 
     /// <summary>
     /// Gets the sort direction for a specific column.
     /// </summary>
     /// <param name="columnId">The column ID to check.</param>
     /// <returns>The sort direction, or None if the column is not being sorted.</returns>
-    public SortDirection GetDirection(string columnId)
-    {
-        return SortedColumn == columnId ? Direction : SortDirection.None;
-    }
+    public SortDirection GetDirection(string columnId) => SortedColumn == columnId ? Direction : SortDirection.None;
 }

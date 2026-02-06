@@ -32,15 +32,15 @@ public static partial class ColorUtils
         double h;
         if (max == rf)
         {
-            h = ((gf - bf) / d + (gf < bf ? 6 : 0)) / 6.0;
+            h = (((gf - bf) / d) + (gf < bf ? 6 : 0)) / 6.0;
         }
         else if (max == gf)
         {
-            h = ((bf - rf) / d + 2) / 6.0;
+            h = (((bf - rf) / d) + 2) / 6.0;
         }
         else
         {
-            h = ((rf - gf) / d + 4) / 6.0;
+            h = (((rf - gf) / d) + 4) / 6.0;
         }
 
         return (h * 360, s, l);
@@ -59,23 +59,43 @@ public static partial class ColorUtils
             return (v, v, v);
         }
 
-        var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-        var p = 2 * l - q;
+        var q = l < 0.5 ? l * (1 + s) : l + s - (l * s);
+        var p = (2 * l) - q;
 
-        var r = HueToRgb(p, q, h + 1.0 / 3);
+        var r = HueToRgb(p, q, h + (1.0 / 3));
         var g = HueToRgb(p, q, h);
-        var b = HueToRgb(p, q, h - 1.0 / 3);
+        var b = HueToRgb(p, q, h - (1.0 / 3));
 
         return ((int)Math.Round(r * 255), (int)Math.Round(g * 255), (int)Math.Round(b * 255));
     }
 
     private static double HueToRgb(double p, double q, double t)
     {
-        if (t < 0) t += 1;
-        if (t > 1) t -= 1;
-        if (t < 1.0 / 6) return p + (q - p) * 6 * t;
-        if (t < 1.0 / 2) return q;
-        if (t < 2.0 / 3) return p + (q - p) * (2.0 / 3 - t) * 6;
+        if (t < 0)
+        {
+            t += 1;
+        }
+
+        if (t > 1)
+        {
+            t -= 1;
+        }
+
+        if (t < (1.0 / 6))
+        {
+            return p + ((q - p) * 6 * t);
+        }
+
+        if (t < (1.0 / 2))
+        {
+            return q;
+        }
+
+        if (t < (2.0 / 3))
+        {
+            return p + ((q - p) * ((2.0 / 3) - t) * 6);
+        }
+
         return p;
     }
 
@@ -87,10 +107,10 @@ public static partial class ColorUtils
         h = h / 360.0;
 
         var i = (int)Math.Floor(h * 6);
-        var f = h * 6 - i;
+        var f = (h * 6) - i;
         var p = v * (1 - s);
-        var q = v * (1 - f * s);
-        var t = v * (1 - (1 - f) * s);
+        var q = v * (1 - (f * s));
+        var t = v * (1 - ((1 - f) * s));
 
         double r, g, b;
         switch (i % 6)
@@ -129,15 +149,15 @@ public static partial class ColorUtils
         }
         else if (max == rf)
         {
-            h = ((gf - bf) / d + (gf < bf ? 6 : 0)) / 6.0;
+            h = (((gf - bf) / d) + (gf < bf ? 6 : 0)) / 6.0;
         }
         else if (max == gf)
         {
-            h = ((bf - rf) / d + 2) / 6.0;
+            h = (((bf - rf) / d) + 2) / 6.0;
         }
         else
         {
-            h = ((rf - gf) / d + 4) / 6.0;
+            h = (((rf - gf) / d) + 4) / 6.0;
         }
 
         return (h * 360, s, v);
@@ -175,14 +195,14 @@ public static partial class ColorUtils
 
         if (hex.Length >= 6)
         {
-            var r = int.Parse(hex[..2], NumberStyles.HexNumber);
-            var g = int.Parse(hex[2..4], NumberStyles.HexNumber);
-            var b = int.Parse(hex[4..6], NumberStyles.HexNumber);
+            var r = int.Parse(hex[..2], NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+            var g = int.Parse(hex[2..4], NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+            var b = int.Parse(hex[4..6], NumberStyles.HexNumber, CultureInfo.InvariantCulture);
 
             int? a = null;
             if (hex.Length >= 8)
             {
-                a = int.Parse(hex[6..8], NumberStyles.HexNumber);
+                a = int.Parse(hex[6..8], NumberStyles.HexNumber, CultureInfo.InvariantCulture);
             }
 
             return (r, g, b, a);
@@ -196,9 +216,13 @@ public static partial class ColorUtils
     /// </summary>
     public static bool IsValidHex(string? hex)
     {
-        if (string.IsNullOrEmpty(hex)) return false;
+        if (string.IsNullOrEmpty(hex))
+        {
+            return false;
+        }
+
         hex = hex.TrimStart('#');
-        return hex.Length is 3 or 4 or 6 or 8 && HexRegex().IsMatch(hex);
+        return (hex.Length is 3 or 4 or 6 or 8) && HexRegex().IsMatch(hex);
     }
 
     [GeneratedRegex("^[0-9A-Fa-f]+$")]

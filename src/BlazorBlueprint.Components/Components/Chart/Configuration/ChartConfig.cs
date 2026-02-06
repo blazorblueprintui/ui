@@ -49,9 +49,13 @@ public class ChartConfig : IEnumerable<KeyValuePair<string, ChartSeriesConfig>>
         set
         {
             if (value != null)
+            {
                 _configs[key] = value;
+            }
             else
+            {
                 _configs.Remove(key);
+            }
         }
     }
 
@@ -60,10 +64,8 @@ public class ChartConfig : IEnumerable<KeyValuePair<string, ChartSeriesConfig>>
     /// </summary>
     /// <param name="key">The series key that matches data property names.</param>
     /// <param name="config">The configuration for the series.</param>
-    public void Add(string key, ChartSeriesConfig config)
-    {
+    public void Add(string key, ChartSeriesConfig config) =>
         _configs[key] = config;
-    }
 
     /// <summary>
     /// Gets the label for a series key, returning the key itself if not configured.
@@ -86,7 +88,9 @@ public class ChartConfig : IEnumerable<KeyValuePair<string, ChartSeriesConfig>>
     public string GetColor(string key, int index = 0)
     {
         if (_configs.TryGetValue(key, out var config) && !string.IsNullOrEmpty(config.Color))
+        {
             return config.Color;
+        }
 
         return ChartColor.GetDefault(index);
     }
@@ -139,7 +143,7 @@ public class ChartConfig : IEnumerable<KeyValuePair<string, ChartSeriesConfig>>
     public static ChartConfig FromLabels(params string[] seriesLabels)
     {
         var chartConfig = new ChartConfig();
-        for (int i = 0; i < seriesLabels.Length; i++)
+        for (var i = 0; i < seriesLabels.Length; i++)
         {
             var label = seriesLabels[i];
             var key = label.ToLowerInvariant().Replace(" ", "-");
@@ -152,13 +156,9 @@ public class ChartConfig : IEnumerable<KeyValuePair<string, ChartSeriesConfig>>
         return chartConfig;
     }
 
-    public IEnumerator<KeyValuePair<string, ChartSeriesConfig>> GetEnumerator()
-    {
-        return _configs.GetEnumerator();
-    }
+    public IEnumerator<KeyValuePair<string, ChartSeriesConfig>> GetEnumerator() =>
+        _configs.GetEnumerator();
 
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
+    IEnumerator IEnumerable.GetEnumerator() =>
+        GetEnumerator();
 }

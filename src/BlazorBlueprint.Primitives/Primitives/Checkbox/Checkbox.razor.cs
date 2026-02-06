@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 
@@ -56,7 +57,7 @@ namespace BlazorBlueprint.Primitives.Checkbox;
 /// </example>
 public partial class Checkbox : ComponentBase
 {
-    private bool shouldPreventDefault = false;
+    private bool shouldPreventDefault;
 
     /// <summary>
     /// Gets or sets whether the checkbox is checked.
@@ -154,8 +155,12 @@ public partial class Checkbox : ComponentBase
     {
         get
         {
-            if (Indeterminate) return "mixed";
-            return Checked.ToString().ToLower();
+            if (Indeterminate)
+            {
+                return "mixed";
+            }
+
+            return Checked.ToString().ToLower(CultureInfo.InvariantCulture);
         }
     }
 
@@ -166,7 +171,11 @@ public partial class Checkbox : ComponentBase
     {
         get
         {
-            if (Indeterminate) return "indeterminate";
+            if (Indeterminate)
+            {
+                return "indeterminate";
+            }
+
             return Checked ? "checked" : "unchecked";
         }
     }

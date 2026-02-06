@@ -14,7 +14,7 @@ public interface IPositioningService
     /// <param name="floating">The floating element to be positioned.</param>
     /// <param name="options">Positioning options.</param>
     /// <returns>Position data including x, y coordinates.</returns>
-    Task<PositionResult> ComputePositionAsync(
+    public Task<PositionResult> ComputePositionAsync(
         ElementReference reference,
         ElementReference floating,
         PositioningOptions? options = null);
@@ -25,7 +25,7 @@ public interface IPositioningService
     /// <param name="floating">The element to position.</param>
     /// <param name="position">The position data to apply.</param>
     /// <param name="makeVisible">Whether to make the element visible after positioning.</param>
-    Task ApplyPositionAsync(ElementReference floating, PositionResult position, bool makeVisible = false);
+    public Task ApplyPositionAsync(ElementReference floating, PositionResult position, bool makeVisible = false);
 
     /// <summary>
     /// Sets up auto-update for dynamic positioning (e.g., on scroll/resize).
@@ -34,7 +34,7 @@ public interface IPositioningService
     /// <param name="floating">The floating element.</param>
     /// <param name="options">Positioning options.</param>
     /// <returns>A disposable handle to clean up auto-update.</returns>
-    Task<IAsyncDisposable> AutoUpdateAsync(
+    public Task<IAsyncDisposable> AutoUpdateAsync(
         ElementReference reference,
         ElementReference floating,
         PositioningOptions? options = null);
@@ -81,7 +81,7 @@ public class PositioningOptions
     /// <summary>
     /// Whether to match the floating element width to the reference element width.
     /// </summary>
-    public bool MatchReferenceWidth { get; set; } = false;
+    public bool MatchReferenceWidth { get; set; }
 }
 
 /// <summary>

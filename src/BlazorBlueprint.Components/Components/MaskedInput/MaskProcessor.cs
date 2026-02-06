@@ -32,7 +32,9 @@ public class MaskProcessor
     public bool IsLiteral(int position)
     {
         if (position < 0 || position >= _mask.Length)
+        {
             return false;
+        }
 
         var maskChar = _mask[position];
         return !IsMaskChar(maskChar);
@@ -49,7 +51,9 @@ public class MaskProcessor
     public bool IsValidChar(char input, int position)
     {
         if (position < 0 || position >= _mask.Length)
+        {
             return false;
+        }
 
         var maskChar = _mask[position];
 
@@ -70,7 +74,9 @@ public class MaskProcessor
         for (var i = position; i < _mask.Length; i++)
         {
             if (IsMaskChar(_mask[i]))
+            {
                 return i;
+            }
         }
         return -1;
     }
@@ -83,7 +89,9 @@ public class MaskProcessor
         for (var i = position - 1; i >= 0; i--)
         {
             if (IsMaskChar(_mask[i]))
+            {
                 return i;
+            }
         }
         return -1;
     }
@@ -94,7 +102,9 @@ public class MaskProcessor
     public string ApplyMask(string? rawInput)
     {
         if (string.IsNullOrEmpty(rawInput))
+        {
             return GetEmptyMask();
+        }
 
         var result = new StringBuilder(_mask.Length);
         var inputIndex = 0;
@@ -120,7 +130,9 @@ public class MaskProcessor
 
                 // If no more input, add placeholder
                 if (result.Length <= maskIndex)
+                {
                     result.Append(_placeholderChar);
+                }
             }
             else
             {
@@ -129,7 +141,9 @@ public class MaskProcessor
 
                 // Skip matching literal in input
                 if (inputIndex < rawInput.Length && rawInput[inputIndex] == maskChar)
+                {
                     inputIndex++;
+                }
             }
         }
 
@@ -142,7 +156,9 @@ public class MaskProcessor
     public string GetUnmaskedValue(string? maskedValue)
     {
         if (string.IsNullOrEmpty(maskedValue))
+        {
             return string.Empty;
+        }
 
         var result = new StringBuilder();
 
@@ -200,7 +216,9 @@ public class MaskProcessor
         foreach (var c in newInput)
         {
             if (char.IsLetterOrDigit(c))
+            {
                 rawChars.Append(c);
+            }
         }
 
         var masked = ApplyMask(rawChars.ToString());
@@ -223,7 +241,9 @@ public class MaskProcessor
         {
             var nextEdit = GetNextEditablePosition(newCursorPos);
             if (nextEdit >= 0)
+            {
                 newCursorPos = nextEdit;
+            }
         }
 
         return (masked, newCursorPos);

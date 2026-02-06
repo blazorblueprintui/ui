@@ -33,6 +33,47 @@ namespace BlazorBlueprint.Components.ButtonGroup;
 /// </example>
 public partial class ButtonGroup : ComponentBase
 {
+    private static readonly string[] HorizontalClasses =
+    [
+        // Remove borders and rounded corners between adjacent buttons
+        "[&>button:not(:first-child):not(:last-child)]:rounded-none",
+        "[&>button:not(:first-child)]:border-l-0",
+        "[&>button:first-child:not(:only-child)]:rounded-r-none",
+        "[&>button:last-child:not(:only-child)]:rounded-l-none",
+
+        // Handle separators - buttons adjacent to separators keep their borders
+        "[&>button:has(+[data-slot=separator])]:rounded-r-none",
+        "[&>[data-slot=separator]+button]:rounded-l-none [&>[data-slot=separator]+button]:!border-l [&>[data-slot=separator]+button]:border-input",
+
+        // Handle nested button groups with gaps
+        "[&>[data-slot=button-group]:not(:first-child)]:ml-2",
+
+        // Focus state z-index (bring focused button above others)
+        "[&>button:focus]:relative [&>button:focus]:z-10"
+    ];
+
+    private static readonly string[] VerticalClasses =
+    [
+        // Vertical layout
+        "flex-col",
+
+        // Remove borders and rounded corners between adjacent buttons
+        "[&>button:not(:first-child):not(:last-child)]:rounded-none",
+        "[&>button:not(:first-child)]:border-t-0",
+        "[&>button:first-child:not(:only-child)]:rounded-b-none",
+        "[&>button:last-child:not(:only-child)]:rounded-t-none",
+
+        // Handle separators - buttons adjacent to separators keep their borders
+        "[&>button:has(+[data-slot=separator])]:rounded-b-none",
+        "[&>[data-slot=separator]+button]:rounded-t-none [&>[data-slot=separator]+button]:!border-t [&>[data-slot=separator]+button]:border-input",
+
+        // Handle nested button groups with gaps
+        "[&>[data-slot=button-group]:not(:first-child)]:mt-2",
+
+        // Focus state z-index (bring focused button above others)
+        "[&>button:focus]:relative [&>button:focus]:z-10"
+    ];
+
     /// <summary>
     /// Gets or sets the orientation of the button group.
     /// </summary>
@@ -100,47 +141,8 @@ public partial class ButtonGroup : ComponentBase
         // Orientation-specific styles
         Orientation switch
         {
-            ButtonGroupOrientation.Horizontal => string.Join(" ", new[]
-            {
-                // Remove borders and rounded corners between adjacent buttons
-                "[&>button:not(:first-child):not(:last-child)]:rounded-none",
-                "[&>button:not(:first-child)]:border-l-0",
-                "[&>button:first-child:not(:only-child)]:rounded-r-none",
-                "[&>button:last-child:not(:only-child)]:rounded-l-none",
-
-                // Handle separators - buttons adjacent to separators keep their borders
-                "[&>button:has(+[data-slot=separator])]:rounded-r-none",
-                "[&>[data-slot=separator]+button]:rounded-l-none [&>[data-slot=separator]+button]:!border-l [&>[data-slot=separator]+button]:border-input",
-
-                // Handle nested button groups with gaps
-                "[&>[data-slot=button-group]:not(:first-child)]:ml-2",
-
-                // Focus state z-index (bring focused button above others)
-                "[&>button:focus]:relative [&>button:focus]:z-10"
-            }),
-
-            ButtonGroupOrientation.Vertical => string.Join(" ", new[]
-            {
-                // Vertical layout
-                "flex-col",
-
-                // Remove borders and rounded corners between adjacent buttons
-                "[&>button:not(:first-child):not(:last-child)]:rounded-none",
-                "[&>button:not(:first-child)]:border-t-0",
-                "[&>button:first-child:not(:only-child)]:rounded-b-none",
-                "[&>button:last-child:not(:only-child)]:rounded-t-none",
-
-                // Handle separators - buttons adjacent to separators keep their borders
-                "[&>button:has(+[data-slot=separator])]:rounded-b-none",
-                "[&>[data-slot=separator]+button]:rounded-t-none [&>[data-slot=separator]+button]:!border-t [&>[data-slot=separator]+button]:border-input",
-
-                // Handle nested button groups with gaps
-                "[&>[data-slot=button-group]:not(:first-child)]:mt-2",
-
-                // Focus state z-index (bring focused button above others)
-                "[&>button:focus]:relative [&>button:focus]:z-10"
-            }),
-
+            ButtonGroupOrientation.Horizontal => string.Join(" ", HorizontalClasses),
+            ButtonGroupOrientation.Vertical => string.Join(" ", VerticalClasses),
             _ => string.Empty
         },
 

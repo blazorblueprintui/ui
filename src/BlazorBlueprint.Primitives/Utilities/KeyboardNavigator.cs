@@ -15,9 +15,12 @@ public class KeyboardNavigator
     /// <param name="e">The keyboard event.</param>
     /// <param name="options">Navigation options.</param>
     /// <returns>The index offset (-1, 0, or 1), or null if key not handled.</returns>
-    public int? HandleArrowNavigation(KeyboardEventArgs e, NavigationOptions options)
+    public static int? HandleArrowNavigation(KeyboardEventArgs e, NavigationOptions options)
     {
-        if (e == null) return null;
+        if (e == null)
+        {
+            return null;
+        }
 
         return e.Key switch
         {
@@ -41,29 +44,52 @@ public class KeyboardNavigator
     /// <param name="itemCount">Total number of items.</param>
     /// <param name="loop">Whether to loop from end to start and vice versa.</param>
     /// <returns>The next index to select.</returns>
-    public int GetNextIndex(int currentIndex, int offset, int itemCount, bool loop = true)
+    public static int GetNextIndex(int currentIndex, int offset, int itemCount, bool loop = true)
     {
-        if (itemCount == 0) return -1;
+        if (itemCount == 0)
+        {
+            return -1;
+        }
 
         // Handle Home key
-        if (offset == int.MinValue) return 0;
+        if (offset == int.MinValue)
+        {
+            return 0;
+        }
 
         // Handle End key
-        if (offset == int.MaxValue) return itemCount - 1;
+        if (offset == int.MaxValue)
+        {
+            return itemCount - 1;
+        }
 
         var nextIndex = currentIndex + offset;
 
         if (loop)
         {
             // Wrap around
-            if (nextIndex < 0) nextIndex = itemCount - 1;
-            if (nextIndex >= itemCount) nextIndex = 0;
+            if (nextIndex < 0)
+            {
+                nextIndex = itemCount - 1;
+            }
+
+            if (nextIndex >= itemCount)
+            {
+                nextIndex = 0;
+            }
         }
         else
         {
             // Clamp to bounds
-            if (nextIndex < 0) nextIndex = 0;
-            if (nextIndex >= itemCount) nextIndex = itemCount - 1;
+            if (nextIndex < 0)
+            {
+                nextIndex = 0;
+            }
+
+            if (nextIndex >= itemCount)
+            {
+                nextIndex = itemCount - 1;
+            }
         }
 
         return nextIndex;
@@ -73,10 +99,8 @@ public class KeyboardNavigator
     /// Determines if the current culture uses right-to-left text direction.
     /// </summary>
     /// <returns>True if RTL, false otherwise.</returns>
-    public static bool IsRtl()
-    {
-        return CultureInfo.CurrentCulture.TextInfo.IsRightToLeft;
-    }
+    public static bool IsRtl() =>
+        CultureInfo.CurrentCulture.TextInfo.IsRightToLeft;
 
     /// <summary>
     /// Handles type-ahead search by matching key input to item text.
@@ -85,18 +109,21 @@ public class KeyboardNavigator
     /// <param name="items">List of searchable item texts.</param>
     /// <param name="currentIndex">Current selected index.</param>
     /// <returns>The index of the matched item, or current index if no match.</returns>
-    public int? HandleTypeAhead(string key, IReadOnlyList<string> items, int currentIndex)
+    public static int? HandleTypeAhead(string key, IReadOnlyList<string> items, int currentIndex)
     {
-        if (string.IsNullOrEmpty(key) || key.Length != 1) return null;
+        if (string.IsNullOrEmpty(key) || key.Length != 1)
+        {
+            return null;
+        }
 
-        var searchChar = key.ToLower();
+        var searchText = key;
         var startIndex = (currentIndex + 1) % items.Count;
 
         // Search from current position forward
-        for (int i = 0; i < items.Count; i++)
+        for (var i = 0; i < items.Count; i++)
         {
             var index = (startIndex + i) % items.Count;
-            if (items[index].ToLower().StartsWith(searchChar))
+            if (items[index].StartsWith(searchText, StringComparison.OrdinalIgnoreCase))
             {
                 return index;
             }

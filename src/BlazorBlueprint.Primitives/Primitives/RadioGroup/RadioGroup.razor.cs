@@ -102,7 +102,10 @@ public partial class RadioGroup<TValue> : ComponentBase
     /// <param name="value">The value to select.</param>
     private async Task SelectValueAsync(TValue value)
     {
-        if (Disabled) return;
+        if (Disabled)
+        {
+            return;
+        }
 
         Value = value;
         await ValueChanged.InvokeAsync(value);
@@ -115,8 +118,16 @@ public partial class RadioGroup<TValue> : ComponentBase
     /// <returns>True if the value is selected, false otherwise.</returns>
     private bool IsSelected(TValue? value)
     {
-        if (Value == null && value == null) return true;
-        if (Value == null || value == null) return false;
+        if (Value == null && value == null)
+        {
+            return true;
+        }
+
+        if (Value == null || value == null)
+        {
+            return false;
+        }
+
         return EqualityComparer<TValue>.Default.Equals(Value, value);
     }
 
@@ -133,10 +144,17 @@ public partial class RadioGroup<TValue> : ComponentBase
     /// </remarks>
     private async Task HandleKeyDown(KeyboardEventArgs args)
     {
-        if (Disabled) return;
+        if (Disabled)
+        {
+            return;
+        }
 
         var enabledItems = GetEnabledItems();
-        if (enabledItems.Count == 0) return;
+        if (enabledItems.Count == 0)
+        {
+            return;
+        }
+
 
         switch (args.Key)
         {
@@ -173,7 +191,10 @@ public partial class RadioGroup<TValue> : ComponentBase
     /// </summary>
     private async Task NavigateNext(List<RadioGroupItem<TValue>> enabledItems)
     {
-        if (enabledItems.Count == 0) return;
+        if (enabledItems.Count == 0)
+        {
+            return;
+        }
 
         var currentIndex = enabledItems.FindIndex(i => IsSelected(i.Value));
         var nextIndex = (currentIndex + 1) % enabledItems.Count;
@@ -191,7 +212,10 @@ public partial class RadioGroup<TValue> : ComponentBase
     /// </summary>
     private async Task NavigatePrevious(List<RadioGroupItem<TValue>> enabledItems)
     {
-        if (enabledItems.Count == 0) return;
+        if (enabledItems.Count == 0)
+        {
+            return;
+        }
 
         var currentIndex = enabledItems.FindIndex(i => IsSelected(i.Value));
         var prevIndex = currentIndex <= 0 ? enabledItems.Count - 1 : currentIndex - 1;

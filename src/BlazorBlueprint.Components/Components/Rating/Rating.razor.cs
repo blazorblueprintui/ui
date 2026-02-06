@@ -1,3 +1,4 @@
+using System.Globalization;
 using BlazorBlueprint.Components.Utilities;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
@@ -128,17 +129,24 @@ public partial class Rating : ComponentBase
         var currentValue = _hoverValue > 0 ? _hoverValue : Value;
 
         if (currentValue >= index)
+        {
             return 1;
+        }
 
         if (AllowHalf && currentValue >= index - 0.5)
+        {
             return 0.5;
+        }
 
         return 0;
     }
 
     private async Task HandleClick(int index)
     {
-        if (Disabled || ReadOnly) return;
+        if (Disabled || ReadOnly)
+        {
+            return;
+        }
 
         double newValue;
 
@@ -180,7 +188,10 @@ public partial class Rating : ComponentBase
 
     private void HandleMouseMove(MouseEventArgs e, int index)
     {
-        if (Disabled || ReadOnly) return;
+        if (Disabled || ReadOnly)
+        {
+            return;
+        }
 
         if (AllowHalf)
         {
@@ -194,17 +205,17 @@ public partial class Rating : ComponentBase
         }
     }
 
-    private void HandleMouseLeave()
-    {
-        _hoverValue = 0;
-    }
+    private void HandleMouseLeave() => _hoverValue = 0;
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
-        if (Disabled || ReadOnly) return;
+        if (Disabled || ReadOnly)
+        {
+            return;
+        }
 
         var step = AllowHalf ? 0.5 : 1.0;
-        double newValue = Value;
+        var newValue = Value;
 
         switch (e.Key)
         {
@@ -231,13 +242,17 @@ public partial class Rating : ComponentBase
             case "7":
             case "8":
             case "9":
-                var numValue = int.Parse(e.Key);
+                var numValue = int.Parse(e.Key, CultureInfo.InvariantCulture);
                 if (numValue <= Max)
+                {
                     newValue = numValue;
+                }
                 break;
             case "0":
                 if (AllowClear)
+                {
                     newValue = 0;
+                }
                 break;
         }
 

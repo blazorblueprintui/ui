@@ -19,11 +19,16 @@ public static class TableDataExtensions
         IEnumerable<IColumnDefinition<TData>> columns) where TData : class
     {
         if (sorting.SortedColumn == null || sorting.Direction == SortDirection.None)
+        {
             return data;
+        }
 
         var column = columns.FirstOrDefault(c => c.Id == sorting.SortedColumn);
         if (column == null)
+        {
             return data;
+        }
+
 
         // Optimize: check if already a list to avoid unnecessary allocation
         var dataList = data as IList<TData> ?? data.ToList();

@@ -105,13 +105,8 @@ public class DropdownMenuContext : PrimitiveContextWithEvents<DropdownMenuState>
     /// Sets the focused menu item index for keyboard navigation.
     /// </summary>
     /// <param name="index">The index of the menu item to focus.</param>
-    public void SetFocusedIndex(int index)
-    {
-        UpdateState(state =>
-        {
-            state.FocusedIndex = index;
-        });
-    }
+    public void SetFocusedIndex(int index) =>
+        UpdateState(state => state.FocusedIndex = index);
 
     /// <summary>
     /// Sets the trigger element reference for positioning.
@@ -126,10 +121,7 @@ public class DropdownMenuContext : PrimitiveContextWithEvents<DropdownMenuState>
         // gets notified when the trigger element becomes available
         if (State.TriggerElement?.Id != triggerElement.Id)
         {
-            UpdateState(state =>
-            {
-                state.TriggerElement = triggerElement;
-            });
+            UpdateState(state => state.TriggerElement = triggerElement);
         }
     }
 }

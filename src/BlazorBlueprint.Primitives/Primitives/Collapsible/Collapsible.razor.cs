@@ -145,7 +145,9 @@ public partial class Collapsible : ComponentBase
     private async Task ToggleAsync()
     {
         if (Disabled)
+        {
             return;
+        }
 
         Open = !Open;
         context.Open = Open;

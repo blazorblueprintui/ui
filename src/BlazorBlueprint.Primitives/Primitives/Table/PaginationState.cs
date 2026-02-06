@@ -47,7 +47,9 @@ public class PaginationState
             totalItems = Math.Max(0, value);
             // Clamp current page to valid range
             if (currentPage > TotalPages && TotalPages > 0)
+            {
                 currentPage = TotalPages;
+            }
         }
     }
 
@@ -92,7 +94,9 @@ public class PaginationState
     public void NextPage()
     {
         if (CanGoNext)
+        {
             CurrentPage++;
+        }
     }
 
     /// <summary>
@@ -101,16 +105,15 @@ public class PaginationState
     public void PreviousPage()
     {
         if (CanGoPrevious)
+        {
             CurrentPage--;
+        }
     }
 
     /// <summary>
     /// Navigates to the first page.
     /// </summary>
-    public void FirstPage()
-    {
-        CurrentPage = 1;
-    }
+    public void FirstPage() => CurrentPage = 1;
 
     /// <summary>
     /// Navigates to the last page.
@@ -118,7 +121,9 @@ public class PaginationState
     public void LastPage()
     {
         if (TotalPages > 0)
+        {
             CurrentPage = TotalPages;
+        }
     }
 
     /// <summary>
@@ -126,17 +131,11 @@ public class PaginationState
     /// Page number is automatically clamped to valid range.
     /// </summary>
     /// <param name="page">The page number to navigate to (1-based).</param>
-    public void GoToPage(int page)
-    {
-        CurrentPage = Math.Max(1, Math.Min(page, TotalPages > 0 ? TotalPages : 1));
-    }
+    public void GoToPage(int page) => CurrentPage = Math.Max(1, Math.Min(page, TotalPages > 0 ? TotalPages : 1));
 
     /// <summary>
     /// Resets pagination to the first page.
     /// Useful when data or filters change.
     /// </summary>
-    public void Reset()
-    {
-        CurrentPage = 1;
-    }
+    public void Reset() => CurrentPage = 1;
 }

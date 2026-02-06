@@ -81,26 +81,16 @@ public class TooltipContext : PrimitiveContextWithEvents<TooltipState>
     /// Signals intent to close the tooltip (without immediately updating IsOpen).
     /// The Tooltip component will apply the delay before actually closing.
     /// </summary>
-    public void Close()
-    {
-        UpdateState(state =>
-        {
-            // Signal close intent
-            state.IsOpen = false; // This will trigger the delay logic in Tooltip component
-        });
-    }
+    // Signal close intent - this will trigger the delay logic in Tooltip component
+    public void Close() =>
+        UpdateState(state => state.IsOpen = false);
 
     /// <summary>
     /// Sets the placement for the tooltip.
     /// </summary>
     /// <param name="placement">The placement position ("top", "bottom", "left", "right").</param>
-    public void SetPlacement(string placement)
-    {
-        UpdateState(state =>
-        {
-            state.Placement = placement;
-        });
-    }
+    public void SetPlacement(string placement) =>
+        UpdateState(state => state.Placement = placement);
 
     /// <summary>
     /// Sets the trigger element reference for positioning.
@@ -115,10 +105,7 @@ public class TooltipContext : PrimitiveContextWithEvents<TooltipState>
         // gets notified when the trigger element becomes available
         if (State.TriggerElement?.Id != triggerElement.Id)
         {
-            UpdateState(state =>
-            {
-                state.TriggerElement = triggerElement;
-            });
+            UpdateState(state => state.TriggerElement = triggerElement);
         }
     }
 }

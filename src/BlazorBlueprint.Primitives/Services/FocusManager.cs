@@ -74,13 +74,15 @@ public class FocusManager : IFocusManager, IAsyncDisposable
     /// </summary>
     public async ValueTask DisposeAsync()
     {
+        GC.SuppressFinalize(this);
+
         if (_module != null)
         {
             await _module.DisposeAsync();
         }
     }
 
-    private class FocusTrapHandle : IAsyncDisposable
+    private sealed class FocusTrapHandle : IAsyncDisposable
     {
         private readonly IJSObjectReference _cleanupFunction;
 

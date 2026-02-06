@@ -8,10 +8,10 @@ public interface IMenubarItem
     /// <summary>
     /// Gets whether the menu item is disabled.
     /// </summary>
-    bool IsDisabled { get; }
+    public bool IsDisabled { get; }
 
     /// <summary>
     /// Focuses this menu item.
     /// </summary>
-    Task FocusAsync();
+    public Task FocusAsync();
 }

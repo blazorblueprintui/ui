@@ -215,10 +215,8 @@ public partial class Input : ComponentBase
     /// Handles the change event (fired when input loses focus).
     /// </summary>
     /// <param name="args">The change event arguments.</param>
-    private async Task HandleChange(ChangeEventArgs args)
-    {
+    private static async Task HandleChange(ChangeEventArgs args) =>
         // Change event is already handled by HandleInput for immediate updates
         // This is here for compatibility and potential future use
         await Task.CompletedTask;
-    }
 }

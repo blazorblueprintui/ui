@@ -88,7 +88,7 @@ public partial class AvatarImage : ComponentBase
     }
 
     private bool isLoaded = true;
-    private bool hasError = false;
+    private bool hasError;
 
     /// <summary>
     /// Handles image loading errors by hiding the image.

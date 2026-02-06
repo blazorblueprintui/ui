@@ -37,6 +37,16 @@ namespace BlazorBlueprint.Components.Field;
 /// </example>
 public partial class FieldGroup : ComponentBase
 {
+    private static readonly string[] ResponsiveClasses = new[]
+    {
+        // Vertical by default
+        "flex-col",
+        // Container query setup for responsive behavior
+        "@container/field-group",
+        // Horizontal at medium container width
+        "@md:flex-row @md:flex-wrap"
+    };
+
     /// <summary>
     /// Gets or sets the orientation of the field group layout.
     /// </summary>
@@ -92,15 +102,7 @@ public partial class FieldGroup : ComponentBase
 
             FieldGroupOrientation.Horizontal => "flex-row flex-wrap",
 
-            FieldGroupOrientation.Responsive => string.Join(" ", new[]
-            {
-                // Vertical by default
-                "flex-col",
-                // Container query setup for responsive behavior
-                "@container/field-group",
-                // Horizontal at medium container width
-                "@md:flex-row @md:flex-wrap"
-            }),
+            FieldGroupOrientation.Responsive => string.Join(" ", ResponsiveClasses),
 
             _ => string.Empty
         },

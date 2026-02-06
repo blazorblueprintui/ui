@@ -79,20 +79,14 @@ public class ColumnDefinition<TData, TValue> : IColumnDefinition<TData> where TD
     /// </summary>
     /// <param name="item">The data item.</param>
     /// <returns>The column value, boxed as object.</returns>
-    public object? GetValue(TData item)
-    {
-        return Accessor(item);
-    }
+    public object? GetValue(TData item) => Accessor(item);
 
     /// <summary>
     /// Gets the typed value from a data item for this column.
     /// </summary>
     /// <param name="item">The data item.</param>
     /// <returns>The column value with its original type.</returns>
-    public TValue GetTypedValue(TData item)
-    {
-        return Accessor(item);
-    }
+    public TValue GetTypedValue(TData item) => Accessor(item);
 
     /// <summary>
     /// Compares two data items based on this column's values.
@@ -110,15 +104,26 @@ public class ColumnDefinition<TData, TValue> : IColumnDefinition<TData> where TD
 
         // Use custom comparer if provided
         if (CustomComparer != null)
+        {
             return CustomComparer.Compare(xValue, yValue);
+        }
 
         // Handle null values
         if (xValue == null && yValue == null)
+        {
             return 0;
+        }
+
         if (xValue == null)
+        {
             return -1;
+        }
+
         if (yValue == null)
+        {
             return 1;
+        }
+
 
         // Use default comparer
         return Comparer<TValue>.Default.Compare(xValue, yValue);

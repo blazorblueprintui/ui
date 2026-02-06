@@ -64,13 +64,8 @@ public class PopoverContext : PrimitiveContextWithEvents<PopoverState>
     /// <summary>
     /// Closes the popover.
     /// </summary>
-    public void Close()
-    {
-        UpdateState(state =>
-        {
-            state.IsOpen = false;
-        });
-    }
+    public void Close() =>
+        UpdateState(state => state.IsOpen = false);
 
     /// <summary>
     /// Toggles the popover open/closed state.
@@ -97,10 +92,8 @@ public class PopoverContext : PrimitiveContextWithEvents<PopoverState>
     /// Notifies subscribers that the popover content is fully ready.
     /// Called by PopoverContent after setup completes.
     /// </summary>
-    public void NotifyContentReady()
-    {
+    public void NotifyContentReady() =>
         OnContentReady?.Invoke();
-    }
 
     /// <summary>
     /// Sets the trigger element reference for positioning.
@@ -115,10 +108,7 @@ public class PopoverContext : PrimitiveContextWithEvents<PopoverState>
         // gets notified when the trigger element becomes available
         if (State.TriggerElement?.Id != triggerElement.Id)
         {
-            UpdateState(state =>
-            {
-                state.TriggerElement = triggerElement;
-            });
+            UpdateState(state => state.TriggerElement = triggerElement);
         }
     }
 }

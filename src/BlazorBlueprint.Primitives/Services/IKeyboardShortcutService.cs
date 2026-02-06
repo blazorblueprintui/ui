@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace BlazorBlueprint.Primitives.Services;
 
 /// <summary>
@@ -19,7 +21,7 @@ public interface IKeyboardShortcutService : IAsyncDisposable
     /// registration.Dispose();
     /// </code>
     /// </example>
-    Task<IDisposable> RegisterAsync(string shortcut, Func<Task> callback);
+    public Task<IDisposable> RegisterAsync(string shortcut, Func<Task> callback);
 
     /// <summary>
     /// Registers a keyboard shortcut with a unique identifier for later unregistration.
@@ -28,27 +30,28 @@ public interface IKeyboardShortcutService : IAsyncDisposable
     /// <param name="callback">The async callback to invoke when the shortcut is pressed.</param>
     /// <param name="id">A unique identifier for this registration.</param>
     /// <returns>A disposable handle to unregister the shortcut.</returns>
-    Task<IDisposable> RegisterAsync(string shortcut, Func<Task> callback, string id);
+    public Task<IDisposable> RegisterAsync(string shortcut, Func<Task> callback, string id);
 
     /// <summary>
     /// Unregisters a shortcut by its unique identifier.
     /// </summary>
     /// <param name="id">The identifier used when registering the shortcut.</param>
-    void Unregister(string id);
+    public void Unregister(string id);
 
     /// <summary>
     /// Temporarily suspends all keyboard shortcuts.
     /// Useful when opening modal dialogs or other scenarios where shortcuts should be disabled.
     /// </summary>
-    void Suspend();
+    public void Suspend();
 
     /// <summary>
     /// Resumes keyboard shortcuts after suspension.
     /// </summary>
-    void Resume();
+    [SuppressMessage("Naming", "CA1716:Identifiers should not match keywords", Justification = "Resume is the correct domain term")]
+    public void Resume();
 
     /// <summary>
     /// Gets whether shortcuts are currently suspended.
     /// </summary>
-    bool IsSuspended { get; }
+    public bool IsSuspended { get; }
 }

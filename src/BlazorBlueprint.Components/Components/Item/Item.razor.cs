@@ -1,6 +1,7 @@
 using BlazorBlueprint.Components.Utilities;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using System.Globalization;
 
 namespace BlazorBlueprint.Components.Item;
 
@@ -95,7 +96,7 @@ public partial class Item : ComponentBase
     /// </summary>
     private Type GetElementType()
     {
-        return AsChild?.ToLower() switch
+        return AsChild?.ToLower(CultureInfo.InvariantCulture) switch
         {
             "a" => typeof(AnchorElement),
             "button" => typeof(ButtonElement),
@@ -132,7 +133,7 @@ public partial class Item : ComponentBase
     }
 
     // Helper components for DynamicComponent
-    private class DivElement : ComponentBase
+    private sealed class DivElement : ComponentBase
     {
         [Parameter] public string? @class { get; set; }
         [Parameter] public string? DataSlot { get; set; }
@@ -150,7 +151,7 @@ public partial class Item : ComponentBase
         }
     }
 
-    private class AnchorElement : ComponentBase
+    private sealed class AnchorElement : ComponentBase
     {
         [Parameter] public string? @class { get; set; }
         [Parameter] public string? DataSlot { get; set; }
@@ -164,14 +165,16 @@ public partial class Item : ComponentBase
             builder.AddAttribute(1, "class", @class);
             builder.AddAttribute(2, "data-slot", DataSlot);
             if (!string.IsNullOrEmpty(href))
+            {
                 builder.AddAttribute(3, "href", href);
+            }
             builder.AddMultipleAttributes(4, Attributes);
             builder.AddContent(5, ChildContent);
             builder.CloseElement();
         }
     }
 
-    private class ButtonElement : ComponentBase
+    private sealed class ButtonElement : ComponentBase
     {
         [Parameter] public string? @class { get; set; }
         [Parameter] public string? DataSlot { get; set; }

@@ -102,21 +102,12 @@ public class TabsContext : PrimitiveContextWithEvents<TabsState>
     /// Sets the active tab.
     /// </summary>
     /// <param name="value">The value of the tab to activate.</param>
-    public void SetActiveTab(string value)
-    {
-        UpdateState(state =>
-        {
-            state.ActiveValue = value;
-        });
-    }
+    public void SetActiveTab(string value) => UpdateState(state => state.ActiveValue = value);
 
     /// <summary>
     /// Checks if the specified tab is currently active.
     /// </summary>
     /// <param name="value">The tab value to check.</param>
     /// <returns>True if the tab is active, otherwise false.</returns>
-    public bool IsTabActive(string value)
-    {
-        return State.ActiveValue == value;
-    }
+    public bool IsTabActive(string value) => State.ActiveValue == value;
 }

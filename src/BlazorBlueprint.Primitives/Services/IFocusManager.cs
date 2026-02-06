@@ -13,7 +13,7 @@ public interface IFocusManager
     /// </summary>
     /// <param name="container">The container element to trap focus within.</param>
     /// <returns>A task that completes when the focus trap is established.</returns>
-    Task<IAsyncDisposable> TrapFocus(ElementReference container);
+    public Task<IAsyncDisposable> TrapFocus(ElementReference container);
 
     /// <summary>
     /// Restores focus to the previously focused element.
@@ -21,19 +21,19 @@ public interface IFocusManager
     /// </summary>
     /// <param name="previousElement">The element to restore focus to, or null to do nothing.</param>
     /// <returns>A task that completes when focus is restored.</returns>
-    Task RestoreFocus(ElementReference? previousElement);
+    public Task RestoreFocus(ElementReference? previousElement);
 
     /// <summary>
     /// Focuses the first focusable element within the container.
     /// </summary>
     /// <param name="container">The container to search for focusable elements.</param>
     /// <returns>A task that completes when focus is set.</returns>
-    Task FocusFirst(ElementReference container);
+    public Task FocusFirst(ElementReference container);
 
     /// <summary>
     /// Focuses the last focusable element within the container.
     /// </summary>
     /// <param name="container">The container to search for focusable elements.</param>
     /// <returns>A task that completes when focus is set.</returns>
-    Task FocusLast(ElementReference container);
+    public Task FocusLast(ElementReference container);
 }

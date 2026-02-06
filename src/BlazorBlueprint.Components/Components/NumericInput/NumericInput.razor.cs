@@ -128,7 +128,9 @@ public partial class NumericInput<TValue> : ComponentBase where TValue : struct,
         get
         {
             if (_isEditing)
+            {
                 return _editingValue;
+            }
 
             if (Format != null)
             {
@@ -144,12 +146,12 @@ public partial class NumericInput<TValue> : ComponentBase where TValue : struct,
         }
     }
 
-    private bool IsFloatingPoint =>
+    private static bool IsFloatingPoint =>
         typeof(TValue) == typeof(double) ||
         typeof(TValue) == typeof(float) ||
         typeof(TValue) == typeof(decimal);
 
-    private string InputMode => IsFloatingPoint ? "decimal" : "numeric";
+    private static string InputMode => IsFloatingPoint ? "decimal" : "numeric";
 
     private string ContainerClass => ClassNames.cn(
         "flex items-center",
@@ -168,7 +170,7 @@ public partial class NumericInput<TValue> : ComponentBase where TValue : struct,
         Class
     );
 
-    private string ButtonClass => ClassNames.cn(
+    private static string ButtonClass => ClassNames.cn(
         "flex items-center justify-center w-8 h-5 border border-input bg-background",
         "hover:bg-accent hover:text-accent-foreground",
         "focus-visible:outline-none",
@@ -221,7 +223,10 @@ public partial class NumericInput<TValue> : ComponentBase where TValue : struct,
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
-        if (Disabled) return;
+        if (Disabled)
+        {
+            return;
+        }
 
         switch (e.Key)
         {
@@ -239,36 +244,52 @@ public partial class NumericInput<TValue> : ComponentBase where TValue : struct,
                 break;
             case "Home":
                 if (Min.HasValue)
+                {
                     await SetValue(Min.Value);
+                }
                 break;
             case "End":
                 if (Max.HasValue)
+                {
                     await SetValue(Max.Value);
+                }
                 break;
         }
     }
 
     private async Task Increment()
     {
-        if (Disabled || IsAtMax) return;
+        if (Disabled || IsAtMax)
+        {
+            return;
+        }
         await SetValue(Value + StepValue);
     }
 
     private async Task Decrement()
     {
-        if (Disabled || IsAtMin) return;
+        if (Disabled || IsAtMin)
+        {
+            return;
+        }
         await SetValue(Value - StepValue);
     }
 
     private async Task IncrementBy(TValue amount)
     {
-        if (Disabled) return;
+        if (Disabled)
+        {
+            return;
+        }
         await SetValue(Value + amount);
     }
 
     private async Task DecrementBy(TValue amount)
     {
-        if (Disabled) return;
+        if (Disabled)
+        {
+            return;
+        }
         await SetValue(Value - amount);
     }
 
@@ -287,13 +308,19 @@ public partial class NumericInput<TValue> : ComponentBase where TValue : struct,
     private TValue ClampValue(TValue value)
     {
         if (!AllowNegative && value < TValue.Zero)
+        {
             value = TValue.Zero;
+        }
 
         if (Min.HasValue && value < Min.Value)
+        {
             value = Min.Value;
+        }
 
         if (Max.HasValue && value > Max.Value)
+        {
             value = Max.Value;
+        }
 
         return value;
     }
@@ -312,7 +339,7 @@ public partial class NumericInput<TValue> : ComponentBase where TValue : struct,
         input = input.Replace(",", "").Trim();
 
         // Handle negative sign
-        if (!AllowNegative && input.StartsWith("-"))
+        if (!AllowNegative && input.StartsWith('-'))
         {
             return false;
         }

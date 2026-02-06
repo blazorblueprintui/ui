@@ -25,10 +25,7 @@ public class PositioningService : IPositioningService, IAsyncDisposable
 
     private async Task<IJSObjectReference> GetModuleAsync()
     {
-        if (_disposed)
-        {
-            throw new ObjectDisposedException(nameof(PositioningService));
-        }
+        ObjectDisposedException.ThrowIf(_disposed, nameof(PositioningService));
 
         await _moduleLock.WaitAsync();
         try
@@ -126,6 +123,7 @@ public class PositioningService : IPositioningService, IAsyncDisposable
             return;
         }
 
+        GC.SuppressFinalize(this);
         _disposed = true;
 
         if (_module != null)
@@ -136,7 +134,7 @@ public class PositioningService : IPositioningService, IAsyncDisposable
         _moduleLock.Dispose();
     }
 
-    private class AutoUpdateHandle : IAsyncDisposable
+    private sealed class AutoUpdateHandle : IAsyncDisposable
     {
         private readonly IJSObjectReference _cleanup;
 

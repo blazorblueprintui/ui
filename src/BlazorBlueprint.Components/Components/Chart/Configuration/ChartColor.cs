@@ -82,7 +82,7 @@ public static class ChartColor
     public static string[] GetColors(int count)
     {
         var colors = new string[count];
-        for (int i = 0; i < count; i++)
+        for (var i = 0; i < count; i++)
         {
             colors[i] = GetDefault(i);
         }

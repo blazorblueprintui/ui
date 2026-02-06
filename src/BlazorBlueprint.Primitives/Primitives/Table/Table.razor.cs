@@ -12,7 +12,7 @@ public partial class Table<TData> : ComponentBase, IDisposable where TData : cla
     private TableContext<TData> _context = null!;
     private TableState<TData> _internalState = new();
     private IEnumerable<TData> _processedData = Array.Empty<TData>();
-    private int _stateVersion = 0;
+    private int _stateVersion;
     private readonly List<Task> _pendingTasks = new();
 
     // ShouldRender tracking fields
@@ -160,10 +160,7 @@ public partial class Table<TData> : ComponentBase, IDisposable where TData : cla
     /// selection operations to function correctly. Without this synchronization, the SelectionState
     /// would retain its default Mode value (None), causing Select() to return early without effect.
     /// </summary>
-    private void SyncSelectionMode()
-    {
-        EffectiveState.Selection.Mode = SelectionMode;
-    }
+    private void SyncSelectionMode() => EffectiveState.Selection.Mode = SelectionMode;
 
     /// <summary>
     /// Sets up event handlers for sorting, pagination, and selection.
@@ -177,7 +174,9 @@ public partial class Table<TData> : ComponentBase, IDisposable where TData : cla
                 try
                 {
                     if (OnSortChange.HasDelegate)
+                    {
                         await OnSortChange.InvokeAsync((columnId, direction));
+                    }
 
                     await NotifyStateChanged();
                 }
@@ -196,7 +195,9 @@ public partial class Table<TData> : ComponentBase, IDisposable where TData : cla
                 try
                 {
                     if (OnPageChange.HasDelegate)
+                    {
                         await OnPageChange.InvokeAsync(page);
+                    }
 
                     await NotifyStateChanged();
                 }
@@ -215,7 +216,9 @@ public partial class Table<TData> : ComponentBase, IDisposable where TData : cla
                 try
                 {
                     if (OnPageSizeChange.HasDelegate)
+                    {
                         await OnPageSizeChange.InvokeAsync(pageSize);
+                    }
 
                     await NotifyStateChanged();
                 }
@@ -234,7 +237,9 @@ public partial class Table<TData> : ComponentBase, IDisposable where TData : cla
                 try
                 {
                     if (OnRowSelect.HasDelegate)
+                    {
                         await OnRowSelect.InvokeAsync(item);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -251,7 +256,9 @@ public partial class Table<TData> : ComponentBase, IDisposable where TData : cla
                 try
                 {
                     if (OnSelectionChange.HasDelegate)
+                    {
                         await OnSelectionChange.InvokeAsync(selectedItems);
+                    }
 
                     await NotifyStateChanged();
                 }
@@ -383,16 +390,14 @@ public partial class Table<TData> : ComponentBase, IDisposable where TData : cla
     /// <summary>
     /// Gets the ARIA row count for the table.
     /// </summary>
-    private int GetAriaRowCount()
-    {
-        return EffectiveState.Pagination.TotalItems + 1; // +1 for header row
-    }
+    private int GetAriaRowCount() => EffectiveState.Pagination.TotalItems + 1; // +1 for header row
 
     /// <summary>
     /// Disposes the component, cleaning up event subscriptions and waiting for pending async operations.
     /// </summary>
     public void Dispose()
     {
+        GC.SuppressFinalize(this);
         _context.OnStateChanged -= HandleContextStateChanged;
 
         // Wait for pending tasks with timeout to prevent memory leaks

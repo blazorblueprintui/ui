@@ -131,20 +131,16 @@ public abstract class ChartBase<TItem> : ComponentBase where TItem : class
     /// </summary>
     /// <param name="seriesCount">The number of series to get colors for.</param>
     /// <returns>An array of color strings.</returns>
-    protected string[] GetSeriesColors(int seriesCount)
-    {
-        return ChartColor.GetColors(seriesCount);
-    }
+    protected string[] GetSeriesColors(int seriesCount) =>
+        ChartColor.GetColors(seriesCount);
 
     /// <summary>
     /// Gets the label for a series from the config.
     /// </summary>
     /// <param name="seriesKey">The series key.</param>
     /// <returns>The display label.</returns>
-    protected string GetSeriesLabel(string seriesKey)
-    {
-        return Config?.GetLabel(seriesKey) ?? seriesKey;
-    }
+    protected string GetSeriesLabel(string seriesKey) =>
+        Config?.GetLabel(seriesKey) ?? seriesKey;
 
     /// <summary>
     /// Gets the color for a series from the config.
@@ -152,10 +148,8 @@ public abstract class ChartBase<TItem> : ComponentBase where TItem : class
     /// <param name="seriesKey">The series key.</param>
     /// <param name="index">The series index for default color fallback.</param>
     /// <returns>The color string.</returns>
-    protected string GetSeriesColor(string seriesKey, int index)
-    {
-        return Config?.GetColor(seriesKey, index) ?? ChartColor.GetDefault(index);
-    }
+    protected string GetSeriesColor(string seriesKey, int index) =>
+        Config?.GetColor(seriesKey, index) ?? ChartColor.GetDefault(index);
 
     /// <summary>
     /// Converts LegendPosition enum to ApexCharts LegendPosition.

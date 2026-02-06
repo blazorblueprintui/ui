@@ -1,3 +1,4 @@
+using System.Globalization;
 using BlazorBlueprint.Components.Utilities;
 using Microsoft.AspNetCore.Components;
 
@@ -136,10 +137,8 @@ public partial class DateRangePicker : ComponentBase
         _displayMonth2 = _displayMonth1.AddMonths(1);
     }
 
-    private string FormatRange(DateRange range)
-    {
-        return $"{range.Start.ToString(DateFormat)} - {range.End.ToString(DateFormat)}";
-    }
+    private string FormatRange(DateRange range) =>
+        $"{range.Start.ToString(DateFormat, CultureInfo.InvariantCulture)} - {range.End.ToString(DateFormat, CultureInfo.InvariantCulture)}";
 
     private void PreviousMonth()
     {
@@ -157,7 +156,10 @@ public partial class DateRangePicker : ComponentBase
 
     private void SelectDate(DateTime date)
     {
-        if (IsDateDisabled(date)) return;
+        if (IsDateDisabled(date))
+        {
+            return;
+        }
 
         if (!_selectionStart.HasValue || (_selectionStart.HasValue && _selectionEnd.HasValue))
         {
@@ -230,7 +232,7 @@ public partial class DateRangePicker : ComponentBase
         }
     }
 
-    private DateRange? GetPresetRange(DateRangePreset preset)
+    private static DateRange? GetPresetRange(DateRangePreset preset)
     {
         var today = DateTime.Today;
         return preset switch
@@ -249,7 +251,7 @@ public partial class DateRangePicker : ComponentBase
         };
     }
 
-    private IEnumerable<DateRangePreset> GetAvailablePresets()
+    private static IEnumerable<DateRangePreset> GetAvailablePresets()
     {
         yield return DateRangePreset.Today;
         yield return DateRangePreset.Yesterday;
@@ -259,7 +261,7 @@ public partial class DateRangePicker : ComponentBase
         yield return DateRangePreset.LastMonth;
     }
 
-    private string GetPresetLabel(DateRangePreset preset) => preset switch
+    private static string GetPresetLabel(DateRangePreset preset) => preset switch
     {
         DateRangePreset.Today => "Today",
         DateRangePreset.Yesterday => "Yesterday",
@@ -273,15 +275,30 @@ public partial class DateRangePicker : ComponentBase
 
     private bool IsDateDisabled(DateTime date)
     {
-        if (MinDate.HasValue && date < MinDate.Value.Date) return true;
-        if (MaxDate.HasValue && date > MaxDate.Value.Date) return true;
-        if (DisabledDates != null && DisabledDates(date)) return true;
+        if (MinDate.HasValue && date < MinDate.Value.Date)
+        {
+            return true;
+        }
+
+        if (MaxDate.HasValue && date > MaxDate.Value.Date)
+        {
+            return true;
+        }
+
+        if (DisabledDates != null && DisabledDates(date))
+        {
+            return true;
+        }
+
         return false;
     }
 
     private bool IsInRange(DateTime date)
     {
-        if (!_selectionStart.HasValue) return false;
+        if (!_selectionStart.HasValue)
+        {
+            return false;
+        }
 
         if (_selectionEnd.HasValue)
         {
@@ -295,8 +312,15 @@ public partial class DateRangePicker : ComponentBase
 
     private bool IsRangeStart(DateTime date)
     {
-        if (!_selectionStart.HasValue) return false;
-        if (!_selectionEnd.HasValue) return date.Date == _selectionStart.Value.Date;
+        if (!_selectionStart.HasValue)
+        {
+            return false;
+        }
+
+        if (!_selectionEnd.HasValue)
+        {
+            return date.Date == _selectionStart.Value.Date;
+        }
 
         var start = _selectionStart.Value < _selectionEnd.Value ? _selectionStart.Value : _selectionEnd.Value;
         return date.Date == start.Date;
@@ -304,7 +328,10 @@ public partial class DateRangePicker : ComponentBase
 
     private bool IsRangeEnd(DateTime date)
     {
-        if (!_selectionEnd.HasValue) return false;
+        if (!_selectionEnd.HasValue)
+        {
+            return false;
+        }
 
         var end = _selectionStart!.Value > _selectionEnd.Value ? _selectionStart.Value : _selectionEnd.Value;
         return date.Date == end.Date;
@@ -326,7 +353,7 @@ public partial class DateRangePicker : ComponentBase
         while (currentDate <= lastOfMonth || weeks.Count < 6)
         {
             var week = new List<DateTime?>();
-            for (int i = 0; i < 7; i++)
+            for (var i = 0; i < 7; i++)
             {
                 if (currentDate.Month == monthDate.Month)
                 {
@@ -341,13 +368,15 @@ public partial class DateRangePicker : ComponentBase
             weeks.Add(week);
 
             if (currentDate.Month != monthDate.Month && weeks.Count >= 5)
+            {
                 break;
+            }
         }
 
         return weeks;
     }
 
-    private string GetMonthName(int month) => MonthNames[month - 1];
+    private static string GetMonthName(int month) => MonthNames[month - 1];
 
     private string ButtonCssClass => ClassNames.cn(
         ShowTwoMonths ? "w-[300px]" : "w-[240px]",
@@ -369,10 +398,12 @@ public partial class DateRangePicker : ComponentBase
         );
     }
 
-    private string GetCellClass(DateTime? day, bool isInRange, bool isRangeStart, bool isRangeEnd)
+    private static string GetCellClass(DateTime? day, bool isInRange, bool isRangeStart, bool isRangeEnd)
     {
         if (!day.HasValue)
+        {
             return "h-9 w-9 text-center text-sm p-0";
+        }
 
         return ClassNames.cn(
             "h-9 w-9 text-center text-sm p-0 relative",
@@ -382,7 +413,7 @@ public partial class DateRangePicker : ComponentBase
         );
     }
 
-    private string GetDayClass(DateTime date, bool isDisabled, bool isInRange, bool isRangeStart, bool isRangeEnd, bool isToday)
+    private static string GetDayClass(DateTime date, bool isDisabled, bool isInRange, bool isRangeStart, bool isRangeEnd, bool isToday)
     {
         return ClassNames.cn(
             "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal",
