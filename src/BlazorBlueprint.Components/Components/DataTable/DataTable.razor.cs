@@ -350,12 +350,12 @@ public partial class DataTable<TData> : ComponentBase where TData : class
             try
             {
                 var value = column.Property(item);
-                if (value == null)
+                if (value is null)
                 {
                     continue;
                 }
 
-                var stringValue = value.ToString();
+                var stringValue = value is IFormattable formattable && column.Format is not null ? formattable.ToString(column.Format, null) : value.ToString();
                 if (!string.IsNullOrEmpty(stringValue) &&
                     stringValue.Contains(searchValue, StringComparison.OrdinalIgnoreCase))
                 {
