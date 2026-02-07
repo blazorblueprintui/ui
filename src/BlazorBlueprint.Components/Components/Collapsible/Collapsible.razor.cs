@@ -1,3 +1,4 @@
+using BlazorBlueprint.Components.Utilities;
 using Microsoft.AspNetCore.Components;
 
 namespace BlazorBlueprint.Components.Collapsible;
@@ -172,6 +173,8 @@ public partial class Collapsible : ComponentBase
             _isOpen = Open;
         }
     }
+
+    private string? CssClass => ClassNames.cn(Class);
 
     private async Task HandleOpenChanged(bool newValue)
     {

@@ -4,7 +4,7 @@
     DialogFooter helper component for organizing dialog action buttons.
 *@
 
-<div class="@GetClassNames()">
+<div class="@CssClass">
     @ChildContent
 </div>
 
@@ -21,22 +21,8 @@
     [Parameter]
     public string? Class { get; set; }
 
-    private string GetClassNames()
-    {
-        var classes = new List<string>
-        {
-            "flex",
-            "flex-col-reverse",
-            "sm:flex-row",
-            "sm:justify-end",
-            "sm:space-x-2"
-        };
-
-        if (!string.IsNullOrWhiteSpace(Class))
-        {
-            classes.Add(Class);
-        }
-
-        return string.Join(" ", classes);
-    }
+    private string CssClass => ClassNames.cn(
+        "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+        Class
+    );
 }

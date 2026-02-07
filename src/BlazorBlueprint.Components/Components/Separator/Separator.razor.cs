@@ -1,5 +1,5 @@
+using BlazorBlueprint.Components.Utilities;
 using Microsoft.AspNetCore.Components;
-using System.Text;
 
 namespace BlazorBlueprint.Components.Separator;
 
@@ -79,32 +79,11 @@ public partial class Separator : ComponentBase
     /// - Orientation-specific classes (width/height)
     /// - Custom classes from the Class parameter
     /// </remarks>
-    private string CssClass
-    {
-        get
-        {
-            var builder = new StringBuilder();
-
-            // Base separator styles (from shadcn/ui)
-            builder.Append("shrink-0 bg-border ");
-
-            // Orientation-specific styles
-            if (Orientation == SeparatorOrientation.Horizontal)
-            {
-                builder.Append("h-[1px] w-full ");
-            }
-            else // Vertical
-            {
-                builder.Append("h-full w-[1px] ");
-            }
-
-            // Custom classes (if provided)
-            if (!string.IsNullOrWhiteSpace(Class))
-            {
-                builder.Append(Class);
-            }
-
-            return builder.ToString().Trim();
-        }
-    }
+    private string CssClass => ClassNames.cn(
+        "shrink-0 bg-border",
+        Orientation == SeparatorOrientation.Horizontal
+            ? "h-[1px] w-full"
+            : "h-full w-[1px]",
+        Class
+    );
 }

@@ -5,7 +5,7 @@
     Styled DialogDescription component with shadcn/ui classes.
 *@
 
-<BlazorBlueprint.Primitives.Dialog.DialogDescription class="@GetClassNames()" @attributes="AdditionalAttributes">
+<BlazorBlueprint.Primitives.Dialog.DialogDescription class="@CssClass" @attributes="AdditionalAttributes">
     @ChildContent
 </BlazorBlueprint.Primitives.Dialog.DialogDescription>
 
@@ -28,19 +28,8 @@
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
-    private string GetClassNames()
-    {
-        var classes = new List<string>
-        {
-            "text-sm",
-            "text-muted-foreground"
-        };
-
-        if (!string.IsNullOrWhiteSpace(Class))
-        {
-            classes.Add(Class);
-        }
-
-        return string.Join(" ", classes);
-    }
+    private string CssClass => ClassNames.cn(
+        "text-sm text-muted-foreground",
+        Class
+    );
 }

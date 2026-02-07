@@ -110,17 +110,12 @@
     [Parameter]
     public string? Style { get; set; }
 
-    private string CssClass
-    {
-        get
-        {
-            var baseClasses = "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover " +
-                            "text-popover-foreground shadow-md " +
-                            "data-[state=open]:animate-in data-[state=closed]:animate-out " +
-                            "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 " +
-                            "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95";
-
-            return string.IsNullOrWhiteSpace(Class) ? baseClasses : $"{baseClasses} {Class}";
-        }
-    }
+    private string CssClass => ClassNames.cn(
+        "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover",
+        "text-popover-foreground shadow-md",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out",
+        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+        Class
+    );
 }

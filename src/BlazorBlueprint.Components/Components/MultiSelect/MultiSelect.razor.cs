@@ -1,9 +1,9 @@
+using BlazorBlueprint.Components.Utilities;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace BlazorBlueprint.Components.MultiSelect;
 
@@ -36,9 +36,7 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
     private readonly Dictionary<string, Func<Task>> _removeHandlerCache = new();
 
     // Cached CSS class strings to avoid recomputation on every render
-    private string? _cachedTriggerCssClass;
-    private string? _lastPopoverWidth;
-    private string? _lastClass;
+    // TriggerCssClass caching fields removed - ClassNames.cn handles this
 
     /// <summary>
     /// Gets or sets the cascaded EditContext from a parent EditForm.
@@ -632,50 +630,16 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
     /// Gets the CSS class for the trigger button.
     /// Uses caching to avoid recomputation on every render.
     /// </summary>
-    private string TriggerCssClass
-    {
-        get
-        {
-            // Return cached value if inputs haven't changed
-            if (_cachedTriggerCssClass != null &&
-                _lastPopoverWidth == PopoverWidth &&
-                _lastClass == Class)
-            {
-                return _cachedTriggerCssClass;
-            }
-
-            var builder = new StringBuilder();
-
-            // Base button styles
-            builder.Append("inline-flex items-center justify-between rounded-md text-sm font-medium ");
-            builder.Append("transition-colors focus-visible:outline-none focus-visible:ring-2 ");
-            builder.Append("focus-visible:ring-ring focus-visible:ring-offset-2 ");
-            builder.Append("disabled:opacity-50 disabled:pointer-events-none ");
-
-            // Outline variant styles
-            builder.Append("border border-input bg-background hover:bg-accent hover:text-accent-foreground ");
-
-            // Size styles
-            builder.Append("min-h-9 px-3 py-1.5 ");
-
-            // Width
-            builder.Append(PopoverWidth);
-            builder.Append(' ');
-
-            // Custom classes
-            if (!string.IsNullOrWhiteSpace(Class))
-            {
-                builder.Append(Class);
-            }
-
-            // Cache the result
-            _cachedTriggerCssClass = builder.ToString().Trim();
-            _lastPopoverWidth = PopoverWidth;
-            _lastClass = Class;
-
-            return _cachedTriggerCssClass;
-        }
-    }
+    private string TriggerCssClass => ClassNames.cn(
+        "inline-flex items-center justify-between rounded-md text-sm font-medium",
+        "transition-colors focus-visible:outline-none focus-visible:ring-2",
+        "focus-visible:ring-ring focus-visible:ring-offset-2",
+        "disabled:opacity-50 disabled:pointer-events-none",
+        "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        "min-h-9 px-3 py-1.5",
+        PopoverWidth,
+        Class
+    );
 
     /// <summary>
     /// Gets the CSS class for the tag remove button.

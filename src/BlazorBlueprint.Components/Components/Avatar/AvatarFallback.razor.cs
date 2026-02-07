@@ -1,5 +1,5 @@
+using BlazorBlueprint.Components.Utilities;
 using Microsoft.AspNetCore.Components;
-using System.Text;
 
 namespace BlazorBlueprint.Components.Avatar;
 
@@ -70,23 +70,9 @@ public partial class AvatarFallback : ComponentBase
     /// - Background and text colors from design system
     /// - Font weight for initials
     /// </remarks>
-    private string CssClass
-    {
-        get
-        {
-            var builder = new StringBuilder();
-
-            // Base fallback styles (from shadcn/ui)
-            builder.Append("flex h-full w-full items-center justify-center rounded-full ");
-            builder.Append("bg-muted text-muted-foreground font-medium ");
-
-            // Custom classes (if provided)
-            if (!string.IsNullOrWhiteSpace(Class))
-            {
-                builder.Append(Class);
-            }
-
-            return builder.ToString().Trim();
-        }
-    }
+    private string CssClass => ClassNames.cn(
+        "flex h-full w-full items-center justify-center rounded-full",
+        "bg-muted text-muted-foreground font-medium",
+        Class
+    );
 }

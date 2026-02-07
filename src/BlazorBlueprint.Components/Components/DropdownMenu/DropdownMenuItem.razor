@@ -40,21 +40,12 @@
     [Parameter]
     public bool CloseOnSelect { get; set; } = true;
 
-    private string CssClass
-    {
-        get
-        {
-            var baseClasses = "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 " +
-                            "text-sm outline-none transition-colors " +
-                            "focus:bg-accent focus:text-accent-foreground " +
-                            "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50";
-
-            if (!Disabled)
-            {
-                baseClasses += " hover:bg-accent hover:text-accent-foreground";
-            }
-
-            return string.IsNullOrWhiteSpace(Class) ? baseClasses : $"{baseClasses} {Class}";
-        }
-    }
+    private string CssClass => ClassNames.cn(
+        "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5",
+        "text-sm outline-none transition-colors",
+        "focus:bg-accent focus:text-accent-foreground",
+        "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
+        !Disabled ? "hover:bg-accent hover:text-accent-foreground" : null,
+        Class
+    );
 }

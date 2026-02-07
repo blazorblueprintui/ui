@@ -1,3 +1,4 @@
+using BlazorBlueprint.Components.Utilities;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
@@ -132,20 +133,7 @@ public partial class RadioGroup<TValue> : ComponentBase
     /// <summary>
     /// Gets the computed CSS classes for the radio group container.
     /// </summary>
-    private string CssClass
-    {
-        get
-        {
-            var classes = "grid gap-2";
-
-            if (!string.IsNullOrWhiteSpace(Class))
-            {
-                classes += " " + Class;
-            }
-
-            return classes.Trim();
-        }
-    }
+    private string CssClass => ClassNames.cn("grid gap-2", Class);
 
     /// <summary>
     /// Handles the value change and notifies EditContext for form validation.

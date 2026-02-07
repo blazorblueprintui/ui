@@ -1,3 +1,4 @@
+using BlazorBlueprint.Components.Utilities;
 using Microsoft.AspNetCore.Components;
 
 namespace BlazorBlueprint.Components.Collapsible;
@@ -86,16 +87,5 @@ public partial class CollapsibleTrigger : ComponentBase
     /// <value>
     /// A string containing all CSS classes to be applied to the button element.
     /// </value>
-    private string CssClass
-    {
-        get
-        {
-            var classes = new List<string> { "group" };
-            if (!string.IsNullOrWhiteSpace(Class))
-            {
-                classes.Add(Class);
-            }
-            return string.Join(" ", classes);
-        }
-    }
+    private string CssClass => ClassNames.cn("group", Class);
 }

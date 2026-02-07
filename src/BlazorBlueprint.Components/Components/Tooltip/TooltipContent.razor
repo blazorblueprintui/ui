@@ -74,26 +74,18 @@
         }
     }
 
-    private string CssClass
-    {
-        get
+    private string CssClass => ClassNames.cn(
+        "z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5",
+        "text-sm text-popover-foreground shadow-md",
+        "animate-in fade-in-0 zoom-in-95 max-w-md",
+        EffectiveSide switch
         {
-            var baseClasses = "z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md " +
-                            "animate-in fade-in-0 zoom-in-95 max-w-md";
-
-            // Add slide animation based on effective side
-            var slideClass = EffectiveSide switch
-            {
-                PopoverSide.Top => " slide-in-from-bottom-2",
-                PopoverSide.Bottom => " slide-in-from-top-2",
-                PopoverSide.Left => " slide-in-from-right-2",
-                PopoverSide.Right => " slide-in-from-left-2",
-                _ => " slide-in-from-bottom-2"
-            };
-
-            var result = baseClasses + slideClass;
-
-            return string.IsNullOrWhiteSpace(Class) ? result : $"{result} {Class}";
-        }
-    }
+            PopoverSide.Top => "slide-in-from-bottom-2",
+            PopoverSide.Bottom => "slide-in-from-top-2",
+            PopoverSide.Left => "slide-in-from-right-2",
+            PopoverSide.Right => "slide-in-from-left-2",
+            _ => "slide-in-from-bottom-2"
+        },
+        Class
+    );
 }

@@ -5,7 +5,7 @@
     Styled DialogTitle component with shadcn/ui classes.
 *@
 
-<BlazorBlueprint.Primitives.Dialog.DialogTitle class="@GetClassNames()" @attributes="AdditionalAttributes">
+<BlazorBlueprint.Primitives.Dialog.DialogTitle class="@CssClass" @attributes="AdditionalAttributes">
     @ChildContent
 </BlazorBlueprint.Primitives.Dialog.DialogTitle>
 
@@ -28,21 +28,8 @@
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
-    private string GetClassNames()
-    {
-        var classes = new List<string>
-        {
-            "text-lg",
-            "font-semibold",
-            "leading-none",
-            "tracking-tight"
-        };
-
-        if (!string.IsNullOrWhiteSpace(Class))
-        {
-            classes.Add(Class);
-        }
-
-        return string.Join(" ", classes);
-    }
+    private string CssClass => ClassNames.cn(
+        "text-lg font-semibold leading-none tracking-tight",
+        Class
+    );
 }

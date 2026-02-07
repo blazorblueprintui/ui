@@ -1,5 +1,5 @@
+using BlazorBlueprint.Components.Utilities;
 using Microsoft.AspNetCore.Components;
-using System.Text;
 using BlazorBlueprint.Primitives.RadioGroup;
 
 namespace BlazorBlueprint.Components.RadioGroup;
@@ -104,55 +104,23 @@ public partial class RadioGroupItem<TValue> : ComponentBase
     /// <summary>
     /// Gets the computed CSS classes for the radio item button.
     /// </summary>
-    private string CssClass
-    {
-        get
-        {
-            var builder = new StringBuilder();
-
-            // Base radio button styles (from shadcn/ui)
-            builder.Append("aspect-square h-4 w-4 rounded-full border border-primary ");
-            builder.Append("text-primary ring-offset-background ");
-            builder.Append("focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ");
-            builder.Append("disabled:cursor-not-allowed disabled:opacity-50 ");
-
-            // Layout for centering the inner circle
-            builder.Append("flex items-center justify-center ");
-
-            // Custom classes (if provided)
-            if (!string.IsNullOrWhiteSpace(Class))
-            {
-                builder.Append(Class);
-            }
-
-            return builder.ToString().Trim();
-        }
-    }
+    private string CssClass => ClassNames.cn(
+        "aspect-square h-4 w-4 rounded-full border border-primary",
+        "text-primary ring-offset-background",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "disabled:cursor-not-allowed disabled:opacity-50",
+        "flex items-center justify-center",
+        Class
+    );
 
     /// <summary>
     /// Gets the computed CSS classes for the inner circle indicator.
     /// </summary>
-    private string CircleIndicatorClass
-    {
-        get
-        {
-            var builder = new StringBuilder();
-
-            // Inner circle that appears when selected
-            builder.Append("h-2.5 w-2.5 rounded-full bg-current ");
-
-            // Only visible when checked
-            if (!IsChecked)
-            {
-                builder.Append("scale-0 ");
-            }
-
-            // Transition for smooth appearance
-            builder.Append("transition-transform duration-100");
-
-            return builder.ToString().Trim();
-        }
-    }
+    private string CircleIndicatorClass => ClassNames.cn(
+        "h-2.5 w-2.5 rounded-full bg-current",
+        !IsChecked ? "scale-0" : null,
+        "transition-transform duration-100"
+    );
 
     /// <summary>
     /// Focuses this radio item programmatically.

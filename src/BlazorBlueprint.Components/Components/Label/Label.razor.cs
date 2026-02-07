@@ -1,5 +1,5 @@
+using BlazorBlueprint.Components.Utilities;
 using Microsoft.AspNetCore.Components;
-using System.Text;
 
 namespace BlazorBlueprint.Components.Label;
 
@@ -128,20 +128,8 @@ public partial class Label : ComponentBase
     /// reduced opacity and cursor-not-allowed styling.
     /// </para>
     /// </remarks>
-    private string CssClass
-    {
-        get
-        {
-            var builder = new StringBuilder();
-            builder.Append("text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70");
-
-            if (!string.IsNullOrWhiteSpace(Class))
-            {
-                builder.Append(' ');
-                builder.Append(Class);
-            }
-
-            return builder.ToString().Trim();
-        }
-    }
+    private string CssClass => ClassNames.cn(
+        "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+        Class
+    );
 }
