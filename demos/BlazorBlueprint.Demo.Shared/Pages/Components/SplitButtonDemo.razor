@@ -1,0 +1,279 @@
+@page "/components/split-button"
+@using BlazorBlueprint.Components.SplitButton
+@using BlazorBlueprint.Components.Button
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Split Button - Blazor Blueprint</PageTitle>
+
+<div class="space-y-10 max-w-4xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Split Button</h1>
+        <p class="text-xl text-muted-foreground">
+            A button with a primary action and a dropdown menu for secondary actions.
+        </p>
+    </div>
+
+    <!-- Default -->
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Default</h2>
+            <p class="text-muted-foreground">
+                Click the main button for the primary action, or the chevron for more options.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap gap-4">
+            <SplitButton OnClick="HandleSave">
+                <ChildContent>Save</ChildContent>
+                <DropdownContent>
+                    <SplitButtonItem OnClick="HandleSaveAs">Save As...</SplitButtonItem>
+                    <SplitButtonItem OnClick="HandleSaveDraft">Save Draft</SplitButtonItem>
+                    <SplitButtonSeparator />
+                    <SplitButtonItem OnClick="HandleExport">Export</SplitButtonItem>
+                </DropdownContent>
+            </SplitButton>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_lastAction))
+        {
+            <p class="text-sm text-muted-foreground">Last action: @_lastAction</p>
+        }
+    </section>
+
+    <!-- Variants -->
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Variants</h2>
+            <p class="text-muted-foreground">
+                SplitButton supports all button variants.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap gap-4">
+            <SplitButton Variant="ButtonVariant.Default" OnClick="HandleSave">
+                <ChildContent>Default</ChildContent>
+                <DropdownContent>
+                    <SplitButtonItem>Option 1</SplitButtonItem>
+                    <SplitButtonItem>Option 2</SplitButtonItem>
+                </DropdownContent>
+            </SplitButton>
+
+            <SplitButton Variant="ButtonVariant.Secondary" OnClick="HandleSave">
+                <ChildContent>Secondary</ChildContent>
+                <DropdownContent>
+                    <SplitButtonItem>Option 1</SplitButtonItem>
+                    <SplitButtonItem>Option 2</SplitButtonItem>
+                </DropdownContent>
+            </SplitButton>
+
+            <SplitButton Variant="ButtonVariant.Outline" OnClick="HandleSave">
+                <ChildContent>Outline</ChildContent>
+                <DropdownContent>
+                    <SplitButtonItem>Option 1</SplitButtonItem>
+                    <SplitButtonItem>Option 2</SplitButtonItem>
+                </DropdownContent>
+            </SplitButton>
+
+            <SplitButton Variant="ButtonVariant.Destructive" OnClick="HandleSave">
+                <ChildContent>Destructive</ChildContent>
+                <DropdownContent>
+                    <SplitButtonItem>Option 1</SplitButtonItem>
+                    <SplitButtonItem>Option 2</SplitButtonItem>
+                </DropdownContent>
+            </SplitButton>
+        </div>
+    </section>
+
+    <!-- Sizes -->
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Sizes</h2>
+            <p class="text-muted-foreground">
+                Available in small, default, and large sizes.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-4">
+            <SplitButton Size="ButtonSize.Small" Variant="ButtonVariant.Outline" OnClick="HandleSave">
+                <ChildContent>Small</ChildContent>
+                <DropdownContent>
+                    <SplitButtonItem>Option 1</SplitButtonItem>
+                    <SplitButtonItem>Option 2</SplitButtonItem>
+                </DropdownContent>
+            </SplitButton>
+
+            <SplitButton Size="ButtonSize.Default" Variant="ButtonVariant.Outline" OnClick="HandleSave">
+                <ChildContent>Default</ChildContent>
+                <DropdownContent>
+                    <SplitButtonItem>Option 1</SplitButtonItem>
+                    <SplitButtonItem>Option 2</SplitButtonItem>
+                </DropdownContent>
+            </SplitButton>
+
+            <SplitButton Size="ButtonSize.Large" Variant="ButtonVariant.Outline" OnClick="HandleSave">
+                <ChildContent>Large</ChildContent>
+                <DropdownContent>
+                    <SplitButtonItem>Option 1</SplitButtonItem>
+                    <SplitButtonItem>Option 2</SplitButtonItem>
+                </DropdownContent>
+            </SplitButton>
+        </div>
+    </section>
+
+    <!-- With Icon -->
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">With Icon</h2>
+            <p class="text-muted-foreground">
+                Add an icon to the primary button for visual context.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap gap-4">
+            <SplitButton OnClick="HandleSave">
+                <ChildContent>
+                    <LucideIcon Name="save" Size="16" Class="mr-2" />
+                    Save
+                </ChildContent>
+                <DropdownContent>
+                    <SplitButtonItem OnClick="HandleSaveAs">
+                        <LucideIcon Name="file-plus" Size="16" Class="mr-2" />
+                        Save As...
+                    </SplitButtonItem>
+                    <SplitButtonItem OnClick="HandleSaveDraft">
+                        <LucideIcon Name="file-edit" Size="16" Class="mr-2" />
+                        Save Draft
+                    </SplitButtonItem>
+                    <SplitButtonSeparator />
+                    <SplitButtonItem OnClick="HandleExport">
+                        <LucideIcon Name="download" Size="16" Class="mr-2" />
+                        Export
+                    </SplitButtonItem>
+                </DropdownContent>
+            </SplitButton>
+
+            <SplitButton Variant="ButtonVariant.Outline" OnClick="HandlePublish">
+                <ChildContent>
+                    <LucideIcon Name="send" Size="16" Class="mr-2" />
+                    Publish
+                </ChildContent>
+                <DropdownContent>
+                    <SplitButtonItem>
+                        <LucideIcon Name="eye" Size="16" Class="mr-2" />
+                        Preview
+                    </SplitButtonItem>
+                    <SplitButtonItem>
+                        <LucideIcon Name="clock" Size="16" Class="mr-2" />
+                        Schedule
+                    </SplitButtonItem>
+                </DropdownContent>
+            </SplitButton>
+        </div>
+    </section>
+
+    <!-- Disabled -->
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-muted-foreground">
+                Both the primary button and dropdown trigger are disabled.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap gap-4">
+            <SplitButton Disabled="true" OnClick="HandleSave">
+                <ChildContent>Save</ChildContent>
+                <DropdownContent>
+                    <SplitButtonItem>Save As...</SplitButtonItem>
+                    <SplitButtonItem>Save Draft</SplitButtonItem>
+                </DropdownContent>
+            </SplitButton>
+
+            <SplitButton Disabled="true" Variant="ButtonVariant.Outline" OnClick="HandleSave">
+                <ChildContent>Outline Disabled</ChildContent>
+                <DropdownContent>
+                    <SplitButtonItem>Option 1</SplitButtonItem>
+                </DropdownContent>
+            </SplitButton>
+        </div>
+    </section>
+
+    <!-- Practical Example -->
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Practical Example</h2>
+            <p class="text-muted-foreground">
+                A merge button commonly seen in version control interfaces.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap gap-4">
+            <SplitButton OnClick="HandleMerge">
+                <ChildContent>
+                    <LucideIcon Name="git-merge" Size="16" Class="mr-2" />
+                    Merge pull request
+                </ChildContent>
+                <DropdownContent>
+                    <SplitButtonItem>
+                        <div class="flex flex-col">
+                            <span class="font-medium">Create a merge commit</span>
+                            <span class="text-xs text-muted-foreground">All commits will be added to the base branch.</span>
+                        </div>
+                    </SplitButtonItem>
+                    <SplitButtonItem>
+                        <div class="flex flex-col">
+                            <span class="font-medium">Squash and merge</span>
+                            <span class="text-xs text-muted-foreground">Commits will be combined into one commit.</span>
+                        </div>
+                    </SplitButtonItem>
+                    <SplitButtonItem>
+                        <div class="flex flex-col">
+                            <span class="font-medium">Rebase and merge</span>
+                            <span class="text-xs text-muted-foreground">Commits will be rebased onto the base branch.</span>
+                        </div>
+                    </SplitButtonItem>
+                </DropdownContent>
+            </SplitButton>
+        </div>
+    </section>
+
+    <!-- Usage Notes -->
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Usage Notes</h2>
+        </div>
+
+        <div class="rounded-lg border p-6 space-y-4">
+            <div class="space-y-3">
+                <h3 class="font-semibold">Key Features</h3>
+                <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+                    <li>Primary action button with a dropdown for secondary actions</li>
+                    <li>Supports all button variants (Default, Secondary, Outline, Destructive)</li>
+                    <li>Available in Small, Default, and Large sizes</li>
+                    <li>Disabled state applies to both buttons</li>
+                    <li>Composes Button and DropdownMenu components internally</li>
+                </ul>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="font-semibold">Accessibility</h3>
+                <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+                    <li>Uses role="group" on the container</li>
+                    <li>Dropdown trigger has aria-label for screen readers</li>
+                    <li>Keyboard navigation supported via DropdownMenu primitive</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+</div>
+
+@code {
+    private string? _lastAction;
+
+    private void HandleSave() => _lastAction = "Save clicked";
+    private void HandleSaveAs() => _lastAction = "Save As clicked";
+    private void HandleSaveDraft() => _lastAction = "Save Draft clicked";
+    private void HandleExport() => _lastAction = "Export clicked";
+    private void HandlePublish() => _lastAction = "Publish clicked";
+    private void HandleMerge() => _lastAction = "Merge pull request clicked";
+}

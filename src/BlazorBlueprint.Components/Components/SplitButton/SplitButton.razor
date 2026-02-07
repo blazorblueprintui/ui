@@ -1,0 +1,35 @@
+@namespace BlazorBlueprint.Components.SplitButton
+@using BlazorBlueprint.Components.Button
+@using BlazorBlueprint.Components.DropdownMenu
+@using BlazorBlueprint.Primitives.Services
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<div class="@CssClass" role="group" @attributes="AdditionalAttributes">
+    <Button Variant="@Variant"
+            Size="@Size"
+            Disabled="@Disabled"
+            OnClick="@OnClick"
+            Icon="@Icon"
+            IconPosition="@IconPosition"
+            Class="@PrimaryButtonClass"
+            AriaLabel="@AriaLabel">
+        @ChildContent
+    </Button>
+    <DropdownMenu>
+        <DropdownMenuTrigger AsChild="true">
+            <Button Variant="@Variant"
+                    Size="@DropdownButtonSize"
+                    Disabled="@Disabled"
+                    Class="@DropdownButtonClass"
+                    AriaLabel="@(DropdownAriaLabel ?? "More options")">
+                <LucideIcon Name="chevron-down" Size="16" />
+            </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent Align="@PopoverAlign.End">
+            @DropdownContent
+        </DropdownMenuContent>
+    </DropdownMenu>
+</div>
+
+@code {
+}
