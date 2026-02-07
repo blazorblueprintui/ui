@@ -114,11 +114,14 @@ jobs:
           echo "📦 Package: $PACKAGE"
           echo "🏷️  Version: $VERSION"
 
-      - name: Setup Node.js
+      - name: Download Tailwind CSS standalone CLI
         if: steps.package-info.outputs.package == 'components'
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+        run: |
+          curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/download/v4.1.16/tailwindcss-linux-x64
+          chmod +x tailwindcss-linux-x64
+          mv tailwindcss-linux-x64 tools/tailwindcss-linux
+          echo "Tailwind CSS standalone CLI installed"
+          ./tools/tailwindcss-linux --help | head -1
 
       - name: Restore dependencies
         run: |
