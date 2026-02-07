@@ -146,6 +146,24 @@
         </div>
     </div>
 
+    <!-- Custom Styling -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Styling</h2>
+            <p class="text-sm text-muted-foreground">
+                Use the <code class="text-xs bg-muted px-1 py-0.5 rounded">Class</code> property on <code class="text-xs bg-muted px-1 py-0.5 rounded">ToastData</code> to create custom-styled toasts. TailwindMerge ensures your classes override the built-in variant styles.
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-4">
+            <Button Variant="ButtonVariant.Outline" OnClick="@ShowSuccessStyledToast">
+                Success Style
+            </Button>
+            <Button Variant="ButtonVariant.Outline" OnClick="@ShowBrandStyledToast">
+                Brand Style
+            </Button>
+        </div>
+    </div>
+
     <!-- API Reference -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -230,5 +248,25 @@
         ToastService.Show("First notification");
         ToastService.Show("Second notification", "Alert");
         ToastService.Error("Third notification is an error");
+    }
+
+    private void ShowSuccessStyledToast()
+    {
+        ToastService.Show(new ToastData
+        {
+            Title = "Success",
+            Description = "A custom-styled success toast using the Class property.",
+            Class = "border-green-500/30 bg-green-600 text-white"
+        });
+    }
+
+    private void ShowBrandStyledToast()
+    {
+        ToastService.Show(new ToastData
+        {
+            Title = "Brand Notification",
+            Description = "A custom-styled toast matching your brand colors.",
+            Class = "border-purple-500/30 bg-gradient-to-r from-purple-600 to-pink-600 text-white"
+        });
     }
 }

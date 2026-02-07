@@ -47,6 +47,11 @@ public class ToastData
     public Action? OnAction { get; set; }
 
     /// <summary>
+    /// Additional CSS classes to apply to the toast element.
+    /// </summary>
+    public string? Class { get; set; }
+
+    /// <summary>
     /// Timestamp when the toast was created.
     /// </summary>
     public DateTime CreatedAt { get; set; } = DateTime.Now;

@@ -100,10 +100,8 @@ public class MockDataService
         return $"{firstName}.{lastName}{suffix}@{domain}";
     }
 
-    private DateTimeOffset? GeneratePromotionDate()
-    {
-        return DateTimeOffset.UtcNow - TimeSpan.FromDays(_random.Next(365, 730));
-    }
+    private static DateTimeOffset? GeneratePromotionDate() =>
+        DateTimeOffset.UtcNow - TimeSpan.FromDays(_random.Next(365, 730));
 }
 
 /// <summary>
