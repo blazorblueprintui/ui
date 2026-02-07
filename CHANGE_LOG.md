@@ -22,6 +22,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `Class` property on `ToastData` for custom toast styling via TailwindMerge
 - SplitButton component — primary action button with a dropdown menu for secondary actions, composing Button + DropdownMenu with SplitButtonItem and SplitButtonSeparator sub-components
 
+### Changed
+- `blazorblueprint.css` removed from git tracking — now rebuilt automatically during build via MSBuild targets (Windows and Linux), eliminating merge conflicts across branches
+
 ### Fixed
 - Infinite render loop when FloatingPortal is nested inside Dialog (e.g., Combobox in Dialog) — removed re-registration in `OnParametersSet` to match DialogPortal pattern
 - Migrated all components to `ClassNames.cn()` for proper TailwindMerge support
