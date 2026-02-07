@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - DataTableColumn now supports nullable `TValue` types for columns with null values
 - Custom variant/styling examples to Button, Badge, Alert, and Toast demo pages showing how to use the `Class` parameter for project-specific variants
 - `Class` property on `ToastData` for custom toast styling via TailwindMerge
+- SplitButton component — primary action button with a dropdown menu for secondary actions, composing Button + DropdownMenu with SplitButtonItem and SplitButtonSeparator sub-components
 
 ### Fixed
 - Infinite render loop when FloatingPortal is nested inside Dialog (e.g., Combobox in Dialog) — removed re-registration in `OnParametersSet` to match DialogPortal pattern
