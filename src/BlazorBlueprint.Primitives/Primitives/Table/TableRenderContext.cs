@@ -60,7 +60,9 @@ public class TableRenderContext<TData> where TData : class
     public void SelectAll()
     {
         if (SelectionMode == SelectionMode.Multiple)
+        {
             State.Selection.SelectAll(ProcessedData);
+        }
     }
 
     /// <summary>

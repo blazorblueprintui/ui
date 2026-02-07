@@ -50,11 +50,19 @@ public class FileUploadItem
         get
         {
             if (Size < 1024)
+            {
                 return $"{Size} B";
+            }
+
             if (Size < 1024 * 1024)
+            {
                 return $"{Size / 1024.0:F1} KB";
+            }
+
             if (Size < 1024 * 1024 * 1024)
+            {
                 return $"{Size / (1024.0 * 1024):F1} MB";
+            }
             return $"{Size / (1024.0 * 1024 * 1024):F1} GB";
         }
     }

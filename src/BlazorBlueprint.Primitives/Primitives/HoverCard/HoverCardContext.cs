@@ -84,24 +84,14 @@ public class HoverCardContext : PrimitiveContextWithEvents<HoverCardState>
     /// <summary>
     /// Closes the hover card.
     /// </summary>
-    public void Close()
-    {
-        UpdateState(state =>
-        {
-            state.IsOpen = false;
-        });
-    }
+    public void Close() =>
+        UpdateState(state => state.IsOpen = false);
 
     /// <summary>
     /// Sets the open state of the hover card.
     /// </summary>
-    public void SetOpen(bool isOpen)
-    {
-        UpdateState(state =>
-        {
-            state.IsOpen = isOpen;
-        });
-    }
+    public void SetOpen(bool isOpen) =>
+        UpdateState(state => state.IsOpen = isOpen);
 
     /// <summary>
     /// Sets the trigger element reference for positioning.
@@ -116,10 +106,7 @@ public class HoverCardContext : PrimitiveContextWithEvents<HoverCardState>
         // gets notified when the trigger element becomes available
         if (State.TriggerElement?.Id != triggerElement.Id)
         {
-            UpdateState(state =>
-            {
-                state.TriggerElement = triggerElement;
-            });
+            UpdateState(state => state.TriggerElement = triggerElement);
         }
     }
 }

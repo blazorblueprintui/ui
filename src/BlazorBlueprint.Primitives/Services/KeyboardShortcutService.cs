@@ -39,10 +39,7 @@ public class KeyboardShortcutService : IKeyboardShortcutService
     /// <inheritdoc />
     public async Task<IDisposable> RegisterAsync(string shortcut, Func<Task> callback, string id)
     {
-        if (_disposed)
-        {
-            throw new ObjectDisposedException(nameof(KeyboardShortcutService));
-        }
+        ObjectDisposedException.ThrowIf(_disposed, nameof(KeyboardShortcutService));
 
         var parsed = KeyboardShortcut.Parse(shortcut);
         var normalizedKey = parsed.GetNormalizedKey();
@@ -73,16 +70,10 @@ public class KeyboardShortcutService : IKeyboardShortcutService
     }
 
     /// <inheritdoc />
-    public void Suspend()
-    {
-        _suspended = true;
-    }
+    public void Suspend() => _suspended = true;
 
     /// <inheritdoc />
-    public void Resume()
-    {
-        _suspended = false;
-    }
+    public void Resume() => _suspended = false;
 
     /// <summary>
     /// Called from JavaScript when a registered shortcut key is pressed.
@@ -124,6 +115,7 @@ public class KeyboardShortcutService : IKeyboardShortcutService
             return;
         }
 
+        GC.SuppressFinalize(this);
         _disposed = true;
         _shortcuts.Clear();
 
@@ -173,11 +165,11 @@ public class KeyboardShortcutService : IKeyboardShortcutService
         if (_shortcuts.Remove(normalizedKey) && _module != null)
         {
             // Fire-and-forget unregister from JS
-            _ = _module.InvokeVoidAsync("unregisterShortcut", normalizedKey);
+            _ = _module.InvokeVoidAsync("unregisterShortcut", normalizedKey).AsTask();
         }
     }
 
-    private class ShortcutRegistration
+    private sealed class ShortcutRegistration
     {
         public string Id { get; }
         public KeyboardShortcut Shortcut { get; }
@@ -191,7 +183,7 @@ public class KeyboardShortcutService : IKeyboardShortcutService
         }
     }
 
-    private class ShortcutHandle : IDisposable
+    private sealed class ShortcutHandle : IDisposable
     {
         private readonly KeyboardShortcutService _service;
         private readonly string _normalizedKey;

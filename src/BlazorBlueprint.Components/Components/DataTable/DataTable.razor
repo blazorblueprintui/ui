@@ -163,7 +163,7 @@
                                         else
                                         {
                                             var value = column.Property(item);
-                                            @(value?.ToString() ?? "")
+                                            @(value is IFormattable formattable && column.Format is not null ? formattable.ToString(column.Format, null) : value?.ToString() ?? "")
                                         }
                                     </TableCell>
                                 }

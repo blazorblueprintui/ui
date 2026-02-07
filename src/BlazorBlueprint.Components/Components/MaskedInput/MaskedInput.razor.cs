@@ -127,7 +127,9 @@ public partial class MaskedInput : ComponentBase, IAsyncDisposable
     private string GetEffectiveMask()
     {
         if (Preset != MaskPreset.Custom)
+        {
             return MaskDefinitions.GetPattern(Preset);
+        }
 
         return Mask ?? string.Empty;
     }
@@ -141,24 +143,24 @@ public partial class MaskedInput : ComponentBase, IAsyncDisposable
         get
         {
             if (!string.IsNullOrEmpty(Placeholder))
+            {
                 return Placeholder;
+            }
 
             if (Preset != MaskPreset.Custom)
+            {
                 return MaskDefinitions.GetPlaceholder(Preset);
+            }
 
             return Processor.GetEmptyMask();
         }
     }
 
-    protected override void OnInitialized()
-    {
+    protected override void OnInitialized() =>
         UpdateDisplayValue();
-    }
 
-    protected override void OnParametersSet()
-    {
+    protected override void OnParametersSet() =>
         UpdateDisplayValue();
-    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -181,10 +183,8 @@ public partial class MaskedInput : ComponentBase, IAsyncDisposable
         }
     }
 
-    private void UpdateDisplayValue()
-    {
+    private void UpdateDisplayValue() =>
         _displayValue = Processor.ApplyMask(Value);
-    }
 
     private void HandleInput(ChangeEventArgs args)
     {
@@ -196,7 +196,9 @@ public partial class MaskedInput : ComponentBase, IAsyncDisposable
         foreach (var c in mask)
         {
             if (MaskProcessor.IsMaskChar(c))
+            {
                 maxEditablePositions++;
+            }
         }
 
         // Extract only valid characters from input (letters and digits only)
@@ -206,7 +208,9 @@ public partial class MaskedInput : ComponentBase, IAsyncDisposable
         {
             // Skip placeholder characters
             if (c == PlaceholderChar)
+            {
                 continue;
+            }
 
             // Only collect alphanumeric characters
             if (char.IsLetterOrDigit(c))
@@ -216,7 +220,9 @@ public partial class MaskedInput : ComponentBase, IAsyncDisposable
 
             // Stop if we have enough characters
             if (rawInput.Length >= maxEditablePositions)
+            {
                 break;
+            }
         }
 
         var rawInputStr = rawInput.ToString();
@@ -230,10 +236,14 @@ public partial class MaskedInput : ComponentBase, IAsyncDisposable
         {
             // Find next editable mask position
             while (maskIndex < mask.Length && !MaskProcessor.IsMaskChar(mask[maskIndex]))
+            {
                 maskIndex++;
+            }
 
             if (maskIndex >= mask.Length)
+            {
                 break;
+            }
 
             var maskChar = mask[maskIndex];
             var inputChar = rawInputStr[rawIndex];
@@ -333,7 +343,10 @@ public partial class MaskedInput : ComponentBase, IAsyncDisposable
                 {
                     // Find the first editable position
                     var firstEditablePos = Processor.GetNextEditablePosition(0);
-                    if (firstEditablePos < 0) firstEditablePos = 0;
+                    if (firstEditablePos < 0)
+                    {
+                        firstEditablePos = 0;
+                    }
 
                     await _jsModule.InvokeVoidAsync("setInputValue", _inputRef, _displayValue, firstEditablePos);
                 }
@@ -361,6 +374,7 @@ public partial class MaskedInput : ComponentBase, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        GC.SuppressFinalize(this);
         if (_jsModule != null)
         {
             try

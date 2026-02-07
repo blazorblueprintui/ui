@@ -94,6 +94,6 @@ public partial class CollapsibleContent : ComponentBase
     /// These classes are applied to the outer container to enable smooth height transitions.
     /// User's custom classes are applied to an inner wrapper to avoid padding affecting the grid collapse.
     /// </remarks>
-    private string GridCssClass =>
+    private static string GridCssClass =>
         "grid grid-rows-[0fr] transition-[grid-template-rows] duration-200 ease-out data-[state=open]:grid-rows-[1fr]";
 }

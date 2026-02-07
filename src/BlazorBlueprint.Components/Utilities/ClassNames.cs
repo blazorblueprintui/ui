@@ -37,6 +37,7 @@ namespace BlazorBlueprint.Components.Utilities;
 /// </example>
 public static class ClassNames
 {
+    private static readonly char[] WhitespaceSeparators = [' ', '\t', '\n', '\r'];
     /// <summary>
     /// Combines multiple class names intelligently, handling Tailwind CSS conflicts.
     /// Equivalent to shadcn's cn() utility.
@@ -58,7 +59,9 @@ public static class ClassNames
     public static string cn(params object?[] inputs)
     {
         if (inputs == null || inputs.Length == 0)
+        {
             return string.Empty;
+        }
 
         var classes = new List<string>();
 
@@ -68,7 +71,9 @@ public static class ClassNames
         }
 
         if (classes.Count == 0)
+        {
             return string.Empty;
+        }
 
         // Use TailwindMerge to resolve conflicts
         return TailwindMerge.Merge(classes.ToArray());
@@ -80,7 +85,9 @@ public static class ClassNames
     private static void ProcessInput(object? input, List<string> classes)
     {
         if (input == null)
+        {
             return;
+        }
 
         // Handle strings (most common case)
         if (input is string str)
@@ -88,7 +95,7 @@ public static class ClassNames
             if (!string.IsNullOrWhiteSpace(str))
             {
                 // Split on whitespace to handle multi-class strings
-                var parts = str.Split(new[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                var parts = str.Split(WhitespaceSeparators, StringSplitOptions.RemoveEmptyEntries);
                 classes.AddRange(parts);
             }
             return;
@@ -136,8 +143,6 @@ public static class ClassNames
     /// cn("btn", isActive ? "btn-active" : null, "px-4")
     /// </code>
     /// </example>
-    public static string? when(bool condition, string className)
-    {
-        return condition ? className : null;
-    }
+    public static string? when(bool condition, string className) =>
+        condition ? className : null;
 }

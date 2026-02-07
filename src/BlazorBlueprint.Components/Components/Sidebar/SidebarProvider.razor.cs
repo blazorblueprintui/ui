@@ -86,10 +86,8 @@ public partial class SidebarProvider
     /// Called from JavaScript when mobile state changes.
     /// </summary>
     [JSInvokable]
-    public void OnMobileChange(bool isMobile)
-    {
+    public void OnMobileChange(bool isMobile) =>
         Context.SetIsMobile(isMobile);
-    }
 
     /// <summary>
     /// Called from JavaScript when keyboard shortcut (Ctrl/Cmd + B) is pressed.

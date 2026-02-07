@@ -218,7 +218,10 @@ public partial class RichTextEditor : ComponentBase, IAsyncDisposable
 
     private async Task InitializeJsAsync()
     {
-        if (_jsInitialized) return;
+        if (_jsInitialized)
+        {
+            return;
+        }
 
         try
         {
@@ -291,13 +294,19 @@ public partial class RichTextEditor : ComponentBase, IAsyncDisposable
     private static bool GetFormatBool(Dictionary<string, object?> format, string key)
     {
         if (!format.TryGetValue(key, out var value) || value == null)
+        {
             return false;
+        }
 
         if (value is bool b)
+        {
             return b;
+        }
 
         if (value is JsonElement je && je.ValueKind == JsonValueKind.True)
+        {
             return true;
+        }
 
         return false;
     }
@@ -305,17 +314,25 @@ public partial class RichTextEditor : ComponentBase, IAsyncDisposable
     private static string GetFormatString(Dictionary<string, object?> format, string key)
     {
         if (!format.TryGetValue(key, out var value) || value == null)
+        {
             return "";
+        }
 
         if (value is string s)
+        {
             return s;
+        }
 
         if (value is JsonElement je)
         {
             if (je.ValueKind == JsonValueKind.String)
+            {
                 return je.GetString() ?? "";
+            }
             if (je.ValueKind == JsonValueKind.Number)
-                return je.GetInt32().ToString();
+            {
+                return je.GetInt32().ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
         }
 
         return value.ToString() ?? "";
@@ -325,10 +342,13 @@ public partial class RichTextEditor : ComponentBase, IAsyncDisposable
 
     private async Task ToggleFormatAsync(string format, object? value = null)
     {
-        if (_jsModule == null || !_jsInitialized || Disabled) return;
+        if (_jsModule == null || !_jsInitialized || Disabled)
+        {
+            return;
+        }
 
         // Toggle: if already active, remove; otherwise apply
-        bool isActive = format switch
+        var isActive = format switch
         {
             "bold" => _isBold,
             "italic" => _isItalic,
@@ -354,7 +374,10 @@ public partial class RichTextEditor : ComponentBase, IAsyncDisposable
 
     private void UpdateFormatState(Dictionary<string, object?> format)
     {
-        if (format == null) return;
+        if (format == null)
+        {
+            return;
+        }
 
         _isBold = GetFormatBool(format, "bold");
         _isItalic = GetFormatBool(format, "italic");
@@ -400,7 +423,10 @@ public partial class RichTextEditor : ComponentBase, IAsyncDisposable
 
     private async Task HandleHeaderChangeAsync(string? value)
     {
-        if (_jsModule == null || !_jsInitialized || Disabled) return;
+        if (_jsModule == null || !_jsInitialized || Disabled)
+        {
+            return;
+        }
 
         _headerLevel = value ?? "";
 
@@ -410,7 +436,7 @@ public partial class RichTextEditor : ComponentBase, IAsyncDisposable
         }
         else
         {
-            await _jsModule.InvokeVoidAsync("format", _editorId, "header", int.Parse(value));
+            await _jsModule.InvokeVoidAsync("format", _editorId, "header", int.Parse(value, System.Globalization.CultureInfo.InvariantCulture));
         }
 
         // Refocus the editor after dropdown change
@@ -419,7 +445,10 @@ public partial class RichTextEditor : ComponentBase, IAsyncDisposable
 
     private async Task InsertLinkAsync()
     {
-        if (_jsModule == null || !_jsInitialized || Disabled) return;
+        if (_jsModule == null || !_jsInitialized || Disabled)
+        {
+            return;
+        }
 
         // Save the current selection before opening dialog
         _savedSelection = await GetSelectionAsync();
@@ -480,7 +509,9 @@ public partial class RichTextEditor : ComponentBase, IAsyncDisposable
     private static bool IsValidUrl(string? url)
     {
         if (string.IsNullOrWhiteSpace(url) || url == "https://")
+        {
             return false;
+        }
 
         return Uri.TryCreate(url, UriKind.Absolute, out var uri)
                && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
@@ -488,7 +519,10 @@ public partial class RichTextEditor : ComponentBase, IAsyncDisposable
 
     private async Task ApplyLinkAsync()
     {
-        if (_jsModule == null || !_jsInitialized || !IsValidUrl(_linkUrl)) return;
+        if (_jsModule == null || !_jsInitialized || !IsValidUrl(_linkUrl))
+        {
+            return;
+        }
 
         // Restore selection before applying link
         if (_savedSelection != null)
@@ -504,7 +538,10 @@ public partial class RichTextEditor : ComponentBase, IAsyncDisposable
 
     private async Task RemoveLinkAsync()
     {
-        if (_jsModule == null || !_jsInitialized) return;
+        if (_jsModule == null || !_jsInitialized)
+        {
+            return;
+        }
 
         // Restore selection before removing link
         if (_savedSelection != null)
@@ -675,7 +712,7 @@ public partial class RichTextEditor : ComponentBase, IAsyncDisposable
         Class
     );
 
-    private string ToolbarCssClass => ClassNames.cn(
+    private static string ToolbarCssClass => ClassNames.cn(
         "flex flex-wrap items-center gap-1 px-3 py-2 border-b border-input bg-muted/40"
     );
 
@@ -713,6 +750,7 @@ public partial class RichTextEditor : ComponentBase, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        GC.SuppressFinalize(this);
         if (_jsModule != null && _jsInitialized)
         {
             try

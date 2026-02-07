@@ -35,6 +35,33 @@ namespace BlazorBlueprint.Components.Field;
 /// </example>
 public partial class Field : ComponentBase
 {
+    private static readonly string[] VerticalClasses = new[]
+    {
+        // Full-width vertical stacking (default)
+        "flex-col w-full"
+    };
+
+    private static readonly string[] HorizontalClasses = new[]
+    {
+        // Row-based layout with aligned items
+        "flex-row items-start",
+        // Adjust spacing for checkbox/radio alignment
+        "[&:has([data-slot=checkbox])]:items-center",
+        "[&:has([data-slot=radio])]:items-center",
+        "[&:has([data-slot=switch])]:items-center"
+    };
+
+    private static readonly string[] ResponsiveClasses = new[]
+    {
+        // Vertical by default, horizontal at medium breakpoint
+        "flex-col w-full",
+        "@md:flex-row @md:items-start",
+        // Adjust spacing for checkbox/radio alignment at medium+
+        "@md:[&:has([data-slot=checkbox])]:items-center",
+        "@md:[&:has([data-slot=radio])]:items-center",
+        "@md:[&:has([data-slot=switch])]:items-center"
+    };
+
     /// <summary>
     /// Gets or sets the orientation of the field layout.
     /// </summary>
@@ -103,32 +130,11 @@ public partial class Field : ComponentBase
         // Orientation-specific styles
         Orientation switch
         {
-            FieldOrientation.Vertical => string.Join(" ", new[]
-            {
-                // Full-width vertical stacking (default)
-                "flex-col w-full"
-            }),
+            FieldOrientation.Vertical => string.Join(" ", VerticalClasses),
 
-            FieldOrientation.Horizontal => string.Join(" ", new[]
-            {
-                // Row-based layout with aligned items
-                "flex-row items-start",
-                // Adjust spacing for checkbox/radio alignment
-                "[&:has([data-slot=checkbox])]:items-center",
-                "[&:has([data-slot=radio])]:items-center",
-                "[&:has([data-slot=switch])]:items-center"
-            }),
+            FieldOrientation.Horizontal => string.Join(" ", HorizontalClasses),
 
-            FieldOrientation.Responsive => string.Join(" ", new[]
-            {
-                // Vertical by default, horizontal at medium breakpoint
-                "flex-col w-full",
-                "@md:flex-row @md:items-start",
-                // Adjust spacing for checkbox/radio alignment at medium+
-                "@md:[&:has([data-slot=checkbox])]:items-center",
-                "@md:[&:has([data-slot=radio])]:items-center",
-                "@md:[&:has([data-slot=switch])]:items-center"
-            }),
+            FieldOrientation.Responsive => string.Join(" ", ResponsiveClasses),
 
             _ => string.Empty
         },

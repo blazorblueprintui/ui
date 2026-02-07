@@ -13,7 +13,7 @@
             <div class="h-5 w-5 rounded border border-input mr-2"
                  style="background-color: @Value;">
             </div>
-            <span class="font-mono text-sm">@Value</span>
+            <span class="font-mono text-sm">@DisplayValue</span>
         </Button>
     </PopoverTrigger>
     <PopoverContent Class="w-[280px] p-4" Align="@PopoverAlign.Start">
@@ -80,7 +80,7 @@
                 </div>
 
                 @* RGB Inputs *@
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid @(ShowAlpha ? "grid-cols-4" : "grid-cols-3") gap-2">
                     <div>
                         <label class="text-xs text-muted-foreground">R</label>
                         <Input Value="@_r.ToString()"
@@ -99,6 +99,15 @@
                                ValueChanged="@(v => HandleRgbInput(v, 'b'))"
                                Class="text-sm text-center" />
                     </div>
+                    @if (ShowAlpha)
+                    {
+                        <div>
+                            <label class="text-xs text-muted-foreground">A</label>
+                            <Input Value="@($"{(int)Math.Round(_alpha * 100)}%")"
+                                   ValueChanged="HandleAlphaInput"
+                                   Class="text-sm text-center" />
+                        </div>
+                    }
                 </div>
             }
 
@@ -132,6 +141,7 @@
     private double _alpha = 1;
     private int _r, _g, _b;
     private string _hexInput = "#000000";
+    private string? _previousValue;
     private long? _activeAreaPointerId;
     private long? _activeHuePointerId;
     private long? _activeAlphaPointerId;
@@ -200,16 +210,28 @@
 
     private string CurrentColorWithoutAlpha => ColorUtils.ToHex(_r, _g, _b);
 
+    private string DisplayValue
+    {
+        get
+        {
+            if (!ShowAlpha) return Value;
+            var hex = ColorUtils.ToHex(_r, _g, _b);
+            return _alpha < 1 ? $"{hex} {(int)Math.Round(_alpha * 100)}%" : hex;
+        }
+    }
+
     protected override void OnInitialized()
     {
         ParseValue(Value);
+        _previousValue = Value;
     }
 
     protected override void OnParametersSet()
     {
-        if (ColorUtils.IsValidHex(Value))
+        if (Value != _previousValue && ColorUtils.IsValidHex(Value))
         {
             ParseValue(Value);
+            _previousValue = Value;
         }
     }
 
@@ -228,7 +250,7 @@
         _saturation = s;
         _brightness = v;
 
-        _hexInput = hex.StartsWith("#") ? hex : $"#{hex}";
+        _hexInput = ColorUtils.ToHex(_r, _g, _b);
     }
 
     private async Task UpdateColor()
@@ -238,15 +260,18 @@
         _g = g;
         _b = b;
 
+        var alphaInt = ShowAlpha ? (int)Math.Round(_alpha * 255) : (int?)null;
+
         var newValue = Format switch
         {
-            ColorFormat.RGB => ColorUtils.ToRgbString(r, g, b, ShowAlpha ? (int)(_alpha * 255) : null),
-            ColorFormat.HSL => ColorUtils.ToHslString(_hue, _saturation, _brightness * (1 - _saturation / 2), ShowAlpha ? (int)(_alpha * 255) : null),
-            _ => ColorUtils.ToHex(r, g, b, ShowAlpha ? (int)(_alpha * 255) : null)
+            ColorFormat.RGB => ColorUtils.ToRgbString(r, g, b, alphaInt),
+            ColorFormat.HSL => ColorUtils.ToHslString(_hue, _saturation, _brightness * (1 - _saturation / 2), alphaInt),
+            _ => ColorUtils.ToHex(r, g, b, alphaInt)
         };
 
-        _hexInput = ColorUtils.ToHex(r, g, b, ShowAlpha ? (int)(_alpha * 255) : null);
+        _hexInput = ColorUtils.ToHex(r, g, b);
 
+        _previousValue = newValue;
         Value = newValue;
         await ValueChanged.InvokeAsync(newValue);
         StateHasChanged();
@@ -391,12 +416,10 @@
         if (string.IsNullOrEmpty(value)) return;
 
         var hex = value.StartsWith("#") ? value : $"#{value}";
-        if (ColorUtils.IsValidHex(hex))
-        {
-            _hexInput = hex;
-            ParseValue(hex);
-            await ValueChanged.InvokeAsync(hex);
-        }
+        if (!ColorUtils.IsValidHex(hex)) return;
+
+        ParseValue(hex);
+        await UpdateColor();
     }
 
     private async Task HandleRgbInput(string? value, char component)
@@ -422,9 +445,16 @@
     private async Task SelectPreset(string color)
     {
         ParseValue(color);
-        Value = color;
-        await ValueChanged.InvokeAsync(color);
-        StateHasChanged();
+        await UpdateColor();
+    }
+
+    private async Task HandleAlphaInput(string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return;
+        value = value.TrimEnd('%');
+        if (!int.TryParse(value, out var v)) return;
+        _alpha = Math.Max(0, Math.Min(1, v / 100.0));
+        await UpdateColor();
     }
 
     private string ButtonClass => ClassNames.cn(

@@ -41,29 +41,29 @@ public interface IVirtualizedGroupHandler
     /// <summary>
     /// Gets the number of visible items in this virtualized group.
     /// </summary>
-    int VisibleItemCount { get; }
+    public int VisibleItemCount { get; }
 
     /// <summary>
     /// Gets or sets the focused index within this group (-1 if not focused).
     /// </summary>
-    int FocusedIndex { get; set; }
+    public int FocusedIndex { get; set; }
 
     /// <summary>
     /// Selects the currently focused item.
     /// </summary>
-    Task SelectFocusedItemAsync();
+    public Task SelectFocusedItemAsync();
 
     /// <summary>
     /// Notifies the group to re-render.
     /// </summary>
-    void NotifyStateChanged();
+    public void NotifyStateChanged();
 
     /// <summary>
     /// Scrolls to a specific index and sets focus. Used for wrap-around navigation
     /// when the target item may not be loaded yet in lazy loading mode.
     /// </summary>
     /// <param name="index">The index to scroll to and focus.</param>
-    Task ScrollToIndexAsync(int index);
+    public Task ScrollToIndexAsync(int index);
 }
 
 /// <summary>
@@ -80,8 +80,8 @@ public class CommandContext
     private Func<CommandItemMetadata, string, bool>? _filterFunction;
     private bool _closeOnSelect = true;
     private bool _disabled;
-    private bool _hasRegisteredItems = false;
-    private bool _isKeyboardNavigating = false; // Flag to suppress hover during keyboard nav
+    private bool _hasRegisteredItems;
+    private bool _isKeyboardNavigating; // Flag to suppress hover during keyboard nav
 
     /// <summary>
     /// Event that is raised when the state changes.
@@ -196,18 +196,14 @@ public class CommandContext
     /// <summary>
     /// Unregisters a virtualized group handler.
     /// </summary>
-    public void UnregisterVirtualizedGroup(IVirtualizedGroupHandler handler)
-    {
+    public void UnregisterVirtualizedGroup(IVirtualizedGroupHandler handler) =>
         _virtualizedGroups.Remove(handler);
-    }
 
     /// <summary>
     /// Gets the list of registered virtualized groups.
     /// </summary>
-    public IReadOnlyList<IVirtualizedGroupHandler> GetVirtualizedGroups()
-    {
-        return _virtualizedGroups.AsReadOnly();
-    }
+    public IReadOnlyList<IVirtualizedGroupHandler> GetVirtualizedGroups() =>
+        _virtualizedGroups.AsReadOnly();
 
     /// <summary>
     /// Sets focus on a specific virtualized group and clears focus from all other groups and regular items.
@@ -355,7 +351,9 @@ public class CommandContext
     {
         // Don't show "No results" until items have had a chance to register
         if (!_hasRegisteredItems)
+        {
             return true;
+        }
 
         return GetFilteredItems().Any(i => !i.Disabled);
     }
@@ -420,10 +418,13 @@ public class CommandContext
         var activeVirtualizedGroups = _virtualizedGroups.Where(g => g.VisibleItemCount > 0).ToList();
 
         // Calculate total navigable items
-        int totalRegularItems = allFiltered.Count;
-        int totalVirtualizedItems = activeVirtualizedGroups.Sum(g => g.VisibleItemCount);
+        var totalRegularItems = allFiltered.Count;
+        var totalVirtualizedItems = activeVirtualizedGroups.Sum(g => g.VisibleItemCount);
 
-        if (enabledFilteredItems.Count == 0 && totalVirtualizedItems == 0) return;
+        if (enabledFilteredItems.Count == 0 && totalVirtualizedItems == 0)
+        {
+            return;
+        }
 
         // Currently in a virtualized group?
         if (_focusedVirtualizedGroupIndex >= 0)
@@ -437,8 +438,8 @@ public class CommandContext
             else
             {
                 var currentGroup = activeVirtualizedGroups[_focusedVirtualizedGroupIndex];
-                int currentIndexInGroup = currentGroup.FocusedIndex;
-                int newIndexInGroup = currentIndexInGroup + direction;
+                var currentIndexInGroup = currentGroup.FocusedIndex;
+                var newIndexInGroup = currentIndexInGroup + direction;
 
                 if (newIndexInGroup >= 0 && newIndexInGroup < currentGroup.VisibleItemCount)
                 {
@@ -517,8 +518,8 @@ public class CommandContext
         }
 
         // Currently in regular items
-        int currentIndex = _focusedIndex;
-        int newIndex = currentIndex + direction;
+        var currentIndex = _focusedIndex;
+        var newIndex = currentIndex + direction;
 
         if (direction > 0)
         {
@@ -567,7 +568,10 @@ public class CommandContext
                     return;
                 }
                 newIndex = 0;
-                while (newIndex < totalRegularItems && allFiltered[newIndex].Disabled) newIndex++;
+                while (newIndex < totalRegularItems && allFiltered[newIndex].Disabled)
+                {
+                    newIndex++;
+                }
             }
         }
         else
@@ -617,7 +621,10 @@ public class CommandContext
                     return;
                 }
                 newIndex = totalRegularItems - 1;
-                while (newIndex >= 0 && allFiltered[newIndex].Disabled) newIndex--;
+                while (newIndex >= 0 && allFiltered[newIndex].Disabled)
+                {
+                    newIndex--;
+                }
             }
         }
 
@@ -630,7 +637,7 @@ public class CommandContext
     private void FocusFirstRegularItem()
     {
         var allFiltered = GetFilteredItems();
-        for (int i = 0; i < allFiltered.Count; i++)
+        for (var i = 0; i < allFiltered.Count; i++)
         {
             if (!allFiltered[i].Disabled)
             {
@@ -643,7 +650,7 @@ public class CommandContext
     private void FocusLastRegularItem()
     {
         var allFiltered = GetFilteredItems();
-        for (int i = allFiltered.Count - 1; i >= 0; i--)
+        for (var i = allFiltered.Count - 1; i >= 0; i--)
         {
             if (!allFiltered[i].Disabled)
             {
@@ -667,7 +674,7 @@ public class CommandContext
 
         // First try regular items
         var filteredItems = GetFilteredItems();
-        for (int i = 0; i < filteredItems.Count; i++)
+        for (var i = 0; i < filteredItems.Count; i++)
         {
             if (!filteredItems[i].Disabled)
             {
@@ -713,7 +720,7 @@ public class CommandContext
 
         // Then try regular items
         var filteredItems = GetFilteredItems();
-        for (int i = filteredItems.Count - 1; i >= 0; i--)
+        for (var i = filteredItems.Count - 1; i >= 0; i--)
         {
             if (!filteredItems[i].Disabled)
             {
@@ -797,8 +804,6 @@ public class CommandContext
     /// <summary>
     /// Notifies subscribers that the state has changed.
     /// </summary>
-    private void NotifyStateChanged()
-    {
+    private void NotifyStateChanged() =>
         OnStateChanged?.Invoke();
-    }
 }

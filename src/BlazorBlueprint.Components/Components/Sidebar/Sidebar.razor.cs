@@ -39,13 +39,7 @@ public partial class Sidebar : IDisposable
     private bool MobileOpen
     {
         get => Context?.OpenMobile ?? false;
-        set
-        {
-            if (Context != null)
-            {
-                Context.SetOpenMobile(value);
-            }
-        }
+        set => Context?.SetOpenMobile(value);
     }
 
     private SheetSide GetSheetSide()
@@ -119,9 +113,15 @@ public partial class Sidebar : IDisposable
 
     private string GetDataState()
     {
-        if (Context == null) return "collapsed";
+        if (Context == null)
+        {
+            return "collapsed";
+        }
 
-        if (Context.Open) return "expanded";
+        if (Context.Open)
+        {
+            return "expanded";
+        }
 
         // When not open: return "collapsed" if Collapsible (shows icons), "closed" if not Collapsible (fully hidden)
         return Collapsible ? "collapsed" : "closed";
@@ -150,14 +150,13 @@ public partial class Sidebar : IDisposable
         }
     }
 
-    private void OnContextStateChanged(object? sender, EventArgs e)
-    {
+    private void OnContextStateChanged(object? sender, EventArgs e) =>
         // Force re-render when sidebar state changes
         StateHasChanged();
-    }
 
     public void Dispose()
     {
+        GC.SuppressFinalize(this);
         if (_subscribedContext != null)
         {
             _subscribedContext.StateChanged -= OnContextStateChanged;

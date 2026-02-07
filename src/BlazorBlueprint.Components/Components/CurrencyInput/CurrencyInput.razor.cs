@@ -148,7 +148,9 @@ public partial class CurrencyInput : ComponentBase
         get
         {
             if (_isEditing)
+            {
                 return _editingValue;
+            }
 
             return FormatCurrency(Value);
         }
@@ -231,7 +233,10 @@ public partial class CurrencyInput : ComponentBase
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
-        if (Disabled) return;
+        if (Disabled)
+        {
+            return;
+        }
 
         var step = (decimal)Math.Pow(10, -Currency.DecimalPlaces);
 
@@ -264,13 +269,19 @@ public partial class CurrencyInput : ComponentBase
         value = Math.Round(value, Currency.DecimalPlaces);
 
         if (!AllowNegative && value < 0)
+        {
             value = 0;
+        }
 
         if (Min.HasValue && value < Min.Value)
+        {
             value = Min.Value;
+        }
 
         if (Max.HasValue && value > Max.Value)
+        {
             value = Max.Value;
+        }
 
         return value;
     }
@@ -304,7 +315,7 @@ public partial class CurrencyInput : ComponentBase
         }
 
         // Handle negative sign
-        if (!AllowNegative && input.StartsWith("-"))
+        if (!AllowNegative && input.StartsWith('-'))
         {
             return false;
         }

@@ -6,6 +6,9 @@ namespace BlazorBlueprint.Components.Utilities;
 /// </summary>
 public static class ClassNamesTests
 {
+    private static readonly string[] AbcArray = ["a", "b", "c"];
+    private static readonly string[] BcArray = ["b", "c"];
+
     public static void RunTests()
     {
         Console.WriteLine("=== ClassNames (cn) Utility Tests ===\n");
@@ -37,12 +40,12 @@ public static class ClassNamesTests
 
         // Test 6: Array support
         Test("Array support",
-            ClassNames.cn(new[] { "a", "b", "c" }),
+            ClassNames.cn(AbcArray),
             "a b c");
 
         // Test 7: Mixed arrays and strings
         Test("Mixed arrays and strings",
-            ClassNames.cn("a", new[] { "b", "c" }, "d"),
+            ClassNames.cn("a", BcArray, "d"),
             "a b c d");
 
         // Test 8: Tailwind conflict - padding

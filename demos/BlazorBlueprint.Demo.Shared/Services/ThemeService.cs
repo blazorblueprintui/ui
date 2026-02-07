@@ -33,7 +33,10 @@ public class ThemeService
     /// </summary>
     public async Task InitializeAsync()
     {
-        if (_isInitialized) return;
+        if (_isInitialized)
+        {
+            return;
+        }
 
         try
         {
@@ -71,7 +74,10 @@ public class ThemeService
     /// <param name="isDark">True for dark mode, false for light mode.</param>
     public async Task SetThemeAsync(bool isDark)
     {
-        if (_isDarkMode == isDark) return;
+        if (_isDarkMode == isDark)
+        {
+            return;
+        }
 
         _isDarkMode = isDark;
         await ApplyThemeAsync(_isDarkMode);

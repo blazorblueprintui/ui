@@ -57,8 +57,5 @@ public class TableState<TData> where TData : class
     /// Resets only the pagination state while preserving sorting and selection.
     /// Useful when data changes.
     /// </summary>
-    public void ResetPagination()
-    {
-        Pagination.Reset();
-    }
+    public void ResetPagination() => Pagination.Reset();
 }

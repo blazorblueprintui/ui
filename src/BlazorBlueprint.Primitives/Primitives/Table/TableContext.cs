@@ -129,10 +129,7 @@ public class TableContext<TData> : PrimitiveContextWithEvents<TableState<TData>>
     /// <param name="item">The item to toggle.</param>
     public void ToggleRowSelection(TData item)
     {
-        UpdateState(state =>
-        {
-            state.Selection.Toggle(item);
-        });
+        UpdateState(state => state.Selection.Toggle(item));
 
         OnRowSelect?.Invoke(item);
         OnSelectionChange?.Invoke(State.Selection.SelectedItems);
@@ -144,10 +141,7 @@ public class TableContext<TData> : PrimitiveContextWithEvents<TableState<TData>>
     /// <param name="item">The item to select.</param>
     public void SelectRow(TData item)
     {
-        UpdateState(state =>
-        {
-            state.Selection.Select(item);
-        });
+        UpdateState(state => state.Selection.Select(item));
 
         OnRowSelect?.Invoke(item);
         OnSelectionChange?.Invoke(State.Selection.SelectedItems);
@@ -160,12 +154,11 @@ public class TableContext<TData> : PrimitiveContextWithEvents<TableState<TData>>
     public void SelectAllOnPage()
     {
         if (SelectionMode != SelectionMode.Multiple)
-            return;
-
-        UpdateState(state =>
         {
-            state.Selection.SelectAll(ProcessedData);
-        });
+            return;
+        }
+
+        UpdateState(state => state.Selection.SelectAll(ProcessedData));
 
         OnSelectionChange?.Invoke(State.Selection.SelectedItems);
     }
@@ -175,10 +168,7 @@ public class TableContext<TData> : PrimitiveContextWithEvents<TableState<TData>>
     /// </summary>
     public void ClearSelection()
     {
-        UpdateState(state =>
-        {
-            state.Selection.Clear();
-        });
+        UpdateState(state => state.Selection.Clear());
 
         OnSelectionChange?.Invoke(State.Selection.SelectedItems);
     }
@@ -189,10 +179,7 @@ public class TableContext<TData> : PrimitiveContextWithEvents<TableState<TData>>
     /// <param name="page">The page number (1-based).</param>
     public void GoToPage(int page)
     {
-        UpdateState(state =>
-        {
-            state.Pagination.GoToPage(page);
-        });
+        UpdateState(state => state.Pagination.GoToPage(page));
 
         OnPageChange?.Invoke(page);
     }
@@ -205,10 +192,7 @@ public class TableContext<TData> : PrimitiveContextWithEvents<TableState<TData>>
         if (State.Pagination.CanGoNext)
         {
             var newPage = State.Pagination.CurrentPage + 1;
-            UpdateState(state =>
-            {
-                state.Pagination.NextPage();
-            });
+            UpdateState(state => state.Pagination.NextPage());
 
             OnPageChange?.Invoke(newPage);
         }
@@ -222,10 +206,7 @@ public class TableContext<TData> : PrimitiveContextWithEvents<TableState<TData>>
         if (State.Pagination.CanGoPrevious)
         {
             var newPage = State.Pagination.CurrentPage - 1;
-            UpdateState(state =>
-            {
-                state.Pagination.PreviousPage();
-            });
+            UpdateState(state => state.Pagination.PreviousPage());
 
             OnPageChange?.Invoke(newPage);
         }
@@ -238,10 +219,7 @@ public class TableContext<TData> : PrimitiveContextWithEvents<TableState<TData>>
     /// <param name="pageSize">The new page size.</param>
     public void ChangePageSize(int pageSize)
     {
-        UpdateState(state =>
-        {
-            state.Pagination.PageSize = pageSize;
-        });
+        UpdateState(state => state.Pagination.PageSize = pageSize);
 
         OnPageSizeChange?.Invoke(pageSize);
     }

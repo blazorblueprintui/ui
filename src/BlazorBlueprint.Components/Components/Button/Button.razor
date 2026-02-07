@@ -1,31 +1,61 @@
 @namespace BlazorBlueprint.Components.Button
 
-<button
-    type="@HtmlType"
-    class="@CssClass"
-    id="@(TriggerContext?.TriggerId)"
-    @ref="_buttonRef"
-    disabled="@Disabled"
-    tabindex="@(Disabled ? -1 : 0)"
-    aria-label="@AriaLabel"
-    aria-disabled="@Disabled.ToString().ToLower()"
-    aria-haspopup="@(TriggerContext?.AriaHasPopup)"
-    aria-expanded="@(TriggerContext != null ? TriggerContext.IsOpen.ToString().ToLower() : null)"
-    aria-controls="@(TriggerContext?.AriaControls)"
-    @onclick="HandleClick"
-    @onkeydown="HandleKeyDown"
-    @onmouseenter="HandleMouseEnter"
-    @onmouseleave="HandleMouseLeave"
-    @onfocus="HandleFocus"
-    @onblur="HandleBlur"
-    @attributes="AdditionalAttributes">
-    @if (Icon != null && IconPosition == IconPosition.Start)
-    {
-        <span class="me-2">@Icon</span>
-    }
-    @ChildContent
-    @if (Icon != null && IconPosition == IconPosition.End)
-    {
-        <span class="ms-2">@Icon</span>
-    }
-</button>
+@if (HasHref)
+{
+    <a href="@(Disabled ? null : Href)"
+       target="@Target"
+       rel="@Rel"
+       class="@CssClass"
+       tabindex="@(Disabled ? -1 : 0)"
+       aria-label="@AriaLabel"
+       aria-disabled="@(Disabled ? "true" : null)"
+       @onclick="HandleClick"
+       @onkeydown="HandleKeyDown"
+       @onmouseenter="HandleMouseEnter"
+       @onmouseleave="HandleMouseLeave"
+       @onfocus="HandleFocus"
+       @onblur="HandleBlur"
+       @attributes="AdditionalAttributes">
+        @if (Icon != null && IconPosition == IconPosition.Start)
+        {
+            <span class="me-2">@Icon</span>
+        }
+        @ChildContent
+        @if (Icon != null && IconPosition == IconPosition.End)
+        {
+            <span class="ms-2">@Icon</span>
+        }
+    </a>
+}
+else
+{
+    <button
+        type="@HtmlType"
+        class="@CssClass"
+        id="@(TriggerContext?.TriggerId)"
+        @ref="_buttonRef"
+        disabled="@Disabled"
+        tabindex="@(Disabled ? -1 : 0)"
+        aria-label="@AriaLabel"
+        aria-disabled="@Disabled.ToString().ToLower()"
+        aria-haspopup="@(TriggerContext?.AriaHasPopup)"
+        aria-expanded="@(TriggerContext != null ? TriggerContext.IsOpen.ToString().ToLower() : null)"
+        aria-controls="@(TriggerContext?.AriaControls)"
+        @onclick="HandleClick"
+        @onkeydown="HandleKeyDown"
+        @onmouseenter="HandleMouseEnter"
+        @onmouseleave="HandleMouseLeave"
+        @onfocus="HandleFocus"
+        @onblur="HandleBlur"
+        @attributes="AdditionalAttributes">
+        @if (Icon != null && IconPosition == IconPosition.Start)
+        {
+            <span class="me-2">@Icon</span>
+        }
+        @ChildContent
+        @if (Icon != null && IconPosition == IconPosition.End)
+        {
+            <span class="ms-2">@Icon</span>
+        }
+    </button>
+}

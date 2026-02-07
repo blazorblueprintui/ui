@@ -111,7 +111,7 @@ public partial class MarkdownEditor : ComponentBase, IAsyncDisposable
     /// <summary>
     /// Gets the CSS classes for the textarea.
     /// </summary>
-    private string TextareaCssClass => ClassNames.cn(
+    private static string TextareaCssClass => ClassNames.cn(
         "flex-1 min-h-[150px] w-full resize-y border-0 bg-transparent",
         "px-3 py-2 text-sm placeholder:text-muted-foreground",
         "focus:outline-none",
@@ -121,7 +121,7 @@ public partial class MarkdownEditor : ComponentBase, IAsyncDisposable
     /// <summary>
     /// Gets the CSS classes for the preview area.
     /// </summary>
-    private string PreviewCssClass => ClassNames.cn(
+    private static string PreviewCssClass => ClassNames.cn(
         "flex-1 min-h-[150px] w-full px-3 py-2 overflow-auto",
         "prose prose-sm dark:prose-invert max-w-none",
         "[&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-2",
@@ -214,7 +214,10 @@ public partial class MarkdownEditor : ComponentBase, IAsyncDisposable
     /// </summary>
     private async Task ApplyBold()
     {
-        if (_module == null || Disabled) return;
+        if (_module == null || Disabled)
+        {
+            return;
+        }
 
         try
         {
@@ -233,7 +236,10 @@ public partial class MarkdownEditor : ComponentBase, IAsyncDisposable
     /// </summary>
     private async Task ApplyItalic()
     {
-        if (_module == null || Disabled) return;
+        if (_module == null || Disabled)
+        {
+            return;
+        }
 
         try
         {
@@ -252,7 +258,10 @@ public partial class MarkdownEditor : ComponentBase, IAsyncDisposable
     /// </summary>
     private async Task ApplyUnderline()
     {
-        if (_module == null || Disabled) return;
+        if (_module == null || Disabled)
+        {
+            return;
+        }
 
         try
         {
@@ -271,11 +280,14 @@ public partial class MarkdownEditor : ComponentBase, IAsyncDisposable
     /// </summary>
     private async Task ApplyHeading(int level)
     {
-        if (_module == null || Disabled) return;
+        if (_module == null || Disabled)
+        {
+            return;
+        }
 
         try
         {
-            string prefix = level switch
+            var prefix = level switch
             {
                 1 => "# ",
                 2 => "## ",
@@ -308,7 +320,10 @@ public partial class MarkdownEditor : ComponentBase, IAsyncDisposable
     /// </summary>
     private async Task ApplyBulletList()
     {
-        if (_module == null || Disabled) return;
+        if (_module == null || Disabled)
+        {
+            return;
+        }
 
         try
         {
@@ -327,7 +342,10 @@ public partial class MarkdownEditor : ComponentBase, IAsyncDisposable
     /// </summary>
     private async Task ApplyNumberedList()
     {
-        if (_module == null || Disabled) return;
+        if (_module == null || Disabled)
+        {
+            return;
+        }
 
         try
         {

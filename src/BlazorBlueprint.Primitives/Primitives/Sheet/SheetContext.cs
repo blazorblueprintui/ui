@@ -114,13 +114,8 @@ public class SheetContext : PrimitiveContextWithEvents<SheetState>
     /// <summary>
     /// Closes the sheet.
     /// </summary>
-    public void Close()
-    {
-        UpdateState(state =>
-        {
-            state.IsOpen = false;
-        });
-    }
+    public void Close() =>
+        UpdateState(state => state.IsOpen = false);
 
     /// <summary>
     /// Toggles the sheet open/closed state.
@@ -142,11 +137,6 @@ public class SheetContext : PrimitiveContextWithEvents<SheetState>
     /// Sets the side from which the sheet slides in.
     /// </summary>
     /// <param name="side">The side to slide in from.</param>
-    public void SetSide(SheetSide side)
-    {
-        UpdateState(state =>
-        {
-            state.Side = side;
-        });
-    }
+    public void SetSide(SheetSide side) =>
+        UpdateState(state => state.Side = side);
 }

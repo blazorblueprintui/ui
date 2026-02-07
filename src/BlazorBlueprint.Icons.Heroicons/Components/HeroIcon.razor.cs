@@ -79,7 +79,10 @@ public partial class HeroIcon : ComponentBase
         get
         {
             var content = HeroIconData.GetIcon(Name, Variant);
-            if (content == null) return null;
+            if (content == null)
+            {
+                return null;
+            }
 
             // Remove stroke and fill attributes from the SVG content
             // This allows the outer SVG's stroke/fill attributes (from Color parameter) to take effect
@@ -102,7 +105,9 @@ public partial class HeroIcon : ComponentBase
         get
         {
             if (Size.HasValue)
+            {
                 return Size.Value;
+            }
 
             return Variant switch
             {
@@ -121,18 +126,12 @@ public partial class HeroIcon : ComponentBase
     /// <summary>
     /// The viewBox for the icon based on variant.
     /// </summary>
-    private string ViewBox
+    private string ViewBox => Variant switch
     {
-        get
-        {
-            return Variant switch
-            {
-                HeroIconVariant.Mini => "0 0 20 20",
-                HeroIconVariant.Micro => "0 0 16 16",
-                _ => "0 0 24 24"  // Outline and Solid use 24x24 viewBox
-            };
-        }
-    }
+        HeroIconVariant.Mini => "0 0 20 20",
+        HeroIconVariant.Micro => "0 0 16 16",
+        _ => "0 0 24 24"  // Outline and Solid use 24x24 viewBox
+    };
 
     /// <summary>
     /// Whether to apply stroke attributes (only for Outline variant).

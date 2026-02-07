@@ -31,7 +31,7 @@ namespace BlazorBlueprint.Components.DataTable;
 ///                  Filterable="true" /&gt;
 /// </code>
 /// </example>
-public partial class DataTableColumn<TData, TValue> : ComponentBase where TData : class where TValue : notnull
+public partial class DataTableColumn<TData, TValue> : ComponentBase where TData : class
 {
     /// <summary>
     /// Gets or sets the unique identifier for this column.
@@ -51,7 +51,13 @@ public partial class DataTableColumn<TData, TValue> : ComponentBase where TData 
     /// This enables type-safe data access.
     /// </summary>
     [Parameter, EditorRequired]
-    public Func<TData, TValue> Property { get; set; } = null!;
+    public Func<TData, TValue?> Property { get; set; } = null!;
+
+    /// <summary>
+    /// Gets or sets the format string used to format the cell value.
+    /// </summary>
+    [Parameter]
+    public string? Format { get; set; }
 
     /// <summary>
     /// Gets or sets whether this column can be sorted.

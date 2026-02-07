@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Release script for BlazorBlueprint.Primitives
-# Usage: ./scripts/release-primitives.sh <version>
-# Example: ./scripts/release-primitives.sh 1.6.2
+# Usage: ./scripts/release-primitives.sh [version]
+# If no version is provided, the script will prompt you to pick a bump type.
 
 set -e  # Exit on error
 
@@ -16,24 +16,87 @@ COLOR_RESET='\033[0m'
 
 COMMITS_MADE=0
 
-# Check if version argument is provided
-if [ -z "$1" ]; then
-    echo -e "${COLOR_RED}Error: Version argument required${COLOR_RESET}"
-    echo "Usage: ./scripts/release-primitives.sh <version>"
-    echo "Example: ./scripts/release-primitives.sh 1.6.2"
-    exit 1
+# Get current version from the latest primitives git tag
+get_current_version() {
+  git tag --sort=-v:refname | grep "^${PACKAGE_NAME}/v" | head -1 | sed "s|^${PACKAGE_NAME}/v||"
+}
+
+# Bump a semantic version component
+# Usage: bump_version <current_version> <major|minor|patch>
+bump_version() {
+  local version=$1
+  local bump_type=$2
+  local major minor patch
+  major=$(echo "$version" | cut -d. -f1)
+  minor=$(echo "$version" | cut -d. -f2)
+  patch=$(echo "$version" | cut -d. -f3 | sed 's/-.*//')  # strip any prerelease suffix
+
+  case $bump_type in
+    major) echo "$((major + 1)).0.0" ;;
+    minor) echo "${major}.$((minor + 1)).0" ;;
+    patch) echo "${major}.${minor}.$((patch + 1))" ;;
+  esac
+}
+
+if [ -n "$1" ]; then
+    # Version provided as argument (legacy usage)
+    VERSION=$1
+    if ! [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
+        echo -e "${COLOR_RED}Error: Invalid version format${COLOR_RESET}"
+        echo "Version must follow semantic versioning (e.g., 1.0.0 or 1.0.0-beta.4)"
+        exit 1
+    fi
+else
+    # Interactive version selection
+    CURRENT_VERSION=$(get_current_version)
+    if [ -z "$CURRENT_VERSION" ]; then
+        echo -e "${COLOR_RED}Error: No existing primitives tags found${COLOR_RESET}"
+        echo "Usage: ./scripts/release-primitives.sh <version>"
+        exit 1
+    fi
+
+    CURRENT_TAG="${PACKAGE_NAME}/v${CURRENT_VERSION}"
+    NEXT_MAJOR=$(bump_version "$CURRENT_VERSION" major)
+    NEXT_MINOR=$(bump_version "$CURRENT_VERSION" minor)
+    NEXT_PATCH=$(bump_version "$CURRENT_VERSION" patch)
+
+    echo ""
+    echo -e "${COLOR_YELLOW}═══════════════════════════════════════════════════${COLOR_RESET}"
+    echo -e "${COLOR_YELLOW}BlazorBlueprint.Primitives Release${COLOR_RESET}"
+    echo -e "${COLOR_YELLOW}═══════════════════════════════════════════════════${COLOR_RESET}"
+    echo -e "Current version: ${COLOR_GREEN}${CURRENT_VERSION}${COLOR_RESET}"
+    echo ""
+
+    # Show changes since last tag
+    CHANGES=$(git log "${CURRENT_TAG}..HEAD" --oneline 2>/dev/null)
+    if [ -n "$CHANGES" ]; then
+        echo -e "${COLOR_CYAN}Changes since v${CURRENT_VERSION}:${COLOR_RESET}"
+        echo "$CHANGES" | sed 's/^/  /'
+    else
+        echo -e "${COLOR_YELLOW}No commits since v${CURRENT_VERSION}${COLOR_RESET}"
+    fi
+
+    echo ""
+    echo -e "${COLOR_CYAN}Select new version:${COLOR_RESET}"
+    echo -e "  1) ${COLOR_GREEN}${NEXT_MAJOR}${COLOR_RESET} (Major)"
+    echo -e "  2) ${COLOR_GREEN}${NEXT_MINOR}${COLOR_RESET} (Minor)"
+    echo -e "  3) ${COLOR_GREEN}${NEXT_PATCH}${COLOR_RESET} (Patch)"
+    echo ""
+    read -p "Enter choice (1-3): " version_choice
+
+    case $version_choice in
+        1) VERSION=$NEXT_MAJOR ;;
+        2) VERSION=$NEXT_MINOR ;;
+        3) VERSION=$NEXT_PATCH ;;
+        *)
+            echo -e "${COLOR_RED}Invalid choice${COLOR_RESET}"
+            exit 1
+            ;;
+    esac
 fi
 
-VERSION=$1
 TAG_NAME="${PACKAGE_NAME}/v${VERSION}"
 RELEASE_BRANCH="${PACKAGE_NAME}/release/v${VERSION}"
-
-# Validate semantic version format (basic check)
-if ! [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
-    echo -e "${COLOR_RED}Error: Invalid version format${COLOR_RESET}"
-    echo "Version must follow semantic versioning (e.g., 1.0.0 or 1.0.0-beta.4)"
-    exit 1
-fi
 
 # Check if we're in the right directory
 if [ ! -d "$PROJECT_PATH" ]; then

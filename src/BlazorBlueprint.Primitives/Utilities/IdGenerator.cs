@@ -6,7 +6,7 @@ namespace BlazorBlueprint.Primitives.Utilities;
 /// </summary>
 public static class IdGenerator
 {
-    private static int _counter = 0;
+    private static int _counter;
 
     /// <summary>
     /// Generates a unique ID with the specified prefix.
@@ -29,7 +29,7 @@ public static class IdGenerator
     public static string[] GenerateIds(int count, string prefix = "shadcn")
     {
         var ids = new string[count];
-        for (int i = 0; i < count; i++)
+        for (var i = 0; i < count; i++)
         {
             ids[i] = GenerateId(prefix);
         }
@@ -40,8 +40,6 @@ public static class IdGenerator
     /// Resets the counter to zero.
     /// WARNING: Only use in testing scenarios.
     /// </summary>
-    internal static void Reset()
-    {
+    internal static void Reset() =>
         Interlocked.Exchange(ref _counter, 0);
-    }
 }

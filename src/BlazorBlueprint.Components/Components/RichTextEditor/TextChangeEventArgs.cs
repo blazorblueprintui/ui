@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace BlazorBlueprint.Components.RichTextEditor;
 
 /// <summary>
 /// Event arguments for text change events in the rich text editor.
 /// </summary>
+[SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "EventArgs suffix is intentional for this DTO")]
 public class TextChangeEventArgs
 {
     /// <summary>

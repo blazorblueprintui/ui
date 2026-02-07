@@ -51,20 +51,16 @@ public class ToastService
     /// </summary>
     /// <param name="description">The message to display.</param>
     /// <param name="title">Optional title.</param>
-    public void Success(string description, string? title = null)
-    {
+    public void Success(string description, string? title = null) =>
         Show(description, title, ToastVariant.Default);
-    }
 
     /// <summary>
     /// Shows an error toast (destructive variant).
     /// </summary>
     /// <param name="description">The message to display.</param>
     /// <param name="title">Optional title.</param>
-    public void Error(string description, string? title = null)
-    {
+    public void Error(string description, string? title = null) =>
         Show(description, title, ToastVariant.Destructive);
-    }
 
     /// <summary>
     /// Dismisses a specific toast by ID.

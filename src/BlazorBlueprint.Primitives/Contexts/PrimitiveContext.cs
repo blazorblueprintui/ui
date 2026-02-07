@@ -38,10 +38,8 @@ public abstract class PrimitiveContext<TState> where TState : class
     /// </summary>
     /// <param name="suffix">The suffix to append to the component ID.</param>
     /// <returns>A unique scoped ID.</returns>
-    public string GetScopedId(string suffix)
-    {
-        return $"{Id}-{suffix}";
-    }
+    public string GetScopedId(string suffix) =>
+        $"{Id}-{suffix}";
 }
 
 /// <summary>
@@ -72,10 +70,8 @@ public abstract class PrimitiveContextWithEvents<TState> : PrimitiveContext<TSta
     /// Notifies subscribers that the state has changed.
     /// Child components should re-render when this is called.
     /// </summary>
-    protected void NotifyStateChanged()
-    {
+    protected void NotifyStateChanged() =>
         OnStateChanged?.Invoke();
-    }
 
     /// <summary>
     /// Updates the state and notifies subscribers.

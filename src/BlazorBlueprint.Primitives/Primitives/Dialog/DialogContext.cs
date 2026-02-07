@@ -73,13 +73,8 @@ public class DialogContext : PrimitiveContextWithEvents<DialogState>
     /// <summary>
     /// Closes the dialog.
     /// </summary>
-    public void Close()
-    {
-        UpdateState(state =>
-        {
-            state.IsOpen = false;
-        });
-    }
+    public void Close() =>
+        UpdateState(state => state.IsOpen = false);
 
     /// <summary>
     /// Toggles the dialog open/closed state.

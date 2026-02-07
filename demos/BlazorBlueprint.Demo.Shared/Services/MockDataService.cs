@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace BlazorBlueprint.Demo.Services;
 
 /// <summary>
@@ -52,10 +54,10 @@ public class MockDataService
     /// </summary>
     /// <param name="count">Number of records to generate.</param>
     /// <returns>List of person records with randomized data.</returns>
-    public List<Person> GeneratePersons(int count)
+    public static List<Person> GeneratePersons(int count)
     {
         var persons = new List<Person>();
-        for (int i = 0; i < count; i++)
+        for (var i = 0; i < count; i++)
         {
             persons.Add(new Person
             {
@@ -66,6 +68,7 @@ public class MockDataService
                 Role = _roles[_random.Next(_roles.Length)],
                 Status = _statuses[_random.Next(_statuses.Length)],
                 Department = _departments[_random.Next(_departments.Length)],
+                LastPromotionDate = GeneratePromotionDate(),
                 Salary = _random.Next(40000, 150000),
                 JoinDate = DateTime.Now.AddDays(-_random.Next(1, 3650)), // Random date within last 10 years
                 IsActive = _random.Next(100) > 20 // 80% chance of being active
@@ -74,17 +77,17 @@ public class MockDataService
         return persons;
     }
 
-    private string GenerateFullName()
+    private static string GenerateFullName()
     {
         var firstName = _firstNames[_random.Next(_firstNames.Length)];
         var lastName = _lastNames[_random.Next(_lastNames.Length)];
         return $"{firstName} {lastName}";
     }
 
-    private string GenerateEmail()
+    private static string GenerateEmail()
     {
-        var firstName = _firstNames[_random.Next(_firstNames.Length)].ToLower();
-        var lastName = _lastNames[_random.Next(_lastNames.Length)].ToLower();
+        var firstName = _firstNames[_random.Next(_firstNames.Length)].ToLower(CultureInfo.InvariantCulture);
+        var lastName = _lastNames[_random.Next(_lastNames.Length)].ToLower(CultureInfo.InvariantCulture);
         var domain = _random.Next(5) switch
         {
             0 => "example.com",
@@ -93,9 +96,12 @@ public class MockDataService
             3 => "enterprise.net",
             _ => "organization.com"
         };
-        var suffix = _random.Next(100) > 70 ? _random.Next(1, 999).ToString() : "";
+        var suffix = _random.Next(100) > 70 ? _random.Next(1, 999).ToString(CultureInfo.InvariantCulture) : "";
         return $"{firstName}.{lastName}{suffix}@{domain}";
     }
+
+    private static DateTimeOffset? GeneratePromotionDate() =>
+        DateTimeOffset.UtcNow - TimeSpan.FromDays(_random.Next(365, 730));
 }
 
 /// <summary>
@@ -110,6 +116,7 @@ public class Person
     public string Role { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public string Department { get; set; } = string.Empty;
+    public DateTimeOffset? LastPromotionDate { get; set; }
     public int Salary { get; set; }
     public DateTime JoinDate { get; set; }
     public bool IsActive { get; set; }

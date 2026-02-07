@@ -46,7 +46,8 @@ public partial class DataTable<TData> : ComponentBase where TData : class
     {
         public string Id { get; set; } = string.Empty;
         public string Header { get; set; } = string.Empty;
-        public Func<TData, object> Property { get; set; } = null!;
+        public Func<TData, object?> Property { get; set; } = null!;
+        public string? Format { get; set; }
         public bool Sortable { get; set; }
         public bool Filterable { get; set; }
         public bool Visible { get; set; } = true;
@@ -63,8 +64,8 @@ public partial class DataTable<TData> : ComponentBase where TData : class
     private IEnumerable<TData> _processedData = Array.Empty<TData>();
     private IEnumerable<TData> _filteredData = Array.Empty<TData>();
     private string _globalSearchValue = string.Empty;
-    private int _columnsVersion = 0;
-    private bool _selectAllDropdownOpen = false;
+    private int _columnsVersion;
+    private bool _selectAllDropdownOpen;
 
     // ShouldRender tracking fields
     private IEnumerable<TData>? _lastData;
@@ -72,11 +73,11 @@ public partial class DataTable<TData> : ComponentBase where TData : class
     private bool _lastIsLoading;
     private int _lastColumnsVersion;
     private string _lastGlobalSearchValue = string.Empty;
-    private int _selectionVersion = 0;
-    private int _lastSelectionVersion = 0;
+    private int _selectionVersion;
+    private int _lastSelectionVersion;
     private IReadOnlyCollection<TData>? _lastSelectedItems;
-    private int _paginationVersion = 0;
-    private int _lastPaginationVersion = 0;
+    private int _paginationVersion;
+    private int _lastPaginationVersion;
 
     /// <summary>
     /// Gets or sets the data source for the table.
@@ -218,14 +219,14 @@ public partial class DataTable<TData> : ComponentBase where TData : class
     /// <summary>
     /// Gets the computed CSS classes for the table container.
     /// </summary>
-    private string TableContainerCssClass => ClassNames.cn(
+    private static string TableContainerCssClass => ClassNames.cn(
         "rounded-md border"
     );
 
     /// <summary>
     /// Gets the computed CSS classes for the table element.
     /// </summary>
-    private string TableCssClass => ClassNames.cn(
+    private static string TableCssClass => ClassNames.cn(
         "w-full caption-bottom text-sm"
     );
 
@@ -263,18 +264,15 @@ public partial class DataTable<TData> : ComponentBase where TData : class
     /// Registers a column with the data table.
     /// Called by DataTableColumn during initialization.
     /// </summary>
-    internal void RegisterColumn<TValue>(DataTableColumn<TData, TValue> column) where TValue : notnull
+    internal void RegisterColumn<TValue>(DataTableColumn<TData, TValue> column)
     {
         // Create internal column data structure (avoids BL0005 component parameter warnings)
         var columnData = new ColumnData
         {
             Id = column.Id ?? column.Header.ToLowerInvariant().Replace(" ", "-"),
             Header = column.Header,
-            Property = item =>
-            {
-                var value = column.Property(item);
-                return value ?? throw new InvalidOperationException($"Column '{column.Header}' returned null for a non-nullable type.");
-            },
+            Property = item => column.Property(item),
+            Format = column.Format,
             Sortable = column.Sortable,
             Filterable = column.Filterable,
             Visible = column.Visible,
@@ -352,7 +350,10 @@ public partial class DataTable<TData> : ComponentBase where TData : class
             try
             {
                 var value = column.Property(item);
-                if (value == null) continue;
+                if (value == null)
+                {
+                    continue;
+                }
 
                 var stringValue = value.ToString();
                 if (!string.IsNullOrEmpty(stringValue) &&
@@ -375,11 +376,15 @@ public partial class DataTable<TData> : ComponentBase where TData : class
     private IEnumerable<TData> ApplySorting(IEnumerable<TData> data)
     {
         if (_tableState.Sorting.Direction == SortDirection.None)
+        {
             return data;
+        }
 
         var column = _columns.FirstOrDefault(c => c.Id == _tableState.Sorting.SortedColumn);
         if (column == null)
+        {
             return data;
+        }
 
         var sorted = _tableState.Sorting.Direction == SortDirection.Ascending
             ? data.OrderBy(item => column.Property(item))
@@ -458,18 +463,14 @@ public partial class DataTable<TData> : ComponentBase where TData : class
     /// Determines whether to show the select-all dropdown prompt.
     /// Returns true when total items exceed the current page count.
     /// </summary>
-    private bool ShouldShowSelectAllPrompt()
-    {
-        return _tableState.Pagination.TotalItems > _processedData.Count();
-    }
+    private bool ShouldShowSelectAllPrompt() =>
+        _tableState.Pagination.TotalItems > _processedData.Count();
 
     /// <summary>
     /// Gets the total count of filtered items across all pages.
     /// </summary>
-    private int GetTotalFilteredItemCount()
-    {
-        return _filteredData.Count();
-    }
+    private int GetTotalFilteredItemCount() =>
+        _filteredData.Count();
 
     /// <summary>
     /// Opens the select-all dropdown menu.
@@ -569,7 +570,9 @@ public partial class DataTable<TData> : ComponentBase where TData : class
     private bool IsAllSelected()
     {
         if (!_processedData.Any())
+        {
             return false;
+        }
 
         return _processedData.All(item => _tableState.Selection.IsSelected(item));
     }
@@ -581,7 +584,9 @@ public partial class DataTable<TData> : ComponentBase where TData : class
     private bool IsSomeSelected()
     {
         if (!_processedData.Any())
+        {
             return false;
+        }
 
         var selectedCount = _processedData.Count(item => _tableState.Selection.IsSelected(item));
         return selectedCount > 0 && selectedCount < _processedData.Count();
@@ -590,20 +595,26 @@ public partial class DataTable<TData> : ComponentBase where TData : class
     /// <summary>
     /// Gets the column width style attribute.
     /// </summary>
-    private string? GetColumnWidthStyle(ColumnData column)
+    private static string? GetColumnWidthStyle(ColumnData column)
     {
         var styles = new List<string>();
 
         if (!string.IsNullOrWhiteSpace(column.Width))
+        {
             styles.Add($"width: {column.Width}");
+        }
 
         if (!string.IsNullOrWhiteSpace(column.MinWidth))
+        {
             styles.Add($"min-width: {column.MinWidth}");
+        }
 
         if (!string.IsNullOrWhiteSpace(column.MaxWidth))
+        {
             styles.Add($"max-width: {column.MaxWidth}");
+        }
 
-        return styles.Any() ? string.Join("; ", styles) : null;
+        return styles.Count > 0 ? string.Join("; ", styles) : null;
     }
 
     /// <summary>

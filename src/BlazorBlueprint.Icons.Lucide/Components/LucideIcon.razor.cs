@@ -73,7 +73,10 @@ public partial class LucideIcon : ComponentBase
         get
         {
             var content = LucideIconData.GetIcon(Name);
-            if (content == null) return null;
+            if (content == null)
+            {
+                return null;
+            }
 
             // Remove stroke="..." attributes from the SVG content
             // This allows the outer SVG's stroke attribute (from Color parameter) to take effect

@@ -198,7 +198,7 @@ public class SidebarContext
     /// </summary>
     public void Initialize(bool? open = null, SidebarVariant? variant = null, SidebarSide? side = null)
     {
-        bool changed = false;
+        var changed = false;
 
         if (open.HasValue && _state.Open != open.Value)
         {
@@ -224,8 +224,6 @@ public class SidebarContext
         }
     }
 
-    private void OnStateChanged()
-    {
+    private void OnStateChanged() =>
         StateChanged?.Invoke(this, EventArgs.Empty);
-    }
 }

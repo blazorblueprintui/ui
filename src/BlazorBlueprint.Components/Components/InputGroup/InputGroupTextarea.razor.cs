@@ -147,8 +147,6 @@ public partial class InputGroupTextarea : ComponentBase
     /// <summary>
     /// Handles the change event (fired when textarea loses focus).
     /// </summary>
-    private async Task HandleChange(ChangeEventArgs args)
-    {
+    private static async Task HandleChange(ChangeEventArgs args) =>
         await Task.CompletedTask;
-    }
 }

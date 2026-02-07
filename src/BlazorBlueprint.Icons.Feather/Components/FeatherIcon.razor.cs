@@ -67,7 +67,10 @@ public partial class FeatherIcon : ComponentBase
         get
         {
             var content = FeatherIconData.GetIcon(Name);
-            if (content == null) return null;
+            if (content == null)
+            {
+                return null;
+            }
 
             // Remove stroke="currentColor" and stroke="..." attributes from the SVG content
             // This allows the outer SVG's stroke attribute (from Color parameter) to take effect

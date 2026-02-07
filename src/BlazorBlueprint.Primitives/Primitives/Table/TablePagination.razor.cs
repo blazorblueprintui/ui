@@ -100,7 +100,10 @@ public partial class TablePagination<TData> : ComponentBase, IDisposable
     /// </summary>
     private async Task HandleFirstPage()
     {
-        if (State.CurrentPage == 1) return;
+        if (State.CurrentPage == 1)
+        {
+            return;
+        }
 
         State.FirstPage();
         await NotifyPageChange();
@@ -111,7 +114,10 @@ public partial class TablePagination<TData> : ComponentBase, IDisposable
     /// </summary>
     private async Task HandlePreviousPage()
     {
-        if (!State.CanGoPrevious) return;
+        if (!State.CanGoPrevious)
+        {
+            return;
+        }
 
         State.PreviousPage();
         await NotifyPageChange();
@@ -122,7 +128,10 @@ public partial class TablePagination<TData> : ComponentBase, IDisposable
     /// </summary>
     private async Task HandleNextPage()
     {
-        if (!State.CanGoNext) return;
+        if (!State.CanGoNext)
+        {
+            return;
+        }
 
         State.NextPage();
         await NotifyPageChange();
@@ -133,7 +142,10 @@ public partial class TablePagination<TData> : ComponentBase, IDisposable
     /// </summary>
     private async Task HandleLastPage()
     {
-        if (State.CurrentPage == State.TotalPages) return;
+        if (State.CurrentPage == State.TotalPages)
+        {
+            return;
+        }
 
         State.LastPage();
         await NotifyPageChange();
@@ -145,7 +157,10 @@ public partial class TablePagination<TData> : ComponentBase, IDisposable
     /// <param name="page">The page number to navigate to (1-based).</param>
     private async Task HandleGoToPage(int page)
     {
-        if (State.CurrentPage == page) return;
+        if (State.CurrentPage == page)
+        {
+            return;
+        }
 
         State.GoToPage(page);
         await NotifyPageChange();
@@ -157,7 +172,10 @@ public partial class TablePagination<TData> : ComponentBase, IDisposable
     /// <param name="newPageSize">The new page size.</param>
     private async Task HandlePageSizeChange(int newPageSize)
     {
-        if (State.PageSize == newPageSize) return;
+        if (State.PageSize == newPageSize)
+        {
+            return;
+        }
 
         State.PageSize = newPageSize;
 
@@ -190,6 +208,7 @@ public partial class TablePagination<TData> : ComponentBase, IDisposable
     /// </summary>
     public void Dispose()
     {
+        GC.SuppressFinalize(this);
         _disposed = true;
     }
 }
@@ -255,7 +274,10 @@ public class PaginationContext
     public string GetPageInfoText()
     {
         if (State.TotalItems == 0)
+        {
             return "No items";
+        }
+
 
         return $"{State.FirstItemIndex}-{State.LastItemIndex} of {State.TotalItems} items";
     }

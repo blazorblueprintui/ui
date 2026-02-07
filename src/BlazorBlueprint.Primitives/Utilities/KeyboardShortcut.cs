@@ -133,10 +133,25 @@ public class KeyboardShortcut
     {
         var parts = new List<string>();
 
-        if (Ctrl) parts.Add("ctrl");
-        if (Shift) parts.Add("shift");
-        if (Alt) parts.Add("alt");
-        if (Meta) parts.Add("meta");
+        if (Ctrl)
+        {
+            parts.Add("ctrl");
+        }
+
+        if (Shift)
+        {
+            parts.Add("shift");
+        }
+
+        if (Alt)
+        {
+            parts.Add("alt");
+        }
+
+        if (Meta)
+        {
+            parts.Add("meta");
+        }
 
         parts.Add(Key.ToLowerInvariant());
 
@@ -154,17 +169,47 @@ public class KeyboardShortcut
 
         if (useMacSymbols)
         {
-            if (Ctrl) parts.Add("⌘");
-            if (Shift) parts.Add("⇧");
-            if (Alt) parts.Add("⌥");
-            if (Meta) parts.Add("⌃");
+            if (Ctrl)
+            {
+                parts.Add("\u2318");
+            }
+
+            if (Shift)
+            {
+                parts.Add("\u21e7");
+            }
+
+            if (Alt)
+            {
+                parts.Add("\u2325");
+            }
+
+            if (Meta)
+            {
+                parts.Add("\u2303");
+            }
         }
         else
         {
-            if (Ctrl) parts.Add("Ctrl");
-            if (Shift) parts.Add("Shift");
-            if (Alt) parts.Add("Alt");
-            if (Meta) parts.Add("Win");
+            if (Ctrl)
+            {
+                parts.Add("Ctrl");
+            }
+
+            if (Shift)
+            {
+                parts.Add("Shift");
+            }
+
+            if (Alt)
+            {
+                parts.Add("Alt");
+            }
+
+            if (Meta)
+            {
+                parts.Add("Win");
+            }
         }
 
         // Capitalize the key for display
@@ -189,9 +234,20 @@ public class KeyboardShortcut
         var eventHasCtrlOrMeta = ctrlKey || metaKey;
         var shortcutNeedsCtrlOrMeta = Ctrl || Meta;
 
-        if (shortcutNeedsCtrlOrMeta != eventHasCtrlOrMeta) return false;
-        if (Shift != shiftKey) return false;
-        if (Alt != altKey) return false;
+        if (shortcutNeedsCtrlOrMeta != eventHasCtrlOrMeta)
+        {
+            return false;
+        }
+
+        if (Shift != shiftKey)
+        {
+            return false;
+        }
+
+        if (Alt != altKey)
+        {
+            return false;
+        }
 
         // Compare keys case-insensitively
         return string.Equals(Key, NormalizeKey(key), StringComparison.OrdinalIgnoreCase);
@@ -237,7 +293,10 @@ public class KeyboardShortcut
 
     private static string CapitalizeFirst(string s)
     {
-        if (string.IsNullOrEmpty(s)) return s;
+        if (string.IsNullOrEmpty(s))
+        {
+            return s;
+        }
         return char.ToUpperInvariant(s[0]) + s.Substring(1).ToLowerInvariant();
     }
 }

@@ -88,7 +88,10 @@ public partial class RadioGroupItem<TValue> : ComponentBase
     {
         get
         {
-            if (Context == null) return false;
+            if (Context == null)
+            {
+                return false;
+            }
             return EqualityComparer<TValue?>.Default.Equals(Context.Value, Value);
         }
     }

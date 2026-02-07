@@ -18,10 +18,8 @@ public class PortalService : IPortalService
     public event Action<string>? OnPortalRendered;
 
     /// <inheritdoc />
-    public void NotifyPortalRendered(string portalId)
-    {
+    public void NotifyPortalRendered(string portalId) =>
         OnPortalRendered?.Invoke(portalId);
-    }
 
     /// <inheritdoc />
     public void RegisterPortal(string id, RenderFragment content)
@@ -31,10 +29,7 @@ public class PortalService : IPortalService
             throw new ArgumentException("Portal ID cannot be null or whitespace.", nameof(id));
         }
 
-        if (content == null)
-        {
-            throw new ArgumentNullException(nameof(content));
-        }
+        ArgumentNullException.ThrowIfNull(content);
 
         _portals[id] = content;
         OnPortalsChanged?.Invoke();
@@ -52,10 +47,7 @@ public class PortalService : IPortalService
     /// <inheritdoc />
     public void UpdatePortalContent(string id, RenderFragment content)
     {
-        if (content == null)
-        {
-            throw new ArgumentNullException(nameof(content));
-        }
+        ArgumentNullException.ThrowIfNull(content);
 
         if (!_portals.TryUpdate(id, content, _portals.GetValueOrDefault(id)!))
         {
@@ -78,8 +70,6 @@ public class PortalService : IPortalService
     }
 
     /// <inheritdoc />
-    public IReadOnlyDictionary<string, RenderFragment> GetPortals()
-    {
-        return _portals;
-    }
+    public IReadOnlyDictionary<string, RenderFragment> GetPortals() =>
+        _portals;
 }

@@ -159,11 +159,9 @@ public partial class Collapsible : ComponentBase
     public RenderFragment? ChildContent { get; set; }
 
     /// <inheritdoc />
-    protected override void OnInitialized()
-    {
+    protected override void OnInitialized() =>
         // Initialize with DefaultOpen if not controlled
         _isOpen = OpenChanged.HasDelegate ? Open : DefaultOpen;
-    }
 
     /// <inheritdoc />
     protected override void OnParametersSet()

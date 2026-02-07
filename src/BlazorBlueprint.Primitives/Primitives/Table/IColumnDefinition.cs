@@ -12,44 +12,44 @@ public interface IColumnDefinition<TData> where TData : class
     /// <summary>
     /// Gets the unique identifier for this column.
     /// </summary>
-    string Id { get; }
+    public string Id { get; }
 
     /// <summary>
     /// Gets the header text displayed for this column.
     /// </summary>
-    string Header { get; }
+    public string Header { get; }
 
     /// <summary>
     /// Gets whether this column can be sorted.
     /// </summary>
-    bool CanSort { get; }
+    public bool CanSort { get; }
 
     /// <summary>
     /// Gets whether this column is currently visible.
     /// </summary>
-    bool Visible { get; }
+    public bool Visible { get; }
 
     /// <summary>
     /// Gets the width of the column (e.g., "200px", "20%", "auto").
     /// </summary>
-    string? Width { get; }
+    public string? Width { get; }
 
     /// <summary>
     /// Gets the minimum width of the column (e.g., "100px").
     /// </summary>
-    string? MinWidth { get; }
+    public string? MinWidth { get; }
 
     /// <summary>
     /// Gets the maximum width of the column (e.g., "400px").
     /// </summary>
-    string? MaxWidth { get; }
+    public string? MaxWidth { get; }
 
     /// <summary>
     /// Gets the value from a data item for this column.
     /// </summary>
     /// <param name="item">The data item.</param>
     /// <returns>The column value, boxed as object.</returns>
-    object? GetValue(TData item);
+    public object? GetValue(TData item);
 
     /// <summary>
     /// Compares two data items based on this column's values.
@@ -59,17 +59,17 @@ public interface IColumnDefinition<TData> where TData : class
     /// <returns>
     /// A negative value if x &lt; y, zero if x == y, or a positive value if x &gt; y.
     /// </returns>
-    int Compare(TData x, TData y);
+    public int Compare(TData x, TData y);
 
     /// <summary>
     /// Gets the custom header template for this column.
     /// </summary>
-    RenderFragment<HeaderContext<TData>>? HeaderTemplate { get; }
+    public RenderFragment<HeaderContext<TData>>? HeaderTemplate { get; }
 
     /// <summary>
     /// Gets the custom cell template for this column.
     /// </summary>
-    RenderFragment<CellContext<TData>>? CellTemplate { get; }
+    public RenderFragment<CellContext<TData>>? CellTemplate { get; }
 }
 
 /// <summary>

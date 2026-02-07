@@ -118,7 +118,9 @@ public partial class CollapsibleTrigger : ComponentBase
     private async Task HandleKeyDown(KeyboardEventArgs args)
     {
         if (Context?.Disabled ?? true)
+        {
             return;
+        }
 
         if (args.Key == " " || args.Key == "Enter")
         {

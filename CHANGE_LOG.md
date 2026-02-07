@@ -6,6 +6,75 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-02-07
+
+### Added
+- DataTableColumn `Format` parameter for custom formatting of cell values (e.g., date/number formats via `IFormattable`)
+- DataTableColumn now supports nullable `TValue` types for columns with null values
+- Custom variant/styling examples to Button, Badge, Alert, and Toast demo pages showing how to use the `Class` parameter for project-specific variants
+- `Class` property on `ToastData` for custom toast styling via TailwindMerge
+
+
+---
+
+## 2026-02-06
+
+### Added
+- Button component now supports `Href` and `Target` parameters, rendering as an `<a>` element for navigation links while preserving all visual styling
+- ColorPicker alpha (A) input field alongside R/G/B for precise transparency control
+
+### Changed
+- Coding standards are now enforced at build time
+
+### Fixed
+- Resolved all build warnings and configured warnings-as-errors for stricter code quality
+- ColorPicker alpha channel now displays clean 6-char hex with percentage instead of confusing 8-char hex format
+- ColorPicker alpha precision no longer drifts on repeated interactions
+- ColorPicker demo alpha preview CSS corrected for proper transparency rendering
+
+---
+
+## 2026-02-05
+
+### Fixed
+- Touch and drag interactions now work on mobile devices for Slider, RangeSlider, Resizable, and ColorPicker components (migrated from mouse events to Pointer Events)
+- RangeSlider thumb z-index no longer appears above dialog overlays
+- Removed duplicate sidebar.js script tags causing console errors in demos
+- Fixed broken theme CSS and image asset paths in demo apps
+
+---
+
+## 2026-02-04
+
+### Added
+- Multi-hosting model demo support - demos now run in Auto, Server, and WebAssembly modes
+
+---
+
+## 2026-02-03
+
+### Fixed
+- ScrollArea overflow and viewport height constraints for proper scrolling
+- Spinner custom color support restored
+- Compiler warnings (CS1998, CS0414) resolved across components
+- DropdownMenu components now use fully qualified names to avoid ambiguity
+
+### Changed
+- Renamed "BlazorBlueprint" to "Blazor Blueprint" in page titles and prose
+
+---
+
+## 2026-02-02
+
+### Changed
+- Project renamed from BlazorUI to BlazorBlueprint for v2.0.0
+- Repository URL updated to blazorblueprintui/ui
+
+### Fixed
+- ApexCharts legend now uses theme-aware styles
+
+---
+
 ## 2026-02-01
 
 ### Added

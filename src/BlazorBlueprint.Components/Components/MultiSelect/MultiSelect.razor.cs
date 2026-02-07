@@ -21,8 +21,8 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
     private IJSObjectReference? _multiSelectModule;
     private DotNetObjectReference<MultiSelect<TItem>>? _dotNetRef;
     private ElementReference _searchInputRef;
-    private bool _jsSetupDone = false;
-    private bool _focusDone = false;
+    private bool _jsSetupDone;
+    private bool _focusDone;
 
     // ShouldRender tracking fields
     private IEnumerable<TItem>? _lastItems;
@@ -168,7 +168,7 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
     /// <summary>
     /// Tracks whether the popover is currently open.
     /// </summary>
-    private bool _isOpen { get; set; } = false;
+    private bool _isOpen { get; set; }
 
     /// <summary>
     /// Tracks the current search query for filtering.
@@ -339,7 +339,11 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
     /// </summary>
     private void Open()
     {
-        if (Disabled) return;
+        if (Disabled)
+        {
+            return;
+        }
+
         _isOpen = true;
     }
 
@@ -366,10 +370,7 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
     /// <summary>
     /// Handles click-outside events when AutoClose is enabled.
     /// </summary>
-    private void HandleClickOutside()
-    {
-        Close();
-    }
+    private void HandleClickOutside() => Close();
 
     /// <summary>
     /// Handles the popover content ready event to focus the search input.
@@ -378,7 +379,11 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
     private async Task HandleContentReady()
     {
         // Guard against multiple calls per open
-        if (_focusDone) return;
+        if (_focusDone)
+        {
+            return;
+        }
+
         _focusDone = true;
 
         try
@@ -396,10 +401,8 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
     /// <summary>
     /// Handles search input changes.
     /// </summary>
-    private void HandleSearchInput(ChangeEventArgs args)
-    {
+    private void HandleSearchInput(ChangeEventArgs args) =>
         _searchQuery = args.Value?.ToString() ?? string.Empty;
-    }
 
     /// <summary>
     /// Handles keyboard events on the search input.
@@ -425,11 +428,8 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
         var itemValue = ValueSelector(item);
         var currentValues = SelectedValues;
 
-        if (currentValues.Contains(itemValue))
-        {
-            currentValues.Remove(itemValue);
-        }
-        else
+        if (!currentValues.Remove(itemValue))
+
         {
             currentValues.Add(itemValue);
         }
@@ -505,10 +505,8 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
     /// <summary>
     /// Clears all selections.
     /// </summary>
-    private async Task ClearAll()
-    {
+    private async Task ClearAll() =>
         await UpdateValues(new List<string>());
-    }
 
     /// <summary>
     /// Updates the selected values and notifies parent.
@@ -528,10 +526,8 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
     /// <summary>
     /// Checks if an item is currently selected.
     /// </summary>
-    private bool IsSelected(TItem item)
-    {
-        return SelectedValues.Contains(ValueSelector(item));
-    }
+    private bool IsSelected(TItem item) =>
+        SelectedValues.Contains(ValueSelector(item));
 
     /// <summary>
     /// Gets the Select All state based on filtered items.
@@ -541,8 +537,16 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
         var filteredValues = FilteredItems.Select(ValueSelector).ToHashSet();
         var selectedFilteredCount = SelectedValues.Count(v => filteredValues.Contains(v));
 
-        if (selectedFilteredCount == 0) return SelectAllState.None;
-        if (selectedFilteredCount == filteredValues.Count) return SelectAllState.All;
+        if (selectedFilteredCount == 0)
+        {
+            return SelectAllState.None;
+        }
+
+        if (selectedFilteredCount == filteredValues.Count)
+        {
+            return SelectAllState.All;
+        }
+
         return SelectAllState.Indeterminate;
     }
 
@@ -581,6 +585,7 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        GC.SuppressFinalize(this);
         await CleanupJsAsync();
 
         if (_multiSelectModule != null)
@@ -621,7 +626,7 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
     /// <summary>
     /// Gets the CSS class for the multiselect container.
     /// </summary>
-    private string ContainerClass => "relative";
+    private static string ContainerClass => "relative";
 
     /// <summary>
     /// Gets the CSS class for the trigger button.
@@ -675,13 +680,13 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
     /// <summary>
     /// Gets the CSS class for the tag remove button.
     /// </summary>
-    private string TagRemoveButtonCssClass =>
+    private static string TagRemoveButtonCssClass =>
         "ml-0.5 rounded-full outline-none hover:bg-secondary-foreground/20 focus:ring-1 focus:ring-ring";
 
     /// <summary>
     /// Gets the CSS class for the dropdown item.
     /// </summary>
-    private string ItemCssClass =>
+    private static string ItemCssClass =>
         "relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none " +
         "data-[focused=true]:bg-accent data-[focused=true]:text-accent-foreground " +
         "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50";
@@ -690,7 +695,7 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
     /// Gets the CSS class for the checkbox.
     /// Uses data-state attribute from Checkbox primitive for checked/unchecked/indeterminate styling.
     /// </summary>
-    private string CheckboxCssClass =>
+    private static string CheckboxCssClass =>
         "h-4 w-4 shrink-0 rounded-sm border border-primary ring-offset-background flex items-center justify-center " +
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 " +
         "disabled:cursor-not-allowed disabled:opacity-50 " +

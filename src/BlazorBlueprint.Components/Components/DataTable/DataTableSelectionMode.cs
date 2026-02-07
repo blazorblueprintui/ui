@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace BlazorBlueprint.Components.DataTable;
 
 /// <summary>
 /// Specifies the row selection behavior for a data table.
 /// </summary>
+[SuppressMessage("Naming", "CA1720:Identifier contains type name", Justification = "Single is a domain term for selection mode")]
 public enum DataTableSelectionMode
 {
     /// <summary>

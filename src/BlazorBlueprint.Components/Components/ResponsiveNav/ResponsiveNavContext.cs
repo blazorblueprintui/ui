@@ -47,10 +47,8 @@ public class ResponsiveNavContext
     /// <summary>
     /// Toggles the mobile menu open/closed state.
     /// </summary>
-    public void Toggle()
-    {
+    public void Toggle() =>
         SetOpenMobile(!_state.OpenMobile);
-    }
 
     /// <summary>
     /// Sets the mobile menu open state.
@@ -82,8 +80,6 @@ public class ResponsiveNavContext
         }
     }
 
-    private void OnStateChanged()
-    {
+    private void OnStateChanged() =>
         StateChanged?.Invoke(this, EventArgs.Empty);
-    }
 }

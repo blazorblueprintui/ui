@@ -123,12 +123,12 @@ public partial class Combobox<TItem> : ComponentBase
     /// When true, PopoverWidth is ignored.
     /// </summary>
     [Parameter]
-    public bool MatchTriggerWidth { get; set; } = false;
+    public bool MatchTriggerWidth { get; set; }
 
     /// <summary>
     /// Tracks whether the popover is currently open.
     /// </summary>
-    private bool _isOpen { get; set; } = false;
+    private bool _isOpen { get; set; }
 
     /// <summary>
     /// Reference to the CommandInput for focus management.
@@ -138,7 +138,7 @@ public partial class Combobox<TItem> : ComponentBase
     /// <summary>
     /// Tracks whether focus has been done for the current open.
     /// </summary>
-    private bool _focusDone = false;
+    private bool _focusDone;
 
     /// <summary>
     /// Gets a unique identifier for this combobox instance.
@@ -181,7 +181,9 @@ public partial class Combobox<TItem> : ComponentBase
         get
         {
             if (string.IsNullOrWhiteSpace(Value))
+            {
                 return Placeholder;
+            }
 
             var selectedItem = Items.FirstOrDefault(item => ValueSelector(item) == Value);
             return selectedItem != null ? DisplaySelector(selectedItem) : Placeholder;
@@ -195,10 +197,17 @@ public partial class Combobox<TItem> : ComponentBase
     private async Task HandleContentReady()
     {
         // Guard against multiple calls per open
-        if (_focusDone) return;
+        if (_focusDone)
+        {
+            return;
+        }
+
         _focusDone = true;
 
-        if (_commandInputRef == null) return;
+        if (_commandInputRef == null)
+        {
+            return;
+        }
 
         try
         {
@@ -250,15 +259,12 @@ public partial class Combobox<TItem> : ComponentBase
     /// </summary>
     /// <param name="item">The item to check.</param>
     /// <returns>True if the item is selected; otherwise, false.</returns>
-    private bool IsSelected(TItem item)
-    {
-        return Value == ValueSelector(item);
-    }
+    private bool IsSelected(TItem item) => Value == ValueSelector(item);
 
     /// <summary>
     /// Gets the CSS class for the combobox container.
     /// </summary>
-    private string ContainerClass => "relative";
+    private static string ContainerClass => "relative";
 
     /// <summary>
     /// Gets the CSS class for the button element (styled like ButtonVariant.Outline).

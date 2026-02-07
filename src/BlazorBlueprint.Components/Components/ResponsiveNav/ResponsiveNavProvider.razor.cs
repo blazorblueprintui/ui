@@ -41,20 +41,16 @@ public partial class ResponsiveNavProvider
         }
     }
 
-    private async void OnStateChanged(object? sender, EventArgs e)
-    {
+    private async void OnStateChanged(object? sender, EventArgs e) =>
         // Notify UI of state change
         await InvokeAsync(StateHasChanged);
-    }
 
     /// <summary>
     /// Called from JavaScript when mobile state changes.
     /// </summary>
     [JSInvokable]
-    public void OnMobileChange(bool isMobile)
-    {
+    public void OnMobileChange(bool isMobile) =>
         Context.SetIsMobile(isMobile);
-    }
 
     public async ValueTask DisposeAsync()
     {

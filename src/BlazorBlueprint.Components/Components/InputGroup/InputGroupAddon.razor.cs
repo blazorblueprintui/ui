@@ -166,11 +166,9 @@ public partial class InputGroupAddon : ComponentBase
     /// this method focuses the sibling input or textarea control for better UX.
     /// This mimics native label behavior.
     /// </remarks>
-    private async Task HandleClick(MouseEventArgs e)
-    {
+    private static async Task HandleClick(MouseEventArgs e) =>
         // Delegate focus to the input control
         // In a real implementation, we'd use ElementReference and JSInterop
         // For now, we'll rely on natural DOM behavior
         await Task.CompletedTask;
-    }
 }
