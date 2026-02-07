@@ -9,10 +9,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## 2026-02-07
 
 ### Added
+- Timeline component with composable sub-components (Timeline, TimelineItem, TimelineIcon, TimelineConnector, TimelineContent, TimelineHeader, TimelineTitle, TimelineDescription, TimelineTime, TimelineEmpty)
+  - Layout alignment options (Center, Left, Right, Alternate)
+  - Icon variants (Solid, Outline) with status-based coloring
+  - Connector line styles (Solid, Dashed, Dotted)
+  - Loading state with pulse animation
+  - Collapsible items support
+  - Size presets (Small, Medium, Large)
 - DataTableColumn `Format` parameter for custom formatting of cell values (e.g., date/number formats via `IFormattable`)
 - DataTableColumn now supports nullable `TValue` types for columns with null values
 - Custom variant/styling examples to Button, Badge, Alert, and Toast demo pages showing how to use the `Class` parameter for project-specific variants
 - `Class` property on `ToastData` for custom toast styling via TailwindMerge
+
+### Fixed
+- TailwindMerge incorrectly classified `border-dashed`, `border-dotted`, and `border-l-2` as border-color utilities, causing them to be dropped during class merging
 
 
 ---
