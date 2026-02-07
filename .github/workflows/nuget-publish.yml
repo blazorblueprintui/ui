@@ -8,6 +8,8 @@ on:
       - 'icons-lucide/v*'
       - 'icons-heroicons/v*'
       - 'icons-feather/v*'
+    branches:
+      - 'chore/gitignore-blazorblueprint-css'  # TEMPORARY: test CI build - remove after验证
   workflow_dispatch:
     inputs:
       package:
@@ -63,6 +65,11 @@ jobs:
             PACKAGE="${{ inputs.package }}"
             VERSION="${{ inputs.version }}"
             echo "Manually triggered release"
+          elif [[ "${{ github.ref }}" == refs/heads/* ]]; then
+            # TEMPORARY: Branch push for CI testing - hardcode components
+            PACKAGE="components"
+            VERSION="0.0.0-test"
+            echo "Branch push test build"
           else
             # Tag push
             TAG_NAME="${{ github.ref_name }}"
@@ -107,6 +114,12 @@ jobs:
           echo "📦 Package: $PACKAGE"
           echo "🏷️  Version: $VERSION"
 
+      - name: Setup Node.js
+        if: steps.package-info.outputs.package == 'components'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       - name: Restore dependencies
         run: |
           # For components package, use NuGet package references instead of project references
@@ -136,33 +149,29 @@ jobs:
             dotnet pack ${{ steps.package-info.outputs.project_path }} --configuration Release --no-build --output ./packages
           fi
 
-      - name: Verify package version
+      - name: List package
         shell: bash
         run: |
           PACKAGE_FILE=$(ls ./packages/*.nupkg)
           echo "Created package: $PACKAGE_FILE"
+          echo "Package size: $(du -h $PACKAGE_FILE | cut -f1)"
 
-          # Extract version from package filename
-          # Remove package name prefix and .nupkg suffix
-          PACKAGE_NAME="${{ steps.package-info.outputs.display_name }}"
-          BASENAME=$(basename "$PACKAGE_FILE" .nupkg)
-          PACKAGE_VERSION="${BASENAME#$PACKAGE_NAME.}"
-
-          echo "Package name: $PACKAGE_NAME"
-          echo "Package version: $PACKAGE_VERSION"
-          echo "Expected version: ${{ steps.package-info.outputs.version }}"
-
-          # Verify version matches
-          if [ "$PACKAGE_VERSION" != "${{ steps.package-info.outputs.version }}" ]; then
-            echo "❌ Version mismatch! Package has version $PACKAGE_VERSION but expected ${{ steps.package-info.outputs.version }}"
-            echo "This usually means the git tag doesn't match the MinVer configuration."
-            exit 1
-          fi
-
-          echo "✅ Version verified successfully"
-
-      - name: Push to NuGet
-        run: dotnet nuget push ./packages/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+      # TEMPORARILY DISABLED for CI test - uncomment after verifying build works
+      # - name: Verify package version
+      #   shell: bash
+      #   run: |
+      #     PACKAGE_FILE=$(ls ./packages/*.nupkg)
+      #     PACKAGE_NAME="${{ steps.package-info.outputs.display_name }}"
+      #     BASENAME=$(basename "$PACKAGE_FILE" .nupkg)
+      #     PACKAGE_VERSION="${BASENAME#$PACKAGE_NAME.}"
+      #     if [ "$PACKAGE_VERSION" != "${{ steps.package-info.outputs.version }}" ]; then
+      #       echo "Version mismatch! Package has version $PACKAGE_VERSION but expected ${{ steps.package-info.outputs.version }}"
+      #       exit 1
+      #     fi
+      #     echo "Version verified successfully"
+      #
+      # - name: Push to NuGet
+      #   run: dotnet nuget push ./packages/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
 
       - name: Summary
         shell: bash

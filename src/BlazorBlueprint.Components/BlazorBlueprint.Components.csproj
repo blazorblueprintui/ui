@@ -55,11 +55,15 @@
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
-  <!-- Build Tailwind CSS before packing (only on Windows, with local dev check) -->
-  <!-- Pre-built CSS is committed to repo, this target only runs during local development on Windows -->
-  <Target Name="BuildBlazorBlueprintCSS" BeforeTargets="BeforeBuild;BeforeRebuild" Condition="'$(OS)' == 'Windows_NT' AND '$(CI)' != 'true'">
+  <!-- Build Tailwind CSS before build (Windows uses local exe, CI/Linux uses npx) -->
+  <Target Name="BuildBlazorBlueprintCSS" BeforeTargets="BeforeBuild;BeforeRebuild" Condition="'$(OS)' == 'Windows_NT'">
     <Message Text="Building BlazorBlueprint Tailwind CSS..." Importance="high" />
     <Exec Command="$(MSBuildProjectDirectory)\..\..\tools\tailwindcss.exe -i wwwroot/css/blazorblueprint-input.css -o wwwroot/blazorblueprint.css --minify" />
+  </Target>
+
+  <Target Name="BuildBlazorBlueprintCSSLinux" BeforeTargets="BeforeBuild;BeforeRebuild" Condition="'$(OS)' != 'Windows_NT'">
+    <Message Text="Building BlazorBlueprint Tailwind CSS (npx)..." Importance="high" />
+    <Exec Command="npx --yes @tailwindcss/cli@4.1.16 -i wwwroot/css/blazorblueprint-input.css -o wwwroot/blazorblueprint.css --minify" />
   </Target>
 
 </Project>

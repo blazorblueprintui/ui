@@ -123,22 +123,16 @@ if [ ! -d "$PROJECT_PATH" ]; then
     exit 1
 fi
 
-# Check for uncommitted changes (excluding blazorblueprint.css which we handle automatically)
-CSS_FILE="$PROJECT_PATH/wwwroot/blazorblueprint.css"
-OTHER_CHANGES=$(git diff-index --name-only HEAD -- | grep -v "^$CSS_FILE$" || true)
+# Check for uncommitted changes
+UNCOMMITTED_CHANGES=$(git diff-index --name-only HEAD -- || true)
 
-if [ -n "$OTHER_CHANGES" ]; then
+if [ -n "$UNCOMMITTED_CHANGES" ]; then
     echo -e "${COLOR_RED}Error: You have uncommitted changes${COLOR_RESET}"
     echo "Please commit or stash your changes before creating a release"
     echo ""
-    echo "Uncommitted files (excluding blazorblueprint.css which is handled automatically):"
-    echo "$OTHER_CHANGES" | sed 's/^/  /'
+    echo "Uncommitted files:"
+    echo "$UNCOMMITTED_CHANGES" | sed 's/^/  /'
     exit 1
-fi
-
-# If CSS has uncommitted changes, note it (will be handled during release)
-if ! git diff --quiet -- "$CSS_FILE" 2>/dev/null; then
-    echo -e "${COLOR_YELLOW}Note: blazorblueprint.css has uncommitted changes - will be rebuilt and committed during release${COLOR_RESET}"
 fi
 
 # Check if tag already exists
@@ -216,35 +210,8 @@ if [ "$WILL_UPDATE_PRIMITIVES" = true ]; then
     echo -e "${COLOR_GREEN}✓ Updated and committed Primitives version${COLOR_RESET}"
 fi
 
-# Rebuild Tailwind CSS to ensure it's up-to-date
-echo ""
-echo -e "${COLOR_YELLOW}Building Tailwind CSS...${COLOR_RESET}"
-cd "$PROJECT_PATH"
-
-# Detect OS and use appropriate Tailwind CLI
-if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
-    # Windows (Git Bash/MSYS)
-    ../../tools/tailwindcss.exe -i wwwroot/css/blazorblueprint-input.css -o wwwroot/blazorblueprint.css --minify
-else
-    # Linux/macOS
-    npx --yes @tailwindcss/cli@4.1.16 -i wwwroot/css/blazorblueprint-input.css -o wwwroot/blazorblueprint.css --minify
-fi
-
-cd - > /dev/null
-
-# Check if CSS has any changes (content or line endings) and commit if needed
-# Use git status instead of git diff to catch line-ending changes
-CSS_STATUS=$(git status --porcelain -- "$PROJECT_PATH/wwwroot/blazorblueprint.css")
-if [ -n "$CSS_STATUS" ]; then
-    echo ""
-    echo -e "${COLOR_YELLOW}CSS needs updating, committing...${COLOR_RESET}"
-    git add "$PROJECT_PATH/wwwroot/blazorblueprint.css"
-    git commit -m "chore: rebuild blazorblueprint.css for v${VERSION}"
-    COMMITS_MADE=$((COMMITS_MADE + 1))
-    echo -e "${COLOR_GREEN}✓ CSS rebuilt and committed${COLOR_RESET}"
-else
-    echo -e "${COLOR_GREEN}✓ CSS is up-to-date${COLOR_RESET}"
-fi
+# Note: blazorblueprint.css is no longer tracked in git.
+# It is rebuilt automatically by the MSBuild target during dotnet build/pack in CI.
 
 # Create and push tag
 echo ""
