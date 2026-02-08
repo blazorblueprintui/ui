@@ -16,6 +16,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `InputConverter<TValue>` system with global, instance, and built-in default converter resolution for 15+ types
 - `UpdateTiming` enum for Input and InputField — `Immediate` (default), `OnChange` (blur/Enter), and `Debounced` modes
 - `DebounceInterval` parameter (default 500ms) for debounced value updates
+- `UpdateTiming` and `DebounceInterval` parameters on `Textarea`, `InputGroupInput`, and `InputGroupTextarea` — matching the `Input` component pattern
+- `DisableDebounce` and `DebounceInterval` parameters on `CommandInput`, `NumericInput<T>`, and `CurrencyInput` — debounce ON by default with selective immediate firing on blur/arrow keys
+- Update Timing / Debounce demo sections with live value displays on Textarea, InputGroup, Command, NumericInput, and CurrencyInput demo pages
 - InputField demo page with examples for all supported types and features
 - `SetPosition()` and `ResetPosition()` methods on `ToastService` for runtime toast position control
 - `TimelineConnectorFit` enum with `Spaced` and `Connected` options for controlling how connector lines fit between icons
@@ -28,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Button component now shows `cursor-pointer` by default and `disabled:cursor-not-allowed` when disabled, replacing `disabled:pointer-events-none` for better UX feedback
 - Added Salary column with currency format (`C0`) to the DataTable demo Basic Table example
 - Command palette keyboard shortcut changed from `Ctrl+K` to `Ctrl+I` across demo pages to avoid browser address bar conflict
+- `CommandDemo` refactored to use `IKeyboardShortcutService` instead of raw JS interop for Ctrl+I shortcut registration
 
 ### Fixed
 - DataTable global search now uses the column's `Format` string when converting values for search matching, consistent with how cell values are rendered
