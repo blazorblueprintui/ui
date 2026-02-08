@@ -1,5 +1,6 @@
 @page "/components/time-picker"
 @using BlazorBlueprint.Components.TimePicker
+@using System.ComponentModel.DataAnnotations
 
 <PageTitle>TimePicker Component - Blazor Blueprint</PageTitle>
 
@@ -173,6 +174,39 @@
         </p>
     </div>
 
+    <!-- Form Validation with EditForm -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Form Validation</h2>
+            <p class="text-sm text-muted-foreground">
+                TimePicker integrates with Blazor's EditForm and EditContext for model validation.
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Value</code> within an EditForm and
+                validation errors will automatically apply error styling via <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-invalid</code>.
+            </p>
+        </div>
+        <EditForm Model="timeFormModel" OnValidSubmit="HandleTimeFormSubmit" class="max-w-md space-y-4">
+            <DataAnnotationsValidator />
+
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Meeting Time</label>
+                <TimePicker @bind-Value="timeFormModel.MeetingTime" />
+                <ValidationMessage For="@(() => timeFormModel.MeetingTime)" class="text-sm text-destructive" />
+            </div>
+
+            <div class="flex gap-4">
+                <Button Type="ButtonType.Submit" Variant="ButtonVariant.Default">Submit</Button>
+                <Button Type="ButtonType.Button" Variant="ButtonVariant.Outline" OnClick="ResetTimeForm">Reset</Button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(timeFormMessage))
+            {
+                <div class="p-4 bg-card rounded-lg border">
+                    <p class="text-sm">@timeFormMessage</p>
+                </div>
+            }
+        </EditForm>
+    </div>
+
     <!-- API Reference -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -232,5 +266,25 @@
         if (hour == 0) hour = 12;
         var amPm = time.Hours < 12 ? "AM" : "PM";
         return $"{hour:D2}:{time.Minutes:D2}:{time.Seconds:D2} {amPm}";
+    }
+
+    private TimeFormModel timeFormModel = new();
+    private string? timeFormMessage;
+
+    private void HandleTimeFormSubmit()
+    {
+        timeFormMessage = $"Form submitted! Meeting Time: {(timeFormModel.MeetingTime.HasValue ? FormatTime12(timeFormModel.MeetingTime.Value) : "None")}";
+    }
+
+    private void ResetTimeForm()
+    {
+        timeFormModel = new();
+        timeFormMessage = null;
+    }
+
+    private class TimeFormModel
+    {
+        [Required(ErrorMessage = "Please select a meeting time.")]
+        public TimeSpan? MeetingTime { get; set; }
     }
 }

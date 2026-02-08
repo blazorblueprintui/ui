@@ -1,5 +1,6 @@
 @page "/components/native-select"
 @using BlazorBlueprint.Components.NativeSelect
+@using System.ComponentModel.DataAnnotations
 
 <PageTitle>Native Select Component - Blazor Blueprint</PageTitle>
 
@@ -138,6 +139,46 @@
         </div>
         <p class="text-sm text-muted-foreground">Selected number: @_selectedNumber</p>
     </div>
+
+    <!-- Form Validation with EditForm -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Form Validation</h2>
+            <p class="text-sm text-muted-foreground">
+                NativeSelect integrates with Blazor's EditForm and EditContext for model validation.
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Value</code> within an EditForm and
+                validation errors will automatically apply error styling via <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-invalid</code>.
+            </p>
+        </div>
+        <EditForm Model="nativeSelectFormModel" OnValidSubmit="HandleNativeSelectFormSubmit" class="max-w-md space-y-4">
+            <DataAnnotationsValidator />
+
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Country</label>
+                <NativeSelect TValue="string" @bind-Value="nativeSelectFormModel.Country" Placeholder="Select a country">
+                    <option value="us">United States</option>
+                    <option value="uk">United Kingdom</option>
+                    <option value="ca">Canada</option>
+                    <option value="au">Australia</option>
+                    <option value="de">Germany</option>
+                    <option value="fr">France</option>
+                </NativeSelect>
+                <ValidationMessage For="@(() => nativeSelectFormModel.Country)" class="text-sm text-destructive" />
+            </div>
+
+            <div class="flex gap-4">
+                <Button Type="ButtonType.Submit" Variant="ButtonVariant.Default">Submit</Button>
+                <Button Type="ButtonType.Button" Variant="ButtonVariant.Outline" OnClick="ResetNativeSelectForm">Reset</Button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(nativeSelectFormMessage))
+            {
+                <div class="p-4 bg-card rounded-lg border">
+                    <p class="text-sm">@nativeSelectFormMessage</p>
+                </div>
+            }
+        </EditForm>
+    </div>
 </div>
 
 @code {
@@ -145,4 +186,23 @@
     private string? _selectedCountry;
     private string? _selectedCar;
     private int _selectedNumber;
+    private NativeSelectFormModel nativeSelectFormModel = new();
+    private string? nativeSelectFormMessage;
+
+    private void HandleNativeSelectFormSubmit()
+    {
+        nativeSelectFormMessage = $"Form submitted! Country: {nativeSelectFormModel.Country}";
+    }
+
+    private void ResetNativeSelectForm()
+    {
+        nativeSelectFormModel = new();
+        nativeSelectFormMessage = null;
+    }
+
+    private class NativeSelectFormModel
+    {
+        [Required(ErrorMessage = "Please select a country.")]
+        public string? Country { get; set; }
+    }
 }

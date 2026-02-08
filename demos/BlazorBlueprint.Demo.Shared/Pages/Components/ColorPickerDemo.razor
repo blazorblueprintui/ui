@@ -1,5 +1,6 @@
 @page "/components/color-picker"
 @using BlazorBlueprint.Components.ColorPicker
+@using System.ComponentModel.DataAnnotations
 
 <PageTitle>ColorPicker Component - Blazor Blueprint</PageTitle>
 
@@ -125,6 +126,39 @@
         <ColorPicker Value="#3B82F6" Disabled="true" />
     </div>
 
+    <!-- Form Validation with EditForm -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Form Validation</h2>
+            <p class="text-sm text-muted-foreground">
+                ColorPicker integrates with Blazor's EditForm and EditContext for model validation.
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Value</code> within an EditForm and
+                validation errors will automatically apply error styling via <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-invalid</code>.
+            </p>
+        </div>
+        <EditForm Model="colorFormModel" OnValidSubmit="HandleColorFormSubmit" class="max-w-md space-y-4">
+            <DataAnnotationsValidator />
+
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Brand Color</label>
+                <ColorPicker @bind-Value="colorFormModel.BrandColor" />
+                <ValidationMessage For="@(() => colorFormModel.BrandColor)" class="text-sm text-destructive" />
+            </div>
+
+            <div class="flex gap-4">
+                <Button Type="ButtonType.Submit" Variant="ButtonVariant.Default">Submit</Button>
+                <Button Type="ButtonType.Button" Variant="ButtonVariant.Outline" OnClick="ResetColorForm">Reset</Button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(colorFormMessage))
+            {
+                <div class="p-4 bg-card rounded-lg border">
+                    <p class="text-sm">@colorFormMessage</p>
+                </div>
+            }
+        </EditForm>
+    </div>
+
     <!-- API Reference -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -174,4 +208,24 @@
         "#EC4899", "#F43F5E", "#EF4444", "#F97316",
         "#F59E0B", "#EAB308", "#84CC16", "#22C55E"
     };
+
+    private ColorFormModel colorFormModel = new();
+    private string? colorFormMessage;
+
+    private void HandleColorFormSubmit()
+    {
+        colorFormMessage = $"Form submitted! Brand Color: {colorFormModel.BrandColor}";
+    }
+
+    private void ResetColorForm()
+    {
+        colorFormModel = new();
+        colorFormMessage = null;
+    }
+
+    private class ColorFormModel
+    {
+        [Required(ErrorMessage = "Please select a brand color.")]
+        public string? BrandColor { get; set; }
+    }
 }

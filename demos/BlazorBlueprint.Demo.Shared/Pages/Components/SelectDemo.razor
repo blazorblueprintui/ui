@@ -1,4 +1,5 @@
 @page "/components/select"
+@using System.ComponentModel.DataAnnotations
 
 <PageTitle>Select Component - Blazor Blueprint</PageTitle>
 
@@ -138,6 +139,49 @@
             }
         </div>
     </section>
+
+    <!-- Form Validation with EditForm -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Form Validation</h2>
+        <p class="text-sm text-muted-foreground">
+            Select integrates with Blazor's EditForm and EditContext for model validation.
+            Use <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Value</code> within an EditForm and
+            validation errors will automatically apply error styling via <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-invalid</code>.
+        </p>
+
+        <EditForm Model="selectFormModel" OnValidSubmit="HandleSelectFormSubmit" class="max-w-md space-y-4">
+            <DataAnnotationsValidator />
+
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Favorite Fruit</label>
+                <Select @bind-Value="selectFormModel.Fruit" TValue="string" Class="w-[280px]">
+                    <SelectTrigger>
+                        <SelectValue Placeholder="Select a fruit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem Value="@("apple")" Text="Apple" TValue="string">Apple</SelectItem>
+                        <SelectItem Value="@("banana")" Text="Banana" TValue="string">Banana</SelectItem>
+                        <SelectItem Value="@("blueberry")" Text="Blueberry" TValue="string">Blueberry</SelectItem>
+                        <SelectItem Value="@("grapes")" Text="Grapes" TValue="string">Grapes</SelectItem>
+                        <SelectItem Value="@("pineapple")" Text="Pineapple" TValue="string">Pineapple</SelectItem>
+                    </SelectContent>
+                </Select>
+                <ValidationMessage For="@(() => selectFormModel.Fruit)" class="text-sm text-destructive" />
+            </div>
+
+            <div class="flex gap-4">
+                <Button Type="ButtonType.Submit" Variant="ButtonVariant.Default">Submit</Button>
+                <Button Type="ButtonType.Button" Variant="ButtonVariant.Outline" OnClick="ResetSelectForm">Reset</Button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(selectFormMessage))
+            {
+                <div class="p-4 bg-card rounded-lg border">
+                    <p class="text-sm">@selectFormMessage</p>
+                </div>
+            }
+        </EditForm>
+    </section>
 </div>
 
 @code {
@@ -159,4 +203,24 @@
         "Cuba", "Cyprus", "Czech Republic", "Denmark", "Djibouti",
         "Dominica", "Dominican Republic", "East Timor", "Ecuador", "Egypt"
     };
+
+    private SelectFormModel selectFormModel = new();
+    private string? selectFormMessage;
+
+    private void HandleSelectFormSubmit()
+    {
+        selectFormMessage = $"Form submitted! Fruit: {selectFormModel.Fruit}";
+    }
+
+    private void ResetSelectForm()
+    {
+        selectFormModel = new();
+        selectFormMessage = null;
+    }
+
+    private class SelectFormModel
+    {
+        [Required(ErrorMessage = "Please select a fruit.")]
+        public string? Fruit { get; set; }
+    }
 }

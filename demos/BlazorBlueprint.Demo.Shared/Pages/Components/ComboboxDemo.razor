@@ -1,5 +1,6 @@
 @page "/components/combobox"
 @using BlazorBlueprint.Components.Combobox
+@using System.ComponentModel.DataAnnotations
 
 <PageTitle>Combobox Component - Blazor Blueprint</PageTitle>
 
@@ -142,6 +143,47 @@
                  PopoverWidth="w-[200px]" />
     </section>
 
+    <!-- Form Validation with EditForm -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">EditForm Validation</h2>
+        <p class="text-sm text-muted-foreground">
+            Combobox integrates with Blazor's EditForm and EditContext for model validation.
+            Use <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Value</code> within an EditForm and
+            validation errors will automatically apply error styling via <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-invalid</code>.
+        </p>
+
+        <EditForm Model="comboboxFormModel" OnValidSubmit="HandleComboboxFormSubmit" class="max-w-md space-y-4">
+            <DataAnnotationsValidator />
+
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Framework</label>
+                <Combobox TItem="Framework"
+                         Items="frameworks"
+                         @bind-Value="comboboxFormModel.Framework"
+                         ValueSelector="@(f => f.Value)"
+                         DisplaySelector="@(f => f.Label)"
+                         Placeholder="Select framework..."
+                         SearchPlaceholder="Search framework..."
+                         EmptyMessage="No framework found."
+                         Class="w-full"
+                         MatchTriggerWidth="true" />
+                <ValidationMessage For="@(() => comboboxFormModel.Framework)" class="text-sm text-destructive" />
+            </div>
+
+            <div class="flex gap-4">
+                <Button Type="ButtonType.Submit" Variant="ButtonVariant.Default">Submit</Button>
+                <Button Type="ButtonType.Button" Variant="ButtonVariant.Outline" OnClick="ResetComboboxForm">Reset</Button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(comboboxFormMessage))
+            {
+                <div class="p-4 bg-card rounded-lg border">
+                    <p class="text-sm">@comboboxFormMessage</p>
+                </div>
+            }
+        </EditForm>
+    </section>
+
     <!-- Form Example -->
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">Form Integration</h2>
@@ -275,6 +317,20 @@
         StateHasChanged();
     }
 
+    private ComboboxFormModel comboboxFormModel = new();
+    private string? comboboxFormMessage;
+
+    private void HandleComboboxFormSubmit()
+    {
+        comboboxFormMessage = $"Form submitted! Framework: {GetFrameworkLabel(comboboxFormModel.Framework)}";
+    }
+
+    private void ResetComboboxForm()
+    {
+        comboboxFormModel = new();
+        comboboxFormMessage = null;
+    }
+
     public class Framework
     {
         public required string Value { get; set; }
@@ -291,5 +347,11 @@
     {
         public required string Code { get; set; }
         public required string Name { get; set; }
+    }
+
+    private class ComboboxFormModel
+    {
+        [Required(ErrorMessage = "Please select a framework.")]
+        public string? Framework { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 @page "/components/currency-input"
 @using BlazorBlueprint.Components.CurrencyInput
+@using System.ComponentModel.DataAnnotations
 
 <PageTitle>CurrencyInput Component - Blazor Blueprint</PageTitle>
 
@@ -237,6 +238,39 @@
         </div>
     </div>
 
+    <!-- Form Validation with EditForm -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Form Validation</h2>
+            <p class="text-sm text-muted-foreground">
+                CurrencyInput integrates with Blazor's EditForm and EditContext for model validation.
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Value</code> within an EditForm and
+                validation errors will automatically apply error styling via <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-invalid</code>.
+            </p>
+        </div>
+        <EditForm Model="currencyFormModel" OnValidSubmit="HandleCurrencyFormSubmit" class="max-w-md space-y-4">
+            <DataAnnotationsValidator />
+
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Amount</label>
+                <CurrencyInput @bind-Value="currencyFormModel.Amount" CurrencyCode="USD" Placeholder="0.00" />
+                <ValidationMessage For="@(() => currencyFormModel.Amount)" class="text-sm text-destructive" />
+            </div>
+
+            <div class="flex gap-4">
+                <Button Type="ButtonType.Submit" Variant="ButtonVariant.Default">Submit</Button>
+                <Button Type="ButtonType.Button" Variant="ButtonVariant.Outline" OnClick="ResetCurrencyForm">Reset</Button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(currencyFormMessage))
+            {
+                <div class="p-4 bg-card rounded-lg border">
+                    <p class="text-sm">@currencyFormMessage</p>
+                </div>
+            }
+        </EditForm>
+    </div>
+
     <!-- API Reference -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -288,5 +322,25 @@
     private void HandleCurrencyChange(ChangeEventArgs e)
     {
         _selectedCurrency = e.Value?.ToString() ?? "USD";
+    }
+
+    private CurrencyFormModel currencyFormModel = new();
+    private string? currencyFormMessage;
+
+    private void HandleCurrencyFormSubmit()
+    {
+        currencyFormMessage = $"Form submitted! Amount: ${currencyFormModel.Amount:F2}";
+    }
+
+    private void ResetCurrencyForm()
+    {
+        currencyFormModel = new();
+        currencyFormMessage = null;
+    }
+
+    private class CurrencyFormModel
+    {
+        [Range(0.01, 10000, ErrorMessage = "Amount must be between $0.01 and $10,000.")]
+        public decimal Amount { get; set; }
     }
 }

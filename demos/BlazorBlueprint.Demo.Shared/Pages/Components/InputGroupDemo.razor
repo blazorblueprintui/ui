@@ -4,6 +4,7 @@
 @using BlazorBlueprint.Components.Input
 @using BlazorBlueprint.Components.Label
 @using BlazorBlueprint.Components.DropdownMenu
+@using System.ComponentModel.DataAnnotations
 
 <PageTitle>Input Group - Blazor Blueprint</PageTitle>
 
@@ -485,6 +486,52 @@
             </div>
         </div>
     </section>
+
+    <!-- Form Validation with EditForm -->
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">EditForm Validation</h2>
+            <p class="text-muted-foreground">
+                InputGroupInput and InputGroupTextarea integrate with Blazor's EditForm for model validation.
+                Validation errors automatically apply error styling via <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-invalid</code>.
+            </p>
+        </div>
+
+        <EditForm Model="formModel" OnValidSubmit="HandleValidSubmit" class="space-y-4">
+            <DataAnnotationsValidator />
+
+            <div class="space-y-2">
+                <Label>Email</Label>
+                <InputGroup>
+                    <InputGroupAddon Align="InputGroupAlign.InlineStart">
+                        <LucideIcon Name="at-sign" Size="16" />
+                    </InputGroupAddon>
+                    <InputGroupInput Type="InputType.Email" @bind-Value="formModel.Email" Placeholder="name@example.com" />
+                </InputGroup>
+                <ValidationMessage For="@(() => formModel.Email)" class="text-sm text-destructive" />
+            </div>
+
+            <div class="space-y-2">
+                <Label>Comment</Label>
+                <InputGroup>
+                    <InputGroupTextarea @bind-Value="formModel.Comment" Rows="3" Placeholder="Write your comment..." />
+                </InputGroup>
+                <ValidationMessage For="@(() => formModel.Comment)" class="text-sm text-destructive" />
+            </div>
+
+            <div class="flex gap-4">
+                <Button Type="ButtonType.Submit" Variant="ButtonVariant.Default">Submit</Button>
+                <Button Type="ButtonType.Button" Variant="ButtonVariant.Outline" OnClick="ResetForm">Reset</Button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(formMessage))
+            {
+                <div class="p-4 bg-card rounded-lg border">
+                    <p class="text-sm">@formMessage</p>
+                </div>
+            }
+        </EditForm>
+    </section>
 </div>
 
 <!-- Code Example -->
@@ -528,6 +575,19 @@
     private string? _igOnChangeValue;
     private string? _igDebouncedValue;
     private string? _igTextareaDebouncedValue;
+    private InputGroupFormModel formModel = new();
+    private string? formMessage;
+
+    private void HandleValidSubmit()
+    {
+        formMessage = $"Form submitted! Email: {formModel.Email}, Comment: {formModel.Comment}";
+    }
+
+    private void ResetForm()
+    {
+        formModel = new();
+        formMessage = null;
+    }
 
     private void HandleMenuAction(string action)
     {
@@ -540,5 +600,16 @@
     {
         // Handle search scope selection
         Console.WriteLine($"Search scope: {scope}");
+    }
+
+    private class InputGroupFormModel
+    {
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
+        public string? Email { get; set; }
+
+        [Required(ErrorMessage = "Comment is required.")]
+        [StringLength(500, MinimumLength = 5, ErrorMessage = "Comment must be between 5 and 500 characters.")]
+        public string? Comment { get; set; }
     }
 }

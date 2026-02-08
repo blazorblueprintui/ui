@@ -1,6 +1,7 @@
 @page "/components/textarea"
 @using BlazorBlueprint.Components.Textarea
 @using BlazorBlueprint.Components.Input
+@using System.ComponentModel.DataAnnotations
 
 <PageTitle>Textarea Component - Blazor Blueprint</PageTitle>
 
@@ -252,6 +253,39 @@
         </div>
     </div>
 
+    <!-- Form Validation with EditForm -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Form Validation</h2>
+            <p class="text-sm text-muted-foreground">
+                Textarea integrates with Blazor's EditForm and EditContext for model validation.
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Value</code> within an EditForm and
+                validation errors will automatically apply error styling via <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-invalid</code>.
+            </p>
+        </div>
+        <EditForm Model="formModel" OnValidSubmit="HandleValidSubmit" class="max-w-md space-y-4">
+            <DataAnnotationsValidator />
+
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Bio</label>
+                <Textarea @bind-Value="formModel.Bio" Placeholder="Tell us about yourself..." />
+                <ValidationMessage For="@(() => formModel.Bio)" class="text-sm text-destructive" />
+            </div>
+
+            <div class="flex gap-4">
+                <Button Type="ButtonType.Submit" Variant="ButtonVariant.Default">Submit</Button>
+                <Button Type="ButtonType.Button" Variant="ButtonVariant.Outline" OnClick="ResetForm">Reset</Button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(formMessage))
+            {
+                <div class="p-4 bg-card rounded-lg border">
+                    <p class="text-sm">@formMessage</p>
+                </div>
+            }
+        </EditForm>
+    </div>
+
     <!-- API Reference -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -356,4 +390,24 @@
     private string? _immediateValue;
     private string? _onChangeValue;
     private string? _debouncedValue;
+    private TextareaFormModel formModel = new();
+    private string? formMessage;
+
+    private void HandleValidSubmit()
+    {
+        formMessage = $"Form submitted! Bio: {formModel.Bio}";
+    }
+
+    private void ResetForm()
+    {
+        formModel = new();
+        formMessage = null;
+    }
+
+    private class TextareaFormModel
+    {
+        [Required(ErrorMessage = "Bio is required.")]
+        [StringLength(500, MinimumLength = 10, ErrorMessage = "Bio must be between 10 and 500 characters.")]
+        public string? Bio { get; set; }
+    }
 }

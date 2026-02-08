@@ -1,5 +1,6 @@
 @page "/components/masked-input"
 @using BlazorBlueprint.Components.MaskedInput
+@using System.ComponentModel.DataAnnotations
 
 <PageTitle>MaskedInput Component - Blazor Blueprint</PageTitle>
 
@@ -207,6 +208,39 @@
         </div>
     </div>
 
+    <!-- Form Validation with EditForm -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Form Validation</h2>
+            <p class="text-sm text-muted-foreground">
+                MaskedInput integrates with Blazor's EditForm and EditContext for model validation.
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Value</code> within an EditForm and
+                validation errors will automatically apply error styling via <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-invalid</code>.
+            </p>
+        </div>
+        <EditForm Model="maskedFormModel" OnValidSubmit="HandleMaskedFormSubmit" class="max-w-md space-y-4">
+            <DataAnnotationsValidator />
+
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Phone Number</label>
+                <MaskedInput @bind-Value="maskedFormModel.Phone" Preset="MaskPreset.Phone" />
+                <ValidationMessage For="@(() => maskedFormModel.Phone)" class="text-sm text-destructive" />
+            </div>
+
+            <div class="flex gap-4">
+                <Button Type="ButtonType.Submit" Variant="ButtonVariant.Default">Submit</Button>
+                <Button Type="ButtonType.Button" Variant="ButtonVariant.Outline" OnClick="ResetMaskedForm">Reset</Button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(maskedFormMessage))
+            {
+                <div class="p-4 bg-card rounded-lg border">
+                    <p class="text-sm">@maskedFormMessage</p>
+                </div>
+            }
+        </EditForm>
+    </div>
+
     <!-- API Reference -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -260,4 +294,24 @@
     private string _prefilled = "5551234567";
 
     private MaskedInput? _phoneRef;
+    private MaskedFormModel maskedFormModel = new();
+    private string? maskedFormMessage;
+
+    private void HandleMaskedFormSubmit()
+    {
+        maskedFormMessage = $"Form submitted! Phone: {maskedFormModel.Phone}";
+    }
+
+    private void ResetMaskedForm()
+    {
+        maskedFormModel = new();
+        maskedFormMessage = null;
+    }
+
+    private class MaskedFormModel
+    {
+        [Required(ErrorMessage = "Phone number is required.")]
+        [MinLength(10, ErrorMessage = "Please enter a complete phone number.")]
+        public string? Phone { get; set; }
+    }
 }

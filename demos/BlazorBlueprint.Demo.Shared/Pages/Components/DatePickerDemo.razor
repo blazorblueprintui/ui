@@ -1,6 +1,7 @@
 @page "/components/date-picker"
 @using BlazorBlueprint.Components.DatePicker
 @using BlazorBlueprint.Components.Separator
+@using System.ComponentModel.DataAnnotations
 
 <PageTitle>Date Picker Component - Blazor Blueprint</PageTitle>
 
@@ -132,6 +133,39 @@
         </div>
     </div>
 
+    <!-- Form Validation with EditForm -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Form Validation</h2>
+            <p class="text-sm text-muted-foreground">
+                DatePicker integrates with Blazor's EditForm and EditContext for model validation.
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Value</code> within an EditForm and
+                validation errors will automatically apply error styling via <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-invalid</code>.
+            </p>
+        </div>
+        <EditForm Model="dateFormModel" OnValidSubmit="HandleDateFormSubmit" class="max-w-md space-y-4">
+            <DataAnnotationsValidator />
+
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Event Date</label>
+                <DatePicker @bind-Value="dateFormModel.EventDate" Placeholder="Select event date" />
+                <ValidationMessage For="@(() => dateFormModel.EventDate)" class="text-sm text-destructive" />
+            </div>
+
+            <div class="flex gap-4">
+                <Button Type="ButtonType.Submit" Variant="ButtonVariant.Default">Submit</Button>
+                <Button Type="ButtonType.Button" Variant="ButtonVariant.Outline" OnClick="ResetDateForm">Reset</Button>
+            </div>
+
+            @if (!string.IsNullOrEmpty(dateFormMessage))
+            {
+                <div class="p-4 bg-card rounded-lg border">
+                    <p class="text-sm">@dateFormMessage</p>
+                </div>
+            }
+        </EditForm>
+    </div>
+
     <!-- API Reference -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -218,5 +252,25 @@
     private bool IsWeekend(DateTime date)
     {
         return date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday;
+    }
+
+    private DateFormModel dateFormModel = new();
+    private string? dateFormMessage;
+
+    private void HandleDateFormSubmit()
+    {
+        dateFormMessage = $"Form submitted! Event Date: {dateFormModel.EventDate?.ToString("MMMM d, yyyy")}";
+    }
+
+    private void ResetDateForm()
+    {
+        dateFormModel = new();
+        dateFormMessage = null;
+    }
+
+    private class DateFormModel
+    {
+        [Required(ErrorMessage = "Please select an event date.")]
+        public DateTime? EventDate { get; set; }
     }
 }
