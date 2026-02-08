@@ -397,6 +397,94 @@
             </div>
         </div>
     </section>
+
+    <!-- Update Timing -->
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Update Timing</h2>
+            <p class="text-muted-foreground">
+                Control when <code class="text-xs bg-muted px-1 py-0.5 rounded">ValueChanged</code> fires using the
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">UpdateTiming</code> parameter on InputGroupInput and InputGroupTextarea.
+            </p>
+        </div>
+
+        <div class="space-y-6">
+            <!-- Immediate -->
+            <div class="space-y-2">
+                <Label>Immediate (default)</Label>
+                <InputGroup>
+                    <InputGroupAddon Align="InputGroupAlign.InlineStart">
+                        <LucideIcon Name="search" Size="16" />
+                    </InputGroupAddon>
+                    <InputGroupInput UpdateTiming="UpdateTiming.Immediate"
+                                     Value="@_igImmediateValue"
+                                     ValueChanged="@((v) => _igImmediateValue = v)"
+                                     Placeholder="Fires on every keystroke" />
+                </InputGroup>
+                <div class="rounded-lg border p-3 bg-muted/50">
+                    <p class="text-xs text-muted-foreground mb-1">Value:</p>
+                    <p class="text-sm font-mono">@(string.IsNullOrEmpty(_igImmediateValue) ? "(empty)" : _igImmediateValue)</p>
+                </div>
+            </div>
+
+            <!-- OnChange -->
+            <div class="space-y-2">
+                <Label>OnChange (blur / Enter)</Label>
+                <InputGroup>
+                    <InputGroupAddon Align="InputGroupAlign.InlineStart">
+                        <LucideIcon Name="search" Size="16" />
+                    </InputGroupAddon>
+                    <InputGroupInput UpdateTiming="UpdateTiming.OnChange"
+                                     Value="@_igOnChangeValue"
+                                     ValueChanged="@((v) => _igOnChangeValue = v)"
+                                     Placeholder="Fires on blur or Enter" />
+                </InputGroup>
+                <div class="rounded-lg border p-3 bg-muted/50">
+                    <p class="text-xs text-muted-foreground mb-1">Value:</p>
+                    <p class="text-sm font-mono">@(string.IsNullOrEmpty(_igOnChangeValue) ? "(empty)" : _igOnChangeValue)</p>
+                </div>
+            </div>
+
+            <!-- Debounced -->
+            <div class="space-y-2">
+                <Label>Debounced (500ms)</Label>
+                <InputGroup>
+                    <InputGroupAddon Align="InputGroupAlign.InlineStart">
+                        <LucideIcon Name="search" Size="16" />
+                    </InputGroupAddon>
+                    <InputGroupInput UpdateTiming="UpdateTiming.Debounced"
+                                     DebounceInterval="500"
+                                     Value="@_igDebouncedValue"
+                                     ValueChanged="@((v) => _igDebouncedValue = v)"
+                                     Placeholder="Fires after typing pauses" />
+                </InputGroup>
+                <div class="rounded-lg border p-3 bg-muted/50">
+                    <p class="text-xs text-muted-foreground mb-1">Value:</p>
+                    <p class="text-sm font-mono">@(string.IsNullOrEmpty(_igDebouncedValue) ? "(empty)" : _igDebouncedValue)</p>
+                </div>
+            </div>
+
+            <!-- Textarea Debounced -->
+            <div class="space-y-2">
+                <Label>Textarea Debounced (300ms)</Label>
+                <InputGroup>
+                    <InputGroupTextarea UpdateTiming="UpdateTiming.Debounced"
+                                        DebounceInterval="300"
+                                        Rows="3"
+                                        Value="@_igTextareaDebouncedValue"
+                                        ValueChanged="@((v) => _igTextareaDebouncedValue = v)"
+                                        Placeholder="Type to see debounced updates..." />
+                    <InputGroupAddon Align="InputGroupAlign.BlockEnd">
+                        <InputGroupText>Debounced at 300ms</InputGroupText>
+                    </InputGroupAddon>
+                </InputGroup>
+                <div class="rounded-lg border p-3 bg-muted/50">
+                    <p class="text-xs text-muted-foreground mb-1">Value:</p>
+                    <p class="text-sm font-mono">@(string.IsNullOrEmpty(_igTextareaDebouncedValue) ? "(empty)" : _igTextareaDebouncedValue)</p>
+                </div>
+            </div>
+        </div>
+    </section>
 </div>
 
 <!-- Code Example -->
@@ -436,6 +524,11 @@
 </section>
 
 @code {
+    private string? _igImmediateValue;
+    private string? _igOnChangeValue;
+    private string? _igDebouncedValue;
+    private string? _igTextareaDebouncedValue;
+
     private void HandleMenuAction(string action)
     {
         // Handle menu action

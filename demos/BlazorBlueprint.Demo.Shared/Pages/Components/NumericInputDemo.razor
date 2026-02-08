@@ -152,6 +152,47 @@
         <p class="text-sm text-muted-foreground">Value: @_longValue.ToString("N0")</p>
     </div>
 
+    <!-- Debounce -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Debounce</h2>
+            <p class="text-sm text-muted-foreground">
+                By default, <code class="text-xs bg-muted px-1 py-0.5 rounded">ValueChanged</code> is debounced during typing to reduce re-renders.
+                Arrow keys, buttons, and blur always fire immediately. Set
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">DisableDebounce="true"</code> to fire on every keystroke.
+            </p>
+        </div>
+        <div class="grid gap-6 md:grid-cols-2 max-w-2xl">
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Debounced (default)</label>
+                <div class="w-64">
+                    <NumericInput TValue="int"
+                                  Value="@_debouncedInt"
+                                  ValueChanged="@((v) => _debouncedInt = v)"
+                                  Placeholder="Type to see delay" />
+                </div>
+                <div class="rounded-lg border p-3 bg-muted/50">
+                    <p class="text-xs text-muted-foreground mb-1">Value:</p>
+                    <p class="text-sm font-mono">@_debouncedInt</p>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Immediate (DisableDebounce)</label>
+                <div class="w-64">
+                    <NumericInput TValue="int"
+                                  DisableDebounce="true"
+                                  Value="@_immediateInt"
+                                  ValueChanged="@((v) => _immediateInt = v)"
+                                  Placeholder="Updates instantly" />
+                </div>
+                <div class="rounded-lg border p-3 bg-muted/50">
+                    <p class="text-xs text-muted-foreground mb-1">Value:</p>
+                    <p class="text-sm font-mono">@_immediateInt</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- API Reference -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -170,6 +211,8 @@
                     <p><strong>AllowNegative:</strong> <code class="bg-muted px-1 py-0.5 rounded">bool</code> - Whether negative values are allowed. Default: true</p>
                     <p><strong>ShowButtons:</strong> <code class="bg-muted px-1 py-0.5 rounded">bool</code> - Show increment/decrement buttons. Default: false</p>
                     <p><strong>Format:</strong> <code class="bg-muted px-1 py-0.5 rounded">string?</code> - Custom format string (e.g., "F2", "N0")</p>
+                    <p><strong>DisableDebounce:</strong> <code class="bg-muted px-1 py-0.5 rounded">bool</code> - Disable debounce to fire ValueChanged on every keystroke. Default: false</p>
+                    <p><strong>DebounceInterval:</strong> <code class="bg-muted px-1 py-0.5 rounded">int</code> - Debounce delay in milliseconds. Default: 500</p>
                     <p><strong>Disabled:</strong> <code class="bg-muted px-1 py-0.5 rounded">bool</code> - Disables the input</p>
                 </div>
             </div>
@@ -196,4 +239,6 @@
     private int _positiveValue = 0;
     private float _floatValue = 3.14f;
     private long _longValue = 0;
+    private int _debouncedInt = 0;
+    private int _immediateInt = 0;
 }

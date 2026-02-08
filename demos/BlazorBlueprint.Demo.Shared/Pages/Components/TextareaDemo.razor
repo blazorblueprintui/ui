@@ -1,5 +1,6 @@
 @page "/components/textarea"
 @using BlazorBlueprint.Components.Textarea
+@using BlazorBlueprint.Components.Input
 
 <PageTitle>Textarea Component - Blazor Blueprint</PageTitle>
 
@@ -180,6 +181,53 @@
         </div>
     </div>
 
+    <!-- Update Timing -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Update Timing</h2>
+            <p class="text-sm text-muted-foreground">
+                Control when <code class="text-xs bg-muted px-1 py-0.5 rounded">ValueChanged</code> fires using the
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">UpdateTiming</code> parameter.
+            </p>
+        </div>
+        <div class="grid gap-6 md:grid-cols-3 max-w-4xl">
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Immediate (default)</label>
+                <Textarea UpdateTiming="UpdateTiming.Immediate"
+                          Value="@_immediateValue"
+                          ValueChanged="@((v) => _immediateValue = v)"
+                          Placeholder="Fires on every keystroke" />
+                <div class="rounded-lg border p-3 bg-muted/50">
+                    <p class="text-xs text-muted-foreground mb-1">Value:</p>
+                    <p class="text-sm font-mono">@(string.IsNullOrEmpty(_immediateValue) ? "(empty)" : _immediateValue)</p>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <label class="text-sm font-medium">OnChange (blur / Enter)</label>
+                <Textarea UpdateTiming="UpdateTiming.OnChange"
+                          Value="@_onChangeValue"
+                          ValueChanged="@((v) => _onChangeValue = v)"
+                          Placeholder="Fires on blur or Enter" />
+                <div class="rounded-lg border p-3 bg-muted/50">
+                    <p class="text-xs text-muted-foreground mb-1">Value:</p>
+                    <p class="text-sm font-mono">@(string.IsNullOrEmpty(_onChangeValue) ? "(empty)" : _onChangeValue)</p>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Debounced (500ms)</label>
+                <Textarea UpdateTiming="UpdateTiming.Debounced"
+                          DebounceInterval="500"
+                          Value="@_debouncedValue"
+                          ValueChanged="@((v) => _debouncedValue = v)"
+                          Placeholder="Fires after typing pauses" />
+                <div class="rounded-lg border p-3 bg-muted/50">
+                    <p class="text-xs text-muted-foreground mb-1">Value:</p>
+                    <p class="text-sm font-mono">@(string.IsNullOrEmpty(_debouncedValue) ? "(empty)" : _debouncedValue)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Styling -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -270,6 +318,26 @@
             </div>
             <Separator />
             <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">UpdateTiming</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">UpdateTiming</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Controls when ValueChanged fires. Options: Immediate (default), OnChange, Debounced.
+                </p>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">DebounceInterval</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">int</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Debounce delay in milliseconds when UpdateTiming is Debounced. Default: 500
+                </p>
+            </div>
+            <Separator />
+            <div>
                 <h3 class="font-mono text-sm font-semibold mb-2">Class</h3>
                 <p class="text-sm text-muted-foreground mb-2">
                     Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string?</code>
@@ -285,4 +353,7 @@
 @code {
     private string? boundValue;
     private string? tweetValue;
+    private string? _immediateValue;
+    private string? _onChangeValue;
+    private string? _debouncedValue;
 }

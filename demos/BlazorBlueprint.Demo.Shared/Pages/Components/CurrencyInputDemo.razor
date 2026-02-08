@@ -196,6 +196,47 @@
         <p class="text-sm text-muted-foreground">Value: @_dynamicValue (@_selectedCurrency)</p>
     </div>
 
+    <!-- Debounce -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Debounce</h2>
+            <p class="text-sm text-muted-foreground">
+                By default, <code class="text-xs bg-muted px-1 py-0.5 rounded">ValueChanged</code> is debounced during typing to reduce re-renders.
+                Arrow keys and blur always fire immediately. Set
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">DisableDebounce="true"</code> to fire on every keystroke.
+            </p>
+        </div>
+        <div class="grid gap-6 md:grid-cols-2 max-w-2xl">
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Debounced (default)</label>
+                <div class="w-64">
+                    <CurrencyInput Value="@_debouncedCurrency"
+                                   ValueChanged="@((v) => _debouncedCurrency = v)"
+                                   CurrencyCode="USD"
+                                   Placeholder="Type to see delay" />
+                </div>
+                <div class="rounded-lg border p-3 bg-muted/50">
+                    <p class="text-xs text-muted-foreground mb-1">Value:</p>
+                    <p class="text-sm font-mono">$@_debouncedCurrency.ToString("F2")</p>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Immediate (DisableDebounce)</label>
+                <div class="w-64">
+                    <CurrencyInput DisableDebounce="true"
+                                   Value="@_immediateCurrency"
+                                   ValueChanged="@((v) => _immediateCurrency = v)"
+                                   CurrencyCode="USD"
+                                   Placeholder="Updates instantly" />
+                </div>
+                <div class="rounded-lg border p-3 bg-muted/50">
+                    <p class="text-xs text-muted-foreground mb-1">Value:</p>
+                    <p class="text-sm font-mono">$@_immediateCurrency.ToString("F2")</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- API Reference -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -212,6 +253,8 @@
                     <p><strong>Max:</strong> <code class="bg-muted px-1 py-0.5 rounded">decimal?</code> - Maximum allowed value</p>
                     <p><strong>AllowNegative:</strong> <code class="bg-muted px-1 py-0.5 rounded">bool</code> - Allow negative values. Default: true</p>
                     <p><strong>UseThousandSeparator:</strong> <code class="bg-muted px-1 py-0.5 rounded">bool</code> - Use thousand separators. Default: true</p>
+                    <p><strong>DisableDebounce:</strong> <code class="bg-muted px-1 py-0.5 rounded">bool</code> - Disable debounce to fire ValueChanged on every keystroke. Default: false</p>
+                    <p><strong>DebounceInterval:</strong> <code class="bg-muted px-1 py-0.5 rounded">int</code> - Debounce delay in milliseconds. Default: 500</p>
                     <p><strong>Disabled:</strong> <code class="bg-muted px-1 py-0.5 rounded">bool</code> - Disables the input</p>
                 </div>
             </div>
@@ -239,6 +282,8 @@
     private decimal _positiveValue = 100.00m;
     private decimal _dynamicValue = 1000.00m;
     private string _selectedCurrency = "USD";
+    private decimal _debouncedCurrency = 0m;
+    private decimal _immediateCurrency = 0m;
 
     private void HandleCurrencyChange(ChangeEventArgs e)
     {
