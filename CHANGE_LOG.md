@@ -13,6 +13,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Cursor and pointer-events conflict resolution groups in TailwindMerge
 - Cursor behavior demo section on Button demo page
 - `SetPosition()` and `ResetPosition()` methods on `ToastService` for runtime toast position control
+- `TimelineConnectorFit` enum with `Spaced` and `Connected` options for controlling how connector lines fit between icons
+- `ConnectorFit` parameter on `Timeline` component
+- `ConnectorClass` parameter on `TimelineItem` for custom connector height overrides
+- `Loading` parameter on `TimelineIcon` for isolated pulse animation
+- Rich Content, Connector Fit, and Custom Connector Height demo sections for Timeline
 
 ### Changed
 - Button component now shows `cursor-pointer` by default and `disabled:cursor-not-allowed` when disabled, replacing `disabled:pointer-events-none` for better UX feedback
@@ -25,6 +30,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Stale portal content when interacting inside open popovers
 - ContextMenu keyboard navigation breaking on repeated right-clicks on the same trigger
 - Toast positioning demo now interactive with live position switching
+- Timeline connector line no longer uses fixed height — dynamically stretches to match content height (#104)
+- Timeline connector gap asymmetry between top and bottom icons resolved with symmetric spacing
+- Timeline loading pulse animation no longer bleeds through icon ring onto connector line
+- Timeline collapsible item chevrons now align consistently regardless of title length
 
 ---
 
