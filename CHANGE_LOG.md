@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 - DataTable global search now uses the column's `Format` string when converting values for search matching, consistent with how cell values are rendered
+- Text input components (`Input`, `Textarea`, `InputGroupInput`, `InputGroupTextarea`) now normalize empty/whitespace strings to `null`, preventing inconsistent validation on nullable string properties (#99)
 
 ---
 
