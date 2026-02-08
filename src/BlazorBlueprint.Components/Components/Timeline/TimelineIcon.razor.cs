@@ -13,6 +13,13 @@ namespace BlazorBlueprint.Components.Timeline;
 public partial class TimelineIcon : ComponentBase
 {
     /// <summary>
+    /// Gets or sets the parent Timeline component via cascading parameter.
+    /// Used to read ConnectorFit for ring styling.
+    /// </summary>
+    [CascadingParameter]
+    public Timeline? ParentTimeline { get; set; }
+
+    /// <summary>
     /// Gets or sets the color theme for the icon.
     /// </summary>
     [Parameter]
@@ -39,6 +46,12 @@ public partial class TimelineIcon : ComponentBase
     public TimelineIconVariant Variant { get; set; } = TimelineIconVariant.Solid;
 
     /// <summary>
+    /// Gets or sets whether the icon is in a loading state (shows pulse animation).
+    /// </summary>
+    [Parameter]
+    public bool Loading { get; set; }
+
+    /// <summary>
     /// Gets or sets additional CSS classes to apply.
     /// </summary>
     [Parameter]
@@ -59,8 +72,16 @@ public partial class TimelineIcon : ComponentBase
     private TimelineColor EffectiveColor =>
         Status == TimelineStatus.Pending ? TimelineColor.Muted : Color;
 
+    private bool IsConnected => ParentTimeline?.ConnectorFit == TimelineConnectorFit.Connected;
+
+    private string RingClass => ClassNames.cn(
+        "relative rounded-full shadow-sm",
+        IsConnected ? null : "ring-8 ring-background",
+        Class
+    );
+
     private string CssClass => ClassNames.cn(
-        "relative flex items-center justify-center rounded-full ring-8 ring-background shadow-sm",
+        "flex items-center justify-center rounded-full",
         Size switch
         {
             TimelineSize.Small => "h-8 w-8",
@@ -87,7 +108,7 @@ public partial class TimelineIcon : ComponentBase
                 TimelineColor.Destructive => "bg-destructive text-destructive-foreground",
                 _ => "bg-primary text-primary-foreground"
             },
-        Class
+        Loading ? "animate-pulse" : null
     );
 
     private string IconSizeClass => Size switch

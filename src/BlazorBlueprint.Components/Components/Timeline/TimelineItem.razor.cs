@@ -87,6 +87,13 @@ public partial class TimelineItem : ComponentBase
     public RenderFragment? DetailContent { get; set; }
 
     /// <summary>
+    /// Gets or sets additional CSS classes to apply to the connector line.
+    /// Use to customize the connector height (e.g., "min-h-16" for taller connectors).
+    /// </summary>
+    [Parameter]
+    public string? ConnectorClass { get; set; }
+
+    /// <summary>
     /// Gets or sets additional CSS classes to apply to the item.
     /// </summary>
     [Parameter]
@@ -139,10 +146,7 @@ public partial class TimelineItem : ComponentBase
         Status == TimelineStatus.InProgress ? "aria-current-step" : null
     );
 
-    private string IconWrapperClass => ClassNames.cn(
-        "relative z-10",
-        Loading ? "animate-pulse" : null
-    );
+    private const string IconWrapperClass = "relative z-10";
 
     private string IconMinHeightClass => IconSize switch
     {
@@ -153,13 +157,27 @@ public partial class TimelineItem : ComponentBase
     };
 
     private string ContentWrapperClass => ClassNames.cn(
-        "flex items-center",
+        "grid items-center",
         IconMinHeightClass
     );
 
     private string ContentWrapperEndClass => ClassNames.cn(
-        "flex items-center justify-end",
+        "grid items-center justify-items-end",
         IconMinHeightClass
+    );
+
+    private string ConnectorGapClass => (ParentTimeline?.Size ?? TimelineSize.Medium) switch
+    {
+        TimelineSize.Small => "-mb-2",
+        TimelineSize.Medium => "-mb-4",
+        TimelineSize.Large => "-mb-6",
+        _ => "-mb-4"
+    };
+
+    private string ComputedConnectorClass => ClassNames.cn(
+        "flex-1 min-h-8",
+        ConnectorGapClass,
+        ConnectorClass
     );
 
     private string DateColumnClass => ClassNames.cn(
