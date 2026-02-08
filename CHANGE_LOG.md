@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 - Button component now shows `cursor-pointer` by default and `disabled:cursor-not-allowed` when disabled, replacing `disabled:pointer-events-none` for better UX feedback
+- Added Salary column with currency format (`C0`) to the DataTable demo Basic Table example
+
+### Fixed
+- DataTable global search now uses the column's `Format` string when converting values for search matching, consistent with how cell values are rendered
 
 ---
 
