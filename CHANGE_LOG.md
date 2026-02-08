@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - Button component now shows `cursor-pointer` by default and `disabled:cursor-not-allowed` when disabled, replacing `disabled:pointer-events-none` for better UX feedback
 - Added Salary column with currency format (`C0`) to the DataTable demo Basic Table example
+- Command palette keyboard shortcut changed from `Ctrl+K` to `Ctrl+I` across demo pages to avoid browser address bar conflict
 
 ### Fixed
 - DataTable global search now uses the column's `Format` string when converting values for search matching, consistent with how cell values are rendered
@@ -34,6 +35,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Timeline connector gap asymmetry between top and bottom icons resolved with symmetric spacing
 - Timeline loading pulse animation no longer bleeds through icon ring onto connector line
 - Timeline collapsible item chevrons now align consistently regardless of title length
+- Menubar demo icon name corrected from `check-circle` to `circle-check`
+- Timeline connector `z-index` changed from `z-10` to `z-[1]` to prevent overlap with overlays
+- Timeline connector minimum height increased from `min-h-8` to `min-h-16` for better spacing
 
 ---
 
