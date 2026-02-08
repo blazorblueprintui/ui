@@ -19,6 +19,32 @@ public class ToastService
     public IReadOnlyList<ToastData> Toasts => _toasts.AsReadOnly();
 
     /// <summary>
+    /// Gets or sets the runtime toast position override.
+    /// When set, this takes priority over the ToastProvider's Position parameter.
+    /// Set to null to revert to the provider's default.
+    /// </summary>
+    public ToastPosition? Position { get; private set; }
+
+    /// <summary>
+    /// Sets the toast position at runtime.
+    /// </summary>
+    /// <param name="position">The position to display toasts.</param>
+    public void SetPosition(ToastPosition position)
+    {
+        Position = position;
+        OnChange?.Invoke();
+    }
+
+    /// <summary>
+    /// Resets the toast position to the ToastProvider's default.
+    /// </summary>
+    public void ResetPosition()
+    {
+        Position = null;
+        OnChange?.Invoke();
+    }
+
+    /// <summary>
     /// Shows a toast notification.
     /// </summary>
     /// <param name="toast">The toast data to display.</param>
