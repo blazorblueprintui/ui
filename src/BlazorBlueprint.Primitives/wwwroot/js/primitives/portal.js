@@ -173,3 +173,35 @@ export function triggerAutofocus(element) {
     // Dispatch the same event that positioning service uses
     element.dispatchEvent(new CustomEvent('blazorblueprint:visible', { bubbles: true }));
 }
+
+/**
+ * Re-dispatches a contextmenu event at the given coordinates.
+ * Temporarily hides the overlay and content to find the element underneath.
+ * @param {HTMLElement} overlay - The overlay element to hide during detection
+ * @param {HTMLElement} content - The menu content element to hide during detection
+ * @param {number} clientX - The client X coordinate
+ * @param {number} clientY - The client Y coordinate
+ */
+export function redispatchContextMenu(overlay, content, clientX, clientY) {
+    overlay.style.display = 'none';
+    if (content) {
+        content.style.display = 'none';
+    }
+
+    const target = document.elementFromPoint(clientX, clientY);
+
+    overlay.style.display = '';
+    if (content) {
+        content.style.display = '';
+    }
+
+    if (target) {
+        target.dispatchEvent(new MouseEvent('contextmenu', {
+            bubbles: true,
+            cancelable: true,
+            clientX: clientX,
+            clientY: clientY,
+            view: window
+        }));
+    }
+}
