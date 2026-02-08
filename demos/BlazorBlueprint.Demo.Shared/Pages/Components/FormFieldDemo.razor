@@ -1,0 +1,279 @@
+@page "/components/form-field"
+@using BlazorBlueprint.Components.FormField
+@using BlazorBlueprint.Components.InputField
+@using BlazorBlueprint.Components.Input
+@using BlazorBlueprint.Components.Converters
+
+<PageTitle>FormField Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">FormField Component</h1>
+            <p class="text-xl text-muted-foreground">
+                An opinionated form field with built-in label, helper text, and automatic error messages.
+            </p>
+        </div>
+    </div>
+
+    <!-- When to use -->
+    <div class="rounded-lg border bg-card p-6 space-y-4">
+        <h2 class="text-lg font-semibold">When to use FormField</h2>
+        <p class="text-sm text-muted-foreground">
+            Use <code class="text-xs bg-muted px-1 py-0.5 rounded">FormField&lt;TValue&gt;</code> when you want a complete,
+            ready-to-use form field with label, helper text, and automatic error display. It composes
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">InputField&lt;TValue&gt;</code> with the Field component system
+            so you don't have to wire them up manually.
+        </p>
+        <div class="bg-muted rounded-md p-4 space-y-2">
+            <pre class="text-sm font-mono whitespace-pre-wrap">&lt;FormField TValue="int" @("@")bind-Value="age" Label="Age" HelperText="Must be 18 or older" /&gt;</pre>
+        </div>
+        <p class="text-sm text-muted-foreground">
+            For full control over layout and error rendering, use the primitive
+            <a href="/components/input-field" class="text-primary underline underline-offset-4 hover:text-primary/80">InputField</a>
+            with the <a href="/components/field" class="text-primary underline underline-offset-4 hover:text-primary/80">Field</a> component system directly.
+        </p>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-sm text-muted-foreground">
+                A simple form field with label and helper text. The label is automatically associated
+                with the input via <code class="text-xs bg-muted px-1 py-0.5 rounded">for</code>/<code class="text-xs bg-muted px-1 py-0.5 rounded">id</code> attributes.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <FormField TValue="string"
+                       @bind-Value="_name"
+                       Label="Full Name"
+                       HelperText="Enter your first and last name."
+                       Placeholder="John Doe" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Current value:</p>
+            <p class="text-sm font-mono">@(string.IsNullOrEmpty(_name) ? "(empty)" : _name)</p>
+        </div>
+    </div>
+
+    <!-- Auto Error Messages -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Automatic Error Messages</h2>
+            <p class="text-sm text-muted-foreground">
+                FormField automatically generates contextual error messages based on the error kind.
+                Try entering a non-numeric value to see a parse error, or a number outside 1-100 to see a validation error.
+                The helper text is replaced by the error message during the error state.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <FormField TValue="int"
+                       @bind-Value="_age"
+                       Label="Age"
+                       HelperText="Must be between 1 and 100."
+                       Validation="v => v >= 1 && v <= 100"
+                       Placeholder="Enter your age" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Current value:</p>
+            <p class="text-sm font-mono">@_age</p>
+        </div>
+    </div>
+
+    <!-- Custom Error Text -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Error Text</h2>
+            <p class="text-sm text-muted-foreground">
+                Use the <code class="text-xs bg-muted px-1 py-0.5 rounded">ErrorText</code> parameter to override
+                the auto-generated error message with a domain-specific one.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <FormField TValue="decimal"
+                       @bind-Value="_price"
+                       Label="Price"
+                       HelperText="Enter the product price in USD."
+                       ErrorText="Please enter a valid dollar amount."
+                       Format="N2"
+                       Placeholder="0.00" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Current value:</p>
+            <p class="text-sm font-mono">@_price</p>
+        </div>
+    </div>
+
+    <!-- Email with Pattern Validation -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Pattern Validation</h2>
+            <p class="text-sm text-muted-foreground">
+                Combine <code class="text-xs bg-muted px-1 py-0.5 rounded">ValidationPattern</code> with FormField
+                for regex-based validation with automatic error display.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <FormField TValue="string"
+                       @bind-Value="_email"
+                       Label="Email Address"
+                       HelperText="We'll never share your email with anyone else."
+                       Type="InputType.Email"
+                       ValidationPattern="^[^@@\s]+@@[^@@\s]+\.[^@@\s]+$"
+                       Placeholder="you@example.com" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Current value:</p>
+            <p class="text-sm font-mono">@(string.IsNullOrEmpty(_email) ? "(empty)" : _email)</p>
+        </div>
+    </div>
+
+    <!-- Nullable DateTime -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Nullable DateTime</h2>
+            <p class="text-sm text-muted-foreground">
+                All InputField features work through FormField, including nullable types and format strings.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <FormField TValue="DateTime?"
+                       @bind-Value="_birthDate"
+                       Label="Date of Birth"
+                       HelperText="Optional. Used for age verification."
+                       Format="yyyy-MM-dd"
+                       Type="InputType.Date" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Current value:</p>
+            <p class="text-sm font-mono">@(_birthDate?.ToString("yyyy-MM-dd") ?? "(null)")</p>
+        </div>
+    </div>
+
+    <!-- Required Field -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Required Field</h2>
+            <p class="text-sm text-muted-foreground">
+                The <code class="text-xs bg-muted px-1 py-0.5 rounded">Required</code> parameter sets the HTML required attribute
+                on the underlying input.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <FormField TValue="string"
+                       @bind-Value="_username"
+                       Label="Username"
+                       HelperText="Required. Choose a unique username."
+                       Required="true"
+                       Placeholder="johndoe" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Current value:</p>
+            <p class="text-sm font-mono">@(string.IsNullOrEmpty(_username) ? "(empty)" : _username)</p>
+        </div>
+    </div>
+
+    <!-- Disabled Field -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">
+                A disabled FormField. The label and helper text remain visible.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <FormField TValue="string"
+                       Value="@("readonly@example.com")"
+                       Label="Email (locked)"
+                       HelperText="Contact support to change your email."
+                       Disabled="true" />
+        </div>
+    </div>
+
+    <!-- Multiple Fields (Form Example) -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Form Example</h2>
+            <p class="text-sm text-muted-foreground">
+                Multiple FormFields composed together as a simple form.
+            </p>
+        </div>
+        <div class="max-w-md space-y-4">
+            <FormField TValue="string"
+                       @bind-Value="_formName"
+                       Label="Name"
+                       Required="true"
+                       Placeholder="Jane Smith" />
+            <FormField TValue="string"
+                       @bind-Value="_formEmail"
+                       Label="Email"
+                       Type="InputType.Email"
+                       Required="true"
+                       Placeholder="jane@example.com" />
+            <FormField TValue="int"
+                       @bind-Value="_formAge"
+                       Label="Age"
+                       HelperText="Must be 18 or older."
+                       Validation="v => v >= 18"
+                       Placeholder="25" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-2">Form values:</p>
+            <div class="space-y-1 text-sm font-mono">
+                <p>Name: @(string.IsNullOrEmpty(_formName) ? "(empty)" : _formName)</p>
+                <p>Email: @(string.IsNullOrEmpty(_formEmail) ? "(empty)" : _formEmail)</p>
+                <p>Age: @_formAge</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Reference -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">FormField&lt;TValue&gt; Parameters</h3>
+                <div class="space-y-2 text-sm">
+                    <p><strong>Label:</strong> <code class="bg-muted px-1 py-0.5 rounded">string?</code> - Label text displayed above the input.</p>
+                    <p><strong>HelperText:</strong> <code class="bg-muted px-1 py-0.5 rounded">string?</code> - Helper text below the input. Hidden during error state.</p>
+                    <p><strong>ErrorText:</strong> <code class="bg-muted px-1 py-0.5 rounded">string?</code> - Manual error text override. When set, replaces auto-generated messages.</p>
+                    <p><strong>Orientation:</strong> <code class="bg-muted px-1 py-0.5 rounded">FieldOrientation</code> - Layout direction. Default: Vertical.</p>
+                    <p><strong>Class:</strong> <code class="bg-muted px-1 py-0.5 rounded">string?</code> - CSS classes for the outer Field container.</p>
+                    <p><strong>InputClass:</strong> <code class="bg-muted px-1 py-0.5 rounded">string?</code> - CSS classes for the inner InputField element.</p>
+                </div>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Pass-Through Parameters</h3>
+                <div class="space-y-2 text-sm text-muted-foreground">
+                    <p>All <code class="bg-muted px-1 py-0.5 rounded">InputField&lt;TValue&gt;</code> parameters are available: Value, Converter, Format, Type, Placeholder, Disabled, Required, Validation, ValidationPattern, UpdateTiming, DebounceInterval, AriaLabel, OnParseError, OnErrorCleared.</p>
+                </div>
+            </div>
+            <Separator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Auto Error Messages</h3>
+                <div class="space-y-2 text-sm text-muted-foreground">
+                    <p><strong>Parse error:</strong> "'abc' is not a valid whole number."</p>
+                    <p><strong>Pattern validation:</strong> "'invalid' does not match the required format."</p>
+                    <p><strong>Value validation:</strong> "The entered value is not valid."</p>
+                    <p>Override with <code class="bg-muted px-1 py-0.5 rounded">ErrorText</code> for domain-specific messages.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string? _name;
+    private int _age;
+    private decimal _price = 19.99m;
+    private string? _email;
+    private DateTime? _birthDate;
+    private string? _username;
+    private string? _formName;
+    private string? _formEmail;
+    private int _formAge;
+}

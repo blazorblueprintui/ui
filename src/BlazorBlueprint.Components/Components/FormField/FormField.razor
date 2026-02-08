@@ -1,0 +1,42 @@
+@namespace BlazorBlueprint.Components.FormField
+@using BlazorBlueprint.Components.Field
+@using BlazorBlueprint.Components.InputField
+@typeparam TValue
+@implements IDisposable
+
+<Field Orientation="@Orientation" IsInvalid="@_hasError" Class="@Class">
+    @if (Label is not null)
+    {
+        <FieldLabel For="@_inputId">@Label</FieldLabel>
+    }
+    <FieldContent>
+        <InputField @ref="_inputRef"
+                    TValue="TValue"
+                    Value="@Value"
+                    ValueChanged="HandleValueChanged"
+                    Converter="@Converter"
+                    Format="@Format"
+                    Type="@Type"
+                    Placeholder="@Placeholder"
+                    Disabled="@Disabled"
+                    Required="@Required"
+                    Validation="@Validation"
+                    ValidationPattern="@ValidationPattern"
+                    UpdateTiming="@UpdateTiming"
+                    DebounceInterval="@DebounceInterval"
+                    Id="@_inputId"
+                    AriaLabel="@AriaLabel"
+                    AriaDescribedBy="@_describedById"
+                    OnParseError="HandleParseError"
+                    OnErrorCleared="HandleErrorCleared"
+                    Class="@InputClass" />
+        @if (!string.IsNullOrEmpty(HelperText) && !_hasError)
+        {
+            <FieldDescription Id="@_descriptionId">@HelperText</FieldDescription>
+        }
+        @if (_hasError)
+        {
+            <FieldError Id="@_errorId">@_errorMessage</FieldError>
+        }
+    </FieldContent>
+</Field>

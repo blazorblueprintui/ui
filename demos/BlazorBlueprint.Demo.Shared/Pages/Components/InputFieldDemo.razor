@@ -31,6 +31,8 @@
         <p class="text-sm text-muted-foreground">
             If you only need a plain string value with no type conversion, use the simpler
             <a href="/components/input" class="text-primary underline underline-offset-4 hover:text-primary/80">Input</a> component instead.
+            For a complete form field with label, helper text, and automatic error messages, see
+            <a href="/components/form-field" class="text-primary underline underline-offset-4 hover:text-primary/80">FormField</a>.
         </p>
     </div>
 
@@ -107,22 +109,65 @@
         </div>
     </div>
 
-    <!-- Parse Error Handling -->
+    <!-- Error Kind Discrimination (NEW) -->
     <div class="space-y-4">
         <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Parse Error Handling</h2>
+            <h2 class="text-2xl font-semibold">Error Kind Discrimination</h2>
             <p class="text-sm text-muted-foreground">
-                Type a non-numeric value and leave the field to see the error state. The border turns red
-                via <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-invalid</code> and
-                <code class="text-xs bg-muted px-1 py-0.5 rounded">OnParseError</code> fires.
-                Errors auto-clear when a valid value is entered.
+                The <code class="text-xs bg-muted px-1 py-0.5 rounded">InputParseException.ErrorKind</code> property
+                lets you distinguish between parse errors, pattern validation errors, and value validation errors.
+                Try entering a non-numeric value (parse error) or a number outside 1-100 (validation error).
             </p>
         </div>
         <div class="max-w-md">
-            <InputField @ref="_errorInput" TValue="int" @bind-Value="_errorDemoValue" OnParseError="HandleParseError" Placeholder="Type 'abc' then blur" />
+            <InputField @ref="_errorKindInput"
+                        TValue="int"
+                        @bind-Value="_errorKindValue"
+                        Validation="v => v >= 1 && v <= 100"
+                        OnParseError="HandleErrorKind"
+                        OnErrorCleared="HandleErrorKindCleared"
+                        Placeholder="Enter 1-100" />
+            @if (_errorKindInput?.HasParseError == true)
+            {
+                <div class="mt-2 space-y-1">
+                    <p class="text-sm text-destructive">@_errorKindMessage</p>
+                    <p class="text-xs text-muted-foreground">
+                        Error kind: <code class="bg-muted px-1 py-0.5 rounded">@_errorKindInput.CurrentErrorKind</code>
+                    </p>
+                </div>
+            }
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Current value:</p>
+            <p class="text-sm font-mono">@_errorKindValue</p>
+        </div>
+    </div>
+
+    <!-- Parse Error Handling with Text Preservation -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Error Text Preservation</h2>
+            <p class="text-sm text-muted-foreground">
+                Invalid text is now preserved on blur so the user can see what they typed wrong.
+                Type a non-numeric value and leave the field — the input retains your text instead of
+                reverting silently. The <code class="text-xs bg-muted px-1 py-0.5 rounded">OnErrorCleared</code>
+                callback fires when you correct the input.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <InputField @ref="_errorInput"
+                        TValue="int"
+                        @bind-Value="_errorDemoValue"
+                        OnParseError="HandleParseError"
+                        OnErrorCleared="HandleParseErrorCleared"
+                        Placeholder="Type 'abc' then blur" />
             @if (_errorInput?.HasParseError == true)
             {
                 <p class="text-sm text-destructive mt-2">@_parseErrorMessage</p>
+            }
+            @if (_errorCleared)
+            {
+                <p class="text-sm text-green-600 mt-2">Error cleared! Input is valid again.</p>
             }
         </div>
         <div class="rounded-lg border p-4 bg-muted/50">
@@ -293,8 +338,10 @@
             <div>
                 <h3 class="font-mono text-sm font-semibold mb-2">Events &amp; State</h3>
                 <div class="space-y-2 text-sm">
-                    <p><strong>OnParseError:</strong> <code class="bg-muted px-1 py-0.5 rounded">EventCallback&lt;InputParseException&gt;</code> - Fires on blur when parsing fails.</p>
-                    <p><strong>HasParseError:</strong> <code class="bg-muted px-1 py-0.5 rounded">bool</code> (read-only) - Whether the input currently has a parse error. Auto-clears on valid input.</p>
+                    <p><strong>OnParseError:</strong> <code class="bg-muted px-1 py-0.5 rounded">EventCallback&lt;InputParseException&gt;</code> - Fires on blur when parsing or validation fails. The <code class="bg-muted px-1 py-0.5 rounded">ErrorKind</code> property indicates the failure type.</p>
+                    <p><strong>OnErrorCleared:</strong> <code class="bg-muted px-1 py-0.5 rounded">EventCallback</code> - Fires when the error state transitions back to valid.</p>
+                    <p><strong>HasParseError:</strong> <code class="bg-muted px-1 py-0.5 rounded">bool</code> (read-only) - Whether the input currently has an error. Auto-clears on valid input.</p>
+                    <p><strong>CurrentErrorKind:</strong> <code class="bg-muted px-1 py-0.5 rounded">InputFieldErrorKind?</code> (read-only) - The kind of error active (<code class="bg-muted px-1 py-0.5 rounded">Parse</code>, <code class="bg-muted px-1 py-0.5 rounded">PatternValidation</code>, or <code class="bg-muted px-1 py-0.5 rounded">ValueValidation</code>), or null.</p>
                 </div>
             </div>
             <Separator />
@@ -310,9 +357,9 @@
             <div>
                 <h3 class="font-mono text-sm font-semibold mb-2">Focus/Blur Behavior</h3>
                 <div class="space-y-2 text-sm text-muted-foreground">
-                    <p><strong>Focused:</strong> Shows raw (unformatted) value for editing.</p>
-                    <p><strong>Blurred:</strong> Shows formatted value. Parse errors fire OnParseError.</p>
-                    <p><strong>During typing:</strong> Parse errors are silently ignored (no error spam).</p>
+                    <p><strong>Focused:</strong> Shows raw (unformatted) value for editing. If in error state, preserves the invalid text.</p>
+                    <p><strong>Blurred:</strong> Shows formatted value if valid. Preserves invalid text if in error state.</p>
+                    <p><strong>During typing:</strong> Parse errors are silently ignored (no error spam). Error state auto-clears on valid input.</p>
                 </div>
             </div>
         </div>
@@ -332,10 +379,14 @@
     private int _immediateIntValue;
     private int _onChangeIntValue;
     private int _debouncedIntValue;
+    private int _errorKindValue;
 
     private InputField<Guid>? _guidInput;
     private InputField<int>? _errorInput;
+    private InputField<int>? _errorKindInput;
     private string _parseErrorMessage = "";
+    private bool _errorCleared;
+    private string _errorKindMessage = "";
 
     // Custom converter: stores as decimal fraction (0.5), displays as percentage (50)
     private readonly InputConverter<double> _percentConverter = new()
@@ -351,6 +402,28 @@
 
     private void HandleParseError(InputParseException ex)
     {
-        _parseErrorMessage = $"Could not parse '{ex.RawInput}' as {ex.TargetType.Name}.";
+        _parseErrorMessage = $"Could not parse '{ex.RawInput}' as {ex.TargetType.Name}. (ErrorKind: {ex.ErrorKind})";
+        _errorCleared = false;
+    }
+
+    private void HandleParseErrorCleared()
+    {
+        _errorCleared = true;
+    }
+
+    private void HandleErrorKind(InputParseException ex)
+    {
+        _errorKindMessage = ex.ErrorKind switch
+        {
+            InputFieldErrorKind.Parse => $"'{ex.RawInput}' is not a valid number.",
+            InputFieldErrorKind.ValueValidation => $"Value must be between 1 and 100.",
+            InputFieldErrorKind.PatternValidation => $"'{ex.RawInput}' does not match the required pattern.",
+            _ => "Invalid input."
+        };
+    }
+
+    private void HandleErrorKindCleared()
+    {
+        _errorKindMessage = "";
     }
 }
