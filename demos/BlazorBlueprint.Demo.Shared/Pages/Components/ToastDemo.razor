@@ -95,15 +95,16 @@
         <div class="border rounded-lg p-6 space-y-4 bg-muted/50">
             <p class="text-sm font-medium">Available positions:</p>
             <div class="grid grid-cols-3 gap-2 text-center text-sm">
-                <code class="bg-background border rounded p-2">TopLeft</code>
-                <code class="bg-background border rounded p-2">TopCenter</code>
-                <code class="bg-background border rounded p-2">TopRight</code>
-                <code class="bg-background border rounded p-2">BottomLeft</code>
-                <code class="bg-background border rounded p-2">BottomCenter</code>
-                <code class="bg-primary text-primary-foreground rounded p-2">BottomRight (default)</code>
+                @foreach (var pos in _positions)
+                {
+                    <Button Variant="@(_selectedPosition == pos.Value ? ButtonVariant.Default : ButtonVariant.Outline)"
+                            OnClick="@(() => ShowPositionToast(pos.Value))">
+                        @pos.Label
+                    </Button>
+                }
             </div>
             <p class="text-sm font-medium mt-4">Example:</p>
-            <pre class="text-sm bg-muted p-3 rounded overflow-x-auto"><code>&lt;ToastProvider Position="ToastPosition.TopRight" /&gt;</code></pre>
+            <pre class="text-sm bg-muted p-3 rounded overflow-x-auto"><code>&lt;ToastProvider Position="ToastPosition.@(_selectedPosition)" /&gt;</code></pre>
         </div>
     </div>
 
@@ -207,6 +208,27 @@
 </div>
 
 @code {
+    private ToastPosition _selectedPosition = ToastPosition.BottomRight;
+
+    private readonly record struct PositionOption(string Label, ToastPosition Value);
+
+    private static readonly PositionOption[] _positions =
+    [
+        new("TopLeft", ToastPosition.TopLeft),
+        new("TopCenter", ToastPosition.TopCenter),
+        new("TopRight", ToastPosition.TopRight),
+        new("BottomLeft", ToastPosition.BottomLeft),
+        new("BottomCenter", ToastPosition.BottomCenter),
+        new("BottomRight (default)", ToastPosition.BottomRight),
+    ];
+
+    private void ShowPositionToast(ToastPosition position)
+    {
+        _selectedPosition = position;
+        ToastService.SetPosition(position);
+        ToastService.Show($"Position set to {position}");
+    }
+
     private void ShowDefaultToast()
     {
         ToastService.Show("Your message has been sent.");

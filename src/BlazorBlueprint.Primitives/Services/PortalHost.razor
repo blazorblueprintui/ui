@@ -6,6 +6,11 @@
 
 @* Renders all registered portals at the document body level *@
 @{
+    // Guard: ignore RefreshPortal calls from nested FloatingPortals during our render.
+    // Without this, a FloatingPortal inside another portal (e.g., Combobox in Dialog)
+    // would trigger OnPortalsChanged during our render, scheduling another render,
+    // creating an infinite async loop.
+    _isRendering = true;
     // Track which portals are being rendered in this cycle
     _renderedThisCycle.Clear();
 }
@@ -20,6 +25,8 @@
 @code {
     private HashSet<string> _renderedThisCycle = new();
     private IJSObjectReference? _portalModule;
+    private bool _isRendering;
+    private bool _pendingRerender;
 
     protected override void OnInitialized()
     {
@@ -28,18 +35,42 @@
 
     /// <summary>
     /// Handles portal changes by triggering a re-render.
-    /// Always re-renders to ensure content updates are reflected (not just key changes).
+    /// Ignores notifications that arrive during our own render cycle to prevent
+    /// infinite loops when FloatingPortal is nested inside another portal.
     /// </summary>
     private void HandlePortalsChanged()
     {
-        // Always re-render when any portal change is signaled.
-        // The previous optimization (only re-render if keys changed) prevented
-        // content updates for existing portals like ColorPicker and TimePicker.
+        // When _isRendering is true, we're in the middle of rendering portal content.
+        // A nested FloatingPortal's OnParametersSet may call RefreshPortal, which fires
+        // this callback. Scheduling another render here would create an infinite loop.
+        // Instead, defer the re-render until after the current cycle completes.
+        // This handles the case where one portal closes while another opens simultaneously
+        // (e.g., clicking directly from one MultiSelect to another).
+        if (_isRendering)
+        {
+            _pendingRerender = true;
+            return;
+        }
+
         InvokeAsync(StateHasChanged);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        // Clear the rendering guard now that the render cycle is complete.
+        // Any subsequent OnPortalsChanged notifications (e.g., from portal close cleanup
+        // or non-nested content updates) should trigger a re-render.
+        _isRendering = false;
+
+        // If a portal change was deferred during rendering (e.g., one portal closing while
+        // another opens), process it now by scheduling a new render cycle.
+        if (_pendingRerender)
+        {
+            _pendingRerender = false;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
         if (firstRender)
         {
             // Load portal.js to initialize the auto-focus observer

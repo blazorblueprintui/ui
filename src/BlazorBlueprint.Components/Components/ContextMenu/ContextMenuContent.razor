@@ -4,7 +4,8 @@
 
 @if (Context?.IsOpen == true)
 {
-    <div class="fixed inset-0 z-40"
+    <div @ref="_overlayRef"
+         class="fixed inset-0 z-40"
          @onclick="HandleOverlayClick"
          @onclick:stopPropagation="true"
          @oncontextmenu="HandleOverlayClose"
@@ -38,18 +39,17 @@
     [Parameter]
     public bool Loop { get; set; } = true;
 
+    private ElementReference _overlayRef;
     private ElementReference _contentRef;
-    private bool _wasClosed = true;
     private IJSObjectReference? _portalModule;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (Context?.IsOpen == true && _wasClosed)
+        if (Context?.IsOpen == true && Context.NeedsFocus)
         {
-            _wasClosed = false;
+            Context.NeedsFocus = false;
             try
             {
-                // Load portal module and trigger autofocus
                 _portalModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
                     "import", "./_content/BlazorBlueprint.Primitives/js/primitives/portal.js");
                 await _portalModule.InvokeVoidAsync("triggerAutofocus", _contentRef);
@@ -58,10 +58,6 @@
             {
                 // Ignore errors during prerendering
             }
-        }
-        else if (Context?.IsOpen != true)
-        {
-            _wasClosed = true;
         }
     }
 
@@ -85,6 +81,17 @@
     {
         if (Context != null)
         {
+            try
+            {
+                _portalModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/portal.js");
+                await _portalModule.InvokeVoidAsync("redispatchContextMenu", _overlayRef, _contentRef, e.ClientX, e.ClientY);
+            }
+            catch
+            {
+                // Ignore errors during prerendering
+            }
+
             await Context.Close();
         }
     }

@@ -53,6 +53,13 @@ public partial class Timeline : ComponentBase
     public TimelineAlign Align { get; set; } = TimelineAlign.Center;
 
     /// <summary>
+    /// Gets or sets how the connector line fits between icons.
+    /// Spaced (default) leaves a small ring gap; Connected makes the line touch each icon.
+    /// </summary>
+    [Parameter]
+    public TimelineConnectorFit ConnectorFit { get; set; } = TimelineConnectorFit.Spaced;
+
+    /// <summary>
     /// Gets or sets additional CSS classes to apply to the timeline.
     /// </summary>
     [Parameter]

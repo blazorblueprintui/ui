@@ -129,12 +129,17 @@
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
-        // Do NOT re-register the portal here. Re-registering fires OnPortalsChanged,
-        // which triggers PortalHost to re-render all portals. When this FloatingPortal
-        // is inside another portal (e.g., Combobox in Dialog), this creates an infinite
-        // render loop. The RenderFragment delegate returned by RenderPortalContent()
-        // captures 'this', so PortalHost reads current ChildContent and style values
-        // automatically when it next renders. This matches the DialogPortal pattern.
+        // When the portal is already open and initialized, notify PortalHost to re-render
+        // so that content updates (e.g., date selection, checkbox toggle) are reflected.
+        // Uses RefreshPortal (not RegisterPortal) to avoid replacing the RenderFragment
+        // delegate, which would break ElementReference stability. The existing delegate
+        // captures 'this', so PortalHost reads current ChildContent automatically.
+        // Note: PortalHost ignores refresh calls during its own render cycle, preventing
+        // infinite loops when FloatingPortal is nested inside another portal.
+        if (_isInitialized && IsOpen && !string.IsNullOrEmpty(PortalId))
+        {
+            PortalService.RefreshPortal(PortalId);
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

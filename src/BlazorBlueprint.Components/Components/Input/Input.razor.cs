@@ -226,6 +226,11 @@ public partial class Input : ComponentBase, IDisposable
     private async Task HandleInput(ChangeEventArgs args)
     {
         var newValue = args.Value?.ToString();
+        if (string.IsNullOrWhiteSpace(newValue))
+        {
+            newValue = null;
+        }
+
         Value = newValue;
 
         switch (UpdateTiming)

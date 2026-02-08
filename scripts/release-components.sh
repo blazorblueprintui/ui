@@ -1,8 +1,23 @@
 #!/bin/bash
 
 # Release script for BlazorBlueprint.Components
-# Usage: ./scripts/release-components.sh [version]
-# If no version is provided, the script will prompt you to pick a bump type.
+# Usage: ./scripts/release-components.sh [version] [flags]
+#
+# Arguments:
+#   version                     Semantic version (e.g., 1.0.0 or 1.0.0-beta.4)
+#                               If omitted, prompts for interactive version selection.
+#
+# Flags:
+#   --yes                       Skip the "Proceed with release?" confirmation prompt
+#   --update-primitives         Auto-update Primitives to latest NuGet version (no prompt)
+#   --release-notes <path>      Path to release notes file; committed on release branch
+#                               and used as the annotated tag message
+#
+# Examples:
+#   ./scripts/release-components.sh                          # Fully interactive
+#   ./scripts/release-components.sh 2.2.0                    # Specify version, interactive prompts
+#   ./scripts/release-components.sh 2.2.0 --yes              # Non-interactive, skip Primitives update
+#   ./scripts/release-components.sh 2.2.0 --yes --update-primitives --release-notes notes.md
 
 set -e  # Exit on error
 
@@ -16,6 +31,9 @@ COLOR_RESET='\033[0m'
 CSPROJ="$PROJECT_PATH/BlazorBlueprint.Components.csproj"
 
 COMMITS_MADE=0
+AUTO_CONFIRM=false
+AUTO_UPDATE_PRIMITIVES=false
+RELEASE_NOTES_PATH=""
 
 # Get latest Primitives version from NuGet
 get_latest_primitives_version() {
@@ -56,9 +74,47 @@ bump_version() {
   esac
 }
 
-if [ -n "$1" ]; then
-    # Version provided as argument (legacy usage)
-    VERSION=$1
+# Parse arguments
+VERSION=""
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --yes)
+            AUTO_CONFIRM=true
+            shift
+            ;;
+        --update-primitives)
+            AUTO_UPDATE_PRIMITIVES=true
+            shift
+            ;;
+        --release-notes)
+            if [[ -z "$2" || "$2" == --* ]]; then
+                echo -e "${COLOR_RED}Error: --release-notes requires a file path argument${COLOR_RESET}"
+                exit 1
+            fi
+            RELEASE_NOTES_PATH="$2"
+            if [ ! -f "$RELEASE_NOTES_PATH" ]; then
+                echo -e "${COLOR_RED}Error: Release notes file not found: $RELEASE_NOTES_PATH${COLOR_RESET}"
+                exit 1
+            fi
+            shift 2
+            ;;
+        -*)
+            echo -e "${COLOR_RED}Error: Unknown flag: $1${COLOR_RESET}"
+            exit 1
+            ;;
+        *)
+            if [ -n "$VERSION" ]; then
+                echo -e "${COLOR_RED}Error: Multiple version arguments provided${COLOR_RESET}"
+                exit 1
+            fi
+            VERSION="$1"
+            shift
+            ;;
+    esac
+done
+
+if [ -n "$VERSION" ]; then
+    # Version provided as argument
     if ! [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
         echo -e "${COLOR_RED}Error: Invalid version format${COLOR_RESET}"
         echo "Version must follow semantic versioning (e.g., 1.0.0 or 1.0.0-beta.4)"
@@ -163,11 +219,21 @@ echo ""
 
 WILL_UPDATE_PRIMITIVES=false
 if [ "$LATEST_PRIMITIVES" != "$CURRENT_PRIMITIVES" ]; then
-  echo -e "${COLOR_YELLOW}⚠️  Newer version available on NuGet${COLOR_RESET}"
-  read -p "Update to $LATEST_PRIMITIVES? (y/N) " update_confirm
-  if [[ "$update_confirm" =~ ^[Yy]$ ]]; then
-    WILL_UPDATE_PRIMITIVES=true
-  fi
+    if [ "$AUTO_UPDATE_PRIMITIVES" = true ]; then
+        # Flag passed: auto-update
+        WILL_UPDATE_PRIMITIVES=true
+        echo -e "${COLOR_CYAN}Will auto-update Primitives to $LATEST_PRIMITIVES (--update-primitives)${COLOR_RESET}"
+    elif [ "$AUTO_CONFIRM" = true ]; then
+        # Non-interactive mode without --update-primitives: skip silently
+        echo -e "${COLOR_YELLOW}Skipping Primitives update (pass --update-primitives to include)${COLOR_RESET}"
+    else
+        # Interactive mode: prompt
+        echo -e "${COLOR_YELLOW}⚠️  Newer version available on NuGet${COLOR_RESET}"
+        read -p "Update to $LATEST_PRIMITIVES? (y/N) " update_confirm
+        if [[ "$update_confirm" =~ ^[Yy]$ ]]; then
+            WILL_UPDATE_PRIMITIVES=true
+        fi
+    fi
 fi
 
 # Show what we're about to do
@@ -183,21 +249,42 @@ echo -e "Primitives:  ${COLOR_GREEN}${CURRENT_PRIMITIVES}${COLOR_RESET}"
 if [ "$WILL_UPDATE_PRIMITIVES" = true ]; then
   echo -e "             ${COLOR_CYAN}→ will update to ${LATEST_PRIMITIVES}${COLOR_RESET}"
 fi
+if [ -n "$RELEASE_NOTES_PATH" ]; then
+  echo -e "Notes:       ${COLOR_GREEN}${RELEASE_NOTES_PATH}${COLOR_RESET}"
+fi
 echo -e "${COLOR_YELLOW}═══════════════════════════════════════════════════${COLOR_RESET}"
 echo ""
 
 # Confirm with user
-read -p "Proceed with release? (y/N): " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo -e "${COLOR_YELLOW}Release cancelled${COLOR_RESET}"
-    exit 0
+if [ "$AUTO_CONFIRM" = true ]; then
+    echo -e "${COLOR_CYAN}Auto-confirmed (--yes)${COLOR_RESET}"
+else
+    read -p "Proceed with release? (y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "${COLOR_YELLOW}Release cancelled${COLOR_RESET}"
+        exit 0
+    fi
 fi
 
 # Create release branch
 echo ""
 echo -e "${COLOR_CYAN}Creating release branch: $RELEASE_BRANCH${COLOR_RESET}"
 git checkout -b "$RELEASE_BRANCH"
+
+# Commit release notes if provided
+if [ -n "$RELEASE_NOTES_PATH" ]; then
+    RELEASE_NOTES_DEST="$PROJECT_PATH/RELEASE_NOTES.md"
+    if [ "$RELEASE_NOTES_PATH" != "$RELEASE_NOTES_DEST" ]; then
+        cp "$RELEASE_NOTES_PATH" "$RELEASE_NOTES_DEST"
+    fi
+    echo ""
+    echo -e "${COLOR_CYAN}Committing release notes...${COLOR_RESET}"
+    git add "$RELEASE_NOTES_DEST"
+    git commit -m "docs: add release notes for v${VERSION}"
+    COMMITS_MADE=$((COMMITS_MADE + 1))
+    echo -e "${COLOR_GREEN}✓ Committed release notes${COLOR_RESET}"
+fi
 
 # Update Primitives version if requested
 if [ "$WILL_UPDATE_PRIMITIVES" = true ]; then
@@ -216,7 +303,12 @@ fi
 # Create and push tag
 echo ""
 echo -e "${COLOR_GREEN}Creating tag: $TAG_NAME${COLOR_RESET}"
-git tag -a "$TAG_NAME" -m "Release BlazorBlueprint.Components v${VERSION}"
+if [ -n "$RELEASE_NOTES_PATH" ]; then
+    RELEASE_NOTES_DEST="$PROJECT_PATH/RELEASE_NOTES.md"
+    git tag -a "$TAG_NAME" -F "$RELEASE_NOTES_DEST"
+else
+    git tag -a "$TAG_NAME" -m "Release BlazorBlueprint.Components v${VERSION}"
+fi
 
 echo -e "${COLOR_GREEN}Pushing release branch and tag to GitHub...${COLOR_RESET}"
 git push origin "$RELEASE_BRANCH"

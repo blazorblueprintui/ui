@@ -151,6 +151,8 @@
             <h2 class="text-2xl font-semibold">Two-Way Binding</h2>
             <p class="text-sm text-muted-foreground">
                 Demonstrating real-time value updates using Value and ValueChanged.
+                Empty or whitespace-only input is automatically normalized to <code class="text-xs bg-muted px-1 py-0.5 rounded">null</code>,
+                matching ASP.NET MVC model binding conventions.
             </p>
         </div>
         <div class="max-w-md space-y-4">
@@ -158,12 +160,19 @@
                 <label class="text-sm font-medium">Type something</label>
                 <Textarea Value="@boundValue" ValueChanged="@((value) => boundValue = value)" Placeholder="Start typing..." />
                 <p class="text-xs text-muted-foreground">
-                    Updates on every keystroke using Value and ValueChanged parameters.
+                    Try typing text, then clearing it. The value returns to <code class="text-xs bg-muted px-1 py-0.5 rounded">null</code> instead of becoming an empty string.
                 </p>
             </div>
             <div class="rounded-lg border p-4 bg-muted/50">
                 <p class="text-sm font-medium mb-1">Current value:</p>
-                <p class="text-sm font-mono whitespace-pre-wrap break-words">@(string.IsNullOrEmpty(boundValue) ? "(empty)" : boundValue)</p>
+                @if (boundValue is null)
+                {
+                    <p class="text-sm font-mono text-muted-foreground italic">null</p>
+                }
+                else
+                {
+                    <p class="text-sm font-mono whitespace-pre-wrap break-words">"@boundValue"</p>
+                }
                 <p class="text-xs text-muted-foreground mt-2">
                     Character count: @(boundValue?.Length ?? 0)
                 </p>
@@ -274,6 +283,6 @@
 </div>
 
 @code {
-    private string? boundValue = "";
-    private string? tweetValue = "";
+    private string? boundValue;
+    private string? tweetValue;
 }

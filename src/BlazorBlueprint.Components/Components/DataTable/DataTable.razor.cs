@@ -355,7 +355,9 @@ public partial class DataTable<TData> : ComponentBase where TData : class
                     continue;
                 }
 
-                var stringValue = value.ToString();
+                var stringValue = value is IFormattable formattable && column.Format is not null
+                    ? formattable.ToString(column.Format, null)
+                    : value.ToString();
                 if (!string.IsNullOrEmpty(stringValue) &&
                     stringValue.Contains(searchValue, StringComparison.OrdinalIgnoreCase))
                 {

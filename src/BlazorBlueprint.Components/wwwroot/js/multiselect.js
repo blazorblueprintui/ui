@@ -15,8 +15,8 @@ let multiSelectStates = new Map();
  * @param {string} contentId - ID of the listbox content element
  */
 export function setupMultiSelectInput(inputElement, dotNetRef, inputId, contentId) {
-    if (!inputElement || !dotNetRef) {
-        console.error('setupMultiSelectInput: missing required parameters');
+    if (!inputElement || !(inputElement instanceof HTMLElement) || !dotNetRef) {
+        console.error('setupMultiSelectInput: missing required parameters or inputElement is not a DOM element');
         return;
     }
 

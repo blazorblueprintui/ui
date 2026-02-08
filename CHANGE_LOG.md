@@ -17,9 +17,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `UpdateTiming` enum for Input and InputField — `Immediate` (default), `OnChange` (blur/Enter), and `Debounced` modes
 - `DebounceInterval` parameter (default 500ms) for debounced value updates
 - InputField demo page with examples for all supported types and features
+- `SetPosition()` and `ResetPosition()` methods on `ToastService` for runtime toast position control
+- `TimelineConnectorFit` enum with `Spaced` and `Connected` options for controlling how connector lines fit between icons
+- `ConnectorFit` parameter on `Timeline` component
+- `ConnectorClass` parameter on `TimelineItem` for custom connector height overrides
+- `Loading` parameter on `TimelineIcon` for isolated pulse animation
+- Rich Content, Connector Fit, and Custom Connector Height demo sections for Timeline
 
 ### Changed
 - Button component now shows `cursor-pointer` by default and `disabled:cursor-not-allowed` when disabled, replacing `disabled:pointer-events-none` for better UX feedback
+- Added Salary column with currency format (`C0`) to the DataTable demo Basic Table example
+
+### Fixed
+- DataTable global search now uses the column's `Format` string when converting values for search matching, consistent with how cell values are rendered
+- Text input components (`Input`, `Textarea`, `InputGroupInput`, `InputGroupTextarea`) now normalize empty/whitespace strings to `null`, preventing inconsistent validation on nullable string properties (#99)
+- Dropdown mispositioning when switching between multiple open MultiSelect components
+- Stale portal content when interacting inside open popovers
+- ContextMenu keyboard navigation breaking on repeated right-clicks on the same trigger
+- Toast positioning demo now interactive with live position switching
+- Timeline connector line no longer uses fixed height — dynamically stretches to match content height (#104)
+- Timeline connector gap asymmetry between top and bottom icons resolved with symmetric spacing
+- Timeline loading pulse animation no longer bleeds through icon ring onto connector line
+- Timeline collapsible item chevrons now align consistently regardless of title length
 
 ---
 
