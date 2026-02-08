@@ -26,6 +26,7 @@
     private HashSet<string> _renderedThisCycle = new();
     private IJSObjectReference? _portalModule;
     private bool _isRendering;
+    private bool _pendingRerender;
 
     protected override void OnInitialized()
     {
@@ -42,10 +43,12 @@
         // When _isRendering is true, we're in the middle of rendering portal content.
         // A nested FloatingPortal's OnParametersSet may call RefreshPortal, which fires
         // this callback. Scheduling another render here would create an infinite loop.
-        // The nested portal's content is already being rendered in the current cycle,
-        // so there's nothing to do.
+        // Instead, defer the re-render until after the current cycle completes.
+        // This handles the case where one portal closes while another opens simultaneously
+        // (e.g., clicking directly from one MultiSelect to another).
         if (_isRendering)
         {
+            _pendingRerender = true;
             return;
         }
 
@@ -58,6 +61,15 @@
         // Any subsequent OnPortalsChanged notifications (e.g., from portal close cleanup
         // or non-nested content updates) should trigger a re-render.
         _isRendering = false;
+
+        // If a portal change was deferred during rendering (e.g., one portal closing while
+        // another opens), process it now by scheduling a new render cycle.
+        if (_pendingRerender)
+        {
+            _pendingRerender = false;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
 
         if (firstRender)
         {
