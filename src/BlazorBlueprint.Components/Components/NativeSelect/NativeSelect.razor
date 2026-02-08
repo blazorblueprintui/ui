@@ -4,6 +4,7 @@
 @using System.Linq.Expressions
 
 <select class="@CssClass"
+        name="@EffectiveName"
         value="@Value"
         disabled="@Disabled"
         @onchange="HandleChange">
@@ -32,6 +33,16 @@
     /// </summary>
     [Parameter]
     public EventCallback<TValue?> ValueChanged { get; set; }
+
+    /// <summary>
+    /// Gets or sets the HTML name attribute for the select element.
+    /// </summary>
+    /// <remarks>
+    /// When inside an EditForm and not explicitly set, the name is automatically
+    /// derived from the ValueExpression (FieldIdentifier) to support SSR form postback.
+    /// </remarks>
+    [Parameter]
+    public string? Name { get; set; }
 
     /// <summary>
     /// Gets or sets an expression that identifies the bound value.
@@ -106,6 +117,11 @@
             _editContext.NotifyFieldChanged(_fieldIdentifier);
         }
     }
+
+    /// <summary>
+    /// Gets the effective name attribute, falling back to the FieldIdentifier name when inside an EditForm.
+    /// </summary>
+    private string? EffectiveName => Name ?? (_editContext != null && _fieldIdentifier.FieldName != null ? _fieldIdentifier.FieldName : null);
 
     private string SizeClasses => Size switch
     {

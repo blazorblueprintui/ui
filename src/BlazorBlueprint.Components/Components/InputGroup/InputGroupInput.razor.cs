@@ -111,6 +111,16 @@ public partial class InputGroupInput : ComponentBase
     public bool? AriaInvalid { get; set; }
 
     /// <summary>
+    /// Gets or sets the HTML name attribute for the input element.
+    /// </summary>
+    /// <remarks>
+    /// When inside an EditForm and not explicitly set, the name is automatically
+    /// derived from the ValueExpression (FieldIdentifier) to support SSR form postback.
+    /// </remarks>
+    [Parameter]
+    public string? Name { get; set; }
+
+    /// <summary>
     /// Gets or sets an expression that identifies the bound value.
     /// </summary>
     [Parameter]
@@ -139,6 +149,11 @@ public partial class InputGroupInput : ComponentBase
             return AriaInvalid?.ToString().ToLowerInvariant();
         }
     }
+
+    /// <summary>
+    /// Gets the effective name attribute, falling back to the FieldIdentifier name when inside an EditForm.
+    /// </summary>
+    private string? EffectiveName => Name ?? (_editContext != null && _fieldIdentifier.FieldName != null ? _fieldIdentifier.FieldName : null);
 
     /// <summary>
     /// Gets or sets additional attributes.
