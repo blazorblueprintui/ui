@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `CursorType` enum and `CursorExtensions.ToClass()` utility for mapping cursor types to Tailwind CSS classes
 - Cursor and pointer-events conflict resolution groups in TailwindMerge
 - Cursor behavior demo section on Button demo page
+- `InputField<TValue>` component — generic typed input with automatic type conversion, formatting, validation, and parse error handling
+- `InputConverter<TValue>` system with global, instance, and built-in default converter resolution for 15+ types
+- `UpdateTiming` enum for Input and InputField — `Immediate` (default), `OnChange` (blur/Enter), and `Debounced` modes
+- `DebounceInterval` parameter (default 500ms) for debounced value updates
+- InputField demo page with examples for all supported types and features
 
 ### Changed
 - Button component now shows `cursor-pointer` by default and `disabled:cursor-not-allowed` when disabled, replacing `disabled:pointer-events-none` for better UX feedback
