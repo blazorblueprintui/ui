@@ -127,6 +127,12 @@ public partial class Combobox<TItem> : ComponentBase
     public bool Disabled { get; set; }
 
     /// <summary>
+    /// Gets or sets the ID(s) of the element(s) that describe this combobox for accessibility.
+    /// </summary>
+    [Parameter]
+    public string? AriaDescribedBy { get; set; }
+
+    /// <summary>
     /// Gets or sets the width of the popover content.
     /// </summary>
     /// <remarks>

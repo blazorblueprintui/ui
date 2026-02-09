@@ -1,0 +1,47 @@
+@namespace BlazorBlueprint.Components.FormFields
+@using BlazorBlueprint.Components.MultiSelect
+@using BlazorBlueprint.Components.Field
+@typeparam TItem
+@inherits FormFieldBase
+
+<Field Orientation="@Orientation" IsInvalid="@IsInvalid" Class="@Class">
+    @if (Label is not null)
+    {
+        <FieldLabel>@Label</FieldLabel>
+    }
+    <FieldContent>
+        <MultiSelect TItem="TItem"
+                     Items="@Items"
+                     Values="@Values"
+                     ValuesChanged="HandleValuesChanged"
+                     ValuesExpression="@ValuesExpression"
+                     ValueSelector="@ValueSelector"
+                     DisplaySelector="@DisplaySelector"
+                     Placeholder="@Placeholder"
+                     SearchPlaceholder="@SearchPlaceholder"
+                     EmptyMessage="@EmptyMessage"
+                     SelectAllLabel="@SelectAllLabel"
+                     ShowSelectAll="@ShowSelectAll"
+                     ClearLabel="@ClearLabel"
+                     CloseLabel="@CloseLabel"
+                     Disabled="@Disabled"
+                     MaxDisplayTags="@MaxDisplayTags"
+                     AriaDescribedBy="@DescribedById"
+                     PopoverWidth="@PopoverWidth"
+                     MatchTriggerWidth="@MatchTriggerWidth"
+                     AutoClose="@AutoClose"
+                     Class="@InputClass" />
+        @if (!string.IsNullOrEmpty(HelperText) && !IsInvalid)
+        {
+            <FieldDescription Id="@DescriptionId">@HelperText</FieldDescription>
+        }
+        @if (IsInvalid && !string.IsNullOrEmpty(ErrorText))
+        {
+            <FieldError Id="@ErrorId">@ErrorText</FieldError>
+        }
+        else if (HasEditContextErrors)
+        {
+            <FieldError Id="@ErrorId" Errors="@EditContextErrors" />
+        }
+    </FieldContent>
+</Field>

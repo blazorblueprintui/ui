@@ -129,6 +129,12 @@ public partial class MultiSelect<TItem> : ComponentBase, IAsyncDisposable
     public bool Disabled { get; set; }
 
     /// <summary>
+    /// Gets or sets the ID(s) of the element(s) that describe this multiselect for accessibility.
+    /// </summary>
+    [Parameter]
+    public string? AriaDescribedBy { get; set; }
+
+    /// <summary>
     /// Gets or sets the maximum number of tags to display before showing "+N more".
     /// </summary>
     [Parameter]

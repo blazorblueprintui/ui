@@ -1,0 +1,227 @@
+@page "/components/multi-select-form-field"
+@using BlazorBlueprint.Components.FormFields
+@using BlazorBlueprint.Components.Button
+@using BlazorBlueprint.Components.Field
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>MultiSelectFormField Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">MultiSelectFormField</h1>
+            <p class="text-xl text-muted-foreground">
+                A form field wrapper for MultiSelect with built-in label, helper text, and error messages.
+            </p>
+        </div>
+    </div>
+
+    <!-- When to use -->
+    <div class="rounded-lg border bg-card p-6 space-y-4">
+        <h2 class="text-lg font-semibold">When to use MultiSelectFormField</h2>
+        <p class="text-sm text-muted-foreground">
+            Use <code class="text-xs bg-muted px-1 py-0.5 rounded">MultiSelectFormField&lt;TItem&gt;</code> when you want a complete,
+            ready-to-use multi-select with label, helper text, and automatic error display. It composes
+            <a href="/components/multiselect" class="text-primary underline underline-offset-4 hover:text-primary/80">MultiSelect</a>
+            with the <a href="/components/field" class="text-primary underline underline-offset-4 hover:text-primary/80">Field</a> component system
+            so you don't have to wire them up manually.
+        </p>
+        <div class="rounded-md border border-dashed p-4 space-y-1.5">
+            <p class="text-sm font-medium">Example scenario</p>
+            <p class="text-sm text-muted-foreground">
+                You're building a job application form where users select their skills from a list.
+                The field needs a label, search, tag display, and validation that at least one skill is selected.
+                Instead of composing MultiSelect + Field + FieldLabel + FieldDescription + FieldError,
+                you drop in a single <code class="text-xs bg-muted px-1 py-0.5 rounded">MultiSelectFormField</code> tag
+                and get all of that automatically.
+            </p>
+        </div>
+        <div class="bg-muted rounded-md p-4 space-y-2">
+            <pre class="text-sm font-mono whitespace-pre-wrap">&lt;MultiSelectFormField TItem="Skill" Items="skills" @("@")bind-Values="selectedSkills"
+    ValueSelector="@("@")(s =&gt; s.Value)" DisplaySelector="@("@")(s =&gt; s.Label)"
+    Label="Skills" Placeholder="Select your skills..." /&gt;</pre>
+        </div>
+    </div>
+
+    <!-- Which form component? -->
+    <div class="rounded-lg border border-dashed bg-muted/30 p-6 space-y-3">
+        <h2 class="text-lg font-semibold">Which form component?</h2>
+        <div class="space-y-2 text-sm text-muted-foreground">
+            <p><strong>Text input</strong> (string, int, date, etc.)? &rarr; <a href="/components/input-form-field" class="text-primary underline underline-offset-4 hover:text-primary/80">InputFormField&lt;T&gt;</a></p>
+            <p><strong>Checkbox</strong>? &rarr; <a href="/components/checkbox-form-field" class="text-primary underline underline-offset-4 hover:text-primary/80">CheckboxFormField</a></p>
+            <p><strong>Switch</strong>? &rarr; <a href="/components/switch-form-field" class="text-primary underline underline-offset-4 hover:text-primary/80">SwitchFormField</a></p>
+            <p><strong>Radio group</strong>? &rarr; <a href="/components/radio-group-form-field" class="text-primary underline underline-offset-4 hover:text-primary/80">RadioGroupFormField</a></p>
+            <p><strong>Select dropdown</strong>? &rarr; <a href="/components/select-form-field" class="text-primary underline underline-offset-4 hover:text-primary/80">SelectFormField</a></p>
+            <p><strong>Searchable select</strong>? &rarr; <a href="/components/combobox-form-field" class="text-primary underline underline-offset-4 hover:text-primary/80">ComboboxFormField</a></p>
+            <p><strong>Multi-select</strong>? &rarr; <strong>MultiSelectFormField</strong> (this page)</p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-sm text-muted-foreground">
+                A multi-select with label, helper text, and search. Selected items appear as tags.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <MultiSelectFormField TItem="Language"
+                                  Items="_languages"
+                                  @bind-Values="_selectedLanguages"
+                                  ValueSelector="@(l => l.Value)"
+                                  DisplaySelector="@(l => l.Label)"
+                                  Label="Programming languages"
+                                  Placeholder="Select languages..."
+                                  SearchPlaceholder="Search languages..."
+                                  HelperText="Select all languages you are proficient in."
+                                  MatchTriggerWidth="true"
+                                  InputClass="w-full" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Selected:</p>
+            <p class="text-sm font-mono">@(_selectedLanguages?.Any() == true ? string.Join(", ", _selectedLanguages) : "(none)")</p>
+        </div>
+    </div>
+
+    <!-- Without Select All -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Without Select All</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">ShowSelectAll="false"</code> to
+                hide the Select All option.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <MultiSelectFormField TItem="Technology"
+                                  Items="_technologies"
+                                  @bind-Values="_selectedTechnologies"
+                                  ValueSelector="@(t => t.Value)"
+                                  DisplaySelector="@(t => t.Label)"
+                                  Label="Tech stack"
+                                  Placeholder="Select technologies..."
+                                  SearchPlaceholder="Search..."
+                                  ShowSelectAll="false"
+                                  MaxDisplayTags="2"
+                                  MatchTriggerWidth="true"
+                                  InputClass="w-full" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Selected:</p>
+            <p class="text-sm font-mono">@(_selectedTechnologies?.Any() == true ? string.Join(", ", _selectedTechnologies) : "(none)")</p>
+        </div>
+    </div>
+
+    <!-- Disabled -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">
+                A disabled multi-select form field with pre-selected values.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <MultiSelectFormField TItem="Language"
+                                  Items="_languages"
+                                  Values="@(new[] { "csharp", "typescript" })"
+                                  ValueSelector="@(l => l.Value)"
+                                  DisplaySelector="@(l => l.Label)"
+                                  Label="Required skills"
+                                  HelperText="These skills are required for this role."
+                                  MatchTriggerWidth="true"
+                                  InputClass="w-full"
+                                  Disabled="true" />
+        </div>
+    </div>
+
+    <!-- EditForm Integration -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">EditForm Integration</h2>
+            <p class="text-sm text-muted-foreground">
+                Validation errors display automatically inside an EditForm.
+                Try submitting without selecting any skills.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <EditForm Model="_formModel" OnValidSubmit="HandleFormSubmit">
+                <DataAnnotationsValidator />
+                <div class="space-y-4">
+                    <MultiSelectFormField TItem="Language"
+                                          Items="_languages"
+                                          @bind-Values="_formModel.Skills"
+                                          ValueSelector="@(l => l.Value)"
+                                          DisplaySelector="@(l => l.Label)"
+                                          Label="Skills"
+                                          Placeholder="Select your skills..."
+                                          SearchPlaceholder="Search skills..."
+                                          MatchTriggerWidth="true"
+                                          InputClass="w-full" />
+                    <Button Type="ButtonType.Submit">Submit</Button>
+                </div>
+            </EditForm>
+            @if (_formSubmitted)
+            {
+                <div class="mt-4 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 p-4">
+                    <p class="text-sm font-medium text-green-800 dark:text-green-200">
+                        Submitted: @(_formModel.Skills != null ? string.Join(", ", _formModel.Skills) : "(none)")
+                    </p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private IEnumerable<string>? _selectedLanguages;
+    private IEnumerable<string>? _selectedTechnologies;
+    private bool _formSubmitted;
+    private MultiSelectFormModel _formModel = new();
+
+    private readonly List<Language> _languages = new()
+    {
+        new Language { Value = "csharp", Label = "C#" },
+        new Language { Value = "typescript", Label = "TypeScript" },
+        new Language { Value = "javascript", Label = "JavaScript" },
+        new Language { Value = "python", Label = "Python" },
+        new Language { Value = "java", Label = "Java" },
+        new Language { Value = "go", Label = "Go" },
+        new Language { Value = "rust", Label = "Rust" },
+        new Language { Value = "php", Label = "PHP" }
+    };
+
+    private readonly List<Technology> _technologies = new()
+    {
+        new Technology { Value = "react", Label = "React" },
+        new Technology { Value = "vue", Label = "Vue.js" },
+        new Technology { Value = "angular", Label = "Angular" },
+        new Technology { Value = "blazor", Label = "Blazor" },
+        new Technology { Value = "nextjs", Label = "Next.js" },
+        new Technology { Value = "dotnet", Label = ".NET" },
+        new Technology { Value = "docker", Label = "Docker" }
+    };
+
+    private void HandleFormSubmit()
+    {
+        _formSubmitted = true;
+    }
+
+    private class Language
+    {
+        public required string Value { get; set; }
+        public required string Label { get; set; }
+    }
+
+    private class Technology
+    {
+        public required string Value { get; set; }
+        public required string Label { get; set; }
+    }
+
+    private class MultiSelectFormModel
+    {
+        [Required(ErrorMessage = "Please select at least one skill.")]
+        public IEnumerable<string>? Skills { get; set; }
+    }
+}

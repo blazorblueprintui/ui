@@ -1,0 +1,200 @@
+@page "/components/combobox-form-field"
+@using BlazorBlueprint.Components.FormFields
+@using BlazorBlueprint.Components.Button
+@using BlazorBlueprint.Components.Field
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>ComboboxFormField Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">ComboboxFormField</h1>
+            <p class="text-xl text-muted-foreground">
+                A form field wrapper for Combobox with built-in label, helper text, and error messages.
+            </p>
+        </div>
+    </div>
+
+    <!-- When to use -->
+    <div class="rounded-lg border bg-card p-6 space-y-4">
+        <h2 class="text-lg font-semibold">When to use ComboboxFormField</h2>
+        <p class="text-sm text-muted-foreground">
+            Use <code class="text-xs bg-muted px-1 py-0.5 rounded">ComboboxFormField&lt;TItem&gt;</code> when you want a complete,
+            ready-to-use searchable dropdown with label, helper text, and automatic error display. It composes
+            <a href="/components/combobox" class="text-primary underline underline-offset-4 hover:text-primary/80">Combobox</a>
+            with the <a href="/components/field" class="text-primary underline underline-offset-4 hover:text-primary/80">Field</a> component system
+            so you don't have to wire them up manually.
+        </p>
+        <div class="rounded-md border border-dashed p-4 space-y-1.5">
+            <p class="text-sm font-medium">Example scenario</p>
+            <p class="text-sm text-muted-foreground">
+                You're building a project setup form where users pick a framework from a long list.
+                The field needs a label, search filtering, and validation that a selection was made.
+                Instead of composing Combobox + Field + FieldLabel + FieldDescription + FieldError,
+                you drop in a single <code class="text-xs bg-muted px-1 py-0.5 rounded">ComboboxFormField</code> tag
+                and get all of that automatically.
+            </p>
+        </div>
+        <div class="bg-muted rounded-md p-4 space-y-2">
+            <pre class="text-sm font-mono whitespace-pre-wrap">&lt;ComboboxFormField TItem="Framework" Items="frameworks" @("@")bind-Value="selected"
+    ValueSelector="@("@")(f =&gt; f.Value)" DisplaySelector="@("@")(f =&gt; f.Label)"
+    Label="Framework" Placeholder="Select..." /&gt;</pre>
+        </div>
+    </div>
+
+    <!-- Which form component? -->
+    <div class="rounded-lg border border-dashed bg-muted/30 p-6 space-y-3">
+        <h2 class="text-lg font-semibold">Which form component?</h2>
+        <div class="space-y-2 text-sm text-muted-foreground">
+            <p><strong>Text input</strong> (string, int, date, etc.)? &rarr; <a href="/components/input-form-field" class="text-primary underline underline-offset-4 hover:text-primary/80">InputFormField&lt;T&gt;</a></p>
+            <p><strong>Checkbox</strong>? &rarr; <a href="/components/checkbox-form-field" class="text-primary underline underline-offset-4 hover:text-primary/80">CheckboxFormField</a></p>
+            <p><strong>Switch</strong>? &rarr; <a href="/components/switch-form-field" class="text-primary underline underline-offset-4 hover:text-primary/80">SwitchFormField</a></p>
+            <p><strong>Radio group</strong>? &rarr; <a href="/components/radio-group-form-field" class="text-primary underline underline-offset-4 hover:text-primary/80">RadioGroupFormField</a></p>
+            <p><strong>Select dropdown</strong>? &rarr; <a href="/components/select-form-field" class="text-primary underline underline-offset-4 hover:text-primary/80">SelectFormField</a></p>
+            <p><strong>Searchable select</strong>? &rarr; <strong>ComboboxFormField</strong> (this page)</p>
+            <p><strong>Multi-select</strong>? &rarr; <a href="/components/multi-select-form-field" class="text-primary underline underline-offset-4 hover:text-primary/80">MultiSelectFormField</a></p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-sm text-muted-foreground">
+                A searchable combobox with a label and helper text.
+                Provide <code class="text-xs bg-muted px-1 py-0.5 rounded">Items</code>,
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">ValueSelector</code>, and
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">DisplaySelector</code> to populate the list.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <ComboboxFormField TItem="Framework"
+                               Items="_frameworks"
+                               @bind-Value="_selectedFramework"
+                               ValueSelector="@(f => f.Value)"
+                               DisplaySelector="@(f => f.Label)"
+                               Label="Framework"
+                               Placeholder="Select framework..."
+                               SearchPlaceholder="Search framework..."
+                               EmptyMessage="No framework found."
+                               HelperText="Choose your preferred framework."
+                               MatchTriggerWidth="true"
+                               InputClass="w-full" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Selected:</p>
+            <p class="text-sm font-mono">@(string.IsNullOrEmpty(_selectedFramework) ? "(none)" : _selectedFramework)</p>
+        </div>
+    </div>
+
+    <!-- Disabled -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">
+                A disabled combobox form field with a pre-selected value.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <ComboboxFormField TItem="Framework"
+                               Items="_frameworks"
+                               Value="@("blazor")"
+                               ValueSelector="@(f => f.Value)"
+                               DisplaySelector="@(f => f.Label)"
+                               Label="Framework"
+                               Placeholder="Select..."
+                               HelperText="Locked to your project's framework."
+                               MatchTriggerWidth="true"
+                               InputClass="w-full"
+                               Disabled="true" />
+        </div>
+    </div>
+
+    <!-- EditForm Integration -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">EditForm Integration</h2>
+            <p class="text-sm text-muted-foreground">
+                Validation errors display automatically inside an EditForm.
+                Try submitting without selecting a language.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <EditForm Model="_formModel" OnValidSubmit="HandleFormSubmit">
+                <DataAnnotationsValidator />
+                <div class="space-y-4">
+                    <ComboboxFormField TItem="Language"
+                                       Items="_languages"
+                                       @bind-Value="_formModel.Language"
+                                       ValueSelector="@(l => l.Value)"
+                                       DisplaySelector="@(l => l.Label)"
+                                       Label="Primary language"
+                                       Placeholder="Select a language..."
+                                       SearchPlaceholder="Search languages..."
+                                       MatchTriggerWidth="true"
+                                       InputClass="w-full" />
+                    <Button Type="ButtonType.Submit">Submit</Button>
+                </div>
+            </EditForm>
+            @if (_formSubmitted)
+            {
+                <div class="mt-4 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 p-4">
+                    <p class="text-sm font-medium text-green-800 dark:text-green-200">
+                        Submitted: @_formModel.Language
+                    </p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private string? _selectedFramework;
+    private bool _formSubmitted;
+    private ComboboxFormModel _formModel = new();
+
+    private readonly List<Framework> _frameworks = new()
+    {
+        new Framework { Value = "next.js", Label = "Next.js" },
+        new Framework { Value = "sveltekit", Label = "SvelteKit" },
+        new Framework { Value = "nuxt.js", Label = "Nuxt.js" },
+        new Framework { Value = "remix", Label = "Remix" },
+        new Framework { Value = "astro", Label = "Astro" },
+        new Framework { Value = "blazor", Label = "Blazor" }
+    };
+
+    private readonly List<Language> _languages = new()
+    {
+        new Language { Value = "csharp", Label = "C#" },
+        new Language { Value = "typescript", Label = "TypeScript" },
+        new Language { Value = "javascript", Label = "JavaScript" },
+        new Language { Value = "python", Label = "Python" },
+        new Language { Value = "java", Label = "Java" },
+        new Language { Value = "go", Label = "Go" },
+        new Language { Value = "rust", Label = "Rust" }
+    };
+
+    private void HandleFormSubmit()
+    {
+        _formSubmitted = true;
+    }
+
+    private class Framework
+    {
+        public required string Value { get; set; }
+        public required string Label { get; set; }
+    }
+
+    private class Language
+    {
+        public required string Value { get; set; }
+        public required string Label { get; set; }
+    }
+
+    private class ComboboxFormModel
+    {
+        [Required(ErrorMessage = "Please select a language.")]
+        public string? Language { get; set; }
+    }
+}
