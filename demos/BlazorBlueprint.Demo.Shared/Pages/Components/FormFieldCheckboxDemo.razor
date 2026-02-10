@@ -90,6 +90,65 @@
         </div>
     </div>
 
+    <!-- Label on Right -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Label on Right (Default)</h2>
+            <p class="text-sm text-muted-foreground">
+                The default orientation is <code class="text-xs bg-muted px-1 py-0.5 rounded">FieldOrientation.HorizontalEnd</code>, which places the label after the checkbox. This is the most common pattern for inline checkboxes.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <FormFieldCheckbox @bind-Checked="_rightLabel"
+                               Label="I agree to the terms and conditions"
+                               HelperText="Required to continue." />
+        </div>
+    </div>
+
+    <!-- Label on Bottom -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Label on Bottom</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">Orientation="FieldOrientation.VerticalEnd"</code> to place the label below the checkbox.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <FormFieldCheckbox @bind-Checked="_bottomLabel"
+                               Label="Enable feature"
+                               HelperText="This can be changed later."
+                               Orientation="FieldOrientation.VerticalEnd" />
+        </div>
+    </div>
+
+    <!-- Indeterminate (Select All) -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Indeterminate</h2>
+            <p class="text-sm text-muted-foreground">
+                A parent checkbox that reflects the aggregate state of its children.
+                When some (but not all) items are selected, the parent shows an indeterminate dash.
+            </p>
+        </div>
+        <div class="max-w-md space-y-3">
+            <FormFieldCheckbox Checked="@_selectAllChecked"
+                               CheckedChanged="HandleSelectAllChanged"
+                               Indeterminate="@_selectAllIndeterminate"
+                               Label="Select all permissions" />
+            <div class="ml-6 space-y-1">
+                <FormFieldCheckbox Checked="@_permRead"
+                                   CheckedChanged="@(v => { _permRead = v; UpdatePermSelectAll(); })"
+                                   Label="Read" />
+                <FormFieldCheckbox Checked="@_permWrite"
+                                   CheckedChanged="@(v => { _permWrite = v; UpdatePermSelectAll(); })"
+                                   Label="Write" />
+                <FormFieldCheckbox Checked="@_permDelete"
+                                   CheckedChanged="@(v => { _permDelete = v; UpdatePermSelectAll(); })"
+                                   Label="Delete" />
+            </div>
+        </div>
+    </div>
+
     <!-- Error Text -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -153,8 +212,36 @@
 @code {
     private bool _acceptTerms;
     private bool _newsletter;
+    private bool _rightLabel;
+    private bool _bottomLabel;
     private bool _errorDemo;
     private bool _formSubmitted;
+
+    // Indeterminate (Select All)
+    private bool _selectAllChecked;
+    private bool _selectAllIndeterminate;
+    private bool _permRead = true;
+    private bool _permWrite;
+    private bool _permDelete;
+
+    protected override void OnInitialized() => UpdatePermSelectAll();
+
+    private void HandleSelectAllChanged(bool value)
+    {
+        _selectAllChecked = value;
+        _selectAllIndeterminate = false;
+        _permRead = value;
+        _permWrite = value;
+        _permDelete = value;
+    }
+
+    private void UpdatePermSelectAll()
+    {
+        var all = _permRead && _permWrite && _permDelete;
+        var none = !_permRead && !_permWrite && !_permDelete;
+        _selectAllChecked = all;
+        _selectAllIndeterminate = !all && !none;
+    }
     private CheckboxFormModel _formModel = new();
 
     private string? _errorDemoError => !_errorDemo ? "This field is required." : null;

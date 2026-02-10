@@ -70,6 +70,54 @@
         </div>
     </div>
 
+    <!-- Indeterminate (Select All) -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Indeterminate</h2>
+            <p class="text-sm text-muted-foreground">
+                A parent checkbox that reflects the aggregate state of its children.
+                When some (but not all) items are selected, the parent shows an indeterminate dash.
+            </p>
+        </div>
+        <div class="space-y-3">
+            <div class="flex items-center space-x-2">
+                <Checkbox Checked="@_selectAllChecked"
+                          CheckedChanged="HandleSelectAllChanged"
+                          Indeterminate="@_selectAllIndeterminate"
+                          Id="select-all" />
+                <label for="select-all" class="text-sm font-semibold leading-none">
+                    Select all
+                </label>
+            </div>
+            <div class="ml-6 space-y-3">
+                <div class="flex items-center space-x-2">
+                    <Checkbox Checked="@_itemRead"
+                              CheckedChanged="@(v => { _itemRead = v; UpdateSelectAll(); })"
+                              Id="item-read" />
+                    <label for="item-read" class="text-sm font-medium leading-none">
+                        Read
+                    </label>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <Checkbox Checked="@_itemWrite"
+                              CheckedChanged="@(v => { _itemWrite = v; UpdateSelectAll(); })"
+                              Id="item-write" />
+                    <label for="item-write" class="text-sm font-medium leading-none">
+                        Write
+                    </label>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <Checkbox Checked="@_itemExecute"
+                              CheckedChanged="@(v => { _itemExecute = v; UpdateSelectAll(); })"
+                              Id="item-execute" />
+                    <label for="item-execute" class="text-sm font-medium leading-none">
+                        Execute
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Disabled State -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -276,6 +324,32 @@
     private bool option1 = true;
     private bool option2 = false;
     private bool option3 = true;
+
+    // Indeterminate (Select All)
+    private bool _selectAllChecked;
+    private bool _selectAllIndeterminate;
+    private bool _itemRead = true;
+    private bool _itemWrite;
+    private bool _itemExecute;
+
+    protected override void OnInitialized() => UpdateSelectAll();
+
+    private void HandleSelectAllChanged(bool value)
+    {
+        _selectAllChecked = value;
+        _selectAllIndeterminate = false;
+        _itemRead = value;
+        _itemWrite = value;
+        _itemExecute = value;
+    }
+
+    private void UpdateSelectAll()
+    {
+        var all = _itemRead && _itemWrite && _itemExecute;
+        var none = !_itemRead && !_itemWrite && !_itemExecute;
+        _selectAllChecked = all;
+        _selectAllIndeterminate = !all && !none;
+    }
 
     // Interactive
     private bool _interactiveChecked = false;

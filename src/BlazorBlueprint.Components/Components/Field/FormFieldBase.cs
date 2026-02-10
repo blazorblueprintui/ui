@@ -111,7 +111,7 @@ public abstract class FormFieldBase : ComponentBase, IDisposable
     /// Gets whether the field is in an invalid state. Subclasses may override
     /// to add additional error sources (e.g., parse errors).
     /// </summary>
-    protected virtual bool IsInvalid => HasEditContextErrors;
+    protected virtual bool IsInvalid => HasEditContextErrors || !string.IsNullOrEmpty(ErrorText);
 
     /// <summary>
     /// Gets the value for the <c>aria-describedby</c> attribute. Points to

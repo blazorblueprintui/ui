@@ -53,7 +53,22 @@ public partial class FormFieldCheckbox : FormFieldBase
     public string? InputClass { get; set; }
 
     /// <inheritdoc />
+    public override Task SetParametersAsync(ParameterView parameters)
+    {
+        if (!parameters.TryGetValue<FieldOrientation>(nameof(Orientation), out _))
+        {
+            Orientation = FieldOrientation.HorizontalEnd;
+        }
+
+        return base.SetParametersAsync(parameters);
+    }
+
+    /// <inheritdoc />
     protected override LambdaExpression? GetFieldExpression() => CheckedExpression;
+
+    private FieldOrientation EffectiveOrientation => Orientation is FieldOrientation.HorizontalEnd or FieldOrientation.Horizontal or FieldOrientation.VerticalEnd
+        ? FieldOrientation.Vertical
+        : Orientation;
 
     private async Task HandleCheckedChanged(bool value)
     {

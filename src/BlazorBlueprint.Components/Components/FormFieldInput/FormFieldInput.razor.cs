@@ -164,7 +164,7 @@ public partial class FormFieldInput<TValue> : FormFieldBase
     public InputField<TValue>? InputFieldRef => _inputRef;
 
     /// <inheritdoc />
-    protected override bool IsInvalid => _hasError || HasEditContextErrors;
+    protected override bool IsInvalid => _hasError || base.IsInvalid;
 
     /// <inheritdoc />
     protected override string? DescribedById => _hasError || HasEditContextErrors

@@ -75,6 +75,8 @@ public partial class FieldLabel : ComponentBase
     private string CssClass => ClassNames.cn(
         // Typography
         "text-sm font-medium leading-none",
+        // Prevent shrinking in horizontal layouts
+        "shrink-0",
         // Error state via peer selector (when input has aria-invalid="true")
         "peer-aria-[invalid=true]:text-destructive",
         // Custom classes (if provided)

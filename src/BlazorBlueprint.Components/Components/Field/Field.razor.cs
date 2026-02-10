@@ -62,6 +62,22 @@ public partial class Field : ComponentBase
         "@md:[&:has([data-slot=switch])]:items-center"
     };
 
+    private static readonly string[] HorizontalEndClasses = new[]
+    {
+        // Row-reverse layout: content first, then label (label on right/end)
+        "flex-row-reverse items-start",
+        // Adjust spacing for checkbox/radio alignment
+        "[&:has([data-slot=checkbox])]:items-center",
+        "[&:has([data-slot=radio])]:items-center",
+        "[&:has([data-slot=switch])]:items-center"
+    };
+
+    private static readonly string[] VerticalEndClasses = new[]
+    {
+        // Column-reverse layout: content first, then label (label on bottom)
+        "flex-col-reverse w-full"
+    };
+
     /// <summary>
     /// Gets or sets the orientation of the field layout.
     /// </summary>
@@ -136,6 +152,10 @@ public partial class Field : ComponentBase
 
             FieldOrientation.Responsive => string.Join(" ", ResponsiveClasses),
 
+            FieldOrientation.HorizontalEnd => string.Join(" ", HorizontalEndClasses),
+
+            FieldOrientation.VerticalEnd => string.Join(" ", VerticalEndClasses),
+
             _ => string.Empty
         },
 
@@ -166,5 +186,16 @@ public enum FieldOrientation
     /// Automatically switches from vertical to horizontal at medium breakpoint.
     /// Uses container queries with @md prefix.
     /// </summary>
-    Responsive
+    Responsive,
+
+    /// <summary>
+    /// Label beside control on the end/right side (flex-row-reverse).
+    /// Useful for checkboxes, switches, and radio buttons where the control appears first.
+    /// </summary>
+    HorizontalEnd,
+
+    /// <summary>
+    /// Label stacked below the control (flex-col-reverse).
+    /// </summary>
+    VerticalEnd
 }
