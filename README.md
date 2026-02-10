@@ -6,7 +6,7 @@
 
 > **Renamed from BlazorUI** — This project was previously published as `BlazorUI.*` packages. Starting with v2.0.0, we've renamed to `BlazorBlueprint.*`. If you're migrating from BlazorUI, see the [Migration Guide](#migrating-from-blazorui) below.
 
-Beautiful, accessible UI components for Blazor. Inspired by [shadcn/ui](https://ui.shadcn.com/). Build modern, responsive interfaces with **70+ styled components** and **15 headless primitives**.
+Beautiful, accessible UI components for Blazor. Inspired by [shadcn/ui](https://ui.shadcn.com/). Build modern, responsive interfaces with **75+ styled components** and **15 headless primitives**.
 
 <p align="center">
   <a href="https://blazorblueprintui.com">
@@ -319,7 +319,7 @@ Primitives give you complete control over styling while handling all the complex
 
 ## Components
 
-Blazor Blueprint includes **70+ styled components** with full shadcn/ui design compatibility:
+Blazor Blueprint includes **75+ styled components** with full shadcn/ui design compatibility:
 
 ### Form Components
 - **Button** - Multiple variants (default, destructive, outline, secondary, ghost, link) with icon support
@@ -329,6 +329,7 @@ Blazor Blueprint includes **70+ styled components** with full shadcn/ui design c
 - **Combobox** - Searchable autocomplete dropdown
 - **Currency Input** - Currency-formatted numeric input with locale support
 - **Field** - Combine labels, controls, and help text for accessible forms
+- **Form Field** - Pre-configured form field wrappers (InputFormField, CheckboxFormField, SwitchFormField, RadioGroupFormField, SelectFormField, ComboboxFormField, MultiSelectFormField) with built-in label, description, and validation
 - **File Upload** - Drag-and-drop file upload with preview
 - **Input** - Text input with multiple types and validation support
 - **Input Field** - Generic typed input with automatic conversion, formatting, and validation for 15+ types
