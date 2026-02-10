@@ -6,7 +6,7 @@
 
 > **Renamed from BlazorUI** — This project was previously published as `BlazorUI.*` packages. Starting with v2.0.0, we've renamed to `BlazorBlueprint.*`. If you're migrating from BlazorUI, see the [Migration Guide](#migrating-from-blazorui) below.
 
-Beautiful, accessible UI components for Blazor. Inspired by [shadcn/ui](https://ui.shadcn.com/).
+Beautiful, accessible UI components for Blazor. Inspired by [shadcn/ui](https://ui.shadcn.com/). Build modern, responsive interfaces with **70+ styled components** and **15 headless primitives**.
 
 <p align="center">
   <a href="https://blazorblueprintui.com">
@@ -22,7 +22,7 @@ Beautiful, accessible UI components for Blazor. Inspired by [shadcn/ui](https://
 
 ## Overview
 
-Blazor Blueprint brings the elegant design system of shadcn/ui to Blazor applications. Build modern, responsive interfaces with **65+ styled components** and **15 headless primitives** that work across all Blazor hosting models—Server, WebAssembly, and Hybrid.
+Blazor Blueprint brings the elegant design system of shadcn/ui to Blazor applications. Build modern, responsive interfaces with **70+ styled components** and **15 headless primitives** that work across all Blazor hosting models—Server, WebAssembly, and Hybrid.
 
 ### Why Blazor Blueprint UI?
 
@@ -319,7 +319,7 @@ Primitives give you complete control over styling while handling all the complex
 
 ## Components
 
-Blazor Blueprint includes **65+ styled components** with full shadcn/ui design compatibility:
+Blazor Blueprint includes **70+ styled components** with full shadcn/ui design compatibility:
 
 ### Form Components
 - **Button** - Multiple variants (default, destructive, outline, secondary, ghost, link) with icon support
@@ -331,6 +331,7 @@ Blazor Blueprint includes **65+ styled components** with full shadcn/ui design c
 - **Field** - Combine labels, controls, and help text for accessible forms
 - **File Upload** - Drag-and-drop file upload with preview
 - **Input** - Text input with multiple types and validation support
+- **Input Field** - Generic typed input with automatic conversion, formatting, and validation for 15+ types
 - **Input Group** - Enhanced inputs with icons, buttons, and addons
 - **Input OTP** - One-time password input with individual digit fields
 - **Label** - Accessible form labels
@@ -348,6 +349,7 @@ Blazor Blueprint includes **65+ styled components** with full shadcn/ui design c
 - **Date Range Picker** - Select a range of dates with dual calendars
 - **Time Picker** - Time selection with hour/minute controls
 - **Slider** - Range input for selecting numeric values with drag support
+- **Split Button** - Primary action button with dropdown menu for secondary actions
 - **Range Slider** - Dual-handle slider for selecting value ranges
 - **Toggle** - Two-state button for toggleable options
 - **Toggle Group** - Group of toggles with single or multiple selection
@@ -368,6 +370,7 @@ Blazor Blueprint includes **65+ styled components** with full shadcn/ui design c
 - **Separator** - Visual dividers
 - **Sidebar** - Responsive sidebar with collapsible icon mode, variants (default, floating, inset), and mobile sheet integration
 - **Tabs** - Tabbed interfaces with controlled/uncontrolled modes
+- **Timeline** - Vertical timeline with alignment options, connector styles, loading states, and collapsible items
 
 ### Overlay Components
 - **Command** - Command palette with keyboard navigation and filtering
@@ -383,6 +386,7 @@ Blazor Blueprint includes **65+ styled components** with full shadcn/ui design c
 - **Toast** - Temporary notification messages with multiple positions
 
 ### Data & Content
+- **Chart** - 6 chart types (Area, Bar, Line, Pie, Radar, Radial) built on ApexCharts with theme integration
 - **DataTable** - Powerful tables with sorting, filtering, pagination, and selection
 - **MarkdownEditor** - Rich text editor with toolbar formatting and live preview
 - **RichTextEditor** - WYSIWYG editor with formatting toolbar and HTML output
