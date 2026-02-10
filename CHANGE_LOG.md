@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-02-10
+
+### Fixed
+- Portal render timeout warnings when floating content is nested inside other portals (e.g., Combobox inside Dialog) — `NotifyPortalRendered` now fires before processing deferred rerenders in `PortalHost`
+
+---
+
 ## 2026-02-09
 
 ### Added
