@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-02-10
+
+### Fixed
+- `DialogPortal` not refreshing content on re-render — event handlers inside dialog content would update state but the UI wouldn't re-render until an unrelated browser event occurred (#118)
+- `SheetPortal` using `UpdatePortalContent` instead of `RefreshPortal`, which unnecessarily replaced the RenderFragment delegate on every parameter update
+
+---
+
 ## 2026-02-09
 
 ### Added
