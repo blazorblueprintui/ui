@@ -16,12 +16,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - API surface snapshot tests for Components and Primitives assemblies using Verify — detects unintentional public API changes
 - `run-tests.sh` script for running API surface tests locally
 - API surface tests integrated into NuGet publish CI workflow
+- `HorizontalEnd` and `VerticalEnd` values for `FieldOrientation` enum — enables label-after-control and label-below-control layouts for `FormFieldCheckbox`
+- Indeterminate (select-all) demo sections on Checkbox and FormFieldCheckbox demo pages
+- Label orientation demo sections (right, bottom) on FormFieldCheckbox demo page
 
 ### Changed
 - Combobox selected item checkmark moved from left side to right side of the item text
 - `PopoverContent` defaults changed from `Strategy="absolute"` / `ZIndex=50` to `Strategy="fixed"` / `ZIndex=9999` — popover-based components (DatePicker, ColorPicker, TimePicker) now render correctly above Dialog/Sheet/Drawer overlays without explicit overrides
 - `PopoverTrigger` AsChild pattern now caches `TriggerContext` and only recreates when dependencies change, reducing unnecessary CascadingValue propagation
 - `Button` re-registers element reference when `TriggerContext` changes (not just on first render), fixing stale references inside Dialog/Sheet
+- `FormFieldCheckbox` defaults to `FieldOrientation.HorizontalEnd` (label on right), matching the standard inline checkbox pattern
+- `FormFieldBase.IsInvalid` now also considers `ErrorText` parameter, not just EditContext validation errors
+- `FormFieldInput.IsInvalid` delegates to `base.IsInvalid` instead of duplicating the `HasEditContextErrors` check
+- `FieldLabel` adds `shrink-0` class to prevent label text from shrinking in horizontal layouts
 
 ### Fixed
 - Sidebar desktop visibility — `hidden` class overriding `md:flex` due to CSS layer cascade conflicts (#116)
@@ -36,6 +43,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Resolved analyzer errors in test project
 - Removed obsolete `[UsesVerify]` attribute from test classes
 - Infinite render loop in `PortalHost` when opening dropdown controls (Select, Combobox, MultiSelect) inside a Dialog — replaced `_pendingRerender` flag with structural change detection to break the loop that froze WASM apps
+- Combobox search input not receiving focus on second open after item selection — `Popover.OnParametersSet` now routes controlled state changes through `Context.Close()`/`Context.Open()` so `OpenChanged` fires correctly and downstream cleanup (focus reset, click-outside disposal) is triggered
 
 ---
 
