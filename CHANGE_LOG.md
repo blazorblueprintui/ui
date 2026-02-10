@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 - `Strategy` and `ZIndex` parameters on `PopoverContent` — allows dropdowns to use `fixed` positioning and custom z-index to escape stacking contexts (e.g., inside Dialogs)
 - Dialog demo expanded with Select, Combobox, and MultiSelect controls to demonstrate nested portal behavior
+- Dialog demo added "DatePicker in Dialog" section to demonstrate popover-based components inside dialogs
 - DataTable demo added "Dialog with Combobox in Cell Template" section as a nested portal regression test
 - API surface snapshot tests for Components and Primitives assemblies using Verify — detects unintentional public API changes
 - `run-tests.sh` script for running API surface tests locally
@@ -18,8 +19,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 - Combobox selected item checkmark moved from left side to right side of the item text
+- `PopoverContent` defaults changed from `Strategy="absolute"` / `ZIndex=50` to `Strategy="fixed"` / `ZIndex=9999` — popover-based components (DatePicker, ColorPicker, TimePicker) now render correctly above Dialog/Sheet/Drawer overlays without explicit overrides
+- `PopoverTrigger` AsChild pattern now caches `TriggerContext` and only recreates when dependencies change, reducing unnecessary CascadingValue propagation
+- `Button` re-registers element reference when `TriggerContext` changes (not just on first render), fixing stale references inside Dialog/Sheet
 
 ### Fixed
+- Sidebar desktop visibility — `hidden` class overriding `md:flex` due to CSS layer cascade conflicts (#116)
+- SidebarRail desktop visibility — same `hidden sm:flex` pattern causing rail to be invisible on all screen sizes
+- DateRangePicker responsive layout broken by CSS layer cascade — replaced Tailwind `sm:` responsive variants with un-layered CSS using `data-*` attribute selectors
+- Popover-based components (DatePicker, ColorPicker, TimePicker) rendering behind Dialog/Sheet/Drawer overlays — both Primitives and Components layer defaults now use `fixed` positioning with `z-index: 9999`
 - Portal render timeout warnings when floating content is nested inside other portals (e.g., Combobox inside Dialog) — `NotifyPortalRendered` now fires before processing deferred rerenders in `PortalHost`
 - Combobox and MultiSelect dropdowns now render correctly above Dialog overlays using `fixed` positioning with elevated z-index
 - `DialogPortal` not refreshing content on re-render — event handlers inside dialog content would update state but the UI wouldn't re-render until an unrelated browser event occurred (#118)
