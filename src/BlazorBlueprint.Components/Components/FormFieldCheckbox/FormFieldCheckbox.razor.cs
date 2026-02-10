@@ -1,13 +1,14 @@
 using System.Linq.Expressions;
+using BlazorBlueprint.Components.Field;
 using Microsoft.AspNetCore.Components;
 
-namespace BlazorBlueprint.Components.FormFields;
+namespace BlazorBlueprint.Components.FormFieldCheckbox;
 
 /// <summary>
 /// A form field wrapper for <see cref="Checkbox.Checkbox"/> that provides
 /// automatic label, helper text, and error message display.
 /// </summary>
-public partial class CheckboxFormField : FormFieldBase
+public partial class FormFieldCheckbox : FormFieldBase
 {
     /// <summary>
     /// Gets or sets whether the checkbox is checked.

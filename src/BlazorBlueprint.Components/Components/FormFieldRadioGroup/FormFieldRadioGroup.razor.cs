@@ -1,14 +1,15 @@
 using System.Linq.Expressions;
+using BlazorBlueprint.Components.Field;
 using Microsoft.AspNetCore.Components;
 
-namespace BlazorBlueprint.Components.FormFields;
+namespace BlazorBlueprint.Components.FormFieldRadioGroup;
 
 /// <summary>
 /// A form field wrapper for <see cref="RadioGroup.RadioGroup{TValue}"/> that provides
 /// automatic label, helper text, and error message display.
 /// </summary>
 /// <typeparam name="TValue">The type of the value associated with radio group items.</typeparam>
-public partial class RadioGroupFormField<TValue> : FormFieldBase
+public partial class FormFieldRadioGroup<TValue> : FormFieldBase
 {
     /// <summary>
     /// Gets or sets the currently selected value.

@@ -1,29 +1,23 @@
-@namespace BlazorBlueprint.Components.FormFields
-@using BlazorBlueprint.Components.Combobox
+@namespace BlazorBlueprint.Components.FormFieldCheckbox
+@using BlazorBlueprint.Components.Checkbox
 @using BlazorBlueprint.Components.Field
-@typeparam TItem
 @inherits FormFieldBase
 
 <Field Orientation="@Orientation" IsInvalid="@IsInvalid" Class="@Class">
     @if (Label is not null)
     {
-        <FieldLabel>@Label</FieldLabel>
+        <FieldLabel For="@ControlId">@Label</FieldLabel>
     }
     <FieldContent>
-        <Combobox TItem="TItem"
-                  Items="@Items"
-                  Value="@Value"
-                  ValueChanged="HandleValueChanged"
-                  ValueExpression="@ValueExpression"
-                  ValueSelector="@ValueSelector"
-                  DisplaySelector="@DisplaySelector"
-                  Placeholder="@Placeholder"
-                  SearchPlaceholder="@SearchPlaceholder"
-                  EmptyMessage="@EmptyMessage"
+        <Checkbox Id="@ControlId"
+                  Checked="@Checked"
+                  CheckedChanged="HandleCheckedChanged"
+                  CheckedExpression="@CheckedExpression"
+                  Indeterminate="@Indeterminate"
+                  IndeterminateChanged="@IndeterminateChanged"
                   Disabled="@Disabled"
+                  AriaLabel="@AriaLabel"
                   AriaDescribedBy="@DescribedById"
-                  PopoverWidth="@PopoverWidth"
-                  MatchTriggerWidth="@MatchTriggerWidth"
                   Class="@InputClass" />
         @if (!string.IsNullOrEmpty(HelperText) && !IsInvalid)
         {

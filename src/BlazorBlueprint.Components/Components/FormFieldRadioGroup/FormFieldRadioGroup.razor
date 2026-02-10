@@ -1,24 +1,25 @@
-@namespace BlazorBlueprint.Components.FormFields
-@using BlazorBlueprint.Components.Checkbox
+@namespace BlazorBlueprint.Components.FormFieldRadioGroup
+@using BlazorBlueprint.Components.RadioGroup
 @using BlazorBlueprint.Components.Field
+@typeparam TValue
 @inherits FormFieldBase
 
 <Field Orientation="@Orientation" IsInvalid="@IsInvalid" Class="@Class">
     @if (Label is not null)
     {
-        <FieldLabel For="@ControlId">@Label</FieldLabel>
+        <FieldLabel>@Label</FieldLabel>
     }
     <FieldContent>
-        <Checkbox Id="@ControlId"
-                  Checked="@Checked"
-                  CheckedChanged="HandleCheckedChanged"
-                  CheckedExpression="@CheckedExpression"
-                  Indeterminate="@Indeterminate"
-                  IndeterminateChanged="@IndeterminateChanged"
-                  Disabled="@Disabled"
-                  AriaLabel="@AriaLabel"
-                  AriaDescribedBy="@DescribedById"
-                  Class="@InputClass" />
+        <RadioGroup TValue="TValue"
+                    Value="@Value"
+                    ValueChanged="HandleValueChanged"
+                    ValueExpression="@ValueExpression"
+                    Disabled="@Disabled"
+                    AriaLabel="@(AriaLabel ?? Label)"
+                    AriaDescribedBy="@DescribedById"
+                    Class="@InputClass">
+            @ChildContent
+        </RadioGroup>
         @if (!string.IsNullOrEmpty(HelperText) && !IsInvalid)
         {
             <FieldDescription Id="@DescriptionId">@HelperText</FieldDescription>

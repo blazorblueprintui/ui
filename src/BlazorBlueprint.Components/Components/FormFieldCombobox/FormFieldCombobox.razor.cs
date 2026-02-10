@@ -1,14 +1,15 @@
 using System.Linq.Expressions;
+using BlazorBlueprint.Components.Field;
 using Microsoft.AspNetCore.Components;
 
-namespace BlazorBlueprint.Components.FormFields;
+namespace BlazorBlueprint.Components.FormFieldCombobox;
 
 /// <summary>
 /// A form field wrapper for <see cref="Combobox.Combobox{TItem}"/> that provides
 /// automatic label, helper text, and error message display.
 /// </summary>
 /// <typeparam name="TItem">The type of items in the combobox list.</typeparam>
-public partial class ComboboxFormField<TItem> : FormFieldBase
+public partial class FormFieldCombobox<TItem> : FormFieldBase
 {
     /// <summary>
     /// Gets or sets the collection of items to display in the combobox.

@@ -329,7 +329,7 @@ Blazor Blueprint includes **75+ styled components** with full shadcn/ui design c
 - **Combobox** - Searchable autocomplete dropdown
 - **Currency Input** - Currency-formatted numeric input with locale support
 - **Field** - Combine labels, controls, and help text for accessible forms
-- **Form Field** - Pre-configured form field wrappers (InputFormField, CheckboxFormField, SwitchFormField, RadioGroupFormField, SelectFormField, ComboboxFormField, MultiSelectFormField) with built-in label, description, and validation
+- **Form Field** - Pre-configured form field wrappers (FormFieldInput, FormFieldCheckbox, FormFieldSwitch, FormFieldRadioGroup, FormFieldSelect, FormFieldCombobox, FormFieldMultiSelect) with built-in label, description, and validation
 - **File Upload** - Drag-and-drop file upload with preview
 - **Input** - Text input with multiple types and validation support
 - **Input Field** - Generic typed input with automatic conversion, formatting, and validation for 15+ types

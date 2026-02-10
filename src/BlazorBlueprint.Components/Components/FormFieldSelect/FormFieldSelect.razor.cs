@@ -1,18 +1,19 @@
 using System.Linq.Expressions;
+using BlazorBlueprint.Components.Field;
 using Microsoft.AspNetCore.Components;
 
-namespace BlazorBlueprint.Components.FormFields;
+namespace BlazorBlueprint.Components.FormFieldSelect;
 
 /// <summary>
 /// A form field wrapper for the Select component that provides
 /// automatic label, helper text, and error message display with a simplified API.
 /// </summary>
 /// <remarks>
-/// SelectFormField auto-generates the SelectTrigger, SelectValue, and SelectContent.
+/// FormFieldSelect auto-generates the SelectTrigger, SelectValue, and SelectContent.
 /// Users only need to provide SelectItem children as ChildContent.
 /// </remarks>
 /// <typeparam name="TValue">The type of the selected value.</typeparam>
-public partial class SelectFormField<TValue> : FormFieldBase
+public partial class FormFieldSelect<TValue> : FormFieldBase
 {
     /// <summary>
     /// Gets or sets the currently selected value.

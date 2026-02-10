@@ -1,14 +1,15 @@
 using System.Linq.Expressions;
+using BlazorBlueprint.Components.Field;
 using BlazorBlueprint.Components.Switch;
 using Microsoft.AspNetCore.Components;
 
-namespace BlazorBlueprint.Components.FormFields;
+namespace BlazorBlueprint.Components.FormFieldSwitch;
 
 /// <summary>
 /// A form field wrapper for <see cref="Switch.Switch"/> that provides
 /// automatic label, helper text, and error message display.
 /// </summary>
-public partial class SwitchFormField : FormFieldBase
+public partial class FormFieldSwitch : FormFieldBase
 {
     /// <summary>
     /// Gets or sets whether the switch is checked (on).

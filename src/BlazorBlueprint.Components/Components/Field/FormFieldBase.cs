@@ -1,9 +1,8 @@
 using System.Linq.Expressions;
-using BlazorBlueprint.Components.Field;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 
-namespace BlazorBlueprint.Components.FormFields;
+namespace BlazorBlueprint.Components.Field;
 
 /// <summary>
 /// Abstract base class for form field wrappers that compose a control with

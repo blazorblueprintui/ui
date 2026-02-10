@@ -1,10 +1,11 @@
 using System.Linq.Expressions;
 using BlazorBlueprint.Components.Converters;
+using BlazorBlueprint.Components.Field;
 using BlazorBlueprint.Components.Input;
 using BlazorBlueprint.Components.InputField;
 using Microsoft.AspNetCore.Components;
 
-namespace BlazorBlueprint.Components.FormFields;
+namespace BlazorBlueprint.Components.FormFieldInput;
 
 /// <summary>
 /// An opinionated form field that composes <see cref="InputField{TValue}"/> with
@@ -13,7 +14,7 @@ namespace BlazorBlueprint.Components.FormFields;
 /// </summary>
 /// <remarks>
 /// <para>
-/// InputFormField provides a higher-level abstraction over the primitive <see cref="InputField{TValue}"/>.
+/// FormFieldInput provides a higher-level abstraction over the primitive <see cref="InputField{TValue}"/>.
 /// It automatically handles label association, helper text display, and error message rendering
 /// based on the error kind from the underlying InputField.
 /// </para>
@@ -34,14 +35,14 @@ namespace BlazorBlueprint.Components.FormFields;
 /// <typeparam name="TValue">The value type to bind to.</typeparam>
 /// <example>
 /// <code>
-/// &lt;InputFormField TValue="int"
+/// &lt;FormFieldInput TValue="int"
 ///            @bind-Value="age"
 ///            Label="Age"
 ///            HelperText="Must be 18 or older"
 ///            Validation="v =&gt; v &gt;= 18" /&gt;
 /// </code>
 /// </example>
-public partial class InputFormField<TValue> : FormFieldBase
+public partial class FormFieldInput<TValue> : FormFieldBase
 {
     private InputField<TValue>? _inputRef;
     private bool _hasError;

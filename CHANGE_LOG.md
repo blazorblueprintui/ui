@@ -9,12 +9,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## 2026-02-09
 
 ### Added
-- Control-specific `FormField` wrapper components: `CheckboxFormField`, `SwitchFormField`, `RadioGroupFormField`, `SelectFormField`, `ComboboxFormField`, and `MultiSelectFormField` — pre-configured FormField wrappers that simplify EditForm integration for non-text controls
+- Control-specific `FormField` wrapper components: `FormFieldCheckbox`, `FormFieldSwitch`, `FormFieldRadioGroup`, `FormFieldSelect`, `FormFieldCombobox`, and `FormFieldMultiSelect` — pre-configured FormField wrappers that simplify EditForm integration for non-text controls
 - `FormFieldBase` base class providing shared EditForm/EditContext integration, validation, label, description, and error message rendering
-- `InputFormField` component for typed text input with built-in form field layout (label, description, validation messages)
-- Flag icon and avatar examples in `SelectFormField` demo
-- Form Components sidebar section in demo navigation with dedicated demo pages for each FormField wrapper
-- EditForm integration for `InputField` and `FormField` components with cascading `EditContext` support
+- `FormFieldInput` component for typed text input with built-in form field layout (label, description, validation messages)
+- Flag icon and avatar examples in `FormFieldSelect` demo
+- Demo pages for each FormField wrapper in the Components sidebar section
+- EditForm integration for `InputField` components with cascading `EditContext` support
 
 ### Fixed
 - Build errors related to FormField component integration

@@ -1,0 +1,41 @@
+@namespace BlazorBlueprint.Components.FormFieldCombobox
+@using BlazorBlueprint.Components.Combobox
+@using BlazorBlueprint.Components.Field
+@typeparam TItem
+@inherits FormFieldBase
+
+<Field Orientation="@Orientation" IsInvalid="@IsInvalid" Class="@Class">
+    @if (Label is not null)
+    {
+        <FieldLabel>@Label</FieldLabel>
+    }
+    <FieldContent>
+        <Combobox TItem="TItem"
+                  Items="@Items"
+                  Value="@Value"
+                  ValueChanged="HandleValueChanged"
+                  ValueExpression="@ValueExpression"
+                  ValueSelector="@ValueSelector"
+                  DisplaySelector="@DisplaySelector"
+                  Placeholder="@Placeholder"
+                  SearchPlaceholder="@SearchPlaceholder"
+                  EmptyMessage="@EmptyMessage"
+                  Disabled="@Disabled"
+                  AriaDescribedBy="@DescribedById"
+                  PopoverWidth="@PopoverWidth"
+                  MatchTriggerWidth="@MatchTriggerWidth"
+                  Class="@InputClass" />
+        @if (!string.IsNullOrEmpty(HelperText) && !IsInvalid)
+        {
+            <FieldDescription Id="@DescriptionId">@HelperText</FieldDescription>
+        }
+        @if (IsInvalid && !string.IsNullOrEmpty(ErrorText))
+        {
+            <FieldError Id="@ErrorId">@ErrorText</FieldError>
+        }
+        else if (HasEditContextErrors)
+        {
+            <FieldError Id="@ErrorId" Errors="@EditContextErrors" />
+        }
+    </FieldContent>
+</Field>
