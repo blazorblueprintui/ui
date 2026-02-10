@@ -322,13 +322,21 @@ public partial class Button : ComponentBase
         TriggerContext?.OnBlur?.Invoke();
 
     /// <summary>
+    /// Tracks the previous TriggerContext to detect when it changes.
+    /// </summary>
+    private TriggerContext? _previousTriggerContext;
+
+    /// <summary>
     /// Registers the button element reference with the trigger context for positioning.
+    /// Re-registers when TriggerContext changes (e.g. parent re-renders inside Dialog/Sheet).
     /// </summary>
     protected override void OnAfterRender(bool firstRender)
     {
-        if (firstRender && TriggerContext?.SetTriggerElement != null)
+        if (TriggerContext?.SetTriggerElement != null &&
+            (firstRender || TriggerContext != _previousTriggerContext))
         {
             TriggerContext.SetTriggerElement.Invoke(_buttonRef);
+            _previousTriggerContext = TriggerContext;
         }
     }
 }

@@ -5,7 +5,7 @@
 @if (AsChild)
 {
     @* When AsChild is true, pass trigger context to child for it to handle *@
-    <CascadingValue Value="TriggerContext" Name="TriggerContext">
+    <CascadingValue Value="GetTriggerContext()" Name="TriggerContext">
         @ChildContent
     </CascadingValue>
 }
@@ -69,20 +69,39 @@ else
     private ElementReference? _asChildTriggerRef;
 
     /// <summary>
-    /// Context passed to child components when AsChild is true.
+    /// Cached TriggerContext to avoid unnecessary CascadingValue change propagation.
+    /// Only recreated when dependencies (IsOpen, TriggerId, ContentId) actually change.
     /// </summary>
-    private TriggerContext TriggerContext => new()
+    private TriggerContext? _cachedTriggerContext;
+    private bool _cachedIsOpen;
+    private string? _cachedTriggerId;
+    private string? _cachedContentId;
+
+    private TriggerContext GetTriggerContext()
     {
-        TriggerId = Context.TriggerId,
-        IsOpen = Context.IsOpen,
-        // Toggle now only opens when closed (to prevent Blazor event routing edge cases)
-        Toggle = () => { if (!Context.IsOpen) Context.Open(_asChildTriggerRef); },
-        Open = () => Context.Open(_asChildTriggerRef),
-        Close = () => Context.Close(),
-        AriaHasPopup = "true",
-        AriaControls = Context.ContentId,
-        SetTriggerElement = (ElementReference el) => _asChildTriggerRef = el
-    };
+        if (_cachedTriggerContext == null ||
+            _cachedIsOpen != Context.IsOpen ||
+            _cachedTriggerId != Context.TriggerId ||
+            _cachedContentId != Context.ContentId)
+        {
+            _cachedIsOpen = Context.IsOpen;
+            _cachedTriggerId = Context.TriggerId;
+            _cachedContentId = Context.ContentId;
+            _cachedTriggerContext = new TriggerContext
+            {
+                TriggerId = Context.TriggerId,
+                IsOpen = Context.IsOpen,
+                // Toggle now only opens when closed (to prevent Blazor event routing edge cases)
+                Toggle = () => { if (!Context.IsOpen) Context.Open(_asChildTriggerRef); },
+                Open = () => Context.Open(_asChildTriggerRef),
+                Close = () => Context.Close(),
+                AriaHasPopup = "true",
+                AriaControls = Context.ContentId,
+                SetTriggerElement = (ElementReference el) => _asChildTriggerRef = el
+            };
+        }
+        return _cachedTriggerContext;
+    }
 
     private async Task HandleClick(MouseEventArgs args)
     {
