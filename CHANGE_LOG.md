@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Combobox and MultiSelect dropdowns now render correctly above Dialog overlays using `fixed` positioning with elevated z-index
 - `DialogPortal` not refreshing content on re-render — event handlers inside dialog content would update state but the UI wouldn't re-render until an unrelated browser event occurred (#118)
 - `SheetPortal` using `UpdatePortalContent` instead of `RefreshPortal`, which unnecessarily replaced the RenderFragment delegate on every parameter update
+- Infinite render loop in `PortalHost` when opening dropdown controls (Select, Combobox, MultiSelect) inside a Dialog — replaced `_pendingRerender` flag with structural change detection to break the loop that froze WASM apps
 
 ---
 
