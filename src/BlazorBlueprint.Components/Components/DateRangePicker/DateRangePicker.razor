@@ -21,18 +21,19 @@
             }
         </Button>
     </PopoverTrigger>
-    <PopoverContent Class="w-[calc(100vw-6rem)] sm:w-auto p-0" Align="@PopoverAlign.Start">
+    <PopoverContent Class="w-[calc(100vw-6rem)] p-0" Align="@PopoverAlign.Start" data-drp>
         <div class="flex flex-col">
             @if (ShowPresets)
             {
-                <div class="flex flex-col sm:flex-row border-b">
-                    <div class="flex flex-row overflow-x-auto sm:flex-col sm:overflow-x-visible gap-1 p-3 border-b sm:border-b-0 sm:border-r sm:min-w-[140px]">
-                        <span class="hidden sm:block text-xs font-medium text-muted-foreground mb-1">Quick Select</span>
+                <div class="flex flex-col border-b" data-drp-body>
+                    <div class="flex flex-row overflow-x-auto gap-1 p-3 border-b" data-drp-presets>
+                        <span class="hidden text-xs font-medium text-muted-foreground mb-1" data-drp-presets-label>Quick Select</span>
                         @foreach (var preset in GetAvailablePresets())
                         {
                             var capturedPreset = preset;
                             <button type="button"
                                     class="@GetPresetButtonClass(capturedPreset)"
+                                    data-drp-preset-btn
                                     @onclick="@(() => ApplyPreset(capturedPreset))">
                                 @GetPresetLabel(capturedPreset)
                             </button>
@@ -42,7 +43,7 @@
                         @* Inline Calendars *@
                         <div class="@(ShowTwoMonths ? "flex" : "")">
                             @* First Calendar *@
-                            <div class="flex-1 px-5 py-3 sm:p-3">
+                            <div class="flex-1 px-5 py-3" data-drp-calendar>
                                 <div class="flex items-center justify-between mb-3">
                                     <button type="button"
                                             class="inline-flex items-center justify-center h-7 w-7 rounded-md border border-input bg-transparent hover:bg-accent hover:text-accent-foreground opacity-50 hover:opacity-100"
@@ -61,11 +62,12 @@
                                     else
                                     {
                                         <button type="button"
-                                                class="sm:hidden inline-flex items-center justify-center h-7 w-7 rounded-md border border-input bg-transparent hover:bg-accent hover:text-accent-foreground opacity-50 hover:opacity-100"
+                                                class="inline-flex items-center justify-center h-7 w-7 rounded-md border border-input bg-transparent hover:bg-accent hover:text-accent-foreground opacity-50 hover:opacity-100"
+                                                data-drp-mobile-nav
                                                 @onclick="NextMonth">
                                             <LucideIcon Name="chevron-right" Class="h-4 w-4" />
                                         </button>
-                                        <div class="hidden sm:block w-7"></div>
+                                        <div class="hidden w-7" data-drp-desktop-spacer></div>
                                     }
                                 </div>
                                 @RenderMonthGridInline(_displayMonth1)
@@ -74,7 +76,7 @@
                             @if (ShowTwoMonths)
                             {
                                 @* Second Calendar *@
-                                <div class="hidden sm:block flex-1 sm:p-3 border-l">
+                                <div class="hidden flex-1 border-l" data-drp-calendar-2>
                                     <div class="flex items-center justify-between mb-3">
                                         <div class="w-7"></div>
                                         <span class="text-sm font-medium">@GetMonthName(_displayMonth2.Month) @_displayMonth2.Year</span>
@@ -96,7 +98,7 @@
                 @* Calendars without presets *@
                 <div class="@(ShowTwoMonths ? "flex" : "")">
                     @* First Calendar *@
-                    <div class="flex-1 px-5 py-3 sm:p-3">
+                    <div class="flex-1 px-5 py-3" data-drp-calendar>
                         <div class="flex items-center justify-between mb-3">
                             <button type="button"
                                     class="inline-flex items-center justify-center h-7 w-7 rounded-md border border-input bg-transparent hover:bg-accent hover:text-accent-foreground opacity-50 hover:opacity-100"
@@ -115,11 +117,12 @@
                             else
                             {
                                 <button type="button"
-                                        class="sm:hidden inline-flex items-center justify-center h-7 w-7 rounded-md border border-input bg-transparent hover:bg-accent hover:text-accent-foreground opacity-50 hover:opacity-100"
+                                        class="inline-flex items-center justify-center h-7 w-7 rounded-md border border-input bg-transparent hover:bg-accent hover:text-accent-foreground opacity-50 hover:opacity-100"
+                                        data-drp-mobile-nav
                                         @onclick="NextMonth">
                                     <LucideIcon Name="chevron-right" Class="h-4 w-4" />
                                 </button>
-                                <div class="hidden sm:block w-7"></div>
+                                <div class="hidden w-7" data-drp-desktop-spacer></div>
                             }
                         </div>
                         @RenderMonthGridInline(_displayMonth1)
@@ -128,7 +131,7 @@
                     @if (ShowTwoMonths)
                     {
                         @* Second Calendar *@
-                        <div class="hidden sm:block flex-1 sm:p-3 border-l">
+                        <div class="hidden flex-1 border-l" data-drp-calendar-2>
                             <div class="flex items-center justify-between mb-3">
                                 <div class="w-7"></div>
                                 <span class="text-sm font-medium">@GetMonthName(_displayMonth2.Month) @_displayMonth2.Year</span>
@@ -184,7 +187,7 @@
                 <tr class="flex">
                     @foreach (var dayName in DayNames)
                     {
-                        <th class="text-muted-foreground w-9 flex-1 sm:flex-none font-normal text-[0.8rem]">@dayName</th>
+                        <th class="text-muted-foreground w-9 flex-1 font-normal text-[0.8rem]" data-drp-cell>@dayName</th>
                     }
                 </tr>
             </thead>
@@ -203,9 +206,10 @@
                                 var isRangeEnd = !isDisabled && IsRangeEnd(dateValue);
                                 var isToday = dateValue.Date == DateTime.Today;
 
-                                <td class="@GetCellClass(day, isInRange, isRangeStart, isRangeEnd)">
+                                <td class="@GetCellClass(day, isInRange, isRangeStart, isRangeEnd)" data-drp-cell>
                                     <button type="button"
                                             class="@GetDayClass(dateValue, isDisabled, isInRange, isRangeStart, isRangeEnd, isToday)"
+                                            data-drp-day-btn
                                             disabled="@isDisabled"
                                             @onclick="@(() => HandleDateClick(dateValue))">
                                         @dateValue.Day
@@ -214,7 +218,7 @@
                             }
                             else
                             {
-                                <td class="h-9 w-9 flex-1 sm:flex-none text-center text-sm p-0"></td>
+                                <td class="h-9 w-9 flex-1 text-center text-sm p-0" data-drp-cell></td>
                             }
                         }
                     </tr>

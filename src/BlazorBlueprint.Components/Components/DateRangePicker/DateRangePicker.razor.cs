@@ -423,7 +423,7 @@ public partial class DateRangePicker : ComponentBase
                          range.Start == _selectionStart.Value && range.End == _selectionEnd.Value;
 
         return ClassNames.cn(
-            "text-left px-2 py-1.5 text-sm rounded-md transition-colors whitespace-nowrap shrink-0 sm:shrink sm:whitespace-normal",
+            "text-left px-2 py-1.5 text-sm rounded-md transition-colors whitespace-nowrap shrink-0",
             isSelected ? "bg-primary text-primary-foreground" : "hover:bg-accent hover:text-accent-foreground"
         );
     }
@@ -432,11 +432,11 @@ public partial class DateRangePicker : ComponentBase
     {
         if (!day.HasValue)
         {
-            return "h-9 w-9 flex-1 sm:flex-none text-center text-sm p-0";
+            return "h-9 w-9 flex-1 text-center text-sm p-0";
         }
 
         return ClassNames.cn(
-            "h-9 w-9 flex-1 sm:flex-none text-center text-sm p-0 relative",
+            "h-9 w-9 flex-1 text-center text-sm p-0 relative",
             isInRange && !isRangeStart && !isRangeEnd ? "bg-accent" : null,
             isRangeStart ? "rounded-l-md bg-accent" : null,
             isRangeEnd ? "rounded-r-md bg-accent" : null
@@ -446,7 +446,7 @@ public partial class DateRangePicker : ComponentBase
     private static string GetDayClass(DateTime date, bool isDisabled, bool isInRange, bool isRangeStart, bool isRangeEnd, bool isToday)
     {
         return ClassNames.cn(
-            "inline-flex h-9 w-full sm:w-9 items-center justify-center rounded-md text-sm font-normal",
+            "inline-flex h-9 w-full items-center justify-center rounded-md text-sm font-normal",
             "ring-offset-background transition-colors",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             "disabled:pointer-events-none disabled:opacity-50",
