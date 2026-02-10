@@ -51,7 +51,7 @@ public partial class Sidebar : IDisposable
 
     private string GetDesktopClasses()
     {
-        var baseClasses = "group peer hidden md:flex flex-col text-sidebar-foreground shrink-0";
+        var baseClasses = "group peer flex flex-col text-sidebar-foreground shrink-0";
 
         // Variant-specific classes
         var variantClasses = Context?.Variant switch
