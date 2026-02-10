@@ -1,6 +1,5 @@
 namespace BlazorBlueprint.Tests.ApiSurface;
 
-[UsesVerify]
 public class PrimitivesApiSurfaceTests
 {
     [Fact]
