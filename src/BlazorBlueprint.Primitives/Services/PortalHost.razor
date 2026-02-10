@@ -26,7 +26,6 @@
     private HashSet<string> _renderedThisCycle = new();
     private IJSObjectReference? _portalModule;
     private bool _isRendering;
-    private bool _pendingRerender;
 
     protected override void OnInitialized()
     {
@@ -37,18 +36,20 @@
     /// Handles portal changes by triggering a re-render.
     /// Ignores notifications that arrive during our own render cycle to prevent
     /// infinite loops when FloatingPortal is nested inside another portal.
+    /// Structural changes (register/unregister) during rendering are detected in
+    /// OnAfterRenderAsync by comparing rendered keys against the current portal set.
     /// </summary>
     private void HandlePortalsChanged()
     {
-        // When _isRendering is true, we're in the middle of rendering portal content.
-        // A nested FloatingPortal's OnParametersSet may call RefreshPortal, which fires
-        // this callback. Scheduling another render here would create an infinite loop.
-        // Instead, defer the re-render until after the current cycle completes.
-        // This handles the case where one portal closes while another opens simultaneously
-        // (e.g., clicking directly from one MultiSelect to another).
         if (_isRendering)
         {
-            _pendingRerender = true;
+            // During rendering, a nested FloatingPortal's OnParametersSet calls
+            // RefreshPortal, which fires this callback. Scheduling a re-render here
+            // would create an infinite loop (RefreshPortal fires every render cycle).
+            // RefreshPortal is always redundant during rendering because PortalHost is
+            // already rendering all portal content with current values.
+            // Structural changes (register/unregister from OnAfterRenderAsync of nested
+            // components) are detected after the render cycle completes.
             return;
         }
 
@@ -81,22 +82,23 @@
             }
         }
 
-        // Notify all portals that were rendered this cycle BEFORE processing pending rerenders.
+        // Notify all portals that were rendered this cycle BEFORE checking for structural changes.
         // This signals to content components that their ElementRef is now valid.
-        // Must happen before the _pendingRerender check because nested portals (e.g., Combobox
-        // inside Dialog) trigger RefreshPortal during PortalHost's render, setting _pendingRerender.
-        // Without notifying first, the early return would skip NotifyPortalRendered, causing
-        // FloatingPortal's 500ms timeout to fire unnecessarily.
+        // Must happen first because nested FloatingPortal components wait for this notification
+        // (with a 500ms timeout) before setting up positioning.
         foreach (var portalId in _renderedThisCycle)
         {
             PortalService.NotifyPortalRendered(portalId);
         }
 
-        // If a portal change was deferred during rendering (e.g., one portal closing while
-        // another opens), process it now by scheduling a new render cycle.
-        if (_pendingRerender)
+        // Detect structural changes (register/unregister) that occurred during the render
+        // cycle. Nested FloatingPortal components call RegisterPortal in their
+        // OnAfterRenderAsync (which runs before ours, depth-first), so the portal set
+        // reflects any additions/removals by this point. RefreshPortal calls are correctly
+        // ignored here since they don't change the portal set.
+        var currentPortalKeys = PortalService.GetPortals().Keys;
+        if (!_renderedThisCycle.SetEquals(currentPortalKeys))
         {
-            _pendingRerender = false;
             await InvokeAsync(StateHasChanged);
         }
     }

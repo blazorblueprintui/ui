@@ -16,6 +16,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `run-tests.sh` script for running API surface tests locally
 - API surface tests integrated into NuGet publish CI workflow
 
+### Changed
+- Combobox selected item checkmark moved from left side to right side of the item text
+
 ### Fixed
 - Portal render timeout warnings when floating content is nested inside other portals (e.g., Combobox inside Dialog) — `NotifyPortalRendered` now fires before processing deferred rerenders in `PortalHost`
 - Combobox and MultiSelect dropdowns now render correctly above Dialog overlays using `fixed` positioning with elevated z-index
@@ -24,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Disabled Verify auto-launching diff tool on test failure
 - Resolved analyzer errors in test project
 - Removed obsolete `[UsesVerify]` attribute from test classes
+- Infinite render loop in `PortalHost` when opening dropdown controls (Select, Combobox, MultiSelect) inside a Dialog — replaced `_pendingRerender` flag with structural change detection to break the loop that froze WASM apps
 
 ---
 
