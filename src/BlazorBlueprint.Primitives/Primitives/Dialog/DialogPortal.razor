@@ -58,17 +58,16 @@
 
     protected override void OnParametersSet()
     {
-        // Update portal registration based on open state
         if (Context.IsOpen || ForceMount)
         {
             if (!_isRegistered)
             {
                 RegisterPortal();
             }
-            // Note: We do NOT call UpdatePortal() here because it would cause infinite loops
-            // when nested portals (like Combobox inside Dialog) are used. The RenderFragment
-            // returned by GetPortalContent() captures ChildContent by reference, so when
-            // PortalHost renders, it will always use the latest content.
+            else
+            {
+                PortalService.RefreshPortal(_portalId);
+            }
         }
         else
         {

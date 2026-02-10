@@ -58,16 +58,15 @@
 
     protected override void OnParametersSet()
     {
-        // Update portal registration based on open state
         if (Context.IsOpen || ForceMount)
         {
-            if (_isRegistered)
+            if (!_isRegistered)
             {
-                UpdatePortal();
+                RegisterPortal();
             }
             else
             {
-                RegisterPortal();
+                PortalService.RefreshPortal(_portalId);
             }
         }
         else
@@ -87,14 +86,6 @@
         {
             PortalService.RegisterPortal(_portalId, GetPortalContent());
             _isRegistered = true;
-        }
-    }
-
-    private void UpdatePortal()
-    {
-        if (_isRegistered && ChildContent != null)
-        {
-            PortalService.UpdatePortalContent(_portalId, GetPortalContent());
         }
     }
 
