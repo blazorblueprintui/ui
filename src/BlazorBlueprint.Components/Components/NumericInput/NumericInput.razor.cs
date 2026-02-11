@@ -249,13 +249,13 @@ public partial class NumericInput<TValue> : ComponentBase, IDisposable where TVa
 
     private string ContainerClass => ClassNames.cn(
         "flex items-center",
-        ShowButtons ? "rounded-md overflow-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background" : null
+        ShowButtons ? "rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background" : null
     );
 
     private string CssClass => ClassNames.cn(
         "flex h-10 w-full border border-input bg-background px-3 py-2 text-base",
         "placeholder:text-muted-foreground",
-        ShowButtons ? "focus-visible:outline-none" : "rounded-md ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        ShowButtons ? "rounded-l-md focus-visible:outline-none" : "rounded-md ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "aria-[invalid=true]:border-destructive",
         "transition-colors",
@@ -270,6 +270,7 @@ public partial class NumericInput<TValue> : ComponentBase, IDisposable where TVa
         "focus-visible:outline-none",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "first:border-b-0",
+        "first:rounded-tr-md last:rounded-br-md",
         "transition-colors"
     );
 
