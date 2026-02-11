@@ -38,8 +38,10 @@ export function initializeResizable(groupElement, dotNetRef, groupId, isHorizont
  * @param {number} clientY - Pointer Y position
  * @param {number[]} currentSizes - Current panel sizes as percentages
  * @param {number} pointerId - The pointer ID for this resize operation
+ * @param {number[]} [minSizes] - Minimum sizes per panel as percentages
+ * @param {number[]} [maxSizes] - Maximum sizes per panel as percentages
  */
-export function startResize(groupId, handleIndex, clientX, clientY, currentSizes, pointerId) {
+export function startResize(groupId, handleIndex, clientX, clientY, currentSizes, pointerId, minSizes, maxSizes) {
     const state = resizableStates.get(groupId);
     if (!state) return;
 
@@ -50,6 +52,8 @@ export function startResize(groupId, handleIndex, clientX, clientY, currentSizes
     state.startPosition = state.isHorizontal ? clientX : clientY;
     state.startSizes = [...currentSizes];
     state.pointerId = pointerId;
+    state.minSizes = minSizes || currentSizes.map(() => 10);
+    state.maxSizes = maxSizes || currentSizes.map(() => 100);
 
     // Prevent text selection while dragging
     document.body.style.userSelect = 'none';
@@ -94,9 +98,13 @@ function onPointerMove(groupId, e) {
     const newSize1 = state.startSizes[panelIndex] + deltaPercent;
     const newSize2 = state.startSizes[panelIndex + 1] - deltaPercent;
 
-    // Apply minimum size constraints (10% minimum)
-    const minSize = 10;
-    if (newSize1 >= minSize && newSize2 >= minSize) {
+    // Apply min/max constraints for both adjacent panels
+    const min1 = state.minSizes[panelIndex];
+    const max1 = state.maxSizes[panelIndex];
+    const min2 = state.minSizes[panelIndex + 1];
+    const max2 = state.maxSizes[panelIndex + 1];
+
+    if (newSize1 >= min1 && newSize1 <= max1 && newSize2 >= min2 && newSize2 <= max2) {
         newSizes[panelIndex] = newSize1;
         newSizes[panelIndex + 1] = newSize2;
 

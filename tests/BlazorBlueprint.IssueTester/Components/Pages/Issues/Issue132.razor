@@ -1,9 +1,10 @@
 @page "/issues/132"
 @using BlazorBlueprint.Components.Input
+@inject IWebHostEnvironment Environment
 
 <PageTitle>Issue #132 - File Input Cannot Resolve Attribute Type</PageTitle>
 
-<div class="max-w-3xl space-y-6">
+<div class="max-w-3xl space-y-10">
     <div class="space-y-2">
         <h1 class="text-3xl font-bold tracking-tight">Issue #132</h1>
         <p class="text-muted-foreground">
@@ -39,6 +40,49 @@
         </div>
     </div>
 
+    <div class="rounded-lg border border-border p-6 space-y-6">
+        <h2 class="text-xl font-semibold">File Upload Test</h2>
+        <p class="text-sm text-muted-foreground">
+            Select a file to upload it to the <code class="rounded bg-muted px-1.5 py-0.5 text-sm">tmp/</code> folder
+            in the project root. Max file size: 10 MB.
+        </p>
+
+        <div class="space-y-4">
+            <h3 class="text-sm font-medium text-muted-foreground">5. InputFile with actual server upload</h3>
+            <InputFile
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base md:text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+                OnChange="HandleFileUpload" />
+
+            @if (isUploading)
+            {
+                <p class="text-sm text-muted-foreground">Uploading...</p>
+            }
+
+            @if (uploadMessage is not null)
+            {
+                <p class="text-sm @(uploadSuccess ? "text-green-600 dark:text-green-400" : "text-destructive")">
+                    @uploadMessage
+                </p>
+            }
+        </div>
+
+        @if (uploadedFiles.Count > 0)
+        {
+            <div class="space-y-2">
+                <h3 class="text-sm font-medium text-muted-foreground">Uploaded files</h3>
+                <ul class="space-y-1">
+                    @foreach (var file in uploadedFiles)
+                    {
+                        <li class="flex items-center gap-2 text-sm">
+                            <span class="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">@file.Size</span>
+                            <span>@file.Name</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+
     <div class="rounded-lg border border-border p-6 space-y-4">
         <h2 class="text-xl font-semibold">Expected Behavior</h2>
         <p class="text-sm text-muted-foreground">
@@ -63,4 +107,72 @@
 @code {
     private string? fileValue;
     private string? textValue;
+
+    private bool isUploading;
+    private bool uploadSuccess;
+    private string? uploadMessage;
+    private readonly List<UploadedFileInfo> uploadedFiles = new();
+
+    private const long MaxFileSize = 10 * 1024 * 1024; // 10 MB
+
+    private async Task HandleFileUpload(InputFileChangeEventArgs e)
+    {
+        isUploading = true;
+        uploadMessage = null;
+
+        try
+        {
+            var file = e.File;
+
+            if (file.Size > MaxFileSize)
+            {
+                uploadMessage = $"File \"{file.Name}\" exceeds the 10 MB limit ({FormatSize(file.Size)}).";
+                uploadSuccess = false;
+                return;
+            }
+
+            var tmpDir = Path.Combine(Environment.ContentRootPath, "..", "..", "tmp");
+            Directory.CreateDirectory(tmpDir);
+
+            var filePath = Path.Combine(tmpDir, file.Name);
+
+            await using var stream = file.OpenReadStream(MaxFileSize);
+            await using var fileStream = new FileStream(filePath, FileMode.Create);
+            await stream.CopyToAsync(fileStream);
+
+            uploadedFiles.Add(new UploadedFileInfo(file.Name, FormatSize(file.Size)));
+            uploadMessage = $"Uploaded \"{file.Name}\" ({FormatSize(file.Size)}) to tmp/";
+            uploadSuccess = true;
+        }
+        catch (Exception ex)
+        {
+            uploadMessage = $"Upload failed: {ex.Message}";
+            uploadSuccess = false;
+        }
+        finally
+        {
+            isUploading = false;
+        }
+    }
+
+    private static string FormatSize(long bytes)
+    {
+        if (bytes < 1024)
+        {
+            return $"{bytes} B";
+        }
+
+        if (bytes < 1024 * 1024)
+        {
+            return $"{bytes / 1024.0:F1} KB";
+        }
+
+        return $"{bytes / (1024.0 * 1024.0):F1} MB";
+    }
+
+    private sealed class UploadedFileInfo(string name, string size)
+    {
+        public string Name { get; } = name;
+        public string Size { get; } = size;
+    }
 }

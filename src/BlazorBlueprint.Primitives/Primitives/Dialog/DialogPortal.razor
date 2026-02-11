@@ -5,7 +5,18 @@
 @*
     DialogPortal renders its content at the document body level using PortalService.
     This ensures proper z-index stacking for overlays.
+    When Container is set, renders inline instead (for contained scenarios).
 *@
+
+@if (!string.IsNullOrEmpty(Container))
+{
+    @if (Context.IsOpen || ForceMount)
+    {
+        <CascadingValue Value="Context" IsFixed="false">
+            @ChildContent
+        </CascadingValue>
+    }
+}
 
 @code {
     [CascadingParameter]
@@ -19,7 +30,10 @@
 
     /// <summary>
     /// The container element to render the portal into.
-    /// When null (default), renders into document body.
+    /// When null (default), renders into document body via PortalService.
+    /// When set, renders inline within the current component tree, allowing
+    /// the content to be contained by a parent element with CSS containment
+    /// (e.g. transform: translateZ(0)).
     /// </summary>
     [Parameter]
     public string? Container { get; set; }
@@ -49,15 +63,26 @@
         // Subscribe to context changes to update portal content
         Context.OnStateChanged += HandleStateChanged;
 
-        // Register initial portal if dialog is open or force mount
-        if (Context.IsOpen || ForceMount)
+        // When Container is set, content renders inline — skip portal registration
+        if (string.IsNullOrEmpty(Container))
         {
-            RegisterPortal();
+            // Register initial portal if dialog is open or force mount
+            if (Context.IsOpen || ForceMount)
+            {
+                RegisterPortal();
+            }
         }
     }
 
     protected override void OnParametersSet()
     {
+        // When Container is set, content renders inline — skip portal registration
+        if (!string.IsNullOrEmpty(Container))
+        {
+            UnregisterPortal();
+            return;
+        }
+
         if (Context.IsOpen || ForceMount)
         {
             if (!_isRegistered)
