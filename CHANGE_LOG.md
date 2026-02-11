@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-02-11
+
+### Added
+- `Container` parameter on `DialogContent` and `SheetContent` — renders content inline instead of portaling to document body, enabling CSS containment scenarios (e.g., parent with `transform: translateZ(0)`)
+- Per-panel `MinSize`/`MaxSize` constraints now enforced during Resizable drag operations (previously hardcoded to 10% minimum for all panels)
+
+### Changed
+
+> **Breaking Changes** — the following changes may require updates to existing code.
+
+- **BREAKING:** Components-layer trigger and close components now default `AsChild` to `true` — `DialogTrigger`, `DialogClose`, `SheetTrigger`, `SheetClose`, `DropdownMenuTrigger`, `PopoverTrigger`, `TooltipTrigger`, `HoverCardTrigger`, `CollapsibleTrigger`. Existing usages that relied on the auto-generated wrapper `<button>` must add `AsChild="false"` explicitly.
+- **BREAKING:** `ResizablePanel` flex-grow changed from `0` to `1` — panels now grow to fill available space instead of using fixed sizing.
+- **BREAKING:** `SelectContext<TValue>.SetDisplayText()` method removed — display text is now assigned directly via `State.DisplayText`.
+
+### Fixed
+- File input crash: `<Input Type="InputType.File">` no longer throws `InvalidStateError` when a file is selected (#132)
+- NumericInput corner clipping when `ShowButtons` is true — input and button borders now use proper rounded corners
+
+---
+
 ## 2026-02-10
 
 ### Added
