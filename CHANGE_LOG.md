@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-02-11
+
+### Fixed
+- `SelectValue` now implements `IDisposable` to properly manage state change subscriptions
+- `SelectContext.SetDisplayText` only fires state change notifications when the display text actually changes, reducing unnecessary re-renders
+
+---
+
 ## 2026-02-10
 
 ### Added
