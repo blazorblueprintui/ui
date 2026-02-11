@@ -176,6 +176,19 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
     }
 
     /// <summary>
+    /// Updates the display text for the currently selected value.
+    /// Only fires a state change notification when the text actually changes.
+    /// </summary>
+    /// <param name="displayText">The new display text.</param>
+    public void SetDisplayText(string? displayText)
+    {
+        if (State.DisplayText != displayText)
+        {
+            UpdateState(state => state.DisplayText = displayText);
+        }
+    }
+
+    /// <summary>
     /// Sets the disabled state.
     /// </summary>
     /// <param name="disabled">Whether the select is disabled.</param>
