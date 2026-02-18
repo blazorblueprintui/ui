@@ -1,6 +1,6 @@
 @namespace BlazorBlueprint.Components
 
-<h5 class="@CssClass">@ChildContent</h5>
+@HeadingFragment
 
 @code {
     /// <summary>
@@ -16,10 +16,25 @@
     public RenderFragment? ChildContent { get; set; }
 
     /// <summary>
+    /// The HTML element tag to use for the title.
+    /// Default is "h5".
+    /// </summary>
+    [Parameter]
+    public string As { get; set; } = "h5";
+
+    /// <summary>
     /// Gets the computed CSS classes for the alert title element.
     /// </summary>
     private string CssClass => ClassNames.cn(
         "mb-1 font-medium leading-none tracking-tight",
         Class
     );
+
+    private RenderFragment HeadingFragment => builder =>
+    {
+        builder.OpenElement(0, As);
+        builder.AddAttribute(1, "class", CssClass);
+        builder.AddContent(2, ChildContent);
+        builder.CloseElement();
+    };
 }

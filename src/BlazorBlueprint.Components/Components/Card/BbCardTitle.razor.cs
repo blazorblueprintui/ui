@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
 
 namespace BlazorBlueprint.Components;
 
@@ -31,6 +32,13 @@ public partial class BbCardTitle : ComponentBase
     public string? Class { get; set; }
 
     /// <summary>
+    /// The HTML element tag to use for the title.
+    /// Default is "h3".
+    /// </summary>
+    [Parameter]
+    public string As { get; set; } = "h3";
+
+    /// <summary>
     /// Gets the computed CSS classes for the card title element.
     /// </summary>
     private string CssClass => ClassNames.cn(
@@ -39,4 +47,12 @@ public partial class BbCardTitle : ComponentBase
         // Custom classes (if provided)
         Class
     );
+
+    private RenderFragment HeadingFragment => builder =>
+    {
+        builder.OpenElement(0, As);
+        builder.AddAttribute(1, "class", CssClass);
+        builder.AddContent(2, ChildContent);
+        builder.CloseElement();
+    };
 }

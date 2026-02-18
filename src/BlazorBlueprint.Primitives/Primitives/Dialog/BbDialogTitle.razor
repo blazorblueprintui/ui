@@ -5,14 +5,20 @@
     Automatically linked to DialogContent via aria-labelledby.
 *@
 
-<h2 id="@Context.TitleId"
-    @attributes="AdditionalAttributes">
-    @ChildContent
-</h2>
+@HeadingFragment
 
 @code {
     [CascadingParameter]
     private DialogContext Context { get; set; } = null!;
+
+    private RenderFragment HeadingFragment => builder =>
+    {
+        builder.OpenElement(0, As);
+        builder.AddAttribute(1, "id", Context.TitleId);
+        builder.AddMultipleAttributes(2, AdditionalAttributes);
+        builder.AddContent(3, ChildContent);
+        builder.CloseElement();
+    };
 
     /// <summary>
     /// The title content to display.
