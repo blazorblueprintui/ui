@@ -188,7 +188,7 @@ Select uses `[CascadingTypeParameter]` — child components infer `TValue` from 
 ### Tooltip
 
 ```razor
-<BbTooltip DelayDuration="400" HideDelay="0">
+<BbTooltip DelayDuration="700" HideDelay="0">
     <BbTooltipTrigger>Hover me</BbTooltipTrigger>
     <BbTooltipContent>Tooltip text</BbTooltipContent>
 </BbTooltip>
@@ -196,7 +196,7 @@ Select uses `[CascadingTypeParameter]` — child components infer `TValue` from 
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `DelayDuration` | `int` | `400` | Milliseconds before showing |
+| `DelayDuration` | `int` | `700` | Milliseconds before showing |
 | `HideDelay` | `int` | `0` | Milliseconds before hiding |
 
 ### HoverCard
