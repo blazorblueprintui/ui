@@ -189,7 +189,7 @@
         {
             await InvokeAsync(async () =>
             {
-                await CleanupSelectAsync();
+                await CleanupAsync();
                 StateHasChanged();
             });
         }
@@ -204,7 +204,7 @@
         return null;
     }
 
-    private async Task CleanupSelectAsync()
+    private async Task CleanupAsync()
     {
         // Clean up keyboard navigation
         if (_jsModule != null && _context != null && _isKeyboardSetup)
@@ -270,16 +270,30 @@
             _context.OnStateChanged -= HandleContextStateChanged;
         }
 
-        await CleanupSelectAsync();
+        await CleanupAsync();
 
         if (_clickOutsideModule != null)
         {
-            await _clickOutsideModule.DisposeAsync();
+            try
+            {
+                await _clickOutsideModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
         }
 
         if (_jsModule != null)
         {
-            await _jsModule.DisposeAsync();
+            try
+            {
+                await _jsModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
         }
 
         _dotNetRef?.Dispose();

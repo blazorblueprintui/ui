@@ -63,7 +63,7 @@ public partial class BbSidebarInset : IAsyncDisposable
                     "import", "./_content/BlazorBlueprint.Components/js/sidebar-inset.js");
                 jsReady = true;
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect in Blazor Server
             }
@@ -89,7 +89,7 @@ public partial class BbSidebarInset : IAsyncDisposable
                 {
                     await module!.InvokeVoidAsync("scrollToTop", mainRef);
                 }
-                catch (JSDisconnectedException)
+                catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
                 {
                     // Circuit disconnected
                 }
@@ -149,7 +149,7 @@ public partial class BbSidebarInset : IAsyncDisposable
             {
                 await module.DisposeAsync();
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Circuit disconnected
             }

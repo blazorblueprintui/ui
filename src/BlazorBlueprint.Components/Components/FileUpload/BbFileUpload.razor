@@ -222,7 +222,7 @@
 
                 _jsInitialized = true;
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }
@@ -242,7 +242,7 @@
                 await _jsCleanup.InvokeVoidAsync("dispose");
                 await _jsCleanup.DisposeAsync();
             }
-            catch (JSDisconnectedException) { }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException) { }
         }
 
         if (_jsModule != null)
@@ -251,7 +251,7 @@
             {
                 await _jsModule.DisposeAsync();
             }
-            catch (JSDisconnectedException) { }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException) { }
         }
     }
 

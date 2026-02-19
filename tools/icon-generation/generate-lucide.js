@@ -1,12 +1,12 @@
-// Node.js script to convert feather.json (IconifyJSON format) to C# dictionary code
+// Node.js script to convert lucide.json (IconifyJSON format) to C# dictionary code
 
 const fs = require('fs');
 const path = require('path');
 
-const jsonPath = path.join(__dirname, '../../tools/icon-generation/data/feather-icons.json');
-const outputPath = path.join(__dirname, 'Data/FeatherIconData.cs');
+const jsonPath = path.join(__dirname, 'data/lucide.json');
+const outputPath = path.join(__dirname, '../../src/BlazorBlueprint.Icons.Lucide/Data/LucideIconData.cs');
 
-console.log('Reading Feather icon data from', jsonPath);
+console.log('Reading Lucide icon data from', jsonPath);
 const jsonContent = fs.readFileSync(jsonPath, 'utf8');
 const data = JSON.parse(jsonContent);
 
@@ -36,7 +36,7 @@ function generateDictionaryEntries(icons, indent) {
 }
 
 // Create Data directory if it doesn't exist
-const dataDir = path.join(__dirname, 'Data');
+const dataDir = path.dirname(outputPath);
 if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
     console.log('Created Data directory');
@@ -46,15 +46,15 @@ if (!fs.existsSync(dataDir)) {
 const lines = [];
 
 lines.push('// This file is auto-generated. Do not edit manually.');
-lines.push(`// Generated from feather.json on ${new Date().toISOString().split('T')[0]}`);
+lines.push(`// Generated from lucide.json on ${new Date().toISOString().split('T')[0]}`);
 lines.push('');
-lines.push('namespace BlazorBlueprint.Icons.Feather.Data;');
+lines.push('namespace BlazorBlueprint.Icons.Lucide.Data;');
 lines.push('');
 lines.push('/// <summary>');
-lines.push('/// Provides access to Feather icon SVG data.');
-lines.push(`/// Contains ${iconCount} icons from the Feather icon set.`);
+lines.push('/// Provides access to Lucide icon SVG data.');
+lines.push(`/// Contains ${iconCount} icons from the Lucide icon set.`);
 lines.push('/// </summary>');
-lines.push('public static class FeatherIconData');
+lines.push('public static class LucideIconData');
 lines.push('{');
 lines.push('    private static readonly IReadOnlyDictionary<string, string> Icons = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)');
 lines.push('    {');
@@ -68,10 +68,7 @@ lines.push('    /// Retrieves the SVG content for the specified icon name.');
 lines.push('    /// </summary>');
 lines.push('    /// <param name="name">The name of the icon (case-insensitive).</param>');
 lines.push('    /// <returns>The SVG path data for the icon, or null if not found.</returns>');
-lines.push('    public static string? GetIcon(string name)');
-lines.push('    {');
-lines.push('        return Icons.TryGetValue(name, out var svg) ? svg : null;');
-lines.push('    }');
+lines.push('    public static string? GetIcon(string name) => Icons.TryGetValue(name, out var svg) ? svg : null;');
 lines.push('');
 
 // GetAvailableIcons method
@@ -102,5 +99,5 @@ lines.push('}');
 const outputContent = lines.join('\n');
 fs.writeFileSync(outputPath, outputContent, 'utf8');
 
-console.log('✓ Generated C# file:', outputPath);
-console.log('✓ Total icons:', iconCount);
+console.log('\u2713 Generated C# file:', outputPath);
+console.log('\u2713 Total icons:', iconCount);

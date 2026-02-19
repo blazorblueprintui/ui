@@ -36,6 +36,13 @@ else
     public HoverCardContext Context { get; set; } = null!;
 
     /// <summary>
+    /// Receives any parent TriggerContext (e.g., from DialogTrigger, SheetTrigger, DropdownMenuTrigger)
+    /// so hover-based triggers can merge parent click/aria behavior with their own hover/focus behavior.
+    /// </summary>
+    [CascadingParameter(Name = "TriggerContext")]
+    private TriggerContext? ParentTriggerContext { get; set; }
+
+    /// <summary>
     /// The child content to render within the trigger.
     /// </summary>
     [Parameter]
@@ -62,18 +69,28 @@ else
 
     /// <summary>
     /// Context passed to child components when AsChild is true.
+    /// When a parent TriggerContext exists (e.g., from DialogTrigger), merges parent click/aria
+    /// behavior with hover card hover/focus behavior so nested triggers work correctly.
     /// </summary>
     private TriggerContext TriggerContext => new()
     {
-        TriggerId = Context.TriggerId,
-        IsOpen = Context.IsOpen,
+        TriggerId = ParentTriggerContext?.TriggerId ?? Context.TriggerId,
+        IsOpen = ParentTriggerContext?.IsOpen ?? Context.IsOpen,
+        Toggle = ParentTriggerContext?.Toggle,
         Open = () => Context.Open(_asChildTriggerRef),
         Close = () => Context.Close(),
+        AriaHasPopup = ParentTriggerContext?.AriaHasPopup,
+        AriaControls = ParentTriggerContext?.AriaControls,
+        OnKeyDown = ParentTriggerContext?.OnKeyDown,
         OnMouseEnter = HandleMouseEnterForContext,
         OnMouseLeave = HandleMouseLeaveForContext,
         OnFocus = HandleFocusForContext,
         OnBlur = HandleBlurForContext,
-        SetTriggerElement = (ElementReference el) => _asChildTriggerRef = el
+        SetTriggerElement = (el) =>
+        {
+            _asChildTriggerRef = el;
+            ParentTriggerContext?.SetTriggerElement?.Invoke(el);
+        }
     };
 
     private void HandleMouseEnterForContext()

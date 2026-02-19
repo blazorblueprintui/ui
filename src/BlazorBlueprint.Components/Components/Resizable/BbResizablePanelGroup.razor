@@ -129,7 +129,7 @@
             await _jsModule.InvokeVoidAsync("initializeResizable", _groupRef, _dotNetRef, _groupId, isHorizontal);
             _jsInitialized = true;
         }
-        catch (JSDisconnectedException)
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
         {
             // Expected during circuit disconnect in Blazor Server
         }
@@ -156,9 +156,20 @@
             try
             {
                 await _jsModule.InvokeVoidAsync("disposeResizable", _groupId);
+            }
+            catch
+            {
+                // Cleanup may already be disposed
+            }
+
+            try
+            {
                 await _jsModule.DisposeAsync();
             }
-            catch { }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
         }
         _dotNetRef?.Dispose();
     }

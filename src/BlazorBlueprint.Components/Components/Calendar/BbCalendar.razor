@@ -507,9 +507,9 @@
             {
                 await _elementUtilsModule.DisposeAsync();
             }
-            catch
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
-                // Module may already be disposed
+                // Expected during circuit disconnect
             }
         }
     }

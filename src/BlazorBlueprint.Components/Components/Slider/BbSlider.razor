@@ -99,7 +99,7 @@
             await _jsModule.InvokeVoidAsync("initializeSlider", _trackRef, _dotNetRef, _sliderId);
             _jsInitialized = true;
         }
-        catch (JSDisconnectedException)
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
         {
             // Expected during circuit disconnect in Blazor Server
         }

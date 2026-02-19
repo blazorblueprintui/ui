@@ -23,11 +23,20 @@ dotnet add package BlazorBlueprint.Components
 
 This package automatically includes:
 - `BlazorBlueprint.Primitives` - Headless primitives providing behavior and accessibility
+- `BlazorBlueprint.Icons.Lucide` - Lucide icon set
 - Pre-built CSS - No Tailwind setup required!
 
 ## Quick Start
 
-### 1. Add to your `_Imports.razor`:
+### 1. Register services in `Program.cs`:
+
+```csharp
+builder.Services.AddBlazorBlueprintComponents();
+```
+
+This registers all required services including portal management, focus trapping, positioning, toast notifications, and programmatic dialogs.
+
+### 2. Add to your `_Imports.razor`:
 
 ```razor
 @using BlazorBlueprint.Components
@@ -36,7 +45,7 @@ This package automatically includes:
 
 That's it — two imports give you access to all components and their enums (`ButtonVariant`, `InputType`, `AccordionType`, etc.).
 
-### 2. Add CSS to your `App.razor`:
+### 3. Add CSS to your `App.razor`:
 
 BlazorBlueprint Components come with pre-built CSS - no Tailwind setup required!
 
@@ -63,82 +72,173 @@ BlazorBlueprint Components come with pre-built CSS - no Tailwind setup required!
 </html>
 ```
 
-### 3. Start using components:
+### 4. Add the portal host to your root layout (`MainLayout.razor`):
 
 ```razor
-<Button Variant="ButtonVariant.Default">Click me</Button>
+<BbPortalHost />
+```
 
-<Dialog>
-    <DialogTrigger AsChild>
-        <Button>Open Dialog</Button>
-    </DialogTrigger>
-    <DialogContent>
-        <DialogHeader>
-            <DialogTitle>Welcome to BlazorBlueprint</DialogTitle>
-            <DialogDescription>
+This is required for overlay components (Dialog, Sheet, Popover, Tooltip, etc.) to render correctly.
+
+### 5. Start using components:
+
+```razor
+<BbButton Variant="ButtonVariant.Default">Click me</BbButton>
+
+<BbDialog>
+    <BbDialogTrigger AsChild>
+        <BbButton>Open Dialog</BbButton>
+    </BbDialogTrigger>
+    <BbDialogContent>
+        <BbDialogHeader>
+            <BbDialogTitle>Welcome to BlazorBlueprint</BbDialogTitle>
+            <BbDialogDescription>
                 Beautiful Blazor components with zero configuration
-            </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-            <DialogClose AsChild>
-                <Button Variant="ButtonVariant.Outline">Close</Button>
-            </DialogClose>
-        </DialogFooter>
-    </DialogContent>
-</Dialog>
+            </BbDialogDescription>
+        </BbDialogHeader>
+        <BbDialogFooter>
+            <BbDialogClose AsChild>
+                <BbButton Variant="ButtonVariant.Outline">Close</BbButton>
+            </BbDialogClose>
+        </BbDialogFooter>
+    </BbDialogContent>
+</BbDialog>
 ```
 
 That's it! No Tailwind installation, no build configuration needed.
 
 ## Available Components
 
-- **Accordion**: Collapsible content sections with smooth animations
-- **Avatar**: User profile images with fallback initials and icons
-- **Badge**: Labels for status, categories, and metadata
-- **Button**: Interactive buttons with multiple variants and sizes
-- **ButtonGroup**: Grouped button controls with shared styling
-- **Card**: Content container with header, content, and footer sections
-- **Checkbox**: Binary selection control with indeterminate state
-- **Collapsible**: Expandable content area with trigger control
-- **Combobox**: Autocomplete input with searchable dropdown
-- **Command**: Command palette for quick actions and navigation
-- **DataTable**: Data table with sorting, pagination, and toolbar
-- **Dialog**: Modal dialogs with backdrop and focus management
-- **Dropdown Menu**: Context menus with items, separators, and shortcuts
-- **Field**: Form field wrapper with label, description, and error states
-- **Hover Card**: Rich preview cards on hover with delay control
-- **Input**: Text input fields with multiple types and sizes
-- **InputGroup**: Grouped input controls with addons
-- **Item**: List item container for menus and lists
-- **Label**: Accessible labels for form controls
-- **MarkdownEditor**: Markdown editor with toolbar and live preview
-- **MultiSelect**: Multi-select dropdown with tag support
-- **Popover**: Floating panels for additional content and actions
-- **Radio Group**: Mutually exclusive options with keyboard navigation
-- **RichTextEditor**: Rich text editor with formatting toolbar
-- **Select**: Dropdown selection with groups and labels
-- **Separator**: Visual dividers for content sections
-- **Sheet**: Side panels that slide in from viewport edges
-- **Sidebar**: Responsive navigation sidebar with collapsible menus
-- **Skeleton**: Loading placeholders for content and images
-- **Switch**: Toggle control for on/off states
-- **Tabs**: Tabbed interface for organizing related content
-- **Textarea**: Multi-line text input field
-- **Tooltip**: Brief informational popups on hover or focus
+### General
+
+| Component | Description |
+|-----------|-------------|
+| **Accordion** | Collapsible content sections with smooth animations |
+| **Alert** | Contextual feedback messages with variant support |
+| **Alert Dialog** | Modal confirmation dialogs requiring user action |
+| **Aspect Ratio** | Maintain consistent width-to-height ratios |
+| **Avatar** | User profile images with fallback initials and group support |
+| **Badge** | Labels for status, categories, and metadata |
+| **Breadcrumb** | Navigation breadcrumb trail with separator support |
+| **Button** | Interactive buttons with multiple variants and sizes |
+| **Button Group** | Grouped button controls with shared styling |
+| **Calendar** | Date selection calendar |
+| **Card** | Content container with header, content, and footer sections |
+| **Carousel** | Scrollable content carousel with navigation controls |
+| **Chart** | Data visualization with multiple series types (Bar, Line, Area, Pie, Radar, Radial) |
+| **Collapsible** | Expandable content area with trigger control |
+| **Empty** | Empty state placeholder for no-content scenarios |
+| **Item** | List item container for menus and lists |
+| **Kbd** | Keyboard shortcut display |
+| **Pagination** | Page navigation controls |
+| **Progress** | Progress indicator bar |
+| **Resizable** | Resizable panel layout with drag handles |
+| **Scroll Area** | Custom scrollable area with styled scrollbars |
+| **Separator** | Visual dividers for content sections |
+| **Skeleton** | Loading placeholders for content and images |
+| **Spinner** | Loading spinner indicator |
+| **Split Button** | Button with dropdown action split |
+| **Timeline** | Chronological event display |
+| **Toggle** | Toggle button control |
+| **Typography** | Typography components for consistent text styling |
+
+### Overlays & Navigation
+
+| Component | Description |
+|-----------|-------------|
+| **Command** | Command palette for quick actions and navigation |
+| **Context Menu** | Right-click context menus with items, labels, and shortcuts |
+| **Dialog** | Modal dialogs with backdrop and focus management |
+| **Drawer** | Slide-out drawer panels with header, footer, and items |
+| **Dropdown Menu** | Context menus with items, separators, and shortcuts |
+| **Hover Card** | Rich preview cards on hover with delay control |
+| **Menubar** | Horizontal menu bar with dropdown menus |
+| **Navigation Menu** | Responsive navigation menu with submenus |
+| **Popover** | Floating panels for additional content and actions |
+| **Responsive Nav** | Mobile-responsive navigation |
+| **Sheet** | Side panels that slide in from viewport edges |
+| **Sidebar** | Responsive navigation sidebar with collapsible menus |
+| **Tabs** | Tabbed interface for organizing related content |
+| **Toast** | Toast notification system with action support |
+| **Tooltip** | Brief informational popups on hover or focus |
+
+### Form Controls
+
+| Component | Description |
+|-----------|-------------|
+| **Checkbox** | Binary selection control with indeterminate state |
+| **Checkbox Group** | Group of checkboxes with shared state management |
+| **Color Picker** | Color selection input |
+| **Combobox** | Autocomplete input with searchable dropdown |
+| **Currency Input** | Currency-formatted number input |
+| **Date Picker** | Date selection input with calendar popup |
+| **Date Range Picker** | Date range selection input |
+| **Field** | Form field wrapper with label, description, and error states |
+| **File Upload** | File upload with drag-and-drop support |
+| **Input** | Text input fields with multiple types and sizes |
+| **Input Field** | Integrated input with field label and description |
+| **Input Group** | Grouped input controls with addons and buttons |
+| **Input OTP** | One-time password input with segmented fields |
+| **Label** | Accessible labels for form controls |
+| **Masked Input** | Input with mask pattern enforcement |
+| **Multi Select** | Multi-select dropdown with tag support |
+| **Native Select** | Native HTML select element with styling |
+| **Numeric Input** | Number input with formatting and validation |
+| **Radio Group** | Mutually exclusive options with keyboard navigation |
+| **Range Slider** | Dual-handle range slider input |
+| **Rating** | Star/icon rating input |
+| **Select** | Dropdown selection with groups and labels |
+| **Slider** | Single-handle slider input |
+| **Switch** | Toggle control for on/off states |
+| **Textarea** | Multi-line text input field |
+| **Time Picker** | Time selection input |
+
+### Editors
+
+| Component | Description |
+|-----------|-------------|
+| **Markdown Editor** | Markdown editor with toolbar and live preview |
+| **Rich Text Editor** | Rich text editor with formatting toolbar |
+
+### Pre-Built Form Fields
+
+Convenience wrappers that combine a form control with `BbField` for label, description, and error handling:
+
+| Component | Description |
+|-----------|-------------|
+| **FormFieldCheckbox** | Checkbox with integrated field wrapper |
+| **FormFieldCombobox** | Combobox with integrated field wrapper |
+| **FormFieldInput** | Input with integrated field wrapper |
+| **FormFieldMultiSelect** | MultiSelect with integrated field wrapper |
+| **FormFieldRadioGroup** | RadioGroup with integrated field wrapper |
+| **FormFieldSelect** | Select with integrated field wrapper |
+| **FormFieldSwitch** | Switch with integrated field wrapper |
+
+### Services
+
+| Service | Description |
+|---------|-------------|
+| `ToastService` | Toast notification state management |
+| `DialogService` | Programmatic dialog/confirm control |
+| `IPortalService` | Portal management for overlays (from Primitives) |
+| `IFocusManager` | Focus trapping and restoration (from Primitives) |
+| `IPositioningService` | Floating element positioning (from Primitives) |
+| `IKeyboardShortcutService` | Global keyboard shortcut registration (from Primitives) |
+| `DropdownManagerService` | Coordinates dropdown mutual exclusivity (from Primitives) |
 
 ## Component API Reference
 
 ### Button
 
 ```razor
-<Button
+<BbButton
     Variant="ButtonVariant.Default"
     Size="ButtonSize.Default"
     Type="ButtonType.Button"
     IconPosition="IconPosition.Start"
     Disabled="false">
     Click me
-</Button>
+</BbButton>
 ```
 
 | Parameter | Type | Default | Values |
@@ -151,7 +251,7 @@ That's it! No Tailwind installation, no build configuration needed.
 ### Input
 
 ```razor
-<Input
+<BbInput
     Type="InputType.Email"
     Placeholder="name@example.com"
     Disabled="false" />
@@ -164,10 +264,10 @@ That's it! No Tailwind installation, no build configuration needed.
 ### Avatar
 
 ```razor
-<Avatar Size="AvatarSize.Default">
-    <AvatarImage Src="user.jpg" Alt="User" />
-    <AvatarFallback>JD</AvatarFallback>
-</Avatar>
+<BbAvatar Size="AvatarSize.Default">
+    <BbAvatarImage Src="user.jpg" Alt="User" />
+    <BbAvatarFallback>JD</BbAvatarFallback>
+</BbAvatar>
 ```
 
 | Parameter | Type | Default | Values |
@@ -177,7 +277,7 @@ That's it! No Tailwind installation, no build configuration needed.
 ### Badge
 
 ```razor
-<Badge Variant="BadgeVariant.Default">New</Badge>
+<BbBadge Variant="BadgeVariant.Default">New</BbBadge>
 ```
 
 | Parameter | Type | Default | Values |
@@ -187,12 +287,12 @@ That's it! No Tailwind installation, no build configuration needed.
 ### Accordion
 
 ```razor
-<Accordion Type="AccordionType.Single" Collapsible="true">
-    <AccordionItem Value="item-1">
-        <AccordionTrigger>Section 1</AccordionTrigger>
-        <AccordionContent>Content 1</AccordionContent>
-    </AccordionItem>
-</Accordion>
+<BbAccordion Type="AccordionType.Single" Collapsible="true">
+    <BbAccordionItem Value="item-1">
+        <BbAccordionTrigger>Section 1</BbAccordionTrigger>
+        <BbAccordionContent>Content 1</BbAccordionContent>
+    </BbAccordionItem>
+</BbAccordion>
 ```
 
 | Parameter | Type | Default | Description |
@@ -203,17 +303,17 @@ That's it! No Tailwind installation, no build configuration needed.
 ### Tabs
 
 ```razor
-<Tabs
+<BbTabs
     DefaultValue="tab1"
     Orientation="TabsOrientation.Horizontal"
     ActivationMode="TabsActivationMode.Automatic">
-    <TabsList>
-        <TabsTrigger Value="tab1">Tab 1</TabsTrigger>
-        <TabsTrigger Value="tab2">Tab 2</TabsTrigger>
-    </TabsList>
-    <TabsContent Value="tab1">Content 1</TabsContent>
-    <TabsContent Value="tab2">Content 2</TabsContent>
-</Tabs>
+    <BbTabsList>
+        <BbTabsTrigger Value="tab1">Tab 1</BbTabsTrigger>
+        <BbTabsTrigger Value="tab2">Tab 2</BbTabsTrigger>
+    </BbTabsList>
+    <BbTabsContent Value="tab1">Content 1</BbTabsContent>
+    <BbTabsContent Value="tab2">Content 2</BbTabsContent>
+</BbTabs>
 ```
 
 | Parameter | Type | Default | Values |
@@ -224,18 +324,18 @@ That's it! No Tailwind installation, no build configuration needed.
 ### Sheet
 
 ```razor
-<Sheet>
-    <SheetTrigger AsChild>
-        <Button>Open Sheet</Button>
-    </SheetTrigger>
-    <SheetContent Side="SheetSide.Right">
-        <SheetHeader>
-            <SheetTitle>Sheet Title</SheetTitle>
-            <SheetDescription>Sheet description</SheetDescription>
-        </SheetHeader>
+<BbSheet>
+    <BbSheetTrigger AsChild>
+        <BbButton>Open Sheet</BbButton>
+    </BbSheetTrigger>
+    <BbSheetContent Side="SheetSide.Right">
+        <BbSheetHeader>
+            <BbSheetTitle>Sheet Title</BbSheetTitle>
+            <BbSheetDescription>Sheet description</BbSheetDescription>
+        </BbSheetHeader>
         <!-- Content -->
-    </SheetContent>
-</Sheet>
+    </BbSheetContent>
+</BbSheet>
 ```
 
 | Parameter | Type | Default | Values |
@@ -245,15 +345,15 @@ That's it! No Tailwind installation, no build configuration needed.
 ### Select
 
 ```razor
-<Select TValue="string" @bind-Value="selectedValue">
-    <SelectTrigger>
-        <SelectValue Placeholder="Select an option" />
-    </SelectTrigger>
-    <SelectContent>
-        <SelectItem Value="@("option1")">Option 1</SelectItem>
-        <SelectItem Value="@("option2")">Option 2</SelectItem>
-    </SelectContent>
-</Select>
+<BbSelect TValue="string" @bind-Value="selectedValue">
+    <BbSelectTrigger>
+        <BbSelectValue Placeholder="Select an option" />
+    </BbSelectTrigger>
+    <BbSelectContent>
+        <BbSelectItem Value="@("option1")" Text="Option 1" />
+        <BbSelectItem Value="@("option2")" Text="Option 2" />
+    </BbSelectContent>
+</BbSelect>
 ```
 
 Select is a generic component. Specify `TValue` for type safety.
@@ -261,7 +361,7 @@ Select is a generic component. Specify `TValue` for type safety.
 ### Separator
 
 ```razor
-<Separator Orientation="SeparatorOrientation.Horizontal" />
+<BbSeparator Orientation="SeparatorOrientation.Horizontal" />
 ```
 
 | Parameter | Type | Default | Values |
@@ -271,8 +371,8 @@ Select is a generic component. Specify `TValue` for type safety.
 ### Skeleton
 
 ```razor
-<Skeleton Shape="SkeletonShape.Rectangular" Class="w-full h-4" />
-<Skeleton Shape="SkeletonShape.Circular" Class="w-12 h-12" />
+<BbSkeleton Shape="SkeletonShape.Rectangular" Class="w-full h-4" />
+<BbSkeleton Shape="SkeletonShape.Circular" Class="w-12 h-12" />
 ```
 
 | Parameter | Type | Default | Values |
@@ -282,10 +382,10 @@ Select is a generic component. Specify `TValue` for type safety.
 ### DataTable
 
 ```razor
-<DataTable TItem="User" Items="users" SelectionMode="DataTableSelectionMode.Multiple">
-    <DataTableColumn TItem="User" Field="x => x.Name" Header="Name" />
-    <DataTableColumn TItem="User" Field="x => x.Email" Header="Email" />
-</DataTable>
+<BbDataTable TItem="User" Items="users" SelectionMode="DataTableSelectionMode.Multiple">
+    <BbDataTableColumn TItem="User" Field="x => x.Name" Header="Name" />
+    <BbDataTableColumn TItem="User" Field="x => x.Email" Header="Email" />
+</BbDataTable>
 ```
 
 | Parameter | Type | Default | Values |
@@ -342,26 +442,26 @@ Dark mode automatically activates when you add the `.dark` class to the `<html>`
 ## Usage Example
 
 ```razor
-<Dialog>
-    <DialogTrigger AsChild>
-        <Button>Open Dialog</Button>
-    </DialogTrigger>
-    <DialogContent>
-        <DialogHeader>
-            <DialogTitle>Confirm Action</DialogTitle>
-            <DialogDescription>
+<BbDialog>
+    <BbDialogTrigger AsChild>
+        <BbButton>Open Dialog</BbButton>
+    </BbDialogTrigger>
+    <BbDialogContent>
+        <BbDialogHeader>
+            <BbDialogTitle>Confirm Action</BbDialogTitle>
+            <BbDialogDescription>
                 Are you sure you want to proceed?
-            </DialogDescription>
-        </DialogHeader>
+            </BbDialogDescription>
+        </BbDialogHeader>
         <p>This action cannot be undone.</p>
-        <DialogFooter>
-            <DialogClose AsChild>
-                <Button Variant="ButtonVariant.Outline">Cancel</Button>
-            </DialogClose>
-            <Button Variant="ButtonVariant.Default">Confirm</Button>
-        </DialogFooter>
-    </DialogContent>
-</Dialog>
+        <BbDialogFooter>
+            <BbDialogClose AsChild>
+                <BbButton Variant="ButtonVariant.Outline">Cancel</BbButton>
+            </BbDialogClose>
+            <BbButton Variant="ButtonVariant.Default">Confirm</BbButton>
+        </BbDialogFooter>
+    </BbDialogContent>
+</BbDialog>
 ```
 
 ### AsChild Pattern
@@ -369,37 +469,37 @@ Dark mode automatically activates when you add the `.dark` class to the `<html>`
 Use `AsChild` on trigger components to use your own styled elements instead of the default button:
 
 ```razor
-<DropdownMenu>
-    <DropdownMenuTrigger AsChild>
-        <Button Variant="ButtonVariant.Outline">
+<BbDropdownMenu>
+    <BbDropdownMenuTrigger AsChild>
+        <BbButton Variant="ButtonVariant.Outline">
             Actions
-            <LucideIcon Name="chevron-down" Size="16" />
-        </Button>
-    </DropdownMenuTrigger>
-    <DropdownMenuContent>
-        <DropdownMenuItem>Edit</DropdownMenuItem>
-        <DropdownMenuItem>Delete</DropdownMenuItem>
-    </DropdownMenuContent>
-</DropdownMenu>
+            <BbLucideIcon Name="chevron-down" Size="16" />
+        </BbButton>
+    </BbDropdownMenuTrigger>
+    <BbDropdownMenuContent>
+        <BbDropdownMenuItem>Edit</BbDropdownMenuItem>
+        <BbDropdownMenuItem>Delete</BbDropdownMenuItem>
+    </BbDropdownMenuContent>
+</BbDropdownMenu>
 ```
 
-This is the industry-standard pattern from Radix UI/shadcn/ui. When `AsChild` is true, the child component (e.g., Button) automatically receives trigger behavior via `TriggerContext`.
+This is the industry-standard pattern from Radix UI/shadcn/ui. When `AsChild` is true, the child component (e.g., BbButton) automatically receives trigger behavior via `TriggerContext`.
 
 ## Form Example
 
 ```razor
 <div class="space-y-4">
     <div>
-        <Label For="email">Email</Label>
-        <Input Id="email" Type="InputType.Email" Placeholder="name@example.com" />
+        <BbLabel For="email">Email</BbLabel>
+        <BbInput Id="email" Type="InputType.Email" Placeholder="name@example.com" />
     </div>
 
     <div class="flex items-center space-x-2">
-        <Checkbox Id="terms" @bind-Checked="agreedToTerms" />
-        <Label For="terms">I agree to the terms and conditions</Label>
+        <BbCheckbox Id="terms" @bind-Checked="agreedToTerms" />
+        <BbLabel For="terms">I agree to the terms and conditions</BbLabel>
     </div>
 
-    <Button Disabled="@(!agreedToTerms)">Submit</Button>
+    <BbButton Disabled="@(!agreedToTerms)">Submit</BbButton>
 </div>
 
 @code {
@@ -414,13 +514,13 @@ This is the industry-standard pattern from Radix UI/shadcn/ui. When `AsChild` is
 Use the `Class` parameter to add custom CSS classes or Tailwind classes (if you have Tailwind set up):
 
 ```razor
-<Button Class="bg-purple-600 hover:bg-purple-700">
+<BbButton Class="bg-purple-600 hover:bg-purple-700">
     Custom Button
-</Button>
+</BbButton>
 
-<Card Class="border-2 border-purple-500 shadow-xl">
+<BbCard Class="border-2 border-purple-500 shadow-xl">
     Custom Card Styling
-</Card>
+</BbCard>
 ```
 
 **Note:** BlazorBlueprint Components include pre-built CSS and don't require Tailwind. However, you can still use Tailwind classes for customization if you've set up Tailwind in your project.
@@ -430,26 +530,26 @@ Use the `Class` parameter to add custom CSS classes or Tailwind classes (if you 
 Build complex UIs by composing components:
 
 ```razor
-<Card>
-    <CardHeader>
-        <CardTitle>Settings</CardTitle>
-        <CardDescription>Manage your account settings</CardDescription>
-    </CardHeader>
-    <CardContent class="space-y-4">
+<BbCard>
+    <BbCardHeader>
+        <BbCardTitle>Settings</BbCardTitle>
+        <BbCardDescription>Manage your account settings</BbCardDescription>
+    </BbCardHeader>
+    <BbCardContent class="space-y-4">
         <div>
-            <Label>Email Notifications</Label>
-            <Switch @bind-Checked="emailNotifications" />
+            <BbLabel>Email Notifications</BbLabel>
+            <BbSwitch @bind-Checked="emailNotifications" />
         </div>
-        <Separator />
+        <BbSeparator />
         <div>
-            <Label>Push Notifications</Label>
-            <Switch @bind-Checked="pushNotifications" />
+            <BbLabel>Push Notifications</BbLabel>
+            <BbSwitch @bind-Checked="pushNotifications" />
         </div>
-    </CardContent>
-    <CardFooter>
-        <Button>Save Changes</Button>
-    </CardFooter>
-</Card>
+    </BbCardContent>
+    <BbCardFooter>
+        <BbButton>Save Changes</BbButton>
+    </BbCardFooter>
+</BbCard>
 ```
 
 ## Design Philosophy
@@ -481,13 +581,13 @@ BlazorBlueprint.Components follows the shadcn/ui philosophy with zero-configurat
 ## Documentation
 
 For full documentation, examples, and API reference, visit:
-- [Documentation Site](https://github.com/blazorblueprintui/ui)
-- [Component Demos](https://github.com/blazorblueprintui/ui)
+- [Documentation Site](https://blazorblueprintui.com)
 - [GitHub Repository](https://github.com/blazorblueprintui/ui)
 
 ## Dependencies
 
 - [BlazorBlueprint.Primitives](https://www.nuget.org/packages/BlazorBlueprint.Primitives) - Headless component primitives (auto-installed)
+- [BlazorBlueprint.Icons.Lucide](https://www.nuget.org/packages/BlazorBlueprint.Icons.Lucide) - Lucide icon set (auto-installed)
 - Pre-built CSS (included in package)
 - No external dependencies required!
 
@@ -501,7 +601,3 @@ Apache License 2.0 - see [LICENSE](https://github.com/blazorblueprintui/ui/blob/
 ## Contributing
 
 Contributions are welcome! Please see our [Contributing Guide](https://github.com/blazorblueprintui/ui/blob/main/CONTRIBUTING.md).
-
----
-
-Made with ❤️ by the BlazorBlueprint team

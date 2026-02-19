@@ -189,7 +189,7 @@
             _clickOutsideCleanup = await _clickOutsideModule.InvokeAsync<IJSObjectReference>(
                 "onClickOutside", _contentRef, _dotNetRef, "HandleClickOutside", Context.State.TriggerElement);
         }
-        catch (JSDisconnectedException)
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
         {
             // Expected during circuit disconnect in Blazor Server
         }
@@ -211,7 +211,7 @@
             await _menuKeyboardModule.InvokeVoidAsync("initialize", _contentRef, _dotNetRef, Context.ContentId,
                 new { mode = "vertical", loop = Loop });
         }
-        catch (JSDisconnectedException)
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
         {
             // Expected during circuit disconnect in Blazor Server
         }
@@ -231,7 +231,7 @@
             _matchWidthCleanup = await _matchWidthModule.InvokeAsync<IJSObjectReference>(
                 "matchTriggerWidth", Context.State.TriggerElement, _contentRef);
         }
-        catch (JSDisconnectedException)
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
         {
             // Expected during circuit disconnect in Blazor Server
         }
@@ -366,26 +366,40 @@
 
         await CleanupAsync();
 
-        try
+        if (_clickOutsideModule != null)
         {
-            if (_clickOutsideModule != null)
+            try
             {
                 await _clickOutsideModule.DisposeAsync();
             }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+        }
 
-            if (_menuKeyboardModule != null)
+        if (_menuKeyboardModule != null)
+        {
+            try
             {
                 await _menuKeyboardModule.DisposeAsync();
             }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+        }
 
-            if (_matchWidthModule != null)
+        if (_matchWidthModule != null)
+        {
+            try
             {
                 await _matchWidthModule.DisposeAsync();
             }
-        }
-        catch (JSDisconnectedException)
-        {
-            // Expected during circuit disconnect
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
         }
 
         _dotNetRef?.Dispose();

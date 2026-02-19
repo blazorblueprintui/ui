@@ -28,6 +28,13 @@ else
     [CascadingParameter]
     private TooltipContext Context { get; set; } = null!;
 
+    /// <summary>
+    /// Receives any parent TriggerContext (e.g., from DialogTrigger, SheetTrigger, DropdownMenuTrigger)
+    /// so hover-based triggers can merge parent click/aria behavior with their own hover/focus behavior.
+    /// </summary>
+    [CascadingParameter(Name = "TriggerContext")]
+    private TriggerContext? ParentTriggerContext { get; set; }
+
     private ElementReference _triggerRef;
 
     /// <summary>
@@ -76,18 +83,28 @@ else
 
     /// <summary>
     /// Context passed to child components when AsChild is true.
+    /// When a parent TriggerContext exists (e.g., from DialogTrigger), merges parent click/aria
+    /// behavior with tooltip hover/focus behavior so nested triggers work correctly.
     /// </summary>
     private TriggerContext TriggerContext => new()
     {
-        TriggerId = Context.TriggerId,
-        IsOpen = Context.IsOpen,
+        TriggerId = ParentTriggerContext?.TriggerId ?? Context.TriggerId,
+        IsOpen = ParentTriggerContext?.IsOpen ?? Context.IsOpen,
+        Toggle = ParentTriggerContext?.Toggle,
         Open = () => Context.Open(_asChildTriggerRef),
         Close = () => Context.Close(),
+        AriaHasPopup = ParentTriggerContext?.AriaHasPopup,
+        AriaControls = ParentTriggerContext?.AriaControls,
+        OnKeyDown = ParentTriggerContext?.OnKeyDown,
         OnMouseEnter = () => Context.Open(_asChildTriggerRef),
         OnMouseLeave = () => Context.Close(),
         OnFocus = () => Context.Open(_asChildTriggerRef),
         OnBlur = () => Context.Close(),
-        SetTriggerElement = (ElementReference el) => _asChildTriggerRef = el
+        SetTriggerElement = (el) =>
+        {
+            _asChildTriggerRef = el;
+            ParentTriggerContext?.SetTriggerElement?.Invoke(el);
+        }
     };
 
     private async Task HandleMouseEnter(MouseEventArgs args)
