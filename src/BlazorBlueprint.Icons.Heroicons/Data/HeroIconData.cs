@@ -1,5 +1,5 @@
 // This file is auto-generated. Do not edit manually.
-// Generated from heroicons.json on 2025-11-16
+// Generated from heroicons.json on 2026-02-19
 
 namespace BlazorBlueprint.Icons.Heroicons.Data;
 

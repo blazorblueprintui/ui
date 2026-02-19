@@ -4,8 +4,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const jsonPath = path.join(__dirname, '../../tools/icon-generation/data/heroicons.json');
-const outputPath = path.join(__dirname, 'Data/HeroIconData.cs');
+const jsonPath = path.join(__dirname, 'data/heroicons.json');
+const outputPath = path.join(__dirname, '../../src/BlazorBlueprint.Icons.Heroicons/Data/HeroIconData.cs');
 
 console.log('Reading Heroicons icon data from', jsonPath);
 const jsonContent = fs.readFileSync(jsonPath, 'utf8');
@@ -75,7 +75,7 @@ function generateDictionaryEntries(icons, indent) {
 }
 
 // Create Data directory if it doesn't exist
-const dataDir = path.join(__dirname, 'Data');
+const dataDir = path.dirname(outputPath);
 if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
     console.log('Created Data directory');
@@ -234,8 +234,8 @@ lines.push('}');
 const outputContent = lines.join('\n');
 fs.writeFileSync(outputPath, outputContent, 'utf8');
 
-console.log('✓ Generated C# file:', outputPath);
-console.log('✓ Total icons:', totalIconCount);
+console.log('\u2713 Generated C# file:', outputPath);
+console.log('\u2713 Total icons:', totalIconCount);
 console.log(`  - Outline: ${outlineCount}`);
 console.log(`  - Solid: ${solidCount}`);
 console.log(`  - Mini: ${miniCount}`);

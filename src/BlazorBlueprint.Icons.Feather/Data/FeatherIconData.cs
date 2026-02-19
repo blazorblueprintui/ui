@@ -1,5 +1,5 @@
 // This file is auto-generated. Do not edit manually.
-// Generated from feather.json on 2025-11-16
+// Generated from feather.json on 2026-02-19
 
 namespace BlazorBlueprint.Icons.Feather.Data;
 
@@ -304,8 +304,7 @@ public static class FeatherIconData
     /// </summary>
     /// <param name="name">The name of the icon (case-insensitive).</param>
     /// <returns>The SVG path data for the icon, or null if not found.</returns>
-    public static string? GetIcon(string name) =>
-        Icons.TryGetValue(name, out var svg) ? svg : null;
+    public static string? GetIcon(string name) => Icons.TryGetValue(name, out var svg) ? svg : null;
 
     /// <summary>
     /// Gets all available icon names.
