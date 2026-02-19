@@ -33,7 +33,7 @@ public partial class BbResponsiveNavProvider
 
                 StateHasChanged();
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect in Blazor Server
                 StateHasChanged();
@@ -79,7 +79,7 @@ public partial class BbResponsiveNavProvider
                 await _module.InvokeVoidAsync("cleanup");
                 await _module.DisposeAsync();
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Circuit disconnected, ignore
             }

@@ -213,7 +213,7 @@ public partial class BbMaskedInput : ComponentBase, IAsyncDisposable
                     "import", "./_content/BlazorBlueprint.Components/js/masked-input.js");
                 _jsModuleLoaded = true;
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }
@@ -338,7 +338,7 @@ public partial class BbMaskedInput : ComponentBase, IAsyncDisposable
             {
                 await _jsModule.InvokeVoidAsync("setInputValue", _inputRef, value, cursorPosition);
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }
@@ -393,7 +393,7 @@ public partial class BbMaskedInput : ComponentBase, IAsyncDisposable
 
                     await _jsModule.InvokeVoidAsync("setInputValue", _inputRef, _displayValue, firstEditablePos);
                 }
-                catch (JSDisconnectedException)
+                catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
                 {
                     // Expected during circuit disconnect
                 }
@@ -424,7 +424,7 @@ public partial class BbMaskedInput : ComponentBase, IAsyncDisposable
             {
                 await _jsModule.DisposeAsync();
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }

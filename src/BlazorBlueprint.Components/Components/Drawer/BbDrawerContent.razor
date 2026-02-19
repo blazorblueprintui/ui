@@ -73,7 +73,7 @@
                 {
                     _focusTrap = await FocusManager.TrapFocus(_contentRef);
                 }
-                catch (JSDisconnectedException)
+                catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
                 {
                     // Expected during circuit disconnect in Blazor Server
                 }
@@ -92,7 +92,7 @@
                         "import", "./_content/BlazorBlueprint.Primitives/js/primitives/portal.js");
                     _scrollLockCleanup = await _portalModule.InvokeAsync<IJSObjectReference>("lockBodyScroll");
                 }
-                catch (JSDisconnectedException)
+                catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
                 {
                     // Expected during circuit disconnect in Blazor Server
                 }
@@ -110,7 +110,7 @@
                 _dotNetRef = DotNetObjectReference.Create(this);
                 await _escapeModule.InvokeVoidAsync("initialize", _dotNetRef, _instanceId);
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect in Blazor Server
             }
@@ -206,7 +206,7 @@
             {
                 await _portalModule.DisposeAsync();
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }
@@ -218,7 +218,7 @@
             {
                 await _escapeModule.DisposeAsync();
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }

@@ -426,7 +426,7 @@ public partial class BbMarkdownEditor : ComponentBase, IAsyncDisposable
                 await _module.InvokeVoidAsync("disposeListContinuation", _textareaRef);
                 await _module.DisposeAsync();
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Circuit disconnected, ignore
             }

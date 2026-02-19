@@ -201,7 +201,7 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
             await jsModule.InvokeVoidAsync("initialize", chartId, serialized);
             jsInitialized = true;
         }
-        catch (JSDisconnectedException)
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
         {
             // Expected during circuit disconnect in Blazor Server
         }
@@ -225,7 +225,7 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
 
             await jsModule.InvokeVoidAsync("update", chartId, serialized);
         }
-        catch (JSDisconnectedException)
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
         {
             // Expected during circuit disconnect in Blazor Server
         }
@@ -257,7 +257,7 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
                 await jsModule.InvokeVoidAsync("dispose", chartId);
                 await jsModule.DisposeAsync();
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Circuit disconnected, ignore
             }

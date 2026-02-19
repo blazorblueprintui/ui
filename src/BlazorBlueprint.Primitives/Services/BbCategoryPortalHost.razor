@@ -88,7 +88,7 @@
                 _portalModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
                     "import", "./_content/BlazorBlueprint.Primitives/js/primitives/portal.js");
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect in Blazor Server
             }
@@ -136,7 +136,7 @@
             {
                 await _portalModule.DisposeAsync();
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }

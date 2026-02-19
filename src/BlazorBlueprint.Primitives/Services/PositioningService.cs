@@ -132,7 +132,7 @@ public class PositioningService : IPositioningService, IAsyncDisposable
             {
                 await _module.DisposeAsync();
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }

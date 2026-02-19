@@ -62,7 +62,7 @@ public partial class BbSidebarProvider
 
                 StateHasChanged();
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect in Blazor Server
                 Context.Initialize(open: DefaultOpen, variant: Variant, side: Side);
@@ -88,7 +88,7 @@ public partial class BbSidebarProvider
                 {
                     await _module.InvokeVoidAsync("saveSidebarState", CookieKey, Context.Open);
                 }
-                catch (JSDisconnectedException)
+                catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
                 {
                     // Expected during circuit disconnect
                 }
@@ -138,7 +138,7 @@ public partial class BbSidebarProvider
                 await _module.InvokeVoidAsync("cleanup");
                 await _module.DisposeAsync();
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Circuit disconnected, ignore
             }

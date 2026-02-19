@@ -188,7 +188,7 @@
                 _keyboardNavCleanup = await _keyboardNavModule.InvokeAsync<IJSObjectReference>(
                     "setupKeyboardNav", _elementRef);
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Circuit disconnected, ignore
             }
@@ -211,7 +211,7 @@
                 await _keyboardNavCleanup.InvokeVoidAsync("dispose");
                 await _keyboardNavCleanup.DisposeAsync();
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Circuit disconnected, ignore
             }
@@ -223,7 +223,7 @@
             {
                 await _keyboardNavModule.DisposeAsync();
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Circuit disconnected, ignore
             }
