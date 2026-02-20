@@ -21,12 +21,14 @@ public partial class MainLayout : LayoutComponentBase, IDisposable
     private bool _componentsMenuOpen;
     private bool _chartsMenuOpen;
     private bool _iconsMenuOpen;
+    private bool _guidesMenuOpen;
 
     // State keys for localStorage
     private const string PrimitivesMenuKey = "sidebar-primitives-menu";
     private const string ComponentsMenuKey = "sidebar-components-menu";
     private const string ChartsMenuKey = "sidebar-charts-menu";
     private const string IconsMenuKey = "sidebar-icons-menu";
+    private const string GuidesMenuKey = "sidebar-guides-menu";
 
     protected override void OnInitialized() =>
         NavigationManager.LocationChanged += OnLocationChanged;
@@ -40,6 +42,7 @@ public partial class MainLayout : LayoutComponentBase, IDisposable
             _componentsMenuOpen = await StateService.GetStateAsync(ComponentsMenuKey, defaultValue: false);
             _chartsMenuOpen = await StateService.GetStateAsync(ChartsMenuKey, defaultValue: false);
             _iconsMenuOpen = await StateService.GetStateAsync(IconsMenuKey, defaultValue: false);
+            _guidesMenuOpen = await StateService.GetStateAsync(GuidesMenuKey, defaultValue: false);
 
             // Trigger re-render with loaded state
             StateHasChanged();
@@ -87,5 +90,11 @@ public partial class MainLayout : LayoutComponentBase, IDisposable
     {
         _iconsMenuOpen = isOpen;
         await StateService.SetStateAsync(IconsMenuKey, isOpen);
+    }
+
+    private async Task OnGuidesMenuOpenChanged(bool isOpen)
+    {
+        _guidesMenuOpen = isOpen;
+        await StateService.SetStateAsync(GuidesMenuKey, isOpen);
     }
 }
