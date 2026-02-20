@@ -17,13 +17,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `ForceMount` parameter on Primitives `BbPopoverContent` and `BbDropdownMenuContent` (default: `false`) — opt-in mount persistence at the headless layer.
 - `ForceMount` parameter on `BbCollapsibleContent` (Components layer, default: `true`) — exposed for developer control; previously hardcoded.
 - `data-state="open"` attribute on `BbToast` — enables CSS animation classes on toast notifications.
-- `AutoDismissAfter` parameter on `BbAlert` — timed alert dismissal with `PeriodicTimer`-based countdown (100ms ticks) and proper `IAsyncDisposable` cleanup.
+- `AutoDismissAfter` parameter on `BbAlert` — timed alert dismissal with CSS animation countdown and `Task.Delay`/`TaskCompletionSource`-based precise timing.
 - `PauseOnHover` parameter on `BbAlert` (default: `true`) — pauses auto-dismiss countdown on mouse hover.
 - `ShowCountdown` parameter on `BbAlert` (default: `true` when `AutoDismissAfter` is set) — visual countdown progress bar.
 - `Actions` RenderFragment on `BbAlert` — slot for inline action buttons below alert content.
 - Animation toggle component in demo site header — toggles `bb-no-animate` on `<html>` with localStorage persistence.
 - Animations guide page (`/guides/animations`) with live interactive examples for all 5 animation types: fade+zoom, slide from edge, fade+zoom+directional slide, slide in (toast), and expand/collapse.
 - "Guides" collapsible sidebar section in demo site navigation.
+- `ShowCountdown` parameter on `BbToastProvider` (default: `false`) — visual countdown progress bar on all toasts. Individual toasts can override via `ToastData.ShowCountdown`.
+- `ShowCountdown` property on `ToastData` (`bool?`) — per-toast countdown bar control. When `null`, uses the provider's `ShowCountdown` setting.
+- Visual countdown progress bar on `BbToast` — reuses the `bb-alert-countdown` CSS keyframe animation shared with `BbAlert`. Pauses on hover via `animation-play-state`.
+- `bb-alert-countdown` CSS `@keyframes` animation — shared countdown bar animation (width: 100% to 0%) used by both `BbAlert` and `BbToast`.
+
+### Changed
+
+- `BbAlert` auto-dismiss refactored from `PeriodicTimer` polling to `Task.Delay` + `TaskCompletionSource` — eliminates polling overhead and provides exact dismiss timing matching the CSS countdown animation.
+- `BbToastProvider` auto-dismiss refactored from centralized `System.Timers.Timer` polling to per-toast `Task.Delay` + `TaskCompletionSource` — eliminates up to 250ms polling latency for exact dismiss timing.
 
 ### Fixed
 
