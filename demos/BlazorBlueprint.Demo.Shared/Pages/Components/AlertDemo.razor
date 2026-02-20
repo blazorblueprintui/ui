@@ -215,6 +215,96 @@
         <CodeBlock Source="Components/Alert/dismissible.txt" />
     </div>
 
+    <!-- Auto-Dismiss -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <div class="flex items-center gap-2">
+                <h2 class="text-2xl font-semibold">Auto-Dismiss</h2>
+                <span class="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">v3</span>
+            </div>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">AutoDismissAfter</code> (in milliseconds) to automatically dismiss the alert after a delay.
+                Enable <code class="text-xs bg-muted px-1 py-0.5 rounded">ShowCountdown</code> for a visual progress bar. Hover to pause the countdown.
+            </p>
+        </div>
+        <div class="space-y-4">
+            @if (_showAutoDismissAlert)
+            {
+                <BbAlert Variant="AlertVariant.Success"
+                         AutoDismissAfter="5000"
+                         ShowCountdown="true"
+                         PauseOnHover="true"
+                         OnDismiss="@(() => _showAutoDismissAlert = false)">
+                    <Icon>
+                        <LucideIcon Name="circle-check" Class="h-4 w-4" />
+                    </Icon>
+                    <ChildContent>
+                        <BbAlertTitle>Changes Saved</BbAlertTitle>
+                        <BbAlertDescription>
+                            Your settings have been saved successfully. This alert will dismiss in 5 seconds. Hover to pause.
+                        </BbAlertDescription>
+                    </ChildContent>
+                </BbAlert>
+            }
+            else
+            {
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => _showAutoDismissAlert = true)">
+                    Show Alert Again
+                </BbButton>
+            }
+        </div>
+
+        <CodeBlock Source="Components/Alert/auto-dismiss.txt" />
+    </div>
+
+    <!-- With Actions -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <div class="flex items-center gap-2">
+                <h2 class="text-2xl font-semibold">With Actions</h2>
+                <span class="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">v3</span>
+            </div>
+            <p class="text-sm text-muted-foreground">
+                Use the <code class="text-xs bg-muted px-1 py-0.5 rounded">Actions</code> slot to add inline action buttons below the alert content.
+            </p>
+        </div>
+        <div class="space-y-4">
+            <BbAlert Variant="AlertVariant.Warning">
+                <Icon>
+                    <LucideIcon Name="triangle-alert" Class="h-4 w-4" />
+                </Icon>
+                <ChildContent>
+                    <BbAlertTitle>Unsaved Changes</BbAlertTitle>
+                    <BbAlertDescription>
+                        You have unsaved changes that will be lost if you leave this page.
+                    </BbAlertDescription>
+                </ChildContent>
+                <Actions>
+                    <BbButton Variant="ButtonVariant.Default" Size="ButtonSize.Small">Save</BbButton>
+                    <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small">Discard</BbButton>
+                </Actions>
+            </BbAlert>
+
+            <BbAlert Variant="AlertVariant.Danger" AccentBorder="true">
+                <Icon>
+                    <LucideIcon Name="circle-alert" Class="h-4 w-4" />
+                </Icon>
+                <ChildContent>
+                    <BbAlertTitle>Deployment Failed</BbAlertTitle>
+                    <BbAlertDescription>
+                        The deployment to production failed. Check logs for details.
+                    </BbAlertDescription>
+                </ChildContent>
+                <Actions>
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small">View Logs</BbButton>
+                    <BbButton Variant="ButtonVariant.Default" Size="ButtonSize.Small">Retry</BbButton>
+                </Actions>
+            </BbAlert>
+        </div>
+
+        <CodeBlock Source="Components/Alert/actions.txt" />
+    </div>
+
     <!-- Custom Styling -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -276,6 +366,18 @@
                 <ApiParameter Name="Icon" Type="RenderFragment?">
                     Optional icon to display in the alert.
                 </ApiParameter>
+                <ApiParameter Name="Actions" Type="RenderFragment?">
+                    Optional action buttons to display below the alert content.
+                </ApiParameter>
+                <ApiParameter Name="AutoDismissAfter" Type="int?">
+                    Duration in milliseconds after which the alert is automatically dismissed. Null (default) disables auto-dismiss.
+                </ApiParameter>
+                <ApiParameter Name="PauseOnHover" Type="bool" Default="true">
+                    Whether to pause the auto-dismiss countdown when hovering over the alert.
+                </ApiParameter>
+                <ApiParameter Name="ShowCountdown" Type="bool" Default="false">
+                    Whether to show a visual countdown progress bar at the bottom of the alert.
+                </ApiParameter>
                 <ApiParameter Name="Class" Type="string?">
                     Additional CSS classes to apply to the alert.
                 </ApiParameter>
@@ -289,4 +391,5 @@
 
 @code {
     private bool _showDismissibleAlert = true;
+    private bool _showAutoDismissAlert = true;
 }

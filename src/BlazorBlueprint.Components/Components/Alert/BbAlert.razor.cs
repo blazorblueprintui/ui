@@ -15,6 +15,8 @@ namespace BlazorBlueprint.Components;
 /// - 5 visual variants (Default, Success, Info, Warning, Danger)
 /// - Optional left accent border with subtle tinted background
 /// - Optional icon support
+/// - Auto-dismiss with optional countdown bar and pause-on-hover
+/// - Action button slot for inline actions (Undo, Retry, etc.)
 /// - Semantic HTML with role="alert"
 /// - Dark mode compatible via CSS variables
 /// </para>
@@ -27,7 +29,7 @@ namespace BlazorBlueprint.Components;
 /// &lt;/Alert&gt;
 /// </code>
 /// </example>
-public partial class BbAlert : ComponentBase
+public partial class BbAlert : ComponentBase, IAsyncDisposable
 {
     /// <summary>
     /// Gets or sets the visual style variant of the alert.
@@ -92,11 +94,54 @@ public partial class BbAlert : ComponentBase
     /// Gets or sets the callback invoked when the alert is dismissed.
     /// </summary>
     /// <remarks>
-    /// Only invoked when <see cref="Dismissible"/> is true and the close button is clicked.
+    /// Invoked when the dismiss button is clicked or when the auto-dismiss timer expires.
     /// Use this to hide or remove the alert from the UI.
     /// </remarks>
     [Parameter]
     public EventCallback OnDismiss { get; set; }
+
+    /// <summary>
+    /// Gets or sets the duration in milliseconds after which the alert is automatically dismissed.
+    /// </summary>
+    /// <remarks>
+    /// When null (default), the alert does not auto-dismiss. When set, a countdown timer starts
+    /// after the component renders and invokes <see cref="OnDismiss"/> when it expires.
+    /// </remarks>
+    [Parameter]
+    public int? AutoDismissAfter { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether to pause the auto-dismiss countdown when the mouse hovers over the alert.
+    /// </summary>
+    /// <remarks>
+    /// Only effective when <see cref="AutoDismissAfter"/> is set. Default is true.
+    /// </remarks>
+    [Parameter]
+    public bool PauseOnHover { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether to show a visual countdown progress bar at the bottom of the alert.
+    /// </summary>
+    /// <remarks>
+    /// Only visible when <see cref="AutoDismissAfter"/> is set. Default is false.
+    /// </remarks>
+    [Parameter]
+    public bool ShowCountdown { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets optional action buttons to display below the alert content.
+    /// </summary>
+    /// <remarks>
+    /// Actions render after the ChildContent and before the dismiss button.
+    /// Use small, outline, or ghost buttons for best visual results.
+    /// </remarks>
+    [Parameter]
+    public RenderFragment? Actions { get; set; }
+
+    private CancellationTokenSource? dismissCts;
+    private double remainingPercent = 100.0;
+    private bool isPaused;
+    private bool dismissed;
 
     /// <summary>
     /// Gets the computed CSS classes for the alert element.
@@ -106,6 +151,8 @@ public partial class BbAlert : ComponentBase
         "relative w-full rounded-lg border p-4 text-foreground",
         // Extra right padding for dismiss button
         Dismissible ? "pr-10" : null,
+        // Extra bottom padding for countdown bar
+        ShowCountdown && AutoDismissAfter.HasValue ? "pb-2" : null,
         // Accent border style (thick left border)
         AccentBorder ? "border-l-4" : null,
         Icon != null ? "[&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&:has(svg)]:pl-11" : null,
@@ -131,14 +178,95 @@ public partial class BbAlert : ComponentBase
         Class
     );
 
+    protected override async Task OnParametersSetAsync()
+    {
+        if (AutoDismissAfter.HasValue && dismissCts == null && !dismissed)
+        {
+            await StartAutoDismissAsync();
+        }
+    }
+
+    private async Task StartAutoDismissAsync()
+    {
+        dismissCts = new CancellationTokenSource();
+        var token = dismissCts.Token;
+        var totalMs = AutoDismissAfter!.Value;
+        var elapsedMs = 0;
+        const int tickMs = 100;
+
+        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(tickMs));
+
+        try
+        {
+            while (await timer.WaitForNextTickAsync(token))
+            {
+                if (isPaused)
+                {
+                    continue;
+                }
+
+                elapsedMs += tickMs;
+
+                if (ShowCountdown)
+                {
+                    remainingPercent = Math.Max(0.0, 100.0 - (elapsedMs * 100.0 / totalMs));
+                    StateHasChanged();
+                }
+
+                if (elapsedMs >= totalMs)
+                {
+                    break;
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (!token.IsCancellationRequested)
+        {
+            dismissed = true;
+            await HandleDismiss();
+        }
+    }
+
+    private void HandleMouseEnter()
+    {
+        if (PauseOnHover && AutoDismissAfter.HasValue)
+        {
+            isPaused = true;
+        }
+    }
+
+    private void HandleMouseLeave()
+    {
+        if (PauseOnHover && AutoDismissAfter.HasValue)
+        {
+            isPaused = false;
+        }
+    }
+
     /// <summary>
-    /// Handles the dismiss button click.
+    /// Handles the dismiss button click or auto-dismiss expiration.
     /// </summary>
     private async Task HandleDismiss()
     {
+        dismissed = true;
+        dismissCts?.Cancel();
+
         if (OnDismiss.HasDelegate)
         {
             await OnDismiss.InvokeAsync();
         }
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        dismissCts?.Cancel();
+        dismissCts?.Dispose();
+        dismissCts = null;
+        GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
     }
 }
