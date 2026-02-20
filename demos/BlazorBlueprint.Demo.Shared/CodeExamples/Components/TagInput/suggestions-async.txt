@@ -1,0 +1,16 @@
+<BbTagInput @bind-Tags="tags"
+            OnSearchSuggestions="SearchFrameworks"
+            Placeholder="Search frameworks..." />
+
+@code {
+    private IReadOnlyList<string>? tags;
+
+    private async Task<IEnumerable<string>> SearchFrameworks(
+        string query, CancellationToken ct)
+    {
+        await Task.Delay(200, ct); // Simulate API call
+        var all = new[] { "React", "Vue", "Angular", "Blazor", "Svelte" };
+        return all.Where(f =>
+            f.Contains(query, StringComparison.OrdinalIgnoreCase));
+    }
+}
