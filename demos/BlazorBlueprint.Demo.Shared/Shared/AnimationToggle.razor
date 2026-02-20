@@ -1,0 +1,65 @@
+@using BlazorBlueprint.Icons.Lucide.Components
+@inject IJSRuntime JSRuntime
+
+<div class="flex items-center gap-2">
+    <LucideIcon Name="zap-off" Class="@IconClass" />
+    <BbSwitch Checked="@_animationsEnabled"
+            CheckedChanged="@OnCheckedChanged"
+            Size="SwitchSize.Small"
+            AriaLabel="Toggle animations" />
+    <LucideIcon Name="zap" Class="@IconClass" />
+</div>
+
+@code {
+    private bool _animationsEnabled = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var saved = await JSRuntime.InvokeAsync<string?>("eval",
+                    "localStorage.getItem('bb-animations')");
+                _animationsEnabled = saved != "disabled";
+                await ApplyAnimationState();
+                StateHasChanged();
+            }
+            catch
+            {
+                // SSR or JS not available
+            }
+        }
+    }
+
+    private async Task OnCheckedChanged(bool value)
+    {
+        _animationsEnabled = value;
+        await ApplyAnimationState();
+    }
+
+    private async Task ApplyAnimationState()
+    {
+        try
+        {
+            if (_animationsEnabled)
+            {
+                await JSRuntime.InvokeVoidAsync("eval",
+                    "document.documentElement.classList.remove('bb-no-animate');" +
+                    "localStorage.setItem('bb-animations', 'enabled')");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("eval",
+                    "document.documentElement.classList.add('bb-no-animate');" +
+                    "localStorage.setItem('bb-animations', 'disabled')");
+            }
+        }
+        catch
+        {
+            // SSR or JS not available
+        }
+    }
+
+    private string IconClass => "h-4 w-4 text-muted-foreground";
+}
