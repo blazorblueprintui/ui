@@ -19,11 +19,14 @@
                 MatchAnchorWidth="@MatchTriggerWidth"
                 Strategy="@Strategy"
                 ZIndex="@ZIndex"
-                OnReady="@HandleFloatingReady">
+                OnReady="@HandleFloatingReady"
+                OnPlacementChanged="@HandlePlacementChanged">
     @RenderPopoverContent()
 </BbFloatingPortal>
 
 @code {
+    private string _actualPlacement = "bottom";
+
     [CascadingParameter]
     private PopoverContext Context { get; set; } = null!;
 
@@ -144,10 +147,17 @@
              tabindex="-1"
              @onkeydown="HandleKeyDown"
              @attributes="AdditionalAttributes"
-             data-state="open">
+             data-state="@(Context.IsOpen ? "open" : "closed")"
+             data-side="@_actualPlacement">
             @ChildContent
         </div>
     };
+
+    private void HandlePlacementChanged(string placement)
+    {
+        _actualPlacement = string.IsNullOrEmpty(placement) ? "bottom" : placement.Split('-')[0];
+        StateHasChanged();
+    }
 
     private async Task HandleFloatingReady()
     {

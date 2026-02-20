@@ -19,11 +19,14 @@
                 MatchAnchorWidth="@MatchTriggerWidth"
                 Strategy="@Strategy"
                 ZIndex="@ZIndex"
-                OnReady="@HandleFloatingReady">
+                OnReady="@HandleFloatingReady"
+                OnPlacementChanged="@HandlePlacementChanged">
     @RenderDropdownContent()
 </BbFloatingPortal>
 
 @code {
+    private string _actualPlacement = "bottom";
+
     [CascadingParameter]
     private DropdownMenuContext Context { get; set; } = null!;
 
@@ -149,7 +152,8 @@
              tabindex="-1"
              data-autofocus
              @attributes="GetAttributesWithoutStyle()"
-             data-state="open">
+             data-state="@(Context.IsOpen ? "open" : "closed")"
+             data-side="@_actualPlacement">
             <CascadingValue Value="Context" IsFixed="false">
                 <CascadingValue Value="this" Name="DropdownMenuContentContext" IsFixed="false">
                     @ChildContent
@@ -157,6 +161,12 @@
             </CascadingValue>
         </div>
     };
+
+    private void HandlePlacementChanged(string placement)
+    {
+        _actualPlacement = string.IsNullOrEmpty(placement) ? "bottom" : placement.Split('-')[0];
+        StateHasChanged();
+    }
 
     private async Task HandleFloatingReady()
     {
