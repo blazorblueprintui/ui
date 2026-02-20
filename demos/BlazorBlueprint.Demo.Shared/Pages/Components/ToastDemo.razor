@@ -166,6 +166,29 @@
         <CodeBlock Source="Components/Toast/position.txt" />
     </div>
 
+    <!-- Countdown Bar -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Countdown Bar</h2>
+            <p class="text-sm text-muted-foreground">
+                Show a visual countdown progress bar at the bottom of the toast. Enable globally via <code class="text-xs bg-muted px-1 py-0.5 rounded">ShowCountdown</code> on BbToastProvider, or per-toast via <code class="text-xs bg-muted px-1 py-0.5 rounded">ToastData.ShowCountdown</code>. The bar pauses when you hover over the toast.
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-4">
+            <BbButton Variant="ButtonVariant.Outline" OnClick="@ShowCountdownToast">
+                With Countdown
+            </BbButton>
+            <BbButton Variant="ButtonVariant.Outline" OnClick="@ShowCountdownSuccessToast">
+                Success with Countdown
+            </BbButton>
+            <BbButton Variant="ButtonVariant.Outline" OnClick="@ShowCountdownLongToast">
+                10s Countdown
+            </BbButton>
+        </div>
+
+        <CodeBlock Source="Components/Toast/countdown.txt" />
+    </div>
+
     <!-- Custom Duration -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -271,6 +294,9 @@
                 <ApiParameter Name="PauseOnHover" Type="bool" Default="true">
                     Pause auto-dismiss when the mouse hovers over a toast.
                 </ApiParameter>
+                <ApiParameter Name="ShowCountdown" Type="bool" Default="false">
+                    Show a visual countdown progress bar on all toasts. Individual toasts can override via ToastData.ShowCountdown.
+                </ApiParameter>
             </ApiReference>
 
             <ApiReference ComponentName="ToastData">
@@ -303,6 +329,9 @@
                 </ApiParameter>
                 <ApiParameter Name="OnAction" Type="Action?">
                     Action button callback
+                </ApiParameter>
+                <ApiParameter Name="ShowCountdown" Type="bool?" Default="null">
+                    Show countdown bar. When null, uses BbToastProvider's ShowCountdown setting.
                 </ApiParameter>
             </ApiReference>
         </div>
@@ -427,6 +456,37 @@
             Description = "This toast appears in the top-left corner.",
             Variant = ToastVariant.Info,
             Position = ToastPosition.TopLeft
+        });
+    }
+
+    private void ShowCountdownToast()
+    {
+        ToastService.Show(new ToastData
+        {
+            Description = "This toast has a countdown bar.",
+            ShowCountdown = true
+        });
+    }
+
+    private void ShowCountdownSuccessToast()
+    {
+        ToastService.Show(new ToastData
+        {
+            Title = "Saved",
+            Description = "Your changes have been saved.",
+            Variant = ToastVariant.Success,
+            ShowCountdown = true
+        });
+    }
+
+    private void ShowCountdownLongToast()
+    {
+        ToastService.Show(new ToastData
+        {
+            Title = "Long Countdown",
+            Description = "This toast has a 10-second countdown. Hover to pause.",
+            Duration = 10000,
+            ShowCountdown = true
         });
     }
 

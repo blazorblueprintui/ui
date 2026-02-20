@@ -139,7 +139,8 @@ public partial class BbAlert : ComponentBase, IAsyncDisposable
     public RenderFragment? Actions { get; set; }
 
     private CancellationTokenSource? dismissCts;
-    private double remainingPercent = 100.0;
+    private TaskCompletionSource? resumeSignal;
+    private int remainingMs;
     private bool isPaused;
     private bool dismissed;
 
@@ -151,8 +152,8 @@ public partial class BbAlert : ComponentBase, IAsyncDisposable
         "relative w-full rounded-lg border p-4 text-foreground",
         // Extra right padding for dismiss button
         Dismissible ? "pr-10" : null,
-        // Extra bottom padding for countdown bar
-        ShowCountdown && AutoDismissAfter.HasValue ? "pb-2" : null,
+        // Extra bottom padding and overflow clip for countdown bar
+        ShowCountdown && AutoDismissAfter.HasValue ? "pb-2 overflow-hidden" : null,
         // Accent border style (thick left border)
         AccentBorder ? "border-l-4" : null,
         Icon != null ? "[&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&:has(svg)]:pl-11" : null,
@@ -178,56 +179,71 @@ public partial class BbAlert : ComponentBase, IAsyncDisposable
         Class
     );
 
-    protected override async Task OnParametersSetAsync()
+    protected override void OnAfterRender(bool firstRender)
     {
-        if (AutoDismissAfter.HasValue && dismissCts == null && !dismissed)
+        if (firstRender && AutoDismissAfter.HasValue && !dismissed)
         {
-            await StartAutoDismissAsync();
+            remainingMs = AutoDismissAfter.Value;
+            _ = RunDismissTimerAsync();
         }
     }
 
-    private async Task StartAutoDismissAsync()
+    private async Task RunDismissTimerAsync()
     {
-        dismissCts = new CancellationTokenSource();
-        var token = dismissCts.Token;
-        var totalMs = AutoDismissAfter!.Value;
-        var elapsedMs = 0;
-        const int tickMs = 100;
-
-        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(tickMs));
-
-        try
+        while (remainingMs > 0 && !dismissed)
         {
-            while (await timer.WaitForNextTickAsync(token))
+            dismissCts?.Dispose();
+            dismissCts = new CancellationTokenSource();
+            var segmentStart = DateTime.UtcNow;
+
+            try
             {
-                if (isPaused)
+                await Task.Delay(remainingMs, dismissCts.Token);
+                // Timer completed — time to dismiss
+                remainingMs = 0;
+            }
+            catch (OperationCanceledException)
+            {
+                // Paused or disposed — track elapsed time
+                var elapsed = (int)(DateTime.UtcNow - segmentStart).TotalMilliseconds;
+                remainingMs = Math.Max(0, remainingMs - elapsed);
+
+                if (dismissed)
                 {
+                    return;
+                }
+
+                // Wait for resume signal from HandleMouseLeave
+                var tcs = new TaskCompletionSource();
+                resumeSignal = tcs;
+
+                // Guard against mouse already having left before we set up the signal
+                if (!isPaused)
+                {
+                    resumeSignal = null;
                     continue;
                 }
 
-                elapsedMs += tickMs;
+                await tcs.Task;
+                resumeSignal = null;
 
-                if (ShowCountdown)
+                if (dismissed)
                 {
-                    remainingPercent = Math.Max(0.0, 100.0 - (elapsedMs * 100.0 / totalMs));
-                    StateHasChanged();
-                }
-
-                if (elapsedMs >= totalMs)
-                {
-                    break;
+                    return;
                 }
             }
         }
-        catch (OperationCanceledException)
-        {
-            return;
-        }
 
-        if (!token.IsCancellationRequested)
+        if (!dismissed)
         {
             dismissed = true;
-            await HandleDismiss();
+            await InvokeAsync(async () =>
+            {
+                if (OnDismiss.HasDelegate)
+                {
+                    await OnDismiss.InvokeAsync();
+                }
+            });
         }
     }
 
@@ -236,6 +252,7 @@ public partial class BbAlert : ComponentBase, IAsyncDisposable
         if (PauseOnHover && AutoDismissAfter.HasValue)
         {
             isPaused = true;
+            dismissCts?.Cancel();
         }
     }
 
@@ -244,6 +261,7 @@ public partial class BbAlert : ComponentBase, IAsyncDisposable
         if (PauseOnHover && AutoDismissAfter.HasValue)
         {
             isPaused = false;
+            resumeSignal?.TrySetResult();
         }
     }
 
@@ -254,6 +272,7 @@ public partial class BbAlert : ComponentBase, IAsyncDisposable
     {
         dismissed = true;
         dismissCts?.Cancel();
+        resumeSignal?.TrySetResult();
 
         if (OnDismiss.HasDelegate)
         {
@@ -263,9 +282,12 @@ public partial class BbAlert : ComponentBase, IAsyncDisposable
 
     public ValueTask DisposeAsync()
     {
+        dismissed = true;
         dismissCts?.Cancel();
         dismissCts?.Dispose();
         dismissCts = null;
+        resumeSignal?.TrySetResult();
+        resumeSignal = null;
         GC.SuppressFinalize(this);
         return ValueTask.CompletedTask;
     }

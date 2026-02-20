@@ -11,8 +11,10 @@
 <div class="@GetContainerCssClass(EffectivePosition)">
     @foreach (var toast in GetToastsForPosition(null))
     {
-        <BbToast Data="@toast"
+        <BbToast @key="toast.Id"
+                 Data="@toast"
                  Class="@toast.Class"
+                 ShowCountdown="@(toast.ShowCountdown ?? ShowCountdown)"
                  OnDismiss="@(() => HandleDismiss(toast.Id))"
                  OnPause="@(() => HandlePause(toast.Id))"
                  OnResume="@(() => HandleResume(toast.Id))" />
@@ -25,8 +27,10 @@
     <div class="@GetContainerCssClass(position)">
         @foreach (var toast in GetToastsForPosition(position))
         {
-            <BbToast Data="@toast"
+            <BbToast @key="toast.Id"
+                     Data="@toast"
                      Class="@toast.Class"
+                     ShowCountdown="@(toast.ShowCountdown ?? ShowCountdown)"
                      OnDismiss="@(() => HandleDismiss(toast.Id))"
                      OnPause="@(() => HandlePause(toast.Id))"
                      OnResume="@(() => HandleResume(toast.Id))" />
@@ -35,10 +39,8 @@
 }
 
 @code {
-    private System.Timers.Timer? autoCloseTimer;
-    private readonly Dictionary<string, long> elapsedMs = new();
-    private readonly HashSet<string> pausedToasts = new();
-    private readonly object timerLock = new();
+    private readonly Dictionary<string, ToastTimerState> timerStates = new();
+    private bool disposed;
 
     /// <summary>
     /// The position of the toast container on the screen.
@@ -60,6 +62,13 @@
     public bool PauseOnHover { get; set; } = true;
 
     /// <summary>
+    /// Whether to show a visual countdown progress bar on toasts.
+    /// Individual toasts can override this via ToastData.ShowCountdown.
+    /// </summary>
+    [Parameter]
+    public bool ShowCountdown { get; set; } = false;
+
+    /// <summary>
     /// Additional CSS classes to apply to the container.
     /// </summary>
     [Parameter]
@@ -68,37 +77,95 @@
     protected override void OnInitialized()
     {
         ToastService.OnChange += HandleToastsChanged;
-        StartAutoCloseTimer();
     }
 
     private void HandleToastsChanged()
     {
-        lock (timerLock)
+        // Start timers for new toasts
+        foreach (var toast in ToastService.Toasts)
         {
-            // Initialize elapsed tracking for new toasts
-            foreach (var toast in ToastService.Toasts)
+            if (!timerStates.ContainsKey(toast.Id) && toast.Duration > 0)
             {
-                if (!elapsedMs.ContainsKey(toast.Id))
-                {
-                    elapsedMs[toast.Id] = 0;
-                }
+                var state = new ToastTimerState { RemainingMs = toast.Duration };
+                timerStates[toast.Id] = state;
+                _ = RunDismissTimerAsync(toast.Id, state);
             }
+        }
 
-            // Clean up stale entries
-            var activeIds = new HashSet<string>(ToastService.Toasts.Select(t => t.Id));
-            var staleIds = elapsedMs.Keys.Where(id => !activeIds.Contains(id)).ToList();
-            foreach (var id in staleIds)
+        // Clean up stale entries (toasts removed externally)
+        var activeIds = new HashSet<string>(ToastService.Toasts.Select(t => t.Id));
+        var staleIds = timerStates.Keys.Where(id => !activeIds.Contains(id)).ToList();
+        foreach (var id in staleIds)
+        {
+            if (timerStates.TryGetValue(id, out var state))
             {
-                elapsedMs.Remove(id);
-                pausedToasts.Remove(id);
+                state.Dismissed = true;
+                state.Cts?.Cancel();
+                state.ResumeSignal?.TrySetResult();
             }
+            timerStates.Remove(id);
         }
 
         InvokeAsync(StateHasChanged);
     }
 
+    private async Task RunDismissTimerAsync(string id, ToastTimerState state)
+    {
+        while (state.RemainingMs > 0 && !state.Dismissed && !disposed)
+        {
+            state.Cts?.Dispose();
+            state.Cts = new CancellationTokenSource();
+            var segmentStart = DateTime.UtcNow;
+
+            try
+            {
+                await Task.Delay(state.RemainingMs, state.Cts.Token);
+                state.RemainingMs = 0;
+            }
+            catch (OperationCanceledException)
+            {
+                var elapsed = (int)(DateTime.UtcNow - segmentStart).TotalMilliseconds;
+                state.RemainingMs = Math.Max(0, state.RemainingMs - elapsed);
+
+                if (state.Dismissed || disposed)
+                {
+                    return;
+                }
+
+                var tcs = new TaskCompletionSource();
+                state.ResumeSignal = tcs;
+
+                if (!state.IsPaused)
+                {
+                    state.ResumeSignal = null;
+                    continue;
+                }
+
+                await tcs.Task;
+                state.ResumeSignal = null;
+
+                if (state.Dismissed || disposed)
+                {
+                    return;
+                }
+            }
+        }
+
+        if (!state.Dismissed && !disposed)
+        {
+            state.Dismissed = true;
+            await InvokeAsync(() => ToastService.Dismiss(id));
+        }
+    }
+
     private void HandleDismiss(string id)
     {
+        if (timerStates.TryGetValue(id, out var state))
+        {
+            state.Dismissed = true;
+            state.Cts?.Cancel();
+            state.ResumeSignal?.TrySetResult();
+        }
         ToastService.Dismiss(id);
     }
 
@@ -109,9 +176,10 @@
             return;
         }
 
-        lock (timerLock)
+        if (timerStates.TryGetValue(id, out var state))
         {
-            pausedToasts.Add(id);
+            state.IsPaused = true;
+            state.Cts?.Cancel();
         }
     }
 
@@ -122,51 +190,11 @@
             return;
         }
 
-        lock (timerLock)
+        if (timerStates.TryGetValue(id, out var state))
         {
-            pausedToasts.Remove(id);
+            state.IsPaused = false;
+            state.ResumeSignal?.TrySetResult();
         }
-    }
-
-    private void StartAutoCloseTimer()
-    {
-        autoCloseTimer = new System.Timers.Timer(1000);
-        autoCloseTimer.Elapsed += (sender, args) =>
-        {
-            var toastsToRemove = new List<string>();
-
-            lock (timerLock)
-            {
-                foreach (var toast in ToastService.Toasts)
-                {
-                    if (toast.Duration <= 0)
-                    {
-                        continue;
-                    }
-
-                    if (!elapsedMs.ContainsKey(toast.Id))
-                    {
-                        elapsedMs[toast.Id] = 0;
-                    }
-
-                    if (!pausedToasts.Contains(toast.Id))
-                    {
-                        elapsedMs[toast.Id] += 1000;
-                    }
-
-                    if (elapsedMs[toast.Id] >= toast.Duration)
-                    {
-                        toastsToRemove.Add(toast.Id);
-                    }
-                }
-            }
-
-            foreach (var id in toastsToRemove)
-            {
-                ToastService.Dismiss(id);
-            }
-        };
-        autoCloseTimer.Start();
     }
 
     private ToastPosition EffectivePosition => ToastService.Position ?? Position;
@@ -206,10 +234,28 @@
 
     public ValueTask DisposeAsync()
     {
+        disposed = true;
         ToastService.OnChange -= HandleToastsChanged;
-        autoCloseTimer?.Stop();
-        autoCloseTimer?.Dispose();
+
+        foreach (var state in timerStates.Values)
+        {
+            state.Dismissed = true;
+            state.Cts?.Cancel();
+            state.Cts?.Dispose();
+            state.ResumeSignal?.TrySetResult();
+        }
+        timerStates.Clear();
+
         GC.SuppressFinalize(this);
         return ValueTask.CompletedTask;
+    }
+
+    private class ToastTimerState
+    {
+        public CancellationTokenSource? Cts { get; set; }
+        public TaskCompletionSource? ResumeSignal { get; set; }
+        public int RemainingMs { get; set; }
+        public bool IsPaused { get; set; }
+        public bool Dismissed { get; set; }
     }
 }

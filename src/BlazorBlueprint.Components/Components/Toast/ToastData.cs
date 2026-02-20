@@ -63,6 +63,12 @@ public class ToastData
     public Action? OnAction { get; set; }
 
     /// <summary>
+    /// Whether to show a visual countdown progress bar at the bottom of the toast.
+    /// When null, uses the BbToastProvider's ShowCountdown setting.
+    /// </summary>
+    public bool? ShowCountdown { get; set; }
+
+    /// <summary>
     /// Additional CSS classes to apply to the toast element.
     /// </summary>
     public string? Class { get; set; }

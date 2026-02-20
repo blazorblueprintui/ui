@@ -46,6 +46,14 @@
             <span class="sr-only">Close</span>
         </button>
     }
+
+    @if (ShouldShowCountdown)
+    {
+        <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-current/20">
+            <div class="h-full bg-current/40"
+                 style="animation: bb-alert-countdown @(Data.Duration)ms linear forwards; animation-play-state: @(isPaused ? "paused" : "running");"></div>
+        </div>
+    }
 </div>
 
 @code {
@@ -74,10 +82,18 @@
     public EventCallback OnResume { get; set; }
 
     /// <summary>
+    /// Whether to show a visual countdown progress bar at the bottom of the toast.
+    /// </summary>
+    [Parameter]
+    public bool ShowCountdown { get; set; }
+
+    /// <summary>
     /// Additional CSS classes to apply to the toast.
     /// </summary>
     [Parameter]
     public string? Class { get; set; }
+
+    private bool isPaused;
 
     private async Task HandleClose()
     {
@@ -92,6 +108,7 @@
 
     private async Task HandleMouseEnter()
     {
+        isPaused = true;
         if (OnPause.HasDelegate)
         {
             await OnPause.InvokeAsync();
@@ -100,6 +117,7 @@
 
     private async Task HandleMouseLeave()
     {
+        isPaused = false;
         if (OnResume.HasDelegate)
         {
             await OnResume.InvokeAsync();
@@ -122,6 +140,8 @@
     /// <summary>
     /// Gets the computed CSS classes for the toast.
     /// </summary>
+    private bool ShouldShowCountdown => ShowCountdown && Data.Duration > 0;
+
     private string CssClass => ClassNames.cn(
         "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border shadow-lg transition-all",
         "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-80",

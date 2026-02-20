@@ -1,5 +1,4 @@
 @namespace BlazorBlueprint.Components
-@implements IAsyncDisposable
 
 <div role="alert" class="@CssClass"
      @onmouseenter="HandleMouseEnter"
@@ -28,9 +27,9 @@
     }
     @if (ShowCountdown && AutoDismissAfter.HasValue)
     {
-        <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-current/20 overflow-hidden rounded-b-lg">
-            <div class="h-full bg-current/40 transition-all ease-linear"
-                 style="width: @(remainingPercent)%; transition-duration: 100ms;" />
+        <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-current/20 overflow-hidden">
+            <div class="h-full bg-current/40"
+                 style="animation: bb-alert-countdown @(AutoDismissAfter.Value)ms linear forwards; animation-play-state: @(isPaused ? "paused" : "running");"></div>
         </div>
     }
 </div>
