@@ -1,5 +1,6 @@
 /* BlazorBlueprint Components - Pre-built Tailwind CSS */
 @import 'tailwindcss';
+@import './tw-animate.css';
 
 /* Configure source paths for scanning Razor files */
 @source "../../Components";
@@ -408,5 +409,27 @@
     [data-drp-day-btn][data-drp-day-btn] {
       width: calc(var(--spacing) * 9);
     }
+  }
+}
+
+/* Global animation disable — add class="bb-no-animate" to <html> to turn off all animations */
+@layer utilities {
+  .bb-no-animate *,
+  .bb-no-animate *::before,
+  .bb-no-animate *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Accessibility — respect user's reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
