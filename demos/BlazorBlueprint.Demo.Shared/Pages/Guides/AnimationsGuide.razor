@@ -1,0 +1,500 @@
+@page "/guides/animations"
+@inject ToastService ToastService
+
+<PageTitle>Animations - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Animations</h1>
+        <p class="text-xl text-muted-foreground">
+            Smooth enter and exit animations for overlay and interactive components, powered by tw-animate-css.
+        </p>
+    </div>
+
+    <div class="space-y-6">
+
+        <!-- Overview -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Overview</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                BlazorBlueprint uses <strong>tw-animate-css</strong> to provide animations for overlay and interactive components.
+                Animations are built into the styled Components layer and activate automatically &mdash; no configuration needed.
+                Components like Dialog, Sheet, Popover, Select, and Toast all animate by default when they open and close.
+            </p>
+            <p class="text-muted-foreground leading-relaxed">
+                The animation system respects accessibility preferences automatically and provides escape hatches
+                for disabling or customizing animations at both the global and per-component level.
+            </p>
+        </section>
+
+        <!-- How It Works -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">How It Works</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                Each animated component uses a <code class="text-xs bg-muted px-1 py-0.5 rounded">data-state</code> attribute
+                that toggles between <code class="text-xs bg-muted px-1 py-0.5 rounded">"open"</code> and
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">"closed"</code>. Tailwind CSS utility classes
+                conditionally apply animations based on this attribute.
+            </p>
+            <div class="rounded-lg border bg-muted/50 p-4">
+                <pre class="text-sm overflow-x-auto"><code>&lt;!-- What the component markup looks like internally --&gt;
+&lt;div data-state="open"
+     class="data-[state=open]:animate-in data-[state=closed]:animate-out
+            data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0
+            data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95"&gt;
+    ...
+&lt;/div&gt;</code></pre>
+            </div>
+            <p class="text-muted-foreground leading-relaxed">
+                The <code class="text-xs bg-muted px-1 py-0.5 rounded">animate-in</code> class triggers a CSS
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">enter</code> keyframe animation that reads from CSS custom properties:
+            </p>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm border-collapse">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-2 px-3 font-medium">Utility Class</th>
+                            <th class="text-left py-2 px-3 font-medium">CSS Custom Property</th>
+                            <th class="text-left py-2 px-3 font-medium">Effect</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-muted-foreground">
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">fade-in-0</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">--tw-enter-opacity: 0</code></td>
+                            <td class="py-2 px-3">Fade from transparent to opaque</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">zoom-in-95</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">--tw-enter-scale: 0.95</code></td>
+                            <td class="py-2 px-3">Scale from 95% to 100%</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">slide-in-from-top-2</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">--tw-enter-translate-y: -0.5rem</code></td>
+                            <td class="py-2 px-3">Slide in from above</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">slide-in-from-bottom-2</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">--tw-enter-translate-y: 0.5rem</code></td>
+                            <td class="py-2 px-3">Slide in from below</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-muted-foreground leading-relaxed">
+                Floating components like Popover, DropdownMenu, and Select also use a
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">data-side</code> attribute to make the slide direction
+                match the actual placement. A dropdown that opens below the trigger slides in from the top, and vice versa.
+            </p>
+        </section>
+
+        <!-- Animation Types -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Animation Types</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                The library uses four distinct animation types. Try each one below.
+            </p>
+
+            <!-- Fade + Zoom -->
+            <div class="p-6 border rounded-lg bg-card space-y-3">
+                <div class="space-y-1">
+                    <p class="text-sm font-semibold">Fade + Zoom</p>
+                    <p class="text-xs text-muted-foreground">Content fades in while scaling from 95% to 100%. Used by Dialog and AlertDialog.</p>
+                </div>
+                <BbDialog @bind-Open="dialogOpen">
+                    <BbDialogTrigger>
+                        <BbButton Variant="ButtonVariant.Outline">Open Dialog</BbButton>
+                    </BbDialogTrigger>
+                    <BbDialogContent>
+                        <BbDialogHeader>
+                            <BbDialogTitle>Fade + Zoom</BbDialogTitle>
+                            <BbDialogDescription>This dialog fades and zooms into view from the center of the screen.</BbDialogDescription>
+                        </BbDialogHeader>
+                        <BbDialogFooter>
+                            <BbDialogClose>
+                                <BbButton>Close</BbButton>
+                            </BbDialogClose>
+                        </BbDialogFooter>
+                    </BbDialogContent>
+                </BbDialog>
+            </div>
+
+            <!-- Slide from Edge -->
+            <div class="p-6 border rounded-lg bg-card space-y-3">
+                <div class="space-y-1">
+                    <p class="text-sm font-semibold">Slide from Edge</p>
+                    <p class="text-xs text-muted-foreground">Full-width or full-height panel slides in from a screen edge. Used by Sheet.</p>
+                </div>
+                <div class="flex gap-2 flex-wrap">
+                    <BbSheet @bind-Open="sheetRightOpen">
+                        <BbSheetTrigger>
+                            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small">Right</BbButton>
+                        </BbSheetTrigger>
+                        <BbSheetContent Side="SheetSide.Right">
+                            <BbSheetHeader>
+                                <BbSheetTitle>Sheet from Right</BbSheetTitle>
+                                <BbSheetDescription>Slides in from the right edge.</BbSheetDescription>
+                            </BbSheetHeader>
+                        </BbSheetContent>
+                    </BbSheet>
+                    <BbSheet @bind-Open="sheetLeftOpen">
+                        <BbSheetTrigger>
+                            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small">Left</BbButton>
+                        </BbSheetTrigger>
+                        <BbSheetContent Side="SheetSide.Left">
+                            <BbSheetHeader>
+                                <BbSheetTitle>Sheet from Left</BbSheetTitle>
+                                <BbSheetDescription>Slides in from the left edge.</BbSheetDescription>
+                            </BbSheetHeader>
+                        </BbSheetContent>
+                    </BbSheet>
+                    <BbSheet @bind-Open="sheetTopOpen">
+                        <BbSheetTrigger>
+                            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small">Top</BbButton>
+                        </BbSheetTrigger>
+                        <BbSheetContent Side="SheetSide.Top">
+                            <BbSheetHeader>
+                                <BbSheetTitle>Sheet from Top</BbSheetTitle>
+                                <BbSheetDescription>Slides in from the top edge.</BbSheetDescription>
+                            </BbSheetHeader>
+                        </BbSheetContent>
+                    </BbSheet>
+                    <BbSheet @bind-Open="sheetBottomOpen">
+                        <BbSheetTrigger>
+                            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small">Bottom</BbButton>
+                        </BbSheetTrigger>
+                        <BbSheetContent Side="SheetSide.Bottom">
+                            <BbSheetHeader>
+                                <BbSheetTitle>Sheet from Bottom</BbSheetTitle>
+                                <BbSheetDescription>Slides in from the bottom edge.</BbSheetDescription>
+                            </BbSheetHeader>
+                        </BbSheetContent>
+                    </BbSheet>
+                </div>
+            </div>
+
+            <!-- Fade + Zoom + Directional Slide -->
+            <div class="p-6 border rounded-lg bg-card space-y-3">
+                <div class="space-y-1">
+                    <p class="text-sm font-semibold">Fade + Zoom + Directional Slide</p>
+                    <p class="text-xs text-muted-foreground">
+                        Floating content fades, zooms, and slides from the direction it opens toward.
+                        A dropdown opening below the trigger slides down from the top. Used by Select, Popover, DropdownMenu, and ContextMenu.
+                    </p>
+                </div>
+                <div class="flex gap-2 flex-wrap items-start">
+                    <BbSelect @bind-Value="selectedDefault" TValue="string" Class="w-[200px]">
+                        <BbSelectTrigger>
+                            <BbSelectValue Placeholder="Select" />
+                        </BbSelectTrigger>
+                        <BbSelectContent>
+                            @foreach (var fruit in Fruits)
+                            {
+                                <BbSelectItem Value="@fruit" Text="@fruit" />
+                            }
+                        </BbSelectContent>
+                    </BbSelect>
+                    <BbDropdownMenu>
+                        <BbDropdownMenuTrigger>
+                            <BbButton Variant="ButtonVariant.Outline">
+                                Menu
+                                <LucideIcon Name="chevron-down" Class="ml-2 h-4 w-4" />
+                            </BbButton>
+                        </BbDropdownMenuTrigger>
+                        <BbDropdownMenuContent>
+                            <BbDropdownMenuItem>Profile</BbDropdownMenuItem>
+                            <BbDropdownMenuItem>Settings</BbDropdownMenuItem>
+                            <BbDropdownMenuSeparator />
+                            <BbDropdownMenuItem>Log out</BbDropdownMenuItem>
+                        </BbDropdownMenuContent>
+                    </BbDropdownMenu>
+                    <BbPopover>
+                        <BbPopoverTrigger>
+                            <BbButton Variant="ButtonVariant.Outline">Popover</BbButton>
+                        </BbPopoverTrigger>
+                        <BbPopoverContent>
+                            <div class="space-y-2">
+                                <h4 class="font-medium leading-none text-sm">Popover Content</h4>
+                                <p class="text-xs text-muted-foreground">Slide direction matches the placement.</p>
+                            </div>
+                        </BbPopoverContent>
+                    </BbPopover>
+                </div>
+            </div>
+
+            <!-- Toast Slide -->
+            <div class="p-6 border rounded-lg bg-card space-y-3">
+                <div class="space-y-1">
+                    <p class="text-sm font-semibold">Slide In</p>
+                    <p class="text-xs text-muted-foreground">Notifications slide into view from the edge of the viewport. Used by Toast.</p>
+                </div>
+                <div class="flex gap-2 flex-wrap">
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@ShowDefaultToast">Default</BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@ShowSuccessToast">Success</BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@ShowDestructiveToast">Destructive</BbButton>
+                </div>
+            </div>
+
+            <!-- Expand / Collapse -->
+            <div class="p-6 border rounded-lg bg-card space-y-3">
+                <div class="space-y-1">
+                    <p class="text-sm font-semibold">Expand / Collapse</p>
+                    <p class="text-xs text-muted-foreground">Content smoothly expands and collapses using CSS grid row animation. Used by Collapsible and Accordion.</p>
+                </div>
+                <BbCollapsible @bind-Open="collapsibleOpen" Class="w-[350px] space-y-2">
+                    <div class="flex items-center justify-between space-x-4 px-4">
+                        <h4 class="text-sm font-semibold">Starred repositories</h4>
+                        <BbCollapsibleTrigger>
+                            <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small">
+                                <LucideIcon Name="chevrons-up-down" Class="h-4 w-4" />
+                                <span class="sr-only">Toggle</span>
+                            </BbButton>
+                        </BbCollapsibleTrigger>
+                    </div>
+                    <div class="rounded-md border px-4 py-3 text-sm">@@blazorblueprint/ui</div>
+                    <BbCollapsibleContent>
+                        <div class="space-y-2">
+                            <div class="rounded-md border px-4 py-3 text-sm">@@blazorblueprint/primitives</div>
+                            <div class="rounded-md border px-4 py-3 text-sm">@@blazorblueprint/icons</div>
+                        </div>
+                    </BbCollapsibleContent>
+                </BbCollapsible>
+            </div>
+        </section>
+
+        <!-- Customizing Animations -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Customizing Animations</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                When using compositional mode, you can pass a <code class="text-xs bg-muted px-1 py-0.5 rounded">Class</code> parameter
+                to the content component to adjust animation behavior. For deeper customization, override the CSS custom properties
+                that control the animation parameters.
+            </p>
+
+            <h3 class="text-lg font-semibold">Slower Animation</h3>
+            <p class="text-muted-foreground leading-relaxed">
+                Use Tailwind's <code class="text-xs bg-muted px-1 py-0.5 rounded">duration-*</code> utilities via the
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">Class</code> parameter to slow down or speed up the animation.
+            </p>
+            <div class="p-6 border rounded-lg bg-card">
+                <BbSelect @bind-Value="selectedSlow" TValue="string" Class="w-[280px]">
+                    <BbSelectTrigger>
+                        <BbSelectValue Placeholder="Select a fruit" />
+                    </BbSelectTrigger>
+                    <BbSelectContent Class="duration-500">
+                        @foreach (var fruit in Fruits)
+                        {
+                            <BbSelectItem Value="@fruit" Text="@fruit" />
+                        }
+                    </BbSelectContent>
+                </BbSelect>
+            </div>
+            <div class="rounded-lg border bg-muted/50 p-4">
+                <pre class="text-sm overflow-x-auto"><code>&lt;BbSelectContent Class="duration-500"&gt;
+    ...
+&lt;/BbSelectContent&gt;</code></pre>
+            </div>
+
+            <h3 class="text-lg font-semibold pt-2">CSS Custom Property Overrides</h3>
+            <p class="text-muted-foreground leading-relaxed">
+                The animation parameters are driven by CSS custom properties. You can override them in your own stylesheet
+                to change the feel of animations without replacing the entire animation system.
+            </p>
+            <div class="rounded-lg border bg-muted/50 p-4">
+                <pre class="text-sm overflow-x-auto"><code>/* Custom CSS — scale from 80% instead of 95% */
+.my-custom-dropdown {
+  --tw-enter-scale: 0.8;
+  --tw-exit-scale: 0.8;
+}
+
+/* Fade only — neutralize zoom and slide */
+.fade-only {
+  --tw-enter-scale: 1;
+  --tw-exit-scale: 1;
+  --tw-enter-translate-y: 0;
+  --tw-exit-translate-y: 0;
+}</code></pre>
+            </div>
+            <div class="rounded-lg border bg-muted/50 p-4">
+                <pre class="text-sm overflow-x-auto"><code>&lt;!-- Then pass the class via the Class parameter --&gt;
+&lt;BbSelectContent Class="my-custom-dropdown"&gt;
+    ...
+&lt;/BbSelectContent&gt;
+
+&lt;BbDropdownMenuContent Class="fade-only"&gt;
+    ...
+&lt;/BbDropdownMenuContent&gt;</code></pre>
+            </div>
+            <p class="text-muted-foreground leading-relaxed">
+                Available custom properties:
+            </p>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm border-collapse">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-2 px-3 font-medium">Property</th>
+                            <th class="text-left py-2 px-3 font-medium">Controls</th>
+                            <th class="text-left py-2 px-3 font-medium">Identity Value</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-muted-foreground">
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">--tw-enter-opacity</code></td>
+                            <td class="py-2 px-3">Starting opacity (enter)</td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">1</code></td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">--tw-enter-scale</code></td>
+                            <td class="py-2 px-3">Starting scale (enter)</td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">1</code></td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">--tw-enter-translate-x</code></td>
+                            <td class="py-2 px-3">Horizontal slide distance (enter)</td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">0</code></td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">--tw-enter-translate-y</code></td>
+                            <td class="py-2 px-3">Vertical slide distance (enter)</td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">0</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-muted-foreground leading-relaxed">
+                Exit animations use the same pattern with <code class="text-xs bg-muted px-1 py-0.5 rounded">--tw-exit-*</code> properties.
+                Set a property to its identity value to effectively disable that part of the animation.
+            </p>
+        </section>
+
+        <!-- Disabling Animations -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Disabling Animations</h2>
+
+            <h3 class="text-lg font-semibold">Globally</h3>
+            <p class="text-muted-foreground leading-relaxed">
+                Add the <code class="text-xs bg-muted px-1 py-0.5 rounded">bb-no-animate</code> class to your
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">&lt;html&gt;</code> element to disable all animations
+                and transitions site-wide. This works for all components, including portaled content like Select and Popover
+                dropdowns.
+            </p>
+            <div class="rounded-lg border bg-muted/50 p-4">
+                <pre class="text-sm overflow-x-auto"><code>&lt;html class="bb-no-animate"&gt;</code></pre>
+            </div>
+            <div class="p-4 border-l-4 border-primary bg-primary/5 rounded-r-lg">
+                <p class="text-sm text-muted-foreground">
+                    Try it out using the animation toggle
+                    (<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block align-text-bottom"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/><line x1="2" x2="22" y1="2" y2="22"/></svg>)
+                    in the site header to toggle animations on and off across the entire demo site.
+                </p>
+            </div>
+
+            <h3 class="text-lg font-semibold pt-2">Per Component</h3>
+            <p class="text-muted-foreground leading-relaxed">
+                In compositional mode, pass <code class="text-xs bg-muted px-1 py-0.5 rounded">Class="animate-none!"</code>
+                to the content component to disable animation on a single instance.
+            </p>
+            <div class="rounded-lg border bg-muted/50 p-4">
+                <pre class="text-sm overflow-x-auto"><code>&lt;BbSelectContent Class="animate-none!"&gt;
+    ...
+&lt;/BbSelectContent&gt;
+
+&lt;BbDropdownMenuContent Class="animate-none!"&gt;
+    ...
+&lt;/BbDropdownMenuContent&gt;
+
+&lt;BbPopoverContent Class="animate-none!"&gt;
+    ...
+&lt;/BbPopoverContent&gt;</code></pre>
+            </div>
+
+            <h3 class="text-lg font-semibold pt-2">Accessibility</h3>
+            <p class="text-muted-foreground leading-relaxed">
+                The library automatically respects the
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">prefers-reduced-motion: reduce</code> media query.
+                When a user has "Reduce motion" enabled in their operating system settings, all animations and transitions
+                are suppressed automatically. No additional configuration is needed.
+            </p>
+        </section>
+
+        <!-- Components with Animations -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Animated Components</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                The following components include built-in animations:
+            </p>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm border-collapse">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-2 px-3 font-medium">Component</th>
+                            <th class="text-left py-2 px-3 font-medium">Animation</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-muted-foreground">
+                        <tr class="border-b">
+                            <td class="py-2 px-3">Dialog / AlertDialog</td>
+                            <td class="py-2 px-3">Fade + zoom</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3">Sheet</td>
+                            <td class="py-2 px-3">Slide in from edge (direction matches side)</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3">Drawer</td>
+                            <td class="py-2 px-3">Slide in from bottom</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3">Popover</td>
+                            <td class="py-2 px-3">Fade + zoom + directional slide</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3">DropdownMenu</td>
+                            <td class="py-2 px-3">Fade + zoom + directional slide</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3">ContextMenu</td>
+                            <td class="py-2 px-3">Fade + zoom + directional slide</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3">Select</td>
+                            <td class="py-2 px-3">Fade + zoom + directional slide</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3">Toast</td>
+                            <td class="py-2 px-3">Slide in from top / bottom</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-3">Collapsible</td>
+                            <td class="py-2 px-3">Grid row expand / collapse</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+</div>
+
+@code {
+    private string? selectedDefault;
+    private string? selectedSlow;
+    private bool dialogOpen;
+    private bool sheetRightOpen;
+    private bool sheetLeftOpen;
+    private bool sheetTopOpen;
+    private bool sheetBottomOpen;
+    private bool collapsibleOpen;
+
+    private static readonly string[] Fruits = ["Apple", "Banana", "Blueberry", "Grapes", "Pineapple"];
+
+    private void ShowDefaultToast() =>
+        ToastService.Show("This toast slides into view from the edge of the viewport.");
+
+    private void ShowSuccessToast() =>
+        ToastService.Success("Your changes have been saved.", "Success");
+
+    private void ShowDestructiveToast() =>
+        ToastService.Error("There was a problem with your request.", "Something went wrong");
+}

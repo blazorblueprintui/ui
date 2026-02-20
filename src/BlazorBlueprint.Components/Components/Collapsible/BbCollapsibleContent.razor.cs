@@ -58,6 +58,14 @@ namespace BlazorBlueprint.Components;
 public partial class BbCollapsibleContent : ComponentBase
 {
     /// <summary>
+    /// Whether to force mount the content even when closed.
+    /// When true (default), enables smooth CSS animations.
+    /// When false, content unmounts when closed (no animation, lower memory).
+    /// </summary>
+    [Parameter]
+    public bool ForceMount { get; set; } = true;
+
+    /// <summary>
     /// Gets or sets additional CSS classes to apply to the content container element.
     /// </summary>
     /// <value>

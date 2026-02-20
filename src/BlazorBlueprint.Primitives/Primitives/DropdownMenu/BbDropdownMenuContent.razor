@@ -19,11 +19,15 @@
                 MatchAnchorWidth="@MatchTriggerWidth"
                 Strategy="@Strategy"
                 ZIndex="@ZIndex"
-                OnReady="@HandleFloatingReady">
+                ForceMount="@ForceMount"
+                OnReady="@HandleFloatingReady"
+                OnPlacementChanged="@HandlePlacementChanged">
     @RenderDropdownContent()
 </BbFloatingPortal>
 
 @code {
+    private string _actualPlacement = "bottom";
+
     [CascadingParameter]
     private DropdownMenuContext Context { get; set; } = null!;
 
@@ -109,6 +113,14 @@
     public bool MatchTriggerWidth { get; set; } = false;
 
     /// <summary>
+    /// Whether to keep the content mounted in the DOM when closed.
+    /// When true, enables CSS exit animations.
+    /// Default is false.
+    /// </summary>
+    [Parameter]
+    public bool ForceMount { get; set; } = false;
+
+    /// <summary>
     /// Positioning strategy: "absolute" (default) or "fixed".
     /// Use "fixed" when dropdown needs to escape parent stacking contexts (e.g., in sidebars).
     /// Fixed strategy renders at document.body level.
@@ -149,7 +161,8 @@
              tabindex="-1"
              data-autofocus
              @attributes="GetAttributesWithoutStyle()"
-             data-state="open">
+             data-state="@(Context.IsOpen ? "open" : "closed")"
+             data-side="@_actualPlacement">
             <CascadingValue Value="Context" IsFixed="false">
                 <CascadingValue Value="this" Name="DropdownMenuContentContext" IsFixed="false">
                     @ChildContent
@@ -157,6 +170,12 @@
             </CascadingValue>
         </div>
     };
+
+    private void HandlePlacementChanged(string placement)
+    {
+        _actualPlacement = string.IsNullOrEmpty(placement) ? "bottom" : placement.Split('-')[0];
+        StateHasChanged();
+    }
 
     private async Task HandleFloatingReady()
     {

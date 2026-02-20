@@ -107,6 +107,13 @@
     public EventCallback OnReady { get; set; }
 
     /// <summary>
+    /// Event callback invoked when the actual placement changes (e.g., flips from bottom to top).
+    /// Passes the final placement string (e.g., "top", "bottom-start", "left-end").
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> OnPlacementChanged { get; set; }
+
+    /// <summary>
     /// Additional attributes to apply to the portal container.
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
@@ -134,6 +141,7 @@
     // Store computed position so it survives Blazor re-renders
     private double _positionLeft = 0;
     private double _positionTop = 0;
+    private string _currentPlacement = "";
 
     protected override void OnInitialized()
     {
@@ -353,6 +361,13 @@
             // Store position in Blazor state so it survives re-renders
             _positionLeft = position.X;
             _positionTop = position.Y;
+
+            // Notify if placement changed (e.g., flipped from bottom to top)
+            if (_currentPlacement != position.Placement && OnPlacementChanged.HasDelegate)
+            {
+                _currentPlacement = position.Placement;
+                await OnPlacementChanged.InvokeAsync(position.Placement);
+            }
 
             // Apply position via JS for initial display
             await PositioningService.ApplyPositionAsync(_portalContentRef, position, makeVisible: true);

@@ -23,12 +23,15 @@
                     MatchAnchorWidth="@MatchTriggerWidth"
                     Strategy="PositioningStrategy.Fixed"
                     ZIndex="9999"
-                    OnReady="@HandleFloatingReady">
+                    OnReady="@HandleFloatingReady"
+                    OnPlacementChanged="@HandlePlacementChanged">
         @RenderSelectListbox()
     </BbFloatingPortal>
 }
 
 @code {
+    private string _actualPlacement = "bottom";
+
     [CascadingParameter]
     private SelectContext<TValue>? _context { get; set; }
 
@@ -122,12 +125,20 @@
             contentBuilder.AddAttribute(4, "aria-activedescendant", GetActiveDescendantId());
             contentBuilder.AddAttribute(5, "data-select-content", "true");
             contentBuilder.AddAttribute(6, "tabindex", "-1");
-            contentBuilder.AddMultipleAttributes(7, AdditionalAttributes);
-            contentBuilder.AddContent(8, ChildContent);
+            contentBuilder.AddAttribute(7, "data-state", _context.IsOpen ? "open" : "closed");
+            contentBuilder.AddAttribute(8, "data-side", _actualPlacement);
+            contentBuilder.AddMultipleAttributes(9, AdditionalAttributes);
+            contentBuilder.AddContent(10, ChildContent);
             contentBuilder.CloseElement();
         }));
         builder.CloseComponent();
     };
+
+    private void HandlePlacementChanged(string placement)
+    {
+        _actualPlacement = string.IsNullOrEmpty(placement) ? "bottom" : placement.Split('-')[0];
+        StateHasChanged();
+    }
 
     private async Task HandleFloatingReady()
     {

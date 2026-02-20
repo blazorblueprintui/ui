@@ -19,11 +19,15 @@
                 MatchAnchorWidth="@MatchTriggerWidth"
                 Strategy="@Strategy"
                 ZIndex="@ZIndex"
-                OnReady="@HandleFloatingReady">
+                ForceMount="@ForceMount"
+                OnReady="@HandleFloatingReady"
+                OnPlacementChanged="@HandlePlacementChanged">
     @RenderPopoverContent()
 </BbFloatingPortal>
 
 @code {
+    private string _actualPlacement = "bottom";
+
     [CascadingParameter]
     private PopoverContext Context { get; set; } = null!;
 
@@ -110,6 +114,14 @@
     public EventCallback OnClickOutside { get; set; }
 
     /// <summary>
+    /// Whether to keep the content mounted in the DOM when closed.
+    /// When true, enables CSS exit animations.
+    /// Default is false.
+    /// </summary>
+    [Parameter]
+    public bool ForceMount { get; set; } = false;
+
+    /// <summary>
     /// Event callback invoked when the popover content is fully ready (positioned and visible).
     /// Useful for focus management.
     /// </summary>
@@ -144,10 +156,17 @@
              tabindex="-1"
              @onkeydown="HandleKeyDown"
              @attributes="AdditionalAttributes"
-             data-state="open">
+             data-state="@(Context.IsOpen ? "open" : "closed")"
+             data-side="@_actualPlacement">
             @ChildContent
         </div>
     };
+
+    private void HandlePlacementChanged(string placement)
+    {
+        _actualPlacement = string.IsNullOrEmpty(placement) ? "bottom" : placement.Split('-')[0];
+        StateHasChanged();
+    }
 
     private async Task HandleFloatingReady()
     {

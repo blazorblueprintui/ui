@@ -6,6 +6,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-02-20
+
+### Added
+
+- Component animations powered by **tw-animate-css** — smooth enter/exit animations for 17 overlay and interactive components using `data-state` attribute toggling and Tailwind utility classes (`animate-in`, `animate-out`, `fade-in-0`, `zoom-in-95`, `slide-in-from-*`, etc.).
+- `bb-no-animate` global CSS class — add to `<html>` to disable all animations and transitions site-wide, including portaled content.
+- `prefers-reduced-motion` accessibility support — all animations and transitions are automatically suppressed when the user has "Reduce motion" enabled in their OS settings.
+- `ForceMount` parameter on `BbPopoverContent` and `BbDropdownMenuContent` (Components layer, default: `true`) — keeps content mounted in the DOM when closed so CSS exit animations can play before removal.
+- `ForceMount` parameter on Primitives `BbPopoverContent` and `BbDropdownMenuContent` (default: `false`) — opt-in mount persistence at the headless layer.
+- `ForceMount` parameter on `BbCollapsibleContent` (Components layer, default: `true`) — exposed for developer control; previously hardcoded.
+- `data-state="open"` attribute on `BbToast` — enables CSS animation classes on toast notifications.
+- `AutoDismissAfter` parameter on `BbAlert` — timed alert dismissal with `PeriodicTimer`-based countdown (100ms ticks) and proper `IAsyncDisposable` cleanup.
+- `PauseOnHover` parameter on `BbAlert` (default: `true`) — pauses auto-dismiss countdown on mouse hover.
+- `ShowCountdown` parameter on `BbAlert` (default: `true` when `AutoDismissAfter` is set) — visual countdown progress bar.
+- `Actions` RenderFragment on `BbAlert` — slot for inline action buttons below alert content.
+- Animation toggle component in demo site header — toggles `bb-no-animate` on `<html>` with localStorage persistence.
+- Animations guide page (`/guides/animations`) with live interactive examples for all 5 animation types: fade+zoom, slide from edge, fade+zoom+directional slide, slide in (toast), and expand/collapse.
+- "Guides" collapsible sidebar section in demo site navigation.
+
+### Fixed
+
+- Dialog and AlertDialog animations simplified to fade+zoom only — removed slide animation that caused visual inconsistency with centered overlays.
+
+---
+
+## 2026-02-19
+
+### Fixed
+
+- `BbTooltipTrigger` and `BbHoverCardTrigger` now merge parent `TriggerContext` (e.g., from `BbDialogTrigger`) so click, ARIA, and keyboard behavior is preserved alongside hover/focus behavior (#131).
+- `DisposeAsync` across all components now catches `JSDisconnectedException`, `TaskCanceledException`, and `ObjectDisposedException` independently per JS module, so one disposal failure doesn't prevent cleanup of others (#77).
+- File inputs in `BbInputGroupInput` and `BbInputField` no longer attempt value binding, preventing `InvalidStateError` on file selection (#132).
+
+### Internal
+
+- Icon generation scripts (Lucide, Heroicons, Feather) centralized into `tools/icon-generation/` with a unified `build-icons.sh` runner. Added Node.js Lucide generator to replace the PowerShell script.
+- Primitives and Components README files updated with correct `Bb`-prefixed component names, 45+ missing components, setup steps, and services documentation.
+
+---
+
 ## 2026-02-17
 
 ### Added
