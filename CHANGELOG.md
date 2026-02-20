@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `ShowCountdown` property on `ToastData` (`bool?`) — per-toast countdown bar control. When `null`, uses the provider's `ShowCountdown` setting.
 - Visual countdown progress bar on `BbToast` — reuses the `bb-alert-countdown` CSS keyframe animation shared with `BbAlert`. Pauses on hover via `animation-play-state`.
 - `bb-alert-countdown` CSS `@keyframes` animation — shared countdown bar animation (width: 100% to 0%) used by both `BbAlert` and `BbToast`.
+- New **`BbTagInput`** component — inline chip/tag input for entering and managing free-form lists of string values. Features configurable trigger keys (Enter, Comma, Space, Tab, Semicolon), `MaxTags`/`MaxTagLength` limits, duplicate prevention, custom validation with `OnTagRejected` callback, paste support with delimiter splitting, static and async suggestions with debouncing, three visual variants (Default, Outline, Secondary), `Clearable` clear-all button, `TagTemplate` for custom tag rendering, and `EditForm` integration via `TagsExpression`.
 
 ### Changed
 

@@ -1,0 +1,344 @@
+@page "/components/tag-input"
+<PageTitle>Tag Input Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <div class="flex items-center gap-3">
+                <h1 class="text-4xl font-bold tracking-tight">Tag Input</h1>
+                <span class="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">New</span>
+            </div>
+            <p class="text-xl text-muted-foreground">
+                An inline chip/tag input for entering and managing free-form lists of text values.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Basic</h2>
+        <p class="text-sm text-muted-foreground">
+            Type a tag and press Enter or comma to add it. Click the x button or press Backspace on an empty input to remove.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <BbTagInput @bind-Tags="basicTags" />
+            <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+                <p class="text-sm"><span class="font-medium">Tags:</span> <span class="font-mono">@FormatTags(basicTags)</span></p>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/TagInput/basic.txt" />
+    </section>
+
+    <!-- Custom Triggers -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Custom Triggers</h2>
+        <p class="text-sm text-muted-foreground">
+            Configure which keys add tags. This example uses Enter, Comma, and Space.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <BbTagInput @bind-Tags="triggerTags"
+                        AddTrigger="TagInputTrigger.Enter | TagInputTrigger.Comma | TagInputTrigger.Space"
+                        Placeholder="Type and press Enter, comma, or space..." />
+            <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+                <p class="text-sm"><span class="font-medium">Tags:</span> <span class="font-mono">@FormatTags(triggerTags)</span></p>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/TagInput/custom-triggers.txt" />
+    </section>
+
+    <!-- Validation & Limits -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Validation &amp; Limits</h2>
+        <p class="text-sm text-muted-foreground">
+            Limit the number of tags, prevent duplicates, and validate tag content. This example limits to 5 tags with max 20 characters each.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <BbTagInput @bind-Tags="limitedTags"
+                        MaxTags="5"
+                        MaxTagLength="20"
+                        Placeholder="Max 5 tags, 20 chars each..."
+                        OnTagRejected="HandleRejected" />
+            @if (!string.IsNullOrEmpty(rejectedMessage))
+            {
+                <p class="text-sm text-destructive">@rejectedMessage</p>
+            }
+            <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+                <p class="text-sm"><span class="font-medium">Tags:</span> <span class="font-mono">@FormatTags(limitedTags)</span></p>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/TagInput/validation.txt" />
+    </section>
+
+    <!-- Email Validation -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Custom Validation</h2>
+        <p class="text-sm text-muted-foreground">
+            Use a custom validation function to only accept email addresses.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <BbTagInput @bind-Tags="emailTags"
+                        Placeholder="Enter email addresses..."
+                        Validate="ValidateEmail"
+                        AddTrigger="TagInputTrigger.Enter | TagInputTrigger.Space" />
+            <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+                <p class="text-sm"><span class="font-medium">Emails:</span> <span class="font-mono">@FormatTags(emailTags)</span></p>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/TagInput/custom-validation.txt" />
+    </section>
+
+    <!-- Clearable -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Clearable</h2>
+        <p class="text-sm text-muted-foreground">
+            Show a clear-all button when tags are present.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <BbTagInput @bind-Tags="clearableTags" Clearable="true" Placeholder="Add tags..." />
+            <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+                <p class="text-sm"><span class="font-medium">Tags:</span> <span class="font-mono">@FormatTags(clearableTags)</span></p>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/TagInput/clearable.txt" />
+    </section>
+
+    <!-- Static Suggestions -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Suggestions</h2>
+        <p class="text-sm text-muted-foreground">
+            Provide a static list of suggestions that filter as the user types.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <BbTagInput @bind-Tags="suggestedTags"
+                        Suggestions="availableFrameworks"
+                        Placeholder="Search frameworks..." />
+            <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+                <p class="text-sm"><span class="font-medium">Tags:</span> <span class="font-mono">@FormatTags(suggestedTags)</span></p>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/TagInput/suggestions-static.txt" />
+    </section>
+
+    <!-- Async Suggestions -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Async Suggestions</h2>
+        <p class="text-sm text-muted-foreground">
+            Load suggestions asynchronously with debouncing. Simulates an API call with a 200ms delay.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <BbTagInput @bind-Tags="asyncTags"
+                        OnSearchSuggestions="SearchFrameworks"
+                        Placeholder="Search frameworks..." />
+            <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+                <p class="text-sm"><span class="font-medium">Tags:</span> <span class="font-mono">@FormatTags(asyncTags)</span></p>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/TagInput/suggestions-async.txt" />
+    </section>
+
+    <!-- Variants -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Variants</h2>
+        <p class="text-sm text-muted-foreground">
+            Choose between different tag visual styles.
+        </p>
+
+        <div class="flex flex-col gap-4">
+            <div class="space-y-1">
+                <p class="text-sm font-medium">Default</p>
+                <BbTagInput @bind-Tags="variantTags1" Variant="TagInputVariant.Default" Placeholder="Default variant..." />
+            </div>
+            <div class="space-y-1">
+                <p class="text-sm font-medium">Outline</p>
+                <BbTagInput @bind-Tags="variantTags2" Variant="TagInputVariant.Outline" Placeholder="Outline variant..." />
+            </div>
+            <div class="space-y-1">
+                <p class="text-sm font-medium">Secondary</p>
+                <BbTagInput @bind-Tags="variantTags3" Variant="TagInputVariant.Secondary" Placeholder="Secondary variant..." />
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/TagInput/variants.txt" />
+    </section>
+
+    <!-- Disabled -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Disabled</h2>
+        <p class="text-sm text-muted-foreground">
+            A disabled tag input with pre-populated tags.
+        </p>
+
+        <BbTagInput Tags="disabledTags" Disabled="true" />
+
+        <CodeBlock Source="Components/TagInput/disabled.txt" />
+    </section>
+
+    <!-- Custom Tag Template -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Custom Tag Template</h2>
+        <p class="text-sm text-muted-foreground">
+            Customize how each tag is rendered using a template.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <BbTagInput @bind-Tags="templateTags" Placeholder="Add hashtags...">
+                <TagTemplate Context="tag">
+                    <span class="inline-flex items-center gap-1 rounded-full bg-blue-100 dark:bg-blue-900 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:text-blue-200">
+                        #@tag
+                    </span>
+                </TagTemplate>
+            </BbTagInput>
+            <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+                <p class="text-sm"><span class="font-medium">Tags:</span> <span class="font-mono">@FormatTags(templateTags)</span></p>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/TagInput/custom-template.txt" />
+    </section>
+
+    <!-- Accessibility -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Container includes <code>aria-label</code> and <code>aria-disabled</code> attributes</AccessibilityItem>
+            <AccessibilityItem>Each remove button includes <code>aria-label="Remove {tag}"</code></AccessibilityItem>
+            <AccessibilityItem>Input uses <code>aria-autocomplete="list"</code>, <code>aria-expanded</code>, and <code>aria-activedescendant</code> when suggestions are shown</AccessibilityItem>
+            <AccessibilityItem>Suggestions use <code>role="listbox"</code> and <code>role="option"</code> with <code>aria-selected</code></AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Add tag (configurable)">
+                <BbKbd>Enter</BbKbd> / <BbKbd>,</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Remove last tag">
+                <BbKbd>Backspace</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Navigate suggestions">
+                <BbKbd>Arrow Up</BbKbd> / <BbKbd>Arrow Down</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Close suggestions">
+                <BbKbd>Escape</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="TagInput">
+                <ApiParameter Name="Tags" Type="IReadOnlyList&lt;string&gt;?" Default="null">
+                    The list of tags. Use <code>@@bind-Tags</code> for two-way binding.
+                </ApiParameter>
+                <ApiParameter Name="Placeholder" Type="string" Default="&quot;Add tag...&quot;">
+                    Placeholder text shown when no tags are present.
+                </ApiParameter>
+                <ApiParameter Name="MaxTags" Type="int" Default="int.MaxValue">
+                    Maximum number of tags allowed.
+                </ApiParameter>
+                <ApiParameter Name="MaxTagLength" Type="int" Default="50">
+                    Maximum character length for a single tag.
+                </ApiParameter>
+                <ApiParameter Name="AllowDuplicates" Type="bool" Default="false">
+                    Whether duplicate tag values are allowed.
+                </ApiParameter>
+                <ApiParameter Name="AddTrigger" Type="TagInputTrigger" Default="Enter | Comma">
+                    Which keys trigger tag creation. Combine flags with bitwise OR.
+                </ApiParameter>
+                <ApiParameter Name="Validate" Type="Func&lt;string, bool&gt;?" Default="null">
+                    Optional validation function. Return false to reject a tag.
+                </ApiParameter>
+                <ApiParameter Name="OnTagRejected" Type="EventCallback&lt;string&gt;" Default="">
+                    Callback when a tag is rejected.
+                </ApiParameter>
+                <ApiParameter Name="Suggestions" Type="IEnumerable&lt;string&gt;?" Default="null">
+                    Static list of suggestions shown as the user types.
+                </ApiParameter>
+                <ApiParameter Name="OnSearchSuggestions" Type="Func&lt;string, CancellationToken, Task&lt;IEnumerable&lt;string&gt;&gt;&gt;?" Default="null">
+                    Async function to load suggestions.
+                </ApiParameter>
+                <ApiParameter Name="SuggestionDebounceMs" Type="int" Default="300">
+                    Debounce interval for suggestion search.
+                </ApiParameter>
+                <ApiParameter Name="Variant" Type="TagInputVariant" Default="Default">
+                    Visual variant for rendered tags.
+                </ApiParameter>
+                <ApiParameter Name="Clearable" Type="bool" Default="false">
+                    Show a clear-all button when tags are present.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether the component is disabled.
+                </ApiParameter>
+                <ApiParameter Name="TagTemplate" Type="RenderFragment&lt;string&gt;?" Default="null">
+                    Custom template for rendering each tag.
+                </ApiParameter>
+                <ApiParameter Name="TagsExpression" Type="Expression&lt;Func&lt;IReadOnlyList&lt;string&gt;?&gt;&gt;?" Default="null">
+                    Expression for EditForm validation.
+                </ApiParameter>
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">
+                    Accessible label for the tag input container.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?" Default="null">
+                    Additional CSS classes for the container.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    private IReadOnlyList<string>? basicTags;
+    private IReadOnlyList<string>? triggerTags;
+    private IReadOnlyList<string>? limitedTags;
+    private IReadOnlyList<string>? emailTags;
+    private IReadOnlyList<string>? clearableTags;
+    private IReadOnlyList<string>? suggestedTags;
+    private IReadOnlyList<string>? asyncTags;
+    private IReadOnlyList<string>? variantTags1 = new[] { "React", "Vue" };
+    private IReadOnlyList<string>? variantTags2 = new[] { "TypeScript", "Rust" };
+    private IReadOnlyList<string>? variantTags3 = new[] { "Blazor", "C#" };
+    private IReadOnlyList<string> disabledTags = new[] { "React", "Vue", "Angular" };
+    private IReadOnlyList<string>? templateTags;
+
+    private string? rejectedMessage;
+
+    private readonly string[] availableFrameworks =
+    {
+        "React", "Vue", "Angular", "Blazor", "Svelte",
+        "Next.js", "Nuxt", "SvelteKit", "Astro", "Solid"
+    };
+
+    private void HandleRejected(string tag)
+    {
+        rejectedMessage = $"Rejected: \"{tag}\"";
+        StateHasChanged();
+    }
+
+    private bool ValidateEmail(string tag) =>
+        tag.Contains('@') && tag.Contains('.');
+
+    private async Task<IEnumerable<string>> SearchFrameworks(string query, CancellationToken ct)
+    {
+        await Task.Delay(200, ct);
+        return availableFrameworks.Where(f =>
+            f.Contains(query, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string FormatTags(IReadOnlyList<string>? tags) =>
+        tags is { Count: > 0 } ? string.Join(", ", tags) : "(none)";
+}

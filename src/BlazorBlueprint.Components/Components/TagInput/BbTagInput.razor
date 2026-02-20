@@ -1,0 +1,93 @@
+@namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+<div class="relative">
+    <div @ref="_containerRef"
+         data-tag-input-container
+         class="@ContainerCssClass"
+         aria-label="@AriaLabel"
+         aria-disabled="@(Disabled ? "true" : null)">
+
+        @if (_currentTags.Count > 0)
+        {
+            @foreach (var tag in _currentTags)
+            {
+                @if (TagTemplate is not null)
+                {
+                    <div @key="tag" class="contents">
+                        @TagTemplate(tag)
+                    </div>
+                }
+                else
+                {
+                    <BbBadge @key="tag" Variant="@TagBadgeVariant" Class="gap-1 shrink-0">
+                        @tag
+                        @if (!Disabled)
+                        {
+                            <button type="button"
+                                    class="ml-0.5 rounded-full outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-secondary-foreground/20"
+                                    aria-label="@($"Remove {tag}")"
+                                    @onclick="GetRemoveHandler(tag)"
+                                    @onclick:stopPropagation="true">
+                                <LucideIcon Name="x" Size="12" Class="h-3 w-3" />
+                            </button>
+                        }
+                    </BbBadge>
+                }
+            }
+        }
+
+        <input @ref="_inputRef"
+               type="text"
+               class="@InputCssClass"
+               value="@_inputText"
+               placeholder="@EffectivePlaceholder"
+               disabled="@Disabled"
+               aria-label="@(AriaLabel ?? "Add tag")"
+               aria-autocomplete="@(HasSuggestions ? "list" : null)"
+               aria-expanded="@(_suggestionsOpen ? "true" : null)"
+               aria-controls="@(_suggestionsOpen ? $"{_instanceId}-suggestions" : null)"
+               aria-activedescendant="@ActiveDescendantId"
+               @oninput="HandleInput"
+               @onfocus="HandleFocus"
+               @onblur="HandleBlur" />
+
+        @if (Clearable && _currentTags.Count > 0 && !Disabled)
+        {
+            <button type="button"
+                    class="ml-auto shrink-0 rounded-sm opacity-70 hover:opacity-100 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    aria-label="Clear all tags"
+                    @onclick="ClearAll"
+                    @onclick:stopPropagation="true">
+                <LucideIcon Name="x" Size="14" Class="h-3.5 w-3.5" />
+            </button>
+        }
+    </div>
+
+    @if (_suggestionsOpen && _filteredSuggestions.Count > 0)
+    {
+        <div class="absolute left-0 right-0 top-full z-50 mt-1 rounded-md border border-input bg-popover p-1 shadow-md max-h-48 overflow-y-auto">
+            <ul id="@($"{_instanceId}-suggestions")"
+                role="listbox"
+                aria-label="Tag suggestions">
+                @for (int i = 0; i < _filteredSuggestions.Count; i++)
+                {
+                    var suggestion = _filteredSuggestions[i];
+                    var index = i;
+                    var isActive = _suggestionIndex == index;
+                    <li @key="suggestion"
+                        id="@($"{_instanceId}-suggestion-{index}")"
+                        role="option"
+                        aria-selected="@isActive.ToString().ToLower()"
+                        class="@SuggestionItemCssClass(isActive)"
+                        @onmousedown="() => SelectSuggestion(suggestion)"
+                        @onmousedown:preventDefault="true">
+                        @suggestion
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</div>
