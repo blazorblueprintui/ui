@@ -2,8 +2,9 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using System.Linq.Expressions
 @inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
 
-<div id="@EffectiveId" class="@ContainerClass" @onpaste="HandlePaste">
+<div @ref="_containerRef" id="@EffectiveId" class="@ContainerClass">
     @if (EffectiveName != null)
     {
         <input type="hidden" name="@EffectiveName" value="@Value" />
@@ -137,6 +138,10 @@
     private ElementReference[] _inputRefs = Array.Empty<ElementReference>();
     private string[] _values = Array.Empty<string>();
     private string? _generatedId;
+    private ElementReference _containerRef;
+    private IJSObjectReference? _jsModule;
+    private DotNetObjectReference<BbInputOTP>? _dotNetRef;
+    private bool _jsInitialized;
 
     protected override void OnInitialized()
     {
@@ -172,6 +177,25 @@
         {
             _editContext = CascadedEditContext;
             _fieldIdentifier = FieldIdentifier.Create(ValueExpression);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_jsInitialized)
+        {
+            try
+            {
+                _jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import",
+                    "./_content/BlazorBlueprint.Components/js/input-otp.js");
+                _dotNetRef = DotNetObjectReference.Create(this);
+                await _jsModule.InvokeVoidAsync("initialize", _containerRef, _dotNetRef, EffectiveId);
+                _jsInitialized = true;
+            }
+            catch
+            {
+                // Ignore JS initialization errors (e.g., prerendering)
+            }
         }
     }
 
@@ -234,9 +258,42 @@
         }
     }
 
-    private void HandlePaste(ClipboardEventArgs e)
+    [JSInvokable]
+    public async Task OnPasteJs(string pastedText)
     {
-        // Handle paste - filled in via JS interop if needed
+        // Extract only digit characters
+        var digits = string.Concat(pastedText.Where(char.IsDigit));
+
+        if (string.IsNullOrEmpty(digits))
+        {
+            return;
+        }
+
+        // Fill values from the start, up to Length; clear any slots beyond pasted digits
+        for (int i = 0; i < Length; i++)
+        {
+            _values[i] = i < digits.Length ? digits[i].ToString() : "";
+        }
+
+        var newValue = string.Join("", _values);
+        await ValueChanged.InvokeAsync(newValue);
+
+        if (_editContext != null && ValueExpression != null && _fieldIdentifier.FieldName != null)
+        {
+            _editContext.NotifyFieldChanged(_fieldIdentifier);
+        }
+
+        // Focus the last filled box, or the next empty box
+        var focusIndex = Math.Min(digits.Length, Length - 1);
+        await FocusInput(focusIndex);
+
+        // Fire OnComplete if all slots are filled
+        if (newValue.Length == Length)
+        {
+            await OnComplete.InvokeAsync(newValue);
+        }
+
+        StateHasChanged();
     }
 
     private void HandleFocus(int index)
@@ -288,4 +345,22 @@
     );
 
     private string SeparatorClass => "flex items-center justify-center text-muted-foreground";
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_jsInitialized && _jsModule != null)
+        {
+            try
+            {
+                await _jsModule.InvokeVoidAsync("dispose", EffectiveId);
+                await _jsModule.DisposeAsync();
+            }
+            catch
+            {
+                // Ignore disposal errors
+            }
+        }
+
+        _dotNetRef?.Dispose();
+    }
 }
