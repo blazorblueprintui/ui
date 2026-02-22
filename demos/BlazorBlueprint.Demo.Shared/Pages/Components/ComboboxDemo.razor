@@ -396,6 +396,46 @@
         <CodeBlock Source="Components/Combobox/compositional.txt" />
     </section>
 
+    <!-- Async Compositional Mode -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Async Compositional Mode</h2>
+        <p class="text-sm text-muted-foreground">
+            Combine <code class="bg-muted px-1 py-0.5 rounded text-sm">SearchQueryChanged</code> with compositional
+            <code class="bg-muted px-1 py-0.5 rounded text-sm">BbComboboxItem</code> children to load data asynchronously
+            while retaining full control over item rendering.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <BbCombobox TValue="string"
+                     @bind-Value="asyncCompSelectedUser"
+                     SearchQueryChanged="@HandleUserSearch"
+                     Placeholder="Search for a user..."
+                     SearchPlaceholder="Type to search users..."
+                     EmptyMessage="@(asyncCompIsLoading ? "Loading..." : "No users found.")"
+                     PopoverWidth="w-[300px]">
+                @foreach (var user in asyncCompUsers)
+                {
+                    <BbComboboxItem Value="@user.Id" Text="@user.Name">
+                        <div class="flex items-center gap-2">
+                            <span class="@($"inline-block h-2 w-2 rounded-full {user.StatusColor}")"></span>
+                            <div class="flex flex-col">
+                                <span>@user.Name</span>
+                                <span class="text-xs text-muted-foreground">@user.Role</span>
+                            </div>
+                        </div>
+                    </BbComboboxItem>
+                }
+            </BbCombobox>
+            <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+                <p class="text-sm"><span class="font-medium">Selected value:</span> <span class="font-mono">@(string.IsNullOrEmpty(asyncCompSelectedUser) ? "(none)" : asyncCompSelectedUser)</span></p>
+                <p class="text-sm"><span class="font-medium">Selected text:</span> @(string.IsNullOrEmpty(asyncCompSelectedUser) ? "(none)" : GetAsyncCompUserName(asyncCompSelectedUser))</p>
+                <p class="text-sm"><span class="font-medium">Results loaded:</span> @asyncCompUsers.Length</p>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/Combobox/async-compositional.txt" />
+    </section>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>
@@ -659,6 +699,64 @@
         asyncIsLoading = false;
         StateHasChanged();
     }
+
+    // Async compositional mode example
+    private string? asyncCompSelectedUser;
+    private UserInfo[] asyncCompUsers = allUsers[0..5];
+    private bool asyncCompIsLoading;
+    private CancellationTokenSource? userSearchCts;
+
+    private static readonly UserInfo[] allUsers =
+    [
+        new("alice", "Alice Johnson", "Engineering Lead", "bg-green-500"),
+        new("bob", "Bob Smith", "Senior Developer", "bg-green-500"),
+        new("carol", "Carol Williams", "Product Manager", "bg-green-500"),
+        new("dave", "Dave Brown", "Designer", "bg-yellow-500"),
+        new("eve", "Eve Davis", "QA Engineer", "bg-green-500"),
+        new("frank", "Frank Miller", "DevOps Engineer", "bg-red-500"),
+        new("grace", "Grace Wilson", "Data Scientist", "bg-yellow-500"),
+        new("hank", "Hank Taylor", "Backend Developer", "bg-green-500"),
+        new("ivy", "Ivy Anderson", "Frontend Developer", "bg-green-500"),
+        new("jack", "Jack Thomas", "Architect", "bg-red-500")
+    ];
+
+    private async Task HandleUserSearch(string query)
+    {
+        userSearchCts?.Cancel();
+        var cts = userSearchCts = new CancellationTokenSource();
+
+        asyncCompIsLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            await Task.Delay(300, cts.Token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            asyncCompUsers = allUsers[0..5];
+        }
+        else
+        {
+            asyncCompUsers = allUsers
+                .Where(u => u.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
+                         || u.Role.Contains(query, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+
+        asyncCompIsLoading = false;
+        StateHasChanged();
+    }
+
+    private string GetAsyncCompUserName(string? id) =>
+        id is not null ? allUsers.FirstOrDefault(u => u.Id == id)?.Name ?? "(none)" : "(none)";
+
+    private record UserInfo(string Id, string Name, string Role, string StatusColor);
 
     // Compositional mode example
     private string? compositionalValue;

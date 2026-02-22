@@ -1,0 +1,51 @@
+<BbCombobox TValue="string"
+         @bind-Value="selectedUser"
+         SearchQueryChanged="@HandleUserSearch"
+         Placeholder="Search for a user..."
+         SearchPlaceholder="Type to search users..."
+         EmptyMessage="@(isLoading ? "Loading..." : "No users found.")"
+         PopoverWidth="w-[300px]">
+    @foreach (var user in users)
+    {
+        <BbComboboxItem Value="@user.Id" Text="@user.Name">
+            <div class="flex items-center gap-2">
+                <span class="inline-block h-2 w-2 rounded-full @user.StatusColor"></span>
+                <div class="flex flex-col">
+                    <span>@user.Name</span>
+                    <span class="text-xs text-muted-foreground">@user.Role</span>
+                </div>
+            </div>
+        </BbComboboxItem>
+    }
+</BbCombobox>
+
+@code {
+    private string? selectedUser;
+    private UserInfo[] users = [];
+    private bool isLoading;
+    private CancellationTokenSource? searchCts;
+
+    private async Task HandleUserSearch(string query)
+    {
+        searchCts?.Cancel();
+        var cts = searchCts = new CancellationTokenSource();
+
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Replace with your actual API call
+            users = await MyApi.SearchUsersAsync(query, cts.Token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private record UserInfo(string Id, string Name, string Role, string StatusColor);
+}
