@@ -50,6 +50,8 @@ public partial class BbCombobox<TValue> : ComponentBase
 {
     private FieldIdentifier _fieldIdentifier;
     private EditContext? _editContext;
+    private static readonly Func<CommandItemMetadata, string, bool> PassthroughFilter = (_, _) => true;
+    private Func<CommandItemMetadata, string, bool>? _filterFunction;
 
     /// <summary>
     /// Gets or sets the cascaded EditContext from a parent EditForm.
@@ -107,6 +109,25 @@ public partial class BbCombobox<TValue> : ComponentBase
     /// </summary>
     [Parameter]
     public string EmptyMessage { get; set; } = "No results found.";
+
+    /// <summary>
+    /// Gets or sets the current search query text.
+    /// Use with <see cref="SearchQueryChanged"/> for two-way binding to react to filter changes,
+    /// e.g. for server-side filtering or loading additional data.
+    /// </summary>
+    /// <remarks>
+    /// When the popover closes, the search query is silently reset to <see cref="string.Empty"/>
+    /// without invoking <see cref="SearchQueryChanged"/>. This keeps the internal Command filter
+    /// cleared for the next open without triggering a consumer data reload on close.
+    /// </remarks>
+    [Parameter]
+    public string SearchQuery { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the callback that is invoked when the search query changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> SearchQueryChanged { get; set; }
 
     /// <summary>
     /// Gets or sets additional CSS classes to apply to the combobox container.
@@ -193,6 +214,10 @@ public partial class BbCombobox<TValue> : ComponentBase
         // Filter out null options for safety (Options mode only)
         Options = Options?.Where(o => o != null);
 
+        // When the consumer handles filtering externally via SearchQueryChanged,
+        // bypass the Command's internal text filter to avoid double-filtering and race conditions.
+        _filterFunction = SearchQueryChanged.HasDelegate ? PassthroughFilter : null;
+
         if (CascadedEditContext != null && ValueExpression != null)
         {
             _editContext = CascadedEditContext;
@@ -258,7 +283,7 @@ public partial class BbCombobox<TValue> : ComponentBase
 
     /// <summary>
     /// Handles the open state change of the popover.
-    /// Resets focus tracking when the popover closes.
+    /// Resets focus tracking and search query when the popover closes.
     /// </summary>
     /// <param name="isOpen">Whether the popover is now open.</param>
     private void HandleOpenChanged(bool isOpen)
@@ -267,7 +292,20 @@ public partial class BbCombobox<TValue> : ComponentBase
         if (!isOpen)
         {
             _focusDone = false; // Reset for next open
+
+            // Reset search query silently — no need to invoke SearchQueryChanged
+            // since the popover is closed and the consumer shouldn't react to this.
+            SearchQuery = string.Empty;
         }
+    }
+
+    /// <summary>
+    /// Handles the search query change from the inner Command component.
+    /// </summary>
+    private async Task HandleSearchQueryChanged(string query)
+    {
+        SearchQuery = query;
+        await SearchQueryChanged.InvokeAsync(query);
     }
 
     /// <summary>

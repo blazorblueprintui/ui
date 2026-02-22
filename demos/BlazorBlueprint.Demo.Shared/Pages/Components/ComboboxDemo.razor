@@ -204,6 +204,34 @@
         <CodeBlock Source="Components/Combobox/match-trigger-width.txt" />
     </section>
 
+    <!-- Async Data Loading -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Async Data Loading</h2>
+        <p class="text-sm text-muted-foreground">
+            Use <code class="bg-muted px-1 py-0.5 rounded text-sm">SearchQueryChanged</code> to react to filter changes
+            and load data from an external source. The search query is exposed via
+            <code class="bg-muted px-1 py-0.5 rounded text-sm">@@bind-SearchQuery</code>.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <BbCombobox TValue="string"
+                     Options="asyncCities"
+                     @bind-Value="asyncSelectedCity"
+                     SearchQueryChanged="@HandleCitySearch"
+                     Placeholder="Search for a city..."
+                     SearchPlaceholder="Type to search cities..."
+                     EmptyMessage="@(asyncIsLoading ? "Loading..." : "No cities found.")"
+                     PopoverWidth="w-[280px]" />
+            <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+                <p class="text-sm"><span class="font-medium">Selected value:</span> <span class="font-mono">@(string.IsNullOrEmpty(asyncSelectedCity) ? "(none)" : asyncSelectedCity)</span></p>
+                <p class="text-sm"><span class="font-medium">Selected text:</span> @(string.IsNullOrEmpty(asyncSelectedCity) ? "(none)" : asyncCities.GetText(asyncSelectedCity))</p>
+                <p class="text-sm"><span class="font-medium">Results loaded:</span> @asyncCities.Length</p>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/Combobox/async-data-loading.txt" />
+    </section>
+
     <!-- Disabled State -->
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">Disabled State</h2>
@@ -368,6 +396,46 @@
         <CodeBlock Source="Components/Combobox/compositional.txt" />
     </section>
 
+    <!-- Async Compositional Mode -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Async Compositional Mode</h2>
+        <p class="text-sm text-muted-foreground">
+            Combine <code class="bg-muted px-1 py-0.5 rounded text-sm">SearchQueryChanged</code> with compositional
+            <code class="bg-muted px-1 py-0.5 rounded text-sm">BbComboboxItem</code> children to load data asynchronously
+            while retaining full control over item rendering.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <BbCombobox TValue="string"
+                     @bind-Value="asyncCompSelectedUser"
+                     SearchQueryChanged="@HandleUserSearch"
+                     Placeholder="Search for a user..."
+                     SearchPlaceholder="Type to search users..."
+                     EmptyMessage="@(asyncCompIsLoading ? "Loading..." : "No users found.")"
+                     PopoverWidth="w-[300px]">
+                @foreach (var user in asyncCompUsers)
+                {
+                    <BbComboboxItem Value="@user.Id" Text="@user.Name">
+                        <div class="flex items-center gap-2">
+                            <span class="@($"inline-block h-2 w-2 rounded-full {user.StatusColor}")"></span>
+                            <div class="flex flex-col">
+                                <span>@user.Name</span>
+                                <span class="text-xs text-muted-foreground">@user.Role</span>
+                            </div>
+                        </div>
+                    </BbComboboxItem>
+                }
+            </BbCombobox>
+            <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+                <p class="text-sm"><span class="font-medium">Selected value:</span> <span class="font-mono">@(string.IsNullOrEmpty(asyncCompSelectedUser) ? "(none)" : asyncCompSelectedUser)</span></p>
+                <p class="text-sm"><span class="font-medium">Selected text:</span> @(string.IsNullOrEmpty(asyncCompSelectedUser) ? "(none)" : GetAsyncCompUserName(asyncCompSelectedUser))</p>
+                <p class="text-sm"><span class="font-medium">Results loaded:</span> @asyncCompUsers.Length</p>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/Combobox/async-compositional.txt" />
+    </section>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>
@@ -438,6 +506,12 @@
                 <ApiParameter Name="ActiveClass" Type="string?" Default="&quot;bg-accent text-accent-foreground&quot;">
                     CSS classes applied to the trigger when the dropdown is open. Set to <code>null</code> or empty to disable.
                     Use to match the context (e.g., <code>"bg-sidebar-accent text-sidebar-accent-foreground"</code> in sidebars).
+                </ApiParameter>
+                <ApiParameter Name="SearchQuery" Type="string" Default="&quot;&quot;">
+                    Current search query text. Supports two-way binding with <code>@@bind-SearchQuery</code> for reacting to filter changes.
+                </ApiParameter>
+                <ApiParameter Name="SearchQueryChanged" Type="EventCallback&lt;string&gt;">
+                    Callback invoked when the search query changes. Use for server-side filtering or loading external data.
                 </ApiParameter>
                 <ApiParameter Name="ChildContent" Type="RenderFragment?">
                     Content for compositional mode. Use ComboboxItem components as children.
@@ -576,6 +650,128 @@
 
     private string GetCompositionalLabel(string? value) =>
         value is not null && compositionalLabels.TryGetValue(value, out var label) ? label : "(none)";
+
+    // Async data loading example
+    private string? asyncSelectedCity;
+    private SelectOption<string>[] asyncCities = allCities[0..5];
+    private bool asyncIsLoading;
+    private CancellationTokenSource? searchCts;
+
+    private static readonly SelectOption<string>[] allCities =
+    [
+        new("new-york", "New York"),
+        new("los-angeles", "Los Angeles"),
+        new("chicago", "Chicago"),
+        new("houston", "Houston"),
+        new("phoenix", "Phoenix"),
+        new("philadelphia", "Philadelphia"),
+        new("san-antonio", "San Antonio"),
+        new("san-diego", "San Diego"),
+        new("dallas", "Dallas"),
+        new("san-jose", "San Jose"),
+        new("london", "London"),
+        new("paris", "Paris"),
+        new("tokyo", "Tokyo"),
+        new("berlin", "Berlin"),
+        new("sydney", "Sydney"),
+        new("toronto", "Toronto"),
+        new("amsterdam", "Amsterdam"),
+        new("singapore", "Singapore"),
+        new("dubai", "Dubai"),
+        new("mumbai", "Mumbai")
+    ];
+
+    private async Task HandleCitySearch(string query)
+    {
+        // Cancel any in-flight search to avoid stale results overwriting newer ones
+        searchCts?.Cancel();
+        var cts = searchCts = new CancellationTokenSource();
+
+        asyncIsLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Simulate API call delay
+            await Task.Delay(300, cts.Token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            asyncCities = allCities[0..5]; // Show top 5 cities when query is empty
+        }
+        else
+        {
+            asyncCities = allCities
+                .Where(c => c.Text.Contains(query, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+
+        asyncIsLoading = false;
+        StateHasChanged();
+    }
+
+    // Async compositional mode example
+    private string? asyncCompSelectedUser;
+    private UserInfo[] asyncCompUsers = allUsers[0..5];
+    private bool asyncCompIsLoading;
+    private CancellationTokenSource? userSearchCts;
+
+    private static readonly UserInfo[] allUsers =
+    [
+        new("alice", "Alice Johnson", "Engineering Lead", "bg-green-500"),
+        new("bob", "Bob Smith", "Senior Developer", "bg-green-500"),
+        new("carol", "Carol Williams", "Product Manager", "bg-green-500"),
+        new("dave", "Dave Brown", "Designer", "bg-yellow-500"),
+        new("eve", "Eve Davis", "QA Engineer", "bg-green-500"),
+        new("frank", "Frank Miller", "DevOps Engineer", "bg-red-500"),
+        new("grace", "Grace Wilson", "Data Scientist", "bg-yellow-500"),
+        new("hank", "Hank Taylor", "Backend Developer", "bg-green-500"),
+        new("ivy", "Ivy Anderson", "Frontend Developer", "bg-green-500"),
+        new("jack", "Jack Thomas", "Architect", "bg-red-500")
+    ];
+
+    private async Task HandleUserSearch(string query)
+    {
+        userSearchCts?.Cancel();
+        var cts = userSearchCts = new CancellationTokenSource();
+
+        asyncCompIsLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            await Task.Delay(300, cts.Token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            asyncCompUsers = allUsers[0..5];
+        }
+        else
+        {
+            asyncCompUsers = allUsers
+                .Where(u => u.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
+                         || u.Role.Contains(query, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+
+        asyncCompIsLoading = false;
+        StateHasChanged();
+    }
+
+    private string GetAsyncCompUserName(string? id) =>
+        id is not null ? allUsers.FirstOrDefault(u => u.Id == id)?.Name ?? "(none)" : "(none)";
+
+    private record UserInfo(string Id, string Name, string Role, string StatusColor);
 
     private void HandleFormSubmit()
     {
