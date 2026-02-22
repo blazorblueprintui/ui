@@ -1,0 +1,38 @@
+<BbCombobox TValue="string"
+         Options="cities"
+         @bind-Value="selectedCity"
+         SearchQueryChanged="@HandleCitySearch"
+         Placeholder="Search for a city..."
+         SearchPlaceholder="Type to search cities..."
+         EmptyMessage="@(isLoading ? "Loading..." : "No cities found.")"
+         PopoverWidth="w-[280px]" />
+
+@code {
+    private string? selectedCity;
+    private SelectOption<string>[] cities = [];
+    private bool isLoading;
+    private CancellationTokenSource? searchCts;
+
+    private async Task HandleCitySearch(string query)
+    {
+        // Cancel any in-flight search to avoid stale results
+        searchCts?.Cancel();
+        var cts = searchCts = new CancellationTokenSource();
+
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Replace with your actual API call
+            cities = await MyApi.SearchCitiesAsync(query, cts.Token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        isLoading = false;
+        StateHasChanged();
+    }
+}

@@ -204,6 +204,34 @@
         <CodeBlock Source="Components/Combobox/match-trigger-width.txt" />
     </section>
 
+    <!-- Async Data Loading -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Async Data Loading</h2>
+        <p class="text-sm text-muted-foreground">
+            Use <code class="bg-muted px-1 py-0.5 rounded text-sm">SearchQueryChanged</code> to react to filter changes
+            and load data from an external source. The search query is exposed via
+            <code class="bg-muted px-1 py-0.5 rounded text-sm">@@bind-SearchQuery</code>.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <BbCombobox TValue="string"
+                     Options="asyncCities"
+                     @bind-Value="asyncSelectedCity"
+                     SearchQueryChanged="@HandleCitySearch"
+                     Placeholder="Search for a city..."
+                     SearchPlaceholder="Type to search cities..."
+                     EmptyMessage="@(asyncIsLoading ? "Loading..." : "No cities found.")"
+                     PopoverWidth="w-[280px]" />
+            <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+                <p class="text-sm"><span class="font-medium">Selected value:</span> <span class="font-mono">@(string.IsNullOrEmpty(asyncSelectedCity) ? "(none)" : asyncSelectedCity)</span></p>
+                <p class="text-sm"><span class="font-medium">Selected text:</span> @(string.IsNullOrEmpty(asyncSelectedCity) ? "(none)" : asyncCities.GetText(asyncSelectedCity))</p>
+                <p class="text-sm"><span class="font-medium">Results loaded:</span> @asyncCities.Length</p>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/Combobox/async-data-loading.txt" />
+    </section>
+
     <!-- Disabled State -->
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">Disabled State</h2>
@@ -439,6 +467,12 @@
                     CSS classes applied to the trigger when the dropdown is open. Set to <code>null</code> or empty to disable.
                     Use to match the context (e.g., <code>"bg-sidebar-accent text-sidebar-accent-foreground"</code> in sidebars).
                 </ApiParameter>
+                <ApiParameter Name="SearchQuery" Type="string" Default="&quot;&quot;">
+                    Current search query text. Supports two-way binding with <code>@@bind-SearchQuery</code> for reacting to filter changes.
+                </ApiParameter>
+                <ApiParameter Name="SearchQueryChanged" Type="EventCallback&lt;string&gt;">
+                    Callback invoked when the search query changes. Use for server-side filtering or loading external data.
+                </ApiParameter>
                 <ApiParameter Name="ChildContent" Type="RenderFragment?">
                     Content for compositional mode. Use ComboboxItem components as children.
                 </ApiParameter>
@@ -561,6 +595,70 @@
         new(ProjectGammaId, "Project Gamma"),
         new(ProjectDeltaId, "Project Delta")
     ];
+
+    // Async data loading example
+    private string? asyncSelectedCity;
+    private SelectOption<string>[] asyncCities = allCities[0..5];
+    private bool asyncIsLoading;
+    private CancellationTokenSource? searchCts;
+
+    private static readonly SelectOption<string>[] allCities =
+    [
+        new("new-york", "New York"),
+        new("los-angeles", "Los Angeles"),
+        new("chicago", "Chicago"),
+        new("houston", "Houston"),
+        new("phoenix", "Phoenix"),
+        new("philadelphia", "Philadelphia"),
+        new("san-antonio", "San Antonio"),
+        new("san-diego", "San Diego"),
+        new("dallas", "Dallas"),
+        new("san-jose", "San Jose"),
+        new("london", "London"),
+        new("paris", "Paris"),
+        new("tokyo", "Tokyo"),
+        new("berlin", "Berlin"),
+        new("sydney", "Sydney"),
+        new("toronto", "Toronto"),
+        new("amsterdam", "Amsterdam"),
+        new("singapore", "Singapore"),
+        new("dubai", "Dubai"),
+        new("mumbai", "Mumbai")
+    ];
+
+    private async Task HandleCitySearch(string query)
+    {
+        // Cancel any in-flight search to avoid stale results overwriting newer ones
+        searchCts?.Cancel();
+        var cts = searchCts = new CancellationTokenSource();
+
+        asyncIsLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Simulate API call delay
+            await Task.Delay(300, cts.Token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            asyncCities = allCities[0..5]; // Show top 5 cities when query is empty
+        }
+        else
+        {
+            asyncCities = allCities
+                .Where(c => c.Text.Contains(query, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
+
+        asyncIsLoading = false;
+        StateHasChanged();
+    }
 
     // Compositional mode example
     private string? compositionalValue;
