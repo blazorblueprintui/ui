@@ -70,6 +70,7 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
     private ElementReference _scrollContainerRef;
     private IJSObjectReference? _jsModule;
     private bool _isLoadingMore;
+    private int _infiniteScrollVersion;
 
     // ShouldRender tracking fields
     private IEnumerable<TItem>? _lastData;
@@ -82,6 +83,7 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
     private int _lastPaginationVersion;
     private int _slotVersion;
     private int _lastSlotVersion;
+    private int _lastInfiniteScrollVersion;
 
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
@@ -182,6 +184,15 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
     /// </summary>
     [Parameter]
     public bool ShowLoadMoreButton { get; set; }
+
+    /// <summary>
+    /// Gets or sets the height of the scroll container when auto-scroll infinite scroll is active
+    /// (EnableInfiniteScroll = true, ShowLoadMoreButton = false).
+    /// Accepts any valid CSS height value, e.g. "400px", "60vh", "30rem".
+    /// When null, no inline height is applied and the container inherits its height from the layout.
+    /// </summary>
+    [Parameter]
+    public string? ScrollHeight { get; set; }
 
     /// <summary>
     /// Gets or sets a custom template for the empty state.
@@ -542,6 +553,7 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
 
         _isLoadingMore = true;
         _currentInfinitePage++;
+        _infiniteScrollVersion++;
         await ProcessDataAsync();
         _isLoadingMore = false;
         StateHasChanged();
@@ -575,8 +587,9 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
         var searchChanged = _lastSearchValue != _searchValue;
         var paginationChanged = _lastPaginationVersion != _paginationVersion;
         var slotChanged = _lastSlotVersion != _slotVersion;
+        var infiniteScrollChanged = _lastInfiniteScrollVersion != _infiniteScrollVersion;
 
-        if (dataChanged || layoutChanged || loadingChanged || fieldsChanged || searchChanged || paginationChanged || slotChanged)
+        if (dataChanged || layoutChanged || loadingChanged || fieldsChanged || searchChanged || paginationChanged || slotChanged || infiniteScrollChanged)
         {
             _lastData = Data;
             _lastLayout = Layout;
@@ -585,6 +598,7 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
             _lastSearchValue = _searchValue;
             _lastPaginationVersion = _paginationVersion;
             _lastSlotVersion = _slotVersion;
+            _lastInfiniteScrollVersion = _infiniteScrollVersion;
             return true;
         }
 
