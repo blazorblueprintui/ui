@@ -235,10 +235,38 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
     public Func<IEnumerable<TItem>, Task<IEnumerable<TItem>>>? PreprocessData { get; set; }
 
     /// <summary>
-    /// Gets or sets additional CSS classes for the container div.
+    /// Gets or sets additional CSS classes for the root container div.
     /// </summary>
     [Parameter]
     public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional Tailwind CSS classes applied to the grid layout container.
+    /// Merged on top of the default <c>grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4</c>
+    /// via TailwindMerge, so any class you provide that conflicts with a default (e.g.
+    /// <c>grid-cols-2</c>, <c>gap-6</c>) will win. Supply only the classes you want to
+    /// override — the rest of the defaults are preserved.
+    /// </summary>
+    [Parameter]
+    public string? GridClass { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional Tailwind CSS classes applied to the list layout container.
+    /// Merged on top of the default <c>flex flex-col gap-2</c> via TailwindMerge, so any
+    /// conflicting class (e.g. <c>gap-4</c>) wins. To remove the gap entirely and use
+    /// dividers instead, pass <c>gap-0 divide-y</c>.
+    /// </summary>
+    /// <example>
+    /// <code>
+    /// // Wider spacing between rows
+    /// ListClass="gap-4"
+    ///
+    /// // Compact divider-style list with no gap
+    /// ListClass="gap-0 divide-y"
+    /// </code>
+    /// </example>
+    [Parameter]
+    public string? ListClass { get; set; }
 
     /// <summary>
     /// Event callback invoked when sorting changes.
@@ -257,8 +285,8 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
     private string ContainerCssClass => ClassNames.cn("w-full space-y-4", Class);
 
     private string ItemContainerCssClass => _effectiveLayout == DataViewLayout.Grid
-        ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-        : "flex flex-col gap-2";
+        ? ClassNames.cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4", GridClass)
+        : ClassNames.cn("flex flex-col gap-2", ListClass);
 
     /// <summary>
     /// The resolved layout, accounting for which templates are available.

@@ -1,5 +1,7 @@
-@* products = MockDataService.GenerateProducts(60) *@
-<BbDataView TItem="Product" Data="@products" Layout="DataViewLayout.Grid" InitialPageSize="12"
+@* products = MockDataService.GenerateProducts(60)
+   Both ListTemplate and GridTemplate are provided, so the toolbar
+   shows layout-toggle buttons letting the user switch between views. *@
+<BbDataView TItem="Product" Data="@products" InitialPageSize="12"
             PageSizes="@(new[] { 6, 12, 24, 48 })">
     <HeaderContent>
         <div class="flex items-center justify-between pb-4 border-b">
@@ -10,7 +12,33 @@
             <BbBadge Variant="BadgeVariant.Secondary">@products.Count(p => p.Stock > 0) in stock</BbBadge>
         </div>
     </HeaderContent>
-    <ItemTemplate Context="product">
+    <ListTemplate Context="product">
+        <BbCard Class="flex items-center gap-4 p-3 shadow-none hover:bg-accent/50 transition-colors">
+            <div class="size-16 shrink-0 rounded-md overflow-hidden bg-muted">
+                <img src="@product.ImageUrl" alt="@product.Name"
+                     class="object-cover w-full h-full" loading="lazy" />
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                    <p class="text-sm font-semibold truncate">@product.Name</p>
+                    <BbBadge Variant="BadgeVariant.Outline" Class="shrink-0 text-xs">@product.Category</BbBadge>
+                </div>
+                <BbRating Value="@product.Rating" ReadOnly="true" Size="RatingSize.Small" />
+            </div>
+            <div class="flex flex-col items-end gap-2 shrink-0">
+                <span class="text-base font-bold">$@product.Price.ToString("F2")</span>
+                @if (product.Stock > 0)
+                {
+                    <BbButton Size="ButtonSize.Small">Add to Cart</BbButton>
+                }
+                else
+                {
+                    <BbBadge Variant="BadgeVariant.Destructive">Out of Stock</BbBadge>
+                }
+            </div>
+        </BbCard>
+    </ListTemplate>
+    <GridTemplate Context="product">
         <BbCard Class="overflow-hidden flex flex-col hover:shadow-md transition-shadow">
             <div class="relative aspect-square overflow-hidden bg-muted">
                 <img src="@product.ImageUrl" alt="@product.Name"
@@ -39,7 +67,7 @@
                 </div>
             </BbCardContent>
         </BbCard>
-    </ItemTemplate>
+    </GridTemplate>
     <FooterContent>
         <div class="flex items-center justify-between pt-4 border-t">
             <BbTypographyMuted>Prices include VAT. Free returns within 30 days.</BbTypographyMuted>

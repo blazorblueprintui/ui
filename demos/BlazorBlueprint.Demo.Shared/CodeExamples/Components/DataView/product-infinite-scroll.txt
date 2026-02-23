@@ -1,9 +1,10 @@
-@* EnableInfiniteScroll with ScrollHeight enables auto-scroll on a grid.
-   Using InitialPageSize as a multiple of LCM(2,3)=6 keeps every row complete
-   at both the two-column and three-column grid breakpoints. *@
-<BbDataView TItem="Product" Data="@products" Layout="DataViewLayout.Grid"
+@* Only GridTemplate is set — the view locks into grid mode with no toggle.
+   EnableInfiniteScroll + ScrollHeight auto-loads more cards as the user scrolls.
+   InitialPageSize=6 is a multiple of LCM(2,3)=6, keeping every row complete
+   at both the sm:grid-cols-2 and lg:grid-cols-3 breakpoints. *@
+<BbDataView TItem="Product" Data="@products"
             EnableInfiniteScroll="true" ScrollHeight="600px" InitialPageSize="6">
-    <ItemTemplate Context="product">
+    <GridTemplate Context="product">
         <BbCard Class="overflow-hidden flex flex-col hover:shadow-md transition-shadow">
             <div class="relative aspect-square overflow-hidden bg-muted">
                 <img src="@product.ImageUrl" alt="@product.Name"
@@ -32,7 +33,7 @@
                 </div>
             </BbCardContent>
         </BbCard>
-    </ItemTemplate>
+    </GridTemplate>
     <Fields>
         <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
         <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />

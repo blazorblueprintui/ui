@@ -1,10 +1,10 @@
-@* Scroll-based auto-loading: omit ShowLoadMoreButton (or set it to false).
-   Use ScrollHeight to set the container height in any valid CSS value.
+@* Only ListTemplate is set — the view locks into list mode with no toggle.
+   Scroll-based auto-loading: ScrollHeight constrains the container.
    The data-view.js module measures the container as a whole, so detection
    works correctly for both flex lists and multi-column CSS grids. *@
 <BbDataView TItem="Person" Data="@people"
             EnableInfiniteScroll="true" ScrollHeight="480px" InitialPageSize="6">
-    <ItemTemplate Context="person">
+    <ListTemplate Context="person">
         <BbCard Class="flex items-center gap-4 p-4 shadow-none hover:bg-accent/50 transition-colors">
             <BbAvatar>
                 <BbAvatarFallback>@GetInitials(person.Name)</BbAvatarFallback>
@@ -16,7 +16,7 @@
             </div>
             <BbBadge Variant="BadgeVariant.Outline">@person.Age yrs</BbBadge>
         </BbCard>
-    </ItemTemplate>
+    </ListTemplate>
     <Fields>
         <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
         <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Role)" Header="Role" Sortable Filterable />

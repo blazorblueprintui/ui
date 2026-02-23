@@ -1,19 +1,21 @@
-<BbDataView TItem="Person" Data="@people" Layout="DataViewLayout.Grid" InitialPageSize="9">
-    <ItemTemplate Context="person">
-        <div class="rounded-lg border bg-card p-4 space-y-2">
-            <div class="flex items-start justify-between">
-                <p class="font-medium">@person.Name</p>
-                <BbBadge Variant="@(person.Status == "Active" ? BadgeVariant.Default : BadgeVariant.Outline)">
-                    @person.Status
-                </BbBadge>
+@* GridTemplate locks the view into grid mode when ListTemplate is not provided.
+   Use GridClass to customise columns and gap (TailwindMerge resolves conflicts). *@
+<BbDataView TItem="Product" Data="@products"
+            GridClass="grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+    <GridTemplate Context="product">
+        <BbCard Class="overflow-hidden flex flex-col">
+            <div class="aspect-square overflow-hidden bg-muted">
+                <img src="@product.ImageUrl" alt="@product.Name"
+                     class="object-cover w-full h-full" loading="lazy" />
             </div>
-            <p class="text-sm text-muted-foreground">@person.Email</p>
-            <p class="text-xs text-muted-foreground">@person.Department · @person.Role</p>
-        </div>
-    </ItemTemplate>
+            <BbCardContent Class="p-3">
+                <p class="text-sm font-semibold line-clamp-2">@product.Name</p>
+                <span class="text-base font-bold">$@product.Price.ToString("F2")</span>
+            </BbCardContent>
+        </BbCard>
+    </GridTemplate>
     <Fields>
-        <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
-        <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
-        <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Role)" Header="Role" Filterable />
+        <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Name)"  Header="Name"  Sortable Filterable />
+        <BbDataViewField TItem="Product" TValue="decimal" Property="@(p => p.Price)" Header="Price" Sortable />
     </Fields>
 </BbDataView>
