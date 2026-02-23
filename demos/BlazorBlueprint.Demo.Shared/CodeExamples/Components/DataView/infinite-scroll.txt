@@ -1,0 +1,30 @@
+@* Load-more button – works for both list and grid. The button is always placed
+   outside the grid container, so it spans the full width regardless of column count. *@
+<BbDataView TItem="Person" Data="@people" EnableInfiniteScroll="true" ShowLoadMoreButton="true" InitialPageSize="6">
+    <ItemTemplate Context="person">
+        <div class="flex items-center gap-4 rounded-md border p-4">
+            <div class="flex-1 space-y-1">
+                <p class="text-sm font-medium">@person.Name</p>
+                <p class="text-sm text-muted-foreground">@person.Email</p>
+            </div>
+            <BbBadge Variant="BadgeVariant.Secondary">@person.Role</BbBadge>
+        </div>
+    </ItemTemplate>
+    <Fields>
+        <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
+        <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Role)" Header="Role" Sortable Filterable />
+    </Fields>
+</BbDataView>
+
+@* Scroll-based auto-loading (omit ShowLoadMoreButton). Renders a fixed-height
+   scrollable container; detects near-bottom via data-view.js for both flex/grid. *@
+<BbDataView TItem="Person" Data="@people" EnableInfiniteScroll="true" InitialPageSize="6">
+    <ItemTemplate Context="person">
+        <div class="flex items-center gap-4 rounded-md border p-4">
+            <p class="text-sm font-medium">@person.Name</p>
+        </div>
+    </ItemTemplate>
+    <Fields>
+        <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
+    </Fields>
+</BbDataView>

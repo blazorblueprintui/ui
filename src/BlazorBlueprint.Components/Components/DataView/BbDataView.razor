@@ -1,0 +1,238 @@
+@namespace BlazorBlueprint.Components
+@typeparam TItem where TItem : class
+@using BlazorBlueprint.Primitives
+@using BlazorBlueprint.Primitives.Table
+
+<CascadingValue Value="this" IsFixed="true">
+    <CascadingValue Value="(IDataViewParent)this" IsFixed="true">
+        <div class="@ContainerCssClass">
+
+            @* ── Header slot ─────────────────────────────────────────────── *@
+            @if (EffectiveHeaderContent != null)
+            {
+                <div class="rounded-t-md border border-b-0 bg-card p-4">
+                    @EffectiveHeaderContent
+                </div>
+            }
+
+            @* ── Toolbar ─────────────────────────────────────────────────── *@
+            @if (ShowToolbar)
+            {
+                <div class="flex flex-wrap items-center gap-2 py-4">
+
+                    @* Global search *@
+                    <BbInput @bind-Value="@_searchValue"
+                             @bind-Value:after="HandleSearchChanged"
+                             Placeholder="Search..."
+                             Class="h-8 w-[150px] lg:w-[250px]" />
+
+                    @* Sort controls – only shown when at least one field is sortable *@
+                    @if (_fields.Any(f => f.Sortable))
+                    {
+                        <BbDropdownMenu>
+                            <BbDropdownMenuTrigger>
+                                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Class="h-8 gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9M3 12h5" />
+                                    </svg>
+                                    @GetSortFieldLabel()
+                                    <svg class="w-3 h-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </BbButton>
+                            </BbDropdownMenuTrigger>
+                            <BbDropdownMenuContent>
+                                <BbDropdownMenuItem OnClick="@(async () => await HandleSortFieldChanged(null))">
+                                    None
+                                </BbDropdownMenuItem>
+                                <BbDropdownMenuSeparator />
+                                @foreach (var field in _fields.Where(f => f.Sortable))
+                                {
+                                    var fieldId = field.Id;
+                                    <BbDropdownMenuItem OnClick="@(async () => await HandleSortFieldChanged(fieldId))">
+                                        @field.Header
+                                    </BbDropdownMenuItem>
+                                }
+                            </BbDropdownMenuContent>
+                        </BbDropdownMenu>
+
+                        @if (!string.IsNullOrEmpty(_sortingState.SortedColumn))
+                        {
+                            <BbButton Variant="ButtonVariant.Outline"
+                                      Size="ButtonSize.Icon"
+                                      OnClick="HandleSortDirectionToggle"
+                                      Class="h-8 w-8"
+                                      title="@(_sortingState.Direction == SortDirection.Ascending ? "Ascending – click to sort descending" : "Descending – click to clear sort")">
+                                @if (_sortingState.Direction == SortDirection.Ascending)
+                                {
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                                    </svg>
+                                }
+                                else if (_sortingState.Direction == SortDirection.Descending)
+                                {
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                }
+                                else
+                                {
+                                    <svg class="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                    </svg>
+                                }
+                            </BbButton>
+                        }
+                    }
+
+                    @* Layout toggle *@
+                    <div class="ml-auto flex items-center gap-1 rounded-md border p-1">
+                        <BbButton Variant="ButtonVariant.Ghost"
+                                  Size="ButtonSize.Icon"
+                                  OnClick="@(() => SetLayout(DataViewLayout.List))"
+                                  Class="@ClassNames.cn("h-7 w-7", Layout == DataViewLayout.List ? "bg-accent text-accent-foreground" : "")"
+                                  title="List view">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                            </svg>
+                        </BbButton>
+                        <BbButton Variant="ButtonVariant.Ghost"
+                                  Size="ButtonSize.Icon"
+                                  OnClick="@(() => SetLayout(DataViewLayout.Grid))"
+                                  Class="@ClassNames.cn("h-7 w-7", Layout == DataViewLayout.Grid ? "bg-accent text-accent-foreground" : "")"
+                                  title="Grid view">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM12 5a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1v-2zM12 13a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1v-2z" />
+                            </svg>
+                        </BbButton>
+                    </div>
+
+                </div>
+            }
+
+            @* ── Content ─────────────────────────────────────────────────── *@
+            @if (IsLoading)
+            {
+                @if (LoadingTemplate != null)
+                {
+                    @LoadingTemplate
+                }
+                else
+                {
+                    <div class="flex items-center justify-center p-8 text-muted-foreground">
+                        <div class="text-sm">Loading...</div>
+                    </div>
+                }
+            }
+            else if (!_filteredSortedData.Any())
+            {
+                @if (EmptyTemplate != null)
+                {
+                    @EmptyTemplate
+                }
+                else
+                {
+                    <BbEmpty Title="No results found" Size="EmptySize.Small" />
+                }
+            }
+            else if (EnableInfiniteScroll && !ShowLoadMoreButton)
+            {
+                @*
+                    Scroll-based infinite scroll.
+                    The items grid/list lives inside a fixed-height scrollable container.
+                    The @onscroll handler calls data-view.js isNearBottom(), which measures
+                    the scroll container as a whole — so it works correctly for both flex
+                    lists and multi-column CSS grids (regardless of items-per-row count).
+                    The sentinel <div> is placed OUTSIDE the grid container so it is always
+                    a full-width block element below all rows, never occupying an empty grid cell.
+                *@
+                <div class="overflow-y-auto max-h-[500px]"
+                     @ref="_scrollContainerRef"
+                     @onscroll="HandleScroll">
+                    <div class="@ItemContainerCssClass">
+                        @foreach (var item in _visibleData)
+                        {
+                            @if (EffectiveItemTemplate != null)
+                            {
+                                @EffectiveItemTemplate(item)
+                            }
+                        }
+                    </div>
+                    @* Sentinel is outside the grid so it spans the full scroll-container
+                       width regardless of the column count. *@
+                    @if (CanLoadMore)
+                    {
+                        <div class="flex items-center justify-center py-2 text-xs text-muted-foreground">
+                            Loading more...
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                @* Regular pagination or ShowLoadMoreButton mode. *@
+                <div class="@ItemContainerCssClass">
+                    @foreach (var item in _visibleData)
+                    {
+                        @if (EffectiveItemTemplate != null)
+                        {
+                            @EffectiveItemTemplate(item)
+                        }
+                    }
+                </div>
+
+                @*
+                    "Load more" button is placed OUTSIDE (after) the grid/flex container.
+                    This guarantees it always renders as a full-width block element on its
+                    own row, even when the grid has 2, 3, or 4 columns and the last row is
+                    only partially filled.
+                *@
+                @if (EnableInfiniteScroll && CanLoadMore && ShowLoadMoreButton)
+                {
+                    <div class="flex justify-center py-4">
+                        <BbButton Variant="ButtonVariant.Outline" OnClick="LoadMore">
+                            Load more
+                        </BbButton>
+                    </div>
+                }
+            }
+
+            @* ── Pagination – hidden in infinite scroll mode ─────────────── *@
+            @if (ShowPagination && !EnableInfiniteScroll && !IsLoading && _filteredSortedData.Any())
+            {
+                <BbPagination State="@_paginationState"
+                              PageSizes="@PageSizes"
+                              OnPageChanged="@HandlePageChanged"
+                              OnPageSizeChanged="@HandlePageSizeChanged"
+                              Class="flex items-center justify-between px-2 py-4">
+                    <BbPaginationInfo />
+                    <BbPaginationContent Class="flex items-center gap-6 lg:gap-8">
+                        <BbPaginationPageSizeSelector />
+                        <div class="flex items-center gap-2">
+                            <BbPaginationPageDisplay />
+                            <div class="flex items-center gap-1">
+                                <BbPaginationItem><BbPaginationFirst /></BbPaginationItem>
+                                <BbPaginationItem><BbPaginationPrevious ShowText="false" /></BbPaginationItem>
+                                <BbPaginationItem><BbPaginationNext ShowText="false" /></BbPaginationItem>
+                                <BbPaginationItem><BbPaginationLast /></BbPaginationItem>
+                            </div>
+                        </div>
+                    </BbPaginationContent>
+                </BbPagination>
+            }
+
+            @* ── Footer slot ─────────────────────────────────────────────── *@
+            @if (EffectiveFooterContent != null)
+            {
+                <div class="rounded-b-md border border-t-0 bg-card p-4">
+                    @EffectiveFooterContent
+                </div>
+            }
+
+        </div>
+
+        @* Capture slot-component registrations (renders nothing visible). *@
+        @Fields
+
+    </CascadingValue>
+</CascadingValue>

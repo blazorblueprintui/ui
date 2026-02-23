@@ -1,0 +1,347 @@
+@page "/components/dataview"
+@using BlazorBlueprint.Demo.Services
+@inject MockDataService MockDataService
+
+<PageTitle>Data View Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-7xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Data View Component</h1>
+            <p class="text-xl text-muted-foreground">
+                A flexible data view component with list and grid layouts, sorting, filtering, pagination,
+                and optional infinite scroll. Define fields via BbDataViewField for sorting/filtering,
+                and use the ItemTemplate render fragment to control how each item is rendered.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic List View -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic List View</h2>
+            <p class="text-sm text-muted-foreground">
+                Use the <code class="bg-muted px-1 py-0.5 rounded">ItemTemplate</code> parameter to control
+                item rendering and register <code class="bg-muted px-1 py-0.5 rounded">BbDataViewField</code>
+                components in the <code class="bg-muted px-1 py-0.5 rounded">Fields</code> fragment for
+                sort and filter support.
+            </p>
+        </div>
+        <BbDataView TItem="Person" Data="@people" InitialPageSize="5">
+            <ItemTemplate Context="person">
+                <div class="flex items-center gap-4 rounded-md border p-4">
+                    <div class="flex-1 space-y-1">
+                        <p class="text-sm font-medium">@person.Name</p>
+                        <p class="text-sm text-muted-foreground">@person.Email</p>
+                    </div>
+                    <BbBadge Variant="@(person.Status == "Active" ? BadgeVariant.Default : BadgeVariant.Outline)">
+                        @person.Status
+                    </BbBadge>
+                </div>
+            </ItemTemplate>
+            <Fields>
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Email)" Header="Email" Filterable />
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Status)" Header="Status" Sortable />
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Role)" Header="Role" Sortable Filterable />
+            </Fields>
+        </BbDataView>
+        <CodeBlock Source="Components/DataView/basic.txt" />
+    </div>
+
+    <!-- Grid Layout -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Grid Layout</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">Layout="DataViewLayout.Grid"</code> for a
+                responsive grid. The toolbar's layout-toggle buttons let users switch at runtime.
+            </p>
+        </div>
+        <BbDataView TItem="Person" Data="@people" Layout="DataViewLayout.Grid" InitialPageSize="9">
+            <ItemTemplate Context="person">
+                <div class="rounded-lg border bg-card p-4 space-y-2">
+                    <div class="flex items-start justify-between">
+                        <p class="font-medium">@person.Name</p>
+                        <BbBadge Variant="@(person.Status == "Active" ? BadgeVariant.Default : BadgeVariant.Outline)">
+                            @person.Status
+                        </BbBadge>
+                    </div>
+                    <p class="text-sm text-muted-foreground">@person.Email</p>
+                    <p class="text-xs text-muted-foreground">@person.Department · @person.Role</p>
+                </div>
+            </ItemTemplate>
+            <Fields>
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Role)" Header="Role" Filterable />
+            </Fields>
+        </BbDataView>
+        <CodeBlock Source="Components/DataView/grid-layout.txt" />
+    </div>
+
+    <!-- Header and Footer Slots -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Header &amp; Footer Slots</h2>
+            <p class="text-sm text-muted-foreground">
+                Use the <code class="bg-muted px-1 py-0.5 rounded">HeaderContent</code> and
+                <code class="bg-muted px-1 py-0.5 rounded">FooterContent</code> parameters to add custom
+                content above and below the view. Alternatively, use the
+                <code class="bg-muted px-1 py-0.5 rounded">BbDataViewHeader</code> and
+                <code class="bg-muted px-1 py-0.5 rounded">BbDataViewFooter</code> child components
+                inside the <code class="bg-muted px-1 py-0.5 rounded">Fields</code> fragment.
+            </p>
+        </div>
+        <BbDataView TItem="Person" Data="@people" InitialPageSize="4">
+            <HeaderContent>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold">Team Members</h2>
+                        <p class="text-sm text-muted-foreground">Browse and search your team directory.</p>
+                    </div>
+                    <BbButton Variant="ButtonVariant.Default" Size="ButtonSize.Small">
+                        Add Member
+                    </BbButton>
+                </div>
+            </HeaderContent>
+            <ItemTemplate Context="person">
+                <div class="flex items-center gap-4 rounded-md border p-4">
+                    <div class="flex-1 space-y-1">
+                        <p class="text-sm font-medium">@person.Name</p>
+                        <p class="text-sm text-muted-foreground">@person.Email</p>
+                    </div>
+                    <BbBadge Variant="BadgeVariant.Secondary">@person.Department</BbBadge>
+                </div>
+            </ItemTemplate>
+            <FooterContent>
+                <p class="text-sm text-muted-foreground">
+                    Showing filtered results from @people.Count total records.
+                </p>
+            </FooterContent>
+            <Fields>
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Email)" Header="Email" Filterable />
+            </Fields>
+        </BbDataView>
+        <CodeBlock Source="Components/DataView/header-footer.txt" />
+    </div>
+
+    <!-- Infinite Scroll – Load More Button -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Infinite Scroll – Load More Button</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">EnableInfiniteScroll</code> and
+                <code class="bg-muted px-1 py-0.5 rounded">ShowLoadMoreButton</code> to show an explicit
+                button below the item list. The button is always placed <em>outside</em> the grid/flex
+                container, so it spans the full width regardless of the column count.
+                Sorting or filtering automatically resets back to the first batch.
+            </p>
+        </div>
+        <BbDataView TItem="Person" Data="@people" EnableInfiniteScroll="true" ShowLoadMoreButton="true" InitialPageSize="6">
+            <ItemTemplate Context="person">
+                <div class="flex items-center gap-4 rounded-md border p-4">
+                    <div class="flex-1 space-y-1">
+                        <p class="text-sm font-medium">@person.Name</p>
+                        <p class="text-sm text-muted-foreground">@person.Email</p>
+                    </div>
+                    <BbBadge Variant="BadgeVariant.Secondary">@person.Role</BbBadge>
+                </div>
+            </ItemTemplate>
+            <Fields>
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Role)" Header="Role" Sortable Filterable />
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Email)" Header="Email" Filterable />
+            </Fields>
+        </BbDataView>
+        <CodeBlock Source="Components/DataView/infinite-scroll.txt" />
+    </div>
+
+    <!-- Infinite Scroll – Grid + Load More Button -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Infinite Scroll – Grid with Load More</h2>
+            <p class="text-sm text-muted-foreground">
+                Infinite scroll works identically in grid mode. The scroll container is measured as
+                a unit, so detection is unaffected by the number of columns. The "Load more" button
+                always appears as a full-width element below all rows, even when the last row is
+                only partially filled.
+            </p>
+        </div>
+        <BbDataView TItem="Person" Data="@people" Layout="DataViewLayout.Grid"
+                    EnableInfiniteScroll="true" ShowLoadMoreButton="true" InitialPageSize="6">
+            <ItemTemplate Context="person">
+                <div class="rounded-lg border bg-card p-4 space-y-2">
+                    <div class="flex items-start justify-between">
+                        <p class="font-medium">@person.Name</p>
+                        <BbBadge Variant="@(person.Status == "Active" ? BadgeVariant.Default : BadgeVariant.Outline)">
+                            @person.Status
+                        </BbBadge>
+                    </div>
+                    <p class="text-sm text-muted-foreground">@person.Email</p>
+                    <p class="text-xs text-muted-foreground">@person.Department</p>
+                </div>
+            </ItemTemplate>
+            <Fields>
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Status)" Header="Status" Sortable />
+            </Fields>
+        </BbDataView>
+    </div>
+
+    <!-- Infinite Scroll – Auto (scroll-based) -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Infinite Scroll – Auto (scroll-based)</h2>
+            <p class="text-sm text-muted-foreground">
+                With <code class="bg-muted px-1 py-0.5 rounded">EnableInfiniteScroll="true"</code> and
+                <code class="bg-muted px-1 py-0.5 rounded">ShowLoadMoreButton="false"</code> the component
+                renders a fixed-height scrollable container and loads the next batch automatically when
+                the user scrolls near the bottom. Uses a lightweight JS helper (data-view.js) to read the
+                container's scroll position — this works for both flex and grid layouts.
+            </p>
+        </div>
+        <BbDataView TItem="Person" Data="@people" EnableInfiniteScroll="true" InitialPageSize="6">
+            <ItemTemplate Context="person">
+                <div class="flex items-center gap-4 rounded-md border p-4">
+                    <div class="flex-1 space-y-1">
+                        <p class="text-sm font-medium">@person.Name</p>
+                        <p class="text-sm text-muted-foreground">@person.Email</p>
+                    </div>
+                    <BbBadge Variant="BadgeVariant.Outline">@person.Role</BbBadge>
+                </div>
+            </ItemTemplate>
+            <Fields>
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Role)" Header="Role" Filterable />
+            </Fields>
+        </BbDataView>
+    </div>
+
+    <!-- Loading State -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Loading State</h2>
+            <p class="text-sm text-muted-foreground">
+                Shows a loading indicator while data is being fetched.
+            </p>
+        </div>
+        <div class="flex gap-2 mb-4">
+            <BbButton OnClick="@(() => isLoading = !isLoading)">Toggle Loading</BbButton>
+        </div>
+        <BbDataView TItem="Person" Data="@people" IsLoading="@isLoading" InitialPageSize="4">
+            <ItemTemplate Context="person">
+                <div class="flex items-center gap-4 rounded-md border p-4">
+                    <p class="text-sm font-medium">@person.Name</p>
+                </div>
+            </ItemTemplate>
+            <Fields>
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
+            </Fields>
+        </BbDataView>
+    </div>
+
+    <!-- Empty State -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Empty State</h2>
+            <p class="text-sm text-muted-foreground">
+                Displays the default empty state when there are no results.
+            </p>
+        </div>
+        <BbDataView TItem="Person" Data="@emptyPeople" InitialPageSize="5">
+            <ItemTemplate Context="person">
+                <div class="rounded-md border p-4">@person.Name</div>
+            </ItemTemplate>
+            <Fields>
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Filterable />
+            </Fields>
+        </BbDataView>
+    </div>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="DataView">
+                <ApiParameter Name="Data" Type="IEnumerable&lt;TItem&gt;">
+                    The data source for the view.
+                </ApiParameter>
+                <ApiParameter Name="ItemTemplate" Type="RenderFragment&lt;TItem&gt;?">
+                    Template used to render each item. The context variable is the data item.
+                </ApiParameter>
+                <ApiParameter Name="HeaderContent" Type="RenderFragment?" Default="null">
+                    Optional content rendered above the toolbar.
+                </ApiParameter>
+                <ApiParameter Name="FooterContent" Type="RenderFragment?" Default="null">
+                    Optional content rendered below items and pagination.
+                </ApiParameter>
+                <ApiParameter Name="Fields" Type="RenderFragment?" Default="null">
+                    Container for BbDataViewField definitions (and optional slot components).
+                </ApiParameter>
+                <ApiParameter Name="Layout" Type="DataViewLayout" Default="List">
+                    Layout mode: List or Grid.
+                </ApiParameter>
+                <ApiParameter Name="ShowToolbar" Type="bool" Default="true">
+                    Whether to show the toolbar with search, sort, and layout controls.
+                </ApiParameter>
+                <ApiParameter Name="ShowPagination" Type="bool" Default="true">
+                    Whether to show pagination controls (hidden when EnableInfiniteScroll is true).
+                </ApiParameter>
+                <ApiParameter Name="IsLoading" Type="bool" Default="false">
+                    Whether the view is in a loading state.
+                </ApiParameter>
+                <ApiParameter Name="InitialPageSize" Type="int" Default="5">
+                    Initial page size (also the batch size in infinite scroll mode).
+                </ApiParameter>
+                <ApiParameter Name="PageSizes" Type="int[]" Default="[5, 10, 20, 50, 100]">
+                    Available page size options.
+                </ApiParameter>
+                <ApiParameter Name="EnableInfiniteScroll" Type="bool" Default="false">
+                    Replaces pagination with progressive item loading. Works for both list and grid layouts.
+                </ApiParameter>
+                <ApiParameter Name="ShowLoadMoreButton" Type="bool" Default="false">
+                    Shows an explicit "Load more" button (outside the grid/flex container) when EnableInfiniteScroll is true.
+                </ApiParameter>
+                <ApiParameter Name="EmptyTemplate" Type="RenderFragment?" Default="null">
+                    Custom template for the empty state.
+                </ApiParameter>
+                <ApiParameter Name="LoadingTemplate" Type="RenderFragment?" Default="null">
+                    Custom template for the loading state.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="DataViewField">
+                <ApiParameter Name="Header" Type="string">
+                    Display label used in the sort field selector.
+                </ApiParameter>
+                <ApiParameter Name="Property" Type="Func&lt;TItem, TValue&gt;">
+                    Expression to get the field value from a data item.
+                </ApiParameter>
+                <ApiParameter Name="Sortable" Type="bool" Default="false">
+                    Whether items can be sorted by this field.
+                </ApiParameter>
+                <ApiParameter Name="Filterable" Type="bool" Default="false">
+                    Whether this field participates in global search filtering.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    private List<Person> people = new();
+    private List<Person> emptyPeople = new();
+    private bool isLoading = false;
+
+    protected override void OnInitialized()
+    {
+        people = MockDataService.GeneratePersons(100);
+    }
+}
