@@ -64,6 +64,17 @@ public class MockDataService
         "Electronics", "Footwear", "Accessories", "Home", "Apparel"
     };
 
+    private static readonly string[] _productDescriptions = {
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.",
+        "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo.",
+        "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
+        "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim.",
+        "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.",
+        "Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit consequatur magni.",
+        "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet consectetur adipisci velit.",
+        "Ut labore et dolore magnam aliquam quaerat voluptatem enim ad minima veniam quis nostrum.",
+    };
+
     // A set of representative Unsplash photo IDs that render nicely as product images.
     private static readonly string[] _productImageUrls = {
         "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&auto=format&fit=crop",
@@ -163,6 +174,7 @@ public class MockDataService
                 Id = i + 1,
                 Name = $"{adj} {noun}",
                 Category = category,
+                Description = _productDescriptions[_random.Next(_productDescriptions.Length)],
                 Price = Math.Round((decimal)((_random.NextDouble() * 290) + 9.99), 2),
                 Rating = Math.Round((_random.NextDouble() * 2) + 3, 1),
                 Stock = stock,
@@ -200,6 +212,7 @@ public class Product
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public double Rating { get; set; }
     public int Stock { get; set; }
