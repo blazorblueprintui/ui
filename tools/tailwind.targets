@@ -5,40 +5,24 @@
     <TailwindToolPath Condition="'$(TailwindToolPath)' == ''">$(MSBuildProjectDirectory)/../../tools</TailwindToolPath>
   </PropertyGroup>
 
-  <Target Name="CheckForNode">
-    <Exec Command="node -v" ContinueOnError="true" IgnoreExitCode="true">
-      <Output TaskParameter="ExitCode" PropertyName="NodeExitCode" />
-    </Exec>
+  <Target Name="BuildTailwind" BeforeTargets="Build">
     <PropertyGroup>
-      <HasNode Condition="'$(NodeExitCode)' == '0'">true</HasNode>
-      <HasNode Condition="'$(NodeExitCode)' != '0'">false</HasNode>
-    </PropertyGroup>
-  </Target>
-
-  <Target Name="BuildTailwind" BeforeTargets="Build" DependsOnTargets="CheckForNode">
-
-    <Message Text="Building Tailwind via npx..." Importance="high" Condition="'$(HasNode)' == 'true'" />
-    <Exec Command="npx @tailwindcss/cli -i $(TailwindInput) -o $(TailwindOutput) --minify"
-          Condition="'$(HasNode)' == 'true'"
-          WorkingDirectory="$(MSBuildProjectDirectory)"/>
-
-    <PropertyGroup Condition="'$(HasNode)' == 'false'">
       <TailwindBinary Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(TailwindToolPath)/tailwindcss.exe</TailwindBinary>
       <TailwindBinary Condition="$([MSBuild]::IsOSPlatform('Linux'))">$(TailwindToolPath)/tailwindcss-linux</TailwindBinary>
       <TailwindBinary Condition="$([MSBuild]::IsOSPlatform('OSX'))">$(TailwindToolPath)/tailwindcss-macos</TailwindBinary>
     </PropertyGroup>
 
-    <Message Text="Node not found. Using binary: $(TailwindBinary)" Importance="high"
-             Condition="'$(HasNode)' == 'false' And Exists('$(TailwindBinary)')" />
+    <Message Text="Building Tailwind CSS ($(TailwindInput))..." Importance="high" />
 
     <Exec Command="chmod +x $(TailwindBinary)"
-          Condition="'$(HasNode)' == 'false' And !$([MSBuild]::IsOSPlatform('Windows')) And Exists('$(TailwindBinary)')"
+          Condition="!$([MSBuild]::IsOSPlatform('Windows')) And Exists('$(TailwindBinary)')"
           ContinueOnError="true" />
 
     <Exec Command="$(TailwindBinary) -i $(TailwindInput) -o $(TailwindOutput) --minify"
-          Condition="'$(HasNode)' == 'false' And Exists('$(TailwindBinary)')" />
+          Condition="Exists('$(TailwindBinary)')"
+          WorkingDirectory="$(MSBuildProjectDirectory)" />
 
-    <Error Text="Tailwind CSS build failed: Node.js is not installed and no binary was found for this OS at $(TailwindBinary)."
-           Condition="'$(HasNode)' == 'false' And !Exists('$(TailwindBinary)')" />
+    <Error Text="Tailwind binary not found at $(TailwindBinary). Please ensure the binary is in the /tools directory."
+           Condition="!Exists('$(TailwindBinary)')" />
   </Target>
 </Project>
