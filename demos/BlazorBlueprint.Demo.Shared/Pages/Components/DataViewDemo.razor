@@ -25,30 +25,30 @@
         </div>
         <BbDataView TItem="Person" Data="@people" InitialPageSize="5">
             <ItemTemplate Context="person">
-                <div class="flex items-center gap-4 rounded-lg border bg-card p-4 hover:bg-accent/50 transition-colors">
+                <BbCard Class="flex items-center gap-4 p-4 shadow-none hover:bg-accent/50 transition-colors">
                     <BbAvatar>
                         <BbAvatarFallback>@GetInitials(person.Name)</BbAvatarFallback>
                     </BbAvatar>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-semibold truncate">@person.Name</p>
-                        <p class="text-xs text-muted-foreground truncate">@person.Email</p>
-                        <p class="text-xs text-muted-foreground">@person.Department · @person.Role</p>
+                        <BbTypographyMuted Class="truncate">@person.Email</BbTypographyMuted>
+                        <BbTypographyMuted Class="text-xs">@person.Department · @person.Role</BbTypographyMuted>
                     </div>
-                    <div class="flex flex-col items-end gap-1">
+                    <div class="flex flex-col items-end gap-1 shrink-0">
                         <BbBadge Variant="@(person.Status == "Active" ? BadgeVariant.Default : BadgeVariant.Outline)">
                             @person.Status
                         </BbBadge>
-                        <span class="text-xs text-muted-foreground">@person.Salary.ToString("C0")</span>
+                        <BbTypographyMuted Class="text-xs">@person.Salary.ToString("C0")</BbTypographyMuted>
                     </div>
-                </div>
+                </BbCard>
             </ItemTemplate>
             <Fields>
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Email)" Header="Email" Filterable />
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)"       Header="Name"       Sortable Filterable />
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Email)"      Header="Email"      Filterable />
                 <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Role)" Header="Role" Sortable Filterable />
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Status)" Header="Status" Sortable />
-                <BbDataViewField TItem="Person" TValue="int" Property="@(p => p.Salary)" Header="Salary" Sortable />
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Role)"       Header="Role"       Sortable Filterable />
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Status)"     Header="Status"     Sortable />
+                <BbDataViewField TItem="Person" TValue="int"    Property="@(p => p.Salary)"     Header="Salary"     Sortable />
             </Fields>
         </BbDataView>
         <CodeBlock Source="Components/DataView/basic.txt" />
@@ -71,14 +71,14 @@
             <HeaderContent>
                 <div class="flex items-center justify-between pb-4 border-b">
                     <div>
-                        <h2 class="text-lg font-semibold">Our Products</h2>
-                        <p class="text-sm text-muted-foreground">@products.Count items · free shipping over $50</p>
+                        <p class="text-lg font-semibold">Our Products</p>
+                        <BbTypographyMuted>@products.Count items · free shipping over $50</BbTypographyMuted>
                     </div>
                     <BbBadge Variant="BadgeVariant.Secondary">@products.Count(p => p.Stock > 0) in stock</BbBadge>
                 </div>
             </HeaderContent>
             <ItemTemplate Context="product">
-                <div class="rounded-lg border bg-card overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+                <BbCard Class="overflow-hidden flex flex-col hover:shadow-md transition-shadow">
                     <div class="relative aspect-square overflow-hidden bg-muted">
                         <img src="@product.ImageUrl"
                              alt="@product.Name"
@@ -87,7 +87,7 @@
                         @if (product.Stock == 0)
                         {
                             <div class="absolute inset-0 bg-background/70 flex items-center justify-center">
-                                <span class="text-sm font-medium text-muted-foreground">Out of Stock</span>
+                                <BbTypographyMuted>Out of Stock</BbTypographyMuted>
                             </div>
                         }
                         else if (product.Stock <= 5)
@@ -97,22 +97,14 @@
                             </div>
                         }
                     </div>
-                    <div class="p-4 flex flex-col gap-2 flex-1">
+                    <BbCardContent Class="flex flex-col gap-2 flex-1 p-4">
                         <div class="flex items-start justify-between gap-2">
                             <p class="text-sm font-semibold leading-snug line-clamp-2">@product.Name</p>
                             <BbBadge Variant="BadgeVariant.Outline" Class="shrink-0 text-xs">@product.Category</BbBadge>
                         </div>
-                        <div class="flex items-center gap-1">
-                            @for (var i = 1; i <= 5; i++)
-                            {
-                                var star = i;
-                                <svg class="@(star <= Math.Round(product.Rating) ? "text-amber-500" : "text-muted-foreground/40") w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                            }
-                            <span class="text-xs text-muted-foreground ml-1">@product.Rating.ToString("F1")</span>
-                        </div>
-                        <div class="flex items-center justify-between mt-auto pt-2 border-t">
+                        <BbRating Value="@product.Rating" ReadOnly="true" Size="RatingSize.Small" />
+                        <BbSeparator />
+                        <div class="flex items-center justify-between">
                             <span class="text-base font-bold">$@product.Price.ToString("F2")</span>
                             <BbButton Size="ButtonSize.Small"
                                       Variant="@(product.Stock > 0 ? ButtonVariant.Default : ButtonVariant.Outline)"
@@ -120,20 +112,20 @@
                                 @(product.Stock > 0 ? "Add to Cart" : "Notify Me")
                             </BbButton>
                         </div>
-                    </div>
-                </div>
+                    </BbCardContent>
+                </BbCard>
             </ItemTemplate>
             <FooterContent>
-                <div class="flex items-center justify-between pt-4 border-t text-sm text-muted-foreground">
-                    <span>Prices include VAT. Free returns within 30 days.</span>
-                    <span>© 2025 Demo Store</span>
+                <div class="flex items-center justify-between pt-4 border-t">
+                    <BbTypographyMuted>Prices include VAT. Free returns within 30 days.</BbTypographyMuted>
+                    <BbTypographyMuted>© 2025 Demo Store</BbTypographyMuted>
                 </div>
             </FooterContent>
             <Fields>
-                <BbDataViewField TItem="Product" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
-                <BbDataViewField TItem="Product" TValue="string" Property="@(p => p.Category)" Header="Category" Sortable Filterable />
-                <BbDataViewField TItem="Product" TValue="decimal" Property="@(p => p.Price)" Header="Price" Sortable />
-                <BbDataViewField TItem="Product" TValue="double" Property="@(p => p.Rating)" Header="Rating" Sortable />
+                <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
+                <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />
+                <BbDataViewField TItem="Product" TValue="decimal" Property="@(p => p.Price)"    Header="Price"    Sortable />
+                <BbDataViewField TItem="Product" TValue="double"  Property="@(p => p.Rating)"   Header="Rating"   Sortable />
             </Fields>
         </BbDataView>
         <CodeBlock Source="Components/DataView/product-catalog.txt" />
@@ -154,8 +146,8 @@
             <HeaderContent>
                 <div class="flex items-center justify-between rounded-t-lg border border-b-0 bg-card px-6 py-4">
                     <div>
-                        <h2 class="text-base font-semibold">Team Members</h2>
-                        <p class="text-sm text-muted-foreground">Browse and search your team directory.</p>
+                        <p class="text-base font-semibold">Team Members</p>
+                        <BbTypographyMuted>Browse and search your team directory.</BbTypographyMuted>
                     </div>
                     <BbButton Variant="ButtonVariant.Default" Size="ButtonSize.Small">
                         Add Member
@@ -163,26 +155,26 @@
                 </div>
             </HeaderContent>
             <ItemTemplate Context="person">
-                <div class="flex items-center gap-4 rounded-lg border bg-card p-4">
+                <BbCard Class="flex items-center gap-4 p-4 shadow-none">
                     <BbAvatar>
                         <BbAvatarFallback>@GetInitials(person.Name)</BbAvatarFallback>
                     </BbAvatar>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-semibold truncate">@person.Name</p>
-                        <p class="text-xs text-muted-foreground truncate">@person.Email</p>
+                        <BbTypographyMuted Class="truncate">@person.Email</BbTypographyMuted>
                     </div>
                     <BbBadge Variant="BadgeVariant.Secondary">@person.Department</BbBadge>
-                </div>
+                </BbCard>
             </ItemTemplate>
             <FooterContent>
-                <div class="rounded-b-lg border border-t-0 bg-muted/30 px-6 py-3 text-sm text-muted-foreground">
-                    Showing filtered results from @people.Count total records.
+                <div class="rounded-b-lg border border-t-0 bg-muted/30 px-6 py-3">
+                    <BbTypographyMuted>Showing filtered results from @people.Count total records.</BbTypographyMuted>
                 </div>
             </FooterContent>
             <Fields>
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)"       Header="Name"       Sortable Filterable />
                 <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Email)" Header="Email" Filterable />
+                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Email)"      Header="Email"      Filterable />
             </Fields>
         </BbDataView>
         <CodeBlock Source="Components/DataView/header-footer.txt" />
@@ -203,7 +195,7 @@
         <BbDataView TItem="Product" Data="@products" Layout="DataViewLayout.Grid"
                     EnableInfiniteScroll="true" ShowLoadMoreButton="true" InitialPageSize="8">
             <ItemTemplate Context="product">
-                <div class="rounded-lg border bg-card overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+                <BbCard Class="overflow-hidden flex flex-col hover:shadow-md transition-shadow">
                     <div class="relative aspect-square overflow-hidden bg-muted">
                         <img src="@product.ImageUrl"
                              alt="@product.Name"
@@ -212,16 +204,18 @@
                         @if (product.Stock == 0)
                         {
                             <div class="absolute inset-0 bg-background/70 flex items-center justify-center">
-                                <span class="text-sm font-medium text-muted-foreground">Out of Stock</span>
+                                <BbTypographyMuted>Out of Stock</BbTypographyMuted>
                             </div>
                         }
                     </div>
-                    <div class="p-4 flex flex-col gap-2 flex-1">
+                    <BbCardContent Class="flex flex-col gap-2 flex-1 p-4">
                         <div class="flex items-start justify-between gap-2">
                             <p class="text-sm font-semibold leading-snug line-clamp-2">@product.Name</p>
                             <BbBadge Variant="BadgeVariant.Outline" Class="shrink-0 text-xs">@product.Category</BbBadge>
                         </div>
-                        <div class="flex items-center justify-between mt-auto pt-2 border-t">
+                        <BbRating Value="@product.Rating" ReadOnly="true" Size="RatingSize.Small" />
+                        <BbSeparator />
+                        <div class="flex items-center justify-between">
                             <span class="text-base font-bold">$@product.Price.ToString("F2")</span>
                             <BbButton Size="ButtonSize.Small"
                                       Variant="@(product.Stock > 0 ? ButtonVariant.Default : ButtonVariant.Outline)"
@@ -229,14 +223,14 @@
                                 @(product.Stock > 0 ? "Add to Cart" : "Notify Me")
                             </BbButton>
                         </div>
-                    </div>
-                </div>
+                    </BbCardContent>
+                </BbCard>
             </ItemTemplate>
             <Fields>
-                <BbDataViewField TItem="Product" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
-                <BbDataViewField TItem="Product" TValue="string" Property="@(p => p.Category)" Header="Category" Sortable Filterable />
-                <BbDataViewField TItem="Product" TValue="decimal" Property="@(p => p.Price)" Header="Price" Sortable />
-                <BbDataViewField TItem="Product" TValue="double" Property="@(p => p.Rating)" Header="Rating" Sortable />
+                <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
+                <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />
+                <BbDataViewField TItem="Product" TValue="decimal" Property="@(p => p.Price)"    Header="Price"    Sortable />
+                <BbDataViewField TItem="Product" TValue="double"  Property="@(p => p.Rating)"   Header="Rating"   Sortable />
             </Fields>
         </BbDataView>
         <CodeBlock Source="Components/DataView/product-infinite-scroll.txt" />
@@ -256,22 +250,22 @@
         </div>
         <BbDataView TItem="Person" Data="@people" EnableInfiniteScroll="true" ScrollHeight="480px" InitialPageSize="6">
             <ItemTemplate Context="person">
-                <div class="flex items-center gap-4 rounded-lg border bg-card p-4 hover:bg-accent/50 transition-colors">
+                <BbCard Class="flex items-center gap-4 p-4 shadow-none hover:bg-accent/50 transition-colors">
                     <BbAvatar>
                         <BbAvatarFallback>@GetInitials(person.Name)</BbAvatarFallback>
                     </BbAvatar>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-semibold truncate">@person.Name</p>
-                        <p class="text-xs text-muted-foreground truncate">@person.Email</p>
-                        <p class="text-xs text-muted-foreground">@person.Department · @person.Role</p>
+                        <BbTypographyMuted Class="truncate">@person.Email</BbTypographyMuted>
+                        <BbTypographyMuted Class="text-xs">@person.Department · @person.Role</BbTypographyMuted>
                     </div>
                     <BbBadge Variant="BadgeVariant.Outline">@person.Age yrs</BbBadge>
-                </div>
+                </BbCard>
             </ItemTemplate>
             <Fields>
                 <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
                 <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Role)" Header="Role" Sortable Filterable />
-                <BbDataViewField TItem="Person" TValue="int" Property="@(p => p.Age)" Header="Age" Sortable />
+                <BbDataViewField TItem="Person" TValue="int"    Property="@(p => p.Age)"  Header="Age"  Sortable />
             </Fields>
         </BbDataView>
         <CodeBlock Source="Components/DataView/infinite-scroll.txt" />
@@ -293,13 +287,15 @@
         </BbButton>
         <BbDataView TItem="Person" Data="@people" IsLoading="@isLoading" InitialPageSize="4">
             <ItemTemplate Context="person">
-                <div class="flex items-center gap-4 rounded-lg border bg-card p-4">
-                    <BbAvatar><BbAvatarFallback>@GetInitials(person.Name)</BbAvatarFallback></BbAvatar>
+                <BbCard Class="flex items-center gap-4 p-4 shadow-none">
+                    <BbAvatar>
+                        <BbAvatarFallback>@GetInitials(person.Name)</BbAvatarFallback>
+                    </BbAvatar>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-semibold">@person.Name</p>
-                        <p class="text-xs text-muted-foreground">@person.Email</p>
+                        <BbTypographyMuted>@person.Email</BbTypographyMuted>
                     </div>
-                </div>
+                </BbCard>
             </ItemTemplate>
             <Fields>
                 <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
@@ -319,7 +315,7 @@
         </div>
         <BbDataView TItem="Person" Data="@emptyPeople" InitialPageSize="5">
             <ItemTemplate Context="person">
-                <div class="rounded-lg border bg-card p-4">@person.Name</div>
+                <BbCard Class="p-4 shadow-none">@person.Name</BbCard>
             </ItemTemplate>
             <Fields>
                 <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Filterable />
