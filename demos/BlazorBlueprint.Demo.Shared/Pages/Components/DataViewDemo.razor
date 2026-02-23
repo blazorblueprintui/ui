@@ -20,7 +20,7 @@
             <p class="text-sm text-muted-foreground">
                 Provide only <code class="bg-muted px-1 py-0.5 rounded">ListTemplate</code> to lock the view
                 into list mode. The layout-toggle buttons are hidden when only one template is set.
-                Register <code class="bg-muted px-1 py-0.5 rounded">BbDataViewField</code> components
+                Register <code class="bg-muted px-1 py-0.5 rounded">BbDataViewColumn</code> components
                 inside <code class="bg-muted px-1 py-0.5 rounded">Fields</code> for sort and filter support.
             </p>
         </div>
@@ -44,12 +44,12 @@
                 </BbCard>
             </ListTemplate>
             <Fields>
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)"       Header="Name"       Sortable Filterable />
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Email)"      Header="Email"      Filterable />
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Role)"       Header="Role"       Sortable Filterable />
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Status)"     Header="Status"     Sortable />
-                <BbDataViewField TItem="Person" TValue="int"    Property="@(p => p.Salary)"     Header="Salary"     Sortable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Name)"       Header="Name"       Sortable Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Email)"      Header="Email"      Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Role)"       Header="Role"       Sortable Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Status)"     Header="Status"     Sortable />
+                <BbDataViewColumn TItem="Person" TValue="int"    Property="@(p => p.Salary)"     Header="Salary"     Sortable />
             </Fields>
         </BbDataView>
         <CodeBlock Source="Components/DataView/basic.txt" />
@@ -153,10 +153,10 @@
                 </div>
             </FooterContent>
             <Fields>
-                <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
-                <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />
-                <BbDataViewField TItem="Product" TValue="decimal" Property="@(p => p.Price)"    Header="Price"    Sortable />
-                <BbDataViewField TItem="Product" TValue="double"  Property="@(p => p.Rating)"   Header="Rating"   Sortable />
+                <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
+                <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />
+                <BbDataViewColumn TItem="Product" TValue="decimal" Property="@(p => p.Price)"    Header="Price"    Sortable />
+                <BbDataViewColumn TItem="Product" TValue="double"  Property="@(p => p.Rating)"   Header="Rating"   Sortable />
             </Fields>
         </BbDataView>
         <CodeBlock Source="Components/DataView/product-catalog.txt" />
@@ -203,12 +203,56 @@
                 </div>
             </FooterContent>
             <Fields>
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)"       Header="Name"       Sortable Filterable />
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Email)"      Header="Email"      Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Name)"       Header="Name"       Sortable Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Email)"      Header="Email"      Filterable />
             </Fields>
         </BbDataView>
         <CodeBlock Source="Components/DataView/header-footer.txt" />
+    </div>
+
+    <!-- ── Custom Toolbar Actions ────────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Toolbar Actions</h2>
+            <p class="text-sm text-muted-foreground">
+                Use the <code class="bg-muted px-1 py-0.5 rounded">ToolbarActions</code> render fragment
+                to add custom buttons or controls on the right side of the toolbar. Works alongside the
+                built-in search, sort, and layout-toggle controls.
+            </p>
+        </div>
+        <BbDataView TItem="Person" Data="@people" InitialPageSize="5">
+            <ToolbarActions>
+                <BbButton Variant="ButtonVariant.Default" Size="ButtonSize.Small">
+                    Add Person
+                </BbButton>
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+                    Export
+                </BbButton>
+            </ToolbarActions>
+            <ListTemplate Context="person">
+                <BbCard Class="flex items-center gap-4 p-4 shadow-none hover:bg-accent/50 transition-colors">
+                    <BbAvatar>
+                        <BbAvatarFallback>@GetInitials(person.Name)</BbAvatarFallback>
+                    </BbAvatar>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold truncate">@person.Name</p>
+                        <BbTypographyMuted Class="truncate">@person.Email</BbTypographyMuted>
+                        <BbTypographyMuted Class="text-xs">@person.Department · @person.Role</BbTypographyMuted>
+                    </div>
+                    <BbBadge Variant="@(person.Status == "Active" ? BadgeVariant.Default : BadgeVariant.Outline)">
+                        @person.Status
+                    </BbBadge>
+                </BbCard>
+            </ListTemplate>
+            <Fields>
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Name)"       Header="Name"       Sortable Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Email)"      Header="Email"      Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Role)"       Header="Role"       Sortable Filterable />
+            </Fields>
+        </BbDataView>
+        <CodeBlock Source="Components/DataView/toolbar-actions.txt" />
     </div>
 
     <!-- ── Layout Customization ───────────────────────────────────────────── -->
@@ -245,9 +289,9 @@
                     </BbCard>
                 </GridTemplate>
                 <Fields>
-                    <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
-                    <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />
-                    <BbDataViewField TItem="Product" TValue="decimal" Property="@(p => p.Price)"    Header="Price"    Sortable />
+                    <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
+                    <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />
+                    <BbDataViewColumn TItem="Product" TValue="decimal" Property="@(p => p.Price)"    Header="Price"    Sortable />
                 </Fields>
             </BbDataView>
         </div>
@@ -283,9 +327,9 @@
                     </BbCard>
                 </GridTemplate>
                 <Fields>
-                    <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
-                    <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />
-                    <BbDataViewField TItem="Product" TValue="decimal" Property="@(p => p.Price)"    Header="Price"    Sortable />
+                    <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
+                    <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />
+                    <BbDataViewColumn TItem="Product" TValue="decimal" Property="@(p => p.Price)"    Header="Price"    Sortable />
                 </Fields>
             </BbDataView>
         </div>
@@ -307,9 +351,9 @@
                     </div>
                 </ListTemplate>
                 <Fields>
-                    <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)"       Header="Name"       Sortable Filterable />
-                    <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
-                    <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Email)"      Header="Email"      Filterable />
+                    <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Name)"       Header="Name"       Sortable Filterable />
+                    <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
+                    <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Email)"      Header="Email"      Filterable />
                 </Fields>
             </BbDataView>
         </div>
@@ -363,10 +407,10 @@
                 </BbCard>
             </GridTemplate>
             <Fields>
-                <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
-                <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />
-                <BbDataViewField TItem="Product" TValue="decimal" Property="@(p => p.Price)"    Header="Price"    Sortable />
-                <BbDataViewField TItem="Product" TValue="double"  Property="@(p => p.Rating)"   Header="Rating"   Sortable />
+                <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
+                <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />
+                <BbDataViewColumn TItem="Product" TValue="decimal" Property="@(p => p.Price)"    Header="Price"    Sortable />
+                <BbDataViewColumn TItem="Product" TValue="double"  Property="@(p => p.Rating)"   Header="Rating"   Sortable />
             </Fields>
         </BbDataView>
         <CodeBlock Source="Components/DataView/product-infinite-scroll.txt" />
@@ -399,9 +443,9 @@
                 </BbCard>
             </ListTemplate>
             <Fields>
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Role)" Header="Role" Sortable Filterable />
-                <BbDataViewField TItem="Person" TValue="int"    Property="@(p => p.Age)"  Header="Age"  Sortable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Role)" Header="Role" Sortable Filterable />
+                <BbDataViewColumn TItem="Person" TValue="int"    Property="@(p => p.Age)"  Header="Age"  Sortable />
             </Fields>
         </BbDataView>
         <CodeBlock Source="Components/DataView/infinite-scroll.txt" />
@@ -434,7 +478,7 @@
                 </BbCard>
             </ListTemplate>
             <Fields>
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
             </Fields>
         </BbDataView>
         <CodeBlock Source="Components/DataView/loading.txt" />
@@ -454,7 +498,7 @@
                 <BbCard Class="p-4 shadow-none">@person.Name</BbCard>
             </ListTemplate>
             <Fields>
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Filterable />
             </Fields>
         </BbDataView>
         <CodeBlock Source="Components/DataView/empty.txt" />
@@ -520,7 +564,11 @@
                     Optional unstyled content rendered below items and pagination. You own all styling.
                 </ApiParameter>
                 <ApiParameter Name="Fields" Type="RenderFragment?" Default="null">
-                    Container for BbDataViewField definitions (and optional slot components).
+                    Container for BbDataViewColumn definitions (and optional slot components).
+                </ApiParameter>
+                <ApiParameter Name="ToolbarActions" Type="RenderFragment?" Default="null">
+                    Custom actions rendered on the right side of the toolbar (e.g. Add, Export buttons).
+                    Visible only when ShowToolbar is true.
                 </ApiParameter>
                 <ApiParameter Name="Layout" Type="DataViewLayout" Default="List">
                     Initial layout mode when both templates are set. Ignored when only one template
@@ -575,29 +623,33 @@
                 </ApiParameter>
             </ApiReference>
 
-            <ApiReference ComponentName="DataViewField">
+            <ApiReference ComponentName="DataViewColumn">
                 <ApiParameter Name="Header" Type="string">
-                    Display label used in the sort field selector.
+                    Display label used in the sort column selector.
                 </ApiParameter>
                 <ApiParameter Name="Property" Type="Func&lt;TItem, TValue&gt;">
-                    Expression to get the field value from a data item.
+                    Expression to get the column value from a data item.
                 </ApiParameter>
                 <ApiParameter Name="Sortable" Type="bool" Default="false">
-                    Whether items can be sorted by this field.
+                    Whether items can be sorted by this column.
                 </ApiParameter>
                 <ApiParameter Name="Filterable" Type="bool" Default="false">
-                    Whether this field participates in global search filtering.
+                    Whether this column participates in global search filtering.
                 </ApiParameter>
             </ApiReference>
 
-            <ApiReference ComponentName="DataViewTemplate">
-                <ApiParameter Name="Layout" Type="DataViewLayout" Default="List">
-                    The layout mode this template applies to. Use DataViewLayout.List for the list
-                    template and DataViewLayout.Grid for the grid template. Place two instances (one
-                    per layout) inside the Fields fragment to enable the layout-toggle buttons.
-                </ApiParameter>
+            <ApiReference ComponentName="DataViewListTemplate">
                 <ApiParameter Name="ChildContent" Type="RenderFragment&lt;TItem&gt;">
-                    The render fragment used to display each item. The context parameter is the data item.
+                    The render fragment used to display each item in list layout. The context parameter is the data item.
+                    When provided without DataViewGridTemplate the view locks into list mode.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="DataViewGridTemplate">
+                <ApiParameter Name="ChildContent" Type="RenderFragment&lt;TItem&gt;">
+                    The render fragment used to display each item in grid layout. The context parameter is the data item.
+                    When provided without DataViewListTemplate the view locks into grid mode.
+                    Provide both DataViewListTemplate and DataViewGridTemplate to enable the layout-toggle.
                 </ApiParameter>
             </ApiReference>
         </div>

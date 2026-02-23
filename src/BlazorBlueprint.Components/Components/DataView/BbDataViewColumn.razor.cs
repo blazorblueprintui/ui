@@ -3,58 +3,58 @@ using Microsoft.AspNetCore.Components;
 namespace BlazorBlueprint.Components;
 
 /// <summary>
-/// Defines a field in a DataView with declarative syntax.
-/// Fields drive sorting and filtering behavior in the parent DataView.
+/// Defines a column in a DataView with declarative syntax.
+/// Columns drive sorting and filtering behavior in the parent DataView.
 /// </summary>
 /// <typeparam name="TItem">The type of data items in the view.</typeparam>
-/// <typeparam name="TValue">The type of the field's value.</typeparam>
+/// <typeparam name="TValue">The type of the column's value.</typeparam>
 /// <remarks>
 /// <para>
-/// BbDataViewField provides a declarative way to define which properties of a data
-/// item participate in sorting and filtering. Each field specifies how to extract
+/// BbDataViewColumn provides a declarative way to define which properties of a data
+/// item participate in sorting and filtering. Each column specifies how to extract
 /// data (Property), a display label (Header), and optional sort/filter flags.
 /// </para>
 /// </remarks>
 /// <example>
 /// <code>
-/// &lt;BbDataViewField TItem="Person" TValue="string"
-///                  Property="@(p => p.Name)"
-///                  Header="Name"
-///                  Sortable="true"
-///                  Filterable="true" /&gt;
+/// &lt;BbDataViewColumn TItem="Person" TValue="string"
+///                   Property="@(p => p.Name)"
+///                   Header="Name"
+///                   Sortable="true"
+///                   Filterable="true" /&gt;
 /// </code>
 /// </example>
-public partial class BbDataViewField<TItem, TValue> : ComponentBase where TItem : class
+public partial class BbDataViewColumn<TItem, TValue> : ComponentBase where TItem : class
 {
     /// <summary>
-    /// Gets or sets the unique identifier for this field.
+    /// Gets or sets the unique identifier for this column.
     /// If not provided, it will be auto-generated from the Header.
     /// </summary>
     [Parameter]
     public string? Id { get; set; }
 
     /// <summary>
-    /// Gets or sets the display label for this field used in sort selectors.
+    /// Gets or sets the display label for this column used in sort selectors.
     /// </summary>
     [Parameter, EditorRequired]
     public string Header { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the function that extracts the field value from a data item.
-    /// Required for sorting and filtering to work on this field.
+    /// Gets or sets the function that extracts the column value from a data item.
+    /// Required for sorting and filtering to work on this column.
     /// </summary>
     [Parameter]
     public Func<TItem, TValue?>? Property { get; set; }
 
     /// <summary>
-    /// Gets or sets whether this field can be used for sorting.
+    /// Gets or sets whether items can be sorted by this column.
     /// Default is false.
     /// </summary>
     [Parameter]
     public bool Sortable { get; set; }
 
     /// <summary>
-    /// Gets or sets whether this field participates in global search filtering.
+    /// Gets or sets whether this column participates in global search filtering.
     /// Default is false.
     /// </summary>
     [Parameter]
@@ -68,7 +68,7 @@ public partial class BbDataViewField<TItem, TValue> : ComponentBase where TItem 
     internal BbDataView<TItem>? ParentView { get; set; }
 
     /// <summary>
-    /// Gets the effective field ID (uses Id if provided, otherwise generates from Header).
+    /// Gets the effective column ID (uses Id if provided, otherwise generates from Header).
     /// </summary>
     internal string EffectiveId => Id ?? Header.ToLowerInvariant().Replace(" ", "-");
 
@@ -77,7 +77,7 @@ public partial class BbDataViewField<TItem, TValue> : ComponentBase where TItem 
         if (ParentView == null)
         {
             throw new InvalidOperationException(
-                $"{nameof(BbDataViewField<TItem, TValue>)} must be placed inside a {nameof(BbDataView<TItem>)} component.");
+                $"{nameof(BbDataViewColumn<TItem, TValue>)} must be placed inside a {nameof(BbDataView<TItem>)} component.");
         }
 
         ParentView.RegisterField(this);

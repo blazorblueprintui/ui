@@ -19,7 +19,7 @@ namespace BlazorBlueprint.Components;
 /// grid views using the toolbar toggle.
 /// </para>
 /// <para>
-/// Register BbDataViewField components inside the Fields fragment to configure sorting and
+/// Register BbDataViewColumn components inside the Fields fragment to configure sorting and
 /// filtering. Use HeaderContent / FooterContent for optional unstyled slot content above and
 /// below the view. Infinite scroll works correctly for both flex-list and multi-column CSS
 /// grid layouts.
@@ -32,7 +32,7 @@ namespace BlazorBlueprint.Components;
 ///         &lt;div class="p-4 border rounded-lg"&gt;@person.Name&lt;/div&gt;
 ///     &lt;/ListTemplate&gt;
 ///     &lt;Fields&gt;
-///         &lt;BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable /&gt;
+///         &lt;BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable /&gt;
 ///     &lt;/Fields&gt;
 /// &lt;/BbDataView&gt;
 /// </code>
@@ -104,8 +104,7 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
     /// When only ListTemplate is provided the component locks into list mode and hides
     /// the layout-toggle buttons. Provide both ListTemplate and GridTemplate to allow
     /// the user to switch between layouts via the toolbar toggle.
-    /// Alternatively, place a BbDataViewTemplate with Layout="DataViewLayout.List"
-    /// inside the Fields fragment.
+    /// Alternatively, place a BbDataViewListTemplate inside the Fields fragment.
     /// </summary>
     [Parameter]
     public RenderFragment<TItem>? ListTemplate { get; set; }
@@ -116,8 +115,7 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
     /// When only GridTemplate is provided the component locks into grid mode and hides
     /// the layout-toggle buttons. Provide both ListTemplate and GridTemplate to allow
     /// the user to switch between layouts via the toolbar toggle.
-    /// Alternatively, place a BbDataViewTemplate with Layout="DataViewLayout.Grid"
-    /// inside the Fields fragment.
+    /// Alternatively, place a BbDataViewGridTemplate inside the Fields fragment.
     /// </summary>
     [Parameter]
     public RenderFragment<TItem>? GridTemplate { get; set; }
@@ -137,9 +135,10 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
     public RenderFragment? FooterContent { get; set; }
 
     /// <summary>
-    /// Gets or sets the field definitions as child content.
-    /// Use BbDataViewField components to define fields declaratively.
-    /// BbDataViewHeader, BbDataViewFooter, and BbDataViewTemplate may also be placed here.
+    /// Gets or sets the column definitions as child content.
+    /// Use BbDataViewColumn components to define columns declaratively.
+    /// BbDataViewHeader, BbDataViewFooter, BbDataViewListTemplate, and BbDataViewGridTemplate
+    /// may also be placed here.
     /// </summary>
     [Parameter]
     public RenderFragment? Fields { get; set; }
@@ -235,6 +234,14 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
     public Func<IEnumerable<TItem>, Task<IEnumerable<TItem>>>? PreprocessData { get; set; }
 
     /// <summary>
+    /// Gets or sets optional custom actions rendered on the right side of the toolbar.
+    /// Use this to add buttons (e.g. Add, Export) alongside the built-in search, sort, and
+    /// layout-toggle controls. Only visible when ShowToolbar is true.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ToolbarActions { get; set; }
+
+    /// <summary>
     /// Gets or sets additional CSS classes for the root container div.
     /// </summary>
     [Parameter]
@@ -327,13 +334,13 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
 
     /// <summary>
     /// The list template in effect: the named parameter takes precedence over any
-    /// slot component that called SetListTemplate (BbDataViewTemplate with Layout=List).
+    /// slot component that called SetListTemplate (BbDataViewListTemplate).
     /// </summary>
     private RenderFragment<TItem>? EffectiveListTemplate => ListTemplate ?? _registeredListTemplate;
 
     /// <summary>
     /// The grid template in effect: the named parameter takes precedence over any
-    /// slot component that called SetGridTemplate (BbDataViewTemplate with Layout=Grid).
+    /// slot component that called SetGridTemplate (BbDataViewGridTemplate).
     /// </summary>
     private RenderFragment<TItem>? EffectiveGridTemplate => GridTemplate ?? _registeredGridTemplate;
 
@@ -378,10 +385,10 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
     // ── Slot registration (called by BbDataViewHeader/Footer/Template) ───────
 
     /// <summary>
-    /// Registers a field with the data view.
-    /// Called by BbDataViewField during initialization.
+    /// Registers a column with the data view.
+    /// Called by BbDataViewColumn during initialization.
     /// </summary>
-    internal void RegisterField<TValue>(BbDataViewField<TItem, TValue> field)
+    internal void RegisterField<TValue>(BbDataViewColumn<TItem, TValue> field)
     {
         _fields.Add(new FieldData
         {
@@ -413,7 +420,7 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
 
     /// <summary>
     /// Sets the list-mode item rendering template.
-    /// Called by BbDataViewTemplate with Layout=DataViewLayout.List during initialization.
+    /// Called by BbDataViewListTemplate during initialization.
     /// </summary>
     internal void SetListTemplate(RenderFragment<TItem>? template)
     {
@@ -424,7 +431,7 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
 
     /// <summary>
     /// Sets the grid-mode item rendering template.
-    /// Called by BbDataViewTemplate with Layout=DataViewLayout.Grid during initialization.
+    /// Called by BbDataViewGridTemplate during initialization.
     /// </summary>
     internal void SetGridTemplate(RenderFragment<TItem>? template)
     {
@@ -562,32 +569,15 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
         {
             _sortingState.ClearSort();
         }
+        else if (_sortingState.SortedColumn == fieldId)
+        {
+            // 3-state cycle on the same field: none → asc → desc → none
+            _sortingState.ToggleSort(fieldId);
+        }
         else
         {
             _sortingState.SetSort(fieldId, SortDirection.Ascending);
         }
-
-        _paginationState.CurrentPage = 1;
-        _currentInfinitePage = 1;
-        _sortingVersion++;
-
-        if (OnSort.HasDelegate)
-        {
-            await OnSort.InvokeAsync((_sortingState.SortedColumn ?? string.Empty, _sortingState.Direction));
-        }
-
-        await ProcessDataAsync();
-        StateHasChanged();
-    }
-
-    private async Task HandleSortDirectionToggle()
-    {
-        if (string.IsNullOrEmpty(_sortingState.SortedColumn))
-        {
-            return;
-        }
-
-        _sortingState.ToggleSort(_sortingState.SortedColumn);
 
         _paginationState.CurrentPage = 1;
         _currentInfinitePage = 1;

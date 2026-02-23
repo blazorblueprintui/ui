@@ -1,0 +1,27 @@
+<BbDataView TItem="Person" Data="@people" InitialPageSize="5">
+    <ToolbarActions>
+        <BbButton Variant="ButtonVariant.Default" Size="ButtonSize.Small" OnClick="@AddNewPerson">
+            Add Person
+        </BbButton>
+        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@ExportData">
+            Export
+        </BbButton>
+    </ToolbarActions>
+    <ListTemplate Context="person">
+        <BbCard Class="p-4">
+            <div class="flex items-center gap-3">
+                <BbAvatar>
+                    <BbAvatarFallback>@GetInitials(person.Name)</BbAvatarFallback>
+                </BbAvatar>
+                <div>
+                    <p class="text-sm font-medium">@person.Name</p>
+                    <BbTypographyMuted>@person.Email</BbTypographyMuted>
+                </div>
+            </div>
+        </BbCard>
+    </ListTemplate>
+    <Fields>
+        <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
+        <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Email)" Header="Email" Filterable />
+    </Fields>
+</BbDataView>
