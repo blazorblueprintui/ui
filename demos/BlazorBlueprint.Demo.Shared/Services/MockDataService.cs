@@ -163,8 +163,8 @@ public class MockDataService
                 Id = i + 1,
                 Name = $"{adj} {noun}",
                 Category = category,
-                Price = Math.Round((decimal)(_random.NextDouble() * 290 + 9.99), 2),
-                Rating = Math.Round(_random.NextDouble() * 2 + 3, 1),
+                Price = Math.Round((decimal)((_random.NextDouble() * 290) + 9.99), 2),
+                Rating = Math.Round((_random.NextDouble() * 2) + 3, 1),
                 Stock = stock,
                 ImageUrl = imageUrl,
             });
@@ -172,6 +172,7 @@ public class MockDataService
 
         return products;
     }
+}
 
 /// <summary>
 /// Represents a person with various properties for demo purposes.
@@ -189,4 +190,18 @@ public class Person
     public int Salary { get; set; }
     public DateTime JoinDate { get; set; }
     public bool IsActive { get; set; }
+}
+
+/// <summary>
+/// Represents a product with various properties for demo purposes.
+/// </summary>
+public class Product
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+    public double Rating { get; set; }
+    public int Stock { get; set; }
+    public string ImageUrl { get; set; } = string.Empty;
 }

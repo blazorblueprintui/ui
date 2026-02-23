@@ -1,0 +1,40 @@
+@* EnableInfiniteScroll + ShowLoadMoreButton=true renders a "Load more" button placed
+   outside the grid container, so it always spans the full width — even with a
+   partially filled last row. Sorting or filtering resets to the first batch. *@
+<BbDataView TItem="Product" Data="@products" Layout="DataViewLayout.Grid"
+            EnableInfiniteScroll="true" ShowLoadMoreButton="true" InitialPageSize="8">
+    <ItemTemplate Context="product">
+        <div class="rounded-lg border bg-card overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+            <div class="relative aspect-square overflow-hidden bg-muted">
+                <img src="@product.ImageUrl" alt="@product.Name"
+                     class="object-cover w-full h-full" loading="lazy" />
+                @if (product.Stock == 0)
+                {
+                    <div class="absolute inset-0 bg-background/70 flex items-center justify-center">
+                        <span class="text-sm font-medium text-muted-foreground">Out of Stock</span>
+                    </div>
+                }
+            </div>
+            <div class="p-4 flex flex-col gap-2 flex-1">
+                <div class="flex items-start justify-between gap-2">
+                    <p class="text-sm font-semibold leading-snug line-clamp-2">@product.Name</p>
+                    <BbBadge Variant="BadgeVariant.Outline" Class="shrink-0 text-xs">@product.Category</BbBadge>
+                </div>
+                <div class="flex items-center justify-between mt-auto pt-2 border-t">
+                    <span class="text-base font-bold">$@product.Price.ToString("F2")</span>
+                    <BbButton Size="ButtonSize.Small"
+                              Variant="@(product.Stock > 0 ? ButtonVariant.Default : ButtonVariant.Outline)"
+                              Disabled="@(product.Stock == 0)">
+                        @(product.Stock > 0 ? "Add to Cart" : "Notify Me")
+                    </BbButton>
+                </div>
+            </div>
+        </div>
+    </ItemTemplate>
+    <Fields>
+        <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
+        <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />
+        <BbDataViewField TItem="Product" TValue="decimal" Property="@(p => p.Price)"    Header="Price"    Sortable />
+        <BbDataViewField TItem="Product" TValue="double"  Property="@(p => p.Rating)"   Header="Rating"   Sortable />
+    </Fields>
+</BbDataView>

@@ -9,8 +9,7 @@
         <h1 class="text-4xl font-bold tracking-tight">Data View Component</h1>
         <p class="text-xl text-muted-foreground">
             A flexible data view component with list and grid layouts, sorting, filtering, pagination,
-            and optional infinite scroll. Define fields via BbDataViewField for sorting/filtering,
-            and use the ItemTemplate render fragment to control how each item is rendered.
+            and optional infinite scroll.
         </p>
     </div>
 
@@ -55,55 +54,16 @@
         <CodeBlock Source="Components/DataView/basic.txt" />
     </div>
 
-    <!-- ── Employee Directory – Grid ──────────────────────────────────────── -->
-    <div class="space-y-4">
-        <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Employee Directory (Grid)</h2>
-            <p class="text-sm text-muted-foreground">
-                Set <code class="bg-muted px-1 py-0.5 rounded">Layout="DataViewLayout.Grid"</code> for a
-                responsive grid. The toolbar's layout-toggle buttons let users switch at runtime.
-            </p>
-        </div>
-        <BbDataView TItem="Person" Data="@people" Layout="DataViewLayout.Grid" InitialPageSize="9">
-            <ItemTemplate Context="person">
-                <div class="rounded-lg border bg-card p-5 space-y-4 hover:bg-accent/50 transition-colors">
-                    <div class="flex items-start justify-between">
-                        <BbAvatar Size="AvatarSize.Large">
-                            <BbAvatarFallback>@GetInitials(person.Name)</BbAvatarFallback>
-                        </BbAvatar>
-                        <BbBadge Variant="@(person.Status == "Active" ? BadgeVariant.Default : BadgeVariant.Outline)">
-                            @person.Status
-                        </BbBadge>
-                    </div>
-                    <div class="space-y-1">
-                        <p class="font-semibold leading-none">@person.Name</p>
-                        <p class="text-xs text-muted-foreground">@person.Role</p>
-                    </div>
-                    <div class="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>@person.Department</span>
-                        <span class="font-medium text-foreground">@person.Salary.ToString("C0")</span>
-                    </div>
-                </div>
-            </ItemTemplate>
-            <Fields>
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Role)" Header="Role" Filterable />
-                <BbDataViewField TItem="Person" TValue="int" Property="@(p => p.Salary)" Header="Salary" Sortable />
-            </Fields>
-        </BbDataView>
-        <CodeBlock Source="Components/DataView/grid-layout.txt" />
-    </div>
-
     <!-- ── Product Catalog ────────────────────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">Product Catalog</h2>
             <p class="text-sm text-muted-foreground">
-                BbDataView isn't limited to tabular data. Here it renders a product catalog with Unsplash
-                images, searchable by name and category, and sortable by price or rating. Switch to list
-                or grid from the toolbar — or set <code class="bg-muted px-1 py-0.5 rounded">Layout</code>
-                to default to either view.
+                BbDataView isn't limited to tabular data. Here it renders a product catalog with images,
+                searchable by name and category, and sortable by price or rating. Use
+                <code class="bg-muted px-1 py-0.5 rounded">HeaderContent</code> and
+                <code class="bg-muted px-1 py-0.5 rounded">FooterContent</code> for unstyled slot areas
+                above and below the view — you own all borders, backgrounds, and spacing.
             </p>
         </div>
         <BbDataView TItem="Product" Data="@products" Layout="DataViewLayout.Grid" InitialPageSize="8"
@@ -142,7 +102,7 @@
                             <p class="text-sm font-semibold leading-snug line-clamp-2">@product.Name</p>
                             <BbBadge Variant="BadgeVariant.Outline" Class="shrink-0 text-xs">@product.Category</BbBadge>
                         </div>
-                        <div class="flex items-center gap-1 text-amber-500">
+                        <div class="flex items-center gap-1">
                             @for (var i = 1; i <= 5; i++)
                             {
                                 var star = i;
@@ -176,6 +136,7 @@
                 <BbDataViewField TItem="Product" TValue="double" Property="@(p => p.Rating)" Header="Rating" Sortable />
             </Fields>
         </BbDataView>
+        <CodeBlock Source="Components/DataView/product-catalog.txt" />
     </div>
 
     <!-- ── Header and Footer Slots ────────────────────────────────────────── -->
@@ -227,43 +188,58 @@
         <CodeBlock Source="Components/DataView/header-footer.txt" />
     </div>
 
-    <!-- ── Infinite Scroll – Load More Button ─────────────────────────────── -->
+    <!-- ── Infinite Scroll – Product Grid (Load More Button) ──────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Infinite Scroll – Load More Button</h2>
+            <h2 class="text-2xl font-semibold">Infinite Scroll – Product Grid</h2>
             <p class="text-sm text-muted-foreground">
                 Set <code class="bg-muted px-1 py-0.5 rounded">EnableInfiniteScroll</code> and
-                <code class="bg-muted px-1 py-0.5 rounded">ShowLoadMoreButton</code> to replace pagination
-                with a "Load more" button. The button is always rendered outside the grid/flex container,
-                so it spans the full width regardless of column count. Sorting or filtering resets to the first batch.
+                <code class="bg-muted px-1 py-0.5 rounded">ShowLoadMoreButton</code> to progressively
+                load items with an explicit button. The button is always rendered outside the grid
+                container so it spans the full width regardless of column count — even when the last
+                row is partially filled. Sorting or filtering resets to the first batch.
             </p>
         </div>
-        <BbDataView TItem="Person" Data="@people" Layout="DataViewLayout.Grid"
-                    EnableInfiniteScroll="true" ShowLoadMoreButton="true" InitialPageSize="6">
-            <ItemTemplate Context="person">
-                <div class="rounded-lg border bg-card p-5 space-y-4 hover:bg-accent/50 transition-colors">
-                    <div class="flex items-start justify-between">
-                        <BbAvatar Size="AvatarSize.Large">
-                            <BbAvatarFallback>@GetInitials(person.Name)</BbAvatarFallback>
-                        </BbAvatar>
-                        <BbBadge Variant="@(person.IsActive ? BadgeVariant.Default : BadgeVariant.Outline)">
-                            @(person.IsActive ? "Active" : "Inactive")
-                        </BbBadge>
+        <BbDataView TItem="Product" Data="@products" Layout="DataViewLayout.Grid"
+                    EnableInfiniteScroll="true" ShowLoadMoreButton="true" InitialPageSize="8">
+            <ItemTemplate Context="product">
+                <div class="rounded-lg border bg-card overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+                    <div class="relative aspect-square overflow-hidden bg-muted">
+                        <img src="@product.ImageUrl"
+                             alt="@product.Name"
+                             class="object-cover w-full h-full transition-transform hover:scale-105 duration-300"
+                             loading="lazy" />
+                        @if (product.Stock == 0)
+                        {
+                            <div class="absolute inset-0 bg-background/70 flex items-center justify-center">
+                                <span class="text-sm font-medium text-muted-foreground">Out of Stock</span>
+                            </div>
+                        }
                     </div>
-                    <div class="space-y-1">
-                        <p class="font-semibold leading-none">@person.Name</p>
-                        <p class="text-xs text-muted-foreground">@person.Role · @person.Department</p>
+                    <div class="p-4 flex flex-col gap-2 flex-1">
+                        <div class="flex items-start justify-between gap-2">
+                            <p class="text-sm font-semibold leading-snug line-clamp-2">@product.Name</p>
+                            <BbBadge Variant="BadgeVariant.Outline" Class="shrink-0 text-xs">@product.Category</BbBadge>
+                        </div>
+                        <div class="flex items-center justify-between mt-auto pt-2 border-t">
+                            <span class="text-base font-bold">$@product.Price.ToString("F2")</span>
+                            <BbButton Size="ButtonSize.Small"
+                                      Variant="@(product.Stock > 0 ? ButtonVariant.Default : ButtonVariant.Outline)"
+                                      Disabled="@(product.Stock == 0)">
+                                @(product.Stock > 0 ? "Add to Cart" : "Notify Me")
+                            </BbButton>
+                        </div>
                     </div>
-                    <p class="text-xs text-muted-foreground truncate">@person.Email</p>
                 </div>
             </ItemTemplate>
             <Fields>
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Role)" Header="Role" Sortable Filterable />
-                <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
+                <BbDataViewField TItem="Product" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
+                <BbDataViewField TItem="Product" TValue="string" Property="@(p => p.Category)" Header="Category" Sortable Filterable />
+                <BbDataViewField TItem="Product" TValue="decimal" Property="@(p => p.Price)" Header="Price" Sortable />
+                <BbDataViewField TItem="Product" TValue="double" Property="@(p => p.Rating)" Header="Rating" Sortable />
             </Fields>
         </BbDataView>
-        <CodeBlock Source="Components/DataView/infinite-scroll.txt" />
+        <CodeBlock Source="Components/DataView/product-infinite-scroll.txt" />
     </div>
 
     <!-- ── Infinite Scroll – Auto (scroll-based) ──────────────────────────── -->
@@ -272,10 +248,10 @@
             <h2 class="text-2xl font-semibold">Infinite Scroll – Auto (scroll-based)</h2>
             <p class="text-sm text-muted-foreground">
                 Omit <code class="bg-muted px-1 py-0.5 rounded">ShowLoadMoreButton</code> (or set it to false)
-                to use automatic scroll detection. Use <code class="bg-muted px-1 py-0.5 rounded">ScrollHeight</code>
-                to set any CSS height on the scroll container. The underlying
-                <code class="bg-muted px-1 py-0.5 rounded">data-view.js</code> module measures the container
-                as a whole, so detection works for both flex lists and multi-column grids.
+                to use automatic scroll detection. Set
+                <code class="bg-muted px-1 py-0.5 rounded">ScrollHeight</code> to any valid CSS height for
+                the scroll container — detection works for both flex lists and multi-column grids because
+                the container is measured as a whole.
             </p>
         </div>
         <BbDataView TItem="Person" Data="@people" EnableInfiniteScroll="true" ScrollHeight="480px" InitialPageSize="6">
@@ -298,6 +274,7 @@
                 <BbDataViewField TItem="Person" TValue="int" Property="@(p => p.Age)" Header="Age" Sortable />
             </Fields>
         </BbDataView>
+        <CodeBlock Source="Components/DataView/infinite-scroll.txt" />
     </div>
 
     <!-- ── Loading State ──────────────────────────────────────────────────── -->
@@ -306,8 +283,9 @@
             <h2 class="text-2xl font-semibold">Loading State</h2>
             <p class="text-sm text-muted-foreground">
                 Set <code class="bg-muted px-1 py-0.5 rounded">IsLoading</code> to show a loading indicator
-                while data is being fetched. Provide <code class="bg-muted px-1 py-0.5 rounded">LoadingTemplate</code>
-                to replace the default indicator with skeleton cards.
+                while data is being fetched. Provide
+                <code class="bg-muted px-1 py-0.5 rounded">LoadingTemplate</code> to replace the default
+                indicator with skeleton cards or any custom content.
             </p>
         </div>
         <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => isLoading = !isLoading)">
@@ -327,6 +305,7 @@
                 <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
             </Fields>
         </BbDataView>
+        <CodeBlock Source="Components/DataView/loading.txt" />
     </div>
 
     <!-- ── Empty State ────────────────────────────────────────────────────── -->
@@ -334,8 +313,8 @@
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">Empty State</h2>
             <p class="text-sm text-muted-foreground">
-                Displays the default empty state when there are no results. Use
-                <code class="bg-muted px-1 py-0.5 rounded">EmptyTemplate</code> to provide a custom state.
+                Displays the default empty state when there are no results. Provide
+                <code class="bg-muted px-1 py-0.5 rounded">EmptyTemplate</code> to render a custom state.
             </p>
         </div>
         <BbDataView TItem="Person" Data="@emptyPeople" InitialPageSize="5">
@@ -346,6 +325,7 @@
                 <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Filterable />
             </Fields>
         </BbDataView>
+        <CodeBlock Source="Components/DataView/empty.txt" />
     </div>
 
     <!-- ── Accessibility ──────────────────────────────────────────────────── -->
@@ -464,35 +444,13 @@
 @code {
     private List<Person> people = new();
     private List<Person> emptyPeople = new();
+    private List<Product> products = new();
     private bool isLoading;
-
-    private static readonly List<Product> products = new()
-    {
-        new(1,  "Wireless Noise-Cancelling Headphones", "Electronics", 79.99m,  4.5, 23, "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&auto=format&fit=crop"),
-        new(2,  "Mirrorless Camera Kit",                "Electronics", 899.00m, 4.8, 6,  "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400&auto=format&fit=crop"),
-        new(3,  "Ultrabook Laptop 14\"",                "Electronics", 1199.00m,4.6, 12, "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&auto=format&fit=crop"),
-        new(4,  "Smartphone Pro Max",                   "Electronics", 999.00m, 4.7, 0,  "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&auto=format&fit=crop"),
-        new(5,  "Mechanical Keyboard TKL",              "Electronics", 129.99m, 4.4, 31, "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400&auto=format&fit=crop"),
-        new(6,  "Running Sneakers X2",                  "Footwear",   119.99m, 4.7, 8,  "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&auto=format&fit=crop"),
-        new(7,  "Leather Chelsea Boots",                "Footwear",   189.99m, 4.3, 4,  "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=400&auto=format&fit=crop"),
-        new(8,  "Classic White Sneakers",               "Footwear",   89.99m,  4.6, 19, "https://images.unsplash.com/photo-1600269452121-4f2416e55c28?w=400&auto=format&fit=crop"),
-        new(9,  "Chronograph Watch",                    "Accessories",249.99m, 4.8, 3,  "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&auto=format&fit=crop"),
-        new(10, "Leather Backpack",                     "Accessories",149.99m, 4.5, 17, "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&auto=format&fit=crop"),
-        new(11, "Polarised Sunglasses",                 "Accessories",69.99m,  4.2, 25, "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&auto=format&fit=crop"),
-        new(12, "Minimalist Desk Lamp",                 "Home",       59.99m,  4.4, 14, "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=400&auto=format&fit=crop"),
-        new(13, "Indoor Monstera Plant",                "Home",       34.99m,  4.9, 7,  "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=400&auto=format&fit=crop"),
-        new(14, "Ceramic Pour-Over Coffee Set",         "Home",       44.99m,  4.7, 22, "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&auto=format&fit=crop"),
-        new(15, "Scented Soy Candle Set",               "Home",       29.99m,  4.6, 0,  "https://images.unsplash.com/photo-1602607630074-87e3df36f809?w=400&auto=format&fit=crop"),
-        new(16, "Cotton Oversized Hoodie",              "Apparel",    59.99m,  4.3, 42, "https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=400&auto=format&fit=crop"),
-        new(17, "Linen Button-Up Shirt",                "Apparel",    69.99m,  4.5, 18, "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=400&auto=format&fit=crop"),
-        new(18, "Slim Chino Trousers",                  "Apparel",    79.99m,  4.4, 11, "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=400&auto=format&fit=crop"),
-        new(19, "Portable Bluetooth Speaker",           "Electronics",89.99m,  4.5, 9,  "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400&auto=format&fit=crop"),
-        new(20, "Stainless Steel Water Bottle",         "Accessories",34.99m,  4.8, 55, "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400&auto=format&fit=crop"),
-    };
 
     protected override void OnInitialized()
     {
         people = MockDataService.GeneratePersons(500);
+        products = MockDataService.GenerateProducts(60);
     }
 
     private static string GetInitials(string name)
@@ -502,6 +460,4 @@
             ? $"{parts[0][0]}{parts[^1][0]}"
             : name.Length > 0 ? name[0].ToString() : "?";
     }
-
-    private record Product(int Id, string Name, string Category, decimal Price, double Rating, int Stock, string ImageUrl);
 }

@@ -1,18 +1,28 @@
 <BbDataView TItem="Person" Data="@people" InitialPageSize="5">
     <ItemTemplate Context="person">
-        <div class="flex items-center gap-4 rounded-md border p-4">
-            <div class="flex-1 space-y-1">
-                <p class="text-sm font-medium">@person.Name</p>
-                <p class="text-sm text-muted-foreground">@person.Email</p>
+        <div class="flex items-center gap-4 rounded-lg border bg-card p-4 hover:bg-accent/50 transition-colors">
+            <BbAvatar>
+                <BbAvatarFallback>@GetInitials(person.Name)</BbAvatarFallback>
+            </BbAvatar>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold truncate">@person.Name</p>
+                <p class="text-xs text-muted-foreground truncate">@person.Email</p>
+                <p class="text-xs text-muted-foreground">@person.Department · @person.Role</p>
             </div>
-            <BbBadge Variant="@(person.Status == "Active" ? BadgeVariant.Default : BadgeVariant.Outline)">
-                @person.Status
-            </BbBadge>
+            <div class="flex flex-col items-end gap-1">
+                <BbBadge Variant="@(person.Status == "Active" ? BadgeVariant.Default : BadgeVariant.Outline)">
+                    @person.Status
+                </BbBadge>
+                <span class="text-xs text-muted-foreground">@person.Salary.ToString("C0")</span>
+            </div>
         </div>
     </ItemTemplate>
     <Fields>
-        <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
-        <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Email)" Header="Email" Filterable />
-        <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Status)" Header="Status" Sortable />
+        <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)"       Header="Name"       Sortable Filterable />
+        <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Email)"      Header="Email"      Filterable />
+        <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
+        <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Role)"       Header="Role"       Sortable Filterable />
+        <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Status)"     Header="Status"     Sortable />
+        <BbDataViewField TItem="Person" TValue="int"    Property="@(p => p.Salary)"     Header="Salary"     Sortable />
     </Fields>
 </BbDataView>
