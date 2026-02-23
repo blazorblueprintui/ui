@@ -66,8 +66,8 @@
                 above and below the view — you own all borders, backgrounds, and spacing.
             </p>
         </div>
-        <BbDataView TItem="Product" Data="@products" Layout="DataViewLayout.Grid" InitialPageSize="8"
-                    PageSizes="@(new[] { 4, 8, 12, 24 })">
+        <BbDataView TItem="Product" Data="@products" Layout="DataViewLayout.Grid" InitialPageSize="12"
+                    PageSizes="@(new[] { 6, 12, 24, 48 })">
             <HeaderContent>
                 <div class="flex items-center justify-between pb-4 border-b">
                     <div>
@@ -180,20 +180,21 @@
         <CodeBlock Source="Components/DataView/header-footer.txt" />
     </div>
 
-    <!-- ── Infinite Scroll – Product Grid (Load More Button) ──────────────── -->
+    <!-- ── Infinite Scroll – Product Grid (Auto) ─────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Infinite Scroll – Product Grid</h2>
+            <h2 class="text-2xl font-semibold">Infinite Scroll – Product Grid (Auto)</h2>
             <p class="text-sm text-muted-foreground">
-                Set <code class="bg-muted px-1 py-0.5 rounded">EnableInfiniteScroll</code> and
-                <code class="bg-muted px-1 py-0.5 rounded">ShowLoadMoreButton</code> to progressively
-                load items with an explicit button. The button is always rendered outside the grid
-                container so it spans the full width regardless of column count — even when the last
-                row is partially filled. Sorting or filtering resets to the first batch.
+                Set <code class="bg-muted px-1 py-0.5 rounded">EnableInfiniteScroll</code> with
+                <code class="bg-muted px-1 py-0.5 rounded">ScrollHeight</code> to progressively load
+                more items as the user scrolls. Using an
+                <code class="bg-muted px-1 py-0.5 rounded">InitialPageSize</code> that is a multiple of
+                LCM(2,3)=6 keeps every row complete at both the two-column and three-column grid
+                breakpoints. Sorting or filtering resets to the first batch.
             </p>
         </div>
         <BbDataView TItem="Product" Data="@products" Layout="DataViewLayout.Grid"
-                    EnableInfiniteScroll="true" ShowLoadMoreButton="true" InitialPageSize="8">
+                    EnableInfiniteScroll="true" ScrollHeight="600px" InitialPageSize="6">
             <ItemTemplate Context="product">
                 <BbCard Class="overflow-hidden flex flex-col hover:shadow-md transition-shadow">
                     <div class="relative aspect-square overflow-hidden bg-muted">
