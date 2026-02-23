@@ -301,6 +301,112 @@
         <CodeBlock Source="Components/DataView/layout-customization.txt" />
     </div>
 
+    <!-- ── Layout Customization ───────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Layout Customization (Columns, Gap &amp; Spacing)</h2>
+            <p class="text-sm text-muted-foreground">
+                Both <code class="bg-muted px-1 py-0.5 rounded">GridClass</code> and
+                <code class="bg-muted px-1 py-0.5 rounded">ListClass</code> are merged on top of their
+                respective defaults using TailwindMerge — so you only need to supply the classes you want
+                to override; the rest of the defaults are preserved. The default grid is
+                <code class="bg-muted px-1 py-0.5 rounded">grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4</code>
+                and the default list is
+                <code class="bg-muted px-1 py-0.5 rounded">flex flex-col gap-2</code>.
+            </p>
+        </div>
+
+        <!-- 4-column grid -->
+        <div class="space-y-2">
+            <p class="font-medium text-sm">4-column grid (<code class="bg-muted px-1 py-0.5 rounded">GridClass="grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"</code>)</p>
+            <BbDataView TItem="Product" Data="@products" InitialPageSize="12"
+                        GridClass="grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                <GridTemplate Context="product">
+                    <BbCard Class="overflow-hidden flex flex-col">
+                        <div class="aspect-square overflow-hidden bg-muted">
+                            <img src="@product.ImageUrl" alt="@product.Name"
+                                 class="object-cover w-full h-full" loading="lazy" />
+                        </div>
+                        <BbCardContent Class="p-3 flex flex-col gap-1">
+                            <p class="text-xs font-semibold line-clamp-2">@product.Name</p>
+                            <BbTypographyMuted Class="text-xs">@product.Category</BbTypographyMuted>
+                            <span class="text-sm font-bold">$@product.Price.ToString("F2")</span>
+                        </BbCardContent>
+                    </BbCard>
+                </GridTemplate>
+                <Fields>
+                    <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
+                    <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />
+                    <BbDataViewField TItem="Product" TValue="decimal" Property="@(p => p.Price)"    Header="Price"    Sortable />
+                </Fields>
+            </BbDataView>
+        </div>
+
+        <!-- 2-column grid with large gap -->
+        <div class="space-y-2">
+            <p class="font-medium text-sm">2-column grid with large gap (<code class="bg-muted px-1 py-0.5 rounded">GridClass="grid-cols-1 sm:grid-cols-2 gap-6"</code>)</p>
+            <BbDataView TItem="Product" Data="@products" InitialPageSize="6"
+                        PageSizes="@(new[] { 6, 12 })"
+                        GridClass="grid-cols-1 sm:grid-cols-2 gap-6">
+                <GridTemplate Context="product">
+                    <BbCard Class="overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+                        <div class="relative aspect-video overflow-hidden bg-muted">
+                            <img src="@product.ImageUrl" alt="@product.Name"
+                                 class="object-cover w-full h-full" loading="lazy" />
+                        </div>
+                        <BbCardContent Class="flex flex-col gap-2 p-4">
+                            <div class="flex items-start justify-between gap-2">
+                                <p class="text-sm font-semibold">@product.Name</p>
+                                <BbBadge Variant="BadgeVariant.Outline" Class="shrink-0 text-xs">@product.Category</BbBadge>
+                            </div>
+                            <BbRating Value="@product.Rating" ReadOnly="true" Size="RatingSize.Small" />
+                            <BbSeparator />
+                            <div class="flex items-center justify-between">
+                                <span class="text-base font-bold">$@product.Price.ToString("F2")</span>
+                                <BbButton Size="ButtonSize.Small"
+                                          Variant="@(product.Stock > 0 ? ButtonVariant.Default : ButtonVariant.Outline)"
+                                          Disabled="@(product.Stock == 0)">
+                                    @(product.Stock > 0 ? "Add to Cart" : "Notify Me")
+                                </BbButton>
+                            </div>
+                        </BbCardContent>
+                    </BbCard>
+                </GridTemplate>
+                <Fields>
+                    <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
+                    <BbDataViewField TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />
+                    <BbDataViewField TItem="Product" TValue="decimal" Property="@(p => p.Price)"    Header="Price"    Sortable />
+                </Fields>
+            </BbDataView>
+        </div>
+
+        <!-- Compact divider list -->
+        <div class="space-y-2">
+            <p class="font-medium text-sm">Compact divider list (<code class="bg-muted px-1 py-0.5 rounded">ListClass="gap-0 divide-y"</code>)</p>
+            <BbDataView TItem="Person" Data="@people" InitialPageSize="6" ListClass="gap-0 divide-y">
+                <ListTemplate Context="person">
+                    <div class="flex items-center gap-4 px-4 py-3 hover:bg-accent/50 transition-colors">
+                        <BbAvatar>
+                            <BbAvatarFallback>@GetInitials(person.Name)</BbAvatarFallback>
+                        </BbAvatar>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold truncate">@person.Name</p>
+                            <BbTypographyMuted Class="truncate">@person.Email</BbTypographyMuted>
+                        </div>
+                        <BbBadge Variant="BadgeVariant.Secondary">@person.Department</BbBadge>
+                    </div>
+                </ListTemplate>
+                <Fields>
+                    <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)"       Header="Name"       Sortable Filterable />
+                    <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
+                    <BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Email)"      Header="Email"      Filterable />
+                </Fields>
+            </BbDataView>
+        </div>
+
+        <CodeBlock Source="Components/DataView/layout-customization.txt" />
+    </div>
+
     <!-- ── Infinite Scroll – Product Grid (Auto, GridTemplate only) ───────── -->
     <div class="space-y-4">
         <div class="space-y-2">
