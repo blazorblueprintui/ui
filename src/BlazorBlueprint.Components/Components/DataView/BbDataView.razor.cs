@@ -666,7 +666,15 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     {
         if (_jsModule != null)
         {
-            await _jsModule.DisposeAsync();
+            try
+            {
+                await _jsModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Circuit disconnected during navigation — safe to ignore
+            }
+
             _jsModule = null;
         }
 
