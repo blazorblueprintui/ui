@@ -83,12 +83,14 @@
                         }
                     }
 
-                    @* Layout toggle *@
+                    @* Layout toggle – only shown when both ListTemplate and GridTemplate are provided *@
+                    @if (CanToggleLayout)
+                    {
                     <div class="ml-auto flex items-center gap-1 rounded-md border p-1">
                         <BbButton Variant="ButtonVariant.Ghost"
                                   Size="ButtonSize.Icon"
                                   OnClick="@(() => SetLayout(DataViewLayout.List))"
-                                  Class="@ClassNames.cn("h-7 w-7", Layout == DataViewLayout.List ? "bg-accent text-accent-foreground" : "")"
+                                  Class="@ClassNames.cn("h-7 w-7", _effectiveLayout == DataViewLayout.List ? "bg-accent text-accent-foreground" : "")"
                                   title="List view">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
@@ -97,13 +99,14 @@
                         <BbButton Variant="ButtonVariant.Ghost"
                                   Size="ButtonSize.Icon"
                                   OnClick="@(() => SetLayout(DataViewLayout.Grid))"
-                                  Class="@ClassNames.cn("h-7 w-7", Layout == DataViewLayout.Grid ? "bg-accent text-accent-foreground" : "")"
+                                  Class="@ClassNames.cn("h-7 w-7", _effectiveLayout == DataViewLayout.Grid ? "bg-accent text-accent-foreground" : "")"
                                   title="Grid view">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM12 5a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1v-2zM12 13a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1v-2z" />
                             </svg>
                         </BbButton>
                     </div>
+                    }
 
                 </div>
             }
@@ -151,9 +154,9 @@
                     <div class="@ItemContainerCssClass">
                         @foreach (var item in _visibleData)
                         {
-                            @if (EffectiveItemTemplate != null)
+                            @if (EffectiveActiveTemplate != null)
                             {
-                                @EffectiveItemTemplate(item)
+                                @EffectiveActiveTemplate(item)
                             }
                         }
                     </div>
@@ -173,9 +176,9 @@
                 <div class="@ItemContainerCssClass">
                     @foreach (var item in _visibleData)
                     {
-                        @if (EffectiveItemTemplate != null)
+                        @if (EffectiveActiveTemplate != null)
                         {
-                            @EffectiveItemTemplate(item)
+                            @EffectiveActiveTemplate(item)
                         }
                     }
                 </div>

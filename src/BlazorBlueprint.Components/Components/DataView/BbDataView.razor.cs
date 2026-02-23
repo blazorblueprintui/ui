@@ -12,24 +12,25 @@ namespace BlazorBlueprint.Components;
 /// <typeparam name="TItem">The type of data items in the view.</typeparam>
 /// <remarks>
 /// <para>
-/// DataView provides a PrimeVue-like composition model: use the ItemTemplate render fragment
-/// (or the BbDataViewTemplate child component) to define item rendering, BbDataViewField
-/// components inside the Fields fragment to register fields for sorting/filtering, and
-/// HeaderContent / FooterContent render fragments (or BbDataViewHeader / BbDataViewFooter
-/// child components) for optional slot content.
+/// DataView provides a PrimeVue-like composition model: use ListTemplate and/or GridTemplate
+/// render fragments to define how items are rendered in each layout mode.
+/// If only one template is provided the component locks into that layout and hides the
+/// layout-toggle buttons. If both are provided the user can switch freely between list and
+/// grid views using the toolbar toggle.
 /// </para>
 /// <para>
-/// Infinite scroll works correctly for both flex-list and multi-column CSS grid layouts:
-/// the scroll container is measured as a unit, and the Load More button / scroll sentinel
-/// are always placed outside the grid container so they span the full width.
+/// Register BbDataViewField components inside the Fields fragment to configure sorting and
+/// filtering. Use HeaderContent / FooterContent for optional unstyled slot content above and
+/// below the view. Infinite scroll works correctly for both flex-list and multi-column CSS
+/// grid layouts.
 /// </para>
 /// </remarks>
 /// <example>
 /// <code>
 /// &lt;BbDataView TItem="Person" Data="@people"&gt;
-///     &lt;ItemTemplate Context="person"&gt;
+///     &lt;ListTemplate Context="person"&gt;
 ///         &lt;div class="p-4 border rounded-lg"&gt;@person.Name&lt;/div&gt;
-///     &lt;/ItemTemplate&gt;
+///     &lt;/ListTemplate&gt;
 ///     &lt;Fields&gt;
 ///         &lt;BbDataViewField TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable /&gt;
 ///     &lt;/Fields&gt;
@@ -64,7 +65,8 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
     // so both the direct-parameter API and the slot-component API work side-by-side.
     private RenderFragment? _registeredHeaderContent;
     private RenderFragment? _footerContentRegistered;
-    private RenderFragment<TItem>? _registeredItemTemplate;
+    private RenderFragment<TItem>? _registeredListTemplate;
+    private RenderFragment<TItem>? _registeredGridTemplate;
 
     // Infinite scroll
     private ElementReference _scrollContainerRef;
@@ -97,12 +99,28 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
     public IEnumerable<TItem> Data { get; set; } = Array.Empty<TItem>();
 
     /// <summary>
-    /// Gets or sets the template used to render each item.
+    /// Gets or sets the template used to render each item in list layout mode.
     /// The context variable provides the current data item of type TItem.
-    /// Alternatively, place a BbDataViewTemplate child component inside the Fields fragment.
+    /// When only ListTemplate is provided the component locks into list mode and hides
+    /// the layout-toggle buttons. Provide both ListTemplate and GridTemplate to allow
+    /// the user to switch between layouts via the toolbar toggle.
+    /// Alternatively, place a BbDataViewTemplate with Layout="DataViewLayout.List"
+    /// inside the Fields fragment.
     /// </summary>
     [Parameter]
-    public RenderFragment<TItem>? ItemTemplate { get; set; }
+    public RenderFragment<TItem>? ListTemplate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the template used to render each item in grid layout mode.
+    /// The context variable provides the current data item of type TItem.
+    /// When only GridTemplate is provided the component locks into grid mode and hides
+    /// the layout-toggle buttons. Provide both ListTemplate and GridTemplate to allow
+    /// the user to switch between layouts via the toolbar toggle.
+    /// Alternatively, place a BbDataViewTemplate with Layout="DataViewLayout.Grid"
+    /// inside the Fields fragment.
+    /// </summary>
+    [Parameter]
+    public RenderFragment<TItem>? GridTemplate { get; set; }
 
     /// <summary>
     /// Gets or sets optional header content rendered above the toolbar.
@@ -238,9 +256,40 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
 
     private string ContainerCssClass => ClassNames.cn("w-full space-y-4", Class);
 
-    private string ItemContainerCssClass => Layout == DataViewLayout.Grid
+    private string ItemContainerCssClass => _effectiveLayout == DataViewLayout.Grid
         ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
         : "flex flex-col gap-2";
+
+    /// <summary>
+    /// The resolved layout, accounting for which templates are available.
+    /// If only one template is set the layout is locked to that mode regardless of the
+    /// Layout parameter. If both are set the Layout parameter (and the toolbar toggle)
+    /// control the active layout.
+    /// </summary>
+    private DataViewLayout _effectiveLayout
+    {
+        get
+        {
+            var hasList = EffectiveListTemplate != null;
+            var hasGrid = EffectiveGridTemplate != null;
+            if (hasList && !hasGrid)
+            {
+                return DataViewLayout.List;
+            }
+
+            if (hasGrid && !hasList)
+            {
+                return DataViewLayout.Grid;
+            }
+
+            return Layout;
+        }
+    }
+
+    /// <summary>
+    /// True when both a list and a grid template are provided, enabling the layout-toggle buttons.
+    /// </summary>
+    private bool CanToggleLayout => EffectiveListTemplate != null && EffectiveGridTemplate != null;
 
     /// <summary>
     /// True when there are more batched items to reveal in infinite scroll mode.
@@ -249,10 +298,22 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
         && _currentInfinitePage * _paginationState.PageSize < _filteredSortedData.Count();
 
     /// <summary>
-    /// The item template in effect: the named parameter takes precedence over any
-    /// slot component that called SetItemTemplate (BbDataViewTemplate).
+    /// The list template in effect: the named parameter takes precedence over any
+    /// slot component that called SetListTemplate (BbDataViewTemplate with Layout=List).
     /// </summary>
-    private RenderFragment<TItem>? EffectiveItemTemplate => ItemTemplate ?? _registeredItemTemplate;
+    private RenderFragment<TItem>? EffectiveListTemplate => ListTemplate ?? _registeredListTemplate;
+
+    /// <summary>
+    /// The grid template in effect: the named parameter takes precedence over any
+    /// slot component that called SetGridTemplate (BbDataViewTemplate with Layout=Grid).
+    /// </summary>
+    private RenderFragment<TItem>? EffectiveGridTemplate => GridTemplate ?? _registeredGridTemplate;
+
+    /// <summary>
+    /// The active item template based on the current effective layout.
+    /// </summary>
+    private RenderFragment<TItem>? EffectiveActiveTemplate
+        => _effectiveLayout == DataViewLayout.Grid ? EffectiveGridTemplate : EffectiveListTemplate;
 
     /// <summary>
     /// The header content in effect: the named parameter takes precedence over any
@@ -323,12 +384,23 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
     }
 
     /// <summary>
-    /// Sets the item rendering template.
-    /// Called by BbDataViewTemplate during initialization.
+    /// Sets the list-mode item rendering template.
+    /// Called by BbDataViewTemplate with Layout=DataViewLayout.List during initialization.
     /// </summary>
-    internal void SetItemTemplate(RenderFragment<TItem>? template)
+    internal void SetListTemplate(RenderFragment<TItem>? template)
     {
-        _registeredItemTemplate = template;
+        _registeredListTemplate = template;
+        _slotVersion++;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Sets the grid-mode item rendering template.
+    /// Called by BbDataViewTemplate with Layout=DataViewLayout.Grid during initialization.
+    /// </summary>
+    internal void SetGridTemplate(RenderFragment<TItem>? template)
+    {
+        _registeredGridTemplate = template;
         _slotVersion++;
         StateHasChanged();
     }
@@ -565,6 +637,11 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
 
     private void SetLayout(DataViewLayout layout)
     {
+        if (!CanToggleLayout)
+        {
+            return;
+        }
+
         Layout = layout;
         StateHasChanged();
     }
