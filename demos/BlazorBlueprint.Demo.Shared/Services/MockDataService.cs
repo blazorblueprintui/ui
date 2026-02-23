@@ -49,6 +49,45 @@ public class MockDataService
         "Engineering", "Sales", "Marketing", "Support", "HR", "Finance", "Operations", "Product"
     };
 
+    private static readonly string[] _productAdjectives = {
+        "Pro", "Ultra", "Mini", "Max", "Lite", "Smart", "Classic", "Premium", "Elite", "Eco",
+        "Slim", "Flex", "Rapid", "Fusion", "Nano", "Turbo", "Swift", "Bold", "Core", "Pure"
+    };
+
+    private static readonly string[] _productNouns = {
+        "Headphones", "Speaker", "Backpack", "Watch", "Keyboard", "Lamp", "Sneakers", "Bottle",
+        "Camera", "Notebook", "Hoodie", "Sunglasses", "Wallet", "Mug", "Charger", "Pad",
+        "Stand", "Hub", "Cable", "Pouch", "Earbuds", "Mat", "Tote", "Jacket", "Desk"
+    };
+
+    private static readonly string[] _productCategories = {
+        "Electronics", "Footwear", "Accessories", "Home", "Apparel"
+    };
+
+    // A set of representative Unsplash photo IDs that render nicely as product images.
+    private static readonly string[] _productImageUrls = {
+        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1600269452121-4f2416e55c28?w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1602607630074-87e3df36f809?w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1556821840-3a63f15732ce?w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400&auto=format&fit=crop",
+    };
+
     /// <summary>
     /// Generates a list of mock person records.
     /// </summary>
@@ -102,7 +141,37 @@ public class MockDataService
 
     private static DateTimeOffset? GeneratePromotionDate() =>
         DateTimeOffset.UtcNow - TimeSpan.FromDays(_random.Next(365, 730));
-}
+
+    /// <summary>
+    /// Generates a list of mock product records.
+    /// </summary>
+    /// <param name="count">Number of records to generate.</param>
+    /// <returns>List of product records with randomized data.</returns>
+    public static List<Product> GenerateProducts(int count)
+    {
+        var products = new List<Product>();
+        for (var i = 0; i < count; i++)
+        {
+            var adj = _productAdjectives[_random.Next(_productAdjectives.Length)];
+            var noun = _productNouns[_random.Next(_productNouns.Length)];
+            var category = _productCategories[_random.Next(_productCategories.Length)];
+            var imageUrl = _productImageUrls[i % _productImageUrls.Length];
+            var stock = _random.Next(100) < 10 ? 0 : _random.Next(1, 100);
+
+            products.Add(new Product
+            {
+                Id = i + 1,
+                Name = $"{adj} {noun}",
+                Category = category,
+                Price = Math.Round((decimal)(_random.NextDouble() * 290 + 9.99), 2),
+                Rating = Math.Round(_random.NextDouble() * 2 + 3, 1),
+                Stock = stock,
+                ImageUrl = imageUrl,
+            });
+        }
+
+        return products;
+    }
 
 /// <summary>
 /// Represents a person with various properties for demo purposes.

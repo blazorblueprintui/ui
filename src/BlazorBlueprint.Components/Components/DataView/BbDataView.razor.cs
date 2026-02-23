@@ -71,6 +71,7 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
     private IJSObjectReference? _jsModule;
     private bool _isLoadingMore;
     private int _infiniteScrollVersion;
+    private int _sortingVersion;
 
     // ShouldRender tracking fields
     private IEnumerable<TItem>? _lastData;
@@ -84,6 +85,7 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
     private int _slotVersion;
     private int _lastSlotVersion;
     private int _lastInfiniteScrollVersion;
+    private int _lastSortingVersion;
 
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
@@ -467,6 +469,7 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
 
         _paginationState.CurrentPage = 1;
         _currentInfinitePage = 1;
+        _sortingVersion++;
 
         if (OnSort.HasDelegate)
         {
@@ -488,6 +491,7 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
 
         _paginationState.CurrentPage = 1;
         _currentInfinitePage = 1;
+        _sortingVersion++;
 
         if (OnSort.HasDelegate)
         {
@@ -588,8 +592,9 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
         var paginationChanged = _lastPaginationVersion != _paginationVersion;
         var slotChanged = _lastSlotVersion != _slotVersion;
         var infiniteScrollChanged = _lastInfiniteScrollVersion != _infiniteScrollVersion;
+        var sortingChanged = _lastSortingVersion != _sortingVersion;
 
-        if (dataChanged || layoutChanged || loadingChanged || fieldsChanged || searchChanged || paginationChanged || slotChanged || infiniteScrollChanged)
+        if (dataChanged || layoutChanged || loadingChanged || fieldsChanged || searchChanged || paginationChanged || slotChanged || infiniteScrollChanged || sortingChanged)
         {
             _lastData = Data;
             _lastLayout = Layout;
@@ -599,6 +604,7 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
             _lastPaginationVersion = _paginationVersion;
             _lastSlotVersion = _slotVersion;
             _lastInfiniteScrollVersion = _infiniteScrollVersion;
+            _lastSortingVersion = _sortingVersion;
             return true;
         }
 
