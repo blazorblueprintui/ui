@@ -20,8 +20,7 @@ namespace BlazorBlueprint.Components;
 /// </para>
 /// <para>
 /// Register BbDataViewColumn components inside the Fields fragment to configure sorting and
-/// filtering. Use HeaderContent / FooterContent for optional unstyled slot content above and
-/// below the view. Infinite scroll works correctly for both flex-list and multi-column CSS
+/// filtering. Infinite scroll works correctly for both flex-list and multi-column CSS
 /// grid layouts.
 /// </para>
 /// </remarks>
@@ -37,7 +36,7 @@ namespace BlazorBlueprint.Components;
 /// &lt;/BbDataView&gt;
 /// </code>
 /// </example>
-public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncDisposable where TItem : class
+public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where TItem : class
 {
     /// <summary>
     /// Internal class for storing field metadata without component parameters.
@@ -60,11 +59,9 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
     private string _searchValue = string.Empty;
     private int _currentInfinitePage = 1;
 
-    // Backing fields for slot-component registrations (BbDataViewHeader/Footer/Template).
+    // Backing fields for slot-component registrations (BbDataViewListTemplate/GridTemplate).
     // The effective value always prefers the named [Parameter] over the registered one,
     // so both the direct-parameter API and the slot-component API work side-by-side.
-    private RenderFragment? _registeredHeaderContent;
-    private RenderFragment? _footerContentRegistered;
     private RenderFragment<TItem>? _registeredListTemplate;
     private RenderFragment<TItem>? _registeredGridTemplate;
 
@@ -121,24 +118,9 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
     public RenderFragment<TItem>? GridTemplate { get; set; }
 
     /// <summary>
-    /// Gets or sets optional header content rendered above the toolbar.
-    /// Alternatively, place a BbDataViewHeader child component inside the Fields fragment.
-    /// </summary>
-    [Parameter]
-    public RenderFragment? HeaderContent { get; set; }
-
-    /// <summary>
-    /// Gets or sets optional footer content rendered below items and pagination.
-    /// Alternatively, place a BbDataViewFooter child component inside the Fields fragment.
-    /// </summary>
-    [Parameter]
-    public RenderFragment? FooterContent { get; set; }
-
-    /// <summary>
     /// Gets or sets the column definitions as child content.
     /// Use BbDataViewColumn components to define columns declaratively.
-    /// BbDataViewHeader, BbDataViewFooter, BbDataViewListTemplate, and BbDataViewGridTemplate
-    /// may also be placed here.
+    /// BbDataViewListTemplate and BbDataViewGridTemplate may also be placed here.
     /// </summary>
     [Parameter]
     public RenderFragment? Fields { get; set; }
@@ -350,18 +332,6 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
     private RenderFragment<TItem>? EffectiveActiveTemplate
         => _effectiveLayout == DataViewLayout.Grid ? EffectiveGridTemplate : EffectiveListTemplate;
 
-    /// <summary>
-    /// The header content in effect: the named parameter takes precedence over any
-    /// slot component that called SetHeaderContent (BbDataViewHeader).
-    /// </summary>
-    private RenderFragment? EffectiveHeaderContent => HeaderContent ?? _registeredHeaderContent;
-
-    /// <summary>
-    /// The footer content in effect: the named parameter takes precedence over any
-    /// slot component that called SetFooterContent (BbDataViewFooter).
-    /// </summary>
-    private RenderFragment? EffectiveFooterContent => FooterContent ?? _footerContentRegistered;
-
     // ── Lifecycle ────────────────────────────────────────────────────────────
 
     protected override void OnInitialized()
@@ -382,7 +352,7 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
         }
     }
 
-    // ── Slot registration (called by BbDataViewHeader/Footer/Template) ───────
+    // ── Slot registration ────────────────────────────────────────────────────
 
     /// <summary>
     /// Registers a column with the data view.
@@ -400,22 +370,6 @@ public partial class BbDataView<TItem> : ComponentBase, IDataViewParent, IAsyncD
         });
 
         _fieldsVersion++;
-    }
-
-    /// <inheritdoc />
-    void IDataViewParent.SetHeaderContent(RenderFragment? content)
-    {
-        _registeredHeaderContent = content;
-        _slotVersion++;
-        StateHasChanged();
-    }
-
-    /// <inheritdoc />
-    void IDataViewParent.SetFooterContent(RenderFragment? content)
-    {
-        _footerContentRegistered = content;
-        _slotVersion++;
-        StateHasChanged();
     }
 
     /// <summary>

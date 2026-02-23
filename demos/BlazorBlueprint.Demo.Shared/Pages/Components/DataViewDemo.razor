@@ -64,21 +64,10 @@
                 <code class="bg-muted px-1 py-0.5 rounded">GridTemplate</code> to enable the toolbar
                 layout-toggle buttons. Each template can be designed independently — the list template
                 is a compact horizontal row and the grid template is a richer card with an image.
-                Use <code class="bg-muted px-1 py-0.5 rounded">HeaderContent</code> and
-                <code class="bg-muted px-1 py-0.5 rounded">FooterContent</code> for unstyled slot areas.
             </p>
         </div>
         <BbDataView TItem="Product" Data="@products" InitialPageSize="12"
                     PageSizes="@(new[] { 6, 12, 24, 48 })">
-            <HeaderContent>
-                <div class="flex items-center justify-between pb-4 border-b">
-                    <div>
-                        <p class="text-lg font-semibold">Our Products</p>
-                        <BbTypographyMuted>@products.Count items · free shipping over $50</BbTypographyMuted>
-                    </div>
-                    <BbBadge Variant="BadgeVariant.Secondary">@products.Count(p => p.Stock > 0) in stock</BbBadge>
-                </div>
-            </HeaderContent>
             <ListTemplate Context="product">
                 <BbCard Class="flex items-center gap-4 p-3 shadow-none hover:bg-accent/50 transition-colors">
                     <div class="size-16 shrink-0 rounded-md overflow-hidden bg-muted">
@@ -146,12 +135,6 @@
                     </BbCardContent>
                 </BbCard>
             </GridTemplate>
-            <FooterContent>
-                <div class="flex items-center justify-between pt-4 border-t">
-                    <BbTypographyMuted>Prices include VAT. Free returns within 30 days.</BbTypographyMuted>
-                    <BbTypographyMuted>© 2025 Demo Store</BbTypographyMuted>
-                </div>
-            </FooterContent>
             <Fields>
                 <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
                 <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />
@@ -160,55 +143,6 @@
             </Fields>
         </BbDataView>
         <CodeBlock Source="Components/DataView/product-catalog.txt" />
-    </div>
-
-    <!-- ── Header and Footer Slots ────────────────────────────────────────── -->
-    <div class="space-y-4">
-        <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Header &amp; Footer Slots</h2>
-            <p class="text-sm text-muted-foreground">
-                Use the <code class="bg-muted px-1 py-0.5 rounded">HeaderContent</code> and
-                <code class="bg-muted px-1 py-0.5 rounded">FooterContent</code> parameters to render
-                custom content above and below the view. The slots are completely unstyled — you own
-                every border, background, and spacing choice.
-            </p>
-        </div>
-        <BbDataView TItem="Person" Data="@people" InitialPageSize="4">
-            <HeaderContent>
-                <div class="flex items-center justify-between rounded-t-lg border border-b-0 bg-card px-6 py-4">
-                    <div>
-                        <p class="text-base font-semibold">Team Members</p>
-                        <BbTypographyMuted>Browse and search your team directory.</BbTypographyMuted>
-                    </div>
-                    <BbButton Variant="ButtonVariant.Default" Size="ButtonSize.Small">
-                        Add Member
-                    </BbButton>
-                </div>
-            </HeaderContent>
-            <ListTemplate Context="person">
-                <BbCard Class="flex items-center gap-4 p-4 shadow-none">
-                    <BbAvatar>
-                        <BbAvatarFallback>@GetInitials(person.Name)</BbAvatarFallback>
-                    </BbAvatar>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold truncate">@person.Name</p>
-                        <BbTypographyMuted Class="truncate">@person.Email</BbTypographyMuted>
-                    </div>
-                    <BbBadge Variant="BadgeVariant.Secondary">@person.Department</BbBadge>
-                </BbCard>
-            </ListTemplate>
-            <FooterContent>
-                <div class="rounded-b-lg border border-t-0 bg-muted/30 px-6 py-3">
-                    <BbTypographyMuted>Showing filtered results from @people.Count total records.</BbTypographyMuted>
-                </div>
-            </FooterContent>
-            <Fields>
-                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Name)"       Header="Name"       Sortable Filterable />
-                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
-                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Email)"      Header="Email"      Filterable />
-            </Fields>
-        </BbDataView>
-        <CodeBlock Source="Components/DataView/header-footer.txt" />
     </div>
 
     <!-- ── Custom Toolbar Actions ────────────────────────────────────────────── -->
@@ -556,12 +490,6 @@
                     Template used to render each item in grid layout. When set without ListTemplate the
                     view locks into grid mode and the layout-toggle is hidden. Provide both templates
                     to enable the toolbar layout-toggle.
-                </ApiParameter>
-                <ApiParameter Name="HeaderContent" Type="RenderFragment?" Default="null">
-                    Optional unstyled content rendered above the toolbar. You own all styling.
-                </ApiParameter>
-                <ApiParameter Name="FooterContent" Type="RenderFragment?" Default="null">
-                    Optional unstyled content rendered below items and pagination. You own all styling.
                 </ApiParameter>
                 <ApiParameter Name="Fields" Type="RenderFragment?" Default="null">
                     Container for BbDataViewColumn definitions (and optional slot components).
