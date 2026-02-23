@@ -217,12 +217,13 @@ Blazor Blueprint includes **80 styled components** organized into the following 
 
 ### Data & Content
 
-| Component | Description |
-|-----------|-------------|
-| **Chart** | 6 chart types (Area, Bar, Line, Pie, Radar, Radial) with theme integration |
-| **DataTable** | Tables with sorting, filtering, pagination, and row selection |
-| **Markdown Editor** | Toolbar formatting with live preview |
-| **Rich Text Editor** | WYSIWYG editor with formatting toolbar and HTML output |
+| Component            | Description                                                                                                        |
+|----------------------|--------------------------------------------------------------------------------------------------------------------|
+| **Chart**            | 6 chart types (Area, Bar, Line, Pie, Radar, Radial) with theme integration                                         |
+| **DataTable**        | Tables with sorting, filtering, pagination, and row selection                                                      |
+| **DataView**         | Displays data using templates in a grid or list layout with sorting, filtering, pagination, and infinite scrolling |
+| **Markdown Editor**  | Toolbar formatting with live preview                                                                               |
+| **Rich Text Editor** | WYSIWYG editor with formatting toolbar and HTML output                                                             |
 
 ### Display
 
