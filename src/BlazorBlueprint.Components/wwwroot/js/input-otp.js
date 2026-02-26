@@ -18,7 +18,9 @@ export function initialize(element, dotNetRef, instanceId) {
     const handlePaste = (event) => {
         const text = event.clipboardData?.getData('text') ?? '';
         event.preventDefault();
-        dotNetRef.invokeMethodAsync('OnPasteJs', text).catch(() => {});
+        dotNetRef.invokeMethodAsync('OnPasteJs', text).catch(err => {
+            console.error('Error invoking OnPasteJs:', err);
+        });
     };
 
     element.addEventListener('paste', handlePaste);

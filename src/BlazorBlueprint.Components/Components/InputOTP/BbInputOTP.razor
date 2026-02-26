@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Components
 @using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.JSInterop
 @using System.Linq.Expressions
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
@@ -142,6 +143,7 @@
     private IJSObjectReference? _jsModule;
     private DotNetObjectReference<BbInputOTP>? _dotNetRef;
     private bool _jsInitialized;
+    private bool _disposed;
 
     protected override void OnInitialized()
     {
@@ -192,9 +194,13 @@
                 await _jsModule.InvokeVoidAsync("initialize", _containerRef, _dotNetRef, EffectiveId);
                 _jsInitialized = true;
             }
-            catch
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
-                // Ignore JS initialization errors (e.g., prerendering)
+                // Expected during circuit disconnect in Blazor Server
+            }
+            catch (InvalidOperationException)
+            {
+                // JS interop not available during prerendering
             }
         }
     }
@@ -261,6 +267,8 @@
     [JSInvokable]
     public async Task OnPasteJs(string pastedText)
     {
+        if (_disposed) return;
+
         // Extract only digit characters
         var digits = string.Concat(pastedText.Where(char.IsDigit));
 
@@ -288,9 +296,10 @@
         await FocusInput(focusIndex);
 
         // Fire OnComplete if all slots are filled
-        if (newValue.Length == Length)
+        var completeValue = string.Join("", _values.Where(v => !string.IsNullOrEmpty(v)));
+        if (completeValue.Length == Length)
         {
-            await OnComplete.InvokeAsync(newValue);
+            await OnComplete.InvokeAsync(completeValue);
         }
 
         StateHasChanged();
@@ -348,6 +357,7 @@
 
     public async ValueTask DisposeAsync()
     {
+        _disposed = true;
         if (_jsInitialized && _jsModule != null)
         {
             try
