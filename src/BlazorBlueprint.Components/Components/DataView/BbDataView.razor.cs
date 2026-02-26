@@ -42,7 +42,7 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     /// Internal class for storing field metadata without component parameters.
     /// This avoids BL0005 warnings when creating field instances programmatically.
     /// </summary>
-    public class FieldData
+    internal sealed class FieldData
     {
         public string Id { get; set; } = string.Empty;
         public string Header { get; set; } = string.Empty;
@@ -54,10 +54,11 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     private List<FieldData> _fields = new();
     private SortingState _sortingState = new();
     private PaginationState _paginationState = new();
-    private IEnumerable<TItem> _filteredSortedData = Array.Empty<TItem>();
-    private IEnumerable<TItem> _visibleData = Array.Empty<TItem>();
+    private List<TItem> _filteredSortedData = new();
+    private List<TItem> _visibleData = new();
     private string _searchValue = string.Empty;
     private int _currentInfinitePage = 1;
+    private DataViewLayout currentLayout;
 
     // Backing fields for slot-component registrations (BbDataViewListTemplate/GridTemplate).
     // The effective value always prefers the named [Parameter] over the registered one,
@@ -299,7 +300,7 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
                 return DataViewLayout.Grid;
             }
 
-            return Layout;
+            return currentLayout;
         }
     }
 
@@ -312,7 +313,7 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     /// True when there are more batched items to reveal in infinite scroll mode.
     /// </summary>
     private bool CanLoadMore => EnableInfiniteScroll
-        && _currentInfinitePage * _paginationState.PageSize < _filteredSortedData.Count();
+        && _currentInfinitePage * _paginationState.PageSize < _filteredSortedData.Count;
 
     /// <summary>
     /// The list template in effect: the named parameter takes precedence over any
@@ -336,11 +337,24 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
 
     protected override void OnInitialized()
     {
+        currentLayout = Layout;
         _paginationState.PageSize = InitialPageSize;
         _paginationState.CurrentPage = 1;
     }
 
-    protected override async Task OnParametersSetAsync() => await ProcessDataAsync();
+    protected override async Task OnParametersSetAsync()
+    {
+        // Sync the backing field when the Layout parameter changes externally.
+        currentLayout = Layout;
+
+        // Skip reprocessing when the data source has not changed.
+        if (ReferenceEquals(_lastData, Data) && _lastData != null)
+        {
+            return;
+        }
+
+        await ProcessDataAsync();
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -360,9 +374,15 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     internal void RegisterField<TValue>(BbDataViewColumn<TItem, TValue> field)
     {
+        var id = field.EffectiveId;
+        if (_fields.Any(f => f.Id == id))
+        {
+            return;
+        }
+
         _fields.Add(new FieldData
         {
-            Id = field.EffectiveId,
+            Id = id,
             Header = field.Header,
             Property = field.Property != null ? item => field.Property(item) : null,
             Sortable = field.Sortable,
@@ -409,7 +429,7 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
         var sorted = ApplySorting(filtered);
 
         _filteredSortedData = sorted.ToList();
-        _paginationState.TotalItems = _filteredSortedData.Count();
+        _paginationState.TotalItems = _filteredSortedData.Count;
 
         if (EnableInfiniteScroll)
         {
@@ -475,9 +495,10 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
                     return true;
                 }
             }
-            catch
+            catch (Exception)
             {
-                // Skip fields that cause errors during property access.
+                // Skip fields that cause errors during property access
+                // (e.g. null reference within the lambda, format exceptions).
             }
         }
 
@@ -582,9 +603,9 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
                 await LoadMore();
             }
         }
-        catch
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
         {
-            // Ignore JS errors (e.g. during server-side prerendering).
+            // JS interop unavailable (prerendering, circuit disconnected).
             _isLoadingMore = false;
         }
     }
@@ -614,7 +635,7 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
             return;
         }
 
-        Layout = layout;
+        currentLayout = layout;
         StateHasChanged();
     }
 
@@ -634,7 +655,7 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     protected override bool ShouldRender()
     {
         var dataChanged = !ReferenceEquals(_lastData, Data);
-        var layoutChanged = _lastLayout != Layout;
+        var layoutChanged = _lastLayout != currentLayout;
         var loadingChanged = _lastIsLoading != IsLoading;
         var fieldsChanged = _lastFieldsVersion != _fieldsVersion;
         var searchChanged = _lastSearchValue != _searchValue;
@@ -646,7 +667,7 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
         if (dataChanged || layoutChanged || loadingChanged || fieldsChanged || searchChanged || paginationChanged || slotChanged || infiniteScrollChanged || sortingChanged)
         {
             _lastData = Data;
-            _lastLayout = Layout;
+            _lastLayout = currentLayout;
             _lastIsLoading = IsLoading;
             _lastFieldsVersion = _fieldsVersion;
             _lastSearchValue = _searchValue;

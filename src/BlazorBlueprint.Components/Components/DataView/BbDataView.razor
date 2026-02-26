@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Components
 @typeparam TItem where TItem : class
+@using BlazorBlueprint.Icons.Lucide.Components
 @using BlazorBlueprint.Primitives
 @using BlazorBlueprint.Primitives.Table
 
@@ -25,26 +26,18 @@
                                 <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Class="h-8 gap-1">
                                     @if (_sortingState.Direction == SortDirection.Ascending)
                                     {
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                                        </svg>
+                                        <LucideIcon Name="arrow-up" Class="w-4 h-4" />
                                     }
                                     else if (_sortingState.Direction == SortDirection.Descending)
                                     {
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                        </svg>
+                                        <LucideIcon Name="arrow-down" Class="w-4 h-4" />
                                     }
                                     else
                                     {
-                                        <svg class="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                                        </svg>
+                                        <LucideIcon Name="arrow-up-down" Class="w-4 h-4 opacity-50" />
                                     }
                                     @GetSortFieldLabel()
-                                    <svg class="w-3 h-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                    </svg>
+                                    <LucideIcon Name="chevron-down" Class="w-3 h-3 opacity-50" />
                                 </BbButton>
                             </BbDropdownMenuTrigger>
                             <BbDropdownMenuContent>
@@ -56,21 +49,15 @@
                                         <div class="flex items-center gap-2">
                                             @if (isSorted && _sortingState.Direction == SortDirection.Ascending)
                                             {
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                                                </svg>
+                                                <LucideIcon Name="arrow-up" Class="w-4 h-4" />
                                             }
                                             else if (isSorted && _sortingState.Direction == SortDirection.Descending)
                                             {
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                                </svg>
+                                                <LucideIcon Name="arrow-down" Class="w-4 h-4" />
                                             }
                                             else
                                             {
-                                                <svg class="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-                                                </svg>
+                                                <LucideIcon Name="arrow-up-down" Class="w-4 h-4 opacity-50" />
                                             }
                                             @field.Header
                                         </div>
@@ -96,18 +83,14 @@
                                               OnClick="@(() => SetLayout(DataViewLayout.List))"
                                               Class="@ClassNames.cn("h-7 w-7", _effectiveLayout == DataViewLayout.List ? "bg-accent text-accent-foreground" : "")"
                                               title="List view">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                                        </svg>
+                                        <LucideIcon Name="list" Class="w-4 h-4" />
                                     </BbButton>
                                     <BbButton Variant="ButtonVariant.Ghost"
                                               Size="ButtonSize.Icon"
                                               OnClick="@(() => SetLayout(DataViewLayout.Grid))"
                                               Class="@ClassNames.cn("h-7 w-7", _effectiveLayout == DataViewLayout.Grid ? "bg-accent text-accent-foreground" : "")"
                                               title="Grid view">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM12 5a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1v-2zM12 13a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 01-1 1h-2a1 1 0 01-1-1v-2z" />
-                                        </svg>
+                                        <LucideIcon Name="layout-grid" Class="w-4 h-4" />
                                     </BbButton>
                                 </div>
                             }
@@ -131,7 +114,7 @@
                     </div>
                 }
             }
-            else if (!_filteredSortedData.Any())
+            else if (_filteredSortedData.Count == 0)
             {
                 @if (EmptyTemplate != null)
                 {
@@ -156,7 +139,9 @@
                 <div class="overflow-y-auto"
                      style="@(ScrollHeight != null ? $"height: {ScrollHeight}" : "")"
                      @ref="_scrollContainerRef"
-                     @onscroll="HandleScroll">
+                     @onscroll="HandleScroll"
+                     role="region"
+                     aria-live="polite">
                     <div class="@ItemContainerCssClass">
                         @foreach (var item in _visibleData)
                         {
@@ -179,7 +164,7 @@
             else
             {
                 @* Regular pagination or ShowLoadMoreButton mode. *@
-                <div class="@ItemContainerCssClass">
+                <div class="@ItemContainerCssClass" role="region" aria-live="polite">
                     @foreach (var item in _visibleData)
                     {
                         @if (EffectiveActiveTemplate != null)
@@ -206,7 +191,7 @@
             }
 
             @* ── Pagination – hidden in infinite scroll mode ─────────────── *@
-            @if (ShowPagination && !EnableInfiniteScroll && !IsLoading && _filteredSortedData.Any())
+            @if (ShowPagination && !EnableInfiniteScroll && !IsLoading && _filteredSortedData.Count > 0)
             {
                 <BbPagination State="@_paginationState"
                               PageSizes="@PageSizes"
