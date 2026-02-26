@@ -52,6 +52,7 @@ public partial class BbCombobox<TValue> : ComponentBase
     private EditContext? _editContext;
     private static readonly Func<CommandItemMetadata, string, bool> PassthroughFilter = (_, _) => true;
     private Func<CommandItemMetadata, string, bool>? _filterFunction;
+    private string? _selectedDisplayTextCache;
 
     /// <summary>
     /// Gets or sets the cascaded EditContext from a parent EditForm.
@@ -116,9 +117,9 @@ public partial class BbCombobox<TValue> : ComponentBase
     /// e.g. for server-side filtering or loading additional data.
     /// </summary>
     /// <remarks>
-    /// When the popover closes, the search query is silently reset to <see cref="string.Empty"/>
-    /// without invoking <see cref="SearchQueryChanged"/>. This keeps the internal Command filter
-    /// cleared for the next open without triggering a consumer data reload on close.
+    /// When the popover closes, the search query is reset to <see cref="string.Empty"/> and
+    /// <see cref="SearchQueryChanged"/> is invoked so the consumer can reload its default dataset
+    /// (e.g. initial top-N results) for the next open.
     /// </remarks>
     [Parameter]
     public string SearchQuery { get; set; } = string.Empty;
@@ -227,7 +228,8 @@ public partial class BbCombobox<TValue> : ComponentBase
 
     /// <summary>
     /// Gets the display text for the currently selected item.
-    /// Checks Options first (Options mode), then the item text registry (Compositional mode).
+    /// Checks Options first (Options mode), then the item text registry (Compositional mode),
+    /// then falls back to the cached display text from the last selection.
     /// </summary>
     private string SelectedDisplayText
     {
@@ -246,7 +248,14 @@ public partial class BbCombobox<TValue> : ComponentBase
             }
 
             // Compositional mode: look up from registered items
-            return _itemTextRegistry.GetValueOrDefault(Value) ?? Placeholder;
+            if (_itemTextRegistry.GetValueOrDefault(Value) is { } registryText)
+            {
+                return registryText;
+            }
+
+            // Fallback: cached display text from last selection survives Options array changes
+            // during async filtering (e.g. selected option filtered out of current results).
+            return _selectedDisplayTextCache ?? Placeholder;
         }
     }
 
@@ -286,16 +295,17 @@ public partial class BbCombobox<TValue> : ComponentBase
     /// Resets focus tracking and search query when the popover closes.
     /// </summary>
     /// <param name="isOpen">Whether the popover is now open.</param>
-    private void HandleOpenChanged(bool isOpen)
+    private async Task HandleOpenChanged(bool isOpen)
     {
         _isOpen = isOpen;
         if (!isOpen)
         {
             _focusDone = false; // Reset for next open
 
-            // Reset search query silently — no need to invoke SearchQueryChanged
-            // since the popover is closed and the consumer shouldn't react to this.
+            // Reset search query and notify the consumer so it can reload
+            // the default dataset (e.g. initial top-N results) for the next open.
             SearchQuery = string.Empty;
+            await SearchQueryChanged.InvokeAsync(string.Empty);
         }
     }
 
@@ -316,6 +326,10 @@ public partial class BbCombobox<TValue> : ComponentBase
     {
         // Toggle behavior: if already selected, deselect
         var newValue = EqualityComparer<TValue>.Default.Equals(Value, option.Value) ? default : option.Value;
+
+        // Cache display text so it survives async Options changes where
+        // the selected option may no longer be in the current results.
+        _selectedDisplayTextCache = newValue is not null ? option.Text : null;
 
         Value = newValue;
         await ValueChanged.InvokeAsync(newValue);

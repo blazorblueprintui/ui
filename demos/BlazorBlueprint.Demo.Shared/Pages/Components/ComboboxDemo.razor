@@ -702,7 +702,21 @@
 
         if (string.IsNullOrWhiteSpace(query))
         {
-            asyncCities = allCities[0..5]; // Show top 5 cities when query is empty
+            var defaults = allCities[0..5];
+
+            // Ensure the selected city is visible so the user can see/deselect it,
+            // even when it falls outside the default top-N slice.
+            if (asyncSelectedCity is not null
+                && !defaults.Any(c => c.Value == asyncSelectedCity))
+            {
+                var selected = allCities.FirstOrDefault(c => c.Value == asyncSelectedCity);
+                if (selected is not null)
+                {
+                    defaults = [selected, .. defaults];
+                }
+            }
+
+            asyncCities = defaults;
         }
         else
         {
@@ -754,7 +768,21 @@
 
         if (string.IsNullOrWhiteSpace(query))
         {
-            asyncCompUsers = allUsers[0..5];
+            var defaults = allUsers[0..5];
+
+            // Ensure the selected user is visible so the user can see/deselect it,
+            // even when it falls outside the default top-N slice.
+            if (asyncCompSelectedUser is not null
+                && !defaults.Any(u => u.Id == asyncCompSelectedUser))
+            {
+                var selected = allUsers.FirstOrDefault(u => u.Id == asyncCompSelectedUser);
+                if (selected is not null)
+                {
+                    defaults = [selected, .. defaults];
+                }
+            }
+
+            asyncCompUsers = defaults;
         }
         else
         {
