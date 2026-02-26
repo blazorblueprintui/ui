@@ -1,0 +1,215 @@
+@namespace BlazorBlueprint.Components
+@typeparam TData where TData : class
+
+<CascadingValue Value="this" IsFixed="true">
+    <div class="@ClassNames.cn("w-full", Class)">
+        <div class="relative w-full overflow-auto">
+            @if (IsLoading)
+            {
+                @if (LoadingTemplate != null)
+                {
+                    @LoadingTemplate
+                }
+                else
+                {
+                    <div class="flex items-center justify-center p-8 text-muted-foreground">
+                        <div class="text-sm">Loading...</div>
+                    </div>
+                }
+            }
+            else if (!_processedData.Any())
+            {
+                @if (EmptyTemplate != null)
+                {
+                    @EmptyTemplate
+                }
+                else
+                {
+                    <BbEmpty Title="No results found" Size="EmptySize.Small" />
+                }
+            }
+            else
+            {
+                <BlazorBlueprint.Primitives.DataGrid.BbDataGrid TData="TData"
+                    Items="@_processedData"
+                    @bind-State="@_gridState"
+                    SelectionMode="@GetPrimitiveSelectionMode()"
+                    ManualPagination="true"
+                    EnableKeyboardNavigation="@EnableKeyboardNavigation"
+                    OnSortChange="HandleSortChange"
+                    OnSelectionChange="HandleSelectionChange"
+                    Class="w-full caption-bottom text-sm"
+                    AriaLabel="@AriaLabel">
+                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader Class="[&_tr]:border-b">
+                        <BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Class="border-b transition-colors hover:bg-muted/50">
+                            @foreach (var column in GetVisibleColumns())
+                            {
+                                var sortDirection = _gridState.Sorting.GetDirection(column.ColumnId);
+                                var sortPriority = _gridState.Sorting.GetPriority(column.ColumnId);
+                                var isSelectColumn = column.ColumnId == "__select";
+
+                                <BlazorBlueprint.Primitives.DataGrid.BbDataGridHeaderCell TData="TData"
+                                    ColumnId="@column.ColumnId"
+                                    Sortable="@column.Sortable"
+                                    Class="@GetHeaderCellClass(column, isSelectColumn)"
+                                    style="@GetColumnWidthStyle(column)">
+                                    @if (isSelectColumn)
+                                    {
+                                        <div @onclick:stopPropagation="true">
+                                            @if (ShouldShowSelectAllPrompt())
+                                            {
+                                                <BbDropdownMenu @bind-Open="_selectAllDropdownOpen">
+                                                    <BbDropdownMenuTrigger AsChild="false" Class="inline-flex items-center justify-center p-0 bg-transparent border-0 hover:bg-transparent focus:outline-none">
+                                                        <BbCheckbox Checked="@IsAllSelected()"
+                                                                  Indeterminate="@IsSomeSelected()"
+                                                                  AriaLabel="Select rows - click to see options"
+                                                                  Class="pointer-events-none" />
+                                                    </BbDropdownMenuTrigger>
+                                                    <BbDropdownMenuContent Side="PopoverSide.Bottom" Align="PopoverAlign.Start">
+                                                        <BbDropdownMenuItem OnClick="@HandleSelectAllOnCurrentPage">
+                                                            Select all on this page (@_processedData.Count() items)
+                                                        </BbDropdownMenuItem>
+                                                        <BbDropdownMenuItem OnClick="@HandleSelectAllItems">
+                                                            Select all @_gridState.Pagination.TotalItems items
+                                                        </BbDropdownMenuItem>
+                                                        @if (_gridState.Selection.HasSelection)
+                                                        {
+                                                            <BbDropdownMenuSeparator />
+                                                            <BbDropdownMenuItem OnClick="@HandleClearSelection">
+                                                                Clear selection
+                                                            </BbDropdownMenuItem>
+                                                        }
+                                                    </BbDropdownMenuContent>
+                                                </BbDropdownMenu>
+                                            }
+                                            else
+                                            {
+                                                <BbCheckbox Checked="@IsAllSelected()"
+                                                          CheckedChanged="@HandleSelectAllChanged"
+                                                          Indeterminate="@IsSomeSelected()"
+                                                          AriaLabel="Select all rows" />
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="flex items-center gap-2">
+                                            <span>@column.Title</span>
+                                            @if (column.Sortable && sortDirection != SortDirection.None)
+                                            {
+                                                @if (sortDirection == SortDirection.Ascending)
+                                                {
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                                                    </svg>
+                                                }
+                                                else
+                                                {
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                    </svg>
+                                                }
+                                                @if (_gridState.Sorting.Definitions.Count > 1)
+                                                {
+                                                    <span class="text-xs text-muted-foreground tabular-nums">@sortPriority</span>
+                                                }
+                                            }
+                                            else if (column.Sortable)
+                                            {
+                                                <svg class="w-4 h-4 opacity-0 group-hover/header:opacity-50 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                                </svg>
+                                            }
+                                        </div>
+                                    }
+                                </BlazorBlueprint.Primitives.DataGrid.BbDataGridHeaderCell>
+                            }
+                        </BlazorBlueprint.Primitives.DataGrid.BbDataGridRow>
+                    </BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader>
+                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridBody>
+                        @if (Virtualize && ItemSize > 0)
+                        {
+                            <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize Items="@_processedDataList" Context="item" ItemSize="@ItemSize" OverscanCount="5">
+                                @RenderDataRow(item)
+                            </Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize>
+                        }
+                        else
+                        {
+                            @foreach (var item in _processedData)
+                            {
+                                @RenderDataRow(item)
+                            }
+                        }
+                    </BlazorBlueprint.Primitives.DataGrid.BbDataGridBody>
+                </BlazorBlueprint.Primitives.DataGrid.BbDataGrid>
+            }
+        </div>
+
+        @if (ShowPagination && !IsLoading && _processedData.Any())
+        {
+            <BbPagination State="@_gridState.Pagination"
+                        PageSizes="@PageSizes"
+                        OnPageChanged="@HandlePageChanged"
+                        OnPageSizeChanged="@HandlePageSizeChanged"
+                        Class="flex items-center justify-between px-2 py-4">
+                <BbPaginationInfo>
+                    @if (_gridState.Selection.HasSelection)
+                    {
+                        <span>@_gridState.Selection.SelectedCount of @_gridState.Pagination.TotalItems row(s) selected</span>
+                    }
+                </BbPaginationInfo>
+                <BbPaginationContent Class="flex items-center gap-6 lg:gap-8">
+                    <BbPaginationPageSizeSelector />
+                    <div class="flex items-center gap-2">
+                        <BbPaginationPageDisplay />
+                        <div class="flex items-center gap-1">
+                            <BbPaginationItem><BbPaginationFirst /></BbPaginationItem>
+                            <BbPaginationItem><BbPaginationPrevious ShowText="false" /></BbPaginationItem>
+                            <BbPaginationItem><BbPaginationNext ShowText="false" /></BbPaginationItem>
+                            <BbPaginationItem><BbPaginationLast /></BbPaginationItem>
+                        </div>
+                    </div>
+                </BbPaginationContent>
+            </BbPagination>
+        }
+    </div>
+
+    @* Capture column definitions from child components *@
+    @Columns
+</CascadingValue>
+
+@code {
+    private RenderFragment<TData> RenderDataRow => item =>
+        @<BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Item="@item"
+            Class="@ClassNames.cn("border-b transition-colors hover:bg-muted/50", _gridState.Selection.IsSelected(item) ? "bg-muted" : "")">
+            @foreach (var column in GetVisibleColumns())
+            {
+                var isSelectColumn = column.ColumnId == "__select";
+
+                <BlazorBlueprint.Primitives.DataGrid.BbDataGridCell
+                    Class="@GetCellClass(column, isSelectColumn)">
+                    @if (isSelectColumn)
+                    {
+                        <div @onclick:stopPropagation="true">
+                            <BbCheckbox Checked="@_gridState.Selection.IsSelected(item)"
+                                      CheckedChanged="@((bool isChecked) => HandleRowSelectionChanged(item, isChecked))"
+                                      AriaLabel="Select this row" />
+                        </div>
+                    }
+                    else if (column.CellTemplate != null)
+                    {
+                        @column.CellTemplate(new BlazorBlueprint.Primitives.DataGrid.DataGridCellContext<TData>
+                        {
+                            Item = item,
+                            Column = column,
+                            Value = column.GetValue(item)
+                        })
+                    }
+                    else
+                    {
+                        @(column.GetValue(item)?.ToString() ?? "")
+                    }
+                </BlazorBlueprint.Primitives.DataGrid.BbDataGridCell>
+            }
+        </BlazorBlueprint.Primitives.DataGrid.BbDataGridRow>;
+}

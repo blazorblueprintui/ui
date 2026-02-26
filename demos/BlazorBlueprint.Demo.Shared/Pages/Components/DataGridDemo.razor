@@ -1,0 +1,274 @@
+@page "/components/datagrid"
+@using BlazorBlueprint.Demo.Services
+@inject MockDataService MockDataService
+
+<PageTitle>Data Grid Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-7xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Data Grid Component</h1>
+        <p class="text-xl text-muted-foreground">
+            An enterprise-grade data grid with multi-column sorting, pagination, row selection,
+            row virtualization, and IQueryable support. Built on headless Primitives with Tailwind CSS styling.
+        </p>
+    </div>
+
+    <!-- ── Basic DataGrid ──────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic DataGrid</h2>
+            <p class="text-sm text-muted-foreground">
+                Define columns using <code class="bg-muted px-1 py-0.5 rounded">BbDataGridPropertyColumn</code>
+                with a type-safe <code class="bg-muted px-1 py-0.5 rounded">Property</code> expression.
+                Column titles are auto-inferred from property names.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+            </Columns>
+        </BbDataGrid>
+    </div>
+
+    <!-- ── Multi-Column Sorting ────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Multi-Column Sorting</h2>
+            <p class="text-sm text-muted-foreground">
+                Click a column header to sort. Hold <kbd class="bg-muted px-1 py-0.5 rounded text-xs">Ctrl</kbd>
+                and click additional headers for multi-column sorting. Priority numbers appear next to each sorted column.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Sortable />
+            </Columns>
+        </BbDataGrid>
+    </div>
+
+    <!-- ── Row Selection ───────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Row Selection</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">BbDataGridSelectColumn</code> for checkbox-based
+                row selection. The header checkbox toggles select-all for the current page.
+                Selected count is shown in the pagination footer.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                   SelectionMode="DataTableSelectionMode.Multiple"
+                   SelectedItemsChanged="HandleSelectionChanged">
+            <Columns>
+                <BbDataGridSelectColumn TData="Person" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+            </Columns>
+        </BbDataGrid>
+        @if (_selectedPeople.Count > 0)
+        {
+            <p class="text-sm text-muted-foreground">
+                Selected: @string.Join(", ", _selectedPeople.Select(p => p.Name))
+            </p>
+        }
+    </div>
+
+    <!-- ── Custom Cell Templates ───────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Cell Templates</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">BbDataGridTemplateColumn</code> for fully custom cell content,
+                or add <code class="bg-muted px-1 py-0.5 rounded">CellTemplate</code> to a PropertyColumn.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable>
+                    <CellTemplate Context="person">
+                        <div class="flex items-center gap-2">
+                            <BbAvatar Class="h-8 w-8">
+                                <BbAvatarFallback Class="text-xs">@GetInitials(person.Name)</BbAvatarFallback>
+                            </BbAvatar>
+                            <span class="font-medium">@person.Name</span>
+                        </div>
+                    </CellTemplate>
+                </BbDataGridPropertyColumn>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Sortable>
+                    <CellTemplate Context="person">
+                        <BbBadge Variant="@(person.Status == "Active" ? BadgeVariant.Default : person.Status == "Pending" ? BadgeVariant.Secondary : BadgeVariant.Outline)">
+                            @person.Status
+                        </BbBadge>
+                    </CellTemplate>
+                </BbDataGridPropertyColumn>
+                <BbDataGridTemplateColumn TData="Person" Title="Actions">
+                    <ChildContent Context="person">
+                        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small">Edit</BbButton>
+                    </ChildContent>
+                </BbDataGridTemplateColumn>
+            </Columns>
+        </BbDataGrid>
+    </div>
+
+    <!-- ── Async Data Loading ──────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Async Data Loading (ItemsProvider)</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">ItemsProvider</code> for server-side data fetching.
+                The grid passes sort and pagination parameters and the provider returns the data.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" ItemsProvider="@LoadPeopleAsync" InitialPageSize="5">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable />
+            </Columns>
+        </BbDataGrid>
+    </div>
+
+    <!-- ── Virtualization ──────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Virtualization (1000 rows)</h2>
+            <p class="text-sm text-muted-foreground">
+                Enable <code class="bg-muted px-1 py-0.5 rounded">Virtualize="true"</code> for smooth
+                rendering of large datasets. Only visible rows are rendered in the DOM.
+            </p>
+        </div>
+        <div style="height: 400px; overflow: auto;">
+            <BbDataGrid TData="Person" Items="@manyPeople" ShowPagination="false"
+                       Virtualize="true" ItemSize="48">
+                <Columns>
+                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Id)" Title="#" Width="60px" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+                </Columns>
+            </BbDataGrid>
+        </div>
+    </div>
+
+    <!-- ── Empty & Loading States ──────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Empty & Loading States</h2>
+            <p class="text-sm text-muted-foreground">
+                The grid shows an empty state when there is no data, and a loading state when
+                <code class="bg-muted px-1 py-0.5 rounded">IsLoading</code> is true.
+            </p>
+        </div>
+        <div class="flex gap-4">
+            <BbButton OnClick="ToggleLoading" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+                Toggle Loading
+            </BbButton>
+        </div>
+        <BbDataGrid TData="Person" Items="@(Array.Empty<Person>())" IsLoading="@_isLoading">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" />
+            </Columns>
+        </BbDataGrid>
+    </div>
+</div>
+
+@code {
+    private List<Person> people = new();
+    private List<Person> manyPeople = new();
+    private List<Person> asyncPeople = new();
+    private IReadOnlyCollection<Person> _selectedPeople = Array.Empty<Person>();
+    private bool _isLoading;
+
+    protected override void OnInitialized()
+    {
+        people = MockDataService.GeneratePersons(50);
+        manyPeople = MockDataService.GeneratePersons(1000);
+        asyncPeople = MockDataService.GeneratePersons(100);
+    }
+
+    private void HandleSelectionChanged(IReadOnlyCollection<Person> selected)
+    {
+        _selectedPeople = selected;
+    }
+
+    private async ValueTask<BlazorBlueprint.Primitives.DataGrid.DataGridResult<Person>> LoadPeopleAsync(
+        BlazorBlueprint.Primitives.DataGrid.DataGridRequest request)
+    {
+        // Simulate async loading delay
+        await Task.Delay(300, request.CancellationToken);
+
+        IEnumerable<Person> query = asyncPeople;
+
+        // Apply multi-column sorting: use OrderBy for the first definition, ThenBy for subsequent
+        var isFirst = true;
+        foreach (var sort in request.SortDefinitions)
+        {
+            if (isFirst)
+            {
+                query = sort.ColumnId switch
+                {
+                    "name" => sort.Direction == SortDirection.Ascending
+                        ? query.OrderBy(p => p.Name)
+                        : query.OrderByDescending(p => p.Name),
+                    "department" => sort.Direction == SortDirection.Ascending
+                        ? query.OrderBy(p => p.Department)
+                        : query.OrderByDescending(p => p.Department),
+                    "age" => sort.Direction == SortDirection.Ascending
+                        ? query.OrderBy(p => p.Age)
+                        : query.OrderByDescending(p => p.Age),
+                    _ => query
+                };
+                isFirst = false;
+            }
+            else if (query is IOrderedEnumerable<Person> ordered)
+            {
+                query = sort.ColumnId switch
+                {
+                    "name" => sort.Direction == SortDirection.Ascending
+                        ? ordered.ThenBy(p => p.Name)
+                        : ordered.ThenByDescending(p => p.Name),
+                    "department" => sort.Direction == SortDirection.Ascending
+                        ? ordered.ThenBy(p => p.Department)
+                        : ordered.ThenByDescending(p => p.Department),
+                    "age" => sort.Direction == SortDirection.Ascending
+                        ? ordered.ThenBy(p => p.Age)
+                        : ordered.ThenByDescending(p => p.Age),
+                    _ => ordered
+                };
+            }
+        }
+
+        var total = asyncPeople.Count;
+        var items = query.Skip(request.StartIndex).Take(request.Count ?? total).ToList();
+
+        return new BlazorBlueprint.Primitives.DataGrid.DataGridResult<Person>
+        {
+            Items = items,
+            TotalItemCount = total
+        };
+    }
+
+    private void ToggleLoading() => _isLoading = !_isLoading;
+
+    private static string GetInitials(string name)
+    {
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}"
+            : parts.Length == 1 ? $"{parts[0][0]}" : "?";
+    }
+}

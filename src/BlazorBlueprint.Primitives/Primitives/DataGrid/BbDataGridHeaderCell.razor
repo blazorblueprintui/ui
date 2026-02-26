@@ -1,0 +1,81 @@
+@namespace BlazorBlueprint.Primitives.DataGrid
+@typeparam TData where TData : class
+
+<th role="columnheader"
+    tabindex="@(IsSortable ? 0 : -1)"
+    aria-sort="@GetAriaSort()"
+    class="@Class"
+    @onclick="HandleClick"
+    @onclick:preventDefault="@IsSortable"
+    @onkeydown="HandleKeyDown"
+    @attributes="AdditionalAttributes">
+    @ChildContent
+</th>
+
+@code {
+    [CascadingParameter]
+    private DataGridContext<TData> Context { get; set; } = default!;
+
+    /// <summary>
+    /// The column identifier for sorting.
+    /// </summary>
+    [Parameter]
+    public string? ColumnId { get; set; }
+
+    /// <summary>
+    /// Whether this column supports sorting.
+    /// </summary>
+    [Parameter]
+    public bool Sortable { get; set; }
+
+    /// <summary>
+    /// Child content for the header cell.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional HTML attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private bool IsSortable => Sortable && !string.IsNullOrEmpty(ColumnId);
+
+    private void HandleClick(MouseEventArgs e)
+    {
+        if (IsSortable && Context != null)
+        {
+            Context.ToggleSort(ColumnId!, multiSort: e.CtrlKey || e.MetaKey);
+        }
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (IsSortable && Context != null && (e.Key == "Enter" || e.Key == " "))
+        {
+            Context.ToggleSort(ColumnId!, multiSort: e.CtrlKey || e.MetaKey);
+        }
+    }
+
+    private string? GetAriaSort()
+    {
+        if (!IsSortable || Context == null)
+        {
+            return null;
+        }
+
+        return Context.State.Sorting.GetDirection(ColumnId!) switch
+        {
+            SortDirection.Ascending => "ascending",
+            SortDirection.Descending => "descending",
+            _ => "none"
+        };
+    }
+}
