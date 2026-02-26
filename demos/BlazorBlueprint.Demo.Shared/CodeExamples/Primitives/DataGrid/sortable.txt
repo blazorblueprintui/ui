@@ -1,0 +1,33 @@
+<BbDataGrid TData="Person" Items="@GetSortedPeople()" @bind-State="@sortableGridState"
+            ManualPagination="true" OnSortChange="@HandleSortChanged"
+            AriaLabel="Sortable grid" Class="w-full caption-bottom text-sm">
+    <BbDataGridHeader Class="[&_tr]:border-b">
+        <tr class="border-b transition-colors hover:bg-muted/50">
+            <BbDataGridHeaderCell TData="Person" ColumnId="name" Sortable="true"
+                Class="h-12 px-4 text-left align-middle font-medium cursor-pointer select-none hover:bg-accent">
+                <div class="flex items-center gap-2">
+                    <span>Name</span>
+                    @* Sort direction indicator *@
+                    @{ var dir = sortableGridState.Sorting.GetDirection("name"); }
+                    @if (dir == SortDirection.Ascending) { <span>↑</span> }
+                    else if (dir == SortDirection.Descending) { <span>↓</span> }
+                    @* Multi-sort priority badge *@
+                    @{ var pri = sortableGridState.Sorting.GetPriority("name"); }
+                    @if (pri > 0 && sortableGridState.Sorting.Definitions.Count > 1)
+                    { <span class="text-xs bg-primary text-primary-foreground rounded-full w-4 h-4 inline-flex items-center justify-center">@pri</span> }
+                </div>
+            </BbDataGridHeaderCell>
+            @* ... more sortable header cells *@
+        </tr>
+    </BbDataGridHeader>
+    <BbDataGridBody>
+        @foreach (var person in GetSortedPeople())
+        {
+            <BbDataGridRow TData="Person">
+                <BbDataGridCell>@person.Name</BbDataGridCell>
+            </BbDataGridRow>
+        }
+    </BbDataGridBody>
+</BbDataGrid>
+
+@* Click header to sort. Hold Ctrl+Click for multi-column sorting. *@

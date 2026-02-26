@@ -1,0 +1,41 @@
+<BbDataGrid TData="Person" Items="@GetCombinedPageData()" @bind-State="@combinedGridState"
+            ManualPagination="true" SelectionMode="SelectionMode.Multiple"
+            OnSortChange="@HandleSortChanged" OnSelectionChange="@HandleSelectionChange"
+            AriaLabel="Combined features grid" Class="w-full caption-bottom text-sm">
+    <BbDataGridHeader>
+        <tr>
+            <BbDataGridHeaderCell TData="Person" Class="w-12 px-4">
+                <input type="checkbox" checked="@selectAllChecked"
+                       @onchange="@HandleSelectAllChanged"
+                       @onclick:stopPropagation="true" aria-label="Select all" />
+            </BbDataGridHeaderCell>
+            <BbDataGridHeaderCell TData="Person" ColumnId="name" Sortable="true" Class="cursor-pointer">
+                <div class="flex items-center gap-2">
+                    <span>Name</span>
+                    @* Sort indicators *@
+                </div>
+            </BbDataGridHeaderCell>
+            @* ... more sortable columns *@
+        </tr>
+    </BbDataGridHeader>
+    <BbDataGridBody>
+        @foreach (var person in GetCombinedPageData())
+        {
+            var isSelected = combinedGridState.Selection.IsSelected(person);
+            <BbDataGridRow TData="Person" Item="@person" Class="@(isSelected ? "bg-muted" : "")">
+                <BbDataGridCell Class="w-12 px-4">
+                    <input type="checkbox" checked="@isSelected"
+                           @onchange="@(() => ToggleRowSelection(person))"
+                           @onclick:stopPropagation="true" />
+                </BbDataGridCell>
+                <BbDataGridCell>@person.Name</BbDataGridCell>
+            </BbDataGridRow>
+        }
+    </BbDataGridBody>
+</BbDataGrid>
+
+@* Pagination controls and status *@
+<div class="flex items-center justify-between">
+    <span>@combinedGridState.Selection.SelectedCount of @combinedGridState.Pagination.TotalItems row(s) selected</span>
+    <span>Page @combinedGridState.Pagination.CurrentPage of @combinedGridState.Pagination.TotalPages</span>
+</div>

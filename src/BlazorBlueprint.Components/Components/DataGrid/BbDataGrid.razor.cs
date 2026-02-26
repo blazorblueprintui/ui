@@ -17,9 +17,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
     private readonly List<IDataGridColumn<TData>> _columns = new();
     private IEnumerable<TData> _processedData = Array.Empty<TData>();
     private IEnumerable<TData> _allSortedData = Array.Empty<TData>();
+    private IEnumerable<TData>? _lastProcessedData;
     private List<TData>? _processedDataList;
     private CancellationTokenSource? _loadCts;
     private bool _selectAllDropdownOpen;
+    private bool _needsDataRefresh = true;
 
     // ShouldRender tracking
     private IEnumerable<TData>? _lastItems;
@@ -167,7 +169,13 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
 
         _gridState.Selection.Mode = GetPrimitiveSelectionMode();
 
-        await ProcessDataAsync();
+        // Only reprocess data when something meaningful changed
+        var itemsChanged = !ReferenceEquals(_lastItems, Items);
+        if (itemsChanged || _needsDataRefresh)
+        {
+            _needsDataRefresh = false;
+            await ProcessDataAsync();
+        }
     }
 
     /// <summary>
@@ -232,10 +240,20 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
                 _gridState.Sorting.Definitions, columns);
 
             _gridState.Pagination.TotalItems = sorted.Count();
-            _processedData = sorted
-                .Skip(_gridState.Pagination.StartIndex)
-                .Take(_gridState.Pagination.PageSize)
-                .ToList();
+
+            if (Virtualize)
+            {
+                // Virtualization: skip pagination, pass all data to the Virtualize component
+                _processedData = sorted.ToList();
+            }
+            else
+            {
+                _processedData = sorted
+                    .Skip(_gridState.Pagination.StartIndex)
+                    .Take(_gridState.Pagination.PageSize)
+                    .ToList();
+            }
+
             _allSortedData = Array.Empty<TData>();
         }
         else
@@ -247,30 +265,51 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
             _allSortedData = list;
             _gridState.Pagination.TotalItems = list.Count;
 
-            var start = Math.Min(_gridState.Pagination.StartIndex, list.Count);
-            var take = Math.Min(_gridState.Pagination.PageSize, list.Count - start);
-
-            if (list is List<TData> typedList && take > 0)
+            if (Virtualize)
             {
-                _processedData = typedList.GetRange(start, take);
-            }
-            else if (take > 0)
-            {
-                var result = new TData[take];
-                for (var i = 0; i < take; i++)
-                {
-                    result[i] = list[start + i];
-                }
-
-                _processedData = result;
+                // Virtualization: skip pagination, pass all data to the Virtualize component
+                _processedData = list;
             }
             else
             {
-                _processedData = Array.Empty<TData>();
+                var start = Math.Min(_gridState.Pagination.StartIndex, list.Count);
+                var take = Math.Min(_gridState.Pagination.PageSize, list.Count - start);
+
+                if (list is List<TData> typedList && take > 0)
+                {
+                    _processedData = typedList.GetRange(start, take);
+                }
+                else if (take > 0)
+                {
+                    var result = new TData[take];
+                    for (var i = 0; i < take; i++)
+                    {
+                        result[i] = list[start + i];
+                    }
+
+                    _processedData = result;
+                }
+                else
+                {
+                    _processedData = Array.Empty<TData>();
+                }
             }
         }
 
-        _processedDataList = Virtualize ? _processedData.ToList() : null;
+        // Only recreate the virtualization list when the data reference actually changes
+        if (Virtualize)
+        {
+            if (_processedDataList == null || !ReferenceEquals(_lastProcessedData, _processedData))
+            {
+                _processedDataList = _processedData as List<TData> ?? _processedData.ToList();
+                _lastProcessedData = _processedData;
+            }
+        }
+        else
+        {
+            _processedDataList = null;
+            _lastProcessedData = null;
+        }
     }
 
     private async Task LoadFromProviderAsync()
@@ -284,8 +323,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
             var request = new DataGridRequest
             {
                 SortDefinitions = _gridState.Sorting.Definitions,
-                StartIndex = _gridState.Pagination.StartIndex,
-                Count = _gridState.Pagination.PageSize,
+                StartIndex = Virtualize ? 0 : _gridState.Pagination.StartIndex,
+                Count = Virtualize ? null : _gridState.Pagination.PageSize,
                 CancellationToken = token
             };
 
@@ -295,7 +334,20 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
             {
                 _processedData = result.Items;
                 _gridState.Pagination.TotalItems = result.TotalItemCount;
-                _processedDataList = Virtualize ? _processedData.ToList() : null;
+
+                if (Virtualize)
+                {
+                    if (_processedDataList == null || !ReferenceEquals(_lastProcessedData, _processedData))
+                    {
+                        _processedDataList = _processedData as List<TData> ?? _processedData.ToList();
+                        _lastProcessedData = _processedData;
+                    }
+                }
+                else
+                {
+                    _processedDataList = null;
+                    _lastProcessedData = null;
+                }
             }
         }
         catch (OperationCanceledException)
@@ -491,7 +543,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
             return true;
         }
 
-        return true; // Default to true for now — optimize later once stable
+        return false;
     }
 
     public void Dispose()

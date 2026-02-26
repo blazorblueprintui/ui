@@ -1,0 +1,34 @@
+<BbDataGrid TData="Person" Items="@people" @bind-State="@selectableGridState"
+            ManualPagination="true" SelectionMode="SelectionMode.Multiple"
+            EnableKeyboardNavigation="true" OnSelectionChange="@HandleSelectionChange"
+            AriaLabel="Selectable grid" Class="w-full caption-bottom text-sm">
+    <BbDataGridHeader>
+        <tr>
+            <BbDataGridHeaderCell TData="Person" Class="w-12 px-4">
+                <input type="checkbox" checked="@selectAllChecked"
+                       @onchange="@HandleSelectAllChanged"
+                       @onclick:stopPropagation="true"
+                       aria-label="Select all" />
+            </BbDataGridHeaderCell>
+            <BbDataGridHeaderCell TData="Person">Name</BbDataGridHeaderCell>
+            <BbDataGridHeaderCell TData="Person">Email</BbDataGridHeaderCell>
+        </tr>
+    </BbDataGridHeader>
+    <BbDataGridBody>
+        @foreach (var person in people)
+        {
+            var isSelected = selectableGridState.Selection.IsSelected(person);
+            <BbDataGridRow TData="Person" Item="@person"
+                Class="@(isSelected ? "bg-muted" : "")">
+                <BbDataGridCell Class="w-12 px-4">
+                    <input type="checkbox" checked="@isSelected"
+                           @onchange="@(() => ToggleRowSelection(person))"
+                           @onclick:stopPropagation="true"
+                           aria-label="@($"Select {person.Name}")" />
+                </BbDataGridCell>
+                <BbDataGridCell>@person.Name</BbDataGridCell>
+                <BbDataGridCell>@person.Email</BbDataGridCell>
+            </BbDataGridRow>
+        }
+    </BbDataGridBody>
+</BbDataGrid>

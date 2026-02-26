@@ -32,6 +32,7 @@
                 <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
             </Columns>
         </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/basic.txt" />
     </div>
 
     <!-- ── Multi-Column Sorting ────────────────────────────────────── -->
@@ -52,6 +53,7 @@
                 <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Sortable />
             </Columns>
         </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/multi-sort.txt" />
     </div>
 
     <!-- ── Row Selection ───────────────────────────────────────────── -->
@@ -81,6 +83,7 @@
                 Selected: @string.Join(", ", _selectedPeople.Select(p => p.Name))
             </p>
         }
+        <CodeBlock Source="Components/DataGrid/row-selection.txt" />
     </div>
 
     <!-- ── Custom Cell Templates ───────────────────────────────────── -->
@@ -119,6 +122,7 @@
                 </BbDataGridTemplateColumn>
             </Columns>
         </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/custom-cell-templates.txt" />
     </div>
 
     <!-- ── Async Data Loading ──────────────────────────────────────── -->
@@ -138,6 +142,7 @@
                 <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable />
             </Columns>
         </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/async-loading.txt" />
     </div>
 
     <!-- ── Virtualization ──────────────────────────────────────────── -->
@@ -161,6 +166,7 @@
                 </Columns>
             </BbDataGrid>
         </div>
+        <CodeBlock Source="Components/DataGrid/virtualization.txt" />
     </div>
 
     <!-- ── Empty & Loading States ──────────────────────────────────── -->
@@ -183,7 +189,152 @@
                 <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" />
             </Columns>
         </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/empty-loading.txt" />
     </div>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Uses role="grid" with aria-rowcount for screen readers</AccessibilityItem>
+            <AccessibilityItem>aria-sort on column headers indicates current sort direction</AccessibilityItem>
+            <AccessibilityItem>aria-selected on rows indicates selection state</AccessibilityItem>
+            <AccessibilityItem>aria-label on checkboxes for row and bulk selection</AccessibilityItem>
+            <AccessibilityItem>Sortable column headers are focusable with tabindex="0"</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Sort column (on focused header)">
+                <BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Multi-column sort (add to existing sort)">
+                <BbKbd>Ctrl</BbKbd> + <BbKbd>Click</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Navigate to next row">
+                <BbKbd>ArrowDown</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Navigate to previous row">
+                <BbKbd>ArrowUp</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Toggle row selection">
+                <BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move focus through interactive elements">
+                <BbKbd>Tab</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="DataGrid">
+                <ApiParameter Name="Items" Type="IEnumerable&lt;TData&gt;">
+                    The data source for the grid. Supports IQueryable for LINQ-composed sorting and pagination, or IEnumerable for in-memory processing. Mutually exclusive with ItemsProvider.
+                </ApiParameter>
+                <ApiParameter Name="ItemsProvider" Type="DataGridItemsProvider&lt;TData&gt;">
+                    Async delegate for server-side data fetching. Receives sort definitions, pagination parameters, and a cancellation token. Mutually exclusive with Items.
+                </ApiParameter>
+                <ApiParameter Name="SelectionMode" Type="DataTableSelectionMode" Default="None">
+                    The selection mode: None, Single, or Multiple.
+                </ApiParameter>
+                <ApiParameter Name="SelectedItemsChanged" Type="EventCallback&lt;IReadOnlyCollection&lt;TData&gt;&gt;">
+                    Event callback invoked when the selected items change.
+                </ApiParameter>
+                <ApiParameter Name="ShowPagination" Type="bool" Default="true">
+                    Whether to show the pagination footer with page navigation and page size selector.
+                </ApiParameter>
+                <ApiParameter Name="InitialPageSize" Type="int" Default="10">
+                    The initial number of rows per page.
+                </ApiParameter>
+                <ApiParameter Name="PageSizes" Type="int[]" Default="[5, 10, 20, 50, 100]">
+                    The available page size options in the pagination selector.
+                </ApiParameter>
+                <ApiParameter Name="IsLoading" Type="bool" Default="false">
+                    Whether the grid is in a loading state. Shows loading template or default loading indicator.
+                </ApiParameter>
+                <ApiParameter Name="Virtualize" Type="bool" Default="false">
+                    Enable row virtualization for large datasets. Only visible rows are rendered in the DOM. Requires a fixed-height scroll container.
+                </ApiParameter>
+                <ApiParameter Name="ItemSize" Type="float" Default="48">
+                    Row height in pixels for virtualization. Used by the Virtualize component to calculate scroll position.
+                </ApiParameter>
+                <ApiParameter Name="EnableKeyboardNavigation" Type="bool" Default="true">
+                    Enable keyboard navigation for grid rows (arrow keys to navigate, Enter/Space to select).
+                </ApiParameter>
+                <ApiParameter Name="OnSort" Type="EventCallback&lt;IReadOnlyList&lt;SortDefinition&gt;&gt;">
+                    Event callback invoked when sorting changes. Receives the list of active sort definitions.
+                </ApiParameter>
+                <ApiParameter Name="LoadingTemplate" Type="RenderFragment">
+                    Custom template displayed when IsLoading is true. Replaces the default loading indicator.
+                </ApiParameter>
+                <ApiParameter Name="EmptyTemplate" Type="RenderFragment">
+                    Custom template displayed when there are no data items. Replaces the default empty state.
+                </ApiParameter>
+                <ApiParameter Name="State" Type="DataGridState&lt;TData&gt;">
+                    External grid state for controlled mode. Use with @@bind-State for two-way binding of sorting, pagination, and selection.
+                </ApiParameter>
+                <ApiParameter Name="AriaLabel" Type="string?">
+                    ARIA label applied to the grid element for screen readers.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="DataGridPropertyColumn">
+                <ApiParameter Name="Property" Type="Expression&lt;Func&lt;TData, TProp&gt;&gt;">
+                    Type-safe expression to access the column value. Used for data display, auto title inference, and IQueryable sort expression generation.
+                </ApiParameter>
+                <ApiParameter Name="Title" Type="string?">
+                    Override the auto-inferred title. If null, the title is derived from the property name (e.g., FirstName becomes "First Name").
+                </ApiParameter>
+                <ApiParameter Name="Format" Type="string?">
+                    Format string for displaying the property value (e.g., "C0" for currency, "N2" for numbers, "d" for dates).
+                </ApiParameter>
+                <ApiParameter Name="Sortable" Type="bool" Default="false">
+                    Whether this column can be sorted by clicking its header.
+                </ApiParameter>
+                <ApiParameter Name="Visible" Type="bool" Default="true">
+                    Whether this column is visible in the grid.
+                </ApiParameter>
+                <ApiParameter Name="Width" Type="string?">
+                    Column width (e.g., "200px", "20%", "auto").
+                </ApiParameter>
+                <ApiParameter Name="CellTemplate" Type="RenderFragment&lt;TData&gt;?">
+                    Custom template for rendering the cell content. Overrides the default value display.
+                </ApiParameter>
+                <ApiParameter Name="CellClass" Type="string?">
+                    Additional CSS classes applied to cells in this column.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="DataGridTemplateColumn">
+                <ApiParameter Name="Title" Type="string">
+                    The column title displayed in the header. Required.
+                </ApiParameter>
+                <ApiParameter Name="ChildContent" Type="RenderFragment&lt;TData&gt;">
+                    Custom cell template. The context provides the data item for the current row.
+                </ApiParameter>
+                <ApiParameter Name="Sortable" Type="bool" Default="false">
+                    Whether this column can be sorted. Requires SortBy to be set.
+                </ApiParameter>
+                <ApiParameter Name="SortBy" Type="Expression&lt;Func&lt;TData, object&gt;&gt;?">
+                    Custom sort expression. Required when Sortable is true.
+                </ApiParameter>
+                <ApiParameter Name="Visible" Type="bool" Default="true">
+                    Whether this column is visible in the grid.
+                </ApiParameter>
+                <ApiParameter Name="Width" Type="string?">
+                    Column width (e.g., "200px", "20%", "auto").
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="DataGridSelectColumn">
+                <ApiParameter Name="Width" Type="string?" Default="48px">
+                    Column width for the checkbox column. Defaults to a compact checkbox width.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
 </div>
 
 @code {

@@ -1,0 +1,26 @@
+<BbDataGrid TData="Person" ItemsProvider="@LoadPeopleAsync" InitialPageSize="5">
+    <Columns>
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private async ValueTask<DataGridResult<Person>> LoadPeopleAsync(DataGridRequest request)
+    {
+        await Task.Delay(300, request.CancellationToken);
+
+        IEnumerable<Person> query = asyncPeople;
+
+        // Apply sorting from request.SortDefinitions
+        // Apply pagination from request.StartIndex and request.Count
+
+        return new DataGridResult<Person>
+        {
+            Items = items,
+            TotalItemCount = total
+        };
+    }
+}
