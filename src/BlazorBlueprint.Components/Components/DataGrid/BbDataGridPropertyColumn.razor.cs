@@ -58,6 +58,24 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
     public string? Width { get; set; }
 
     /// <summary>
+    /// Whether the user can toggle this column's visibility via a column chooser. Default is true.
+    /// </summary>
+    [Parameter]
+    public bool Hideable { get; set; } = true;
+
+    /// <summary>
+    /// Whether this column can be resized via drag handles. Default is true.
+    /// </summary>
+    [Parameter]
+    public bool Resizable { get; set; } = true;
+
+    /// <summary>
+    /// Whether this column can be reordered via drag-and-drop. Default is true.
+    /// </summary>
+    [Parameter]
+    public bool Reorderable { get; set; } = true;
+
+    /// <summary>
     /// Additional CSS classes for cells in this column.
     /// </summary>
     [Parameter]
@@ -92,6 +110,12 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
     bool IDataGridColumn<TData>.Visible => Visible;
 
     string? IDataGridColumn<TData>.Width => Width;
+
+    bool IDataGridColumn<TData>.Hideable => Hideable;
+
+    bool IDataGridColumn<TData>.Resizable => Resizable;
+
+    bool IDataGridColumn<TData>.Reorderable => Reorderable;
 
     RenderFragment<DataGridCellContext<TData>>? IDataGridColumn<TData>.CellTemplate =>
         CellTemplate != null

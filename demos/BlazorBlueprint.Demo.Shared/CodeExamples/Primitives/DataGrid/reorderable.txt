@@ -1,0 +1,47 @@
+<BbDataGrid TData="Person" Items="@people" @bind-State="@gridState"
+            ManualPagination="true" OnColumnReorder="@HandleReorder"
+            AriaLabel="Reorderable grid" Class="w-full caption-bottom text-sm">
+    <BbDataGridHeader Class="[&_tr]:border-b">
+        <tr class="border-b transition-colors hover:bg-muted/50">
+            @foreach (var colId in gridState.Columns.GetVisibleColumnIds())
+            {
+                <BbDataGridHeaderCell TData="Person" ColumnId="@colId" Reorderable="true"
+                                      Class="h-12 px-4 text-left align-middle font-medium">
+                    @GetColumnTitle(colId)
+                </BbDataGridHeaderCell>
+            }
+        </tr>
+    </BbDataGridHeader>
+    <BbDataGridBody>
+        @foreach (var person in people)
+        {
+            <BbDataGridRow TData="Person">
+                @foreach (var colId in gridState.Columns.GetVisibleColumnIds())
+                {
+                    <BbDataGridCell>@GetCellValue(person, colId)</BbDataGridCell>
+                }
+            </BbDataGridRow>
+        }
+    </BbDataGridBody>
+</BbDataGrid>
+
+@code {
+    private DataGridState<Person> gridState = new();
+    private string[] columnIds = { "name", "email", "age", "department" };
+
+    protected override void OnInitialized()
+    {
+        gridState.Columns.Initialize(columnIds);
+    }
+
+    // Programmatic reorder via state API
+    private void MoveColumnLeft(string columnId)
+    {
+        var entry = gridState.Columns.Entries
+            .FirstOrDefault(e => e.ColumnId == columnId);
+        if (entry != null && entry.Order > 0)
+        {
+            gridState.Columns.ReorderColumn(columnId, entry.Order - 1);
+        }
+    }
+}

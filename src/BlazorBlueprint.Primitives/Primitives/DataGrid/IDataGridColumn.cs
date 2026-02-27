@@ -35,6 +35,24 @@ public interface IDataGridColumn<TData> where TData : class
     public string? Width { get; }
 
     /// <summary>
+    /// Gets whether the user can toggle this column's visibility via a column chooser.
+    /// Default is true. Set to false for columns that must always be visible (e.g., selection columns).
+    /// </summary>
+    public bool Hideable { get; }
+
+    /// <summary>
+    /// Gets whether this column supports resizing via drag handles.
+    /// Default is true. Set to false for fixed-width columns.
+    /// </summary>
+    public bool Resizable { get; }
+
+    /// <summary>
+    /// Gets whether this column supports reordering via drag-and-drop.
+    /// Default is true. Set to false for fixed-position columns (e.g., selection columns).
+    /// </summary>
+    public bool Reorderable { get; }
+
+    /// <summary>
     /// Gets the value from a data item for this column (type-erased).
     /// </summary>
     /// <param name="item">The data item.</param>

@@ -1,0 +1,45 @@
+<BbDataGrid TData="Person" Items="@people" @bind-State="@gridState"
+            ManualPagination="true" OnColumnResize="@HandleResize"
+            AriaLabel="Resizable columns grid" Class="w-full caption-bottom text-sm"
+            style="table-layout: fixed;">
+    <BbDataGridHeader Class="[&_tr]:border-b">
+        <tr class="border-b transition-colors hover:bg-muted/50">
+            @foreach (var colId in columnIds)
+            {
+                var width = gridState.Columns.GetWidth(colId);
+                <BbDataGridHeaderCell TData="Person" ColumnId="@colId"
+                                      Class="h-12 px-4 text-left align-middle font-medium"
+                                      style="@(width != null ? $"width: {width}" : null)">
+                    @GetColumnTitle(colId)
+                </BbDataGridHeaderCell>
+            }
+        </tr>
+    </BbDataGridHeader>
+    <BbDataGridBody>
+        @foreach (var person in people)
+        {
+            <BbDataGridRow TData="Person">
+                @foreach (var colId in columnIds)
+                {
+                    <BbDataGridCell>@GetCellValue(person, colId)</BbDataGridCell>
+                }
+            </BbDataGridRow>
+        }
+    </BbDataGridBody>
+</BbDataGrid>
+
+@code {
+    private DataGridState<Person> gridState = new();
+    private string[] columnIds = { "name", "email", "age", "department" };
+
+    protected override void OnInitialized()
+    {
+        gridState.Columns.Initialize(columnIds);
+    }
+
+    // Programmatic resize via state API
+    private void SetColumnWidth(string columnId, string? width)
+    {
+        gridState.Columns.SetWidth(columnId, width);
+    }
+}

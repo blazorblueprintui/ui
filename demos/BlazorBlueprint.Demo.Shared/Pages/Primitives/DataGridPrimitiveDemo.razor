@@ -333,194 +333,428 @@
         <CodeBlock Source="Primitives/DataGrid/selectable.txt" />
     </section>
 
-    @* Combined Features *@
+    @* Column Visibility *@
     <section class="space-y-4">
         <div>
-            <h2 class="text-2xl font-semibold">All Features Combined</h2>
-            <p class="text-sm text-muted-foreground">Multi-sort, pagination, and selection working together. Click headers to sort, Ctrl+Click for multi-sort. Click the select-all checkbox to choose between selecting this page or all items.</p>
+            <h2 class="text-2xl font-semibold">Column Visibility</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">DataGridColumnState</code> to toggle column
+                visibility programmatically. The <code class="bg-muted px-1 py-0.5 rounded">OnColumnVisibilityChange</code>
+                callback fires when visibility changes.
+            </p>
         </div>
 
         <div class="space-y-4">
+            <div class="flex items-center gap-2 flex-wrap">
+                @foreach (var colId in visibilityColumnIds)
+                {
+                    var isVisible = visibilityGridState.Columns.IsVisible(colId);
+                    <button @onclick="@(() => ToggleColumnVisibility(colId))"
+                            class="@($"inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors h-8 px-3 border {(isVisible ? "bg-primary text-primary-foreground border-primary" : "bg-background text-foreground border-input hover:bg-accent")}")">
+                        @colId
+                    </button>
+                }
+            </div>
+
             <div class="rounded-md border">
-                <BlazorBlueprint.Primitives.DataGrid.BbDataGrid TData="Person" Items="@GetCombinedPageData()" @bind-State="@combinedGridState" ManualPagination="true"
-                            SelectionMode="SelectionMode.Multiple" OnSortChange="@HandleCombinedSortChanged"
-                            OnSelectionChange="@HandleCombinedSelectionChange" AriaLabel="Combined features grid" Class="w-full caption-bottom text-sm">
+                <BlazorBlueprint.Primitives.DataGrid.BbDataGrid TData="Person" Items="@people" @bind-State="@visibilityGridState" ManualPagination="true"
+                            OnColumnVisibilityChange="@HandleVisibilityChange" AriaLabel="Column visibility grid" Class="w-full caption-bottom text-sm">
                     <BbDataGridHeader Class="[&_tr]:border-b">
                         <tr class="border-b transition-colors hover:bg-muted/50">
-                            <BbDataGridHeaderCell TData="Person" Class="h-12 w-12 px-4">
-                                <div @onclick:stopPropagation="true">
-                                    @if (combinedGridState.Pagination.TotalPages > 1)
-                                    {
-                                        <BbDropdownMenu @bind-Open="combinedSelectAllDropdownOpen">
-                                            <BbDropdownMenuTrigger AsChild="false" Class="inline-flex items-center justify-center p-0 bg-transparent border-0 hover:bg-transparent focus:outline-none">
-                                                <input type="checkbox"
-                                                       checked="@CombinedIsAllOnPageSelected()"
-                                                       @onchange:preventDefault
-                                                       class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary pointer-events-none"
-                                                       aria-label="Select rows - click to see options" />
-                                            </BbDropdownMenuTrigger>
-                                            <BbDropdownMenuContent Side="PopoverSide.Bottom" Align="PopoverAlign.Start">
-                                                <BbDropdownMenuItem OnClick="@HandleCombinedSelectAllOnPage">
-                                                    Select all on this page (@GetCombinedPageData().Count() items)
-                                                </BbDropdownMenuItem>
-                                                <BbDropdownMenuItem OnClick="@HandleCombinedSelectAllItems">
-                                                    Select all @largePeopleDataset.Count items
-                                                </BbDropdownMenuItem>
-                                                @if (combinedGridState.Selection.HasSelection)
-                                                {
-                                                    <BbDropdownMenuSeparator />
-                                                    <BbDropdownMenuItem OnClick="@HandleCombinedClearSelection">
-                                                        Clear selection
-                                                    </BbDropdownMenuItem>
-                                                }
-                                            </BbDropdownMenuContent>
-                                        </BbDropdownMenu>
-                                    }
-                                    else
-                                    {
-                                        <input type="checkbox"
-                                               checked="@combinedSelectAllChecked"
-                                               @onchange="@HandleCombinedSelectAllChanged"
-                                               class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary"
-                                               aria-label="Select all" />
-                                    }
-                                </div>
-                            </BbDataGridHeaderCell>
-                            <BbDataGridHeaderCell TData="Person" ColumnId="name" Sortable="true"
-                                                  Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer select-none hover:bg-accent">
-                                <div class="flex items-center gap-2">
-                                    <span>Name</span>
-                                    @{ var cNameDir = combinedGridState.Sorting.GetDirection("name"); }
-                                    @if (cNameDir == SortDirection.Ascending) { <span class="text-xs">↑</span> }
-                                    else if (cNameDir == SortDirection.Descending) { <span class="text-xs">↓</span> }
-                                    @{ var cNamePri = combinedGridState.Sorting.GetPriority("name"); }
-                                    @if (cNamePri > 0 && combinedGridState.Sorting.Definitions.Count > 1)
-                                    {
-                                        <span class="text-[10px] bg-primary text-primary-foreground rounded-full w-4 h-4 inline-flex items-center justify-center">@cNamePri</span>
-                                    }
-                                </div>
-                            </BbDataGridHeaderCell>
-                            <BbDataGridHeaderCell TData="Person" ColumnId="email" Sortable="true"
-                                                  Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer select-none hover:bg-accent">
-                                <div class="flex items-center gap-2">
-                                    <span>Email</span>
-                                    @{ var cEmailDir = combinedGridState.Sorting.GetDirection("email"); }
-                                    @if (cEmailDir == SortDirection.Ascending) { <span class="text-xs">↑</span> }
-                                    else if (cEmailDir == SortDirection.Descending) { <span class="text-xs">↓</span> }
-                                    @{ var cEmailPri = combinedGridState.Sorting.GetPriority("email"); }
-                                    @if (cEmailPri > 0 && combinedGridState.Sorting.Definitions.Count > 1)
-                                    {
-                                        <span class="text-[10px] bg-primary text-primary-foreground rounded-full w-4 h-4 inline-flex items-center justify-center">@cEmailPri</span>
-                                    }
-                                </div>
-                            </BbDataGridHeaderCell>
-                            <BbDataGridHeaderCell TData="Person" ColumnId="age" Sortable="true"
-                                                  Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer select-none hover:bg-accent">
-                                <div class="flex items-center gap-2">
-                                    <span>Age</span>
-                                    @{ var cAgeDir = combinedGridState.Sorting.GetDirection("age"); }
-                                    @if (cAgeDir == SortDirection.Ascending) { <span class="text-xs">↑</span> }
-                                    else if (cAgeDir == SortDirection.Descending) { <span class="text-xs">↓</span> }
-                                    @{ var cAgePri = combinedGridState.Sorting.GetPriority("age"); }
-                                    @if (cAgePri > 0 && combinedGridState.Sorting.Definitions.Count > 1)
-                                    {
-                                        <span class="text-[10px] bg-primary text-primary-foreground rounded-full w-4 h-4 inline-flex items-center justify-center">@cAgePri</span>
-                                    }
-                                </div>
-                            </BbDataGridHeaderCell>
-                            <BbDataGridHeaderCell TData="Person" ColumnId="department" Sortable="true"
-                                                  Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer select-none hover:bg-accent">
-                                <div class="flex items-center gap-2">
-                                    <span>Department</span>
-                                    @{ var cDeptDir = combinedGridState.Sorting.GetDirection("department"); }
-                                    @if (cDeptDir == SortDirection.Ascending) { <span class="text-xs">↑</span> }
-                                    else if (cDeptDir == SortDirection.Descending) { <span class="text-xs">↓</span> }
-                                    @{ var cDeptPri = combinedGridState.Sorting.GetPriority("department"); }
-                                    @if (cDeptPri > 0 && combinedGridState.Sorting.Definitions.Count > 1)
-                                    {
-                                        <span class="text-[10px] bg-primary text-primary-foreground rounded-full w-4 h-4 inline-flex items-center justify-center">@cDeptPri</span>
-                                    }
-                                </div>
-                            </BbDataGridHeaderCell>
+                            @foreach (var colId in visibilityColumnIds)
+                            {
+                                @if (visibilityGridState.Columns.IsVisible(colId))
+                                {
+                                    <BbDataGridHeaderCell TData="Person" ColumnId="@colId"
+                                                          Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                        @GetColumnTitle(colId)
+                                    </BbDataGridHeaderCell>
+                                }
+                            }
                         </tr>
                     </BbDataGridHeader>
                     <BbDataGridBody Class="[&_tr:last-child]:border-0">
-                        @foreach (var person in GetCombinedPageData())
+                        @foreach (var person in people)
                         {
-                            var isSelected = combinedGridState.Selection.IsSelected(person);
-                            <BbDataGridRow TData="Person" Item="@person" Class="@($"border-b transition-colors hover:bg-muted/50 cursor-pointer {(isSelected ? "bg-muted" : "")}")">
-                                <BbDataGridCell Class="w-12 px-4">
-                                    <input type="checkbox"
-                                           checked="@isSelected"
-                                           @onchange="@(() => ToggleCombinedRowSelection(person))"
-                                           @onclick:stopPropagation="true"
-                                           @onkeydown:stopPropagation="true"
-                                           tabindex="-1"
-                                           class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary"
-                                           aria-label="@($"Select {person.Name}")" />
-                                </BbDataGridCell>
-                                <BbDataGridCell Class="p-4 align-middle">@person.Name</BbDataGridCell>
-                                <BbDataGridCell Class="p-4 align-middle">@person.Email</BbDataGridCell>
-                                <BbDataGridCell Class="p-4 align-middle">@person.Age</BbDataGridCell>
-                                <BbDataGridCell Class="p-4 align-middle">@person.Department</BbDataGridCell>
+                            <BbDataGridRow TData="Person" Class="border-b transition-colors hover:bg-muted/50">
+                                @if (visibilityGridState.Columns.IsVisible("name"))
+                                {
+                                    <BbDataGridCell Class="p-4 align-middle">@person.Name</BbDataGridCell>
+                                }
+                                @if (visibilityGridState.Columns.IsVisible("email"))
+                                {
+                                    <BbDataGridCell Class="p-4 align-middle">@person.Email</BbDataGridCell>
+                                }
+                                @if (visibilityGridState.Columns.IsVisible("age"))
+                                {
+                                    <BbDataGridCell Class="p-4 align-middle">@person.Age</BbDataGridCell>
+                                }
+                                @if (visibilityGridState.Columns.IsVisible("department"))
+                                {
+                                    <BbDataGridCell Class="p-4 align-middle">@person.Department</BbDataGridCell>
+                                }
                             </BbDataGridRow>
                         }
                     </BbDataGridBody>
                 </BlazorBlueprint.Primitives.DataGrid.BbDataGrid>
             </div>
 
-            <div class="flex items-center justify-between px-2">
-                <div class="flex-1 text-sm text-muted-foreground">
-                    @{
-                        var totalSelected = combinedGridState.Selection.SelectedCount;
+            <div class="rounded-lg border bg-card p-4">
+                <h3 class="font-semibold mb-2">Visibility State</h3>
+                <div class="text-sm space-y-1">
+                    @foreach (var colId in visibilityColumnIds)
+                    {
+                        <p>
+                            <span class="font-medium">@colId:</span>
+                            @(visibilityGridState.Columns.IsVisible(colId) ? "Visible" : "Hidden")
+                        </p>
                     }
-                    @totalSelected of @combinedGridState.Pagination.TotalItems row(s) selected
                 </div>
-                <div class="flex items-center space-x-6 lg:space-x-8">
-                    <div class="flex items-center space-x-2">
-                        <p class="text-sm font-medium">Rows per page</p>
-                        <select @onchange="@HandleCombinedPageSizeChange"
-                                class="h-8 w-[70px] rounded-md border border-input bg-background px-2 py-1 text-sm">
-                            @foreach (var size in new[] { 5, 10, 20 })
+            </div>
+        </div>
+        <CodeBlock Source="Primitives/DataGrid/column-visibility.txt" />
+    </section>
+
+    @* Reorderable Headers *@
+    <section class="space-y-4">
+        <div>
+            <h2 class="text-2xl font-semibold">Reorderable Headers</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">Reorderable="true"</code> on
+                <code class="bg-muted px-1 py-0.5 rounded">BbDataGridHeaderCell</code> to render
+                <code class="bg-muted px-1 py-0.5 rounded">draggable="true"</code> and
+                <code class="bg-muted px-1 py-0.5 rounded">data-column-id</code> attributes.
+                Use <code class="bg-muted px-1 py-0.5 rounded">OnColumnReorder</code> to handle reorder events.
+                This example uses buttons to reorder programmatically via <code class="bg-muted px-1 py-0.5 rounded">DataGridColumnState.ReorderColumn()</code>.
+            </p>
+        </div>
+
+        <div class="space-y-4">
+            <div class="flex items-center gap-2 flex-wrap">
+                @foreach (var colId in GetReorderableVisibleColumns())
+                {
+                    var order = reorderGridState.Columns.Entries.FirstOrDefault(e => e.ColumnId == colId)?.Order ?? 0;
+                    <div class="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-sm">
+                        <button @onclick="@(() => MoveColumnLeft(colId))" disabled="@(order == 0)"
+                                class="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-accent disabled:opacity-30"
+                                aria-label="@($"Move {colId} left")">
+                            <LucideIcon Name="chevron-left" Size="14" />
+                        </button>
+                        <span class="font-medium px-1">@GetColumnTitle(colId)</span>
+                        <button @onclick="@(() => MoveColumnRight(colId))" disabled="@(order >= reorderColumnIds.Length - 1)"
+                                class="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-accent disabled:opacity-30"
+                                aria-label="@($"Move {colId} right")">
+                            <LucideIcon Name="chevron-right" Size="14" />
+                        </button>
+                    </div>
+                }
+            </div>
+
+            <div class="rounded-md border">
+                <BlazorBlueprint.Primitives.DataGrid.BbDataGrid TData="Person" Items="@people" @bind-State="@reorderGridState" ManualPagination="true"
+                            OnColumnReorder="@HandleReorder" AriaLabel="Reorderable headers grid" Class="w-full caption-bottom text-sm">
+                    <BbDataGridHeader Class="[&_tr]:border-b">
+                        <tr class="border-b transition-colors hover:bg-muted/50">
+                            @foreach (var colId in GetReorderableVisibleColumns())
                             {
-                                <option value="@size" selected="@(combinedGridState.Pagination.PageSize == size)">@size</option>
+                                <BbDataGridHeaderCell TData="Person" ColumnId="@colId" Reorderable="true"
+                                                      Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                                    @GetColumnTitle(colId)
+                                </BbDataGridHeaderCell>
                             }
-                        </select>
-                    </div>
-                    <div class="flex w-[100px] items-center justify-center text-sm font-medium">
-                        Page @combinedGridState.Pagination.CurrentPage of @combinedGridState.Pagination.TotalPages
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Icon"
-                                  OnClick="@(() => { combinedGridState.Pagination.FirstPage(); StateHasChanged(); })"
-                                  Disabled="@(!combinedGridState.Pagination.CanGoPrevious)" AriaLabel="Go to first page">
-                            <LucideIcon Name="chevrons-left" Size="16" />
-                        </BbButton>
-                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Icon"
-                                  OnClick="@(() => { combinedGridState.Pagination.PreviousPage(); StateHasChanged(); })"
-                                  Disabled="@(!combinedGridState.Pagination.CanGoPrevious)" AriaLabel="Go to previous page">
-                            <LucideIcon Name="chevron-left" Size="16" />
-                        </BbButton>
-                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Icon"
-                                  OnClick="@(() => { combinedGridState.Pagination.NextPage(); StateHasChanged(); })"
-                                  Disabled="@(!combinedGridState.Pagination.CanGoNext)" AriaLabel="Go to next page">
-                            <LucideIcon Name="chevron-right" Size="16" />
-                        </BbButton>
-                        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Icon"
-                                  OnClick="@(() => { combinedGridState.Pagination.LastPage(); StateHasChanged(); })"
-                                  Disabled="@(!combinedGridState.Pagination.CanGoNext)" AriaLabel="Go to last page">
-                            <LucideIcon Name="chevrons-right" Size="16" />
-                        </BbButton>
-                    </div>
-                </div>
+                        </tr>
+                    </BbDataGridHeader>
+                    <BbDataGridBody Class="[&_tr:last-child]:border-0">
+                        @foreach (var person in people)
+                        {
+                            <BbDataGridRow TData="Person" Class="border-b transition-colors hover:bg-muted/50">
+                                @foreach (var colId in GetReorderableVisibleColumns())
+                                {
+                                    <BbDataGridCell Class="p-4 align-middle">
+                                        @GetCellValue(person, colId)
+                                    </BbDataGridCell>
+                                }
+                            </BbDataGridRow>
+                        }
+                    </BbDataGridBody>
+                </BlazorBlueprint.Primitives.DataGrid.BbDataGrid>
             </div>
 
             <div class="rounded-lg border bg-card p-4">
-                <h3 class="font-semibold mb-2">Current State</h3>
+                <h3 class="font-semibold mb-2">Column Order</h3>
+                <div class="text-sm">
+                    @string.Join(" → ", GetReorderableVisibleColumns().Select(c => GetColumnTitle(c)))
+                </div>
+            </div>
+        </div>
+        <CodeBlock Source="Primitives/DataGrid/reorderable.txt" />
+    </section>
+
+    @* Column Resize *@
+    <section class="space-y-4">
+        <div>
+            <h2 class="text-2xl font-semibold">Column Resize</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">DataGridColumnState.SetWidth()</code> and
+                <code class="bg-muted px-1 py-0.5 rounded">GetWidth()</code> to control column widths programmatically.
+                The <code class="bg-muted px-1 py-0.5 rounded">OnColumnResize</code> callback fires when column widths change.
+                The primitive provides the state management; interactive drag resize lives in the Component layer.
+            </p>
+        </div>
+
+        <div class="space-y-4">
+            <div class="flex items-center gap-2 flex-wrap">
+                @foreach (var colId in resizeColumnIds)
+                {
+                    var currentWidth = resizeGridState.Columns.GetWidth(colId);
+                    <div class="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-sm">
+                        <span class="font-medium">@GetColumnTitle(colId):</span>
+                        <button @onclick="@(() => SetColumnWidth(colId, "100px"))"
+                                class="@($"h-6 px-2 rounded text-xs {(currentWidth == "100px" ? "bg-primary text-primary-foreground" : "hover:bg-accent")}")">
+                            100px
+                        </button>
+                        <button @onclick="@(() => SetColumnWidth(colId, "200px"))"
+                                class="@($"h-6 px-2 rounded text-xs {(currentWidth == "200px" ? "bg-primary text-primary-foreground" : "hover:bg-accent")}")">
+                            200px
+                        </button>
+                        <button @onclick="@(() => SetColumnWidth(colId, null))"
+                                class="@($"h-6 px-2 rounded text-xs {(currentWidth == null ? "bg-primary text-primary-foreground" : "hover:bg-accent")}")">
+                            Auto
+                        </button>
+                    </div>
+                }
+            </div>
+
+            <div class="rounded-md border">
+                <BlazorBlueprint.Primitives.DataGrid.BbDataGrid TData="Person" Items="@people" @bind-State="@resizeGridState" ManualPagination="true"
+                            OnColumnResize="@HandleResize" AriaLabel="Resizable columns grid" Class="w-full caption-bottom text-sm"
+                            style="table-layout: fixed;">
+                    <BbDataGridHeader Class="[&_tr]:border-b">
+                        <tr class="border-b transition-colors hover:bg-muted/50">
+                            @foreach (var colId in resizeColumnIds)
+                            {
+                                var width = resizeGridState.Columns.GetWidth(colId);
+                                <BbDataGridHeaderCell TData="Person" ColumnId="@colId"
+                                                      Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground overflow-hidden text-ellipsis whitespace-nowrap"
+                                                      style="@(width != null ? $"width: {width}" : null)">
+                                    @GetColumnTitle(colId)
+                                </BbDataGridHeaderCell>
+                            }
+                        </tr>
+                    </BbDataGridHeader>
+                    <BbDataGridBody Class="[&_tr:last-child]:border-0">
+                        @foreach (var person in people)
+                        {
+                            <BbDataGridRow TData="Person" Class="border-b transition-colors hover:bg-muted/50">
+                                @foreach (var colId in resizeColumnIds)
+                                {
+                                    <BbDataGridCell Class="p-4 align-middle overflow-hidden text-ellipsis whitespace-nowrap">
+                                        @GetCellValue(person, colId)
+                                    </BbDataGridCell>
+                                }
+                            </BbDataGridRow>
+                        }
+                    </BbDataGridBody>
+                </BlazorBlueprint.Primitives.DataGrid.BbDataGrid>
+            </div>
+
+            <div class="rounded-lg border bg-card p-4">
+                <h3 class="font-semibold mb-2">Column Widths</h3>
                 <div class="text-sm space-y-1">
-                    <p><span class="font-medium">Sort Columns:</span> @(combinedGridState.Sorting.Definitions.Count == 0 ? "None" : string.Join(", ", combinedGridState.Sorting.Definitions.Select(d => $"{d.ColumnId} ({d.Direction})")))</p>
-                    <p><span class="font-medium">Current Page:</span> @combinedGridState.Pagination.CurrentPage / @combinedGridState.Pagination.TotalPages</p>
-                    <p><span class="font-medium">Selected Rows:</span> @combinedGridState.Selection.SelectedCount</p>
+                    @foreach (var colId in resizeColumnIds)
+                    {
+                        <p>
+                            <span class="font-medium">@GetColumnTitle(colId):</span>
+                            @(resizeGridState.Columns.GetWidth(colId) ?? "auto")
+                        </p>
+                    }
+                </div>
+            </div>
+        </div>
+        <CodeBlock Source="Primitives/DataGrid/column-resize.txt" />
+    </section>
+
+    @* All Features Combined *@
+    <section class="space-y-4">
+        <div>
+            <h2 class="text-2xl font-semibold">All Features Combined</h2>
+            <p class="text-sm text-muted-foreground">
+                Multi-column sorting, pagination, row selection, column visibility, column reorder, and column resize all working together.
+                This demonstrates the full DataGrid primitive API.
+            </p>
+        </div>
+
+        <div class="space-y-4">
+            @* Column visibility toggles *@
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-sm font-medium text-muted-foreground">Columns:</span>
+                @foreach (var colId in combinedColumnIds)
+                {
+                    var isVisible = combinedGridState.Columns.IsVisible(colId);
+                    <button @onclick="@(() => ToggleCombinedColumnVisibility(colId))"
+                            class="@($"inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors h-7 px-2 border {(isVisible ? "bg-primary text-primary-foreground border-primary" : "bg-background text-foreground border-input hover:bg-accent")}")">
+                        @GetColumnTitle(colId)
+                    </button>
+                }
+            </div>
+
+            @* Reorder controls *@
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-sm font-medium text-muted-foreground">Order:</span>
+                @foreach (var colId in GetCombinedVisibleColumns())
+                {
+                    var entry = combinedGridState.Columns.Entries.FirstOrDefault(e => e.ColumnId == colId);
+                    var order = entry?.Order ?? 0;
+                    <div class="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-sm">
+                        <button @onclick="@(() => MoveCombinedColumnLeft(colId))" disabled="@(order == 0)"
+                                class="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-accent disabled:opacity-30"
+                                aria-label="@($"Move {colId} left")">
+                            <LucideIcon Name="chevron-left" Size="14" />
+                        </button>
+                        <span class="font-medium px-1">@GetColumnTitle(colId)</span>
+                        <button @onclick="@(() => MoveCombinedColumnRight(colId))" disabled="@(order >= combinedColumnIds.Length - 1)"
+                                class="h-5 w-5 inline-flex items-center justify-center rounded hover:bg-accent disabled:opacity-30"
+                                aria-label="@($"Move {colId} right")">
+                            <LucideIcon Name="chevron-right" Size="14" />
+                        </button>
+                    </div>
+                }
+            </div>
+
+            @* Width controls *@
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-sm font-medium text-muted-foreground">Widths:</span>
+                @foreach (var colId in GetCombinedVisibleColumns())
+                {
+                    var currentWidth = combinedGridState.Columns.GetWidth(colId);
+                    <div class="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs">
+                        <span class="font-medium">@GetColumnTitle(colId)</span>
+                        <button @onclick="@(() => SetCombinedColumnWidth(colId, "120px"))"
+                                class="@($"h-5 px-1 rounded {(currentWidth == "120px" ? "bg-primary text-primary-foreground" : "hover:bg-accent")}")">
+                            120
+                        </button>
+                        <button @onclick="@(() => SetCombinedColumnWidth(colId, null))"
+                                class="@($"h-5 px-1 rounded {(currentWidth == null ? "bg-primary text-primary-foreground" : "hover:bg-accent")}")">
+                            Auto
+                        </button>
+                    </div>
+                }
+            </div>
+
+            @* Grid with all features *@
+            <div class="rounded-md border">
+                <BlazorBlueprint.Primitives.DataGrid.BbDataGrid TData="Person" Items="@GetCombinedPageData()"
+                            @bind-State="@combinedGridState" ManualPagination="true"
+                            SelectionMode="SelectionMode.Multiple"
+                            OnSortChange="@HandleCombinedSortChanged"
+                            OnSelectionChange="@HandleCombinedSelectionChange"
+                            OnColumnVisibilityChange="@HandleCombinedVisibilityChange"
+                            OnColumnReorder="@HandleCombinedReorder"
+                            OnColumnResize="@HandleCombinedResize"
+                            AriaLabel="Combined features grid" Class="w-full caption-bottom text-sm"
+                            style="table-layout: fixed;">
+                    <BbDataGridHeader Class="[&_tr]:border-b">
+                        <tr class="border-b transition-colors hover:bg-muted/50">
+                            <BbDataGridHeaderCell TData="Person" Class="h-12 w-12 px-4 text-center align-middle" style="width: 48px">
+                                <input type="checkbox" checked="@CombinedIsAllOnPageSelected()"
+                                       @onchange="@HandleCombinedSelectAllChanged"
+                                       @onclick:stopPropagation="true"
+                                       class="rounded border-input"
+                                       aria-label="Select all rows on page" />
+                            </BbDataGridHeaderCell>
+                            @foreach (var colId in GetCombinedVisibleColumns())
+                            {
+                                var sortDirection = combinedGridState.Sorting.GetDirection(colId);
+                                var width = combinedGridState.Columns.GetWidth(colId);
+                                <BbDataGridHeaderCell TData="Person" ColumnId="@colId" Sortable="true" Reorderable="true"
+                                                      Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground cursor-pointer select-none overflow-hidden"
+                                                      style="@(width != null ? $"width: {width}" : null)">
+                                    <div class="flex items-center gap-2">
+                                        <span>@GetColumnTitle(colId)</span>
+                                        @if (sortDirection != SortDirection.None)
+                                        {
+                                            @if (sortDirection == SortDirection.Ascending)
+                                            {
+                                                <LucideIcon Name="arrow-up" Size="16" />
+                                            }
+                                            else
+                                            {
+                                                <LucideIcon Name="arrow-down" Size="16" />
+                                            }
+                                        }
+                                    </div>
+                                </BbDataGridHeaderCell>
+                            }
+                        </tr>
+                    </BbDataGridHeader>
+                    <BbDataGridBody Class="[&_tr:last-child]:border-0">
+                        @foreach (var person in GetCombinedPageData())
+                        {
+                            var isSelected = combinedGridState.Selection.IsSelected(person);
+                            <BbDataGridRow TData="Person" Item="@person" Class="@($"border-b transition-colors hover:bg-muted/50 {(isSelected ? "bg-muted" : "")}")">
+                                <BbDataGridCell Class="p-4 w-12 text-center align-middle" style="width: 48px">
+                                    <input type="checkbox" checked="@isSelected"
+                                           @onchange="@(() => ToggleCombinedRowSelection(person))"
+                                           @onclick:stopPropagation="true"
+                                           class="rounded border-input" />
+                                </BbDataGridCell>
+                                @foreach (var colId in GetCombinedVisibleColumns())
+                                {
+                                    <BbDataGridCell Class="p-4 align-middle overflow-hidden text-ellipsis whitespace-nowrap">
+                                        @GetCellValue(person, colId)
+                                    </BbDataGridCell>
+                                }
+                            </BbDataGridRow>
+                        }
+                    </BbDataGridBody>
+                </BlazorBlueprint.Primitives.DataGrid.BbDataGrid>
+            </div>
+
+            @* Pagination controls *@
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-muted-foreground">
+                    @combinedGridState.Selection.SelectedCount of @combinedGridState.Pagination.TotalItems row(s) selected
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm">Rows per page:</span>
+                        <select value="@combinedGridState.Pagination.PageSize"
+                                @onchange="@HandleCombinedPageSizeChange"
+                                class="h-8 rounded-md border bg-background px-2 text-sm">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                        </select>
+                    </div>
+                    <span class="text-sm">
+                        Page @combinedGridState.Pagination.CurrentPage of @combinedGridState.Pagination.TotalPages
+                    </span>
+                    <div class="flex items-center gap-1">
+                        <button disabled="@(!combinedGridState.Pagination.CanGoPrevious)"
+                                @onclick="@(() => combinedGridState.Pagination.FirstPage())"
+                                class="h-8 w-8 inline-flex items-center justify-center rounded-md border hover:bg-accent disabled:opacity-50"
+                                aria-label="First page">
+                            <LucideIcon Name="chevrons-left" Size="16" />
+                        </button>
+                        <button disabled="@(!combinedGridState.Pagination.CanGoPrevious)"
+                                @onclick="@(() => combinedGridState.Pagination.PreviousPage())"
+                                class="h-8 w-8 inline-flex items-center justify-center rounded-md border hover:bg-accent disabled:opacity-50"
+                                aria-label="Previous page">
+                            <LucideIcon Name="chevron-left" Size="16" />
+                        </button>
+                        <button disabled="@(!combinedGridState.Pagination.CanGoNext)"
+                                @onclick="@(() => combinedGridState.Pagination.NextPage())"
+                                class="h-8 w-8 inline-flex items-center justify-center rounded-md border hover:bg-accent disabled:opacity-50"
+                                aria-label="Next page">
+                            <LucideIcon Name="chevron-right" Size="16" />
+                        </button>
+                        <button disabled="@(!combinedGridState.Pagination.CanGoNext)"
+                                @onclick="@(() => combinedGridState.Pagination.LastPage())"
+                                class="h-8 w-8 inline-flex items-center justify-center rounded-md border hover:bg-accent disabled:opacity-50"
+                                aria-label="Last page">
+                            <LucideIcon Name="chevrons-right" Size="16" />
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -608,6 +842,15 @@
                 <ApiParameter Name="OnPageSizeChange" Type="EventCallback&lt;int&gt;">
                     Callback invoked when the page size changes.
                 </ApiParameter>
+                <ApiParameter Name="OnColumnVisibilityChange" Type="EventCallback&lt;(string ColumnId, bool Visible)&gt;">
+                    Callback invoked when a column's visibility changes.
+                </ApiParameter>
+                <ApiParameter Name="OnColumnReorder" Type="EventCallback&lt;(string ColumnId, int NewIndex)&gt;">
+                    Callback invoked when a column is reordered.
+                </ApiParameter>
+                <ApiParameter Name="OnColumnResize" Type="EventCallback&lt;(string ColumnId, string? Width)&gt;">
+                    Callback invoked when a column is resized.
+                </ApiParameter>
                 <ApiParameter Name="AriaLabel" Type="string?">
                     ARIA label for the grid element.
                 </ApiParameter>
@@ -625,6 +868,9 @@
                 </ApiParameter>
                 <ApiParameter Name="Sortable" Type="bool" Default="false">
                     Whether this column supports sorting. When true, clicking the header toggles sort.
+                </ApiParameter>
+                <ApiParameter Name="Reorderable" Type="bool" Default="false">
+                    Whether this column can be reordered. When true, renders <code>draggable="true"</code> and <code>data-column-id</code> on the header cell.
                 </ApiParameter>
                 <ApiParameter Name="Class" Type="string?">
                     Additional CSS classes for the header cell.
@@ -671,12 +917,32 @@
 
     private bool selectAllChecked;
     private bool combinedSelectAllChecked;
-    private bool combinedSelectAllDropdownOpen;
+
+    // Column visibility state
+    private DataGridState<Person> visibilityGridState = new();
+    private readonly string[] visibilityColumnIds = { "name", "email", "age", "department" };
+
+    // Reorder state
+    private DataGridState<Person> reorderGridState = new();
+    private readonly string[] reorderColumnIds = { "name", "email", "age", "department" };
+
+    // Resize state
+    private DataGridState<Person> resizeGridState = new();
+    private readonly string[] resizeColumnIds = { "name", "email", "age", "department" };
+
+    // Combined column IDs
+    private readonly string[] combinedColumnIds = { "name", "email", "age", "department" };
 
     protected override void OnInitialized()
     {
         selectableGridState.Selection.Mode = SelectionMode.Multiple;
         combinedGridState.Selection.Mode = SelectionMode.Multiple;
+
+        // Initialize column state for visibility, reorder, resize, and combined demos
+        visibilityGridState.Columns.Initialize(visibilityColumnIds);
+        reorderGridState.Columns.Initialize(reorderColumnIds);
+        resizeGridState.Columns.Initialize(resizeColumnIds);
+        combinedGridState.Columns.Initialize(combinedColumnIds);
 
         people = new List<Person>
         {
@@ -812,7 +1078,7 @@
         {
             combinedGridState.Selection.Select(item);
         }
-        combinedSelectAllDropdownOpen = false;
+
         combinedSelectAllChecked = true;
         StateHasChanged();
     }
@@ -823,7 +1089,7 @@
         {
             combinedGridState.Selection.Select(item);
         }
-        combinedSelectAllDropdownOpen = false;
+
         combinedSelectAllChecked = true;
         StateHasChanged();
     }
@@ -831,7 +1097,7 @@
     private void HandleCombinedClearSelection()
     {
         combinedGridState.Selection.Clear();
-        combinedSelectAllDropdownOpen = false;
+
         combinedSelectAllChecked = false;
         StateHasChanged();
     }
@@ -898,6 +1164,140 @@
 
         return ordered ?? data;
     }
+
+    // --- Column visibility helpers ---
+
+    private void ToggleColumnVisibility(string columnId)
+    {
+        var isVisible = visibilityGridState.Columns.IsVisible(columnId);
+        visibilityGridState.Columns.SetVisibility(columnId, !isVisible);
+        StateHasChanged();
+    }
+
+    private void HandleVisibilityChange((string ColumnId, bool Visible) change)
+    {
+        StateHasChanged();
+    }
+
+    // --- Reorder helpers ---
+
+    private IReadOnlyList<string> GetReorderableVisibleColumns()
+    {
+        return reorderGridState.Columns.GetVisibleColumnIds();
+    }
+
+    private void MoveColumnLeft(string columnId)
+    {
+        var entry = reorderGridState.Columns.Entries.FirstOrDefault(e => e.ColumnId == columnId);
+        if (entry != null && entry.Order > 0)
+        {
+            reorderGridState.Columns.ReorderColumn(columnId, entry.Order - 1);
+            StateHasChanged();
+        }
+    }
+
+    private void MoveColumnRight(string columnId)
+    {
+        var entry = reorderGridState.Columns.Entries.FirstOrDefault(e => e.ColumnId == columnId);
+        if (entry != null && entry.Order < reorderColumnIds.Length - 1)
+        {
+            reorderGridState.Columns.ReorderColumn(columnId, entry.Order + 1);
+            StateHasChanged();
+        }
+    }
+
+    private void HandleReorder((string ColumnId, int NewIndex) reorder)
+    {
+        StateHasChanged();
+    }
+
+    // --- Resize helpers ---
+
+    private void SetColumnWidth(string columnId, string? width)
+    {
+        resizeGridState.Columns.SetWidth(columnId, width);
+        StateHasChanged();
+    }
+
+    private void HandleResize((string ColumnId, string? Width) resize)
+    {
+        StateHasChanged();
+    }
+
+    // --- Combined column helpers ---
+
+    private IReadOnlyList<string> GetCombinedVisibleColumns()
+    {
+        return combinedGridState.Columns.GetVisibleColumnIds();
+    }
+
+    private void ToggleCombinedColumnVisibility(string columnId)
+    {
+        var isVisible = combinedGridState.Columns.IsVisible(columnId);
+        combinedGridState.Columns.SetVisibility(columnId, !isVisible);
+        StateHasChanged();
+    }
+
+    private void HandleCombinedVisibilityChange((string ColumnId, bool Visible) change)
+    {
+        StateHasChanged();
+    }
+
+    private void MoveCombinedColumnLeft(string columnId)
+    {
+        var entry = combinedGridState.Columns.Entries.FirstOrDefault(e => e.ColumnId == columnId);
+        if (entry != null && entry.Order > 0)
+        {
+            combinedGridState.Columns.ReorderColumn(columnId, entry.Order - 1);
+            StateHasChanged();
+        }
+    }
+
+    private void MoveCombinedColumnRight(string columnId)
+    {
+        var entry = combinedGridState.Columns.Entries.FirstOrDefault(e => e.ColumnId == columnId);
+        if (entry != null && entry.Order < combinedColumnIds.Length - 1)
+        {
+            combinedGridState.Columns.ReorderColumn(columnId, entry.Order + 1);
+            StateHasChanged();
+        }
+    }
+
+    private void HandleCombinedReorder((string ColumnId, int NewIndex) reorder)
+    {
+        StateHasChanged();
+    }
+
+    private void SetCombinedColumnWidth(string columnId, string? width)
+    {
+        combinedGridState.Columns.SetWidth(columnId, width);
+        StateHasChanged();
+    }
+
+    private void HandleCombinedResize((string ColumnId, string? Width) resize)
+    {
+        StateHasChanged();
+    }
+
+    // --- Shared column helpers ---
+
+    private static string GetColumnTitle(string columnId) => columnId switch
+    {
+        "name" => "Name",
+        "email" => "Email",
+        "age" => "Age",
+        "department" => "Department",
+        _ => columnId
+    };
+
+    private static string GetCellValue(Person person, string columnId) => columnId switch
+    {
+        "name" => person.Name,
+        "email" => person.Email,
+        "age" => person.Age.ToString(),
+        "department" => person.Department,
+        _ => ""
+    };
 
     public class Person
     {

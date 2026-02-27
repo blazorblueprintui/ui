@@ -63,6 +63,21 @@ public class DataGridContext<TData> : PrimitiveContextWithEvents<DataGridState<T
     public Action<IReadOnlyCollection<TData>>? OnSelectionChange { get; set; }
 
     /// <summary>
+    /// Callback invoked when a column's visibility changes.
+    /// </summary>
+    public Action<string, bool>? OnColumnVisibilityChange { get; set; }
+
+    /// <summary>
+    /// Callback invoked when a column is reordered.
+    /// </summary>
+    public Action<string, int>? OnColumnReorder { get; set; }
+
+    /// <summary>
+    /// Callback invoked when a column is resized.
+    /// </summary>
+    public Action<string, string?>? OnColumnResize { get; set; }
+
+    /// <summary>
     /// Initializes a new instance of the DataGridContext.
     /// </summary>
     /// <param name="state">The initial grid state.</param>
@@ -214,6 +229,42 @@ public class DataGridContext<TData> : PrimitiveContextWithEvents<DataGridState<T
         UpdateState(state => state.Pagination.PageSize = pageSize);
 
         OnPageSizeChange?.Invoke(pageSize);
+    }
+
+    /// <summary>
+    /// Sets the visibility of a column.
+    /// </summary>
+    /// <param name="columnId">The column ID.</param>
+    /// <param name="visible">Whether the column should be visible.</param>
+    public void SetColumnVisibility(string columnId, bool visible)
+    {
+        UpdateState(state => state.Columns.SetVisibility(columnId, visible));
+
+        OnColumnVisibilityChange?.Invoke(columnId, visible);
+    }
+
+    /// <summary>
+    /// Moves a column to a new position.
+    /// </summary>
+    /// <param name="columnId">The column ID to move.</param>
+    /// <param name="newIndex">The new zero-based position.</param>
+    public void ReorderColumn(string columnId, int newIndex)
+    {
+        UpdateState(state => state.Columns.ReorderColumn(columnId, newIndex));
+
+        OnColumnReorder?.Invoke(columnId, newIndex);
+    }
+
+    /// <summary>
+    /// Sets the width of a column.
+    /// </summary>
+    /// <param name="columnId">The column ID.</param>
+    /// <param name="width">The width value (e.g., "200px"), or null for auto.</param>
+    public void SetColumnWidth(string columnId, string? width)
+    {
+        UpdateState(state => state.Columns.SetWidth(columnId, width));
+
+        OnColumnResize?.Invoke(columnId, width);
     }
 
     /// <summary>

@@ -99,6 +99,26 @@ public class DataGridSortState
     public void ClearSort() => definitions.Clear();
 
     /// <summary>
+    /// Adds a sort definition without clearing existing ones.
+    /// Used internally for restoring multi-sort state from a snapshot.
+    /// </summary>
+    /// <param name="columnId">The column ID to sort.</param>
+    /// <param name="direction">The sort direction.</param>
+    internal void AddSort(string columnId, SortDirection direction)
+    {
+        if (direction == SortDirection.None)
+        {
+            return;
+        }
+
+        definitions.Add(new SortDefinition
+        {
+            ColumnId = columnId,
+            Direction = direction
+        });
+    }
+
+    /// <summary>
     /// Gets the sort direction for a specific column.
     /// </summary>
     /// <param name="columnId">The column ID to check.</param>

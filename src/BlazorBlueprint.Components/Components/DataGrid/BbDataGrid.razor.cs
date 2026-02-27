@@ -2,6 +2,7 @@ using BlazorBlueprint.Primitives;
 using BlazorBlueprint.Primitives.DataGrid;
 using BlazorBlueprint.Primitives.Table;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 
 namespace BlazorBlueprint.Components;
 
@@ -11,7 +12,7 @@ namespace BlazorBlueprint.Components;
 /// Built on the headless DataGrid primitives with Tailwind CSS styling.
 /// </summary>
 /// <typeparam name="TData">The type of data items in the grid.</typeparam>
-public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData : class
+public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where TData : class
 {
     private DataGridState<TData> _gridState = new();
     private readonly List<IDataGridColumn<TData>> _columns = new();
@@ -22,6 +23,14 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
     private CancellationTokenSource? _loadCts;
     private bool _selectAllDropdownOpen;
     private bool _needsDataRefresh = true;
+    private bool columnStateInitialized;
+
+    // JS interop state
+    private IJSObjectReference? columnsModule;
+    private DotNetObjectReference<BbDataGrid<TData>>? selfRef;
+    private ElementReference containerRef;
+    private readonly string gridId = Guid.NewGuid().ToString("N");
+    private bool jsInitialized;
 
     // ShouldRender tracking
     private IEnumerable<TData>? _lastItems;
@@ -29,6 +38,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
     private int _lastColumnsVersion;
     private int _stateVersion;
     private int _lastStateVersion;
+
+    [Inject]
+    private IJSRuntime Js { get; set; } = null!;
 
     /// <summary>
     /// The data source for the grid. Can be IQueryable&lt;TData&gt; or IEnumerable&lt;TData&gt;.
@@ -123,6 +135,13 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
     public float ItemSize { get; set; } = 48f;
 
     /// <summary>
+    /// Keep the header row visible while scrolling. Useful with virtualized grids
+    /// inside a fixed-height scroll container. Default is false.
+    /// </summary>
+    [Parameter]
+    public bool StickyHeader { get; set; }
+
+    /// <summary>
     /// Enable keyboard navigation for rows. Default is true.
     /// </summary>
     [Parameter]
@@ -147,12 +166,49 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     /// <summary>
+    /// Toolbar content rendered above the grid. Use for column visibility toggles,
+    /// search inputs, or other controls that need grid context.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? Toolbar { get; set; }
+
+    /// <summary>
     /// Event callback invoked when sorting changes.
     /// </summary>
     [Parameter]
     public EventCallback<IReadOnlyList<SortDefinition>> OnSort { get; set; }
 
-    private DataGridState<TData> EffectiveState => State ?? _gridState;
+    /// <summary>
+    /// Enable column resizing by dragging header cell borders. Default is false.
+    /// </summary>
+    [Parameter]
+    public bool Resizable { get; set; }
+
+    /// <summary>
+    /// Minimum column width in pixels when resizing. Default is 50.
+    /// </summary>
+    [Parameter]
+    public int MinColumnWidth { get; set; } = 50;
+
+    /// <summary>
+    /// Event callback invoked when a column is resized.
+    /// </summary>
+    [Parameter]
+    public EventCallback<(string ColumnId, string Width)> OnColumnResize { get; set; }
+
+    /// <summary>
+    /// Enable column reordering by dragging header cells. Default is false.
+    /// </summary>
+    [Parameter]
+    public bool Reorderable { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when a column is reordered.
+    /// </summary>
+    [Parameter]
+    public EventCallback<(string ColumnId, int NewIndex)> OnColumnReorder { get; set; }
+
+    internal DataGridState<TData> EffectiveState => State ?? _gridState;
 
     protected override void OnInitialized()
     {
@@ -175,6 +231,60 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
         {
             _needsDataRefresh = false;
             await ProcessDataAsync();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!Resizable && !Reorderable)
+        {
+            return;
+        }
+
+        try
+        {
+            if (!jsInitialized)
+            {
+                columnsModule = await Js.InvokeAsync<IJSObjectReference>("import",
+                    "./_content/BlazorBlueprint.Components/js/datagrid-columns.js");
+                selfRef = DotNetObjectReference.Create(this);
+                jsInitialized = true;
+
+                if (Resizable)
+                {
+                    await columnsModule.InvokeVoidAsync("initColumnResize", containerRef, selfRef, gridId, MinColumnWidth);
+                }
+
+                if (Reorderable)
+                {
+                    await columnsModule.InvokeVoidAsync("initColumnReorder", containerRef, selfRef, gridId);
+                }
+            }
+
+            if (jsInitialized)
+            {
+                if (Resizable)
+                {
+                    await columnsModule!.InvokeVoidAsync("setupResizeHandles", gridId);
+                }
+
+                if (Reorderable)
+                {
+                    var reorderableIds = GetVisibleColumns()
+                        .Where(c => c.Reorderable)
+                        .Select(c => c.ColumnId)
+                        .ToArray();
+                    await columnsModule!.InvokeVoidAsync("setupDraggableHeaders", gridId, reorderableIds);
+                }
+            }
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Expected during circuit disconnect in Blazor Server
+        }
+        catch (InvalidOperationException)
+        {
+            // JS interop not available during prerendering
         }
     }
 
@@ -207,11 +317,57 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
         _columnsVersion++;
     }
 
-    private IEnumerable<IDataGridColumn<TData>> GetVisibleColumns() =>
-        _columns.Where(c => c.Visible);
+    /// <summary>
+    /// Gets all registered columns (for child components like column visibility toggle).
+    /// </summary>
+    internal IReadOnlyList<IDataGridColumn<TData>> GetAllColumns() => _columns.AsReadOnly();
+
+    private IEnumerable<IDataGridColumn<TData>> GetVisibleColumns()
+    {
+        // Column components register in OnInitialized (during render), which runs
+        // after ProcessDataAsync in OnParametersSetAsync. Ensure the column state
+        // is initialized once columns have registered.
+        InitializeColumnState();
+
+        if (!columnStateInitialized)
+        {
+            return _columns.Where(c => c.Visible);
+        }
+
+        var visibleIds = _gridState.Columns.GetVisibleColumnIds();
+        var columnMap = new Dictionary<string, IDataGridColumn<TData>>(_columns.Count);
+        foreach (var col in _columns)
+        {
+            columnMap[col.ColumnId] = col;
+        }
+
+        var result = new List<IDataGridColumn<TData>>(visibleIds.Count);
+        foreach (var id in visibleIds)
+        {
+            if (columnMap.TryGetValue(id, out var column))
+            {
+                result.Add(column);
+            }
+        }
+
+        return result;
+    }
+
+    private void InitializeColumnState()
+    {
+        if (columnStateInitialized || _columns.Count == 0)
+        {
+            return;
+        }
+
+        _gridState.Columns.Initialize(_columns.Select(c => c.ColumnId));
+        columnStateInitialized = true;
+    }
 
     private async Task ProcessDataAsync()
     {
+        InitializeColumnState();
+
         if (ItemsProvider != null)
         {
             await LoadFromProviderAsync();
@@ -446,6 +602,56 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
         StateHasChanged();
     }
 
+    /// <summary>
+    /// Handles column visibility change from the toggle component.
+    /// </summary>
+    internal void HandleColumnVisibilityChanged(string columnId, bool visible)
+    {
+        _gridState.Columns.SetVisibility(columnId, visible);
+        _stateVersion++;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Called from JS when a column resize drag completes.
+    /// Receives all column widths to commit to state at once.
+    /// </summary>
+    [JSInvokable]
+    public async Task OnResizeCompleted(string resizedColumnId, Dictionary<string, double> widths)
+    {
+        foreach (var (colId, widthPx) in widths)
+        {
+            _gridState.Columns.SetWidth(colId, $"{Math.Round(widthPx)}px");
+        }
+
+        _stateVersion++;
+
+        if (OnColumnResize.HasDelegate)
+        {
+            var width = widths.TryGetValue(resizedColumnId, out var w) ? $"{Math.Round(w)}px" : "";
+            await OnColumnResize.InvokeAsync((resizedColumnId, width));
+        }
+
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Called from JS when a column is reordered via drag-and-drop.
+    /// </summary>
+    [JSInvokable]
+    public async Task OnColumnReordered(string columnId, int newIndex)
+    {
+        _gridState.Columns.ReorderColumn(columnId, newIndex);
+        _stateVersion++;
+
+        if (OnColumnReorder.HasDelegate)
+        {
+            await OnColumnReorder.InvokeAsync((columnId, newIndex));
+        }
+
+        StateHasChanged();
+    }
+
     private bool ShouldShowSelectAllPrompt() =>
         _allSortedData.Any() && _gridState.Pagination.TotalItems > _processedData.Count();
 
@@ -495,7 +701,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
         _ => Primitives.Table.SelectionMode.None
     };
 
-    private static string GetHeaderCellClass(IDataGridColumn<TData> column, bool isSelectColumn)
+    private string GetHeaderCellClass(IDataGridColumn<TData> column, bool isSelectColumn)
     {
         var baseClass = "h-12 px-4 text-left align-middle font-medium text-muted-foreground";
 
@@ -504,10 +710,17 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
             return ClassNames.cn(baseClass, "w-12");
         }
 
-        return ClassNames.cn(baseClass, column.Sortable ? "cursor-pointer select-none group/header" : "");
+        var needsGroup = column.Sortable || (Reorderable && column.Reorderable);
+        var sortClass = column.Sortable ? "cursor-pointer select-none" : "";
+        var groupClass = needsGroup ? "group/header" : "";
+        var needsRelative = (Resizable && column.Resizable) || (Reorderable && column.Reorderable);
+        var positionClass = needsRelative ? "relative" : "";
+        var overflowClass = Resizable ? "overflow-hidden" : "";
+
+        return ClassNames.cn(baseClass, sortClass, groupClass, positionClass, overflowClass);
     }
 
-    private static string GetCellClass(IDataGridColumn<TData> column, bool isSelectColumn)
+    private string GetCellClass(IDataGridColumn<TData> column, bool isSelectColumn)
     {
         var baseClass = "p-4 align-middle";
 
@@ -523,11 +736,17 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
             _ => null
         };
 
-        return ClassNames.cn(baseClass, cellClass);
+        var overflowClass = Resizable ? "overflow-hidden" : "";
+
+        return ClassNames.cn(baseClass, cellClass, overflowClass);
     }
 
-    private static string? GetColumnWidthStyle(IDataGridColumn<TData> column) =>
-        column.Width != null ? $"width: {column.Width}" : null;
+    private string? GetColumnWidthStyle(IDataGridColumn<TData> column)
+    {
+        var stateWidth = columnStateInitialized ? _gridState.Columns.GetWidth(column.ColumnId) : null;
+        var width = stateWidth ?? column.Width;
+        return width != null ? $"width: {width}" : null;
+    }
 
     protected override bool ShouldRender()
     {
@@ -546,10 +765,33 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
         return false;
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         GC.SuppressFinalize(this);
         _loadCts?.Cancel();
         _loadCts?.Dispose();
+
+        if (columnsModule != null && jsInitialized)
+        {
+            try
+            {
+                await columnsModule.InvokeVoidAsync("dispose", gridId);
+            }
+            catch
+            {
+                // Cleanup may already be disposed
+            }
+
+            try
+            {
+                await columnsModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+        }
+
+        selfRef?.Dispose();
     }
 }

@@ -152,11 +152,13 @@
             <p class="text-sm text-muted-foreground">
                 Enable <code class="bg-muted px-1 py-0.5 rounded">Virtualize="true"</code> for smooth
                 rendering of large datasets. Only visible rows are rendered in the DOM.
+                Use <code class="bg-muted px-1 py-0.5 rounded">StickyHeader="true"</code> to keep the header
+                visible while scrolling.
             </p>
         </div>
         <div style="height: 400px; overflow: auto;">
             <BbDataGrid TData="Person" Items="@manyPeople" ShowPagination="false"
-                       Virtualize="true" ItemSize="48">
+                       Virtualize="true" ItemSize="48" StickyHeader="true">
                 <Columns>
                     <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Id)" Title="#" Width="60px" />
                     <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
@@ -167,6 +169,106 @@
             </BbDataGrid>
         </div>
         <CodeBlock Source="Components/DataGrid/virtualization.txt" />
+    </div>
+
+    <!-- ── Column Visibility ──────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Column Visibility</h2>
+            <p class="text-sm text-muted-foreground">
+                Use the <code class="bg-muted px-1 py-0.5 rounded">Toolbar</code> parameter with
+                <code class="bg-muted px-1 py-0.5 rounded">BbDataGridColumnVisibility</code> to add a
+                dropdown that lets users show or hide columns. Columns with <code class="bg-muted px-1 py-0.5 rounded">Hideable="false"</code>
+                are excluded from the toggle.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
+            <Toolbar>
+                <div class="flex items-center gap-2">
+                    <BbDataGridColumnVisibility TData="Person" />
+                </div>
+            </Toolbar>
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Hideable="false" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/column-visibility.txt" />
+    </div>
+
+    <!-- ── Resizable Columns ────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Resizable Columns</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">Resizable="true"</code> to enable column resizing.
+                Drag the right edge of any column header to resize. Uses <code class="bg-muted px-1 py-0.5 rounded">table-layout: fixed</code>
+                for precise width control. Individual columns can opt out with <code class="bg-muted px-1 py-0.5 rounded">Resizable="false"</code>.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5" Resizable="true">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Width="200px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable Width="250px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Width="150px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" Width="150px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Width="120px" />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/resizable-columns.txt" />
+    </div>
+
+    <!-- ── Reorderable Columns ──────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Reorderable Columns</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">Reorderable="true"</code> to enable drag-and-drop
+                column reordering. Drag a column header to move it to a new position. A visual indicator shows
+                the drop target. Individual columns can opt out with <code class="bg-muted px-1 py-0.5 rounded">Reorderable="false"</code>.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5" Reorderable="true">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/reorderable-columns.txt" />
+    </div>
+
+    <!-- ── All Column Features Combined ─────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">All Column Features Combined</h2>
+            <p class="text-sm text-muted-foreground">
+                Column visibility, resize, reorder, sorting, and selection all working together.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                   Resizable="true" Reorderable="true"
+                   SelectionMode="DataTableSelectionMode.Multiple">
+            <Toolbar>
+                <div class="flex items-center gap-2">
+                    <BbDataGridColumnVisibility TData="Person" />
+                </div>
+            </Toolbar>
+            <Columns>
+                <BbDataGridSelectColumn TData="Person" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Hideable="false" Width="200px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable Width="250px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Width="150px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" Width="150px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Width="120px" />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/all-column-features.txt" />
     </div>
 
     <!-- ── Empty & Loading States ──────────────────────────────────── -->
@@ -257,6 +359,9 @@
                 <ApiParameter Name="Virtualize" Type="bool" Default="false">
                     Enable row virtualization for large datasets. Only visible rows are rendered in the DOM. Requires a fixed-height scroll container.
                 </ApiParameter>
+                <ApiParameter Name="StickyHeader" Type="bool" Default="false">
+                    Keep the header row visible while scrolling. Useful with virtualized grids inside a fixed-height scroll container.
+                </ApiParameter>
                 <ApiParameter Name="ItemSize" Type="float" Default="48">
                     Row height in pixels for virtualization. Used by the Virtualize component to calculate scroll position.
                 </ApiParameter>
@@ -271,6 +376,24 @@
                 </ApiParameter>
                 <ApiParameter Name="EmptyTemplate" Type="RenderFragment">
                     Custom template displayed when there are no data items. Replaces the default empty state.
+                </ApiParameter>
+                <ApiParameter Name="Toolbar" Type="RenderFragment">
+                    Toolbar content rendered above the grid. Use for column visibility toggles, search inputs, or other controls that need grid context.
+                </ApiParameter>
+                <ApiParameter Name="Resizable" Type="bool" Default="false">
+                    Enable column resizing by dragging header cell borders.
+                </ApiParameter>
+                <ApiParameter Name="MinColumnWidth" Type="int" Default="50">
+                    Minimum column width in pixels when resizing.
+                </ApiParameter>
+                <ApiParameter Name="OnColumnResize" Type="EventCallback&lt;(string ColumnId, string Width)&gt;">
+                    Event callback invoked when a column is resized.
+                </ApiParameter>
+                <ApiParameter Name="Reorderable" Type="bool" Default="false">
+                    Enable column reordering by dragging header cells.
+                </ApiParameter>
+                <ApiParameter Name="OnColumnReorder" Type="EventCallback&lt;(string ColumnId, int NewIndex)&gt;">
+                    Event callback invoked when a column is reordered.
                 </ApiParameter>
                 <ApiParameter Name="State" Type="DataGridState&lt;TData&gt;">
                     External grid state for controlled mode. Use with @@bind-State for two-way binding of sorting, pagination, and selection.
@@ -304,6 +427,15 @@
                 </ApiParameter>
                 <ApiParameter Name="CellClass" Type="string?">
                     Additional CSS classes applied to cells in this column.
+                </ApiParameter>
+                <ApiParameter Name="Hideable" Type="bool" Default="true">
+                    Whether this column can be toggled via the column visibility dropdown.
+                </ApiParameter>
+                <ApiParameter Name="Resizable" Type="bool" Default="true">
+                    Whether this column can be resized by dragging.
+                </ApiParameter>
+                <ApiParameter Name="Reorderable" Type="bool" Default="true">
+                    Whether this column can be reordered by dragging.
                 </ApiParameter>
             </ApiReference>
 

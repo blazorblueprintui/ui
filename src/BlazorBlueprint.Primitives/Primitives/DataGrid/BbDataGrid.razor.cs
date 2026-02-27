@@ -87,6 +87,24 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
     public EventCallback<IReadOnlyCollection<TData>> OnSelectionChange { get; set; }
 
     /// <summary>
+    /// Event callback invoked when a column's visibility changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<(string ColumnId, bool Visible)> OnColumnVisibilityChange { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when a column is reordered.
+    /// </summary>
+    [Parameter]
+    public EventCallback<(string ColumnId, int NewIndex)> OnColumnReorder { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when a column is resized.
+    /// </summary>
+    [Parameter]
+    public EventCallback<(string ColumnId, string? Width)> OnColumnResize { get; set; }
+
+    /// <summary>
     /// Child content (header, body, etc.).
     /// </summary>
     [Parameter]
@@ -270,6 +288,69 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
                 catch (Exception ex)
                 {
                     Console.Error.WriteLine($"Error in OnSelectionChange: {ex.Message}");
+                }
+            });
+            pendingTasks.Add(task);
+        };
+
+        context.OnColumnVisibilityChange = (columnId, visible) =>
+        {
+            var task = InvokeAsync(async () =>
+            {
+                try
+                {
+                    if (OnColumnVisibilityChange.HasDelegate)
+                    {
+                        await OnColumnVisibilityChange.InvokeAsync((columnId, visible));
+                    }
+
+                    await NotifyStateChangedAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Error in OnColumnVisibilityChange: {ex.Message}");
+                }
+            });
+            pendingTasks.Add(task);
+        };
+
+        context.OnColumnReorder = (columnId, newIndex) =>
+        {
+            var task = InvokeAsync(async () =>
+            {
+                try
+                {
+                    if (OnColumnReorder.HasDelegate)
+                    {
+                        await OnColumnReorder.InvokeAsync((columnId, newIndex));
+                    }
+
+                    await NotifyStateChangedAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Error in OnColumnReorder: {ex.Message}");
+                }
+            });
+            pendingTasks.Add(task);
+        };
+
+        context.OnColumnResize = (columnId, width) =>
+        {
+            var task = InvokeAsync(async () =>
+            {
+                try
+                {
+                    if (OnColumnResize.HasDelegate)
+                    {
+                        await OnColumnResize.InvokeAsync((columnId, width));
+                    }
+
+                    await NotifyStateChangedAsync();
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Error in OnColumnResize: {ex.Message}");
                 }
             });
             pendingTasks.Add(task);

@@ -64,4 +64,59 @@ public class DataGridState<TData> where TData : class
     /// Resets only the pagination state while preserving other state.
     /// </summary>
     public void ResetPagination() => Pagination.Reset();
+
+    /// <summary>
+    /// Creates a serializable snapshot of the current grid state.
+    /// Captures sorting, column visibility/order/widths, and page size.
+    /// Selection state is intentionally excluded as it is transient.
+    /// </summary>
+    /// <returns>A snapshot that can be serialized and persisted.</returns>
+    public DataGridStateSnapshot Save()
+    {
+        var snapshot = new DataGridStateSnapshot
+        {
+            PageSize = Pagination.PageSize
+        };
+
+        foreach (var sort in Sorting.Definitions)
+        {
+            snapshot.SortDefinitions.Add(new SortDefinitionSnapshot
+            {
+                ColumnId = sort.ColumnId,
+                Direction = sort.Direction
+            });
+        }
+
+        foreach (var entry in Columns.Entries)
+        {
+            snapshot.ColumnStates.Add(new ColumnStateSnapshot
+            {
+                ColumnId = entry.ColumnId,
+                Visible = entry.Visible,
+                Width = entry.Width,
+                Order = entry.Order
+            });
+        }
+
+        return snapshot;
+    }
+
+    /// <summary>
+    /// Restores grid state from a previously saved snapshot.
+    /// Applies sorting, column visibility/order/widths, and page size.
+    /// </summary>
+    /// <param name="snapshot">The snapshot to restore from.</param>
+    public void Restore(DataGridStateSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+
+        Sorting.ClearSort();
+        foreach (var sort in snapshot.SortDefinitions)
+        {
+            Sorting.AddSort(sort.ColumnId, sort.Direction);
+        }
+
+        Columns.RestoreFromSnapshots(snapshot.ColumnStates);
+        Pagination.PageSize = snapshot.PageSize;
+    }
 }

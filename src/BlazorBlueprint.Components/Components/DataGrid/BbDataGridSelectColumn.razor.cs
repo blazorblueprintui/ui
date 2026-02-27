@@ -36,6 +36,12 @@ public partial class BbDataGridSelectColumn<TData> : ComponentBase, IDataGridCol
 
     string? IDataGridColumn<TData>.Width => Width;
 
+    bool IDataGridColumn<TData>.Hideable => false;
+
+    bool IDataGridColumn<TData>.Resizable => false;
+
+    bool IDataGridColumn<TData>.Reorderable => false;
+
     RenderFragment<DataGridCellContext<TData>>? IDataGridColumn<TData>.CellTemplate => null;
 
     RenderFragment<DataGridHeaderContext<TData>>? IDataGridColumn<TData>.HeaderTemplate => null;

@@ -5,6 +5,8 @@
     tabindex="@(IsSortable ? 0 : -1)"
     aria-sort="@GetAriaSort()"
     class="@Class"
+    data-column-id="@ColumnId"
+    draggable="@(IsReorderable ? "true" : null)"
     @onclick="HandleClick"
     @onclick:preventDefault="@IsSortable"
     @onkeydown="HandleKeyDown"
@@ -29,6 +31,12 @@
     public bool Sortable { get; set; }
 
     /// <summary>
+    /// Whether this column supports reordering via drag-and-drop.
+    /// </summary>
+    [Parameter]
+    public bool Reorderable { get; set; }
+
+    /// <summary>
     /// Child content for the header cell.
     /// </summary>
     [Parameter]
@@ -47,6 +55,8 @@
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private bool IsSortable => Sortable && !string.IsNullOrEmpty(ColumnId);
+
+    private bool IsReorderable => Reorderable && !string.IsNullOrEmpty(ColumnId);
 
     private void HandleClick(MouseEventArgs e)
     {

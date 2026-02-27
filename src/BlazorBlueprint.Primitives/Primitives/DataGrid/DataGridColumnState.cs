@@ -150,6 +150,26 @@ public class DataGridColumnState
     /// </summary>
     public void Reset() => entries.Clear();
 
+    /// <summary>
+    /// Replaces all entries from a collection of snapshots.
+    /// Used internally for restoring state from a persisted snapshot.
+    /// </summary>
+    /// <param name="snapshots">The column state snapshots to restore.</param>
+    internal void RestoreFromSnapshots(IEnumerable<ColumnStateSnapshot> snapshots)
+    {
+        entries.Clear();
+        foreach (var snapshot in snapshots)
+        {
+            entries.Add(new ColumnStateEntry
+            {
+                ColumnId = snapshot.ColumnId,
+                Visible = snapshot.Visible,
+                Width = snapshot.Width,
+                Order = snapshot.Order
+            });
+        }
+    }
+
     private ColumnStateEntry GetOrCreateEntry(string columnId)
     {
         var entry = entries.FirstOrDefault(e => e.ColumnId == columnId);
