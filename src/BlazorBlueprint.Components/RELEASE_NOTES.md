@@ -1,14 +1,10 @@
-## What's New in v3.1.2
-
-### New Components
-- **DataView** (`BbDataView`) — Display collections in switchable list/grid layouts with built-in sorting, filtering, pagination, and infinite scroll support
-- **TagInput** (`BbTagInput`) — Multi-value input for entering and managing tags
+## What's New in v3.2.0
 
 ### New Features
-- **Combobox** — Added `SearchQuery` and `SearchQueryChanged` parameters for external async data source filtering
-- **Dialog / Sheet** — Added `CloseOnOverlayClick` parameter to control whether clicking the overlay dismisses the modal
-
-### Bug Fixes
-- **InputOTP** — Paste support now works via Ctrl+V and clipboard events
-- **DropdownMenu** — Keyboard navigation now correctly highlights individual menu items instead of the parent container
-- **Sheet** — Fixed `Modal` parameter not being wired through context, preventing dismissal correctly
+- **Composite Chart** (`BbChart`): Mix any combination of bar, line, area, and scatter series in a single chart
+- **Scatter Chart** (`BbScatterChart` + `BbScatter`): Scatter plots and bubble charts with configurable symbol sizes via `SymbolSize` and data-driven sizing via `SymbolSizeKey`
+- **Candlestick Chart** (`BbCandlestickChart` + `BbCandlestick`): Financial OHLC charts with configurable `BullColor` and `BearColor`
+- **Heatmap Chart** (`BbHeatmapChart` + `BbHeatmap`): Color-coded grid visualizations with `BbVisualMap` for gradient mapping
+- **Gauge Chart** (`BbGaugeChart` + `BbGauge`): Speedometer-style gauges with progress arcs, pointers, and customizable value display
+- **Funnel Chart** (`BbFunnelChart` + `BbFunnel`): Pipeline visualizations with sort order, alignment, and gap controls
+- `DataKey` and `Scale` parameters on `BbYAxis` for category axis data binding and auto-fitted value ranges
