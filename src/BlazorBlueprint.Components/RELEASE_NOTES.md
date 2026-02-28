@@ -1,6 +1,14 @@
-## What's New in v3.1.1
+## What's New in v3.1.2
+
+### New Components
+- **DataView** (`BbDataView`) — Display collections in switchable list/grid layouts with built-in sorting, filtering, pagination, and infinite scroll support
+- **TagInput** (`BbTagInput`) — Multi-value input for entering and managing tags
+
+### New Features
+- **Combobox** — Added `SearchQuery` and `SearchQueryChanged` parameters for external async data source filtering
+- **Dialog / Sheet** — Added `CloseOnOverlayClick` parameter to control whether clicking the overlay dismisses the modal
 
 ### Bug Fixes
-
-- **`BbDialogContent`** and **`BbSheetContent`**: Added `CloseOnOverlayClick` parameter (default: `true`) to control whether clicking the backdrop overlay dismisses the dialog or sheet. This surfaces the underlying primitive's `CloseOnClick` option that was previously inaccessible at the Components layer.
-- **`BbAlertDialogContent`**: Fixed a bug where clicking the backdrop overlay incorrectly closed the dialog. Per `role="alertdialog"` accessibility semantics, the overlay is now non-dismissable by default — users must interact with an explicit action button.
+- **InputOTP** — Paste support now works via Ctrl+V and clipboard events
+- **DropdownMenu** — Keyboard navigation now correctly highlights individual menu items instead of the parent container
+- **Sheet** — Fixed `Modal` parameter not being wired through context, preventing dismissal correctly
