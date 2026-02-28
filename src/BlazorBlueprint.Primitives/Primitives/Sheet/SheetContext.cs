@@ -18,6 +18,11 @@ public class SheetState
     public SheetSide Side { get; set; } = SheetSide.Right;
 
     /// <summary>
+    /// Gets or sets whether the sheet can be dismissed by clicking the overlay or pressing Escape.
+    /// </summary>
+    public bool Modal { get; set; } = true;
+
+    /// <summary>
     /// Gets or sets the element that triggered the sheet opening.
     /// Used for focus restoration on close.
     /// </summary>
@@ -71,6 +76,11 @@ public class SheetContext : PrimitiveContextWithEvents<SheetState>
     /// Gets the side from which the sheet slides in.
     /// </summary>
     public SheetSide Side => State.Side;
+
+    /// <summary>
+    /// Gets whether the sheet can be dismissed by clicking the overlay or pressing Escape.
+    /// </summary>
+    public bool Modal => State.Modal;
 
     /// <summary>
     /// Opens the sheet.
