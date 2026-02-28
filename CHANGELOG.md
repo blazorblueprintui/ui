@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - `BbDropdownMenu`, `BbMenubar`, and `BbNavigationMenuLink`: keyboard navigation now correctly highlights individual items instead of the parent container when using `Href` links. Removed the overly broad `[role="menu"] div:has(> a:focus)` CSS rule and added a `focusMenuItem` helper in `menu-keyboard.js` with a tabindex fallback for reliable anchor focus (#162).
+- `BbDialogContent` and `BbSheetContent`: clicking the backdrop overlay could not be disabled — added `CloseOnOverlayClick` parameter (default: `true`) to surface control that was already present on the underlying `BbDialogOverlay`/`BbSheetOverlay` primitives but never wired up (#165).
+- `BbAlertDialogContent`: clicking the backdrop overlay incorrectly closed the dialog despite `role="alertdialog"` semantics requiring explicit acknowledgement via an action button. `CloseOnClick="false"` is now hardcoded on the overlay (#165).
 
 ---
 
