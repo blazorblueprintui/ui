@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## 2026-02-28
 
+### Added
+
+- **6 new ECharts chart types** with full declarative composition API:
+  - `BbChart` (Composite) — mix any series types (line, bar, area, etc.) in a single chart.
+  - `BbScatterChart` + `BbScatter` — scatter/bubble plots with optional variable symbol sizes via `SymbolSizeKey`.
+  - `BbCandlestickChart` + `BbCandlestick` — financial OHLC candlestick charts with configurable `BullColor`/`BearColor`.
+  - `BbHeatmapChart` + `BbHeatmap` + `BbVisualMap` — color-coded grid visualizations with gradient mapping.
+  - `BbGaugeChart` + `BbGauge` — speedometer-style gauges with progress arcs, pointers, and value display.
+  - `BbFunnelChart` + `BbFunnel` — funnel/pipeline visualizations with sort, alignment, and gap controls.
+- `DataKey` and `Scale` parameters on `BbYAxis` — enables category axis data binding and auto-fitted value ranges.
+
 ### Fixed
 
 - `BbDropdownMenu`, `BbMenubar`, and `BbNavigationMenuLink`: keyboard navigation now correctly highlights individual items instead of the parent container when using `Href` links. Removed the overly broad `[role="menu"] div:has(> a:focus)` CSS rule and added a `focusMenuItem` helper in `menu-keyboard.js` with a tabindex fallback for reliable anchor focus (#162).
