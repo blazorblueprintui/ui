@@ -143,7 +143,7 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
         // Center-based charts (Pie): shift center and shrink radius
         foreach (var series in option.Series)
         {
-            if (series.Type == "pie" && series.Center == null)
+            if (series.Type is "pie" or "funnel" && series.Center == null)
             {
                 series.Center = ["50%", centerY];
                 ShrinkPieRadius(series, 0.85);

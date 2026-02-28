@@ -1,0 +1,269 @@
+@page "/charts/composite"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Composite Chart - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-6xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Composite Chart</h1>
+            <p class="text-xl text-muted-foreground">
+                Mix multiple series types in a single chart — combine bars, lines, and areas for rich data storytelling.
+            </p>
+        </div>
+    </div>
+
+    <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+        <div class="flex items-start justify-between p-6">
+            <div class="flex flex-col space-y-1.5">
+                <h3 class="font-semibold leading-none tracking-tight">Revenue & Profit Overview</h3>
+                <p class="text-sm text-muted-foreground">Showing revenue (bars), profit (line), and forecast (area)</p>
+            </div>
+            <div class="flex">
+                <div class="flex flex-col gap-1 border-l px-6 py-0.5">
+                    <span class="text-xs text-muted-foreground">Total Revenue</span>
+                    <span class="text-2xl font-bold leading-none">@_revenueData.Sum(d => d.Revenue).ToString("N0")</span>
+                </div>
+                <div class="flex flex-col gap-1 border-l px-6 py-0.5">
+                    <span class="text-xs text-muted-foreground">Total Profit</span>
+                    <span class="text-2xl font-bold leading-none">@_revenueData.Sum(d => d.Profit).ToString("N0")</span>
+                </div>
+            </div>
+        </div>
+        <div class="p-6 pt-0">
+            <BbChart Data="@_revenueData" Height="300px">
+                <BbXAxis DataKey="month" />
+                <BbYAxis />
+                <BbChartTooltip />
+                <BbChartLegend />
+                <BbBar DataKey="revenue" Name="Revenue" Color="var(--chart-1)" BorderRadius="4" />
+                <BbLine DataKey="profit" Name="Profit" Color="var(--chart-2)" Curve="CurveType.Smooth" ShowDots="false" StrokeWidth="3" />
+                <BbArea DataKey="forecast" Name="Forecast" Color="var(--chart-3)" Curve="CurveType.Smooth" FillOpacity="0.15" />
+            </BbChart>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Bar + Line</h3>
+                    <p class="text-sm text-muted-foreground">January - June 2024</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbChart Data="@_monthlyData" Height="200px">
+                        <BbXAxis DataKey="month" />
+                        <BbYAxis Show="false" />
+                        <BbChartTooltip />
+                        <BbBar DataKey="desktop" Name="Desktop" Color="var(--chart-1)" BorderRadius="4" />
+                        <BbLine DataKey="mobile" Name="Mobile" Color="var(--chart-2)" Curve="CurveType.Smooth" ShowDots="false" />
+                    </BbChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Trending up by 5.2% this month <LucideIcon Name="trending-up" Size="16" />
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Showing total visitors for the last 6 months
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Stacked Bar + Line</h3>
+                    <p class="text-sm text-muted-foreground">January - June 2024</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbChart Data="@_monthlyData" Height="200px">
+                        <BbXAxis DataKey="month" />
+                        <BbYAxis Show="false" />
+                        <BbChartTooltip />
+                        <BbChartLegend />
+                        <BbBar DataKey="desktop" Name="Desktop" Color="var(--chart-1)" Stacked="true" />
+                        <BbBar DataKey="mobile" Name="Mobile" Color="var(--chart-2)" Stacked="true" />
+                        <BbLine DataKey="desktop" Name="Trend" Color="var(--chart-4)" Curve="CurveType.Smooth" ShowDots="false" Dashed="true" />
+                    </BbChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Stacked bars with trend overlay
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Showing total visitors for the last 6 months
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Area + Line</h3>
+                    <p class="text-sm text-muted-foreground">January - June 2024</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbChart Data="@_monthlyData" Height="200px">
+                        <BbXAxis DataKey="month" />
+                        <BbYAxis Show="false" />
+                        <BbChartTooltip />
+                        <BbArea DataKey="desktop" Name="Desktop" Color="var(--chart-1)" Curve="CurveType.Smooth" FillOpacity="0.2" />
+                        <BbLine DataKey="mobile" Name="Mobile" Color="var(--chart-2)" Curve="CurveType.Smooth" ShowDots="true" DotSize="6" />
+                    </BbChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Area fill with line overlay
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Showing total visitors for the last 6 months
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Bar + Scatter</h3>
+                    <p class="text-sm text-muted-foreground">January - June 2024</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbChart Data="@_monthlyData" Height="200px">
+                        <BbXAxis DataKey="month" />
+                        <BbYAxis Show="false" />
+                        <BbChartTooltip />
+                        <BbBar DataKey="desktop" Name="Desktop" Color="var(--chart-1)" BorderRadius="4" />
+                        <BbScatter DataKey="mobile" Name="Mobile" Color="var(--chart-5)" SymbolSize="12" />
+                    </BbChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Bar chart with scatter overlay
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Showing total visitors for the last 6 months
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Multi-Area + Line</h3>
+                    <p class="text-sm text-muted-foreground">January - June 2024</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbChart Data="@_monthlyData" Height="200px">
+                        <BbXAxis DataKey="month" />
+                        <BbYAxis Show="false" />
+                        <BbChartTooltip />
+                        <BbChartLegend />
+                        <BbArea DataKey="desktop" Name="Desktop" Color="var(--chart-1)" Curve="CurveType.Smooth" FillOpacity="0.3" Stacked="true" />
+                        <BbArea DataKey="mobile" Name="Mobile" Color="var(--chart-2)" Curve="CurveType.Smooth" FillOpacity="0.3" Stacked="true" />
+                    </BbChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Stacked areas with smooth curves
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Showing total visitors for the last 6 months
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">All Three Types</h3>
+                    <p class="text-sm text-muted-foreground">January - June 2024</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbChart Data="@_revenueData" Height="200px">
+                        <BbXAxis DataKey="month" />
+                        <BbYAxis Show="false" />
+                        <BbChartTooltip />
+                        <BbChartLegend />
+                        <BbBar DataKey="revenue" Name="Revenue" Color="var(--chart-1)" BorderRadius="4" />
+                        <BbLine DataKey="profit" Name="Profit" Color="var(--chart-2)" Curve="CurveType.Smooth" ShowDots="false" />
+                        <BbArea DataKey="forecast" Name="Forecast" Color="var(--chart-3)" Curve="CurveType.Smooth" FillOpacity="0.15" />
+                    </BbChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Bar, line, and area combined
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Revenue, profit, and forecast together
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">BbChart</h3>
+                <p class="text-sm text-muted-foreground">
+                    A general-purpose composite chart that accepts any combination of series types
+                    (BbBar, BbLine, BbArea, BbScatter, etc.) as children. Provides grid-based defaults
+                    with XAxis/YAxis support.
+                </p>
+            </div>
+            <BbSeparator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Mixing Series Types</h3>
+                <p class="text-sm text-muted-foreground">
+                    Each series component independently sets its ECharts type. You can freely combine
+                    BbBar, BbLine, BbArea, and BbScatter within a single BbChart.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public class MonthlyData
+    {
+        public string Month { get; set; } = "";
+        public int Desktop { get; set; }
+        public int Mobile { get; set; }
+    }
+
+    public class RevenueData
+    {
+        public string Month { get; set; } = "";
+        public int Revenue { get; set; }
+        public int Profit { get; set; }
+        public int Forecast { get; set; }
+    }
+
+    private readonly List<MonthlyData> _monthlyData =
+    [
+        new() { Month = "Jan", Desktop = 186, Mobile = 80 },
+        new() { Month = "Feb", Desktop = 305, Mobile = 200 },
+        new() { Month = "Mar", Desktop = 237, Mobile = 120 },
+        new() { Month = "Apr", Desktop = 73, Mobile = 190 },
+        new() { Month = "May", Desktop = 209, Mobile = 130 },
+        new() { Month = "Jun", Desktop = 214, Mobile = 140 }
+    ];
+
+    private readonly List<RevenueData> _revenueData =
+    [
+        new() { Month = "Jan", Revenue = 4200, Profit = 1800, Forecast = 4000 },
+        new() { Month = "Feb", Revenue = 5100, Profit = 2200, Forecast = 4800 },
+        new() { Month = "Mar", Revenue = 4700, Profit = 1900, Forecast = 5200 },
+        new() { Month = "Apr", Revenue = 6300, Profit = 2800, Forecast = 5500 },
+        new() { Month = "May", Revenue = 5800, Profit = 2400, Forecast = 6000 },
+        new() { Month = "Jun", Revenue = 7100, Profit = 3200, Forecast = 6500 }
+    ];
+}

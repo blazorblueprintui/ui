@@ -1,0 +1,172 @@
+@page "/charts/candlestick"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Candlestick Chart - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-6xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Candlestick Chart</h1>
+            <p class="text-xl text-muted-foreground">
+                Financial OHLC (Open-High-Low-Close) charts for stock price and market data visualization.
+            </p>
+        </div>
+    </div>
+
+    <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+        <div class="flex items-start justify-between p-6">
+            <div class="flex flex-col space-y-1.5">
+                <h3 class="font-semibold leading-none tracking-tight">ACME Corp — Jan 2025</h3>
+                <p class="text-sm text-muted-foreground">Daily OHLC price data</p>
+            </div>
+        </div>
+        <div class="p-6 pt-0">
+            <BbCandlestickChart Data="@_stockData" Height="300px">
+                <BbXAxis DataKey="date" />
+                <BbYAxis Scale="true" />
+                <BbChartTooltip />
+                <BbCandlestick OpenKey="open" CloseKey="close" HighKey="high" LowKey="low" />
+            </BbCandlestickChart>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Default Colors</h3>
+                    <p class="text-sm text-muted-foreground">Bull green, bear red</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbCandlestickChart Data="@_stockData" Height="200px">
+                        <BbXAxis DataKey="date" />
+                        <BbYAxis Scale="true" Show="false" />
+                        <BbChartTooltip />
+                        <BbCandlestick OpenKey="open" CloseKey="close" HighKey="high" LowKey="low" />
+                    </BbCandlestickChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Default bull/bear color scheme
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Green (#22c55e) and red (#ef4444)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Custom Colors</h3>
+                    <p class="text-sm text-muted-foreground">Blue and orange scheme</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbCandlestickChart Data="@_stockData" Height="200px">
+                        <BbXAxis DataKey="date" />
+                        <BbYAxis Scale="true" Show="false" />
+                        <BbChartTooltip />
+                        <BbCandlestick OpenKey="open" CloseKey="close" HighKey="high" LowKey="low"
+                                       BullColor="#3b82f6" BearColor="#f97316" />
+                    </BbCandlestickChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Custom bull and bear colors
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Blue (#3b82f6) and orange (#f97316)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">With Grid Lines</h3>
+                    <p class="text-sm text-muted-foreground">Visible Y-axis and grid</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbCandlestickChart Data="@_stockData" Height="200px">
+                        <BbXAxis DataKey="date" />
+                        <BbYAxis Scale="true" ShowGrid="true" />
+                        <BbChartTooltip />
+                        <BbCandlestick OpenKey="open" CloseKey="close" HighKey="high" LowKey="low" />
+                    </BbCandlestickChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Grid lines for price reference
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        YAxis with ShowGrid enabled
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Candlestick.OpenKey / CloseKey / HighKey / LowKey</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Property names for OHLC values. All four are required for candlestick rendering.
+                </p>
+            </div>
+            <BbSeparator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Candlestick.BullColor</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string</code> (default: <code class="text-xs bg-muted px-1 py-0.5 rounded">#22c55e</code>)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Color for bullish (up) candles where close is greater than open.
+                </p>
+            </div>
+            <BbSeparator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Candlestick.BearColor</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string</code> (default: <code class="text-xs bg-muted px-1 py-0.5 rounded">#ef4444</code>)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Color for bearish (down) candles where close is less than open.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public class StockData
+    {
+        public string Date { get; set; } = "";
+        public double Open { get; set; }
+        public double Close { get; set; }
+        public double High { get; set; }
+        public double Low { get; set; }
+    }
+
+    private readonly List<StockData> _stockData =
+    [
+        new() { Date = "Jan 2", Open = 142.0, Close = 156.5, High = 158.0, Low = 140.0 },
+        new() { Date = "Jan 3", Open = 157.0, Close = 148.2, High = 160.5, Low = 145.0 },
+        new() { Date = "Jan 6", Open = 149.0, Close = 165.8, High = 168.0, Low = 147.5 },
+        new() { Date = "Jan 7", Open = 166.0, Close = 158.0, High = 170.0, Low = 155.0 },
+        new() { Date = "Jan 8", Open = 159.5, Close = 172.3, High = 175.0, Low = 157.0 },
+        new() { Date = "Jan 9", Open = 173.0, Close = 162.5, High = 176.0, Low = 160.0 },
+        new() { Date = "Jan 10", Open = 163.0, Close = 178.0, High = 180.5, Low = 161.0 },
+        new() { Date = "Jan 13", Open = 179.0, Close = 170.5, High = 183.0, Low = 168.0 },
+        new() { Date = "Jan 14", Open = 171.0, Close = 185.0, High = 188.0, Low = 169.0 },
+        new() { Date = "Jan 15", Open = 186.0, Close = 192.5, High = 195.0, Low = 182.0 }
+    ];
+}

@@ -29,6 +29,16 @@ public partial class BbYAxis : ComponentBase, IChartComponent, IDisposable
     private BbChartBase? ParentChart { get; set; }
 
     /// <summary>
+    /// Gets or sets the property name used to extract category values from the chart data.
+    /// </summary>
+    /// <remarks>
+    /// When set, category labels are automatically extracted from each data item using this property name.
+    /// Typically used with <see cref="AxisType.Category"/> for heatmap Y-axes.
+    /// </remarks>
+    [Parameter]
+    public string? DataKey { get; set; }
+
+    /// <summary>
     /// Gets or sets the axis type.
     /// </summary>
     /// <remarks>
@@ -127,14 +137,28 @@ public partial class BbYAxis : ComponentBase, IChartComponent, IDisposable
     [Parameter]
     public object? Max { get; set; }
 
+    /// <summary>
+    /// Gets or sets whether the axis scale should auto-fit to the data range.
+    /// </summary>
+    /// <remarks>
+    /// When <c>true</c>, the axis range is determined by the data rather than starting at zero.
+    /// Essential for candlestick and other financial charts where values cluster in a narrow range.
+    /// </remarks>
+    [Parameter]
+    public bool? Scale { get; set; }
+
     protected override void OnInitialized() =>
         ParentChart?.RegisterComponent(this);
 
     void IChartComponent.ApplyTo(EChartsOption option)
     {
+        var effectiveType = !string.IsNullOrEmpty(DataKey) && Type == AxisType.Value
+            ? AxisType.Category
+            : Type;
+
         var axis = new EChartsAxisOption
         {
-            Type = Type switch
+            Type = effectiveType switch
             {
                 AxisType.Category => "category",
                 AxisType.Value => "value",
@@ -146,6 +170,7 @@ public partial class BbYAxis : ComponentBase, IChartComponent, IDisposable
             Name = Name,
             Min = Min,
             Max = Max,
+            Scale = Scale,
             AxisLine = new EChartsAxisLineOption
             {
                 Show = Show && ShowAxisLine
@@ -174,6 +199,11 @@ public partial class BbYAxis : ComponentBase, IChartComponent, IDisposable
                 }
                 : new EChartsAxisLabelOption { Show = false }
         };
+
+        if (!string.IsNullOrEmpty(DataKey) && ParentChart?.Data != null)
+        {
+            axis.Data = DataExtractor.ExtractDistinctStringValues(ParentChart.Data, DataKey);
+        }
 
         // When parent chart swaps axes (e.g., horizontal BarChart),
         // YAxis config goes to the physical X-axis
