@@ -28,7 +28,7 @@ If you find a bug or have a feature request, please create an issue on GitHub:
 - **.NET 8 SDK** or later
 - **Git** for version control
 - **IDE**: Visual Studio 2022, VS Code, or Rider (recommended)
-- **Tailwind CSS standalone CLI** (included in demo app, no Node.js required)
+- **Tailwind CSS standalone CLI** (downloaded via `tools/install.sh` or `tools/install.ps1`, no Node.js required)
 
 ### Clone and Build
 
@@ -39,7 +39,37 @@ git clone https://github.com/blazorblueprintui/ui.git
 cd ui
 ```
 
-2. **Build the solution:**
+2. **Download the Tailwind CSS standalone CLI:**
+
+   Blazor Blueprint uses the [Tailwind CSS standalone CLI](https://tailwindcss.com/blog/standalone-cli) — no Node.js or npm required. The binary is not included in the repository and must be downloaded before your first build.
+
+   Run the appropriate script from the `tools/` directory:
+
+   **Linux / macOS:**
+   ```bash
+   cd tools
+   ./install.sh
+   ```
+
+   **Windows (PowerShell):**
+   ```powershell
+   cd tools
+   .\install.ps1
+   ```
+
+   The scripts detect your OS and architecture and download the correct binary from the [Tailwind CSS releases page](https://github.com/tailwindlabs/tailwindcss/releases/latest), placing it in `tools/`:
+
+   | Platform       | Binary name               |
+   |----------------|---------------------------|
+   | Windows x64    | `tailwindcss.exe`         |
+   | Linux x64      | `tailwindcss-linux`       |
+   | Linux arm64    | `tailwindcss-linux`       |
+   | macOS x64      | `tailwindcss-macos`       |
+   | macOS arm64    | `tailwindcss-macos`       |
+
+   The MSBuild target (`tools/tailwind.targets`) is imported by `BlazorBlueprint.Components` and runs automatically on every build — no manual Tailwind invocation needed.
+
+3. **Build the solution:**
 
 ```bash
 dotnet build
