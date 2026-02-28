@@ -23,6 +23,22 @@ function getEnabledMenuItems(container) {
 }
 
 /**
+ * Focus a menu item reliably. Uses preventScroll and falls back to
+ * temporarily setting tabindex="0" if the initial focus() call fails
+ * (can happen with anchor elements in some browser/framework contexts).
+ */
+function focusMenuItem(item) {
+  if (!item) return;
+  item.focus({ preventScroll: true });
+  if (document.activeElement !== item) {
+    const prev = item.getAttribute('tabindex');
+    item.setAttribute('tabindex', '0');
+    item.focus({ preventScroll: true });
+    item.setAttribute('tabindex', prev ?? '-1');
+  }
+}
+
+/**
  * Navigate to the next enabled menu item.
  */
 function navigateNext(container, loop) {
@@ -40,7 +56,7 @@ function navigateNext(container, loop) {
     nextIndex = currentIndex + 1;
   }
 
-  items[nextIndex]?.focus();
+  focusMenuItem(items[nextIndex]);
 }
 
 /**
@@ -61,7 +77,7 @@ function navigatePrevious(container, loop) {
     prevIndex = currentIndex - 1;
   }
 
-  items[prevIndex]?.focus();
+  focusMenuItem(items[prevIndex]);
 }
 
 /**
@@ -70,7 +86,7 @@ function navigatePrevious(container, loop) {
 function navigateFirst(container) {
   const items = getEnabledMenuItems(container);
   if (items.length > 0) {
-    items[0].focus();
+    focusMenuItem(items[0]);
   }
 }
 
@@ -80,7 +96,7 @@ function navigateFirst(container) {
 function navigateLast(container) {
   const items = getEnabledMenuItems(container);
   if (items.length > 0) {
-    items[items.length - 1].focus();
+    focusMenuItem(items[items.length - 1]);
   }
 }
 

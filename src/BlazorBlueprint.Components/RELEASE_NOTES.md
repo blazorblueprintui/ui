@@ -1,32 +1,14 @@
-## What's New in v3.0.0
+## What's New in v3.1.2
 
-### Breaking Changes
-- All Razor components now use the `Bb` prefix (e.g., `Button` -> `BbButton`, `Dialog` -> `BbDialog`)
-- Namespaces flattened to `BlazorBlueprint.Components` and `BlazorBlueprint.Primitives`
-- Combobox and MultiSelect API redesigned: `TItem` replaced with `TValue`, simplified value binding
-- Trigger and Close components default `AsChild` to `true`
-- ApexCharts replaced with Apache ECharts using a new declarative composition API
-- Portal system upgraded to two-layer architecture with category-scoped rendering
+### New Components
+- **DataView** (`BbDataView`) — Display collections in switchable list/grid layouts with built-in sorting, filtering, pagination, and infinite scroll support
+- **TagInput** (`BbTagInput`) — Multi-value input for entering and managing tags
 
 ### New Features
-- 7 new components added
-- 30+ new usability parameters across existing components
-- Toast semantic variants, compact size, auto icons, pause-on-hover, and per-toast positioning
-- Auto-generated `id` attributes for all input components (accessibility)
-- `DialogService` with programmatic `Confirm()` method
-- `ScrollArea` `FillContainer` parameter and `SidebarInset` scroll reset on navigation
-- `ActiveClass` parameter on Select, Combobox, MultiSelect, and DropdownMenu triggers
-- `ForceMount` parameter on `FloatingPortal` for persistent portal content
-- Custom `bb-theme-changed` event for theme change detection
-- Switch `ThumbClass`, `ThumbCheckedClass`, `ThumbUncheckedClass`, and `ThumbContent` parameters
-
-### Performance
-- Menu keyboard navigation moved from C# to JavaScript
-- Dialog, Sheet, and Drawer escape key handling moved to JavaScript
-- Input components migrated to JavaScript-first event architecture
-- Centralized input validation logic into shared `InputValidationBehavior`
-- Select display text state change optimization to prevent unnecessary re-renders
+- **Combobox** — Added `SearchQuery` and `SearchQueryChanged` parameters for external async data source filtering
+- **Dialog / Sheet** — Added `CloseOnOverlayClick` parameter to control whether clicking the overlay dismisses the modal
 
 ### Bug Fixes
-- Fixed `FloatingPortal` content staying visible one render behind on close
-- Removed default focus ring from all input components
+- **InputOTP** — Paste support now works via Ctrl+V and clipboard events
+- **DropdownMenu** — Keyboard navigation now correctly highlights individual menu items instead of the parent container
+- **Sheet** — Fixed `Modal` parameter not being wired through context, preventing dismissal correctly

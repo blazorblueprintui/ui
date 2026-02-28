@@ -54,4 +54,8 @@ internal sealed class EChartsOption
     [JsonPropertyName("radiusAxis")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public EChartsRadiusAxisOption? RadiusAxis { get; set; }
+
+    [JsonPropertyName("visualMap")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public EChartsVisualMapOption? VisualMap { get; set; }
 }

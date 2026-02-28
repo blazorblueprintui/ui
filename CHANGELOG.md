@@ -6,6 +6,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-02-28
+
+### Added
+
+- **6 new ECharts chart types** with full declarative composition API:
+  - `BbChart` (Composite) — mix any series types (line, bar, area, etc.) in a single chart.
+  - `BbScatterChart` + `BbScatter` — scatter/bubble plots with optional variable symbol sizes via `SymbolSizeKey`.
+  - `BbCandlestickChart` + `BbCandlestick` — financial OHLC candlestick charts with configurable `BullColor`/`BearColor`.
+  - `BbHeatmapChart` + `BbHeatmap` + `BbVisualMap` — color-coded grid visualizations with gradient mapping.
+  - `BbGaugeChart` + `BbGauge` — speedometer-style gauges with progress arcs, pointers, and value display.
+  - `BbFunnelChart` + `BbFunnel` — funnel/pipeline visualizations with sort, alignment, and gap controls.
+- `DataKey` and `Scale` parameters on `BbYAxis` — enables category axis data binding and auto-fitted value ranges.
+
+### Fixed
+
+- `BbDropdownMenu`, `BbMenubar`, and `BbNavigationMenuLink`: keyboard navigation now correctly highlights individual items instead of the parent container when using `Href` links. Removed the overly broad `[role="menu"] div:has(> a:focus)` CSS rule and added a `focusMenuItem` helper in `menu-keyboard.js` with a tabindex fallback for reliable anchor focus (#162).
+- `BbDialogContent` and `BbSheetContent`: clicking the backdrop overlay could not be disabled — added `CloseOnOverlayClick` parameter (default: `true`) to surface control that was already present on the underlying `BbDialogOverlay`/`BbSheetOverlay` primitives but never wired up (#165).
+- `BbAlertDialogContent`: clicking the backdrop overlay incorrectly closed the dialog despite `role="alertdialog"` semantics requiring explicit acknowledgement via an action button. `CloseOnClick="false"` is now hardcoded on the overlay (#165).
+- `BbSheet`: the `Modal` parameter was declared and documented but never stored in `SheetContext`, so setting `Modal="false"` had no effect — the sheet always closed on overlay click and Escape key press. `Modal` is now synced into context and respected by both `BbSheetOverlay` (overlay click) and `BbSheetContent` (Escape key).
+
+---
+
+## 2026-02-26
+
+### Added
+
+- New **`BbDataView`** component — flexible data presentation with list/grid layout toggle, column definitions via `BbDataViewColumn`, custom templates via `BbDataViewListTemplate` and `BbDataViewGridTemplate`, built-in filtering and sorting, pagination, infinite scroll, a `ToolbarActions` slot for custom toolbar content, and a `ScrollHeight` parameter for fixed-height viewports (#161).
+- `SearchQuery` and `SearchQueryChanged` parameters on `BbCombobox` — exposes the current search string as a two-way bindable parameter, enabling external async filtering so consumers can reload options from an API on each keystroke (#159).
+- Paste support on `BbInputOTP` — clipboard paste now fills OTP slots via JS interop (`input-otp.js`) using a `[JSInvokable]` `OnPasteJs` handler (#156).
+
+---
+
+## 2026-02-22
+
+### Internal
+
+- Added `CONTRIBUTING.md` with contributor guidelines.
+
+---
+
 ## 2026-02-20
 
 ### Added

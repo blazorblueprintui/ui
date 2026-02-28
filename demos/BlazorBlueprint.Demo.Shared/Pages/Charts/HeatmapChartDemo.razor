@@ -1,0 +1,236 @@
+@page "/charts/heatmap"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Heatmap Chart - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-6xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Heatmap Chart</h1>
+            <p class="text-xl text-muted-foreground">
+                Color-coded grid visualizations where cell intensity represents data values.
+            </p>
+        </div>
+    </div>
+
+    <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+        <div class="flex items-start justify-between p-6">
+            <div class="flex flex-col space-y-1.5">
+                <h3 class="font-semibold leading-none tracking-tight">Weekly Activity</h3>
+                <p class="text-sm text-muted-foreground">Commits per day and time slot</p>
+            </div>
+        </div>
+        <div class="p-6 pt-0">
+            <BbHeatmapChart Data="@_heatmapData" Height="300px">
+                <BbXAxis DataKey="day" />
+                <BbYAxis DataKey="timeSlot" />
+                <BbVisualMap Min="0" Max="50" />
+                <BbChartTooltip />
+                <BbHeatmap XKey="dayIndex" YKey="timeIndex" ValueKey="commits" />
+            </BbHeatmapChart>
+        </div>
+    </div>
+    <CodeBlock Source="Charts/HeatmapChart/default.txt" />
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Default</h3>
+                    <p class="text-sm text-muted-foreground">Basic heatmap with visual map</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbHeatmapChart Data="@_simpleHeatmap" Height="200px">
+                        <BbXAxis DataKey="x" />
+                        <BbYAxis DataKey="y" />
+                        <BbVisualMap Min="0" Max="100" />
+                        <BbChartTooltip />
+                        <BbHeatmap XKey="xi" YKey="yi" ValueKey="value" />
+                    </BbHeatmapChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Simple 3x3 grid heatmap
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Default color gradient
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/HeatmapChart/simple.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">With Labels</h3>
+                    <p class="text-sm text-muted-foreground">Value labels in each cell</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbHeatmapChart Data="@_simpleHeatmap" Height="200px">
+                        <BbXAxis DataKey="x" />
+                        <BbYAxis DataKey="y" />
+                        <BbVisualMap Min="0" Max="100" Show="false" />
+                        <BbChartTooltip />
+                        <BbHeatmap XKey="xi" YKey="yi" ValueKey="value" ShowLabel="true" />
+                    </BbHeatmapChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        ShowLabel for cell values
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Visual map hidden, labels visible
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/HeatmapChart/labels.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Custom Colors</h3>
+                    <p class="text-sm text-muted-foreground">Custom gradient palette</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbHeatmapChart Data="@_simpleHeatmap" Height="200px">
+                        <BbXAxis DataKey="x" />
+                        <BbYAxis DataKey="y" />
+                        <BbVisualMap Min="0" Max="100" Colors="@(new[] { "var(--chart-3)", "var(--chart-4)", "var(--chart-1)" })" />
+                        <BbChartTooltip />
+                        <BbHeatmap XKey="xi" YKey="yi" ValueKey="value" />
+                    </BbHeatmapChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Three-stop color gradient
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Custom Colors array on VisualMap
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/HeatmapChart/custom-colors.txt" />
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Heatmap.XKey / YKey / ValueKey</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string?</code>
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Property names for the X coordinate, Y coordinate, and cell value. Data is extracted as [x, y, value] triplets.
+                </p>
+            </div>
+            <BbSeparator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">VisualMap.Min / Max</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">double</code> (defaults: <code class="text-xs bg-muted px-1 py-0.5 rounded">0</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">100</code>)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Range of the color gradient. Values outside this range are clamped.
+                </p>
+            </div>
+            <BbSeparator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">VisualMap.Colors</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string[]?</code> (default: <code class="text-xs bg-muted px-1 py-0.5 rounded">["var(--chart-5)", "var(--chart-1)"]</code>)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Color gradient stops from Min to Max. Accepts CSS colors or var() references.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public class HeatmapData
+    {
+        public string Day { get; set; } = "";
+        public string TimeSlot { get; set; } = "";
+        public int DayIndex { get; set; }
+        public int TimeIndex { get; set; }
+        public int Commits { get; set; }
+    }
+
+    public class SimpleHeatmapData
+    {
+        public string X { get; set; } = "";
+        public string Y { get; set; } = "";
+        public int Xi { get; set; }
+        public int Yi { get; set; }
+        public int Value { get; set; }
+    }
+
+    private readonly List<HeatmapData> _heatmapData = GenerateHeatmapData();
+    private readonly List<SimpleHeatmapData> _simpleHeatmap = GenerateSimpleHeatmap();
+
+    private static List<HeatmapData> GenerateHeatmapData()
+    {
+        var days = new[] { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+        var times = new[] { "Morning", "Afternoon", "Evening", "Night" };
+        var values = new[,]
+        {
+            { 12, 25, 18, 5 },
+            { 20, 35, 22, 8 },
+            { 15, 42, 30, 10 },
+            { 28, 38, 25, 6 },
+            { 22, 30, 15, 3 },
+            { 5, 10, 8, 2 },
+            { 3, 8, 6, 1 }
+        };
+
+        var data = new List<HeatmapData>();
+        for (var d = 0; d < days.Length; d++)
+        {
+            for (var t = 0; t < times.Length; t++)
+            {
+                data.Add(new HeatmapData
+                {
+                    Day = days[d],
+                    TimeSlot = times[t],
+                    DayIndex = d,
+                    TimeIndex = t,
+                    Commits = values[d, t]
+                });
+            }
+        }
+
+        return data;
+    }
+
+    private static List<SimpleHeatmapData> GenerateSimpleHeatmap()
+    {
+        var xs = new[] { "A", "B", "C" };
+        var ys = new[] { "X", "Y", "Z" };
+        var values = new[,] { { 20, 65, 40 }, { 85, 30, 70 }, { 50, 90, 15 } };
+
+        var data = new List<SimpleHeatmapData>();
+        for (var x = 0; x < 3; x++)
+        {
+            for (var y = 0; y < 3; y++)
+            {
+                data.Add(new SimpleHeatmapData
+                {
+                    X = xs[x],
+                    Y = ys[y],
+                    Xi = x,
+                    Yi = y,
+                    Value = values[x, y]
+                });
+            }
+        }
+
+        return data;
+    }
+}

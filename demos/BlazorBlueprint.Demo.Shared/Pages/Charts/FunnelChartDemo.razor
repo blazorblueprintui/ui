@@ -1,0 +1,216 @@
+@page "/charts/funnel"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Funnel Chart - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-6xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Funnel Chart</h1>
+            <p class="text-xl text-muted-foreground">
+                Visualize conversion pipelines, sales processes, and progressive filtering stages.
+            </p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Funnel Chart</h3>
+                    <p class="text-sm text-muted-foreground">Sales Pipeline</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbFunnelChart Data="@_funnelData" Height="250px">
+                        <BbChartTooltip />
+                        <BbFunnel DataKey="value" NameKey="stage" />
+                    </BbFunnelChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Default descending funnel
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Showing conversion pipeline stages
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/FunnelChart/default.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Ascending</h3>
+                    <p class="text-sm text-muted-foreground">Inverted funnel</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbFunnelChart Data="@_funnelData" Height="250px">
+                        <BbChartTooltip />
+                        <BbFunnel DataKey="value" NameKey="stage" Sort="FunnelSort.Ascending" />
+                    </BbFunnelChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Smallest at top, largest at bottom
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        FunnelSort.Ascending for inverted view
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/FunnelChart/ascending.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">With Legend</h3>
+                    <p class="text-sm text-muted-foreground">Sales Pipeline</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbFunnelChart Data="@_funnelData" Height="250px">
+                        <BbChartTooltip />
+                        <BbChartLegend />
+                        <BbFunnel DataKey="value" NameKey="stage" />
+                    </BbFunnelChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Legend component included
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Interactive legend for stage filtering
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/FunnelChart/legend.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Left Aligned</h3>
+                    <p class="text-sm text-muted-foreground">Aligned to left edge</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbFunnelChart Data="@_funnelData" Height="250px">
+                        <BbChartTooltip />
+                        <BbFunnel DataKey="value" NameKey="stage" Align="FunnelAlign.Left" />
+                    </BbFunnelChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        FunnelAlign.Left alignment
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Segments align to the left edge
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/FunnelChart/left-align.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">No Gap</h3>
+                    <p class="text-sm text-muted-foreground">Seamless segments</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbFunnelChart Data="@_funnelData" Height="250px">
+                        <BbChartTooltip />
+                        <BbFunnel DataKey="value" NameKey="stage" Gap="0" />
+                    </BbFunnelChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Gap set to 0
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Continuous funnel without segment gaps
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/FunnelChart/no-gap.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Custom Labels</h3>
+                    <p class="text-sm text-muted-foreground">Formatted label display</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbFunnelChart Data="@_funnelData" Height="250px">
+                        <BbChartTooltip />
+                        <BbFunnel DataKey="value" NameKey="stage" LabelFormatter="{b}: {c}" LabelColor="white" />
+                    </BbFunnelChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Custom label formatting
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Showing stage name and value
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/FunnelChart/custom-labels.txt" />
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Funnel.Sort</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">FunnelSort</code> (default: <code class="text-xs bg-muted px-1 py-0.5 rounded">Descending</code>)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Sort order for segments. Options: Descending, Ascending, None.
+                </p>
+            </div>
+            <BbSeparator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Funnel.Align</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">FunnelAlign</code> (default: <code class="text-xs bg-muted px-1 py-0.5 rounded">Center</code>)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Horizontal alignment of funnel segments. Options: Center, Left, Right.
+                </p>
+            </div>
+            <BbSeparator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Funnel.Gap</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">int</code> (default: <code class="text-xs bg-muted px-1 py-0.5 rounded">2</code>)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Gap between funnel segments in pixels.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public class FunnelData
+    {
+        public string Stage { get; set; } = "";
+        public int Value { get; set; }
+    }
+
+    private readonly List<FunnelData> _funnelData =
+    [
+        new() { Stage = "Visited", Value = 5000 },
+        new() { Stage = "Inquired", Value = 3200 },
+        new() { Stage = "Ordered", Value = 2100 },
+        new() { Stage = "Paid", Value = 1500 },
+        new() { Stage = "Completed", Value = 1200 }
+    ];
+}

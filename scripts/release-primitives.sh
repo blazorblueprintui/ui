@@ -105,6 +105,30 @@ if [ ! -d "$PROJECT_PATH" ]; then
     exit 1
 fi
 
+# Ensure we're on main and up to date with remote
+CURRENT_BRANCH=$(git branch --show-current)
+echo "Fetching from remote..."
+git fetch origin main --quiet
+LOCAL=$(git rev-parse main 2>/dev/null || echo "")
+REMOTE=$(git rev-parse origin/main)
+
+if [ "$CURRENT_BRANCH" != "main" ] || [ "$LOCAL" != "$REMOTE" ]; then
+    if [ "$CURRENT_BRANCH" != "main" ]; then
+        echo -e "${COLOR_YELLOW}Current branch: ${CURRENT_BRANCH}${COLOR_RESET}"
+    else
+        echo -e "${COLOR_YELLOW}Local main is behind origin/main${COLOR_RESET}"
+    fi
+    read -p "Switch to main and pull latest? (y/N): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        git checkout main
+        git pull
+    else
+        echo -e "${COLOR_YELLOW}Release cancelled${COLOR_RESET}"
+        exit 0
+    fi
+fi
+
 # Check for uncommitted changes
 if ! git diff-index --quiet HEAD --; then
     echo -e "${COLOR_RED}Error: You have uncommitted changes${COLOR_RESET}"

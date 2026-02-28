@@ -1,0 +1,222 @@
+@namespace BlazorBlueprint.Components
+@typeparam TItem where TItem : class
+@using BlazorBlueprint.Icons.Lucide.Components
+@using BlazorBlueprint.Primitives
+@using BlazorBlueprint.Primitives.Table
+
+<CascadingValue Value="this" IsFixed="true">
+    <div class="@ContainerCssClass">
+
+            @* ── Toolbar ─────────────────────────────────────────────────── *@
+            @if (ShowToolbar)
+            {
+                <div class="flex flex-wrap items-center gap-2 py-4">
+
+                    @* Global search *@
+                    <BbInput @bind-Value="@_searchValue"
+                             @bind-Value:after="HandleSearchChanged"
+                             Placeholder="Search..."
+                             Class="h-8 w-[150px] lg:w-[250px]" />
+
+                    @* Sort controls – only shown when at least one field is sortable *@
+                    @if (_fields.Any(f => f.Sortable))
+                    {
+                        <BbDropdownMenu>
+                            <BbDropdownMenuTrigger>
+                                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Class="h-8 gap-1">
+                                    @if (_sortingState.Direction == SortDirection.Ascending)
+                                    {
+                                        <LucideIcon Name="arrow-up" Class="w-4 h-4" />
+                                    }
+                                    else if (_sortingState.Direction == SortDirection.Descending)
+                                    {
+                                        <LucideIcon Name="arrow-down" Class="w-4 h-4" />
+                                    }
+                                    else
+                                    {
+                                        <LucideIcon Name="arrow-up-down" Class="w-4 h-4 opacity-50" />
+                                    }
+                                    @GetSortFieldLabel()
+                                    <LucideIcon Name="chevron-down" Class="w-3 h-3 opacity-50" />
+                                </BbButton>
+                            </BbDropdownMenuTrigger>
+                            <BbDropdownMenuContent>
+                                @foreach (var field in _fields.Where(f => f.Sortable))
+                                {
+                                    var fieldId = field.Id;
+                                    var isSorted = _sortingState.SortedColumn == fieldId;
+                                    <BbDropdownMenuItem OnClick="@(async () => await HandleSortFieldChanged(fieldId))">
+                                        <div class="flex items-center gap-2">
+                                            @if (isSorted && _sortingState.Direction == SortDirection.Ascending)
+                                            {
+                                                <LucideIcon Name="arrow-up" Class="w-4 h-4" />
+                                            }
+                                            else if (isSorted && _sortingState.Direction == SortDirection.Descending)
+                                            {
+                                                <LucideIcon Name="arrow-down" Class="w-4 h-4" />
+                                            }
+                                            else
+                                            {
+                                                <LucideIcon Name="arrow-up-down" Class="w-4 h-4 opacity-50" />
+                                            }
+                                            @field.Header
+                                        </div>
+                                    </BbDropdownMenuItem>
+                                }
+                            </BbDropdownMenuContent>
+                        </BbDropdownMenu>
+                    }
+
+                    @* Right side: ToolbarActions + layout toggle (both pushed to the right with ml-auto) *@
+                    @if (ToolbarActions != null || CanToggleLayout)
+                    {
+                        <div class="ml-auto flex items-center gap-2">
+                            @if (ToolbarActions != null)
+                            {
+                                @ToolbarActions
+                            }
+                            @if (CanToggleLayout)
+                            {
+                                <div class="flex items-center gap-1 rounded-md border p-1">
+                                    <BbButton Variant="ButtonVariant.Ghost"
+                                              Size="ButtonSize.Icon"
+                                              OnClick="@(() => SetLayout(DataViewLayout.List))"
+                                              Class="@ClassNames.cn("h-7 w-7", _effectiveLayout == DataViewLayout.List ? "bg-accent text-accent-foreground" : "")"
+                                              title="List view">
+                                        <LucideIcon Name="list" Class="w-4 h-4" />
+                                    </BbButton>
+                                    <BbButton Variant="ButtonVariant.Ghost"
+                                              Size="ButtonSize.Icon"
+                                              OnClick="@(() => SetLayout(DataViewLayout.Grid))"
+                                              Class="@ClassNames.cn("h-7 w-7", _effectiveLayout == DataViewLayout.Grid ? "bg-accent text-accent-foreground" : "")"
+                                              title="Grid view">
+                                        <LucideIcon Name="layout-grid" Class="w-4 h-4" />
+                                    </BbButton>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                </div>
+            }
+
+            @* ── Content ─────────────────────────────────────────────────── *@
+            @if (IsLoading)
+            {
+                @if (LoadingTemplate != null)
+                {
+                    @LoadingTemplate
+                }
+                else
+                {
+                    <div class="flex items-center justify-center p-8 text-muted-foreground">
+                        <div class="text-sm">Loading...</div>
+                    </div>
+                }
+            }
+            else if (_filteredSortedData.Count == 0)
+            {
+                @if (EmptyTemplate != null)
+                {
+                    @EmptyTemplate
+                }
+                else
+                {
+                    <BbEmpty Title="No results found" Size="EmptySize.Small" />
+                }
+            }
+            else if (EnableInfiniteScroll && !ShowLoadMoreButton)
+            {
+                @*
+                    Scroll-based infinite scroll.
+                    The items grid/list lives inside a fixed-height scrollable container.
+                    The @onscroll handler calls data-view.js isNearBottom(), which measures
+                    the scroll container as a whole — so it works correctly for both flex
+                    lists and multi-column CSS grids (regardless of items-per-row count).
+                    The sentinel <div> is placed OUTSIDE the grid container so it is always
+                    a full-width block element below all rows, never occupying an empty grid cell.
+                *@
+                <div class="overflow-y-auto"
+                     style="@(ScrollHeight != null ? $"height: {ScrollHeight}" : "")"
+                     @ref="_scrollContainerRef"
+                     @onscroll="HandleScroll"
+                     role="region"
+                     aria-live="polite">
+                    <div class="@ItemContainerCssClass">
+                        @foreach (var item in _visibleData)
+                        {
+                            @if (EffectiveActiveTemplate != null)
+                            {
+                                @EffectiveActiveTemplate(item)
+                            }
+                        }
+                    </div>
+                    @* Sentinel is outside the grid so it spans the full scroll-container
+                       width regardless of the column count. *@
+                    @if (CanLoadMore)
+                    {
+                        <div class="flex items-center justify-center py-2 text-xs text-muted-foreground">
+                            Loading more...
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                @* Regular pagination or ShowLoadMoreButton mode. *@
+                <div class="@ItemContainerCssClass" role="region" aria-live="polite">
+                    @foreach (var item in _visibleData)
+                    {
+                        @if (EffectiveActiveTemplate != null)
+                        {
+                            @EffectiveActiveTemplate(item)
+                        }
+                    }
+                </div>
+
+                @*
+                    "Load more" button is placed OUTSIDE (after) the grid/flex container.
+                    This guarantees it always renders as a full-width block element on its
+                    own row, even when the grid has 2, 3, or 4 columns and the last row is
+                    only partially filled.
+                *@
+                @if (EnableInfiniteScroll && CanLoadMore && ShowLoadMoreButton)
+                {
+                    <div class="flex justify-center py-4">
+                        <BbButton Variant="ButtonVariant.Outline" OnClick="LoadMore">
+                            Load more
+                        </BbButton>
+                    </div>
+                }
+            }
+
+            @* ── Pagination – hidden in infinite scroll mode ─────────────── *@
+            @if (ShowPagination && !EnableInfiniteScroll && !IsLoading && _filteredSortedData.Count > 0)
+            {
+                <BbPagination State="@_paginationState"
+                              PageSizes="@PageSizes"
+                              OnPageChanged="@HandlePageChanged"
+                              OnPageSizeChanged="@HandlePageSizeChanged"
+                              Class="flex items-center justify-between px-2 py-4">
+                    <BbPaginationInfo />
+                    <BbPaginationContent Class="flex items-center gap-6 lg:gap-8">
+                        <BbPaginationPageSizeSelector Label="Items per page" />
+                        <div class="flex items-center gap-2">
+                            <BbPaginationPageDisplay />
+                            <div class="flex items-center gap-1">
+                                <BbPaginationItem><BbPaginationFirst /></BbPaginationItem>
+                                <BbPaginationItem><BbPaginationPrevious ShowText="false" /></BbPaginationItem>
+                                <BbPaginationItem><BbPaginationNext ShowText="false" /></BbPaginationItem>
+                                <BbPaginationItem><BbPaginationLast /></BbPaginationItem>
+                            </div>
+                        </div>
+                    </BbPaginationContent>
+                </BbPagination>
+            }
+
+        </div>
+
+        @* Capture slot-component registrations (renders nothing visible). *@
+        @Fields
+
+</CascadingValue>

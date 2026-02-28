@@ -52,6 +52,10 @@ internal sealed class EChartsAxisOption
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? Inverse { get; set; }
 
+    [JsonPropertyName("scale")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? Scale { get; set; }
+
     [JsonPropertyName("z")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? Z { get; set; }

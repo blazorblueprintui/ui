@@ -211,7 +211,7 @@ public partial class BbXAxis : ComponentBase, IChartComponent, IDisposable
 
         if (!string.IsNullOrEmpty(DataKey) && ParentChart?.Data != null)
         {
-            axis.Data = DataExtractor.ExtractStringValues(ParentChart.Data, DataKey);
+            axis.Data = DataExtractor.ExtractDistinctStringValues(ParentChart.Data, DataKey);
         }
 
         // When parent chart swaps axes (e.g., horizontal BarChart),
