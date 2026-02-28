@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-02-28
+
+### Fixed
+
+- `BbDropdownMenu`, `BbMenubar`, and `BbNavigationMenuLink`: keyboard navigation now correctly highlights individual items instead of the parent container when using `Href` links. Removed the overly broad `[role="menu"] div:has(> a:focus)` CSS rule and added a `focusMenuItem` helper in `menu-keyboard.js` with a tabindex fallback for reliable anchor focus (#162).
+
+---
+
+## 2026-02-26
+
+### Added
+
+- New **`BbDataView`** component — flexible data presentation with list/grid layout toggle, column definitions via `BbDataViewColumn`, custom templates via `BbDataViewListTemplate` and `BbDataViewGridTemplate`, built-in filtering and sorting, pagination, infinite scroll, a `ToolbarActions` slot for custom toolbar content, and a `ScrollHeight` parameter for fixed-height viewports (#161).
+- `SearchQuery` and `SearchQueryChanged` parameters on `BbCombobox` — exposes the current search string as a two-way bindable parameter, enabling external async filtering so consumers can reload options from an API on each keystroke (#159).
+- Paste support on `BbInputOTP` — clipboard paste now fills OTP slots via JS interop (`input-otp.js`) using a `[JSInvokable]` `OnPasteJs` handler (#156).
+
+---
+
+## 2026-02-22
+
+### Internal
+
+- Added `CONTRIBUTING.md` with contributor guidelines.
+
+---
+
 ## 2026-02-20
 
 ### Added
