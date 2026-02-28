@@ -1,0 +1,70 @@
+@* products = MockDataService.GenerateProducts(60)
+   Both ListTemplate and GridTemplate are provided, so the toolbar
+   shows layout-toggle buttons letting the user switch between views. *@
+<BbDataView TItem="Product" Data="@products" InitialPageSize="12"
+            PageSizes="@(new[] { 6, 12, 24, 48 })">
+    <ListTemplate Context="product">
+        <BbCard Class="flex items-center gap-4 p-3 shadow-none hover:bg-accent/50 transition-colors">
+            <div class="size-16 shrink-0 rounded-md overflow-hidden bg-muted">
+                <img src="@product.ImageUrl" alt="@product.Name"
+                     class="object-cover w-full h-full" loading="lazy" />
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                    <p class="text-sm font-semibold truncate">@product.Name</p>
+                    <BbBadge Variant="BadgeVariant.Outline" Class="shrink-0 text-xs">@product.Category</BbBadge>
+                </div>
+                <BbRating Value="@product.Rating" ReadOnly="true" Size="RatingSize.Small" />
+            </div>
+            <div class="flex flex-col items-end gap-2 shrink-0">
+                <span class="text-base font-bold">$@product.Price.ToString("F2")</span>
+                @if (product.Stock > 0)
+                {
+                    <BbButton Size="ButtonSize.Small">Add to Cart</BbButton>
+                }
+                else
+                {
+                    <BbBadge Variant="BadgeVariant.Destructive">Out of Stock</BbBadge>
+                }
+            </div>
+        </BbCard>
+    </ListTemplate>
+    <GridTemplate Context="product">
+        <BbCard Class="overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+            <div class="relative aspect-square overflow-hidden bg-muted">
+                <img src="@product.ImageUrl" alt="@product.Name"
+                     class="object-cover w-full h-full" loading="lazy" />
+                @if (product.Stock == 0)
+                {
+                    <div class="absolute inset-0 bg-background/70 flex items-center justify-center">
+                        <BbTypographyMuted>Out of Stock</BbTypographyMuted>
+                    </div>
+                }
+            </div>
+            <BbCardHeader>
+                <div class="flex items-start justify-between gap-2">
+                    <BbCardTitle Class="text-base line-clamp-2 leading-snug">@product.Name</BbCardTitle>
+                    <BbBadge Variant="BadgeVariant.Outline" Class="shrink-0 text-xs mt-0.5">@product.Category</BbBadge>
+                </div>
+                <BbCardDescription Class="line-clamp-2">@product.Description</BbCardDescription>
+            </BbCardHeader>
+            <BbCardContent>
+                <BbRating Value="@product.Rating" ReadOnly="true" Size="RatingSize.Small" />
+            </BbCardContent>
+            <BbCardFooter Class="justify-between">
+                <span class="text-base font-bold">$@product.Price.ToString("F2")</span>
+                <BbButton Size="ButtonSize.Small"
+                          Variant="@(product.Stock > 0 ? ButtonVariant.Default : ButtonVariant.Outline)"
+                          Disabled="@(product.Stock == 0)">
+                    @(product.Stock > 0 ? "Add to Cart" : "Notify Me")
+                </BbButton>
+            </BbCardFooter>
+        </BbCard>
+    </GridTemplate>
+    <Fields>
+        <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
+        <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />
+        <BbDataViewColumn TItem="Product" TValue="decimal" Property="@(p => p.Price)"    Header="Price"    Sortable />
+        <BbDataViewColumn TItem="Product" TValue="double"  Property="@(p => p.Rating)"   Header="Rating"   Sortable />
+    </Fields>
+</BbDataView>

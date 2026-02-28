@@ -1,156 +1,158 @@
-# Contributing to Blazor Blueprint
+# Contributing to Blazor Blueprint UI
 
-Thank you for your interest in contributing to Blazor Blueprint! We welcome contributions from the community.
+Thank you for your interest in contributing to Blazor Blueprint UI! 🎉
+We welcome all contributions — whether it's bug fixes, new features, documentation improvements, or tooling enhancements.
 
-## How to Contribute
+---
 
-### Reporting Issues
+## 📋 Table of Contents
 
-If you find a bug or have a feature request, please create an issue on GitHub:
+- [Getting Started](#getting-started)
+- [Branching Strategy](#branching-strategy)
+- [Submitting a Pull Request](#submitting-a-pull-request)
+- [Commit Messages](#commit-messages)
+- [Pull Request Checklist](#pull-request-checklist)
+- [Code Style](#code-style)
+- [Reporting Bugs](#reporting-bugs)
+- [Suggesting Features](#suggesting-features)
 
-1. Check if the issue already exists
-2. Use the issue template if available
-3. Provide a clear description and reproduction steps for bugs
-4. For feature requests, explain the use case and expected behavior
+---
 
-### Submitting Pull Requests
+## Getting Started
 
-1. **Fork the repository** and create a new branch from `main`
-2. **Make your changes** following our code style guidelines
-3. **Test your changes** across different Blazor hosting models (Server, WASM, Hybrid)
-4. **Update documentation** if you're adding new features or changing behavior
-5. **Submit a pull request** with a clear description of your changes
+1. **Fork** this repository to your own GitHub account
+2. **Clone** your fork locally:
+   ```bash
+   git clone https://github.com/<your-username>/ui.git
+   cd ui
+   ```
+3. **Set the upstream remote** so you can pull in future changes:
+   ```bash
+   git remote add upstream https://github.com/blazorblueprintui/ui.git
+   ```
+4. **Install dependencies** and verify the project builds:
+   ```bash
+   dotnet build
+   ```
 
-## Development Setup
+---
 
-### Prerequisites
+## Branching Strategy
 
-- **.NET 8 SDK** or later
-- **Git** for version control
-- **IDE**: Visual Studio 2022, VS Code, or Rider (recommended)
-- **Tailwind CSS standalone CLI** (included in demo app, no Node.js required)
+> ⚠️ **Important:** Please **do not** target `main` with your pull requests.
+> `main` reflects the latest released version of the NuGet package only.
 
-### Clone and Build
+| Branch | Purpose |
+|---|---|
+| `main` | Released, stable code — mirrors the published NuGet package |
+| `develop` | Active development — all features and fixes accumulate here |
+| `feature/*` | Individual feature branches, branched off `develop` |
+| `fix/*` | Bug fix branches, branched off `develop` |
 
-1. **Clone the repository:**
+### For contributors:
 
-```bash
-git clone https://github.com/blazorblueprintui/ui.git
-cd ui
+- Always **branch off `develop`**:
+  ```bash
+  git fetch upstream
+  git checkout -b feature/my-new-feature upstream/develop
+  ```
+- Always **target `develop`** as the base branch when opening a pull request
+- `main` is only updated by maintainers when cutting a new release
+
+---
+
+## Submitting a Pull Request
+
+1. Ensure your branch is based off the latest `develop`:
+   ```bash
+   git fetch upstream
+   git rebase upstream/develop
+   ```
+2. Push your branch to your fork:
+   ```bash
+   git push origin feature/my-new-feature
+   ```
+3. Open a pull request from your fork's branch **targeting `blazorblueprintui/ui:develop`**
+4. Fill in the pull request template completely
+5. Wait for a review — we aim to respond within a few days
+
+---
+
+## Commit Messages
+
+We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+
+```
+<type>(scope): short description
+
+[optional body]
 ```
 
-2. **Build the solution:**
+**Types:**
+- `feat` — a new feature
+- `fix` — a bug fix
+- `docs` — documentation changes only
+- `refactor` — code change that neither fixes a bug nor adds a feature
+- `style` — formatting, missing semicolons, etc.
+- `test` — adding or updating tests
+- `chore` — build process or tooling changes
 
-```bash
-dotnet build
+**Examples:**
+```
+feat(Combobox): add SearchQuery parameter for async filtering
+fix(InputOTP): implement paste support via JS interop
+docs: add CONTRIBUTING.md
 ```
 
-This builds all five NuGet packages:
-- `BlazorBlueprint.Components` - Styled components
-- `BlazorBlueprint.Primitives` - Headless primitives
-- `BlazorBlueprint.Icons.Lucide` - Lucide icon library
-- `BlazorBlueprint.Icons.Heroicons` - Heroicons library
-- `BlazorBlueprint.Icons.Feather` - Feather icon library
+---
 
-### Run the Demo Application
+## Pull Request Checklist
 
-```bash
-cd demo/BlazorBlueprint.Demo
-dotnet watch run
-```
+Before submitting, please ensure:
 
-The demo app will be available at `https://localhost:5001`
+- [ ] Your branch is based off `develop` (not `main`)
+- [ ] Your PR targets the `develop` branch
+- [ ] The project builds without errors: `dotnet build`
+- [ ] You have tested your changes on Blazor Server and/or WebAssembly
+- [ ] Accessibility and keyboard navigation are unaffected (or improved)
+- [ ] Dark mode still works correctly
+- [ ] You have updated documentation/demo pages if adding a new feature
+- [ ] Your commit messages follow the Conventional Commits format
 
-**Note:** The demo includes Tailwind CSS setup and shows all components with live examples.
+---
 
-### Project Structure
+## Code Style
 
-This is a mono-repo containing:
+- Follow the existing code patterns and conventions in the codebase
+- Use meaningful variable and parameter names
+- Add XML doc comments (`/// <summary>`) to public parameters and methods
+- Keep components focused — one responsibility per component
 
-```
-BlazorBlueprint/
-├── src/
-│   ├── BlazorBlueprint.Components/      # Styled components (shadcn/ui design)
-│   ├── BlazorBlueprint.Primitives/      # Headless UI primitives
-│   ├── BlazorBlueprint.Icons.Lucide/    # Lucide icon integration
-│   ├── BlazorBlueprint.Icons.Heroicons/ # Heroicons integration
-│   └── BlazorBlueprint.Icons.Feather/   # Feather icon integration
-├── demo/
-│   └── BlazorBlueprint.Demo/            # Demo Blazor Server app
-├── scripts/                      # Release automation scripts
-└── .github/                      # CI/CD workflows
-```
+---
 
-### Technology Stack
+## Reporting Bugs
 
-- **.NET 8 (LTS)** - Target framework
-- **Blazor** - Supports Server, WebAssembly, and Hybrid hosting models
-- **Tailwind CSS** - Utility-first CSS framework (standalone CLI, no Node.js required)
-- **CSS Variables** - Runtime theme switching
-- **Lucide Icons** - 1000+ beautiful, consistent icons
+Please [open an issue](https://github.com/blazorblueprintui/ui/issues/new) and include:
 
-### Naming Conventions
-- **PascalCase** for public members, types, and namespaces
-- **camelCase** for private fields (no underscore prefix)
-- Component files: `ComponentName.razor` + `ComponentName.razor.cs`
+- A clear description of the bug
+- Steps to reproduce
+- Expected vs actual behaviour
+- Blazor hosting model (Server / WebAssembly / Hybrid)
+- Browser and OS
+- A minimal reproduction if possible (link to a StackBlitz, GitHub repo, etc.)
 
-### Documentation
-- Add XML documentation for all public APIs
-- Include inline comments for complex logic
-- Update README.md for new components
+---
 
-### Code Quality
-- Follow Blazor best practices
-- Avoid unnecessary re-renders
-- Properly dispose of resources
-- Use null-safety throughout
+## Suggesting Features
 
-### Accessibility
-- All components should include appropriate ARIA attributes
-- Implement keyboard interaction support
-- Use semantic HTML structure
+We love feature suggestions! [Open an issue](https://github.com/blazorblueprintui/ui/issues/new) with:
 
-## Testing
+- A description of the problem you're trying to solve
+- Your proposed solution or API design
+- Any relevant examples from other component libraries
 
-Before submitting a pull request, please:
+---
 
-- Test across Blazor Server, WebAssembly, and Hybrid
-- Verify cross-browser compatibility (Chrome, Firefox, Edge, Safari)
-- Validate accessibility with keyboard navigation
-- Check that all components render correctly in light and dark mode
+## Thank You ❤️
 
-## License
-
-By contributing to Blazor Blueprint, you agree that your contributions will be licensed under the [Apache License 2.0](LICENSE).
-
-This means:
-- Your contributions will be freely available to everyone
-- You retain copyright to your contributions
-- You grant Blazor Blueprint and its users the rights specified in the Apache License 2.0
-
-## Code of Conduct
-
-### Our Standards
-
-- Be respectful and inclusive
-- Welcome newcomers and help them get started
-- Accept constructive criticism gracefully
-- Focus on what's best for the community
-- Show empathy towards other community members
-
-### Unacceptable Behavior
-
-- Harassment, discrimination, or offensive comments
-- Personal attacks or trolling
-- Publishing others' private information
-- Other conduct that would be inappropriate in a professional setting
-
-## Questions?
-
-If you have questions about contributing, feel free to:
-
-- Open an issue for discussion
-- Join the community discussions on GitHub
-- Reach out to the maintainers
-
-Thank you for contributing to Blazor Blueprint!
+Every contribution, no matter how small, helps make Blazor Blueprint UI better for everyone.

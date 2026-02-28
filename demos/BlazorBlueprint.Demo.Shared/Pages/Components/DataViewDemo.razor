@@ -1,0 +1,614 @@
+@page "/components/dataview"
+@using BlazorBlueprint.Demo.Services
+@inject MockDataService MockDataService
+
+<PageTitle>Data View Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-7xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Data View Component</h1>
+        <p class="text-xl text-muted-foreground">
+            A flexible data view component with list and grid layouts, sorting, filtering, pagination,
+            and optional infinite scroll.
+        </p>
+    </div>
+
+    <!-- ── Employee Directory – List only ─────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Employee Directory (List)</h2>
+            <p class="text-sm text-muted-foreground">
+                Provide only <code class="bg-muted px-1 py-0.5 rounded">ListTemplate</code> to lock the view
+                into list mode. The layout-toggle buttons are hidden when only one template is set.
+                Register <code class="bg-muted px-1 py-0.5 rounded">BbDataViewColumn</code> components
+                inside <code class="bg-muted px-1 py-0.5 rounded">Fields</code> for sort and filter support.
+            </p>
+        </div>
+        <BbDataView TItem="Person" Data="@people" InitialPageSize="5">
+            <ListTemplate Context="person">
+                <BbCard Class="flex items-center gap-4 p-4 shadow-none hover:bg-accent/50 transition-colors">
+                    <BbAvatar>
+                        <BbAvatarFallback>@GetInitials(person.Name)</BbAvatarFallback>
+                    </BbAvatar>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold truncate">@person.Name</p>
+                        <BbTypographyMuted Class="truncate">@person.Email</BbTypographyMuted>
+                        <BbTypographyMuted Class="text-xs">@person.Department · @person.Role</BbTypographyMuted>
+                    </div>
+                    <div class="flex flex-col items-end gap-1 shrink-0">
+                        <BbBadge Variant="@(person.Status == "Active" ? BadgeVariant.Default : BadgeVariant.Outline)">
+                            @person.Status
+                        </BbBadge>
+                        <BbTypographyMuted Class="text-xs">@person.Salary.ToString("C0")</BbTypographyMuted>
+                    </div>
+                </BbCard>
+            </ListTemplate>
+            <Fields>
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Name)"       Header="Name"       Sortable Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Email)"      Header="Email"      Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Role)"       Header="Role"       Sortable Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Status)"     Header="Status"     Sortable />
+                <BbDataViewColumn TItem="Person" TValue="int"    Property="@(p => p.Salary)"     Header="Salary"     Sortable />
+            </Fields>
+        </BbDataView>
+        <CodeBlock Source="Components/DataView/basic.txt" />
+    </div>
+
+    <!-- ── Product Catalog – both templates, layout toggle enabled ────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Product Catalog (List + Grid Toggle)</h2>
+            <p class="text-sm text-muted-foreground">
+                Provide both <code class="bg-muted px-1 py-0.5 rounded">ListTemplate</code> and
+                <code class="bg-muted px-1 py-0.5 rounded">GridTemplate</code> to enable the toolbar
+                layout-toggle buttons. Each template can be designed independently — the list template
+                is a compact horizontal row and the grid template is a richer card with an image.
+            </p>
+        </div>
+        <BbDataView TItem="Product" Data="@products" InitialPageSize="12"
+                    PageSizes="@(new[] { 6, 12, 24, 48 })">
+            <ListTemplate Context="product">
+                <BbCard Class="flex items-center gap-4 p-3 shadow-none hover:bg-accent/50 transition-colors">
+                    <div class="size-16 shrink-0 rounded-md overflow-hidden bg-muted">
+                        <img src="@product.ImageUrl" alt="@product.Name"
+                             class="object-cover w-full h-full" loading="lazy" />
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm font-semibold truncate">@product.Name</p>
+                            <BbBadge Variant="BadgeVariant.Outline" Class="shrink-0 text-xs">@product.Category</BbBadge>
+                        </div>
+                        <BbRating Value="@product.Rating" ReadOnly="true" Size="RatingSize.Small" />
+                    </div>
+                    <div class="flex flex-col items-end gap-2 shrink-0">
+                        <span class="text-base font-bold">$@product.Price.ToString("F2")</span>
+                        @if (product.Stock == 0)
+                        {
+                            <BbBadge Variant="BadgeVariant.Destructive">Out of Stock</BbBadge>
+                        }
+                        else if (product.Stock <= 5)
+                        {
+                            <BbBadge Variant="BadgeVariant.Secondary">Low stock</BbBadge>
+                        }
+                        else
+                        {
+                            <BbButton Size="ButtonSize.Small">Add to Cart</BbButton>
+                        }
+                    </div>
+                </BbCard>
+            </ListTemplate>
+            <GridTemplate Context="product">
+                <BbCard Class="overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+                    <div class="relative aspect-square overflow-hidden bg-muted">
+                        <img src="@product.ImageUrl" alt="@product.Name"
+                             class="object-cover w-full h-full transition-transform hover:scale-105 duration-300"
+                             loading="lazy" />
+                        @if (product.Stock == 0)
+                        {
+                            <div class="absolute inset-0 bg-background/70 flex items-center justify-center">
+                                <BbTypographyMuted>Out of Stock</BbTypographyMuted>
+                            </div>
+                        }
+                        else if (product.Stock <= 5)
+                        {
+                            <div class="absolute top-2 right-2">
+                                <BbBadge Variant="BadgeVariant.Destructive">Low stock</BbBadge>
+                            </div>
+                        }
+                    </div>
+                    <BbCardHeader>
+                        <div class="flex items-start justify-between gap-2">
+                            <BbCardTitle Class="text-base line-clamp-2 leading-snug">@product.Name</BbCardTitle>
+                            <BbBadge Variant="BadgeVariant.Outline" Class="shrink-0 text-xs mt-0.5">@product.Category</BbBadge>
+                        </div>
+                        <BbCardDescription Class="line-clamp-2">@product.Description</BbCardDescription>
+                    </BbCardHeader>
+                    <BbCardContent>
+                        <BbRating Value="@product.Rating" ReadOnly="true" Size="RatingSize.Small" />
+                    </BbCardContent>
+                    <BbCardFooter Class="justify-between">
+                        <span class="text-base font-bold">$@product.Price.ToString("F2")</span>
+                        <BbButton Size="ButtonSize.Small"
+                                  Variant="@(product.Stock > 0 ? ButtonVariant.Default : ButtonVariant.Outline)"
+                                  Disabled="@(product.Stock == 0)">
+                            @(product.Stock > 0 ? "Add to Cart" : "Notify Me")
+                        </BbButton>
+                    </BbCardFooter>
+                </BbCard>
+            </GridTemplate>
+            <Fields>
+                <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
+                <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />
+                <BbDataViewColumn TItem="Product" TValue="decimal" Property="@(p => p.Price)"    Header="Price"    Sortable />
+                <BbDataViewColumn TItem="Product" TValue="double"  Property="@(p => p.Rating)"   Header="Rating"   Sortable />
+            </Fields>
+        </BbDataView>
+        <CodeBlock Source="Components/DataView/product-catalog.txt" />
+    </div>
+
+    <!-- ── Custom Toolbar Actions ────────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Toolbar Actions</h2>
+            <p class="text-sm text-muted-foreground">
+                Use the <code class="bg-muted px-1 py-0.5 rounded">ToolbarActions</code> render fragment
+                to add custom buttons or controls on the right side of the toolbar. Works alongside the
+                built-in search, sort, and layout-toggle controls.
+            </p>
+        </div>
+        <BbDataView TItem="Person" Data="@people" InitialPageSize="5">
+            <ToolbarActions>
+                <BbButton Variant="ButtonVariant.Default" Size="ButtonSize.Small">
+                    Add Person
+                </BbButton>
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+                    Export
+                </BbButton>
+            </ToolbarActions>
+            <ListTemplate Context="person">
+                <BbCard Class="flex items-center gap-4 p-4 shadow-none hover:bg-accent/50 transition-colors">
+                    <BbAvatar>
+                        <BbAvatarFallback>@GetInitials(person.Name)</BbAvatarFallback>
+                    </BbAvatar>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold truncate">@person.Name</p>
+                        <BbTypographyMuted Class="truncate">@person.Email</BbTypographyMuted>
+                        <BbTypographyMuted Class="text-xs">@person.Department · @person.Role</BbTypographyMuted>
+                    </div>
+                    <BbBadge Variant="@(person.Status == "Active" ? BadgeVariant.Default : BadgeVariant.Outline)">
+                        @person.Status
+                    </BbBadge>
+                </BbCard>
+            </ListTemplate>
+            <Fields>
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Name)"       Header="Name"       Sortable Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Email)"      Header="Email"      Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Role)"       Header="Role"       Sortable Filterable />
+            </Fields>
+        </BbDataView>
+        <CodeBlock Source="Components/DataView/toolbar-actions.txt" />
+    </div>
+
+    <!-- ── Layout Customization ───────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Layout Customization (Columns, Gap &amp; Spacing)</h2>
+            <p class="text-sm text-muted-foreground">
+                Both <code class="bg-muted px-1 py-0.5 rounded">GridClass</code> and
+                <code class="bg-muted px-1 py-0.5 rounded">ListClass</code> are merged on top of their
+                respective defaults using TailwindMerge — so you only need to supply the classes you want
+                to override; the rest of the defaults are preserved. The default grid is
+                <code class="bg-muted px-1 py-0.5 rounded">grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4</code>
+                and the default list is
+                <code class="bg-muted px-1 py-0.5 rounded">flex flex-col gap-2</code>.
+            </p>
+        </div>
+
+        <!-- 4-column grid -->
+        <div class="space-y-2">
+            <p class="font-medium text-sm">4-column grid (<code class="bg-muted px-1 py-0.5 rounded">GridClass="grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"</code>)</p>
+            <BbDataView TItem="Product" Data="@products" InitialPageSize="12"
+                        GridClass="grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                <GridTemplate Context="product">
+                    <BbCard Class="overflow-hidden flex flex-col">
+                        <div class="aspect-square overflow-hidden bg-muted">
+                            <img src="@product.ImageUrl" alt="@product.Name"
+                                 class="object-cover w-full h-full" loading="lazy" />
+                        </div>
+                        <BbCardHeader Class="p-3">
+                            <BbCardTitle Class="text-xs line-clamp-2">@product.Name</BbCardTitle>
+                            <BbCardDescription Class="text-xs line-clamp-2">@product.Description</BbCardDescription>
+                        </BbCardHeader>
+                        <BbCardFooter Class="p-3 pt-0 justify-start">
+                            <span class="text-sm font-bold">$@product.Price.ToString("F2")</span>
+                        </BbCardFooter>
+                    </BbCard>
+                </GridTemplate>
+                <Fields>
+                    <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
+                    <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />
+                    <BbDataViewColumn TItem="Product" TValue="decimal" Property="@(p => p.Price)"    Header="Price"    Sortable />
+                </Fields>
+            </BbDataView>
+        </div>
+
+        <!-- 2-column grid with large gap -->
+        <div class="space-y-2">
+            <p class="font-medium text-sm">2-column grid with large gap (<code class="bg-muted px-1 py-0.5 rounded">GridClass="grid-cols-1 sm:grid-cols-2 gap-6"</code>)</p>
+            <BbDataView TItem="Product" Data="@products" InitialPageSize="6"
+                        PageSizes="@(new[] { 6, 12 })"
+                        GridClass="grid-cols-1 sm:grid-cols-2 gap-6">
+                <GridTemplate Context="product">
+                    <BbCard Class="overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+                        <div class="relative aspect-video overflow-hidden bg-muted">
+                            <img src="@product.ImageUrl" alt="@product.Name"
+                                 class="object-cover w-full h-full" loading="lazy" />
+                        </div>
+                        <BbCardHeader>
+                            <div class="flex items-start justify-between gap-2">
+                                <BbCardTitle Class="text-base leading-snug">@product.Name</BbCardTitle>
+                                <BbBadge Variant="BadgeVariant.Outline" Class="shrink-0 text-xs mt-0.5">@product.Category</BbBadge>
+                            </div>
+                            <BbCardDescription Class="line-clamp-2">@product.Description</BbCardDescription>
+                        </BbCardHeader>
+                        <BbCardContent>
+                            <BbRating Value="@product.Rating" ReadOnly="true" Size="RatingSize.Small" />
+                        </BbCardContent>
+                        <BbCardFooter Class="justify-between">
+                            <span class="text-base font-bold">$@product.Price.ToString("F2")</span>
+                            <BbButton Size="ButtonSize.Small"
+                                      Variant="@(product.Stock > 0 ? ButtonVariant.Default : ButtonVariant.Outline)"
+                                      Disabled="@(product.Stock == 0)">
+                                @(product.Stock > 0 ? "Add to Cart" : "Notify Me")
+                            </BbButton>
+                        </BbCardFooter>
+                    </BbCard>
+                </GridTemplate>
+                <Fields>
+                    <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
+                    <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />
+                    <BbDataViewColumn TItem="Product" TValue="decimal" Property="@(p => p.Price)"    Header="Price"    Sortable />
+                </Fields>
+            </BbDataView>
+        </div>
+
+        <!-- Compact divider list -->
+        <div class="space-y-2">
+            <p class="font-medium text-sm">Compact divider list (<code class="bg-muted px-1 py-0.5 rounded">ListClass="gap-0 divide-y"</code>)</p>
+            <BbDataView TItem="Person" Data="@people" InitialPageSize="6" ListClass="gap-0 divide-y">
+                <ListTemplate Context="person">
+                    <div class="flex items-center gap-4 px-4 py-3 hover:bg-accent/50 transition-colors">
+                        <BbAvatar>
+                            <BbAvatarFallback>@GetInitials(person.Name)</BbAvatarFallback>
+                        </BbAvatar>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-semibold truncate">@person.Name</p>
+                            <BbTypographyMuted Class="truncate">@person.Email</BbTypographyMuted>
+                        </div>
+                        <BbBadge Variant="BadgeVariant.Secondary">@person.Department</BbBadge>
+                    </div>
+                </ListTemplate>
+                <Fields>
+                    <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Name)"       Header="Name"       Sortable Filterable />
+                    <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
+                    <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Email)"      Header="Email"      Filterable />
+                </Fields>
+            </BbDataView>
+        </div>
+
+        <CodeBlock Source="Components/DataView/layout-customization.txt" />
+    </div>
+
+    <!-- ── Infinite Scroll – Product Grid (Auto, GridTemplate only) ───────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Infinite Scroll – Product Grid (Auto)</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">EnableInfiniteScroll</code> with
+                <code class="bg-muted px-1 py-0.5 rounded">ScrollHeight</code> to progressively load
+                more items as the user scrolls. Only <code class="bg-muted px-1 py-0.5 rounded">GridTemplate</code>
+                is set here, so the view locks into grid mode with no toggle. Sorting or filtering resets
+                to the first batch.
+            </p>
+        </div>
+        <BbDataView TItem="Product" Data="@products"
+                    EnableInfiniteScroll="true" ScrollHeight="600px" InitialPageSize="6">
+            <GridTemplate Context="product">
+                <BbCard Class="overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+                    <div class="relative aspect-square overflow-hidden bg-muted">
+                        <img src="@product.ImageUrl" alt="@product.Name"
+                             class="object-cover w-full h-full transition-transform hover:scale-105 duration-300"
+                             loading="lazy" />
+                        @if (product.Stock == 0)
+                        {
+                            <div class="absolute inset-0 bg-background/70 flex items-center justify-center">
+                                <BbTypographyMuted>Out of Stock</BbTypographyMuted>
+                            </div>
+                        }
+                    </div>
+                    <BbCardHeader>
+                        <div class="flex items-start justify-between gap-2">
+                            <BbCardTitle Class="text-base line-clamp-2 leading-snug">@product.Name</BbCardTitle>
+                            <BbBadge Variant="BadgeVariant.Outline" Class="shrink-0 text-xs mt-0.5">@product.Category</BbBadge>
+                        </div>
+                        <BbCardDescription Class="line-clamp-2">@product.Description</BbCardDescription>
+                    </BbCardHeader>
+                    <BbCardContent>
+                        <BbRating Value="@product.Rating" ReadOnly="true" Size="RatingSize.Small" />
+                    </BbCardContent>
+                    <BbCardFooter Class="justify-between">
+                        <span class="text-base font-bold">$@product.Price.ToString("F2")</span>
+                        <BbButton Size="ButtonSize.Small"
+                                  Variant="@(product.Stock > 0 ? ButtonVariant.Default : ButtonVariant.Outline)"
+                                  Disabled="@(product.Stock == 0)">
+                            @(product.Stock > 0 ? "Add to Cart" : "Notify Me")
+                        </BbButton>
+                    </BbCardFooter>
+                </BbCard>
+            </GridTemplate>
+            <Fields>
+                <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Name)"     Header="Name"     Sortable Filterable />
+                <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Category)" Header="Category" Sortable Filterable />
+                <BbDataViewColumn TItem="Product" TValue="decimal" Property="@(p => p.Price)"    Header="Price"    Sortable />
+                <BbDataViewColumn TItem="Product" TValue="double"  Property="@(p => p.Rating)"   Header="Rating"   Sortable />
+            </Fields>
+        </BbDataView>
+        <CodeBlock Source="Components/DataView/product-infinite-scroll.txt" />
+    </div>
+
+    <!-- ── Infinite Scroll – Auto (scroll-based, ListTemplate only) ───────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Infinite Scroll – Employee List (Auto)</h2>
+            <p class="text-sm text-muted-foreground">
+                Only <code class="bg-muted px-1 py-0.5 rounded">ListTemplate</code> is set, so the view
+                locks into list mode. Set
+                <code class="bg-muted px-1 py-0.5 rounded">ScrollHeight</code> to any valid CSS height for
+                the scroll container — detection works for both flex lists and multi-column grids because
+                the container is measured as a whole.
+            </p>
+        </div>
+        <BbDataView TItem="Person" Data="@people" EnableInfiniteScroll="true" ScrollHeight="480px" InitialPageSize="6">
+            <ListTemplate Context="person">
+                <BbCard Class="flex items-center gap-4 p-4 shadow-none hover:bg-accent/50 transition-colors">
+                    <BbAvatar>
+                        <BbAvatarFallback>@GetInitials(person.Name)</BbAvatarFallback>
+                    </BbAvatar>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold truncate">@person.Name</p>
+                        <BbTypographyMuted Class="truncate">@person.Email</BbTypographyMuted>
+                        <BbTypographyMuted Class="text-xs">@person.Department · @person.Role</BbTypographyMuted>
+                    </div>
+                    <BbBadge Variant="BadgeVariant.Outline">@person.Age yrs</BbBadge>
+                </BbCard>
+            </ListTemplate>
+            <Fields>
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Role)" Header="Role" Sortable Filterable />
+                <BbDataViewColumn TItem="Person" TValue="int"    Property="@(p => p.Age)"  Header="Age"  Sortable />
+            </Fields>
+        </BbDataView>
+        <CodeBlock Source="Components/DataView/infinite-scroll.txt" />
+    </div>
+
+    <!-- ── Loading State ──────────────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Loading State</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">IsLoading</code> to show a loading indicator
+                while data is being fetched. Provide
+                <code class="bg-muted px-1 py-0.5 rounded">LoadingTemplate</code> to replace the default
+                indicator with skeleton cards or any custom content.
+            </p>
+        </div>
+        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => isLoading = !isLoading)">
+            Toggle Loading
+        </BbButton>
+        <BbDataView TItem="Person" Data="@people" IsLoading="@isLoading" InitialPageSize="4">
+            <ListTemplate Context="person">
+                <BbCard Class="flex items-center gap-4 p-4 shadow-none">
+                    <BbAvatar>
+                        <BbAvatarFallback>@GetInitials(person.Name)</BbAvatarFallback>
+                    </BbAvatar>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold">@person.Name</p>
+                        <BbTypographyMuted>@person.Email</BbTypographyMuted>
+                    </div>
+                </BbCard>
+            </ListTemplate>
+            <Fields>
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
+            </Fields>
+        </BbDataView>
+        <CodeBlock Source="Components/DataView/loading.txt" />
+    </div>
+
+    <!-- ── Empty State ────────────────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Empty State</h2>
+            <p class="text-sm text-muted-foreground">
+                Displays the default empty state when there are no results. Provide
+                <code class="bg-muted px-1 py-0.5 rounded">EmptyTemplate</code> to render a custom state.
+            </p>
+        </div>
+        <BbDataView TItem="Person" Data="@emptyPeople" InitialPageSize="5">
+            <ListTemplate Context="person">
+                <BbCard Class="p-4 shadow-none">@person.Name</BbCard>
+            </ListTemplate>
+            <Fields>
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Filterable />
+            </Fields>
+        </BbDataView>
+        <CodeBlock Source="Components/DataView/empty.txt" />
+    </div>
+
+    <!-- ── Accessibility ──────────────────────────────────────────────────── -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Toolbar search uses a native input with <code>role="searchbox"</code> semantics via BbInput</AccessibilityItem>
+            <AccessibilityItem>Layout-toggle buttons include a <code>title</code> attribute ("List view" / "Grid view") and are only rendered when both templates are provided</AccessibilityItem>
+            <AccessibilityItem><code>title</code> on sort direction button describes the current sort direction and next action</AccessibilityItem>
+            <AccessibilityItem>Empty state uses BbEmpty which renders descriptive text readable by screen readers</AccessibilityItem>
+            <AccessibilityItem>Pagination uses BbPagination primitives with full keyboard and ARIA support</AccessibilityItem>
+            <AccessibilityItem>Product images carry meaningful <code>alt</code> text derived from the item's name</AccessibilityItem>
+            <AccessibilityItem>Avatar fallbacks use text initials readable by screen readers</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Focus the global search input">
+                <BbKbd>Tab</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Open the sort field dropdown">
+                <BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Toggle sort direction">
+                <BbKbd>Click</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Switch layout (when both templates are set)">
+                <BbKbd>Tab</BbKbd> to toggle button, then <BbKbd>Enter</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Navigate pagination controls">
+                <BbKbd>Tab</BbKbd> / <BbKbd>Shift</BbKbd>+<BbKbd>Tab</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate pagination buttons">
+                <BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- ── API Reference ──────────────────────────────────────────────────── -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component parameters and render fragments.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="DataView">
+                <ApiParameter Name="Data" Type="IEnumerable&lt;TItem&gt;">
+                    The data source for the view.
+                </ApiParameter>
+                <ApiParameter Name="ListTemplate" Type="RenderFragment&lt;TItem&gt;?" Default="null">
+                    Template used to render each item in list layout. When set without GridTemplate the
+                    view locks into list mode and the layout-toggle is hidden.
+                </ApiParameter>
+                <ApiParameter Name="GridTemplate" Type="RenderFragment&lt;TItem&gt;?" Default="null">
+                    Template used to render each item in grid layout. When set without ListTemplate the
+                    view locks into grid mode and the layout-toggle is hidden. Provide both templates
+                    to enable the toolbar layout-toggle.
+                </ApiParameter>
+                <ApiParameter Name="Fields" Type="RenderFragment?" Default="null">
+                    Container for BbDataViewColumn definitions (and optional slot components).
+                </ApiParameter>
+                <ApiParameter Name="ToolbarActions" Type="RenderFragment?" Default="null">
+                    Custom actions rendered on the right side of the toolbar (e.g. Add, Export buttons).
+                    Visible only when ShowToolbar is true.
+                </ApiParameter>
+                <ApiParameter Name="Layout" Type="DataViewLayout" Default="List">
+                    Initial layout mode when both templates are set. Ignored when only one template
+                    is provided (the view locks to that template's mode).
+                </ApiParameter>
+                <ApiParameter Name="GridClass" Type="string?" Default="null">
+                    Extra Tailwind classes applied to the grid container. Merged on top of the default
+                    <code>grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4</code> via TailwindMerge —
+                    supply only the classes you want to override (e.g. <code>grid-cols-2 gap-6</code>).
+                </ApiParameter>
+                <ApiParameter Name="ListClass" Type="string?" Default="null">
+                    Extra Tailwind classes applied to the list container. Merged on top of the default
+                    <code>flex flex-col gap-2</code> via TailwindMerge — supply only the classes you want
+                    to override (e.g. <code>gap-4</code> or <code>gap-0 divide-y</code> for a divider list).
+                </ApiParameter>
+                <ApiParameter Name="ShowToolbar" Type="bool" Default="true">
+                    Whether to show the toolbar with search, sort, and (when applicable) layout-toggle controls.
+                </ApiParameter>
+                <ApiParameter Name="ShowPagination" Type="bool" Default="true">
+                    Whether to show pagination controls (hidden when EnableInfiniteScroll is true).
+                </ApiParameter>
+                <ApiParameter Name="IsLoading" Type="bool" Default="false">
+                    Whether the view is in a loading state.
+                </ApiParameter>
+                <ApiParameter Name="InitialPageSize" Type="int" Default="5">
+                    Initial page size (also the batch size in infinite scroll mode).
+                </ApiParameter>
+                <ApiParameter Name="PageSizes" Type="int[]" Default="[5, 10, 20, 50, 100]">
+                    Available page size options shown in the pagination size selector.
+                </ApiParameter>
+                <ApiParameter Name="EnableInfiniteScroll" Type="bool" Default="false">
+                    Replaces pagination with progressive item loading. Works for both list and grid.
+                </ApiParameter>
+                <ApiParameter Name="ShowLoadMoreButton" Type="bool" Default="false">
+                    Shows an explicit "Load more" button when EnableInfiniteScroll is true.
+                </ApiParameter>
+                <ApiParameter Name="ScrollHeight" Type="string?" Default="null">
+                    CSS height for the scroll container in auto-scroll mode (e.g. "400px", "60vh").
+                    When null, no inline height is set and the container inherits from its parent.
+                </ApiParameter>
+                <ApiParameter Name="EmptyTemplate" Type="RenderFragment?" Default="null">
+                    Custom template for the empty state.
+                </ApiParameter>
+                <ApiParameter Name="LoadingTemplate" Type="RenderFragment?" Default="null">
+                    Custom template for the loading state.
+                </ApiParameter>
+                <ApiParameter Name="OnSort" Type="EventCallback&lt;(string, SortDirection)&gt;">
+                    Invoked when sorting changes.
+                </ApiParameter>
+                <ApiParameter Name="OnFilter" Type="EventCallback&lt;string?&gt;">
+                    Invoked when the global search value changes.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="DataViewColumn">
+                <ApiParameter Name="Header" Type="string">
+                    Display label used in the sort column selector.
+                </ApiParameter>
+                <ApiParameter Name="Property" Type="Func&lt;TItem, TValue&gt;">
+                    Expression to get the column value from a data item.
+                </ApiParameter>
+                <ApiParameter Name="Sortable" Type="bool" Default="false">
+                    Whether items can be sorted by this column.
+                </ApiParameter>
+                <ApiParameter Name="Filterable" Type="bool" Default="false">
+                    Whether this column participates in global search filtering.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="DataViewListTemplate">
+                <ApiParameter Name="ChildContent" Type="RenderFragment&lt;TItem&gt;">
+                    The render fragment used to display each item in list layout. The context parameter is the data item.
+                    When provided without DataViewGridTemplate the view locks into list mode.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="DataViewGridTemplate">
+                <ApiParameter Name="ChildContent" Type="RenderFragment&lt;TItem&gt;">
+                    The render fragment used to display each item in grid layout. The context parameter is the data item.
+                    When provided without DataViewListTemplate the view locks into grid mode.
+                    Provide both DataViewListTemplate and DataViewGridTemplate to enable the layout-toggle.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    private List<Person> people = new();
+    private List<Person> emptyPeople = new();
+    private List<Product> products = new();
+    private bool isLoading;
+
+    protected override void OnInitialized()
+    {
+        people = MockDataService.GeneratePersons(500);
+        products = MockDataService.GenerateProducts(60);
+    }
+
+    private static string GetInitials(string name)
+    {
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{parts[0][0]}{parts[^1][0]}"
+            : name.Length > 0 ? name[0].ToString() : "?";
+    }
+}

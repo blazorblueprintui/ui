@@ -1,0 +1,21 @@
+@* GridTemplate locks the view into grid mode when ListTemplate is not provided.
+   Use GridClass to customise columns and gap (TailwindMerge resolves conflicts). *@
+<BbDataView TItem="Product" Data="@products"
+            GridClass="grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+    <GridTemplate Context="product">
+        <BbCard Class="overflow-hidden flex flex-col">
+            <div class="aspect-square overflow-hidden bg-muted">
+                <img src="@product.ImageUrl" alt="@product.Name"
+                     class="object-cover w-full h-full" loading="lazy" />
+            </div>
+            <BbCardContent Class="p-3">
+                <p class="text-sm font-semibold line-clamp-2">@product.Name</p>
+                <span class="text-base font-bold">$@product.Price.ToString("F2")</span>
+            </BbCardContent>
+        </BbCard>
+    </GridTemplate>
+    <Fields>
+        <BbDataViewColumn TItem="Product" TValue="string"  Property="@(p => p.Name)"  Header="Name"  Sortable Filterable />
+        <BbDataViewColumn TItem="Product" TValue="decimal" Property="@(p => p.Price)" Header="Price" Sortable />
+    </Fields>
+</BbDataView>
