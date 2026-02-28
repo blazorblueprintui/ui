@@ -1,0 +1,221 @@
+@page "/charts/gauge"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Gauge Chart - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-6xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Gauge Chart</h1>
+            <p class="text-xl text-muted-foreground">
+                Speedometer-style visualizations for KPI display, progress indicators, and metric dashboards.
+            </p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Gauge Chart</h3>
+                    <p class="text-sm text-muted-foreground">Default speedometer</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbGaugeChart Data="@_gaugeData" Height="250px">
+                        <BbGauge DataKey="value" Name="Speed" />
+                    </BbGaugeChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Default gauge with pointer
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Scale from 0 to 100
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/GaugeChart/default.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">With Progress</h3>
+                    <p class="text-sm text-muted-foreground">Progress arc indicator</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbGaugeChart Data="@_gaugeData" Height="250px">
+                        <BbGauge DataKey="value" Name="Progress" Color="var(--chart-1)"
+                                 ShowProgress="true" ProgressWidth="14" />
+                    </BbGaugeChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        ShowProgress with colored arc
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Progress width set to 14px
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/GaugeChart/progress.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">No Pointer</h3>
+                    <p class="text-sm text-muted-foreground">Progress-only display</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbGaugeChart Data="@_gaugeData" Height="250px">
+                        <BbGauge DataKey="value" Name="Score" Color="var(--chart-2)"
+                                 ShowProgress="true" ProgressWidth="18"
+                                 ShowPointer="false" AxisLineWidth="18" />
+                    </BbGaugeChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Progress arc without pointer
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Clean progress indicator style
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/GaugeChart/no-pointer.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Custom Range</h3>
+                    <p class="text-sm text-muted-foreground">0-200 scale</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbGaugeChart Data="@_speedData" Height="250px">
+                        <BbGauge DataKey="value" Name="km/h" Color="var(--chart-3)"
+                                 Min="0" Max="200" SplitNumber="5" />
+                    </BbGaugeChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Custom Min/Max range
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Scale from 0 to 200 with 5 splits
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/GaugeChart/custom-range.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Custom Formatter</h3>
+                    <p class="text-sm text-muted-foreground">Percentage display</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbGaugeChart Data="@_gaugeData" Height="250px">
+                        <BbGauge DataKey="value" Name="Completion" Color="var(--chart-4)"
+                                 ShowProgress="true" ProgressWidth="12"
+                                 DetailFormatter="{value}%" DetailFontSize="30" />
+                    </BbGaugeChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        DetailFormatter with % suffix
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Custom format and font size
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/GaugeChart/formatter.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Minimal</h3>
+                    <p class="text-sm text-muted-foreground">Clean minimal gauge</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbGaugeChart Data="@_gaugeData" Height="250px">
+                        <BbGauge DataKey="value" Name="Health" Color="var(--chart-5)"
+                                 ShowProgress="true" ProgressWidth="20"
+                                 ShowPointer="false" ShowAxisLine="true" AxisLineWidth="20"
+                                 ShowTitle="false" DetailFontSize="32" />
+                    </BbGaugeChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        No pointer, no title
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Thick progress ring style
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/GaugeChart/minimal.txt" />
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Gauge.Min / Max</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">double</code> (defaults: <code class="text-xs bg-muted px-1 py-0.5 rounded">0</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">100</code>)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Range of the gauge scale.
+                </p>
+            </div>
+            <BbSeparator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Gauge.ShowProgress</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">bool</code> (default: <code class="text-xs bg-muted px-1 py-0.5 rounded">false</code>)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Whether to show a colored progress arc filling from min to the current value.
+                </p>
+            </div>
+            <BbSeparator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Gauge.ShowPointer</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">bool</code> (default: <code class="text-xs bg-muted px-1 py-0.5 rounded">true</code>)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Whether to show the pointer needle. Set to false for progress-only gauge styles.
+                </p>
+            </div>
+            <BbSeparator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Gauge.DetailFormatter</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string</code> (default: <code class="text-xs bg-muted px-1 py-0.5 rounded">{value}</code>)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    ECharts formatter for the displayed value. Use {value} as the placeholder.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public class GaugeData
+    {
+        public double Value { get; set; }
+    }
+
+    private readonly List<GaugeData> _gaugeData = [new() { Value = 72 }];
+    private readonly List<GaugeData> _speedData = [new() { Value = 135 }];
+}

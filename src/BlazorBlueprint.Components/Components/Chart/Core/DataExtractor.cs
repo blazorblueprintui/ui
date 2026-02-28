@@ -52,6 +52,24 @@ internal static class DataExtractor
         return strings;
     }
 
+    internal static List<string> ExtractDistinctStringValues(object? data, string dataKey)
+    {
+        var rawValues = ExtractValues(data, dataKey);
+        var seen = new HashSet<string>();
+        var strings = new List<string>();
+
+        foreach (var value in rawValues)
+        {
+            var str = value?.ToString() ?? string.Empty;
+            if (seen.Add(str))
+            {
+                strings.Add(str);
+            }
+        }
+
+        return strings;
+    }
+
     internal static List<Dictionary<string, object?>> ExtractNameValuePairs(object? data, string nameKey, string valueKey)
     {
         var pairs = new List<Dictionary<string, object?>>();
