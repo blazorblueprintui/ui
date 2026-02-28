@@ -111,6 +111,106 @@ internal sealed class EChartsSeriesOption
     [JsonPropertyName("colorBy")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ColorBy { get; set; }
+
+    // Funnel properties
+
+    [JsonPropertyName("sort")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Sort { get; set; }
+
+    [JsonPropertyName("funnelAlign")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? FunnelAlign { get; set; }
+
+    [JsonPropertyName("left")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Left { get; set; }
+
+    [JsonPropertyName("top")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Top { get; set; }
+
+    [JsonPropertyName("right")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Right { get; set; }
+
+    [JsonPropertyName("bottom")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Bottom { get; set; }
+
+    [JsonPropertyName("width")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Width { get; set; }
+
+    [JsonPropertyName("height")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Height { get; set; }
+
+    [JsonPropertyName("minSize")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? MinSize { get; set; }
+
+    [JsonPropertyName("maxSize")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? MaxSize { get; set; }
+
+    [JsonPropertyName("gap")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? Gap { get; set; }
+
+    // Gauge properties
+
+    [JsonPropertyName("min")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public double? Min { get; set; }
+
+    [JsonPropertyName("max")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public double? Max { get; set; }
+
+    [JsonPropertyName("startAngle")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? StartAngle { get; set; }
+
+    [JsonPropertyName("endAngle")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? EndAngle { get; set; }
+
+    [JsonPropertyName("splitNumber")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? SplitNumber { get; set; }
+
+    [JsonPropertyName("progress")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public EChartsGaugeProgressOption? Progress { get; set; }
+
+    [JsonPropertyName("axisLine")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public EChartsGaugeAxisLineOption? AxisLine { get; set; }
+
+    [JsonPropertyName("axisTick")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public EChartsAxisTickOption? AxisTick { get; set; }
+
+    [JsonPropertyName("splitLine")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public EChartsGaugeSplitLineOption? SplitLine { get; set; }
+
+    [JsonPropertyName("pointer")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public EChartsGaugePointerOption? Pointer { get; set; }
+
+    [JsonPropertyName("detail")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public EChartsGaugeDetailOption? Detail { get; set; }
+
+    [JsonPropertyName("anchor")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public EChartsGaugeAnchorOption? Anchor { get; set; }
+
+    [JsonPropertyName("title")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public EChartsSeriesTitleOption? Title { get; set; }
 }
 
 internal sealed class EChartsBackgroundStyleOption
@@ -164,6 +264,14 @@ internal sealed class EChartsItemStyleOption
     [JsonPropertyName("opacity")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public double? Opacity { get; set; }
+
+    [JsonPropertyName("color0")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Color0 { get; set; }
+
+    [JsonPropertyName("borderColor0")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? BorderColor0 { get; set; }
 }
 
 internal sealed class EChartsLabelOption

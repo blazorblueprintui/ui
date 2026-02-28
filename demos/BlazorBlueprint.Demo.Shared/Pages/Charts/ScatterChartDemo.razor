@@ -1,0 +1,235 @@
+@page "/charts/scatter"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Scatter Chart - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-6xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Scatter Chart</h1>
+            <p class="text-xl text-muted-foreground">
+                Visualize correlations and distributions with scatter plots and bubble charts.
+            </p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Scatter Chart</h3>
+                    <p class="text-sm text-muted-foreground">Height vs Weight Distribution</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbScatterChart Data="@_scatterData" Height="250px">
+                        <BbXAxis DataKey="height" Type="AxisType.Category" />
+                        <BbYAxis />
+                        <BbChartTooltip />
+                        <BbScatter DataKey="weight" Name="Weight" Color="var(--chart-1)" />
+                    </BbScatterChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Default scatter with category axis
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Showing height vs weight correlation
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/ScatterChart/default.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Multiple Series</h3>
+                    <p class="text-sm text-muted-foreground">Group A vs Group B</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbScatterChart Data="@_scatterData" Height="250px">
+                        <BbXAxis DataKey="height" Type="AxisType.Category" />
+                        <BbYAxis />
+                        <BbChartTooltip />
+                        <BbChartLegend />
+                        <BbScatter DataKey="weight" Name="Group A" Color="var(--chart-1)" />
+                        <BbScatter DataKey="score" Name="Group B" Color="var(--chart-2)" />
+                    </BbScatterChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Two scatter series with legend
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Comparing two datasets side by side
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/ScatterChart/multiple.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Custom Symbol Size</h3>
+                    <p class="text-sm text-muted-foreground">Larger data points</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbScatterChart Data="@_scatterData" Height="250px">
+                        <BbXAxis DataKey="height" Type="AxisType.Category" />
+                        <BbYAxis />
+                        <BbChartTooltip />
+                        <BbScatter DataKey="weight" Name="Weight" Color="var(--chart-3)" SymbolSize="16" />
+                    </BbScatterChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        SymbolSize set to 16px
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Larger dots for better visibility
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/ScatterChart/custom-size.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">With Labels</h3>
+                    <p class="text-sm text-muted-foreground">Labeled data points</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbScatterChart Data="@_scatterData" Height="250px">
+                        <BbXAxis DataKey="height" Type="AxisType.Category" />
+                        <BbYAxis />
+                        <BbChartTooltip />
+                        <BbScatter DataKey="weight" Name="Weight" Color="var(--chart-4)" ShowLabel="true" LabelPosition="LabelPosition.Top" />
+                    </BbScatterChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Value labels on each point
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        ShowLabel with Top position
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/ScatterChart/labels.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Bubble Chart</h3>
+                    <p class="text-sm text-muted-foreground">Variable size by score</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbScatterChart Data="@_scatterData" Height="250px">
+                        <BbXAxis DataKey="height" Type="AxisType.Category" />
+                        <BbYAxis />
+                        <BbChartTooltip />
+                        <BbScatter DataKey="weight" Name="Weight" Color="var(--chart-5)" SymbolSizeKey="score" />
+                    </BbScatterChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Symbol size driven by data
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        SymbolSizeKey maps score to dot size
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/ScatterChart/bubble.txt" />
+        </div>
+
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Small Dots</h3>
+                    <p class="text-sm text-muted-foreground">Minimal scatter</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbScatterChart Data="@_scatterData" Height="250px">
+                        <BbXAxis DataKey="height" Type="AxisType.Category" />
+                        <BbYAxis />
+                        <BbChartTooltip />
+                        <BbScatter DataKey="weight" Name="Weight" Color="var(--chart-1)" SymbolSize="5" />
+                    </BbScatterChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Small symbol size of 5px
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        Suitable for dense datasets
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/ScatterChart/small.txt" />
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Scatter.SymbolSize</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">int</code> (default: <code class="text-xs bg-muted px-1 py-0.5 rounded">10</code>)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    The size of each scatter symbol in pixels.
+                </p>
+            </div>
+            <BbSeparator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Scatter.SymbolSizeKey</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string?</code> (default: <code class="text-xs bg-muted px-1 py-0.5 rounded">null</code>)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Property name for per-item symbol sizes, enabling bubble chart visualizations.
+                </p>
+            </div>
+            <BbSeparator />
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Scatter.ShowLabel</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">bool</code> (default: <code class="text-xs bg-muted px-1 py-0.5 rounded">false</code>)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Whether to display data labels on each point.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    public class ScatterData
+    {
+        public string Height { get; set; } = "";
+        public int Weight { get; set; }
+        public int Score { get; set; }
+    }
+
+    private readonly List<ScatterData> _scatterData =
+    [
+        new() { Height = "160", Weight = 55, Score = 8 },
+        new() { Height = "165", Weight = 62, Score = 12 },
+        new() { Height = "170", Weight = 68, Score = 15 },
+        new() { Height = "172", Weight = 71, Score = 10 },
+        new() { Height = "175", Weight = 75, Score = 18 },
+        new() { Height = "178", Weight = 80, Score = 22 },
+        new() { Height = "180", Weight = 82, Score = 14 },
+        new() { Height = "183", Weight = 88, Score = 20 },
+        new() { Height = "185", Weight = 90, Score = 16 },
+        new() { Height = "190", Weight = 95, Score = 25 }
+    ];
+}
