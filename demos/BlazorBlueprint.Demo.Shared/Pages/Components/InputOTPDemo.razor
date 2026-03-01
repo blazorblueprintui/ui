@@ -120,6 +120,50 @@
         <CodeBlock Source="Components/InputOTP/disabled.txt" />
     </div>
 
+    <!-- Masked -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Masked</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">Mask</code> to hide entered values with asterisks. Useful for sensitive codes like PINs.
+            </p>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <p class="text-sm text-muted-foreground mb-2">Masked PIN:</p>
+                <BbInputOTP @bind-Value="_maskedValue" Length="4" ShowSeparator="false" Mask="true" />
+                <p class="text-sm text-muted-foreground mt-2">Actual value: @(_maskedValue ?? "empty")</p>
+            </div>
+        </div>
+        <CodeBlock Source="Components/InputOTP/masked.txt" />
+    </div>
+
+    <!-- Input Mode -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Input Mode</h2>
+            <p class="text-sm text-muted-foreground">
+                Control the types of characters accepted with <code class="text-xs bg-muted px-1 py-0.5 rounded">InputMode</code>.
+                Defaults to numbers only.
+            </p>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <p class="text-sm text-muted-foreground mb-2">Numbers only (default):</p>
+                <BbInputOTP Length="4" ShowSeparator="false" InputMode="InputOTPInputMode.Numbers" />
+            </div>
+            <div>
+                <p class="text-sm text-muted-foreground mb-2">Letters only:</p>
+                <BbInputOTP Length="4" ShowSeparator="false" InputMode="InputOTPInputMode.Letters" />
+            </div>
+            <div>
+                <p class="text-sm text-muted-foreground mb-2">Letters and numbers:</p>
+                <BbInputOTP Length="6" InputMode="InputOTPInputMode.LettersAndNumbers" />
+            </div>
+        </div>
+        <CodeBlock Source="Components/InputOTP/input-mode.txt" />
+    </div>
+
     <!-- Custom Input Styling -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -208,7 +252,7 @@
 
     <AccessibilityList>
         <AriaAttributes>
-            <AccessibilityItem>Each digit input uses <code class="text-xs bg-muted px-1 py-0.5 rounded">inputmode="numeric"</code> for mobile numeric keyboards</AccessibilityItem>
+            <AccessibilityItem>Each digit input uses <code class="text-xs bg-muted px-1 py-0.5 rounded">inputmode="numeric"</code> or <code class="text-xs bg-muted px-1 py-0.5 rounded">inputmode="text"</code> based on the <code class="text-xs bg-muted px-1 py-0.5 rounded">InputMode</code> parameter</AccessibilityItem>
             <AccessibilityItem>Individual inputs are constrained with <code class="text-xs bg-muted px-1 py-0.5 rounded">maxlength="1"</code></AccessibilityItem>
             <AccessibilityItem>Disabled state applies the <code class="text-xs bg-muted px-1 py-0.5 rounded">disabled</code> attribute to all digit inputs</AccessibilityItem>
             <AccessibilityItem>Integrates with EditForm validation, applying <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-invalid</code> styling on error</AccessibilityItem>
@@ -271,6 +315,12 @@
                 <ApiParameter Name="Size" Type="InputOTPSize" Default="Default">
                     Size variant for the input boxes. Options: Small, Default, Large.
                 </ApiParameter>
+                <ApiParameter Name="Mask" Type="bool" Default="false">
+                    Whether to mask input values with asterisks (*). The actual value is still tracked internally.
+                </ApiParameter>
+                <ApiParameter Name="InputMode" Type="InputOTPInputMode" Default="Numbers">
+                    The types of characters accepted. Options: Numbers, Letters, LettersAndNumbers.
+                </ApiParameter>
                 <ApiParameter Name="InputClass" Type="string?" Default="null">
                     Additional CSS classes applied to each individual OTP input box.
                 </ApiParameter>
@@ -288,6 +338,7 @@
 @code {
     private string? _otpValue;
     private string? _verifyOtp;
+    private string? _maskedValue;
     private bool _isComplete;
 
     private void HandleComplete(string value)

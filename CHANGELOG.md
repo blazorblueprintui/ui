@@ -40,6 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - `@bind-State` two-way binding for controlled state management.
   - Full keyboard navigation and ARIA attributes.
   - Demo page with 16 interactive examples.
+- **BbInputOTP** — Added `Mask` parameter to hide entered values with asterisks (`*`), and `InputOTPInputMode` enum (`Numbers`, `Letters`, `LettersAndNumbers`) via the `InputMode` parameter to control accepted character types.
 
 ### Changed
 
