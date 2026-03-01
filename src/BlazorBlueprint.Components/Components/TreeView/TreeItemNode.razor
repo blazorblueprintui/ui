@@ -1,0 +1,120 @@
+@namespace BlazorBlueprint.Components
+@typeparam TItem
+@using BlazorBlueprint.Icons.Lucide.Components
+@using BlazorBlueprint.Primitives.TreeView
+
+@*
+    Internal component for recursively rendering data-driven tree items.
+*@
+
+<BlazorBlueprint.Primitives.TreeView.BbTreeItem Value="@NodeValue"
+                                                  Disabled="@false"
+                                                  IsLeaf="@(HasChildren ? null : true)">
+    <NodeContent>
+        <div class="@NodeCssClass"
+             style="@NodeStyle"
+             data-tree-node
+             draggable="@(IsDraggable ? "true" : null)"
+             data-draggable="@(IsDraggable ? "true" : null)">
+            @* Expand/collapse toggle *@
+            @if (HasChildren)
+            {
+                @if (IsLoading)
+                {
+                    <span class="inline-flex h-5 w-5 items-center justify-center shrink-0">
+                        <svg class="h-3.5 w-3.5 animate-spin text-muted-foreground"
+                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </span>
+                }
+                else
+                {
+                    <button type="button"
+                            class="inline-flex h-5 w-5 items-center justify-center rounded-sm hover:bg-accent/80 shrink-0"
+                            data-tree-toggle
+                            tabindex="-1"
+                            aria-hidden="true">
+                        <svg class="@ChevronCssClass"
+                             xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                             viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                }
+            }
+            else
+            {
+                <span class="inline-flex h-5 w-5 shrink-0"></span>
+            }
+
+            @* Checkbox (display-only; toggling handled by tree-keyboard.js) *@
+            @if (Checkable)
+            {
+                <span data-tree-checkbox class="inline-flex shrink-0 cursor-pointer">
+                    <BbCheckbox Checked="@IsChecked"
+                                Indeterminate="@IsIndeterminate"
+                                Disabled="@false"
+                                Class="h-4 w-4 pointer-events-none" />
+                </span>
+            }
+
+            @* Icon *@
+            @if (ShowIcons && !string.IsNullOrEmpty(IconValue))
+            {
+                <LucideIcon Name="@IconValue" Size="16" Class="shrink-0 text-muted-foreground" />
+            }
+
+            @* Label *@
+            @if (IsMatchHighlighted && !string.IsNullOrEmpty(SearchText))
+            {
+                @HighlightedLabel
+            }
+            else
+            {
+                <span class="truncate">@LabelValue</span>
+            }
+        </div>
+    </NodeContent>
+    <ChildContent>
+        @if (HasError)
+        {
+            <div class="flex items-center gap-2 py-1 text-sm text-destructive" style="@ChildNodeStyle">
+                <span>Failed to load</span>
+                <button type="button"
+                        class="text-xs underline hover:no-underline"
+                        @onclick="HandleRetry">
+                    Retry
+                </button>
+            </div>
+        }
+        else
+        {
+            @foreach (var child in Children)
+            {
+                if (!IsFilteredOut(child))
+                {
+                    <TreeItemNode TItem="TItem"
+                                  Item="child"
+                                  TextField="@TextField"
+                                  ValueField="@ValueField"
+                                  IconField="@IconField"
+                                  ChildrenAccessor="@ChildrenAccessor"
+                                  HasChildrenAccessor="@HasChildrenAccessor"
+                                  IsFilteredOut="@IsFilteredOut"
+                                  IsMatchHighlighted="@IsMatchHighlighted"
+                                  SearchText="@SearchText"
+                                  ShowIcons="@ShowIcons"
+                                  Checkable="@Checkable"
+                                  Draggable="@Draggable"
+                                  AllowDrag="@AllowDrag"
+                                  LoadingNodes="@LoadingNodes"
+                                  ErrorNodes="@ErrorNodes"
+                                  OnRetryLoad="OnRetryLoad" />
+                }
+            }
+        }
+    </ChildContent>
+</BlazorBlueprint.Primitives.TreeView.BbTreeItem>

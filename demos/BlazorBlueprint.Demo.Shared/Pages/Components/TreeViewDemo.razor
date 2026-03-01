@@ -1,0 +1,609 @@
+@page "/components/tree-view"
+
+<PageTitle>Tree View Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Tree View Component</h1>
+            <p class="text-xl text-muted-foreground">
+                A hierarchical data display for file explorers, category browsers, navigation trees, and more.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+
+        @* --- 1. Basic Tree --- *@
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Tree</h2>
+                <p class="text-muted-foreground">
+                    A simple declarative tree with expand/collapse. Click nodes to expand or collapse branches.
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-4">
+                <BbTreeView TItem="object" SelectionMode="TreeSelectionMode.None">
+                    <BbTreeItem Value="docs" Label="Documents" Icon="folder">
+                        <BbTreeItem Value="reports" Label="Reports" Icon="folder">
+                            <BbTreeItem Value="q1" Label="Q1 Report.pdf" Icon="file-text" />
+                            <BbTreeItem Value="q2" Label="Q2 Report.pdf" Icon="file-text" />
+                        </BbTreeItem>
+                        <BbTreeItem Value="invoices" Label="Invoices" Icon="folder">
+                            <BbTreeItem Value="inv1" Label="Invoice #1001.pdf" Icon="file-text" />
+                            <BbTreeItem Value="inv2" Label="Invoice #1002.pdf" Icon="file-text" />
+                        </BbTreeItem>
+                    </BbTreeItem>
+                    <BbTreeItem Value="images" Label="Images" Icon="folder">
+                        <BbTreeItem Value="logo" Label="logo.png" Icon="image" />
+                        <BbTreeItem Value="banner" Label="banner.jpg" Icon="image" />
+                    </BbTreeItem>
+                    <BbTreeItem Value="readme" Label="README.md" Icon="file" />
+                </BbTreeView>
+            </div>
+        </section>
+
+        @* --- 2. Data-Driven Tree (Nested Data) --- *@
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Data-Driven (Nested Data)</h2>
+                <p class="text-muted-foreground">
+                    Tree generated from nested object data using <code>ChildrenProperty</code>.
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-4">
+                <BbTreeView TItem="CategoryNode"
+                            Items="@nestedCategories"
+                            ChildrenProperty="@(c => c.Children)"
+                            TextField="@(c => c.Name)"
+                            ValueField="@(c => c.Id)"
+                            IconField="@(c => c.Icon)"
+                            SelectionMode="TreeSelectionMode.Single"
+                            @bind-SelectedValue="selectedCategory"
+                            DefaultExpandDepth="1" />
+            </div>
+            <p class="text-sm text-muted-foreground">
+                Selected: <strong>@(selectedCategory ?? "None")</strong>
+            </p>
+        </section>
+
+        @* --- 3. Flat Data with Parent References --- *@
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Flat Data (Parent References)</h2>
+                <p class="text-muted-foreground">
+                    Tree built from flat data using <code>ParentField</code> to reference parent IDs.
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-4">
+                <BbTreeView TItem="FlatNode"
+                            Items="@flatNodes"
+                            ParentField="@(n => n.ParentId)"
+                            TextField="@(n => n.Name)"
+                            ValueField="@(n => n.Id)"
+                            SelectionMode="TreeSelectionMode.Multiple"
+                            @bind-SelectedValues="selectedFlatIds"
+                            DefaultExpandAll="true" />
+            </div>
+            <p class="text-sm text-muted-foreground">
+                Selected: <strong>@(selectedFlatIds.Count > 0 ? string.Join(", ", selectedFlatIds) : "None")</strong>
+            </p>
+        </section>
+
+        @* --- 4. Single and Multi-Selection --- *@
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Selection Modes</h2>
+                <p class="text-muted-foreground">
+                    Single selection: only one node can be selected. Multiple selection: toggle multiple nodes.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="rounded-lg border p-4">
+                    <p class="text-sm font-medium mb-2">Single Selection</p>
+                    <BbTreeView TItem="object" SelectionMode="TreeSelectionMode.Single" @bind-SelectedValue="singleSelectedValue">
+                        <BbTreeItem Value="fruits" Label="Fruits" Icon="apple">
+                            <BbTreeItem Value="apple" Label="Apple" />
+                            <BbTreeItem Value="banana" Label="Banana" />
+                            <BbTreeItem Value="cherry" Label="Cherry" />
+                        </BbTreeItem>
+                        <BbTreeItem Value="vegetables" Label="Vegetables" Icon="salad">
+                            <BbTreeItem Value="carrot" Label="Carrot" />
+                            <BbTreeItem Value="broccoli" Label="Broccoli" />
+                        </BbTreeItem>
+                    </BbTreeView>
+                    <p class="text-xs text-muted-foreground mt-2">Selected: @(singleSelectedValue ?? "None")</p>
+                </div>
+
+                <div class="rounded-lg border p-4">
+                    <p class="text-sm font-medium mb-2">Multiple Selection</p>
+                    <BbTreeView TItem="object" SelectionMode="TreeSelectionMode.Multiple" @bind-SelectedValues="multiSelectedValues">
+                        <BbTreeItem Value="red" Label="Red" />
+                        <BbTreeItem Value="green" Label="Green" />
+                        <BbTreeItem Value="blue" Label="Blue" />
+                        <BbTreeItem Value="yellow" Label="Yellow" />
+                        <BbTreeItem Value="purple" Label="Purple" />
+                    </BbTreeView>
+                    <p class="text-xs text-muted-foreground mt-2">Selected: @(multiSelectedValues.Count > 0 ? string.Join(", ", multiSelectedValues) : "None")</p>
+                </div>
+            </div>
+        </section>
+
+        @* --- 5. Checkable Tree with Cascade --- *@
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Checkable Tree</h2>
+                <p class="text-muted-foreground">
+                    Tri-state checkboxes with parent/child cascade. Checking a parent checks all descendants.
+                    Checking some children puts the parent in indeterminate state.
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-4">
+                <BbTreeView TItem="object" Checkable="true" @bind-CheckedValues="checkedPermissions" DefaultExpandAll="true">
+                    <BbTreeItem Value="admin" Label="Administration" Icon="shield">
+                        <BbTreeItem Value="users" Label="User Management" Icon="users">
+                            <BbTreeItem Value="user-create" Label="Create Users" />
+                            <BbTreeItem Value="user-edit" Label="Edit Users" />
+                            <BbTreeItem Value="user-delete" Label="Delete Users" />
+                        </BbTreeItem>
+                        <BbTreeItem Value="settings" Label="Settings" Icon="settings">
+                            <BbTreeItem Value="settings-general" Label="General Settings" />
+                            <BbTreeItem Value="settings-security" Label="Security Settings" />
+                        </BbTreeItem>
+                    </BbTreeItem>
+                    <BbTreeItem Value="content" Label="Content" Icon="file-text">
+                        <BbTreeItem Value="content-create" Label="Create Content" />
+                        <BbTreeItem Value="content-edit" Label="Edit Content" />
+                        <BbTreeItem Value="content-publish" Label="Publish Content" />
+                    </BbTreeItem>
+                </BbTreeView>
+            </div>
+            <p class="text-sm text-muted-foreground">
+                Checked: <strong>@(checkedPermissions.Count > 0 ? string.Join(", ", checkedPermissions) : "None")</strong>
+            </p>
+        </section>
+
+        @* --- 6. Lazy Loading --- *@
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Lazy Loading</h2>
+                <p class="text-muted-foreground">
+                    Children are loaded on demand when a node is expanded for the first time.
+                    A loading spinner appears during fetch, and results are cached.
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-4">
+                <BbTreeView TItem="LazyNode"
+                            Items="@lazyRootNodes"
+                            TextField="@(n => n.Name)"
+                            ValueField="@(n => n.Id)"
+                            IconField="@(n => n.Icon)"
+                            HasChildrenField="@(n => n.HasChildren)"
+                            OnLoadChildren="LoadLazyChildren"
+                            SelectionMode="TreeSelectionMode.Single"
+                            @bind-SelectedValue="selectedLazyNode" />
+            </div>
+        </section>
+
+        @* --- 7. Drag and Drop --- *@
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Drag and Drop</h2>
+                <p class="text-muted-foreground">
+                    Drag nodes to reorder or reparent within the tree. Drop indicators show
+                    where the node will be placed (before, after, or inside a target node).
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-4">
+                <BbTreeView TItem="DragNode"
+                            Items="@dragItems"
+                            ChildrenProperty="@(n => n.Children)"
+                            TextField="@(n => n.Name)"
+                            ValueField="@(n => n.Id)"
+                            IconField="@(n => n.Icon)"
+                            Draggable="true"
+                            OnNodeDrop="HandleDrop"
+                            DefaultExpandAll="true"
+                            SelectionMode="TreeSelectionMode.Single" />
+            </div>
+            <p class="text-sm text-muted-foreground">@dragMessage</p>
+        </section>
+
+        @* --- 8. Search and Filter --- *@
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Search and Filter</h2>
+                <p class="text-muted-foreground">
+                    Built-in search input filters visible nodes and auto-expands matching branches.
+                    Matching text is highlighted.
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-4">
+                <BbTreeView TItem="CategoryNode"
+                            Items="@nestedCategories"
+                            ChildrenProperty="@(c => c.Children)"
+                            TextField="@(c => c.Name)"
+                            ValueField="@(c => c.Id)"
+                            IconField="@(c => c.Icon)"
+                            ShowSearch="true"
+                            SearchPlaceholder="Search categories..."
+                            SelectionMode="TreeSelectionMode.Single"
+                            DefaultExpandDepth="1" />
+            </div>
+        </section>
+
+        @* --- 9. Custom Node Templates --- *@
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Custom Node Templates</h2>
+                <p class="text-muted-foreground">
+                    Nodes with custom label templates and action buttons that appear on hover.
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-4">
+                <BbTreeView TItem="object" SelectionMode="TreeSelectionMode.Single">
+                    <BbTreeItem Value="project" Label="My Project" Icon="folder">
+                        <BbTreeItem Value="src" Icon="folder">
+                            <LabelTemplate>
+                                <span class="font-medium">src</span>
+                                <span class="text-xs text-muted-foreground ml-1">(source code)</span>
+                            </LabelTemplate>
+                            <ActionsTemplate>
+                                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Class="h-6 w-6">
+                                    <LucideIcon Name="plus" Size="14" />
+                                </BbButton>
+                            </ActionsTemplate>
+                            <ChildContent>
+                                <BbTreeItem Value="app.cs" Label="App.cs" Icon="file-code" />
+                                <BbTreeItem Value="program.cs" Label="Program.cs" Icon="file-code" />
+                            </ChildContent>
+                        </BbTreeItem>
+                        <BbTreeItem Value="tests" Icon="folder">
+                            <LabelTemplate>
+                                <span class="font-medium">tests</span>
+                                <BbBadge Variant="BadgeVariant.Outline" Class="ml-1 text-xs px-1 py-0 h-4">2 files</BbBadge>
+                            </LabelTemplate>
+                            <ChildContent>
+                                <BbTreeItem Value="test1.cs" Label="AppTests.cs" Icon="file-code" />
+                                <BbTreeItem Value="test2.cs" Label="UtilTests.cs" Icon="file-code" />
+                            </ChildContent>
+                        </BbTreeItem>
+                    </BbTreeItem>
+                </BbTreeView>
+            </div>
+        </section>
+
+        @* --- 10. Icons and Badges --- *@
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Icons and Badges</h2>
+                <p class="text-muted-foreground">
+                    Nodes with Lucide icons and count badges.
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-4">
+                <BbTreeView TItem="object" SelectionMode="TreeSelectionMode.Single">
+                    <BbTreeItem Value="inbox" Label="Inbox" Icon="inbox" Badge="12">
+                        <BbTreeItem Value="primary" Label="Primary" Icon="mail" Badge="8" />
+                        <BbTreeItem Value="social" Label="Social" Icon="users" Badge="3" />
+                        <BbTreeItem Value="promotions" Label="Promotions" Icon="tag" Badge="1" />
+                    </BbTreeItem>
+                    <BbTreeItem Value="sent" Label="Sent" Icon="send" />
+                    <BbTreeItem Value="drafts" Label="Drafts" Icon="file-edit" Badge="2" />
+                    <BbTreeItem Value="trash" Label="Trash" Icon="trash-2" />
+                </BbTreeView>
+            </div>
+        </section>
+
+        @* --- 11. Controlled Tree --- *@
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Controlled Tree</h2>
+                <p class="text-muted-foreground">
+                    External state management for expand/collapse. Use buttons to control the tree programmatically.
+                </p>
+            </div>
+
+            <div class="flex gap-2 mb-2">
+                <BbButton Size="ButtonSize.Sm" OnClick="ExpandAllControlled">Expand All</BbButton>
+                <BbButton Size="ButtonSize.Sm" Variant="ButtonVariant.Outline" OnClick="CollapseAllControlled">Collapse All</BbButton>
+            </div>
+
+            <div class="rounded-lg border p-4">
+                <BbTreeView TItem="object" @bind-ExpandedValues="controlledExpandedValues" SelectionMode="TreeSelectionMode.Single">
+                    <BbTreeItem Value="c-root" Label="Root" Icon="folder">
+                        <BbTreeItem Value="c-branch1" Label="Branch 1" Icon="folder">
+                            <BbTreeItem Value="c-leaf1" Label="Leaf 1" Icon="file" />
+                            <BbTreeItem Value="c-leaf2" Label="Leaf 2" Icon="file" />
+                        </BbTreeItem>
+                        <BbTreeItem Value="c-branch2" Label="Branch 2" Icon="folder">
+                            <BbTreeItem Value="c-leaf3" Label="Leaf 3" Icon="file" />
+                        </BbTreeItem>
+                    </BbTreeItem>
+                </BbTreeView>
+            </div>
+        </section>
+
+        @* --- 12. File Explorer Example --- *@
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">File Explorer</h2>
+                <p class="text-muted-foreground">
+                    A comprehensive file explorer combining selection, icons, badges, and search.
+                </p>
+            </div>
+
+            <div class="rounded-lg border p-4">
+                <BbTreeView TItem="CategoryNode"
+                            Items="@fileExplorerData"
+                            ChildrenProperty="@(n => n.Children)"
+                            TextField="@(n => n.Name)"
+                            ValueField="@(n => n.Id)"
+                            IconField="@(n => n.Icon)"
+                            ShowSearch="true"
+                            SearchPlaceholder="Search files..."
+                            SelectionMode="TreeSelectionMode.Single"
+                            @bind-SelectedValue="selectedFile"
+                            DefaultExpandDepth="2"
+                            ShowLines="true" />
+            </div>
+            <p class="text-sm text-muted-foreground">
+                Selected file: <strong>@(selectedFile ?? "None")</strong>
+            </p>
+        </section>
+    </div>
+</div>
+
+@code {
+    // --- Selection state ---
+    private string? selectedCategory;
+    private HashSet<string> selectedFlatIds = new();
+    private string? singleSelectedValue;
+    private HashSet<string> multiSelectedValues = new();
+    private HashSet<string> checkedPermissions = new();
+    private string? selectedLazyNode;
+    private string? selectedFile;
+    private string dragMessage = "Drag a node to reorder.";
+
+    // --- Controlled tree ---
+    private HashSet<string> controlledExpandedValues = new() { "c-root" };
+
+    private void ExpandAllControlled()
+    {
+        controlledExpandedValues = new HashSet<string> { "c-root", "c-branch1", "c-branch2" };
+    }
+
+    private void CollapseAllControlled()
+    {
+        controlledExpandedValues = new HashSet<string>();
+    }
+
+    // --- Nested category data ---
+    private List<CategoryNode> nestedCategories = new()
+    {
+        new CategoryNode
+        {
+            Id = "electronics", Name = "Electronics", Icon = "cpu",
+            Children = new List<CategoryNode>
+            {
+                new CategoryNode
+                {
+                    Id = "phones", Name = "Phones", Icon = "smartphone",
+                    Children = new List<CategoryNode>
+                    {
+                        new CategoryNode { Id = "iphone", Name = "iPhone", Icon = "smartphone" },
+                        new CategoryNode { Id = "samsung", Name = "Samsung Galaxy", Icon = "smartphone" },
+                        new CategoryNode { Id = "pixel", Name = "Google Pixel", Icon = "smartphone" }
+                    }
+                },
+                new CategoryNode
+                {
+                    Id = "laptops", Name = "Laptops", Icon = "laptop",
+                    Children = new List<CategoryNode>
+                    {
+                        new CategoryNode { Id = "macbook", Name = "MacBook", Icon = "laptop" },
+                        new CategoryNode { Id = "thinkpad", Name = "ThinkPad", Icon = "laptop" }
+                    }
+                },
+                new CategoryNode { Id = "tablets", Name = "Tablets", Icon = "tablet" }
+            }
+        },
+        new CategoryNode
+        {
+            Id = "clothing", Name = "Clothing", Icon = "shirt",
+            Children = new List<CategoryNode>
+            {
+                new CategoryNode { Id = "mens", Name = "Men's", Icon = "shirt" },
+                new CategoryNode { Id = "womens", Name = "Women's", Icon = "shirt" },
+                new CategoryNode { Id = "kids", Name = "Kids", Icon = "baby" }
+            }
+        },
+        new CategoryNode { Id = "books", Name = "Books", Icon = "book-open" }
+    };
+
+    // --- Flat data ---
+    private List<FlatNode> flatNodes = new()
+    {
+        new FlatNode { Id = "usa", Name = "United States", ParentId = null },
+        new FlatNode { Id = "ca", Name = "California", ParentId = "usa" },
+        new FlatNode { Id = "ny", Name = "New York", ParentId = "usa" },
+        new FlatNode { Id = "tx", Name = "Texas", ParentId = "usa" },
+        new FlatNode { Id = "sf", Name = "San Francisco", ParentId = "ca" },
+        new FlatNode { Id = "la", Name = "Los Angeles", ParentId = "ca" },
+        new FlatNode { Id = "nyc", Name = "New York City", ParentId = "ny" },
+        new FlatNode { Id = "uk", Name = "United Kingdom", ParentId = null },
+        new FlatNode { Id = "london", Name = "London", ParentId = "uk" },
+        new FlatNode { Id = "manchester", Name = "Manchester", ParentId = "uk" }
+    };
+
+    // --- Lazy loading ---
+    private List<LazyNode> lazyRootNodes = new()
+    {
+        new LazyNode { Id = "dept-eng", Name = "Engineering", Icon = "code", HasChildren = true },
+        new LazyNode { Id = "dept-design", Name = "Design", Icon = "palette", HasChildren = true },
+        new LazyNode { Id = "dept-marketing", Name = "Marketing", Icon = "megaphone", HasChildren = true }
+    };
+
+    private async Task<IEnumerable<LazyNode>> LoadLazyChildren(LazyNode parent)
+    {
+        // Simulate network delay
+        await Task.Delay(1000);
+
+        return parent.Id switch
+        {
+            "dept-eng" => new List<LazyNode>
+            {
+                new LazyNode { Id = "team-frontend", Name = "Frontend", Icon = "monitor", HasChildren = true },
+                new LazyNode { Id = "team-backend", Name = "Backend", Icon = "server", HasChildren = true },
+                new LazyNode { Id = "team-infra", Name = "Infrastructure", Icon = "cloud", HasChildren = false }
+            },
+            "dept-design" => new List<LazyNode>
+            {
+                new LazyNode { Id = "team-ux", Name = "UX Research", Icon = "search", HasChildren = false },
+                new LazyNode { Id = "team-ui", Name = "UI Design", Icon = "figma", HasChildren = false }
+            },
+            "dept-marketing" => new List<LazyNode>
+            {
+                new LazyNode { Id = "team-content", Name = "Content", Icon = "pen-tool", HasChildren = false },
+                new LazyNode { Id = "team-social", Name = "Social Media", Icon = "share-2", HasChildren = false }
+            },
+            "team-frontend" => new List<LazyNode>
+            {
+                new LazyNode { Id = "alice", Name = "Alice", Icon = "user", HasChildren = false },
+                new LazyNode { Id = "bob", Name = "Bob", Icon = "user", HasChildren = false }
+            },
+            "team-backend" => new List<LazyNode>
+            {
+                new LazyNode { Id = "charlie", Name = "Charlie", Icon = "user", HasChildren = false },
+                new LazyNode { Id = "diana", Name = "Diana", Icon = "user", HasChildren = false }
+            },
+            _ => Enumerable.Empty<LazyNode>()
+        };
+    }
+
+    // --- Drag and drop ---
+    private List<DragNode> dragItems = new()
+    {
+        new DragNode
+        {
+            Id = "todo", Name = "To Do", Icon = "circle",
+            Children = new List<DragNode>
+            {
+                new DragNode { Id = "task1", Name = "Design mockups", Icon = "file" },
+                new DragNode { Id = "task2", Name = "Write tests", Icon = "file" }
+            }
+        },
+        new DragNode
+        {
+            Id = "inprogress", Name = "In Progress", Icon = "clock",
+            Children = new List<DragNode>
+            {
+                new DragNode { Id = "task3", Name = "Build API", Icon = "file" }
+            }
+        },
+        new DragNode
+        {
+            Id = "done", Name = "Done", Icon = "check-circle",
+            Children = new List<DragNode>
+            {
+                new DragNode { Id = "task4", Name = "Setup CI/CD", Icon = "file" }
+            }
+        }
+    };
+
+    private Task HandleDrop(TreeDropEventArgs<DragNode> args)
+    {
+        dragMessage = $"Dropped '{args.SourceNode.Name}' {args.Position.ToString().ToLower()} '{args.TargetNode.Name}'";
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    // --- File explorer data ---
+    private List<CategoryNode> fileExplorerData = new()
+    {
+        new CategoryNode
+        {
+            Id = "fe-src", Name = "src", Icon = "folder",
+            Children = new List<CategoryNode>
+            {
+                new CategoryNode
+                {
+                    Id = "fe-components", Name = "components", Icon = "folder",
+                    Children = new List<CategoryNode>
+                    {
+                        new CategoryNode { Id = "fe-button", Name = "Button.razor", Icon = "file-code" },
+                        new CategoryNode { Id = "fe-input", Name = "Input.razor", Icon = "file-code" },
+                        new CategoryNode { Id = "fe-dialog", Name = "Dialog.razor", Icon = "file-code" },
+                        new CategoryNode { Id = "fe-treeview", Name = "TreeView.razor", Icon = "file-code" }
+                    }
+                },
+                new CategoryNode
+                {
+                    Id = "fe-pages", Name = "pages", Icon = "folder",
+                    Children = new List<CategoryNode>
+                    {
+                        new CategoryNode { Id = "fe-index", Name = "Index.razor", Icon = "file-code" },
+                        new CategoryNode { Id = "fe-about", Name = "About.razor", Icon = "file-code" }
+                    }
+                },
+                new CategoryNode { Id = "fe-app", Name = "App.razor", Icon = "file-code" },
+                new CategoryNode { Id = "fe-program", Name = "Program.cs", Icon = "file-code" }
+            }
+        },
+        new CategoryNode
+        {
+            Id = "fe-tests", Name = "tests", Icon = "folder",
+            Children = new List<CategoryNode>
+            {
+                new CategoryNode { Id = "fe-unit", Name = "UnitTests.cs", Icon = "file-code" },
+                new CategoryNode { Id = "fe-integration", Name = "IntegrationTests.cs", Icon = "file-code" }
+            }
+        },
+        new CategoryNode { Id = "fe-readme", Name = "README.md", Icon = "file" },
+        new CategoryNode { Id = "fe-gitignore", Name = ".gitignore", Icon = "file" },
+        new CategoryNode { Id = "fe-sln", Name = "Solution.sln", Icon = "file-code" }
+    };
+
+    // --- Data model classes ---
+    private class CategoryNode
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? Icon { get; set; }
+        public List<CategoryNode>? Children { get; set; }
+    }
+
+    private class FlatNode
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? ParentId { get; set; }
+    }
+
+    private class LazyNode
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? Icon { get; set; }
+        public bool HasChildren { get; set; }
+        public List<LazyNode>? Children { get; set; }
+    }
+
+    private class DragNode
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? Icon { get; set; }
+        public List<DragNode>? Children { get; set; }
+    }
+}
