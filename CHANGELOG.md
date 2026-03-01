@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-01
+
+### Added
+
+- **BbFormWizard** — Multi-step form wizard component with `BbWizardStep` composition for defining steps.
+  - Horizontal and vertical step indicator layouts with visual step states (pending, active, completed, invalid).
+  - Per-step validation via `FieldNames` (EditContext integration) or custom `Validator` callbacks.
+  - `RetainStepState` parameter (default `true`) — when `false`, navigating backward clears forward step state and resets model data via reflection.
+  - Optional/skippable steps with a built-in Skip button for steps marked `IsOptional`.
+  - Disabled step support — disabled steps are skipped during navigation.
+  - Controlled (`@bind-CurrentStep`) and uncontrolled usage modes.
+  - Custom navigation via `NavigationTemplate`, or customizable button labels (`BackLabel`, `NextLabel`, `CompleteLabel`).
+  - `OnComplete` and `OnStepChanged` event callbacks.
+  - Demo page with 8 interactive examples and View Code blocks.
+
+---
+
 ## 2026-02-28
 
 ### Added
