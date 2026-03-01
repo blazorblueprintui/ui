@@ -11,6 +11,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - **`BbFilterBuilder`** — Visual query builder for constructing data filter expressions with AND/OR logic, nested groups, and type-aware value inputs. Supports `Text`, `Number`, `Date`, `DateTime`, `Boolean`, and `Enum` field types with automatic operator selection and value input rendering (text input, numeric input, date picker, date range picker, multi-select, etc.). Filter evaluation via `ToFunc<T>()` for client-side LINQ-to-Objects, `ToExpression<T>()` for server-side EF Core/IQueryable queries, and `ToJson()`/`FromJson()` for serialization. Configurable `MaxDepth`, `MaxConditions`, `ShowApplyButton` with debounced auto-apply, and `Compact` layout mode.
+- **BbFormWizard** — Multi-step form wizard component with `BbWizardStep` composition for defining steps.
+  - Horizontal and vertical step indicator layouts with visual step states (pending, active, completed, invalid).
+  - Per-step validation via `FieldNames` (EditContext integration) or custom `Validator` callbacks.
+  - `RetainStepState` parameter (default `true`) — when `false`, navigating backward clears forward step state and resets model data via reflection.
+  - Optional/skippable steps with a built-in Skip button for steps marked `IsOptional`.
+  - Disabled step support — disabled steps are skipped during navigation.
+  - Controlled (`@bind-CurrentStep`) and uncontrolled usage modes.
+  - Custom navigation via `NavigationTemplate`, or customizable button labels (`BackLabel`, `NextLabel`, `CompleteLabel`).
+  - `OnComplete` and `OnStepChanged` event callbacks.
+  - Demo page with 8 interactive examples and View Code blocks.
 
 ---
 
