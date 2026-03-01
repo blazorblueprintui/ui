@@ -7,7 +7,7 @@ namespace BlazorBlueprint.Components;
 /// Holds step metadata (title, icon, validation) and conditionally renders
 /// its content when the step is active.
 /// </summary>
-public partial class BbWizardStep : ComponentBase
+public partial class BbWizardStep : ComponentBase, IDisposable
 {
     private int index = -1;
 
@@ -101,6 +101,13 @@ public partial class BbWizardStep : ComponentBase
             FieldNames = FieldNames,
             Validator = Validator
         });
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        Wizard?.UnregisterStep(this);
+        GC.SuppressFinalize(this);
     }
 
     private string? CssClass => ClassNames.cn(Class);

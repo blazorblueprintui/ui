@@ -13,7 +13,6 @@
             @* Step button *@
             <button type="button"
                     class="@GetStepButtonClass(index)"
-                    aria-label="@step.Title"
                     aria-current="@(state == WizardStepState.Active ? "step" : null)"
                     disabled="@(!CanNavigateToStep(index) && state != WizardStepState.Active)"
                     @onclick="() => GoToStepAsync(index)">
@@ -39,10 +38,16 @@
                         @(index + 1)
                     }
                 </span>
-                <span class="@GetStepTitleClass(state)">@step.Title</span>
                 @if (Layout == WizardLayout.Vertical && step.Description is not null)
                 {
-                    <span class="text-xs text-muted-foreground">@step.Description</span>
+                    <span class="flex flex-col">
+                        <span class="@GetStepTitleClass(state)">@step.Title</span>
+                        <span class="text-xs text-muted-foreground">@step.Description</span>
+                    </span>
+                }
+                else
+                {
+                    <span class="@GetStepTitleClass(state)">@step.Title</span>
                 }
             </button>
 

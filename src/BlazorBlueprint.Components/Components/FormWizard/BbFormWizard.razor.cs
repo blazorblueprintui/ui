@@ -213,13 +213,89 @@ public partial class BbFormWizard : ComponentBase
         return idx;
     }
 
+    /// <summary>
+    /// Unregisters a step when its component is disposed.
+    /// Rebuilds indices so the step list stays contiguous.
+    /// </summary>
+    internal void UnregisterStep(BbWizardStep owner)
+    {
+        if (!stepOwners.TryGetValue(owner, out var removedIdx))
+        {
+            return;
+        }
+
+        steps.RemoveAt(removedIdx);
+        stepOwners.Remove(owner);
+
+        // Rebuild indices for steps after the removed one
+        foreach (var kvp in stepOwners)
+        {
+            if (kvp.Value > removedIdx)
+            {
+                stepOwners[kvp.Key] = kvp.Value - 1;
+            }
+        }
+
+        // Clean up state that referenced the removed index
+        stepValidationState.Remove(removedIdx);
+        skippedSteps.Remove(removedIdx);
+        visitedSteps.Remove(removedIdx);
+
+        // Shift state entries above the removed index down by one
+        ShiftStateAfterRemoval(removedIdx);
+
+        // Clamp current step if it's now out of range
+        if (steps.Count > 0 && currentStep >= steps.Count)
+        {
+            currentStep = steps.Count - 1;
+        }
+    }
+
+    private void ShiftStateAfterRemoval(int removedIdx)
+    {
+        var newValidation = new Dictionary<int, bool>();
+        foreach (var kvp in stepValidationState)
+        {
+            newValidation[kvp.Key > removedIdx ? kvp.Key - 1 : kvp.Key] = kvp.Value;
+        }
+        stepValidationState.Clear();
+        foreach (var kvp in newValidation)
+        {
+            stepValidationState[kvp.Key] = kvp.Value;
+        }
+
+        var newSkipped = new HashSet<int>();
+        foreach (var idx in skippedSteps)
+        {
+            newSkipped.Add(idx > removedIdx ? idx - 1 : idx);
+        }
+        skippedSteps.Clear();
+        foreach (var idx in newSkipped)
+        {
+            skippedSteps.Add(idx);
+        }
+
+        var newVisited = new HashSet<int>();
+        foreach (var idx in visitedSteps)
+        {
+            newVisited.Add(idx > removedIdx ? idx - 1 : idx);
+        }
+        visitedSteps.Clear();
+        foreach (var idx in newVisited)
+        {
+            visitedSteps.Add(idx);
+        }
+    }
+
     /// <inheritdoc />
     protected override void OnParametersSet()
     {
         // Sync controlled state
         if (CurrentStepChanged.HasDelegate && CurrentStep != currentStep)
         {
-            currentStep = CurrentStep;
+            currentStep = steps.Count > 0
+                ? Math.Clamp(CurrentStep, 0, steps.Count - 1)
+                : 0;
             visitedSteps.Add(currentStep);
         }
     }
