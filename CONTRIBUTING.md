@@ -30,7 +30,27 @@ We welcome all contributions — whether it's bug fixes, new features, documenta
    ```bash
    git remote add upstream https://github.com/blazorblueprintui/ui.git
    ```
-4. **Install dependencies** and verify the project builds:
+4. **Download the Tailwind CSS standalone CLI:**
+
+   Blazor Blueprint uses the [Tailwind CSS standalone CLI](https://tailwindcss.com/blog/standalone-cli) — no Node.js or npm required. The binary is not included in the repository and must be downloaded before your first build.
+
+   Run the appropriate script from the `tools/` directory:
+
+   **Linux / macOS:**
+   ```bash
+   cd tools
+   ./install.sh
+   ```
+
+   **Windows (PowerShell):**
+   ```powershell
+   cd tools
+   .\install.ps1
+   ```
+   
+   The MSBuild target (`tools/tailwind.targets`) is imported by `BlazorBlueprint.Components` and runs automatically on every build — no manual Tailwind invocation needed.
+
+5. **Install dependencies** and verify the project builds:
    ```bash
    dotnet build
    ```
