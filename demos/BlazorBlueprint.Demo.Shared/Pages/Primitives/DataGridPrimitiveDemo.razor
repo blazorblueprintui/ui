@@ -574,6 +574,96 @@
         <CodeBlock Source="Primitives/DataGrid/column-resize.txt" />
     </section>
 
+    @* Pinned Columns *@
+    <section class="space-y-4">
+        <div>
+            <h2 class="text-2xl font-semibold">Pinned Columns</h2>
+            <p class="text-sm text-muted-foreground">
+                Pin columns to the left or right edge using CSS <code class="text-xs bg-muted px-1 py-0.5 rounded">position: sticky</code>
+                with computed pixel offsets. Pinned columns remain visible while the middle content scrolls horizontally.
+            </p>
+        </div>
+        <div class="space-y-4">
+            <div class="max-w-[700px] overflow-x-auto rounded-md border">
+                <BlazorBlueprint.Primitives.DataGrid.BbDataGrid TData="Person" Items="@people"
+                        AriaLabel="Pinned columns grid" Class="w-full caption-bottom text-sm table-fixed" style="min-width: 1000px;">
+                    <colgroup>
+                        <col style="width: 120px" />
+                        <col style="width: 200px" />
+                        <col style="width: 200px" />
+                        <col style="width: 100px" />
+                        <col style="width: 180px" />
+                        <col style="width: 120px" />
+                    </colgroup>
+                    <BbDataGridHeader Class="[&_tr]:border-b">
+                        <tr class="border-b transition-colors hover:bg-muted/50">
+                            @* Left-pinned: Name *@
+                            <BbDataGridHeaderCell TData="Person" ColumnId="name"
+                                                  Class="h-12 px-4 text-left align-middle font-medium bg-background border-r border-border"
+                                                  style="position: sticky; left: 0; z-index: 2;">
+                                Name
+                            </BbDataGridHeaderCell>
+                            @* Scrollable middle columns *@
+                            <BbDataGridHeaderCell TData="Person" ColumnId="email"
+                                                  Class="h-12 px-4 text-left align-middle font-medium">
+                                Email
+                            </BbDataGridHeaderCell>
+                            <BbDataGridHeaderCell TData="Person" ColumnId="department"
+                                                  Class="h-12 px-4 text-left align-middle font-medium">
+                                Department
+                            </BbDataGridHeaderCell>
+                            <BbDataGridHeaderCell TData="Person" ColumnId="age"
+                                                  Class="h-12 px-4 text-left align-middle font-medium">
+                                Age
+                            </BbDataGridHeaderCell>
+                            <BbDataGridHeaderCell TData="Person" ColumnId="id"
+                                                  Class="h-12 px-4 text-left align-middle font-medium">
+                                ID
+                            </BbDataGridHeaderCell>
+                            @* Right-pinned: Actions *@
+                            <BbDataGridHeaderCell TData="Person" ColumnId="actions"
+                                                  Class="h-12 px-4 text-left align-middle font-medium bg-background border-l border-border"
+                                                  style="position: sticky; right: 0; z-index: 2;">
+                                Actions
+                            </BbDataGridHeaderCell>
+                        </tr>
+                    </BbDataGridHeader>
+                    <BbDataGridBody>
+                        @foreach (var person in people)
+                        {
+                            <BbDataGridRow TData="Person">
+                                @* Left-pinned cell *@
+                                <BbDataGridCell Class="p-4 align-middle bg-background border-r border-border"
+                                                style="position: sticky; left: 0; z-index: 1;">
+                                    @person.Name
+                                </BbDataGridCell>
+                                @* Scrollable cells *@
+                                <BbDataGridCell Class="p-4 align-middle overflow-hidden text-ellipsis whitespace-nowrap">
+                                    @person.Email
+                                </BbDataGridCell>
+                                <BbDataGridCell Class="p-4 align-middle">
+                                    @person.Department
+                                </BbDataGridCell>
+                                <BbDataGridCell Class="p-4 align-middle">
+                                    @person.Age
+                                </BbDataGridCell>
+                                <BbDataGridCell Class="p-4 align-middle">
+                                    @person.Id
+                                </BbDataGridCell>
+                                @* Right-pinned cell *@
+                                <BbDataGridCell Class="p-4 align-middle bg-background border-l border-border"
+                                                style="position: sticky; right: 0; z-index: 1;">
+                                    <button class="text-sm text-primary hover:underline">Edit</button>
+                                </BbDataGridCell>
+                            </BbDataGridRow>
+                        }
+                    </BbDataGridBody>
+                </BlazorBlueprint.Primitives.DataGrid.BbDataGrid>
+            </div>
+        </div>
+        <CodeBlock Source="Primitives/DataGrid/pinned-columns.txt" />
+    </section>
+
     @* All Features Combined *@
     <section class="space-y-4">
         <div>

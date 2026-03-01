@@ -74,6 +74,13 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
     public bool Reorderable { get; set; } = true;
 
     /// <summary>
+    /// Whether this column is pinned to an edge of the scrollable viewport.
+    /// Pinned columns use CSS position: sticky. Default is <see cref="ColumnPinning.None"/>.
+    /// </summary>
+    [Parameter]
+    public ColumnPinning Pinned { get; set; } = ColumnPinning.None;
+
+    /// <summary>
     /// Additional CSS classes for cells in this column.
     /// </summary>
     [Parameter]
@@ -107,7 +114,9 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
 
     bool IDataGridColumn<TData>.Resizable => Resizable;
 
-    bool IDataGridColumn<TData>.Reorderable => Reorderable;
+    bool IDataGridColumn<TData>.Reorderable => Reorderable && Pinned == ColumnPinning.None;
+
+    ColumnPinning IDataGridColumn<TData>.Pinned => Pinned;
 
     RenderFragment<DataGridCellContext<TData>>? IDataGridColumn<TData>.CellTemplate =>
         ChildContent != null

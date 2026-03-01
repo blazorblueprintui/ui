@@ -281,6 +281,9 @@ export function setupDraggableHeaders(gridId, reorderableColumnIds) {
     const columnId = th.getAttribute('data-column-id');
     if (state.dragColumnId === columnId) return;
 
+    // Do not show drop indicator over pinned columns
+    if (th.getAttribute('data-pinned') === 'true') return;
+
     e.preventDefault();
     if (e.dataTransfer) {
       e.dataTransfer.dropEffect = 'move';
@@ -321,6 +324,9 @@ export function setupDraggableHeaders(gridId, reorderableColumnIds) {
 
     const th = e.target.closest('th[data-column-id]');
     if (!th) return;
+
+    // Do not allow dropping onto a pinned column
+    if (th.getAttribute('data-pinned') === 'true') return;
 
     // Determine target index from visible header cells
     const headerCells = Array.from(

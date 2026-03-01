@@ -1,6 +1,7 @@
 @namespace BlazorBlueprint.Components
 @typeparam TData where TData : class
 @using BlazorBlueprint.Icons.Lucide.Components
+@using BlazorBlueprint.Primitives.DataGrid
 
 <CascadingValue Value="this" IsFixed="true">
     <div class="@ClassNames.cn("w-full", Class)">
@@ -45,9 +46,9 @@
                     EnableKeyboardNavigation="@EnableKeyboardNavigation"
                     OnSortChange="HandleSortChange"
                     OnSelectionChange="HandleSelectionChange"
-                    Class="@ClassNames.cn("w-full caption-bottom text-sm", Resizable ? "table-fixed" : "")"
+                    Class="@ClassNames.cn("w-full caption-bottom text-sm", HasTableFixed() ? "table-fixed" : "")"
                     AriaLabel="@AriaLabel">
-                    @if (Resizable)
+                    @if (HasTableFixed())
                     {
                         <colgroup>
                             @foreach (var col in GetVisibleColumns())
@@ -58,19 +59,27 @@
                     }
                     <BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader Class="@ClassNames.cn("[&_tr]:border-b", StickyHeader ? "sticky top-0 z-10 bg-background" : "")">
                         <BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Class="border-b transition-colors hover:bg-muted/50">
-                            @foreach (var column in GetVisibleColumns())
+                            @{
+                                var headerVisibleCols = GetVisibleColumns().ToList();
+                                var headerLastLeftId = headerVisibleCols.LastOrDefault(c => c.Pinned == ColumnPinning.Left)?.ColumnId;
+                                var headerFirstRightId = headerVisibleCols.FirstOrDefault(c => c.Pinned == ColumnPinning.Right)?.ColumnId;
+                            }
+                            @foreach (var column in headerVisibleCols)
                             {
                                 var sortDirection = _gridState.Sorting.GetDirection(column.ColumnId);
                                 var sortPriority = _gridState.Sorting.GetPriority(column.ColumnId);
                                 var isSelectColumn = column.ColumnId == "__select";
+                                var isLastLeft = column.ColumnId == headerLastLeftId;
+                                var isFirstRight = column.ColumnId == headerFirstRightId;
 
                                 <BlazorBlueprint.Primitives.DataGrid.BbDataGridHeaderCell TData="TData"
                                     @key="@column.ColumnId"
                                     ColumnId="@column.ColumnId"
                                     Sortable="@column.Sortable"
                                     Reorderable="@(Reorderable && column.Reorderable)"
-                                    Class="@GetHeaderCellClass(column, isSelectColumn)"
-                                    style="@GetColumnWidthStyle(column)">
+                                    Class="@GetHeaderCellClass(column, isSelectColumn, isLastLeft, isFirstRight)"
+                                    style="@GetColumnStyle(column, headerVisibleCols)"
+                                    data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)">
                                     @if (isSelectColumn)
                                     {
                                         <div @onclick:stopPropagation="true">
@@ -203,13 +212,22 @@
     private RenderFragment<TData> RenderDataRow => item =>
         @<BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Item="@item"
             Class="@ClassNames.cn("border-b transition-colors hover:bg-muted/50", _gridState.Selection.IsSelected(item) ? "bg-muted" : "")">
-            @foreach (var column in GetVisibleColumns())
+            @{
+                var bodyVisibleCols = GetVisibleColumns().ToList();
+                var bodyLastLeftId = bodyVisibleCols.LastOrDefault(c => c.Pinned == ColumnPinning.Left)?.ColumnId;
+                var bodyFirstRightId = bodyVisibleCols.FirstOrDefault(c => c.Pinned == ColumnPinning.Right)?.ColumnId;
+            }
+            @foreach (var column in bodyVisibleCols)
             {
                 var isSelectColumn = column.ColumnId == "__select";
+                var isLastLeft = column.ColumnId == bodyLastLeftId;
+                var isFirstRight = column.ColumnId == bodyFirstRightId;
+                var pinnedStyle = GetPinnedStyle(column, bodyVisibleCols);
 
                 <BlazorBlueprint.Primitives.DataGrid.BbDataGridCell
                     @key="@column.ColumnId"
-                    Class="@GetCellClass(column, isSelectColumn)">
+                    Class="@GetCellClass(column, isSelectColumn, isLastLeft, isFirstRight)"
+                    style="@pinnedStyle">
                     @if (isSelectColumn)
                     {
                         <div @onclick:stopPropagation="true">

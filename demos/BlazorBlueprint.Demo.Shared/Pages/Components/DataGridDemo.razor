@@ -243,6 +243,47 @@
         <CodeBlock Source="Components/DataGrid/reorderable-columns.txt" />
     </div>
 
+    <!-- ── Pinned Columns ──────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Pinned Columns</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left"</code> or
+                <code class="bg-muted px-1 py-0.5 rounded">Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Right"</code> on any column
+                to pin it to the edge of the scrollable viewport using CSS
+                <code class="bg-muted px-1 py-0.5 rounded">position: sticky</code>.
+                Offsets are computed automatically. Scroll horizontally to see pinned columns stay in place.
+            </p>
+        </div>
+        <div style="max-width: 700px; overflow: auto;">
+            <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                       SelectionMode="DataTableSelectionMode.Multiple">
+                <Columns>
+                    <BbDataGridSelectColumn TData="Person" Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)"
+                        Sortable Width="180px" Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)"
+                        Width="220px" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)"
+                        Width="180px" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)"
+                        Width="160px" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)"
+                        Width="100px" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)"
+                        Format="C0" Width="140px" />
+                    <BbDataGridTemplateColumn TData="Person" Title="Actions" Width="120px"
+                        Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Right">
+                        <ChildContent Context="person">
+                            <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small">Edit</BbButton>
+                        </ChildContent>
+                    </BbDataGridTemplateColumn>
+                </Columns>
+            </BbDataGrid>
+        </div>
+        <CodeBlock Source="Components/DataGrid/pinned-columns.txt" />
+    </div>
+
     <!-- ── All Column Features Combined ─────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -437,6 +478,9 @@
                 <ApiParameter Name="Reorderable" Type="bool" Default="true">
                     Whether this column can be reordered by dragging.
                 </ApiParameter>
+                <ApiParameter Name="Pinned" Type="ColumnPinning" Default="None">
+                    Whether this column is pinned to an edge of the scrollable viewport. Use BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left or BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Right.
+                </ApiParameter>
             </ApiReference>
 
             <ApiReference ComponentName="DataGridTemplateColumn">
@@ -463,6 +507,9 @@
             <ApiReference ComponentName="DataGridSelectColumn">
                 <ApiParameter Name="Width" Type="string?" Default="48px">
                     Column width for the checkbox column. Defaults to a compact checkbox width.
+                </ApiParameter>
+                <ApiParameter Name="Pinned" Type="ColumnPinning" Default="None">
+                    Whether this column is pinned. Commonly set to BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left to keep the checkbox column visible when scrolling horizontally.
                 </ApiParameter>
             </ApiReference>
         </div>

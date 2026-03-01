@@ -53,6 +53,13 @@ public interface IDataGridColumn<TData> where TData : class
     public bool Reorderable { get; }
 
     /// <summary>
+    /// Gets whether this column is pinned to an edge of the scrollable viewport.
+    /// Pinned columns use CSS position: sticky with automatically computed offsets.
+    /// Default is <see cref="ColumnPinning.None"/>.
+    /// </summary>
+    public ColumnPinning Pinned { get; }
+
+    /// <summary>
     /// Gets the value from a data item for this column (type-erased).
     /// </summary>
     /// <param name="item">The data item.</param>

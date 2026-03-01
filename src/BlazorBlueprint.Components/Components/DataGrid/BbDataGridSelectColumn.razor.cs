@@ -19,6 +19,14 @@ public partial class BbDataGridSelectColumn<TData> : ComponentBase, IDataGridCol
     public string? Width { get; set; } = "48px";
 
     /// <summary>
+    /// Whether this column is pinned to an edge of the scrollable viewport.
+    /// Default is <see cref="ColumnPinning.None"/>. Commonly set to <see cref="ColumnPinning.Left"/>
+    /// to keep the checkbox column visible when the grid scrolls horizontally.
+    /// </summary>
+    [Parameter]
+    public ColumnPinning Pinned { get; set; } = ColumnPinning.None;
+
+    /// <summary>
     /// The parent DataGrid component. Set via cascading parameter.
     /// </summary>
     [CascadingParameter]
@@ -41,6 +49,8 @@ public partial class BbDataGridSelectColumn<TData> : ComponentBase, IDataGridCol
     bool IDataGridColumn<TData>.Resizable => false;
 
     bool IDataGridColumn<TData>.Reorderable => false;
+
+    ColumnPinning IDataGridColumn<TData>.Pinned => Pinned;
 
     RenderFragment<DataGridCellContext<TData>>? IDataGridColumn<TData>.CellTemplate => null;
 

@@ -322,7 +322,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     internal IReadOnlyList<IDataGridColumn<TData>> GetAllColumns() => _columns.AsReadOnly();
 
-    private IEnumerable<IDataGridColumn<TData>> GetVisibleColumns()
+    private List<IDataGridColumn<TData>> GetVisibleColumns()
     {
         // Column components register in OnInitialized (during render), which runs
         // after ProcessDataAsync in OnParametersSetAsync. Ensure the column state
@@ -331,7 +331,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         if (!columnStateInitialized)
         {
-            return _columns.Where(c => c.Visible);
+            var visible = _columns.Where(c => c.Visible).ToList();
+            return PartitionByPinning(visible);
         }
 
         var visibleIds = _gridState.Columns.GetVisibleColumnIds();
@@ -350,6 +351,44 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             }
         }
 
+        return PartitionByPinning(result);
+    }
+
+    /// <summary>
+    /// Reorders a list of columns so left-pinned come first, unpinned in the middle,
+    /// and right-pinned come last. Preserves relative order within each group.
+    /// </summary>
+    private static List<IDataGridColumn<TData>> PartitionByPinning(List<IDataGridColumn<TData>> columns)
+    {
+        if (!columns.Any(c => c.Pinned != ColumnPinning.None))
+        {
+            return columns;
+        }
+
+        var leftPinned = new List<IDataGridColumn<TData>>();
+        var unpinned = new List<IDataGridColumn<TData>>();
+        var rightPinned = new List<IDataGridColumn<TData>>();
+
+        foreach (var col in columns)
+        {
+            switch (col.Pinned)
+            {
+                case ColumnPinning.Left:
+                    leftPinned.Add(col);
+                    break;
+                case ColumnPinning.Right:
+                    rightPinned.Add(col);
+                    break;
+                default:
+                    unpinned.Add(col);
+                    break;
+            }
+        }
+
+        var result = new List<IDataGridColumn<TData>>(columns.Count);
+        result.AddRange(leftPinned);
+        result.AddRange(unpinned);
+        result.AddRange(rightPinned);
         return result;
     }
 
@@ -701,13 +740,34 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         _ => Primitives.Table.SelectionMode.None
     };
 
-    private string GetHeaderCellClass(IDataGridColumn<TData> column, bool isSelectColumn)
+    private bool HasTableFixed() =>
+        Resizable || _columns.Any(c => c.Pinned != ColumnPinning.None);
+
+    private string GetHeaderCellClass(IDataGridColumn<TData> column, bool isSelectColumn,
+        bool isLastLeft, bool isFirstRight)
     {
         var baseClass = "h-12 px-4 text-left align-middle font-medium text-muted-foreground";
 
+        var pinnedClass = "";
+        if (column.Pinned != ColumnPinning.None)
+        {
+            var zClass = StickyHeader ? "z-20" : "z-10";
+            pinnedClass = ClassNames.cn("bg-background", zClass);
+        }
+
+        var separatorClass = "";
+        if (isLastLeft)
+        {
+            separatorClass = "border-r border-border";
+        }
+        else if (isFirstRight)
+        {
+            separatorClass = "border-l border-border";
+        }
+
         if (isSelectColumn)
         {
-            return ClassNames.cn(baseClass, "w-12");
+            return ClassNames.cn(baseClass, "w-12", pinnedClass, separatorClass);
         }
 
         var needsGroup = column.Sortable || (Reorderable && column.Reorderable);
@@ -717,16 +777,34 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         var positionClass = needsRelative ? "relative" : "";
         var overflowClass = Resizable ? "overflow-hidden" : "";
 
-        return ClassNames.cn(baseClass, sortClass, groupClass, positionClass, overflowClass);
+        return ClassNames.cn(baseClass, sortClass, groupClass, positionClass, overflowClass,
+            pinnedClass, separatorClass);
     }
 
-    private string GetCellClass(IDataGridColumn<TData> column, bool isSelectColumn)
+    private string GetCellClass(IDataGridColumn<TData> column, bool isSelectColumn,
+        bool isLastLeft, bool isFirstRight)
     {
         var baseClass = "p-4 align-middle";
 
+        var pinnedClass = "";
+        if (column.Pinned != ColumnPinning.None)
+        {
+            pinnedClass = ClassNames.cn("bg-background", "z-10");
+        }
+
+        var separatorClass = "";
+        if (isLastLeft)
+        {
+            separatorClass = "border-r border-border";
+        }
+        else if (isFirstRight)
+        {
+            separatorClass = "border-l border-border";
+        }
+
         if (isSelectColumn)
         {
-            return ClassNames.cn(baseClass, "w-12");
+            return ClassNames.cn(baseClass, "w-12", pinnedClass, separatorClass);
         }
 
         // Check if the column has a CellClass via the property or template column
@@ -738,7 +816,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         var overflowClass = Resizable ? "overflow-hidden" : "";
 
-        return ClassNames.cn(baseClass, cellClass, overflowClass);
+        return ClassNames.cn(baseClass, cellClass, overflowClass, pinnedClass, separatorClass);
     }
 
     private string? GetColumnWidthStyle(IDataGridColumn<TData> column)
@@ -746,6 +824,95 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         var stateWidth = columnStateInitialized ? _gridState.Columns.GetWidth(column.ColumnId) : null;
         var width = stateWidth ?? column.Width;
         return width != null ? $"width: {width}" : null;
+    }
+
+    /// <summary>
+    /// Resolves a column's effective pixel width from state (post-resize) or the column's
+    /// declared Width parameter. Falls back to 150px for non-pixel or missing widths,
+    /// since sticky offset calculation requires a numeric value.
+    /// </summary>
+    private double GetEffectiveWidthPx(IDataGridColumn<TData> column)
+    {
+        var stateWidth = columnStateInitialized ? _gridState.Columns.GetWidth(column.ColumnId) : null;
+        var width = stateWidth ?? column.Width;
+
+        if (width != null && width.EndsWith("px", StringComparison.OrdinalIgnoreCase)
+            && double.TryParse(width.AsSpan(0, width.Length - 2),
+                System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out var px))
+        {
+            return px;
+        }
+
+        return 150.0;
+    }
+
+    /// <summary>
+    /// Computes the CSS style string for a pinned column (position: sticky + left/right offset).
+    /// Returns null for unpinned columns.
+    /// </summary>
+    private string? GetPinnedStyle(IDataGridColumn<TData> column,
+        IReadOnlyList<IDataGridColumn<TData>> visibleColumns)
+    {
+        if (column.Pinned == ColumnPinning.None)
+        {
+            return null;
+        }
+
+        var offset = 0.0;
+
+        if (column.Pinned == ColumnPinning.Left)
+        {
+            foreach (var col in visibleColumns)
+            {
+                if (col.ColumnId == column.ColumnId)
+                {
+                    break;
+                }
+
+                if (col.Pinned == ColumnPinning.Left)
+                {
+                    offset += GetEffectiveWidthPx(col);
+                }
+            }
+
+            return $"position: sticky; left: {offset.ToString(System.Globalization.CultureInfo.InvariantCulture)}px";
+        }
+        else
+        {
+            for (var i = visibleColumns.Count - 1; i >= 0; i--)
+            {
+                var col = visibleColumns[i];
+                if (col.ColumnId == column.ColumnId)
+                {
+                    break;
+                }
+
+                if (col.Pinned == ColumnPinning.Right)
+                {
+                    offset += GetEffectiveWidthPx(col);
+                }
+            }
+
+            return $"position: sticky; right: {offset.ToString(System.Globalization.CultureInfo.InvariantCulture)}px";
+        }
+    }
+
+    /// <summary>
+    /// Merges the column width style and pinned style into a single style string.
+    /// </summary>
+    private string? GetColumnStyle(IDataGridColumn<TData> column,
+        IReadOnlyList<IDataGridColumn<TData>> visibleColumns)
+    {
+        var widthStyle = GetColumnWidthStyle(column);
+        var pinnedStyle = GetPinnedStyle(column, visibleColumns);
+
+        if (pinnedStyle != null && widthStyle != null)
+        {
+            return $"{widthStyle}; {pinnedStyle}";
+        }
+
+        return pinnedStyle ?? widthStyle;
     }
 
     protected override bool ShouldRender()
