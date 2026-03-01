@@ -8,7 +8,7 @@ public enum FilterFieldType
     /// <summary>
     /// Text field. Supports operators like Contains, StartsWith, EndsWith.
     /// </summary>
-    String,
+    Text,
 
     /// <summary>
     /// Numeric field. Supports comparison operators like GreaterThan, LessThan, Between.

@@ -1,0 +1,32 @@
+<BbFilterBuilder @bind-Filter="filter"
+                 Fields="@fields"
+                 MaxDepth="0"
+                 OnFilterChanged="HandleFilterChanged" />
+
+@code {
+    private FilterDefinition filter = new();
+
+    private readonly FilterField[] fields = new[]
+    {
+        new FilterField { Name = "Name", Label = "Name", Type = FilterFieldType.Text },
+        new FilterField { Name = "Email", Label = "Email", Type = FilterFieldType.Text },
+        new FilterField { Name = "Age", Label = "Age", Type = FilterFieldType.Number },
+        new FilterField { Name = "JoinDate", Label = "Join Date", Type = FilterFieldType.Date },
+        new FilterField
+        {
+            Name = "Status", Label = "Status", Type = FilterFieldType.Enum,
+            Options = new SelectOption<string>[]
+            {
+                new("Active", "Active"),
+                new("Inactive", "Inactive"),
+                new("Pending", "Pending")
+            }
+        },
+        new FilterField { Name = "IsActive", Label = "Active", Type = FilterFieldType.Boolean }
+    };
+
+    private void HandleFilterChanged(FilterDefinition filter)
+    {
+        // React to filter changes
+    }
+}

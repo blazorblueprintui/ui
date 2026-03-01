@@ -8,7 +8,35 @@
         <div class="space-y-3">
             <h1 class="text-4xl font-bold tracking-tight">Filter Builder</h1>
             <p class="text-xl text-muted-foreground">
-                A composable query builder for constructing data filter expressions with AND/OR logic and nested conditions.
+                A visual query builder for constructing data filter expressions with AND/OR logic, nested groups, and type-aware value inputs.
+            </p>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <div class="rounded-lg border border-dashed bg-muted/30 p-6 space-y-3">
+        <h2 class="text-lg font-semibold">How it works</h2>
+        <div class="space-y-2 text-sm text-muted-foreground">
+            <p>
+                The Filter Builder lets users construct structured filter expressions through an intuitive UI.
+                Each filter is a tree of <strong>conditions</strong> (field + operator + value) combined with
+                <strong>AND/OR groups</strong> that can be nested to any configurable depth.
+            </p>
+            <p>
+                <strong>Define fields</strong> — Provide an array of <code>FilterField</code> definitions describing the
+                filterable columns, their data types, and any enum options. The component automatically selects the
+                correct operators and value inputs for each type (text search, numeric comparison, date pickers, multi-select, etc.).
+            </p>
+            <p>
+                <strong>Bind and react</strong> — Use <code>@@bind-Filter</code> for two-way binding to a <code>FilterDefinition</code>
+                model. Subscribe to <code>OnFilterChanged</code> to apply filters whenever the user edits a condition.
+                Changes are debounced by default (300ms), or you can enable an explicit Apply button for expensive queries.
+            </p>
+            <p>
+                <strong>Evaluate anywhere</strong> — Convert the filter tree into a <code>Func&lt;T, bool&gt;</code>
+                for client-side in-memory filtering, or an <code>Expression&lt;Func&lt;T, bool&gt;&gt;</code>
+                for server-side queries with EF Core and other IQueryable providers. Filters can also be serialized
+                to JSON for storage or transmission.
             </p>
         </div>
     </div>
@@ -18,11 +46,12 @@
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">Basic Filter Builder</h2>
             <p class="text-sm text-muted-foreground">
-                Build filters with string, number, date, and enum fields. The filter definition is output as JSON below.
+                Build flat filters with string, number, date, enum, and boolean fields. The filter is output as JSON below.
             </p>
         </div>
         <BbFilterBuilder @bind-Filter="basicFilter"
                          Fields="@basicFields"
+                         MaxDepth="0"
                          OnFilterChanged="HandleBasicFilterChanged" />
 
         @if (!basicFilter.IsEmpty)
@@ -32,6 +61,7 @@
                 <pre class="text-xs overflow-auto max-h-64 text-muted-foreground">@basicFilterJson</pre>
             </div>
         }
+        <CodeBlock Source="Components/FilterBuilder/basic.txt" />
     </div>
 
     <!-- Nested Groups -->
@@ -40,12 +70,13 @@
             <h2 class="text-2xl font-semibold">Nested AND/OR Groups</h2>
             <p class="text-sm text-muted-foreground">
                 Create complex queries with nested groups. Click "Add group" to create sub-groups with their own AND/OR logic.
-                Maximum nesting depth is limited to 3 levels.
+                Each depth level is visually distinguished with a colored left border. Maximum nesting depth is configurable.
             </p>
         </div>
         <BbFilterBuilder @bind-Filter="nestedFilter"
                          Fields="@basicFields"
                          MaxDepth="3" />
+        <CodeBlock Source="Components/FilterBuilder/nested-groups.txt" />
     </div>
 
     <!-- With Apply Button -->
@@ -54,7 +85,7 @@
             <h2 class="text-2xl font-semibold">Apply Button Mode</h2>
             <p class="text-sm text-muted-foreground">
                 With <code>ShowApplyButton="true"</code>, changes are only applied when the user clicks the Apply button.
-                Useful for expensive server-side queries.
+                Useful for expensive server-side queries where you want to avoid triggering a request on every keystroke.
             </p>
         </div>
         <BbFilterBuilder @bind-Filter="applyFilter"
@@ -68,6 +99,7 @@
                 Filter applied with @applyFilter.TotalConditionCount condition(s)
             </BbBadge>
         }
+        <CodeBlock Source="Components/FilterBuilder/apply-button.txt" />
     </div>
 
     <!-- DataTable Integration -->
@@ -75,7 +107,9 @@
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">DataTable Integration</h2>
             <p class="text-sm text-muted-foreground">
-                Use the filter builder alongside a DataTable. The filter is applied client-side using <code>ToFunc&lt;T&gt;()</code>.
+                Pair the filter builder with a DataTable for interactive data exploration.
+                The filter is compiled to a <code>Func&lt;T, bool&gt;</code> using <code>ToFunc&lt;T&gt;()</code>
+                and applied client-side as users modify conditions.
             </p>
         </div>
         <BbFilterBuilder @bind-Filter="tableFilter"
@@ -108,6 +142,53 @@
                 </BbDataTableColumn>
             </Columns>
         </BbDataTable>
+        <CodeBlock Source="Components/FilterBuilder/datatable-integration.txt" />
+    </div>
+
+    <!-- LINQ & EF Core Integration -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">LINQ &amp; EF Core Integration</h2>
+            <p class="text-sm text-muted-foreground">
+                The <code>FilterDefinition</code> model can be converted to executable code for both client-side and server-side scenarios.
+            </p>
+        </div>
+        <div class="rounded-lg border border-dashed bg-muted/30 p-6 space-y-4">
+            <div class="space-y-2">
+                <h3 class="text-base font-semibold">Client-side — <code>ToFunc&lt;T&gt;()</code></h3>
+                <p class="text-sm text-muted-foreground">
+                    Compiles the filter tree into a <code>Func&lt;T, bool&gt;</code> delegate using reflection.
+                    Ideal for filtering in-memory collections with LINQ-to-Objects.
+                </p>
+                <pre class="rounded-lg border bg-muted p-4 text-xs leading-relaxed overflow-x-auto"><code>var predicate = filter.ToFunc&lt;Person&gt;(fields);
+var results = people.Where(predicate).ToList();</code></pre>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-base font-semibold">Server-side — <code>ToExpression&lt;T&gt;()</code></h3>
+                <p class="text-sm text-muted-foreground">
+                    Builds a LINQ <code>Expression&lt;Func&lt;T, bool&gt;&gt;</code> that can be passed to
+                    EF Core's <code>Where()</code> method. The expression tree is translated to SQL by the database provider,
+                    so filtering happens at the database level rather than in application memory.
+                </p>
+                <pre class="rounded-lg border bg-muted p-4 text-xs leading-relaxed overflow-x-auto"><code>var expression = filter.ToExpression&lt;Person&gt;(fields);
+var results = await dbContext.People
+    .Where(expression)
+    .ToListAsync();</code></pre>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-base font-semibold">Serialization — <code>ToJson()</code> / <code>FromJson()</code></h3>
+                <p class="text-sm text-muted-foreground">
+                    Serialize the entire filter tree to JSON for persistence (e.g., saving user-defined filters to a database
+                    or transmitting filters between client and server in an API request).
+                </p>
+                <pre class="rounded-lg border bg-muted p-4 text-xs leading-relaxed overflow-x-auto"><code>// Save
+var json = filter.ToJson();
+
+// Restore
+var restored = FilterDefinitionExtensions.FromJson(json);</code></pre>
+            </div>
+        </div>
+        <CodeBlock Source="Components/FilterBuilder/linq-expression.txt" />
     </div>
 
     <!-- Compact Mode -->
@@ -122,6 +203,7 @@
                          Fields="@basicFields"
                          Compact="true"
                          MaxDepth="1" />
+        <CodeBlock Source="Components/FilterBuilder/compact.txt" />
     </div>
 
     <!-- Max Conditions -->
@@ -130,6 +212,7 @@
             <h2 class="text-2xl font-semibold">Max Conditions Limit</h2>
             <p class="text-sm text-muted-foreground">
                 Limit the total number of conditions with <code>MaxConditions</code>. This example allows a maximum of 5 conditions.
+                Once the limit is reached, the "Add condition" and "Add group" buttons are disabled.
             </p>
         </div>
         <BbFilterBuilder @bind-Filter="limitedFilter"
@@ -138,6 +221,7 @@
         <p class="text-sm text-muted-foreground">
             Conditions: @limitedFilter.TotalConditionCount / 5
         </p>
+        <CodeBlock Source="Components/FilterBuilder/max-conditions.txt" />
     </div>
 
     <!-- API Reference -->
@@ -158,7 +242,7 @@
                     Callback invoked when the filter changes. Use for side effects like applying filters to data.
                 </ApiParameter>
                 <ApiParameter Name="MaxDepth" Type="int" Default="3">
-                    Maximum nesting depth for filter groups.
+                    Maximum nesting depth for filter groups. Set to 0 to disable grouping entirely.
                 </ApiParameter>
                 <ApiParameter Name="MaxConditions" Type="int?" Default="null">
                     Maximum total conditions allowed across all groups. Null for unlimited.
@@ -200,8 +284,8 @@
     // Field definitions for basic demos
     private readonly FilterField[] basicFields = new[]
     {
-        new FilterField { Name = "Name", Label = "Name", Type = FilterFieldType.String },
-        new FilterField { Name = "Email", Label = "Email", Type = FilterFieldType.String },
+        new FilterField { Name = "Name", Label = "Name", Type = FilterFieldType.Text },
+        new FilterField { Name = "Email", Label = "Email", Type = FilterFieldType.Text },
         new FilterField { Name = "Age", Label = "Age", Type = FilterFieldType.Number },
         new FilterField { Name = "JoinDate", Label = "Join Date", Type = FilterFieldType.Date },
         new FilterField
@@ -221,8 +305,8 @@
     // Extended field definitions for DataTable integration
     private readonly FilterField[] personFields = new[]
     {
-        new FilterField { Name = "Name", Label = "Name", Type = FilterFieldType.String },
-        new FilterField { Name = "Email", Label = "Email", Type = FilterFieldType.String },
+        new FilterField { Name = "Name", Label = "Name", Type = FilterFieldType.Text },
+        new FilterField { Name = "Email", Label = "Email", Type = FilterFieldType.Text },
         new FilterField { Name = "Age", Label = "Age", Type = FilterFieldType.Number },
         new FilterField
         {

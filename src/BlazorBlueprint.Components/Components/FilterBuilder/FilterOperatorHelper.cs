@@ -8,7 +8,7 @@ public static class FilterOperatorHelper
 {
     private static readonly Dictionary<FilterFieldType, FilterOperator[]> OperatorsByType = new()
     {
-        [FilterFieldType.String] = new[]
+        [FilterFieldType.Text] = new[]
         {
             FilterOperator.Equals,
             FilterOperator.NotEquals,
@@ -100,10 +100,8 @@ public static class FilterOperatorHelper
     /// <summary>
     /// Gets the available operators for a given field type.
     /// </summary>
-    public static FilterOperator[] GetOperatorsForType(FilterFieldType type)
-    {
-        return OperatorsByType.TryGetValue(type, out var operators) ? operators : Array.Empty<FilterOperator>();
-    }
+    public static FilterOperator[] GetOperatorsForType(FilterFieldType type) =>
+        OperatorsByType.TryGetValue(type, out var operators) ? operators : Array.Empty<FilterOperator>();
 
     /// <summary>
     /// Gets the display label for an operator, optionally adjusted for a specific field type.
@@ -142,8 +140,6 @@ public static class FilterOperatorHelper
     /// <summary>
     /// Returns true if the operator requires two values (e.g. Between).
     /// </summary>
-    public static bool IsRangeOperator(FilterOperator op)
-    {
-        return op is FilterOperator.Between;
-    }
+    public static bool IsRangeOperator(FilterOperator op) =>
+        op is FilterOperator.Between;
 }

@@ -33,7 +33,7 @@ public class FilterDefinition
     {
         get
         {
-            int count = Conditions.Count;
+            var count = Conditions.Count;
             foreach (var group in Groups)
             {
                 count += group.TotalConditionCount;

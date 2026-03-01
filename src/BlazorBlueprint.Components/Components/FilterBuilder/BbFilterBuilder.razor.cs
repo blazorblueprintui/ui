@@ -115,10 +115,8 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
             Timeout.Infinite);
     }
 
-    private async Task HandleApply()
-    {
+    private async Task HandleApply() =>
         await NotifyFilterChanged();
-    }
 
     private async Task HandleClear()
     {
@@ -146,7 +144,7 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
         Class
     );
 
-    private string ActionsCssClass => "flex items-center gap-2 pt-2";
+    private static string ActionsCssClass => "flex items-center gap-2 pt-2";
 
     public void Dispose()
     {
@@ -155,5 +153,6 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
             debounceTimer?.Dispose();
             disposed = true;
         }
+        GC.SuppressFinalize(this);
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
@@ -68,18 +69,14 @@ public static class FilterDefinitionExtensions
     /// <summary>
     /// Serializes the filter definition to a JSON string.
     /// </summary>
-    public static string ToJson(this FilterDefinition filter)
-    {
-        return JsonSerializer.Serialize(filter, JsonOptions);
-    }
+    public static string ToJson(this FilterDefinition filter) =>
+        JsonSerializer.Serialize(filter, JsonOptions);
 
     /// <summary>
     /// Deserializes a filter definition from a JSON string.
     /// </summary>
-    public static FilterDefinition FromJson(string json)
-    {
-        return JsonSerializer.Deserialize<FilterDefinition>(json, JsonOptions) ?? new FilterDefinition();
-    }
+    public static FilterDefinition FromJson(string json) =>
+        JsonSerializer.Deserialize<FilterDefinition>(json, JsonOptions) ?? new FilterDefinition();
 
     #region ToFunc implementation
 
@@ -149,10 +146,8 @@ public static class FilterDefinitionExtensions
         };
     }
 
-    private static bool IsEmpty(object? value)
-    {
-        return value is null or "" || (value is string s && string.IsNullOrWhiteSpace(s));
-    }
+    private static bool IsEmpty(object? value) =>
+        value is null or "" || (value is string s && string.IsNullOrWhiteSpace(s));
 
     private static bool AreEqual(object? a, object? b)
     {
@@ -393,7 +388,7 @@ public static class FilterDefinitionExtensions
         return Expression.Constant(expected);
     }
 
-    private static Expression BuildComparisonExpression(
+    private static BinaryExpression BuildComparisonExpression(
         MemberExpression propAccess, Type propType, object? value, ExpressionType comparison)
     {
         var underlyingType = Nullable.GetUnderlyingType(propType) ?? propType;
@@ -402,13 +397,13 @@ public static class FilterDefinitionExtensions
 
         if (Nullable.GetUnderlyingType(propType) != null)
         {
-            constant = Expression.Constant(convertedValue == null ? null : convertedValue, propType);
+            constant = Expression.Constant(convertedValue, propType);
         }
 
         return Expression.MakeBinary(comparison, propAccess, constant);
     }
 
-    private static Expression BuildStringMethodExpression(
+    private static BinaryExpression BuildStringMethodExpression(
         MemberExpression propAccess, Type propType, object? value, string methodName)
     {
         var stringValue = value?.ToString() ?? "";
@@ -424,7 +419,7 @@ public static class FilterDefinitionExtensions
         return Expression.AndAlso(nullCheck, methodCall);
     }
 
-    private static Expression BuildBetweenExpression(
+    private static BinaryExpression BuildBetweenExpression(
         MemberExpression propAccess, Type propType, object? valueStart, object? valueEnd)
     {
         var gte = BuildComparisonExpression(propAccess, propType, valueStart, ExpressionType.GreaterThanOrEqual);
@@ -448,40 +443,40 @@ public static class FilterDefinitionExtensions
 
             if (targetType == typeof(DateTime) && value is string dateStr)
             {
-                return DateTime.Parse(dateStr);
+                return DateTime.Parse(dateStr, CultureInfo.InvariantCulture);
             }
 
             if (targetType == typeof(int))
             {
-                return Convert.ToInt32(value);
+                return Convert.ToInt32(value, CultureInfo.InvariantCulture);
             }
 
             if (targetType == typeof(double))
             {
-                return Convert.ToDouble(value);
+                return Convert.ToDouble(value, CultureInfo.InvariantCulture);
             }
 
             if (targetType == typeof(decimal))
             {
-                return Convert.ToDecimal(value);
+                return Convert.ToDecimal(value, CultureInfo.InvariantCulture);
             }
 
             if (targetType == typeof(float))
             {
-                return Convert.ToSingle(value);
+                return Convert.ToSingle(value, CultureInfo.InvariantCulture);
             }
 
             if (targetType == typeof(long))
             {
-                return Convert.ToInt64(value);
+                return Convert.ToInt64(value, CultureInfo.InvariantCulture);
             }
 
             if (targetType == typeof(bool))
             {
-                return Convert.ToBoolean(value);
+                return Convert.ToBoolean(value, CultureInfo.InvariantCulture);
             }
 
-            return Convert.ChangeType(value, targetType);
+            return Convert.ChangeType(value, targetType, CultureInfo.InvariantCulture);
         }
         catch
         {

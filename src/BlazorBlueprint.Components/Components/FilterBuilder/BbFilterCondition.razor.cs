@@ -84,10 +84,10 @@ public partial class BbFilterCondition : ComponentBase
         await OnChanged.InvokeAsync();
     }
 
-    private async Task HandleOperatorChanged(FilterOperator? newOperator)
+    private async Task HandleOperatorChanged(FilterOperator newOperator)
     {
         var previousOperator = Condition.Operator;
-        Condition.Operator = newOperator ?? default;
+        Condition.Operator = newOperator;
 
         if (FilterOperatorHelper.IsValuelessOperator(Condition.Operator))
         {
@@ -103,10 +103,8 @@ public partial class BbFilterCondition : ComponentBase
         await OnChanged.InvokeAsync();
     }
 
-    private async Task HandleRemove()
-    {
+    private async Task HandleRemove() =>
         await OnRemove.InvokeAsync();
-    }
 
     // String value helpers
     private string GetStringValue() => Condition.Value as string ?? "";
@@ -216,9 +214,9 @@ public partial class BbFilterCondition : ComponentBase
         await OnChanged.InvokeAsync();
     }
 
-    private async Task HandleInLastPeriodChanged(InLastPeriod? value)
+    private async Task HandleInLastPeriodChanged(InLastPeriod value)
     {
-        Condition.ValueEnd = value ?? InLastPeriod.Days;
+        Condition.ValueEnd = value;
         await OnChanged.InvokeAsync();
     }
 
@@ -228,7 +226,6 @@ public partial class BbFilterCondition : ComponentBase
         return Condition.Value switch
         {
             IEnumerable<string> values => values,
-            string[] arr => arr,
             _ => null
         };
     }
@@ -245,9 +242,9 @@ public partial class BbFilterCondition : ComponentBase
         Context?.Compact == true ? "gap-1" : "gap-2"
     );
 
-    private string FieldSelectClass => Context?.Compact == true ? "w-[120px]" : "w-[160px]";
+    private string FieldSelectClass => Context?.Compact == true ? "w-[140px]" : "w-[160px]";
 
-    private string OperatorSelectClass => Context?.Compact == true ? "w-[130px]" : "w-[180px]";
+    private string OperatorSelectClass => Context?.Compact == true ? "w-[160px]" : "w-[180px]";
 
-    private string ValueInputClass => Context?.Compact == true ? "w-[120px]" : "w-[180px]";
+    private string ValueInputClass => Context?.Compact == true ? "w-[140px]" : "w-[180px]";
 }

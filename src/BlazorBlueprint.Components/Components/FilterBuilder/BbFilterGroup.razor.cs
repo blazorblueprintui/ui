@@ -44,11 +44,11 @@ public partial class BbFilterGroup : ComponentBase
     [CascadingParameter]
     private FilterBuilderContext? Context { get; set; }
 
-    private async Task HandleOperatorChanged(LogicalOperator? newOperator)
+    private Task HandleOperatorChanged(LogicalOperator newOperator)
     {
-        Group.Operator = newOperator ?? LogicalOperator.And;
+        Group.Operator = newOperator;
         HandleChanged();
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
     private void AddCondition()
@@ -90,10 +90,8 @@ public partial class BbFilterGroup : ComponentBase
         HandleChanged();
     }
 
-    private async Task HandleRemoveGroup()
-    {
+    private async Task HandleRemoveGroup() =>
         await OnRemove.InvokeAsync();
-    }
 
     private void HandleChanged()
     {
@@ -104,7 +102,7 @@ public partial class BbFilterGroup : ComponentBase
     private string GroupAriaLabel => IsRoot ? "Root filter group" : $"Nested filter group at depth {Depth}";
 
     // Depth-based accent colors for visual nesting
-    private static readonly string[] DepthBorderColors = new[]
+    private static readonly string[] depthBorderColors = new[]
     {
         "border-l-primary",
         "border-l-blue-500",
@@ -112,15 +110,14 @@ public partial class BbFilterGroup : ComponentBase
         "border-l-orange-500"
     };
 
-    private string DepthBorderColor => DepthBorderColors[Depth % DepthBorderColors.Length];
+    private string DepthBorderColor => depthBorderColors[Depth % depthBorderColors.Length];
 
     private string GroupCssClass => ClassNames.cn(
         "rounded-lg border p-3 space-y-3",
-        !IsRoot ? ClassNames.cn("border-l-4", DepthBorderColor, "bg-muted/30") : "bg-background",
-        IsRoot ? "border-l-4 border-l-primary" : null
+        !IsRoot ? ClassNames.cn("border-l-4", DepthBorderColor, "bg-muted/30") : "bg-background"
     );
 
-    private string HeaderCssClass => "flex items-center justify-between";
+    private static string HeaderCssClass => "flex items-center justify-between";
 
-    private string ConditionsCssClass => "space-y-2";
+    private static string ConditionsCssClass => "space-y-2";
 }
