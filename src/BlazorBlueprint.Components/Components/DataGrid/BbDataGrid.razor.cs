@@ -38,6 +38,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private int _lastColumnsVersion;
     private int _stateVersion;
     private int _lastStateVersion;
+    private int _lastGridStateVersion;
 
     [Inject]
     private IJSRuntime Js { get; set; } = null!;
@@ -160,6 +161,13 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     public string? Class { get; set; }
 
     /// <summary>
+    /// Optional callback for applying custom CSS classes to data rows.
+    /// Receives the row's data item and returns additional CSS classes, or null.
+    /// </summary>
+    [Parameter]
+    public Func<TData, string?>? RowClass { get; set; }
+
+    /// <summary>
     /// Additional HTML attributes.
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
@@ -225,9 +233,22 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         _gridState.Selection.Mode = GetPrimitiveSelectionMode();
 
+        // Detect external state mutations (e.g., Restore() or Reset() called from outside)
+        var externalStateChanged = _gridState.Version != _lastGridStateVersion;
+        if (externalStateChanged)
+        {
+            _lastGridStateVersion = _gridState.Version;
+            // Reset() clears column entries — re-initialize on next access.
+            // Restore() repopulates entries with saved order — skip re-init to preserve it.
+            if (_gridState.Columns.Entries.Count == 0)
+            {
+                columnStateInitialized = false;
+            }
+        }
+
         // Only reprocess data when something meaningful changed
         var itemsChanged = !ReferenceEquals(_lastItems, Items);
-        if (itemsChanged || _needsDataRefresh)
+        if (itemsChanged || _needsDataRefresh || externalStateChanged)
         {
             _needsDataRefresh = false;
             await ProcessDataAsync();
@@ -778,7 +799,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         var overflowClass = Resizable ? "overflow-hidden" : "";
 
         return ClassNames.cn(baseClass, sortClass, groupClass, positionClass, overflowClass,
-            pinnedClass, separatorClass);
+            pinnedClass, separatorClass, column.HeaderClass);
     }
 
     private string GetCellClass(IDataGridColumn<TData> column, bool isSelectColumn,
@@ -807,12 +828,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             return ClassNames.cn(baseClass, "w-12", pinnedClass, separatorClass);
         }
 
-        // Check if the column has a CellClass via the property or template column
-        var cellClass = column switch
-        {
-            BbDataGridPropertyColumn<TData, string> pc => pc.CellClass,
-            _ => null
-        };
+        var cellClass = column.CellClass;
 
         var overflowClass = Resizable ? "overflow-hidden" : "";
 
@@ -920,12 +936,14 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         var itemsChanged = !ReferenceEquals(_lastItems, Items);
         var columnsChanged = _lastColumnsVersion != _columnsVersion;
         var stateChanged = _lastStateVersion != _stateVersion;
+        var externalStateChanged = _gridState.Version != _lastGridStateVersion;
 
-        if (itemsChanged || columnsChanged || stateChanged)
+        if (itemsChanged || columnsChanged || stateChanged || externalStateChanged)
         {
             _lastItems = Items;
             _lastColumnsVersion = _columnsVersion;
             _lastStateVersion = _stateVersion;
+            _lastGridStateVersion = _gridState.Version;
             return true;
         }
 

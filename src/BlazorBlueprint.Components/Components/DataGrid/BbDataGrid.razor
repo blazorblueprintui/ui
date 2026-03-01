@@ -125,7 +125,18 @@
                                             <LucideIcon Name="grip-vertical" Class="absolute left-1 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground/40 opacity-0 group-hover/header:opacity-100 transition-opacity pointer-events-none" />
                                         }
                                         <div class="flex items-center gap-2">
-                                            <span>@column.Title</span>
+                                            @if (column.HeaderTemplate != null)
+                                            {
+                                                @column.HeaderTemplate(new BlazorBlueprint.Primitives.DataGrid.DataGridHeaderContext<TData>
+                                                {
+                                                    Column = column,
+                                                    State = _gridState
+                                                })
+                                            }
+                                            else
+                                            {
+                                                <span>@column.Title</span>
+                                            }
                                             @if (column.Sortable && sortDirection != SortDirection.None)
                                             {
                                                 @if (sortDirection == SortDirection.Ascending)
@@ -211,7 +222,7 @@
 @code {
     private RenderFragment<TData> RenderDataRow => item =>
         @<BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Item="@item"
-            Class="@ClassNames.cn("border-b transition-colors hover:bg-muted/50", _gridState.Selection.IsSelected(item) ? "bg-muted" : "")">
+            Class="@ClassNames.cn("border-b transition-colors hover:bg-muted/50", _gridState.Selection.IsSelected(item) ? "bg-muted" : "", RowClass?.Invoke(item))">
             @{
                 var bodyVisibleCols = GetVisibleColumns().ToList();
                 var bodyLastLeftId = bodyVisibleCols.LastOrDefault(c => c.Pinned == ColumnPinning.Left)?.ColumnId;

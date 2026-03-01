@@ -90,6 +90,16 @@ public interface IDataGridColumn<TData> where TData : class
     /// Gets the custom header template for this column.
     /// </summary>
     public RenderFragment<DataGridHeaderContext<TData>>? HeaderTemplate { get; }
+
+    /// <summary>
+    /// Gets additional CSS classes for cells in this column.
+    /// </summary>
+    public string? CellClass { get; }
+
+    /// <summary>
+    /// Gets additional CSS classes for the header cell.
+    /// </summary>
+    public string? HeaderClass { get; }
 }
 
 /// <summary>

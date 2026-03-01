@@ -128,6 +128,10 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
             ? _ => HeaderTemplate
             : null;
 
+    string? IDataGridColumn<TData>.CellClass => CellClass;
+
+    string? IDataGridColumn<TData>.HeaderClass => HeaderClass;
+
     public object? GetValue(TData item) => null;
 
     public int Compare(TData x, TData y)

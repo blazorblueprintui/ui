@@ -1,0 +1,51 @@
+@inject IJSRuntime Js
+
+<BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+           @bind-State="gridState"
+           Resizable="true" Reorderable="true">
+    <Toolbar>
+        <div class="flex items-center gap-2">
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="SaveGridState">
+                Save State
+            </BbButton>
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="RestoreGridState">
+                Restore State
+            </BbButton>
+            <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="ResetGridState">
+                Reset
+            </BbButton>
+        </div>
+    </Toolbar>
+    <Columns>
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Width="180px" />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Width="150px" />
+        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Width="120px" />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private DataGridState<Person> gridState = new();
+    private const string StorageKey = "my-grid-state";
+
+    private async Task SaveGridState()
+    {
+        var snapshot = gridState.Save();
+        var json = JsonSerializer.Serialize(snapshot);
+        await Js.InvokeVoidAsync("localStorage.setItem", StorageKey, json);
+    }
+
+    private async Task RestoreGridState()
+    {
+        var json = await Js.InvokeAsync<string?>("localStorage.getItem", StorageKey);
+        if (json != null)
+        {
+            var snapshot = JsonSerializer.Deserialize<DataGridStateSnapshot>(json);
+            if (snapshot != null)
+            {
+                gridState.Restore(snapshot);
+            }
+        }
+    }
+
+    private void ResetGridState() => gridState.Reset();
+}

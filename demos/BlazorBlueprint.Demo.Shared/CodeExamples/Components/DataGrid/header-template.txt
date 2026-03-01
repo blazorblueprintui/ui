@@ -1,0 +1,30 @@
+<BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
+    <Columns>
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+        <BbDataGridTemplateColumn TData="Person" Title="Contact" Sortable
+            SortBy="@(p => (object)p.Email)">
+            <HeaderTemplate>
+                <div class="flex items-center gap-1.5">
+                    <LucideIcon Name="mail" Class="h-4 w-4" />
+                    <span>Contact</span>
+                </div>
+            </HeaderTemplate>
+            <ChildContent Context="person">
+                @person.Email
+            </ChildContent>
+        </BbDataGridTemplateColumn>
+        <BbDataGridTemplateColumn TData="Person" Title="Status" Sortable
+            SortBy="@(p => (object)p.Status)">
+            <HeaderTemplate>
+                <div class="flex items-center gap-1.5">
+                    <LucideIcon Name="activity" Class="h-4 w-4" />
+                    <span>Status</span>
+                </div>
+            </HeaderTemplate>
+            <ChildContent Context="person">
+                <BbBadge>@person.Status</BbBadge>
+            </ChildContent>
+        </BbDataGridTemplateColumn>
+        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+    </Columns>
+</BbDataGrid>

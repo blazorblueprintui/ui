@@ -133,6 +133,10 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
 
     RenderFragment<DataGridHeaderContext<TData>>? IDataGridColumn<TData>.HeaderTemplate => null;
 
+    string? IDataGridColumn<TData>.CellClass => CellClass;
+
+    string? IDataGridColumn<TData>.HeaderClass => HeaderClass;
+
     public object? GetValue(TData item)
     {
         compiledProperty ??= Property.Compile();

@@ -30,6 +30,13 @@ public class DataGridState<TData> where TData : class
     public DataGridColumnState Columns { get; } = new();
 
     /// <summary>
+    /// Gets a version counter that increments whenever state is mutated
+    /// through <see cref="Restore"/> or <see cref="Reset"/>.
+    /// Used by the grid component to detect external state changes.
+    /// </summary>
+    public int Version { get; private set; }
+
+    /// <summary>
     /// Gets whether the grid has any active sorting.
     /// </summary>
     public bool HasSorting => Sorting.HasSorting;
@@ -58,6 +65,7 @@ public class DataGridState<TData> where TData : class
         Pagination.Reset();
         Selection.Clear();
         Columns.Reset();
+        Version++;
     }
 
     /// <summary>
@@ -118,5 +126,6 @@ public class DataGridState<TData> where TData : class
 
         Columns.RestoreFromSnapshots(snapshot.ColumnStates);
         Pagination.PageSize = snapshot.PageSize;
+        Version++;
     }
 }

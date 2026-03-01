@@ -1,6 +1,8 @@
 @page "/components/datagrid"
 @using BlazorBlueprint.Demo.Services
+@using System.Text.Json
 @inject MockDataService MockDataService
+@inject IJSRuntime Js
 
 <PageTitle>Data Grid Component - Blazor Blueprint</PageTitle>
 
@@ -123,6 +125,76 @@
             </Columns>
         </BbDataGrid>
         <CodeBlock Source="Components/DataGrid/custom-cell-templates.txt" />
+    </div>
+
+    <!-- ── Custom Header Template ──────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Header Template</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">HeaderTemplate</code> on a
+                <code class="bg-muted px-1 py-0.5 rounded">BbDataGridTemplateColumn</code> to replace
+                the default header text with custom content. Sort icons and resize handles are preserved.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridTemplateColumn TData="Person" Title="Contact" Sortable
+                    SortBy="@(p => (object)p.Email)">
+                    <HeaderTemplate>
+                        <div class="flex items-center gap-1.5">
+                            <LucideIcon Name="mail" Class="h-4 w-4" />
+                            <span>Contact</span>
+                        </div>
+                    </HeaderTemplate>
+                    <ChildContent Context="person">
+                        @person.Email
+                    </ChildContent>
+                </BbDataGridTemplateColumn>
+                <BbDataGridTemplateColumn TData="Person" Title="Status" Sortable
+                    SortBy="@(p => (object)p.Status)">
+                    <HeaderTemplate>
+                        <div class="flex items-center gap-1.5">
+                            <LucideIcon Name="activity" Class="h-4 w-4" />
+                            <span>Status</span>
+                        </div>
+                    </HeaderTemplate>
+                    <ChildContent Context="person">
+                        <BbBadge Variant="@(person.Status == "Active" ? BadgeVariant.Default : BadgeVariant.Secondary)">
+                            @person.Status
+                        </BbBadge>
+                    </ChildContent>
+                </BbDataGridTemplateColumn>
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/header-template.txt" />
+    </div>
+
+    <!-- ── Row & Column Styling ──────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Row & Column Styling</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">RowClass</code> to apply CSS classes
+                per row based on data, <code class="bg-muted px-1 py-0.5 rounded">CellClass</code> for
+                column cell styling, and <code class="bg-muted px-1 py-0.5 rounded">HeaderClass</code> for
+                column header styling.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                   RowClass="@(p => p.Status == "Inactive" ? "opacity-50" : null)">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable
+                    HeaderClass="text-primary" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable
+                    CellClass="font-mono tabular-nums" HeaderClass="text-right"  />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/row-column-styling.txt" />
     </div>
 
     <!-- ── Async Data Loading ──────────────────────────────────────── -->
@@ -335,6 +407,49 @@
         <CodeBlock Source="Components/DataGrid/empty-loading.txt" />
     </div>
 
+    <!-- ── State Persistence ──────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">State Persistence</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">Save()</code> to capture a serializable
+                snapshot of sort order, column widths, column visibility, and page size.
+                Use <code class="bg-muted px-1 py-0.5 rounded">Restore(snapshot)</code> to reapply it.
+                Snapshots are plain JSON-serializable objects — store them in localStorage, a database, or user preferences.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                   @bind-State="persistenceState"
+                   Resizable="true" Reorderable="true">
+            <Toolbar>
+                <div class="flex items-center gap-2">
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="SaveGridState">
+                        Save State
+                    </BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="RestoreGridState"
+                              Disabled="@(!hasSavedState)">
+                        Restore State
+                    </BbButton>
+                    <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="ResetGridState">
+                        Reset
+                    </BbButton>
+                </div>
+            </Toolbar>
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Width="180px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Width="150px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Width="120px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable Width="80px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Width="120px" />
+            </Columns>
+        </BbDataGrid>
+        @if (hasSavedState)
+        {
+            <p class="text-xs text-muted-foreground">State saved to localStorage.</p>
+        }
+        <CodeBlock Source="Components/DataGrid/state-persistence.txt" />
+    </div>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>Uses role="grid" with aria-rowcount for screen readers</AccessibilityItem>
@@ -442,6 +557,9 @@
                 <ApiParameter Name="AriaLabel" Type="string?">
                     ARIA label applied to the grid element for screen readers.
                 </ApiParameter>
+                <ApiParameter Name="RowClass" Type="Func&lt;TData, string?&gt;?">
+                    Optional callback for applying custom CSS classes to data rows. Receives the row's data item and returns additional CSS classes.
+                </ApiParameter>
             </ApiReference>
 
             <ApiReference ComponentName="DataGridPropertyColumn">
@@ -469,6 +587,9 @@
                 <ApiParameter Name="CellClass" Type="string?">
                     Additional CSS classes applied to cells in this column.
                 </ApiParameter>
+                <ApiParameter Name="HeaderClass" Type="string?">
+                    Additional CSS classes applied to the header cell of this column.
+                </ApiParameter>
                 <ApiParameter Name="Hideable" Type="bool" Default="true">
                     Whether this column can be toggled via the column visibility dropdown.
                 </ApiParameter>
@@ -490,6 +611,9 @@
                 <ApiParameter Name="ChildContent" Type="RenderFragment&lt;TData&gt;">
                     Custom cell template. The context provides the data item for the current row.
                 </ApiParameter>
+                <ApiParameter Name="HeaderTemplate" Type="RenderFragment?">
+                    Custom header template. Replaces the default title text while preserving sort icons and resize handles.
+                </ApiParameter>
                 <ApiParameter Name="Sortable" Type="bool" Default="false">
                     Whether this column can be sorted. Requires SortBy to be set.
                 </ApiParameter>
@@ -501,6 +625,24 @@
                 </ApiParameter>
                 <ApiParameter Name="Width" Type="string?">
                     Column width (e.g., "200px", "20%", "auto").
+                </ApiParameter>
+                <ApiParameter Name="CellClass" Type="string?">
+                    Additional CSS classes applied to cells in this column.
+                </ApiParameter>
+                <ApiParameter Name="HeaderClass" Type="string?">
+                    Additional CSS classes applied to the header cell of this column.
+                </ApiParameter>
+                <ApiParameter Name="Hideable" Type="bool" Default="true">
+                    Whether this column can be toggled via the column visibility dropdown.
+                </ApiParameter>
+                <ApiParameter Name="Resizable" Type="bool" Default="true">
+                    Whether this column can be resized by dragging.
+                </ApiParameter>
+                <ApiParameter Name="Reorderable" Type="bool" Default="true">
+                    Whether this column can be reordered by dragging.
+                </ApiParameter>
+                <ApiParameter Name="Pinned" Type="ColumnPinning" Default="None">
+                    Whether this column is pinned to an edge of the scrollable viewport.
                 </ApiParameter>
             </ApiReference>
 
@@ -528,6 +670,26 @@
         people = MockDataService.GeneratePersons(50);
         manyPeople = MockDataService.GeneratePersons(1000);
         asyncPeople = MockDataService.GeneratePersons(100);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var json = await Js.InvokeAsync<string?>("localStorage.getItem", PersistenceKey);
+                if (json != null)
+                {
+                    hasSavedState = true;
+                    StateHasChanged();
+                }
+            }
+            catch
+            {
+                // localStorage not available during SSR
+            }
+        }
     }
 
     private void HandleSelectionChanged(IReadOnlyCollection<Person> selected)
@@ -600,5 +762,53 @@
         return parts.Length >= 2
             ? $"{parts[0][0]}{parts[1][0]}"
             : parts.Length == 1 ? $"{parts[0][0]}" : "?";
+    }
+
+    // --- State Persistence ---
+
+    private BlazorBlueprint.Primitives.DataGrid.DataGridState<Person> persistenceState = new();
+    private bool hasSavedState;
+    private const string PersistenceKey = "datagrid-state-demo";
+
+    private async Task SaveGridState()
+    {
+        var snapshot = persistenceState.Save();
+        var json = JsonSerializer.Serialize(snapshot);
+        hasSavedState = true;
+
+        try
+        {
+            await Js.InvokeVoidAsync("localStorage.setItem", PersistenceKey, json);
+        }
+        catch
+        {
+            // localStorage not available during SSR
+        }
+    }
+
+    private async Task RestoreGridState()
+    {
+        try
+        {
+            var json = await Js.InvokeAsync<string?>("localStorage.getItem", PersistenceKey);
+            if (json != null)
+            {
+                var snapshot = JsonSerializer.Deserialize<BlazorBlueprint.Primitives.DataGrid.DataGridStateSnapshot>(json);
+                if (snapshot != null)
+                {
+                    persistenceState.Restore(snapshot);
+                }
+            }
+        }
+        catch
+        {
+            // localStorage not available during SSR
+        }
+    }
+
+    private void ResetGridState()
+    {
+        persistenceState.Reset();
+        hasSavedState = false;
     }
 }

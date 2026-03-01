@@ -56,6 +56,10 @@ public partial class BbDataGridSelectColumn<TData> : ComponentBase, IDataGridCol
 
     RenderFragment<DataGridHeaderContext<TData>>? IDataGridColumn<TData>.HeaderTemplate => null;
 
+    string? IDataGridColumn<TData>.CellClass => null;
+
+    string? IDataGridColumn<TData>.HeaderClass => null;
+
     public object? GetValue(TData item) => null;
 
     public int Compare(TData x, TData y) => 0;
