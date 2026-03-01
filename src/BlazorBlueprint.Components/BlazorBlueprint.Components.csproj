@@ -48,7 +48,7 @@
 
   <ItemGroup Condition="'$(UsePackageReferences)' == 'true'">
     <PackageReference Include="BlazorBlueprint.Icons.Lucide" Version="2.0.0" />
-    <PackageReference Include="BlazorBlueprint.Primitives" Version="3.1.1" />
+    <PackageReference Include="BlazorBlueprint.Primitives" Version="3.2.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -63,15 +63,5 @@
     <Content Update="wwwroot\**" Pack="false" />
   </ItemGroup>
 
-  <!-- Build Tailwind CSS before build (standalone CLI binary per platform) -->
-  <Target Name="BuildBlazorBlueprintCSS" BeforeTargets="BeforeBuild;BeforeRebuild" Condition="'$(OS)' == 'Windows_NT'">
-    <Message Text="Building BlazorBlueprint Tailwind CSS..." Importance="high" />
-    <Exec Command="$(MSBuildProjectDirectory)\..\..\tools\tailwindcss.exe -i wwwroot/css/blazorblueprint-input.css -o wwwroot/blazorblueprint.css --minify" />
-  </Target>
-
-  <Target Name="BuildBlazorBlueprintCSSLinux" BeforeTargets="BeforeBuild;BeforeRebuild" Condition="'$(OS)' != 'Windows_NT'">
-    <Message Text="Building BlazorBlueprint Tailwind CSS (Linux)..." Importance="high" />
-    <Exec Command="$(MSBuildProjectDirectory)/../../tools/tailwindcss-linux -i wwwroot/css/blazorblueprint-input.css -o wwwroot/blazorblueprint.css --minify" />
-  </Target>
-
+  <Import Project="..\..\tools\tailwind.targets" />
 </Project>
