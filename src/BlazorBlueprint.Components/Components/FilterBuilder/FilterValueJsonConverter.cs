@@ -33,6 +33,14 @@ public class FilterValueJsonConverter : JsonConverter<object?>
                 {
                     return intValue;
                 }
+                if (reader.TryGetInt64(out var longValue))
+                {
+                    return longValue;
+                }
+                if (reader.TryGetDecimal(out var decimalValue))
+                {
+                    return decimalValue;
+                }
                 return reader.GetDouble();
 
             case JsonTokenType.True:

@@ -115,7 +115,7 @@ public static class FilterDefinitionExtensions
         var prop = GetProperty(itemType, condition.Field);
         if (prop == null)
         {
-            return true;
+            return false;
         }
 
         var rawValue = prop.GetValue(item);
@@ -338,7 +338,7 @@ public static class FilterDefinitionExtensions
 
         if (property == null)
         {
-            return Expression.Constant(true);
+            return Expression.Constant(false);
         }
 
         var propAccess = Expression.Property(parameter, property);
@@ -396,7 +396,14 @@ public static class FilterDefinitionExtensions
 
         if (propType == typeof(bool?))
         {
-            return Expression.Equal(propAccess, Expression.Constant((bool?)expected, typeof(bool?)));
+            if (expected)
+            {
+                // IsTrue: value must be exactly true
+                return Expression.Equal(propAccess, Expression.Constant((bool?)true, typeof(bool?)));
+            }
+
+            // IsFalse: value is false or null (matches ToFunc semantics: rawValue is false or null)
+            return Expression.NotEqual(propAccess, Expression.Constant((bool?)true, typeof(bool?)));
         }
 
         return Expression.Constant(expected);

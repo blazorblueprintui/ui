@@ -33,7 +33,8 @@
     <div class="@ConditionsCssClass">
         @foreach (var condition in Group.Conditions)
         {
-            <BbFilterCondition Condition="@condition"
+            <BbFilterCondition @key="condition.Id"
+                               Condition="@condition"
                                OnRemove="@(() => RemoveCondition(condition))"
                                OnChanged="HandleChanged" />
         }
@@ -41,7 +42,8 @@
         @* Nested groups *@
         @foreach (var nestedGroup in Group.Groups)
         {
-            <BbFilterGroup Group="@nestedGroup"
+            <BbFilterGroup @key="nestedGroup"
+                           Group="@nestedGroup"
                            Depth="@(Depth + 1)"
                            IsRoot="false"
                            OnRemove="@(() => RemoveGroup(nestedGroup))" />

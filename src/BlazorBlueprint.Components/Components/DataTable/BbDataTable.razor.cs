@@ -206,14 +206,12 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
     /// <summary>
     /// Gets or sets a <see cref="FilterDefinition"/> to apply to the data.
     /// When provided, the filter is applied client-side using <see cref="FilterDefinitionExtensions.ToFunc{T}"/>.
-    /// Requires <see cref="FilterFields"/> to be set.
     /// </summary>
     [Parameter]
     public FilterDefinition? Filter { get; set; }
 
     /// <summary>
     /// Gets or sets the field definitions used to evaluate the <see cref="Filter"/>.
-    /// Required when <see cref="Filter"/> is provided.
     /// </summary>
     [Parameter]
     public IEnumerable<FilterField>? FilterFields { get; set; }
@@ -341,13 +339,7 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
         // Apply FilterDefinition if provided
         if (Filter != null && !Filter.IsEmpty)
         {
-            if (FilterFields == null)
-            {
-                throw new InvalidOperationException(
-                    $"{nameof(FilterFields)} must be provided when {nameof(Filter)} is set.");
-            }
-
-            var predicate = Filter.ToFunc<TData>(FilterFields);
+            var predicate = Filter.ToFunc<TData>(FilterFields ?? Array.Empty<FilterField>());
             data = data.Where(predicate);
         }
 
