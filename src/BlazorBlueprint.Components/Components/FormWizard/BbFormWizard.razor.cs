@@ -35,6 +35,7 @@ public partial class BbFormWizard : ComponentBase
     private int lastRenderedStepCount = -1;
     private readonly HashSet<int> visitedSteps = new() { 0 };
     private readonly Dictionary<int, bool> stepValidationState = new();
+    private readonly HashSet<int> skippedSteps = new();
 
     // --- Parameters ---
 
@@ -172,24 +173,24 @@ public partial class BbFormWizard : ComponentBase
     internal int StepCount => steps.Count;
 
     /// <summary>
-    /// Gets whether the current step is the first step.
+    /// Gets whether the current step is the first enabled step.
     /// </summary>
-    internal bool IsFirstStep => currentStep == 0;
+    internal bool IsFirstStep => FindPreviousEnabledStep(currentStep) == -1;
 
     /// <summary>
-    /// Gets whether the current step is the last step.
+    /// Gets whether the current step is the last enabled step.
     /// </summary>
-    internal bool IsLastStep => currentStep == steps.Count - 1;
+    internal bool IsLastStep => FindNextEnabledStep(currentStep) == -1;
 
     /// <summary>
     /// Gets whether backward navigation is possible.
     /// </summary>
-    internal bool CanGoBack => currentStep > 0;
+    internal bool CanGoBack => FindPreviousEnabledStep(currentStep) != -1;
 
     /// <summary>
     /// Gets whether forward navigation is possible.
     /// </summary>
-    internal bool CanGoNext => currentStep < steps.Count - 1;
+    internal bool CanGoNext => FindNextEnabledStep(currentStep) != -1;
 
     // --- Step Registration ---
 
@@ -314,7 +315,8 @@ public partial class BbFormWizard : ComponentBase
 
         if (currentStep < steps.Count && steps[currentStep].IsOptional)
         {
-            stepValidationState[currentStep] = true;
+            skippedSteps.Add(currentStep);
+            stepValidationState.Remove(currentStep);
             var nextIndex = FindNextEnabledStep(currentStep);
             if (nextIndex >= 0)
             {
@@ -403,6 +405,11 @@ public partial class BbFormWizard : ComponentBase
             return WizardStepState.Pending;
         }
 
+        if (skippedSteps.Contains(index))
+        {
+            return WizardStepState.Skipped;
+        }
+
         if (stepValidationState.TryGetValue(index, out var isValid))
         {
             return isValid ? WizardStepState.Completed : WizardStepState.Invalid;
@@ -465,6 +472,7 @@ public partial class BbFormWizard : ComponentBase
         {
             visitedSteps.Remove(i);
             stepValidationState.Remove(i);
+            skippedSteps.Remove(i);
             ResetStepModelFields(steps[i]);
         }
     }
