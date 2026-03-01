@@ -10,7 +10,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- **`BbFilterBuilder`** — Visual query builder for constructing data filter expressions with AND/OR logic, nested groups, and type-aware value inputs. Supports `Text`, `Number`, `Date`, `DateTime`, `Boolean`, and `Enum` field types with automatic operator selection and value input rendering (text input, numeric input, date picker, date range picker, multi-select, etc.). Filter evaluation via `ToFunc<T>()` for client-side LINQ-to-Objects, `ToExpression<T>()` for server-side EF Core/IQueryable queries, and `ToJson()`/`FromJson()` for serialization. Configurable `MaxDepth`, `MaxConditions`, `ShowApplyButton` with debounced auto-apply, and `Compact` layout mode.
+- **BbFilterBuilder** — Visual query builder for constructing data filter expressions with AND/OR logic, nested groups, and type-aware value inputs.
+  - `Text`, `Number`, `Date`, `DateTime`, `Boolean`, and `Enum` field types with automatic operator selection and value input rendering (text input, numeric input, date picker, date range picker, multi-select, etc.).
+  - Filter evaluation via `ToFunc<T>()` for client-side LINQ-to-Objects, `ToExpression<T>()` for server-side EF Core/IQueryable queries, and `ToJson()`/`FromJson()` for serialization.
+  - Configurable `MaxDepth`, `MaxConditions`, `ShowApplyButton` with debounced auto-apply, and `Compact` layout mode.
+  - Demo page with 7 interactive examples and View Code blocks.
 - **BbFormWizard** — Multi-step form wizard component with `BbWizardStep` composition for defining steps.
   - Horizontal and vertical step indicator layouts with visual step states (pending, active, completed, invalid).
   - Per-step validation via `FieldNames` (EditContext integration) or custom `Validator` callbacks.
