@@ -345,7 +345,104 @@
             <CodeBlock Source="Components/TreeView/controlled.txt" />
         </section>
 
-        @* --- 12. File Explorer Example --- *@
+        @* --- 12. Expand on Click --- *@
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Expand on Click</h2>
+                <p class="text-muted-foreground">
+                    With <code>ExpandOnClick</code>, clicking anywhere on a parent node toggles its
+                    expanded state — no need to click the chevron. Compare the two trees below.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="rounded-lg border p-4">
+                    <p class="text-sm font-medium mb-2">Default (chevron only)</p>
+                    <BbTreeView TItem="object" SelectionMode="TreeSelectionMode.Single">
+                        <BbTreeItem Value="eoc-music" Label="Music" Icon="music">
+                            <BbTreeItem Value="eoc-rock" Label="Rock" Icon="disc">
+                                <BbTreeItem Value="eoc-classic-rock" Label="Classic Rock" />
+                                <BbTreeItem Value="eoc-alt-rock" Label="Alternative" />
+                            </BbTreeItem>
+                            <BbTreeItem Value="eoc-jazz" Label="Jazz" Icon="disc" />
+                            <BbTreeItem Value="eoc-electronic" Label="Electronic" Icon="disc" />
+                        </BbTreeItem>
+                        <BbTreeItem Value="eoc-podcasts" Label="Podcasts" Icon="podcast">
+                            <BbTreeItem Value="eoc-tech" Label="Technology" />
+                            <BbTreeItem Value="eoc-science" Label="Science" />
+                        </BbTreeItem>
+                    </BbTreeView>
+                </div>
+
+                <div class="rounded-lg border p-4">
+                    <p class="text-sm font-medium mb-2">ExpandOnClick enabled</p>
+                    <BbTreeView TItem="object" SelectionMode="TreeSelectionMode.Single" ExpandOnClick="true">
+                        <BbTreeItem Value="eoc2-music" Label="Music" Icon="music">
+                            <BbTreeItem Value="eoc2-rock" Label="Rock" Icon="disc">
+                                <BbTreeItem Value="eoc2-classic-rock" Label="Classic Rock" />
+                                <BbTreeItem Value="eoc2-alt-rock" Label="Alternative" />
+                            </BbTreeItem>
+                            <BbTreeItem Value="eoc2-jazz" Label="Jazz" Icon="disc" />
+                            <BbTreeItem Value="eoc2-electronic" Label="Electronic" Icon="disc" />
+                        </BbTreeItem>
+                        <BbTreeItem Value="eoc2-podcasts" Label="Podcasts" Icon="podcast">
+                            <BbTreeItem Value="eoc2-tech" Label="Technology" />
+                            <BbTreeItem Value="eoc2-science" Label="Science" />
+                        </BbTreeItem>
+                    </BbTreeView>
+                </div>
+            </div>
+            <CodeBlock Source="Components/TreeView/expand-on-click.txt" />
+        </section>
+
+        @* --- 13. Custom Styling --- *@
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Custom Styling</h2>
+                <p class="text-muted-foreground">
+                    Use the <code>Class</code> parameter on <code>BbTreeItem</code> to apply custom styles per node,
+                    and the tree-level <code>Class</code> parameter for container styling.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="rounded-lg border p-4">
+                    <p class="text-sm font-medium mb-2">Status-colored nodes</p>
+                    <BbTreeView TItem="object" SelectionMode="TreeSelectionMode.Single" DefaultExpandAll="true">
+                        <BbTreeItem Value="cs-pipeline" Label="Deploy Pipeline" Icon="git-branch">
+                            <BbTreeItem Value="cs-build" Label="Build" Icon="hammer" Class="text-green-600 dark:text-green-400" />
+                            <BbTreeItem Value="cs-test" Label="Test" Icon="test-tubes" Class="text-green-600 dark:text-green-400" />
+                            <BbTreeItem Value="cs-lint" Label="Lint" Icon="search-check" Class="text-yellow-600 dark:text-yellow-400" />
+                            <BbTreeItem Value="cs-deploy" Label="Deploy" Icon="rocket" Class="text-red-600 dark:text-red-400" />
+                        </BbTreeItem>
+                    </BbTreeView>
+                </div>
+
+                <div class="rounded-lg border p-4">
+                    <p class="text-sm font-medium mb-2">Compact with custom container</p>
+                    <BbTreeView TItem="object"
+                                SelectionMode="TreeSelectionMode.Single"
+                                DefaultExpandAll="true"
+                                Class="text-xs bg-muted/30 rounded-md p-2"
+                                ShowIcons="false">
+                        <BbTreeItem Value="cs2-app" Label="app/">
+                            <BbTreeItem Value="cs2-layout" Label="layout.tsx" />
+                            <BbTreeItem Value="cs2-page" Label="page.tsx" />
+                            <BbTreeItem Value="cs2-api" Label="api/">
+                                <BbTreeItem Value="cs2-route" Label="route.ts" />
+                            </BbTreeItem>
+                        </BbTreeItem>
+                        <BbTreeItem Value="cs2-public" Label="public/">
+                            <BbTreeItem Value="cs2-favicon" Label="favicon.ico" />
+                        </BbTreeItem>
+                        <BbTreeItem Value="cs2-package" Label="package.json" />
+                    </BbTreeView>
+                </div>
+            </div>
+            <CodeBlock Source="Components/TreeView/custom-styling.txt" />
+        </section>
+
+        @* --- 14. File Explorer Example --- *@
         <section class="space-y-4">
             <div class="space-y-2">
                 <h2 class="text-2xl font-semibold">File Explorer</h2>
@@ -480,6 +577,9 @@
                     </ApiParameter>
                     <ApiParameter Name="SearchPlaceholder" Type="string" Default="&quot;Search...&quot;">
                         Placeholder text for the search input.
+                    </ApiParameter>
+                    <ApiParameter Name="ExpandOnClick" Type="bool" Default="false">
+                        Whether clicking a parent node also toggles its expanded state. When true, clicking anywhere on a node with children expands or collapses it in addition to selecting it.
                     </ApiParameter>
                     <ApiParameter Name="Draggable" Type="bool" Default="false">
                         Whether drag and drop is enabled.
@@ -703,9 +803,78 @@
 
     private Task HandleDrop(TreeDropEventArgs<DragNode> args)
     {
-        dragMessage = $"Dropped '{args.SourceNode.Name}' {args.Position.ToString().ToLower()} '{args.TargetNode.Name}'";
+        var source = args.SourceNode;
+        var target = args.TargetNode;
+
+        // Remove source from its current location
+        RemoveDragNode(dragItems, source.Id);
+
+        // Insert at the new position
+        switch (args.Position)
+        {
+            case TreeDropPosition.Inside:
+                target.Children ??= new List<DragNode>();
+                target.Children.Add(source);
+                break;
+
+            case TreeDropPosition.Before:
+            case TreeDropPosition.After:
+                var parentList = FindDragParentList(dragItems, target.Id);
+                if (parentList != null)
+                {
+                    var idx = parentList.FindIndex(n => n.Id == target.Id);
+                    if (idx >= 0)
+                    {
+                        parentList.Insert(args.Position == TreeDropPosition.Before ? idx : idx + 1, source);
+                    }
+                }
+                break;
+        }
+
+        dragMessage = $"Moved '{source.Name}' {args.Position.ToString().ToLower()} '{target.Name}'";
         StateHasChanged();
         return Task.CompletedTask;
+    }
+
+    private bool RemoveDragNode(List<DragNode> nodes, string id)
+    {
+        for (var i = 0; i < nodes.Count; i++)
+        {
+            if (nodes[i].Id == id)
+            {
+                nodes.RemoveAt(i);
+                return true;
+            }
+
+            if (nodes[i].Children != null && RemoveDragNode(nodes[i].Children!, id))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private List<DragNode>? FindDragParentList(List<DragNode> nodes, string id)
+    {
+        foreach (var node in nodes)
+        {
+            if (node.Id == id)
+            {
+                return nodes;
+            }
+
+            if (node.Children != null)
+            {
+                var found = FindDragParentList(node.Children, id);
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+        }
+
+        return null;
     }
 
     // --- File explorer data ---

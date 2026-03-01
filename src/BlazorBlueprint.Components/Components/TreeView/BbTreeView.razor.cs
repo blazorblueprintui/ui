@@ -177,6 +177,14 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
     public bool ShowIcons { get; set; } = true;
 
     /// <summary>
+    /// Whether clicking a parent node also toggles its expanded state.
+    /// When true, clicking anywhere on a node with children will expand or collapse it
+    /// in addition to selecting it. When false (default), only the chevron toggle expands/collapses.
+    /// </summary>
+    [Parameter]
+    public bool ExpandOnClick { get; set; }
+
+    /// <summary>
     /// Additional CSS classes.
     /// </summary>
     [Parameter]

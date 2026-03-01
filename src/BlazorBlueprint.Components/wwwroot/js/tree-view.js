@@ -25,10 +25,15 @@ export function initializeDragDropById(elementId, dotNetRef, instanceId) {
 export function initializeDragDrop(containerElement, dotNetRef, instanceId) {
   if (!containerElement || !dotNetRef) return;
 
+  const DRAG_THRESHOLD = 5; // px of movement before drag starts
+
   const state = {
     containerElement,
     dotNetRef,
     isDragging: false,
+    pendingDrag: false,
+    startX: 0,
+    startY: 0,
     sourceElement: null,
     sourceValue: null,
     indicator: null,
@@ -112,6 +117,20 @@ export function initializeDragDrop(containerElement, dotNetRef, instanceId) {
     });
   };
 
+  const startDrag = () => {
+    state.pendingDrag = false;
+    state.isDragging = true;
+
+    // Set pointer capture on the container for smooth drag
+    containerElement.setPointerCapture(state.pointerId);
+
+    // Visual feedback: reduce opacity of source
+    state.sourceElement.style.opacity = '0.5';
+
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'grabbing';
+  };
+
   const handlePointerDown = (e) => {
     const draggableNode = e.target.closest('[data-draggable="true"]');
     if (!draggableNode) return;
@@ -122,23 +141,25 @@ export function initializeDragDrop(containerElement, dotNetRef, instanceId) {
     // Don't start drag on toggle or checkbox clicks
     if (e.target.closest('[data-tree-toggle]') || e.target.closest('[data-tree-checkbox]')) return;
 
-    state.isDragging = true;
+    // Record pending drag — actual drag starts after movement exceeds threshold
+    state.pendingDrag = true;
+    state.startX = e.clientX;
+    state.startY = e.clientY;
     state.sourceElement = treeItem;
     state.sourceValue = treeItem.getAttribute('data-value');
     state.pointerId = e.pointerId;
-
-    // Set pointer capture on the container for smooth drag
-    containerElement.setPointerCapture(e.pointerId);
-
-    // Visual feedback: reduce opacity of source
-    treeItem.style.opacity = '0.5';
-
-    document.body.style.userSelect = 'none';
-    document.body.style.cursor = 'grabbing';
   };
 
   const handlePointerMove = (e) => {
-    if (!state.isDragging) return;
+    if (!state.isDragging && !state.pendingDrag) return;
+
+    // Check threshold before starting actual drag
+    if (state.pendingDrag && !state.isDragging) {
+      const dx = e.clientX - state.startX;
+      const dy = e.clientY - state.startY;
+      if (Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return;
+      startDrag();
+    }
 
     const targetItem = getTreeItemFromPoint(e.clientX, e.clientY);
     if (!targetItem) {
@@ -156,8 +177,37 @@ export function initializeDragDrop(containerElement, dotNetRef, instanceId) {
     updateIndicator(targetItem, position);
   };
 
+  const resetState = () => {
+    if (state.sourceElement) {
+      state.sourceElement.style.opacity = '';
+    }
+    clearIndicator();
+    document.body.style.userSelect = '';
+    document.body.style.cursor = '';
+
+    if (state.isDragging && state.pointerId !== null) {
+      try {
+        containerElement.releasePointerCapture(state.pointerId);
+      } catch {
+        // Pointer capture may already be released
+      }
+    }
+
+    state.isDragging = false;
+    state.pendingDrag = false;
+    state.sourceElement = null;
+    state.sourceValue = null;
+    state.pointerId = null;
+  };
+
   const handlePointerUp = (e) => {
-    if (!state.isDragging) return;
+    if (!state.isDragging && !state.pendingDrag) return;
+
+    // If drag never actually started (below threshold), just reset — let click fire normally
+    if (!state.isDragging) {
+      resetState();
+      return;
+    }
 
     const targetItem = getTreeItemFromPoint(e.clientX, e.clientY);
 
@@ -170,41 +220,11 @@ export function initializeDragDrop(containerElement, dotNetRef, instanceId) {
       }
     }
 
-    // Cleanup
-    if (state.sourceElement) {
-      state.sourceElement.style.opacity = '';
-    }
-
-    clearIndicator();
-
-    document.body.style.userSelect = '';
-    document.body.style.cursor = '';
-
-    if (state.pointerId !== null) {
-      try {
-        containerElement.releasePointerCapture(state.pointerId);
-      } catch {
-        // Pointer capture may already be released
-      }
-    }
-
-    state.isDragging = false;
-    state.sourceElement = null;
-    state.sourceValue = null;
-    state.pointerId = null;
+    resetState();
   };
 
   const handlePointerCancel = () => {
-    if (state.sourceElement) {
-      state.sourceElement.style.opacity = '';
-    }
-    clearIndicator();
-    document.body.style.userSelect = '';
-    document.body.style.cursor = '';
-    state.isDragging = false;
-    state.sourceElement = null;
-    state.sourceValue = null;
-    state.pointerId = null;
+    resetState();
   };
 
   containerElement.addEventListener('pointerdown', handlePointerDown);

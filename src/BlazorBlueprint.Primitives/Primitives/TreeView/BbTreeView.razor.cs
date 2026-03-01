@@ -124,6 +124,14 @@ public partial class BbTreeView : IAsyncDisposable
     public bool ShowIcons { get; set; } = true;
 
     /// <summary>
+    /// Whether clicking a parent node also toggles its expanded state.
+    /// When true, clicking anywhere on a node with children will expand or collapse it
+    /// in addition to selecting it. When false (default), only the chevron toggle expands/collapses.
+    /// </summary>
+    [Parameter]
+    public bool ExpandOnClick { get; set; }
+
+    /// <summary>
     /// Fired when a node is clicked.
     /// </summary>
     [Parameter]
@@ -289,13 +297,27 @@ public partial class BbTreeView : IAsyncDisposable
     /// Called from JavaScript when a node is activated via click or keyboard (Enter/Space).
     /// </summary>
     [JSInvokable]
-    public async Task JsOnNodeActivate(string value)
+    public async Task JsOnNodeActivate(string value, bool hasChildren = false)
     {
         // Update context selection BEFORE firing OnNodeClick. The EventCallback's
         // InvokeAsync triggers StateHasChanged on the receiver (wrapper component),
         // which could re-render with stale parameter values. By selecting first,
         // the context already has the correct state when SyncStateToContext runs.
         context.SelectNode(value);
+
+        if (ExpandOnClick && (hasChildren || context.HasChildren(value)))
+        {
+            context.ToggleExpanded(value);
+
+            if (context.IsExpanded(value) && OnNodeExpand.HasDelegate)
+            {
+                await OnNodeExpand.InvokeAsync(value);
+            }
+            else if (!context.IsExpanded(value) && OnNodeCollapse.HasDelegate)
+            {
+                await OnNodeCollapse.InvokeAsync(value);
+            }
+        }
 
         if (OnNodeClick.HasDelegate)
         {

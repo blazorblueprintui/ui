@@ -149,7 +149,8 @@ export function initialize(containerElement, dotNetRef, instanceId) {
       case 'Enter': {
         e.preventDefault();
         if (!isDisabled(currentItem)) {
-          dotNetRef.invokeMethodAsync('JsOnNodeActivate', value);
+          const hasChildren = currentItem.getAttribute('data-has-children') === 'true';
+          dotNetRef.invokeMethodAsync('JsOnNodeActivate', value, hasChildren);
         }
         break;
       }
@@ -162,7 +163,8 @@ export function initialize(containerElement, dotNetRef, instanceId) {
           if (isCheckable) {
             dotNetRef.invokeMethodAsync('JsOnNodeCheck', value);
           } else {
-            dotNetRef.invokeMethodAsync('JsOnNodeActivate', value);
+            const hasChildren = currentItem.getAttribute('data-has-children') === 'true';
+            dotNetRef.invokeMethodAsync('JsOnNodeActivate', value, hasChildren);
           }
         }
         break;
@@ -232,7 +234,8 @@ export function initialize(containerElement, dotNetRef, instanceId) {
     }
 
     // Otherwise, select the node
-    dotNetRef.invokeMethodAsync('JsOnNodeActivate', value);
+    const hasChildren = treeItem.getAttribute('data-has-children') === 'true';
+    dotNetRef.invokeMethodAsync('JsOnNodeActivate', value, hasChildren);
 
     // Make sure the clicked item gets focus
     treeItem.focus();
