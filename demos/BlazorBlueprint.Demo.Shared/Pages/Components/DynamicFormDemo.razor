@@ -1,0 +1,396 @@
+@page "/components/dynamic-form"
+
+<PageTitle>DynamicForm Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">DynamicForm</h1>
+            <p class="text-xl text-muted-foreground">
+                Render forms from schema definitions. Eliminates hand-coding forms for CMS, admin panels,
+                and settings pages where form structure comes from backend configuration.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic Form -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Dynamic Form</h2>
+            <p class="text-sm text-muted-foreground">
+                Define a schema with field definitions and the form renders the correct input component for each field type.
+            </p>
+        </div>
+        <div class="max-w-lg">
+            <BbDynamicForm Schema="@_basicSchema"
+                           @bind-Values="_basicValues"
+                           OnValidSubmit="HandleBasicSubmit" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Current values:</p>
+            <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_basicValues)</pre>
+        </div>
+    </div>
+
+    <!-- Multi-Section Form -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Multi-Section Form</h2>
+            <p class="text-sm text-muted-foreground">
+                Group related fields into sections with headings, descriptions, and optional collapsible behavior.
+            </p>
+        </div>
+        <div class="max-w-2xl">
+            <BbDynamicForm Schema="@_sectionSchema"
+                           @bind-Values="_sectionValues"
+                           OnValidSubmit="HandleSectionSubmit" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Current values:</p>
+            <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_sectionValues)</pre>
+        </div>
+    </div>
+
+    <!-- Conditional Visibility -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Conditional Visibility</h2>
+            <p class="text-sm text-muted-foreground">
+                Show or hide fields based on other field values using <code class="text-xs bg-muted px-1 py-0.5 rounded">VisibleWhen</code> expressions.
+                Select "US" as the country to reveal the State field.
+            </p>
+        </div>
+        <div class="max-w-lg">
+            <BbDynamicForm Schema="@_conditionalSchema"
+                           @bind-Values="_conditionalValues"
+                           OnValidSubmit="HandleConditionalSubmit" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Current values:</p>
+            <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_conditionalValues)</pre>
+        </div>
+    </div>
+
+    <!-- Multi-Column Layout -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Multi-Column Layout</h2>
+            <p class="text-sm text-muted-foreground">
+                Use the <code class="text-xs bg-muted px-1 py-0.5 rounded">Columns</code> parameter for responsive grid layouts.
+                Fields can span multiple columns with <code class="text-xs bg-muted px-1 py-0.5 rounded">ColSpan</code>.
+            </p>
+        </div>
+        <BbDynamicForm Schema="@_multiColSchema"
+                       @bind-Values="_multiColValues"
+                       Columns="2"
+                       OnValidSubmit="HandleMultiColSubmit" />
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Current values:</p>
+            <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_multiColValues)</pre>
+        </div>
+    </div>
+
+    <!-- JSON Schema -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">JSON Schema-Driven Form</h2>
+            <p class="text-sm text-muted-foreground">
+                Parse a JSON Schema string into a form definition using <code class="text-xs bg-muted px-1 py-0.5 rounded">FormSchemaParser.FromJson</code>.
+                Useful for API-driven forms where the schema comes from the server.
+            </p>
+        </div>
+        <div class="max-w-lg">
+            <BbDynamicForm Schema="@_jsonSchema"
+                           @bind-Values="_jsonValues"
+                           OnValidSubmit="HandleJsonSubmit" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Current values:</p>
+            <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_jsonValues)</pre>
+        </div>
+    </div>
+
+    <!-- Read-Only / Disabled -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Read-Only / Disabled</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">Disabled</code> to prevent all interaction.
+            </p>
+        </div>
+        <div class="max-w-lg">
+            <BbDynamicForm Schema="@_basicSchema"
+                           @bind-Values="_disabledValues"
+                           Disabled="true"
+                           ShowSubmitButton="false" />
+        </div>
+    </div>
+
+    <!-- Validation -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Validation</h2>
+            <p class="text-sm text-muted-foreground">
+                Define validation rules on field definitions. Required fields, patterns, min/max length,
+                and numeric range validations are all supported. Try submitting the empty form.
+            </p>
+        </div>
+        <div class="max-w-lg">
+            <BbDynamicForm Schema="@_validationSchema"
+                           @bind-Values="_validationValues"
+                           OnValidSubmit="HandleValidationSubmit" />
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_submitMessage))
+    {
+        <BbAlert Variant="AlertVariant.Success" Dismissible="true" OnDismiss="() => _submitMessage = null">
+            <BbAlertTitle>Form Submitted</BbAlertTitle>
+            <BbAlertDescription>@_submitMessage</BbAlertDescription>
+        </BbAlert>
+    }
+</div>
+
+@code {
+    private string? _submitMessage;
+
+    // ── Basic Form ──────────────────────────────────────────────────
+
+    private readonly FormSchema _basicSchema = new()
+    {
+        Title = "Contact Information",
+        Description = "Enter your basic contact details.",
+        Fields =
+        [
+            new FormFieldDefinition { Name = "FirstName", Label = "First Name", Type = FieldType.Text, Placeholder = "John", Required = true },
+            new FormFieldDefinition { Name = "LastName", Label = "Last Name", Type = FieldType.Text, Placeholder = "Doe", Required = true },
+            new FormFieldDefinition { Name = "Email", Label = "Email Address", Type = FieldType.Email, Placeholder = "john@example.com", Required = true },
+            new FormFieldDefinition { Name = "Theme", Label = "Preferred Theme", Type = FieldType.Select, Options = [new("light", "Light"), new("dark", "Dark"), new("system", "System")] },
+            new FormFieldDefinition { Name = "Newsletter", Label = "Subscribe to newsletter", Type = FieldType.Switch }
+        ]
+    };
+
+    private Dictionary<string, object?> _basicValues = new();
+
+    // ── Section Form ────────────────────────────────────────────────
+
+    private readonly FormSchema _sectionSchema = new()
+    {
+        Title = "User Registration",
+        Sections =
+        [
+            new FormSectionDefinition
+            {
+                Title = "Personal Details",
+                Description = "Your basic information.",
+                Fields =
+                [
+                    new FormFieldDefinition { Name = "FullName", Label = "Full Name", Type = FieldType.Text, Required = true },
+                    new FormFieldDefinition { Name = "Email", Label = "Email", Type = FieldType.Email, Required = true },
+                    new FormFieldDefinition { Name = "Phone", Label = "Phone", Type = FieldType.Phone, Placeholder = "+1 (555) 000-0000" }
+                ]
+            },
+            new FormSectionDefinition
+            {
+                Title = "Preferences",
+                Description = "Customize your experience.",
+                Collapsible = true,
+                Fields =
+                [
+                    new FormFieldDefinition { Name = "Language", Label = "Language", Type = FieldType.Select, Options = [new("en", "English"), new("es", "Spanish"), new("fr", "French"), new("de", "German")] },
+                    new FormFieldDefinition { Name = "DarkMode", Label = "Dark Mode", Type = FieldType.Switch },
+                    new FormFieldDefinition { Name = "Notifications", Label = "Notification Preferences", Type = FieldType.CheckboxGroup, Options = [new("email", "Email"), new("sms", "SMS"), new("push", "Push")] }
+                ]
+            }
+        ]
+    };
+
+    private Dictionary<string, object?> _sectionValues = new();
+
+    // ── Conditional Visibility ──────────────────────────────────────
+
+    private readonly FormSchema _conditionalSchema = new()
+    {
+        Fields =
+        [
+            new FormFieldDefinition
+            {
+                Name = "Country", Label = "Country", Type = FieldType.Select, Required = true,
+                Options = [new("US", "United States"), new("CA", "Canada"), new("UK", "United Kingdom"), new("AU", "Australia")]
+            },
+            new FormFieldDefinition
+            {
+                Name = "State", Label = "State", Type = FieldType.Select,
+                VisibleWhen = "Country == 'US'",
+                Options = [new("CA", "California"), new("NY", "New York"), new("TX", "Texas"), new("FL", "Florida")]
+            },
+            new FormFieldDefinition
+            {
+                Name = "Province", Label = "Province", Type = FieldType.Select,
+                VisibleWhen = "Country == 'CA'",
+                Options = [new("ON", "Ontario"), new("QC", "Quebec"), new("BC", "British Columbia")]
+            },
+            new FormFieldDefinition
+            {
+                Name = "PostalCode", Label = "Postal Code", Type = FieldType.Text,
+                VisibleWhen = "Country != null",
+                Placeholder = "Enter postal code"
+            }
+        ]
+    };
+
+    private Dictionary<string, object?> _conditionalValues = new();
+
+    // ── Multi-Column ────────────────────────────────────────────────
+
+    private readonly FormSchema _multiColSchema = new()
+    {
+        Title = "Shipping Address",
+        Columns = 2,
+        Fields =
+        [
+            new FormFieldDefinition { Name = "FirstName", Label = "First Name", Type = FieldType.Text, Required = true },
+            new FormFieldDefinition { Name = "LastName", Label = "Last Name", Type = FieldType.Text, Required = true },
+            new FormFieldDefinition { Name = "Address", Label = "Street Address", Type = FieldType.Text, ColSpan = 2, Required = true },
+            new FormFieldDefinition { Name = "City", Label = "City", Type = FieldType.Text, Required = true },
+            new FormFieldDefinition { Name = "Zip", Label = "ZIP Code", Type = FieldType.Text },
+            new FormFieldDefinition { Name = "Notes", Label = "Delivery Notes", Type = FieldType.Textarea, ColSpan = 2, Placeholder = "Any special instructions..." }
+        ]
+    };
+
+    private Dictionary<string, object?> _multiColValues = new();
+
+    // ── JSON Schema ─────────────────────────────────────────────────
+
+    private static readonly string _jsonSchemaString = """
+    {
+        "type": "object",
+        "title": "Product Feedback",
+        "description": "Help us improve by sharing your feedback.",
+        "required": ["name", "rating"],
+        "properties": {
+            "name": {
+                "type": "string",
+                "title": "Your Name",
+                "minLength": 2,
+                "maxLength": 100
+            },
+            "email": {
+                "type": "string",
+                "format": "email",
+                "title": "Email Address"
+            },
+            "rating": {
+                "type": "integer",
+                "title": "Rating (1-5)",
+                "minimum": 1,
+                "maximum": 5
+            },
+            "category": {
+                "type": "string",
+                "title": "Category",
+                "enum": ["bug", "feature", "improvement", "question"]
+            },
+            "comments": {
+                "type": "string",
+                "title": "Comments",
+                "maxLength": 500
+            }
+        }
+    }
+    """;
+
+    private readonly FormSchema _jsonSchema = FormSchemaParser.FromJson(_jsonSchemaString);
+
+    private Dictionary<string, object?> _jsonValues = new();
+
+    // ── Disabled ────────────────────────────────────────────────────
+
+    private Dictionary<string, object?> _disabledValues = new()
+    {
+        ["FirstName"] = "John",
+        ["LastName"] = "Doe",
+        ["Email"] = "john@example.com",
+        ["Theme"] = "dark",
+        ["Newsletter"] = true
+    };
+
+    // ── Validation ──────────────────────────────────────────────────
+
+    private readonly FormSchema _validationSchema = new()
+    {
+        Title = "Account Setup",
+        Fields =
+        [
+            new FormFieldDefinition
+            {
+                Name = "Username", Label = "Username", Type = FieldType.Text, Required = true,
+                Validations = [new() { Type = ValidationType.MinLength, Value = 3, Message = "Username must be at least 3 characters." }, new() { Type = ValidationType.MaxLength, Value = 20 }]
+            },
+            new FormFieldDefinition
+            {
+                Name = "Email", Label = "Email", Type = FieldType.Email, Required = true,
+                Validations = [new() { Type = ValidationType.Email }]
+            },
+            new FormFieldDefinition
+            {
+                Name = "Password", Label = "Password", Type = FieldType.Password, Required = true,
+                Validations = [new() { Type = ValidationType.MinLength, Value = 8, Message = "Password must be at least 8 characters." }, new() { Type = ValidationType.Pattern, Value = @"(?=.*[A-Z])(?=.*\d)", Message = "Password must contain at least one uppercase letter and one digit." }]
+            },
+            new FormFieldDefinition
+            {
+                Name = "Age", Label = "Age", Type = FieldType.Number,
+                Validations = [new() { Type = ValidationType.Min, Value = 18, Message = "You must be at least 18 years old." }, new() { Type = ValidationType.Max, Value = 120 }]
+            },
+            new FormFieldDefinition
+            {
+                Name = "Website", Label = "Website (optional)", Type = FieldType.Url,
+                Validations = [new() { Type = ValidationType.Url }]
+            }
+        ]
+    };
+
+    private Dictionary<string, object?> _validationValues = new();
+
+    // ── Handlers ────────────────────────────────────────────────────
+
+    private void HandleBasicSubmit(Dictionary<string, object?> values)
+    {
+        _submitMessage = $"Basic form submitted with {values.Count} fields.";
+    }
+
+    private void HandleSectionSubmit(Dictionary<string, object?> values)
+    {
+        _submitMessage = $"Registration form submitted with {values.Count} fields.";
+    }
+
+    private void HandleConditionalSubmit(Dictionary<string, object?> values)
+    {
+        _submitMessage = $"Location form submitted. Country: {values.GetValueOrDefault("Country")}";
+    }
+
+    private void HandleMultiColSubmit(Dictionary<string, object?> values)
+    {
+        _submitMessage = $"Shipping form submitted for {values.GetValueOrDefault("FirstName")} {values.GetValueOrDefault("LastName")}.";
+    }
+
+    private void HandleJsonSubmit(Dictionary<string, object?> values)
+    {
+        _submitMessage = $"Feedback form submitted. Rating: {values.GetValueOrDefault("rating")}";
+    }
+
+    private void HandleValidationSubmit(Dictionary<string, object?> values)
+    {
+        _submitMessage = $"Account created for {values.GetValueOrDefault("Username")}!";
+    }
+
+    private static string FormatValues(Dictionary<string, object?> values)
+    {
+        if (values.Count == 0)
+        {
+            return "(no values yet)";
+        }
+
+        return string.Join("\n", values.Select(kv => $"{kv.Key}: {kv.Value ?? "(null)"}"));
+    }
+}
