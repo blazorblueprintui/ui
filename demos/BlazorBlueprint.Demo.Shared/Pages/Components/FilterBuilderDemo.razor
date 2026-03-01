@@ -1,0 +1,284 @@
+@page "/components/filterbuilder"
+@using BlazorBlueprint.Demo.Services
+
+<PageTitle>Filter Builder - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-7xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Filter Builder</h1>
+            <p class="text-xl text-muted-foreground">
+                A composable query builder for constructing data filter expressions with AND/OR logic and nested conditions.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Filter Builder</h2>
+            <p class="text-sm text-muted-foreground">
+                Build filters with string, number, date, and enum fields. The filter definition is output as JSON below.
+            </p>
+        </div>
+        <BbFilterBuilder @bind-Filter="basicFilter"
+                         Fields="@basicFields"
+                         OnFilterChanged="HandleBasicFilterChanged" />
+
+        @if (!basicFilter.IsEmpty)
+        {
+            <div class="rounded-lg border bg-muted/50 p-4">
+                <div class="text-sm font-medium mb-2">Filter JSON Output:</div>
+                <pre class="text-xs overflow-auto max-h-64 text-muted-foreground">@basicFilterJson</pre>
+            </div>
+        }
+    </div>
+
+    <!-- Nested Groups -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Nested AND/OR Groups</h2>
+            <p class="text-sm text-muted-foreground">
+                Create complex queries with nested groups. Click "Add group" to create sub-groups with their own AND/OR logic.
+                Maximum nesting depth is limited to 3 levels.
+            </p>
+        </div>
+        <BbFilterBuilder @bind-Filter="nestedFilter"
+                         Fields="@basicFields"
+                         MaxDepth="3" />
+    </div>
+
+    <!-- With Apply Button -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Apply Button Mode</h2>
+            <p class="text-sm text-muted-foreground">
+                With <code>ShowApplyButton="true"</code>, changes are only applied when the user clicks the Apply button.
+                Useful for expensive server-side queries.
+            </p>
+        </div>
+        <BbFilterBuilder @bind-Filter="applyFilter"
+                         Fields="@basicFields"
+                         ShowApplyButton="true"
+                         OnFilterChanged="HandleApplyFilterChanged" />
+
+        @if (applyFilterApplied)
+        {
+            <BbBadge Variant="BadgeVariant.Default">
+                Filter applied with @applyFilter.TotalConditionCount condition(s)
+            </BbBadge>
+        }
+    </div>
+
+    <!-- DataTable Integration -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">DataTable Integration</h2>
+            <p class="text-sm text-muted-foreground">
+                Use the filter builder alongside a DataTable. The filter is applied client-side using <code>ToFunc&lt;T&gt;()</code>.
+            </p>
+        </div>
+        <BbFilterBuilder @bind-Filter="tableFilter"
+                         Fields="@personFields"
+                         OnFilterChanged="HandleTableFilterChanged" />
+
+        <div class="flex items-center gap-2">
+            <BbBadge Variant="BadgeVariant.Secondary">
+                @filteredPeople.Count of @allPeople.Count records
+            </BbBadge>
+        </div>
+
+        <BbDataTable TData="Person" Data="@filteredPeople" InitialPageSize="10">
+            <Columns>
+                <BbDataTableColumn TData="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable />
+                <BbDataTableColumn TData="Person" TValue="string" Property="@(p => p.Email)" Header="Email" />
+                <BbDataTableColumn TData="Person" TValue="int" Property="@(p => p.Age)" Header="Age" Sortable />
+                <BbDataTableColumn TData="Person" TValue="string" Property="@(p => p.Role)" Header="Role" />
+                <BbDataTableColumn TData="Person" TValue="string" Property="@(p => p.Status)" Header="Status">
+                    <CellTemplate Context="person">
+                        <BbBadge Variant="@(person.Status == "Active" ? BadgeVariant.Default : BadgeVariant.Outline)">
+                            @person.Status
+                        </BbBadge>
+                    </CellTemplate>
+                </BbDataTableColumn>
+                <BbDataTableColumn TData="Person" TValue="bool" Property="@(p => p.IsActive)" Header="Active">
+                    <CellTemplate Context="person">
+                        @(person.IsActive ? "Yes" : "No")
+                    </CellTemplate>
+                </BbDataTableColumn>
+            </Columns>
+        </BbDataTable>
+    </div>
+
+    <!-- Compact Mode -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Compact Mode</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code>Compact="true"</code> for a smaller layout suitable for toolbars and inline placement.
+            </p>
+        </div>
+        <BbFilterBuilder @bind-Filter="compactFilter"
+                         Fields="@basicFields"
+                         Compact="true"
+                         MaxDepth="1" />
+    </div>
+
+    <!-- Max Conditions -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Max Conditions Limit</h2>
+            <p class="text-sm text-muted-foreground">
+                Limit the total number of conditions with <code>MaxConditions</code>. This example allows a maximum of 5 conditions.
+            </p>
+        </div>
+        <BbFilterBuilder @bind-Filter="limitedFilter"
+                         Fields="@basicFields"
+                         MaxConditions="5" />
+        <p class="text-sm text-muted-foreground">
+            Conditions: @limitedFilter.TotalConditionCount / 5
+        </p>
+    </div>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="FilterBuilder">
+                <ApiParameter Name="Filter" Type="FilterDefinition">
+                    The current filter state. Use with @@bind-Filter for two-way binding.
+                </ApiParameter>
+                <ApiParameter Name="Fields" Type="IEnumerable&lt;FilterField&gt;">
+                    The available fields to filter on. Each field defines a name, label, type, and optional options for enum fields.
+                </ApiParameter>
+                <ApiParameter Name="OnFilterChanged" Type="EventCallback&lt;FilterDefinition&gt;">
+                    Callback invoked when the filter changes. Use for side effects like applying filters to data.
+                </ApiParameter>
+                <ApiParameter Name="MaxDepth" Type="int" Default="3">
+                    Maximum nesting depth for filter groups.
+                </ApiParameter>
+                <ApiParameter Name="MaxConditions" Type="int?" Default="null">
+                    Maximum total conditions allowed across all groups. Null for unlimited.
+                </ApiParameter>
+                <ApiParameter Name="DefaultOperator" Type="LogicalOperator" Default="And">
+                    Default logical operator (AND/OR) for new groups.
+                </ApiParameter>
+                <ApiParameter Name="ShowApplyButton" Type="bool" Default="false">
+                    Show an explicit Apply button instead of auto-applying changes on each edit.
+                </ApiParameter>
+                <ApiParameter Name="Compact" Type="bool" Default="false">
+                    Compact layout mode for inline/toolbar placement with smaller inputs.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?">
+                    Additional CSS classes for the container element.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    // Data
+    private List<Person> allPeople = new();
+    private List<Person> filteredPeople = new();
+
+    // Filters
+    private FilterDefinition basicFilter = new();
+    private FilterDefinition nestedFilter = new();
+    private FilterDefinition applyFilter = new();
+    private FilterDefinition tableFilter = new();
+    private FilterDefinition compactFilter = new();
+    private FilterDefinition limitedFilter = new();
+
+    // State
+    private string basicFilterJson = "";
+    private bool applyFilterApplied;
+
+    // Field definitions for basic demos
+    private readonly FilterField[] basicFields = new[]
+    {
+        new FilterField { Name = "Name", Label = "Name", Type = FilterFieldType.String },
+        new FilterField { Name = "Email", Label = "Email", Type = FilterFieldType.String },
+        new FilterField { Name = "Age", Label = "Age", Type = FilterFieldType.Number },
+        new FilterField { Name = "JoinDate", Label = "Join Date", Type = FilterFieldType.Date },
+        new FilterField
+        {
+            Name = "Status", Label = "Status", Type = FilterFieldType.Enum,
+            Options = new SelectOption<string>[]
+            {
+                new("Active", "Active"),
+                new("Inactive", "Inactive"),
+                new("Pending", "Pending"),
+                new("Suspended", "Suspended")
+            }
+        },
+        new FilterField { Name = "IsActive", Label = "Active", Type = FilterFieldType.Boolean }
+    };
+
+    // Extended field definitions for DataTable integration
+    private readonly FilterField[] personFields = new[]
+    {
+        new FilterField { Name = "Name", Label = "Name", Type = FilterFieldType.String },
+        new FilterField { Name = "Email", Label = "Email", Type = FilterFieldType.String },
+        new FilterField { Name = "Age", Label = "Age", Type = FilterFieldType.Number },
+        new FilterField
+        {
+            Name = "Role", Label = "Role", Type = FilterFieldType.Enum,
+            Options = new SelectOption<string>[]
+            {
+                new("Admin", "Admin"),
+                new("User", "User"),
+                new("Guest", "Guest"),
+                new("Moderator", "Moderator"),
+                new("Manager", "Manager"),
+                new("Developer", "Developer"),
+                new("Designer", "Designer"),
+                new("Analyst", "Analyst")
+            }
+        },
+        new FilterField
+        {
+            Name = "Status", Label = "Status", Type = FilterFieldType.Enum,
+            Options = new SelectOption<string>[]
+            {
+                new("Active", "Active"),
+                new("Inactive", "Inactive"),
+                new("Pending", "Pending"),
+                new("Suspended", "Suspended")
+            }
+        },
+        new FilterField { Name = "IsActive", Label = "Active", Type = FilterFieldType.Boolean }
+    };
+
+    protected override void OnInitialized()
+    {
+        allPeople = MockDataService.GeneratePersons(100);
+        filteredPeople = new List<Person>(allPeople);
+    }
+
+    private void HandleBasicFilterChanged(FilterDefinition filter)
+    {
+        basicFilterJson = filter.IsEmpty ? "" : filter.ToJson();
+    }
+
+    private void HandleApplyFilterChanged(FilterDefinition filter)
+    {
+        applyFilterApplied = !filter.IsEmpty;
+    }
+
+    private void HandleTableFilterChanged(FilterDefinition filter)
+    {
+        if (filter.IsEmpty)
+        {
+            filteredPeople = new List<Person>(allPeople);
+        }
+        else
+        {
+            var predicate = filter.ToFunc<Person>(personFields);
+            filteredPeople = allPeople.Where(predicate).ToList();
+        }
+    }
+}

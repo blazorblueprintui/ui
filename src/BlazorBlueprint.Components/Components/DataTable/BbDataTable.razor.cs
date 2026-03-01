@@ -78,6 +78,7 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
     private IReadOnlyCollection<TData>? _lastSelectedItems;
     private int _paginationVersion;
     private int _lastPaginationVersion;
+    private FilterDefinition? _lastFilter;
 
     /// <summary>
     /// Gets or sets the data source for the table.
@@ -202,6 +203,21 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
     public EventCallback<string?> OnFilter { get; set; }
 
     /// <summary>
+    /// Gets or sets a <see cref="FilterDefinition"/> to apply to the data.
+    /// When provided, the filter is applied client-side using <see cref="FilterDefinitionExtensions.ToFunc{T}"/>.
+    /// Requires <see cref="FilterFields"/> to be set.
+    /// </summary>
+    [Parameter]
+    public FilterDefinition? Filter { get; set; }
+
+    /// <summary>
+    /// Gets or sets the field definitions used to evaluate the <see cref="Filter"/>.
+    /// Required when <see cref="Filter"/> is provided.
+    /// </summary>
+    [Parameter]
+    public IEnumerable<FilterField>? FilterFields { get; set; }
+
+    /// <summary>
     /// Gets or sets a function to preprocess data before automatic processing.
     /// Use for custom transformations or server-side data fetching.
     /// </summary>
@@ -317,10 +333,17 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
     }
 
     /// <summary>
-    /// Applies global search filtering to the data.
+    /// Applies global search filtering and FilterDefinition to the data.
     /// </summary>
     private IEnumerable<TData> ApplyFiltering(IEnumerable<TData> data)
     {
+        // Apply FilterDefinition if provided
+        if (Filter != null && !Filter.IsEmpty && FilterFields != null)
+        {
+            var predicate = Filter.ToFunc<TData>(FilterFields);
+            data = data.Where(predicate);
+        }
+
         if (string.IsNullOrWhiteSpace(_globalSearchValue))
         {
             return data;
@@ -671,8 +694,9 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
         var searchChanged = _lastGlobalSearchValue != _globalSearchValue;
         var selectionChanged = _lastSelectionVersion != _selectionVersion;
         var paginationChanged = _lastPaginationVersion != _paginationVersion;
+        var filterChanged = !ReferenceEquals(_lastFilter, Filter);
 
-        if (dataChanged || selectionModeChanged || loadingChanged || columnsChanged || searchChanged || selectionChanged || paginationChanged)
+        if (dataChanged || selectionModeChanged || loadingChanged || columnsChanged || searchChanged || selectionChanged || paginationChanged || filterChanged)
         {
             _lastData = Data;
             _lastSelectionMode = SelectionMode;
@@ -681,6 +705,7 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
             _lastGlobalSearchValue = _globalSearchValue;
             _lastSelectionVersion = _selectionVersion;
             _lastPaginationVersion = _paginationVersion;
+            _lastFilter = Filter;
             return true;
         }
 

@@ -1,0 +1,118 @@
+@namespace BlazorBlueprint.Components
+
+<div class="@RowCssClass" role="group" aria-label="Filter condition">
+    @* Field selector *@
+    <BbSelect TValue="string"
+              Value="@Condition.Field"
+              ValueChanged="HandleFieldChanged"
+              Options="@fieldOptions"
+              Placeholder="Select field..."
+              Class="@FieldSelectClass" />
+
+    @* Operator selector *@
+    @if (!string.IsNullOrEmpty(Condition.Field) && selectedField != null)
+    {
+        <BbSelect TValue="FilterOperator"
+                  Value="@Condition.Operator"
+                  ValueChanged="HandleOperatorChanged"
+                  Options="@operatorOptions"
+                  Class="@OperatorSelectClass" />
+
+        @* Value input — type-aware *@
+        @if (!FilterOperatorHelper.IsValuelessOperator(Condition.Operator))
+        {
+            @switch (selectedField.Type)
+            {
+                case FilterFieldType.String:
+                    <BbInput Value="@GetStringValue()"
+                             ValueChanged="HandleStringValueChanged"
+                             Placeholder="@(selectedField.Placeholder ?? "Enter value...")"
+                             Class="@ValueInputClass" />
+                    break;
+
+                case FilterFieldType.Number when FilterOperatorHelper.IsRangeOperator(Condition.Operator):
+                    <div class="flex items-center gap-2">
+                        <BbNumericInput TValue="double"
+                                        Value="@GetDoubleValue()"
+                                        ValueChanged="HandleDoubleValueChanged"
+                                        Placeholder="Min"
+                                        Class="@ValueInputClass" />
+                        <span class="text-sm text-muted-foreground shrink-0">and</span>
+                        <BbNumericInput TValue="double"
+                                        Value="@GetDoubleValueEnd()"
+                                        ValueChanged="HandleDoubleValueEndChanged"
+                                        Placeholder="Max"
+                                        Class="@ValueInputClass" />
+                    </div>
+                    break;
+
+                case FilterFieldType.Number:
+                    <BbNumericInput TValue="double"
+                                    Value="@GetDoubleValue()"
+                                    ValueChanged="HandleDoubleValueChanged"
+                                    Placeholder="@(selectedField.Placeholder ?? "Enter value...")"
+                                    Class="@ValueInputClass" />
+                    break;
+
+                case FilterFieldType.Date or FilterFieldType.DateTime when FilterOperatorHelper.IsRangeOperator(Condition.Operator):
+                    <BbDateRangePicker Value="@GetDateRangeValue()"
+                                       ValueChanged="HandleDateRangeValueChanged"
+                                       Class="@ValueInputClass" />
+                    break;
+
+                case FilterFieldType.Date or FilterFieldType.DateTime when Condition.Operator == FilterOperator.InLast:
+                    <div class="flex items-center gap-2">
+                        <BbNumericInput TValue="int"
+                                        Value="@GetInLastAmount()"
+                                        ValueChanged="HandleInLastAmountChanged"
+                                        Min="1"
+                                        Placeholder="Amount"
+                                        Class="@ValueInputClass" />
+                        <BbSelect TValue="InLastPeriod"
+                                  Value="@GetInLastPeriod()"
+                                  ValueChanged="HandleInLastPeriodChanged"
+                                  Options="@inLastPeriodOptions"
+                                  Class="@OperatorSelectClass" />
+                    </div>
+                    break;
+
+                case FilterFieldType.Date or FilterFieldType.DateTime:
+                    <BbDatePicker Value="@GetDateTimeValue()"
+                                  ValueChanged="HandleDateTimeValueChanged"
+                                  Placeholder="@(selectedField.Placeholder ?? "Pick a date")"
+                                  Class="@ValueInputClass" />
+                    break;
+
+                case FilterFieldType.Enum when Condition.Operator is FilterOperator.In or FilterOperator.NotIn:
+                    <BbMultiSelect TValue="string"
+                                   Values="@GetMultiSelectValues()"
+                                   ValuesChanged="HandleMultiSelectValuesChanged"
+                                   Options="@(selectedField.Options ?? Array.Empty<SelectOption<string>>())"
+                                   Placeholder="Select values..."
+                                   Class="@ValueInputClass" />
+                    break;
+
+                case FilterFieldType.Enum:
+                    <BbSelect TValue="string"
+                              Value="@GetStringValue()"
+                              ValueChanged="HandleStringValueChanged"
+                              Options="@(selectedField.Options ?? Array.Empty<SelectOption<string>>())"
+                              Placeholder="Select value..."
+                              Class="@ValueInputClass" />
+                    break;
+            }
+        }
+    }
+
+    @* Remove button *@
+    <BbButton Variant="ButtonVariant.Ghost"
+              Size="ButtonSize.IconSmall"
+              OnClick="HandleRemove"
+              Class="shrink-0 text-muted-foreground hover:text-destructive"
+              aria-label="Remove condition">
+        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+    </BbButton>
+</div>
