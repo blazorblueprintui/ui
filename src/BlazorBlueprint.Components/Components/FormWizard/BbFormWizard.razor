@@ -1,0 +1,104 @@
+@namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<div class="@CssClass" data-slot="form-wizard" @attributes="AdditionalAttributes">
+    @* Step Indicator *@
+    <nav class="@IndicatorCssClass" aria-label="Wizard progress">
+        @for (int i = 0; i < steps.Count; i++)
+        {
+            var index = i;
+            var step = steps[i];
+            var state = GetStepState(i);
+
+            @* Step button *@
+            <button type="button"
+                    class="@GetStepButtonClass(index, state)"
+                    aria-current="@(state == WizardStepState.Active ? "step" : null)"
+                    disabled="@(!CanNavigateToStep(index) && state != WizardStepState.Active)"
+                    @onclick="() => GoToStepAsync(index)">
+                <span class="@GetStepCircleClass(state)">
+                    @if (state == WizardStepState.Completed)
+                    {
+                        <LucideIcon Name="check" Class="h-4 w-4" />
+                    }
+                    else if (state == WizardStepState.Invalid)
+                    {
+                        <LucideIcon Name="x" Class="h-4 w-4" />
+                    }
+                    else if (step.Icon is not null)
+                    {
+                        <LucideIcon Name="@step.Icon" Class="h-4 w-4" />
+                    }
+                    else
+                    {
+                        @(index + 1)
+                    }
+                </span>
+                <span class="@GetStepTitleClass(state)">@step.Title</span>
+                @if (step.Description is not null && Layout == WizardLayout.Vertical)
+                {
+                    <span class="text-xs text-muted-foreground">@step.Description</span>
+                }
+            </button>
+
+            @* Connector line between steps *@
+            @if (i < steps.Count - 1)
+            {
+                <div class="@GetConnectorClass(state, Layout)" aria-hidden="true"></div>
+            }
+        }
+    </nav>
+
+    @* Content + Navigation wrapper (needed for vertical layout alignment) *@
+    <div class="@ContentWrapperCssClass">
+        @* Step Content *@
+        <div class="@ContentCssClass" data-slot="wizard-content">
+            <CascadingValue Value="this" IsFixed="false">
+                @ChildContent
+            </CascadingValue>
+        </div>
+
+        @* Navigation *@
+        @if (ShowNavigation || NavigationTemplate is not null)
+        {
+            <div class="@NavigationCssClass" data-slot="wizard-navigation">
+                @if (NavigationTemplate is not null)
+                {
+                    @NavigationTemplate
+                }
+                else
+                {
+                    <BbButton Variant="ButtonVariant.Outline"
+                              Disabled="@(!CanGoBack)"
+                              OnClick="GoToBackAsync"
+                              Class="@(IsFirstStep ? "invisible" : "")">
+                        @(BackLabel ?? "Back")
+                    </BbButton>
+
+                    <div class="flex items-center gap-2">
+                        @if (currentStep < steps.Count && steps[currentStep].IsOptional && !IsLastStep)
+                        {
+                            <BbButton Variant="ButtonVariant.Ghost"
+                                      OnClick="SkipCurrentStepAsync">
+                                Skip
+                            </BbButton>
+                        }
+
+                        @if (IsLastStep)
+                        {
+                            <BbButton OnClick="CompleteAsync">
+                                @(CompleteLabel ?? "Complete")
+                            </BbButton>
+                        }
+                        else
+                        {
+                            <BbButton OnClick="GoToNextAsync">
+                                @(NextLabel ?? "Next")
+                            </BbButton>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

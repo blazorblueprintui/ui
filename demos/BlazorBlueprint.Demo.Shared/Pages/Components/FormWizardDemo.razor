@@ -1,0 +1,445 @@
+@page "/components/form-wizard"
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>Form Wizard Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Form Wizard</h1>
+            <p class="text-xl text-muted-foreground">
+                A multi-step form wizard with step indicators, navigation, and per-step validation.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic Wizard -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Wizard</h2>
+            <p class="text-sm text-muted-foreground">
+                A simple wizard with three steps. Navigate using Back/Next buttons or by clicking visited step indicators.
+            </p>
+        </div>
+        <div class="rounded-lg border p-6">
+            <BbFormWizard>
+                <BbWizardStep Title="Account">
+                    <div class="space-y-4">
+                        <BbFormFieldInput TValue="string"
+                                          @bind-Value="_basicName"
+                                          Label="Name"
+                                          Placeholder="Enter your name" />
+                        <BbFormFieldInput TValue="string"
+                                          @bind-Value="_basicEmail"
+                                          Label="Email"
+                                          Placeholder="you@@example.com" />
+                    </div>
+                </BbWizardStep>
+                <BbWizardStep Title="Profile">
+                    <div class="space-y-4">
+                        <BbFormFieldInput TValue="string"
+                                          @bind-Value="_basicBio"
+                                          Label="Bio"
+                                          Placeholder="Tell us about yourself" />
+                    </div>
+                </BbWizardStep>
+                <BbWizardStep Title="Confirm">
+                    <div class="space-y-3">
+                        <p class="text-sm text-muted-foreground">Please review your information:</p>
+                        <div class="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
+                            <p><span class="font-medium">Name:</span> @(string.IsNullOrEmpty(_basicName) ? "Not provided" : _basicName)</p>
+                            <p><span class="font-medium">Email:</span> @(string.IsNullOrEmpty(_basicEmail) ? "Not provided" : _basicEmail)</p>
+                            <p><span class="font-medium">Bio:</span> @(string.IsNullOrEmpty(_basicBio) ? "Not provided" : _basicBio)</p>
+                        </div>
+                    </div>
+                </BbWizardStep>
+            </BbFormWizard>
+        </div>
+    </div>
+
+    <!-- Wizard with Validation -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Per-Step Validation</h2>
+            <p class="text-sm text-muted-foreground">
+                Each step declares its fields via <code class="text-xs bg-muted px-1 py-0.5 rounded">FieldNames</code>.
+                Clicking "Next" validates only the current step's fields. The step indicator shows validation state.
+            </p>
+        </div>
+        <div class="rounded-lg border p-6">
+            <EditForm Model="_validationModel" OnValidSubmit="HandleValidationSubmit">
+                <DataAnnotationsValidator />
+                <BbFormWizard OnComplete="HandleValidationSubmit">
+                    <BbWizardStep Title="Personal Info" Icon="user"
+                                  FieldNames='@(new[] { "FirstName", "LastName" })'>
+                        <div class="space-y-4">
+                            <BbFormFieldInput TValue="string"
+                                              @bind-Value="_validationModel.FirstName"
+                                              Label="First Name"
+                                              Placeholder="John" />
+                            <BbFormFieldInput TValue="string"
+                                              @bind-Value="_validationModel.LastName"
+                                              Label="Last Name"
+                                              Placeholder="Doe" />
+                        </div>
+                    </BbWizardStep>
+                    <BbWizardStep Title="Contact" Icon="mail"
+                                  FieldNames='@(new[] { "Email" })'>
+                        <div class="space-y-4">
+                            <BbFormFieldInput TValue="string"
+                                              @bind-Value="_validationModel.Email"
+                                              Label="Email Address"
+                                              Placeholder="john@@example.com" />
+                        </div>
+                    </BbWizardStep>
+                    <BbWizardStep Title="Review" Icon="check-circle">
+                        <div class="space-y-3">
+                            <p class="text-sm text-muted-foreground">Everything looks good? Click "Complete" to finish.</p>
+                            <div class="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
+                                <p><span class="font-medium">Name:</span> @_validationModel.FirstName @_validationModel.LastName</p>
+                                <p><span class="font-medium">Email:</span> @_validationModel.Email</p>
+                            </div>
+                        </div>
+                    </BbWizardStep>
+                </BbFormWizard>
+            </EditForm>
+            @if (_validationSubmitted)
+            {
+                <div class="mt-4 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 p-4">
+                    <p class="text-sm font-medium text-green-800 dark:text-green-200">Wizard completed successfully!</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Optional Step -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Optional / Skippable Step</h2>
+            <p class="text-sm text-muted-foreground">
+                Steps with <code class="text-xs bg-muted px-1 py-0.5 rounded">IsOptional="true"</code> show
+                a "Skip" button, allowing users to bypass them without validation.
+            </p>
+        </div>
+        <div class="rounded-lg border p-6">
+            <BbFormWizard>
+                <BbWizardStep Title="Required Info">
+                    <div class="space-y-4">
+                        <BbFormFieldInput TValue="string"
+                                          @bind-Value="_optionalName"
+                                          Label="Full Name"
+                                          Placeholder="Enter your name" />
+                    </div>
+                </BbWizardStep>
+                <BbWizardStep Title="Preferences" IsOptional="true">
+                    <div class="space-y-4">
+                        <BbFormFieldInput TValue="string"
+                                          @bind-Value="_optionalTheme"
+                                          Label="Theme Preference"
+                                          Placeholder="Light, Dark, or System" />
+                        <p class="text-xs text-muted-foreground">This step is optional. You can skip it.</p>
+                    </div>
+                </BbWizardStep>
+                <BbWizardStep Title="Done">
+                    <p class="text-sm text-muted-foreground">You're all set!</p>
+                </BbWizardStep>
+            </BbFormWizard>
+        </div>
+    </div>
+
+    <!-- Vertical Layout -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Vertical Layout</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">Layout="WizardLayout.Vertical"</code> to
+                place the step indicator on the left side with content on the right.
+            </p>
+        </div>
+        <div class="rounded-lg border p-6">
+            <BbFormWizard Layout="WizardLayout.Vertical">
+                <BbWizardStep Title="Step One" Description="First step details">
+                    <div class="space-y-4">
+                        <BbFormFieldInput TValue="string"
+                                          @bind-Value="_verticalField1"
+                                          Label="Field One"
+                                          Placeholder="Enter something" />
+                    </div>
+                </BbWizardStep>
+                <BbWizardStep Title="Step Two" Description="Second step details">
+                    <div class="space-y-4">
+                        <BbFormFieldInput TValue="string"
+                                          @bind-Value="_verticalField2"
+                                          Label="Field Two"
+                                          Placeholder="Enter something else" />
+                    </div>
+                </BbWizardStep>
+                <BbWizardStep Title="Step Three" Description="Final step">
+                    <p class="text-sm text-muted-foreground">You've reached the end of the vertical wizard.</p>
+                </BbWizardStep>
+            </BbFormWizard>
+        </div>
+    </div>
+
+    <!-- With Icons -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Step Icons</h2>
+            <p class="text-sm text-muted-foreground">
+                Add Lucide icon names to steps via the <code class="text-xs bg-muted px-1 py-0.5 rounded">Icon</code> parameter.
+                Icons are replaced by checkmarks when the step is completed.
+            </p>
+        </div>
+        <div class="rounded-lg border p-6">
+            <BbFormWizard>
+                <BbWizardStep Title="Account" Icon="user">
+                    <p class="text-sm text-muted-foreground">Set up your account details.</p>
+                </BbWizardStep>
+                <BbWizardStep Title="Settings" Icon="settings">
+                    <p class="text-sm text-muted-foreground">Configure your preferences.</p>
+                </BbWizardStep>
+                <BbWizardStep Title="Billing" Icon="credit-card">
+                    <p class="text-sm text-muted-foreground">Add your payment information.</p>
+                </BbWizardStep>
+                <BbWizardStep Title="Complete" Icon="check-circle">
+                    <p class="text-sm text-muted-foreground">All done! Your account is ready.</p>
+                </BbWizardStep>
+            </BbFormWizard>
+        </div>
+    </div>
+
+    <!-- Custom Navigation -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Navigation</h2>
+            <p class="text-sm text-muted-foreground">
+                Replace the default navigation buttons with your own using
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">NavigationTemplate</code>.
+                Access the wizard via a cascading parameter.
+            </p>
+        </div>
+        <div class="rounded-lg border p-6">
+            <BbFormWizard @bind-CurrentStep="_customNavStep" ShowNavigation="false">
+                <BbWizardStep Title="Step 1">
+                    <p class="text-sm text-muted-foreground">Custom navigation example - Step 1</p>
+                </BbWizardStep>
+                <BbWizardStep Title="Step 2">
+                    <p class="text-sm text-muted-foreground">Custom navigation example - Step 2</p>
+                </BbWizardStep>
+                <BbWizardStep Title="Step 3">
+                    <p class="text-sm text-muted-foreground">Custom navigation example - Step 3</p>
+                </BbWizardStep>
+            </BbFormWizard>
+            <div class="flex gap-2 mt-4">
+                <BbButton Variant="ButtonVariant.Outline"
+                          Disabled="@(_customNavStep <= 0)"
+                          OnClick="() => _customNavStep = Math.Max(0, _customNavStep - 1)">
+                    Previous
+                </BbButton>
+                <BbButton Disabled="@(_customNavStep >= 2)"
+                          OnClick="() => _customNavStep = Math.Min(2, _customNavStep + 1)">
+                    Continue
+                </BbButton>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controlled Wizard -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Controlled Wizard</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-CurrentStep</code> to
+                programmatically control which step is displayed.
+            </p>
+        </div>
+        <div class="rounded-lg border p-6">
+            <div class="flex gap-2 mb-4">
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                          OnClick="() => _controlledStep = 0">Go to Step 1</BbButton>
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                          OnClick="() => _controlledStep = 1">Go to Step 2</BbButton>
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                          OnClick="() => _controlledStep = 2">Go to Step 3</BbButton>
+            </div>
+            <p class="text-xs text-muted-foreground mb-4">Current step: <strong>@_controlledStep</strong></p>
+            <BbFormWizard @bind-CurrentStep="_controlledStep" AllowSkipAhead="true">
+                <BbWizardStep Title="Overview">
+                    <p class="text-sm text-muted-foreground">This is the overview step.</p>
+                </BbWizardStep>
+                <BbWizardStep Title="Details">
+                    <p class="text-sm text-muted-foreground">This is the details step.</p>
+                </BbWizardStep>
+                <BbWizardStep Title="Summary">
+                    <p class="text-sm text-muted-foreground">This is the summary step.</p>
+                </BbWizardStep>
+            </BbFormWizard>
+        </div>
+    </div>
+
+    <!-- Custom Labels -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Button Labels</h2>
+            <p class="text-sm text-muted-foreground">
+                Customize the navigation button text with <code class="text-xs bg-muted px-1 py-0.5 rounded">BackLabel</code>,
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">NextLabel</code>, and
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">CompleteLabel</code>.
+            </p>
+        </div>
+        <div class="rounded-lg border p-6">
+            <BbFormWizard BackLabel="Previous" NextLabel="Continue" CompleteLabel="Submit">
+                <BbWizardStep Title="Step 1">
+                    <p class="text-sm text-muted-foreground">Custom labels example.</p>
+                </BbWizardStep>
+                <BbWizardStep Title="Step 2">
+                    <p class="text-sm text-muted-foreground">Notice the button labels.</p>
+                </BbWizardStep>
+                <BbWizardStep Title="Step 3">
+                    <p class="text-sm text-muted-foreground">The final button says "Submit".</p>
+                </BbWizardStep>
+            </BbFormWizard>
+        </div>
+    </div>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Step indicator uses <code>aria-label="Wizard progress"</code> for screen readers</AccessibilityItem>
+            <AccessibilityItem>Active step is marked with <code>aria-current="step"</code></AccessibilityItem>
+            <AccessibilityItem>Disabled/unreachable steps have <code>disabled</code> attribute on their indicator buttons</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Navigate between step indicators">
+                <BbKbd>Tab</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate a step indicator">
+                <BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+
+        <div class="space-y-4">
+            <ApiReference ComponentName="FormWizard">
+                <ApiParameter Name="CurrentStep" Type="int" Default="0">
+                    The zero-based index of the active step. Supports two-way binding with <code>@@bind-CurrentStep</code>.
+                </ApiParameter>
+                <ApiParameter Name="OnComplete" Type="EventCallback" Default="null">
+                    Fired when the user clicks the complete button on the last step.
+                </ApiParameter>
+                <ApiParameter Name="OnStepChanged" Type="EventCallback&lt;int&gt;" Default="null">
+                    Fired when the active step changes. Receives the new step index.
+                </ApiParameter>
+                <ApiParameter Name="Layout" Type="WizardLayout" Default="Horizontal">
+                    Step indicator layout: Horizontal (top) or Vertical (left side).
+                </ApiParameter>
+                <ApiParameter Name="ShowNavigation" Type="bool" Default="true">
+                    Whether to show the built-in Back/Next/Complete navigation buttons.
+                </ApiParameter>
+                <ApiParameter Name="NavigationTemplate" Type="RenderFragment?" Default="null">
+                    Custom navigation content replacing the default buttons.
+                </ApiParameter>
+                <ApiParameter Name="AllowSkipAhead" Type="bool" Default="false">
+                    Whether users can click unvisited future steps in the indicator.
+                </ApiParameter>
+                <ApiParameter Name="BackLabel" Type="string?" Default="&quot;Back&quot;">
+                    Custom label for the back button.
+                </ApiParameter>
+                <ApiParameter Name="NextLabel" Type="string?" Default="&quot;Next&quot;">
+                    Custom label for the next button.
+                </ApiParameter>
+                <ApiParameter Name="CompleteLabel" Type="string?" Default="&quot;Complete&quot;">
+                    Custom label for the complete button.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?" Default="null">
+                    Additional CSS classes for the root container.
+                </ApiParameter>
+                <ApiParameter Name="IndicatorClass" Type="string?" Default="null">
+                    Additional CSS classes for the step indicator nav.
+                </ApiParameter>
+                <ApiParameter Name="ContentClass" Type="string?" Default="null">
+                    Additional CSS classes for the content area.
+                </ApiParameter>
+                <ApiParameter Name="NavigationClass" Type="string?" Default="null">
+                    Additional CSS classes for the navigation area.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="WizardStep">
+                <ApiParameter Name="Title" Type="string" Default="(required)">
+                    The step title shown in the step indicator.
+                </ApiParameter>
+                <ApiParameter Name="Description" Type="string?" Default="null">
+                    Optional description shown below the title (visible in vertical layout).
+                </ApiParameter>
+                <ApiParameter Name="Icon" Type="string?" Default="null">
+                    Lucide icon name for the step indicator circle.
+                </ApiParameter>
+                <ApiParameter Name="IsOptional" Type="bool" Default="false">
+                    Whether the step can be skipped without validation.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether the step is disabled and cannot be navigated to.
+                </ApiParameter>
+                <ApiParameter Name="FieldNames" Type="string[]?" Default="null">
+                    Model property names to validate when clicking Next. Works with EditForm + DataAnnotationsValidator.
+                </ApiParameter>
+                <ApiParameter Name="Validator" Type="Func&lt;bool&gt;?" Default="null">
+                    Custom validation function. Must return true for the step to be considered valid.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?" Default="null">
+                    Additional CSS classes for the step content wrapper.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    // Basic wizard
+    private string? _basicName;
+    private string? _basicEmail;
+    private string? _basicBio;
+
+    // Validation wizard
+    private ValidationModel _validationModel = new();
+    private bool _validationSubmitted;
+
+    // Optional step
+    private string? _optionalName;
+    private string? _optionalTheme;
+
+    // Vertical layout
+    private string? _verticalField1;
+    private string? _verticalField2;
+
+    // Custom navigation
+    private int _customNavStep;
+
+    // Controlled wizard
+    private int _controlledStep;
+
+    private void HandleValidationSubmit()
+    {
+        _validationSubmitted = true;
+    }
+
+    private class ValidationModel
+    {
+        [Required(ErrorMessage = "First name is required.")]
+        public string? FirstName { get; set; }
+
+        [Required(ErrorMessage = "Last name is required.")]
+        public string? LastName { get; set; }
+
+        [Required(ErrorMessage = "Email is required.")]
+        [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
+        public string? Email { get; set; }
+    }
+}
