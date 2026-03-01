@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace BlazorBlueprint.Components;
 
 /// <summary>
@@ -6,6 +8,12 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public class FilterDefinition
 {
+    /// <summary>
+    /// Gets a monotonically increasing version number that changes on every filter edit.
+    /// Used by consumers (e.g. <see cref="BbDataTable{TData}"/>) to detect in-place mutations.
+    /// </summary>
+    [JsonIgnore]
+    public int Version { get; internal set; }
     /// <summary>
     /// Gets or sets the logical operator (AND/OR) used to combine conditions and groups.
     /// </summary>

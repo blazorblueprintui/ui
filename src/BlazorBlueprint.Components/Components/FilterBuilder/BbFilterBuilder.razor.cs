@@ -100,25 +100,34 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
         debounceTimer?.Dispose();
         var capturedVersion = ++debounceVersion;
         debounceTimer = new Timer(
-            async _ =>
-            {
-                if (disposed || capturedVersion != debounceVersion)
-                {
-                    return;
-                }
-                await InvokeAsync(async () =>
-                {
-                    if (capturedVersion != debounceVersion)
-                    {
-                        return;
-                    }
-                    await NotifyFilterChanged();
-                    StateHasChanged();
-                });
-            },
+            _ => _ = HandleDebouncedChangeAsync(capturedVersion),
             null,
             300,
             Timeout.Infinite);
+    }
+
+    private async Task HandleDebouncedChangeAsync(int capturedVersion)
+    {
+        try
+        {
+            if (disposed || capturedVersion != debounceVersion)
+            {
+                return;
+            }
+            await InvokeAsync(async () =>
+            {
+                if (capturedVersion != debounceVersion)
+                {
+                    return;
+                }
+                await NotifyFilterChanged();
+                StateHasChanged();
+            });
+        }
+        catch (ObjectDisposedException)
+        {
+            // Component was disposed between timer fire and InvokeAsync
+        }
     }
 
     private async Task HandleApply() =>
@@ -134,6 +143,8 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
 
     private async Task NotifyFilterChanged()
     {
+        Filter.Version++;
+
         if (FilterChanged.HasDelegate)
         {
             await FilterChanged.InvokeAsync(Filter);

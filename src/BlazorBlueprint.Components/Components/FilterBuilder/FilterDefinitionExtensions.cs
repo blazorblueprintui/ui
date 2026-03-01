@@ -40,8 +40,8 @@ public static class FilterDefinitionExtensions
             return _ => true;
         }
 
-        var fieldMap = fields.ToDictionary(f => f.Name, StringComparer.OrdinalIgnoreCase);
-        return item => EvaluateGroup(item!, filter, fieldMap, typeof(T));
+        var itemType = typeof(T);
+        return item => EvaluateGroup(item!, filter, itemType);
     }
 
     /// <summary>
@@ -60,8 +60,7 @@ public static class FilterDefinitionExtensions
             return Expression.Lambda<Func<T, bool>>(Expression.Constant(true), parameter);
         }
 
-        var fieldMap = fields.ToDictionary(f => f.Name, StringComparer.OrdinalIgnoreCase);
-        var body = BuildGroupExpression(parameter, filter, fieldMap);
+        var body = BuildGroupExpression(parameter, filter);
 
         return Expression.Lambda<Func<T, bool>>(body, parameter);
     }
@@ -80,7 +79,7 @@ public static class FilterDefinitionExtensions
 
     #region ToFunc implementation
 
-    private static bool EvaluateGroup<T>(T item, FilterDefinition group, Dictionary<string, FilterField> fieldMap, Type itemType)
+    private static bool EvaluateGroup<T>(T item, FilterDefinition group, Type itemType)
     {
         var results = new List<bool>();
 
@@ -97,7 +96,7 @@ public static class FilterDefinitionExtensions
         {
             if (!nestedGroup.IsEmpty)
             {
-                results.Add(EvaluateGroup(item, nestedGroup, fieldMap, itemType));
+                results.Add(EvaluateGroup(item, nestedGroup, itemType));
             }
         }
 
@@ -294,8 +293,7 @@ public static class FilterDefinitionExtensions
 
     private static Expression BuildGroupExpression(
         ParameterExpression parameter,
-        FilterDefinition group,
-        Dictionary<string, FilterField> fieldMap)
+        FilterDefinition group)
     {
         var expressions = new List<Expression>();
 
@@ -306,7 +304,7 @@ public static class FilterDefinitionExtensions
                 continue;
             }
 
-            var condExpr = BuildConditionExpression(parameter, condition, fieldMap);
+            var condExpr = BuildConditionExpression(parameter, condition);
             if (condExpr != null)
             {
                 expressions.Add(condExpr);
@@ -317,7 +315,7 @@ public static class FilterDefinitionExtensions
         {
             if (!nestedGroup.IsEmpty)
             {
-                expressions.Add(BuildGroupExpression(parameter, nestedGroup, fieldMap));
+                expressions.Add(BuildGroupExpression(parameter, nestedGroup));
             }
         }
 
@@ -333,8 +331,7 @@ public static class FilterDefinitionExtensions
 
     private static Expression? BuildConditionExpression(
         ParameterExpression parameter,
-        FilterCondition condition,
-        Dictionary<string, FilterField> fieldMap)
+        FilterCondition condition)
     {
         var property = parameter.Type.GetProperty(condition.Field,
             BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
@@ -346,7 +343,6 @@ public static class FilterDefinitionExtensions
 
         var propAccess = Expression.Property(parameter, property);
         var propType = property.PropertyType;
-        var underlyingType = Nullable.GetUnderlyingType(propType) ?? propType;
         var isNullable = Nullable.GetUnderlyingType(propType) != null || !propType.IsValueType;
 
         return condition.Operator switch
@@ -418,9 +414,17 @@ public static class FilterDefinitionExtensions
             return Expression.Constant(true);
         }
 
-        var constant = Nullable.GetUnderlyingType(propType) != null
-            ? Expression.Constant(convertedValue, propType)
-            : Expression.Constant(convertedValue, propType);
+        // For nullable types, build the constant with the underlying type then lift to nullable
+        Expression constant;
+        if (Nullable.GetUnderlyingType(propType) != null)
+        {
+            var underlyingConstant = Expression.Constant(convertedValue, underlyingType);
+            constant = Expression.Convert(underlyingConstant, propType);
+        }
+        else
+        {
+            constant = Expression.Constant(convertedValue, propType);
+        }
 
         return Expression.MakeBinary(comparison, propAccess, constant);
     }
@@ -439,15 +443,15 @@ public static class FilterDefinitionExtensions
             return Expression.AndAlso(nullCheck, methodCall);
         }
 
-        // For non-string properties: null-check the property, then call ToString() and the method
+        // For non-string properties: null-check the property, then call ToString() and the method.
+        // Box value types to object first so ToString() resolves correctly in the expression tree.
         var isNullable = !propType.IsValueType || Nullable.GetUnderlyingType(propType) != null;
-        Expression toStringCall = Expression.Call(propAccess, typeof(object).GetMethod(nameof(object.ToString))!);
+        var boxed = Expression.Convert(propAccess, typeof(object));
+        Expression toStringCall = Expression.Call(boxed, typeof(object).GetMethod(nameof(object.ToString))!);
 
         if (isNullable)
         {
-            var propNullCheck = Expression.NotEqual(
-                Expression.Convert(propAccess, typeof(object)),
-                Expression.Constant(null, typeof(object)));
+            var propNullCheck = Expression.NotEqual(boxed, Expression.Constant(null, typeof(object)));
             var methodCall = Expression.Call(toStringCall, method, Expression.Constant(stringValue), Expression.Constant(StringComparison.OrdinalIgnoreCase));
             return Expression.AndAlso(propNullCheck, methodCall);
         }
@@ -524,14 +528,16 @@ public static class FilterDefinitionExtensions
         }
 
         // Build: values.Any(v => string.Equals(v, item.Prop?.ToString(), OrdinalIgnoreCase))
+        // Box value types to object first so ToString() resolves correctly in the expression tree.
+        var boxed = Expression.Convert(propAccess, typeof(object));
         Expression target = propType == typeof(string)
             ? propAccess
-            : Expression.Call(propAccess, typeof(object).GetMethod(nameof(object.ToString))!);
+            : Expression.Call(boxed, typeof(object).GetMethod(nameof(object.ToString))!);
 
         var coalesce = propType == typeof(string)
             ? (Expression)Expression.Coalesce(propAccess, Expression.Constant(""))
             : Expression.Condition(
-                Expression.Equal(Expression.Convert(propAccess, typeof(object)), Expression.Constant(null, typeof(object))),
+                Expression.Equal(boxed, Expression.Constant(null, typeof(object))),
                 Expression.Constant(""),
                 target);
 
@@ -610,7 +616,7 @@ public static class FilterDefinitionExtensions
         }
         catch
         {
-            return value;
+            return null;
         }
     }
 

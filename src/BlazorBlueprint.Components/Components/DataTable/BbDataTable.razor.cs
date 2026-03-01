@@ -79,7 +79,7 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
     private int _paginationVersion;
     private int _lastPaginationVersion;
     private FilterDefinition? _lastFilter;
-    private int _lastFilterConditionCount;
+    private int _lastFilterVersion;
 
     /// <summary>
     /// Gets or sets the data source for the table.
@@ -339,8 +339,14 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
     private IEnumerable<TData> ApplyFiltering(IEnumerable<TData> data)
     {
         // Apply FilterDefinition if provided
-        if (Filter != null && !Filter.IsEmpty && FilterFields != null)
+        if (Filter != null && !Filter.IsEmpty)
         {
+            if (FilterFields == null)
+            {
+                throw new InvalidOperationException(
+                    $"{nameof(FilterFields)} must be provided when {nameof(Filter)} is set.");
+            }
+
             var predicate = Filter.ToFunc<TData>(FilterFields);
             data = data.Where(predicate);
         }
@@ -695,8 +701,8 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
         var searchChanged = _lastGlobalSearchValue != _globalSearchValue;
         var selectionChanged = _lastSelectionVersion != _selectionVersion;
         var paginationChanged = _lastPaginationVersion != _paginationVersion;
-        var currentFilterCount = Filter?.TotalConditionCount ?? 0;
-        var filterChanged = !ReferenceEquals(_lastFilter, Filter) || _lastFilterConditionCount != currentFilterCount;
+        var currentFilterVersion = Filter?.Version ?? 0;
+        var filterChanged = !ReferenceEquals(_lastFilter, Filter) || _lastFilterVersion != currentFilterVersion;
 
         if (dataChanged || selectionModeChanged || loadingChanged || columnsChanged || searchChanged || selectionChanged || paginationChanged || filterChanged)
         {
@@ -708,7 +714,7 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
             _lastSelectionVersion = _selectionVersion;
             _lastPaginationVersion = _paginationVersion;
             _lastFilter = Filter;
-            _lastFilterConditionCount = currentFilterCount;
+            _lastFilterVersion = currentFilterVersion;
             return true;
         }
 

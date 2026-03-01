@@ -153,7 +153,14 @@ public partial class BbFilterCondition : ComponentBase
     }
 
     // DateTime value helpers
-    private DateTime? GetDateTimeValue() => Condition.Value as DateTime?;
+    private DateTime? GetDateTimeValue()
+    {
+        return Condition.Value switch
+        {
+            DateTime dt => dt,
+            _ => null
+        };
+    }
 
     private async Task HandleDateTimeValueChanged(DateTime? value)
     {

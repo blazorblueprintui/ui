@@ -24,10 +24,8 @@ public class FilterValueJsonConverter : JsonConverter<object?>
                 {
                     return dateValue;
                 }
-                if (Enum.TryParse<InLastPeriod>(stringValue, out var periodValue))
-                {
-                    return periodValue;
-                }
+                // InLastPeriod values are kept as strings here; callers interpret
+                // them based on the filter operator when needed.
                 return stringValue;
 
             case JsonTokenType.Number:
