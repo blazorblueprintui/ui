@@ -41,8 +41,19 @@ public class FilterCondition
             Id = Id,
             Field = Field,
             Operator = Operator,
-            Value = Value,
-            ValueEnd = ValueEnd
+            Value = CloneValue(Value),
+            ValueEnd = CloneValue(ValueEnd)
+        };
+    }
+
+    private static object? CloneValue(object? value)
+    {
+        return value switch
+        {
+            null => null,
+            string[] arr => (string[])arr.Clone(),
+            Array arr => arr.Clone(),
+            _ => value
         };
     }
 }

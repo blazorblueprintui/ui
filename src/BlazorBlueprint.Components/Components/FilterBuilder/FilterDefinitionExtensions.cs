@@ -439,31 +439,35 @@ public static class FilterDefinitionExtensions
     private static Expression BuildStringMethodExpression(
         MemberExpression propAccess, Type propType, object? value, string methodName)
     {
-        var stringValue = value?.ToString() ?? "";
-        var method = typeof(string).GetMethod(methodName, new[] { typeof(string), typeof(StringComparison) })!;
+        // Use ToLower() + single-param overloads for EF Core/IQueryable translation compatibility.
+        // The StringComparison overloads are not translatable to SQL by most providers.
+        var normalizedValue = (value?.ToString() ?? "").ToLower(CultureInfo.InvariantCulture);
+        var toLowerMethod = typeof(string).GetMethod(nameof(string.ToLower), Type.EmptyTypes)!;
+        var comparisonMethod = typeof(string).GetMethod(methodName, new[] { typeof(string) })!;
 
         if (propType == typeof(string))
         {
-            // For string properties: check for null first, then call the method
             var nullCheck = Expression.NotEqual(propAccess, Expression.Constant(null, typeof(string)));
-            var methodCall = Expression.Call(propAccess, method, Expression.Constant(stringValue), Expression.Constant(StringComparison.OrdinalIgnoreCase));
+            var loweredProp = Expression.Call(propAccess, toLowerMethod);
+            var methodCall = Expression.Call(loweredProp, comparisonMethod, Expression.Constant(normalizedValue));
             return Expression.AndAlso(nullCheck, methodCall);
         }
 
-        // For non-string properties: null-check the property, then call ToString() and the method.
+        // For non-string properties: null-check the property, then call ToString(), ToLower() and the method.
         // Box value types to object first so ToString() resolves correctly in the expression tree.
         var isNullable = !propType.IsValueType || Nullable.GetUnderlyingType(propType) != null;
         var boxed = Expression.Convert(propAccess, typeof(object));
-        Expression toStringCall = Expression.Call(boxed, typeof(object).GetMethod(nameof(object.ToString))!);
+        Expression toStringCall = Expression.Call(boxed, typeof(object).GetMethod(nameof(ToString))!);
+        var loweredToString = Expression.Call(toStringCall, toLowerMethod);
 
         if (isNullable)
         {
             var propNullCheck = Expression.NotEqual(boxed, Expression.Constant(null, typeof(object)));
-            var methodCall = Expression.Call(toStringCall, method, Expression.Constant(stringValue), Expression.Constant(StringComparison.OrdinalIgnoreCase));
+            var methodCall = Expression.Call(loweredToString, comparisonMethod, Expression.Constant(normalizedValue));
             return Expression.AndAlso(propNullCheck, methodCall);
         }
 
-        return Expression.Call(toStringCall, method, Expression.Constant(stringValue), Expression.Constant(StringComparison.OrdinalIgnoreCase));
+        return Expression.Call(loweredToString, comparisonMethod, Expression.Constant(normalizedValue));
     }
 
     private static BinaryExpression BuildBetweenExpression(
@@ -534,31 +538,36 @@ public static class FilterDefinitionExtensions
             return Expression.Constant(!negate);
         }
 
-        // Build: values.Any(v => string.Equals(v, item.Prop?.ToString(), OrdinalIgnoreCase))
-        // Box value types to object first so ToString() resolves correctly in the expression tree.
-        var boxed = Expression.Convert(propAccess, typeof(object));
-        Expression target = propType == typeof(string)
-            ? propAccess
-            : Expression.Call(boxed, typeof(object).GetMethod(nameof(object.ToString))!);
+        // Use ToLower() + equality for EF Core/IQueryable translation compatibility.
+        var toLowerMethod = typeof(string).GetMethod(nameof(string.ToLower), Type.EmptyTypes)!;
 
-        var coalesce = propType == typeof(string)
-            ? (Expression)Expression.Coalesce(propAccess, Expression.Constant(""))
-            : Expression.Condition(
-                Expression.Equal(boxed, Expression.Constant(null, typeof(object))),
-                Expression.Constant(""),
-                target);
+        // For string properties use directly; for others box and call ToString()
+        Expression stringExpr;
+        if (propType == typeof(string))
+        {
+            stringExpr = Expression.Coalesce(propAccess, Expression.Constant(""));
+        }
+        else
+        {
+            var boxed = Expression.Convert(propAccess, typeof(object));
+            var isNullable = !propType.IsValueType || Nullable.GetUnderlyingType(propType) != null;
+            var toStringCall = Expression.Call(boxed, typeof(object).GetMethod(nameof(ToString))!);
+            stringExpr = isNullable
+                ? Expression.Condition(
+                    Expression.Equal(boxed, Expression.Constant(null, typeof(object))),
+                    Expression.Constant(""),
+                    toStringCall)
+                : toStringCall;
+        }
+
+        var loweredProp = Expression.Call(stringExpr, toLowerMethod);
 
         // Build individual equality checks combined with OR
-        var equalsMethod = typeof(string).GetMethod(nameof(string.Equals),
-            new[] { typeof(string), typeof(string), typeof(StringComparison) })!;
-
         Expression? combined = null;
         foreach (var v in valueList)
         {
-            var check = Expression.Call(equalsMethod,
-                Expression.Constant(v),
-                coalesce,
-                Expression.Constant(StringComparison.OrdinalIgnoreCase));
+            var loweredValue = v.ToLower(CultureInfo.InvariantCulture);
+            var check = Expression.Equal(loweredProp, Expression.Constant(loweredValue));
             combined = combined == null ? check : Expression.OrElse(combined, check);
         }
 
@@ -617,6 +626,15 @@ public static class FilterDefinitionExtensions
             if (targetType == typeof(bool))
             {
                 return Convert.ToBoolean(value, CultureInfo.InvariantCulture);
+            }
+
+            if (targetType.IsEnum)
+            {
+                if (value is string enumStr)
+                {
+                    return Enum.Parse(targetType, enumStr, ignoreCase: true);
+                }
+                return Enum.ToObject(targetType, Convert.ToInt64(value, CultureInfo.InvariantCulture));
             }
 
             return Convert.ChangeType(value, targetType, CultureInfo.InvariantCulture);

@@ -80,6 +80,9 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
     private int _lastPaginationVersion;
     private FilterDefinition? _lastFilter;
     private int _lastFilterVersion;
+    private Func<TData, bool>? _cachedFilterPredicate;
+    private FilterDefinition? _cachedFilterRef;
+    private int _cachedFilterVersion;
 
     /// <summary>
     /// Gets or sets the data source for the table.
@@ -339,8 +342,16 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
         // Apply FilterDefinition if provided
         if (Filter != null && !Filter.IsEmpty)
         {
-            var predicate = Filter.ToFunc<TData>(FilterFields ?? Array.Empty<FilterField>());
-            data = data.Where(predicate);
+            if (_cachedFilterPredicate == null
+                || !ReferenceEquals(_cachedFilterRef, Filter)
+                || _cachedFilterVersion != Filter.Version)
+            {
+                _cachedFilterPredicate = Filter.ToFunc<TData>(FilterFields ?? Array.Empty<FilterField>());
+                _cachedFilterRef = Filter;
+                _cachedFilterVersion = Filter.Version;
+            }
+
+            data = data.Where(_cachedFilterPredicate);
         }
 
         if (string.IsNullOrWhiteSpace(_globalSearchValue))
