@@ -79,6 +79,7 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
     private int _paginationVersion;
     private int _lastPaginationVersion;
     private FilterDefinition? _lastFilter;
+    private int _lastFilterConditionCount;
 
     /// <summary>
     /// Gets or sets the data source for the table.
@@ -694,7 +695,8 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
         var searchChanged = _lastGlobalSearchValue != _globalSearchValue;
         var selectionChanged = _lastSelectionVersion != _selectionVersion;
         var paginationChanged = _lastPaginationVersion != _paginationVersion;
-        var filterChanged = !ReferenceEquals(_lastFilter, Filter);
+        var currentFilterCount = Filter?.TotalConditionCount ?? 0;
+        var filterChanged = !ReferenceEquals(_lastFilter, Filter) || _lastFilterConditionCount != currentFilterCount;
 
         if (dataChanged || selectionModeChanged || loadingChanged || columnsChanged || searchChanged || selectionChanged || paginationChanged || filterChanged)
         {
@@ -706,6 +708,7 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
             _lastSelectionVersion = _selectionVersion;
             _lastPaginationVersion = _paginationVersion;
             _lastFilter = Filter;
+            _lastFilterConditionCount = currentFilterCount;
             return true;
         }
 

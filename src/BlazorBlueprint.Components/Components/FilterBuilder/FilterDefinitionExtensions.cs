@@ -90,7 +90,7 @@ public static class FilterDefinitionExtensions
             {
                 continue;
             }
-            results.Add(EvaluateCondition(item, condition, fieldMap, itemType));
+            results.Add(EvaluateCondition(item, condition, itemType));
         }
 
         foreach (var nestedGroup in group.Groups)
@@ -111,7 +111,7 @@ public static class FilterDefinitionExtensions
             : results.Any(r => r);
     }
 
-    private static bool EvaluateCondition<T>(T item, FilterCondition condition, Dictionary<string, FilterField> fieldMap, Type itemType)
+    private static bool EvaluateCondition<T>(T item, FilterCondition condition, Type itemType)
     {
         var prop = GetProperty(itemType, condition.Field);
         if (prop == null)
@@ -120,7 +120,6 @@ public static class FilterDefinitionExtensions
         }
 
         var rawValue = prop.GetValue(item);
-        fieldMap.TryGetValue(condition.Field, out var fieldDef);
 
         return condition.Operator switch
         {
@@ -134,11 +133,11 @@ public static class FilterDefinitionExtensions
             FilterOperator.NotContains => StringOp(rawValue, condition.Value, (s, v) => !s.Contains(v, StringComparison.OrdinalIgnoreCase)),
             FilterOperator.StartsWith => StringOp(rawValue, condition.Value, (s, v) => s.StartsWith(v, StringComparison.OrdinalIgnoreCase)),
             FilterOperator.EndsWith => StringOp(rawValue, condition.Value, (s, v) => s.EndsWith(v, StringComparison.OrdinalIgnoreCase)),
-            FilterOperator.GreaterThan => Compare(rawValue, condition.Value) > 0,
-            FilterOperator.LessThan => Compare(rawValue, condition.Value) < 0,
-            FilterOperator.GreaterOrEqual => Compare(rawValue, condition.Value) >= 0,
-            FilterOperator.LessOrEqual => Compare(rawValue, condition.Value) <= 0,
-            FilterOperator.Between => Compare(rawValue, condition.Value) >= 0 && Compare(rawValue, condition.ValueEnd) <= 0,
+            FilterOperator.GreaterThan => Compare(rawValue, condition.Value) is > 0,
+            FilterOperator.LessThan => Compare(rawValue, condition.Value) is < 0,
+            FilterOperator.GreaterOrEqual => Compare(rawValue, condition.Value) is >= 0,
+            FilterOperator.LessOrEqual => Compare(rawValue, condition.Value) is <= 0,
+            FilterOperator.Between => Compare(rawValue, condition.Value) is >= 0 && Compare(rawValue, condition.ValueEnd) is <= 0,
             FilterOperator.InLast => EvaluateInLast(rawValue, condition),
             FilterOperator.In => EvaluateIn(rawValue, condition.Value, contains: true),
             FilterOperator.NotIn => EvaluateIn(rawValue, condition.Value, contains: false),
@@ -193,11 +192,11 @@ public static class FilterDefinitionExtensions
         return op(s, v);
     }
 
-    private static int Compare(object? a, object? b)
+    private static int? Compare(object? a, object? b)
     {
         if (a is null || b is null)
         {
-            return 0;
+            return null;
         }
 
         if (IsNumeric(a) && IsNumeric(b))
@@ -219,7 +218,7 @@ public static class FilterDefinitionExtensions
             // Fall through
         }
 
-        return 0;
+        return null;
     }
 
     private static bool IsNumeric(object value) =>
@@ -367,6 +366,9 @@ public static class FilterDefinitionExtensions
             FilterOperator.StartsWith => BuildStringMethodExpression(propAccess, propType, condition.Value, "StartsWith"),
             FilterOperator.EndsWith => BuildStringMethodExpression(propAccess, propType, condition.Value, "EndsWith"),
             FilterOperator.Between => BuildBetweenExpression(propAccess, propType, condition.Value, condition.ValueEnd),
+            FilterOperator.InLast => BuildInLastExpression(propAccess, propType, condition),
+            FilterOperator.In => BuildInExpression(propAccess, propType, condition.Value, negate: false),
+            FilterOperator.NotIn => BuildInExpression(propAccess, propType, condition.Value, negate: true),
             _ => Expression.Constant(true)
         };
     }
@@ -404,35 +406,53 @@ public static class FilterDefinitionExtensions
         return Expression.Constant(expected);
     }
 
-    private static BinaryExpression BuildComparisonExpression(
+    private static Expression BuildComparisonExpression(
         MemberExpression propAccess, Type propType, object? value, ExpressionType comparison)
     {
         var underlyingType = Nullable.GetUnderlyingType(propType) ?? propType;
         var convertedValue = ConvertValue(value, underlyingType);
-        var constant = Expression.Constant(convertedValue, propType);
 
-        if (Nullable.GetUnderlyingType(propType) != null)
+        // Incomplete condition (user hasn't entered a value yet) — ignore it
+        if (convertedValue is null && underlyingType.IsValueType)
         {
-            constant = Expression.Constant(convertedValue, propType);
+            return Expression.Constant(true);
         }
+
+        var constant = Nullable.GetUnderlyingType(propType) != null
+            ? Expression.Constant(convertedValue, propType)
+            : Expression.Constant(convertedValue, propType);
 
         return Expression.MakeBinary(comparison, propAccess, constant);
     }
 
-    private static BinaryExpression BuildStringMethodExpression(
+    private static Expression BuildStringMethodExpression(
         MemberExpression propAccess, Type propType, object? value, string methodName)
     {
         var stringValue = value?.ToString() ?? "";
         var method = typeof(string).GetMethod(methodName, new[] { typeof(string), typeof(StringComparison) })!;
 
-        Expression target = propType == typeof(string)
-            ? propAccess
-            : Expression.Call(propAccess, typeof(object).GetMethod(nameof(object.ToString))!);
+        if (propType == typeof(string))
+        {
+            // For string properties: check for null first, then call the method
+            var nullCheck = Expression.NotEqual(propAccess, Expression.Constant(null, typeof(string)));
+            var methodCall = Expression.Call(propAccess, method, Expression.Constant(stringValue), Expression.Constant(StringComparison.OrdinalIgnoreCase));
+            return Expression.AndAlso(nullCheck, methodCall);
+        }
 
-        var nullCheck = Expression.NotEqual(target, Expression.Constant(null, typeof(string)));
-        var methodCall = Expression.Call(target, method, Expression.Constant(stringValue), Expression.Constant(StringComparison.OrdinalIgnoreCase));
+        // For non-string properties: null-check the property, then call ToString() and the method
+        var isNullable = !propType.IsValueType || Nullable.GetUnderlyingType(propType) != null;
+        Expression toStringCall = Expression.Call(propAccess, typeof(object).GetMethod(nameof(object.ToString))!);
 
-        return Expression.AndAlso(nullCheck, methodCall);
+        if (isNullable)
+        {
+            var propNullCheck = Expression.NotEqual(
+                Expression.Convert(propAccess, typeof(object)),
+                Expression.Constant(null, typeof(object)));
+            var methodCall = Expression.Call(toStringCall, method, Expression.Constant(stringValue), Expression.Constant(StringComparison.OrdinalIgnoreCase));
+            return Expression.AndAlso(propNullCheck, methodCall);
+        }
+
+        return Expression.Call(toStringCall, method, Expression.Constant(stringValue), Expression.Constant(StringComparison.OrdinalIgnoreCase));
     }
 
     private static BinaryExpression BuildBetweenExpression(
@@ -441,6 +461,100 @@ public static class FilterDefinitionExtensions
         var gte = BuildComparisonExpression(propAccess, propType, valueStart, ExpressionType.GreaterThanOrEqual);
         var lte = BuildComparisonExpression(propAccess, propType, valueEnd, ExpressionType.LessThanOrEqual);
         return Expression.AndAlso(gte, lte);
+    }
+
+    private static Expression BuildInLastExpression(
+        MemberExpression propAccess, Type propType, FilterCondition condition)
+    {
+        if (propType != typeof(DateTime) && propType != typeof(DateTime?))
+        {
+            return Expression.Constant(true);
+        }
+
+        var amount = condition.Value switch
+        {
+            int i => i,
+            double d => (int)d,
+            _ => 0
+        };
+
+        var period = condition.ValueEnd switch
+        {
+            InLastPeriod p => p,
+            int i when Enum.IsDefined(typeof(InLastPeriod), i) => (InLastPeriod)i,
+            string s when Enum.TryParse<InLastPeriod>(s, out var p) => p,
+            _ => InLastPeriod.Days
+        };
+
+        var cutoff = period switch
+        {
+            InLastPeriod.Days => DateTime.Now.AddDays(-amount),
+            InLastPeriod.Weeks => DateTime.Now.AddDays(-amount * 7),
+            InLastPeriod.Months => DateTime.Now.AddMonths(-amount),
+            _ => DateTime.Now
+        };
+
+        Expression target = propType == typeof(DateTime?)
+            ? Expression.Property(propAccess, "Value")
+            : propAccess;
+
+        var gte = Expression.GreaterThanOrEqual(target, Expression.Constant(cutoff));
+
+        if (propType == typeof(DateTime?))
+        {
+            var hasValue = Expression.Property(propAccess, "HasValue");
+            return Expression.AndAlso(hasValue, gte);
+        }
+
+        return gte;
+    }
+
+    private static Expression BuildInExpression(
+        MemberExpression propAccess, Type propType, object? filterValue, bool negate)
+    {
+        if (filterValue is not IEnumerable<string> values)
+        {
+            return Expression.Constant(!negate);
+        }
+
+        var valueList = values.ToList();
+        if (valueList.Count == 0)
+        {
+            return Expression.Constant(!negate);
+        }
+
+        // Build: values.Any(v => string.Equals(v, item.Prop?.ToString(), OrdinalIgnoreCase))
+        Expression target = propType == typeof(string)
+            ? propAccess
+            : Expression.Call(propAccess, typeof(object).GetMethod(nameof(object.ToString))!);
+
+        var coalesce = propType == typeof(string)
+            ? (Expression)Expression.Coalesce(propAccess, Expression.Constant(""))
+            : Expression.Condition(
+                Expression.Equal(Expression.Convert(propAccess, typeof(object)), Expression.Constant(null, typeof(object))),
+                Expression.Constant(""),
+                target);
+
+        // Build individual equality checks combined with OR
+        var equalsMethod = typeof(string).GetMethod(nameof(string.Equals),
+            new[] { typeof(string), typeof(string), typeof(StringComparison) })!;
+
+        Expression? combined = null;
+        foreach (var v in valueList)
+        {
+            var check = Expression.Call(equalsMethod,
+                Expression.Constant(v),
+                coalesce,
+                Expression.Constant(StringComparison.OrdinalIgnoreCase));
+            combined = combined == null ? check : Expression.OrElse(combined, check);
+        }
+
+        if (combined == null)
+        {
+            return Expression.Constant(!negate);
+        }
+
+        return negate ? Expression.Not(combined) : combined;
     }
 
     private static object? ConvertValue(object? value, Type targetType)

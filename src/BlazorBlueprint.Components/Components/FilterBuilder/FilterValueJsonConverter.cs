@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -16,7 +17,10 @@ public class FilterValueJsonConverter : JsonConverter<object?>
         {
             case JsonTokenType.String:
                 var stringValue = reader.GetString();
-                if (DateTime.TryParse(stringValue, out var dateValue))
+                // Only parse the ISO 8601 round-trip format written by Write() to avoid
+                // coercing plain strings that happen to look like dates.
+                if (DateTime.TryParseExact(stringValue, "O", CultureInfo.InvariantCulture,
+                    DateTimeStyles.RoundtripKind, out var dateValue))
                 {
                     return dateValue;
                 }

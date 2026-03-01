@@ -60,7 +60,7 @@ public partial class BbFilterCondition : ComponentBase
             return;
         }
 
-        selectedField = Context.Fields.FirstOrDefault(f => f.Name == Condition.Field);
+        selectedField = Context.Fields.FirstOrDefault(f => string.Equals(f.Name, Condition.Field, StringComparison.OrdinalIgnoreCase));
         if (selectedField != null)
         {
             operatorOptions = FilterOperatorHelper.GetOperatorOptions(selectedField.Type);

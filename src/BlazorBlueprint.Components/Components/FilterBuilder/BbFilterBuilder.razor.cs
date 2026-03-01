@@ -11,6 +11,7 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
 {
     private FilterBuilderContext? context;
     private Timer? debounceTimer;
+    private int debounceVersion;
     private bool disposed;
 
     /// <summary>
@@ -97,15 +98,20 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
         }
 
         debounceTimer?.Dispose();
+        var capturedVersion = ++debounceVersion;
         debounceTimer = new Timer(
             async _ =>
             {
-                if (disposed)
+                if (disposed || capturedVersion != debounceVersion)
                 {
                     return;
                 }
                 await InvokeAsync(async () =>
                 {
+                    if (capturedVersion != debounceVersion)
+                    {
+                        return;
+                    }
                     await NotifyFilterChanged();
                     StateHasChanged();
                 });
