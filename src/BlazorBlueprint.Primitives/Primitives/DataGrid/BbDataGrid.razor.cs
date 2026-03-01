@@ -188,6 +188,12 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
         EffectiveState.Selection.Mode = SelectionMode;
     }
 
+    private void TrackTask(Task task)
+    {
+        pendingTasks.RemoveAll(t => t.IsCompleted);
+        pendingTasks.Add(task);
+    }
+
     private void SetupEventHandlers()
     {
         context.OnSortChange = (definitions) =>
@@ -208,7 +214,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
                     Console.Error.WriteLine($"Error in OnSortChange: {ex.Message}");
                 }
             });
-            pendingTasks.Add(task);
+            TrackTask(task);
         };
 
         context.OnPageChange = (page) =>
@@ -229,7 +235,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
                     Console.Error.WriteLine($"Error in OnPageChange: {ex.Message}");
                 }
             });
-            pendingTasks.Add(task);
+            TrackTask(task);
         };
 
         context.OnPageSizeChange = (pageSize) =>
@@ -250,7 +256,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
                     Console.Error.WriteLine($"Error in OnPageSizeChange: {ex.Message}");
                 }
             });
-            pendingTasks.Add(task);
+            TrackTask(task);
         };
 
         context.OnRowSelect = (item) =>
@@ -269,7 +275,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
                     Console.Error.WriteLine($"Error in OnRowSelect: {ex.Message}");
                 }
             });
-            pendingTasks.Add(task);
+            TrackTask(task);
         };
 
         context.OnSelectionChange = (selectedItems) =>
@@ -290,7 +296,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
                     Console.Error.WriteLine($"Error in OnSelectionChange: {ex.Message}");
                 }
             });
-            pendingTasks.Add(task);
+            TrackTask(task);
         };
 
         context.OnColumnVisibilityChange = (columnId, visible) =>
@@ -311,7 +317,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
                     Console.Error.WriteLine($"Error in OnColumnVisibilityChange: {ex.Message}");
                 }
             });
-            pendingTasks.Add(task);
+            TrackTask(task);
         };
 
         context.OnColumnReorder = (columnId, newIndex) =>
@@ -332,7 +338,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
                     Console.Error.WriteLine($"Error in OnColumnReorder: {ex.Message}");
                 }
             });
-            pendingTasks.Add(task);
+            TrackTask(task);
         };
 
         context.OnColumnResize = (columnId, width) =>
@@ -353,7 +359,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
                     Console.Error.WriteLine($"Error in OnColumnResize: {ex.Message}");
                 }
             });
-            pendingTasks.Add(task);
+            TrackTask(task);
         };
 
         context.OnStateChanged += HandleContextStateChanged;
@@ -441,8 +447,10 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
 
     private async Task LoadFromProviderAsync(DataGridState<TData> currentState)
     {
-        // Cancel any previous load
-        loadCts?.Cancel();
+        // Cancel and dispose previous load
+        var oldCts = loadCts;
+        oldCts?.Cancel();
+        oldCts?.Dispose();
         loadCts = new CancellationTokenSource();
         var token = loadCts.Token;
 

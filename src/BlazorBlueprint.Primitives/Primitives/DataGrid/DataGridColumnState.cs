@@ -75,6 +75,10 @@ public class DataGridColumnState
             return;
         }
 
+        // Clamp newIndex to a valid range
+        var maxIndex = entries.Count - 1;
+        newIndex = Math.Clamp(newIndex, 0, maxIndex);
+
         var currentIndex = entry.Order;
         if (currentIndex == newIndex)
         {
@@ -108,6 +112,9 @@ public class DataGridColumnState
         }
 
         entry.Order = newIndex;
+
+        // Normalize orders to be contiguous (0..N-1) to prevent gaps
+        NormalizeOrders();
     }
 
     /// <summary>
@@ -167,6 +174,15 @@ public class DataGridColumnState
                 Width = snapshot.Width,
                 Order = snapshot.Order
             });
+        }
+    }
+
+    private void NormalizeOrders()
+    {
+        var sorted = entries.OrderBy(e => e.Order).ToList();
+        for (var i = 0; i < sorted.Count; i++)
+        {
+            sorted[i].Order = i;
         }
     }
 

@@ -12,6 +12,9 @@ namespace BlazorBlueprint.Components;
 public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridColumn<TData>
     where TData : class
 {
+    private Func<TData, object>? compiledSortBy;
+    private Expression<Func<TData, object>>? lastSortBy;
+
     /// <summary>
     /// The column title displayed in the header.
     /// </summary>
@@ -141,13 +144,34 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
             return 0;
         }
 
-        var compiled = SortBy.Compile();
-        var xVal = compiled(x);
-        var yVal = compiled(y);
+        if (compiledSortBy == null || !ReferenceEquals(lastSortBy, SortBy))
+        {
+            compiledSortBy = SortBy.Compile();
+            lastSortBy = SortBy;
+        }
+
+        var xVal = compiledSortBy(x);
+        var yVal = compiledSortBy(y);
         return Comparer<object>.Default.Compare(xVal, yVal);
     }
 
-    public LambdaExpression? GetSortExpression() => SortBy;
+    public LambdaExpression? GetSortExpression()
+    {
+        if (SortBy == null)
+        {
+            return null;
+        }
+
+        // Unwrap Convert(..., object) to expose the underlying member's real type.
+        // Without this, IQueryable providers (e.g. EF Core) fail to translate
+        // OrderBy<TData, object> because the boxing conversion has no SQL equivalent.
+        if (SortBy.Body is UnaryExpression { NodeType: ExpressionType.Convert } unary)
+        {
+            return Expression.Lambda(unary.Operand, SortBy.Parameters);
+        }
+
+        return SortBy;
+    }
 
     protected override void OnInitialized()
     {

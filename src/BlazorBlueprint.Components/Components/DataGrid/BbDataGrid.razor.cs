@@ -530,7 +530,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     private async Task LoadFromProviderAsync()
     {
-        _loadCts?.Cancel();
+        var oldCts = _loadCts;
+        oldCts?.Cancel();
+        oldCts?.Dispose();
         _loadCts = new CancellationTokenSource();
         var token = _loadCts.Token;
 
@@ -572,6 +574,14 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
     }
 
+    private async Task NotifyStateChangedAsync()
+    {
+        if (StateChanged.HasDelegate)
+        {
+            await StateChanged.InvokeAsync(EffectiveState);
+        }
+    }
+
     private async Task HandleSortChange(IReadOnlyList<SortDefinition> definitions)
     {
         await ProcessDataAsync();
@@ -581,6 +591,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             await OnSort.InvokeAsync(definitions);
         }
 
+        await NotifyStateChangedAsync();
         StateHasChanged();
     }
 
@@ -591,6 +602,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             await SelectedItemsChanged.InvokeAsync(selectedItems);
         }
 
+        await NotifyStateChangedAsync();
         StateHasChanged();
     }
 
@@ -627,6 +639,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             await SelectedItemsChanged.InvokeAsync(_gridState.Selection.SelectedItems);
         }
 
+        await NotifyStateChangedAsync();
         StateHasChanged();
     }
 
@@ -645,6 +658,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             await SelectedItemsChanged.InvokeAsync(_gridState.Selection.SelectedItems);
         }
 
+        await NotifyStateChangedAsync();
         StateHasChanged();
     }
 
@@ -659,16 +673,18 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             await SelectedItemsChanged.InvokeAsync(_gridState.Selection.SelectedItems);
         }
 
+        await NotifyStateChangedAsync();
         StateHasChanged();
     }
 
     /// <summary>
     /// Handles column visibility change from the toggle component.
     /// </summary>
-    internal void HandleColumnVisibilityChanged(string columnId, bool visible)
+    internal async void HandleColumnVisibilityChanged(string columnId, bool visible)
     {
         _gridState.Columns.SetVisibility(columnId, visible);
         _stateVersion++;
+        await NotifyStateChangedAsync();
         StateHasChanged();
     }
 
@@ -692,6 +708,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             await OnColumnResize.InvokeAsync((resizedColumnId, width));
         }
 
+        await NotifyStateChangedAsync();
         StateHasChanged();
     }
 
@@ -709,6 +726,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             await OnColumnReorder.InvokeAsync((columnId, newIndex));
         }
 
+        await NotifyStateChangedAsync();
         StateHasChanged();
     }
 
@@ -731,6 +749,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             await SelectedItemsChanged.InvokeAsync(_gridState.Selection.SelectedItems);
         }
 
+        await NotifyStateChangedAsync();
         StateHasChanged();
     }
 
@@ -738,6 +757,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     {
         _gridState.Pagination.GoToPage(page);
         await ProcessDataAsync();
+        await NotifyStateChangedAsync();
         StateHasChanged();
     }
 
@@ -745,6 +765,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     {
         _gridState.Pagination.PageSize = pageSize;
         await ProcessDataAsync();
+        await NotifyStateChangedAsync();
         StateHasChanged();
     }
 
