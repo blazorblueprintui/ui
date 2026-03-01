@@ -14,6 +14,7 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
     private int debounceVersion;
     private bool disposed;
     private FilterDefinition? draftFilter;
+    private FilterDefinition? lastFilter;
 
     /// <summary>
     /// Gets or sets the current filter state. Supports two-way binding via <c>@bind-Filter</c>.
@@ -80,7 +81,11 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
     {
         // When ShowApplyButton is true, work on a draft copy so the bound Filter
         // is not mutated until the user explicitly clicks Apply.
-        if (ShowApplyButton && draftFilter == null)
+        // Re-clone when the Filter parameter reference changes (e.g., loading a saved filter).
+        var filterChanged = !ReferenceEquals(lastFilter, Filter);
+        lastFilter = Filter;
+
+        if (ShowApplyButton && (draftFilter == null || filterChanged))
         {
             draftFilter = Filter.Clone();
         }
@@ -148,10 +153,12 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
     {
         if (draftFilter != null)
         {
-            // Copy draft state back to the bound Filter
-            Filter.Conditions = draftFilter.Conditions;
-            Filter.Groups = draftFilter.Groups;
-            Filter.Operator = draftFilter.Operator;
+            // Deep-clone draft state into Filter so the two remain independent.
+            // Without cloning, subsequent draft edits would mutate Filter directly.
+            var snapshot = draftFilter.Clone();
+            Filter.Conditions = snapshot.Conditions;
+            Filter.Groups = snapshot.Groups;
+            Filter.Operator = snapshot.Operator;
         }
         await NotifyFilterChanged();
     }

@@ -41,7 +41,8 @@ public static class FilterDefinitionExtensions
         }
 
         var itemType = typeof(T);
-        return item => EvaluateGroup(item!, filter, itemType);
+        var allowedFields = BuildAllowedFieldSet(fields);
+        return item => EvaluateGroup(item!, filter, itemType, allowedFields);
     }
 
     /// <summary>
@@ -60,7 +61,8 @@ public static class FilterDefinitionExtensions
             return Expression.Lambda<Func<T, bool>>(Expression.Constant(true), parameter);
         }
 
-        var body = BuildGroupExpression(parameter, filter);
+        var allowedFields = BuildAllowedFieldSet(fields);
+        var body = BuildGroupExpression(parameter, filter, allowedFields);
 
         return Expression.Lambda<Func<T, bool>>(body, parameter);
     }
@@ -79,13 +81,17 @@ public static class FilterDefinitionExtensions
 
     #region ToFunc implementation
 
-    private static bool EvaluateGroup<T>(T item, FilterDefinition group, Type itemType)
+    private static bool EvaluateGroup<T>(T item, FilterDefinition group, Type itemType, HashSet<string>? allowedFields)
     {
         var results = new List<bool>();
 
         foreach (var condition in group.Conditions)
         {
             if (string.IsNullOrEmpty(condition.Field))
+            {
+                continue;
+            }
+            if (allowedFields != null && !allowedFields.Contains(condition.Field))
             {
                 continue;
             }
@@ -96,7 +102,7 @@ public static class FilterDefinitionExtensions
         {
             if (!nestedGroup.IsEmpty)
             {
-                results.Add(EvaluateGroup(item, nestedGroup, itemType));
+                results.Add(EvaluateGroup(item, nestedGroup, itemType, allowedFields));
             }
         }
 
@@ -421,13 +427,18 @@ public static class FilterDefinitionExtensions
 
     private static Expression BuildGroupExpression(
         ParameterExpression parameter,
-        FilterDefinition group)
+        FilterDefinition group,
+        HashSet<string>? allowedFields)
     {
         var expressions = new List<Expression>();
 
         foreach (var condition in group.Conditions)
         {
             if (string.IsNullOrEmpty(condition.Field))
+            {
+                continue;
+            }
+            if (allowedFields != null && !allowedFields.Contains(condition.Field))
             {
                 continue;
             }
@@ -443,7 +454,7 @@ public static class FilterDefinitionExtensions
         {
             if (!nestedGroup.IsEmpty)
             {
-                expressions.Add(BuildGroupExpression(parameter, nestedGroup));
+                expressions.Add(BuildGroupExpression(parameter, nestedGroup, allowedFields));
             }
         }
 
@@ -846,6 +857,16 @@ public static class FilterDefinitionExtensions
         }
 
         return negate ? Expression.Not(combined) : combined;
+    }
+
+    private static HashSet<string>? BuildAllowedFieldSet(IEnumerable<FilterField> fields)
+    {
+        var list = fields as IList<FilterField> ?? fields.ToList();
+        if (list.Count == 0)
+        {
+            return null;
+        }
+        return new HashSet<string>(list.Select(f => f.Name), StringComparer.OrdinalIgnoreCase);
     }
 
     private static object? ConvertValue(object? value, Type targetType)

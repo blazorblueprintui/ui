@@ -6,8 +6,9 @@ namespace BlazorBlueprint.Components;
 
 /// <summary>
 /// Custom JSON converter for the polymorphic <c>Value</c> and <c>ValueEnd</c> properties
-/// on <see cref="FilterCondition"/>. Handles string, double, bool, DateTime, string[], int,
-/// and <see cref="InLastPeriod"/> values.
+/// on <see cref="FilterCondition"/>. Handles string, int, long, double, float, decimal, bool,
+/// DateTime, string[], <see cref="IEnumerable{T}"/> of string, <see cref="InLastPeriod"/>,
+/// and <see cref="DatePreset"/> values.
 /// </summary>
 public class FilterValueJsonConverter : JsonConverter<object?>
 {

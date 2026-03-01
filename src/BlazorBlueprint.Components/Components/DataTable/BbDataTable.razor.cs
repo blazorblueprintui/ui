@@ -83,6 +83,7 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
     private Func<TData, bool>? _cachedFilterPredicate;
     private FilterDefinition? _cachedFilterRef;
     private int _cachedFilterVersion;
+    private IEnumerable<FilterField>? _cachedFilterFields;
 
     /// <summary>
     /// Gets or sets the data source for the table.
@@ -344,11 +345,13 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
         {
             if (_cachedFilterPredicate == null
                 || !ReferenceEquals(_cachedFilterRef, Filter)
-                || _cachedFilterVersion != Filter.Version)
+                || _cachedFilterVersion != Filter.Version
+                || !ReferenceEquals(_cachedFilterFields, FilterFields))
             {
                 _cachedFilterPredicate = Filter.ToFunc<TData>(FilterFields ?? Array.Empty<FilterField>());
                 _cachedFilterRef = Filter;
                 _cachedFilterVersion = Filter.Version;
+                _cachedFilterFields = FilterFields;
             }
 
             data = data.Where(_cachedFilterPredicate);
