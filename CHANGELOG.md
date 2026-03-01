@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-01
+
+### Added
+
+- **`BbFilterBuilder`** — Visual query builder for constructing data filter expressions with AND/OR logic, nested groups, and type-aware value inputs. Supports `Text`, `Number`, `Date`, `DateTime`, `Boolean`, and `Enum` field types with automatic operator selection and value input rendering (text input, numeric input, date picker, date range picker, multi-select, etc.). Filter evaluation via `ToFunc<T>()` for client-side LINQ-to-Objects, `ToExpression<T>()` for server-side EF Core/IQueryable queries, and `ToJson()`/`FromJson()` for serialization. Configurable `MaxDepth`, `MaxConditions`, `ShowApplyButton` with debounced auto-apply, and `Compact` layout mode.
+
+---
+
 ## 2026-02-28
 
 ### Added
