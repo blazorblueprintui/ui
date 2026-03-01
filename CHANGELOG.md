@@ -21,6 +21,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Custom navigation via `NavigationTemplate`, or customizable button labels (`BackLabel`, `NextLabel`, `CompleteLabel`).
   - `OnComplete` and `OnStepChanged` event callbacks.
   - Demo page with 8 interactive examples and View Code blocks.
+- **BbDataGrid** — Enterprise-grade DataGrid component (headless primitives + styled layer) with full feature set.
+  - `BbDataGridPropertyColumn`, `BbDataGridTemplateColumn`, `BbDataGridSelectColumn` for declarative column definitions.
+  - Multi-column sorting with 3-state cycle (ascending → descending → none) and IQueryable LINQ expression composition.
+  - Pagination with configurable page sizes and page navigation.
+  - Row selection (None, Single, Multiple) with select-all/clear-all dropdown.
+  - Row virtualization via `Virtualize` parameter for large datasets.
+  - Async data loading via `ItemsProvider` delegate.
+  - Column resize (drag handles), reorder (drag-and-drop), and visibility toggle (`BbDataGridColumnVisibility`).
+  - Declarative column pinning (`ColumnPinning.Left`/`Right`) with CSS `position: sticky`.
+  - `HeaderTemplate` on `TemplateColumn` for custom header rendering.
+  - `CellClass`, `HeaderClass`, `RowClass` parameters for per-column and per-row conditional styling.
+  - State persistence via `DataGridState<T>.Save()`/`Restore()`/`Reset()` with version tracking.
+  - `@bind-State` two-way binding for controlled state management.
+  - Full keyboard navigation and ARIA attributes.
+  - Demo page with 16 interactive examples.
+
+### Changed
+
+- **BbDataView** — Refined `ListTemplate`/`GridTemplate` split, 3-state sort cycle, `ToolbarActions` slot, `GridClass`/`ListClass` customization. Removed `BbDataViewHeader` and `BbDataViewFooter` in favor of direct composition.
 
 ---
 

@@ -1,0 +1,57 @@
+<div style="max-width: 700px; overflow-x: auto;">
+    <BbDataGrid TData="Person" Items="@people"
+                AriaLabel="Pinned columns grid"
+                Class="w-full text-sm table-fixed" style="min-width: 1000px;">
+        <colgroup>
+            <col style="width: 120px" />
+            <col style="width: 200px" />
+            <col style="width: 200px" />
+            <col style="width: 100px" />
+            <col style="width: 180px" />
+            <col style="width: 120px" />
+        </colgroup>
+        <BbDataGridHeader>
+            <tr>
+                @* Left-pinned header *@
+                <BbDataGridHeaderCell TData="Person" ColumnId="name"
+                    Class="bg-background border-r border-border"
+                    style="position: sticky; left: 0; z-index: 2;">
+                    Name
+                </BbDataGridHeaderCell>
+                @* Scrollable headers *@
+                <BbDataGridHeaderCell TData="Person" ColumnId="email">Email</BbDataGridHeaderCell>
+                <BbDataGridHeaderCell TData="Person" ColumnId="department">Department</BbDataGridHeaderCell>
+                <BbDataGridHeaderCell TData="Person" ColumnId="age">Age</BbDataGridHeaderCell>
+                <BbDataGridHeaderCell TData="Person" ColumnId="id">ID</BbDataGridHeaderCell>
+                @* Right-pinned header *@
+                <BbDataGridHeaderCell TData="Person" ColumnId="actions"
+                    Class="bg-background border-l border-border"
+                    style="position: sticky; right: 0; z-index: 2;">
+                    Actions
+                </BbDataGridHeaderCell>
+            </tr>
+        </BbDataGridHeader>
+        <BbDataGridBody>
+            @foreach (var person in people)
+            {
+                <BbDataGridRow TData="Person">
+                    @* Left-pinned cell *@
+                    <BbDataGridCell Class="bg-background border-r border-border"
+                        style="position: sticky; left: 0; z-index: 1;">
+                        @person.Name
+                    </BbDataGridCell>
+                    @* Scrollable cells *@
+                    <BbDataGridCell>@person.Email</BbDataGridCell>
+                    <BbDataGridCell>@person.Department</BbDataGridCell>
+                    <BbDataGridCell>@person.Age</BbDataGridCell>
+                    <BbDataGridCell>@person.Id</BbDataGridCell>
+                    @* Right-pinned cell *@
+                    <BbDataGridCell Class="bg-background border-l border-border"
+                        style="position: sticky; right: 0; z-index: 1;">
+                        <button>Edit</button>
+                    </BbDataGridCell>
+                </BbDataGridRow>
+            }
+        </BbDataGridBody>
+    </BbDataGrid>
+</div>

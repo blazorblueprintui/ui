@@ -1,0 +1,46 @@
+<BbDataGrid TData="Person" Items="@people" @bind-State="@gridState"
+            ManualPagination="true" OnColumnVisibilityChange="@HandleVisibilityChange"
+            AriaLabel="Column visibility grid" Class="w-full caption-bottom text-sm">
+    <BbDataGridHeader Class="[&_tr]:border-b">
+        <tr class="border-b transition-colors hover:bg-muted/50">
+            @foreach (var colId in columnIds)
+            {
+                @if (gridState.Columns.IsVisible(colId))
+                {
+                    <BbDataGridHeaderCell TData="Person" ColumnId="@colId"
+                                          Class="h-12 px-4 text-left align-middle font-medium">
+                        @GetColumnTitle(colId)
+                    </BbDataGridHeaderCell>
+                }
+            }
+        </tr>
+    </BbDataGridHeader>
+    <BbDataGridBody>
+        @foreach (var person in people)
+        {
+            <BbDataGridRow TData="Person">
+                @if (gridState.Columns.IsVisible("name"))
+                {
+                    <BbDataGridCell>@person.Name</BbDataGridCell>
+                }
+                @* ... other columns ... *@
+            </BbDataGridRow>
+        }
+    </BbDataGridBody>
+</BbDataGrid>
+
+@code {
+    private DataGridState<Person> gridState = new();
+    private string[] columnIds = { "name", "email", "age", "department" };
+
+    protected override void OnInitialized()
+    {
+        gridState.Columns.Initialize(columnIds);
+    }
+
+    private void ToggleColumnVisibility(string columnId)
+    {
+        var isVisible = gridState.Columns.IsVisible(columnId);
+        gridState.Columns.SetVisibility(columnId, !isVisible);
+    }
+}

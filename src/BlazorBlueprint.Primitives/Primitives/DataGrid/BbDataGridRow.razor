@@ -1,0 +1,150 @@
+@namespace BlazorBlueprint.Primitives.DataGrid
+@typeparam TData where TData : class
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+<tr @ref="elementRef"
+    role="row"
+    aria-selected="@(IsSelected ? "true" : "false")"
+    tabindex="@(IsKeyboardNavigable ? 0 : -1)"
+    class="@ComputedClass"
+    @onclick="HandleClick"
+    @onkeydown="HandleKeyDown"
+    @attributes="AdditionalAttributes">
+    @ChildContent
+</tr>
+
+@code {
+    private ElementReference elementRef;
+    private bool spaceKeyHandlerAttached;
+    private IJSObjectReference? navModule;
+    private IJSObjectReference? spaceKeyCleanup;
+
+    [CascadingParameter]
+    private DataGridContext<TData> Context { get; set; } = default!;
+
+    /// <summary>
+    /// The data item for this row.
+    /// </summary>
+    [Parameter]
+    public TData? Item { get; set; }
+
+    /// <summary>
+    /// Child content for the row (typically cells).
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Additional HTML attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private bool IsSelected => Item != null && Context != null && Context.IsSelected(Item);
+
+    private bool IsSelectable => Context != null && Context.SelectionMode != Table.SelectionMode.None;
+
+    private bool IsKeyboardNavigable => IsSelectable && Context != null && Context.EnableKeyboardNavigation;
+
+    private const string FocusRingClasses = "relative focus:outline-none focus:ring-2 focus:ring-ring focus:ring-inset focus:z-10";
+
+    private string ComputedClass => IsKeyboardNavigable ? $"{FocusRingClasses} {Class}" : Class ?? "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && IsKeyboardNavigable && !spaceKeyHandlerAttached)
+        {
+            try
+            {
+                navModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/table-row-nav.js");
+
+                spaceKeyCleanup = await navModule.InvokeAsync<IJSObjectReference>(
+                    "preventSpaceKeyScroll", elementRef);
+                spaceKeyHandlerAttached = true;
+            }
+            catch
+            {
+                // Silently fail during prerendering
+            }
+        }
+    }
+
+    private void HandleClick()
+    {
+        if (Item != null && IsSelectable)
+        {
+            Context.ToggleRowSelection(Item);
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (IsKeyboardNavigable)
+        {
+            switch (e.Key)
+            {
+                case "ArrowUp":
+                    await MoveFocus("moveFocusToPreviousRow");
+                    return;
+                case "ArrowDown":
+                    await MoveFocus("moveFocusToNextRow");
+                    return;
+            }
+        }
+
+        if (IsSelectable && Item != null && (e.Key == "Enter" || e.Key == " "))
+        {
+            Context.ToggleRowSelection(Item);
+        }
+    }
+
+    private async Task MoveFocus(string method)
+    {
+        try
+        {
+            navModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/table-row-nav.js");
+            await navModule.InvokeVoidAsync(method, elementRef);
+        }
+        catch
+        {
+            // Ignore JS interop errors
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (spaceKeyCleanup != null)
+        {
+            try
+            {
+                await spaceKeyCleanup.InvokeVoidAsync("dispose");
+                await spaceKeyCleanup.DisposeAsync();
+            }
+            catch
+            {
+                // Ignore disposal errors
+            }
+        }
+
+        if (navModule != null)
+        {
+            try
+            {
+                await navModule.DisposeAsync();
+            }
+            catch
+            {
+                // Ignore disposal errors
+            }
+        }
+    }
+}

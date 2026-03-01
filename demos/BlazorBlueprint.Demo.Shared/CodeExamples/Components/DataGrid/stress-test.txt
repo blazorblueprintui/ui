@@ -1,0 +1,42 @@
+<div style="height: 500px; overflow: auto;">
+    <BbDataGrid TData="Person" Items="@stressTestPeople" ShowPagination="false"
+               Virtualize="true" ItemSize="48" StickyHeader="true"
+               SelectionMode="DataTableSelectionMode.Multiple"
+               Resizable="true" Reorderable="true">
+        <Columns>
+            <BbDataGridSelectColumn TData="Person" Pinned="ColumnPinning.Left" />
+            <BbDataGridPropertyColumn TData="Person" TProp="int"
+                Property="@(p => p.Id)" Title="#" Width="80px" Sortable Reorderable="false" />
+            <BbDataGridPropertyColumn TData="Person" TProp="string"
+                Property="@(p => p.Name)" Sortable Width="200px" />
+            <BbDataGridPropertyColumn TData="Person" TProp="string"
+                Property="@(p => p.Email)" Width="250px" />
+            <BbDataGridPropertyColumn TData="Person" TProp="int"
+                Property="@(p => p.Age)" Sortable Width="80px" />
+            <BbDataGridPropertyColumn TData="Person" TProp="string"
+                Property="@(p => p.Role)" Sortable Width="150px" />
+            <BbDataGridPropertyColumn TData="Person" TProp="string"
+                Property="@(p => p.Department)" Sortable Width="150px" />
+            <BbDataGridPropertyColumn TData="Person" TProp="int"
+                Property="@(p => p.Salary)" Format="C0" Sortable Width="120px" />
+            <BbDataGridPropertyColumn TData="Person" TProp="string"
+                Property="@(p => p.Status)" Sortable Width="100px" />
+            <BbDataGridTemplateColumn TData="Person" Title="Active"
+                Sortable SortBy="@(p => (object)p.IsActive)" Width="80px">
+                @if (context.IsActive)
+                {
+                    <BbBadge Variant="BadgeVariant.Default">Yes</BbBadge>
+                }
+                else
+                {
+                    <BbBadge Variant="BadgeVariant.Secondary">No</BbBadge>
+                }
+            </BbDataGridTemplateColumn>
+        </Columns>
+    </BbDataGrid>
+</div>
+
+@code {
+    // Generate on-demand to avoid blocking page load
+    private List<Person> stressTestPeople = MockDataService.GeneratePersons(100_000);
+}

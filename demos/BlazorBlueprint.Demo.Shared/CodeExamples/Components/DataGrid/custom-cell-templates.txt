@@ -1,0 +1,27 @@
+<BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
+    <Columns>
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable>
+            <CellTemplate Context="person">
+                <div class="flex items-center gap-2">
+                    <BbAvatar Class="h-8 w-8">
+                        <BbAvatarFallback Class="text-xs">@GetInitials(person.Name)</BbAvatarFallback>
+                    </BbAvatar>
+                    <span class="font-medium">@person.Name</span>
+                </div>
+            </CellTemplate>
+        </BbDataGridPropertyColumn>
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Sortable>
+            <CellTemplate Context="person">
+                <BbBadge Variant="@GetStatusVariant(person.Status)">
+                    @person.Status
+                </BbBadge>
+            </CellTemplate>
+        </BbDataGridPropertyColumn>
+        <BbDataGridTemplateColumn TData="Person" Title="Actions">
+            <ChildContent Context="person">
+                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small">Edit</BbButton>
+            </ChildContent>
+        </BbDataGridTemplateColumn>
+    </Columns>
+</BbDataGrid>
