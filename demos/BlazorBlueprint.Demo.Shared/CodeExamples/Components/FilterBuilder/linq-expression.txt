@@ -1,0 +1,11 @@
+// Client-side filtering with Func<T, bool>
+var predicate = filter.ToFunc<Person>(fields);
+var results = people.Where(predicate).ToList();
+
+// Server-side filtering with Expression<Func<T, bool>> (EF Core)
+var expression = filter.ToExpression<Person>(fields);
+var results = await dbContext.People.Where(expression).ToListAsync();
+
+// Serialization — save/load filters as JSON
+var json = filter.ToJson();
+var restored = FilterDefinitionExtensions.FromJson(json);

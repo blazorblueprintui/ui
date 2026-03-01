@@ -1,0 +1,444 @@
+@page "/components/filterbuilder"
+@using BlazorBlueprint.Demo.Services
+
+<PageTitle>Filter Builder - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-7xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Filter Builder</h1>
+            <p class="text-xl text-muted-foreground">
+                A visual query builder for constructing data filter expressions with AND/OR logic, nested groups, and type-aware value inputs.
+            </p>
+        </div>
+    </div>
+
+    <!-- Overview -->
+    <div class="rounded-lg border border-dashed bg-muted/30 p-6 space-y-5">
+        <h2 class="text-lg font-semibold">How it works</h2>
+        <div class="space-y-2 text-sm text-muted-foreground">
+            <p>
+                The Filter Builder lets users construct structured filter expressions through an intuitive UI.
+                Each filter is a tree of <strong>conditions</strong> (field + operator + value) combined with
+                <strong>AND/OR groups</strong> that can be nested to any configurable depth.
+            </p>
+            <p>
+                <strong>Define fields</strong> — Provide an array of <code>FilterField</code> definitions describing the
+                filterable columns, their data types, and any enum options. The component automatically selects the
+                correct operators and value inputs for each type (text search, numeric comparison, date pickers, multi-select, etc.).
+            </p>
+            <p>
+                <strong>Bind and react</strong> — Use <code>@@bind-Filter</code> for two-way binding to a <code>FilterDefinition</code>
+                model. Subscribe to <code>OnFilterChanged</code> to apply filters whenever the user edits a condition.
+                Changes are debounced by default (300ms), or you can enable an explicit Apply button for expensive queries.
+            </p>
+            <p>
+                <strong>Evaluate anywhere</strong> — Convert the filter tree into a <code>Func&lt;T, bool&gt;</code>
+                for client-side in-memory filtering, or an <code>Expression&lt;Func&lt;T, bool&gt;&gt;</code>
+                for server-side queries with EF Core and other IQueryable providers. Filters can also be serialized
+                to JSON for storage or transmission.
+            </p>
+        </div>
+
+        <h3 class="text-base font-semibold">Understanding groups</h3>
+        <div class="space-y-3 text-sm text-muted-foreground">
+            <p>
+                A <code>FilterDefinition</code> is a <strong>group</strong> — it holds a logical operator
+                (<code>AND</code> or <code>OR</code>), a list of conditions, and a list of nested child groups.
+                This recursive structure lets you build arbitrarily complex queries.
+            </p>
+
+            <div class="space-y-2">
+                <p class="font-medium text-foreground">Flat filter (no groups)</p>
+                <p>All conditions live in the root group and share the same operator.</p>
+                <pre class="rounded-lg border bg-muted p-4 text-xs leading-relaxed overflow-x-auto"><code>Name contains "Smith" <strong>AND</strong> Age greater than 25 <strong>AND</strong> Status equals "Active"</code></pre>
+                <p>Every condition must be true. This is equivalent to:<br />
+                <code class="text-xs">(Name ∧ Age ∧ Status)</code></p>
+            </div>
+
+            <div class="space-y-2">
+                <p class="font-medium text-foreground">Nested group — mixing AND &amp; OR</p>
+                <p>
+                    To express <em>"Name contains Smith AND (Status is Active OR Status is Pending)"</em>, you need a nested group.
+                    The root group uses <code>AND</code>, and a child group uses <code>OR</code> for the status conditions:
+                </p>
+                <pre class="rounded-lg border bg-muted p-4 text-xs leading-relaxed overflow-x-auto"><code>WHERE <strong>AND</strong>
+├─ Name contains "Smith"
+└─ GROUP <strong>OR</strong>
+   ├─ Status equals "Active"
+   └─ Status equals "Pending"</code></pre>
+                <p>This evaluates as:<br />
+                <code class="text-xs">(Name) AND (Status = Active OR Status = Pending)</code></p>
+            </div>
+
+            <div class="space-y-2">
+                <p class="font-medium text-foreground">Deeper nesting</p>
+                <p>
+                    Groups can be nested multiple levels deep. For example, <em>"find active users named Smith who are either
+                    Admins over 30 or Managers over 40"</em>:
+                </p>
+                <pre class="rounded-lg border bg-muted p-4 text-xs leading-relaxed overflow-x-auto"><code>WHERE <strong>AND</strong>
+├─ Name contains "Smith"
+├─ Status equals "Active"
+└─ GROUP <strong>OR</strong>
+   ├─ GROUP <strong>AND</strong>
+   │  ├─ Role equals "Admin"
+   │  └─ Age greater than 30
+   └─ GROUP <strong>AND</strong>
+      ├─ Role equals "Manager"
+      └─ Age greater than 40</code></pre>
+                <p>This evaluates as:<br />
+                <code class="text-xs">(Name ∧ Status) AND ((Role = Admin ∧ Age &gt; 30) OR (Role = Manager ∧ Age &gt; 40))</code></p>
+            </div>
+
+            <div class="space-y-2">
+                <p class="font-medium text-foreground">Controlling depth</p>
+                <p>
+                    Use the <code>MaxDepth</code> parameter to limit how deeply groups can nest.
+                    Set <code>MaxDepth="0"</code> for flat-only filters (no "Add group" button),
+                    or increase it to allow more complex queries. Each depth level is visually indicated with a
+                    colored left border so users can easily see the structure.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Filter Builder</h2>
+            <p class="text-sm text-muted-foreground">
+                Build flat filters with string, number, date, enum, and boolean fields.
+            </p>
+        </div>
+        <BbFilterBuilder @bind-Filter="basicFilter"
+                         Fields="@basicFields"
+                         MaxDepth="0"
+                         OnFilterChanged="@(_ => StateHasChanged())" />
+        <div class="flex items-start gap-4">
+            <CodeBlock Source="Components/FilterBuilder/basic.txt" />
+            <FilterJsonViewer Filter="basicFilter" />
+        </div>
+    </div>
+
+    <!-- Nested Groups -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Nested AND/OR Groups</h2>
+            <p class="text-sm text-muted-foreground">
+                Create complex queries with nested groups. Click "Add group" to create sub-groups with their own AND/OR logic.
+                Each depth level is visually distinguished with a colored left border. Maximum nesting depth is configurable.
+            </p>
+        </div>
+        <BbFilterBuilder @bind-Filter="nestedFilter"
+                         Fields="@basicFields"
+                         MaxDepth="3"
+                         OnFilterChanged="@(_ => StateHasChanged())" />
+        <div class="flex items-start gap-4">
+            <CodeBlock Source="Components/FilterBuilder/nested-groups.txt" />
+            <FilterJsonViewer Filter="nestedFilter" />
+        </div>
+    </div>
+
+    <!-- With Apply Button -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Apply Button Mode</h2>
+            <p class="text-sm text-muted-foreground">
+                With <code>ShowApplyButton="true"</code>, changes are only applied when the user clicks the Apply button.
+                Useful for expensive server-side queries where you want to avoid triggering a request on every keystroke.
+            </p>
+        </div>
+        <BbFilterBuilder @bind-Filter="applyFilter"
+                         Fields="@basicFields"
+                         ShowApplyButton="true"
+                         OnFilterChanged="HandleApplyFilterChanged" />
+
+        @if (applyFilterApplied)
+        {
+            <BbBadge Variant="BadgeVariant.Default">
+                Filter applied with @applyFilter.TotalConditionCount condition(s)
+            </BbBadge>
+        }
+        <div class="flex items-start gap-4">
+            <CodeBlock Source="Components/FilterBuilder/apply-button.txt" />
+            <FilterJsonViewer Filter="applyFilter" />
+        </div>
+    </div>
+
+    <!-- DataTable Integration -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">DataTable Integration</h2>
+            <p class="text-sm text-muted-foreground">
+                Pair the filter builder with a DataTable for interactive data exploration.
+                The filter is compiled to a <code>Func&lt;T, bool&gt;</code> using <code>ToFunc&lt;T&gt;()</code>
+                and applied client-side as users modify conditions.
+            </p>
+        </div>
+        <BbFilterBuilder @bind-Filter="tableFilter"
+                         Fields="@personFields"
+                         OnFilterChanged="HandleTableFilterChanged" />
+
+        <div class="flex items-center gap-2">
+            <BbBadge Variant="BadgeVariant.Secondary">
+                @filteredPeople.Count of @allPeople.Count records
+            </BbBadge>
+        </div>
+
+        <BbDataTable TData="Person" Data="@filteredPeople" InitialPageSize="10">
+            <Columns>
+                <BbDataTableColumn TData="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable />
+                <BbDataTableColumn TData="Person" TValue="string" Property="@(p => p.Email)" Header="Email" />
+                <BbDataTableColumn TData="Person" TValue="int" Property="@(p => p.Age)" Header="Age" Sortable />
+                <BbDataTableColumn TData="Person" TValue="DateTime" Property="@(p => p.JoinDate)" Header="Join Date" Sortable>
+                    <CellTemplate Context="person">
+                        @person.JoinDate.ToString("dd MMM yyyy")
+                    </CellTemplate>
+                </BbDataTableColumn>
+                <BbDataTableColumn TData="Person" TValue="string" Property="@(p => p.Role)" Header="Role" />
+                <BbDataTableColumn TData="Person" TValue="string" Property="@(p => p.Status)" Header="Status">
+                    <CellTemplate Context="person">
+                        <BbBadge Variant="@(person.Status == "Active" ? BadgeVariant.Default : BadgeVariant.Outline)">
+                            @person.Status
+                        </BbBadge>
+                    </CellTemplate>
+                </BbDataTableColumn>
+                <BbDataTableColumn TData="Person" TValue="bool" Property="@(p => p.IsActive)" Header="Active">
+                    <CellTemplate Context="person">
+                        @(person.IsActive ? "Yes" : "No")
+                    </CellTemplate>
+                </BbDataTableColumn>
+            </Columns>
+        </BbDataTable>
+        <div class="flex items-start gap-4">
+            <CodeBlock Source="Components/FilterBuilder/datatable-integration.txt" />
+            <FilterJsonViewer Filter="tableFilter" />
+        </div>
+    </div>
+
+    <!-- LINQ & EF Core Integration -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">LINQ &amp; EF Core Integration</h2>
+            <p class="text-sm text-muted-foreground">
+                The <code>FilterDefinition</code> model can be converted to executable code for both client-side and server-side scenarios.
+            </p>
+        </div>
+        <div class="rounded-lg border border-dashed bg-muted/30 p-6 space-y-4">
+            <div class="space-y-2">
+                <h3 class="text-base font-semibold">Client-side — <code>ToFunc&lt;T&gt;()</code></h3>
+                <p class="text-sm text-muted-foreground">
+                    Compiles the filter tree into a <code>Func&lt;T, bool&gt;</code> delegate using reflection.
+                    Ideal for filtering in-memory collections with LINQ-to-Objects.
+                </p>
+                <pre class="rounded-lg border bg-muted p-4 text-xs leading-relaxed overflow-x-auto"><code>var predicate = filter.ToFunc&lt;Person&gt;(fields);
+var results = people.Where(predicate).ToList();</code></pre>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-base font-semibold">Server-side — <code>ToExpression&lt;T&gt;()</code></h3>
+                <p class="text-sm text-muted-foreground">
+                    Builds a LINQ <code>Expression&lt;Func&lt;T, bool&gt;&gt;</code> that can be passed to
+                    EF Core's <code>Where()</code> method. The expression tree is translated to SQL by the database provider,
+                    so filtering happens at the database level rather than in application memory.
+                </p>
+                <pre class="rounded-lg border bg-muted p-4 text-xs leading-relaxed overflow-x-auto"><code>var expression = filter.ToExpression&lt;Person&gt;(fields);
+var results = await dbContext.People
+    .Where(expression)
+    .ToListAsync();</code></pre>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-base font-semibold">Serialization — <code>ToJson()</code> / <code>FromJson()</code></h3>
+                <p class="text-sm text-muted-foreground">
+                    Serialize the entire filter tree to JSON for persistence (e.g., saving user-defined filters to a database
+                    or transmitting filters between client and server in an API request).
+                </p>
+                <pre class="rounded-lg border bg-muted p-4 text-xs leading-relaxed overflow-x-auto"><code>// Save
+var json = filter.ToJson();
+
+// Restore
+var restored = FilterDefinitionExtensions.FromJson(json);</code></pre>
+            </div>
+        </div>
+        <CodeBlock Source="Components/FilterBuilder/linq-expression.txt" />
+    </div>
+
+    <!-- Compact Mode -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Compact Mode</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code>Compact="true"</code> for a smaller layout suitable for toolbars and inline placement.
+            </p>
+        </div>
+        <BbFilterBuilder @bind-Filter="compactFilter"
+                         Fields="@basicFields"
+                         Compact="true"
+                         MaxDepth="1"
+                         OnFilterChanged="@(_ => StateHasChanged())" />
+        <div class="flex items-start gap-4">
+            <CodeBlock Source="Components/FilterBuilder/compact.txt" />
+            <FilterJsonViewer Filter="compactFilter" />
+        </div>
+    </div>
+
+    <!-- Max Conditions -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Max Conditions Limit</h2>
+            <p class="text-sm text-muted-foreground">
+                Limit the total number of conditions with <code>MaxConditions</code>. This example allows a maximum of 5 conditions.
+                Once the limit is reached, the "Add condition" and "Add group" buttons are disabled.
+            </p>
+        </div>
+        <BbFilterBuilder @bind-Filter="limitedFilter"
+                         Fields="@basicFields"
+                         MaxConditions="5"
+                         OnFilterChanged="@(_ => StateHasChanged())" />
+        <p class="text-sm text-muted-foreground">
+            Conditions: @limitedFilter.TotalConditionCount / 5
+        </p>
+        <div class="flex items-start gap-4">
+            <CodeBlock Source="Components/FilterBuilder/max-conditions.txt" />
+            <FilterJsonViewer Filter="limitedFilter" />
+        </div>
+    </div>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="FilterBuilder">
+                <ApiParameter Name="Filter" Type="FilterDefinition">
+                    The current filter state. Use with @@bind-Filter for two-way binding.
+                </ApiParameter>
+                <ApiParameter Name="Fields" Type="IEnumerable&lt;FilterField&gt;">
+                    The available fields to filter on. Each field defines a name, label, type, and optional options for enum fields.
+                </ApiParameter>
+                <ApiParameter Name="OnFilterChanged" Type="EventCallback&lt;FilterDefinition&gt;">
+                    Callback invoked when the filter changes. Use for side effects like applying filters to data.
+                </ApiParameter>
+                <ApiParameter Name="MaxDepth" Type="int" Default="3">
+                    Maximum nesting depth for filter groups. Set to 0 to disable grouping entirely.
+                </ApiParameter>
+                <ApiParameter Name="MaxConditions" Type="int?" Default="null">
+                    Maximum total conditions allowed across all groups. Null for unlimited.
+                </ApiParameter>
+                <ApiParameter Name="DefaultOperator" Type="LogicalOperator" Default="And">
+                    Default logical operator (AND/OR) for new groups.
+                </ApiParameter>
+                <ApiParameter Name="ShowApplyButton" Type="bool" Default="false">
+                    Show an explicit Apply button instead of auto-applying changes on each edit.
+                </ApiParameter>
+                <ApiParameter Name="Compact" Type="bool" Default="false">
+                    Compact layout mode for inline/toolbar placement with smaller inputs.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?">
+                    Additional CSS classes for the container element.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    // Data
+    private List<Person> allPeople = new();
+    private List<Person> filteredPeople = new();
+
+    // Filters
+    private FilterDefinition basicFilter = new();
+    private FilterDefinition nestedFilter = new();
+    private FilterDefinition applyFilter = new();
+    private FilterDefinition tableFilter = new();
+    private FilterDefinition compactFilter = new();
+    private FilterDefinition limitedFilter = new();
+
+    // State
+    private bool applyFilterApplied;
+
+    // Field definitions for basic demos
+    private readonly FilterField[] basicFields = new[]
+    {
+        new FilterField { Name = "Name", Label = "Name", Type = FilterFieldType.Text },
+        new FilterField { Name = "Email", Label = "Email", Type = FilterFieldType.Text },
+        new FilterField { Name = "Age", Label = "Age", Type = FilterFieldType.Number },
+        new FilterField { Name = "JoinDate", Label = "Join Date", Type = FilterFieldType.Date },
+        new FilterField
+        {
+            Name = "Status", Label = "Status", Type = FilterFieldType.Enum,
+            Options = new SelectOption<string>[]
+            {
+                new("Active", "Active"),
+                new("Inactive", "Inactive"),
+                new("Pending", "Pending"),
+                new("Suspended", "Suspended")
+            }
+        },
+        new FilterField { Name = "IsActive", Label = "Active", Type = FilterFieldType.Boolean }
+    };
+
+    // Extended field definitions for DataTable integration
+    private readonly FilterField[] personFields = new[]
+    {
+        new FilterField { Name = "Name", Label = "Name", Type = FilterFieldType.Text },
+        new FilterField { Name = "Email", Label = "Email", Type = FilterFieldType.Text },
+        new FilterField { Name = "Age", Label = "Age", Type = FilterFieldType.Number },
+        new FilterField { Name = "JoinDate", Label = "Join Date", Type = FilterFieldType.Date },
+        new FilterField
+        {
+            Name = "Role", Label = "Role", Type = FilterFieldType.Enum,
+            Options = new SelectOption<string>[]
+            {
+                new("Admin", "Admin"),
+                new("User", "User"),
+                new("Guest", "Guest"),
+                new("Moderator", "Moderator"),
+                new("Manager", "Manager"),
+                new("Developer", "Developer"),
+                new("Designer", "Designer"),
+                new("Analyst", "Analyst")
+            }
+        },
+        new FilterField
+        {
+            Name = "Status", Label = "Status", Type = FilterFieldType.Enum,
+            Options = new SelectOption<string>[]
+            {
+                new("Active", "Active"),
+                new("Inactive", "Inactive"),
+                new("Pending", "Pending"),
+                new("Suspended", "Suspended")
+            }
+        },
+        new FilterField { Name = "IsActive", Label = "Active", Type = FilterFieldType.Boolean }
+    };
+
+    protected override void OnInitialized()
+    {
+        allPeople = MockDataService.GeneratePersons(100);
+        filteredPeople = new List<Person>(allPeople);
+    }
+
+    private void HandleApplyFilterChanged(FilterDefinition filter)
+    {
+        applyFilterApplied = !filter.IsEmpty;
+    }
+
+    private void HandleTableFilterChanged(FilterDefinition filter)
+    {
+        if (filter.IsEmpty)
+        {
+            filteredPeople = new List<Person>(allPeople);
+        }
+        else
+        {
+            var predicate = filter.ToFunc<Person>(personFields);
+            filteredPeople = allPeople.Where(predicate).ToList();
+        }
+    }
+
+}
