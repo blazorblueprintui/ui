@@ -103,6 +103,13 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
     public string? HeaderClass { get; set; }
 
     /// <summary>
+    /// Whether text in this column should not wrap. When true, cell content uses
+    /// white-space: nowrap and truncates with an ellipsis on overflow. Default is false.
+    /// </summary>
+    [Parameter]
+    public bool NoWrap { get; set; }
+
+    /// <summary>
     /// Custom cell template. If provided, overrides the default value rendering.
     /// </summary>
     [Parameter]
@@ -144,6 +151,8 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
     string? IDataGridColumn<TData>.CellClass => CellClass;
 
     string? IDataGridColumn<TData>.HeaderClass => HeaderClass;
+
+    bool IDataGridColumn<TData>.NoWrap => NoWrap;
 
     public object? GetValue(TData item)
     {

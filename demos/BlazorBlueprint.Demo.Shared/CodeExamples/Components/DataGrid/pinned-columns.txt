@@ -1,17 +1,30 @@
 <div style="max-width: 700px; overflow-x: auto;">
-    <BbDataGrid TData="Person" Items="@people">
+    <BbDataGrid TData="Person" Items="@people"
+                SelectionMode="DataTableSelectionMode.Multiple">
         <Columns>
             <BbDataGridSelectColumn TData="Person" Pinned="ColumnPinning.Left" />
             <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)"
-                                      Sortable Pinned="ColumnPinning.Left" Width="160px" />
-            <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable />
-            <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
-            <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" />
-            <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
-            <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable />
+                                      Sortable Pinned="ColumnPinning.Left" Width="180px" />
+            <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Width="220px" />
+            <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Width="180px" />
+            <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" Width="160px" />
+            <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Width="100px" />
+            <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Width="140px" />
             <BbDataGridTemplateColumn TData="Person" Title="Actions"
-                                      Pinned="ColumnPinning.Right" Width="100px">
-                <button>Edit</button>
+                                      Pinned="ColumnPinning.Right" Width="200px">
+                <ChildContent Context="person">
+                    <div @onclick:stopPropagation="true">
+                        <BbSplitButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+                            <ChildContent>Edit</ChildContent>
+                            <DropdownContent>
+                                <BbSplitButtonItem>Duplicate</BbSplitButtonItem>
+                                <BbSplitButtonItem>Archive</BbSplitButtonItem>
+                                <BbSplitButtonSeparator />
+                                <BbSplitButtonItem>Delete</BbSplitButtonItem>
+                            </DropdownContent>
+                        </BbSplitButton>
+                    </div>
+                </ChildContent>
             </BbDataGridTemplateColumn>
         </Columns>
     </BbDataGrid>

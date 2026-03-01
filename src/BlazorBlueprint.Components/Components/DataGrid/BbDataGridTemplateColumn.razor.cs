@@ -104,6 +104,13 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
     public string? HeaderClass { get; set; }
 
     /// <summary>
+    /// Whether text in this column should not wrap. When true, cell content uses
+    /// white-space: nowrap and truncates with an ellipsis on overflow. Default is false.
+    /// </summary>
+    [Parameter]
+    public bool NoWrap { get; set; }
+
+    /// <summary>
     /// The parent DataGrid component. Set via cascading parameter.
     /// </summary>
     [CascadingParameter]
@@ -142,6 +149,8 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
     string? IDataGridColumn<TData>.CellClass => CellClass;
 
     string? IDataGridColumn<TData>.HeaderClass => HeaderClass;
+
+    bool IDataGridColumn<TData>.NoWrap => NoWrap;
 
     public object? GetValue(TData item) => null;
 

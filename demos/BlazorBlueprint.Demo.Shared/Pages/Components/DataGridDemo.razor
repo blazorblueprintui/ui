@@ -211,6 +211,116 @@
         <CodeBlock Source="Components/DataGrid/row-column-styling.txt" />
     </div>
 
+    <!-- ── Custom Styling Showcase ────────────────────────────────── -->
+    <div class="space-y-8">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Styling Showcase</h2>
+            <p class="text-sm text-muted-foreground">
+                Combine <code class="bg-muted px-1 py-0.5 rounded">Class</code>,
+                <code class="bg-muted px-1 py-0.5 rounded">RowClass</code>,
+                <code class="bg-muted px-1 py-0.5 rounded">CellClass</code>, and
+                <code class="bg-muted px-1 py-0.5 rounded">HeaderClass</code> with Tailwind CSS
+                utilities for full visual customization of the grid.
+            </p>
+        </div>
+
+        <!-- Grid Lines -->
+        <div class="space-y-4">
+            <div class="space-y-1">
+                <h3 class="text-lg font-medium">Grid Lines</h3>
+                <p class="text-sm text-muted-foreground">
+                    Add visible row and column borders. Apply <code class="bg-muted px-1 py-0.5 rounded">border-r</code>
+                    via <code class="bg-muted px-1 py-0.5 rounded">CellClass</code> and
+                    <code class="bg-muted px-1 py-0.5 rounded">HeaderClass</code> on each column,
+                    and wrap the grid in an outer border with <code class="bg-muted px-1 py-0.5 rounded">Class</code>.
+                </p>
+            </div>
+            <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                       Class="border border-border rounded-lg overflow-hidden">
+                <Columns>
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable
+                        CellClass="border-r border-border/40" HeaderClass="border-r border-border/40" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable
+                        CellClass="border-r border-border/40" HeaderClass="border-r border-border/40" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable
+                        CellClass="border-r border-border/40" HeaderClass="border-r border-border/40" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" />
+                </Columns>
+            </BbDataGrid>
+            <CodeBlock Source="Components/DataGrid/custom-grid-lines.txt" />
+        </div>
+
+        <!-- Striped Rows -->
+        <div class="space-y-4">
+            <div class="space-y-1">
+                <h3 class="text-lg font-medium">Striped Rows</h3>
+                <p class="text-sm text-muted-foreground">
+                    Use <code class="bg-muted px-1 py-0.5 rounded">RowClass</code> with Tailwind's
+                    <code class="bg-muted px-1 py-0.5 rounded">even:</code> variant to alternate
+                    row background colours. The hover effect remains visible on all rows.
+                </p>
+            </div>
+            <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                       RowClass="@(_ => "even:bg-muted/40")">
+                <Columns>
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" />
+                </Columns>
+            </BbDataGrid>
+            <CodeBlock Source="Components/DataGrid/custom-striped-rows.txt" />
+        </div>
+
+        <!-- Striped Columns -->
+        <div class="space-y-4">
+            <div class="space-y-1">
+                <h3 class="text-lg font-medium">Striped Columns</h3>
+                <p class="text-sm text-muted-foreground">
+                    Apply <code class="bg-muted px-1 py-0.5 rounded">CellClass</code> and
+                    <code class="bg-muted px-1 py-0.5 rounded">HeaderClass</code> to alternating
+                    columns for a vertical stripe effect.
+                </p>
+            </div>
+            <BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
+                <Columns>
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable
+                        CellClass="bg-muted" HeaderClass="bg-muted" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable
+                        CellClass="bg-muted" HeaderClass="bg-muted" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" />
+                </Columns>
+            </BbDataGrid>
+            <CodeBlock Source="Components/DataGrid/custom-striped-columns.txt" />
+        </div>
+
+        <!-- Colored Header -->
+        <div class="space-y-4">
+            <div class="space-y-1">
+                <h3 class="text-lg font-medium">Colored Header</h3>
+                <p class="text-sm text-muted-foreground">
+                    Apply a distinct background colour to the header row using
+                    <code class="bg-muted px-1 py-0.5 rounded">HeaderClass</code> on each column.
+                    TailwindMerge automatically resolves conflicting classes with the base header styles.
+                </p>
+            </div>
+            <BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
+                <Columns>
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable
+                        HeaderClass="bg-primary text-primary-foreground" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable
+                        HeaderClass="bg-primary text-primary-foreground" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable
+                        HeaderClass="bg-primary text-primary-foreground" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)"
+                        HeaderClass="bg-primary text-primary-foreground" />
+                </Columns>
+            </BbDataGrid>
+            <CodeBlock Source="Components/DataGrid/custom-colored-header.txt" />
+        </div>
+    </div>
+
     <!-- ── Async Data Loading ──────────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -257,12 +367,12 @@
         <CodeBlock Source="Components/DataGrid/virtualization.txt" />
     </div>
 
-    <!-- ── Stress Test: 50,000 Rows ──────────────────────────────── -->
+    <!-- ── Stress Test: 100,000 Rows ─────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Stress Test (50,000 rows)</h2>
+            <h2 class="text-2xl font-semibold">Stress Test (100,000 rows)</h2>
             <p class="text-sm text-muted-foreground">
-                Push the grid to its limits with 50,000 rows. Data is generated on-demand to avoid slowing
+                Push the grid to its limits with 100,000 rows. Data is generated on-demand to avoid slowing
                 down page load. Virtualization renders only the visible rows, keeping the DOM lightweight
                 and scrolling smooth even at this scale. Multi-column sorting, selection, and column
                 features all remain fully functional.
@@ -273,11 +383,11 @@
             <BbButton Variant="ButtonVariant.Outline" OnClick="@LoadStressTestData" Disabled="@stressTestLoading">
                 @if (stressTestLoading)
                 {
-                    <span>Generating 50,000 records...</span>
+                    <span>Generating 100,000 records...</span>
                 }
                 else
                 {
-                    <span>Load 50,000 Records</span>
+                    <span>Load 100,000 Records</span>
                 }
             </BbButton>
         }
@@ -358,7 +468,7 @@
         </div>
         <BbDataGrid TData="Person" Items="@people" InitialPageSize="5" Resizable="true">
             <Columns>
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Width="200px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable NoWrap Width="200px" />
                 <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable Width="250px" />
                 <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Width="150px" />
                 <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" Width="150px" />
@@ -419,10 +529,20 @@
                         Width="100px" />
                     <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)"
                         Format="C0" Width="140px" />
-                    <BbDataGridTemplateColumn TData="Person" Title="Actions" Width="120px"
+                    <BbDataGridTemplateColumn TData="Person" Title="Actions" Width="200px"
                         Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Right">
                         <ChildContent Context="person">
-                            <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small">Edit</BbButton>
+                            <div @onclick:stopPropagation="true">
+                                <BbSplitButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+                                    <ChildContent>Edit</ChildContent>
+                                    <DropdownContent>
+                                        <BbSplitButtonItem>Duplicate</BbSplitButtonItem>
+                                        <BbSplitButtonItem>Archive</BbSplitButtonItem>
+                                        <BbSplitButtonSeparator />
+                                        <BbSplitButtonItem>Delete</BbSplitButtonItem>
+                                    </DropdownContent>
+                                </BbSplitButton>
+                            </div>
                         </ChildContent>
                     </BbDataGridTemplateColumn>
                 </Columns>
@@ -635,9 +755,21 @@
                 <ApiParameter Name="RowClass" Type="Func&lt;TData, string?&gt;?">
                     Optional callback for applying custom CSS classes to data rows. Receives the row's data item and returns additional CSS classes.
                 </ApiParameter>
+                <ApiParameter Name="Class" Type="string?">
+                    Additional CSS classes applied to the grid's root container element.
+                </ApiParameter>
+                <ApiParameter Name="Columns" Type="RenderFragment">
+                    The column definitions for the grid. Place BbDataGridPropertyColumn, BbDataGridTemplateColumn, and BbDataGridSelectColumn components here.
+                </ApiParameter>
+                <ApiParameter Name="StateChanged" Type="EventCallback&lt;DataGridState&lt;TData&gt;&gt;">
+                    Event callback invoked when the grid state changes. Use with @@bind-State for two-way binding.
+                </ApiParameter>
             </ApiReference>
 
             <ApiReference ComponentName="DataGridPropertyColumn">
+                <ApiParameter Name="Id" Type="string?">
+                    Explicit unique identifier for this column. When not set, falls back to the property member name (lowercase). Provide this when property names may collide or when persisted state must remain stable.
+                </ApiParameter>
                 <ApiParameter Name="Property" Type="Expression&lt;Func&lt;TData, TProp&gt;&gt;">
                     Type-safe expression to access the column value. Used for data display, auto title inference, and IQueryable sort expression generation.
                 </ApiParameter>
@@ -677,9 +809,15 @@
                 <ApiParameter Name="Pinned" Type="ColumnPinning" Default="None">
                     Whether this column is pinned to an edge of the scrollable viewport. Use BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left or BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Right.
                 </ApiParameter>
+                <ApiParameter Name="NoWrap" Type="bool" Default="false">
+                    Whether text in this column should not wrap. When true, cell content uses white-space: nowrap and truncates with an ellipsis on overflow.
+                </ApiParameter>
             </ApiReference>
 
             <ApiReference ComponentName="DataGridTemplateColumn">
+                <ApiParameter Name="Id" Type="string?">
+                    Explicit unique identifier for this column. When not set, falls back to a slug derived from Title. Provide this when titles may collide, change under localization, or when persisted state must remain stable.
+                </ApiParameter>
                 <ApiParameter Name="Title" Type="string">
                     The column title displayed in the header. Required.
                 </ApiParameter>
@@ -719,6 +857,9 @@
                 <ApiParameter Name="Pinned" Type="ColumnPinning" Default="None">
                     Whether this column is pinned to an edge of the scrollable viewport.
                 </ApiParameter>
+                <ApiParameter Name="NoWrap" Type="bool" Default="false">
+                    Whether text in this column should not wrap. When true, cell content uses white-space: nowrap and truncates with an ellipsis on overflow.
+                </ApiParameter>
             </ApiReference>
 
             <ApiReference ComponentName="DataGridSelectColumn">
@@ -757,7 +898,7 @@
 
         // Yield to allow the UI to update before the heavy generation runs
         await Task.Delay(1);
-        stressTestPeople = MockDataService.GeneratePersons(50_000);
+        stressTestPeople = MockDataService.GeneratePersons(100_000);
         stressTestLoaded = true;
         stressTestLoading = false;
     }

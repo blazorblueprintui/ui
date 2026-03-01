@@ -59,7 +59,7 @@
                         </colgroup>
                     }
                     <BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader Class="@ClassNames.cn("[&_tr]:border-b", StickyHeader ? "sticky top-0 z-10 bg-background" : "")">
-                        <BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Class="border-b transition-colors hover:bg-muted/50">
+                        <BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Class="group/row border-b transition-colors hover:bg-muted/50">
                             @foreach (var column in _cachedVisibleColumns)
                             {
                                 var sortDirection = _gridState.Sorting.GetDirection(column.ColumnId);
@@ -218,7 +218,8 @@
 @code {
     private RenderFragment<TData> RenderDataRow => item =>
         @<BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Item="@item"
-            Class="@ClassNames.cn("border-b transition-colors hover:bg-muted/50", _gridState.Selection.IsSelected(item) ? "bg-muted" : "", RowClass?.Invoke(item))">
+            Class="@ClassNames.cn("group/row border-b transition-colors hover:bg-muted/50", _gridState.Selection.IsSelected(item) ? "bg-muted" : "", RowClass?.Invoke(item))">
+            @{var isRowSelected = _gridState.Selection.IsSelected(item);}
             @foreach (var column in _cachedVisibleColumns)
             {
                 var isSelectColumn = column.ColumnId == "__select";
@@ -228,7 +229,7 @@
 
                 <BlazorBlueprint.Primitives.DataGrid.BbDataGridCell
                     @key="@column.ColumnId"
-                    Class="@GetCellClass(column, isSelectColumn, isLastLeft, isFirstRight)"
+                    Class="@GetCellClass(column, isSelectColumn, isLastLeft, isFirstRight, isRowSelected)"
                     style="@pinnedStyle">
                     @if (isSelectColumn)
                     {

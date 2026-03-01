@@ -100,6 +100,13 @@ public interface IDataGridColumn<TData> where TData : class
     /// Gets additional CSS classes for the header cell.
     /// </summary>
     public string? HeaderClass { get; }
+
+    /// <summary>
+    /// Gets whether text in this column should not wrap. When true, cell content is
+    /// rendered with <c>white-space: nowrap</c> and truncated with an ellipsis on overflow.
+    /// Default is false.
+    /// </summary>
+    public bool NoWrap { get; }
 }
 
 /// <summary>

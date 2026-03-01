@@ -39,6 +39,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     // ShouldRender tracking
     private IEnumerable<TData>? _lastItems;
+    private bool _lastIsLoading;
     private int _columnsVersion;
     private int _lastColumnsVersion;
     private int _stateVersion;
@@ -817,7 +818,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         if (column.Pinned != ColumnPinning.None)
         {
             var zClass = StickyHeader ? "z-20" : "z-10";
-            pinnedClass = ClassNames.cn("bg-background", zClass);
+            pinnedClass = ClassNames.cn("bg-background group-hover/row:bg-muted", zClass);
         }
 
         var separatorClass = "";
@@ -847,14 +848,17 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     }
 
     private string GetCellClass(IDataGridColumn<TData> column, bool isSelectColumn,
-        bool isLastLeft, bool isFirstRight)
+        bool isLastLeft, bool isFirstRight, bool isRowSelected)
     {
         var baseClass = "p-4 align-middle";
 
         var pinnedClass = "";
         if (column.Pinned != ColumnPinning.None)
         {
-            pinnedClass = ClassNames.cn("bg-background", "z-10");
+            var bgClass = isRowSelected
+                ? "bg-muted group-hover/row:bg-muted"
+                : "bg-background group-hover/row:bg-muted";
+            pinnedClass = ClassNames.cn(bgClass, "z-10");
         }
 
         var separatorClass = "";
@@ -875,8 +879,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         var cellClass = column.CellClass;
 
         var overflowClass = Resizable ? "overflow-hidden" : "";
+        var noWrapClass = column.NoWrap ? "whitespace-nowrap overflow-hidden text-ellipsis" : "";
 
-        return ClassNames.cn(baseClass, cellClass, overflowClass, pinnedClass, separatorClass);
+        return ClassNames.cn(baseClass, cellClass, overflowClass, noWrapClass, pinnedClass, separatorClass);
     }
 
     private string? GetColumnWidthStyle(IDataGridColumn<TData> column)
@@ -978,13 +983,15 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     protected override bool ShouldRender()
     {
         var itemsChanged = !ReferenceEquals(_lastItems, Items);
+        var loadingChanged = _lastIsLoading != IsLoading;
         var columnsChanged = _lastColumnsVersion != _columnsVersion;
         var stateChanged = _lastStateVersion != _stateVersion;
         var externalStateChanged = _gridState.Version != _lastGridStateVersion;
 
-        if (itemsChanged || columnsChanged || stateChanged || externalStateChanged)
+        if (itemsChanged || loadingChanged || columnsChanged || stateChanged || externalStateChanged)
         {
             _lastItems = Items;
+            _lastIsLoading = IsLoading;
             _lastColumnsVersion = _columnsVersion;
             _lastStateVersion = _stateVersion;
             _lastGridStateVersion = _gridState.Version;

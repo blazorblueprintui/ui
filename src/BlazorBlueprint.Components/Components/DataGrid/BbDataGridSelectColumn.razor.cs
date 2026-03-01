@@ -60,6 +60,8 @@ public partial class BbDataGridSelectColumn<TData> : ComponentBase, IDataGridCol
 
     string? IDataGridColumn<TData>.HeaderClass => null;
 
+    bool IDataGridColumn<TData>.NoWrap => false;
+
     public object? GetValue(TData item) => null;
 
     public int Compare(TData x, TData y) => 0;
