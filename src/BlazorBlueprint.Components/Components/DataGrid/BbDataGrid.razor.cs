@@ -25,6 +25,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private bool _needsDataRefresh = true;
     private bool columnStateInitialized;
 
+    // Cached per-render visible column data to avoid recomputing per row
+    private List<IDataGridColumn<TData>> _cachedVisibleColumns = new();
+    private string? _cachedLastLeftId;
+    private string? _cachedFirstRightId;
+
     // JS interop state
     private IJSObjectReference? columnsModule;
     private DotNetObjectReference<BbDataGrid<TData>>? selfRef;
@@ -317,6 +322,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     {
         _columns.Add(column);
         _columnsVersion++;
+        StateHasChanged();
     }
 
     /// <summary>
@@ -326,6 +332,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     {
         _columns.Add(column);
         _columnsVersion++;
+        StateHasChanged();
     }
 
     /// <summary>
@@ -336,6 +343,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         // Insert select column at the beginning
         _columns.Insert(0, column);
         _columnsVersion++;
+        StateHasChanged();
     }
 
     /// <summary>
@@ -373,6 +381,17 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
 
         return PartitionByPinning(result);
+    }
+
+    /// <summary>
+    /// Refreshes the cached visible columns, pin boundary IDs. Called once per render
+    /// pass so that row rendering can reuse the result without recomputing per row.
+    /// </summary>
+    private void RefreshVisibleColumnsCache()
+    {
+        _cachedVisibleColumns = GetVisibleColumns();
+        _cachedLastLeftId = _cachedVisibleColumns.LastOrDefault(c => c.Pinned == ColumnPinning.Left)?.ColumnId;
+        _cachedFirstRightId = _cachedVisibleColumns.FirstOrDefault(c => c.Pinned == ColumnPinning.Right)?.ColumnId;
     }
 
     /// <summary>
@@ -597,6 +616,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     private async Task HandleSelectionChange(IReadOnlyCollection<TData> selectedItems)
     {
+        _stateVersion++;
+
         if (SelectedItemsChanged.HasDelegate)
         {
             await SelectedItemsChanged.InvokeAsync(selectedItems);
@@ -680,7 +701,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// <summary>
     /// Handles column visibility change from the toggle component.
     /// </summary>
-    internal async void HandleColumnVisibilityChanged(string columnId, bool visible)
+    internal async Task HandleColumnVisibilityChangedAsync(string columnId, bool visible)
     {
         _gridState.Columns.SetVisibility(columnId, visible);
         _stateVersion++;
@@ -743,6 +764,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         {
             _gridState.Selection.Deselect(item);
         }
+
+        _stateVersion++;
 
         if (SelectedItemsChanged.HasDelegate)
         {

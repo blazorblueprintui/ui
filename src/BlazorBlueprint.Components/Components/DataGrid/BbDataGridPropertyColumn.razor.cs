@@ -21,6 +21,14 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
     private Func<TData, TProp>? compiledProperty;
 
     /// <summary>
+    /// Explicit unique identifier for this column. When not set, falls back to the
+    /// property member name (lowercase). Provide this when property names may collide
+    /// or when persisted state must remain stable across refactors.
+    /// </summary>
+    [Parameter]
+    public string? Id { get; set; }
+
+    /// <summary>
     /// The property expression for this column. Used for type-safe data access,
     /// auto title inference, and IQueryable sort expression generation.
     /// </summary>
@@ -108,7 +116,7 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
 
     // IDataGridColumn implementation
 
-    public string ColumnId => GetColumnId();
+    public string ColumnId => Id ?? GetColumnId();
 
     string? IDataGridColumn<TData>.Title => Title ?? resolvedTitle;
 

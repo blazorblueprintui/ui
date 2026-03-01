@@ -19,9 +19,11 @@ public class DataGridColumnState
     /// <param name="columnIds">The column IDs to initialize.</param>
     public void Initialize(IEnumerable<string> columnIds)
     {
+        var activeIds = new HashSet<string>();
         var order = 0;
         foreach (var id in columnIds)
         {
+            activeIds.Add(id);
             var existing = entries.FirstOrDefault(e => e.ColumnId == id);
             if (existing == null)
             {
@@ -38,6 +40,11 @@ public class DataGridColumnState
 
             order++;
         }
+
+        // Remove entries for columns that no longer exist (e.g., from stale persisted state)
+        entries.RemoveAll(e => !activeIds.Contains(e.ColumnId));
+
+        NormalizeOrders();
     }
 
     /// <summary>

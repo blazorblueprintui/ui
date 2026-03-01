@@ -16,6 +16,14 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
     private Expression<Func<TData, object>>? lastSortBy;
 
     /// <summary>
+    /// Explicit unique identifier for this column. When not set, falls back to a slug
+    /// derived from <see cref="Title"/>. Provide this when titles may collide, change
+    /// under localization, or when persisted state must remain stable.
+    /// </summary>
+    [Parameter]
+    public string? Id { get; set; }
+
+    /// <summary>
     /// The column title displayed in the header.
     /// </summary>
     [Parameter, EditorRequired]
@@ -103,7 +111,7 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
 
     // IDataGridColumn implementation
 
-    public string ColumnId => Title.ToLowerInvariant().Replace(" ", "-");
+    public string ColumnId => Id ?? Title.ToLowerInvariant().Replace(" ", "-");
 
     string? IDataGridColumn<TData>.Title => Title;
 

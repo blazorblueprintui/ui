@@ -257,6 +257,67 @@
         <CodeBlock Source="Components/DataGrid/virtualization.txt" />
     </div>
 
+    <!-- ── Stress Test: 50,000 Rows ──────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Stress Test (50,000 rows)</h2>
+            <p class="text-sm text-muted-foreground">
+                Push the grid to its limits with 50,000 rows. Data is generated on-demand to avoid slowing
+                down page load. Virtualization renders only the visible rows, keeping the DOM lightweight
+                and scrolling smooth even at this scale. Multi-column sorting, selection, and column
+                features all remain fully functional.
+            </p>
+        </div>
+        @if (!stressTestLoaded)
+        {
+            <BbButton Variant="ButtonVariant.Outline" OnClick="@LoadStressTestData" Disabled="@stressTestLoading">
+                @if (stressTestLoading)
+                {
+                    <span>Generating 50,000 records...</span>
+                }
+                else
+                {
+                    <span>Load 50,000 Records</span>
+                }
+            </BbButton>
+        }
+        else
+        {
+            <div class="text-sm text-muted-foreground">
+                <BbBadge>@stressTestPeople.Count.ToString("N0") rows loaded</BbBadge>
+            </div>
+            <div style="height: 500px; overflow: auto;">
+                <BbDataGrid TData="Person" Items="@stressTestPeople" ShowPagination="false"
+                           Virtualize="true" ItemSize="48" StickyHeader="true"
+                           SelectionMode="DataTableSelectionMode.Multiple"
+                           Resizable="true" Reorderable="true">
+                    <Columns>
+                        <BbDataGridSelectColumn TData="Person" Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Id)" Title="#" Width="80px" Sortable Reorderable="false" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Width="200px" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Width="250px" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable Width="80px" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" Sortable Width="150px" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Width="150px" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Width="120px" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Sortable Width="100px" />
+                        <BbDataGridTemplateColumn TData="Person" Title="Active" Sortable SortBy="@(p => (object)p.IsActive)" Width="80px">
+                            @if (context.IsActive)
+                            {
+                                <BbBadge Variant="BadgeVariant.Default">Yes</BbBadge>
+                            }
+                            else
+                            {
+                                <BbBadge Variant="BadgeVariant.Secondary">No</BbBadge>
+                            }
+                        </BbDataGridTemplateColumn>
+                    </Columns>
+                </BbDataGrid>
+            </div>
+            <CodeBlock Source="Components/DataGrid/stress-test.txt" />
+        }
+    </div>
+
     <!-- ── Column Visibility ──────────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -675,15 +736,30 @@
 @code {
     private List<Person> people = new();
     private List<Person> manyPeople = new();
+    private List<Person> stressTestPeople = new();
     private List<Person> asyncPeople = new();
     private IReadOnlyCollection<Person> _selectedPeople = Array.Empty<Person>();
     private bool _isLoading;
+    private bool stressTestLoaded;
+    private bool stressTestLoading;
 
     protected override void OnInitialized()
     {
         people = MockDataService.GeneratePersons(50);
         manyPeople = MockDataService.GeneratePersons(1000);
         asyncPeople = MockDataService.GeneratePersons(100);
+    }
+
+    private async Task LoadStressTestData()
+    {
+        stressTestLoading = true;
+        StateHasChanged();
+
+        // Yield to allow the UI to update before the heavy generation runs
+        await Task.Delay(1);
+        stressTestPeople = MockDataService.GeneratePersons(50_000);
+        stressTestLoaded = true;
+        stressTestLoading = false;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

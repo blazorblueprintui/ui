@@ -81,12 +81,18 @@ public static class DataGridDataExtensions
             return list;
         }
 
+        // Build a dictionary for O(1) column lookup instead of O(columns) per comparison
+        var columnMap = new Dictionary<string, IDataGridColumn<TData>>(columns.Count);
+        foreach (var col in columns)
+        {
+            columnMap[col.ColumnId] = col;
+        }
+
         list.Sort((x, y) =>
         {
             foreach (var sortDef in sortDefinitions)
             {
-                var column = columns.FirstOrDefault(c => c.ColumnId == sortDef.ColumnId);
-                if (column == null)
+                if (!columnMap.TryGetValue(sortDef.ColumnId, out var column))
                 {
                     continue;
                 }
