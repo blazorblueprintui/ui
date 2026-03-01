@@ -84,7 +84,7 @@ public partial class TreeItemNode<TItem> : ComponentBase
 
     private bool IsDraggable => Draggable && (AllowDrag == null || AllowDrag(Item));
 
-    private int Depth => ParentPrimitiveItem?.Depth + 1 ?? 0;
+    private int Depth => (ParentPrimitiveItem?.Depth + 1) ?? 0;
 
     private IEnumerable<TItem> Children => ChildrenAccessor(Item);
 
@@ -94,9 +94,9 @@ public partial class TreeItemNode<TItem> : ComponentBase
         IsSelected ? "bg-accent text-accent-foreground" : "text-foreground"
     );
 
-    private string NodeStyle => $"padding-left: {Depth * 1.25 + 0.5}rem;";
+    private string NodeStyle => $"padding-left: {(Depth * 1.25) + 0.5}rem;";
 
-    private string ChildNodeStyle => $"padding-left: {(Depth + 1) * 1.25 + 0.5}rem;";
+    private string ChildNodeStyle => $"padding-left: {((Depth + 1) * 1.25) + 0.5}rem;";
 
     private string ChevronCssClass => ClassNames.cn(
         "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",

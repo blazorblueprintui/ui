@@ -5,7 +5,7 @@ namespace BlazorBlueprint.Primitives.TreeView;
 /// <summary>
 /// Information about a registered tree node.
 /// </summary>
-internal class TreeNodeInfo
+internal sealed class TreeNodeInfo
 {
     public string Value { get; set; } = string.Empty;
     public string? ParentValue { get; set; }
@@ -55,10 +55,8 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
     /// <summary>
     /// Unregisters a node from the tree context.
     /// </summary>
-    public void UnregisterNode(string value)
-    {
+    public void UnregisterNode(string value) =>
         nodeRegistry.Remove(value);
-    }
 
     /// <summary>
     /// Updates the disabled state of a registered node.
@@ -148,10 +146,8 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
     /// <summary>
     /// Gets the depth of a node.
     /// </summary>
-    public int GetNodeDepth(string value)
-    {
-        return nodeRegistry.TryGetValue(value, out var info) ? info.Depth : 0;
-    }
+    public int GetNodeDepth(string value) =>
+        nodeRegistry.TryGetValue(value, out var info) ? info.Depth : 0;
 
     /// <summary>
     /// Gets the number of siblings at the same level (including the node itself).
@@ -181,7 +177,7 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
             .OrderBy(n => n.Order)
             .ToList();
 
-        for (int i = 0; i < siblings.Count; i++)
+        for (var i = 0; i < siblings.Count; i++)
         {
             if (siblings[i].Value == value)
             {
@@ -195,26 +191,20 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
     /// <summary>
     /// Checks whether a node has registered children.
     /// </summary>
-    public bool HasChildren(string value)
-    {
-        return nodeRegistry.Values.Any(n => n.ParentValue == value);
-    }
+    public bool HasChildren(string value) =>
+        nodeRegistry.Values.Any(n => n.ParentValue == value);
 
     /// <summary>
     /// Checks whether a node is registered.
     /// </summary>
-    public bool IsNodeRegistered(string value)
-    {
-        return nodeRegistry.ContainsKey(value);
-    }
+    public bool IsNodeRegistered(string value) =>
+        nodeRegistry.ContainsKey(value);
 
     /// <summary>
     /// Gets the parent value of a node, or null if root.
     /// </summary>
-    public string? GetParentValue(string value)
-    {
-        return nodeRegistry.TryGetValue(value, out var info) ? info.ParentValue : null;
-    }
+    public string? GetParentValue(string value) =>
+        nodeRegistry.TryGetValue(value, out var info) ? info.ParentValue : null;
 
     // --- Expand/Collapse ---
 
@@ -286,6 +276,26 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
     /// </summary>
     public void SetExpandedValues(HashSet<string> values) =>
         UpdateState(state => state.ExpandedValues = new HashSet<string>(values));
+
+    /// <summary>
+    /// Expands all registered nodes that have children.
+    /// </summary>
+    public void ExpandAllWithChildren()
+    {
+        var allExpandable = new HashSet<string>();
+        foreach (var kvp in nodeRegistry)
+        {
+            if (HasChildren(kvp.Key))
+            {
+                allExpandable.Add(kvp.Key);
+            }
+        }
+
+        if (allExpandable.Count > 0)
+        {
+            UpdateState(state => state.ExpandedValues = allExpandable);
+        }
+    }
 
     // --- Selection ---
 
@@ -371,8 +381,8 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
             return false;
         }
 
-        bool hasChecked = false;
-        bool hasUnchecked = false;
+        var hasChecked = false;
+        var hasUnchecked = false;
 
         foreach (var d in descendants)
         {
@@ -416,7 +426,7 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
 
         UpdateState(state =>
         {
-            bool newChecked = !state.CheckedValues.Contains(value);
+            var newChecked = !state.CheckedValues.Contains(value);
 
             if (state.CheckStrictly)
             {
@@ -474,7 +484,7 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
                     continue;
                 }
 
-                bool allChecked = enabledChildren.All(c => state.CheckedValues.Contains(c));
+                var allChecked = enabledChildren.All(c => state.CheckedValues.Contains(c));
                 if (allChecked)
                 {
                     state.CheckedValues.Add(ancestor);

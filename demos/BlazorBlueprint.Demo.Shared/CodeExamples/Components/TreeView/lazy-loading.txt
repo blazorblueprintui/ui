@@ -1,0 +1,33 @@
+<BbTreeView TItem="LazyNode"
+            Items="@rootNodes"
+            TextField="@(n => n.Name)"
+            ValueField="@(n => n.Id)"
+            IconField="@(n => n.Icon)"
+            HasChildrenField="@(n => n.HasChildren)"
+            OnLoadChildren="LoadChildren"
+            SelectionMode="TreeSelectionMode.Single"
+            @bind-SelectedValue="selectedNode" />
+
+@code {
+    private string? selectedNode;
+
+    private List<LazyNode> rootNodes = new()
+    {
+        new LazyNode { Id = "eng", Name = "Engineering", Icon = "code", HasChildren = true },
+        new LazyNode { Id = "design", Name = "Design", Icon = "palette", HasChildren = true }
+    };
+
+    private async Task<IEnumerable<LazyNode>> LoadChildren(LazyNode parent)
+    {
+        await Task.Delay(1000); // Simulate network delay
+        return parent.Id switch
+        {
+            "eng" => new List<LazyNode>
+            {
+                new LazyNode { Id = "frontend", Name = "Frontend", Icon = "monitor" },
+                new LazyNode { Id = "backend", Name = "Backend", Icon = "server" }
+            },
+            _ => Enumerable.Empty<LazyNode>()
+        };
+    }
+}

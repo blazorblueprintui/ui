@@ -1,4 +1,5 @@
 using System.Timers;
+using BlazorBlueprint.Primitives;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
@@ -15,6 +16,7 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
     private string searchText = string.Empty;
     private HashSet<string>? preSearchExpandedValues;
     private HashSet<string> searchExpandedValues = new();
+    private HashSet<string>? managedExpandedValues;
     private Dictionary<string, List<TItem>> loadedChildren = new();
     private HashSet<string> loadingNodes = new();
     private HashSet<string> errorNodes = new();
@@ -286,8 +288,8 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
 
     private bool IsSearchActive => !string.IsNullOrWhiteSpace(ActiveSearchText);
 
-    private HashSet<string> effectiveExpandedValues =>
-        IsSearchActive ? searchExpandedValues : (ExpandedValues ?? new HashSet<string>());
+    private HashSet<string>? effectiveExpandedValues =>
+        IsSearchActive ? searchExpandedValues : (ExpandedValues ?? managedExpandedValues);
 
     protected override void OnInitialized()
     {
@@ -436,9 +438,9 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
 
         var value = ValueField(item);
 
-        if (loadedChildren.ContainsKey(value))
+        if (loadedChildren.TryGetValue(value, out var children))
         {
-            return loadedChildren[value].Count > 0;
+            return children.Count > 0;
         }
 
         if (HasChildrenField != null)
@@ -496,6 +498,7 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
             if (preSearchExpandedValues != null)
             {
                 searchExpandedValues = new HashSet<string>();
+                managedExpandedValues = preSearchExpandedValues;
                 if (ExpandedValuesChanged.HasDelegate)
                 {
                     _ = ExpandedValuesChanged.InvokeAsync(preSearchExpandedValues);
@@ -514,7 +517,7 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
         // Save current expand state before search
         if (preSearchExpandedValues == null)
         {
-            preSearchExpandedValues = new HashSet<string>(ExpandedValues ?? new HashSet<string>());
+            preSearchExpandedValues = new HashSet<string>(effectiveExpandedValues ?? new HashSet<string>());
         }
 
         // Compute which nodes to show and expand
@@ -579,7 +582,7 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
 
     private void ExpandAncestorsOf(TItem item)
     {
-        if (ValueField == null || ParentField == null && ChildrenProperty == null)
+        if (ValueField == null || (ParentField == null && ChildrenProperty == null))
         {
             return;
         }
@@ -743,6 +746,7 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
 
     private void HandleExpandedValuesChanged(HashSet<string> values)
     {
+        managedExpandedValues = values;
         if (ExpandedValuesChanged.HasDelegate)
         {
             _ = ExpandedValuesChanged.InvokeAsync(values);
@@ -767,7 +771,7 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
             }
         }
 
-        ExpandedValues = allExpandable;
+        managedExpandedValues = allExpandable;
         if (ExpandedValuesChanged.HasDelegate)
         {
             _ = ExpandedValuesChanged.InvokeAsync(allExpandable);
@@ -787,7 +791,7 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
             ExpandToDepthRecursive(item, 0, depth, expandSet);
         }
 
-        ExpandedValues = expandSet;
+        managedExpandedValues = expandSet;
         if (ExpandedValuesChanged.HasDelegate)
         {
             _ = ExpandedValuesChanged.InvokeAsync(expandSet);
@@ -870,6 +874,7 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        GC.SuppressFinalize(this);
         if (disposed)
         {
             return;

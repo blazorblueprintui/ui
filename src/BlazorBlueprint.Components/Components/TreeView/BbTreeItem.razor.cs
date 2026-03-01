@@ -91,7 +91,7 @@ public partial class BbTreeItem : ComponentBase
     [CascadingParameter]
     public BlazorBlueprint.Primitives.TreeView.BbTreeItem? ParentPrimitiveItem { get; set; }
 
-    private int Depth => ParentPrimitiveItem?.Depth + 1 ?? 0;
+    private int Depth => (ParentPrimitiveItem?.Depth + 1) ?? 0;
 
     private bool IsExpanded => TreeContext?.IsExpanded(Value) ?? false;
 
@@ -102,7 +102,7 @@ public partial class BbTreeItem : ComponentBase
     private bool IsIndeterminate => TreeContext?.IsIndeterminate(Value) ?? false;
 
     private bool ShowCheckbox =>
-        (Checkable ?? TreeContext?.Checkable ?? false) && !Disabled || (Checkable == true);
+        ((Checkable ?? TreeContext?.Checkable ?? false) && !Disabled) || (Checkable == true);
 
     private bool HasExpandableChildren =>
         IsLeaf != true && (ChildContent != null || (TreeContext?.HasChildren(Value) ?? false));
@@ -115,7 +115,7 @@ public partial class BbTreeItem : ComponentBase
         Class
     );
 
-    private string NodeStyle => $"padding-left: {Depth * 1.25 + 0.5}rem;";
+    private string NodeStyle => $"padding-left: {(Depth * 1.25) + 0.5}rem;";
 
     private string ChevronCssClass => ClassNames.cn(
         "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",

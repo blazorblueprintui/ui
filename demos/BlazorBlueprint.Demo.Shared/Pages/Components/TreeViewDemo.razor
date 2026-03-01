@@ -42,6 +42,7 @@
                     <BbTreeItem Value="readme" Label="README.md" Icon="file" />
                 </BbTreeView>
             </div>
+            <CodeBlock Source="Components/TreeView/basic.txt" />
         </section>
 
         @* --- 2. Data-Driven Tree (Nested Data) --- *@
@@ -67,6 +68,7 @@
             <p class="text-sm text-muted-foreground">
                 Selected: <strong>@(selectedCategory ?? "None")</strong>
             </p>
+            <CodeBlock Source="Components/TreeView/data-driven.txt" />
         </section>
 
         @* --- 3. Flat Data with Parent References --- *@
@@ -91,6 +93,7 @@
             <p class="text-sm text-muted-foreground">
                 Selected: <strong>@(selectedFlatIds.Count > 0 ? string.Join(", ", selectedFlatIds) : "None")</strong>
             </p>
+            <CodeBlock Source="Components/TreeView/flat-data.txt" />
         </section>
 
         @* --- 4. Single and Multi-Selection --- *@
@@ -131,6 +134,7 @@
                     <p class="text-xs text-muted-foreground mt-2">Selected: @(multiSelectedValues.Count > 0 ? string.Join(", ", multiSelectedValues) : "None")</p>
                 </div>
             </div>
+            <CodeBlock Source="Components/TreeView/selection.txt" />
         </section>
 
         @* --- 5. Checkable Tree with Cascade --- *@
@@ -166,6 +170,7 @@
             <p class="text-sm text-muted-foreground">
                 Checked: <strong>@(checkedPermissions.Count > 0 ? string.Join(", ", checkedPermissions) : "None")</strong>
             </p>
+            <CodeBlock Source="Components/TreeView/checkable.txt" />
         </section>
 
         @* --- 6. Lazy Loading --- *@
@@ -189,6 +194,7 @@
                             SelectionMode="TreeSelectionMode.Single"
                             @bind-SelectedValue="selectedLazyNode" />
             </div>
+            <CodeBlock Source="Components/TreeView/lazy-loading.txt" />
         </section>
 
         @* --- 7. Drag and Drop --- *@
@@ -214,6 +220,7 @@
                             SelectionMode="TreeSelectionMode.Single" />
             </div>
             <p class="text-sm text-muted-foreground">@dragMessage</p>
+            <CodeBlock Source="Components/TreeView/drag-drop.txt" />
         </section>
 
         @* --- 8. Search and Filter --- *@
@@ -238,6 +245,7 @@
                             SelectionMode="TreeSelectionMode.Single"
                             DefaultExpandDepth="1" />
             </div>
+            <CodeBlock Source="Components/TreeView/search.txt" />
         </section>
 
         @* --- 9. Custom Node Templates --- *@
@@ -280,6 +288,7 @@
                     </BbTreeItem>
                 </BbTreeView>
             </div>
+            <CodeBlock Source="Components/TreeView/custom-templates.txt" />
         </section>
 
         @* --- 10. Icons and Badges --- *@
@@ -299,10 +308,11 @@
                         <BbTreeItem Value="promotions" Label="Promotions" Icon="tag" Badge="1" />
                     </BbTreeItem>
                     <BbTreeItem Value="sent" Label="Sent" Icon="send" />
-                    <BbTreeItem Value="drafts" Label="Drafts" Icon="file-edit" Badge="2" />
+                    <BbTreeItem Value="drafts" Label="Drafts" Icon="file-pen" Badge="2" />
                     <BbTreeItem Value="trash" Label="Trash" Icon="trash-2" />
                 </BbTreeView>
             </div>
+            <CodeBlock Source="Components/TreeView/icons-badges.txt" />
         </section>
 
         @* --- 11. Controlled Tree --- *@
@@ -315,8 +325,8 @@
             </div>
 
             <div class="flex gap-2 mb-2">
-                <BbButton Size="ButtonSize.Sm" OnClick="ExpandAllControlled">Expand All</BbButton>
-                <BbButton Size="ButtonSize.Sm" Variant="ButtonVariant.Outline" OnClick="CollapseAllControlled">Collapse All</BbButton>
+                <BbButton Size="ButtonSize.Small" OnClick="ExpandAllControlled">Expand All</BbButton>
+                <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Outline" OnClick="CollapseAllControlled">Collapse All</BbButton>
             </div>
 
             <div class="rounded-lg border p-4">
@@ -332,6 +342,7 @@
                     </BbTreeItem>
                 </BbTreeView>
             </div>
+            <CodeBlock Source="Components/TreeView/controlled.txt" />
         </section>
 
         @* --- 12. File Explorer Example --- *@
@@ -360,6 +371,175 @@
             <p class="text-sm text-muted-foreground">
                 Selected file: <strong>@(selectedFile ?? "None")</strong>
             </p>
+            <CodeBlock Source="Components/TreeView/file-explorer.txt" />
+        </section>
+
+        @* --- Accessibility --- *@
+        <AccessibilityList>
+            <AriaAttributes>
+                <AccessibilityItem>Uses <code>role="tree"</code> on the root container and <code>role="treeitem"</code> on each node</AccessibilityItem>
+                <AccessibilityItem>Includes <code>aria-expanded</code> on parent nodes to indicate expand/collapse state</AccessibilityItem>
+                <AccessibilityItem>Includes <code>aria-selected</code> on nodes when selection is enabled</AccessibilityItem>
+                <AccessibilityItem>Includes <code>aria-checked</code> and <code>aria-readonly</code> on checkable nodes</AccessibilityItem>
+                <AccessibilityItem>Uses <code>aria-level</code>, <code>aria-setsize</code>, and <code>aria-posinset</code> for tree structure</AccessibilityItem>
+                <AccessibilityItem>Supports <code>aria-label</code> on the tree root for screen readers</AccessibilityItem>
+                <AccessibilityItem>Disabled nodes include <code>aria-disabled="true"</code></AccessibilityItem>
+            </AriaAttributes>
+            <KeyboardNavigation>
+                <KeyboardShortcutItem Description="Move focus to the next visible node">
+                    <BbKbd>ArrowDown</BbKbd>
+                </KeyboardShortcutItem>
+                <KeyboardShortcutItem Description="Move focus to the previous visible node">
+                    <BbKbd>ArrowUp</BbKbd>
+                </KeyboardShortcutItem>
+                <KeyboardShortcutItem Description="Expand the focused node (or move to first child if already expanded)">
+                    <BbKbd>ArrowRight</BbKbd>
+                </KeyboardShortcutItem>
+                <KeyboardShortcutItem Description="Collapse the focused node (or move to parent if already collapsed)">
+                    <BbKbd>ArrowLeft</BbKbd>
+                </KeyboardShortcutItem>
+                <KeyboardShortcutItem Description="Move focus to the first node in the tree">
+                    <BbKbd>Home</BbKbd>
+                </KeyboardShortcutItem>
+                <KeyboardShortcutItem Description="Move focus to the last visible node in the tree">
+                    <BbKbd>End</BbKbd>
+                </KeyboardShortcutItem>
+                <KeyboardShortcutItem Description="Select the focused node or toggle its checkbox">
+                    <BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd>
+                </KeyboardShortcutItem>
+                <KeyboardShortcutItem Description="Expand all siblings at the current level">
+                    <BbKbd>*</BbKbd>
+                </KeyboardShortcutItem>
+            </KeyboardNavigation>
+        </AccessibilityList>
+
+        @* --- API Reference --- *@
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">API Reference</h2>
+                <p class="text-muted-foreground">Component properties and parameters.</p>
+            </div>
+            <div class="space-y-4">
+                <ApiReference ComponentName="BbTreeView&lt;TItem&gt;">
+                    <ApiParameter Name="Items" Type="IEnumerable&lt;TItem&gt;?" Default="null">
+                        Data source for data-driven mode. When provided, nodes are rendered from the data.
+                    </ApiParameter>
+                    <ApiParameter Name="ChildrenProperty" Type="Func&lt;TItem, IEnumerable&lt;TItem&gt;?&gt;?" Default="null">
+                        Function to get child items from a parent item (nested data mode).
+                    </ApiParameter>
+                    <ApiParameter Name="ParentField" Type="Func&lt;TItem, string?&gt;?" Default="null">
+                        Function to get the parent ID from an item (flat data mode).
+                    </ApiParameter>
+                    <ApiParameter Name="TextField" Type="Func&lt;TItem, string&gt;?" Default="null">
+                        Function to get display text from an item.
+                    </ApiParameter>
+                    <ApiParameter Name="ValueField" Type="Func&lt;TItem, string&gt;?" Default="null">
+                        Function to get the unique value/ID from an item.
+                    </ApiParameter>
+                    <ApiParameter Name="IconField" Type="Func&lt;TItem, string?&gt;?" Default="null">
+                        Function to get a Lucide icon name from an item.
+                    </ApiParameter>
+                    <ApiParameter Name="HasChildrenField" Type="Func&lt;TItem, bool&gt;?" Default="null">
+                        Function to determine if an item has children (for lazy loading).
+                    </ApiParameter>
+                    <ApiParameter Name="SelectionMode" Type="TreeSelectionMode" Default="None">
+                        Selection mode: None, Single, or Multiple.
+                    </ApiParameter>
+                    <ApiParameter Name="SelectedValue" Type="string?" Default="null">
+                        Selected value in single selection mode (two-way bindable).
+                    </ApiParameter>
+                    <ApiParameter Name="SelectedValues" Type="HashSet&lt;string&gt;?" Default="null">
+                        Selected values in multiple selection mode (two-way bindable).
+                    </ApiParameter>
+                    <ApiParameter Name="ExpandedValues" Type="HashSet&lt;string&gt;?" Default="null">
+                        Controls which nodes are expanded (two-way bindable).
+                    </ApiParameter>
+                    <ApiParameter Name="DefaultExpandAll" Type="bool" Default="false">
+                        Whether to expand all nodes on initial render.
+                    </ApiParameter>
+                    <ApiParameter Name="DefaultExpandDepth" Type="int?" Default="null">
+                        Expand nodes to this depth on initial render.
+                    </ApiParameter>
+                    <ApiParameter Name="Checkable" Type="bool" Default="false">
+                        Whether nodes display tri-state checkboxes.
+                    </ApiParameter>
+                    <ApiParameter Name="CheckStrictly" Type="bool" Default="false">
+                        When true, disables parent/child checkbox cascade. Each checkbox is independent.
+                    </ApiParameter>
+                    <ApiParameter Name="CheckedValues" Type="HashSet&lt;string&gt;?" Default="null">
+                        Checked node values (two-way bindable).
+                    </ApiParameter>
+                    <ApiParameter Name="ShowLines" Type="bool" Default="false">
+                        Whether to show connector lines between nodes.
+                    </ApiParameter>
+                    <ApiParameter Name="ShowIcons" Type="bool" Default="true">
+                        Whether to show node icons.
+                    </ApiParameter>
+                    <ApiParameter Name="ShowSearch" Type="bool" Default="false">
+                        Whether to show the built-in search input.
+                    </ApiParameter>
+                    <ApiParameter Name="SearchPlaceholder" Type="string" Default="&quot;Search...&quot;">
+                        Placeholder text for the search input.
+                    </ApiParameter>
+                    <ApiParameter Name="Draggable" Type="bool" Default="false">
+                        Whether drag and drop is enabled.
+                    </ApiParameter>
+                    <ApiParameter Name="OnNodeDrop" Type="EventCallback&lt;TreeDropEventArgs&lt;TItem&gt;&gt;">
+                        Event callback when a node is dropped during drag and drop.
+                    </ApiParameter>
+                    <ApiParameter Name="OnLoadChildren" Type="Func&lt;TItem, Task&lt;IEnumerable&lt;TItem&gt;&gt;&gt;?" Default="null">
+                        Async callback to load children on demand when a node is expanded.
+                    </ApiParameter>
+                    <ApiParameter Name="OnNodeClick" Type="EventCallback&lt;TItem&gt;">
+                        Fired when a node is clicked.
+                    </ApiParameter>
+                    <ApiParameter Name="OnNodeExpand" Type="EventCallback&lt;TItem&gt;">
+                        Fired when a node is expanded.
+                    </ApiParameter>
+                    <ApiParameter Name="OnNodeCollapse" Type="EventCallback&lt;TItem&gt;">
+                        Fired when a node is collapsed.
+                    </ApiParameter>
+                    <ApiParameter Name="AriaLabel" Type="string?" Default="null">
+                        ARIA label for the tree root element.
+                    </ApiParameter>
+                    <ApiParameter Name="Class" Type="string?" Default="null">
+                        Additional CSS classes for the tree container.
+                    </ApiParameter>
+                </ApiReference>
+
+                <ApiReference ComponentName="BbTreeItem">
+                    <ApiParameter Name="Value" Type="string" Default="(required)">
+                        Unique value/identifier for this node.
+                    </ApiParameter>
+                    <ApiParameter Name="Label" Type="string?" Default="null">
+                        Display text for the node.
+                    </ApiParameter>
+                    <ApiParameter Name="Icon" Type="string?" Default="null">
+                        Lucide icon name for the node.
+                    </ApiParameter>
+                    <ApiParameter Name="Badge" Type="string?" Default="null">
+                        Badge text shown after the label.
+                    </ApiParameter>
+                    <ApiParameter Name="Disabled" Type="bool" Default="false">
+                        Whether this node is disabled (cannot be selected or checked).
+                    </ApiParameter>
+                    <ApiParameter Name="Checkable" Type="bool?" Default="null">
+                        Override the parent tree's checkable setting for this node.
+                    </ApiParameter>
+                    <ApiParameter Name="IsLeaf" Type="bool?" Default="null">
+                        Explicitly mark as a leaf node (no expand arrow).
+                    </ApiParameter>
+                    <ApiParameter Name="LabelTemplate" Type="RenderFragment?" Default="null">
+                        Custom label content replacing the default text.
+                    </ApiParameter>
+                    <ApiParameter Name="ActionsTemplate" Type="RenderFragment?" Default="null">
+                        Action buttons shown on hover (e.g., edit, delete).
+                    </ApiParameter>
+                    <ApiParameter Name="Class" Type="string?" Default="null">
+                        Additional CSS classes for the node row.
+                    </ApiParameter>
+                </ApiReference>
+            </div>
         </section>
     </div>
 </div>
@@ -513,7 +693,7 @@
         },
         new DragNode
         {
-            Id = "done", Name = "Done", Icon = "check-circle",
+            Id = "done", Name = "Done", Icon = "circle-check",
             Children = new List<DragNode>
             {
                 new DragNode { Id = "task4", Name = "Setup CI/CD", Icon = "file" }

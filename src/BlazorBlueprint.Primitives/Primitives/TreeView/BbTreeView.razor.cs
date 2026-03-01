@@ -10,6 +10,16 @@ public partial class BbTreeView : IAsyncDisposable
     private IJSObjectReference? keyboardModule;
     private DotNetObjectReference<BbTreeView>? dotNetRef;
     private bool disposed;
+    private bool defaultExpandApplied;
+
+    // Track last-synced parameter values to prevent stale re-renders from
+    // overwriting context state. Without this, an intermediate render (triggered
+    // by EventCallback on a wrapper component) could pass stale parameter values
+    // through SyncStateToContext and revert a user-initiated selection/check.
+    private string? lastSyncedSelectedValue;
+    private HashSet<string>? lastSyncedSelectedValues;
+    private HashSet<string>? lastSyncedCheckedValues;
+    private HashSet<string>? lastSyncedExpandedValues;
 
     /// <summary>
     /// The child content to render within the tree. Should contain BbTreeItem components.
@@ -148,10 +158,8 @@ public partial class BbTreeView : IAsyncDisposable
         context.OnStateChanged += HandleContextStateChanged;
     }
 
-    protected override void OnParametersSet()
-    {
+    protected override void OnParametersSet() =>
         SyncStateToContext();
-    }
 
     private void SyncStateToContext()
     {
@@ -161,23 +169,52 @@ public partial class BbTreeView : IAsyncDisposable
         context.State.ShowLines = ShowLines;
         context.State.ShowIcons = ShowIcons;
 
-        if (ExpandedValues != null)
+        // Only sync collection state when the PARAMETER value has actually changed
+        // since the last sync. This prevents stale re-renders (caused by intermediate
+        // StateHasChanged calls on wrapper components) from overwriting context state
+        // that was just updated by user interaction.
+
+        if (ExpandedValues != null && !ReferenceEquals(ExpandedValues, lastSyncedExpandedValues))
         {
-            context.State.ExpandedValues = new HashSet<string>(ExpandedValues);
+            lastSyncedExpandedValues = ExpandedValues;
+            if (!context.State.ExpandedValues.SetEquals(ExpandedValues))
+            {
+                context.SetExpandedValues(ExpandedValues);
+            }
         }
 
-        if (SelectedValues != null)
+        if (SelectedValues != null && !ReferenceEquals(SelectedValues, lastSyncedSelectedValues))
         {
-            context.State.SelectedValues = new HashSet<string>(SelectedValues);
+            lastSyncedSelectedValues = SelectedValues;
+            if (!context.State.SelectedValues.SetEquals(SelectedValues))
+            {
+                context.SetSelectedValues(SelectedValues);
+            }
         }
-        else if (SelectedValue != null && SelectionMode == TreeSelectionMode.Single)
+        else if (SelectedValue != lastSyncedSelectedValue && SelectionMode == TreeSelectionMode.Single)
         {
-            context.State.SelectedValues = new HashSet<string> { SelectedValue };
+            lastSyncedSelectedValue = SelectedValue;
+            if (SelectedValue != null)
+            {
+                var expected = new HashSet<string> { SelectedValue };
+                if (!context.State.SelectedValues.SetEquals(expected))
+                {
+                    context.SetSelectedValues(expected);
+                }
+            }
+            else if (context.State.SelectedValues.Count > 0)
+            {
+                context.SetSelectedValues(new HashSet<string>());
+            }
         }
 
-        if (CheckedValues != null)
+        if (CheckedValues != null && !ReferenceEquals(CheckedValues, lastSyncedCheckedValues))
         {
-            context.State.CheckedValues = new HashSet<string>(CheckedValues);
+            lastSyncedCheckedValues = CheckedValues;
+            if (!context.State.CheckedValues.SetEquals(CheckedValues))
+            {
+                context.SetCheckedValues(CheckedValues);
+            }
         }
     }
 
@@ -185,6 +222,22 @@ public partial class BbTreeView : IAsyncDisposable
     {
         if (firstRender)
         {
+            // Apply default expand after first render — child BbTreeItems have
+            // registered in the node registry during their OnInitialized, so
+            // we can now determine which nodes have children.
+            if (!defaultExpandApplied && ExpandedValues == null)
+            {
+                defaultExpandApplied = true;
+                if (DefaultExpandAll)
+                {
+                    context.ExpandAllWithChildren();
+                }
+                else if (DefaultExpandDepth.HasValue)
+                {
+                    ExpandToDepth(DefaultExpandDepth.Value);
+                }
+            }
+
             try
             {
                 dotNetRef = DotNetObjectReference.Create(this);
@@ -200,28 +253,62 @@ public partial class BbTreeView : IAsyncDisposable
         }
     }
 
+    private void ExpandToDepth(int maxDepth)
+    {
+        var expandSet = new HashSet<string>();
+        // Start from root nodes (nodes with no parent)
+        foreach (var rootValue in context.GetChildValues(null))
+        {
+            ExpandToDepthRecursive(rootValue, 0, maxDepth, expandSet);
+        }
+
+        if (expandSet.Count > 0)
+        {
+            context.SetExpandedValues(expandSet);
+        }
+    }
+
+    private void ExpandToDepthRecursive(string value, int currentDepth, int maxDepth, HashSet<string> expandSet)
+    {
+        if (currentDepth >= maxDepth)
+        {
+            return;
+        }
+
+        if (context.HasChildren(value))
+        {
+            expandSet.Add(value);
+            foreach (var child in context.GetChildValues(value))
+            {
+                ExpandToDepthRecursive(child, currentDepth + 1, maxDepth, expandSet);
+            }
+        }
+    }
+
     /// <summary>
-    /// Called from JavaScript when a node is activated via keyboard (Enter/Space).
+    /// Called from JavaScript when a node is activated via click or keyboard (Enter/Space).
     /// </summary>
     [JSInvokable]
     public async Task JsOnNodeActivate(string value)
     {
+        // Update context selection BEFORE firing OnNodeClick. The EventCallback's
+        // InvokeAsync triggers StateHasChanged on the receiver (wrapper component),
+        // which could re-render with stale parameter values. By selecting first,
+        // the context already has the correct state when SyncStateToContext runs.
+        context.SelectNode(value);
+
         if (OnNodeClick.HasDelegate)
         {
             await OnNodeClick.InvokeAsync(value);
         }
-
-        context.SelectNode(value);
     }
 
     /// <summary>
     /// Called from JavaScript when a node checkbox is toggled via keyboard (Space).
     /// </summary>
     [JSInvokable]
-    public void JsOnNodeCheck(string value)
-    {
+    public void JsOnNodeCheck(string value) =>
         context.ToggleChecked(value);
-    }
 
     /// <summary>
     /// Called from JavaScript when a node should be expanded.
@@ -253,14 +340,15 @@ public partial class BbTreeView : IAsyncDisposable
     /// Called from JavaScript to expand all siblings of a node.
     /// </summary>
     [JSInvokable]
-    public void JsOnExpandSiblings(string value)
-    {
+    public void JsOnExpandSiblings(string value) =>
         context.ExpandSiblings(value);
-    }
 
     private void HandleContextStateChanged()
     {
-        // Sync context state back to bound parameters
+        // Propagate context state changes to bound parameters via EventCallbacks.
+        // Do NOT call StateHasChanged() here — BbTreeItem instances re-render via their
+        // own OnStateChanged subscription, and an intermediate render would cause
+        // SyncStateToContext to overwrite context state with stale parameter values.
         if (ExpandedValuesChanged.HasDelegate)
         {
             _ = ExpandedValuesChanged.InvokeAsync(new HashSet<string>(context.State.ExpandedValues));
@@ -281,35 +369,23 @@ public partial class BbTreeView : IAsyncDisposable
         {
             _ = CheckedValuesChanged.InvokeAsync(new HashSet<string>(context.State.CheckedValues));
         }
-
-        StateHasChanged();
     }
 
     /// <summary>
     /// Expands all nodes in the tree.
     /// </summary>
-    public void ExpandAll()
-    {
-        var allExpandable = new HashSet<string>();
-        foreach (var value in context.State.ExpandedValues.ToList())
-        {
-            allExpandable.Add(value);
-        }
-
-        // Find all nodes that have children and expand them
-        context.SetExpandedValues(allExpandable);
-    }
+    public void ExpandAll() =>
+        context.ExpandAllWithChildren();
 
     /// <summary>
     /// Collapses all nodes in the tree.
     /// </summary>
-    public void CollapseAll()
-    {
+    public void CollapseAll() =>
         context.SetExpandedValues(new HashSet<string>());
-    }
 
     public async ValueTask DisposeAsync()
     {
+        GC.SuppressFinalize(this);
         if (disposed)
         {
             return;

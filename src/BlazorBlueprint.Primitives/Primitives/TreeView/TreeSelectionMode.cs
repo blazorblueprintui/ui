@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace BlazorBlueprint.Primitives;
 
 /// <summary>
 /// Selection mode for a tree view.
 /// </summary>
+[SuppressMessage("Naming", "CA1720:Identifier contains type name", Justification = "Single is the clearest name for this selection mode")]
 public enum TreeSelectionMode
 {
     /// <summary>

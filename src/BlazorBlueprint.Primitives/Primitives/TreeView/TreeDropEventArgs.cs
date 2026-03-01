@@ -1,9 +1,12 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace BlazorBlueprint.Primitives;
 
 /// <summary>
 /// Event arguments for a tree node drop operation.
 /// </summary>
 /// <typeparam name="TItem">The type of the tree data item.</typeparam>
+[SuppressMessage("Naming", "CA1711:Identifiers should not have incorrect suffix", Justification = "Type represents event arguments")]
 public class TreeDropEventArgs<TItem>
 {
     /// <summary>
