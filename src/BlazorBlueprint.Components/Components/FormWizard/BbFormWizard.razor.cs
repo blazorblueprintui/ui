@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 
@@ -25,12 +26,13 @@ namespace BlazorBlueprint.Components;
 /// </remarks>
 public partial class BbFormWizard : ComponentBase
 {
-    // --- Registration (Timeline pattern: reset counter each render) ---
+    // --- Registration (instance-based deduplication) ---
     private readonly List<WizardStepInfo> steps = new();
-    private int registrationIndex;
+    private readonly Dictionary<BbWizardStep, int> stepOwners = new();
 
     // --- State ---
     private int currentStep;
+    private int lastRenderedStepCount = -1;
     private readonly HashSet<int> visitedSteps = new() { 0 };
     private readonly Dictionary<int, bool> stepValidationState = new();
 
@@ -96,6 +98,15 @@ public partial class BbFormWizard : ComponentBase
     /// </summary>
     [Parameter]
     public bool AllowSkipAhead { get; set; }
+
+    /// <summary>
+    /// Whether completed steps retain their checked/visited state when navigating backwards.
+    /// When <c>true</c> (default), steps keep their completed state.
+    /// When <c>false</c>, navigating back clears the completed and visited state of all steps
+    /// after the destination step.
+    /// </summary>
+    [Parameter]
+    public bool RetainStepState { get; set; } = true;
 
     /// <summary>
     /// Additional CSS classes for the root wizard container.
@@ -184,33 +195,42 @@ public partial class BbFormWizard : ComponentBase
 
     /// <summary>
     /// Registers a step with the wizard and returns its index.
-    /// Called by each <see cref="BbWizardStep"/> during <c>OnParametersSet</c>.
+    /// Uses the component instance as a key to prevent duplicate entries
+    /// when <c>OnParametersSet</c> fires multiple times per render cycle.
     /// </summary>
-    internal int RegisterStep(WizardStepInfo info)
+    internal int RegisterStep(BbWizardStep owner, WizardStepInfo info)
     {
-        var idx = registrationIndex++;
-        if (idx < steps.Count)
+        if (stepOwners.TryGetValue(owner, out var existingIdx))
         {
-            steps[idx] = info;
+            steps[existingIdx] = info;
+            return existingIdx;
         }
-        else
-        {
-            steps.Add(info);
-        }
+
+        var idx = steps.Count;
+        steps.Add(info);
+        stepOwners[owner] = idx;
         return idx;
     }
 
     /// <inheritdoc />
     protected override void OnParametersSet()
     {
-        // Reset registration counter each render cycle (Timeline pattern)
-        registrationIndex = 0;
-
         // Sync controlled state
         if (CurrentStepChanged.HasDelegate && CurrentStep != currentStep)
         {
             currentStep = CurrentStep;
             visitedSteps.Add(currentStep);
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnAfterRender(bool firstRender)
+    {
+        // Re-render if step count changed so the indicator reflects current steps
+        if (steps.Count != lastRenderedStepCount)
+        {
+            lastRenderedStepCount = steps.Count;
+            StateHasChanged();
         }
     }
 
@@ -333,19 +353,26 @@ public partial class BbFormWizard : ComponentBase
 
         var step = steps[currentStep];
 
-        // Check EditContext-based field validation
+        // Check EditContext-based field validation (per-step only)
         if (step.FieldNames is { Length: > 0 } && EditContext is not null)
         {
-            EditContext.Validate();
+            var hasErrors = false;
 
             foreach (var fieldName in step.FieldNames)
             {
                 var fieldIdentifier = new FieldIdentifier(EditContext.Model, fieldName);
+                EditContext.NotifyFieldChanged(fieldIdentifier);
+
                 if (EditContext.GetValidationMessages(fieldIdentifier).Any())
                 {
-                    stepValidationState[currentStep] = false;
-                    return false;
+                    hasErrors = true;
                 }
+            }
+
+            if (hasErrors)
+            {
+                stepValidationState[currentStep] = false;
+                return false;
             }
         }
 
@@ -411,6 +438,11 @@ public partial class BbFormWizard : ComponentBase
 
     private async Task SetCurrentStepAsync(int index)
     {
+        if (!RetainStepState && index < currentStep)
+        {
+            ClearForwardStepState(index);
+        }
+
         currentStep = index;
         visitedSteps.Add(index);
 
@@ -427,9 +459,42 @@ public partial class BbFormWizard : ComponentBase
         StateHasChanged();
     }
 
+    private void ClearForwardStepState(int fromIndex)
+    {
+        for (var i = fromIndex + 1; i < steps.Count; i++)
+        {
+            visitedSteps.Remove(i);
+            stepValidationState.Remove(i);
+            ResetStepModelFields(steps[i]);
+        }
+    }
+
+    private void ResetStepModelFields(WizardStepInfo step)
+    {
+        if (EditContext is null || step.FieldNames is not { Length: > 0 })
+        {
+            return;
+        }
+
+        var model = EditContext.Model;
+        var modelType = model.GetType();
+
+        foreach (var fieldName in step.FieldNames)
+        {
+            var property = modelType.GetProperty(fieldName, BindingFlags.Public | BindingFlags.Instance);
+            if (property is { CanWrite: true })
+            {
+                var defaultValue = property.PropertyType.IsValueType
+                    ? Activator.CreateInstance(property.PropertyType)
+                    : null;
+                property.SetValue(model, defaultValue);
+            }
+        }
+    }
+
     private int FindNextEnabledStep(int fromIndex)
     {
-        for (int i = fromIndex + 1; i < steps.Count; i++)
+        for (var i = fromIndex + 1; i < steps.Count; i++)
         {
             if (!steps[i].Disabled)
             {
@@ -441,7 +506,7 @@ public partial class BbFormWizard : ComponentBase
 
     private int FindPreviousEnabledStep(int fromIndex)
     {
-        for (int i = fromIndex - 1; i >= 0; i--)
+        for (var i = fromIndex - 1; i >= 0; i--)
         {
             if (!steps[i].Disabled)
             {
@@ -460,7 +525,7 @@ public partial class BbFormWizard : ComponentBase
 
     private string IndicatorCssClass => ClassNames.cn(
         Layout == WizardLayout.Horizontal
-            ? "flex items-center w-full"
+            ? "flex items-start w-full"
             : "flex flex-col shrink-0",
         IndicatorClass
     );
@@ -475,7 +540,7 @@ public partial class BbFormWizard : ComponentBase
     );
 
     private string NavigationCssClass => ClassNames.cn(
-        "flex items-center justify-between pt-6",
+        "flex items-center justify-between pt-6 pb-2",
         NavigationClass
     );
 
@@ -491,9 +556,11 @@ public partial class BbFormWizard : ComponentBase
         }
     );
 
-    private string GetStepButtonClass(int index, WizardStepState state) => ClassNames.cn(
-        "flex items-center gap-2 group cursor-default",
-        Layout == WizardLayout.Vertical ? "flex-row" : "flex-col",
+    private string GetStepButtonClass(int index) => ClassNames.cn(
+        "flex group cursor-default",
+        Layout == WizardLayout.Vertical
+            ? "flex-row items-center gap-2"
+            : "flex-col items-center shrink-0 gap-2",
         CanNavigateToStep(index) ? "cursor-pointer" : null
     );
 
@@ -507,7 +574,7 @@ public partial class BbFormWizard : ComponentBase
         if (layout == WizardLayout.Horizontal)
         {
             return ClassNames.cn(
-                "flex-1 mx-2 transition-colors",
+                "flex-1 mx-2 mt-4 transition-colors",
                 state == WizardStepState.Completed ? "h-0.5 bg-primary" : "h-0.5 bg-border"
             );
         }

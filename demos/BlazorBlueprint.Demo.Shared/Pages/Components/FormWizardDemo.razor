@@ -13,6 +13,28 @@
         </div>
     </div>
 
+    <div class="space-y-4 text-sm text-muted-foreground">
+        <p>
+            Compose a wizard using <code class="text-xs bg-muted px-1 py-0.5 rounded">BbFormWizard</code> as
+            the container and <code class="text-xs bg-muted px-1 py-0.5 rounded">BbWizardStep</code> children
+            for each step. The wizard handles navigation, step indicators, and visual state automatically.
+        </p>
+        <p>
+            For validation, wrap the wizard inside an
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">EditForm</code> with a
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">DataAnnotationsValidator</code> and bind your
+            model properties to form fields as usual. Then set
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">FieldNames</code> on each step to declare which
+            model properties belong to that step &mdash; the wizard will validate only those fields when the
+            user clicks "Next", keeping each step's validation independent.
+        </p>
+        <p>
+            Steps can be marked as optional, display icons, or be completely disabled. The wizard supports
+            both horizontal and vertical layouts, controlled and uncontrolled step navigation, and fully
+            custom navigation buttons.
+        </p>
+    </div>
+
     <!-- Basic Wizard -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -32,7 +54,7 @@
                         <BbFormFieldInput TValue="string"
                                           @bind-Value="_basicEmail"
                                           Label="Email"
-                                          Placeholder="you@@example.com" />
+                                          Placeholder='@("you@example.com")' />
                     </div>
                 </BbWizardStep>
                 <BbWizardStep Title="Profile">
@@ -55,6 +77,7 @@
                 </BbWizardStep>
             </BbFormWizard>
         </div>
+        <CodeBlock Source="Components/FormWizard/basic.txt" />
     </div>
 
     <!-- Wizard with Validation -->
@@ -89,10 +112,10 @@
                             <BbFormFieldInput TValue="string"
                                               @bind-Value="_validationModel.Email"
                                               Label="Email Address"
-                                              Placeholder="john@@example.com" />
+                                              Placeholder='@("john@example.com")' />
                         </div>
                     </BbWizardStep>
-                    <BbWizardStep Title="Review" Icon="check-circle">
+                    <BbWizardStep Title="Review" Icon="circle-check">
                         <div class="space-y-3">
                             <p class="text-sm text-muted-foreground">Everything looks good? Click "Complete" to finish.</p>
                             <div class="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
@@ -110,6 +133,7 @@
                 </div>
             }
         </div>
+        <CodeBlock Source="Components/FormWizard/validation.txt" />
     </div>
 
     <!-- Optional Step -->
@@ -119,32 +143,52 @@
             <p class="text-sm text-muted-foreground">
                 Steps with <code class="text-xs bg-muted px-1 py-0.5 rounded">IsOptional="true"</code> show
                 a "Skip" button, allowing users to bypass them without validation.
+                Clicking "Next" still validates; clicking "Skip" does not.
             </p>
         </div>
         <div class="rounded-lg border p-6">
-            <BbFormWizard>
-                <BbWizardStep Title="Required Info">
-                    <div class="space-y-4">
-                        <BbFormFieldInput TValue="string"
-                                          @bind-Value="_optionalName"
-                                          Label="Full Name"
-                                          Placeholder="Enter your name" />
-                    </div>
-                </BbWizardStep>
-                <BbWizardStep Title="Preferences" IsOptional="true">
-                    <div class="space-y-4">
-                        <BbFormFieldInput TValue="string"
-                                          @bind-Value="_optionalTheme"
-                                          Label="Theme Preference"
-                                          Placeholder="Light, Dark, or System" />
-                        <p class="text-xs text-muted-foreground">This step is optional. You can skip it.</p>
-                    </div>
-                </BbWizardStep>
-                <BbWizardStep Title="Done">
-                    <p class="text-sm text-muted-foreground">You're all set!</p>
-                </BbWizardStep>
-            </BbFormWizard>
+            <EditForm Model="_optionalModel" OnValidSubmit="HandleOptionalSubmit">
+                <DataAnnotationsValidator />
+                <BbFormWizard OnComplete="HandleOptionalSubmit">
+                    <BbWizardStep Title="Required Info" Icon="user"
+                                  FieldNames='@(new[] { "FullName" })'>
+                        <div class="space-y-4">
+                            <BbFormFieldInput TValue="string"
+                                              @bind-Value="_optionalModel.FullName"
+                                              Label="Full Name"
+                                              Placeholder="Enter your name" />
+                        </div>
+                    </BbWizardStep>
+                    <BbWizardStep Title="Preferences" Icon="palette" IsOptional="true"
+                                  FieldNames='@(new[] { "Theme" })'>
+                        <div class="space-y-4">
+                            <BbFormFieldSelect TValue="string"
+                                               @bind-Value="_optionalModel.Theme"
+                                               Label="Theme Preference"
+                                               Placeholder="Select a theme..."
+                                               Options="_themeOptions" />
+                            <p class="text-xs text-muted-foreground">This step is optional. You can skip it or fill it in.</p>
+                        </div>
+                    </BbWizardStep>
+                    <BbWizardStep Title="Done" Icon="circle-check">
+                        <div class="space-y-3">
+                            <p class="text-sm text-muted-foreground">You're all set! Here's a summary:</p>
+                            <div class="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
+                                <p><span class="font-medium">Name:</span> @(string.IsNullOrEmpty(_optionalModel.FullName) ? "Not provided" : _optionalModel.FullName)</p>
+                                <p><span class="font-medium">Theme:</span> @(string.IsNullOrEmpty(_optionalModel.Theme) ? "Skipped" : _optionalModel.Theme)</p>
+                            </div>
+                        </div>
+                    </BbWizardStep>
+                </BbFormWizard>
+            </EditForm>
+            @if (_optionalSubmitted)
+            {
+                <div class="mt-4 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 p-4">
+                    <p class="text-sm font-medium text-green-800 dark:text-green-200">Wizard completed successfully!</p>
+                </div>
+            }
         </div>
+        <CodeBlock Source="Components/FormWizard/optional.txt" />
     </div>
 
     <!-- Vertical Layout -->
@@ -179,6 +223,7 @@
                 </BbWizardStep>
             </BbFormWizard>
         </div>
+        <CodeBlock Source="Components/FormWizard/vertical.txt" />
     </div>
 
     <!-- With Icons -->
@@ -201,11 +246,12 @@
                 <BbWizardStep Title="Billing" Icon="credit-card">
                     <p class="text-sm text-muted-foreground">Add your payment information.</p>
                 </BbWizardStep>
-                <BbWizardStep Title="Complete" Icon="check-circle">
+                <BbWizardStep Title="Complete" Icon="circle-check">
                     <p class="text-sm text-muted-foreground">All done! Your account is ready.</p>
                 </BbWizardStep>
             </BbFormWizard>
         </div>
+        <CodeBlock Source="Components/FormWizard/icons.txt" />
     </div>
 
     <!-- Custom Navigation -->
@@ -242,6 +288,7 @@
                 </BbButton>
             </div>
         </div>
+        <CodeBlock Source="Components/FormWizard/custom-navigation.txt" />
     </div>
 
     <!-- Controlled Wizard -->
@@ -275,31 +322,54 @@
                 </BbWizardStep>
             </BbFormWizard>
         </div>
+        <CodeBlock Source="Components/FormWizard/controlled.txt" />
     </div>
 
-    <!-- Custom Labels -->
+    <!-- Retain Step State -->
     <div class="space-y-4">
         <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Custom Button Labels</h2>
+            <h2 class="text-2xl font-semibold">Reset on Back</h2>
             <p class="text-sm text-muted-foreground">
-                Customize the navigation button text with <code class="text-xs bg-muted px-1 py-0.5 rounded">BackLabel</code>,
-                <code class="text-xs bg-muted px-1 py-0.5 rounded">NextLabel</code>, and
-                <code class="text-xs bg-muted px-1 py-0.5 rounded">CompleteLabel</code>.
+                Set <code class="text-xs bg-muted px-1 py-0.5 rounded">RetainStepState="false"</code> to
+                clear the completed state and model data of future steps when navigating backwards.
+                Fill in both steps, then press "Back" &mdash; the forward step's data and progress are reset.
             </p>
         </div>
         <div class="rounded-lg border p-6">
-            <BbFormWizard BackLabel="Previous" NextLabel="Continue" CompleteLabel="Submit">
-                <BbWizardStep Title="Step 1">
-                    <p class="text-sm text-muted-foreground">Custom labels example.</p>
-                </BbWizardStep>
-                <BbWizardStep Title="Step 2">
-                    <p class="text-sm text-muted-foreground">Notice the button labels.</p>
-                </BbWizardStep>
-                <BbWizardStep Title="Step 3">
-                    <p class="text-sm text-muted-foreground">The final button says "Submit".</p>
-                </BbWizardStep>
-            </BbFormWizard>
+            <EditForm Model="_resetModel">
+                <DataAnnotationsValidator />
+                <BbFormWizard RetainStepState="false">
+                    <BbWizardStep Title="Your Info"
+                                  FieldNames='@(new[] { "Username" })'>
+                        <div class="space-y-4">
+                            <BbFormFieldInput TValue="string"
+                                              @bind-Value="_resetModel.Username"
+                                              Label="Username"
+                                              Placeholder="Pick a username" />
+                        </div>
+                    </BbWizardStep>
+                    <BbWizardStep Title="Address"
+                                  FieldNames='@(new[] { "City" })'>
+                        <div class="space-y-4">
+                            <BbFormFieldInput TValue="string"
+                                              @bind-Value="_resetModel.City"
+                                              Label="City"
+                                              Placeholder="Enter your city" />
+                        </div>
+                    </BbWizardStep>
+                    <BbWizardStep Title="Confirm">
+                        <div class="space-y-3">
+                            <p class="text-sm text-muted-foreground">Review your details:</p>
+                            <div class="rounded-lg bg-muted/50 p-4 space-y-2 text-sm">
+                                <p><span class="font-medium">Username:</span> @(string.IsNullOrEmpty(_resetModel.Username) ? "Not provided" : _resetModel.Username)</p>
+                                <p><span class="font-medium">City:</span> @(string.IsNullOrEmpty(_resetModel.City) ? "Not provided" : _resetModel.City)</p>
+                            </div>
+                        </div>
+                    </BbWizardStep>
+                </BbFormWizard>
+            </EditForm>
         </div>
+        <CodeBlock Source="Components/FormWizard/retain-step-state.txt" />
     </div>
 
     <AccessibilityList>
@@ -347,6 +417,10 @@
                 </ApiParameter>
                 <ApiParameter Name="AllowSkipAhead" Type="bool" Default="false">
                     Whether users can click unvisited future steps in the indicator.
+                </ApiParameter>
+                <ApiParameter Name="RetainStepState" Type="bool" Default="true">
+                    Whether completed steps keep their checked/visited state when navigating backwards.
+                    When <code>false</code>, going back clears the state of all steps after the destination.
                 </ApiParameter>
                 <ApiParameter Name="BackLabel" Type="string?" Default="&quot;Back&quot;">
                     Custom label for the back button.
@@ -412,8 +486,14 @@
     private bool _validationSubmitted;
 
     // Optional step
-    private string? _optionalName;
-    private string? _optionalTheme;
+    private OptionalModel _optionalModel = new();
+    private bool _optionalSubmitted;
+    private readonly SelectOption<string>[] _themeOptions =
+    [
+        new("Light", "Light"),
+        new("Dark", "Dark"),
+        new("System", "System")
+    ];
 
     // Vertical layout
     private string? _verticalField1;
@@ -425,9 +505,35 @@
     // Controlled wizard
     private int _controlledStep;
 
+    // Reset on back
+    private ResetModel _resetModel = new();
+
     private void HandleValidationSubmit()
     {
         _validationSubmitted = true;
+    }
+
+    private void HandleOptionalSubmit()
+    {
+        _optionalSubmitted = true;
+    }
+
+    private class ResetModel
+    {
+        [Required(ErrorMessage = "Username is required.")]
+        public string? Username { get; set; }
+
+        [Required(ErrorMessage = "City is required.")]
+        public string? City { get; set; }
+    }
+
+    private class OptionalModel
+    {
+        [Required(ErrorMessage = "Full name is required.")]
+        public string? FullName { get; set; }
+
+        [Required(ErrorMessage = "Please select a theme.")]
+        public string? Theme { get; set; }
     }
 
     private class ValidationModel

@@ -91,7 +91,7 @@ public partial class BbWizardStep : ComponentBase
                 "BbWizardStep must be used within a BbFormWizard component.");
         }
 
-        index = Wizard.RegisterStep(new WizardStepInfo
+        index = Wizard.RegisterStep(this, new WizardStepInfo
         {
             Title = Title,
             Description = Description,

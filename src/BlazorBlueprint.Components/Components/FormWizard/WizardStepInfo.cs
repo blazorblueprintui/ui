@@ -4,7 +4,7 @@ namespace BlazorBlueprint.Components;
 /// Internal data class holding metadata for a wizard step.
 /// Populated by <see cref="BbWizardStep"/> during registration.
 /// </summary>
-internal class WizardStepInfo
+internal sealed class WizardStepInfo
 {
     public string Title { get; set; } = string.Empty;
     public string? Description { get; set; }
