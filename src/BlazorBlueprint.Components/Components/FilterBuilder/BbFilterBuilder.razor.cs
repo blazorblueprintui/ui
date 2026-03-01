@@ -13,6 +13,7 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
     private Timer? debounceTimer;
     private int debounceVersion;
     private bool disposed;
+    private FilterDefinition? draftFilter;
 
     /// <summary>
     /// Gets or sets the current filter state. Supports two-way binding via <c>@bind-Filter</c>.
@@ -77,6 +78,19 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
 
     protected override void OnParametersSet()
     {
+        // When ShowApplyButton is true, work on a draft copy so the bound Filter
+        // is not mutated until the user explicitly clicks Apply.
+        if (ShowApplyButton && draftFilter == null)
+        {
+            draftFilter = Filter.Clone();
+        }
+        else if (!ShowApplyButton)
+        {
+            draftFilter = null;
+        }
+
+        var activeFilter = draftFilter ?? Filter;
+
         context = new FilterBuilderContext
         {
             Fields = Fields,
@@ -84,7 +98,7 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
             MaxConditions = MaxConditions,
             DefaultOperator = DefaultOperator,
             Compact = Compact,
-            RootFilter = Filter,
+            RootFilter = activeFilter,
             NotifyChanged = OnFilterTreeChanged
         };
     }
@@ -130,14 +144,32 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
         }
     }
 
-    private async Task HandleApply() =>
+    private async Task HandleApply()
+    {
+        if (draftFilter != null)
+        {
+            // Copy draft state back to the bound Filter
+            Filter.Conditions = draftFilter.Conditions;
+            Filter.Groups = draftFilter.Groups;
+            Filter.Operator = draftFilter.Operator;
+        }
         await NotifyFilterChanged();
+    }
 
     private async Task HandleClear()
     {
-        Filter.Conditions.Clear();
-        Filter.Groups.Clear();
-        Filter.Operator = DefaultOperator;
+        var activeFilter = draftFilter ?? Filter;
+        activeFilter.Conditions.Clear();
+        activeFilter.Groups.Clear();
+        activeFilter.Operator = DefaultOperator;
+
+        if (draftFilter != null)
+        {
+            // Also clear the bound Filter on explicit Clear
+            Filter.Conditions.Clear();
+            Filter.Groups.Clear();
+            Filter.Operator = DefaultOperator;
+        }
         await NotifyFilterChanged();
     }
 

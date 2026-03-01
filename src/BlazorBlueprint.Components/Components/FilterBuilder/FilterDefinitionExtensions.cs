@@ -120,6 +120,13 @@ public static class FilterDefinitionExtensions
 
         var rawValue = prop.GetValue(item);
 
+        // Incomplete condition: user hasn't entered a value yet — ignore (match all)
+        // to align with ToExpression behavior and avoid filtering out all rows mid-edit.
+        if (IsIncompleteCondition(condition))
+        {
+            return true;
+        }
+
         return condition.Operator switch
         {
             FilterOperator.IsEmpty => IsEmpty(rawValue),
@@ -145,6 +152,26 @@ public static class FilterDefinitionExtensions
             FilterOperator.NotIn => EvaluateIn(rawValue, condition.Value, contains: false),
             _ => true
         };
+    }
+
+    private static bool IsIncompleteCondition(FilterCondition condition)
+    {
+        // Valueless operators (IsEmpty, IsNotEmpty, IsTrue, IsFalse) never need a value.
+        // Date preset operators store preset enum, not a free-form value.
+        if (FilterOperatorHelper.IsValuelessOperator(condition.Operator)
+            || FilterOperatorHelper.IsDatePresetOperator(condition.Operator))
+        {
+            return false;
+        }
+
+        // Range operators (Between, InLast, InNext) need both Value and ValueEnd.
+        if (condition.Operator is FilterOperator.Between)
+        {
+            return condition.Value is null || condition.ValueEnd is null;
+        }
+
+        // All other operators require a primary value.
+        return condition.Value is null;
     }
 
     private static bool IsEmpty(object? value) =>
@@ -260,12 +287,13 @@ public static class FilterDefinitionExtensions
             _ => InLastPeriod.Days
         };
 
+        var now = DateTime.Now;
         var cutoff = period switch
         {
-            InLastPeriod.Days => DateTime.Now.AddDays(-amount),
-            InLastPeriod.Weeks => DateTime.Now.AddDays(-amount * 7),
-            InLastPeriod.Months => DateTime.Now.AddMonths(-amount),
-            _ => DateTime.Now
+            InLastPeriod.Days => now.AddDays(-amount),
+            InLastPeriod.Weeks => now.AddDays(-amount * 7),
+            InLastPeriod.Months => now.AddMonths(-amount),
+            _ => now
         };
 
         return dateValue >= cutoff;
@@ -369,8 +397,14 @@ public static class FilterDefinitionExtensions
             return contains; // no filter values = match all (In) or nothing (NotIn)
         }
 
+        var valueList = values as IList<string> ?? values.ToList();
+        if (valueList.Count == 0)
+        {
+            return contains; // empty list = match all (In) or nothing (NotIn), aligns with ToExpression
+        }
+
         var itemValue = rawValue?.ToString() ?? "";
-        var isIn = values.Any(v => string.Equals(v, itemValue, StringComparison.OrdinalIgnoreCase));
+        var isIn = valueList.Any(v => string.Equals(v, itemValue, StringComparison.OrdinalIgnoreCase));
         return contains ? isIn : !isIn;
     }
 
@@ -536,35 +570,59 @@ public static class FilterDefinitionExtensions
     private static Expression BuildStringMethodExpression(
         MemberExpression propAccess, Type propType, object? value, string methodName)
     {
-        // Use ToLower() + single-param overloads for EF Core/IQueryable translation compatibility.
-        // The StringComparison overloads are not translatable to SQL by most providers.
+        // Use ToLower(CultureInfo.InvariantCulture) + single-param overloads for EF Core/IQueryable
+        // translation compatibility. The StringComparison overloads are not translatable to SQL.
+        // Both sides use the same ToLower(CultureInfo.InvariantCulture) to avoid culture mismatch.
         var normalizedValue = (value?.ToString() ?? "").ToLower(CultureInfo.InvariantCulture);
-        var toLowerMethod = typeof(string).GetMethod(nameof(string.ToLower), Type.EmptyTypes)!;
+        var toLowerMethod = typeof(string).GetMethod(nameof(string.ToLower), new[] { typeof(CultureInfo) })!;
+        var invariantCulture = Expression.Constant(CultureInfo.InvariantCulture);
         var comparisonMethod = typeof(string).GetMethod(methodName, new[] { typeof(string) })!;
 
         if (propType == typeof(string))
         {
             var nullCheck = Expression.NotEqual(propAccess, Expression.Constant(null, typeof(string)));
-            var loweredProp = Expression.Call(propAccess, toLowerMethod);
+            var loweredProp = Expression.Call(propAccess, toLowerMethod, invariantCulture);
             var methodCall = Expression.Call(loweredProp, comparisonMethod, Expression.Constant(normalizedValue));
             return Expression.AndAlso(nullCheck, methodCall);
         }
 
-        // For non-string properties: null-check the property, then call ToString(), ToLower() and the method.
-        // Box value types to object first so ToString() resolves correctly in the expression tree.
-        var isNullable = !propType.IsValueType || Nullable.GetUnderlyingType(propType) != null;
-        var boxed = Expression.Convert(propAccess, typeof(object));
-        Expression toStringCall = Expression.Call(boxed, typeof(object).GetMethod(nameof(ToString))!);
-        var loweredToString = Expression.Call(toStringCall, toLowerMethod);
+        // For non-string properties: call type-specific ToString() to avoid boxing,
+        // which improves EF Core/IQueryable translatability.
+        var underlyingNullableType = Nullable.GetUnderlyingType(propType);
 
-        if (isNullable)
+        if (underlyingNullableType != null)
         {
-            var propNullCheck = Expression.NotEqual(boxed, Expression.Constant(null, typeof(object)));
-            var methodCall = Expression.Call(loweredToString, comparisonMethod, Expression.Constant(normalizedValue));
-            return Expression.AndAlso(propNullCheck, methodCall);
+            // Nullable value types: check HasValue, then operate on Value.
+            var toStringMethod = underlyingNullableType.GetMethod(nameof(ToString), Type.EmptyTypes)
+                                 ?? typeof(object).GetMethod(nameof(ToString))!;
+            var hasValue = Expression.Property(propAccess, "HasValue");
+            var valueProperty = Expression.Property(propAccess, "Value");
+            var toStringCallExpr = Expression.Call(valueProperty, toStringMethod);
+            var lowered = Expression.Call(toStringCallExpr, toLowerMethod, invariantCulture);
+            var methodCall = Expression.Call(lowered, comparisonMethod, Expression.Constant(normalizedValue));
+            return Expression.AndAlso(hasValue, methodCall);
         }
 
-        return Expression.Call(loweredToString, comparisonMethod, Expression.Constant(normalizedValue));
+        if (!propType.IsValueType)
+        {
+            // Reference types (non-string): null-check, then call ToString().
+            var toStringMethod = propType.GetMethod(nameof(ToString), Type.EmptyTypes)
+                                 ?? typeof(object).GetMethod(nameof(ToString))!;
+            var nullCheck = Expression.NotEqual(propAccess, Expression.Constant(null, propType));
+            var toStringCallExpr = Expression.Call(propAccess, toStringMethod);
+            var lowered = Expression.Call(toStringCallExpr, toLowerMethod, invariantCulture);
+            var methodCall = Expression.Call(lowered, comparisonMethod, Expression.Constant(normalizedValue));
+            return Expression.AndAlso(nullCheck, methodCall);
+        }
+
+        // Non-nullable value types: call ToString() directly.
+        {
+            var toStringMethod = propType.GetMethod(nameof(ToString), Type.EmptyTypes)
+                                 ?? typeof(object).GetMethod(nameof(ToString))!;
+            var toStringCallExpr = Expression.Call(propAccess, toStringMethod);
+            var lowered = Expression.Call(toStringCallExpr, toLowerMethod, invariantCulture);
+            return Expression.Call(lowered, comparisonMethod, Expression.Constant(normalizedValue));
+        }
     }
 
     private static BinaryExpression BuildBetweenExpression(
@@ -727,10 +785,12 @@ public static class FilterDefinitionExtensions
             return Expression.Constant(!negate);
         }
 
-        // Use ToLower() + equality for EF Core/IQueryable translation compatibility.
-        var toLowerMethod = typeof(string).GetMethod(nameof(string.ToLower), Type.EmptyTypes)!;
+        // Use ToLower(CultureInfo.InvariantCulture) + equality for EF Core/IQueryable translation compatibility.
+        var toLowerMethod = typeof(string).GetMethod(nameof(string.ToLower), new[] { typeof(CultureInfo) })!;
+        var invariantCulture = Expression.Constant(CultureInfo.InvariantCulture);
 
-        // For string properties use directly; for others box and call ToString()
+        // For string properties use directly; for others call type-specific ToString()
+        // to avoid boxing and improve EF Core/IQueryable translatability.
         Expression stringExpr;
         if (propType == typeof(string))
         {
@@ -738,18 +798,38 @@ public static class FilterDefinitionExtensions
         }
         else
         {
-            var boxed = Expression.Convert(propAccess, typeof(object));
-            var isNullable = !propType.IsValueType || Nullable.GetUnderlyingType(propType) != null;
-            var toStringCall = Expression.Call(boxed, typeof(object).GetMethod(nameof(ToString))!);
-            stringExpr = isNullable
-                ? Expression.Condition(
-                    Expression.Equal(boxed, Expression.Constant(null, typeof(object))),
-                    Expression.Constant(""),
-                    toStringCall)
-                : toStringCall;
+            var underlyingNullableType = Nullable.GetUnderlyingType(propType);
+            if (underlyingNullableType != null)
+            {
+                // Nullable value types: return "" when !HasValue, else Value.ToString()
+                var toStringMethod = underlyingNullableType.GetMethod(nameof(ToString), Type.EmptyTypes)
+                                     ?? typeof(object).GetMethod(nameof(ToString))!;
+                var hasValue = Expression.Property(propAccess, "HasValue");
+                var valueProperty = Expression.Property(propAccess, "Value");
+                var toStringCall = Expression.Call(valueProperty, toStringMethod);
+                stringExpr = Expression.Condition(hasValue, toStringCall, Expression.Constant(""));
+            }
+            else if (!propType.IsValueType)
+            {
+                // Reference types: return "" when null, else ToString()
+                var toStringMethod = propType.GetMethod(nameof(ToString), Type.EmptyTypes)
+                                     ?? typeof(object).GetMethod(nameof(ToString))!;
+                var toStringCall = Expression.Call(propAccess, toStringMethod);
+                stringExpr = Expression.Condition(
+                    Expression.NotEqual(propAccess, Expression.Constant(null, propType)),
+                    toStringCall,
+                    Expression.Constant(""));
+            }
+            else
+            {
+                // Non-nullable value types: call ToString() directly
+                var toStringMethod = propType.GetMethod(nameof(ToString), Type.EmptyTypes)
+                                     ?? typeof(object).GetMethod(nameof(ToString))!;
+                stringExpr = Expression.Call(propAccess, toStringMethod);
+            }
         }
 
-        var loweredProp = Expression.Call(stringExpr, toLowerMethod);
+        var loweredProp = Expression.Call(stringExpr, toLowerMethod, invariantCulture);
 
         // Build individual equality checks combined with OR
         Expression? combined = null;
