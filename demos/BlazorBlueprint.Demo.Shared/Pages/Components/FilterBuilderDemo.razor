@@ -14,7 +14,7 @@
     </div>
 
     <!-- Overview -->
-    <div class="rounded-lg border border-dashed bg-muted/30 p-6 space-y-3">
+    <div class="rounded-lg border border-dashed bg-muted/30 p-6 space-y-5">
         <h2 class="text-lg font-semibold">How it works</h2>
         <div class="space-y-2 text-sm text-muted-foreground">
             <p>
@@ -39,6 +39,68 @@
                 to JSON for storage or transmission.
             </p>
         </div>
+
+        <h3 class="text-base font-semibold">Understanding groups</h3>
+        <div class="space-y-3 text-sm text-muted-foreground">
+            <p>
+                A <code>FilterDefinition</code> is a <strong>group</strong> — it holds a logical operator
+                (<code>AND</code> or <code>OR</code>), a list of conditions, and a list of nested child groups.
+                This recursive structure lets you build arbitrarily complex queries.
+            </p>
+
+            <div class="space-y-2">
+                <p class="font-medium text-foreground">Flat filter (no groups)</p>
+                <p>All conditions live in the root group and share the same operator.</p>
+                <pre class="rounded-lg border bg-muted p-4 text-xs leading-relaxed overflow-x-auto"><code>Name contains "Smith" <strong>AND</strong> Age greater than 25 <strong>AND</strong> Status equals "Active"</code></pre>
+                <p>Every condition must be true. This is equivalent to:<br />
+                <code class="text-xs">(Name ∧ Age ∧ Status)</code></p>
+            </div>
+
+            <div class="space-y-2">
+                <p class="font-medium text-foreground">Nested group — mixing AND &amp; OR</p>
+                <p>
+                    To express <em>"Name contains Smith AND (Status is Active OR Status is Pending)"</em>, you need a nested group.
+                    The root group uses <code>AND</code>, and a child group uses <code>OR</code> for the status conditions:
+                </p>
+                <pre class="rounded-lg border bg-muted p-4 text-xs leading-relaxed overflow-x-auto"><code>WHERE <strong>AND</strong>
+├─ Name contains "Smith"
+└─ GROUP <strong>OR</strong>
+   ├─ Status equals "Active"
+   └─ Status equals "Pending"</code></pre>
+                <p>This evaluates as:<br />
+                <code class="text-xs">(Name) AND (Status = Active OR Status = Pending)</code></p>
+            </div>
+
+            <div class="space-y-2">
+                <p class="font-medium text-foreground">Deeper nesting</p>
+                <p>
+                    Groups can be nested multiple levels deep. For example, <em>"find active users named Smith who are either
+                    Admins over 30 or Managers over 40"</em>:
+                </p>
+                <pre class="rounded-lg border bg-muted p-4 text-xs leading-relaxed overflow-x-auto"><code>WHERE <strong>AND</strong>
+├─ Name contains "Smith"
+├─ Status equals "Active"
+└─ GROUP <strong>OR</strong>
+   ├─ GROUP <strong>AND</strong>
+   │  ├─ Role equals "Admin"
+   │  └─ Age greater than 30
+   └─ GROUP <strong>AND</strong>
+      ├─ Role equals "Manager"
+      └─ Age greater than 40</code></pre>
+                <p>This evaluates as:<br />
+                <code class="text-xs">(Name ∧ Status) AND ((Role = Admin ∧ Age &gt; 30) OR (Role = Manager ∧ Age &gt; 40))</code></p>
+            </div>
+
+            <div class="space-y-2">
+                <p class="font-medium text-foreground">Controlling depth</p>
+                <p>
+                    Use the <code>MaxDepth</code> parameter to limit how deeply groups can nest.
+                    Set <code>MaxDepth="0"</code> for flat-only filters (no "Add group" button),
+                    or increase it to allow more complex queries. Each depth level is visually indicated with a
+                    colored left border so users can easily see the structure.
+                </p>
+            </div>
+        </div>
     </div>
 
     <!-- Basic Example -->
@@ -46,22 +108,17 @@
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">Basic Filter Builder</h2>
             <p class="text-sm text-muted-foreground">
-                Build flat filters with string, number, date, enum, and boolean fields. The filter is output as JSON below.
+                Build flat filters with string, number, date, enum, and boolean fields.
             </p>
         </div>
         <BbFilterBuilder @bind-Filter="basicFilter"
                          Fields="@basicFields"
                          MaxDepth="0"
-                         OnFilterChanged="HandleBasicFilterChanged" />
-
-        @if (!basicFilter.IsEmpty)
-        {
-            <div class="rounded-lg border bg-muted/50 p-4">
-                <div class="text-sm font-medium mb-2">Filter JSON Output:</div>
-                <pre class="text-xs overflow-auto max-h-64 text-muted-foreground">@basicFilterJson</pre>
-            </div>
-        }
-        <CodeBlock Source="Components/FilterBuilder/basic.txt" />
+                         OnFilterChanged="@(_ => StateHasChanged())" />
+        <div class="flex items-start gap-4">
+            <CodeBlock Source="Components/FilterBuilder/basic.txt" />
+            <FilterJsonViewer Filter="basicFilter" />
+        </div>
     </div>
 
     <!-- Nested Groups -->
@@ -75,8 +132,12 @@
         </div>
         <BbFilterBuilder @bind-Filter="nestedFilter"
                          Fields="@basicFields"
-                         MaxDepth="3" />
-        <CodeBlock Source="Components/FilterBuilder/nested-groups.txt" />
+                         MaxDepth="3"
+                         OnFilterChanged="@(_ => StateHasChanged())" />
+        <div class="flex items-start gap-4">
+            <CodeBlock Source="Components/FilterBuilder/nested-groups.txt" />
+            <FilterJsonViewer Filter="nestedFilter" />
+        </div>
     </div>
 
     <!-- With Apply Button -->
@@ -99,7 +160,10 @@
                 Filter applied with @applyFilter.TotalConditionCount condition(s)
             </BbBadge>
         }
-        <CodeBlock Source="Components/FilterBuilder/apply-button.txt" />
+        <div class="flex items-start gap-4">
+            <CodeBlock Source="Components/FilterBuilder/apply-button.txt" />
+            <FilterJsonViewer Filter="applyFilter" />
+        </div>
     </div>
 
     <!-- DataTable Integration -->
@@ -142,7 +206,10 @@
                 </BbDataTableColumn>
             </Columns>
         </BbDataTable>
-        <CodeBlock Source="Components/FilterBuilder/datatable-integration.txt" />
+        <div class="flex items-start gap-4">
+            <CodeBlock Source="Components/FilterBuilder/datatable-integration.txt" />
+            <FilterJsonViewer Filter="tableFilter" />
+        </div>
     </div>
 
     <!-- LINQ & EF Core Integration -->
@@ -202,8 +269,12 @@ var restored = FilterDefinitionExtensions.FromJson(json);</code></pre>
         <BbFilterBuilder @bind-Filter="compactFilter"
                          Fields="@basicFields"
                          Compact="true"
-                         MaxDepth="1" />
-        <CodeBlock Source="Components/FilterBuilder/compact.txt" />
+                         MaxDepth="1"
+                         OnFilterChanged="@(_ => StateHasChanged())" />
+        <div class="flex items-start gap-4">
+            <CodeBlock Source="Components/FilterBuilder/compact.txt" />
+            <FilterJsonViewer Filter="compactFilter" />
+        </div>
     </div>
 
     <!-- Max Conditions -->
@@ -217,11 +288,15 @@ var restored = FilterDefinitionExtensions.FromJson(json);</code></pre>
         </div>
         <BbFilterBuilder @bind-Filter="limitedFilter"
                          Fields="@basicFields"
-                         MaxConditions="5" />
+                         MaxConditions="5"
+                         OnFilterChanged="@(_ => StateHasChanged())" />
         <p class="text-sm text-muted-foreground">
             Conditions: @limitedFilter.TotalConditionCount / 5
         </p>
-        <CodeBlock Source="Components/FilterBuilder/max-conditions.txt" />
+        <div class="flex items-start gap-4">
+            <CodeBlock Source="Components/FilterBuilder/max-conditions.txt" />
+            <FilterJsonViewer Filter="limitedFilter" />
+        </div>
     </div>
 
     <!-- API Reference -->
@@ -278,7 +353,6 @@ var restored = FilterDefinitionExtensions.FromJson(json);</code></pre>
     private FilterDefinition limitedFilter = new();
 
     // State
-    private string basicFilterJson = "";
     private bool applyFilterApplied;
 
     // Field definitions for basic demos
@@ -343,11 +417,6 @@ var restored = FilterDefinitionExtensions.FromJson(json);</code></pre>
         filteredPeople = new List<Person>(allPeople);
     }
 
-    private void HandleBasicFilterChanged(FilterDefinition filter)
-    {
-        basicFilterJson = filter.IsEmpty ? "" : filter.ToJson();
-    }
-
     private void HandleApplyFilterChanged(FilterDefinition filter)
     {
         applyFilterApplied = !filter.IsEmpty;
@@ -365,4 +434,5 @@ var restored = FilterDefinitionExtensions.FromJson(json);</code></pre>
             filteredPeople = allPeople.Where(predicate).ToList();
         }
     }
+
 }

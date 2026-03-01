@@ -160,6 +160,11 @@ public static class FilterDefinitionExtensions
             return false;
         }
 
+        if (IsNumeric(a) && IsNumeric(b))
+        {
+            return ToDouble(a).CompareTo(ToDouble(b)) == 0;
+        }
+
         try
         {
             var comparable = ConvertToComparable(a);
@@ -195,6 +200,11 @@ public static class FilterDefinitionExtensions
             return 0;
         }
 
+        if (IsNumeric(a) && IsNumeric(b))
+        {
+            return ToDouble(a).CompareTo(ToDouble(b));
+        }
+
         try
         {
             var comparableA = ConvertToComparable(a);
@@ -211,6 +221,12 @@ public static class FilterDefinitionExtensions
 
         return 0;
     }
+
+    private static bool IsNumeric(object value) =>
+        value is int or long or float or double or decimal or short or byte or sbyte or ushort or uint or ulong;
+
+    private static double ToDouble(object value) =>
+        Convert.ToDouble(value, CultureInfo.InvariantCulture);
 
     private static IComparable? ConvertToComparable(object? value)
     {
