@@ -1,0 +1,21 @@
+<BbButton OnClick="ToggleLoading" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+    Toggle Loading
+</BbButton>
+
+<BbDataGrid TData="Person" Items="@(Array.Empty<Person>())" IsLoading="@_isLoading">
+    <Columns>
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" />
+    </Columns>
+</BbDataGrid>
+
+@* Custom templates: *@
+<BbDataGrid TData="Person" Items="@data" IsLoading="@loading">
+    <LoadingTemplate>
+        <div class="p-8 text-center">Custom loading...</div>
+    </LoadingTemplate>
+    <EmptyTemplate>
+        <div class="p-8 text-center">No records found.</div>
+    </EmptyTemplate>
+    <Columns>...</Columns>
+</BbDataGrid>

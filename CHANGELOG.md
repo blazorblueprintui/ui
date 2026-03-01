@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-01
+
+### Added
+
+- **`BbFilterBuilder`** — Visual query builder for constructing data filter expressions with AND/OR logic, nested groups, and type-aware value inputs. Supports `Text`, `Number`, `Date`, `DateTime`, `Boolean`, and `Enum` field types with automatic operator selection and value input rendering (text input, numeric input, date picker, date range picker, multi-select, etc.). Filter evaluation via `ToFunc<T>()` for client-side LINQ-to-Objects, `ToExpression<T>()` for server-side EF Core/IQueryable queries, and `ToJson()`/`FromJson()` for serialization. Configurable `MaxDepth`, `MaxConditions`, `ShowApplyButton` with debounced auto-apply, and `Compact` layout mode.
+- **BbFormWizard** — Multi-step form wizard component with `BbWizardStep` composition for defining steps.
+  - Horizontal and vertical step indicator layouts with visual step states (pending, active, completed, invalid).
+  - Per-step validation via `FieldNames` (EditContext integration) or custom `Validator` callbacks.
+  - `RetainStepState` parameter (default `true`) — when `false`, navigating backward clears forward step state and resets model data via reflection.
+  - Optional/skippable steps with a built-in Skip button for steps marked `IsOptional`.
+  - Disabled step support — disabled steps are skipped during navigation.
+  - Controlled (`@bind-CurrentStep`) and uncontrolled usage modes.
+  - Custom navigation via `NavigationTemplate`, or customizable button labels (`BackLabel`, `NextLabel`, `CompleteLabel`).
+  - `OnComplete` and `OnStepChanged` event callbacks.
+  - Demo page with 8 interactive examples and View Code blocks.
+- **BbDataGrid** — Enterprise-grade DataGrid component (headless primitives + styled layer) with full feature set.
+  - `BbDataGridPropertyColumn`, `BbDataGridTemplateColumn`, `BbDataGridSelectColumn` for declarative column definitions.
+  - Multi-column sorting with 3-state cycle (ascending → descending → none) and IQueryable LINQ expression composition.
+  - Pagination with configurable page sizes and page navigation.
+  - Row selection (None, Single, Multiple) with select-all/clear-all dropdown.
+  - Row virtualization via `Virtualize` parameter for large datasets.
+  - Async data loading via `ItemsProvider` delegate.
+  - Column resize (drag handles), reorder (drag-and-drop), and visibility toggle (`BbDataGridColumnVisibility`).
+  - Declarative column pinning (`ColumnPinning.Left`/`Right`) with CSS `position: sticky`.
+  - `HeaderTemplate` on `TemplateColumn` for custom header rendering.
+  - `CellClass`, `HeaderClass`, `RowClass` parameters for per-column and per-row conditional styling.
+  - State persistence via `DataGridState<T>.Save()`/`Restore()`/`Reset()` with version tracking.
+  - `@bind-State` two-way binding for controlled state management.
+  - Full keyboard navigation and ARIA attributes.
+  - Demo page with 16 interactive examples.
+
+### Changed
+
+- **BbDataView** — Refined `ListTemplate`/`GridTemplate` split, 3-state sort cycle, `ToolbarActions` slot, `GridClass`/`ListClass` customization. Removed `BbDataViewHeader` and `BbDataViewFooter` in favor of direct composition.
+
+---
+
 ## 2026-02-28
 
 ### Added

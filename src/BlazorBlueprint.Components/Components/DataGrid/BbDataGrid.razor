@@ -1,0 +1,258 @@
+@namespace BlazorBlueprint.Components
+@typeparam TData where TData : class
+@using BlazorBlueprint.Icons.Lucide.Components
+@using BlazorBlueprint.Primitives.DataGrid
+
+<CascadingValue Value="this" IsFixed="true">
+    <div class="@ClassNames.cn("w-full", Class)">
+        @if (Toolbar != null)
+        {
+            <div class="flex items-center justify-between py-4">
+                @Toolbar
+            </div>
+        }
+        <div @ref="containerRef" class="@ClassNames.cn("relative w-full", Virtualize ? "" : "overflow-auto")">
+            @if (IsLoading)
+            {
+                @if (LoadingTemplate != null)
+                {
+                    @LoadingTemplate
+                }
+                else
+                {
+                    <div class="flex items-center justify-center p-8 text-muted-foreground">
+                        <div class="text-sm">Loading...</div>
+                    </div>
+                }
+            }
+            else if (!_processedData.Any())
+            {
+                @if (EmptyTemplate != null)
+                {
+                    @EmptyTemplate
+                }
+                else
+                {
+                    <BbEmpty Title="No results found" Size="EmptySize.Small" />
+                }
+            }
+            else
+            {
+                RefreshVisibleColumnsCache();
+                <BlazorBlueprint.Primitives.DataGrid.BbDataGrid TData="TData"
+                    Items="@_processedData"
+                    @bind-State="@_gridState"
+                    SelectionMode="@GetPrimitiveSelectionMode()"
+                    ManualPagination="true"
+                    EnableKeyboardNavigation="@EnableKeyboardNavigation"
+                    OnSortChange="HandleSortChange"
+                    OnSelectionChange="HandleSelectionChange"
+                    Class="@ClassNames.cn("w-full caption-bottom text-sm", HasTableFixed() ? "table-fixed" : "")"
+                    AriaLabel="@AriaLabel">
+                    @if (HasTableFixed())
+                    {
+                        <colgroup>
+                            @foreach (var col in _cachedVisibleColumns)
+                            {
+                                <col style="@GetColumnWidthStyle(col)" />
+                            }
+                        </colgroup>
+                    }
+                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader Class="@ClassNames.cn("[&_tr]:border-b", StickyHeader ? "sticky top-0 z-10 bg-background" : "")">
+                        <BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Class="group/row border-b transition-colors hover:bg-muted/50">
+                            @foreach (var column in _cachedVisibleColumns)
+                            {
+                                var sortDirection = _gridState.Sorting.GetDirection(column.ColumnId);
+                                var sortPriority = _gridState.Sorting.GetPriority(column.ColumnId);
+                                var isSelectColumn = column.ColumnId == "__select";
+                                var isLastLeft = column.ColumnId == _cachedLastLeftId;
+                                var isFirstRight = column.ColumnId == _cachedFirstRightId;
+
+                                <BlazorBlueprint.Primitives.DataGrid.BbDataGridHeaderCell TData="TData"
+                                    @key="@column.ColumnId"
+                                    ColumnId="@column.ColumnId"
+                                    Sortable="@column.Sortable"
+                                    Reorderable="@(Reorderable && column.Reorderable)"
+                                    Class="@GetHeaderCellClass(column, isSelectColumn, isLastLeft, isFirstRight)"
+                                    style="@GetColumnStyle(column, _cachedVisibleColumns)"
+                                    data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)">
+                                    @if (isSelectColumn)
+                                    {
+                                        <div @onclick:stopPropagation="true">
+                                            @if (ShouldShowSelectAllPrompt())
+                                            {
+                                                <BbDropdownMenu @bind-Open="_selectAllDropdownOpen">
+                                                    <BbDropdownMenuTrigger AsChild="false" Class="inline-flex items-center justify-center p-0 bg-transparent border-0 hover:bg-transparent focus:outline-none">
+                                                        <BbCheckbox Checked="@IsAllSelected()"
+                                                                  Indeterminate="@IsSomeSelected()"
+                                                                  AriaLabel="Select rows - click to see options"
+                                                                  Class="pointer-events-none" />
+                                                    </BbDropdownMenuTrigger>
+                                                    <BbDropdownMenuContent Side="PopoverSide.Bottom" Align="PopoverAlign.Start">
+                                                        <BbDropdownMenuItem OnClick="@HandleSelectAllOnCurrentPage">
+                                                            Select all on this page (@_processedData.Count() items)
+                                                        </BbDropdownMenuItem>
+                                                        <BbDropdownMenuItem OnClick="@HandleSelectAllItems">
+                                                            Select all @_gridState.Pagination.TotalItems items
+                                                        </BbDropdownMenuItem>
+                                                        @if (_gridState.Selection.HasSelection)
+                                                        {
+                                                            <BbDropdownMenuSeparator />
+                                                            <BbDropdownMenuItem OnClick="@HandleClearSelection">
+                                                                Clear selection
+                                                            </BbDropdownMenuItem>
+                                                        }
+                                                    </BbDropdownMenuContent>
+                                                </BbDropdownMenu>
+                                            }
+                                            else
+                                            {
+                                                <BbCheckbox Checked="@IsAllSelected()"
+                                                          CheckedChanged="@HandleSelectAllChanged"
+                                                          Indeterminate="@IsSomeSelected()"
+                                                          AriaLabel="Select all rows" />
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        @if (Reorderable && column.Reorderable)
+                                        {
+                                            <LucideIcon Name="grip-vertical" Class="absolute left-1 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground/40 opacity-0 group-hover/header:opacity-100 transition-opacity pointer-events-none" />
+                                        }
+                                        <div class="flex items-center gap-2">
+                                            @if (column.HeaderTemplate != null)
+                                            {
+                                                @column.HeaderTemplate(new BlazorBlueprint.Primitives.DataGrid.DataGridHeaderContext<TData>
+                                                {
+                                                    Column = column,
+                                                    State = _gridState
+                                                })
+                                            }
+                                            else
+                                            {
+                                                <span>@column.Title</span>
+                                            }
+                                            @if (column.Sortable && sortDirection != SortDirection.None)
+                                            {
+                                                @if (sortDirection == SortDirection.Ascending)
+                                                {
+                                                    <LucideIcon Name="arrow-up" Class="w-4 h-4" />
+                                                }
+                                                else
+                                                {
+                                                    <LucideIcon Name="arrow-down" Class="w-4 h-4" />
+                                                }
+                                                @if (_gridState.Sorting.Definitions.Count > 1)
+                                                {
+                                                    <span class="text-xs text-muted-foreground tabular-nums">@sortPriority</span>
+                                                }
+                                            }
+                                            else if (column.Sortable)
+                                            {
+                                                <LucideIcon Name="arrow-up-down" Class="w-4 h-4 opacity-0 group-hover/header:opacity-50 transition-opacity" />
+                                            }
+                                        </div>
+                                        @if (Resizable && column.Resizable)
+                                        {
+                                            <div class="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-primary/20 active:bg-primary/40"
+                                                 data-resize-handle="@column.ColumnId"></div>
+                                        }
+                                    }
+                                </BlazorBlueprint.Primitives.DataGrid.BbDataGridHeaderCell>
+                            }
+                        </BlazorBlueprint.Primitives.DataGrid.BbDataGridRow>
+                    </BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader>
+                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridBody>
+                        @if (Virtualize && ItemSize > 0)
+                        {
+                            <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize Items="@_processedDataList" Context="item" ItemSize="@ItemSize" OverscanCount="5">
+                                @RenderDataRow(item)
+                            </Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize>
+                        }
+                        else
+                        {
+                            @foreach (var item in _processedData)
+                            {
+                                @RenderDataRow(item)
+                            }
+                        }
+                    </BlazorBlueprint.Primitives.DataGrid.BbDataGridBody>
+                </BlazorBlueprint.Primitives.DataGrid.BbDataGrid>
+            }
+        </div>
+
+        @if (ShowPagination && !IsLoading && _processedData.Any())
+        {
+            <BbPagination State="@_gridState.Pagination"
+                        PageSizes="@PageSizes"
+                        OnPageChanged="@HandlePageChanged"
+                        OnPageSizeChanged="@HandlePageSizeChanged"
+                        Class="flex items-center justify-between px-2 py-4">
+                <BbPaginationInfo>
+                    @if (_gridState.Selection.HasSelection)
+                    {
+                        <span>@_gridState.Selection.SelectedCount of @_gridState.Pagination.TotalItems row(s) selected</span>
+                    }
+                </BbPaginationInfo>
+                <BbPaginationContent Class="flex items-center gap-6 lg:gap-8">
+                    <BbPaginationPageSizeSelector />
+                    <div class="flex items-center gap-2">
+                        <BbPaginationPageDisplay />
+                        <div class="flex items-center gap-1">
+                            <BbPaginationItem><BbPaginationFirst /></BbPaginationItem>
+                            <BbPaginationItem><BbPaginationPrevious ShowText="false" /></BbPaginationItem>
+                            <BbPaginationItem><BbPaginationNext ShowText="false" /></BbPaginationItem>
+                            <BbPaginationItem><BbPaginationLast /></BbPaginationItem>
+                        </div>
+                    </div>
+                </BbPaginationContent>
+            </BbPagination>
+        }
+    </div>
+
+    @* Capture column definitions from child components *@
+    @Columns
+</CascadingValue>
+
+@code {
+    private RenderFragment<TData> RenderDataRow => item =>
+        @<BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Item="@item"
+            Class="@ClassNames.cn("group/row border-b transition-colors hover:bg-muted/50", _gridState.Selection.IsSelected(item) ? "bg-muted" : "", RowClass?.Invoke(item))">
+            @{var isRowSelected = _gridState.Selection.IsSelected(item);}
+            @foreach (var column in _cachedVisibleColumns)
+            {
+                var isSelectColumn = column.ColumnId == "__select";
+                var isLastLeft = column.ColumnId == _cachedLastLeftId;
+                var isFirstRight = column.ColumnId == _cachedFirstRightId;
+                var pinnedStyle = GetPinnedStyle(column, _cachedVisibleColumns);
+
+                <BlazorBlueprint.Primitives.DataGrid.BbDataGridCell
+                    @key="@column.ColumnId"
+                    Class="@GetCellClass(column, isSelectColumn, isLastLeft, isFirstRight, isRowSelected)"
+                    style="@pinnedStyle">
+                    @if (isSelectColumn)
+                    {
+                        <div @onclick:stopPropagation="true">
+                            <BbCheckbox Checked="@_gridState.Selection.IsSelected(item)"
+                                      CheckedChanged="@((bool isChecked) => HandleRowSelectionChanged(item, isChecked))"
+                                      AriaLabel="Select this row" />
+                        </div>
+                    }
+                    else if (column.CellTemplate != null)
+                    {
+                        @column.CellTemplate(new BlazorBlueprint.Primitives.DataGrid.DataGridCellContext<TData>
+                        {
+                            Item = item,
+                            Column = column,
+                            Value = column.GetValue(item)
+                        })
+                    }
+                    else
+                    {
+                        @(column.GetValue(item)?.ToString() ?? "")
+                    }
+                </BlazorBlueprint.Primitives.DataGrid.BbDataGridCell>
+            }
+        </BlazorBlueprint.Primitives.DataGrid.BbDataGridRow>;
+}

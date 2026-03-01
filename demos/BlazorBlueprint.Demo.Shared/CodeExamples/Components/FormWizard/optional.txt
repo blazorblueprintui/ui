@@ -1,0 +1,23 @@
+<EditForm Model="_model">
+    <DataAnnotationsValidator />
+    <BbFormWizard OnComplete="HandleSubmit">
+        <BbWizardStep Title="Required Info" Icon="user"
+                      FieldNames='@(new[] { "FullName" })'>
+            <BbFormFieldInput TValue="string"
+                              @bind-Value="_model.FullName"
+                              Label="Full Name" />
+        </BbWizardStep>
+        <BbWizardStep Title="Preferences" Icon="palette"
+                      IsOptional="true"
+                      FieldNames='@(new[] { "Theme" })'>
+            <BbFormFieldSelect TValue="string"
+                               @bind-Value="_model.Theme"
+                               Label="Theme Preference"
+                               Placeholder="Select a theme..."
+                               Options="_themeOptions" />
+        </BbWizardStep>
+        <BbWizardStep Title="Done" Icon="circle-check">
+            <p>You're all set!</p>
+        </BbWizardStep>
+    </BbFormWizard>
+</EditForm>

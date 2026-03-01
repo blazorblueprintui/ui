@@ -1,0 +1,68 @@
+<BbDataGrid TData="Person" Items="@GetCombinedPageData()" @bind-State="@combinedGridState"
+            ManualPagination="true" SelectionMode="SelectionMode.Multiple"
+            OnSortChange="@HandleSortChanged" OnSelectionChange="@HandleSelectionChange"
+            OnColumnVisibilityChange="@HandleVisibilityChange"
+            OnColumnReorder="@HandleReorder" OnColumnResize="@HandleResize"
+            AriaLabel="Combined features grid" Class="w-full caption-bottom text-sm"
+            style="table-layout: fixed;">
+    <BbDataGridHeader>
+        <tr>
+            <BbDataGridHeaderCell TData="Person" Class="w-12 px-4">
+                <input type="checkbox" checked="@selectAllChecked"
+                       @onchange="@HandleSelectAllChanged"
+                       @onclick:stopPropagation="true" aria-label="Select all" />
+            </BbDataGridHeaderCell>
+            @foreach (var colId in GetVisibleColumns())
+            {
+                var width = combinedGridState.Columns.GetWidth(colId);
+                <BbDataGridHeaderCell TData="Person" ColumnId="@colId"
+                                      Sortable="true" Reorderable="true"
+                                      Class="cursor-pointer"
+                                      style="@(width != null ? $"width: {width}" : null)">
+                    <div class="flex items-center gap-2">
+                        <span>@GetColumnTitle(colId)</span>
+                        @* Sort indicators *@
+                    </div>
+                </BbDataGridHeaderCell>
+            }
+        </tr>
+    </BbDataGridHeader>
+    <BbDataGridBody>
+        @foreach (var person in GetCombinedPageData())
+        {
+            var isSelected = combinedGridState.Selection.IsSelected(person);
+            <BbDataGridRow TData="Person" Item="@person" Class="@(isSelected ? "bg-muted" : "")">
+                <BbDataGridCell Class="w-12 px-4">
+                    <input type="checkbox" checked="@isSelected"
+                           @onchange="@(() => ToggleRowSelection(person))"
+                           @onclick:stopPropagation="true" />
+                </BbDataGridCell>
+                @foreach (var colId in GetVisibleColumns())
+                {
+                    <BbDataGridCell>@GetCellValue(person, colId)</BbDataGridCell>
+                }
+            </BbDataGridRow>
+        }
+    </BbDataGridBody>
+</BbDataGrid>
+
+@* Column visibility toggles, reorder controls, width controls *@
+@* Pagination controls and status *@
+<div class="flex items-center justify-between">
+    <span>@combinedGridState.Selection.SelectedCount of @combinedGridState.Pagination.TotalItems row(s) selected</span>
+    <span>Page @combinedGridState.Pagination.CurrentPage of @combinedGridState.Pagination.TotalPages</span>
+</div>
+
+@code {
+    private DataGridState<Person> combinedGridState = new() { Pagination = { PageSize = 5 } };
+    private string[] columnIds = { "name", "email", "age", "department" };
+
+    protected override void OnInitialized()
+    {
+        combinedGridState.Columns.Initialize(columnIds);
+        combinedGridState.Selection.Mode = SelectionMode.Multiple;
+    }
+
+    private IReadOnlyList<string> GetVisibleColumns()
+        => combinedGridState.Columns.GetVisibleColumnIds();
+}
