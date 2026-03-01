@@ -39,6 +39,9 @@ public static class FilterOperatorHelper
             FilterOperator.LessThan,
             FilterOperator.Between,
             FilterOperator.InLast,
+            FilterOperator.InNext,
+            FilterOperator.DateIs,
+            FilterOperator.DateIsNot,
             FilterOperator.IsEmpty,
             FilterOperator.IsNotEmpty
         },
@@ -50,6 +53,9 @@ public static class FilterOperatorHelper
             FilterOperator.LessThan,
             FilterOperator.Between,
             FilterOperator.InLast,
+            FilterOperator.InNext,
+            FilterOperator.DateIs,
+            FilterOperator.DateIsNot,
             FilterOperator.IsEmpty,
             FilterOperator.IsNotEmpty
         },
@@ -85,10 +91,13 @@ public static class FilterOperatorHelper
         [FilterOperator.LessOrEqual] = "less or equal",
         [FilterOperator.Between] = "between",
         [FilterOperator.InLast] = "in the last",
+        [FilterOperator.InNext] = "in the next",
         [FilterOperator.In] = "is any of",
         [FilterOperator.NotIn] = "is none of",
         [FilterOperator.IsTrue] = "is true",
-        [FilterOperator.IsFalse] = "is false"
+        [FilterOperator.IsFalse] = "is false",
+        [FilterOperator.DateIs] = "is",
+        [FilterOperator.DateIsNot] = "is not"
     };
 
     private static readonly Dictionary<FilterOperator, string> DateOperatorLabels = new()
@@ -142,4 +151,10 @@ public static class FilterOperatorHelper
     /// </summary>
     public static bool IsRangeOperator(FilterOperator op) =>
         op is FilterOperator.Between;
+
+    /// <summary>
+    /// Returns true if the operator uses a <see cref="DatePreset"/> dropdown for its value input.
+    /// </summary>
+    public static bool IsDatePresetOperator(FilterOperator op) =>
+        op is FilterOperator.DateIs or FilterOperator.DateIsNot;
 }

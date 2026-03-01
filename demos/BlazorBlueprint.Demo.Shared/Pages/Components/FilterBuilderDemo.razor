@@ -191,6 +191,11 @@
                 <BbDataTableColumn TData="Person" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable />
                 <BbDataTableColumn TData="Person" TValue="string" Property="@(p => p.Email)" Header="Email" />
                 <BbDataTableColumn TData="Person" TValue="int" Property="@(p => p.Age)" Header="Age" Sortable />
+                <BbDataTableColumn TData="Person" TValue="DateTime" Property="@(p => p.JoinDate)" Header="Join Date" Sortable>
+                    <CellTemplate Context="person">
+                        @person.JoinDate.ToString("dd MMM yyyy")
+                    </CellTemplate>
+                </BbDataTableColumn>
                 <BbDataTableColumn TData="Person" TValue="string" Property="@(p => p.Role)" Header="Role" />
                 <BbDataTableColumn TData="Person" TValue="string" Property="@(p => p.Status)" Header="Status">
                     <CellTemplate Context="person">
@@ -382,6 +387,7 @@ var restored = FilterDefinitionExtensions.FromJson(json);</code></pre>
         new FilterField { Name = "Name", Label = "Name", Type = FilterFieldType.Text },
         new FilterField { Name = "Email", Label = "Email", Type = FilterFieldType.Text },
         new FilterField { Name = "Age", Label = "Age", Type = FilterFieldType.Number },
+        new FilterField { Name = "JoinDate", Label = "Join Date", Type = FilterFieldType.Date },
         new FilterField
         {
             Name = "Role", Label = "Role", Type = FilterFieldType.Enum,

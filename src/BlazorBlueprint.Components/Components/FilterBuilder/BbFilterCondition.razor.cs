@@ -18,6 +18,23 @@ public partial class BbFilterCondition : ComponentBase
         new SelectOption<InLastPeriod>(InLastPeriod.Months, "months")
     };
 
+    private static readonly IEnumerable<SelectOption<DatePreset>> datePresetOptions = new[]
+    {
+        new SelectOption<DatePreset>(DatePreset.Today, "today"),
+        new SelectOption<DatePreset>(DatePreset.Yesterday, "yesterday"),
+        new SelectOption<DatePreset>(DatePreset.Tomorrow, "tomorrow"),
+        new SelectOption<DatePreset>(DatePreset.ThisWeek, "this week"),
+        new SelectOption<DatePreset>(DatePreset.LastWeek, "last week"),
+        new SelectOption<DatePreset>(DatePreset.NextWeek, "next week"),
+        new SelectOption<DatePreset>(DatePreset.ThisMonth, "this month"),
+        new SelectOption<DatePreset>(DatePreset.LastMonth, "last month"),
+        new SelectOption<DatePreset>(DatePreset.NextMonth, "next month"),
+        new SelectOption<DatePreset>(DatePreset.ThisQuarter, "this quarter"),
+        new SelectOption<DatePreset>(DatePreset.LastQuarter, "last quarter"),
+        new SelectOption<DatePreset>(DatePreset.ThisYear, "this year"),
+        new SelectOption<DatePreset>(DatePreset.LastYear, "last year")
+    };
+
     /// <summary>
     /// Gets or sets the condition data for this row.
     /// </summary>
@@ -97,6 +114,11 @@ public partial class BbFilterCondition : ComponentBase
         else if (FilterOperatorHelper.IsRangeOperator(Condition.Operator) != FilterOperatorHelper.IsRangeOperator(previousOperator))
         {
             Condition.Value = null;
+            Condition.ValueEnd = null;
+        }
+        else if (FilterOperatorHelper.IsDatePresetOperator(Condition.Operator) != FilterOperatorHelper.IsDatePresetOperator(previousOperator))
+        {
+            Condition.Value = FilterOperatorHelper.IsDatePresetOperator(Condition.Operator) ? DatePreset.Today : null;
             Condition.ValueEnd = null;
         }
 
@@ -190,6 +212,24 @@ public partial class BbFilterCondition : ComponentBase
             Condition.Value = null;
             Condition.ValueEnd = null;
         }
+        await OnChanged.InvokeAsync();
+    }
+
+    // DatePreset helpers — Value stores the preset (DatePreset)
+    private DatePreset GetDatePreset()
+    {
+        return Condition.Value switch
+        {
+            DatePreset p => p,
+            int i when System.Enum.IsDefined(typeof(DatePreset), i) => (DatePreset)i,
+            string s when System.Enum.TryParse<DatePreset>(s, out var p) => p,
+            _ => DatePreset.Today
+        };
+    }
+
+    private async Task HandleDatePresetChanged(DatePreset value)
+    {
+        Condition.Value = value;
         await OnChanged.InvokeAsync();
     }
 

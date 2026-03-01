@@ -27,6 +27,7 @@ public enum FilterOperator
 
     // Date-specific
     InLast,
+    InNext,
 
     // Enum
     In,
@@ -34,5 +35,9 @@ public enum FilterOperator
 
     // Boolean
     IsTrue,
-    IsFalse
+    IsFalse,
+
+    // Date preset
+    DateIs,
+    DateIsNot
 }

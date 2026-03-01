@@ -138,6 +138,9 @@ public static class FilterDefinitionExtensions
             FilterOperator.LessOrEqual => Compare(rawValue, condition.Value) is <= 0,
             FilterOperator.Between => Compare(rawValue, condition.Value) is >= 0 && Compare(rawValue, condition.ValueEnd) is <= 0,
             FilterOperator.InLast => EvaluateInLast(rawValue, condition),
+            FilterOperator.InNext => EvaluateInNext(rawValue, condition),
+            FilterOperator.DateIs => EvaluateDatePreset(rawValue, condition, negate: false),
+            FilterOperator.DateIsNot => EvaluateDatePreset(rawValue, condition, negate: true),
             FilterOperator.In => EvaluateIn(rawValue, condition.Value, contains: true),
             FilterOperator.NotIn => EvaluateIn(rawValue, condition.Value, contains: false),
             _ => true
@@ -268,6 +271,97 @@ public static class FilterDefinitionExtensions
         return dateValue >= cutoff;
     }
 
+    private static bool EvaluateInNext(object? rawValue, FilterCondition condition)
+    {
+        if (rawValue is not DateTime dateValue)
+        {
+            return false;
+        }
+
+        var amount = condition.Value switch
+        {
+            int i => i,
+            double d => (int)d,
+            _ => 0
+        };
+
+        var period = condition.ValueEnd switch
+        {
+            InLastPeriod p => p,
+            int i when Enum.IsDefined(typeof(InLastPeriod), i) => (InLastPeriod)i,
+            string s when Enum.TryParse<InLastPeriod>(s, out var p) => p,
+            _ => InLastPeriod.Days
+        };
+
+        var cutoff = period switch
+        {
+            InLastPeriod.Days => DateTime.Now.AddDays(amount),
+            InLastPeriod.Weeks => DateTime.Now.AddDays(amount * 7),
+            InLastPeriod.Months => DateTime.Now.AddMonths(amount),
+            _ => DateTime.Now
+        };
+
+        return dateValue <= cutoff && dateValue >= DateTime.Now;
+    }
+
+    private static bool EvaluateDatePreset(object? rawValue, FilterCondition condition, bool negate)
+    {
+        if (rawValue is not DateTime dateValue)
+        {
+            return false;
+        }
+
+        var preset = condition.Value switch
+        {
+            DatePreset p => p,
+            int i when Enum.IsDefined(typeof(DatePreset), i) => (DatePreset)i,
+            string s when Enum.TryParse<DatePreset>(s, out var p) => p,
+            _ => DatePreset.Today
+        };
+
+        var (start, end) = ResolveDatePresetRange(preset);
+        var inRange = dateValue >= start && dateValue < end;
+        return negate ? !inRange : inRange;
+    }
+
+    private static (DateTime Start, DateTime End) ResolveDatePresetRange(DatePreset preset)
+    {
+        var today = DateTime.Today;
+
+        return preset switch
+        {
+            DatePreset.Today => (today, today.AddDays(1)),
+            DatePreset.Yesterday => (today.AddDays(-1), today),
+            DatePreset.Tomorrow => (today.AddDays(1), today.AddDays(2)),
+            DatePreset.ThisWeek => (StartOfWeek(today), StartOfWeek(today).AddDays(7)),
+            DatePreset.LastWeek => (StartOfWeek(today).AddDays(-7), StartOfWeek(today)),
+            DatePreset.NextWeek => (StartOfWeek(today).AddDays(7), StartOfWeek(today).AddDays(14)),
+            DatePreset.ThisMonth => (new DateTime(today.Year, today.Month, 1),
+                                     new DateTime(today.Year, today.Month, 1).AddMonths(1)),
+            DatePreset.LastMonth => (new DateTime(today.Year, today.Month, 1).AddMonths(-1),
+                                     new DateTime(today.Year, today.Month, 1)),
+            DatePreset.NextMonth => (new DateTime(today.Year, today.Month, 1).AddMonths(1),
+                                     new DateTime(today.Year, today.Month, 1).AddMonths(2)),
+            DatePreset.ThisQuarter => (StartOfQuarter(today), StartOfQuarter(today).AddMonths(3)),
+            DatePreset.LastQuarter => (StartOfQuarter(today).AddMonths(-3), StartOfQuarter(today)),
+            DatePreset.ThisYear => (new DateTime(today.Year, 1, 1), new DateTime(today.Year + 1, 1, 1)),
+            DatePreset.LastYear => (new DateTime(today.Year - 1, 1, 1), new DateTime(today.Year, 1, 1)),
+            _ => (today, today.AddDays(1))
+        };
+    }
+
+    private static DateTime StartOfWeek(DateTime date)
+    {
+        var diff = ((int)date.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
+        return date.AddDays(-diff);
+    }
+
+    private static DateTime StartOfQuarter(DateTime date)
+    {
+        var quarter = (date.Month - 1) / 3;
+        return new DateTime(date.Year, (quarter * 3) + 1, 1);
+    }
+
     private static bool EvaluateIn(object? rawValue, object? filterValue, bool contains)
     {
         if (filterValue is not IEnumerable<string> values)
@@ -363,6 +457,9 @@ public static class FilterDefinitionExtensions
             FilterOperator.EndsWith => BuildStringMethodExpression(propAccess, propType, condition.Value, "EndsWith"),
             FilterOperator.Between => BuildBetweenExpression(propAccess, propType, condition.Value, condition.ValueEnd),
             FilterOperator.InLast => BuildInLastExpression(propAccess, propType, condition),
+            FilterOperator.InNext => BuildInNextExpression(propAccess, propType, condition),
+            FilterOperator.DateIs => BuildDatePresetExpression(propAccess, propType, condition, negate: false),
+            FilterOperator.DateIsNot => BuildDatePresetExpression(propAccess, propType, condition, negate: true),
             FilterOperator.In => BuildInExpression(propAccess, propType, condition.Value, negate: false),
             FilterOperator.NotIn => BuildInExpression(propAccess, propType, condition.Value, negate: true),
             _ => Expression.Constant(true)
@@ -522,6 +619,98 @@ public static class FilterDefinitionExtensions
         }
 
         return gte;
+    }
+
+    private static Expression BuildInNextExpression(
+        MemberExpression propAccess, Type propType, FilterCondition condition)
+    {
+        if (propType != typeof(DateTime) && propType != typeof(DateTime?))
+        {
+            return Expression.Constant(true);
+        }
+
+        var amount = condition.Value switch
+        {
+            int i => i,
+            double d => (int)d,
+            _ => 0
+        };
+
+        var period = condition.ValueEnd switch
+        {
+            InLastPeriod p => p,
+            int i when Enum.IsDefined(typeof(InLastPeriod), i) => (InLastPeriod)i,
+            string s when Enum.TryParse<InLastPeriod>(s, out var p) => p,
+            _ => InLastPeriod.Days
+        };
+
+        var now = DateTime.Now;
+        var cutoff = period switch
+        {
+            InLastPeriod.Days => now.AddDays(amount),
+            InLastPeriod.Weeks => now.AddDays(amount * 7),
+            InLastPeriod.Months => now.AddMonths(amount),
+            _ => now
+        };
+
+        Expression target = propType == typeof(DateTime?)
+            ? Expression.Property(propAccess, "Value")
+            : propAccess;
+
+        // target >= now AND target <= cutoff
+        var gte = Expression.GreaterThanOrEqual(target, Expression.Constant(now));
+        var lte = Expression.LessThanOrEqual(target, Expression.Constant(cutoff));
+        Expression inRange = Expression.AndAlso(gte, lte);
+
+        if (propType == typeof(DateTime?))
+        {
+            var hasValue = Expression.Property(propAccess, "HasValue");
+            return Expression.AndAlso(hasValue, inRange);
+        }
+
+        return inRange;
+    }
+
+    private static Expression BuildDatePresetExpression(
+        MemberExpression propAccess, Type propType, FilterCondition condition, bool negate)
+    {
+        if (propType != typeof(DateTime) && propType != typeof(DateTime?))
+        {
+            return Expression.Constant(true);
+        }
+
+        var preset = condition.Value switch
+        {
+            DatePreset p => p,
+            int i when Enum.IsDefined(typeof(DatePreset), i) => (DatePreset)i,
+            string s when Enum.TryParse<DatePreset>(s, out var p) => p,
+            _ => DatePreset.Today
+        };
+
+        var (start, end) = ResolveDatePresetRange(preset);
+
+        Expression target = propType == typeof(DateTime?)
+            ? Expression.Property(propAccess, "Value")
+            : propAccess;
+
+        var gte = Expression.GreaterThanOrEqual(target, Expression.Constant(start));
+        var lt = Expression.LessThan(target, Expression.Constant(end));
+        Expression inRange = Expression.AndAlso(gte, lt);
+
+        if (negate)
+        {
+            inRange = Expression.Not(inRange);
+        }
+
+        if (propType == typeof(DateTime?))
+        {
+            var hasValue = Expression.Property(propAccess, "HasValue");
+            return negate
+                ? Expression.OrElse(Expression.Not(hasValue), Expression.AndAlso(hasValue, inRange))
+                : Expression.AndAlso(hasValue, inRange);
+        }
+
+        return inRange;
     }
 
     private static Expression BuildInExpression(

@@ -60,7 +60,7 @@
                                        Class="@ValueInputClass" />
                     break;
 
-                case FilterFieldType.Date or FilterFieldType.DateTime when Condition.Operator == FilterOperator.InLast:
+                case FilterFieldType.Date or FilterFieldType.DateTime when Condition.Operator is FilterOperator.InLast or FilterOperator.InNext:
                     <div class="flex items-center gap-2">
                         <BbNumericInput TValue="int"
                                         Value="@GetInLastAmount()"
@@ -74,6 +74,14 @@
                                   Options="@inLastPeriodOptions"
                                   Class="@OperatorSelectClass" />
                     </div>
+                    break;
+
+                case FilterFieldType.Date or FilterFieldType.DateTime when FilterOperatorHelper.IsDatePresetOperator(Condition.Operator):
+                    <BbSelect TValue="DatePreset"
+                              Value="@GetDatePreset()"
+                              ValueChanged="HandleDatePresetChanged"
+                              Options="@datePresetOptions"
+                              Class="@ValueInputClass" />
                     break;
 
                 case FilterFieldType.Date or FilterFieldType.DateTime:

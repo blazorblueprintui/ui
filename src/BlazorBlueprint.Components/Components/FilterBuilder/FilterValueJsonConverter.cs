@@ -99,6 +99,9 @@ public class FilterValueJsonConverter : JsonConverter<object?>
             case InLastPeriod period:
                 writer.WriteStringValue(period.ToString());
                 break;
+            case DatePreset preset:
+                writer.WriteStringValue(preset.ToString());
+                break;
             case string[] arr:
                 writer.WriteStartArray();
                 foreach (var item in arr)
