@@ -394,6 +394,78 @@
         <CodeBlock Source="Components/Dialog/confirm-service.txt" />
     </div>
 
+    <div class="mt-10 space-y-4">
+        <h2 class="text-2xl font-semibold">
+            Alert Service
+            <span class="bg-primary/10 text-primary rounded px-1.5 py-0.5 text-xs font-normal">
+                New
+            </span>
+        </h2>
+
+        <p class="text-muted-foreground text-sm">
+            Use <code>DialogService.Alert()</code> for simple acknowledgment dialogs.
+            Returns a <code>Task</code> that completes when the user clicks OK.
+        </p>
+
+        <div class="flex items-center gap-4">
+            <BbButton OnClick="HandleAlert">
+                Show Alert
+            </BbButton>
+
+            <span class="text-muted-foreground text-sm">
+                Status: @alertStatus
+            </span>
+        </div>
+    </div>
+
+    <div class="mt-10 space-y-4">
+        <h2 class="text-2xl font-semibold">
+            Prompt Service
+            <span class="bg-primary/10 text-primary rounded px-1.5 py-0.5 text-xs font-normal">
+                New
+            </span>
+        </h2>
+
+        <p class="text-muted-foreground text-sm">
+            Use <code>DialogService.Prompt()</code> to collect text input asynchronously.
+            Returns <code>string?</code>.
+        </p>
+
+        <div class="flex items-center gap-4">
+            <BbButton OnClick="HandlePrompt">
+                Rename File
+            </BbButton>
+
+            <span class="text-muted-foreground text-sm">
+                Result: @promptResult
+            </span>
+        </div>
+    </div>
+
+    <div class="mt-10 space-y-4">
+        <h2 class="text-2xl font-semibold">
+            Custom Component Dialog
+            <span class="bg-primary/10 text-primary rounded px-1.5 py-0.5 text-xs font-normal">
+                New
+            </span>
+        </h2>
+
+        <p class="text-muted-foreground text-sm">
+            Use <code>DialogService.Open&lt;TComponent&gt;()</code> to render a fully custom dialog component.
+            Returns a <code>DialogResult</code>.
+        </p>
+
+        <div class="flex items-center gap-4">
+            <BbButton OnClick="HandleCustomDialog">
+                Edit User
+            </BbButton>
+
+            <span class="text-muted-foreground text-sm">
+                Result: @customResult
+            </span>
+        </div>
+    </div>
+
     <div class="space-y-4">
         <h2 class="text-2xl font-semibold">Form in Dialog</h2>
         <p class="text-sm text-muted-foreground">
@@ -603,12 +675,16 @@
 </div>
 
 @code {
-    private string confirmResult = "None";
     private bool isDialogOpen = false;
     private DateTime? dialogDatePickerValue;
     private string? selectedComboboxFramework;
     private string? selectedDialogFruit;
     private IEnumerable<string>? selectedTechnologies = new List<string>();
+
+    private string confirmResult = "None";
+    private string alertStatus = "Idle";
+    private string promptResult = "-";
+    private string customResult = "-";
 
     // Form in Dialog
     private string? formFirstName;
@@ -684,4 +760,100 @@
 
         confirmResult = confirmed ? "Deleted!" : "Kept";
     }
+
+    private async Task HandleAlert()
+    {
+        alertStatus = "Waiting...";
+        await DialogService.Alert(
+            "Session Expired",
+            "Please log in again.");
+
+        alertStatus = "Acknowledged";
+    }
+
+    private async Task HandlePrompt()
+    {
+        var name = await DialogService.Prompt(
+            "Rename File",
+            "Enter a new file name:",
+            new PromptDialogOptions
+            {
+                DefaultValue = "document.txt",
+                Placeholder = "file-name.txt",
+                Required = true,
+                MaxLength = 50
+            });
+
+        promptResult = name ?? "Cancelled";
+    }
+
+    private async Task HandleCustomDialog()
+    {
+        var result = await DialogService.Open<EditUserDemoComponent>(
+            new Dictionary<string, object?>
+            {
+                ["UserId"] = 42
+            },
+            new DialogOpenOptions
+            {
+                Title = "Edit User",
+                Size = DialogSize.Large
+            });
+
+        if (!result.Cancelled)
+        {
+            var data = result.GetData<UserDto>();
+            customResult = $"Saved: {data}";
+        }
+        else
+        {
+            customResult = "Cancelled";
+        }
+    }
+
+    public sealed class EditUserDemoComponent : ComponentBase
+    {
+        [Parameter] public int UserId { get; set; }
+
+        [CascadingParameter]
+        public IDialogReference DialogRef { get; set; } = default!;
+
+        private string? userName;
+        private string? userEmail;
+
+        protected override void OnInitialized()
+        {
+            // Simulate loading user data
+            userName = $"User {UserId}";
+            userEmail = "example@company.com";
+        }
+
+        private Task Save()
+        {
+            var dto = new UserDto(
+                UserId,
+                userName ?? string.Empty,
+                userEmail ?? string.Empty);
+
+            return DialogRef.CloseAsync(DialogResult.Ok(dto));
+        }
+
+        private Task Cancel()
+            => DialogRef.CancelAsync();
+
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder __builder)
+        {
+            <div class="space-y-4">
+                <div>Editing User @UserId</div>
+                <BbInput @bind-Value="userName" Placeholder="Name" />
+                <BbInput @bind-Value="userEmail" Placeholder="Email" Type="InputType.Email" />
+                <div class="flex justify-end gap-2">
+                    <BbButton Variant="ButtonVariant.Outline" OnClick="Cancel">Cancel</BbButton>
+                    <BbButton OnClick="Save">Save</BbButton>
+                </div>
+            </div>
+        }
+    }
+
+    public sealed record UserDto(int Id, string Name, string Email);
 }
