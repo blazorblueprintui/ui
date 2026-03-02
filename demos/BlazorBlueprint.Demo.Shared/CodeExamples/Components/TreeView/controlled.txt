@@ -1,0 +1,30 @@
+<BbButton Size="ButtonSize.Small" OnClick="ExpandAll">Expand All</BbButton>
+<BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Outline" OnClick="CollapseAll">Collapse All</BbButton>
+
+<BbTreeView TItem="object"
+            @bind-ExpandedValues="expandedValues"
+            SelectionMode="TreeSelectionMode.Single">
+    <BbTreeItem Value="root" Label="Root" Icon="folder">
+        <BbTreeItem Value="branch1" Label="Branch 1" Icon="folder">
+            <BbTreeItem Value="leaf1" Label="Leaf 1" Icon="file" />
+            <BbTreeItem Value="leaf2" Label="Leaf 2" Icon="file" />
+        </BbTreeItem>
+        <BbTreeItem Value="branch2" Label="Branch 2" Icon="folder">
+            <BbTreeItem Value="leaf3" Label="Leaf 3" Icon="file" />
+        </BbTreeItem>
+    </BbTreeItem>
+</BbTreeView>
+
+@code {
+    private HashSet<string> expandedValues = new() { "root" };
+
+    private void ExpandAll()
+    {
+        expandedValues = new HashSet<string> { "root", "branch1", "branch2" };
+    }
+
+    private void CollapseAll()
+    {
+        expandedValues = new HashSet<string>();
+    }
+}

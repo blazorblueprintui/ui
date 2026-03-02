@@ -1,0 +1,26 @@
+<BbTreeView TItem="CategoryNode"
+            Items="@categories"
+            ChildrenProperty="@(c => c.Children)"
+            TextField="@(c => c.Name)"
+            ValueField="@(c => c.Id)"
+            IconField="@(c => c.Icon)"
+            SelectionMode="TreeSelectionMode.Single"
+            @bind-SelectedValue="selectedCategory"
+            DefaultExpandDepth="1" />
+
+@code {
+    private string? selectedCategory;
+
+    private List<CategoryNode> categories = new()
+    {
+        new CategoryNode
+        {
+            Id = "electronics", Name = "Electronics", Icon = "cpu",
+            Children = new List<CategoryNode>
+            {
+                new CategoryNode { Id = "phones", Name = "Phones", Icon = "smartphone" },
+                new CategoryNode { Id = "laptops", Name = "Laptops", Icon = "laptop" }
+            }
+        }
+    };
+}
