@@ -25,6 +25,12 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
     private readonly Dictionary<string, List<TreeNodeInfo>> childrenByParent = new();
     private int nextOrder;
 
+    /// <summary>
+    /// Gets or sets the currently focused node value for roving tabindex.
+    /// Set by JS-invokable methods so Blazor re-renders preserve correct tabindex.
+    /// </summary>
+    public string? FocusedNodeValue { get; set; }
+
     private static string ParentKey(string? parentValue) => parentValue ?? RootParentKey;
 
     /// <summary>

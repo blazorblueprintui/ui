@@ -182,21 +182,27 @@ public partial class BbTreeView : IAsyncDisposable
         // StateHasChanged calls on wrapper components) from overwriting context state
         // that was just updated by user interaction.
 
-        if (ExpandedValues != null && !ReferenceEquals(ExpandedValues, lastSyncedExpandedValues))
+        if (ExpandedValues != null)
         {
-            lastSyncedExpandedValues = ExpandedValues;
-            if (!context.State.ExpandedValues.SetEquals(ExpandedValues))
+            if (lastSyncedExpandedValues == null || !lastSyncedExpandedValues.SetEquals(ExpandedValues))
             {
-                context.SetExpandedValues(ExpandedValues);
+                lastSyncedExpandedValues = new HashSet<string>(ExpandedValues);
+                if (!context.State.ExpandedValues.SetEquals(ExpandedValues))
+                {
+                    context.SetExpandedValues(ExpandedValues);
+                }
             }
         }
 
-        if (SelectedValues != null && !ReferenceEquals(SelectedValues, lastSyncedSelectedValues))
+        if (SelectedValues != null)
         {
-            lastSyncedSelectedValues = SelectedValues;
-            if (!context.State.SelectedValues.SetEquals(SelectedValues))
+            if (lastSyncedSelectedValues == null || !lastSyncedSelectedValues.SetEquals(SelectedValues))
             {
-                context.SetSelectedValues(SelectedValues);
+                lastSyncedSelectedValues = new HashSet<string>(SelectedValues);
+                if (!context.State.SelectedValues.SetEquals(SelectedValues))
+                {
+                    context.SetSelectedValues(SelectedValues);
+                }
             }
         }
         else if (SelectedValue != lastSyncedSelectedValue && SelectionMode == TreeSelectionMode.Single)
@@ -216,12 +222,15 @@ public partial class BbTreeView : IAsyncDisposable
             }
         }
 
-        if (CheckedValues != null && !ReferenceEquals(CheckedValues, lastSyncedCheckedValues))
+        if (CheckedValues != null)
         {
-            lastSyncedCheckedValues = CheckedValues;
-            if (!context.State.CheckedValues.SetEquals(CheckedValues))
+            if (lastSyncedCheckedValues == null || !lastSyncedCheckedValues.SetEquals(CheckedValues))
             {
-                context.SetCheckedValues(CheckedValues);
+                lastSyncedCheckedValues = new HashSet<string>(CheckedValues);
+                if (!context.State.CheckedValues.SetEquals(CheckedValues))
+                {
+                    context.SetCheckedValues(CheckedValues);
+                }
             }
         }
     }
@@ -299,6 +308,8 @@ public partial class BbTreeView : IAsyncDisposable
     [JSInvokable]
     public async Task JsOnNodeActivate(string value, bool hasChildren = false)
     {
+        context.FocusedNodeValue = value;
+
         // Update context selection BEFORE firing OnNodeClick. The EventCallback's
         // InvokeAsync triggers StateHasChanged on the receiver (wrapper component),
         // which could re-render with stale parameter values. By selecting first,
@@ -329,8 +340,11 @@ public partial class BbTreeView : IAsyncDisposable
     /// Called from JavaScript when a node checkbox is toggled via keyboard (Space).
     /// </summary>
     [JSInvokable]
-    public void JsOnNodeCheck(string value) =>
+    public void JsOnNodeCheck(string value)
+    {
+        context.FocusedNodeValue = value;
         context.ToggleChecked(value);
+    }
 
     /// <summary>
     /// Called from JavaScript when a node should be expanded.
@@ -338,6 +352,7 @@ public partial class BbTreeView : IAsyncDisposable
     [JSInvokable]
     public async Task JsOnNodeExpand(string value)
     {
+        context.FocusedNodeValue = value;
         context.ExpandNode(value);
         if (OnNodeExpand.HasDelegate)
         {
@@ -351,6 +366,7 @@ public partial class BbTreeView : IAsyncDisposable
     [JSInvokable]
     public async Task JsOnNodeCollapse(string value)
     {
+        context.FocusedNodeValue = value;
         context.CollapseNode(value);
         if (OnNodeCollapse.HasDelegate)
         {
@@ -362,34 +378,45 @@ public partial class BbTreeView : IAsyncDisposable
     /// Called from JavaScript to expand all siblings of a node.
     /// </summary>
     [JSInvokable]
-    public void JsOnExpandSiblings(string value) =>
+    public void JsOnExpandSiblings(string value)
+    {
+        context.FocusedNodeValue = value;
         context.ExpandSiblings(value);
+    }
 
-    private void HandleContextStateChanged()
+    private async void HandleContextStateChanged()
     {
         // Propagate context state changes to bound parameters via EventCallbacks.
         // Do NOT call StateHasChanged() here — BbTreeItem instances re-render via their
         // own OnStateChanged subscription, and an intermediate render would cause
         // SyncStateToContext to overwrite context state with stale parameter values.
-        if (ExpandedValuesChanged.HasDelegate)
+        try
         {
-            _ = ExpandedValuesChanged.InvokeAsync(new HashSet<string>(context.State.ExpandedValues));
-        }
+            if (ExpandedValuesChanged.HasDelegate)
+            {
+                await ExpandedValuesChanged.InvokeAsync(new HashSet<string>(context.State.ExpandedValues));
+            }
 
-        if (SelectionMode == TreeSelectionMode.Single && SelectedValueChanged.HasDelegate)
-        {
-            var selected = context.State.SelectedValues.FirstOrDefault();
-            _ = SelectedValueChanged.InvokeAsync(selected);
-        }
+            if (SelectionMode == TreeSelectionMode.Single && SelectedValueChanged.HasDelegate)
+            {
+                var selected = context.State.SelectedValues.FirstOrDefault();
+                await SelectedValueChanged.InvokeAsync(selected);
+            }
 
-        if (SelectionMode == TreeSelectionMode.Multiple && SelectedValuesChanged.HasDelegate)
-        {
-            _ = SelectedValuesChanged.InvokeAsync(new HashSet<string>(context.State.SelectedValues));
-        }
+            if (SelectionMode == TreeSelectionMode.Multiple && SelectedValuesChanged.HasDelegate)
+            {
+                await SelectedValuesChanged.InvokeAsync(new HashSet<string>(context.State.SelectedValues));
+            }
 
-        if (Checkable && CheckedValuesChanged.HasDelegate)
+            if (Checkable && CheckedValuesChanged.HasDelegate)
+            {
+                await CheckedValuesChanged.InvokeAsync(new HashSet<string>(context.State.CheckedValues));
+            }
+        }
+        catch (Exception)
         {
-            _ = CheckedValuesChanged.InvokeAsync(new HashSet<string>(context.State.CheckedValues));
+            // Consumer callback exception — prevent unobserved task exceptions
+            // from crashing the application.
         }
     }
 

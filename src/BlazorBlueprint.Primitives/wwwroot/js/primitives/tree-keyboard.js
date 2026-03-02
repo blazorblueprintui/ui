@@ -57,6 +57,7 @@ function isDisabled(el) {
  * @returns {boolean}
  */
 function isFromInteractiveElement(e, treeItem) {
+  if (!(e.target instanceof Element)) return false;
   const interactiveSelectors = 'button:not([data-tree-toggle]):not([data-tree-checkbox]), a, input, textarea, select, [contenteditable="true"]';
   const interactive = e.target.closest(interactiveSelectors);
   // Only consider it interactive if it's inside the treeitem but not the treeitem itself
@@ -69,7 +70,8 @@ function isFromInteractiveElement(e, treeItem) {
  * @returns {HTMLElement|null}
  */
 function getTreeItemFromEvent(e) {
-  return e.target.closest('[role="treeitem"]');
+  const target = e.target instanceof Element ? e.target : e.target.parentElement;
+  return target ? target.closest('[role="treeitem"]') : null;
 }
 
 /**
@@ -249,8 +251,11 @@ export function initialize(containerElement, dotNetRef, instanceId) {
     const value = getNodeValue(treeItem);
     if (!value) return;
 
+    // Normalize target to Element for closest() calls
+    const clickTarget = e.target instanceof Element ? e.target : (e.target.parentElement || null);
+
     // Check if the click was on the expand toggle area
-    const toggle = e.target.closest('[data-tree-toggle]');
+    const toggle = clickTarget ? clickTarget.closest('[data-tree-toggle]') : null;
     if (toggle) {
       const isExpanded = treeItem.getAttribute('aria-expanded') === 'true';
       if (isExpanded) {
@@ -262,7 +267,7 @@ export function initialize(containerElement, dotNetRef, instanceId) {
     }
 
     // Check if click was on a checkbox
-    const checkbox = e.target.closest('[data-tree-checkbox]');
+    const checkbox = clickTarget ? clickTarget.closest('[data-tree-checkbox]') : null;
     if (checkbox) {
       dotNetRef.invokeMethodAsync('JsOnNodeCheck', value);
       return;

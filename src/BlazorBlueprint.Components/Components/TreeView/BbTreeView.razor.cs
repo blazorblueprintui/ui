@@ -761,6 +761,19 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
         }
     }
 
+    private async Task HandleCheckedValuesChanged(HashSet<string> values)
+    {
+        if (CheckedValuesChanged.HasDelegate)
+        {
+            await CheckedValuesChanged.InvokeAsync(values);
+        }
+
+        if (OnCheckedChanged.HasDelegate)
+        {
+            await OnCheckedChanged.InvokeAsync(values);
+        }
+    }
+
     // --- Expand helpers ---
 
     private void ExpandAllNodes()

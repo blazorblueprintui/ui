@@ -110,7 +110,9 @@
     /// </summary>
     public bool HasChildContent => IsLeaf == true ? false : (ChildContent != null || Context.HasChildren(Value));
 
-    private bool IsFocusable => !Disabled && Depth == 0 && Context.IsFirstEnabledRoot(Value);
+    private bool IsFocusable => !Disabled && (Context.FocusedNodeValue != null
+        ? Context.FocusedNodeValue == Value
+        : (Depth == 0 && Context.IsFirstEnabledRoot(Value)));
 
     private string? AriaCheckedValue
     {
