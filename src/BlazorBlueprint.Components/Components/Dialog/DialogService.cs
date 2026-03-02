@@ -1,4 +1,5 @@
-using System.ComponentModel;
+
+using Microsoft.AspNetCore.Components;
 
 namespace BlazorBlueprint.Components;
 
