@@ -551,8 +551,10 @@
     private IEnumerable<int> GetYears()
     {
         var currentYear = DateTime.Today.Year;
-        // Show 100 years range: 50 years back and 50 years forward
-        for (int year = currentYear - 50; year <= currentYear + 50; year++)
+        var startYear = MinDate?.Year ?? currentYear - 50;
+        var endYear = MaxDate?.Year ?? currentYear + 50;
+
+        for (int year = startYear; year <= endYear; year++)
         {
             yield return year;
         }
