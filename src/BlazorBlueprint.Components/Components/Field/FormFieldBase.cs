@@ -55,12 +55,13 @@ public abstract class FormFieldBase : ComponentBase, IDisposable
     public string? HelperText { get; set; }
 
     /// <summary>
-    /// Gets or sets a manual error text override displayed when the field has validation errors.
+    /// Gets or sets a manual error text to display on the field.
     /// </summary>
     /// <remarks>
-    /// This is a display-only override: it does <b>not</b> trigger an error state by itself.
-    /// When the field is invalid (e.g., has EditContext validation errors) and this property is set,
-    /// the provided text is shown instead of the auto-generated validation messages.
+    /// When set, the field enters an invalid state and displays this text as the error message.
+    /// This can be used to inject validation errors from external sources (e.g., server-side
+    /// validation or <see cref="BbDynamicForm"/>). When the field also has EditContext validation
+    /// errors, this text takes precedence over the auto-generated validation messages.
     /// </remarks>
     [Parameter]
     public string? ErrorText { get; set; }
@@ -113,7 +114,7 @@ public abstract class FormFieldBase : ComponentBase, IDisposable
     /// Gets whether the field is in an invalid state. Subclasses may override
     /// to add additional error sources (e.g., parse errors).
     /// </summary>
-    protected virtual bool IsInvalid => HasEditContextErrors;
+    protected virtual bool IsInvalid => HasEditContextErrors || !string.IsNullOrEmpty(ErrorText);
 
     /// <summary>
     /// Gets the value for the <c>aria-describedby</c> attribute. Points to

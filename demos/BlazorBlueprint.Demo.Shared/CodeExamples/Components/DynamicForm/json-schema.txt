@@ -1,0 +1,69 @@
+private static readonly string jsonSchemaString = @"{
+    ""type"": ""object"",
+    ""title"": ""Product Feedback"",
+    ""description"": ""Help us improve by sharing your feedback."",
+    ""required"": [""name"", ""rating"", ""category""],
+    ""properties"": {
+        ""name"": {
+            ""type"": ""string"",
+            ""title"": ""Your Name"",
+            ""minLength"": 2,
+            ""maxLength"": 100
+        },
+        ""email"": {
+            ""type"": ""string"",
+            ""format"": ""email"",
+            ""title"": ""Email Address""
+        },
+        ""rating"": {
+            ""type"": ""integer"",
+            ""title"": ""Rating (1-5)"",
+            ""minimum"": 1,
+            ""maximum"": 5
+        },
+        ""category"": {
+            ""type"": ""string"",
+            ""title"": ""Category"",
+            ""oneOf"": [
+                { ""const"": ""bug"", ""title"": ""Bug Report"" },
+                { ""const"": ""feature"", ""title"": ""Feature Request"" },
+                { ""const"": ""improvement"", ""title"": ""Improvement"" },
+                { ""const"": ""question"", ""title"": ""Question"" }
+            ]
+        },
+        ""product"": {
+            ""type"": ""string"",
+            ""title"": ""Product"",
+            ""x-field-type"": ""combobox"",
+            ""oneOf"": [
+                { ""const"": ""blazor-blueprint"", ""title"": ""Blazor Blueprint"" },
+                { ""const"": ""blazor-primitives"", ""title"": ""Blazor Primitives"" },
+                { ""const"": ""icons-lucide"", ""title"": ""Icons - Lucide"" },
+                { ""const"": ""icons-heroicons"", ""title"": ""Icons - Heroicons"" },
+                { ""const"": ""icons-feather"", ""title"": ""Icons - Feather"" }
+            ]
+        },
+        ""platforms"": {
+            ""type"": ""array"",
+            ""title"": ""Affected Platforms"",
+            ""items"": {
+                ""type"": ""string"",
+                ""oneOf"": [
+                    { ""const"": ""server"", ""title"": ""Blazor Server"" },
+                    { ""const"": ""wasm"", ""title"": ""Blazor WebAssembly"" },
+                    { ""const"": ""auto"", ""title"": ""Blazor Auto"" },
+                    { ""const"": ""maui"", ""title"": ""MAUI Hybrid"" }
+                ]
+            }
+        },
+        ""comments"": {
+            ""type"": ""string"",
+            ""title"": ""Comments"",
+            ""maxLength"": 500
+        }
+    }
+}";
+
+private readonly FormSchema schema = FormSchemaParser.FromJson(jsonSchemaString);
+
+<BbDynamicForm Schema="@schema" @bind-Values="values" OnValidSubmit="HandleSubmit" />

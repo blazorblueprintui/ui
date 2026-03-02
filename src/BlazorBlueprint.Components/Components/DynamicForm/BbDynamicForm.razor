@@ -1,0 +1,75 @@
+@namespace BlazorBlueprint.Components
+
+<form class="@FormCssClass" @onsubmit="HandleSubmit" @onsubmit:preventDefault>
+
+    @if (Schema?.Title is not null || Schema?.Description is not null)
+    {
+        <div class="space-y-1">
+            @if (Schema.Title is not null)
+            {
+                <h2 class="text-lg font-semibold">@Schema.Title</h2>
+            }
+            @if (Schema.Description is not null)
+            {
+                <p class="text-sm text-muted-foreground">@Schema.Description</p>
+            }
+        </div>
+    }
+
+    @if (ShowValidationSummary && HasErrors)
+    {
+        <BbAlert Variant="AlertVariant.Danger">
+            <BbAlertTitle>Validation Errors</BbAlertTitle>
+            <BbAlertDescription>
+                <ul class="list-disc pl-4 space-y-1">
+                    @foreach (var error in ErrorSummary)
+                    {
+                        <li>@error</li>
+                    }
+                </ul>
+            </BbAlertDescription>
+        </BbAlert>
+    }
+
+    @if (Schema is not null)
+    {
+        @if (Schema.Sections.Count > 0)
+        {
+            @foreach (var sectionDef in Schema.Sections)
+            {
+                if (!IsSectionVisible(sectionDef))
+                {
+                    continue;
+                }
+
+                var columns = GetEffectiveColumns(sectionDef.Columns);
+
+                <BbFormSection Title="@sectionDef.Title"
+                               Description="@sectionDef.Description"
+                               Collapsible="@sectionDef.Collapsible"
+                               DefaultExpanded="@sectionDef.DefaultExpanded">
+                    @((RenderFragment)(builder => RenderFieldsGrid(builder, sectionDef.Fields, columns)))
+                </BbFormSection>
+            }
+        }
+        else if (Schema.Fields.Count > 0)
+        {
+            var columns = GetEffectiveColumns(null);
+            @((RenderFragment)(builder => RenderFieldsGrid(builder, Schema.Fields, columns)))
+        }
+    }
+
+    @ChildContent
+
+    @if (ShowSubmitButton)
+    {
+        <div class="flex justify-end pt-2">
+            <BbButton Type="ButtonType.Submit"
+                      Loading="@isSubmitting"
+                      Disabled="@(Disabled || isSubmitting)">
+                @SubmitText
+            </BbButton>
+        </div>
+    }
+
+</form>
