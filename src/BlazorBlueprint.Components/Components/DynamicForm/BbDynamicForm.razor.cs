@@ -87,6 +87,13 @@ public partial class BbDynamicForm : ComponentBase
     public bool ShowSubmitButton { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets whether to show a validation error summary at the top of the form.
+    /// When false (default), errors are only shown inline next to each field.
+    /// </summary>
+    [Parameter]
+    public bool ShowValidationSummary { get; set; }
+
+    /// <summary>
     /// Gets or sets additional CSS classes applied to the form element.
     /// </summary>
     [Parameter]
@@ -106,16 +113,10 @@ public partial class BbDynamicForm : ComponentBase
     public RenderFragment? ChildContent { get; set; }
 
     /// <inheritdoc />
-    protected override void OnInitialized()
-    {
-        ApplyDefaultValues();
-    }
+    protected override void OnInitialized() => ApplyDefaultValues();
 
     /// <inheritdoc />
-    protected override void OnParametersSet()
-    {
-        ApplyDefaultValues();
-    }
+    protected override void OnParametersSet() => ApplyDefaultValues();
 
     private void ApplyDefaultValues()
     {
@@ -148,7 +149,7 @@ public partial class BbDynamicForm : ComponentBase
         return Schema.Fields;
     }
 
-    private List<FormFieldDefinition> GetOrderedFields(List<FormFieldDefinition> fields)
+    private static List<FormFieldDefinition> GetOrderedFields(List<FormFieldDefinition> fields)
     {
         return fields
             .Select((f, i) => (field: f, index: i))
@@ -191,12 +192,10 @@ public partial class BbDynamicForm : ComponentBase
         }
     }
 
-    private int GetEffectiveColumns(int? sectionOverride)
-    {
-        return sectionOverride ?? Schema?.Columns ?? Columns;
-    }
+    private int GetEffectiveColumns(int? sectionOverride) =>
+        sectionOverride ?? Schema?.Columns ?? Columns;
 
-    private string GetGridClass(int columns)
+    private static string GetGridClass(int columns)
     {
         return columns switch
         {
@@ -208,7 +207,7 @@ public partial class BbDynamicForm : ComponentBase
         };
     }
 
-    private string? GetColSpanStyle(FormFieldDefinition field, int maxColumns)
+    private static string? GetColSpanStyle(FormFieldDefinition field, int maxColumns)
     {
         if (field.ColSpan > 1 && maxColumns > 1)
         {
@@ -229,6 +228,9 @@ public partial class BbDynamicForm : ComponentBase
         // Clear field error on change
         fieldErrors.Remove(fieldName);
 
+        // Clear values and errors for fields that are now hidden
+        ClearHiddenFieldValues();
+
         await ValuesChanged.InvokeAsync(Values);
 
         if (OnFieldChanged.HasDelegate)
@@ -239,10 +241,20 @@ public partial class BbDynamicForm : ComponentBase
         StateHasChanged();
     }
 
-    private Func<object?, Task> CreateFieldCallback(string fieldName)
+    private void ClearHiddenFieldValues()
     {
-        return newValue => OnFieldValueChanged(fieldName, newValue);
+        foreach (var field in GetAllFields())
+        {
+            if (!IsFieldVisible(field) && Values.ContainsKey(field.Name))
+            {
+                Values.Remove(field.Name);
+                fieldErrors.Remove(field.Name);
+            }
+        }
     }
+
+    private Func<object?, Task> CreateFieldCallback(string fieldName) =>
+        newValue => OnFieldValueChanged(fieldName, newValue);
 
     // ── Validation ──────────────────────────────────────────────────
 
@@ -496,10 +508,8 @@ public partial class BbDynamicForm : ComponentBase
         Class
     );
 
-    private string? GetFieldErrorText(string fieldName)
-    {
-        return fieldErrors.TryGetValue(fieldName, out var error) ? error : null;
-    }
+    private string? GetFieldErrorText(string fieldName) =>
+        fieldErrors.TryGetValue(fieldName, out var error) ? error : null;
 
     private bool HasErrors => fieldErrors.Count > 0;
 

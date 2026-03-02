@@ -208,7 +208,7 @@ public static class VisibilityExpression
 
     private interface INode
     {
-        bool Evaluate(Dictionary<string, object?> values);
+        public bool Evaluate(Dictionary<string, object?> values);
     }
 
     private sealed class ComparisonNode : INode
@@ -244,10 +244,8 @@ public static class VisibilityExpression
             this.right = right;
         }
 
-        public bool Evaluate(Dictionary<string, object?> values)
-        {
-            return left.Evaluate(values) && right.Evaluate(values);
-        }
+        public bool Evaluate(Dictionary<string, object?> values) =>
+            left.Evaluate(values) && right.Evaluate(values);
     }
 
     private sealed class OrNode : INode
@@ -261,10 +259,8 @@ public static class VisibilityExpression
             this.right = right;
         }
 
-        public bool Evaluate(Dictionary<string, object?> values)
-        {
-            return left.Evaluate(values) || right.Evaluate(values);
-        }
+        public bool Evaluate(Dictionary<string, object?> values) =>
+            left.Evaluate(values) || right.Evaluate(values);
     }
 
     private sealed class NotNode : INode
@@ -276,10 +272,8 @@ public static class VisibilityExpression
             this.inner = inner;
         }
 
-        public bool Evaluate(Dictionary<string, object?> values)
-        {
-            return !inner.Evaluate(values);
-        }
+        public bool Evaluate(Dictionary<string, object?> values) =>
+            !inner.Evaluate(values);
     }
 
     private sealed class TruthyNode : INode
@@ -291,17 +285,15 @@ public static class VisibilityExpression
             this.valueNode = valueNode;
         }
 
-        public bool Evaluate(Dictionary<string, object?> values)
-        {
-            return IsTruthy(valueNode.GetValue(values));
-        }
+        public bool Evaluate(Dictionary<string, object?> values) =>
+            IsTruthy(valueNode.GetValue(values));
     }
 
     // ── Value Nodes ──────────────────────────────────────────────────
 
     private interface IValueNode
     {
-        object? GetValue(Dictionary<string, object?> values);
+        public object? GetValue(Dictionary<string, object?> values);
     }
 
     private sealed class IdentifierNode : IValueNode
@@ -313,10 +305,8 @@ public static class VisibilityExpression
             this.name = name;
         }
 
-        public object? GetValue(Dictionary<string, object?> values)
-        {
-            return values.TryGetValue(name, out var value) ? value : null;
-        }
+        public object? GetValue(Dictionary<string, object?> values) =>
+            values.TryGetValue(name, out var value) ? value : null;
     }
 
     private sealed class LiteralNode : IValueNode
@@ -328,10 +318,7 @@ public static class VisibilityExpression
             this.value = value;
         }
 
-        public object? GetValue(Dictionary<string, object?> values)
-        {
-            return value;
-        }
+        public object? GetValue(Dictionary<string, object?> values) => value;
     }
 
     // ── Parser ───────────────────────────────────────────────────────
@@ -364,10 +351,7 @@ public static class VisibilityExpression
         }
 
         // expression → or_expr
-        public INode ParseExpression()
-        {
-            return ParseOr();
-        }
+        public INode ParseExpression() => ParseOr();
 
         // or_expr → and_expr ("||" and_expr)*
         private INode ParseOr()
@@ -544,8 +528,6 @@ public static class VisibilityExpression
         };
     }
 
-    private static bool IsNumeric(object? value)
-    {
-        return value is int or long or float or double or decimal or short or byte;
-    }
+    private static bool IsNumeric(object? value) =>
+        value is int or long or float or double or decimal or short or byte;
 }

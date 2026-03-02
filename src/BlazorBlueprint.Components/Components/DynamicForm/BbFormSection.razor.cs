@@ -53,10 +53,7 @@ public partial class BbFormSection : ComponentBase
     public string? Class { get; set; }
 
     /// <inheritdoc />
-    protected override void OnInitialized()
-    {
-        isExpanded = DefaultExpanded;
-    }
+    protected override void OnInitialized() => isExpanded = DefaultExpanded;
 
     private string SectionCssClass => ClassNames.cn("space-y-4", Class);
 }

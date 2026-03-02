@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 
 namespace BlazorBlueprint.Components;
@@ -384,7 +385,7 @@ public static class FormSchemaParser
             return name;
         }
 
-        var chars = new List<char> { char.ToUpper(name[0]) };
+        var chars = new List<char> { char.ToUpper(name[0], CultureInfo.InvariantCulture) };
         for (var i = 1; i < name.Length; i++)
         {
             if (char.IsUpper(name[i]) && i > 0 && !char.IsUpper(name[i - 1]))

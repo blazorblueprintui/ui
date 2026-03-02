@@ -30,6 +30,7 @@
             <p class="text-sm font-medium mb-1">Current values:</p>
             <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_basicValues)</pre>
         </div>
+        <CodeBlock Source="Components/DynamicForm/basic.txt" />
     </div>
 
     <!-- Multi-Section Form -->
@@ -49,6 +50,7 @@
             <p class="text-sm font-medium mb-1">Current values:</p>
             <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_sectionValues)</pre>
         </div>
+        <CodeBlock Source="Components/DynamicForm/multi-section.txt" />
     </div>
 
     <!-- Conditional Visibility -->
@@ -69,6 +71,7 @@
             <p class="text-sm font-medium mb-1">Current values:</p>
             <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_conditionalValues)</pre>
         </div>
+        <CodeBlock Source="Components/DynamicForm/conditional-visibility.txt" />
     </div>
 
     <!-- Multi-Column Layout -->
@@ -88,6 +91,7 @@
             <p class="text-sm font-medium mb-1">Current values:</p>
             <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_multiColValues)</pre>
         </div>
+        <CodeBlock Source="Components/DynamicForm/multi-column.txt" />
     </div>
 
     <!-- JSON Schema -->
@@ -108,6 +112,7 @@
             <p class="text-sm font-medium mb-1">Current values:</p>
             <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_jsonValues)</pre>
         </div>
+        <CodeBlock Source="Components/DynamicForm/json-schema.txt" />
     </div>
 
     <!-- Read-Only / Disabled -->
@@ -124,6 +129,7 @@
                            Disabled="true"
                            ShowSubmitButton="false" />
         </div>
+        <CodeBlock Source="Components/DynamicForm/read-only-disabled.txt" />
     </div>
 
     <!-- Validation -->
@@ -140,6 +146,7 @@
                            @bind-Values="_validationValues"
                            OnValidSubmit="HandleValidationSubmit" />
         </div>
+        <CodeBlock Source="Components/DynamicForm/validation.txt" />
     </div>
 
     @if (!string.IsNullOrEmpty(_submitMessage))
@@ -149,6 +156,201 @@
             <BbAlertDescription>@_submitMessage</BbAlertDescription>
         </BbAlert>
     }
+
+    <!-- Accessibility -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                Each rendered input inherits the accessibility features of its underlying BlazorBlueprint component (labels, ARIA attributes, error announcements)
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Labels are automatically associated with their inputs via <code class="text-xs bg-muted px-1 py-0.5 rounded">BbFieldLabel</code>
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Validation errors are displayed inline with <code class="text-xs bg-muted px-1 py-0.5 rounded">BbFieldError</code> for screen reader support
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Hidden fields (via <code class="text-xs bg-muted px-1 py-0.5 rounded">VisibleWhen</code>) are fully removed from the DOM, not just visually hidden
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Collapsible sections use <code class="text-xs bg-muted px-1 py-0.5 rounded">BbCollapsible</code> with proper <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-expanded</code> state
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Form uses native <code class="text-xs bg-muted px-1 py-0.5 rounded">&lt;form&gt;</code> element for standard submit behavior
+            </AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between form fields">
+                <BbKbd>Tab</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Submit the form">
+                <BbKbd>Enter</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Toggle collapsible sections">
+                <BbKbd>Enter</BbKbd> or <BbKbd>Space</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbDynamicForm">
+                <ApiParameter Name="Schema" Type="FormSchema?">
+                    The schema definition for the form, containing fields and/or sections.
+                </ApiParameter>
+                <ApiParameter Name="Values" Type="Dictionary&lt;string, object?&gt;">
+                    The current form values dictionary. Use <code>@@bind-Values</code> for two-way binding.
+                </ApiParameter>
+                <ApiParameter Name="OnSubmit" Type="EventCallback&lt;Dictionary&lt;string, object?&gt;&gt;">
+                    Callback invoked on form submission regardless of validation.
+                </ApiParameter>
+                <ApiParameter Name="OnValidSubmit" Type="EventCallback&lt;Dictionary&lt;string, object?&gt;&gt;">
+                    Callback invoked on form submission only when all validation passes.
+                </ApiParameter>
+                <ApiParameter Name="OnFieldChanged" Type="EventCallback&lt;FormFieldChangedEventArgs&gt;">
+                    Callback invoked when any field value changes. Provides field name, old value, and new value.
+                </ApiParameter>
+                <ApiParameter Name="Layout" Type="FormLayout" Default="Vertical">
+                    Form layout mode. Options: Vertical, Horizontal, Inline.
+                </ApiParameter>
+                <ApiParameter Name="Columns" Type="int" Default="1">
+                    Number of columns for the responsive grid layout. Can be overridden per section.
+                </ApiParameter>
+                <ApiParameter Name="ReadOnly" Type="bool" Default="false">
+                    Whether all fields are rendered as read-only.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether all fields are disabled.
+                </ApiParameter>
+                <ApiParameter Name="SubmitText" Type="string" Default="Submit">
+                    Text for the built-in submit button.
+                </ApiParameter>
+                <ApiParameter Name="ShowSubmitButton" Type="bool" Default="true">
+                    Whether to show the built-in submit button.
+                </ApiParameter>
+                <ApiParameter Name="ShowValidationSummary" Type="bool" Default="false">
+                    Whether to show a validation error summary at the top of the form. When false, errors are only shown inline next to each field.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?" Default="null">
+                    Additional CSS classes applied to the form element.
+                </ApiParameter>
+                <ApiParameter Name="FieldRenderers" Type="Dictionary&lt;string, RenderFragment&lt;DynamicFieldRenderContext&gt;&gt;?">
+                    Custom field renderers keyed by field name. Used for <code>FieldType.Custom</code> fields.
+                </ApiParameter>
+                <ApiParameter Name="ChildContent" Type="RenderFragment?">
+                    Additional content rendered inside the form (e.g., extra buttons).
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="FormSchema">
+                <ApiParameter Name="Title" Type="string?">
+                    Form title displayed above the form.
+                </ApiParameter>
+                <ApiParameter Name="Description" Type="string?">
+                    Description displayed below the title.
+                </ApiParameter>
+                <ApiParameter Name="Fields" Type="List&lt;FormFieldDefinition&gt;">
+                    Flat list of fields. Ignored when Sections is populated.
+                </ApiParameter>
+                <ApiParameter Name="Sections" Type="List&lt;FormSectionDefinition&gt;">
+                    Grouped fields with headings and descriptions. When set, Fields is ignored.
+                </ApiParameter>
+                <ApiParameter Name="Columns" Type="int" Default="1">
+                    Default number of grid columns. Individual sections can override this.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="FormFieldDefinition">
+                <ApiParameter Name="Name" Type="string">
+                    Field name used as the key in the values dictionary.
+                </ApiParameter>
+                <ApiParameter Name="Label" Type="string?">
+                    Label text displayed above or beside the field.
+                </ApiParameter>
+                <ApiParameter Name="Description" Type="string?">
+                    Helper text displayed below the field.
+                </ApiParameter>
+                <ApiParameter Name="Placeholder" Type="string?">
+                    Placeholder text displayed when the field is empty.
+                </ApiParameter>
+                <ApiParameter Name="Type" Type="FieldType" Default="Text">
+                    Field type that determines which component is rendered. Options: Text, Email, Password, Url, Phone, Number, Currency, Textarea, RichText, Select, Combobox, MultiSelect, NativeSelect, Checkbox, Switch, CheckboxGroup, RadioGroup, Date, DateRange, Time, DateTime, Color, File, OTP, Slider, RangeSlider, Tags, Custom.
+                </ApiParameter>
+                <ApiParameter Name="Required" Type="bool" Default="false">
+                    Whether this field is required.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether this field is disabled.
+                </ApiParameter>
+                <ApiParameter Name="ReadOnly" Type="bool" Default="false">
+                    Whether this field is read-only.
+                </ApiParameter>
+                <ApiParameter Name="DefaultValue" Type="object?">
+                    Default value applied when the field is not present in the values dictionary.
+                </ApiParameter>
+                <ApiParameter Name="Order" Type="int?">
+                    Display order. Fields with lower values appear first. Null uses definition order.
+                </ApiParameter>
+                <ApiParameter Name="ColSpan" Type="int" Default="1">
+                    Number of grid columns this field spans.
+                </ApiParameter>
+                <ApiParameter Name="VisibleWhen" Type="string?">
+                    Visibility expression evaluated against current values. Example: <code>"Country == 'US'"</code>. Supports <code>==</code>, <code>!=</code>, <code>&amp;&amp;</code>, <code>||</code>, <code>!</code>.
+                </ApiParameter>
+                <ApiParameter Name="Options" Type="List&lt;SelectOption&lt;string&gt;&gt;?">
+                    Options for Select, Combobox, MultiSelect, RadioGroup, and CheckboxGroup fields.
+                </ApiParameter>
+                <ApiParameter Name="Validations" Type="List&lt;FieldValidation&gt;?">
+                    Validation rules for this field.
+                </ApiParameter>
+                <ApiParameter Name="Metadata" Type="Dictionary&lt;string, object&gt;?">
+                    Additional metadata for field-type-specific configuration (e.g., min, max, step for sliders).
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="FormSectionDefinition">
+                <ApiParameter Name="Title" Type="string?">
+                    Section heading text.
+                </ApiParameter>
+                <ApiParameter Name="Description" Type="string?">
+                    Section description displayed below the heading.
+                </ApiParameter>
+                <ApiParameter Name="Fields" Type="List&lt;FormFieldDefinition&gt;">
+                    Fields within this section.
+                </ApiParameter>
+                <ApiParameter Name="Columns" Type="int?">
+                    Override for the form-level column count within this section.
+                </ApiParameter>
+                <ApiParameter Name="VisibleWhen" Type="string?">
+                    Visibility expression that controls whether this section is shown.
+                </ApiParameter>
+                <ApiParameter Name="Collapsible" Type="bool" Default="false">
+                    Whether this section can be collapsed.
+                </ApiParameter>
+                <ApiParameter Name="DefaultExpanded" Type="bool" Default="true">
+                    Whether this section is initially expanded when Collapsible is true.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="FieldValidation">
+                <ApiParameter Name="Type" Type="ValidationType">
+                    Validation type. Options: Required, MinLength, MaxLength, Min, Max, Pattern, Email, Url, Phone, Custom.
+                </ApiParameter>
+                <ApiParameter Name="Value" Type="object?">
+                    Validation parameter (e.g., max length number, regex pattern string).
+                </ApiParameter>
+                <ApiParameter Name="Message" Type="string?">
+                    Custom error message. When null, a default message is generated.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
 </div>
 
 @code {
@@ -262,43 +464,41 @@
 
     // ── JSON Schema ─────────────────────────────────────────────────
 
-    private static readonly string _jsonSchemaString = """
-    {
-        "type": "object",
-        "title": "Product Feedback",
-        "description": "Help us improve by sharing your feedback.",
-        "required": ["name", "rating"],
-        "properties": {
-            "name": {
-                "type": "string",
-                "title": "Your Name",
-                "minLength": 2,
-                "maxLength": 100
+    private static readonly string _jsonSchemaString = @"{
+        ""type"": ""object"",
+        ""title"": ""Product Feedback"",
+        ""description"": ""Help us improve by sharing your feedback."",
+        ""required"": [""name"", ""rating""],
+        ""properties"": {
+            ""name"": {
+                ""type"": ""string"",
+                ""title"": ""Your Name"",
+                ""minLength"": 2,
+                ""maxLength"": 100
             },
-            "email": {
-                "type": "string",
-                "format": "email",
-                "title": "Email Address"
+            ""email"": {
+                ""type"": ""string"",
+                ""format"": ""email"",
+                ""title"": ""Email Address""
             },
-            "rating": {
-                "type": "integer",
-                "title": "Rating (1-5)",
-                "minimum": 1,
-                "maximum": 5
+            ""rating"": {
+                ""type"": ""integer"",
+                ""title"": ""Rating (1-5)"",
+                ""minimum"": 1,
+                ""maximum"": 5
             },
-            "category": {
-                "type": "string",
-                "title": "Category",
-                "enum": ["bug", "feature", "improvement", "question"]
+            ""category"": {
+                ""type"": ""string"",
+                ""title"": ""Category"",
+                ""enum"": [""bug"", ""feature"", ""improvement"", ""question""]
             },
-            "comments": {
-                "type": "string",
-                "title": "Comments",
-                "maxLength": 500
+            ""comments"": {
+                ""type"": ""string"",
+                ""title"": ""Comments"",
+                ""maxLength"": 500
             }
         }
-    }
-    """;
+    }";
 
     private readonly FormSchema _jsonSchema = FormSchemaParser.FromJson(_jsonSchemaString);
 

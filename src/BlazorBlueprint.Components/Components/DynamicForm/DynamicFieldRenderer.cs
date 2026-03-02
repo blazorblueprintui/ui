@@ -657,9 +657,7 @@ internal static class DynamicFieldRenderer
         var context = new DynamicFieldRenderContext(field, value, onValueChanged, disabled, readOnly);
 
         RenderWrappedField(builder, seq, field, errorText, controlBuilder =>
-        {
-            controlBuilder.AddContent(0, customRenderer(context));
-        });
+            controlBuilder.AddContent(0, customRenderer(context)));
     }
 
     // ── Shared Helpers ───────────────────────────────────────────────
@@ -683,11 +681,7 @@ internal static class DynamicFieldRenderer
             builder.AddAttribute(seq + 1, "HelperText", field.Description);
         }
 
-        if (errorText is not null)
-        {
-            builder.AddAttribute(seq + 2, "ErrorText", errorText);
-        }
-
+        builder.AddAttribute(seq + 2, "ErrorText", errorText);
         builder.AddAttribute(seq + 3, "Disabled", disabled);
     }
 
@@ -708,9 +702,7 @@ internal static class DynamicFieldRenderer
             {
                 innerBuilder.OpenComponent<BbFieldLabel>(0);
                 innerBuilder.AddAttribute(1, "ChildContent", (RenderFragment)(lb =>
-                {
-                    lb.AddContent(0, field.Label);
-                }));
+                    lb.AddContent(0, field.Label)));
                 innerBuilder.CloseComponent();
             }
 
@@ -722,18 +714,14 @@ internal static class DynamicFieldRenderer
             {
                 innerBuilder.OpenComponent<BbFieldError>(50);
                 innerBuilder.AddAttribute(51, "ChildContent", (RenderFragment)(eb =>
-                {
-                    eb.AddContent(0, errorText);
-                }));
+                    eb.AddContent(0, errorText)));
                 innerBuilder.CloseComponent();
             }
             else if (field.Description is not null)
             {
                 innerBuilder.OpenComponent<BbFieldDescription>(50);
                 innerBuilder.AddAttribute(51, "ChildContent", (RenderFragment)(db =>
-                {
-                    db.AddContent(0, field.Description);
-                }));
+                    db.AddContent(0, field.Description)));
                 innerBuilder.CloseComponent();
             }
         }));

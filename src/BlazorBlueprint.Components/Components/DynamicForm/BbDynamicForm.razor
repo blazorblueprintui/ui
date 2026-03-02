@@ -16,7 +16,7 @@
         </div>
     }
 
-    @if (HasErrors)
+    @if (ShowValidationSummary && HasErrors)
     {
         <BbAlert Variant="AlertVariant.Danger">
             <BbAlertTitle>Validation Errors</BbAlertTitle>
@@ -35,20 +35,20 @@
     {
         @if (Schema.Sections.Count > 0)
         {
-            @foreach (var section in Schema.Sections)
+            @foreach (var sectionDef in Schema.Sections)
             {
-                if (!IsSectionVisible(section))
+                if (!IsSectionVisible(sectionDef))
                 {
                     continue;
                 }
 
-                var columns = GetEffectiveColumns(section.Columns);
+                var columns = GetEffectiveColumns(sectionDef.Columns);
 
-                <BbFormSection Title="@section.Title"
-                               Description="@section.Description"
-                               Collapsible="@section.Collapsible"
-                               DefaultExpanded="@section.DefaultExpanded">
-                    @((RenderFragment)(builder => RenderFieldsGrid(builder, section.Fields, columns)))
+                <BbFormSection Title="@sectionDef.Title"
+                               Description="@sectionDef.Description"
+                               Collapsible="@sectionDef.Collapsible"
+                               DefaultExpanded="@sectionDef.DefaultExpanded">
+                    @((RenderFragment)(builder => RenderFieldsGrid(builder, sectionDef.Fields, columns)))
                 </BbFormSection>
             }
         }

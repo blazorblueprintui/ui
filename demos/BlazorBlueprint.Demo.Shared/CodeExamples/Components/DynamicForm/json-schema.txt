@@ -1,0 +1,39 @@
+private static readonly string jsonSchemaString = @"{
+    ""type"": ""object"",
+    ""title"": ""Product Feedback"",
+    ""description"": ""Help us improve by sharing your feedback."",
+    ""required"": [""name"", ""rating""],
+    ""properties"": {
+        ""name"": {
+            ""type"": ""string"",
+            ""title"": ""Your Name"",
+            ""minLength"": 2,
+            ""maxLength"": 100
+        },
+        ""email"": {
+            ""type"": ""string"",
+            ""format"": ""email"",
+            ""title"": ""Email Address""
+        },
+        ""rating"": {
+            ""type"": ""integer"",
+            ""title"": ""Rating (1-5)"",
+            ""minimum"": 1,
+            ""maximum"": 5
+        },
+        ""category"": {
+            ""type"": ""string"",
+            ""title"": ""Category"",
+            ""enum"": [""bug"", ""feature"", ""improvement"", ""question""]
+        },
+        ""comments"": {
+            ""type"": ""string"",
+            ""title"": ""Comments"",
+            ""maxLength"": 500
+        }
+    }
+}";
+
+private readonly FormSchema schema = FormSchemaParser.FromJson(jsonSchemaString);
+
+<BbDynamicForm Schema="@schema" @bind-Values="values" OnValidSubmit="HandleSubmit" />
