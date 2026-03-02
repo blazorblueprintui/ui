@@ -41,7 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - `@bind-State` two-way binding for controlled state management.
   - Full keyboard navigation and ARIA attributes.
   - Demo page with 16 interactive examples.
-- **BbTreeView** — Hierarchical data display component (`BbTreeView` + `BbTreeItem`) with full keyboard navigation and ARIA compliance.
+- **BbTreeView** — Hierarchical data display component (`BbTreeView` + `BbTreeItem`) with keyboard navigation and ARIA attributes.
   - Three data binding modes: declarative markup, nested objects via `ChildrenProperty`, and flat data with `ParentField`.
   - Primitives layer: headless tree with context-based state management, expand/collapse, single/multi selection, and keyboard navigation via JS interop.
   - Components layer: styled tree with Tailwind CSS, Lucide icons, badges, search/filter with auto-expand, lazy loading with caching, tri-state checkboxes with parent/child cascade, and drag-and-drop reordering.

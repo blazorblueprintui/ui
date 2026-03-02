@@ -51,12 +51,38 @@ function isDisabled(el) {
 }
 
 /**
+ * Checks if the event target is an interactive element that should handle its own events.
+ * @param {Event} e
+ * @param {HTMLElement} treeItem - The closest treeitem ancestor
+ * @returns {boolean}
+ */
+function isFromInteractiveElement(e, treeItem) {
+  const interactiveSelectors = 'button:not([data-tree-toggle]):not([data-tree-checkbox]), a, input, textarea, select, [contenteditable="true"]';
+  const interactive = e.target.closest(interactiveSelectors);
+  // Only consider it interactive if it's inside the treeitem but not the treeitem itself
+  return interactive != null && interactive !== treeItem && treeItem.contains(interactive);
+}
+
+/**
  * Finds the closest treeitem element from the event target.
  * @param {Event} e
  * @returns {HTMLElement|null}
  */
 function getTreeItemFromEvent(e) {
   return e.target.closest('[role="treeitem"]');
+}
+
+/**
+ * Updates roving tabindex: sets tabindex="0" on the target item and
+ * tabindex="-1" on all other visible items in the tree.
+ * @param {HTMLElement} container
+ * @param {HTMLElement} targetItem
+ */
+function updateRovingTabindex(container, targetItem) {
+  const items = container.querySelectorAll('[role="treeitem"]');
+  for (const item of items) {
+    item.setAttribute('tabindex', item === targetItem ? '0' : '-1');
+  }
 }
 
 /**
@@ -70,9 +96,18 @@ export function initialize(containerElement, dotNetRef, instanceId) {
 
   const state = { containerElement, dotNetRef, instanceId };
 
+  const focusTreeItem = (item) => {
+    if (!item) return;
+    updateRovingTabindex(containerElement, item);
+    item.focus({ preventScroll: false });
+  };
+
   const handleKeyDown = (e) => {
     const currentItem = getTreeItemFromEvent(e);
     if (!currentItem) return;
+
+    // Don't intercept events from interactive descendants (buttons, links, inputs, etc.)
+    if (isFromInteractiveElement(e, currentItem)) return;
 
     const value = getNodeValue(currentItem);
     if (!value) return;
@@ -86,7 +121,7 @@ export function initialize(containerElement, dotNetRef, instanceId) {
         // Move focus to next visible node
         for (let i = currentIndex + 1; i < items.length; i++) {
           if (!isDisabled(items[i])) {
-            items[i].focus();
+            focusTreeItem(items[i]);
             break;
           }
         }
@@ -98,7 +133,7 @@ export function initialize(containerElement, dotNetRef, instanceId) {
         // Move focus to previous visible node
         for (let i = currentIndex - 1; i >= 0; i--) {
           if (!isDisabled(items[i])) {
-            items[i].focus();
+            focusTreeItem(items[i]);
             break;
           }
         }
@@ -119,7 +154,7 @@ export function initialize(containerElement, dotNetRef, instanceId) {
           if (group) {
             const firstChild = group.querySelector('[role="treeitem"]');
             if (firstChild && !isDisabled(firstChild)) {
-              firstChild.focus();
+              focusTreeItem(firstChild);
             }
           }
         }
@@ -139,7 +174,7 @@ export function initialize(containerElement, dotNetRef, instanceId) {
           if (group && group.getAttribute('role') === 'group') {
             const parentItem = group.parentElement;
             if (parentItem && parentItem.getAttribute('role') === 'treeitem' && !isDisabled(parentItem)) {
-              parentItem.focus();
+              focusTreeItem(parentItem);
             }
           }
         }
@@ -175,7 +210,7 @@ export function initialize(containerElement, dotNetRef, instanceId) {
         // Focus first visible node
         for (let i = 0; i < items.length; i++) {
           if (!isDisabled(items[i])) {
-            items[i].focus();
+            focusTreeItem(items[i]);
             break;
           }
         }
@@ -187,7 +222,7 @@ export function initialize(containerElement, dotNetRef, instanceId) {
         // Focus last visible node
         for (let i = items.length - 1; i >= 0; i--) {
           if (!isDisabled(items[i])) {
-            items[i].focus();
+            focusTreeItem(items[i]);
             break;
           }
         }
@@ -233,12 +268,15 @@ export function initialize(containerElement, dotNetRef, instanceId) {
       return;
     }
 
+    // Don't steal focus from interactive elements (buttons, links, inputs, etc.)
+    if (isFromInteractiveElement(e, treeItem)) return;
+
     // Otherwise, select the node
     const hasChildren = treeItem.getAttribute('data-has-children') === 'true';
     dotNetRef.invokeMethodAsync('JsOnNodeActivate', value, hasChildren);
 
-    // Make sure the clicked item gets focus
-    treeItem.focus();
+    // Make sure the clicked item gets focus and update roving tabindex
+    focusTreeItem(treeItem);
   };
 
   containerElement.addEventListener('keydown', handleKeyDown);

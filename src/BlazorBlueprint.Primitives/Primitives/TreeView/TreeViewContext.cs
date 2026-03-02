@@ -20,8 +20,12 @@ internal sealed class TreeNodeInfo
 /// </summary>
 public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
 {
+    private const string RootParentKey = "\0__root__";
     private readonly Dictionary<string, TreeNodeInfo> nodeRegistry = new();
+    private readonly Dictionary<string, List<TreeNodeInfo>> childrenByParent = new();
     private int nextOrder;
+
+    private static string ParentKey(string? parentValue) => parentValue ?? RootParentKey;
 
     /// <summary>
     /// Initializes a new instance of the TreeViewContext.
@@ -42,7 +46,13 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
     /// </summary>
     public void RegisterNode(string value, string? parentValue, int depth, bool disabled)
     {
-        nodeRegistry[value] = new TreeNodeInfo
+        // Remove from old parent index if re-registering
+        if (nodeRegistry.TryGetValue(value, out var existing))
+        {
+            RemoveFromChildrenIndex(existing);
+        }
+
+        var info = new TreeNodeInfo
         {
             Value = value,
             ParentValue = parentValue,
@@ -50,13 +60,42 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
             Disabled = disabled,
             Order = nextOrder++
         };
+        nodeRegistry[value] = info;
+
+        // Add to parent-to-children index
+        var key = ParentKey(parentValue);
+        if (!childrenByParent.TryGetValue(key, out var siblings))
+        {
+            siblings = new List<TreeNodeInfo>();
+            childrenByParent[key] = siblings;
+        }
+        siblings.Add(info);
     }
 
     /// <summary>
     /// Unregisters a node from the tree context.
     /// </summary>
-    public void UnregisterNode(string value) =>
-        nodeRegistry.Remove(value);
+    public void UnregisterNode(string value)
+    {
+        if (nodeRegistry.TryGetValue(value, out var info))
+        {
+            RemoveFromChildrenIndex(info);
+            nodeRegistry.Remove(value);
+        }
+    }
+
+    private void RemoveFromChildrenIndex(TreeNodeInfo info)
+    {
+        var key = ParentKey(info.ParentValue);
+        if (childrenByParent.TryGetValue(key, out var siblings))
+        {
+            siblings.Remove(info);
+            if (siblings.Count == 0)
+            {
+                childrenByParent.Remove(key);
+            }
+        }
+    }
 
     /// <summary>
     /// Updates the disabled state of a registered node.
@@ -74,8 +113,12 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
     /// </summary>
     public List<string> GetChildValues(string? parentValue)
     {
-        return nodeRegistry.Values
-            .Where(n => n.ParentValue == parentValue)
+        if (!childrenByParent.TryGetValue(ParentKey(parentValue), out var children))
+        {
+            return new List<string>();
+        }
+
+        return children
             .OrderBy(n => n.Order)
             .Select(n => n.Value)
             .ToList();
@@ -136,8 +179,13 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
             return new List<string>();
         }
 
-        return nodeRegistry.Values
-            .Where(n => n.ParentValue == info.ParentValue && n.Value != value)
+        if (!childrenByParent.TryGetValue(ParentKey(info.ParentValue), out var siblings))
+        {
+            return new List<string>();
+        }
+
+        return siblings
+            .Where(n => n.Value != value)
             .OrderBy(n => n.Order)
             .Select(n => n.Value)
             .ToList();
@@ -159,7 +207,7 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
             return 0;
         }
 
-        return nodeRegistry.Values.Count(n => n.ParentValue == info.ParentValue);
+        return childrenByParent.TryGetValue(ParentKey(info.ParentValue), out var siblings) ? siblings.Count : 0;
     }
 
     /// <summary>
@@ -172,14 +220,15 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
             return 0;
         }
 
-        var siblings = nodeRegistry.Values
-            .Where(n => n.ParentValue == info.ParentValue)
-            .OrderBy(n => n.Order)
-            .ToList();
-
-        for (var i = 0; i < siblings.Count; i++)
+        if (!childrenByParent.TryGetValue(ParentKey(info.ParentValue), out var siblings))
         {
-            if (siblings[i].Value == value)
+            return 0;
+        }
+
+        var ordered = siblings.OrderBy(n => n.Order).ToList();
+        for (var i = 0; i < ordered.Count; i++)
+        {
+            if (ordered[i].Value == value)
             {
                 return i + 1;
             }
@@ -192,7 +241,25 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
     /// Checks whether a node has registered children.
     /// </summary>
     public bool HasChildren(string value) =>
-        nodeRegistry.Values.Any(n => n.ParentValue == value);
+        childrenByParent.TryGetValue(value, out var children) && children.Count > 0;
+
+    /// <summary>
+    /// Returns true if the given value is the first enabled root node (for roving tabindex).
+    /// </summary>
+    public bool IsFirstEnabledRoot(string value)
+    {
+        if (!childrenByParent.TryGetValue(RootParentKey, out var roots))
+        {
+            return false;
+        }
+
+        var firstEnabled = roots
+            .Where(n => !n.Disabled)
+            .OrderBy(n => n.Order)
+            .FirstOrDefault();
+
+        return firstEnabled?.Value == value;
+    }
 
     /// <summary>
     /// Checks whether a node is registered.
@@ -282,10 +349,11 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
     /// </summary>
     public void ExpandAllWithChildren()
     {
+        // Build set of all parent values directly from the index keys
         var allExpandable = new HashSet<string>();
-        foreach (var kvp in nodeRegistry)
+        foreach (var kvp in childrenByParent)
         {
-            if (HasChildren(kvp.Key))
+            if (kvp.Key != RootParentKey && kvp.Value.Count > 0)
             {
                 allExpandable.Add(kvp.Key);
             }

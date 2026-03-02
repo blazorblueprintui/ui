@@ -86,6 +86,11 @@ export function initializeDragDrop(containerElement, dotNetRef, instanceId) {
       state.indicator = createIndicator();
     }
 
+    // Clear stale drop-target classes from any previous target
+    containerElement.querySelectorAll('.bb-tree-drop-target').forEach(el => {
+      el.classList.remove('bb-tree-drop-target');
+    });
+
     const nodeEl = targetEl.querySelector('[data-tree-node]') || targetEl;
     const containerRect = containerElement.getBoundingClientRect();
     const targetRect = nodeEl.getBoundingClientRect();
@@ -97,11 +102,9 @@ export function initializeDragDrop(containerElement, dotNetRef, instanceId) {
     if (position === 'before') {
       state.indicator.style.top = `${targetRect.top - containerRect.top}px`;
       state.indicator.style.height = '2px';
-      targetEl.classList.remove('bb-tree-drop-target');
     } else if (position === 'after') {
       state.indicator.style.top = `${targetRect.bottom - containerRect.top}px`;
       state.indicator.style.height = '2px';
-      targetEl.classList.remove('bb-tree-drop-target');
     } else {
       state.indicator.style.display = 'none';
       targetEl.classList.add('bb-tree-drop-target');
