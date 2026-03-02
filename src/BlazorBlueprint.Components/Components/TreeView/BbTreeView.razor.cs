@@ -24,6 +24,7 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
     private Dictionary<string, List<TItem>>? childrenByParent;
     private System.Timers.Timer? debounceTimer;
     private bool disposed;
+    private const string RootSentinel = "\0__tree_root__";
     private string instanceId = Guid.NewGuid().ToString("N")[..8];
 
     // --- Declarative mode ---
@@ -349,7 +350,7 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
             foreach (var item in Items)
             {
                 var parentId = ParentField(item);
-                var key = parentId ?? "__root__";
+                var key = parentId ?? RootSentinel;
                 if (!childrenByParent.TryGetValue(key, out var list))
                 {
                     list = new List<TItem>();
@@ -378,7 +379,7 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
         var value = ValueField(item);
         itemsByValue![value] = item;
 
-        var key = parentKey ?? "__root__";
+        var key = parentKey ?? RootSentinel;
         if (!childrenByParent!.TryGetValue(key, out var list))
         {
             list = new List<TItem>();
@@ -401,7 +402,7 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
 
     private IEnumerable<TItem> GetRootItems()
     {
-        if (childrenByParent != null && childrenByParent.TryGetValue("__root__", out var roots))
+        if (childrenByParent != null && childrenByParent.TryGetValue(RootSentinel, out var roots))
         {
             return roots;
         }
@@ -624,7 +625,7 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
             {
                 foreach (var child in kvp.Value)
                 {
-                    if (ValueField(child) == value && kvp.Key != "__root__")
+                    if (ValueField(child) == value && kvp.Key != RootSentinel)
                     {
                         searchExpandedValues.Add(kvp.Key);
                         var parentItem = GetItemByValue(kvp.Key);
