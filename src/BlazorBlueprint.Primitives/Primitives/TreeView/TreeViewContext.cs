@@ -31,6 +31,19 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
     /// </summary>
     public string? FocusedNodeValue { get; set; }
 
+    /// <summary>
+    /// When true, nodes are auto-expanded on registration so the tree
+    /// progressively renders fully expanded without instantiating the entire
+    /// component tree upfront (important for WASM performance).
+    /// </summary>
+    internal bool AutoExpandAll { get; set; }
+
+    /// <summary>
+    /// When set, nodes at depth less than this value are auto-expanded on
+    /// registration.
+    /// </summary>
+    internal int? AutoExpandDepth { get; set; }
+
     private static string ParentKey(string? parentValue) => parentValue ?? RootParentKey;
 
     /// <summary>
@@ -76,6 +89,16 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
             childrenByParent[key] = siblings;
         }
         siblings.Add(info);
+
+        // Auto-expand this node during initial render so ChildContent renders
+        // progressively level by level, avoiding the cost of instantiating the
+        // entire component tree at once (critical for WASM performance).
+        // Modify State.ExpandedValues directly instead of calling UpdateState
+        // to avoid firing OnStateChanged mid-render.
+        if (AutoExpandAll || (AutoExpandDepth.HasValue && depth < AutoExpandDepth.Value))
+        {
+            State.ExpandedValues.Add(value);
+        }
     }
 
     /// <summary>
