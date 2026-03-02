@@ -178,13 +178,6 @@ internal static class DynamicFieldRenderer
             controlBuilder.AddAttribute(1, "Value", ConvertToDouble(value));
             controlBuilder.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<double>(owner, v => onValueChanged(v)));
             controlBuilder.AddAttribute(3, "Disabled", disabled);
-            controlBuilder.AddAttribute(8, "Id", controlId);
-            controlBuilder.AddAttribute(9, "Required", field.Required);
-            if (describedById is not null)
-            {
-                controlBuilder.AddAttribute(10, "AriaDescribedBy", describedById);
-            }
-
             if (field.Placeholder is not null)
             {
                 controlBuilder.AddAttribute(4, "Placeholder", field.Placeholder);
@@ -193,6 +186,13 @@ internal static class DynamicFieldRenderer
             AddMetadataDouble(controlBuilder, 5, field, "min", "Min");
             AddMetadataDouble(controlBuilder, 6, field, "max", "Max");
             AddMetadataDouble(controlBuilder, 7, field, "step", "Step");
+            controlBuilder.AddAttribute(8, "Id", controlId);
+            controlBuilder.AddAttribute(9, "Required", field.Required);
+            if (describedById is not null)
+            {
+                controlBuilder.AddAttribute(10, "AriaDescribedBy", describedById);
+            }
+
             controlBuilder.CloseComponent();
         });
     }
@@ -210,6 +210,12 @@ internal static class DynamicFieldRenderer
             controlBuilder.AddAttribute(1, "Value", ConvertToDecimal(value));
             controlBuilder.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<decimal>(owner, v => onValueChanged(v)));
             controlBuilder.AddAttribute(3, "Disabled", disabled);
+            if (field.Placeholder is not null)
+            {
+                controlBuilder.AddAttribute(4, "Placeholder", field.Placeholder);
+            }
+
+            AddMetadataString(controlBuilder, 5, field, "currencyCode", "CurrencyCode");
             controlBuilder.AddAttribute(6, "Id", controlId);
             controlBuilder.AddAttribute(7, "Required", field.Required);
             if (describedById is not null)
@@ -217,12 +223,6 @@ internal static class DynamicFieldRenderer
                 controlBuilder.AddAttribute(8, "AriaDescribedBy", describedById);
             }
 
-            if (field.Placeholder is not null)
-            {
-                controlBuilder.AddAttribute(4, "Placeholder", field.Placeholder);
-            }
-
-            AddMetadataString(controlBuilder, 5, field, "currencyCode", "CurrencyCode");
             controlBuilder.CloseComponent();
         });
     }
@@ -240,16 +240,16 @@ internal static class DynamicFieldRenderer
             controlBuilder.AddAttribute(1, "Value", value as string);
             controlBuilder.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create<string?>(owner, v => onValueChanged(v)));
             controlBuilder.AddAttribute(3, "Disabled", disabled);
+            if (field.Placeholder is not null)
+            {
+                controlBuilder.AddAttribute(4, "Placeholder", field.Placeholder);
+            }
+
             controlBuilder.AddAttribute(5, "Id", controlId);
             controlBuilder.AddAttribute(6, "Required", field.Required);
             if (describedById is not null)
             {
                 controlBuilder.AddAttribute(7, "AriaDescribedBy", describedById);
-            }
-
-            if (field.Placeholder is not null)
-            {
-                controlBuilder.AddAttribute(4, "Placeholder", field.Placeholder);
             }
 
             controlBuilder.CloseComponent();
@@ -709,14 +709,15 @@ internal static class DynamicFieldRenderer
         {
             controlBuilder.OpenComponent<BbFileUpload>(0);
             controlBuilder.AddAttribute(1, "Disabled", disabled);
+            AddMetadataString(controlBuilder, 2, field, "accept", "Accept");
+            AddMetadataBool(controlBuilder, 3, field, "multiple", "Multiple");
             controlBuilder.AddAttribute(4, "FilesChanged",
                 EventCallback.Factory.Create<IReadOnlyList<FileUploadItem>>(owner, files => onValueChanged(files)));
             if (value is IReadOnlyList<FileUploadItem> existingFiles)
             {
                 controlBuilder.AddAttribute(5, "Files", existingFiles);
             }
-            AddMetadataString(controlBuilder, 2, field, "accept", "Accept");
-            AddMetadataBool(controlBuilder, 3, field, "multiple", "Multiple");
+
             controlBuilder.CloseComponent();
         });
     }
@@ -786,8 +787,8 @@ internal static class DynamicFieldRenderer
 
         builder.OpenComponent<BbField>(seq);
         builder.AddAttribute(seq + 1, "IsInvalid", errorText is not null);
-        builder.AddAttribute(seq + 3, "Orientation", GetFieldOrientation(layout));
-        builder.AddAttribute(seq + 2, "ChildContent", (RenderFragment)(innerBuilder =>
+        builder.AddAttribute(seq + 2, "Orientation", GetFieldOrientation(layout));
+        builder.AddAttribute(seq + 3, "ChildContent", (RenderFragment)(innerBuilder =>
         {
             // Label
             if (field.Label is not null)

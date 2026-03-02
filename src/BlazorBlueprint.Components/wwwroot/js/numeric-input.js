@@ -52,10 +52,11 @@ export function initialize(element, dotNetRef, instanceId, config) {
 
     for (let i = 0; i < raw.length; i++) {
       const ch = raw[i];
+      const decSep = cfg.decimalSeparator || '.';
       if (ch >= '0' && ch <= '9') {
         sanitized += ch;
-      } else if (ch === '.' && cfg.allowDecimal && !hasDecimal) {
-        sanitized += ch;
+      } else if ((ch === '.' || ch === ',' || ch === decSep) && cfg.allowDecimal && !hasDecimal) {
+        sanitized += decSep;
         hasDecimal = true;
       } else if (ch === '-' && cfg.allowNegative && sanitized.length === 0) {
         sanitized += ch;

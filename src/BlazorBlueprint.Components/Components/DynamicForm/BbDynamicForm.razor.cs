@@ -359,10 +359,20 @@ public partial class BbDynamicForm : ComponentBase
 
     private static string? ValidateField(FormFieldDefinition field, object? value)
     {
-        // Required check
-        if (field.Required && IsEmpty(value))
+        // Required check — for boolean fields, "required" means the value must be true
+        if (field.Required)
         {
-            return $"{field.Label ?? field.Name} is required.";
+            if (value is bool boolValue)
+            {
+                if (!boolValue)
+                {
+                    return $"{field.Label ?? field.Name} is required.";
+                }
+            }
+            else if (IsEmpty(value))
+            {
+                return $"{field.Label ?? field.Name} is required.";
+            }
         }
 
         // Skip further validation if empty and not required
