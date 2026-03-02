@@ -362,9 +362,9 @@ public partial class BbDynamicForm : ComponentBase
         // Required check — for boolean fields, "required" means the value must be true
         if (field.Required)
         {
-            if (value is bool boolValue)
+            if (field.Type is FieldType.Checkbox or FieldType.Switch)
             {
-                if (!boolValue)
+                if (!CoerceToBool(value))
                 {
                     return $"{field.Label ?? field.Name} is required.";
                 }
@@ -561,6 +561,16 @@ public partial class BbDynamicForm : ComponentBase
             null => true,
             string s => string.IsNullOrWhiteSpace(s),
             System.Collections.IEnumerable enumerable => !enumerable.Cast<object?>().Any(),
+            _ => false
+        };
+    }
+
+    private static bool CoerceToBool(object? value)
+    {
+        return value switch
+        {
+            bool b => b,
+            string s => bool.TryParse(s, out var parsed) && parsed,
             _ => false
         };
     }

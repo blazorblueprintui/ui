@@ -22,6 +22,7 @@ const instances = new Map();
  * @param {string[]} config.stepKeys - Key names to intercept (e.g. ['ArrowUp', 'ArrowDown']).
  * @param {boolean} config.allowDecimal - Whether decimal points are allowed.
  * @param {boolean} config.allowNegative - Whether negative sign is allowed.
+ * @param {string} config.decimalSeparator - The decimal separator character used for input sanitization (e.g. '.').
  */
 export function initialize(element, dotNetRef, instanceId, config) {
   if (!element || !dotNetRef) {
