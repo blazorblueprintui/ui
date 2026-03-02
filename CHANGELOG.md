@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-02
+
+### Fixed
+
+- **BbSelect**: Performance — set `ForceMount=false` on portal so items only exist in the DOM when the dropdown is open; set `IsFixed=true` on cascading context to eliminate redundant notifications; added `ShouldRender` gate and cached attributes/CSS constants on `BbSelectItem`.
+- **BbSelect**: Checkmark overlapping text in narrow dropdowns — replaced absolute-positioned checkmark with flex layout so text truncates gracefully.
+- **BbCalendar**: Year picker now respects `MinDate`/`MaxDate` as year range bounds.
+- **BbDateRangePicker**: Performance — added `ShouldRender`, cached week/day-name collections and pre-computed CSS constants, guarded `OnParametersSet` against redundant syncs.
+- **BbTreeView**: Optimized `TreeViewContext` with parent-to-children index reducing `GetPosInSet`/`GetSetSize`/`HasChildren` from O(N²) to O(N) lookups.
+- **BbTreeView**: Fixed roving tabindex — focused node now tracked in context so keyboard navigation and re-renders preserve correct focus.
+- **BbTreeView**: `OnCheckedChanged` callback was declared but never fired — now routed through `CheckedValuesChanged` handler.
+- **BbTreeView**: Interactive elements (buttons, links, inputs) inside `ActionsTemplate` are no longer intercepted by tree keyboard/click handlers.
+- **BbTreeView**: Stale `.bb-tree-drop-target` CSS classes during drag-and-drop are now cleared at the start of each indicator update.
+
+---
+
 ## 2026-03-01
 
 ### Added
