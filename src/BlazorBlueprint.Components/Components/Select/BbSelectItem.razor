@@ -1,5 +1,6 @@
 @typeparam TValue
 @namespace BlazorBlueprint.Components
+@implements IDisposable
 
 @* Styled SelectItem wrapper around SelectItem primitive *@
 <BlazorBlueprint.Primitives.Select.BbSelectItem TValue="TValue"
@@ -7,15 +8,7 @@
                                            Text="@GetDisplayText()"
                                            Disabled="Disabled"
                                            class="@CssClass">
-    @if (IsSelected)
-    {
-        <span class="absolute inset-y-0 right-0 flex items-center pr-3">
-            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-        </span>
-    }
-    <span class="@(IsSelected ? "pr-6" : "")">
+    <span class="truncate">
         @if (ChildContent is not null)
         {
             @ChildContent
@@ -25,11 +18,21 @@
             @GetDisplayText()
         }
     </span>
+    @if (IsSelected)
+    {
+        <svg class="ml-auto h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+    }
 </BlazorBlueprint.Primitives.Select.BbSelectItem>
 
 @code {
     [CascadingParameter]
     private BlazorBlueprint.Primitives.Select.SelectContext<TValue>? _context { get; set; }
+
+    // ShouldRender tracking fields
+    private bool lastIsSelected;
+    private bool lastDisabled;
 
     /// <summary>
     /// Gets or sets the value of this item.
@@ -74,17 +77,53 @@
         }
     }
 
+    private const string BaseClasses =
+        "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 px-2 text-sm " +
+        "outline-none transition-colors " +
+        "data-[focused=true]:bg-accent data-[focused=true]:text-accent-foreground " +
+        "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50";
+
+    private const string SelectedClasses =
+        BaseClasses + " bg-accent/50 text-accent-foreground";
+
     /// <summary>
     /// Gets the computed CSS classes for the item.
     /// </summary>
-    private string CssClass => ClassNames.cn(
-        "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 px-2 text-sm",
-        "outline-none transition-colors",
-        "data-[focused=true]:bg-accent data-[focused=true]:text-accent-foreground",
-        "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
-        ClassNames.when(IsSelected, "bg-accent/50 text-accent-foreground"),
-        Class
-    );
+    private string CssClass => string.IsNullOrEmpty(Class)
+        ? (IsSelected ? SelectedClasses : BaseClasses)
+        : ClassNames.cn(IsSelected ? SelectedClasses : BaseClasses, Class);
+
+    protected override void OnInitialized()
+    {
+        if (_context != null)
+        {
+            _context.OnStateChanged += HandleStateChanged;
+        }
+
+        // Initialize ShouldRender tracking
+        lastIsSelected = IsSelected;
+        lastDisabled = Disabled;
+    }
+
+    protected override bool ShouldRender()
+    {
+        var currentIsSelected = IsSelected;
+
+        if (currentIsSelected != lastIsSelected ||
+            Disabled != lastDisabled)
+        {
+            lastIsSelected = currentIsSelected;
+            lastDisabled = Disabled;
+            return true;
+        }
+
+        return false;
+    }
+
+    private void HandleStateChanged()
+    {
+        StateHasChanged();
+    }
 
     /// <summary>
     /// Gets the display text for this item.
@@ -93,5 +132,13 @@
     private string? GetDisplayText()
     {
         return Text ?? Value?.ToString();
+    }
+
+    public void Dispose()
+    {
+        if (_context != null)
+        {
+            _context.OnStateChanged -= HandleStateChanged;
+        }
     }
 }
