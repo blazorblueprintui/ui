@@ -40,11 +40,14 @@
 
     private void TryBackdropClose(DialogData dialog)
     {
+        if (dialog is AlertDialogData)
+            return;
+
         if (dialog is ComponentDialogData component &&
             component.Options.PreventClose)
             return;
 
-        DialogService.Resolve<object?>(dialog.Id, null);
+        DialogService.Resolve(dialog.Id, DialogResult.Cancel());
     }
 
     public void Dispose()

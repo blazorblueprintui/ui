@@ -3,7 +3,7 @@ namespace BlazorBlueprint.Components;
 /// <summary>
 /// Provides control over a custom component dialog instance.
 /// This interface is cascaded to components opened via
-/// <see cref="DialogService.Open{TComponent}(DialogOpenOptions?)"/>.
+/// <see cref="DialogService.Open{TComponent}(Dictionary{string, object?}, BlazorBlueprint.Components.DialogOpenOptions?)"/>.
 /// </summary>
 public interface IDialogReference
 {

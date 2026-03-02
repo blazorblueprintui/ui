@@ -739,16 +739,16 @@
 
     private async Task HandleConfirmDelete()
     {
-        var confirmed = await DialogService.Confirm(
+        var result = await DialogService.Confirm(
             "Delete item?",
             "This action cannot be undone. The item will be permanently removed.");
 
-        confirmResult = confirmed ? "Confirmed" : "Cancelled";
+        confirmResult = result.Confirmed ? "Confirmed" : "Cancelled";
     }
 
     private async Task HandleDestructiveDelete()
     {
-        var confirmed = await DialogService.Confirm(
+        var data = await DialogService.Confirm(
             "Delete item?",
             "This action cannot be undone.",
             new ConfirmDialogOptions
@@ -758,7 +758,7 @@
                 Destructive = true
             });
 
-        confirmResult = confirmed ? "Deleted!" : "Kept";
+        confirmResult = data.Confirmed ? "Deleted!" : "Kept";
     }
 
     private async Task HandleAlert()
@@ -784,7 +784,7 @@
                 MaxLength = 50
             });
 
-        promptResult = name ?? "Cancelled";
+        promptResult = name.Value ?? "Cancelled";
     }
 
     private async Task HandleCustomDialog()

@@ -6,8 +6,9 @@ namespace BlazorBlueprint.Components;
 /// <remarks>
 /// A prompt dialog displays a text input field and allows the user
 /// to submit a string value or cancel the dialog.
+/// The submitted value is available via <see cref="DialogResult.Data"/>.
 /// </remarks>
-public class PromptDialogData : DialogData<string?>
+public sealed class PromptDialogData : DialogData
 {
     /// <summary>
     /// Gets or sets the customization options for the prompt dialog.

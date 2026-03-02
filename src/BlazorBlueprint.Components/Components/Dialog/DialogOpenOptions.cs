@@ -2,7 +2,7 @@ namespace BlazorBlueprint.Components;
 
 /// <summary>
 /// Options controlling behavior and appearance of a dialog opened via
-/// <see cref="DialogService.Open{TComponent}(DialogOpenOptions?)"/>.
+/// <see cref="DialogService.Open{TComponent}(Dictionary{string, object?}, BlazorBlueprint.Components.DialogOpenOptions?)"/>.
 /// </summary>
 public sealed class DialogOpenOptions
 {

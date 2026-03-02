@@ -1,7 +1,7 @@
 namespace BlazorBlueprint.Components;
 
 /// <summary>
-/// Preset width options for dialogs opened via <see cref="DialogService.Open{TComponent}(BlazorBlueprint.Components.DialogOpenOptions?)"/>.
+/// Preset width options for dialogs opened via <see cref="DialogService.Open{TComponent}(Dictionary{string, object?}, BlazorBlueprint.Components.DialogOpenOptions?)"/>.
 /// </summary>
 public enum DialogSize
 {
