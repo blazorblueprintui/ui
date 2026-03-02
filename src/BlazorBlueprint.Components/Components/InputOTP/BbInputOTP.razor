@@ -15,7 +15,7 @@
         var index = i;
         <input @ref="_inputRefs[index]"
                type="text"
-               inputmode="numeric"
+               inputmode="@HtmlInputMode"
                maxlength="1"
                class="@ComputedInputClass"
                value="@GetValueAt(index)"
@@ -136,6 +136,20 @@
     [Parameter]
     public string? Id { get; set; }
 
+    /// <summary>
+    /// Whether to mask the input values with asterisks (*).
+    /// Useful for sensitive codes like PINs.
+    /// </summary>
+    [Parameter]
+    public bool Mask { get; set; }
+
+    /// <summary>
+    /// The types of characters accepted by the input.
+    /// Defaults to <see cref="InputOTPInputMode.Numbers"/>.
+    /// </summary>
+    [Parameter]
+    public InputOTPInputMode InputMode { get; set; } = InputOTPInputMode.Numbers;
+
     private ElementReference[] _inputRefs = Array.Empty<ElementReference>();
     private string[] _values = Array.Empty<string>();
     private string? _generatedId;
@@ -207,15 +221,15 @@
 
     private string GetValueAt(int index)
     {
-        return index < _values.Length ? _values[index] ?? "" : "";
+        var val = index < _values.Length ? _values[index] ?? "" : "";
+        return Mask && !string.IsNullOrEmpty(val) ? "*" : val;
     }
 
     private async Task HandleInput(int index, ChangeEventArgs e)
     {
         var inputValue = e.Value?.ToString() ?? "";
 
-        // Only accept digits
-        if (!string.IsNullOrEmpty(inputValue) && !char.IsDigit(inputValue[0]))
+        if (!string.IsNullOrEmpty(inputValue) && !IsCharAllowed(inputValue[0]))
         {
             return;
         }
@@ -269,18 +283,18 @@
     {
         if (_disposed) return;
 
-        // Extract only digit characters
-        var digits = string.Concat(pastedText.Where(char.IsDigit));
+        // Extract only allowed characters
+        var filtered = string.Concat(pastedText.Where(IsCharAllowed));
 
-        if (string.IsNullOrEmpty(digits))
+        if (string.IsNullOrEmpty(filtered))
         {
             return;
         }
 
-        // Fill values from the start, up to Length; clear any slots beyond pasted digits
+        // Fill values from the start, up to Length; clear any slots beyond pasted chars
         for (int i = 0; i < Length; i++)
         {
-            _values[i] = i < digits.Length ? digits[i].ToString() : "";
+            _values[i] = i < filtered.Length ? filtered[i].ToString() : "";
         }
 
         var newValue = string.Join("", _values);
@@ -292,7 +306,7 @@
         }
 
         // Focus the last filled box, or the next empty box
-        var focusIndex = Math.Min(digits.Length, Length - 1);
+        var focusIndex = Math.Min(filtered.Length, Length - 1);
         await FocusInput(focusIndex);
 
         // Fire OnComplete if all slots are filled
@@ -331,6 +345,20 @@
     private string? EffectiveName => Name ?? (_editContext != null && _fieldIdentifier.FieldName != null ? _fieldIdentifier.FieldName : null);
 
     private string EffectiveId => Id ?? (_generatedId ??= $"otp-{Guid.NewGuid().ToString("N")[..8]}");
+
+    private bool IsCharAllowed(char c) => InputMode switch
+    {
+        InputOTPInputMode.Letters => char.IsLetter(c),
+        InputOTPInputMode.LettersAndNumbers => char.IsLetterOrDigit(c),
+        _ => char.IsDigit(c)
+    };
+
+    private string HtmlInputMode => InputMode switch
+    {
+        InputOTPInputMode.Letters => "text",
+        InputOTPInputMode.LettersAndNumbers => "text",
+        _ => "numeric"
+    };
 
     private string SizeClasses => Size switch
     {

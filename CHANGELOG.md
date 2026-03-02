@@ -48,6 +48,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - `ExpandOnClick` parameter — toggles expand/collapse when clicking a parent node, not just the chevron.
   - ARIA roles (`tree`/`treeitem`), `aria-expanded`, `aria-selected`, `aria-checked` attributes.
   - Demo page with 12+ interactive examples covering all features.
+- **BbInputOTP** — Added `Mask` parameter to hide entered values with asterisks (`*`), and `InputOTPInputMode` enum (`Numbers`, `Letters`, `LettersAndNumbers`) via the `InputMode` parameter to control accepted character types.
 
 ### Changed
 
