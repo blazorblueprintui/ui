@@ -42,8 +42,8 @@ public partial class BbField : ComponentBase
 
     private static readonly string[] HorizontalClasses = new[]
     {
-        // Row-based layout with aligned items
-        "flex-row items-start",
+        // Row-based layout with aligned items, full width to fill container
+        "flex-row items-start w-full",
         // Adjust spacing for checkbox/radio alignment
         "[&:has([data-slot=checkbox])]:items-center",
         "[&:has([data-slot=radio])]:items-center",
@@ -63,8 +63,8 @@ public partial class BbField : ComponentBase
 
     private static readonly string[] HorizontalEndClasses = new[]
     {
-        // Row-reverse layout: content first, then label (label on right/end)
-        "flex-row-reverse items-start",
+        // Row-reverse layout: content first, then label (label on right/end), full width to fill container
+        "flex-row-reverse items-start w-full",
         // Adjust spacing for checkbox/radio alignment
         "[&:has([data-slot=checkbox])]:items-center",
         "[&:has([data-slot=radio])]:items-center",

@@ -57,6 +57,15 @@ public partial class BbDynamicForm : ComponentBase
     public FormLayout Layout { get; set; } = FormLayout.Vertical;
 
     /// <summary>
+    /// Gets or sets the fixed width for field labels when using <see cref="FormLayout.Horizontal"/> layout.
+    /// Ensures all labels have the same width so inputs align consistently.
+    /// Accepts any valid CSS width value (e.g., "100px", "8rem").
+    /// When null, labels size to their content.
+    /// </summary>
+    [Parameter]
+    public string? LabelWidth { get; set; }
+
+    /// <summary>
     /// Gets or sets the number of columns for the field grid layout.
     /// </summary>
     [Parameter]
@@ -463,6 +472,11 @@ public partial class BbDynamicForm : ComponentBase
             : GetGridClass(columns);
         builder.AddAttribute(seq++, "class", containerClass);
 
+        if (Layout == FormLayout.Horizontal && LabelWidth is not null)
+        {
+            builder.AddAttribute(seq++, "style", $"--bb-label-width: {LabelWidth}");
+        }
+
         foreach (var field in orderedFields)
         {
             if (!IsFieldVisible(field))
@@ -472,7 +486,11 @@ public partial class BbDynamicForm : ComponentBase
 
             var colSpanStyle = GetColSpanStyle(field, columns);
             builder.OpenElement(seq, "div");
-            if (colSpanStyle is not null)
+            if (Layout == FormLayout.Inline)
+            {
+                builder.AddAttribute(seq + 1, "class", "flex-1 min-w-32");
+            }
+            else if (colSpanStyle is not null)
             {
                 builder.AddAttribute(seq + 1, "style", colSpanStyle);
             }

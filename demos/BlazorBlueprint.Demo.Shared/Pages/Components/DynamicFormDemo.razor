@@ -151,7 +151,7 @@
                 Compare Vertical (default), Horizontal, and Inline layouts using the same schema.
             </p>
         </div>
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="space-y-2">
                 <h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Vertical (default)</h3>
                 <div class="rounded-lg border p-4">
@@ -167,17 +167,18 @@
                     <BbDynamicForm Schema="@_layoutSchema"
                                    @bind-Values="_layoutHorizontalValues"
                                    Layout="FormLayout.Horizontal"
+                                   LabelWidth="4rem"
                                    ShowSubmitButton="false" />
                 </div>
             </div>
-            <div class="space-y-2">
-                <h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Inline</h3>
-                <div class="rounded-lg border p-4">
-                    <BbDynamicForm Schema="@_layoutSchema"
-                                   @bind-Values="_layoutInlineValues"
-                                   Layout="FormLayout.Inline"
-                                   ShowSubmitButton="false" />
-                </div>
+        </div>
+        <div class="space-y-2">
+            <h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Inline</h3>
+            <div class="rounded-lg border p-4">
+                <BbDynamicForm Schema="@_layoutSchema"
+                               @bind-Values="_layoutInlineValues"
+                               Layout="FormLayout.Inline"
+                               ShowSubmitButton="false" />
             </div>
         </div>
         <CodeBlock Source="Components/DynamicForm/form-layouts.txt" />
@@ -313,6 +314,9 @@
                 </ApiParameter>
                 <ApiParameter Name="Layout" Type="FormLayout" Default="Vertical">
                     Form layout mode. Options: Vertical, Horizontal, Inline.
+                </ApiParameter>
+                <ApiParameter Name="LabelWidth" Type="string?" Default="null">
+                    Fixed label width for Horizontal layout (e.g., "100px", "8rem"). Ensures all labels have the same width so inputs align consistently.
                 </ApiParameter>
                 <ApiParameter Name="Columns" Type="int" Default="1">
                     Number of columns for the responsive grid layout. Can be overridden per section.

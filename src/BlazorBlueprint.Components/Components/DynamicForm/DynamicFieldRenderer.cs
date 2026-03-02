@@ -740,6 +740,7 @@ internal static class DynamicFieldRenderer
 
         builder.AddAttribute(seq + 2, "ErrorText", errorText);
         builder.AddAttribute(seq + 3, "Disabled", disabled);
+        builder.AddAttribute(seq + 4, "Orientation", GetFieldOrientation());
     }
 
     /// <summary>
