@@ -10,6 +10,10 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 internal static class DynamicFieldRenderer
 {
+    // Layout context set per RenderField call, read by RenderWrappedField.
+    // Safe because Blazor rendering is single-threaded per circuit.
+    private static FormLayout currentLayout;
+
     /// <summary>
     /// Renders a single field into the render tree.
     /// </summary>
@@ -23,10 +27,12 @@ internal static class DynamicFieldRenderer
         bool disabled,
         bool readOnly,
         IComponent owner,
-        RenderFragment<DynamicFieldRenderContext>? customRenderer)
+        RenderFragment<DynamicFieldRenderContext>? customRenderer,
+        FormLayout layout = FormLayout.Vertical)
     {
         var isDisabled = disabled || field.Disabled;
         var isReadOnly = readOnly || field.ReadOnly;
+        currentLayout = layout;
 
         switch (field.Type)
         {
@@ -87,8 +93,11 @@ internal static class DynamicFieldRenderer
                 break;
 
             case FieldType.Date:
-            case FieldType.DateTime:
                 RenderDatePicker(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                break;
+
+            case FieldType.DateTime:
+                RenderDateTimePicker(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
                 break;
 
             case FieldType.DateRange:
@@ -479,6 +488,48 @@ internal static class DynamicFieldRenderer
         });
     }
 
+    // ── Date Time Picker ────────────────────────────────────────────
+
+    private static void RenderDateTimePicker(
+        RenderTreeBuilder builder, int seq, FormFieldDefinition field,
+        object? value, Func<object?, Task> onValueChanged, string? errorText,
+        bool disabled, IComponent owner)
+    {
+        var dateTime = value as DateTime?;
+
+        RenderWrappedField(builder, seq, field, errorText, controlBuilder =>
+        {
+            controlBuilder.OpenElement(0, "div");
+            controlBuilder.AddAttribute(1, "class", "flex items-start gap-2");
+
+            // Date picker
+            controlBuilder.OpenComponent<BbDatePicker>(2);
+            controlBuilder.AddAttribute(3, "Value", dateTime?.Date);
+            controlBuilder.AddAttribute(4, "ValueChanged", EventCallback.Factory.Create<DateTime?>(owner, newDate =>
+            {
+                var currentTime = dateTime?.TimeOfDay ?? TimeSpan.Zero;
+                var combined = newDate.HasValue ? newDate.Value.Date + currentTime : (DateTime?)null;
+                return onValueChanged(combined);
+            }));
+            controlBuilder.AddAttribute(5, "Disabled", disabled);
+            controlBuilder.CloseComponent();
+
+            // Time picker
+            controlBuilder.OpenComponent<BbTimePicker>(10);
+            controlBuilder.AddAttribute(11, "Value", dateTime?.TimeOfDay);
+            controlBuilder.AddAttribute(12, "ValueChanged", EventCallback.Factory.Create<TimeSpan?>(owner, newTime =>
+            {
+                var currentDate = dateTime?.Date ?? DateTime.Today;
+                var combined = currentDate + (newTime ?? TimeSpan.Zero);
+                return onValueChanged(combined);
+            }));
+            controlBuilder.AddAttribute(13, "Disabled", disabled);
+            controlBuilder.CloseComponent();
+
+            controlBuilder.CloseElement();
+        });
+    }
+
     // ── Date Range Picker ────────────────────────────────────────────
 
     private static void RenderDateRangePicker(
@@ -635,6 +686,12 @@ internal static class DynamicFieldRenderer
         {
             controlBuilder.OpenComponent<BbFileUpload>(0);
             controlBuilder.AddAttribute(1, "Disabled", disabled);
+            controlBuilder.AddAttribute(4, "FilesChanged",
+                EventCallback.Factory.Create<IReadOnlyList<FileUploadItem>>(owner, files => onValueChanged(files)));
+            if (value is IReadOnlyList<FileUploadItem> existingFiles)
+            {
+                controlBuilder.AddAttribute(5, "Files", existingFiles);
+            }
             AddMetadataString(controlBuilder, 2, field, "accept", "Accept");
             AddMetadataBool(controlBuilder, 3, field, "multiple", "Multiple");
             controlBuilder.CloseComponent();
@@ -689,12 +746,19 @@ internal static class DynamicFieldRenderer
     /// Wraps a raw component (one without its own FormField* wrapper) inside
     /// BbField + BbFieldLabel + control + BbFieldDescription/BbFieldError.
     /// </summary>
+    private static FieldOrientation GetFieldOrientation() => currentLayout switch
+    {
+        FormLayout.Horizontal => FieldOrientation.Horizontal,
+        _ => FieldOrientation.Vertical
+    };
+
     private static void RenderWrappedField(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field, string? errorText,
         Action<RenderTreeBuilder> renderControl)
     {
         builder.OpenComponent<BbField>(seq);
         builder.AddAttribute(seq + 1, "IsInvalid", errorText is not null);
+        builder.AddAttribute(seq + 3, "Orientation", GetFieldOrientation());
         builder.AddAttribute(seq + 2, "ChildContent", (RenderFragment)(innerBuilder =>
         {
             // Label

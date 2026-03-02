@@ -458,7 +458,10 @@ public partial class BbDynamicForm : ComponentBase
         var seq = 0;
 
         builder.OpenElement(seq++, "div");
-        builder.AddAttribute(seq++, "class", GetGridClass(columns));
+        var containerClass = Layout == FormLayout.Inline
+            ? "flex flex-wrap items-end gap-4"
+            : GetGridClass(columns);
+        builder.AddAttribute(seq++, "class", containerClass);
 
         foreach (var field in orderedFields)
         {
@@ -493,7 +496,8 @@ public partial class BbDynamicForm : ComponentBase
                 Disabled,
                 ReadOnly,
                 this,
-                customRenderer);
+                customRenderer,
+                Layout);
 
             builder.CloseElement();
             seq += 100;
@@ -503,8 +507,7 @@ public partial class BbDynamicForm : ComponentBase
     }
 
     private string FormCssClass => ClassNames.cn(
-        "space-y-6",
-        Layout == FormLayout.Inline ? "flex flex-wrap items-end gap-4" : null,
+        Layout == FormLayout.Inline ? "space-y-4" : "space-y-6",
         Class
     );
 

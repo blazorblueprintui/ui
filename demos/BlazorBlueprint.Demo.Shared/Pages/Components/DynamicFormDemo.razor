@@ -13,6 +13,26 @@
         </div>
     </div>
 
+    <!-- Field Type Gallery -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Field Type Gallery</h2>
+            <p class="text-sm text-muted-foreground">
+                Every supported field type rendered in a single form. Each section groups related input types
+                so you can see the full range of controls available.
+            </p>
+        </div>
+        <BbDynamicForm Schema="@_gallerySchema"
+                       @bind-Values="_galleryValues"
+                       Columns="2"
+                       ShowSubmitButton="false" />
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Current values:</p>
+            <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_galleryValues)</pre>
+        </div>
+        <CodeBlock Source="Components/DynamicForm/field-type-gallery.txt" />
+    </div>
+
     <!-- Basic Form -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -26,6 +46,13 @@
                            @bind-Values="_basicValues"
                            OnValidSubmit="HandleBasicSubmit" />
         </div>
+        @if (_basicSubmitMessage is not null)
+        {
+            <BbAlert Variant="AlertVariant.Success" Dismissible="true" OnDismiss="() => _basicSubmitMessage = null">
+                <BbAlertTitle>Form Submitted</BbAlertTitle>
+                <BbAlertDescription>@_basicSubmitMessage</BbAlertDescription>
+            </BbAlert>
+        }
         <div class="rounded-lg border p-4 bg-muted/50">
             <p class="text-sm font-medium mb-1">Current values:</p>
             <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_basicValues)</pre>
@@ -46,6 +73,13 @@
                            @bind-Values="_sectionValues"
                            OnValidSubmit="HandleSectionSubmit" />
         </div>
+        @if (_sectionSubmitMessage is not null)
+        {
+            <BbAlert Variant="AlertVariant.Success" Dismissible="true" OnDismiss="() => _sectionSubmitMessage = null">
+                <BbAlertTitle>Form Submitted</BbAlertTitle>
+                <BbAlertDescription>@_sectionSubmitMessage</BbAlertDescription>
+            </BbAlert>
+        }
         <div class="rounded-lg border p-4 bg-muted/50">
             <p class="text-sm font-medium mb-1">Current values:</p>
             <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_sectionValues)</pre>
@@ -67,6 +101,13 @@
                            @bind-Values="_conditionalValues"
                            OnValidSubmit="HandleConditionalSubmit" />
         </div>
+        @if (_conditionalSubmitMessage is not null)
+        {
+            <BbAlert Variant="AlertVariant.Success" Dismissible="true" OnDismiss="() => _conditionalSubmitMessage = null">
+                <BbAlertTitle>Form Submitted</BbAlertTitle>
+                <BbAlertDescription>@_conditionalSubmitMessage</BbAlertDescription>
+            </BbAlert>
+        }
         <div class="rounded-lg border p-4 bg-muted/50">
             <p class="text-sm font-medium mb-1">Current values:</p>
             <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_conditionalValues)</pre>
@@ -87,11 +128,59 @@
                        @bind-Values="_multiColValues"
                        Columns="2"
                        OnValidSubmit="HandleMultiColSubmit" />
+        @if (_multiColSubmitMessage is not null)
+        {
+            <BbAlert Variant="AlertVariant.Success" Dismissible="true" OnDismiss="() => _multiColSubmitMessage = null">
+                <BbAlertTitle>Form Submitted</BbAlertTitle>
+                <BbAlertDescription>@_multiColSubmitMessage</BbAlertDescription>
+            </BbAlert>
+        }
         <div class="rounded-lg border p-4 bg-muted/50">
             <p class="text-sm font-medium mb-1">Current values:</p>
             <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_multiColValues)</pre>
         </div>
         <CodeBlock Source="Components/DynamicForm/multi-column.txt" />
+    </div>
+
+    <!-- Form Layouts -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Form Layouts</h2>
+            <p class="text-sm text-muted-foreground">
+                The <code class="text-xs bg-muted px-1 py-0.5 rounded">Layout</code> parameter controls how labels and fields are arranged.
+                Compare Vertical (default), Horizontal, and Inline layouts using the same schema.
+            </p>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="space-y-2">
+                <h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Vertical (default)</h3>
+                <div class="rounded-lg border p-4">
+                    <BbDynamicForm Schema="@_layoutSchema"
+                                   @bind-Values="_layoutVerticalValues"
+                                   Layout="FormLayout.Vertical"
+                                   ShowSubmitButton="false" />
+                </div>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Horizontal</h3>
+                <div class="rounded-lg border p-4">
+                    <BbDynamicForm Schema="@_layoutSchema"
+                                   @bind-Values="_layoutHorizontalValues"
+                                   Layout="FormLayout.Horizontal"
+                                   ShowSubmitButton="false" />
+                </div>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Inline</h3>
+                <div class="rounded-lg border p-4">
+                    <BbDynamicForm Schema="@_layoutSchema"
+                                   @bind-Values="_layoutInlineValues"
+                                   Layout="FormLayout.Inline"
+                                   ShowSubmitButton="false" />
+                </div>
+            </div>
+        </div>
+        <CodeBlock Source="Components/DynamicForm/form-layouts.txt" />
     </div>
 
     <!-- JSON Schema -->
@@ -108,6 +197,13 @@
                            @bind-Values="_jsonValues"
                            OnValidSubmit="HandleJsonSubmit" />
         </div>
+        @if (_jsonSubmitMessage is not null)
+        {
+            <BbAlert Variant="AlertVariant.Success" Dismissible="true" OnDismiss="() => _jsonSubmitMessage = null">
+                <BbAlertTitle>Form Submitted</BbAlertTitle>
+                <BbAlertDescription>@_jsonSubmitMessage</BbAlertDescription>
+            </BbAlert>
+        }
         <div class="rounded-lg border p-4 bg-muted/50">
             <p class="text-sm font-medium mb-1">Current values:</p>
             <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_jsonValues)</pre>
@@ -146,16 +242,15 @@
                            @bind-Values="_validationValues"
                            OnValidSubmit="HandleValidationSubmit" />
         </div>
+        @if (_validationSubmitMessage is not null)
+        {
+            <BbAlert Variant="AlertVariant.Success" Dismissible="true" OnDismiss="() => _validationSubmitMessage = null">
+                <BbAlertTitle>Form Submitted</BbAlertTitle>
+                <BbAlertDescription>@_validationSubmitMessage</BbAlertDescription>
+            </BbAlert>
+        }
         <CodeBlock Source="Components/DynamicForm/validation.txt" />
     </div>
-
-    @if (!string.IsNullOrEmpty(_submitMessage))
-    {
-        <BbAlert Variant="AlertVariant.Success" Dismissible="true" OnDismiss="() => _submitMessage = null">
-            <BbAlertTitle>Form Submitted</BbAlertTitle>
-            <BbAlertDescription>@_submitMessage</BbAlertDescription>
-        </BbAlert>
-    }
 
     <!-- Accessibility -->
     <AccessibilityList>
@@ -354,7 +449,164 @@
 </div>
 
 @code {
-    private string? _submitMessage;
+    // ── Field Type Gallery ──────────────────────────────────────────
+
+    private readonly FormSchema _gallerySchema = new()
+    {
+        Sections =
+        [
+            new FormSectionDefinition
+            {
+                Title = "Text Inputs",
+                Description = "Single-line text fields with different input modes.",
+                Fields =
+                [
+                    new FormFieldDefinition { Name = "GText", Label = "Text", Type = FieldType.Text, Placeholder = "Plain text input" },
+                    new FormFieldDefinition { Name = "GEmail", Label = "Email", Type = FieldType.Email, Placeholder = "user@example.com" },
+                    new FormFieldDefinition { Name = "GPassword", Label = "Password", Type = FieldType.Password, Placeholder = "Enter password" },
+                    new FormFieldDefinition { Name = "GUrl", Label = "URL", Type = FieldType.Url, Placeholder = "https://example.com" },
+                    new FormFieldDefinition { Name = "GPhone", Label = "Phone", Type = FieldType.Phone, Placeholder = "+1 (555) 000-0000" }
+                ]
+            },
+            new FormSectionDefinition
+            {
+                Title = "Numeric Inputs",
+                Description = "Number and currency fields with range constraints.",
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Name = "GNumber", Label = "Number", Type = FieldType.Number, Placeholder = "0",
+                        Metadata = new() { ["min"] = 0, ["max"] = 100, ["step"] = 1 }
+                    },
+                    new FormFieldDefinition
+                    {
+                        Name = "GCurrency", Label = "Currency", Type = FieldType.Currency, Placeholder = "0.00",
+                        Metadata = new() { ["currencyCode"] = "USD" }
+                    }
+                ]
+            },
+            new FormSectionDefinition
+            {
+                Title = "Text Areas",
+                Description = "Multi-line text and rich text editing.",
+                Columns = 1,
+                Fields =
+                [
+                    new FormFieldDefinition { Name = "GTextarea", Label = "Textarea", Type = FieldType.Textarea, Placeholder = "Write multiple lines..." },
+                    new FormFieldDefinition { Name = "GRichText", Label = "Rich Text", Type = FieldType.RichText }
+                ]
+            },
+            new FormSectionDefinition
+            {
+                Title = "Selection Controls",
+                Description = "Dropdown, combobox, and multi-select fields.",
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Name = "GSelect", Label = "Select", Type = FieldType.Select,
+                        Options = [new("apple", "Apple"), new("banana", "Banana"), new("cherry", "Cherry")]
+                    },
+                    new FormFieldDefinition
+                    {
+                        Name = "GCombobox", Label = "Combobox", Type = FieldType.Combobox, Placeholder = "Search fruits...",
+                        Options = [new("apple", "Apple"), new("banana", "Banana"), new("cherry", "Cherry"), new("date", "Date"), new("elderberry", "Elderberry")]
+                    },
+                    new FormFieldDefinition
+                    {
+                        Name = "GMultiSelect", Label = "Multi-Select", Type = FieldType.MultiSelect, Placeholder = "Choose multiple...",
+                        Options = [new("red", "Red"), new("green", "Green"), new("blue", "Blue"), new("yellow", "Yellow")]
+                    },
+                    new FormFieldDefinition
+                    {
+                        Name = "GNativeSelect", Label = "Native Select", Type = FieldType.NativeSelect,
+                        Options = [new("small", "Small"), new("medium", "Medium"), new("large", "Large")]
+                    }
+                ]
+            },
+            new FormSectionDefinition
+            {
+                Title = "Boolean & Group Controls",
+                Description = "Toggles, checkboxes, and option groups.",
+                Fields =
+                [
+                    new FormFieldDefinition { Name = "GCheckbox", Label = "Accept terms and conditions", Type = FieldType.Checkbox },
+                    new FormFieldDefinition { Name = "GSwitch", Label = "Enable notifications", Type = FieldType.Switch },
+                    new FormFieldDefinition
+                    {
+                        Name = "GCheckboxGroup", Label = "Interests", Type = FieldType.CheckboxGroup,
+                        Options = [new("sports", "Sports"), new("music", "Music"), new("tech", "Technology"), new("art", "Art")]
+                    },
+                    new FormFieldDefinition
+                    {
+                        Name = "GRadioGroup", Label = "Experience Level", Type = FieldType.RadioGroup,
+                        Options = [new("beginner", "Beginner"), new("intermediate", "Intermediate"), new("advanced", "Advanced")]
+                    }
+                ]
+            },
+            new FormSectionDefinition
+            {
+                Title = "Date & Time",
+                Description = "Date, time, and date-range pickers.",
+                Fields =
+                [
+                    new FormFieldDefinition { Name = "GDate", Label = "Date", Type = FieldType.Date },
+                    new FormFieldDefinition { Name = "GDateTime", Label = "Date & Time", Type = FieldType.DateTime },
+                    new FormFieldDefinition { Name = "GDateRange", Label = "Date Range", Type = FieldType.DateRange, ColSpan = 2 },
+                    new FormFieldDefinition { Name = "GTime", Label = "Time", Type = FieldType.Time }
+                ]
+            },
+            new FormSectionDefinition
+            {
+                Title = "Specialty Inputs",
+                Description = "Color pickers, OTP, sliders, tags, and file uploads.",
+                Fields =
+                [
+                    new FormFieldDefinition { Name = "GColor", Label = "Color", Type = FieldType.Color },
+                    new FormFieldDefinition
+                    {
+                        Name = "GOTP", Label = "OTP Code", Type = FieldType.OTP,
+                        Metadata = new() { ["length"] = 6 }
+                    },
+                    new FormFieldDefinition
+                    {
+                        Name = "GSlider", Label = "Slider", Type = FieldType.Slider,
+                        Metadata = new() { ["min"] = 0, ["max"] = 100, ["step"] = 1 }
+                    },
+                    new FormFieldDefinition
+                    {
+                        Name = "GRangeSlider", Label = "Range Slider", Type = FieldType.RangeSlider,
+                        Metadata = new() { ["min"] = 0, ["max"] = 100, ["step"] = 5 }
+                    },
+                    new FormFieldDefinition { Name = "GTags", Label = "Tags", Type = FieldType.Tags, Placeholder = "Add a tag..." },
+                    new FormFieldDefinition
+                    {
+                        Name = "GFile", Label = "File Upload", Type = FieldType.File,
+                        Metadata = new() { ["accept"] = ".pdf,.jpg,.png", ["multiple"] = true }
+                    }
+                ]
+            }
+        ]
+    };
+
+    private Dictionary<string, object?> _galleryValues = new();
+
+    // ── Form Layouts ────────────────────────────────────────────────
+
+    private readonly FormSchema _layoutSchema = new()
+    {
+        Fields =
+        [
+            new FormFieldDefinition { Name = "Name", Label = "Name", Type = FieldType.Text, Placeholder = "Jane Doe" },
+            new FormFieldDefinition { Name = "Email", Label = "Email", Type = FieldType.Email, Placeholder = "jane@example.com" },
+            new FormFieldDefinition { Name = "Role", Label = "Role", Type = FieldType.Select, Options = [new("dev", "Developer"), new("design", "Designer"), new("pm", "Product Manager")] }
+        ]
+    };
+
+    private Dictionary<string, object?> _layoutVerticalValues = new();
+    private Dictionary<string, object?> _layoutHorizontalValues = new();
+    private Dictionary<string, object?> _layoutInlineValues = new();
 
     // ── Basic Form ──────────────────────────────────────────────────
 
@@ -554,34 +806,41 @@
 
     // ── Handlers ────────────────────────────────────────────────────
 
+    private string? _basicSubmitMessage;
+    private string? _sectionSubmitMessage;
+    private string? _conditionalSubmitMessage;
+    private string? _multiColSubmitMessage;
+    private string? _jsonSubmitMessage;
+    private string? _validationSubmitMessage;
+
     private void HandleBasicSubmit(Dictionary<string, object?> values)
     {
-        _submitMessage = $"Basic form submitted with {values.Count} fields.";
+        _basicSubmitMessage = $"Basic form submitted with {values.Count} fields.";
     }
 
     private void HandleSectionSubmit(Dictionary<string, object?> values)
     {
-        _submitMessage = $"Registration form submitted with {values.Count} fields.";
+        _sectionSubmitMessage = $"Registration form submitted with {values.Count} fields.";
     }
 
     private void HandleConditionalSubmit(Dictionary<string, object?> values)
     {
-        _submitMessage = $"Location form submitted. Country: {values.GetValueOrDefault("Country")}";
+        _conditionalSubmitMessage = $"Location form submitted. Country: {values.GetValueOrDefault("Country")}";
     }
 
     private void HandleMultiColSubmit(Dictionary<string, object?> values)
     {
-        _submitMessage = $"Shipping form submitted for {values.GetValueOrDefault("FirstName")} {values.GetValueOrDefault("LastName")}.";
+        _multiColSubmitMessage = $"Shipping form submitted for {values.GetValueOrDefault("FirstName")} {values.GetValueOrDefault("LastName")}.";
     }
 
     private void HandleJsonSubmit(Dictionary<string, object?> values)
     {
-        _submitMessage = $"Feedback form submitted. Rating: {values.GetValueOrDefault("rating")}";
+        _jsonSubmitMessage = $"Feedback form submitted. Rating: {values.GetValueOrDefault("rating")}";
     }
 
     private void HandleValidationSubmit(Dictionary<string, object?> values)
     {
-        _submitMessage = $"Account created for {values.GetValueOrDefault("Username")}!";
+        _validationSubmitMessage = $"Account created for {values.GetValueOrDefault("Username")}!";
     }
 
     private static string FormatValues(Dictionary<string, object?> values)
@@ -591,6 +850,40 @@
             return "(no values yet)";
         }
 
-        return string.Join("\n", values.Select(kv => $"{kv.Key}: {kv.Value ?? "(null)"}"));
+        return string.Join("\n", values.Select(kv => $"{kv.Key}: {FormatValue(kv.Value)}"));
+    }
+
+    private static string FormatValue(object? value)
+    {
+        if (value is null)
+        {
+            return "(null)";
+        }
+
+        if (value is string s)
+        {
+            return s;
+        }
+
+        if (value is IReadOnlyList<FileUploadItem> files)
+        {
+            if (files.Count == 0)
+            {
+                return "[]";
+            }
+            return $"[{string.Join(", ", files.Select(f => $"{f.Name} ({f.FormattedSize})"))}]";
+        }
+
+        if (value is System.Collections.IEnumerable enumerable)
+        {
+            var items = new List<string>();
+            foreach (var item in enumerable)
+            {
+                items.Add(item?.ToString() ?? "(null)");
+            }
+            return items.Count > 0 ? $"[{string.Join(", ", items)}]" : "[]";
+        }
+
+        return value.ToString() ?? "(null)";
     }
 }
