@@ -164,6 +164,15 @@ public partial class BbTreeView : IAsyncDisposable
     {
         SyncStateToContext();
         context.OnStateChanged += HandleContextStateChanged;
+
+        // Set auto-expand flags before child BbTreeItems render so nodes
+        // expand progressively during registration (one level per render pass).
+        // Only applies in uncontrolled mode (ExpandedValues not bound).
+        if (ExpandedValues == null)
+        {
+            context.AutoExpandAll = DefaultExpandAll;
+            context.AutoExpandDepth = DefaultExpandDepth;
+        }
     }
 
     protected override void OnParametersSet() =>
@@ -245,6 +254,14 @@ public partial class BbTreeView : IAsyncDisposable
             if (!defaultExpandApplied && ExpandedValues == null)
             {
                 defaultExpandApplied = true;
+
+                // Clear auto-expand flags now that the initial expansion pass
+                // is complete. Keeping them set would cause re-registered nodes
+                // (from collapse/expand cycles with lazy rendering) to be
+                // force-expanded, overriding user-collapsed state.
+                context.AutoExpandAll = false;
+                context.AutoExpandDepth = null;
+
                 if (DefaultExpandAll)
                 {
                     context.ExpandAllWithChildren();
