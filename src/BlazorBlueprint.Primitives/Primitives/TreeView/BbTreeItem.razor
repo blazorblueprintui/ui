@@ -19,9 +19,9 @@
      data-has-children="@(HasChildContent ? "true" : "false")"
      @attributes="AdditionalAttributes">
     @NodeContent
-    @if (HasChildContent && IsExpanded)
+    @if (HasChildContent && (IsExpanded || RequiresCascadeRendering))
     {
-        <div role="group">
+        <div role="group" style="@(IsExpanded ? null : "display:none")">
             <CascadingValue Value="this" IsFixed="false">
                 @ChildContent
             </CascadingValue>
@@ -113,6 +113,13 @@
     private bool IsFocusable => !Disabled && (Context.FocusedNodeValue != null
         ? Context.FocusedNodeValue == Value
         : (Depth == 0 && Context.IsFirstEnabledRoot(Value)));
+
+    /// <summary>
+    /// When cascade checking is active, children must remain in the DOM even
+    /// when collapsed so that GetAllDescendants/IsIndeterminate/ToggleChecked
+    /// can operate on registered descendants.
+    /// </summary>
+    private bool RequiresCascadeRendering => Context.Checkable && !Context.CheckStrictly;
 
     private string? AriaCheckedValue
     {
