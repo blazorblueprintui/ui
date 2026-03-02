@@ -1,0 +1,28 @@
+<Project>
+  <PropertyGroup>
+    <TailwindInput Condition="'$(TailwindInput)' == ''">wwwroot/css/blazorblueprint-input.css</TailwindInput>
+    <TailwindOutput Condition="'$(TailwindOutput)' == ''">wwwroot/blazorblueprint.css</TailwindOutput>
+    <TailwindToolPath Condition="'$(TailwindToolPath)' == ''">$(MSBuildProjectDirectory)/../../tools</TailwindToolPath>
+  </PropertyGroup>
+
+  <Target Name="BuildTailwind" BeforeTargets="Build">
+    <PropertyGroup>
+      <TailwindBinary Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(TailwindToolPath)/tailwindcss.exe</TailwindBinary>
+      <TailwindBinary Condition="$([MSBuild]::IsOSPlatform('Linux'))">$(TailwindToolPath)/tailwindcss-linux</TailwindBinary>
+      <TailwindBinary Condition="$([MSBuild]::IsOSPlatform('OSX'))">$(TailwindToolPath)/tailwindcss-macos</TailwindBinary>
+    </PropertyGroup>
+
+    <Message Text="Building Tailwind CSS ($(TailwindInput))..." Importance="high" />
+
+    <Exec Command="chmod +x $(TailwindBinary)"
+          Condition="!$([MSBuild]::IsOSPlatform('Windows')) And Exists('$(TailwindBinary)')"
+          ContinueOnError="true" />
+
+    <Exec Command="$(TailwindBinary) -i $(TailwindInput) -o $(TailwindOutput) --minify"
+          Condition="Exists('$(TailwindBinary)')"
+          WorkingDirectory="$(MSBuildProjectDirectory)" />
+
+    <Error Text="Tailwind binary not found at $(TailwindBinary). Please ensure the binary is in the /tools directory."
+           Condition="!Exists('$(TailwindBinary)')" />
+  </Target>
+</Project>

@@ -1,6 +1,10 @@
-## What's New in v3.1.1
+## What's New in v3.2.0
 
-### Bug Fixes
-
-- **`BbDialogContent`** and **`BbSheetContent`**: Added `CloseOnOverlayClick` parameter (default: `true`) to control whether clicking the backdrop overlay dismisses the dialog or sheet. This surfaces the underlying primitive's `CloseOnClick` option that was previously inaccessible at the Components layer.
-- **`BbAlertDialogContent`**: Fixed a bug where clicking the backdrop overlay incorrectly closed the dialog. Per `role="alertdialog"` accessibility semantics, the overlay is now non-dismissable by default — users must interact with an explicit action button.
+### New Features
+- **Composite Chart** (`BbChart`): Mix any combination of bar, line, area, and scatter series in a single chart
+- **Scatter Chart** (`BbScatterChart` + `BbScatter`): Scatter plots and bubble charts with configurable symbol sizes via `SymbolSize` and data-driven sizing via `SymbolSizeKey`
+- **Candlestick Chart** (`BbCandlestickChart` + `BbCandlestick`): Financial OHLC charts with configurable `BullColor` and `BearColor`
+- **Heatmap Chart** (`BbHeatmapChart` + `BbHeatmap`): Color-coded grid visualizations with `BbVisualMap` for gradient mapping
+- **Gauge Chart** (`BbGaugeChart` + `BbGauge`): Speedometer-style gauges with progress arcs, pointers, and customizable value display
+- **Funnel Chart** (`BbFunnelChart` + `BbFunnel`): Pipeline visualizations with sort order, alignment, and gap controls
+- `DataKey` and `Scale` parameters on `BbYAxis` for category axis data binding and auto-fitted value ranges
