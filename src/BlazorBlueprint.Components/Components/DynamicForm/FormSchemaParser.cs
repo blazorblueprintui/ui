@@ -272,6 +272,11 @@ public static class FormSchemaParser
         var jsonType = property.TryGetProperty("type", out var typeEl) ? typeEl.GetString() : null;
         var format = property.TryGetProperty("format", out var formatEl) ? formatEl.GetString() : null;
         var hasEnum = property.TryGetProperty("enum", out var enumEl);
+        var hasOneOf = property.TryGetProperty("oneOf", out var oneOfEl) &&
+                       oneOfEl.ValueKind == JsonValueKind.Array;
+
+        // Check for x-field-type UI hint (e.g., "combobox", "multiselect", "radio")
+        var xFieldType = property.TryGetProperty("x-field-type", out var xftEl) ? xftEl.GetString() : null;
 
         if (hasEnum)
         {
@@ -282,6 +287,18 @@ public static class FormSchemaParser
                 var val = item.GetString() ?? item.ToString();
                 field.Options.Add(new SelectOption<string>(val, val));
             }
+        }
+        else if (hasOneOf && TryParseOneOfOptions(oneOfEl, out var oneOfOptions))
+        {
+            // oneOf with const/title pattern → Select with text/value pairs
+            field.Type = FieldType.Select;
+            field.Options = oneOfOptions;
+        }
+        else if (jsonType == "array" && property.TryGetProperty("items", out var itemsEl))
+        {
+            // Array with items → MultiSelect
+            field.Type = FieldType.MultiSelect;
+            field.Options = ParseItemsOptions(itemsEl);
         }
         else
         {
@@ -299,6 +316,15 @@ public static class FormSchemaParser
                 ("array", _) => FieldType.Tags,
                 _ => FieldType.Text
             };
+        }
+
+        // Apply x-field-type override if specified
+        if (xFieldType is not null && field.Options is not null)
+        {
+            if (Enum.TryParse<FieldType>(xFieldType, ignoreCase: true, out var overrideType))
+            {
+                field.Type = overrideType;
+            }
         }
 
         // Validation rules from JSON Schema keywords
@@ -366,6 +392,67 @@ public static class FormSchemaParser
         }
 
         return field;
+    }
+
+    // ── JSON Schema Option Helpers ───────────────────────────────────
+
+    /// <summary>
+    /// Tries to parse a oneOf array as select options using the const/title pattern.
+    /// E.g.: [{"const": "apple", "title": "Apple"}, {"const": "banana", "title": "Banana"}]
+    /// </summary>
+    private static bool TryParseOneOfOptions(JsonElement oneOfEl, out List<SelectOption<string>> options)
+    {
+        options = new List<SelectOption<string>>();
+        foreach (var item in oneOfEl.EnumerateArray())
+        {
+            if (item.ValueKind != JsonValueKind.Object || !item.TryGetProperty("const", out var constEl))
+            {
+                // Not a const/title option pattern — bail out
+                options = new List<SelectOption<string>>();
+                return false;
+            }
+
+            var val = constEl.GetString() ?? constEl.ToString();
+            var text = item.TryGetProperty("title", out var titleEl) ? titleEl.GetString() ?? val : val;
+            options.Add(new SelectOption<string>(val, text));
+        }
+
+        return options.Count > 0;
+    }
+
+    /// <summary>
+    /// Parses options from a JSON Schema "items" definition (for array types).
+    /// Supports both "enum" and "oneOf" with const/title.
+    /// </summary>
+    private static List<SelectOption<string>>? ParseItemsOptions(JsonElement itemsEl)
+    {
+        if (itemsEl.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        // items with oneOf → text/value pairs
+        if (itemsEl.TryGetProperty("oneOf", out var oneOfEl) &&
+            oneOfEl.ValueKind == JsonValueKind.Array &&
+            TryParseOneOfOptions(oneOfEl, out var oneOfOptions))
+        {
+            return oneOfOptions;
+        }
+
+        // items with enum → simple options
+        if (itemsEl.TryGetProperty("enum", out var enumEl) && enumEl.ValueKind == JsonValueKind.Array)
+        {
+            var options = new List<SelectOption<string>>();
+            foreach (var item in enumEl.EnumerateArray())
+            {
+                var val = item.GetString() ?? item.ToString();
+                options.Add(new SelectOption<string>(val, val));
+            }
+
+            return options.Count > 0 ? options : null;
+        }
+
+        return null;
     }
 
     // ── Helpers ──────────────────────────────────────────────────────

@@ -724,7 +724,7 @@
         ""type"": ""object"",
         ""title"": ""Product Feedback"",
         ""description"": ""Help us improve by sharing your feedback."",
-        ""required"": [""name"", ""rating""],
+        ""required"": [""name"", ""rating"", ""category""],
         ""properties"": {
             ""name"": {
                 ""type"": ""string"",
@@ -746,7 +746,37 @@
             ""category"": {
                 ""type"": ""string"",
                 ""title"": ""Category"",
-                ""enum"": [""bug"", ""feature"", ""improvement"", ""question""]
+                ""oneOf"": [
+                    { ""const"": ""bug"", ""title"": ""Bug Report"" },
+                    { ""const"": ""feature"", ""title"": ""Feature Request"" },
+                    { ""const"": ""improvement"", ""title"": ""Improvement"" },
+                    { ""const"": ""question"", ""title"": ""Question"" }
+                ]
+            },
+            ""product"": {
+                ""type"": ""string"",
+                ""title"": ""Product"",
+                ""x-field-type"": ""combobox"",
+                ""oneOf"": [
+                    { ""const"": ""blazor-blueprint"", ""title"": ""Blazor Blueprint"" },
+                    { ""const"": ""blazor-primitives"", ""title"": ""Blazor Primitives"" },
+                    { ""const"": ""icons-lucide"", ""title"": ""Icons - Lucide"" },
+                    { ""const"": ""icons-heroicons"", ""title"": ""Icons - Heroicons"" },
+                    { ""const"": ""icons-feather"", ""title"": ""Icons - Feather"" }
+                ]
+            },
+            ""platforms"": {
+                ""type"": ""array"",
+                ""title"": ""Affected Platforms"",
+                ""items"": {
+                    ""type"": ""string"",
+                    ""oneOf"": [
+                        { ""const"": ""server"", ""title"": ""Blazor Server"" },
+                        { ""const"": ""wasm"", ""title"": ""Blazor WebAssembly"" },
+                        { ""const"": ""auto"", ""title"": ""Blazor Auto"" },
+                        { ""const"": ""maui"", ""title"": ""MAUI Hybrid"" }
+                    ]
+                }
             },
             ""comments"": {
                 ""type"": ""string"",
