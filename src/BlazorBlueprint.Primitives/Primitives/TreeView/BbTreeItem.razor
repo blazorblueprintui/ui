@@ -1,0 +1,196 @@
+@namespace BlazorBlueprint.Primitives.TreeView
+@implements IDisposable
+
+@* TreeItem primitive - individual tree node with ARIA attributes *@
+<div id="@Context.GetNodeId(Value)"
+     role="treeitem"
+     tabindex="@(IsFocusable ? 0 : -1)"
+     aria-expanded="@(HasChildContent ? (IsExpanded ? "true" : "false") : null)"
+     aria-selected="@(Context.SelectionMode != TreeSelectionMode.None ? (IsSelected ? "true" : "false") : null)"
+     aria-checked="@AriaCheckedValue"
+     aria-level="@(Depth + 1)"
+     aria-setsize="@Context.GetSetSize(Value)"
+     aria-posinset="@Context.GetPosInSet(Value)"
+     aria-disabled="@(Disabled ? "true" : null)"
+     data-value="@Value"
+     data-depth="@Depth"
+     data-state="@(IsExpanded ? "open" : "closed")"
+     data-selected="@(IsSelected ? "true" : "false")"
+     data-has-children="@(HasChildContent ? "true" : "false")"
+     @attributes="AdditionalAttributes">
+    @NodeContent
+    @if (HasChildContent && (IsExpanded || RequiresCascadeRendering))
+    {
+        <div role="group" style="@(IsExpanded ? null : "display:none")">
+            <CascadingValue Value="this" IsFixed="false">
+                @ChildContent
+            </CascadingValue>
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// Unique value/identifier for this node.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public string Value { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Whether this node is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Content rendered for the node row itself (label, icon, etc.).
+    /// In the primitives layer this is the direct node content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? NodeContent { get; set; }
+
+    /// <summary>
+    /// Child BbTreeItem nodes.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Explicitly mark this node as a leaf (suppresses expand arrow even without children).
+    /// When null, presence of ChildContent or registered children determines leaf status.
+    /// </summary>
+    [Parameter]
+    public bool? IsLeaf { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the node element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Cascading parameter to receive the tree context.
+    /// </summary>
+    [CascadingParameter]
+    public TreeViewContext Context { get; set; } = null!;
+
+    /// <summary>
+    /// Cascading parameter to receive the parent tree item (null for root-level items).
+    /// </summary>
+    [CascadingParameter]
+    public BbTreeItem? ParentItem { get; set; }
+
+    /// <summary>
+    /// Gets the depth of this node (0 for root level).
+    /// </summary>
+    public int Depth => ParentItem != null ? ParentItem.Depth + 1 : 0;
+
+    /// <summary>
+    /// Gets whether this node is expanded.
+    /// </summary>
+    public bool IsExpanded => Context.IsExpanded(Value);
+
+    /// <summary>
+    /// Gets whether this node is selected.
+    /// </summary>
+    public bool IsSelected => Context.IsSelected(Value);
+
+    /// <summary>
+    /// Gets whether this node is checked.
+    /// </summary>
+    public bool IsChecked => Context.IsChecked(Value);
+
+    /// <summary>
+    /// Gets whether this node is in indeterminate state.
+    /// </summary>
+    public bool IsIndeterminate => Context.IsIndeterminate(Value);
+
+    /// <summary>
+    /// Gets whether this node has child content to display.
+    /// </summary>
+    public bool HasChildContent => IsLeaf == true ? false : (ChildContent != null || Context.HasChildren(Value));
+
+    private bool IsFocusable => !Disabled && (Context.FocusedNodeValue != null
+        ? Context.FocusedNodeValue == Value
+        : (Depth == 0 && Context.IsFirstEnabledRoot(Value)));
+
+    /// <summary>
+    /// When cascade checking is active, children must remain in the DOM even
+    /// when collapsed so that GetAllDescendants/IsIndeterminate/ToggleChecked
+    /// can operate on registered descendants.
+    /// </summary>
+    private bool RequiresCascadeRendering => Context.Checkable && !Context.CheckStrictly;
+
+    private string? AriaCheckedValue
+    {
+        get
+        {
+            if (!Context.Checkable)
+            {
+                return null;
+            }
+
+            if (IsIndeterminate)
+            {
+                return "mixed";
+            }
+
+            return IsChecked ? "true" : "false";
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException("BbTreeItem must be used within a BbTreeView component.");
+        }
+
+        Context.RegisterNode(Value, ParentItem?.Value, Depth, Disabled);
+        Context.OnStateChanged += StateHasChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        Context.UpdateNodeDisabled(Value, Disabled);
+    }
+
+    /// <summary>
+    /// Toggles the expanded state of this node.
+    /// </summary>
+    public void ToggleExpanded()
+    {
+        if (!Disabled && HasChildContent)
+        {
+            Context.ToggleExpanded(Value);
+        }
+    }
+
+    /// <summary>
+    /// Selects this node.
+    /// </summary>
+    public void Select()
+    {
+        if (!Disabled)
+        {
+            Context.SelectNode(Value);
+        }
+    }
+
+    /// <summary>
+    /// Toggles the checked state of this node.
+    /// </summary>
+    public void ToggleChecked()
+    {
+        if (!Disabled)
+        {
+            Context.ToggleChecked(Value);
+        }
+    }
+
+    public void Dispose()
+    {
+        Context.OnStateChanged -= StateHasChanged;
+        Context.UnregisterNode(Value);
+    }
+}

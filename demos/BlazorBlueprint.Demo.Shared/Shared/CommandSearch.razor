@@ -5,6 +5,7 @@
 @using BlazorBlueprint.Icons.Feather.Components
 @using BlazorBlueprint.Icons.Feather.Data
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.JSInterop
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JS
 @implements IAsyncDisposable
@@ -120,6 +121,7 @@
 @code {
     private bool _isOpen;
     private DotNetObjectReference<CommandSearch>? _dotNetRef;
+    private IJSObjectReference? _utilsModule;
 
     // Primitives list
     private static readonly LibraryItem[] Primitives = new[]
@@ -208,6 +210,7 @@
         new LibraryItem("Toggle", "/components/toggle", "toggle-right"),
         new LibraryItem("Toggle Group", "/components/toggle-group", "layout-grid"),
         new LibraryItem("Tooltip", "/components/tooltip", "info"),
+        new LibraryItem("Tree View", "/components/tree-view", "list-tree"),
         new LibraryItem("Typography", "/components/typography", "type"),
     };
 
@@ -221,26 +224,9 @@
         if (firstRender)
         {
             _dotNetRef = DotNetObjectReference.Create(this);
-
-            await JS.InvokeVoidAsync("eval", @"
-                if (window.globalSearchKeyHandler) {
-                    document.removeEventListener('keydown', window.globalSearchKeyHandler);
-                }
-                window.registerGlobalSearchRef = function(dotNetRef) {
-                    window.globalSearchDotNetRef = dotNetRef;
-                    window.globalSearchKeyHandler = function(e) {
-                        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                            e.preventDefault();
-                            if (window.globalSearchDotNetRef) {
-                                window.globalSearchDotNetRef.invokeMethodAsync('OpenSearch');
-                            }
-                        }
-                    };
-                    document.addEventListener('keydown', window.globalSearchKeyHandler);
-                };
-            ");
-
-            await JS.InvokeVoidAsync("registerGlobalSearchRef", _dotNetRef);
+            _utilsModule = await JS.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorBlueprint.Demo.Shared/js/demo-utils.js");
+            await _utilsModule.InvokeVoidAsync("registerGlobalSearch", _dotNetRef);
         }
     }
 
@@ -286,11 +272,18 @@
 
     public async ValueTask DisposeAsync()
     {
-        try
+        if (_utilsModule != null)
         {
-            await JS.InvokeVoidAsync("eval", "document.removeEventListener('keydown', window.globalSearchKeyHandler);");
+            try
+            {
+                await _utilsModule.InvokeVoidAsync("disposeGlobalSearch");
+                await _utilsModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Circuit disconnected, ignore
+            }
         }
-        catch { }
         _dotNetRef?.Dispose();
     }
 

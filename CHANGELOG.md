@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-02
+
+### Fixed
+
+- **BbSelect**: Performance — set `ForceMount=false` on portal so items only exist in the DOM when the dropdown is open; set `IsFixed=true` on cascading context to eliminate redundant notifications; added `ShouldRender` gate and cached attributes/CSS constants on `BbSelectItem`.
+- **BbSelect**: Checkmark overlapping text in narrow dropdowns — replaced absolute-positioned checkmark with flex layout so text truncates gracefully.
+- **BbCalendar**: Year picker now respects `MinDate`/`MaxDate` as year range bounds.
+- **BbDateRangePicker**: Performance — added `ShouldRender`, cached week/day-name collections and pre-computed CSS constants, guarded `OnParametersSet` against redundant syncs.
+- **BbTreeView**: Optimized `TreeViewContext` with parent-to-children index reducing `GetPosInSet`/`GetSetSize`/`HasChildren` from O(N²) to O(N) lookups.
+- **BbTreeView**: Fixed roving tabindex — focused node now tracked in context so keyboard navigation and re-renders preserve correct focus.
+- **BbTreeView**: `OnCheckedChanged` callback was declared but never fired — now routed through `CheckedValuesChanged` handler.
+- **BbTreeView**: Interactive elements (buttons, links, inputs) inside `ActionsTemplate` are no longer intercepted by tree keyboard/click handlers.
+- **BbTreeView**: Stale `.bb-tree-drop-target` CSS classes during drag-and-drop are now cleared at the start of each indicator update.
+
+---
+
 ## 2026-03-01
 
 ### Added
@@ -36,15 +52,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Declarative column pinning (`ColumnPinning.Left`/`Right`) with CSS `position: sticky`.
   - `HeaderTemplate` on `TemplateColumn` for custom header rendering.
   - `CellClass`, `HeaderClass`, `RowClass` parameters for per-column and per-row conditional styling.
+  - `NoWrap` column property for text truncation with ellipsis on overflow.
   - State persistence via `DataGridState<T>.Save()`/`Restore()`/`Reset()` with version tracking.
   - `@bind-State` two-way binding for controlled state management.
   - Full keyboard navigation and ARIA attributes.
   - Demo page with 16 interactive examples.
+- **BbTreeView** — Hierarchical data display component (`BbTreeView` + `BbTreeItem`) with keyboard navigation and ARIA attributes.
+  - Three data binding modes: declarative markup, nested objects via `ChildrenProperty`, and flat data with `ParentField`.
+  - Primitives layer: headless tree with context-based state management, expand/collapse, single/multi selection, and keyboard navigation via JS interop.
+  - Components layer: styled tree with Tailwind CSS, Lucide icons, badges, search/filter with auto-expand, lazy loading with caching, tri-state checkboxes with parent/child cascade, and drag-and-drop reordering.
+  - `ExpandOnClick` parameter — toggles expand/collapse when clicking a parent node, not just the chevron.
+  - ARIA roles (`tree`/`treeitem`), `aria-expanded`, `aria-selected`, `aria-checked` attributes.
+  - Demo page with 12+ interactive examples covering all features.
 - **BbInputOTP** — Added `Mask` parameter to hide entered values with asterisks (`*`), and `InputOTPInputMode` enum (`Numbers`, `Letters`, `LettersAndNumbers`) via the `InputMode` parameter to control accepted character types.
 
 ### Changed
 
 - **BbDataView** — Refined `ListTemplate`/`GridTemplate` split, 3-state sort cycle, `ToolbarActions` slot, `GridClass`/`ListClass` customization. Removed `BbDataViewHeader` and `BbDataViewFooter` in favor of direct composition.
+
+### Fixed
+
+- **BbDataGrid**: Pinned column hover bleed-through fixed with opaque `bg-muted` background.
+- **BbDataGrid**: Pinned columns now receive selection background highlight.
+- **BbDataGrid**: `ShouldRender` now tracks `IsLoading` parameter changes.
 
 ---
 

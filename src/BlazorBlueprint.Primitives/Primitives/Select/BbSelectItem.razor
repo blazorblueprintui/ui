@@ -32,6 +32,16 @@
 
     private int _itemIndex = -1;
 
+    // ShouldRender tracking fields
+    private bool lastIsFocused;
+    private bool lastIsSelected;
+    private bool lastDisabled;
+
+    // MergedAttributes cache fields
+    private Dictionary<string, object>? cachedMergedAttributes;
+    private string? cachedItemClass;
+    private Dictionary<string, object>? cachedAdditionalAttributes;
+
     /// <summary>
     /// The value this item represents.
     /// </summary>
@@ -68,25 +78,40 @@
         get
         {
             var itemClass = _context?.ItemClass;
-            if (string.IsNullOrEmpty(itemClass))
+
+            // Return cached result if inputs haven't changed
+            if (itemClass == cachedItemClass && ReferenceEquals(AdditionalAttributes, cachedAdditionalAttributes))
             {
-                return AdditionalAttributes;
+                return cachedMergedAttributes;
             }
 
-            var merged = AdditionalAttributes != null
-                ? new Dictionary<string, object>(AdditionalAttributes)
-                : new Dictionary<string, object>();
+            // Rebuild and cache
+            cachedItemClass = itemClass;
+            cachedAdditionalAttributes = AdditionalAttributes;
 
-            if (merged.TryGetValue("class", out var existing))
+            if (string.IsNullOrEmpty(itemClass))
             {
-                merged["class"] = $"{itemClass} {existing}";
+                cachedMergedAttributes = AdditionalAttributes;
             }
             else
             {
-                merged["class"] = itemClass;
+                var merged = AdditionalAttributes != null
+                    ? new Dictionary<string, object>(AdditionalAttributes)
+                    : new Dictionary<string, object>();
+
+                if (merged.TryGetValue("class", out var existing))
+                {
+                    merged["class"] = $"{itemClass} {existing}";
+                }
+                else
+                {
+                    merged["class"] = itemClass;
+                }
+
+                cachedMergedAttributes = merged;
             }
 
-            return merged;
+            return cachedMergedAttributes;
         }
     }
 
@@ -107,6 +132,24 @@
 
     private bool IsFocused => _context != null && _context.FocusedIndex == _itemIndex;
 
+    protected override bool ShouldRender()
+    {
+        var currentIsFocused = IsFocused;
+        var currentIsSelected = IsSelected;
+
+        if (currentIsFocused != lastIsFocused ||
+            currentIsSelected != lastIsSelected ||
+            Disabled != lastDisabled)
+        {
+            lastIsFocused = currentIsFocused;
+            lastIsSelected = currentIsSelected;
+            lastDisabled = Disabled;
+            return true;
+        }
+
+        return false;
+    }
+
     protected override void OnInitialized()
     {
         if (_context == null) return;
@@ -116,6 +159,11 @@
 
         // Register this item with the context for keyboard navigation
         _itemIndex = _context.RegisterItem(Value, Disabled, displayText);
+
+        // Initialize ShouldRender tracking to match initial state
+        lastIsFocused = IsFocused;
+        lastIsSelected = IsSelected;
+        lastDisabled = Disabled;
 
         // Subscribe to state changes to update focus
         _context.OnStateChanged += HandleStateChanged;

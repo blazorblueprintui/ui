@@ -1,0 +1,84 @@
+@namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
+@using BlazorBlueprint.Primitives.TreeView
+
+@*
+    Styled TreeItem component.
+    Wraps the TreeItem primitive with Tailwind styling, icons, badges, and actions.
+*@
+
+<BlazorBlueprint.Primitives.TreeView.BbTreeItem @ref="primitiveRef"
+                                                  Value="@Value"
+                                                  Disabled="@Disabled"
+                                                  IsLeaf="@IsLeaf">
+    <NodeContent>
+        <div class="@NodeCssClass"
+             style="@NodeStyle"
+             data-tree-node>
+            @* Expand/collapse toggle *@
+            @if (HasExpandableChildren)
+            {
+                <button type="button"
+                        class="inline-flex h-5 w-5 items-center justify-center rounded-sm hover:bg-accent/80 shrink-0"
+                        data-tree-toggle
+                        tabindex="-1"
+                        aria-hidden="true">
+                    <svg class="@ChevronCssClass"
+                         xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                         viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            }
+            else
+            {
+                <span class="inline-flex h-5 w-5 shrink-0"></span>
+            }
+
+            @* Checkbox (display-only; toggling handled by tree-keyboard.js) *@
+            @if (ShowCheckbox)
+            {
+                <span data-tree-checkbox class="inline-flex shrink-0 cursor-pointer">
+                    <BbCheckbox Checked="@IsChecked"
+                                Indeterminate="@IsIndeterminate"
+                                Disabled="@Disabled"
+                                Class="h-4 w-4 pointer-events-none" />
+                </span>
+            }
+
+            @* Icon *@
+            @if (TreeContext?.State.ShowIcons == true && !string.IsNullOrEmpty(Icon))
+            {
+                <LucideIcon Name="@Icon" Size="16" Class="shrink-0 text-muted-foreground" />
+            }
+
+            @* Label *@
+            @if (LabelTemplate != null)
+            {
+                @LabelTemplate
+            }
+            else if (!string.IsNullOrEmpty(Label))
+            {
+                <span class="truncate">@Label</span>
+            }
+
+            @* Badge *@
+            @if (!string.IsNullOrEmpty(Badge))
+            {
+                <BbBadge Variant="BadgeVariant.Secondary" Class="ml-auto text-xs px-1.5 py-0 h-5">@Badge</BbBadge>
+            }
+
+            @* Actions (visible on hover) *@
+            @if (ActionsTemplate != null)
+            {
+                <span class="ml-auto opacity-0 group-hover/treeitem:opacity-100 transition-opacity shrink-0 flex items-center gap-0.5">
+                    @ActionsTemplate
+                </span>
+            }
+        </div>
+    </NodeContent>
+    <ChildContent>
+        @ChildContent
+    </ChildContent>
+</BlazorBlueprint.Primitives.TreeView.BbTreeItem>

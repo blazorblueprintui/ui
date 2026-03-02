@@ -14,6 +14,28 @@ public partial class BbDateRangePicker : ComponentBase
     private DateTime? _selectionStart;
     private DateTime? _selectionEnd;
 
+    // OnParametersSet guard
+    private DateRange? _previousValue;
+
+    // Caching fields
+    private DayOfWeek _cachedFirstDayOfWeek;
+    private string[]? _cachedDayNames;
+    private List<List<DateTime?>>? _cachedWeeksMonth1;
+    private List<List<DateTime?>>? _cachedWeeksMonth2;
+
+    // ShouldRender tracking fields
+    private bool _lastIsOpen;
+    private DateTime _lastDisplayMonth1;
+    private DateTime _lastDisplayMonth2;
+    private DateTime? _lastSelectionStart;
+    private DateTime? _lastSelectionEnd;
+    private DateRange? _lastValue;
+    private DateTime? _lastMinDate;
+    private DateTime? _lastMaxDate;
+    private bool _lastShowTwoMonths;
+    private bool _lastShowPresets;
+    private bool _lastDisabled;
+
     /// <summary>
     /// The selected date range.
     /// </summary>
@@ -100,21 +122,35 @@ public partial class BbDateRangePicker : ComponentBase
 
     private static readonly string[] BaseDayNames = { "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa" };
 
-    private string[] DayNames
+    private string[] DayNames => _cachedDayNames ??= BuildDayNames();
+
+    private string[] BuildDayNames()
     {
-        get
+        var start = (int)FirstDayOfWeek;
+        var result = new string[7];
+        for (var i = 0; i < 7; i++)
         {
-            var start = (int)FirstDayOfWeek;
-            var result = new string[7];
-            for (var i = 0; i < 7; i++)
-            {
-                result[i] = BaseDayNames[(start + i) % 7];
-            }
-            return result;
+            result[i] = BaseDayNames[(start + i) % 7];
         }
+        return result;
     }
+
     private static readonly string[] MonthNames = { "January", "February", "March", "April", "May", "June",
                                                      "July", "August", "September", "October", "November", "December" };
+
+    // Pre-computed CSS class constants — eliminates ~168 ClassNames.cn()/TailwindMerge calls per render
+    private const string CellEmpty = "h-9 w-9 flex-1 text-center text-sm p-0";
+    private const string CellDefault = "h-9 w-9 flex-1 text-center text-sm p-0 relative";
+    private const string CellInRange = "h-9 w-9 flex-1 text-center text-sm p-0 relative bg-accent";
+    private const string CellRangeStart = "h-9 w-9 flex-1 text-center text-sm p-0 relative rounded-l-md bg-accent";
+    private const string CellRangeEnd = "h-9 w-9 flex-1 text-center text-sm p-0 relative rounded-r-md bg-accent";
+
+    private const string DayBase = "inline-flex h-9 w-full items-center justify-center rounded-md text-sm font-normal ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+    private const string DayDefault = DayBase + " hover:bg-accent hover:text-accent-foreground";
+    private const string DayDisabled = DayBase + " text-muted-foreground opacity-50";
+    private const string DayRangeEndpoint = DayBase + " bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground";
+    private const string DayInRange = DayBase + " bg-accent text-accent-foreground";
+    private const string DayToday = DayBase + " bg-accent text-accent-foreground";
 
     private bool CanApply => _selectionStart.HasValue && _selectionEnd.HasValue;
 
@@ -126,14 +162,29 @@ public partial class BbDateRangePicker : ComponentBase
             _selectionStart = Value.Start;
             _selectionEnd = Value.End;
         }
+        _previousValue = Value;
     }
 
     protected override void OnParametersSet()
     {
-        if (Value != null)
+        // Only sync when Value actually changes from external source
+        if (Value != _previousValue)
         {
-            _selectionStart = Value.Start;
-            _selectionEnd = Value.End;
+            _previousValue = Value;
+            if (Value != null)
+            {
+                _selectionStart = Value.Start;
+                _selectionEnd = Value.End;
+            }
+        }
+
+        // Invalidate caches when FirstDayOfWeek changes
+        if (_cachedFirstDayOfWeek != FirstDayOfWeek)
+        {
+            _cachedFirstDayOfWeek = FirstDayOfWeek;
+            _cachedDayNames = null;
+            _cachedWeeksMonth1 = null;
+            _cachedWeeksMonth2 = null;
         }
     }
 
@@ -157,14 +208,16 @@ public partial class BbDateRangePicker : ComponentBase
     {
         _displayMonth1 = _displayMonth1.AddMonths(-1);
         _displayMonth2 = _displayMonth2.AddMonths(-1);
-        StateHasChanged();
+        _cachedWeeksMonth1 = null;
+        _cachedWeeksMonth2 = null;
     }
 
     private void NextMonth()
     {
         _displayMonth1 = _displayMonth1.AddMonths(1);
         _displayMonth2 = _displayMonth2.AddMonths(1);
-        StateHasChanged();
+        _cachedWeeksMonth1 = null;
+        _cachedWeeksMonth2 = null;
     }
 
     private void SelectDate(DateTime date)
@@ -198,7 +251,6 @@ public partial class BbDateRangePicker : ComponentBase
                 // Reset selection
                 _selectionStart = date;
                 _selectionEnd = null;
-                StateHasChanged();
                 return;
             }
             if (MaxDays.HasValue && days > MaxDays.Value)
@@ -206,11 +258,9 @@ public partial class BbDateRangePicker : ComponentBase
                 // Reset selection
                 _selectionStart = date;
                 _selectionEnd = null;
-                StateHasChanged();
                 return;
             }
         }
-        StateHasChanged();
     }
 
     private async Task Apply()
@@ -241,7 +291,8 @@ public partial class BbDateRangePicker : ComponentBase
             _selectionEnd = range.End;
             _displayMonth1 = new DateTime(range.Start.Year, range.Start.Month, 1);
             _displayMonth2 = _displayMonth1.AddMonths(1);
-            StateHasChanged();
+            _cachedWeeksMonth1 = null;
+            _cachedWeeksMonth2 = null;
         }
     }
 
@@ -308,10 +359,18 @@ public partial class BbDateRangePicker : ComponentBase
 
     private int CountSelectedDays(DateTime start, DateTime end)
     {
+        var s = start.Date <= end.Date ? start.Date : end.Date;
+        var e = start.Date > end.Date ? start.Date : end.Date;
+
+        // Fast path: no disabled dates callback — use O(1) arithmetic
+        if (DisabledDates == null && !MinDate.HasValue && !MaxDate.HasValue)
+        {
+            return (e - s).Days + 1;
+        }
+
         var count = 0;
-        var current = start.Date <= end.Date ? start.Date : end.Date;
-        var last = start.Date > end.Date ? start.Date : end.Date;
-        while (current <= last)
+        var current = s;
+        while (current <= e)
         {
             if (!IsDateDisabled(current))
             {
@@ -366,7 +425,13 @@ public partial class BbDateRangePicker : ComponentBase
         return date.Date == end.Date;
     }
 
-    private List<List<DateTime?>> GetWeeksInMonth(DateTime monthDate)
+    private List<List<DateTime?>> GetWeeksInMonth1() =>
+        _cachedWeeksMonth1 ??= BuildWeeksInMonth(_displayMonth1);
+
+    private List<List<DateTime?>> GetWeeksInMonth2() =>
+        _cachedWeeksMonth2 ??= BuildWeeksInMonth(_displayMonth2);
+
+    private List<List<DateTime?>> BuildWeeksInMonth(DateTime monthDate)
     {
         var weeks = new List<List<DateTime?>>();
         var firstOfMonth = new DateTime(monthDate.Year, monthDate.Month, 1);
@@ -431,29 +496,86 @@ public partial class BbDateRangePicker : ComponentBase
     {
         if (!day.HasValue)
         {
-            return "h-9 w-9 flex-1 text-center text-sm p-0";
+            return CellEmpty;
         }
 
-        return ClassNames.cn(
-            "h-9 w-9 flex-1 text-center text-sm p-0 relative",
-            isInRange && !isRangeStart && !isRangeEnd ? "bg-accent" : null,
-            isRangeStart ? "rounded-l-md bg-accent" : null,
-            isRangeEnd ? "rounded-r-md bg-accent" : null
-        );
+        if (isRangeStart)
+        {
+            return CellRangeStart;
+        }
+
+        if (isRangeEnd)
+        {
+            return CellRangeEnd;
+        }
+
+        if (isInRange)
+        {
+            return CellInRange;
+        }
+
+        return CellDefault;
     }
 
     private static string GetDayClass(DateTime date, bool isDisabled, bool isInRange, bool isRangeStart, bool isRangeEnd, bool isToday)
     {
-        return ClassNames.cn(
-            "inline-flex h-9 w-full items-center justify-center rounded-md text-sm font-normal",
-            "ring-offset-background transition-colors",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-            "disabled:pointer-events-none disabled:opacity-50",
-            isDisabled ? "text-muted-foreground opacity-50" : null,
-            (isRangeStart || isRangeEnd) ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground" : null,
-            isInRange && !isRangeStart && !isRangeEnd ? "bg-accent text-accent-foreground" : null,
-            !isInRange && !isDisabled ? "hover:bg-accent hover:text-accent-foreground" : null,
-            isToday && !isRangeStart && !isRangeEnd ? "bg-accent text-accent-foreground" : null
-        );
+        if (isDisabled)
+        {
+            return DayDisabled;
+        }
+
+        if (isRangeStart || isRangeEnd)
+        {
+            return DayRangeEndpoint;
+        }
+
+        if (isInRange)
+        {
+            return DayInRange;
+        }
+
+        if (isToday)
+        {
+            return DayToday;
+        }
+
+        return DayDefault;
+    }
+
+    /// <summary>
+    /// Determines whether the component should re-render based on tracked state changes.
+    /// This optimization reduces unnecessary render cycles.
+    /// </summary>
+    protected override bool ShouldRender()
+    {
+        var changed = _lastIsOpen != _isOpen
+            || _lastDisplayMonth1 != _displayMonth1
+            || _lastDisplayMonth2 != _displayMonth2
+            || _lastSelectionStart != _selectionStart
+            || _lastSelectionEnd != _selectionEnd
+            || _lastValue != Value
+            || _lastMinDate != MinDate
+            || _lastMaxDate != MaxDate
+            || _lastShowTwoMonths != ShowTwoMonths
+            || _lastShowPresets != ShowPresets
+            || _lastDisabled != Disabled;
+
+        if (changed)
+        {
+            _lastIsOpen = _isOpen;
+            _lastDisplayMonth1 = _displayMonth1;
+            _lastDisplayMonth2 = _displayMonth2;
+            _lastSelectionStart = _selectionStart;
+            _lastSelectionEnd = _selectionEnd;
+            _lastValue = Value;
+            _lastMinDate = MinDate;
+            _lastMaxDate = MaxDate;
+            _lastShowTwoMonths = ShowTwoMonths;
+            _lastShowPresets = ShowPresets;
+            _lastDisabled = Disabled;
+            return true;
+        }
+
+        return false;
     }
 }

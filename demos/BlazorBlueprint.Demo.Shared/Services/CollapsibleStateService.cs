@@ -5,14 +5,21 @@ namespace BlazorBlueprint.Demo.Services;
 /// <summary>
 /// Service for persisting collapsible menu state in browser localStorage.
 /// </summary>
-public class CollapsibleStateService
+public class CollapsibleStateService : IAsyncDisposable
 {
-    private readonly IJSRuntime _jsRuntime;
+    private readonly IJSRuntime jsRuntime;
     private const string LocalStoragePrefix = "blazorblueprint:collapsible:";
+    private IJSObjectReference? utilsModule;
 
     public CollapsibleStateService(IJSRuntime jsRuntime)
     {
-        _jsRuntime = jsRuntime;
+        this.jsRuntime = jsRuntime;
+    }
+
+    private async ValueTask<IJSObjectReference> GetUtilsModuleAsync()
+    {
+        return utilsModule ??= await jsRuntime.InvokeAsync<IJSObjectReference>(
+            "import", "./_content/BlazorBlueprint.Demo.Shared/js/demo-utils.js");
     }
 
     /// <summary>
@@ -26,7 +33,7 @@ public class CollapsibleStateService
         try
         {
             var storageKey = LocalStoragePrefix + key;
-            var value = await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", storageKey);
+            var value = await jsRuntime.InvokeAsync<string?>("localStorage.getItem", storageKey);
 
             if (string.IsNullOrEmpty(value))
             {
@@ -44,15 +51,21 @@ public class CollapsibleStateService
 
     /// <summary>
     /// Save the state for a collapsible menu.
+    /// Fires and forgets the JS interop call to avoid blocking the UI thread.
     /// </summary>
     /// <param name="key">Unique identifier for the collapsible</param>
     /// <param name="isOpen">Whether the menu is open</param>
-    public async Task SetStateAsync(string key, bool isOpen)
+    public void SetState(string key, bool isOpen)
+    {
+        var storageKey = LocalStoragePrefix + key;
+        _ = SetStateFireAndForgetAsync(storageKey, isOpen);
+    }
+
+    private async Task SetStateFireAndForgetAsync(string storageKey, bool isOpen)
     {
         try
         {
-            var storageKey = LocalStoragePrefix + key;
-            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", storageKey, isOpen.ToString());
+            await jsRuntime.InvokeVoidAsync("localStorage.setItem", storageKey, isOpen.ToString());
         }
         catch
         {
@@ -69,7 +82,7 @@ public class CollapsibleStateService
         try
         {
             var storageKey = LocalStoragePrefix + key;
-            await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", storageKey);
+            await jsRuntime.InvokeVoidAsync("localStorage.removeItem", storageKey);
         }
         catch
         {
@@ -84,20 +97,34 @@ public class CollapsibleStateService
     {
         try
         {
-            // Get all keys from localStorage
-            var keys = await _jsRuntime.InvokeAsync<string[]>(
-                "eval",
-                $"Object.keys(localStorage).filter(k => k.startsWith('{LocalStoragePrefix}'))");
+            var module = await GetUtilsModuleAsync();
+            var keys = await module.InvokeAsync<string[]>("getLocalStorageKeysByPrefix", LocalStoragePrefix);
 
-            // Remove each key
             foreach (var key in keys)
             {
-                await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", key);
+                await jsRuntime.InvokeVoidAsync("localStorage.removeItem", key);
             }
         }
         catch
         {
             // Silently fail if localStorage is not available
         }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (utilsModule != null)
+        {
+            try
+            {
+                await utilsModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Circuit disconnected, ignore
+            }
+        }
+
+        GC.SuppressFinalize(this);
     }
 }

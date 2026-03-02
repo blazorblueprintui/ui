@@ -1,0 +1,74 @@
+@namespace BlazorBlueprint.Components
+@typeparam TItem
+@using BlazorBlueprint.Icons.Lucide.Components
+
+@*
+    Styled TreeView component.
+    Supports declarative (ChildContent) and data-driven (Items) modes.
+*@
+
+@if (ShowSearch)
+{
+    <div class="mb-2">
+        <BbInput Value="@searchText"
+                 ValueChanged="HandleSearchTextChanged"
+                 Placeholder="@SearchPlaceholder"
+                 Class="h-8 text-sm" />
+    </div>
+}
+
+<BlazorBlueprint.Primitives.TreeView.BbTreeView @ref="primitiveTreeRef"
+                                                  ExpandedValues="@effectiveExpandedValues"
+                                                  ExpandedValuesChanged="HandleExpandedValuesChanged"
+                                                  SelectedValue="@SelectedValue"
+                                                  SelectedValueChanged="SelectedValueChanged"
+                                                  SelectedValues="@SelectedValues"
+                                                  SelectedValuesChanged="SelectedValuesChanged"
+                                                  SelectionMode="@SelectionMode"
+                                                  Checkable="@Checkable"
+                                                  CheckStrictly="@CheckStrictly"
+                                                  CheckedValues="@CheckedValues"
+                                                  CheckedValuesChanged="HandleCheckedValuesChanged"
+                                                  DefaultExpandAll="@DefaultExpandAll"
+                                                  DefaultExpandDepth="@DefaultExpandDepth"
+                                                  ShowLines="@ShowLines"
+                                                  ShowIcons="@ShowIcons"
+                                                  ExpandOnClick="@ExpandOnClick"
+                                                  OnNodeClick="HandleNodeClick"
+                                                  OnNodeExpand="HandleNodeExpand"
+                                                  OnNodeCollapse="HandleNodeCollapse"
+                                                  AriaLabel="@AriaLabel"
+                                                  class="@CssClass">
+    @if (Items != null && ValueField != null && TextField != null)
+    {
+        @* Data-driven mode *@
+        @foreach (var item in GetRootItems())
+        {
+            if (!IsFilteredOut(item))
+            {
+                <TreeItemNode TItem="TItem"
+                              Item="item"
+                              TextField="@TextField"
+                              ValueField="@ValueField"
+                              IconField="@IconField"
+                              ChildrenAccessor="@GetChildren"
+                              HasChildrenAccessor="@GetHasChildren"
+                              IsFilteredOut="@IsFilteredOut"
+                              IsMatchHighlighted="@IsSearchActive"
+                              SearchText="@ActiveSearchText"
+                              ShowIcons="@ShowIcons"
+                              Checkable="@Checkable"
+                              Draggable="@Draggable"
+                              AllowDrag="@AllowDrag"
+                              LoadingNodes="@loadingNodes"
+                              ErrorNodes="@errorNodes"
+                              OnRetryLoad="HandleRetryLoad" />
+            }
+        }
+    }
+    else
+    {
+        @* Declarative mode *@
+        @ChildContent
+    }
+</BlazorBlueprint.Primitives.TreeView.BbTreeView>
