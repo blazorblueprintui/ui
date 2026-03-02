@@ -1,0 +1,20 @@
+<BbTreeView TItem="FlatNode"
+            Items="@flatNodes"
+            ParentField="@(n => n.ParentId)"
+            TextField="@(n => n.Name)"
+            ValueField="@(n => n.Id)"
+            SelectionMode="TreeSelectionMode.Multiple"
+            @bind-SelectedValues="selectedIds"
+            DefaultExpandAll="true" />
+
+@code {
+    private HashSet<string> selectedIds = new();
+
+    private List<FlatNode> flatNodes = new()
+    {
+        new FlatNode { Id = "usa", Name = "United States", ParentId = null },
+        new FlatNode { Id = "ca", Name = "California", ParentId = "usa" },
+        new FlatNode { Id = "sf", Name = "San Francisco", ParentId = "ca" },
+        new FlatNode { Id = "la", Name = "Los Angeles", ParentId = "ca" }
+    };
+}
