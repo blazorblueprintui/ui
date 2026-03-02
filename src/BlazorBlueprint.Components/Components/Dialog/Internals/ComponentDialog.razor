@@ -1,0 +1,31 @@
+@using BlazorBlueprint.Components.Components.Dialog.Internals.Shared
+
+<div class="@ContainerClass">
+    @if (!string.IsNullOrWhiteSpace(Dialog.Title))
+    {
+        <DialogHeader Title="@Dialog.Title" />
+    }
+
+    <CascadingValue Value="(IDialogReference)Dialog" IsFixed="true">
+        <DynamicComponent Type="@Dialog.ComponentType"
+                          Parameters="@Dialog.Parameters" />
+    </CascadingValue>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public ComponentDialogData Dialog { get; set; } = default!;
+
+    private string ContainerClass =>
+        $"fixed left-[50%] top-[50%] z-50 grid w-full {GetWidth()} " +
+        "translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg animate-in fade-in-0 zoom-in-95";
+
+    private string GetWidth() => Dialog.Options.Size switch
+    {
+        DialogSize.Small => "max-w-sm",
+        DialogSize.Large => "max-w-2xl",
+        DialogSize.ExtraLarge => "max-w-4xl",
+        DialogSize.Full => "max-w-[95vw]",
+        _ => "max-w-lg"
+    };
+}

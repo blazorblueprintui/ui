@@ -1,0 +1,46 @@
+@using BlazorBlueprint.Components.Components.Dialog.Internals.Shared
+@inject DialogService DialogService
+
+<div class="@DialogContainerClass">
+    <DialogHeader Title="@Dialog.Title"
+                  Description="@Dialog.Description" />
+
+    <input class="w-full border px-3 py-2"
+           @bind="Value"
+           @bind:event="oninput"
+           placeholder="@Dialog.Options.Placeholder"
+           maxlength="@Dialog.Options.MaxLength"
+           autofocus />
+
+    <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+        <BbButton Variant="ButtonVariant.Outline"
+                  OnClick="() => DialogService.Resolve<object?>(Dialog.Id, null)">
+            @Dialog.Options.CancelText
+        </BbButton>
+
+        <BbButton Disabled="@IsDisabled"
+                  OnClick="Submit">
+            @Dialog.Options.ConfirmText
+        </BbButton>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public PromptDialogData Dialog { get; set; } = default!;
+
+    private string? Value { get; set; }
+
+    protected override void OnInitialized()
+        => Value = Dialog.Options.DefaultValue;
+
+    private bool IsDisabled =>
+        Dialog.Options.Required && string.IsNullOrWhiteSpace(Value);
+
+    private void Submit()
+        => DialogService.Resolve(Dialog.Id, Value);
+
+    private const string DialogContainerClass =
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg " +
+        "translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg animate-in fade-in-0 zoom-in-95";
+}

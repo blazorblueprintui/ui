@@ -1,66 +1,50 @@
 @namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Components.Components.Dialog.Internals
 @implements IDisposable
 @inject DialogService DialogService
-
-@*
-    Dialog Provider - renders programmatic confirm dialogs from DialogService.
-    Place this component once at the root of your application (e.g., in MainLayout).
-*@
 
 @foreach (var dialog in DialogService.Dialogs)
 {
     <div @key="dialog.Id">
-        @* Overlay *@
-        <div class="fixed inset-0 z-50 bg-black/80 animate-in fade-in-0" />
 
-        @* Content *@
-        <div class="fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 animate-in fade-in-0 zoom-in-95 slide-in-from-left-1/2 slide-in-from-top-[48%] sm:rounded-lg"
-             role="alertdialog"
-             aria-modal="true">
+        <div class="animate-in fade-in-0 fixed inset-0 z-50 bg-black/80"
+             @onclick="() => TryBackdropClose(dialog)" />
 
-            @* Header *@
-            <div class="flex flex-col space-y-2 text-center sm:text-left">
-                <h2 class="text-lg font-semibold leading-none tracking-tight">@dialog.Title</h2>
-                @if (!string.IsNullOrEmpty(dialog.Description))
-                {
-                    <p class="text-sm text-muted-foreground">@dialog.Description</p>
-                }
-            </div>
+        @switch (dialog)
+        {
+            case ConfirmDialogData confirm:
+                <ConfirmDialog Dialog="confirm" />
+                break;
 
-            @* Footer *@
-            <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
-                <BbButton Variant="ButtonVariant.Outline"
-                        OnClick="@(() => HandleCancel(dialog.Id))">
-                    @dialog.Options.CancelText
-                </BbButton>
-                <BbButton Variant="@(dialog.Options.Destructive ? ButtonVariant.Destructive : ButtonVariant.Default)"
-                        OnClick="@(() => HandleConfirm(dialog.Id))">
-                    @dialog.Options.ConfirmText
-                </BbButton>
-            </div>
-        </div>
+            case AlertDialogData alert:
+                <AlertDialog Dialog="alert" />
+                break;
+
+            case PromptDialogData prompt:
+                <PromptDialog Dialog="prompt" />
+                break;
+
+            case ComponentDialogData component:
+                <ComponentDialog Dialog="component" />
+                break;
+        }
     </div>
 }
 
 @code {
     protected override void OnInitialized()
-    {
-        DialogService.OnChange += HandleChange;
-    }
+        => DialogService.OnChange += HandleChange;
 
     private void HandleChange()
-    {
-        InvokeAsync(StateHasChanged);
-    }
+        => InvokeAsync(StateHasChanged);
 
-    private void HandleConfirm(string id)
+    private void TryBackdropClose(DialogData dialog)
     {
-        DialogService.Resolve(id, true);
-    }
+        if (dialog is ComponentDialogData component &&
+            component.Options.PreventClose)
+            return;
 
-    private void HandleCancel(string id)
-    {
-        DialogService.Resolve(id, false);
+        DialogService.Resolve<object?>(dialog.Id, null);
     }
 
     public void Dispose()

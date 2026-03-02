@@ -1,0 +1,22 @@
+@using BlazorBlueprint.Components.Components.Dialog.Internals.Shared
+@inject DialogService DialogService
+
+<div class="@DialogContainerClass">
+    <DialogHeader Title="@Dialog.Title"
+                  Description="@Dialog.Description" />
+
+    <div class="flex justify-end">
+        <BbButton OnClick="() => DialogService.Resolve<object?>(Dialog.Id, null)">
+            @Dialog.Options.ButtonText
+        </BbButton>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public AlertDialogData Dialog { get; set; } = default!;
+
+    private const string DialogContainerClass =
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg " +
+        "translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg animate-in fade-in-0 zoom-in-95";
+}

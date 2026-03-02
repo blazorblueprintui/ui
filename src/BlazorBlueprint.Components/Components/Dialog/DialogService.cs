@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 namespace BlazorBlueprint.Components;
 
 /// <summary>
@@ -6,7 +8,7 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public class DialogService
 {
-    private readonly List<ConfirmDialogData> dialogs = new();
+    private readonly List<DialogData> dialogs = new();
 
     /// <summary>
     /// Event fired when the dialog collection changes.
@@ -16,7 +18,29 @@ public class DialogService
     /// <summary>
     /// Gets the current list of pending dialogs.
     /// </summary>
-    public IReadOnlyList<ConfirmDialogData> Dialogs => dialogs.AsReadOnly();
+    public IReadOnlyList<DialogData> Dialogs => dialogs.AsReadOnly();
+
+    /// <summary>
+    /// Shows an alert dialog with a single acknowledgment button.
+    /// </summary>
+    /// <param name="title">The dialog title.</param>
+    /// <param name="description">Optional dialog message.</param>
+    /// <param name="options">Optional customization options.</param>
+    /// <returns>A task that completes when the user acknowledges the dialog.</returns>
+    public Task Alert(string title, string? description = null, AlertDialogOptions? options = null)
+    {
+        var data = new AlertDialogData
+        {
+            Title = title,
+            Description = description,
+            Options = options ?? new AlertDialogOptions()
+        };
+
+        dialogs.Add(data);
+        OnChange?.Invoke();
+
+        return data.Completion;
+    }
 
     /// <summary>
     /// Shows a confirm dialog and returns true if confirmed, false if cancelled.
@@ -41,20 +65,47 @@ public class DialogService
     }
 
     /// <summary>
-    /// Resolves a dialog with the given result and removes it from the list.
-    /// Called by DialogProvider when the user clicks confirm or cancel.
+    /// Opens a custom component inside a dialog.
     /// </summary>
-    /// <param name="id">The dialog ID to resolve.</param>
-    /// <param name="result">True for confirm, false for cancel.</param>
-    internal void Resolve(string id, bool result)
+    public Task<DialogResult> Open<TComponent>(DialogOpenOptions? options = null)
+        where TComponent : IComponent
+        => Open<TComponent>(new Dictionary<string, object?>(), options);
+
+    /// <summary>
+    /// Opens a custom component inside a dialog with parameters.
+    /// </summary>
+    public Task<DialogResult> Open<TComponent>(
+        Dictionary<string, object?> parameters,
+        DialogOpenOptions? options = null)
+        where TComponent : IComponent
     {
-        var dialog = dialogs.FirstOrDefault(d => d.Id == id);
-        if (dialog != null)
+        var data = new ComponentDialogData
         {
-            dialogs.Remove(dialog);
-            dialog.Tcs.TrySetResult(result);
-            OnChange?.Invoke();
-        }
+            Title = options?.Title ?? string.Empty,
+            ComponentType = typeof(TComponent),
+            Parameters = parameters,
+            Options = options ?? new DialogOpenOptions()
+        };
+
+        dialogs.Add(data);
+        OnChange?.Invoke();
+
+        return data.Tcs.Task;
+    }
+
+    public Task<string?> Prompt(string title, string? description = null, PromptDialogOptions? options = null)
+    {
+        var data = new PromptDialogData
+        {
+            Title = title,
+            Description = description,
+            Options = options ?? new PromptDialogOptions()
+        };
+
+        dialogs.Add(data);
+        OnChange?.Invoke();
+
+        return data.Tcs.Task;
     }
 
     /// <summary>
@@ -64,10 +115,27 @@ public class DialogService
     {
         foreach (var dialog in dialogs.ToList())
         {
-            dialog.Tcs.TrySetResult(false);
+            dialog.SetResult(null);
         }
 
         dialogs.Clear();
         OnChange?.Invoke();
+    }
+
+    /// <summary>
+    /// Resolves a dialog with the given result and removes it from the list.
+    /// Called by DialogProvider when the user clicks confirm or cancel.
+    /// </summary>
+    /// <param name="id">The dialog ID to resolve.</param>
+    /// <param name="result">True for confirm, false for cancel.</param>
+    internal void Resolve<TResult>(string id, TResult? result)
+    {
+        var dialog = dialogs.FirstOrDefault(d => d.Id == id);
+        if (dialog != null)
+        {
+            dialogs.Remove(dialog);
+            dialog.SetResult(result);
+            OnChange?.Invoke();
+        }
     }
 }
