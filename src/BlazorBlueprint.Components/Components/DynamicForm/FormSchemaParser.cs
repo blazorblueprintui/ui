@@ -154,12 +154,20 @@ public static class FormSchemaParser
             field.Validations = new List<FieldValidation>();
             foreach (var validationElement in dto.Validations)
             {
-                var validation = new FieldValidation();
-                if (validationElement.TryGetProperty("type", out var vType) &&
-                    Enum.TryParse<ValidationType>(vType.GetString(), ignoreCase: true, out var valType))
+                // Skip entries with missing or invalid type to avoid defaulting to Required
+                if (!validationElement.TryGetProperty("type", out var vType))
                 {
-                    validation.Type = valType;
+                    continue;
                 }
+
+                var typeString = vType.GetString();
+                if (string.IsNullOrWhiteSpace(typeString) ||
+                    !Enum.TryParse<ValidationType>(typeString, ignoreCase: true, out var valType))
+                {
+                    continue;
+                }
+
+                var validation = new FieldValidation { Type = valType };
 
                 if (validationElement.TryGetProperty("value", out var vVal))
                 {

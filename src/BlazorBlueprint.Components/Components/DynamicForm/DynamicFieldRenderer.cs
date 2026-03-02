@@ -514,8 +514,12 @@ internal static class DynamicFieldRenderer
             controlBuilder.AddAttribute(11, "Value", dateTime?.TimeOfDay);
             controlBuilder.AddAttribute(12, "ValueChanged", EventCallback.Factory.Create<TimeSpan?>(owner, newTime =>
             {
-                var currentDate = dateTime?.Date ?? DateTime.Today;
-                var combined = currentDate + (newTime ?? TimeSpan.Zero);
+                if (!dateTime.HasValue)
+                {
+                    return onValueChanged(null);
+                }
+
+                var combined = dateTime.Value.Date + (newTime ?? TimeSpan.Zero);
                 return onValueChanged(combined);
             }));
             controlBuilder.AddAttribute(13, "Disabled", disabled);
@@ -749,6 +753,10 @@ internal static class DynamicFieldRenderer
         RenderTreeBuilder builder, int seq, FormFieldDefinition field, string? errorText,
         FormLayout layout, Action<RenderTreeBuilder> renderControl)
     {
+        var controlId = $"bb-df-{field.Name}";
+        var descriptionId = $"{controlId}-desc";
+        var errorId = $"{controlId}-error";
+
         builder.OpenComponent<BbField>(seq);
         builder.AddAttribute(seq + 1, "IsInvalid", errorText is not null);
         builder.AddAttribute(seq + 3, "Orientation", GetFieldOrientation(layout));
@@ -758,7 +766,8 @@ internal static class DynamicFieldRenderer
             if (field.Label is not null)
             {
                 innerBuilder.OpenComponent<BbFieldLabel>(0);
-                innerBuilder.AddAttribute(1, "ChildContent", (RenderFragment)(lb =>
+                innerBuilder.AddAttribute(1, "For", controlId);
+                innerBuilder.AddAttribute(2, "ChildContent", (RenderFragment)(lb =>
                     lb.AddContent(0, field.Label)));
                 innerBuilder.CloseComponent();
             }
@@ -770,14 +779,16 @@ internal static class DynamicFieldRenderer
             if (errorText is not null)
             {
                 innerBuilder.OpenComponent<BbFieldError>(50);
-                innerBuilder.AddAttribute(51, "ChildContent", (RenderFragment)(eb =>
+                innerBuilder.AddAttribute(51, "Id", errorId);
+                innerBuilder.AddAttribute(52, "ChildContent", (RenderFragment)(eb =>
                     eb.AddContent(0, errorText)));
                 innerBuilder.CloseComponent();
             }
             else if (field.Description is not null)
             {
                 innerBuilder.OpenComponent<BbFieldDescription>(50);
-                innerBuilder.AddAttribute(51, "ChildContent", (RenderFragment)(db =>
+                innerBuilder.AddAttribute(51, "Id", descriptionId);
+                innerBuilder.AddAttribute(52, "ChildContent", (RenderFragment)(db =>
                     db.AddContent(0, field.Description)));
                 innerBuilder.CloseComponent();
             }

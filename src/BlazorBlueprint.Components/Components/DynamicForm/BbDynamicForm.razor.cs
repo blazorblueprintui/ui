@@ -136,11 +136,37 @@ public partial class BbDynamicForm : ComponentBase
 
         foreach (var field in GetAllFields())
         {
-            if (field.DefaultValue is not null && !Values.ContainsKey(field.Name))
+            if (!Values.ContainsKey(field.Name))
             {
-                Values[field.Name] = field.DefaultValue;
+                if (field.DefaultValue is not null)
+                {
+                    Values[field.Name] = field.DefaultValue;
+                }
+                else
+                {
+                    // Seed non-nullable field types so validation matches the rendered default
+                    var implicitDefault = GetImplicitDefault(field.Type);
+                    if (implicitDefault is not null)
+                    {
+                        Values[field.Name] = implicitDefault;
+                    }
+                }
             }
         }
+    }
+
+    private static object? GetImplicitDefault(FieldType type)
+    {
+        return type switch
+        {
+            FieldType.Number => 0d,
+            FieldType.Currency => 0m,
+            FieldType.Slider => 0d,
+            FieldType.RangeSlider => (0d, 0d),
+            FieldType.Checkbox => false,
+            FieldType.Switch => false,
+            _ => null
+        };
     }
 
     private IEnumerable<FormFieldDefinition> GetAllFields()
@@ -333,7 +359,9 @@ public partial class BbDynamicForm : ComponentBase
     private static string? EvaluateValidation(FormFieldDefinition field, FieldValidation validation, object? value)
     {
         var label = field.Label ?? field.Name;
-        var str = value?.ToString() ?? "";
+        var str = value is IFormattable formattable
+            ? formattable.ToString(null, CultureInfo.InvariantCulture)
+            : value?.ToString() ?? "";
 
         switch (validation.Type)
         {
@@ -370,7 +398,7 @@ public partial class BbDynamicForm : ComponentBase
                 break;
 
             case ValidationType.Min:
-                if (validation.Value is not null && double.TryParse(str, CultureInfo.InvariantCulture, out var minNum))
+                if (validation.Value is not null && TryConvertToDouble(value, out var minNum))
                 {
                     var minVal = Convert.ToDouble(validation.Value, CultureInfo.InvariantCulture);
                     if (minNum < minVal)
@@ -382,7 +410,7 @@ public partial class BbDynamicForm : ComponentBase
                 break;
 
             case ValidationType.Max:
-                if (validation.Value is not null && double.TryParse(str, CultureInfo.InvariantCulture, out var maxNum))
+                if (validation.Value is not null && TryConvertToDouble(value, out var maxNum))
                 {
                     var maxVal = Convert.ToDouble(validation.Value, CultureInfo.InvariantCulture);
                     if (maxNum > maxVal)
@@ -424,9 +452,54 @@ public partial class BbDynamicForm : ComponentBase
                 }
 
                 break;
+
+            case ValidationType.Custom:
+                if (field.Validations is not null)
+                {
+                    var customValidator = field.Metadata?.TryGetValue("customValidator", out var validatorObj) == true
+                        ? validatorObj as Func<object?, string?>
+                        : null;
+                    if (customValidator is not null)
+                    {
+                        var customError = customValidator(value);
+                        if (customError is not null)
+                        {
+                            return validation.Message ?? customError;
+                        }
+                    }
+                }
+
+                break;
         }
 
         return null;
+    }
+
+    private static bool TryConvertToDouble(object? value, out double result)
+    {
+        switch (value)
+        {
+            case double d:
+                result = d;
+                return true;
+            case int i:
+                result = i;
+                return true;
+            case decimal m:
+                result = (double)m;
+                return true;
+            case float f:
+                result = f;
+                return true;
+            case long l:
+                result = l;
+                return true;
+            default:
+                var str = value is IFormattable fmt
+                    ? fmt.ToString(null, CultureInfo.InvariantCulture)
+                    : value?.ToString() ?? "";
+                return double.TryParse(str, CultureInfo.InvariantCulture, out result);
+        }
     }
 
     private static bool IsEmpty(object? value)
@@ -435,7 +508,7 @@ public partial class BbDynamicForm : ComponentBase
         {
             null => true,
             string s => string.IsNullOrWhiteSpace(s),
-            IEnumerable<string> list => !list.Any(),
+            System.Collections.IEnumerable enumerable => !enumerable.Cast<object?>().Any(),
             _ => false
         };
     }

@@ -44,7 +44,7 @@ export function initialize(element, dotNetRef, instanceId, config) {
   const sanitizeInput = () => {
     const cfg = state.config;
     const raw = element.value;
-    const cursorPos = element.selectionStart;
+    const cursorPos = element.selectionStart ?? raw.length;
 
     let sanitized = '';
     let hasDecimal = false;
@@ -68,8 +68,12 @@ export function initialize(element, dotNetRef, instanceId, config) {
 
     if (sanitized !== raw) {
       element.value = sanitized;
-      const newPos = cursorPos - removed;
-      element.setSelectionRange(newPos, newPos);
+      const newPos = Math.max(0, Math.min(cursorPos - removed, sanitized.length));
+      try {
+        element.setSelectionRange(newPos, newPos);
+      } catch {
+        // setSelectionRange not supported for this input type
+      }
     }
   };
 
