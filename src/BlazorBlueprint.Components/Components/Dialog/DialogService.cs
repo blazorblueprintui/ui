@@ -80,7 +80,7 @@ public class DialogService
         DialogOpenOptions? options = null)
         where TComponent : IComponent
     {
-        var data = new ComponentDialogData
+        var data = new ComponentDialogData(this)
         {
             Title = options?.Title ?? string.Empty,
             ComponentType = typeof(TComponent),

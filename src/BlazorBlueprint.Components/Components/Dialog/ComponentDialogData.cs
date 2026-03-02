@@ -3,7 +3,7 @@ namespace BlazorBlueprint.Components;
 /// <summary>
 /// Represents a pending custom component dialog.
 /// </summary>
-public sealed class ComponentDialogData : DialogData<DialogResult>, IDialogReference
+public sealed class ComponentDialogData(DialogService dialogService) : DialogData<DialogResult>, IDialogReference
 {
     /// <summary>
     /// The component type to render.
@@ -21,16 +21,16 @@ public sealed class ComponentDialogData : DialogData<DialogResult>, IDialogRefer
     public DialogOpenOptions Options { get; init; } = new();
 
     /// <inheritdoc />
-    public Task Close(DialogResult result)
+    public Task CloseAsync(DialogResult result)
     {
-        SetResult(result);
+        dialogService.Resolve(Id, result);
         return Task.CompletedTask;
     }
 
     /// <inheritdoc />
-    public Task Cancel()
+    public Task CancelAsync()
     {
-        SetResult(DialogResult.Cancel());
+        dialogService.Resolve(Id, DialogResult.Cancel());
         return Task.CompletedTask;
     }
 }
