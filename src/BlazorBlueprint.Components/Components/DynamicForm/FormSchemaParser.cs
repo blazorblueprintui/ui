@@ -50,7 +50,7 @@ public static class FormSchemaParser
         {
             Title = dto.Title,
             Description = dto.Description,
-            Columns = dto.Columns ?? 1
+            Columns = dto.Columns
         };
 
         if (dto.Sections is not null)
@@ -97,9 +97,14 @@ public static class FormSchemaParser
 
     private static FormFieldDefinition ParseNativeField(NativeFieldDto dto)
     {
+        if (string.IsNullOrWhiteSpace(dto.Name))
+        {
+            throw new JsonException("Field 'name' is required and cannot be empty.");
+        }
+
         var field = new FormFieldDefinition
         {
-            Name = dto.Name ?? "",
+            Name = dto.Name,
             Label = dto.Label,
             Description = dto.Description,
             Placeholder = dto.Placeholder,

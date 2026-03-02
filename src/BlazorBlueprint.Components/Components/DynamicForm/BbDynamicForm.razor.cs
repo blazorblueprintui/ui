@@ -212,8 +212,18 @@ public partial class BbDynamicForm : ComponentBase
             2 => "grid grid-cols-1 md:grid-cols-2 gap-4",
             3 => "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4",
             4 => "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4",
-            _ => $"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-{columns} gap-4"
+            _ => "grid grid-cols-1 md:grid-cols-2 gap-4"
         };
+    }
+
+    private static string? GetGridStyle(int columns)
+    {
+        if (columns > 4)
+        {
+            return $"grid-template-columns: repeat({columns}, minmax(0, 1fr))";
+        }
+
+        return null;
     }
 
     private static string? GetColSpanStyle(FormFieldDefinition field, int maxColumns)
@@ -221,7 +231,7 @@ public partial class BbDynamicForm : ComponentBase
         if (field.ColSpan > 1 && maxColumns > 1)
         {
             var span = Math.Min(field.ColSpan, maxColumns);
-            return $"grid-column: span {span}";
+            return $"grid-column: span {span} / span {span}";
         }
 
         return null;
@@ -472,9 +482,14 @@ public partial class BbDynamicForm : ComponentBase
             : GetGridClass(columns);
         builder.AddAttribute(seq++, "class", containerClass);
 
-        if (Layout == FormLayout.Horizontal && LabelWidth is not null)
+        var gridStyle = Layout == FormLayout.Inline ? null : GetGridStyle(columns);
+        var labelWidthStyle = Layout == FormLayout.Horizontal && LabelWidth is not null
+            ? $"--bb-label-width: {LabelWidth}"
+            : null;
+        var combinedStyle = string.Join("; ", new[] { gridStyle, labelWidthStyle }.Where(s => s is not null));
+        if (combinedStyle.Length > 0)
         {
-            builder.AddAttribute(seq++, "style", $"--bb-label-width: {LabelWidth}");
+            builder.AddAttribute(seq++, "style", combinedStyle);
         }
 
         foreach (var field in orderedFields)

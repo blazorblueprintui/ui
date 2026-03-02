@@ -10,10 +10,6 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 internal static class DynamicFieldRenderer
 {
-    // Layout context set per RenderField call, read by RenderWrappedField.
-    // Safe because Blazor rendering is single-threaded per circuit.
-    private static FormLayout currentLayout;
-
     /// <summary>
     /// Renders a single field into the render tree.
     /// </summary>
@@ -32,7 +28,6 @@ internal static class DynamicFieldRenderer
     {
         var isDisabled = disabled || field.Disabled;
         var isReadOnly = readOnly || field.ReadOnly;
-        currentLayout = layout;
 
         switch (field.Type)
         {
@@ -41,99 +36,99 @@ internal static class DynamicFieldRenderer
             case FieldType.Password:
             case FieldType.Url:
             case FieldType.Phone:
-                RenderTextInput(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderTextInput(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.Number:
-                RenderNumericInput(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderNumericInput(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.Currency:
-                RenderCurrencyInput(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderCurrencyInput(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.Textarea:
-                RenderTextarea(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderTextarea(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.RichText:
-                RenderRichText(builder, seq, field, value, onValueChanged, errorText, isDisabled, isReadOnly, owner);
+                RenderRichText(builder, seq, field, value, onValueChanged, errorText, isDisabled, isReadOnly, owner, layout);
                 break;
 
             case FieldType.Select:
-                RenderSelect(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderSelect(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.Combobox:
-                RenderCombobox(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderCombobox(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.MultiSelect:
-                RenderMultiSelect(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderMultiSelect(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.NativeSelect:
-                RenderNativeSelect(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderNativeSelect(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.Checkbox:
-                RenderCheckbox(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderCheckbox(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.Switch:
-                RenderSwitch(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderSwitch(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.CheckboxGroup:
-                RenderCheckboxGroup(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderCheckboxGroup(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.RadioGroup:
-                RenderRadioGroup(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderRadioGroup(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.Date:
-                RenderDatePicker(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderDatePicker(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.DateTime:
-                RenderDateTimePicker(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderDateTimePicker(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.DateRange:
-                RenderDateRangePicker(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderDateRangePicker(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.Time:
-                RenderTimePicker(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderTimePicker(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.Color:
-                RenderColorPicker(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderColorPicker(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.OTP:
-                RenderInputOTP(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderInputOTP(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.Slider:
-                RenderSlider(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderSlider(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.RangeSlider:
-                RenderRangeSlider(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderRangeSlider(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.Tags:
-                RenderTagInput(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderTagInput(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.File:
-                RenderFileUpload(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner);
+                RenderFileUpload(builder, seq, field, value, onValueChanged, errorText, isDisabled, owner, layout);
                 break;
 
             case FieldType.Custom:
-                RenderCustomField(builder, seq, field, value, onValueChanged, errorText, isDisabled, isReadOnly, customRenderer);
+                RenderCustomField(builder, seq, field, value, onValueChanged, errorText, isDisabled, isReadOnly, customRenderer, layout);
                 break;
         }
     }
@@ -143,7 +138,7 @@ internal static class DynamicFieldRenderer
     private static void RenderTextInput(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
         var inputType = field.Type switch
         {
@@ -158,7 +153,7 @@ internal static class DynamicFieldRenderer
         builder.AddAttribute(seq + 1, "Value", value as string);
         builder.AddAttribute(seq + 2, "ValueChanged", EventCallback.Factory.Create<string?>(owner, v => onValueChanged(v)));
         builder.AddAttribute(seq + 3, "Type", inputType);
-        AddCommonFormFieldAttributes(builder, seq + 4, field, errorText, disabled);
+        AddCommonFormFieldAttributes(builder, seq + 4, field, errorText, disabled, layout);
         if (field.Placeholder is not null)
         {
             builder.AddAttribute(seq + 8, "Placeholder", field.Placeholder);
@@ -172,9 +167,9 @@ internal static class DynamicFieldRenderer
     private static void RenderNumericInput(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
-        RenderWrappedField(builder, seq, field, errorText, controlBuilder =>
+        RenderWrappedField(builder, seq, field, errorText, layout, controlBuilder =>
         {
             controlBuilder.OpenComponent<BbNumericInput<double>>(0);
             controlBuilder.AddAttribute(1, "Value", ConvertToDouble(value));
@@ -197,9 +192,9 @@ internal static class DynamicFieldRenderer
     private static void RenderCurrencyInput(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
-        RenderWrappedField(builder, seq, field, errorText, controlBuilder =>
+        RenderWrappedField(builder, seq, field, errorText, layout, controlBuilder =>
         {
             controlBuilder.OpenComponent<BbCurrencyInput>(0);
             controlBuilder.AddAttribute(1, "Value", ConvertToDecimal(value));
@@ -220,9 +215,9 @@ internal static class DynamicFieldRenderer
     private static void RenderTextarea(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
-        RenderWrappedField(builder, seq, field, errorText, controlBuilder =>
+        RenderWrappedField(builder, seq, field, errorText, layout, controlBuilder =>
         {
             controlBuilder.OpenComponent<BbTextarea>(0);
             controlBuilder.AddAttribute(1, "Value", value as string);
@@ -242,9 +237,9 @@ internal static class DynamicFieldRenderer
     private static void RenderRichText(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, bool readOnly, IComponent owner)
+        bool disabled, bool readOnly, IComponent owner, FormLayout layout)
     {
-        RenderWrappedField(builder, seq, field, errorText, controlBuilder =>
+        RenderWrappedField(builder, seq, field, errorText, layout, controlBuilder =>
         {
             controlBuilder.OpenComponent<BbRichTextEditor>(0);
             controlBuilder.AddAttribute(1, "Value", value as string);
@@ -265,7 +260,7 @@ internal static class DynamicFieldRenderer
     private static void RenderSelect(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
         builder.OpenComponent<BbFormFieldSelect<string>>(seq);
         builder.AddAttribute(seq + 1, "Value", value as string);
@@ -275,7 +270,7 @@ internal static class DynamicFieldRenderer
             builder.AddAttribute(seq + 3, "Options", (IEnumerable<SelectOption<string>>)field.Options);
         }
 
-        AddCommonFormFieldAttributes(builder, seq + 4, field, errorText, disabled);
+        AddCommonFormFieldAttributes(builder, seq + 4, field, errorText, disabled, layout);
         if (field.Placeholder is not null)
         {
             builder.AddAttribute(seq + 8, "Placeholder", field.Placeholder);
@@ -289,7 +284,7 @@ internal static class DynamicFieldRenderer
     private static void RenderCombobox(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
         builder.OpenComponent<BbFormFieldCombobox<string>>(seq);
         builder.AddAttribute(seq + 1, "Value", value as string);
@@ -299,7 +294,7 @@ internal static class DynamicFieldRenderer
             builder.AddAttribute(seq + 3, "Options", (IEnumerable<SelectOption<string>>)field.Options);
         }
 
-        AddCommonFormFieldAttributes(builder, seq + 4, field, errorText, disabled);
+        AddCommonFormFieldAttributes(builder, seq + 4, field, errorText, disabled, layout);
         if (field.Placeholder is not null)
         {
             builder.AddAttribute(seq + 8, "Placeholder", field.Placeholder);
@@ -313,7 +308,7 @@ internal static class DynamicFieldRenderer
     private static void RenderMultiSelect(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
         builder.OpenComponent<BbFormFieldMultiSelect<string>>(seq);
         builder.AddAttribute(seq + 1, "Values", value as IEnumerable<string>);
@@ -323,7 +318,7 @@ internal static class DynamicFieldRenderer
             builder.AddAttribute(seq + 3, "Options", (IEnumerable<SelectOption<string>>)field.Options);
         }
 
-        AddCommonFormFieldAttributes(builder, seq + 4, field, errorText, disabled);
+        AddCommonFormFieldAttributes(builder, seq + 4, field, errorText, disabled, layout);
         if (field.Placeholder is not null)
         {
             builder.AddAttribute(seq + 8, "Placeholder", field.Placeholder);
@@ -337,9 +332,9 @@ internal static class DynamicFieldRenderer
     private static void RenderNativeSelect(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
-        RenderWrappedField(builder, seq, field, errorText, controlBuilder =>
+        RenderWrappedField(builder, seq, field, errorText, layout, controlBuilder =>
         {
             controlBuilder.OpenComponent<BbNativeSelect<string>>(0);
             controlBuilder.AddAttribute(1, "Value", value as string);
@@ -375,12 +370,12 @@ internal static class DynamicFieldRenderer
     private static void RenderCheckbox(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
         builder.OpenComponent<BbFormFieldCheckbox>(seq);
         builder.AddAttribute(seq + 1, "Checked", ConvertToBool(value));
         builder.AddAttribute(seq + 2, "CheckedChanged", EventCallback.Factory.Create<bool>(owner, v => onValueChanged(v)));
-        AddCommonFormFieldAttributes(builder, seq + 3, field, errorText, disabled);
+        AddCommonFormFieldAttributes(builder, seq + 3, field, errorText, disabled, layout);
         builder.CloseComponent();
     }
 
@@ -389,12 +384,12 @@ internal static class DynamicFieldRenderer
     private static void RenderSwitch(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
         builder.OpenComponent<BbFormFieldSwitch>(seq);
         builder.AddAttribute(seq + 1, "Checked", ConvertToBool(value));
         builder.AddAttribute(seq + 2, "CheckedChanged", EventCallback.Factory.Create<bool>(owner, v => onValueChanged(v)));
-        AddCommonFormFieldAttributes(builder, seq + 3, field, errorText, disabled);
+        AddCommonFormFieldAttributes(builder, seq + 3, field, errorText, disabled, layout);
         builder.CloseComponent();
     }
 
@@ -403,9 +398,9 @@ internal static class DynamicFieldRenderer
     private static void RenderCheckboxGroup(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
-        RenderWrappedField(builder, seq, field, errorText, controlBuilder =>
+        RenderWrappedField(builder, seq, field, errorText, layout, controlBuilder =>
         {
             controlBuilder.OpenComponent<BbCheckboxGroup<string>>(0);
             var selectedValues = value as IReadOnlyCollection<string>
@@ -440,12 +435,12 @@ internal static class DynamicFieldRenderer
     private static void RenderRadioGroup(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
         builder.OpenComponent<BbFormFieldRadioGroup<string>>(seq);
         builder.AddAttribute(seq + 1, "Value", value as string ?? "");
         builder.AddAttribute(seq + 2, "ValueChanged", EventCallback.Factory.Create<string>(owner, v => onValueChanged(v)));
-        AddCommonFormFieldAttributes(builder, seq + 3, field, errorText, disabled);
+        AddCommonFormFieldAttributes(builder, seq + 3, field, errorText, disabled, layout);
 
         if (field.Options is not null)
         {
@@ -471,9 +466,9 @@ internal static class DynamicFieldRenderer
     private static void RenderDatePicker(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
-        RenderWrappedField(builder, seq, field, errorText, controlBuilder =>
+        RenderWrappedField(builder, seq, field, errorText, layout, controlBuilder =>
         {
             controlBuilder.OpenComponent<BbDatePicker>(0);
             controlBuilder.AddAttribute(1, "Value", value as DateTime?);
@@ -493,11 +488,11 @@ internal static class DynamicFieldRenderer
     private static void RenderDateTimePicker(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
         var dateTime = value as DateTime?;
 
-        RenderWrappedField(builder, seq, field, errorText, controlBuilder =>
+        RenderWrappedField(builder, seq, field, errorText, layout, controlBuilder =>
         {
             controlBuilder.OpenElement(0, "div");
             controlBuilder.AddAttribute(1, "class", "flex items-start gap-2");
@@ -535,9 +530,9 @@ internal static class DynamicFieldRenderer
     private static void RenderDateRangePicker(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
-        RenderWrappedField(builder, seq, field, errorText, controlBuilder =>
+        RenderWrappedField(builder, seq, field, errorText, layout, controlBuilder =>
         {
             controlBuilder.OpenComponent<BbDateRangePicker>(0);
             controlBuilder.AddAttribute(1, "Value", value as DateRange);
@@ -557,9 +552,9 @@ internal static class DynamicFieldRenderer
     private static void RenderTimePicker(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
-        RenderWrappedField(builder, seq, field, errorText, controlBuilder =>
+        RenderWrappedField(builder, seq, field, errorText, layout, controlBuilder =>
         {
             controlBuilder.OpenComponent<BbTimePicker>(0);
             controlBuilder.AddAttribute(1, "Value", value as TimeSpan?);
@@ -579,9 +574,9 @@ internal static class DynamicFieldRenderer
     private static void RenderColorPicker(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
-        RenderWrappedField(builder, seq, field, errorText, controlBuilder =>
+        RenderWrappedField(builder, seq, field, errorText, layout, controlBuilder =>
         {
             controlBuilder.OpenComponent<BbColorPicker>(0);
             controlBuilder.AddAttribute(1, "Value", value as string ?? "#000000");
@@ -596,9 +591,9 @@ internal static class DynamicFieldRenderer
     private static void RenderInputOTP(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
-        RenderWrappedField(builder, seq, field, errorText, controlBuilder =>
+        RenderWrappedField(builder, seq, field, errorText, layout, controlBuilder =>
         {
             controlBuilder.OpenComponent<BbInputOTP>(0);
             controlBuilder.AddAttribute(1, "Value", value as string);
@@ -614,9 +609,9 @@ internal static class DynamicFieldRenderer
     private static void RenderSlider(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
-        RenderWrappedField(builder, seq, field, errorText, controlBuilder =>
+        RenderWrappedField(builder, seq, field, errorText, layout, controlBuilder =>
         {
             controlBuilder.OpenComponent<BbSlider>(0);
             controlBuilder.AddAttribute(1, "Value", ConvertToDouble(value));
@@ -634,9 +629,9 @@ internal static class DynamicFieldRenderer
     private static void RenderRangeSlider(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
-        RenderWrappedField(builder, seq, field, errorText, controlBuilder =>
+        RenderWrappedField(builder, seq, field, errorText, layout, controlBuilder =>
         {
             controlBuilder.OpenComponent<BbRangeSlider>(0);
             if (value is ValueTuple<double, double> range)
@@ -658,9 +653,9 @@ internal static class DynamicFieldRenderer
     private static void RenderTagInput(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
-        RenderWrappedField(builder, seq, field, errorText, controlBuilder =>
+        RenderWrappedField(builder, seq, field, errorText, layout, controlBuilder =>
         {
             controlBuilder.OpenComponent<BbTagInput>(0);
             controlBuilder.AddAttribute(1, "Tags", value as IReadOnlyList<string>);
@@ -680,9 +675,9 @@ internal static class DynamicFieldRenderer
     private static void RenderFileUpload(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
-        bool disabled, IComponent owner)
+        bool disabled, IComponent owner, FormLayout layout)
     {
-        RenderWrappedField(builder, seq, field, errorText, controlBuilder =>
+        RenderWrappedField(builder, seq, field, errorText, layout, controlBuilder =>
         {
             controlBuilder.OpenComponent<BbFileUpload>(0);
             controlBuilder.AddAttribute(1, "Disabled", disabled);
@@ -704,7 +699,7 @@ internal static class DynamicFieldRenderer
         RenderTreeBuilder builder, int seq, FormFieldDefinition field,
         object? value, Func<object?, Task> onValueChanged, string? errorText,
         bool disabled, bool readOnly,
-        RenderFragment<DynamicFieldRenderContext>? customRenderer)
+        RenderFragment<DynamicFieldRenderContext>? customRenderer, FormLayout layout)
     {
         if (customRenderer is null)
         {
@@ -713,7 +708,7 @@ internal static class DynamicFieldRenderer
 
         var context = new DynamicFieldRenderContext(field, value, onValueChanged, disabled, readOnly);
 
-        RenderWrappedField(builder, seq, field, errorText, controlBuilder =>
+        RenderWrappedField(builder, seq, field, errorText, layout, controlBuilder =>
             controlBuilder.AddContent(0, customRenderer(context)));
     }
 
@@ -726,7 +721,8 @@ internal static class DynamicFieldRenderer
     /// (e.g., BbFormFieldCheckbox, BbFormFieldSwitch, BbFormFieldRadioGroup).
     /// </summary>
     private static void AddCommonFormFieldAttributes(
-        RenderTreeBuilder builder, int seq, FormFieldDefinition field, string? errorText, bool disabled)
+        RenderTreeBuilder builder, int seq, FormFieldDefinition field, string? errorText, bool disabled,
+        FormLayout layout)
     {
         if (field.Label is not null)
         {
@@ -740,14 +736,10 @@ internal static class DynamicFieldRenderer
 
         builder.AddAttribute(seq + 2, "ErrorText", errorText);
         builder.AddAttribute(seq + 3, "Disabled", disabled);
-        builder.AddAttribute(seq + 4, "Orientation", GetFieldOrientation());
+        builder.AddAttribute(seq + 4, "Orientation", GetFieldOrientation(layout));
     }
 
-    /// <summary>
-    /// Wraps a raw component (one without its own FormField* wrapper) inside
-    /// BbField + BbFieldLabel + control + BbFieldDescription/BbFieldError.
-    /// </summary>
-    private static FieldOrientation GetFieldOrientation() => currentLayout switch
+    private static FieldOrientation GetFieldOrientation(FormLayout layout) => layout switch
     {
         FormLayout.Horizontal => FieldOrientation.Horizontal,
         _ => FieldOrientation.Vertical
@@ -755,11 +747,11 @@ internal static class DynamicFieldRenderer
 
     private static void RenderWrappedField(
         RenderTreeBuilder builder, int seq, FormFieldDefinition field, string? errorText,
-        Action<RenderTreeBuilder> renderControl)
+        FormLayout layout, Action<RenderTreeBuilder> renderControl)
     {
         builder.OpenComponent<BbField>(seq);
         builder.AddAttribute(seq + 1, "IsInvalid", errorText is not null);
-        builder.AddAttribute(seq + 3, "Orientation", GetFieldOrientation());
+        builder.AddAttribute(seq + 3, "Orientation", GetFieldOrientation(layout));
         builder.AddAttribute(seq + 2, "ChildContent", (RenderFragment)(innerBuilder =>
         {
             // Label

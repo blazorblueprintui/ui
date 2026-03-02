@@ -139,18 +139,28 @@ public static class VisibilityExpression
             {
                 var quote = c;
                 i++;
-                var start = i;
+                var startPos = i;
+                var sb = new System.Text.StringBuilder();
                 while (i < input.Length && input[i] != quote)
                 {
-                    i++;
+                    if (input[i] == '\\' && i + 1 < input.Length)
+                    {
+                        sb.Append(input[i + 1]);
+                        i += 2;
+                    }
+                    else
+                    {
+                        sb.Append(input[i]);
+                        i++;
+                    }
                 }
 
                 if (i >= input.Length)
                 {
-                    throw new FormatException($"Unterminated string literal in visibility expression at position {start - 1}.");
+                    throw new FormatException($"Unterminated string literal in visibility expression at position {startPos - 1}.");
                 }
 
-                tokens.Add(new Token(TokenType.StringLiteral, input[start..i]));
+                tokens.Add(new Token(TokenType.StringLiteral, sb.ToString()));
                 i++;
                 continue;
             }
@@ -495,10 +505,10 @@ public static class VisibilityExpression
             return string.Equals(leftStr, rightStr, StringComparison.OrdinalIgnoreCase);
         }
 
-        // Boolean comparison with conversion
+        // Boolean comparison: convert the other side strictly
         if (left is bool || right is bool)
         {
-            return IsTruthy(left) == IsTruthy(right);
+            return ConvertToBool(left) == ConvertToBool(right);
         }
 
         // Numeric comparison
@@ -525,6 +535,19 @@ public static class VisibilityExpression
             double d => d != 0,
             decimal dec => dec != 0,
             _ => true
+        };
+    }
+
+    private static bool ConvertToBool(object? value)
+    {
+        return value switch
+        {
+            bool b => b,
+            string s when bool.TryParse(s, out var parsed) => parsed,
+            int i => i != 0,
+            double d => d != 0,
+            decimal dec => dec != 0,
+            _ => false
         };
     }
 

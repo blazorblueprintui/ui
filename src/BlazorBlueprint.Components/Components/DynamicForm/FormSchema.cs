@@ -30,8 +30,9 @@ public class FormSchema
     /// <summary>
     /// Gets or sets the default number of grid columns for field layout.
     /// Individual sections can override this value.
+    /// When null, the <see cref="BbDynamicForm.Columns"/> parameter is used.
     /// </summary>
-    public int Columns { get; set; } = 1;
+    public int? Columns { get; set; }
 }
 
 /// <summary>
