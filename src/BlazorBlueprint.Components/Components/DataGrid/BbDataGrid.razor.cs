@@ -955,7 +955,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         if (column.Pinned != ColumnPinning.None)
         {
             var zClass = StickyHeader ? "z-30" : "z-10";
-            pinnedClass = ClassNames.cn("bg-background group-hover/row:bg-muted", zClass);
+            pinnedClass = ClassNames.cn("bg-background", zClass);
         }
 
         var separatorClass = "";
@@ -985,7 +985,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     }
 
     private string GetCellClass(IDataGridColumn<TData> column, bool isSelectColumn,
-        bool isExpandColumn, bool isLastLeft, bool isFirstRight, bool isRowSelected)
+        bool isExpandColumn, bool isLastLeft, bool isFirstRight, bool isRowSelected,
+        string? rowClass)
     {
         var baseClass = "p-4 align-middle";
 
@@ -993,9 +994,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         if (column.Pinned != ColumnPinning.None)
         {
             var bgClass = isRowSelected
-                ? "bg-muted group-hover/row:bg-muted"
-                : "bg-background group-hover/row:bg-muted";
-            pinnedClass = ClassNames.cn(bgClass, "z-10");
+                ? "bg-muted"
+                : "bg-background";
+            pinnedClass = ClassNames.cn(bgClass, "z-10", rowClass);
         }
 
         var separatorClass = "";

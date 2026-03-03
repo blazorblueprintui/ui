@@ -253,7 +253,10 @@
     private RenderFragment<TData> RenderDataRow => item =>
         @<BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Item="@item"
             Class="@ClassNames.cn("group/row border-b transition-colors hover:bg-muted/50", _gridState.Selection.IsSelected(item) ? "bg-muted" : "", RowClass?.Invoke(item))">
-            @{var isRowSelected = _gridState.Selection.IsSelected(item);}
+            @{
+                var isRowSelected = _gridState.Selection.IsSelected(item);
+                var rowClassValue = RowClass?.Invoke(item);
+            }
             @foreach (var column in _cachedVisibleColumns)
             {
                 var isSelectColumn = column.ColumnId == "__select";
@@ -264,8 +267,9 @@
 
                 <BlazorBlueprint.Primitives.DataGrid.BbDataGridCell
                     @key="@column.ColumnId"
-                    Class="@GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight, isRowSelected)"
-                    style="@pinnedStyle">
+                    Class="@GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight, isRowSelected, rowClassValue)"
+                    style="@pinnedStyle"
+                    data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)">
                     @if (isExpandColumn)
                     {
                         @if (DetailTemplate != null)
