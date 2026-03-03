@@ -240,7 +240,7 @@
     }
 
     [JSInvokable]
-    public async Task JsOnWidgetResizeEnd(string widgetId, int columnSpan, int rowSpan)
+    public async Task JsOnWidgetResizeEnd(string widgetId, int column, int row, int columnSpan, int rowSpan)
     {
         if (_disposed)
         {
@@ -249,10 +249,12 @@
 
         var oldPos = _context.GetWidgetPosition(widgetId)?.Clone() ?? new WidgetPosition(widgetId, 1, 1, 1, 1);
         var newPos = oldPos.Clone();
+        newPos.Column = column;
+        newPos.Row = row;
         newPos.ColumnSpan = columnSpan;
         newPos.RowSpan = rowSpan;
 
-        _context.UpdateWidgetPosition(widgetId, oldPos.Column, oldPos.Row, columnSpan, rowSpan);
+        _context.UpdateWidgetPosition(widgetId, column, row, columnSpan, rowSpan);
 
         if (OnWidgetResizeEnd.HasDelegate)
         {
@@ -352,8 +354,8 @@
         JsOnWidgetDragEnd(widgetId, column, row).ConfigureAwait(false);
 
     [JSInvokable]
-    public void JsOnWidgetKeyboardResize(string widgetId, int columnSpan, int rowSpan) =>
-        JsOnWidgetResizeEnd(widgetId, columnSpan, rowSpan).ConfigureAwait(false);
+    public void JsOnWidgetKeyboardResize(string widgetId, int column, int row, int columnSpan, int rowSpan) =>
+        JsOnWidgetResizeEnd(widgetId, column, row, columnSpan, rowSpan).ConfigureAwait(false);
 
     public async ValueTask DisposeAsync()
     {

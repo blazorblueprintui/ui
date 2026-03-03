@@ -354,22 +354,36 @@ function updateResize(state, e) {
   const dx = e.clientX - state.startX;
   const dy = e.clientY - state.startY;
 
+  const handle = state.activeHandle;
+  const resizeRight = handle === 'e' || handle === 'se' || handle === 'ne';
+  const resizeLeft = handle === 'w' || handle === 'sw' || handle === 'nw';
+  const resizeBottom = handle === 's' || handle === 'se' || handle === 'sw';
+  const resizeTop = handle === 'n' || handle === 'ne' || handle === 'nw';
+
+  let newCol = state.startCol;
+  let newRow = state.startRow;
   let newColSpan = state.startColSpan;
   let newRowSpan = state.startRowSpan;
 
-  const handle = state.activeHandle;
-
-  if (handle === 'se' || handle === 'e') {
-    newColSpan = Math.max(1, Math.round((state.startColSpan * (cellWidth + gap) + dx) / (cellWidth + gap)));
+  // Right/bottom: grow span in drag direction
+  if (resizeRight) {
+    newColSpan = Math.round((state.startColSpan * (cellWidth + gap) + dx) / (cellWidth + gap));
+  }
+  if (resizeBottom) {
+    newRowSpan = Math.round((state.startRowSpan * (rowHeight + gap) + dy) / (rowHeight + gap));
   }
 
-  if (handle === 'se' || handle === 's') {
-    newRowSpan = Math.max(1, Math.round((state.startRowSpan * (rowHeight + gap) + dy) / (rowHeight + gap)));
+  // Left/top: move position and adjust span inversely (opposite edge stays fixed)
+  if (resizeLeft) {
+    const colDelta = Math.round(dx / (cellWidth + gap));
+    newCol = state.startCol + colDelta;
+    newColSpan = state.startColSpan - colDelta;
   }
-
-  // Clamp to grid max columns
-  const maxCol = cols - state.startCol + 1;
-  newColSpan = Math.min(newColSpan, maxCol);
+  if (resizeTop) {
+    const rowDelta = Math.round(dy / (rowHeight + gap));
+    newRow = state.startRow + rowDelta;
+    newRowSpan = state.startRowSpan - rowDelta;
+  }
 
   // Apply min/max from widget data attributes
   const widget = state.originalWidget;
@@ -380,32 +394,51 @@ function updateResize(state, e) {
 
   newColSpan = Math.max(minColSpan, newColSpan);
   newRowSpan = Math.max(minRowSpan, newRowSpan);
-  if (maxColSpan > 0) newColSpan = Math.min(maxColSpan, newColSpan);
-  if (maxRowSpan > 0) newRowSpan = Math.min(maxRowSpan, newRowSpan);
+  if (maxColSpan > 0) { newColSpan = Math.min(maxColSpan, newColSpan); }
+  if (maxRowSpan > 0) { newRowSpan = Math.min(maxRowSpan, newRowSpan); }
 
-  // Collision detection — only resize if new size doesn't overlap other widgets
+  // When resizing from left/top, recalculate position to keep opposite edge fixed
+  if (resizeLeft) {
+    newCol = state.startCol + state.startColSpan - newColSpan;
+  }
+  if (resizeTop) {
+    newRow = state.startRow + state.startRowSpan - newRowSpan;
+  }
+
+  // Grid bounds
+  newCol = Math.max(1, newCol);
+  newRow = Math.max(1, newRow);
+  newColSpan = Math.min(newColSpan, cols - newCol + 1);
+
+  // Collision detection — only resize if new bounds don't overlap other widgets
   const others = getWidgetPositions(grid, state.activeWidgetId);
-  if (wouldOverlap(state.startCol, state.startRow, newColSpan, newRowSpan, others)) {
+  if (wouldOverlap(newCol, newRow, newColSpan, newRowSpan, others)) {
     return; // Keep current size, don't update
   }
 
   // Live update
-  widget.style.gridColumn = `${state.startCol} / span ${newColSpan}`;
-  widget.style.gridRow = `${state.startRow} / span ${newRowSpan}`;
+  widget.style.gridColumn = `${newCol} / span ${newColSpan}`;
+  widget.style.gridRow = `${newRow} / span ${newRowSpan}`;
 
+  state.targetCol = newCol;
+  state.targetRow = newRow;
   state.targetColSpan = newColSpan;
   state.targetRowSpan = newRowSpan;
 }
 
 function finishResize(state) {
+  const col = state.targetCol ?? state.startCol;
+  const row = state.targetRow ?? state.startRow;
   const colSpan = state.targetColSpan || state.startColSpan;
   const rowSpan = state.targetRowSpan || state.startRowSpan;
 
   state.originalWidget.setAttribute('data-resizing', 'false');
   document.body.style.userSelect = '';
 
-  if (colSpan !== state.startColSpan || rowSpan !== state.startRowSpan) {
-    state.dotNetRef.invokeMethodAsync('JsOnWidgetResizeEnd', state.activeWidgetId, colSpan, rowSpan).catch(() => {});
+  if (col !== state.startCol || row !== state.startRow ||
+      colSpan !== state.startColSpan || rowSpan !== state.startRowSpan) {
+    state.dotNetRef.invokeMethodAsync('JsOnWidgetResizeEnd',
+      state.activeWidgetId, col, row, colSpan, rowSpan).catch(() => {});
 
     announceChange(state, `Widget resized to ${colSpan} columns, ${rowSpan} rows`);
   }
@@ -499,7 +532,7 @@ function onKeyDown(instanceId, state, e) {
       if (newColSpan !== colSpan || newRowSpan !== rowSpan) {
         const others = getWidgetPositions(grid, widgetId);
         if (wouldOverlap(col, row, newColSpan, newRowSpan, others)) { return; }
-        state.dotNetRef.invokeMethodAsync('JsOnWidgetResizeEnd', widgetId, newColSpan, newRowSpan).catch(() => {});
+        state.dotNetRef.invokeMethodAsync('JsOnWidgetResizeEnd', widgetId, col, row, newColSpan, newRowSpan).catch(() => {});
         announceChange(state, `Widget resized to ${newColSpan} columns, ${newRowSpan} rows`);
       }
     }
