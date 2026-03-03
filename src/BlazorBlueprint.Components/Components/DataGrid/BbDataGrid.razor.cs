@@ -37,6 +37,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private readonly string gridId = Guid.NewGuid().ToString("N");
     private bool jsInitialized;
 
+    // ItemKey tracking
+    private Func<TData, object>? _lastItemKey;
+
     // ShouldRender tracking
     private IEnumerable<TData>? _lastItems;
     private bool _lastIsLoading;
@@ -241,12 +244,22 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     [Parameter]
     public EventCallback<(string ColumnId, int NewIndex)> OnColumnReorder { get; set; }
 
+    /// <summary>
+    /// A function that returns a stable identity key for each data item
+    /// (e.g., <c>item =&gt; item.Id</c>). When set, selection and expansion state
+    /// is tracked by key instead of reference equality, so state survives data re-fetches.
+    /// Also forwarded to the Virtualize component when virtualization is enabled.
+    /// </summary>
+    [Parameter]
+    public Func<TData, object>? ItemKey { get; set; }
+
     internal DataGridState<TData> EffectiveState => State ?? _gridState;
 
     protected override void OnInitialized()
     {
         _gridState.Pagination.PageSize = InitialPageSize;
         _gridState.Selection.Mode = GetPrimitiveSelectionMode();
+        ApplyItemKeyComparer();
     }
 
     protected override async Task OnParametersSetAsync()
@@ -257,6 +270,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
 
         _gridState.Selection.Mode = GetPrimitiveSelectionMode();
+
+        if (!ReferenceEquals(_lastItemKey, ItemKey))
+        {
+            ApplyItemKeyComparer();
+        }
 
         // Detect external state mutations (e.g., Restore() or Reset() called from outside)
         var externalStateChanged = _gridState.Version != _lastGridStateVersion;
@@ -855,6 +873,12 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     private bool IsSomeSelected() =>
         _gridState.Selection.AreSomeSelected(_processedData);
+
+    private void ApplyItemKeyComparer()
+    {
+        _lastItemKey = ItemKey;
+        EffectiveState.SetItemKey(ItemKey);
+    }
 
     private SelectionMode GetPrimitiveSelectionMode() => SelectionMode switch
     {

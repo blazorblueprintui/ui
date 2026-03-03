@@ -7,7 +7,7 @@ namespace BlazorBlueprint.Primitives.Table;
 /// <typeparam name="TData">The type of data items in the table.</typeparam>
 public class SelectionState<TData> where TData : class
 {
-    private readonly HashSet<TData> selectedItems = new();
+    private HashSet<TData> selectedItems = new();
 
     /// <summary>
     /// Gets the collection of selected items.
@@ -167,6 +167,14 @@ public class SelectionState<TData> where TData : class
 
         return selectedCount > 0 && selectedCount < totalCount;
     }
+
+    /// <summary>
+    /// Rebuilds the internal HashSet with the given comparer, preserving existing items.
+    /// Pass null to revert to default reference equality.
+    /// </summary>
+    /// <param name="comparer">The equality comparer to use, or null for default.</param>
+    public void SetComparer(IEqualityComparer<TData>? comparer) =>
+        selectedItems = new HashSet<TData>(selectedItems, comparer);
 
     /// <summary>
     /// Sets the selection state for multiple items at once.

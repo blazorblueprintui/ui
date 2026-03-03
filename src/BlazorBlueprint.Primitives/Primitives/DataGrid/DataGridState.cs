@@ -68,6 +68,20 @@ public class DataGridState<TData> where TData : class
     public bool HasPagination => Pagination.TotalPages > 1;
 
     /// <summary>
+    /// Configures a key-based equality comparer for selection and expansion state.
+    /// When set, items are compared by their key (e.g., <c>item => item.Id</c>) instead
+    /// of by reference equality, so state survives data re-fetches.
+    /// Pass null to revert to default reference equality.
+    /// </summary>
+    /// <param name="itemKey">A function that returns a stable identity key for each item, or null.</param>
+    public void SetItemKey(Func<TData, object>? itemKey)
+    {
+        var comparer = itemKey != null ? new KeyBasedEqualityComparer<TData>(itemKey) : null;
+        Selection.SetComparer(comparer);
+        Expanded.SetComparer(comparer);
+    }
+
+    /// <summary>
     /// Resets all state to default values.
     /// </summary>
     public void Reset()
