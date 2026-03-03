@@ -37,6 +37,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private readonly string gridId = Guid.NewGuid().ToString("N");
     private bool jsInitialized;
 
+    // Context menu state
+    private BbContextMenu? rowContextMenu;
+    private TData? contextMenuItem;
+    private IJSObjectReference? clipboardModule;
+
     // ItemKey tracking
     private Func<TData, object>? _lastItemKey;
 
@@ -207,6 +212,20 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     [Parameter]
     public EventCallback<TData> OnRowCollapse { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when a row is clicked.
+    /// </summary>
+    [Parameter]
+    public EventCallback<TData> OnRowClick { get; set; }
+
+    /// <summary>
+    /// Render fragment for the row context menu. When set, right-clicking a row opens
+    /// a context menu with the provided content. Receives a <see cref="DataGridRowMenuContext{TData}"/>
+    /// with the clicked item and a clipboard helper.
+    /// </summary>
+    [Parameter]
+    public RenderFragment<DataGridRowMenuContext<TData>>? RowContextMenu { get; set; }
 
     /// <summary>
     /// Event callback invoked when sorting changes.
@@ -852,6 +871,43 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         StateHasChanged();
     }
 
+    private List<IDataGridColumn<TData>> GetVisibleDataColumns() =>
+        GetVisibleColumns()
+            .Where(c => c.ColumnId != "__select" && c.ColumnId != "__expand")
+            .ToList();
+
+    private async Task HandleRowClick(TData item)
+    {
+        if (OnRowClick.HasDelegate)
+        {
+            await OnRowClick.InvokeAsync(item);
+        }
+    }
+
+    private async Task HandleRowContextMenu((TData Item, double ClientX, double ClientY) args)
+    {
+        contextMenuItem = args.Item;
+
+        if (rowContextMenu != null)
+        {
+            await rowContextMenu.OpenAt(args.ClientX, args.ClientY);
+        }
+    }
+
+    private async Task<bool> CopyToClipboardAsync(string text)
+    {
+        try
+        {
+            clipboardModule ??= await Js.InvokeAsync<IJSObjectReference>("import",
+                "./_content/BlazorBlueprint.Components/js/clipboard.js");
+            return await clipboardModule.InvokeAsync<bool>("copyToClipboard", text);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private async Task HandlePageChanged(int page)
     {
         _gridState.Pagination.GoToPage(page);
@@ -1116,5 +1172,17 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
 
         selfRef?.Dispose();
+
+        if (clipboardModule != null)
+        {
+            try
+            {
+                await clipboardModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+        }
     }
 }

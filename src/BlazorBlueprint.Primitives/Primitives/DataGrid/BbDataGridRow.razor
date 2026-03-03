@@ -9,6 +9,8 @@
     tabindex="@(IsKeyboardNavigable ? 0 : -1)"
     class="@ComputedClass"
     @onclick="HandleClick"
+    @oncontextmenu="HandleContextMenu"
+    @oncontextmenu:preventDefault="@HasContextMenuHandler"
     @onkeydown="HandleKeyDown"
     @attributes="AdditionalAttributes">
     @ChildContent
@@ -77,11 +79,26 @@
         }
     }
 
+    private bool HasContextMenuHandler => Context?.OnRowContextMenu != null;
+
     private void HandleClick()
     {
-        if (Item != null && IsSelectable)
+        if (Item != null && Context != null)
         {
-            Context.ToggleRowSelection(Item);
+            Context.OnRowClick?.Invoke(Item);
+
+            if (IsSelectable)
+            {
+                Context.ToggleRowSelection(Item);
+            }
+        }
+    }
+
+    private void HandleContextMenu(MouseEventArgs e)
+    {
+        if (Item != null)
+        {
+            Context?.OnRowContextMenu?.Invoke(Item, e.ClientX, e.ClientY);
         }
     }
 

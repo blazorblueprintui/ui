@@ -48,6 +48,8 @@
                     EnableKeyboardNavigation="@EnableKeyboardNavigation"
                     OnSortChange="HandleSortChange"
                     OnSelectionChange="HandleSelectionChange"
+                    OnRowClick="HandleRowClick"
+                    OnRowContextMenu="@(RowContextMenu != null ? (EventCallback<(TData, double, double)>)EventCallback.Factory.Create<(TData, double, double)>(this, HandleRowContextMenu) : default)"
                     Class="@ClassNames.cn("w-full caption-bottom text-sm", HasTableFixed() ? "table-fixed" : "")"
                     AriaLabel="@AriaLabel">
                     @if (HasTableFixed())
@@ -172,7 +174,7 @@
                     <BlazorBlueprint.Primitives.DataGrid.BbDataGridBody>
                         @if (Virtualize && ItemSize > 0)
                         {
-                            <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize Items="@_processedDataList" Context="item" ItemSize="@ItemSize" OverscanCount="5" ItemKey="@ItemKey">
+                            <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize Items="@_processedDataList" Context="item" ItemSize="@ItemSize" OverscanCount="5">
                                 @RenderDataRow(item)
                             </Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize>
                         }
@@ -195,6 +197,24 @@
                 </BlazorBlueprint.Primitives.DataGrid.BbDataGrid>
             }
         </div>
+
+        @if (RowContextMenu != null)
+        {
+            <BbContextMenu @ref="rowContextMenu">
+                <BbContextMenuContent>
+                    @if (contextMenuItem != null)
+                    {
+                        @RowContextMenu(new DataGridRowMenuContext<TData>
+                        {
+                            Item = contextMenuItem,
+                            SelectedItems = _gridState.Selection.SelectedItems,
+                            VisibleColumns = GetVisibleDataColumns(),
+                            CopyToClipboardAsync = CopyToClipboardAsync
+                        })
+                    }
+                </BbContextMenuContent>
+            </BbContextMenu>
+        }
 
         @if (ShowPagination && !IsLoading && _processedData.Any())
         {

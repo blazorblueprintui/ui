@@ -63,6 +63,12 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
     public EventCallback<IReadOnlyList<SortDefinition>> OnSortChange { get; set; }
 
     /// <summary>
+    /// Event callback invoked when a row is clicked.
+    /// </summary>
+    [Parameter]
+    public EventCallback<TData> OnRowClick { get; set; }
+
+    /// <summary>
     /// Event callback invoked when a row is selected.
     /// </summary>
     [Parameter]
@@ -85,6 +91,12 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
     /// </summary>
     [Parameter]
     public EventCallback<IReadOnlyCollection<TData>> OnSelectionChange { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when a row is right-clicked (context menu).
+    /// </summary>
+    [Parameter]
+    public EventCallback<(TData Item, double ClientX, double ClientY)> OnRowContextMenu { get; set; }
 
     /// <summary>
     /// Event callback invoked when a column's visibility changes.
@@ -258,6 +270,44 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
             });
             TrackTask(task);
         };
+
+        context.OnRowClick = (item) =>
+        {
+            var task = InvokeAsync(async () =>
+            {
+                try
+                {
+                    if (OnRowClick.HasDelegate)
+                    {
+                        await OnRowClick.InvokeAsync(item);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Error in OnRowClick: {ex.Message}");
+                }
+            });
+            TrackTask(task);
+        };
+
+        if (OnRowContextMenu.HasDelegate)
+        {
+            context.OnRowContextMenu = (item, x, y) =>
+            {
+                var task = InvokeAsync(async () =>
+                {
+                    try
+                    {
+                        await OnRowContextMenu.InvokeAsync((item, x, y));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine($"Error in OnRowContextMenu: {ex.Message}");
+                    }
+                });
+                TrackTask(task);
+            };
+        }
 
         context.OnRowSelect = (item) =>
         {

@@ -43,6 +43,11 @@ public class DataGridContext<TData> : PrimitiveContextWithEvents<DataGridState<T
     public Action<IReadOnlyList<SortDefinition>>? OnSortChange { get; set; }
 
     /// <summary>
+    /// Callback invoked when a row is clicked.
+    /// </summary>
+    public Action<TData>? OnRowClick { get; set; }
+
+    /// <summary>
     /// Callback invoked when a row is selected.
     /// </summary>
     public Action<TData>? OnRowSelect { get; set; }
@@ -61,6 +66,12 @@ public class DataGridContext<TData> : PrimitiveContextWithEvents<DataGridState<T
     /// Callback invoked when the selection changes.
     /// </summary>
     public Action<IReadOnlyCollection<TData>>? OnSelectionChange { get; set; }
+
+    /// <summary>
+    /// Callback invoked when a row is right-clicked (context menu).
+    /// Parameters: item, clientX, clientY.
+    /// </summary>
+    public Action<TData, double, double>? OnRowContextMenu { get; set; }
 
     /// <summary>
     /// Callback invoked when a column's visibility changes.

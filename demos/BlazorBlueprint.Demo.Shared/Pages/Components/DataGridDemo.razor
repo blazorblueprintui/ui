@@ -643,17 +643,86 @@
         <CodeBlock Source="Components/DataGrid/pinned-columns.txt" />
     </div>
 
+    <!-- ── Row Click & Context Menu ─────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Row Click & Context Menu</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">OnRowClick</code> to respond to row clicks and
+                <code class="bg-muted px-1 py-0.5 rounded">RowContextMenu</code> to show a custom context menu on right-click.
+                The context provides <code class="bg-muted px-1 py-0.5 rounded">CopyToClipboardAsync</code> for clipboard access,
+                <code class="bg-muted px-1 py-0.5 rounded">VisibleColumns</code> for column-aware copying, and built-in
+                <code class="bg-muted px-1 py-0.5 rounded">FormatRow</code> / <code class="bg-muted px-1 py-0.5 rounded">FormatRows</code>
+                helpers that automatically respect column visibility and ordering.
+            </p>
+        </div>
+        @if (!string.IsNullOrEmpty(clickedRowMessage))
+        {
+            <BbAlert Variant="AlertVariant.Default" Class="transition-all">
+                <BbAlertDescription>@clickedRowMessage</BbAlertDescription>
+            </BbAlert>
+        }
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                    OnRowClick="HandleDemoRowClick">
+            <RowContextMenu Context="menu">
+                <BbContextMenuItem OnClick="@(async () => await CopyWithFeedback(menu, menu.Item.Name))">
+                    Copy Name
+                </BbContextMenuItem>
+                <BbContextMenuItem OnClick="@(async () => await CopyWithFeedback(menu, menu.Item.Email))">
+                    Copy Email
+                </BbContextMenuItem>
+                <BbContextMenuSeparator />
+                <BbContextMenuItem OnClick="@(async () => await CopyWithFeedback(menu, menu.FormatRow(menu.Item)))">
+                    Copy Row
+                </BbContextMenuItem>
+            </RowContextMenu>
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" />
+            </Columns>
+        </BbDataGrid>
+    </div>
+
     <!-- ── All Column Features Combined ─────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">All Column Features Combined</h2>
             <p class="text-sm text-muted-foreground">
-                Column visibility, resize, reorder, sorting, and selection all working together.
+                Column visibility, resize, reorder, sorting, selection, and context menu all working together.
+                Right-click a row to copy data — hidden columns are excluded automatically.
+                Select multiple rows and use "Copy Selected Rows" from the context menu.
             </p>
         </div>
+        @if (!string.IsNullOrEmpty(allFeaturesMessage))
+        {
+            <BbAlert Variant="AlertVariant.Default" Class="transition-all">
+                <BbAlertDescription>@allFeaturesMessage</BbAlertDescription>
+            </BbAlert>
+        }
         <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
                    Resizable="true" Reorderable="true"
-                   SelectionMode="DataTableSelectionMode.Multiple">
+                   SelectionMode="DataTableSelectionMode.Multiple"
+                   OnRowClick="HandleAllFeaturesRowClick">
+            <RowContextMenu Context="menu">
+                <BbContextMenuItem OnClick="@(async () => await CopyAllFeatures(menu, menu.Item.Name))">
+                    Copy Name
+                </BbContextMenuItem>
+                <BbContextMenuItem OnClick="@(async () => await CopyAllFeatures(menu, menu.Item.Email))">
+                    Copy Email
+                </BbContextMenuItem>
+                <BbContextMenuSeparator />
+                <BbContextMenuItem OnClick="@(async () => await CopyAllFeatures(menu, menu.FormatRow(menu.Item)))">
+                    Copy Row
+                </BbContextMenuItem>
+                @if (menu.SelectedItems.Count > 1)
+                {
+                    <BbContextMenuItem OnClick="@(async () => await CopyAllFeatures(menu, menu.FormatRows(menu.SelectedItems)))">
+                        Copy @menu.SelectedItems.Count Selected Rows
+                    </BbContextMenuItem>
+                }
+            </RowContextMenu>
             <Toolbar>
                 <div class="flex items-center gap-2">
                     <BbDataGridColumnVisibility TData="Person" />
@@ -972,6 +1041,7 @@
     private List<Person> stressTestPeople = new();
     private List<Person> asyncPeople = new();
     private IReadOnlyCollection<Person> _selectedPeople = Array.Empty<Person>();
+    private string? clickedRowMessage;
     private bool _isLoading;
     private bool stressTestLoaded;
     private bool stressTestLoading;
@@ -1178,4 +1248,33 @@
         persistenceState.Reset();
         hasSavedState = false;
     }
+
+    // --- Row Click & Context Menu ---
+
+    private void HandleDemoRowClick(Person person)
+    {
+        clickedRowMessage = $"Clicked: {person.Name} ({person.Email})";
+    }
+
+    private async Task CopyWithFeedback(DataGridRowMenuContext<Person> menu, string text)
+    {
+        await menu.CopyToClipboardAsync(text);
+        clickedRowMessage = $"Copied to clipboard: {text}";
+    }
+
+    // --- All Features ---
+
+    private string? allFeaturesMessage;
+
+    private void HandleAllFeaturesRowClick(Person person)
+    {
+        allFeaturesMessage = $"Clicked: {person.Name} ({person.Email})";
+    }
+
+    private async Task CopyAllFeatures(DataGridRowMenuContext<Person> menu, string text)
+    {
+        await menu.CopyToClipboardAsync(text);
+        allFeaturesMessage = $"Copied to clipboard: {text}";
+    }
+
 }
