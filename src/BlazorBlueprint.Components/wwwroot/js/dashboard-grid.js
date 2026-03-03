@@ -232,6 +232,13 @@ function activateDrag(state) {
   state.isDragging = true;
   state.pendingDrag = false;
 
+  // Capture all widget positions at drag start for stable swap detection
+  const grid = state.originalWidget.closest('[role="region"][aria-roledescription="dashboard grid"]');
+  if (grid) {
+    state.dragGrid = grid;
+    state.originalPositions = getWidgetPositions(grid, null);
+  }
+
   document.body.style.userSelect = 'none';
   document.body.style.cursor = 'grabbing';
 
@@ -241,7 +248,7 @@ function activateDrag(state) {
 }
 
 function updateDrag(state, e) {
-  const grid = state.originalWidget.closest('[role="region"][aria-roledescription="dashboard grid"]');
+  const grid = state.dragGrid;
   if (!grid) return;
 
   const gridRect = grid.getBoundingClientRect();
@@ -261,24 +268,43 @@ function updateDrag(state, e) {
   targetCol = Math.max(1, Math.min(targetCol, cols - state.startColSpan + 1));
   targetRow = Math.max(1, targetRow);
 
-  // Collision detection — only move if target doesn't overlap other widgets
-  const others = getWidgetPositions(grid, state.activeWidgetId);
-  if (wouldOverlap(targetCol, targetRow, state.startColSpan, state.startRowSpan, others)) {
-    return; // Keep current position, don't update
+  // Skip if target hasn't changed
+  if (targetCol === state.lastResolvedCol && targetRow === state.lastResolvedRow) return;
+
+  // Build proposed layout from original positions with dragged widget at target
+  const proposed = state.originalPositions.map(p => ({...p}));
+  const dragged = proposed.find(p => p.id === state.activeWidgetId);
+  if (!dragged) return;
+  dragged.col = targetCol;
+  dragged.row = targetRow;
+
+  // Resolve all overlaps by pushing displaced widgets
+  const resolved = resolveLayout(proposed, state.activeWidgetId,
+    state.startCol, state.startRow, cols);
+
+  if (!resolved) {
+    // Couldn't resolve — restore original layout
+    applyLayout(grid, state.originalPositions);
+    state.originalWidget.style.opacity = '0.5';
+    state.originalWidget.style.zIndex = '50';
+    state.lastResolvedCol = undefined;
+    state.lastResolvedRow = undefined;
+    return;
   }
 
-  // Update inline style for live preview
-  state.originalWidget.style.gridColumn = `${targetCol} / span ${state.startColSpan}`;
-  state.originalWidget.style.gridRow = `${targetRow} / span ${state.startRowSpan}`;
+  // Apply resolved layout to DOM
+  applyLayout(grid, resolved);
+  state.originalWidget.style.opacity = '0.5';
+  state.originalWidget.style.zIndex = '50';
 
+  state.resolvedLayout = resolved;
   state.targetCol = targetCol;
   state.targetRow = targetRow;
+  state.lastResolvedCol = targetCol;
+  state.lastResolvedRow = targetRow;
 }
 
 function finishDrag(state) {
-  const col = state.targetCol || state.startCol;
-  const row = state.targetRow || state.startRow;
-
   state.originalWidget.style.opacity = '';
   state.originalWidget.style.zIndex = '';
   state.originalWidget.setAttribute('data-dragging', 'false');
@@ -286,11 +312,22 @@ function finishDrag(state) {
   document.body.style.userSelect = '';
   document.body.style.cursor = '';
 
-  if (col !== state.startCol || row !== state.startRow) {
-    state.dotNetRef.invokeMethodAsync('JsOnWidgetDragEnd', state.activeWidgetId, col, row).catch(() => {});
+  if (state.resolvedLayout && state.originalPositions) {
+    // Find all widgets that changed position
+    const changes = [];
+    for (const resolved of state.resolvedLayout) {
+      const original = state.originalPositions.find(p => p.id === resolved.id);
+      if (!original) continue;
+      if (resolved.col !== original.col || resolved.row !== original.row) {
+        changes.push({ id: resolved.id, col: resolved.col, row: resolved.row });
+      }
+    }
 
-    // Announce to screen readers
-    announceChange(state, `Widget moved to column ${col}, row ${row}`);
+    if (changes.length > 0) {
+      state.dotNetRef.invokeMethodAsync('JsOnLayoutResolved',
+        state.activeWidgetId, changes).catch(() => {});
+      announceChange(state, `Dashboard layout updated`);
+    }
   }
 }
 
@@ -476,7 +513,7 @@ function onKeyDown(instanceId, state, e) {
   }
 }
 
-// --- Collision Detection ---
+// --- Collision Detection & Layout Resolution ---
 
 function getWidgetPositions(grid, excludeWidgetId) {
   // Use :scope > to select only direct child widgets, not nested
@@ -509,6 +546,84 @@ function wouldOverlap(col, row, colSpan, rowSpan, others) {
   return false;
 }
 
+function rectsOverlap(a, b) {
+  return a.col < b.col + b.colSpan &&
+    b.col < a.col + a.colSpan &&
+    a.row < b.row + b.rowSpan &&
+    b.row < a.row + a.rowSpan;
+}
+
+function findFirstOverlap(layout) {
+  for (let i = 0; i < layout.length; i++) {
+    for (let j = i + 1; j < layout.length; j++) {
+      if (rectsOverlap(layout[i], layout[j])) {
+        return [layout[i], layout[j]];
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Resolve all overlaps in the layout by pushing displaced widgets.
+ * Strategy: displaced widgets try the dragged widget's vacated position first,
+ * then get pushed below the widget that displaced them.
+ */
+function resolveLayout(layout, movedId, origCol, origRow, cols) {
+  for (let iter = 0; iter < 100; iter++) {
+    const pair = findFirstOverlap(layout);
+    if (!pair) return layout; // no overlaps — resolved
+
+    const [a, b] = pair;
+
+    // The dragged widget always takes priority. For cascade pushes,
+    // the widget at the higher/earlier position pushes the other.
+    let pusher, pushed;
+    if (a.id === movedId) { pusher = a; pushed = b; }
+    else if (b.id === movedId) { pusher = b; pushed = a; }
+    else {
+      if (a.row < b.row || (a.row === b.row && a.col <= b.col)) {
+        pusher = a; pushed = b;
+      } else {
+        pusher = b; pushed = a;
+      }
+    }
+
+    // Strategy 1: For widgets directly displaced by the dragged widget,
+    // try placing them at the dragged widget's vacated position.
+    if (pusher.id === movedId) {
+      const fits = origCol + pushed.colSpan - 1 <= cols &&
+        !wouldOverlap(origCol, origRow, pushed.colSpan, pushed.rowSpan,
+          layout.filter(w => w.id !== pushed.id));
+      if (fits) {
+        pushed.col = origCol;
+        pushed.row = origRow;
+        continue;
+      }
+    }
+
+    // Strategy 2: Push below the pusher, keep same column.
+    pushed.row = pusher.row + pusher.rowSpan;
+
+    // If pushed off-grid horizontally, move to column 1
+    if (pushed.col + pushed.colSpan - 1 > cols) {
+      pushed.col = 1;
+    }
+  }
+
+  return null; // couldn't resolve
+}
+
+function applyLayout(grid, layout) {
+  for (const pos of layout) {
+    const el = grid.querySelector(`:scope > [data-widget-id="${pos.id}"]`);
+    if (el) {
+      el.style.gridColumn = `${pos.col} / span ${pos.colSpan}`;
+      el.style.gridRow = `${pos.row} / span ${pos.rowSpan}`;
+    }
+  }
+}
+
 // --- Helpers ---
 
 function parseGridValue(gridProp, type) {
@@ -527,10 +642,12 @@ function parseGridValue(gridProp, type) {
 }
 
 function cancelInteraction(state) {
+  // Restore all widgets to their original positions
+  if (state.dragGrid && state.originalPositions) {
+    applyLayout(state.dragGrid, state.originalPositions);
+  }
+
   if (state.originalWidget) {
-    // Restore original position
-    state.originalWidget.style.gridColumn = `${state.startCol} / span ${state.startColSpan}`;
-    state.originalWidget.style.gridRow = `${state.startRow} / span ${state.startRowSpan}`;
     state.originalWidget.style.opacity = '';
     state.originalWidget.style.zIndex = '';
     state.originalWidget.setAttribute('data-dragging', 'false');
@@ -556,6 +673,11 @@ function resetState(state) {
   state.targetRow = undefined;
   state.targetColSpan = undefined;
   state.targetRowSpan = undefined;
+  state.dragGrid = null;
+  state.originalPositions = null;
+  state.resolvedLayout = null;
+  state.lastResolvedCol = undefined;
+  state.lastResolvedRow = undefined;
 }
 
 function announceChange(state, message) {

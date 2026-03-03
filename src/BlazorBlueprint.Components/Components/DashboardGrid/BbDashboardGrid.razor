@@ -297,6 +297,57 @@
     }
 
     [JSInvokable]
+    public async Task JsOnLayoutResolved(string draggedWidgetId, LayoutChangeDto[] changes)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        WidgetDragEventArgs? dragArgs = null;
+
+        foreach (var change in changes)
+        {
+            var oldPos = _context.GetWidgetPosition(change.Id)?.Clone();
+            if (oldPos == null)
+            {
+                continue;
+            }
+
+            _context.UpdateWidgetPosition(change.Id, change.Col, change.Row, oldPos.ColumnSpan, oldPos.RowSpan);
+
+            if (change.Id == draggedWidgetId && OnWidgetDragEnd.HasDelegate)
+            {
+                var newPos = oldPos.Clone();
+                newPos.Column = change.Col;
+                newPos.Row = change.Row;
+                dragArgs = new WidgetDragEventArgs
+                {
+                    WidgetId = draggedWidgetId,
+                    OldPosition = oldPos,
+                    NewPosition = newPos
+                };
+            }
+        }
+
+        if (dragArgs != null)
+        {
+            await OnWidgetDragEnd.InvokeAsync(dragArgs);
+        }
+        if (OnLayoutChanged.HasDelegate)
+        {
+            await OnLayoutChanged.InvokeAsync(_context.State.GetActiveLayout());
+        }
+    }
+
+    public sealed class LayoutChangeDto
+    {
+        public string Id { get; set; } = string.Empty;
+        public int Col { get; set; }
+        public int Row { get; set; }
+    }
+
+    [JSInvokable]
     public void JsOnWidgetKeyboardMove(string widgetId, int column, int row) =>
         JsOnWidgetDragEnd(widgetId, column, row).ConfigureAwait(false);
 
