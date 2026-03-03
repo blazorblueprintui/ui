@@ -117,12 +117,18 @@
   }
 }
 
-/* DataGrid pinned-cell hover — opaque equivalent of the row's hover:bg-muted/50.
-   Pinned (sticky) cells need opaque backgrounds to hide scrolling content, so we
-   use color-mix() to blend muted at 50% with the background color. */
+/* DataGrid pinned-cell backgrounds — pinned (sticky) cells need opaque
+   backgrounds to hide scrolling content. These CSS rules override the
+   semi-transparent group-hover/row:bg-muted/50 utility on pinned cells
+   with an opaque color-mix() blend. Selected state is ordered after hover
+   so it takes precedence at equal specificity. */
 @layer utilities {
   .group\/row:hover > td[data-pinned] {
     background-color: color-mix(in oklch, var(--muted) 50%, var(--background));
+  }
+
+  .group\/row[aria-selected="true"] > td[data-pinned] {
+    background-color: var(--muted);
   }
 }
 

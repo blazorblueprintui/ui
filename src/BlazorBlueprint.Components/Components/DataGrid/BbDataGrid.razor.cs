@@ -1129,14 +1129,14 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         bool isExpandColumn, bool isLastLeft, bool isFirstRight, bool isRowSelected,
         string? rowClass)
     {
-        var baseClass = "p-4 align-middle";
+        var baseClass = "p-4 align-middle transition-colors";
+        var hoverClass = isRowSelected ? "" : "group-hover/row:bg-muted/50";
+        var selectedClass = isRowSelected ? "bg-muted" : "";
 
         var pinnedClass = "";
         if (column.Pinned != ColumnPinning.None)
         {
-            var bgClass = isRowSelected
-                ? "bg-muted"
-                : "bg-background";
+            var bgClass = isRowSelected ? "bg-muted" : "bg-background";
             pinnedClass = ClassNames.cn(bgClass, "z-10", rowClass);
         }
 
@@ -1152,13 +1152,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         if (isSelectColumn || isExpandColumn)
         {
-            var selectBg = "";
-            if (column.Pinned == ColumnPinning.None && isRowSelected)
-            {
-                selectBg = "bg-muted";
-            }
-
-            return ClassNames.cn(baseClass, "w-12", selectBg, pinnedClass, separatorClass);
+            return ClassNames.cn(baseClass, hoverClass, "w-12", selectedClass, pinnedClass, separatorClass);
         }
 
         var cellClass = column.CellClass;
@@ -1166,7 +1160,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         var overflowClass = HasTableFixed() ? "overflow-hidden" : "";
         var noWrapClass = column.NoWrap ? "whitespace-nowrap overflow-hidden text-ellipsis" : "";
 
-        return ClassNames.cn(baseClass, cellClass, overflowClass, noWrapClass, pinnedClass, separatorClass);
+        return ClassNames.cn(baseClass, hoverClass, selectedClass, cellClass, overflowClass, noWrapClass, pinnedClass, separatorClass);
     }
 
     private string? GetColumnWidthStyle(IDataGridColumn<TData> column)
