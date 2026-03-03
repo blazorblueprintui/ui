@@ -1,0 +1,44 @@
+@namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Primitives.DashboardGrid
+
+<div class="@CssClass">
+    @if (_showDragHandle)
+    {
+        <div class="cursor-grab active:cursor-grabbing text-muted-foreground shrink-0"
+             data-dashboard-drag-handle="true"
+             data-widget-id="@Widget?.Id"
+             role="button"
+             aria-label="Move widget"
+             tabindex="0">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="5" r="1" /><circle cx="15" cy="5" r="1" />
+                <circle cx="9" cy="12" r="1" /><circle cx="15" cy="12" r="1" />
+                <circle cx="9" cy="19" r="1" /><circle cx="15" cy="19" r="1" />
+            </svg>
+        </div>
+    }
+    <div class="flex-1 min-w-0">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    public BlazorBlueprint.Primitives.DashboardGrid.BbDashboardWidget? Widget { get; set; }
+
+    [CascadingParameter]
+    public DashboardGridContext? Context { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? Class { get; set; }
+
+    private bool _showDragHandle =>
+        (Widget?.Draggable ?? false) && !(Widget?.Static ?? false)
+        && (Context?.AllowDrag ?? false) && (Context?.Editable ?? false);
+
+    private string CssClass => ClassNames.cn(
+        "flex items-center px-4 py-3 border-b",
+        _showDragHandle ? "gap-2" : "",
+        Class
+    );
+}
