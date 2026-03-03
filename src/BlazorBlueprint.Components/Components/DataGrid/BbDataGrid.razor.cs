@@ -1,5 +1,7 @@
+using System.Linq.Expressions;
 using BlazorBlueprint.Primitives;
 using BlazorBlueprint.Primitives.DataGrid;
+using BlazorBlueprint.Primitives.Filtering;
 using BlazorBlueprint.Primitives.Table;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -232,6 +234,13 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     [Parameter]
     public EventCallback<IReadOnlyList<SortDefinition>> OnSort { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when column filters change.
+    /// Receives the active filters keyed by column ID.
+    /// </summary>
+    [Parameter]
+    public EventCallback<IReadOnlyDictionary<string, FilterCondition>> OnFilter { get; set; }
 
     /// <summary>
     /// Enable column resizing by dragging header cell borders. Default is false.
@@ -541,7 +550,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         if (data is IQueryable<TData> queryable)
         {
-            var sorted = queryable.ApplyMultiSort(
+            var filtered = ApplyColumnFilters(queryable);
+            var sorted = filtered.ApplyMultiSort(
                 _gridState.Sorting.Definitions, columns);
 
             _gridState.Pagination.TotalItems = sorted.Count();
@@ -563,7 +573,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
         else
         {
-            var sorted = data.ApplyMultiSort(
+            var filtered = ApplyColumnFilters(data);
+            var sorted = filtered.ApplyMultiSort(
                 _gridState.Sorting.Definitions, columns);
 
             var list = sorted as IList<TData> ?? sorted.ToList();
@@ -632,7 +643,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
                 SortDefinitions = _gridState.Sorting.Definitions,
                 StartIndex = Virtualize ? 0 : _gridState.Pagination.StartIndex,
                 Count = Virtualize ? null : _gridState.Pagination.PageSize,
-                CancellationToken = token
+                CancellationToken = token,
+                Filters = _gridState.Filtering.Filters
             };
 
             var result = await ItemsProvider!(request);
@@ -682,6 +694,135 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         await NotifyStateChangedAsync();
         StateHasChanged();
+    }
+
+    /// <summary>
+    /// Handles a column filter being applied or cleared.
+    /// Updates state, resets pagination, reprocesses data, and fires OnFilter.
+    /// </summary>
+    internal async Task HandleColumnFilterChanged(string columnId, FilterCondition? condition)
+    {
+        _gridState.Filtering.SetFilter(columnId, condition);
+        _gridState.Pagination.GoToPage(1);
+        await ProcessDataAsync();
+
+        if (OnFilter.HasDelegate)
+        {
+            await OnFilter.InvokeAsync(_gridState.Filtering.Filters);
+        }
+
+        await NotifyStateChangedAsync();
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Clears all column filters, reprocesses data, and fires OnFilter.
+    /// </summary>
+    internal async Task HandleClearAllFilters()
+    {
+        _gridState.Filtering.ClearAll();
+        _gridState.Pagination.GoToPage(1);
+        await ProcessDataAsync();
+
+        if (OnFilter.HasDelegate)
+        {
+            await OnFilter.InvokeAsync(_gridState.Filtering.Filters);
+        }
+
+        await NotifyStateChangedAsync();
+        StateHasChanged();
+    }
+
+    private IQueryable<TData> ApplyColumnFilters(IQueryable<TData> queryable)
+    {
+        if (!_gridState.Filtering.HasFilters)
+        {
+            return queryable;
+        }
+
+        var columnMap = new Dictionary<string, IDataGridColumn<TData>>(_columns.Count);
+        foreach (var col in _columns)
+        {
+            columnMap[col.ColumnId] = col;
+        }
+
+        foreach (var (columnId, condition) in _gridState.Filtering.Filters)
+        {
+            if (!columnMap.TryGetValue(columnId, out var column) || !column.Filterable)
+            {
+                continue;
+            }
+
+            var field = GetFilterFieldForColumn(column);
+            if (field == null)
+            {
+                continue;
+            }
+
+            var filterDef = new FilterDefinition
+            {
+                Conditions = new List<FilterCondition> { condition }
+            };
+
+            var expression = filterDef.ToExpression<TData>(new[] { field });
+            queryable = queryable.Where(expression);
+        }
+
+        return queryable;
+    }
+
+    private IEnumerable<TData> ApplyColumnFilters(IEnumerable<TData> data)
+    {
+        if (!_gridState.Filtering.HasFilters)
+        {
+            return data;
+        }
+
+        var columnMap = new Dictionary<string, IDataGridColumn<TData>>(_columns.Count);
+        foreach (var col in _columns)
+        {
+            columnMap[col.ColumnId] = col;
+        }
+
+        foreach (var (columnId, condition) in _gridState.Filtering.Filters)
+        {
+            if (!columnMap.TryGetValue(columnId, out var column) || !column.Filterable)
+            {
+                continue;
+            }
+
+            var field = GetFilterFieldForColumn(column);
+            if (field == null)
+            {
+                continue;
+            }
+
+            var filterDef = new FilterDefinition
+            {
+                Conditions = new List<FilterCondition> { condition }
+            };
+
+            var predicate = filterDef.ToFunc<TData>(new[] { field });
+            data = data.Where(predicate);
+        }
+
+        return data;
+    }
+
+    private static FilterField? GetFilterFieldForColumn(IDataGridColumn<TData> column)
+    {
+        if (column is not IFilterableColumn filterable)
+        {
+            return null;
+        }
+
+        return new FilterField
+        {
+            Name = filterable.GetFilterFieldName(),
+            Label = column.Title ?? column.ColumnId,
+            Type = filterable.GetFilterFieldType(),
+            Options = filterable.GetFilterOptions()
+        };
     }
 
     private async Task HandleSelectionChange(IReadOnlyCollection<TData> selectedItems)
@@ -973,7 +1114,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             return ClassNames.cn(baseClass, "w-12", pinnedClass, separatorClass);
         }
 
-        var needsGroup = column.Sortable || (Reorderable && column.Reorderable);
+        var needsGroup = column.Sortable || column.Filterable || (Reorderable && column.Reorderable);
         var sortClass = column.Sortable ? "cursor-pointer select-none" : "";
         var groupClass = needsGroup ? "group/header" : "";
         var needsRelative = (Resizable && column.Resizable) || (Reorderable && column.Reorderable);

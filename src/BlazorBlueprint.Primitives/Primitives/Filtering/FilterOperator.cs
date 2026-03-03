@@ -1,4 +1,4 @@
-namespace BlazorBlueprint.Components;
+namespace BlazorBlueprint.Primitives.Filtering;
 
 /// <summary>
 /// Defines the comparison operator for a filter condition.

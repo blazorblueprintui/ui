@@ -25,6 +25,11 @@ public interface IDataGridColumn<TData> where TData : class
     public bool Sortable { get; }
 
     /// <summary>
+    /// Gets whether this column supports per-column filtering.
+    /// </summary>
+    public bool Filterable { get; }
+
+    /// <summary>
     /// Gets whether this column is currently visible.
     /// </summary>
     public bool Visible { get; }
@@ -80,6 +85,12 @@ public interface IDataGridColumn<TData> where TData : class
     /// Returns null if the column does not support expression-based sorting.
     /// </summary>
     public LambdaExpression? GetSortExpression();
+
+    /// <summary>
+    /// Gets the LINQ property expression for building filter Where clauses.
+    /// Returns null if the column does not support expression-based filtering.
+    /// </summary>
+    public LambdaExpression? GetFilterExpression();
 
     /// <summary>
     /// Gets the custom cell template for this column.

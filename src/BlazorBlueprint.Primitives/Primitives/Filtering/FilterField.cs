@@ -1,4 +1,4 @@
-namespace BlazorBlueprint.Components;
+namespace BlazorBlueprint.Primitives.Filtering;
 
 /// <summary>
 /// Defines metadata for a field available in the filter builder.

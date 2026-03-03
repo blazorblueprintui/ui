@@ -1,19 +1,19 @@
 using System.Text.Json.Serialization;
 
-namespace BlazorBlueprint.Components;
+namespace BlazorBlueprint.Primitives.Filtering;
 
 /// <summary>
 /// Represents a tree of filter conditions and nested groups combined with a logical operator.
-/// Used as the model for <see cref="BbFilterBuilder"/>.
 /// </summary>
 public class FilterDefinition
 {
     /// <summary>
     /// Gets a monotonically increasing version number that changes on every filter edit.
-    /// Used by consumers (e.g. <see cref="BbDataTable{TData}"/>) to detect in-place mutations.
+    /// Used by consumers to detect in-place mutations.
     /// </summary>
     [JsonIgnore]
-    public int Version { get; internal set; }
+    public int Version { get; set; }
+
     /// <summary>
     /// Gets or sets the logical operator (AND/OR) used to combine conditions and groups.
     /// </summary>

@@ -14,7 +14,7 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 /// <typeparam name="TData">The type of data items in the grid.</typeparam>
 /// <typeparam name="TProp">The type of the property this column binds to.</typeparam>
-public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDataGridColumn<TData>
+public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDataGridColumn<TData>, IFilterableColumn
     where TData : class
 {
     private string? resolvedTitle;
@@ -110,6 +110,26 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
     public bool NoWrap { get; set; }
 
     /// <summary>
+    /// Whether this column supports per-column filtering. Default is false.
+    /// When true, a filter icon appears in the column header that opens a filter popover.
+    /// </summary>
+    [Parameter]
+    public bool Filterable { get; set; }
+
+    /// <summary>
+    /// Override the auto-inferred filter field type. When null, the type is inferred from <typeparamref name="TProp"/>.
+    /// </summary>
+    [Parameter]
+    public FilterFieldType? FilterType { get; set; }
+
+    /// <summary>
+    /// Predefined options for Enum filter fields. Required when <see cref="FilterType"/>
+    /// is <see cref="FilterFieldType.Enum"/> or when <typeparamref name="TProp"/> is an enum type.
+    /// </summary>
+    [Parameter]
+    public IEnumerable<SelectOption<string>>? FilterOptions { get; set; }
+
+    /// <summary>
     /// Custom cell template. If provided, overrides the default value rendering.
     /// </summary>
     [Parameter]
@@ -128,6 +148,8 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
     string? IDataGridColumn<TData>.Title => Title ?? resolvedTitle;
 
     bool IDataGridColumn<TData>.Sortable => Sortable;
+
+    bool IDataGridColumn<TData>.Filterable => Filterable;
 
     bool IDataGridColumn<TData>.Visible => Visible;
 
@@ -181,6 +203,61 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
     }
 
     public LambdaExpression? GetSortExpression() => Property;
+
+    public LambdaExpression? GetFilterExpression() => Filterable ? Property : null;
+
+    // IFilterableColumn implementation
+
+    FilterFieldType IFilterableColumn.GetFilterFieldType() => FilterType ?? InferFilterFieldType();
+
+    IEnumerable<SelectOption<string>>? IFilterableColumn.GetFilterOptions() => FilterOptions;
+
+    string IFilterableColumn.GetFilterFieldName()
+    {
+        if (Property.Body is MemberExpression member)
+        {
+            return member.Member.Name;
+        }
+        return ColumnId;
+    }
+
+    private static FilterFieldType InferFilterFieldType()
+    {
+        var propType = Nullable.GetUnderlyingType(typeof(TProp)) ?? typeof(TProp);
+
+        if (propType == typeof(string))
+        {
+            return FilterFieldType.Text;
+        }
+        if (propType == typeof(bool))
+        {
+            return FilterFieldType.Boolean;
+        }
+        if (propType == typeof(DateTime))
+        {
+            return FilterFieldType.DateTime;
+        }
+        if (propType == typeof(DateOnly))
+        {
+            return FilterFieldType.Date;
+        }
+        if (propType.IsEnum)
+        {
+            return FilterFieldType.Enum;
+        }
+        if (IsNumericType(propType))
+        {
+            return FilterFieldType.Number;
+        }
+
+        return FilterFieldType.Text;
+    }
+
+    private static bool IsNumericType(Type type) =>
+        type == typeof(int) || type == typeof(long) || type == typeof(float) ||
+        type == typeof(double) || type == typeof(decimal) || type == typeof(short) ||
+        type == typeof(byte) || type == typeof(sbyte) || type == typeof(ushort) ||
+        type == typeof(uint) || type == typeof(ulong);
 
     protected override void OnInitialized()
     {

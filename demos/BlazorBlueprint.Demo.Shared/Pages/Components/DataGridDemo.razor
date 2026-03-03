@@ -740,6 +740,46 @@
         <CodeBlock Source="Components/DataGrid/all-column-features.txt" />
     </div>
 
+    <!-- ── Column Filtering ──────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Column Filtering</h2>
+            <p class="text-sm text-muted-foreground">
+                Add <code class="bg-muted px-1 py-0.5 rounded">Filterable="true"</code> to property columns to enable
+                per-column filtering. A filter icon appears in the column header — hover to reveal it, or it stays
+                visible when a filter is active. Click the icon to open a popover with operator and value inputs.
+                Filter types are auto-inferred from the property type (text, number, date, boolean, enum).
+            </p>
+        </div>
+        @if (_gridState.Filtering.HasFilters)
+        {
+            <div class="flex items-center gap-2">
+                <BbBadge Variant="BadgeVariant.Secondary">
+                    @_gridState.Filtering.ActiveFilterCount active filter@(_gridState.Filtering.ActiveFilterCount != 1 ? "s" : "")
+                </BbBadge>
+            </div>
+        }
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                   @bind-State="_gridState" Resizable="true">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Filterable Width="200px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable Filterable Width="250px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Filterable
+                    FilterType="FilterFieldType.Enum"
+                    FilterOptions="@(new[] { "Engineering", "Sales", "Marketing", "Support", "HR", "Finance", "Operations", "Product" }.Select(d => new SelectOption<string>(d, d)))"
+                    Width="150px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable Filterable Width="100px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Filterable Width="130px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Sortable Filterable
+                    FilterType="FilterFieldType.Enum"
+                    FilterOptions="@(new[] { "Active", "Inactive", "Pending", "Suspended" }.Select(s => new SelectOption<string>(s, s)))"
+                    Width="120px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="bool" Property="@(p => p.IsActive)" Title="Active" Sortable Filterable Width="100px" />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/column-filtering.txt" />
+    </div>
+
     <!-- ── Empty & Loading States ──────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -883,6 +923,9 @@
                 <ApiParameter Name="OnSort" Type="EventCallback&lt;IReadOnlyList&lt;SortDefinition&gt;&gt;">
                     Event callback invoked when sorting changes. Receives the list of active sort definitions.
                 </ApiParameter>
+                <ApiParameter Name="OnFilter" Type="EventCallback&lt;IReadOnlyDictionary&lt;string, FilterCondition&gt;&gt;">
+                    Event callback invoked when column filters change. Receives the active filters keyed by column ID.
+                </ApiParameter>
                 <ApiParameter Name="LoadingTemplate" Type="RenderFragment">
                     Custom template displayed when IsLoading is true. Replaces the default loading indicator.
                 </ApiParameter>
@@ -970,6 +1013,15 @@
                 <ApiParameter Name="Pinned" Type="ColumnPinning" Default="None">
                     Whether this column is pinned to an edge of the scrollable viewport. Use BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left or BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Right.
                 </ApiParameter>
+                <ApiParameter Name="Filterable" Type="bool" Default="false">
+                    Whether this column supports per-column filtering. When true, a filter icon appears in the column header that opens a filter popover. The filter field type is auto-inferred from the property type.
+                </ApiParameter>
+                <ApiParameter Name="FilterType" Type="FilterFieldType?" Default="null">
+                    Override the auto-inferred filter field type. Use when the default inference is not correct (e.g., use FilterFieldType.Enum for string properties with known values).
+                </ApiParameter>
+                <ApiParameter Name="FilterOptions" Type="IEnumerable&lt;SelectOption&lt;string&gt;&gt;?" Default="null">
+                    Predefined options for Enum filter fields. Required when FilterType is FilterFieldType.Enum.
+                </ApiParameter>
                 <ApiParameter Name="NoWrap" Type="bool" Default="false">
                     Whether text in this column should not wrap. When true, cell content uses white-space: nowrap and truncates with an ellipsis on overflow.
                 </ApiParameter>
@@ -1018,6 +1070,18 @@
                 <ApiParameter Name="Pinned" Type="ColumnPinning" Default="None">
                     Whether this column is pinned to an edge of the scrollable viewport.
                 </ApiParameter>
+                <ApiParameter Name="Filterable" Type="bool" Default="false">
+                    Whether this column supports per-column filtering. Requires FilterBy to be set.
+                </ApiParameter>
+                <ApiParameter Name="FilterBy" Type="Expression&lt;Func&lt;TData, object&gt;&gt;?" Default="null">
+                    Expression used to build filter Where clauses. Required when Filterable is true.
+                </ApiParameter>
+                <ApiParameter Name="FilterType" Type="FilterFieldType?" Default="null">
+                    Override the filter field type. Defaults to FilterFieldType.Text when not set.
+                </ApiParameter>
+                <ApiParameter Name="FilterOptions" Type="IEnumerable&lt;SelectOption&lt;string&gt;&gt;?" Default="null">
+                    Predefined options for Enum filter fields.
+                </ApiParameter>
                 <ApiParameter Name="NoWrap" Type="bool" Default="false">
                     Whether text in this column should not wrap. When true, cell content uses white-space: nowrap and truncates with an ellipsis on overflow.
                 </ApiParameter>
@@ -1045,6 +1109,9 @@
     private bool _isLoading;
     private bool stressTestLoaded;
     private bool stressTestLoading;
+
+    // Column Filtering demo state
+    private BlazorBlueprint.Primitives.DataGrid.DataGridState<Person> _gridState = new();
 
     // Expandable nested table demo data
     private record Subtask(string Title, string Assignee, string Status, int EstimatedHours);

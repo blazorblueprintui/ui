@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace BlazorBlueprint.Components;
+namespace BlazorBlueprint.Primitives.Filtering;
 
 /// <summary>
 /// Custom JSON converter for the polymorphic <c>Value</c> and <c>ValueEnd</c> properties

@@ -600,6 +600,15 @@
   - CascadedEditContext : EditContext [CascadingParameter]
   - FieldIsInvalid : Boolean? [CascadingParameter]
 
+### BbDataGridColumnFilter (BlazorBlueprint.Components)
+  - ColumnTitle : String
+  - CurrentFilter : FilterCondition
+  - FieldName : String
+  - FieldType : FilterFieldType
+  - FilterOptions : IEnumerable<SelectOption<String>>
+  - OnApply : EventCallback<FilterCondition>
+  - OnClear : EventCallback
+
 ### BbDataGridColumnVisibility`1 (BlazorBlueprint.Components)
   - AsChild : Boolean
   - TriggerClass : String
@@ -614,6 +623,9 @@
 ### BbDataGridPropertyColumn`2 (BlazorBlueprint.Components)
   - CellClass : String
   - CellTemplate : RenderFragment<TData>
+  - FilterOptions : IEnumerable<SelectOption<String>>
+  - FilterType : FilterFieldType?
+  - Filterable : Boolean
   - Format : String
   - HeaderClass : String
   - Hideable : Boolean
@@ -637,6 +649,10 @@
 ### BbDataGridTemplateColumn`1 (BlazorBlueprint.Components)
   - CellClass : String
   - ChildContent : RenderFragment<TData>
+  - FilterBy : Expression<Func<TData, Object>>
+  - FilterOptions : IEnumerable<SelectOption<String>>
+  - FilterType : FilterFieldType?
+  - Filterable : Boolean
   - HeaderClass : String
   - HeaderTemplate : RenderFragment
   - Hideable : Boolean
@@ -670,6 +686,7 @@
   - MinColumnWidth : Int32
   - OnColumnReorder : EventCallback<ValueTuple<String, Int32>>
   - OnColumnResize : EventCallback<ValueTuple<String, String>>
+  - OnFilter : EventCallback<IReadOnlyDictionary<String, FilterCondition>>
   - OnRowClick : EventCallback<TData>
   - OnRowCollapse : EventCallback<TData>
   - OnRowExpand : EventCallback<TData>
@@ -3038,21 +3055,6 @@
   - List = 0
   - Grid = 1
 
-### DatePreset (BlazorBlueprint.Components)
-  - Today = 0
-  - Yesterday = 1
-  - Tomorrow = 2
-  - ThisWeek = 3
-  - LastWeek = 4
-  - NextWeek = 5
-  - ThisMonth = 6
-  - LastMonth = 7
-  - NextMonth = 8
-  - ThisQuarter = 9
-  - LastQuarter = 10
-  - ThisYear = 11
-  - LastYear = 12
-
 ### DateRangePreset (BlazorBlueprint.Components)
   - Today = 0
   - Yesterday = 1
@@ -3125,37 +3127,6 @@
   - InvalidType = 1
   - TooManyFiles = 2
 
-### FilterFieldType (BlazorBlueprint.Components)
-  - Text = 0
-  - Number = 1
-  - Date = 2
-  - DateTime = 3
-  - Boolean = 4
-  - Enum = 5
-
-### FilterOperator (BlazorBlueprint.Components)
-  - Equals = 0
-  - NotEquals = 1
-  - IsEmpty = 2
-  - IsNotEmpty = 3
-  - Contains = 4
-  - NotContains = 5
-  - StartsWith = 6
-  - EndsWith = 7
-  - GreaterThan = 8
-  - LessThan = 9
-  - GreaterOrEqual = 10
-  - LessOrEqual = 11
-  - Between = 12
-  - InLast = 13
-  - InNext = 14
-  - In = 15
-  - NotIn = 16
-  - IsTrue = 17
-  - IsFalse = 18
-  - DateIs = 19
-  - DateIsNot = 20
-
 ### FormLayout (BlazorBlueprint.Components)
   - Vertical = 0
   - Horizontal = 1
@@ -3178,11 +3149,6 @@
 ### IconPosition (BlazorBlueprint.Components)
   - Start = 0
   - End = 1
-
-### InLastPeriod (BlazorBlueprint.Components)
-  - Days = 0
-  - Weeks = 1
-  - Months = 2
 
 ### InputFieldErrorKind (BlazorBlueprint.Components)
   - Parse = 0
@@ -3261,10 +3227,6 @@
   - Solid = 0
   - Dashed = 1
   - Dotted = 2
-
-### LogicalOperator (BlazorBlueprint.Components)
-  - And = 0
-  - Or = 1
 
 ### MaskPreset (BlazorBlueprint.Components)
   - Custom = 0

@@ -1,3 +1,4 @@
+using BlazorBlueprint.Primitives.Filtering;
 using BlazorBlueprint.Primitives.Table;
 
 namespace BlazorBlueprint.Primitives.DataGrid;
@@ -28,6 +29,11 @@ public class DataGridState<TData> where TData : class
     /// Gets the column state (visibility, order, widths).
     /// </summary>
     public DataGridColumnState Columns { get; } = new();
+
+    /// <summary>
+    /// Gets the per-column filter state.
+    /// </summary>
+    public DataGridFilterState Filtering { get; } = new();
 
     /// <summary>
     /// Gets the row expansion state. Tracks which rows have their detail content visible.
@@ -63,6 +69,11 @@ public class DataGridState<TData> where TData : class
     public bool HasExpanded => Expanded.HasExpanded;
 
     /// <summary>
+    /// Gets whether any column filters are active.
+    /// </summary>
+    public bool HasFiltering => Filtering.HasFilters;
+
+    /// <summary>
     /// Gets whether pagination is active (more than one page).
     /// </summary>
     public bool HasPagination => Pagination.TotalPages > 1;
@@ -91,6 +102,7 @@ public class DataGridState<TData> where TData : class
         Selection.Clear();
         Expanded.Clear();
         Columns.Reset();
+        Filtering.ClearAll();
         Version++;
     }
 
@@ -132,6 +144,17 @@ public class DataGridState<TData> where TData : class
             });
         }
 
+        foreach (var (columnId, condition) in Filtering.Filters)
+        {
+            snapshot.ColumnFilters.Add(new ColumnFilterSnapshot
+            {
+                ColumnId = columnId,
+                Operator = condition.Operator,
+                Value = condition.Value,
+                ValueEnd = condition.ValueEnd
+            });
+        }
+
         return snapshot;
     }
 
@@ -152,6 +175,19 @@ public class DataGridState<TData> where TData : class
 
         Columns.RestoreFromSnapshots(snapshot.ColumnStates);
         Pagination.PageSize = snapshot.PageSize;
+
+        Filtering.ClearAll();
+        foreach (var filter in snapshot.ColumnFilters)
+        {
+            Filtering.SetFilter(filter.ColumnId, new FilterCondition
+            {
+                Field = filter.ColumnId,
+                Operator = filter.Operator,
+                Value = filter.Value,
+                ValueEnd = filter.ValueEnd
+            });
+        }
+
         Version++;
     }
 }

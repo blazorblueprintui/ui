@@ -160,6 +160,41 @@
                                             {
                                                 <LucideIcon Name="arrow-up-down" Class="w-4 h-4 opacity-0 group-hover/header:opacity-50 transition-opacity" />
                                             }
+                                            @if (column.Filterable)
+                                            {
+                                                var hasActiveFilter = _gridState.Filtering.HasFilter(column.ColumnId);
+                                                var filterColumn = column;
+                                                <div @onclick:stopPropagation="true" class="inline-flex">
+                                                    <BbPopover>
+                                                        <BbPopoverTrigger AsChild="true">
+                                                            <BbButton Variant="ButtonVariant.Ghost"
+                                                                      Size="ButtonSize.Icon"
+                                                                      Class="@ClassNames.cn("w-7 h-7 transition-colors",
+                                                                          hasActiveFilter ? "text-primary" : "text-muted-foreground opacity-0 group-hover/header:opacity-100")"
+                                                                      AriaLabel="@($"Filter {filterColumn.Title}")">
+                                                                <LucideIcon Name="filter" Class="w-3.5 h-3.5" />
+                                                            </BbButton>
+                                                        </BbPopoverTrigger>
+                                                        <BbPopoverContent Side="PopoverSide.Bottom" Align="PopoverAlign.Start" Class="w-72 p-0">
+                                                            @{
+                                                                var filterField = GetFilterFieldForColumn(filterColumn);
+                                                                if (filterField != null)
+                                                                {
+                                                                    var filterableCol = filterColumn as IFilterableColumn;
+                                                                    <BbDataGridColumnFilter
+                                                                        ColumnTitle="@filterColumn.Title"
+                                                                        FieldType="@filterField.Type"
+                                                                        FieldName="@filterField.Name"
+                                                                        FilterOptions="@filterableCol?.GetFilterOptions()"
+                                                                        CurrentFilter="@_gridState.Filtering.GetFilter(filterColumn.ColumnId)"
+                                                                        OnApply="@(condition => HandleColumnFilterChanged(filterColumn.ColumnId, condition))"
+                                                                        OnClear="@(() => HandleColumnFilterChanged(filterColumn.ColumnId, null))" />
+                                                                }
+                                                            }
+                                                        </BbPopoverContent>
+                                                    </BbPopover>
+                                                </div>
+                                            }
                                         </div>
                                         @if (Resizable && column.Resizable)
                                         {

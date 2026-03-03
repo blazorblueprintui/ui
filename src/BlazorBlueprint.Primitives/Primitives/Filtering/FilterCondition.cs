@@ -1,4 +1,4 @@
-namespace BlazorBlueprint.Components;
+namespace BlazorBlueprint.Primitives.Filtering;
 
 /// <summary>
 /// Represents a single filter condition with a field, operator, and value(s).

@@ -1,3 +1,5 @@
+using BlazorBlueprint.Primitives.Filtering;
+
 namespace BlazorBlueprint.Components;
 
 /// <summary>
