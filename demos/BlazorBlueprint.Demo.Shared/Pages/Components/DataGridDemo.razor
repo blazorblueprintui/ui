@@ -102,6 +102,98 @@
         <CodeBlock Source="Components/DataGrid/row-selection.txt" />
     </div>
 
+    <!-- ── Expandable Rows ────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Expandable Rows</h2>
+            <p class="text-sm text-muted-foreground">
+                Add <code class="bg-muted px-1 py-0.5 rounded">BbDataGridExpandColumn</code> and provide a
+                <code class="bg-muted px-1 py-0.5 rounded">DetailTemplate</code> to reveal additional content
+                beneath each row. Click the chevron to toggle expansion.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
+            <Columns>
+                <BbDataGridExpandColumn />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" />
+            </Columns>
+            <DetailTemplate>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="font-medium text-muted-foreground">Role:</span>
+                        <span class="ml-2">@context.Role</span>
+                    </div>
+                    <div>
+                        <span class="font-medium text-muted-foreground">Age:</span>
+                        <span class="ml-2">@context.Age</span>
+                    </div>
+                    <div>
+                        <span class="font-medium text-muted-foreground">Status:</span>
+                        <span class="ml-2">@context.Status</span>
+                    </div>
+                    <div>
+                        <span class="font-medium text-muted-foreground">Join Date:</span>
+                        <span class="ml-2">@context.JoinDate.ToShortDateString()</span>
+                    </div>
+                </div>
+            </DetailTemplate>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/expandable-rows.txt" />
+    </div>
+
+    <!-- ── Expandable Rows: Nested Table ─────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Expandable Rows: Nested Table</h2>
+            <p class="text-sm text-muted-foreground">
+                The <code class="bg-muted px-1 py-0.5 rounded">DetailTemplate</code> can contain any content,
+                including a nested table. This example shows parent tasks that expand to reveal their subtasks
+                with their own set of columns.
+            </p>
+        </div>
+        <BbDataGrid TData="ProjectTask" Items="@projectTasks" InitialPageSize="5" ShowPagination="false">
+            <Columns>
+                <BbDataGridExpandColumn />
+                <BbDataGridPropertyColumn TData="ProjectTask" TProp="string" Property="@(t => t.Title)" Title="Task" />
+                <BbDataGridPropertyColumn TData="ProjectTask" TProp="string" Property="@(t => t.Assignee)" />
+                <BbDataGridPropertyColumn TData="ProjectTask" TProp="string" Property="@(t => t.Status)" />
+                <BbDataGridPropertyColumn TData="ProjectTask" TProp="string" Property="@(t => t.Priority)" />
+            </Columns>
+            <DetailTemplate>
+                <div class="pl-4">
+                    <p class="text-sm font-medium mb-2 text-muted-foreground">Subtasks (@context.Subtasks.Count)</p>
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b">
+                                <th class="py-2 px-3 text-left font-medium text-muted-foreground">Subtask</th>
+                                <th class="py-2 px-3 text-left font-medium text-muted-foreground">Assignee</th>
+                                <th class="py-2 px-3 text-left font-medium text-muted-foreground">Status</th>
+                                <th class="py-2 px-3 text-right font-medium text-muted-foreground">Hours</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var sub in context.Subtasks)
+                            {
+                                <tr class="border-b last:border-0">
+                                    <td class="py-2 px-3">@sub.Title</td>
+                                    <td class="py-2 px-3">@sub.Assignee</td>
+                                    <td class="py-2 px-3">
+                                        <BbBadge Variant="@GetSubtaskBadge(sub.Status)">@sub.Status</BbBadge>
+                                    </td>
+                                    <td class="py-2 px-3 text-right tabular-nums">@sub.EstimatedHours h</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </DetailTemplate>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/expandable-nested-table.txt" />
+    </div>
+
     <!-- ── Custom Cell Templates ───────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -883,6 +975,50 @@
     private bool _isLoading;
     private bool stressTestLoaded;
     private bool stressTestLoading;
+
+    // Expandable nested table demo data
+    private record Subtask(string Title, string Assignee, string Status, int EstimatedHours);
+    private record ProjectTask(string Title, string Assignee, string Status, string Priority, List<Subtask> Subtasks);
+
+    private List<ProjectTask> projectTasks = new()
+    {
+        new("Design landing page", "Alice", "In Progress", "High", new()
+        {
+            new("Create wireframes", "Alice", "Done", 4),
+            new("Design hero section", "Alice", "In Progress", 6),
+            new("Design footer", "Bob", "To Do", 3),
+        }),
+        new("Build API endpoints", "Charlie", "In Progress", "High", new()
+        {
+            new("Set up auth middleware", "Charlie", "Done", 8),
+            new("Create user endpoints", "Charlie", "Done", 6),
+            new("Create project endpoints", "Dave", "In Progress", 10),
+            new("Write integration tests", "Eve", "To Do", 5),
+        }),
+        new("Write documentation", "Eve", "To Do", "Medium", new()
+        {
+            new("API reference docs", "Eve", "To Do", 8),
+            new("Getting started guide", "Eve", "To Do", 4),
+        }),
+        new("Set up CI/CD pipeline", "Dave", "Done", "Medium", new()
+        {
+            new("Configure GitHub Actions", "Dave", "Done", 3),
+            new("Set up staging deploy", "Dave", "Done", 4),
+            new("Set up production deploy", "Dave", "Done", 5),
+        }),
+        new("Performance optimization", "Bob", "To Do", "Low", new()
+        {
+            new("Profile database queries", "Bob", "To Do", 6),
+            new("Add caching layer", "Charlie", "To Do", 8),
+        }),
+    };
+
+    private static BadgeVariant GetSubtaskBadge(string status) => status switch
+    {
+        "Done" => BadgeVariant.Default,
+        "In Progress" => BadgeVariant.Secondary,
+        _ => BadgeVariant.Outline
+    };
 
     protected override void OnInitialized()
     {

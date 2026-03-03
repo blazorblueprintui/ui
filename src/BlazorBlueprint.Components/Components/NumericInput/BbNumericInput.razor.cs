@@ -214,7 +214,10 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
     {
         disableDebounce = DisableDebounce,
         debounceMs = DebounceInterval,
-        stepKeys = new[] { "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End" }
+        stepKeys = new[] { "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End" },
+        allowDecimal = IsFloatingPoint,
+        allowNegative = AllowNegative,
+        decimalSeparator = CultureInfo.InvariantCulture.NumberFormat.NumberDecimalSeparator
     };
 
     private void NotifyFieldChanged() => validation.NotifyFieldChanged();

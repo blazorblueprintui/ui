@@ -8,6 +8,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## 2026-03-02
 
+### Added
+
+- **BbDynamicForm** — Schema-driven form rendering component that generates forms from JSON Schema definitions.
+  - `Text`, `Number`, `Date`, `DateTime`, `Boolean`, `Enum`, and `File` field types with automatic input rendering.
+  - Inline validation with per-field error display.
+  - Horizontal, inline, and vertical layouts with configurable `LabelWidth`.
+  - Hidden field values are automatically cleared when fields become invisible.
+  - Text/value pairs via JSON Schema `oneOf` for select-style fields.
+  - Demo page with field type gallery and interactive examples.
+- **BbDataGrid: Expandable Rows** — `BbDataGridExpandColumn` and `DetailTemplate` for parent-child row expansion via chevron toggle button (non-virtualized path only).
+  - New `ExpandedRowState<TData>` primitive for HashSet-based expansion tracking, integrated into `DataGridState` (transient, not persisted).
+  - `OnRowExpand` and `OnRowCollapse` event callbacks.
+  - Demo sections for basic expandable rows and nested subtask table pattern.
+- **BbDataGrid: CascadingTypeParameter** — `TData` now cascades from `BbDataGrid` so single-type-param children (`SelectColumn`, `ExpandColumn`, `TemplateColumn`) can omit the type parameter.
+
 ### Fixed
 
 - **BbSelect**: Performance — set `ForceMount=false` on portal so items only exist in the DOM when the dropdown is open; set `IsFixed=true` on cascading context to eliminate redundant notifications; added `ShouldRender` gate and cached attributes/CSS constants on `BbSelectItem`.
@@ -19,6 +34,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **BbTreeView**: `OnCheckedChanged` callback was declared but never fired — now routed through `CheckedValuesChanged` handler.
 - **BbTreeView**: Interactive elements (buttons, links, inputs) inside `ActionsTemplate` are no longer intercepted by tree keyboard/click handlers.
 - **BbTreeView**: Stale `.bb-tree-drop-target` CSS classes during drag-and-drop are now cleared at the start of each indicator update.
+- **BbDataGrid**: Z-index stacking conflict when `StickyHeader` + pinned columns caused row checkboxes to render above the header checkbox.
+- **BbDataGrid**: Selected row background not rendering on select/expand column cells.
+- **BbDataGrid**: Text overflow in pinned column grids — `overflow-hidden` now applied to all cells when `table-fixed` layout is active, not only when `Resizable` is set.
 
 ---
 

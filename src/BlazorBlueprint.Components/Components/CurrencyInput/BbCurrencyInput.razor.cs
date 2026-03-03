@@ -230,7 +230,10 @@ public partial class BbCurrencyInput : ComponentBase
     {
         disableDebounce = DisableDebounce,
         debounceMs = DebounceInterval,
-        stepKeys = new[] { "ArrowUp", "ArrowDown" }
+        stepKeys = new[] { "ArrowUp", "ArrowDown" },
+        allowDecimal = true,
+        allowNegative = AllowNegative,
+        decimalSeparator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator
     };
 
     private void NotifyFieldChanged() => validation.NotifyFieldChanged();

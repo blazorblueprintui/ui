@@ -187,6 +187,25 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     public RenderFragment? Toolbar { get; set; }
 
     /// <summary>
+    /// Template for expanded row detail content. When set with an expand column,
+    /// clicking the expand chevron reveals this content beneath the row.
+    /// </summary>
+    [Parameter]
+    public RenderFragment<TData>? DetailTemplate { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when a row is expanded.
+    /// </summary>
+    [Parameter]
+    public EventCallback<TData> OnRowExpand { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when a row is collapsed.
+    /// </summary>
+    [Parameter]
+    public EventCallback<TData> OnRowCollapse { get; set; }
+
+    /// <summary>
     /// Event callback invoked when sorting changes.
     /// </summary>
     [Parameter]
@@ -343,6 +362,19 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     {
         // Insert select column at the beginning
         _columns.Insert(0, column);
+        _columnsVersion++;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Registers an expand column. Inserted after the select column (if present),
+    /// or at position 0.
+    /// </summary>
+    internal void RegisterColumn(BbDataGridExpandColumn<TData> column)
+    {
+        var selectIndex = _columns.FindIndex(c => c.ColumnId == "__select");
+        var insertIndex = selectIndex >= 0 ? selectIndex + 1 : 0;
+        _columns.Insert(insertIndex, column);
         _columnsVersion++;
         StateHasChanged();
     }
@@ -777,6 +809,31 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         StateHasChanged();
     }
 
+    internal async Task HandleRowExpandToggle(TData item)
+    {
+        var wasExpanded = _gridState.Expanded.IsExpanded(item);
+        _gridState.Expanded.Toggle(item);
+        _stateVersion++;
+
+        if (wasExpanded)
+        {
+            if (OnRowCollapse.HasDelegate)
+            {
+                await OnRowCollapse.InvokeAsync(item);
+            }
+        }
+        else
+        {
+            if (OnRowExpand.HasDelegate)
+            {
+                await OnRowExpand.InvokeAsync(item);
+            }
+        }
+
+        await NotifyStateChangedAsync();
+        StateHasChanged();
+    }
+
     private async Task HandlePageChanged(int page)
     {
         _gridState.Pagination.GoToPage(page);
@@ -810,14 +867,14 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         Resizable || _columns.Any(c => c.Pinned != ColumnPinning.None);
 
     private string GetHeaderCellClass(IDataGridColumn<TData> column, bool isSelectColumn,
-        bool isLastLeft, bool isFirstRight)
+        bool isExpandColumn, bool isLastLeft, bool isFirstRight)
     {
         var baseClass = "h-12 px-4 text-left align-middle font-medium text-muted-foreground";
 
         var pinnedClass = "";
         if (column.Pinned != ColumnPinning.None)
         {
-            var zClass = StickyHeader ? "z-20" : "z-10";
+            var zClass = StickyHeader ? "z-30" : "z-10";
             pinnedClass = ClassNames.cn("bg-background group-hover/row:bg-muted", zClass);
         }
 
@@ -831,7 +888,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             separatorClass = "border-l border-border";
         }
 
-        if (isSelectColumn)
+        if (isSelectColumn || isExpandColumn)
         {
             return ClassNames.cn(baseClass, "w-12", pinnedClass, separatorClass);
         }
@@ -841,14 +898,14 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         var groupClass = needsGroup ? "group/header" : "";
         var needsRelative = (Resizable && column.Resizable) || (Reorderable && column.Reorderable);
         var positionClass = needsRelative ? "relative" : "";
-        var overflowClass = Resizable ? "overflow-hidden" : "";
+        var overflowClass = HasTableFixed() ? "overflow-hidden" : "";
 
         return ClassNames.cn(baseClass, sortClass, groupClass, positionClass, overflowClass,
             pinnedClass, separatorClass, column.HeaderClass);
     }
 
     private string GetCellClass(IDataGridColumn<TData> column, bool isSelectColumn,
-        bool isLastLeft, bool isFirstRight, bool isRowSelected)
+        bool isExpandColumn, bool isLastLeft, bool isFirstRight, bool isRowSelected)
     {
         var baseClass = "p-4 align-middle";
 
@@ -871,14 +928,20 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             separatorClass = "border-l border-border";
         }
 
-        if (isSelectColumn)
+        if (isSelectColumn || isExpandColumn)
         {
-            return ClassNames.cn(baseClass, "w-12", pinnedClass, separatorClass);
+            var selectBg = "";
+            if (column.Pinned == ColumnPinning.None && isRowSelected)
+            {
+                selectBg = "bg-muted";
+            }
+
+            return ClassNames.cn(baseClass, "w-12", selectBg, pinnedClass, separatorClass);
         }
 
         var cellClass = column.CellClass;
 
-        var overflowClass = Resizable ? "overflow-hidden" : "";
+        var overflowClass = HasTableFixed() ? "overflow-hidden" : "";
         var noWrapClass = column.NoWrap ? "whitespace-nowrap overflow-hidden text-ellipsis" : "";
 
         return ClassNames.cn(baseClass, cellClass, overflowClass, noWrapClass, pinnedClass, separatorClass);

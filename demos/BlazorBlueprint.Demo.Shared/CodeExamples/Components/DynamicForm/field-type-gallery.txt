@@ -1,0 +1,48 @@
+// Define a schema with sections covering all 26 field types
+private readonly FormSchema schema = new()
+{
+    Sections =
+    [
+        new FormSectionDefinition
+        {
+            Title = "Text Inputs",
+            Fields =
+            [
+                new() { Name = "Text", Label = "Text", Type = FieldType.Text },
+                new() { Name = "Email", Label = "Email", Type = FieldType.Email },
+                new() { Name = "Password", Label = "Password", Type = FieldType.Password },
+                new() { Name = "Url", Label = "URL", Type = FieldType.Url },
+                new() { Name = "Phone", Label = "Phone", Type = FieldType.Phone }
+            ]
+        },
+        new FormSectionDefinition
+        {
+            Title = "Numeric Inputs",
+            Fields =
+            [
+                new() { Name = "Number", Label = "Number", Type = FieldType.Number,
+                    Metadata = new() { ["min"] = 0, ["max"] = 100, ["step"] = 1 } },
+                new() { Name = "Currency", Label = "Currency", Type = FieldType.Currency,
+                    Metadata = new() { ["currencyCode"] = "USD" } }
+            ]
+        },
+        new FormSectionDefinition
+        {
+            Title = "Selection Controls",
+            Fields =
+            [
+                new() { Name = "Select", Label = "Select", Type = FieldType.Select,
+                    Options = [new("a", "Option A"), new("b", "Option B")] },
+                new() { Name = "Combobox", Label = "Combobox", Type = FieldType.Combobox,
+                    Options = [new("a", "Option A"), new("b", "Option B")] },
+                new() { Name = "MultiSelect", Label = "Multi-Select", Type = FieldType.MultiSelect,
+                    Options = [new("a", "Option A"), new("b", "Option B")] },
+                new() { Name = "NativeSelect", Label = "Native Select", Type = FieldType.NativeSelect,
+                    Options = [new("a", "Option A"), new("b", "Option B")] }
+            ]
+        },
+        // Boolean, Date/Time, and Specialty sections follow the same pattern...
+    ]
+};
+
+<BbDynamicForm Schema="@schema" @bind-Values="values" Columns="2" ShowSubmitButton="false" />

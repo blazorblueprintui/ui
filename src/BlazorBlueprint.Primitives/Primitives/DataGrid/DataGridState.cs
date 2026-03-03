@@ -30,6 +30,12 @@ public class DataGridState<TData> where TData : class
     public DataGridColumnState Columns { get; } = new();
 
     /// <summary>
+    /// Gets the row expansion state. Tracks which rows have their detail content visible.
+    /// Expansion is transient and not persisted in snapshots.
+    /// </summary>
+    public ExpandedRowState<TData> Expanded { get; } = new();
+
+    /// <summary>
     /// Gets a version counter that increments whenever state is mutated
     /// through <see cref="Restore"/> or <see cref="Reset"/>.
     /// Used by the grid component to detect external state changes.
@@ -52,6 +58,11 @@ public class DataGridState<TData> where TData : class
     public int TotalSelected => Selection.SelectedCount;
 
     /// <summary>
+    /// Gets whether any rows are expanded.
+    /// </summary>
+    public bool HasExpanded => Expanded.HasExpanded;
+
+    /// <summary>
     /// Gets whether pagination is active (more than one page).
     /// </summary>
     public bool HasPagination => Pagination.TotalPages > 1;
@@ -64,6 +75,7 @@ public class DataGridState<TData> where TData : class
         Sorting.ClearSort();
         Pagination.Reset();
         Selection.Clear();
+        Expanded.Clear();
         Columns.Reset();
         Version++;
     }

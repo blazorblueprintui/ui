@@ -1,0 +1,43 @@
+private readonly FormSchema schema = new()
+{
+    Title = "Account Setup",
+    Fields =
+    [
+        new FormFieldDefinition
+        {
+            Name = "Username", Label = "Username", Type = FieldType.Text, Required = true,
+            Validations =
+            [
+                new() { Type = ValidationType.MinLength, Value = 3, Message = "Username must be at least 3 characters." },
+                new() { Type = ValidationType.MaxLength, Value = 20 }
+            ]
+        },
+        new FormFieldDefinition
+        {
+            Name = "Email", Label = "Email", Type = FieldType.Email, Required = true,
+            Validations = [new() { Type = ValidationType.Email }]
+        },
+        new FormFieldDefinition
+        {
+            Name = "Password", Label = "Password", Type = FieldType.Password, Required = true,
+            Validations =
+            [
+                new() { Type = ValidationType.MinLength, Value = 8 },
+                new() { Type = ValidationType.Pattern, Value = @"(?=.*[A-Z])(?=.*\d)",
+                    Message = "Must contain at least one uppercase letter and one digit." }
+            ]
+        },
+        new FormFieldDefinition
+        {
+            Name = "Age", Label = "Age", Type = FieldType.Number,
+            Validations =
+            [
+                new() { Type = ValidationType.Min, Value = 18, Message = "You must be at least 18." },
+                new() { Type = ValidationType.Max, Value = 120 }
+            ]
+        }
+    ]
+};
+
+// Validation runs on submit. Use OnValidSubmit to handle only valid submissions.
+<BbDynamicForm Schema="@schema" @bind-Values="values" OnValidSubmit="HandleSubmit" />

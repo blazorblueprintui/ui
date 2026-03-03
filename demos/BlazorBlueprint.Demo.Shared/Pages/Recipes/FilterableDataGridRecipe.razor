@@ -1,0 +1,285 @@
+@page "/recipes/filterable-datagrid"
+@using System.Globalization
+
+<PageTitle>Filterable Data Grid - Recipes - Blazor Blueprint</PageTitle>
+
+<div class="space-y-6 max-w-[90rem]">
+    <div>
+        <div class="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+            <a href="recipes" class="hover:text-foreground transition-colors">Recipes</a>
+            <span>/</span>
+            <span>Filterable Data Grid</span>
+        </div>
+        <h1 class="text-4xl font-bold">Filterable Data Grid</h1>
+        <p class="text-xl text-muted-foreground">
+            Combine the Filter Builder with a Data Grid to create a powerful, interactive
+            data exploration experience. This recipe uses 1,000 employee records across
+            multiple field types to demonstrate real-world filtering.
+        </p>
+    </div>
+
+    <div class="space-y-2">
+        <h2 class="text-2xl font-semibold">Overview</h2>
+        <p class="text-sm text-muted-foreground">
+            This recipe demonstrates how to wire a <code>BbFilterBuilder</code> to a <code>BbDataGrid</code>
+            for client-side filtering. The filter definition is compiled to a <code>Func&lt;T, bool&gt;</code>
+            predicate via <code>ToFunc&lt;T&gt;()</code> and applied in-memory. Try building complex filters with
+            nested AND/OR groups across all the available field types.
+        </p>
+    </div>
+
+    <div class="space-y-2">
+        <h3 class="text-lg font-semibold">Available Fields</h3>
+        <div class="flex flex-wrap gap-2">
+            <BbBadge Variant="BadgeVariant.Outline">Name (Text)</BbBadge>
+            <BbBadge Variant="BadgeVariant.Outline">Email (Text)</BbBadge>
+            <BbBadge Variant="BadgeVariant.Outline">Age (Number)</BbBadge>
+            <BbBadge Variant="BadgeVariant.Outline">Salary (Number)</BbBadge>
+            <BbBadge Variant="BadgeVariant.Outline">Department (Enum)</BbBadge>
+            <BbBadge Variant="BadgeVariant.Outline">Role (Enum)</BbBadge>
+            <BbBadge Variant="BadgeVariant.Outline">Status (Enum)</BbBadge>
+            <BbBadge Variant="BadgeVariant.Outline">Join Date (Date)</BbBadge>
+            <BbBadge Variant="BadgeVariant.Outline">Last Promotion (Date)</BbBadge>
+            <BbBadge Variant="BadgeVariant.Outline">Active (Boolean)</BbBadge>
+        </div>
+    </div>
+
+    <!-- Filter Builder -->
+    <div class="space-y-3">
+        <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold">Filters</h3>
+            @if (!filter.IsEmpty)
+            {
+                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="ClearFilters">
+                    Clear all filters
+                </BbButton>
+            }
+        </div>
+        <BbFilterBuilder @bind-Filter="filter"
+                         Fields="@employeeFields"
+                         OnFilterChanged="HandleFilterChanged"
+                         MaxDepth="3" />
+    </div>
+
+    <!-- Results summary -->
+    <div class="flex items-center gap-3">
+        <BbBadge Variant="BadgeVariant.Secondary">
+            @filteredEmployees.Count.ToString("N0") of @allEmployees.Count.ToString("N0") employees
+        </BbBadge>
+        @if (!filter.IsEmpty)
+        {
+            <span class="text-sm text-muted-foreground">
+                @filter.TotalConditionCount active condition@(filter.TotalConditionCount != 1 ? "s" : "")
+            </span>
+        }
+    </div>
+
+    <!-- Data Grid -->
+    <BbDataGrid TData="Employee" Items="@filteredEmployees" ShowPagination="true"
+                InitialPageSize="20" PageSizes="@(new[] { 10, 20, 50, 100 })"
+                Resizable="true" StickyHeader="true" Class="max-h-[700px]">
+        <Columns>
+            <BbDataGridPropertyColumn Property="@(e => e.Id)" Title="ID" Sortable="true" Width="80px" />
+            <BbDataGridPropertyColumn Property="@(e => e.Name)" Title="Name" Sortable="true" Width="180px" />
+            <BbDataGridPropertyColumn Property="@(e => e.Email)" Title="Email" Sortable="true" Width="240px" NoWrap="true" />
+            <BbDataGridPropertyColumn Property="@(e => e.Department)" Title="Department" Sortable="true" Width="140px" />
+            <BbDataGridPropertyColumn Property="@(e => e.Role)" Title="Role" Sortable="true" Width="130px" />
+            <BbDataGridTemplateColumn Title="Status" Sortable="true" SortBy="@(e => e.Status)" Width="120px">
+                @{
+                    var employee = context;
+                    var variant = employee.Status switch
+                    {
+                        "Active" => BadgeVariant.Default,
+                        "Inactive" => BadgeVariant.Secondary,
+                        "Pending" => BadgeVariant.Outline,
+                        _ => BadgeVariant.Destructive
+                    };
+                }
+                <BbBadge Variant="@variant">@employee.Status</BbBadge>
+            </BbDataGridTemplateColumn>
+            <BbDataGridPropertyColumn Property="@(e => e.Age)" Title="Age" Sortable="true" Width="80px" />
+            <BbDataGridPropertyColumn Property="@(e => e.Salary)" Title="Salary" Sortable="true" Format="C0" Width="120px" />
+            <BbDataGridPropertyColumn Property="@(e => e.JoinDate)" Title="Join Date" Sortable="true" Format="d" Width="130px" />
+            <BbDataGridTemplateColumn Title="Last Promotion" Sortable="true" SortBy="@(e => e.LastPromotionDate)" Width="150px">
+                @{
+                    var emp = context;
+                }
+                @if (emp.LastPromotionDate.HasValue)
+                {
+                    @emp.LastPromotionDate.Value.ToString("d")
+                }
+                else
+                {
+                    <span class="text-muted-foreground">—</span>
+                }
+            </BbDataGridTemplateColumn>
+            <BbDataGridTemplateColumn Title="Active" Sortable="true" SortBy="@(e => e.IsActive)" Width="90px">
+                @{
+                    var activeEmp = context;
+                }
+                @if (activeEmp.IsActive)
+                {
+                    <span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                        Yes
+                    </span>
+                }
+                else
+                {
+                    <span class="text-muted-foreground">No</span>
+                }
+            </BbDataGridTemplateColumn>
+        </Columns>
+    </BbDataGrid>
+</div>
+
+@code {
+    private List<Employee> allEmployees = new();
+    private List<Employee> filteredEmployees = new();
+    private FilterDefinition filter = new();
+
+    private static readonly string[] Departments =
+        { "Engineering", "Sales", "Marketing", "Support", "HR", "Finance", "Operations", "Product", "Legal", "Design" };
+
+    private static readonly string[] Roles =
+        { "Junior", "Mid-Level", "Senior", "Lead", "Manager", "Director", "VP", "Intern" };
+
+    private static readonly string[] Statuses =
+        { "Active", "Inactive", "Pending", "Suspended" };
+
+    private readonly FilterField[] employeeFields = new[]
+    {
+        new FilterField { Name = "Name", Label = "Name", Type = FilterFieldType.Text, Placeholder = "e.g. John" },
+        new FilterField { Name = "Email", Label = "Email", Type = FilterFieldType.Text, Placeholder = "e.g. @company.com" },
+        new FilterField { Name = "Age", Label = "Age", Type = FilterFieldType.Number, Placeholder = "e.g. 30" },
+        new FilterField { Name = "Salary", Label = "Salary", Type = FilterFieldType.Number, Placeholder = "e.g. 75000" },
+        new FilterField
+        {
+            Name = "Department", Label = "Department", Type = FilterFieldType.Enum,
+            Options = Departments.Select(d => new SelectOption<string>(d, d)).ToArray()
+        },
+        new FilterField
+        {
+            Name = "Role", Label = "Role", Type = FilterFieldType.Enum,
+            Options = Roles.Select(r => new SelectOption<string>(r, r)).ToArray()
+        },
+        new FilterField
+        {
+            Name = "Status", Label = "Status", Type = FilterFieldType.Enum,
+            Options = Statuses.Select(s => new SelectOption<string>(s, s)).ToArray()
+        },
+        new FilterField { Name = "JoinDate", Label = "Join Date", Type = FilterFieldType.Date },
+        new FilterField { Name = "LastPromotionDate", Label = "Last Promotion", Type = FilterFieldType.Date },
+        new FilterField { Name = "IsActive", Label = "Active", Type = FilterFieldType.Boolean }
+    };
+
+    protected override void OnInitialized()
+    {
+        allEmployees = GenerateEmployees(1000);
+        filteredEmployees = new List<Employee>(allEmployees);
+    }
+
+    private void HandleFilterChanged(FilterDefinition newFilter)
+    {
+        if (newFilter.IsEmpty)
+        {
+            filteredEmployees = new List<Employee>(allEmployees);
+        }
+        else
+        {
+            var predicate = newFilter.ToFunc<Employee>(employeeFields);
+            filteredEmployees = allEmployees.Where(predicate).ToList();
+        }
+    }
+
+    private void ClearFilters()
+    {
+        filter = new FilterDefinition();
+        filteredEmployees = new List<Employee>(allEmployees);
+    }
+
+    // --- Data Generation ---
+
+    private static readonly Random Rng = new(42); // Fixed seed for consistent demo data
+
+    private static readonly string[] FirstNames =
+    {
+        "James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda",
+        "William", "Barbara", "David", "Elizabeth", "Richard", "Susan", "Joseph", "Jessica",
+        "Thomas", "Sarah", "Charles", "Karen", "Christopher", "Nancy", "Daniel", "Lisa",
+        "Matthew", "Betty", "Anthony", "Margaret", "Mark", "Sandra", "Donald", "Ashley",
+        "Steven", "Kimberly", "Paul", "Emily", "Andrew", "Donna", "Joshua", "Michelle",
+        "Kenneth", "Dorothy", "Kevin", "Carol", "Brian", "Amanda", "George", "Melissa",
+        "Edward", "Deborah", "Ronald", "Stephanie", "Timothy", "Rebecca", "Jason", "Sharon",
+        "Jeffrey", "Laura", "Ryan", "Cynthia", "Jacob", "Kathleen", "Gary", "Amy",
+        "Nicholas", "Shirley", "Eric", "Angela", "Jonathan", "Helen", "Stephen", "Anna",
+        "Larry", "Brenda", "Justin", "Pamela", "Scott", "Nicole", "Brandon", "Emma",
+        "Benjamin", "Samantha", "Samuel", "Katherine", "Raymond", "Christine", "Gregory", "Debra"
+    };
+
+    private static readonly string[] LastNames =
+    {
+        "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
+        "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas",
+        "Taylor", "Moore", "Jackson", "Martin", "Lee", "Perez", "Thompson", "White",
+        "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson", "Walker", "Young",
+        "Allen", "King", "Wright", "Scott", "Torres", "Nguyen", "Hill", "Flores",
+        "Green", "Adams", "Nelson", "Baker", "Hall", "Rivera", "Campbell", "Mitchell",
+        "Carter", "Roberts", "Gomez", "Phillips", "Evans", "Turner", "Diaz", "Parker",
+        "Cruz", "Edwards", "Collins", "Reyes", "Stewart", "Morris", "Morales", "Murphy"
+    };
+
+    private static readonly string[] EmailDomains =
+        { "acme.com", "globex.com", "initech.com", "hooli.com", "piedpiper.com", "waynetech.com", "starkindustries.com", "umbrellacorp.com" };
+
+    private static List<Employee> GenerateEmployees(int count)
+    {
+        var employees = new List<Employee>(count);
+
+        for (var i = 0; i < count; i++)
+        {
+            var firstName = FirstNames[Rng.Next(FirstNames.Length)];
+            var lastName = LastNames[Rng.Next(LastNames.Length)];
+            var domain = EmailDomains[Rng.Next(EmailDomains.Length)];
+            var suffix = Rng.Next(100) > 60 ? Rng.Next(1, 999).ToString(CultureInfo.InvariantCulture) : "";
+            var department = Departments[Rng.Next(Departments.Length)];
+            var role = Roles[Rng.Next(Roles.Length)];
+            var joinDate = DateTime.Today.AddDays(-Rng.Next(30, 3650));
+            var hasPromotion = Rng.Next(100) > 30;
+
+            employees.Add(new Employee
+            {
+                Id = i + 1,
+                Name = $"{firstName} {lastName}",
+                Email = $"{firstName.ToLower(CultureInfo.InvariantCulture)}.{lastName.ToLower(CultureInfo.InvariantCulture)}{suffix}@{domain}",
+                Age = Rng.Next(21, 65),
+                Department = department,
+                Role = role,
+                Status = Statuses[Rng.Next(Statuses.Length)],
+                Salary = RoundToNearest500(Rng.Next(35000, 200000)),
+                JoinDate = joinDate,
+                LastPromotionDate = hasPromotion ? joinDate.AddDays(Rng.Next(90, 1500)) : null,
+                IsActive = Rng.Next(100) > 15
+            });
+        }
+
+        return employees;
+    }
+
+    private static int RoundToNearest500(int value) => (int)(Math.Round(value / 500.0) * 500);
+
+    public class Employee
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public int Age { get; set; }
+        public string Department { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public int Salary { get; set; }
+        public DateTime JoinDate { get; set; }
+        public DateTime? LastPromotionDate { get; set; }
+        public bool IsActive { get; set; }
+    }
+}

@@ -193,6 +193,89 @@
 
         <CodeBlock Source="Components/Accordion/rich-content.txt" />
         </section>
+
+    <!-- Accessibility Notes -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-expanded</code> on trigger buttons indicates open/closed state
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-controls</code> on trigger references the associated content panel
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Content panels use <code class="text-xs bg-muted px-1 py-0.5 rounded">role="region"</code> with <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-labelledby</code> referencing the trigger
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Trigger buttons are wrapped in heading elements (default <code class="text-xs bg-muted px-1 py-0.5 rounded">h3</code>) for document structure
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Disabled items have the <code class="text-xs bg-muted px-1 py-0.5 rounded">disabled</code> attribute on the trigger button
+            </AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Toggle the focused accordion item">
+                <BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move focus to the next trigger">
+                <BbKbd>ArrowDown</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move focus to the previous trigger">
+                <BbKbd>ArrowUp</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move focus to the first trigger">
+                <BbKbd>Home</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move focus to the last trigger">
+                <BbKbd>End</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbAccordion">
+                <ApiParameter Name="Type" Type="AccordionType" Default="AccordionType.Single">
+                    Whether only one item can be open at a time (Single) or multiple items (Multiple).
+                </ApiParameter>
+                <ApiParameter Name="Value" Type="HashSet&lt;string&gt;?" Default="null">
+                    Controls which items are open (controlled mode). Supports two-way binding with <code>@@bind-Value</code>.
+                </ApiParameter>
+                <ApiParameter Name="DefaultValue" Type="HashSet&lt;string&gt;?" Default="null">
+                    Default open items in uncontrolled mode.
+                </ApiParameter>
+                <ApiParameter Name="Collapsible" Type="bool" Default="false">
+                    Whether all items can be collapsed in Single mode. When false, one item always remains open.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbAccordionItem">
+                <ApiParameter Name="Value" Type="string" Default="string.Empty">
+                    Unique identifier for this accordion item. Required.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether this item is disabled.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbAccordionTrigger">
+                <ApiParameter Name="As" Type="string" Default="&quot;h3&quot;">
+                    HTML heading element tag to wrap the trigger button.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbAccordionContent">
+                <ApiParameter Name="ForceMount" Type="bool" Default="true">
+                    Whether to keep content in the DOM when collapsed. Enables CSS animations.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
     </div>
 </div>
 

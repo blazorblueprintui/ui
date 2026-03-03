@@ -269,6 +269,95 @@
             </div>
         </div>
     </section>
+
+    <!-- Accessibility Notes -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">role="group"</code> on the container groups primary and dropdown buttons
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Primary button supports custom <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-label</code> via the AriaLabel parameter
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Dropdown trigger has <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-haspopup="menu"</code> and <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-expanded</code> indicating menu state
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Dropdown trigger defaults to <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-label="More options"</code> when DropdownAriaLabel is not set
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Menu items use <code class="text-xs bg-muted px-1 py-0.5 rounded">role="menuitem"</code> within a <code class="text-xs bg-muted px-1 py-0.5 rounded">role="menu"</code> container
+            </AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Open the dropdown menu">
+                <BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Open dropdown and focus first item">
+                <BbKbd>ArrowDown</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Navigate menu items">
+                <BbKbd>ArrowUp</BbKbd> / <BbKbd>ArrowDown</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate the focused menu item">
+                <BbKbd>Enter</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Close the dropdown menu">
+                <BbKbd>Escape</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbSplitButton">
+                <ApiParameter Name="Variant" Type="ButtonVariant" Default="ButtonVariant.Default">
+                    Visual style variant applied to both buttons.
+                </ApiParameter>
+                <ApiParameter Name="Size" Type="ButtonSize" Default="ButtonSize.Default">
+                    Size of both the primary button and dropdown trigger.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Disables both the primary button and dropdown trigger.
+                </ApiParameter>
+                <ApiParameter Name="OnClick" Type="EventCallback&lt;MouseEventArgs&gt;">
+                    Click handler for the primary action button.
+                </ApiParameter>
+                <ApiParameter Name="Icon" Type="RenderFragment?" Default="null">
+                    Icon rendered inside the primary button.
+                </ApiParameter>
+                <ApiParameter Name="IconPosition" Type="IconPosition" Default="IconPosition.Start">
+                    Position of the icon relative to text.
+                </ApiParameter>
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">
+                    ARIA label for the primary action button.
+                </ApiParameter>
+                <ApiParameter Name="DropdownAriaLabel" Type="string?" Default="&quot;More options&quot;">
+                    ARIA label for the dropdown trigger button.
+                </ApiParameter>
+                <ApiParameter Name="DropdownContent" Type="RenderFragment?" Default="null">
+                    Content for the dropdown menu. Should contain BbSplitButtonItem components.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbSplitButtonItem">
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether the menu item is disabled.
+                </ApiParameter>
+                <ApiParameter Name="OnClick" Type="EventCallback&lt;MouseEventArgs&gt;">
+                    Click handler for this menu item.
+                </ApiParameter>
+                <ApiParameter Name="CloseOnSelect" Type="bool" Default="true">
+                    Whether clicking this item closes the dropdown.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
 </div>
 
 @code {

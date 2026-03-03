@@ -1,0 +1,41 @@
+private readonly FormSchema schema = new()
+{
+    Title = "User Registration",
+    Sections =
+    [
+        new FormSectionDefinition
+        {
+            Title = "Personal Details",
+            Description = "Your basic information.",
+            Fields =
+            [
+                new FormFieldDefinition { Name = "FullName", Label = "Full Name", Type = FieldType.Text, Required = true },
+                new FormFieldDefinition { Name = "Email", Label = "Email", Type = FieldType.Email, Required = true },
+                new FormFieldDefinition { Name = "Phone", Label = "Phone", Type = FieldType.Phone }
+            ]
+        },
+        new FormSectionDefinition
+        {
+            Title = "Preferences",
+            Description = "Customize your experience.",
+            Collapsible = true,
+            Fields =
+            [
+                new FormFieldDefinition
+                {
+                    Name = "Language", Label = "Language", Type = FieldType.Select,
+                    Options = [new("en", "English"), new("es", "Spanish"), new("fr", "French")]
+                },
+                new FormFieldDefinition { Name = "DarkMode", Label = "Dark Mode", Type = FieldType.Switch },
+                new FormFieldDefinition
+                {
+                    Name = "Notifications", Label = "Notification Preferences",
+                    Type = FieldType.CheckboxGroup,
+                    Options = [new("email", "Email"), new("sms", "SMS"), new("push", "Push")]
+                }
+            ]
+        }
+    ]
+};
+
+<BbDynamicForm Schema="@schema" @bind-Values="values" OnValidSubmit="HandleSubmit" />

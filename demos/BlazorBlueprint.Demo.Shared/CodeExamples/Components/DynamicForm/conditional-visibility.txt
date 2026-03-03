@@ -1,0 +1,35 @@
+private readonly FormSchema schema = new()
+{
+    Fields =
+    [
+        new FormFieldDefinition
+        {
+            Name = "Country", Label = "Country", Type = FieldType.Select, Required = true,
+            Options = [new("US", "United States"), new("CA", "Canada"), new("UK", "United Kingdom")]
+        },
+        new FormFieldDefinition
+        {
+            Name = "State", Label = "State", Type = FieldType.Select,
+            VisibleWhen = "Country == 'US'",
+            Options = [new("CA", "California"), new("NY", "New York"), new("TX", "Texas")]
+        },
+        new FormFieldDefinition
+        {
+            Name = "Province", Label = "Province", Type = FieldType.Select,
+            VisibleWhen = "Country == 'CA'",
+            Options = [new("ON", "Ontario"), new("QC", "Quebec"), new("BC", "British Columbia")]
+        },
+        new FormFieldDefinition
+        {
+            Name = "PostalCode", Label = "Postal Code", Type = FieldType.Text,
+            VisibleWhen = "Country != null",
+            Placeholder = "Enter postal code"
+        }
+    ]
+};
+
+// Supported expression operators: ==, !=, &&, ||, !
+// Supports string literals ('value'), booleans (true/false), null, and numbers
+// Hidden fields are automatically cleared from the values dictionary
+
+<BbDynamicForm Schema="@schema" @bind-Values="values" OnValidSubmit="HandleSubmit" />

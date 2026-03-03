@@ -1,0 +1,923 @@
+@page "/components/dynamic-form"
+
+<PageTitle>Dynamic Form Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Dynamic Form</h1>
+            <p class="text-xl text-muted-foreground">
+                Render forms from schema definitions. Eliminates hand-coding forms for CMS, admin panels,
+                and settings pages where form structure comes from backend configuration.
+            </p>
+        </div>
+    </div>
+
+    <!-- Field Type Gallery -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Field Type Gallery</h2>
+            <p class="text-sm text-muted-foreground">
+                Every supported field type rendered in a single form. Each section groups related input types
+                so you can see the full range of controls available.
+            </p>
+        </div>
+        <BbDynamicForm Schema="@_gallerySchema"
+                       @bind-Values="_galleryValues"
+                       Columns="2"
+                       ShowSubmitButton="false" />
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Current values:</p>
+            <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_galleryValues)</pre>
+        </div>
+        <CodeBlock Source="Components/DynamicForm/field-type-gallery.txt" />
+    </div>
+
+    <!-- Basic Form -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Dynamic Form</h2>
+            <p class="text-sm text-muted-foreground">
+                Define a schema with field definitions and the form renders the correct input component for each field type.
+            </p>
+        </div>
+        <div class="max-w-lg">
+            <BbDynamicForm Schema="@_basicSchema"
+                           @bind-Values="_basicValues"
+                           OnValidSubmit="HandleBasicSubmit" />
+        </div>
+        @if (_basicSubmitMessage is not null)
+        {
+            <BbAlert Variant="AlertVariant.Success" Dismissible="true" OnDismiss="() => _basicSubmitMessage = null">
+                <BbAlertTitle>Form Submitted</BbAlertTitle>
+                <BbAlertDescription>@_basicSubmitMessage</BbAlertDescription>
+            </BbAlert>
+        }
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Current values:</p>
+            <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_basicValues)</pre>
+        </div>
+        <CodeBlock Source="Components/DynamicForm/basic.txt" />
+    </div>
+
+    <!-- Multi-Section Form -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Multi-Section Form</h2>
+            <p class="text-sm text-muted-foreground">
+                Group related fields into sections with headings, descriptions, and optional collapsible behavior.
+            </p>
+        </div>
+        <div class="max-w-2xl">
+            <BbDynamicForm Schema="@_sectionSchema"
+                           @bind-Values="_sectionValues"
+                           OnValidSubmit="HandleSectionSubmit" />
+        </div>
+        @if (_sectionSubmitMessage is not null)
+        {
+            <BbAlert Variant="AlertVariant.Success" Dismissible="true" OnDismiss="() => _sectionSubmitMessage = null">
+                <BbAlertTitle>Form Submitted</BbAlertTitle>
+                <BbAlertDescription>@_sectionSubmitMessage</BbAlertDescription>
+            </BbAlert>
+        }
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Current values:</p>
+            <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_sectionValues)</pre>
+        </div>
+        <CodeBlock Source="Components/DynamicForm/multi-section.txt" />
+    </div>
+
+    <!-- Conditional Visibility -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Conditional Visibility</h2>
+            <p class="text-sm text-muted-foreground">
+                Show or hide fields based on other field values using <code class="text-xs bg-muted px-1 py-0.5 rounded">VisibleWhen</code> expressions.
+                Select "US" as the country to reveal the State field.
+            </p>
+        </div>
+        <div class="max-w-lg">
+            <BbDynamicForm Schema="@_conditionalSchema"
+                           @bind-Values="_conditionalValues"
+                           OnValidSubmit="HandleConditionalSubmit" />
+        </div>
+        @if (_conditionalSubmitMessage is not null)
+        {
+            <BbAlert Variant="AlertVariant.Success" Dismissible="true" OnDismiss="() => _conditionalSubmitMessage = null">
+                <BbAlertTitle>Form Submitted</BbAlertTitle>
+                <BbAlertDescription>@_conditionalSubmitMessage</BbAlertDescription>
+            </BbAlert>
+        }
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Current values:</p>
+            <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_conditionalValues)</pre>
+        </div>
+        <CodeBlock Source="Components/DynamicForm/conditional-visibility.txt" />
+    </div>
+
+    <!-- Multi-Column Layout -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Multi-Column Layout</h2>
+            <p class="text-sm text-muted-foreground">
+                Use the <code class="text-xs bg-muted px-1 py-0.5 rounded">Columns</code> parameter for responsive grid layouts.
+                Fields can span multiple columns with <code class="text-xs bg-muted px-1 py-0.5 rounded">ColSpan</code>.
+            </p>
+        </div>
+        <BbDynamicForm Schema="@_multiColSchema"
+                       @bind-Values="_multiColValues"
+                       Columns="2"
+                       OnValidSubmit="HandleMultiColSubmit" />
+        @if (_multiColSubmitMessage is not null)
+        {
+            <BbAlert Variant="AlertVariant.Success" Dismissible="true" OnDismiss="() => _multiColSubmitMessage = null">
+                <BbAlertTitle>Form Submitted</BbAlertTitle>
+                <BbAlertDescription>@_multiColSubmitMessage</BbAlertDescription>
+            </BbAlert>
+        }
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Current values:</p>
+            <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_multiColValues)</pre>
+        </div>
+        <CodeBlock Source="Components/DynamicForm/multi-column.txt" />
+    </div>
+
+    <!-- Form Layouts -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Form Layouts</h2>
+            <p class="text-sm text-muted-foreground">
+                The <code class="text-xs bg-muted px-1 py-0.5 rounded">Layout</code> parameter controls how labels and fields are arranged.
+                Compare Vertical (default), Horizontal, and Inline layouts using the same schema.
+            </p>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="space-y-2">
+                <h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Vertical (default)</h3>
+                <div class="rounded-lg border p-4">
+                    <BbDynamicForm Schema="@_layoutSchema"
+                                   @bind-Values="_layoutVerticalValues"
+                                   Layout="FormLayout.Vertical"
+                                   ShowSubmitButton="false" />
+                </div>
+            </div>
+            <div class="space-y-2">
+                <h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Horizontal</h3>
+                <div class="rounded-lg border p-4">
+                    <BbDynamicForm Schema="@_layoutSchema"
+                                   @bind-Values="_layoutHorizontalValues"
+                                   Layout="FormLayout.Horizontal"
+                                   LabelWidth="4rem"
+                                   ShowSubmitButton="false" />
+                </div>
+            </div>
+        </div>
+        <div class="space-y-2">
+            <h3 class="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Inline</h3>
+            <div class="rounded-lg border p-4">
+                <BbDynamicForm Schema="@_layoutSchema"
+                               @bind-Values="_layoutInlineValues"
+                               Layout="FormLayout.Inline"
+                               ShowSubmitButton="false" />
+            </div>
+        </div>
+        <CodeBlock Source="Components/DynamicForm/form-layouts.txt" />
+    </div>
+
+    <!-- JSON Schema -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">JSON Schema-Driven Form</h2>
+            <p class="text-sm text-muted-foreground">
+                Parse a JSON Schema string into a form definition using <code class="text-xs bg-muted px-1 py-0.5 rounded">FormSchemaParser.FromJson</code>.
+                Useful for API-driven forms where the schema comes from the server.
+            </p>
+        </div>
+        <div class="max-w-lg">
+            <BbDynamicForm Schema="@_jsonSchema"
+                           @bind-Values="_jsonValues"
+                           OnValidSubmit="HandleJsonSubmit" />
+        </div>
+        @if (_jsonSubmitMessage is not null)
+        {
+            <BbAlert Variant="AlertVariant.Success" Dismissible="true" OnDismiss="() => _jsonSubmitMessage = null">
+                <BbAlertTitle>Form Submitted</BbAlertTitle>
+                <BbAlertDescription>@_jsonSubmitMessage</BbAlertDescription>
+            </BbAlert>
+        }
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Current values:</p>
+            <pre class="text-sm font-mono whitespace-pre-wrap">@FormatValues(_jsonValues)</pre>
+        </div>
+        <CodeBlock Source="Components/DynamicForm/json-schema.txt" />
+    </div>
+
+    <!-- Read-Only / Disabled -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Read-Only / Disabled</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">Disabled</code> to prevent all interaction.
+            </p>
+        </div>
+        <div class="max-w-lg">
+            <BbDynamicForm Schema="@_basicSchema"
+                           @bind-Values="_disabledValues"
+                           Disabled="true"
+                           ShowSubmitButton="false" />
+        </div>
+        <CodeBlock Source="Components/DynamicForm/read-only-disabled.txt" />
+    </div>
+
+    <!-- Validation -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Validation</h2>
+            <p class="text-sm text-muted-foreground">
+                Define validation rules on field definitions. Required fields, patterns, min/max length,
+                and numeric range validations are all supported. Try submitting the empty form.
+            </p>
+        </div>
+        <div class="max-w-lg">
+            <BbDynamicForm Schema="@_validationSchema"
+                           @bind-Values="_validationValues"
+                           OnValidSubmit="HandleValidationSubmit" />
+        </div>
+        @if (_validationSubmitMessage is not null)
+        {
+            <BbAlert Variant="AlertVariant.Success" Dismissible="true" OnDismiss="() => _validationSubmitMessage = null">
+                <BbAlertTitle>Form Submitted</BbAlertTitle>
+                <BbAlertDescription>@_validationSubmitMessage</BbAlertDescription>
+            </BbAlert>
+        }
+        <CodeBlock Source="Components/DynamicForm/validation.txt" />
+    </div>
+
+    <!-- Accessibility -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                Each rendered input inherits the accessibility features of its underlying BlazorBlueprint component (labels, ARIA attributes, error announcements)
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Labels are automatically associated with their inputs via <code class="text-xs bg-muted px-1 py-0.5 rounded">BbFieldLabel</code>
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Validation errors are displayed inline with <code class="text-xs bg-muted px-1 py-0.5 rounded">BbFieldError</code> for screen reader support
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Hidden fields (via <code class="text-xs bg-muted px-1 py-0.5 rounded">VisibleWhen</code>) are fully removed from the DOM, not just visually hidden
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Collapsible sections use <code class="text-xs bg-muted px-1 py-0.5 rounded">BbCollapsible</code> with proper <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-expanded</code> state
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Form uses native <code class="text-xs bg-muted px-1 py-0.5 rounded">&lt;form&gt;</code> element for standard submit behavior
+            </AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between form fields">
+                <BbKbd>Tab</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Submit the form">
+                <BbKbd>Enter</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Toggle collapsible sections">
+                <BbKbd>Enter</BbKbd> or <BbKbd>Space</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbDynamicForm">
+                <ApiParameter Name="Schema" Type="FormSchema?">
+                    The schema definition for the form, containing fields and/or sections.
+                </ApiParameter>
+                <ApiParameter Name="Values" Type="Dictionary&lt;string, object?&gt;">
+                    The current form values dictionary. Use <code>@@bind-Values</code> for two-way binding.
+                </ApiParameter>
+                <ApiParameter Name="OnSubmit" Type="EventCallback&lt;Dictionary&lt;string, object?&gt;&gt;">
+                    Callback invoked on form submission regardless of validation.
+                </ApiParameter>
+                <ApiParameter Name="OnValidSubmit" Type="EventCallback&lt;Dictionary&lt;string, object?&gt;&gt;">
+                    Callback invoked on form submission only when all validation passes.
+                </ApiParameter>
+                <ApiParameter Name="OnFieldChanged" Type="EventCallback&lt;FormFieldChangedEventArgs&gt;">
+                    Callback invoked when any field value changes. Provides field name, old value, and new value.
+                </ApiParameter>
+                <ApiParameter Name="Layout" Type="FormLayout" Default="Vertical">
+                    Form layout mode. Options: Vertical, Horizontal, Inline.
+                </ApiParameter>
+                <ApiParameter Name="LabelWidth" Type="string?" Default="null">
+                    Fixed label width for Horizontal layout (e.g., "100px", "8rem"). Ensures all labels have the same width so inputs align consistently.
+                </ApiParameter>
+                <ApiParameter Name="Columns" Type="int" Default="1">
+                    Number of columns for the responsive grid layout. Can be overridden per section.
+                </ApiParameter>
+                <ApiParameter Name="ReadOnly" Type="bool" Default="false">
+                    Whether all fields are rendered as read-only.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether all fields are disabled.
+                </ApiParameter>
+                <ApiParameter Name="SubmitText" Type="string" Default="Submit">
+                    Text for the built-in submit button.
+                </ApiParameter>
+                <ApiParameter Name="ShowSubmitButton" Type="bool" Default="true">
+                    Whether to show the built-in submit button.
+                </ApiParameter>
+                <ApiParameter Name="ShowValidationSummary" Type="bool" Default="false">
+                    Whether to show a validation error summary at the top of the form. When false, errors are only shown inline next to each field.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?" Default="null">
+                    Additional CSS classes applied to the form element.
+                </ApiParameter>
+                <ApiParameter Name="FieldRenderers" Type="Dictionary&lt;string, RenderFragment&lt;DynamicFieldRenderContext&gt;&gt;?">
+                    Custom field renderers keyed by field name. Used for <code>FieldType.Custom</code> fields.
+                </ApiParameter>
+                <ApiParameter Name="ChildContent" Type="RenderFragment?">
+                    Additional content rendered inside the form (e.g., extra buttons).
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="FormSchema">
+                <ApiParameter Name="Title" Type="string?">
+                    Form title displayed above the form.
+                </ApiParameter>
+                <ApiParameter Name="Description" Type="string?">
+                    Description displayed below the title.
+                </ApiParameter>
+                <ApiParameter Name="Fields" Type="List&lt;FormFieldDefinition&gt;">
+                    Flat list of fields. Ignored when Sections is populated.
+                </ApiParameter>
+                <ApiParameter Name="Sections" Type="List&lt;FormSectionDefinition&gt;">
+                    Grouped fields with headings and descriptions. When set, Fields is ignored.
+                </ApiParameter>
+                <ApiParameter Name="Columns" Type="int" Default="1">
+                    Default number of grid columns. Individual sections can override this.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="FormFieldDefinition">
+                <ApiParameter Name="Name" Type="string">
+                    Field name used as the key in the values dictionary.
+                </ApiParameter>
+                <ApiParameter Name="Label" Type="string?">
+                    Label text displayed above or beside the field.
+                </ApiParameter>
+                <ApiParameter Name="Description" Type="string?">
+                    Helper text displayed below the field.
+                </ApiParameter>
+                <ApiParameter Name="Placeholder" Type="string?">
+                    Placeholder text displayed when the field is empty.
+                </ApiParameter>
+                <ApiParameter Name="Type" Type="FieldType" Default="Text">
+                    Field type that determines which component is rendered. Options: Text, Email, Password, Url, Phone, Number, Currency, Textarea, RichText, Select, Combobox, MultiSelect, NativeSelect, Checkbox, Switch, CheckboxGroup, RadioGroup, Date, DateRange, Time, DateTime, Color, File, OTP, Slider, RangeSlider, Tags, Custom.
+                </ApiParameter>
+                <ApiParameter Name="Required" Type="bool" Default="false">
+                    Whether this field is required.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether this field is disabled.
+                </ApiParameter>
+                <ApiParameter Name="ReadOnly" Type="bool" Default="false">
+                    Whether this field is read-only.
+                </ApiParameter>
+                <ApiParameter Name="DefaultValue" Type="object?">
+                    Default value applied when the field is not present in the values dictionary.
+                </ApiParameter>
+                <ApiParameter Name="Order" Type="int?">
+                    Display order. Fields with lower values appear first. Null uses definition order.
+                </ApiParameter>
+                <ApiParameter Name="ColSpan" Type="int" Default="1">
+                    Number of grid columns this field spans.
+                </ApiParameter>
+                <ApiParameter Name="VisibleWhen" Type="string?">
+                    Visibility expression evaluated against current values. Example: <code>"Country == 'US'"</code>. Supports <code>==</code>, <code>!=</code>, <code>&amp;&amp;</code>, <code>||</code>, <code>!</code>.
+                </ApiParameter>
+                <ApiParameter Name="Options" Type="List&lt;SelectOption&lt;string&gt;&gt;?">
+                    Options for Select, Combobox, MultiSelect, RadioGroup, and CheckboxGroup fields.
+                </ApiParameter>
+                <ApiParameter Name="Validations" Type="List&lt;FieldValidation&gt;?">
+                    Validation rules for this field.
+                </ApiParameter>
+                <ApiParameter Name="Metadata" Type="Dictionary&lt;string, object&gt;?">
+                    Additional metadata for field-type-specific configuration (e.g., min, max, step for sliders).
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="FormSectionDefinition">
+                <ApiParameter Name="Title" Type="string?">
+                    Section heading text.
+                </ApiParameter>
+                <ApiParameter Name="Description" Type="string?">
+                    Section description displayed below the heading.
+                </ApiParameter>
+                <ApiParameter Name="Fields" Type="List&lt;FormFieldDefinition&gt;">
+                    Fields within this section.
+                </ApiParameter>
+                <ApiParameter Name="Columns" Type="int?">
+                    Override for the form-level column count within this section.
+                </ApiParameter>
+                <ApiParameter Name="VisibleWhen" Type="string?">
+                    Visibility expression that controls whether this section is shown.
+                </ApiParameter>
+                <ApiParameter Name="Collapsible" Type="bool" Default="false">
+                    Whether this section can be collapsed.
+                </ApiParameter>
+                <ApiParameter Name="DefaultExpanded" Type="bool" Default="true">
+                    Whether this section is initially expanded when Collapsible is true.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="FieldValidation">
+                <ApiParameter Name="Type" Type="ValidationType">
+                    Validation type. Options: Required, MinLength, MaxLength, Min, Max, Pattern, Email, Url, Phone, Custom.
+                </ApiParameter>
+                <ApiParameter Name="Value" Type="object?">
+                    Validation parameter (e.g., max length number, regex pattern string).
+                </ApiParameter>
+                <ApiParameter Name="Message" Type="string?">
+                    Custom error message. When null, a default message is generated.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    // ── Field Type Gallery ──────────────────────────────────────────
+
+    private readonly FormSchema _gallerySchema = new()
+    {
+        Sections =
+        [
+            new FormSectionDefinition
+            {
+                Title = "Text Inputs",
+                Description = "Single-line text fields with different input modes.",
+                Fields =
+                [
+                    new FormFieldDefinition { Name = "GText", Label = "Text", Type = FieldType.Text, Placeholder = "Plain text input" },
+                    new FormFieldDefinition { Name = "GEmail", Label = "Email", Type = FieldType.Email, Placeholder = "user@example.com" },
+                    new FormFieldDefinition { Name = "GPassword", Label = "Password", Type = FieldType.Password, Placeholder = "Enter password" },
+                    new FormFieldDefinition { Name = "GUrl", Label = "URL", Type = FieldType.Url, Placeholder = "https://example.com" },
+                    new FormFieldDefinition { Name = "GPhone", Label = "Phone", Type = FieldType.Phone, Placeholder = "+1 (555) 000-0000" }
+                ]
+            },
+            new FormSectionDefinition
+            {
+                Title = "Numeric Inputs",
+                Description = "Number and currency fields with range constraints.",
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Name = "GNumber", Label = "Number", Type = FieldType.Number, Placeholder = "0",
+                        Metadata = new() { ["min"] = 0, ["max"] = 100, ["step"] = 1 }
+                    },
+                    new FormFieldDefinition
+                    {
+                        Name = "GCurrency", Label = "Currency", Type = FieldType.Currency, Placeholder = "0.00",
+                        Metadata = new() { ["currencyCode"] = "USD" }
+                    }
+                ]
+            },
+            new FormSectionDefinition
+            {
+                Title = "Text Areas",
+                Description = "Multi-line text and rich text editing.",
+                Columns = 1,
+                Fields =
+                [
+                    new FormFieldDefinition { Name = "GTextarea", Label = "Textarea", Type = FieldType.Textarea, Placeholder = "Write multiple lines..." },
+                    new FormFieldDefinition { Name = "GRichText", Label = "Rich Text", Type = FieldType.RichText }
+                ]
+            },
+            new FormSectionDefinition
+            {
+                Title = "Selection Controls",
+                Description = "Dropdown, combobox, and multi-select fields.",
+                Fields =
+                [
+                    new FormFieldDefinition
+                    {
+                        Name = "GSelect", Label = "Select", Type = FieldType.Select,
+                        Options = [new("apple", "Apple"), new("banana", "Banana"), new("cherry", "Cherry")]
+                    },
+                    new FormFieldDefinition
+                    {
+                        Name = "GCombobox", Label = "Combobox", Type = FieldType.Combobox, Placeholder = "Search fruits...",
+                        Options = [new("apple", "Apple"), new("banana", "Banana"), new("cherry", "Cherry"), new("date", "Date"), new("elderberry", "Elderberry")]
+                    },
+                    new FormFieldDefinition
+                    {
+                        Name = "GMultiSelect", Label = "Multi-Select", Type = FieldType.MultiSelect, Placeholder = "Choose multiple...",
+                        Options = [new("red", "Red"), new("green", "Green"), new("blue", "Blue"), new("yellow", "Yellow")]
+                    },
+                    new FormFieldDefinition
+                    {
+                        Name = "GNativeSelect", Label = "Native Select", Type = FieldType.NativeSelect,
+                        Options = [new("small", "Small"), new("medium", "Medium"), new("large", "Large")]
+                    }
+                ]
+            },
+            new FormSectionDefinition
+            {
+                Title = "Boolean & Group Controls",
+                Description = "Toggles, checkboxes, and option groups.",
+                Fields =
+                [
+                    new FormFieldDefinition { Name = "GCheckbox", Label = "Accept terms and conditions", Type = FieldType.Checkbox },
+                    new FormFieldDefinition { Name = "GSwitch", Label = "Enable notifications", Type = FieldType.Switch },
+                    new FormFieldDefinition
+                    {
+                        Name = "GCheckboxGroup", Label = "Interests", Type = FieldType.CheckboxGroup,
+                        Options = [new("sports", "Sports"), new("music", "Music"), new("tech", "Technology"), new("art", "Art")]
+                    },
+                    new FormFieldDefinition
+                    {
+                        Name = "GRadioGroup", Label = "Experience Level", Type = FieldType.RadioGroup,
+                        Options = [new("beginner", "Beginner"), new("intermediate", "Intermediate"), new("advanced", "Advanced")]
+                    }
+                ]
+            },
+            new FormSectionDefinition
+            {
+                Title = "Date & Time",
+                Description = "Date, time, and date-range pickers.",
+                Fields =
+                [
+                    new FormFieldDefinition { Name = "GDate", Label = "Date", Type = FieldType.Date },
+                    new FormFieldDefinition { Name = "GDateTime", Label = "Date & Time", Type = FieldType.DateTime },
+                    new FormFieldDefinition { Name = "GDateRange", Label = "Date Range", Type = FieldType.DateRange, ColSpan = 2 },
+                    new FormFieldDefinition { Name = "GTime", Label = "Time", Type = FieldType.Time }
+                ]
+            },
+            new FormSectionDefinition
+            {
+                Title = "Specialty Inputs",
+                Description = "Color pickers, OTP, sliders, tags, and file uploads.",
+                Fields =
+                [
+                    new FormFieldDefinition { Name = "GColor", Label = "Color", Type = FieldType.Color },
+                    new FormFieldDefinition
+                    {
+                        Name = "GOTP", Label = "OTP Code", Type = FieldType.OTP,
+                        Metadata = new() { ["length"] = 6 }
+                    },
+                    new FormFieldDefinition
+                    {
+                        Name = "GSlider", Label = "Slider", Type = FieldType.Slider,
+                        Metadata = new() { ["min"] = 0, ["max"] = 100, ["step"] = 1 }
+                    },
+                    new FormFieldDefinition
+                    {
+                        Name = "GRangeSlider", Label = "Range Slider", Type = FieldType.RangeSlider,
+                        Metadata = new() { ["min"] = 0, ["max"] = 100, ["step"] = 5 }
+                    },
+                    new FormFieldDefinition { Name = "GTags", Label = "Tags", Type = FieldType.Tags, Placeholder = "Add a tag..." },
+                    new FormFieldDefinition
+                    {
+                        Name = "GFile", Label = "File Upload", Type = FieldType.File,
+                        Metadata = new() { ["accept"] = ".pdf,.jpg,.png", ["multiple"] = true }
+                    }
+                ]
+            }
+        ]
+    };
+
+    private Dictionary<string, object?> _galleryValues = new();
+
+    // ── Form Layouts ────────────────────────────────────────────────
+
+    private readonly FormSchema _layoutSchema = new()
+    {
+        Fields =
+        [
+            new FormFieldDefinition { Name = "Name", Label = "Name", Type = FieldType.Text, Placeholder = "Jane Doe" },
+            new FormFieldDefinition { Name = "Email", Label = "Email", Type = FieldType.Email, Placeholder = "jane@example.com" },
+            new FormFieldDefinition { Name = "Role", Label = "Role", Type = FieldType.Select, Options = [new("dev", "Developer"), new("design", "Designer"), new("pm", "Product Manager")] }
+        ]
+    };
+
+    private Dictionary<string, object?> _layoutVerticalValues = new();
+    private Dictionary<string, object?> _layoutHorizontalValues = new();
+    private Dictionary<string, object?> _layoutInlineValues = new();
+
+    // ── Basic Form ──────────────────────────────────────────────────
+
+    private readonly FormSchema _basicSchema = new()
+    {
+        Title = "Contact Information",
+        Description = "Enter your basic contact details.",
+        Fields =
+        [
+            new FormFieldDefinition { Name = "FirstName", Label = "First Name", Type = FieldType.Text, Placeholder = "John", Required = true },
+            new FormFieldDefinition { Name = "LastName", Label = "Last Name", Type = FieldType.Text, Placeholder = "Doe", Required = true },
+            new FormFieldDefinition { Name = "Email", Label = "Email Address", Type = FieldType.Email, Placeholder = "john@example.com", Required = true },
+            new FormFieldDefinition { Name = "Theme", Label = "Preferred Theme", Type = FieldType.Select, Options = [new("light", "Light"), new("dark", "Dark"), new("system", "System")] },
+            new FormFieldDefinition { Name = "Newsletter", Label = "Subscribe to newsletter", Type = FieldType.Switch }
+        ]
+    };
+
+    private Dictionary<string, object?> _basicValues = new();
+
+    // ── Section Form ────────────────────────────────────────────────
+
+    private readonly FormSchema _sectionSchema = new()
+    {
+        Title = "User Registration",
+        Sections =
+        [
+            new FormSectionDefinition
+            {
+                Title = "Personal Details",
+                Description = "Your basic information.",
+                Fields =
+                [
+                    new FormFieldDefinition { Name = "FullName", Label = "Full Name", Type = FieldType.Text, Required = true },
+                    new FormFieldDefinition { Name = "Email", Label = "Email", Type = FieldType.Email, Required = true },
+                    new FormFieldDefinition { Name = "Phone", Label = "Phone", Type = FieldType.Phone, Placeholder = "+1 (555) 000-0000" }
+                ]
+            },
+            new FormSectionDefinition
+            {
+                Title = "Preferences",
+                Description = "Customize your experience.",
+                Collapsible = true,
+                Fields =
+                [
+                    new FormFieldDefinition { Name = "Language", Label = "Language", Type = FieldType.Select, Options = [new("en", "English"), new("es", "Spanish"), new("fr", "French"), new("de", "German")] },
+                    new FormFieldDefinition { Name = "DarkMode", Label = "Dark Mode", Type = FieldType.Switch },
+                    new FormFieldDefinition { Name = "Notifications", Label = "Notification Preferences", Type = FieldType.CheckboxGroup, Options = [new("email", "Email"), new("sms", "SMS"), new("push", "Push")] }
+                ]
+            }
+        ]
+    };
+
+    private Dictionary<string, object?> _sectionValues = new();
+
+    // ── Conditional Visibility ──────────────────────────────────────
+
+    private readonly FormSchema _conditionalSchema = new()
+    {
+        Fields =
+        [
+            new FormFieldDefinition
+            {
+                Name = "Country", Label = "Country", Type = FieldType.Select, Required = true,
+                Options = [new("US", "United States"), new("CA", "Canada"), new("UK", "United Kingdom"), new("AU", "Australia")]
+            },
+            new FormFieldDefinition
+            {
+                Name = "State", Label = "State", Type = FieldType.Select,
+                VisibleWhen = "Country == 'US'",
+                Options = [new("CA", "California"), new("NY", "New York"), new("TX", "Texas"), new("FL", "Florida")]
+            },
+            new FormFieldDefinition
+            {
+                Name = "Province", Label = "Province", Type = FieldType.Select,
+                VisibleWhen = "Country == 'CA'",
+                Options = [new("ON", "Ontario"), new("QC", "Quebec"), new("BC", "British Columbia")]
+            },
+            new FormFieldDefinition
+            {
+                Name = "PostalCode", Label = "Postal Code", Type = FieldType.Text,
+                VisibleWhen = "Country != null",
+                Placeholder = "Enter postal code"
+            }
+        ]
+    };
+
+    private Dictionary<string, object?> _conditionalValues = new();
+
+    // ── Multi-Column ────────────────────────────────────────────────
+
+    private readonly FormSchema _multiColSchema = new()
+    {
+        Title = "Shipping Address",
+        Columns = 2,
+        Fields =
+        [
+            new FormFieldDefinition { Name = "FirstName", Label = "First Name", Type = FieldType.Text, Required = true },
+            new FormFieldDefinition { Name = "LastName", Label = "Last Name", Type = FieldType.Text, Required = true },
+            new FormFieldDefinition { Name = "Address", Label = "Street Address", Type = FieldType.Text, ColSpan = 2, Required = true },
+            new FormFieldDefinition { Name = "City", Label = "City", Type = FieldType.Text, Required = true },
+            new FormFieldDefinition { Name = "Zip", Label = "ZIP Code", Type = FieldType.Text },
+            new FormFieldDefinition { Name = "Notes", Label = "Delivery Notes", Type = FieldType.Textarea, ColSpan = 2, Placeholder = "Any special instructions..." }
+        ]
+    };
+
+    private Dictionary<string, object?> _multiColValues = new();
+
+    // ── JSON Schema ─────────────────────────────────────────────────
+
+    private static readonly string _jsonSchemaString = @"{
+        ""type"": ""object"",
+        ""title"": ""Product Feedback"",
+        ""description"": ""Help us improve by sharing your feedback."",
+        ""required"": [""name"", ""rating"", ""category""],
+        ""properties"": {
+            ""name"": {
+                ""type"": ""string"",
+                ""title"": ""Your Name"",
+                ""minLength"": 2,
+                ""maxLength"": 100
+            },
+            ""email"": {
+                ""type"": ""string"",
+                ""format"": ""email"",
+                ""title"": ""Email Address""
+            },
+            ""rating"": {
+                ""type"": ""integer"",
+                ""title"": ""Rating (1-5)"",
+                ""minimum"": 1,
+                ""maximum"": 5
+            },
+            ""category"": {
+                ""type"": ""string"",
+                ""title"": ""Category"",
+                ""oneOf"": [
+                    { ""const"": ""bug"", ""title"": ""Bug Report"" },
+                    { ""const"": ""feature"", ""title"": ""Feature Request"" },
+                    { ""const"": ""improvement"", ""title"": ""Improvement"" },
+                    { ""const"": ""question"", ""title"": ""Question"" }
+                ]
+            },
+            ""product"": {
+                ""type"": ""string"",
+                ""title"": ""Product"",
+                ""x-field-type"": ""combobox"",
+                ""oneOf"": [
+                    { ""const"": ""blazor-blueprint"", ""title"": ""Blazor Blueprint"" },
+                    { ""const"": ""blazor-primitives"", ""title"": ""Blazor Primitives"" },
+                    { ""const"": ""icons-lucide"", ""title"": ""Icons - Lucide"" },
+                    { ""const"": ""icons-heroicons"", ""title"": ""Icons - Heroicons"" },
+                    { ""const"": ""icons-feather"", ""title"": ""Icons - Feather"" }
+                ]
+            },
+            ""platforms"": {
+                ""type"": ""array"",
+                ""title"": ""Affected Platforms"",
+                ""items"": {
+                    ""type"": ""string"",
+                    ""oneOf"": [
+                        { ""const"": ""server"", ""title"": ""Blazor Server"" },
+                        { ""const"": ""wasm"", ""title"": ""Blazor WebAssembly"" },
+                        { ""const"": ""auto"", ""title"": ""Blazor Auto"" },
+                        { ""const"": ""maui"", ""title"": ""MAUI Hybrid"" }
+                    ]
+                }
+            },
+            ""comments"": {
+                ""type"": ""string"",
+                ""title"": ""Comments"",
+                ""maxLength"": 500
+            }
+        }
+    }";
+
+    private readonly FormSchema _jsonSchema = FormSchemaParser.FromJson(_jsonSchemaString);
+
+    private Dictionary<string, object?> _jsonValues = new();
+
+    // ── Disabled ────────────────────────────────────────────────────
+
+    private Dictionary<string, object?> _disabledValues = new()
+    {
+        ["FirstName"] = "John",
+        ["LastName"] = "Doe",
+        ["Email"] = "john@example.com",
+        ["Theme"] = "dark",
+        ["Newsletter"] = true
+    };
+
+    // ── Validation ──────────────────────────────────────────────────
+
+    private readonly FormSchema _validationSchema = new()
+    {
+        Title = "Account Setup",
+        Fields =
+        [
+            new FormFieldDefinition
+            {
+                Name = "Username", Label = "Username", Type = FieldType.Text, Required = true,
+                Validations = [new() { Type = ValidationType.MinLength, Value = 3, Message = "Username must be at least 3 characters." }, new() { Type = ValidationType.MaxLength, Value = 20 }]
+            },
+            new FormFieldDefinition
+            {
+                Name = "Email", Label = "Email", Type = FieldType.Email, Required = true,
+                Validations = [new() { Type = ValidationType.Email }]
+            },
+            new FormFieldDefinition
+            {
+                Name = "Password", Label = "Password", Type = FieldType.Password, Required = true,
+                Validations = [new() { Type = ValidationType.MinLength, Value = 8, Message = "Password must be at least 8 characters." }, new() { Type = ValidationType.Pattern, Value = @"(?=.*[A-Z])(?=.*\d)", Message = "Password must contain at least one uppercase letter and one digit." }]
+            },
+            new FormFieldDefinition
+            {
+                Name = "Age", Label = "Age", Type = FieldType.Number,
+                Validations = [new() { Type = ValidationType.Min, Value = 18, Message = "You must be at least 18 years old." }, new() { Type = ValidationType.Max, Value = 120 }]
+            },
+            new FormFieldDefinition
+            {
+                Name = "Website", Label = "Website (optional)", Type = FieldType.Url,
+                Validations = [new() { Type = ValidationType.Url }]
+            }
+        ]
+    };
+
+    private Dictionary<string, object?> _validationValues = new();
+
+    // ── Handlers ────────────────────────────────────────────────────
+
+    private string? _basicSubmitMessage;
+    private string? _sectionSubmitMessage;
+    private string? _conditionalSubmitMessage;
+    private string? _multiColSubmitMessage;
+    private string? _jsonSubmitMessage;
+    private string? _validationSubmitMessage;
+
+    private void HandleBasicSubmit(Dictionary<string, object?> values)
+    {
+        _basicSubmitMessage = $"Basic form submitted with {values.Count} fields.";
+    }
+
+    private void HandleSectionSubmit(Dictionary<string, object?> values)
+    {
+        _sectionSubmitMessage = $"Registration form submitted with {values.Count} fields.";
+    }
+
+    private void HandleConditionalSubmit(Dictionary<string, object?> values)
+    {
+        _conditionalSubmitMessage = $"Location form submitted. Country: {values.GetValueOrDefault("Country")}";
+    }
+
+    private void HandleMultiColSubmit(Dictionary<string, object?> values)
+    {
+        _multiColSubmitMessage = $"Shipping form submitted for {values.GetValueOrDefault("FirstName")} {values.GetValueOrDefault("LastName")}.";
+    }
+
+    private void HandleJsonSubmit(Dictionary<string, object?> values)
+    {
+        _jsonSubmitMessage = $"Feedback form submitted. Rating: {values.GetValueOrDefault("rating")}";
+    }
+
+    private void HandleValidationSubmit(Dictionary<string, object?> values)
+    {
+        _validationSubmitMessage = $"Account created for {values.GetValueOrDefault("Username")}!";
+    }
+
+    private static string FormatValues(Dictionary<string, object?> values)
+    {
+        if (values.Count == 0)
+        {
+            return "(no values yet)";
+        }
+
+        return string.Join("\n", values.Select(kv => $"{kv.Key}: {FormatValue(kv.Value)}"));
+    }
+
+    private static string FormatValue(object? value)
+    {
+        if (value is null)
+        {
+            return "(null)";
+        }
+
+        if (value is string s)
+        {
+            return s;
+        }
+
+        if (value is IReadOnlyList<FileUploadItem> files)
+        {
+            if (files.Count == 0)
+            {
+                return "[]";
+            }
+            return $"[{string.Join(", ", files.Select(f => $"{f.Name} ({f.FormattedSize})"))}]";
+        }
+
+        if (value is System.Collections.IEnumerable enumerable)
+        {
+            var items = new List<string>();
+            foreach (var item in enumerable)
+            {
+                items.Add(item?.ToString() ?? "(null)");
+            }
+            return items.Count > 0 ? $"[{string.Join(", ", items)}]" : "[]";
+        }
+
+        return value.ToString() ?? "(null)";
+    }
+}

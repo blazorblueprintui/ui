@@ -163,7 +163,7 @@ public partial class BbFormFieldInput<TValue> : FormFieldBase
     protected override bool IsInvalid => _hasError || base.IsInvalid;
 
     /// <inheritdoc />
-    protected override string? DescribedById => _hasError || HasEditContextErrors
+    protected override string? DescribedById => IsInvalid
         ? ErrorId
         : !string.IsNullOrEmpty(HelperText) ? DescriptionId : null;
 

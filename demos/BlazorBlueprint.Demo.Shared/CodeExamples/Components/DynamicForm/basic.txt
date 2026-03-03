@@ -1,0 +1,40 @@
+private readonly FormSchema schema = new()
+{
+    Title = "Contact Information",
+    Description = "Enter your basic contact details.",
+    Fields =
+    [
+        new FormFieldDefinition
+        {
+            Name = "FirstName", Label = "First Name",
+            Type = FieldType.Text, Placeholder = "John", Required = true
+        },
+        new FormFieldDefinition
+        {
+            Name = "LastName", Label = "Last Name",
+            Type = FieldType.Text, Placeholder = "Doe", Required = true
+        },
+        new FormFieldDefinition
+        {
+            Name = "Email", Label = "Email Address",
+            Type = FieldType.Email, Placeholder = "john@example.com", Required = true
+        },
+        new FormFieldDefinition
+        {
+            Name = "Theme", Label = "Preferred Theme",
+            Type = FieldType.Select,
+            Options = [new("light", "Light"), new("dark", "Dark"), new("system", "System")]
+        },
+        new FormFieldDefinition
+        {
+            Name = "Newsletter", Label = "Subscribe to newsletter",
+            Type = FieldType.Switch
+        }
+    ]
+};
+
+private Dictionary<string, object?> values = new();
+
+<BbDynamicForm Schema="@schema"
+               @bind-Values="values"
+               OnValidSubmit="HandleSubmit" />

@@ -20,6 +20,9 @@ const instances = new Map();
  * @param {boolean} config.disableDebounce - When true, fire JsOnInput immediately.
  * @param {number} config.debounceMs - Debounce interval (when disableDebounce is false).
  * @param {string[]} config.stepKeys - Key names to intercept (e.g. ['ArrowUp', 'ArrowDown']).
+ * @param {boolean} config.allowDecimal - Whether decimal points are allowed.
+ * @param {boolean} config.allowNegative - Whether negative sign is allowed.
+ * @param {string} config.decimalSeparator - The decimal separator character used for input sanitization (e.g. '.').
  */
 export function initialize(element, dotNetRef, instanceId, config) {
   if (!element || !dotNetRef) {
@@ -35,6 +38,47 @@ export function initialize(element, dotNetRef, instanceId, config) {
 
   const stepKeySet = new Set(config.stepKeys || []);
 
+  /**
+   * Strips non-numeric characters from input value, preserving cursor position.
+   * Allows digits, at most one decimal point (if allowDecimal), and a leading minus (if allowNegative).
+   */
+  const sanitizeInput = () => {
+    const cfg = state.config;
+    const raw = element.value;
+    const cursorPos = element.selectionStart ?? raw.length;
+
+    let sanitized = '';
+    let hasDecimal = false;
+    let removed = 0;
+
+    for (let i = 0; i < raw.length; i++) {
+      const ch = raw[i];
+      const decSep = cfg.decimalSeparator || '.';
+      if (ch >= '0' && ch <= '9') {
+        sanitized += ch;
+      } else if ((ch === '.' || ch === ',' || ch === decSep) && cfg.allowDecimal && !hasDecimal) {
+        sanitized += decSep;
+        hasDecimal = true;
+      } else if (ch === '-' && cfg.allowNegative && sanitized.length === 0) {
+        sanitized += ch;
+      } else {
+        if (i < cursorPos) {
+          removed++;
+        }
+      }
+    }
+
+    if (sanitized !== raw) {
+      element.value = sanitized;
+      const newPos = Math.max(0, Math.min(cursorPos - removed, sanitized.length));
+      try {
+        element.setSelectionRange(newPos, newPos);
+      } catch {
+        // setSelectionRange not supported for this input type
+      }
+    }
+  };
+
   const cancelPending = () => {
     if (state.debounceTimer) {
       clearTimeout(state.debounceTimer);
@@ -43,6 +87,7 @@ export function initialize(element, dotNetRef, instanceId, config) {
   };
 
   const handleInput = () => {
+    sanitizeInput();
     const value = element.value;
 
     if (state.config.disableDebounce) {

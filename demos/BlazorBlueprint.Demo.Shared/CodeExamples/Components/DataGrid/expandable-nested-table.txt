@@ -1,0 +1,67 @@
+<BbDataGrid TData="ProjectTask" Items="@projectTasks" InitialPageSize="5"
+           ShowPagination="false">
+    <Columns>
+        <BbDataGridExpandColumn />
+        <BbDataGridPropertyColumn TData="ProjectTask" TProp="string"
+            Property="@(t => t.Title)" Title="Task" />
+        <BbDataGridPropertyColumn TData="ProjectTask" TProp="string"
+            Property="@(t => t.Assignee)" />
+        <BbDataGridPropertyColumn TData="ProjectTask" TProp="string"
+            Property="@(t => t.Status)" />
+        <BbDataGridPropertyColumn TData="ProjectTask" TProp="string"
+            Property="@(t => t.Priority)" />
+    </Columns>
+    <DetailTemplate>
+        <div class="pl-4">
+            <p class="text-sm font-medium mb-2 text-muted-foreground">
+                Subtasks (@context.Subtasks.Count)
+            </p>
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b">
+                        <th class="py-2 px-3 text-left font-medium
+                            text-muted-foreground">Subtask</th>
+                        <th class="py-2 px-3 text-left font-medium
+                            text-muted-foreground">Assignee</th>
+                        <th class="py-2 px-3 text-left font-medium
+                            text-muted-foreground">Status</th>
+                        <th class="py-2 px-3 text-right font-medium
+                            text-muted-foreground">Hours</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sub in context.Subtasks)
+                    {
+                        <tr class="border-b last:border-0">
+                            <td class="py-2 px-3">@sub.Title</td>
+                            <td class="py-2 px-3">@sub.Assignee</td>
+                            <td class="py-2 px-3">
+                                <BbBadge Variant="@GetSubtaskBadge(sub.Status)">
+                                    @sub.Status
+                                </BbBadge>
+                            </td>
+                            <td class="py-2 px-3 text-right tabular-nums">
+                                @sub.EstimatedHours h
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </DetailTemplate>
+</BbDataGrid>
+
+@code {
+    record Subtask(string Title, string Assignee,
+        string Status, int EstimatedHours);
+    record ProjectTask(string Title, string Assignee,
+        string Status, string Priority, List<Subtask> Subtasks);
+
+    private static BadgeVariant GetSubtaskBadge(string status)
+        => status switch
+        {
+            "Done" => BadgeVariant.Default,
+            "In Progress" => BadgeVariant.Secondary,
+            _ => BadgeVariant.Outline
+        };
+}

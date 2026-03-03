@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Components
 @typeparam TData where TData : class
+@attribute [CascadingTypeParameter(nameof(TData))]
 @using BlazorBlueprint.Icons.Lucide.Components
 @using BlazorBlueprint.Primitives.DataGrid
 
@@ -58,13 +59,14 @@
                             }
                         </colgroup>
                     }
-                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader Class="@ClassNames.cn("[&_tr]:border-b", StickyHeader ? "sticky top-0 z-10 bg-background" : "")">
+                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader Class="@ClassNames.cn("[&_tr]:border-b", StickyHeader ? "sticky top-0 z-20 bg-background" : "")">
                         <BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Class="group/row border-b transition-colors hover:bg-muted/50">
                             @foreach (var column in _cachedVisibleColumns)
                             {
                                 var sortDirection = _gridState.Sorting.GetDirection(column.ColumnId);
                                 var sortPriority = _gridState.Sorting.GetPriority(column.ColumnId);
                                 var isSelectColumn = column.ColumnId == "__select";
+                                var isExpandColumn = column.ColumnId == "__expand";
                                 var isLastLeft = column.ColumnId == _cachedLastLeftId;
                                 var isFirstRight = column.ColumnId == _cachedFirstRightId;
 
@@ -73,10 +75,14 @@
                                     ColumnId="@column.ColumnId"
                                     Sortable="@column.Sortable"
                                     Reorderable="@(Reorderable && column.Reorderable)"
-                                    Class="@GetHeaderCellClass(column, isSelectColumn, isLastLeft, isFirstRight)"
+                                    Class="@GetHeaderCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight)"
                                     style="@GetColumnStyle(column, _cachedVisibleColumns)"
                                     data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)">
-                                    @if (isSelectColumn)
+                                    @if (isExpandColumn)
+                                    {
+                                        @* Empty spacer — no header control for expand column *@
+                                    }
+                                    else if (isSelectColumn)
                                     {
                                         <div @onclick:stopPropagation="true">
                                             @if (ShouldShowSelectAllPrompt())
@@ -175,6 +181,14 @@
                             @foreach (var item in _processedData)
                             {
                                 @RenderDataRow(item)
+                                @if (DetailTemplate != null && _gridState.Expanded.IsExpanded(item))
+                                {
+                                    <tr class="border-b">
+                                        <td colspan="@_cachedVisibleColumns.Count" class="p-4">
+                                            @DetailTemplate(item)
+                                        </td>
+                                    </tr>
+                                }
                             }
                         }
                     </BlazorBlueprint.Primitives.DataGrid.BbDataGridBody>
@@ -223,15 +237,31 @@
             @foreach (var column in _cachedVisibleColumns)
             {
                 var isSelectColumn = column.ColumnId == "__select";
+                var isExpandColumn = column.ColumnId == "__expand";
                 var isLastLeft = column.ColumnId == _cachedLastLeftId;
                 var isFirstRight = column.ColumnId == _cachedFirstRightId;
                 var pinnedStyle = GetPinnedStyle(column, _cachedVisibleColumns);
 
                 <BlazorBlueprint.Primitives.DataGrid.BbDataGridCell
                     @key="@column.ColumnId"
-                    Class="@GetCellClass(column, isSelectColumn, isLastLeft, isFirstRight, isRowSelected)"
+                    Class="@GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight, isRowSelected)"
                     style="@pinnedStyle">
-                    @if (isSelectColumn)
+                    @if (isExpandColumn)
+                    {
+                        @if (DetailTemplate != null)
+                        {
+                            var isExpanded = _gridState.Expanded.IsExpanded(item);
+                            <button type="button"
+                                    class="inline-flex items-center justify-center rounded-md w-8 h-8 hover:bg-muted transition-colors"
+                                    aria-expanded="@isExpanded.ToString().ToLowerInvariant()"
+                                    aria-label="@(isExpanded ? "Collapse row" : "Expand row")"
+                                    @onclick="@(() => HandleRowExpandToggle(item))"
+                                    @onclick:stopPropagation="true">
+                                <LucideIcon Name="@(isExpanded ? "chevron-down" : "chevron-right")" Class="w-4 h-4" />
+                            </button>
+                        }
+                    }
+                    else if (isSelectColumn)
                     {
                         <div @onclick:stopPropagation="true">
                             <BbCheckbox Checked="@_gridState.Selection.IsSelected(item)"
