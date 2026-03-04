@@ -13,10 +13,16 @@ const INTERACTIVE_SELECTOR =
   '[role="menuitem"],[role="option"],[role="tab"]';
 
 /**
- * Attaches a capture-phase click listener on the row that stops propagation
- * when the click originates from an interactive child element.
- * This prevents row selection / OnRowClick from firing when the user
- * clicks buttons, links, checkboxes, etc. inside a cell.
+ * Attaches a capture-phase click listener on the row that flags clicks
+ * originating from interactive child elements.  Instead of calling
+ * stopPropagation (which would prevent Blazor's root-level event
+ * delegation from seeing the event at all), we set a property on the
+ * row element that the C# HandleClick can read via JS interop.
+ *
+ * Library-owned interactive elements (expand button, selection checkbox)
+ * already use Blazor's @onclick:stopPropagation="true" to suppress the
+ * row handler through Blazor's internal dispatch.  This interceptor
+ * handles user-provided interactive content in cell templates.
  *
  * @param {HTMLElement} rowElement - The <tr> element
  * @returns {{ dispose(): void }} Cleanup handle
@@ -25,15 +31,11 @@ export function interceptInteractiveClicks(rowElement) {
   if (!rowElement) return { dispose: () => {} };
 
   const handler = (e) => {
-    // Walk from the actual click target up to (but not including) the row.
-    // If we hit an interactive element, swallow the event.
     const interactive = e.target.closest(INTERACTIVE_SELECTOR);
-    if (interactive && rowElement.contains(interactive) && interactive !== rowElement) {
-      e.stopPropagation();
-    }
+    rowElement._bbInteractiveClick = !!(interactive && rowElement.contains(interactive) && interactive !== rowElement);
   };
 
-  // Capture phase so we run before Blazor's bubble-phase @onclick binding.
+  // Capture phase so the flag is set before Blazor dispatches the row click.
   rowElement.addEventListener('click', handler, { capture: true });
 
   return {
@@ -41,6 +43,20 @@ export function interceptInteractiveClicks(rowElement) {
       rowElement.removeEventListener('click', handler, { capture: true });
     }
   };
+}
+
+/**
+ * Returns true if the last click on this row targeted an interactive
+ * child element, then resets the flag.
+ *
+ * @param {HTMLElement} rowElement - The <tr> element
+ * @returns {boolean}
+ */
+export function consumeInteractiveClickFlag(rowElement) {
+  if (!rowElement) return false;
+  const flag = rowElement._bbInteractiveClick === true;
+  rowElement._bbInteractiveClick = false;
+  return flag;
 }
 
 /**
@@ -79,27 +95,23 @@ export function moveFocusToPreviousRow(element) {
     if (!element) return;
 
     let prevRow = element.previousElementSibling;
-    while (prevRow && prevRow.getAttribute('tabindex') === '-1') {
+    while (prevRow && prevRow.getAttribute('tabindex') !== '0') {
         prevRow = prevRow.previousElementSibling;
     }
-    if (prevRow && prevRow.getAttribute('tabindex') === '0') {
-        prevRow.focus();
-    }
+    prevRow?.focus();
 }
 
 /**
  * Moves focus to the next focusable row.
- * Skips rows with tabindex="-1".
+ * Skips siblings without tabindex="0" (detail rows, non-navigable rows, etc.).
  * @param {HTMLElement} element - The current row element
  */
 export function moveFocusToNextRow(element) {
     if (!element) return;
 
     let nextRow = element.nextElementSibling;
-    while (nextRow && nextRow.getAttribute('tabindex') === '-1') {
+    while (nextRow && nextRow.getAttribute('tabindex') !== '0') {
         nextRow = nextRow.nextElementSibling;
     }
-    if (nextRow && nextRow.getAttribute('tabindex') === '0') {
-        nextRow.focus();
-    }
+    nextRow?.focus();
 }
