@@ -2,7 +2,7 @@ namespace BlazorBlueprint.Components;
 
 /// <summary>
 /// Provides configuration options for a prompt dialog shown via
-/// <see cref="DialogService.Prompt(string, string?, PromptDialogOptions?)"/>.
+/// <see cref="DialogService.PromptAsync(string, string?, PromptDialogOptions?)"/>.
 /// </summary>
 public class PromptDialogOptions : DialogOptions
 {

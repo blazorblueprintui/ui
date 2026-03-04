@@ -34,7 +34,7 @@ public class DialogService
     /// <returns>
     /// A task that completes when the user dismisses the dialog.
     /// </returns>
-    public Task<DialogResult> Alert(
+    public Task<DialogResult> AlertAsync(
         string title,
         string? description = null,
         AlertDialogOptions? options = null)
@@ -62,7 +62,7 @@ public class DialogService
     /// A task that resolves to a <see cref="ConfirmDialogResult"/>
     /// indicating whether the user confirmed the action.
     /// </returns>
-    public async Task<ConfirmDialogResult> Confirm(
+    public async Task<ConfirmDialogResult> ConfirmAsync(
         string title,
         string? description = null,
         ConfirmDialogOptions? options = null)
@@ -81,6 +81,27 @@ public class DialogService
         return new ConfirmDialogResult(result);
     }
 
+
+    /// <summary>
+    /// Shows a confirm dialog.
+    /// </summary>
+    /// <param name="title">The dialog title.</param>
+    /// <param name="description">Optional dialog description or message.</param>
+    /// <param name="options">Optional customization options.</param>
+    /// <returns>
+    /// A task that resolves to a <see cref="ConfirmDialogResult"/>
+    /// indicating whether the user confirmed the action.
+    /// </returns>
+    [Obsolete("This call has been replaced with the new 'Confirm' overload.")]
+    public async Task<bool> Confirm(
+        string title,
+        string? description = null,
+        ConfirmDialogOptions? options = null)
+    {
+        var result = await ConfirmAsync(title, description, options);
+        return result.Confirmed;
+    }
+
     /// <summary>
     /// Shows a prompt dialog that collects text input from the user.
     /// </summary>
@@ -91,7 +112,7 @@ public class DialogService
     /// A task that resolves to a <see cref="PromptDialogResult"/>
     /// containing the entered value when confirmed.
     /// </returns>
-    public async Task<PromptDialogResult> Prompt(
+    public async Task<PromptDialogResult> PromptAsync(
         string title,
         string? description = null,
         PromptDialogOptions? options = null)
@@ -113,7 +134,7 @@ public class DialogService
     /// <summary>
     /// Opens a custom component inside a dialog.
     /// </summary>
-    public Task<DialogResult> Open<TComponent>(
+    public Task<DialogResult> OpenAsync<TComponent>(
         Dictionary<string, object?> parameters,
         DialogOpenOptions? options = null)
         where TComponent : IComponent
