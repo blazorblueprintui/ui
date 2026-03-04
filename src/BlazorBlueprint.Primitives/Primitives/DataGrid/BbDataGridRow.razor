@@ -119,6 +119,22 @@
                 }
             }
 
+            // Ensure the row receives focus on click so keyboard navigation
+            // (ArrowUp/Down, Home/End, Space, Enter) works immediately.
+            if (IsKeyboardNavigable)
+            {
+                try
+                {
+                    navModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
+                        "import", "./_content/BlazorBlueprint.Primitives/js/primitives/table-row-nav.js");
+                    await navModule.InvokeVoidAsync("focusRow", elementRef);
+                }
+                catch
+                {
+                    // Ignore JS interop errors during prerendering
+                }
+            }
+
             Context.OnRowClick?.Invoke(Item);
 
             if (IsSelectable)

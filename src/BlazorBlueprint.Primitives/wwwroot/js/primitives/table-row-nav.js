@@ -119,6 +119,14 @@ export function moveFocusToNextRow(element) {
 }
 
 /**
+ * Focuses the given row element.
+ * @param {HTMLElement} element - The row element to focus
+ */
+export function focusRow(element) {
+    element?.focus();
+}
+
+/**
  * Moves focus to the first focusable row in the table body.
  * @param {HTMLElement} element - The current row element
  */
