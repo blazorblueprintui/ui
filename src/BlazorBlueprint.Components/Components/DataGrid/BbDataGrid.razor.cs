@@ -1096,7 +1096,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         if (column.Pinned != ColumnPinning.None)
         {
             var zClass = StickyHeader ? "z-30" : "z-10";
-            pinnedClass = ClassNames.cn("bg-background", zClass);
+            pinnedClass = zClass;
         }
 
         var separatorClass = "";
@@ -1126,18 +1126,14 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     }
 
     private string GetCellClass(IDataGridColumn<TData> column, bool isSelectColumn,
-        bool isExpandColumn, bool isLastLeft, bool isFirstRight, bool isRowSelected,
-        string? rowClass)
+        bool isExpandColumn, bool isLastLeft, bool isFirstRight)
     {
         var baseClass = "p-4 align-middle transition-colors";
-        var hoverClass = isRowSelected ? "" : "group-hover/row:bg-muted/50";
-        var selectedClass = isRowSelected ? "bg-muted" : "";
 
         var pinnedClass = "";
         if (column.Pinned != ColumnPinning.None)
         {
-            var bgClass = isRowSelected ? "bg-muted" : "bg-background";
-            pinnedClass = ClassNames.cn(bgClass, "z-10", rowClass);
+            pinnedClass = "z-10";
         }
 
         var separatorClass = "";
@@ -1152,7 +1148,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         if (isSelectColumn || isExpandColumn)
         {
-            return ClassNames.cn(baseClass, hoverClass, "w-12", selectedClass, pinnedClass, separatorClass);
+            return ClassNames.cn(baseClass, "w-12", pinnedClass, separatorClass);
         }
 
         var cellClass = column.CellClass;
@@ -1160,7 +1156,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         var overflowClass = HasTableFixed() ? "overflow-hidden" : "";
         var noWrapClass = column.NoWrap ? "whitespace-nowrap overflow-hidden text-ellipsis" : "";
 
-        return ClassNames.cn(baseClass, hoverClass, selectedClass, cellClass, overflowClass, noWrapClass, pinnedClass, separatorClass);
+        return ClassNames.cn(baseClass, cellClass, overflowClass, noWrapClass, pinnedClass, separatorClass);
     }
 
     private string? GetColumnWidthStyle(IDataGridColumn<TData> column)

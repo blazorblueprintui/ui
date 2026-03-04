@@ -117,17 +117,42 @@
   }
 }
 
-/* DataGrid pinned-cell backgrounds — pinned (sticky) cells need opaque
-   backgrounds to hide scrolling content. These CSS rules override the
-   semi-transparent group-hover/row:bg-muted/50 utility on pinned cells
-   with an opaque color-mix() blend. Selected state is ordered after hover
-   so it takes precedence at equal specificity. */
+/* DataGrid theming — all visual state (borders, hover, selected, pinned
+   backgrounds) lives here in CSS. C# only handles structure (padding,
+   alignment, z-index, separators). This separation prevents conflicts
+   between Tailwind utilities and CSS overrides.
+
+   Bottom borders are on cells (not rows) so they stay visible under
+   sticky/pinned cells. This frees box-shadow exclusively for focus rings. */
 @layer utilities {
-  .group\/row:hover > td[data-pinned] {
-    background-color: color-mix(in oklch, var(--muted) 50%, var(--background));
+  /* ── Cell Borders ──
+     Bottom border on every cell so borders stay visible under sticky cells. */
+  .group\/row > td,
+  .group\/row > th {
+    border-bottom: 1px solid var(--border);
   }
 
-  .group\/row[aria-selected="true"] > td[data-pinned] {
+  /* ── Pinned Backgrounds ──
+     Pinned cells inherit the row's background for opaque sticky coverage. */
+  .group\/row > [data-pinned] {
+    background-color: inherit;
+  }
+
+  /* ── Hover ──
+     Opaque tint on ALL body cells — identical for pinned and non-pinned. */
+  .group\/row:hover > td {
+    background-color: color-mix(in oklab, var(--muted) 50%, var(--background));
+  }
+
+  /* ── Selected ──
+     Solid muted on ALL body cells. Ordered after hover so source order wins.
+     The row itself also gets the background so the <tr> (bg-background) can't
+     bleed through under sticky cells as a visible white line. */
+  .group\/row[aria-selected="true"] {
+    background-color: var(--muted);
+  }
+
+  .group\/row[aria-selected="true"] > td {
     background-color: var(--muted);
   }
 }
