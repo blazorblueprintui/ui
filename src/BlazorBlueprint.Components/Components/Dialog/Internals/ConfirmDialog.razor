@@ -1,32 +1,25 @@
 @using BlazorBlueprint.Components.Components.Dialog.Internals.Shared
 @inject DialogService DialogService
 
-<div class="@DialogContainerClass"
-     role="alertdialog"
-     aria-modal="true">
-    <DialogHeader Title="@Dialog.Title"
-                  Description="@Dialog.Description" />
 
-    <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
-        <BbButton Variant="ButtonVariant.Outline"
-                  OnClick="Cancel">
-            @Dialog.Options.CancelText
-        </BbButton>
+<DialogHeader Title="@Dialog.Title"
+              Description="@Dialog.Description" />
 
-        <BbButton Variant="@(Dialog.Options.Destructive? ButtonVariant.Destructive: ButtonVariant.Default)"
-                  OnClick="Confirm">
-            @Dialog.Options.ConfirmText
-        </BbButton>
-    </div>
+<div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+    <BbButton Variant="ButtonVariant.Outline"
+              OnClick="Cancel">
+        @Dialog.Options.CancelText
+    </BbButton>
+
+    <BbButton Variant="@(Dialog.Options.Destructive? ButtonVariant.Destructive: ButtonVariant.Default)"
+              OnClick="Confirm">
+        @Dialog.Options.ConfirmText
+    </BbButton>
 </div>
 
 @code {
     [Parameter, EditorRequired]
     public ConfirmDialogData Dialog { get; set; } = default!;
-
-    private const string DialogContainerClass =
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg " +
-        "translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg animate-in fade-in-0 zoom-in-95";
 
     private void Cancel()
         => DialogService.Resolve(Dialog.Id, DialogResult.Cancel());

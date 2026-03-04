@@ -1,26 +1,19 @@
 @using BlazorBlueprint.Components.Components.Dialog.Internals.Shared
 
-<div class="@ContainerClass"
-     role="alertdialog"
-     aria-modal="true">
-    @if (!string.IsNullOrWhiteSpace(Dialog.Title))
-    {
-        <DialogHeader Title="@Dialog.Title" />
-    }
 
-    <CascadingValue Value="(IDialogReference)Dialog" IsFixed="true">
-        <DynamicComponent Type="@Dialog.ComponentType"
-                          Parameters="@Dialog.Parameters" />
-    </CascadingValue>
-</div>
+@if (!string.IsNullOrWhiteSpace(Dialog.Title))
+{
+    <DialogHeader Title="@Dialog.Title" />
+}
+
+<CascadingValue Value="(IDialogReference)Dialog" IsFixed="true">
+    <DynamicComponent Type="@Dialog.ComponentType"
+                      Parameters="@Dialog.Parameters" />
+</CascadingValue>
 
 @code {
     [Parameter, EditorRequired]
     public ComponentDialogData Dialog { get; set; } = default!;
-
-    private string ContainerClass =>
-        $"fixed left-[50%] top-[50%] z-50 grid w-full {GetWidth()} " +
-        "translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg animate-in fade-in-0 zoom-in-95";
 
     private string GetWidth() => Dialog.Options.Size switch
     {

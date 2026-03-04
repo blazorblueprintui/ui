@@ -1,27 +1,24 @@
 @using BlazorBlueprint.Components.Components.Dialog.Internals.Shared
 @inject DialogService DialogService
 
-<div class="@DialogContainerClass"
-     role="alertdialog"
-     aria-modal="true">
-    <DialogHeader Title="@Dialog.Title"
-                  Description="@Dialog.Description" />
 
-    <BbInput @bind-Value="Value"
-             Class="w-full"
-             Placeholder="@Dialog.Options.Placeholder" />
+<DialogHeader Title="@Dialog.Title"
+              Description="@Dialog.Description" />
 
-    <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
-        <BbButton Variant="ButtonVariant.Outline"
-                  OnClick="Cancel">
-            @Dialog.Options.CancelText
-        </BbButton>
+<BbInput @bind-Value="Value"
+         Class="w-full"
+         Placeholder="@Dialog.Options.Placeholder" />
 
-        <BbButton Disabled="@IsDisabled"
-                  OnClick="Submit">
-            @Dialog.Options.ConfirmText
-        </BbButton>
-    </div>
+<div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+    <BbButton Variant="ButtonVariant.Outline"
+              OnClick="Cancel">
+        @Dialog.Options.CancelText
+    </BbButton>
+
+    <BbButton Disabled="@IsDisabled"
+              OnClick="Submit">
+        @Dialog.Options.ConfirmText
+    </BbButton>
 </div>
 
 @code {
@@ -41,10 +38,4 @@
 
     private void Submit()
         => DialogService.Resolve(Dialog.Id, DialogResult.Ok(Value));
-
-    private const string DialogContainerClass =
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg " +
-        "translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg animate-in fade-in-0 zoom-in-95";
-
-
 }

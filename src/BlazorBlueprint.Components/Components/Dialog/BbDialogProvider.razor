@@ -17,28 +17,36 @@
              @onclick="() => TryBackdropClose(dialog)" />
 
         @* Content *@
-        @switch (dialog)
-        {
-            case ConfirmDialogData confirm:
-                <ConfirmDialog Dialog="confirm" />
-                break;
+        <div class="@DialogContainerClass"
+             role="alertdialog"
+             aria-modal="true">
+            @switch (dialog)
+            {
+                case ConfirmDialogData confirm:
+                    <ConfirmDialog Dialog="confirm" />
+                    break;
 
-            case AlertDialogData alert:
-                <AlertDialog Dialog="alert" />
-                break;
+                case AlertDialogData alert:
+                    <AlertDialog Dialog="alert" />
+                    break;
 
-            case PromptDialogData prompt:
-                <PromptDialog Dialog="prompt" />
-                break;
+                case PromptDialogData prompt:
+                    <PromptDialog Dialog="prompt" />
+                    break;
 
-            case ComponentDialogData component:
-                <ComponentDialog Dialog="component" />
-                break;
-        }
+                case ComponentDialogData component:
+                    <ComponentDialog Dialog="component" />
+                    break;
+            }
+        </div>
     </div>
 }
 
 @code {
+    private const string DialogContainerClass =
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg " +
+        "translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg animate-in fade-in-0 zoom-in-95";
+
     protected override void OnInitialized()
         => DialogService.OnChange += HandleChange;
 
