@@ -54,6 +54,32 @@ public partial class BbCombobox<TValue> : ComponentBase
     private Func<CommandItemMetadata, string, bool>? _filterFunction;
     private string? _selectedDisplayTextCache;
 
+    // ShouldRender tracking fields
+    private bool _lastIsOpen;
+    private IEnumerable<SelectOption<TValue>>? _lastOptions;
+    private TValue? _lastValue;
+    private bool _lastDisabled;
+    private string _lastSearchQuery = string.Empty;
+
+    protected override bool ShouldRender()
+    {
+        if (_isOpen != _lastIsOpen
+            || !EqualityComparer<TValue>.Default.Equals(Value, _lastValue)
+            || Disabled != _lastDisabled
+            || SearchQuery != _lastSearchQuery
+            || !ReferenceEquals(Options, _lastOptions))
+        {
+            _lastIsOpen = _isOpen;
+            _lastValue = Value;
+            _lastDisabled = Disabled;
+            _lastSearchQuery = SearchQuery;
+            _lastOptions = Options;
+            return true;
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Gets or sets the cascaded EditContext from a parent EditForm.
     /// </summary>
