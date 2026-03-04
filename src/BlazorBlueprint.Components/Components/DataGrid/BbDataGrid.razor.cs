@@ -518,7 +518,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             return;
         }
 
-        _gridState.Columns.Initialize(_columns.Select(c => c.ColumnId));
+        _gridState.Columns.Initialize(_columns.Select(c => (c.ColumnId, c.Visible)));
         columnStateInitialized = true;
     }
 

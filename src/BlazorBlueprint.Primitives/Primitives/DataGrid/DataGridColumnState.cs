@@ -13,15 +13,16 @@ public class DataGridColumnState
     public IReadOnlyList<ColumnStateEntry> Entries => entries;
 
     /// <summary>
-    /// Initializes column state from a list of column IDs.
+    /// Initializes column state from a list of column definitions.
     /// Preserves existing entries and adds new ones for unknown columns.
+    /// New entries use the provided initial visibility; existing entries retain their current visibility.
     /// </summary>
-    /// <param name="columnIds">The column IDs to initialize.</param>
-    public void Initialize(IEnumerable<string> columnIds)
+    /// <param name="columns">The column IDs and their initial visibility.</param>
+    public void Initialize(IEnumerable<(string ColumnId, bool Visible)> columns)
     {
         var activeIds = new HashSet<string>();
         var order = 0;
-        foreach (var id in columnIds)
+        foreach (var (id, visible) in columns)
         {
             activeIds.Add(id);
             var existing = entries.FirstOrDefault(e => e.ColumnId == id);
@@ -30,6 +31,7 @@ public class DataGridColumnState
                 entries.Add(new ColumnStateEntry
                 {
                     ColumnId = id,
+                    Visible = visible,
                     Order = order
                 });
             }
