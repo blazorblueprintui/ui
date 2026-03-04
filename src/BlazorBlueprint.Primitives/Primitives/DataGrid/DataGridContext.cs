@@ -74,6 +74,12 @@ public class DataGridContext<TData> : PrimitiveContextWithEvents<DataGridState<T
     public Action<TData, double, double>? OnRowContextMenu { get; set; }
 
     /// <summary>
+    /// Callback invoked to toggle expansion of a row.
+    /// Set by the Components layer when a DetailTemplate is provided.
+    /// </summary>
+    public Action<TData>? OnToggleExpand { get; set; }
+
+    /// <summary>
     /// Callback invoked when a column's visibility changes.
     /// </summary>
     public Action<string, bool>? OnColumnVisibilityChange { get; set; }

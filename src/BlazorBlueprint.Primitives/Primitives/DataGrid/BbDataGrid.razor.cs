@@ -99,6 +99,12 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
     public EventCallback<(TData Item, double ClientX, double ClientY)> OnRowContextMenu { get; set; }
 
     /// <summary>
+    /// Event callback invoked to toggle expansion of a row.
+    /// </summary>
+    [Parameter]
+    public EventCallback<TData> OnToggleExpand { get; set; }
+
+    /// <summary>
     /// Event callback invoked when a column's visibility changes.
     /// </summary>
     [Parameter]
@@ -289,6 +295,25 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
             });
             TrackTask(task);
         };
+
+        if (OnToggleExpand.HasDelegate)
+        {
+            context.OnToggleExpand = (item) =>
+            {
+                var task = InvokeAsync(async () =>
+                {
+                    try
+                    {
+                        await OnToggleExpand.InvokeAsync(item);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine($"Error in OnToggleExpand: {ex.Message}");
+                    }
+                });
+                TrackTask(task);
+            };
+        }
 
         if (OnRowContextMenu.HasDelegate)
         {

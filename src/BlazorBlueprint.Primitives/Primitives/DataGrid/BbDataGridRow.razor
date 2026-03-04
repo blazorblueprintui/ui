@@ -55,11 +55,13 @@
 
     private bool IsSelectable => Context != null && Context.SelectionMode != Table.SelectionMode.None;
 
+    private bool IsExpandable => Context?.OnToggleExpand != null;
+
     private bool IsDataRow => Item != null;
 
     private bool NeedsClickIntercept => IsDataRow && (IsSelectable || Context?.OnRowClick != null);
 
-    private bool IsKeyboardNavigable => IsSelectable && Context != null && Context.EnableKeyboardNavigation;
+    private bool IsKeyboardNavigable => IsDataRow && Context != null && Context.EnableKeyboardNavigation;
 
     private const string FocusRingClasses = "relative focus:outline-none focus:z-10";
 
@@ -100,10 +102,23 @@
 
     private bool HasContextMenuHandler => Context?.OnRowContextMenu != null;
 
-    private void HandleClick()
+    private async Task HandleClick()
     {
         if (Item != null && Context != null)
         {
+            // When the click interceptor is active, check whether the click
+            // targeted an interactive child (user-provided button/link/input
+            // inside a cell template).  If so, skip row-level handling.
+            if (clickInterceptAttached && navModule != null)
+            {
+                var wasInteractive = await navModule.InvokeAsync<bool>(
+                    "consumeInteractiveClickFlag", elementRef);
+                if (wasInteractive)
+                {
+                    return;
+                }
+            }
+
             Context.OnRowClick?.Invoke(Item);
 
             if (IsSelectable)
@@ -136,9 +151,30 @@
             }
         }
 
-        if (IsSelectable && Item != null && (e.Key == "Enter" || e.Key == " "))
+        if (Item != null)
         {
-            Context.ToggleRowSelection(Item);
+            if (e.Key == " ")
+            {
+                if (IsSelectable)
+                {
+                    Context!.ToggleRowSelection(Item);
+                }
+                else if (IsExpandable)
+                {
+                    Context!.OnToggleExpand!(Item);
+                }
+            }
+            else if (e.Key == "Enter")
+            {
+                if (IsExpandable)
+                {
+                    Context!.OnToggleExpand!(Item);
+                }
+                else if (IsSelectable)
+                {
+                    Context!.ToggleRowSelection(Item);
+                }
+            }
         }
     }
 
