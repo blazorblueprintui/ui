@@ -72,7 +72,9 @@ export function preventSpaceKeyScroll(element) {
         // Prevent Space, ArrowUp, and ArrowDown from scrolling
         if (e.key === ' ' || e.keyCode === 32 ||
             e.key === 'ArrowUp' || e.keyCode === 38 ||
-            e.key === 'ArrowDown' || e.keyCode === 40) {
+            e.key === 'ArrowDown' || e.keyCode === 40 ||
+            e.key === 'Home' || e.keyCode === 36 ||
+            e.key === 'End' || e.keyCode === 35) {
             e.preventDefault();
         }
     };
@@ -114,4 +116,38 @@ export function moveFocusToNextRow(element) {
         nextRow = nextRow.nextElementSibling;
     }
     nextRow?.focus();
+}
+
+/**
+ * Moves focus to the first focusable row in the table body.
+ * @param {HTMLElement} element - The current row element
+ */
+export function moveFocusToFirstRow(element) {
+    if (!element) return;
+
+    const tbody = element.closest('tbody');
+    if (!tbody) return;
+
+    let firstRow = tbody.firstElementChild;
+    while (firstRow && firstRow.getAttribute('tabindex') !== '0') {
+        firstRow = firstRow.nextElementSibling;
+    }
+    firstRow?.focus();
+}
+
+/**
+ * Moves focus to the last focusable row in the table body.
+ * @param {HTMLElement} element - The current row element
+ */
+export function moveFocusToLastRow(element) {
+    if (!element) return;
+
+    const tbody = element.closest('tbody');
+    if (!tbody) return;
+
+    let lastRow = tbody.lastElementChild;
+    while (lastRow && lastRow.getAttribute('tabindex') !== '0') {
+        lastRow = lastRow.previousElementSibling;
+    }
+    lastRow?.focus();
 }
