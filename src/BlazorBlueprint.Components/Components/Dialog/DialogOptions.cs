@@ -5,7 +5,7 @@ public abstract class DialogOptions
     /// <summary>
     /// The label for the confirm/action button. Default: "Continue".
     /// </summary>
-    public string ConfirmText { get; set; } = default!;
+    public string ConfirmText { get; set; } = "OK";
 
     /// <summary>
     /// The label for the cancel button. Default: "Cancel".
