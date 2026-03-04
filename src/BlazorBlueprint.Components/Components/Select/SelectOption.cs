@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 
 #pragma warning disable CA1716 // Namespace matches existing Select component family
-namespace BlazorBlueprint.Primitives;
+namespace BlazorBlueprint.Components;
 #pragma warning restore CA1716
 
 /// <summary>

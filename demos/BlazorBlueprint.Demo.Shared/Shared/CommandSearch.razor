@@ -5,7 +5,6 @@
 @using BlazorBlueprint.Icons.Feather.Components
 @using BlazorBlueprint.Icons.Feather.Data
 @using Microsoft.AspNetCore.Components.Web
-@using Microsoft.JSInterop
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JS
 @implements IAsyncDisposable
@@ -121,7 +120,6 @@
 @code {
     private bool _isOpen;
     private DotNetObjectReference<CommandSearch>? _dotNetRef;
-    private IJSObjectReference? _utilsModule;
 
     // Primitives list
     private static readonly LibraryItem[] Primitives = new[]
@@ -130,7 +128,6 @@
         new LibraryItem("Checkbox", "/primitives/checkbox", "square-check"),
         new LibraryItem("Collapsible", "/primitives/collapsible", "chevrons-up-down"),
         new LibraryItem("Combobox", "/primitives/combobox", "text-cursor-input"),
-        new LibraryItem("DataGrid", "/primitives/datagrid", "table-2"),
         new LibraryItem("Dialog", "/primitives/dialog", "app-window"),
         new LibraryItem("Dropdown Menu", "/primitives/dropdown-menu", "chevron-down"),
         new LibraryItem("Hover Card", "/primitives/hovercard", "square-mouse-pointer"),
@@ -165,10 +162,8 @@
         new LibraryItem("Combobox", "/components/combobox", "text-cursor-input"),
         new LibraryItem("Command", "/components/command", "command"),
         new LibraryItem("Context Menu", "/components/context-menu", "menu"),
-        new LibraryItem("Data Grid", "/components/datagrid", "grid-3x3"),
         new LibraryItem("Data Table", "/components/datatable", "table-2"),
         new LibraryItem("Data View", "/components/dataview", "layout-list"),
-        new LibraryItem("Filter Builder", "/components/filterbuilder", "filter"),
         new LibraryItem("Date Picker", "/components/date-picker", "calendar-days"),
         new LibraryItem("Dialog", "/components/dialog", "app-window"),
         new LibraryItem("Dropdown Menu", "/components/dropdown-menu", "chevron-down"),
@@ -210,7 +205,6 @@
         new LibraryItem("Toggle", "/components/toggle", "toggle-right"),
         new LibraryItem("Toggle Group", "/components/toggle-group", "layout-grid"),
         new LibraryItem("Tooltip", "/components/tooltip", "info"),
-        new LibraryItem("Tree View", "/components/tree-view", "list-tree"),
         new LibraryItem("Typography", "/components/typography", "type"),
     };
 
@@ -224,9 +218,26 @@
         if (firstRender)
         {
             _dotNetRef = DotNetObjectReference.Create(this);
-            _utilsModule = await JS.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Demo.Shared/js/demo-utils.js");
-            await _utilsModule.InvokeVoidAsync("registerGlobalSearch", _dotNetRef);
+
+            await JS.InvokeVoidAsync("eval", @"
+                if (window.globalSearchKeyHandler) {
+                    document.removeEventListener('keydown', window.globalSearchKeyHandler);
+                }
+                window.registerGlobalSearchRef = function(dotNetRef) {
+                    window.globalSearchDotNetRef = dotNetRef;
+                    window.globalSearchKeyHandler = function(e) {
+                        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                            e.preventDefault();
+                            if (window.globalSearchDotNetRef) {
+                                window.globalSearchDotNetRef.invokeMethodAsync('OpenSearch');
+                            }
+                        }
+                    };
+                    document.addEventListener('keydown', window.globalSearchKeyHandler);
+                };
+            ");
+
+            await JS.InvokeVoidAsync("registerGlobalSearchRef", _dotNetRef);
         }
     }
 
@@ -272,18 +283,11 @@
 
     public async ValueTask DisposeAsync()
     {
-        if (_utilsModule != null)
+        try
         {
-            try
-            {
-                await _utilsModule.InvokeVoidAsync("disposeGlobalSearch");
-                await _utilsModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Circuit disconnected, ignore
-            }
+            await JS.InvokeVoidAsync("eval", "document.removeEventListener('keydown', window.globalSearchKeyHandler);");
         }
+        catch { }
         _dotNetRef?.Dispose();
     }
 

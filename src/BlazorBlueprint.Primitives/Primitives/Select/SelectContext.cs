@@ -135,13 +135,6 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
             return;
         }
 
-        // Clear registered items when opening — they'll re-register as the content mounts.
-        // Required for ForceMount=false where items are destroyed on close and recreated on open.
-        if (!State.IsOpen)
-        {
-            Items.Clear();
-        }
-
         UpdateState(state =>
         {
             state.IsOpen = true;
