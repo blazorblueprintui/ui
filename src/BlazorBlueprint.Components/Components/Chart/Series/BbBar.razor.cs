@@ -57,7 +57,7 @@ public partial class BbBar : SeriesBase
     /// Gets or sets the position of the data label relative to the bar.
     /// </summary>
     /// <remarks>
-    /// Default is <see cref="Components.LabelPosition.Top"/> for vertical bars.
+    /// Default is <see cref="LabelPosition.Top"/> for vertical bars.
     /// </remarks>
     [Parameter]
     public LabelPosition LabelPosition { get; set; } = LabelPosition.Top;
