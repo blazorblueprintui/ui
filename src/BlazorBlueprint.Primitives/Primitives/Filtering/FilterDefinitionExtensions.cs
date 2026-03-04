@@ -563,19 +563,27 @@ public static class FilterDefinitionExtensions
             return Expression.Constant(true);
         }
 
-        // For nullable types, build the constant with the underlying type then lift to nullable
-        Expression constant;
+        // For nullable types, use explicit HasValue/Value checks instead of lifted operators
+        // which can produce incorrect results (e.g. null != X evaluates to null, not true).
         if (Nullable.GetUnderlyingType(propType) != null)
         {
-            var underlyingConstant = Expression.Constant(convertedValue, underlyingType);
-            constant = Expression.Convert(underlyingConstant, propType);
-        }
-        else
-        {
-            constant = Expression.Constant(convertedValue, propType);
+            var hasValue = Expression.Property(propAccess, "HasValue");
+            var valueProperty = Expression.Property(propAccess, "Value");
+            var constant = Expression.Constant(convertedValue, underlyingType);
+            var comp = Expression.MakeBinary(comparison, valueProperty, constant);
+
+            if (comparison == ExpressionType.NotEqual)
+            {
+                // null != X should be true (null is not equal to any value)
+                return Expression.OrElse(Expression.Not(hasValue), Expression.AndAlso(hasValue, comp));
+            }
+
+            // For all other operators, null fails the comparison
+            return Expression.AndAlso(hasValue, comp);
         }
 
-        return Expression.MakeBinary(comparison, propAccess, constant);
+        var nonNullableConstant = Expression.Constant(convertedValue, propType);
+        return Expression.MakeBinary(comparison, propAccess, nonNullableConstant);
     }
 
     private static Expression BuildStringMethodExpression(
@@ -886,6 +894,28 @@ public static class FilterDefinitionExtensions
             if (targetType == typeof(DateTime) && value is string dateStr)
             {
                 return DateTime.Parse(dateStr, CultureInfo.InvariantCulture);
+            }
+
+            if (targetType == typeof(DateOnly))
+            {
+                return value switch
+                {
+                    DateOnly d => d,
+                    DateTime dt => DateOnly.FromDateTime(dt),
+                    string s => DateOnly.Parse(s, CultureInfo.InvariantCulture),
+                    _ => null
+                };
+            }
+
+            if (targetType == typeof(DateTimeOffset))
+            {
+                return value switch
+                {
+                    DateTimeOffset dto => dto,
+                    DateTime dt => new DateTimeOffset(dt),
+                    string s => DateTimeOffset.Parse(s, CultureInfo.InvariantCulture),
+                    _ => null
+                };
             }
 
             if (targetType == typeof(int))

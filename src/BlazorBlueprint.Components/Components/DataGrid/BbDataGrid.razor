@@ -26,7 +26,7 @@
                     </div>
                 }
             }
-            else if (!_processedData.Any())
+            else if (!_processedData.Any() && !_gridState.Filtering.HasFilters)
             {
                 @if (EmptyTemplate != null)
                 {
@@ -219,7 +219,22 @@
                         </BlazorBlueprint.Primitives.DataGrid.BbDataGridRow>
                     </BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader>
                     <BlazorBlueprint.Primitives.DataGrid.BbDataGridBody Class="bg-background">
-                        @if (Virtualize && ItemSize > 0)
+                        @if (!_processedData.Any())
+                        {
+                            <tr>
+                                <td colspan="@_cachedVisibleColumns.Count" class="p-0">
+                                    @if (EmptyTemplate != null)
+                                    {
+                                        @EmptyTemplate
+                                    }
+                                    else
+                                    {
+                                        <BbEmpty Title="No results found" Size="EmptySize.Small" />
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        else if (Virtualize && ItemSize > 0)
                         {
                             <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize Items="@_processedDataList" Context="item" ItemSize="@ItemSize" OverscanCount="5">
                                 @RenderDataRow(item)
