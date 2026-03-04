@@ -68,6 +68,7 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
     private bool _selectAllDropdownOpen;
 
     // ShouldRender tracking fields
+    private bool _parametersChanged;
     private IEnumerable<TData>? _lastData;
     private DataTableSelectionMode _lastSelectionMode;
     private bool _lastIsLoading;
@@ -259,6 +260,8 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
 
     protected override async Task OnParametersSetAsync()
     {
+        _parametersChanged = true;
+
         // Keep selection mode in sync with parameter
         _tableState.Selection.Mode = GetPrimitiveSelectionMode();
 
@@ -700,6 +703,21 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
     /// </summary>
     protected override bool ShouldRender()
     {
+        if (_parametersChanged)
+        {
+            _parametersChanged = false;
+            _lastData = Data;
+            _lastSelectionMode = SelectionMode;
+            _lastIsLoading = IsLoading;
+            _lastColumnsVersion = _columnsVersion;
+            _lastGlobalSearchValue = _globalSearchValue;
+            _lastSelectionVersion = _selectionVersion;
+            _lastPaginationVersion = _paginationVersion;
+            _lastFilter = Filter;
+            _lastFilterVersion = Filter?.Version ?? 0;
+            return true;
+        }
+
         var dataChanged = !ReferenceEquals(_lastData, Data);
         var selectionModeChanged = _lastSelectionMode != SelectionMode;
         var loadingChanged = _lastIsLoading != IsLoading;

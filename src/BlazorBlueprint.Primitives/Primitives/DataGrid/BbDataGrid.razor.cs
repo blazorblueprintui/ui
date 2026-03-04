@@ -18,6 +18,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
     private CancellationTokenSource? loadCts;
 
     // ShouldRender tracking
+    private bool parametersChanged;
     private int lastRenderVersion;
     private object? lastItems;
     private SelectionMode lastSelectionMode;
@@ -182,6 +183,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
 
     protected override async Task OnParametersSetAsync()
     {
+        parametersChanged = true;
+
         context.SelectionMode = SelectionMode;
         context.EnableKeyboardNavigation = EnableKeyboardNavigation;
         EffectiveState.Selection.Mode = SelectionMode;
@@ -610,6 +613,16 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
     {
         if (IsControlled)
         {
+            return true;
+        }
+
+        if (parametersChanged)
+        {
+            parametersChanged = false;
+            lastItems = Items;
+            lastSelectionMode = SelectionMode;
+            lastManualPagination = ManualPagination;
+            lastRenderVersion = stateVersion;
             return true;
         }
 
