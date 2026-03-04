@@ -1,7 +1,47 @@
 /**
- * Table row keyboard navigation utilities
+ * Table row navigation and click utilities
  * Provides functions for accessible table row interaction
  */
+
+/**
+ * Selector matching interactive elements whose clicks should NOT
+ * bubble into row-level click / selection handlers.
+ */
+const INTERACTIVE_SELECTOR =
+  'a[href],button,input,select,textarea,label[for],' +
+  '[role="button"],[role="checkbox"],[role="switch"],' +
+  '[role="menuitem"],[role="option"],[role="tab"]';
+
+/**
+ * Attaches a capture-phase click listener on the row that stops propagation
+ * when the click originates from an interactive child element.
+ * This prevents row selection / OnRowClick from firing when the user
+ * clicks buttons, links, checkboxes, etc. inside a cell.
+ *
+ * @param {HTMLElement} rowElement - The <tr> element
+ * @returns {{ dispose(): void }} Cleanup handle
+ */
+export function interceptInteractiveClicks(rowElement) {
+  if (!rowElement) return { dispose: () => {} };
+
+  const handler = (e) => {
+    // Walk from the actual click target up to (but not including) the row.
+    // If we hit an interactive element, swallow the event.
+    const interactive = e.target.closest(INTERACTIVE_SELECTOR);
+    if (interactive && rowElement.contains(interactive) && interactive !== rowElement) {
+      e.stopPropagation();
+    }
+  };
+
+  // Capture phase so we run before Blazor's bubble-phase @onclick binding.
+  rowElement.addEventListener('click', handler, { capture: true });
+
+  return {
+    dispose: () => {
+      rowElement.removeEventListener('click', handler, { capture: true });
+    }
+  };
+}
 
 /**
  * Prevents Space and Arrow keys from scrolling when a table row is focused.

@@ -19,8 +19,10 @@
 @code {
     private ElementReference elementRef;
     private bool spaceKeyHandlerAttached;
+    private bool clickInterceptAttached;
     private IJSObjectReference? navModule;
     private IJSObjectReference? spaceKeyCleanup;
+    private IJSObjectReference? clickInterceptCleanup;
 
     [CascadingParameter]
     private DataGridContext<TData> Context { get; set; } = default!;
@@ -53,6 +55,10 @@
 
     private bool IsSelectable => Context != null && Context.SelectionMode != Table.SelectionMode.None;
 
+    private bool IsDataRow => Item != null;
+
+    private bool NeedsClickIntercept => IsDataRow && (IsSelectable || Context?.OnRowClick != null);
+
     private bool IsKeyboardNavigable => IsSelectable && Context != null && Context.EnableKeyboardNavigation;
 
     private const string FocusRingClasses = "relative focus:outline-none focus:z-10";
@@ -61,16 +67,29 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && IsKeyboardNavigable && !spaceKeyHandlerAttached)
+        if (firstRender)
         {
             try
             {
-                navModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/table-row-nav.js");
+                if (IsKeyboardNavigable && !spaceKeyHandlerAttached)
+                {
+                    navModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
+                        "import", "./_content/BlazorBlueprint.Primitives/js/primitives/table-row-nav.js");
 
-                spaceKeyCleanup = await navModule.InvokeAsync<IJSObjectReference>(
-                    "preventSpaceKeyScroll", elementRef);
-                spaceKeyHandlerAttached = true;
+                    spaceKeyCleanup = await navModule.InvokeAsync<IJSObjectReference>(
+                        "preventSpaceKeyScroll", elementRef);
+                    spaceKeyHandlerAttached = true;
+                }
+
+                if (NeedsClickIntercept && !clickInterceptAttached)
+                {
+                    navModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
+                        "import", "./_content/BlazorBlueprint.Primitives/js/primitives/table-row-nav.js");
+
+                    clickInterceptCleanup = await navModule.InvokeAsync<IJSObjectReference>(
+                        "interceptInteractiveClicks", elementRef);
+                    clickInterceptAttached = true;
+                }
             }
             catch
             {
@@ -139,6 +158,19 @@
 
     public async ValueTask DisposeAsync()
     {
+        if (clickInterceptCleanup != null)
+        {
+            try
+            {
+                await clickInterceptCleanup.InvokeVoidAsync("dispose");
+                await clickInterceptCleanup.DisposeAsync();
+            }
+            catch
+            {
+                // Ignore disposal errors
+            }
+        }
+
         if (spaceKeyCleanup != null)
         {
             try
