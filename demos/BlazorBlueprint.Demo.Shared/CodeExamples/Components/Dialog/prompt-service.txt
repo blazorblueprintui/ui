@@ -1,0 +1,17 @@
+@inject DialogService DialogService
+
+private async Task HandlePrompt()
+{
+    var name = await DialogService.PromptAsync(
+        "Rename File",
+        "Enter a new file name:",
+        new PromptDialogOptions
+        {
+            DefaultValue = "document.txt",
+            Placeholder = "file-name.txt",
+            Required = true,
+            MaxLength = 50
+        });
+
+    var text = name.Value ?? "Cancelled";
+}

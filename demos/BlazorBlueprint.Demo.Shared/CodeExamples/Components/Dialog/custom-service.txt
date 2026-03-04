@@ -1,0 +1,22 @@
+@inject DialogService DialogService
+
+private async Task HandleCustomDialog()
+{
+    var result = await DialogService.OpenAsync<EditUserComponent>(
+        new Dictionary<string, object?>
+        {
+            [nameof(EditUserComponent.UserId)] = 42
+        },
+        new DialogOpenOptions
+        {
+            Title = "Edit User",
+            Size = DialogSize.Large
+        });
+
+    if (result.Cancelled)
+    {
+        return;
+    }
+
+    var data = result.GetData<UserDto>();
+}
