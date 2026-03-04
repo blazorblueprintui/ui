@@ -3,13 +3,20 @@
 @implements IDisposable
 @inject DialogService DialogService
 
+@*
+    Dialog Provider - renders programmatic confirm dialogs from DialogService.
+    Place this component once at the root of your application (e.g., in MainLayout).
+*@
+
 @foreach (var dialog in DialogService.Dialogs)
 {
     <div @key="dialog.Id">
 
+        @* Overlay *@
         <div class="animate-in fade-in-0 fixed inset-0 z-50 bg-black/80"
              @onclick="() => TryBackdropClose(dialog)" />
 
+        @* Content *@
         @switch (dialog)
         {
             case ConfirmDialogData confirm:
