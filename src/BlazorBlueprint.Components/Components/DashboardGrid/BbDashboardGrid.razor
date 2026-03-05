@@ -4,31 +4,75 @@
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 
-<BlazorBlueprint.Primitives.DashboardGrid.BbDashboardGrid
-    Context="@_context"
-    AriaLabel="@AriaLabel"
-    class="@CssClass"
-    style="@GridStyle"
-    data-dashboard-id="@_instanceId"
-    data-show-grid-guide="@(ShowGridGuide ? "true" : "false")"
-    data-editable="@(Editable ? "true" : "false")"
-    data-positioned="@(_positioned ? "true" : "false")"
-    @attributes="AdditionalAttributes">
-
-    @if (Background != DashboardBackground.None)
+@if (Loading)
+{
+    @if (LoadingContent != null)
     {
-        <div class="@GuideOverlayClass" style="@GuideOverlayStyle" aria-hidden="true">
-            @for (var i = 0; i < GuideRows * ActiveColumns; i++)
-            {
-                <div class="@GuideCellClass"></div>
-            }
+        @LoadingContent
+    }
+    else
+    {
+        <div class="@LoadingContainerClass" role="status" aria-label="Loading dashboard">
+            <div class="space-y-4 w-full">
+                <div class="grid gap-4" style="grid-template-columns: repeat(@Columns, 1fr);">
+                    @for (var i = 0; i < 4; i++)
+                    {
+                        <div class="rounded-lg bg-muted animate-pulse" style="grid-column: span 3; height: @(RowHeight * 2 + Gap)px;"></div>
+                    }
+                </div>
+                <div class="grid gap-4" style="grid-template-columns: repeat(@Columns, 1fr);">
+                    <div class="rounded-lg bg-muted animate-pulse" style="grid-column: span 8; height: @(RowHeight * 4 + Gap * 3)px;"></div>
+                    <div class="rounded-lg bg-muted animate-pulse" style="grid-column: span 4; height: @(RowHeight * 4 + Gap * 3)px;"></div>
+                </div>
+            </div>
         </div>
     }
+}
+else if (_hasNoWidgets && EmptyContent != null)
+{
+    @EmptyContent
+}
+else if (_hasNoWidgets)
+{
+    <div class="@EmptyContainerClass" role="status">
+        <svg class="h-12 w-12 opacity-20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="7" height="9" x="3" y="3" rx="1" />
+            <rect width="7" height="5" x="14" y="3" rx="1" />
+            <rect width="7" height="9" x="14" y="12" rx="1" />
+            <rect width="7" height="5" x="3" y="16" rx="1" />
+        </svg>
+        <p class="text-sm text-muted-foreground">No widgets to display</p>
+    </div>
+}
+else
+{
+    <BlazorBlueprint.Primitives.DashboardGrid.BbDashboardGrid
+        Context="@_context"
+        AriaLabel="@AriaLabel"
+        class="@CssClass"
+        style="@GridStyle"
+        data-dashboard-id="@_instanceId"
+        data-show-grid-guide="@(ShowGridGuide ? "true" : "false")"
+        data-editable="@(Editable ? "true" : "false")"
+        data-positioned="@(_positioned ? "true" : "false")"
+        @attributes="AdditionalAttributes">
 
-    @ChildContent
-</BlazorBlueprint.Primitives.DashboardGrid.BbDashboardGrid>
+        @if (Background != DashboardBackground.None)
+        {
+            <div class="@GuideOverlayClass" style="@GuideOverlayStyle" aria-hidden="true">
+                @for (var i = 0; i < GuideRows * ActiveColumns; i++)
+                {
+                    <div class="@GuideCellClass"></div>
+                }
+            </div>
+        }
 
-<div aria-live="polite" class="sr-only" id="@(_instanceId)-live"></div>
+        @ChildContent
+    </BlazorBlueprint.Primitives.DashboardGrid.BbDashboardGrid>
+
+    <div aria-live="polite" class="sr-only" id="@(_instanceId)-live"></div>
+}
 
 @code {
     private DashboardGridContext _context = new();
@@ -60,6 +104,9 @@
     [Parameter] public EventCallback<WidgetResizeEventArgs> OnWidgetResizeEnd { get; set; }
     [Parameter] public EventCallback<DashboardGridLayout> OnLayoutChanged { get; set; }
     [Parameter] public EventCallback<DashboardBreakpoint> OnBreakpointChanged { get; set; }
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public RenderFragment? LoadingContent { get; set; }
+    [Parameter] public RenderFragment? EmptyContent { get; set; }
     [Parameter] public bool Border { get; set; }
     [Parameter] public DashboardBackground Background { get; set; } = DashboardBackground.None;
     [Parameter] public string? AriaLabel { get; set; }
@@ -119,6 +166,18 @@
     private string GuideOverlayClass => ClassNames.cn(
         "absolute inset-0 pointer-events-none overflow-hidden",
         Border ? "p-4" : ""
+    );
+
+    private bool _hasNoWidgets => !Loading && _context.State.GetActiveLayout().Positions.Count == 0;
+
+    private string LoadingContainerClass => ClassNames.cn(
+        "flex items-center justify-center py-12",
+        Border ? "rounded-lg border p-4" : ""
+    );
+
+    private string EmptyContainerClass => ClassNames.cn(
+        "flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground",
+        Border ? "rounded-lg border border-dashed p-4" : "border border-dashed rounded-lg"
     );
 
     private string GuideOverlayStyle =>
@@ -370,6 +429,62 @@
         {
             await OnLayoutChanged.InvokeAsync(_context.State.GetActiveLayout());
         }
+    }
+
+    /// <summary>
+    /// Returns the complete dashboard configuration: grid settings and all widget positions.
+    /// Serialize this to persist the dashboard and restore it later.
+    /// </summary>
+    public DashboardConfig GetConfig()
+    {
+        var layout = _context.State.GetActiveLayout();
+        var widgets = new List<DashboardWidgetConfig>(layout.Positions.Count);
+        foreach (var pos in layout.Positions)
+        {
+            widgets.Add(new DashboardWidgetConfig
+            {
+                WidgetId = pos.WidgetId,
+                Column = pos.Column,
+                Row = pos.Row,
+                ColumnSpan = pos.ColumnSpan,
+                RowSpan = pos.RowSpan
+            });
+        }
+
+        return new DashboardConfig
+        {
+            Columns = Columns,
+            RowHeight = RowHeight,
+            Gap = Gap,
+            MaxRows = MaxRows,
+            MediumColumns = MediumColumns,
+            SmallColumns = SmallColumns,
+            MediumBreakpoint = MediumBreakpoint,
+            SmallBreakpoint = SmallBreakpoint,
+            Widgets = widgets
+        };
+    }
+
+    public sealed class DashboardConfig
+    {
+        public int Columns { get; set; }
+        public int RowHeight { get; set; }
+        public int Gap { get; set; }
+        public int MaxRows { get; set; }
+        public int MediumColumns { get; set; }
+        public int SmallColumns { get; set; }
+        public int MediumBreakpoint { get; set; }
+        public int SmallBreakpoint { get; set; }
+        public List<DashboardWidgetConfig> Widgets { get; set; } = new();
+    }
+
+    public sealed class DashboardWidgetConfig
+    {
+        public string WidgetId { get; set; } = string.Empty;
+        public int Column { get; set; }
+        public int Row { get; set; }
+        public int ColumnSpan { get; set; }
+        public int RowSpan { get; set; }
     }
 
     public sealed class LayoutChangeDto
