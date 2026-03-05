@@ -14,15 +14,15 @@
     {
         <div class="@LoadingContainerClass" role="status" aria-label="Loading dashboard">
             <div class="space-y-4 w-full">
-                <div class="grid gap-4" style="grid-template-columns: repeat(@Columns, 1fr);">
+                <div class="grid gap-2" style="grid-template-columns: repeat(@Columns, 1fr);">
                     @for (var i = 0; i < 4; i++)
                     {
-                        <div class="rounded-lg bg-muted animate-pulse" style="grid-column: span 3; height: @(RowHeight * 2 + Gap)px;"></div>
+                        <div class="rounded-lg bg-muted animate-pulse" style="grid-column: span @(Columns / 4); height: @(RowHeight * 4 + Gap * 3)px;"></div>
                     }
                 </div>
-                <div class="grid gap-4" style="grid-template-columns: repeat(@Columns, 1fr);">
-                    <div class="rounded-lg bg-muted animate-pulse" style="grid-column: span 8; height: @(RowHeight * 4 + Gap * 3)px;"></div>
-                    <div class="rounded-lg bg-muted animate-pulse" style="grid-column: span 4; height: @(RowHeight * 4 + Gap * 3)px;"></div>
+                <div class="grid gap-2" style="grid-template-columns: repeat(@Columns, 1fr);">
+                    <div class="rounded-lg bg-muted animate-pulse" style="grid-column: span @(Columns * 2 / 3); height: @(RowHeight * 8 + Gap * 7)px;"></div>
+                    <div class="rounded-lg bg-muted animate-pulse" style="grid-column: span @(Columns / 3); height: @(RowHeight * 8 + Gap * 7)px;"></div>
                 </div>
             </div>
         </div>
@@ -64,12 +64,7 @@ else
 
         @if (Background != DashboardBackground.None)
         {
-            <div class="@GuideOverlayClass" style="@GuideOverlayStyle" aria-hidden="true">
-                @for (var i = 0; i < GuideRows * ActiveColumns; i++)
-                {
-                    <div class="@GuideCellClass"></div>
-                }
-            </div>
+            <div class="@GuideOverlayClass @GuideBackgroundClass" style="@GuideBackgroundStyle" aria-hidden="true"></div>
         }
 
         @ChildContent
@@ -90,9 +85,9 @@ else
     private int _lastStateVersion = -1;
     private DashboardBreakpoint _lastBreakpoint = DashboardBreakpoint.Large;
 
-    [Parameter] public int Columns { get; set; } = 12;
-    [Parameter] public int RowHeight { get; set; } = 80;
-    [Parameter] public int Gap { get; set; } = 16;
+    [Parameter] public int Columns { get; set; } = 24;
+    [Parameter] public int RowHeight { get; set; } = 40;
+    [Parameter] public int Gap { get; set; } = 8;
     [Parameter] public int MaxRows { get; set; }
     [Parameter] public DashboardGridState? State { get; set; }
     [Parameter] public EventCallback<DashboardGridState> StateChanged { get; set; }
@@ -101,8 +96,8 @@ else
     [Parameter] public bool Editable { get; set; } = true;
     [Parameter] public bool Compact { get; set; } = true;
     [Parameter] public bool ShowGridGuide { get; set; } = true;
-    [Parameter] public int MediumColumns { get; set; } = 6;
-    [Parameter] public int SmallColumns { get; set; } = 1;
+    [Parameter] public int MediumColumns { get; set; } = 12;
+    [Parameter] public int SmallColumns { get; set; } = 2;
     [Parameter] public int MediumBreakpoint { get; set; } = 1024;
     [Parameter] public int SmallBreakpoint { get; set; } = 768;
     [Parameter] public EventCallback<WidgetDragEventArgs> OnWidgetDragEnd { get; set; }
@@ -126,41 +121,11 @@ else
         _ => Columns
     };
 
-    private int GuideRows
-    {
-        get
-        {
-            if (MaxRows > 0)
-            {
-                return MaxRows;
-            }
-
-            var layout = _context.State.GetActiveLayout();
-            var maxRow = 0;
-            foreach (var pos in layout.Positions)
-            {
-                var end = pos.Row + pos.RowSpan;
-                if (end > maxRow)
-                {
-                    maxRow = end;
-                }
-            }
-
-            return Math.Max(maxRow, 4);
-        }
-    }
-
     private string CssClass => ClassNames.cn(
         "relative grid",
         Border ? "rounded-lg border p-4" : "",
         Class
     );
-
-    private string GuideCellClass => Background switch
-    {
-        DashboardBackground.Squares => "bb-guide-cell-squares",
-        _ => ""
-    };
 
     private string GridStyle =>
         $"grid-template-columns: repeat({ActiveColumns}, 1fr); grid-auto-rows: {RowHeight}px; gap: {Gap}px;"
@@ -168,9 +133,32 @@ else
         + (MaxRows > 0 ? $" grid-template-rows: repeat({MaxRows}, {RowHeight}px);" : "");
 
     private string GuideOverlayClass => ClassNames.cn(
-        "absolute inset-0 pointer-events-none overflow-hidden",
+        "absolute inset-0 pointer-events-none",
         Border ? "p-4" : ""
     );
+
+    private string GuideBackgroundClass => Background switch
+    {
+        DashboardBackground.Squares => "bb-guide-background-squares",
+        _ => ""
+    };
+
+    private string GuideBackgroundStyle
+    {
+        get
+        {
+            var tileSize = RowHeight + Gap;
+            // SVG viewBox matches tile height; preserveAspectRatio keeps the square
+            // uniform when the tile is wider than tall (horizontal cell stride > rowHeight + gap).
+            var svg = $"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {tileSize} {tileSize}' preserveAspectRatio='xMinYMin meet'>"
+                + $"<rect x='1' y='1' width='{RowHeight - 2}' height='{RowHeight - 2}' rx='3' ry='3' fill='none' stroke='white'/>"
+                + "</svg>";
+            var encoded = Uri.EscapeDataString(svg);
+            return $"--bb-dashboard-guide-svg: url(\"data:image/svg+xml,{encoded}\");"
+                + $" --bb-dashboard-cell-w: calc((100% + {Gap}px) / {ActiveColumns});"
+                + $" --bb-dashboard-cell-h: {tileSize}px;";
+        }
+    }
 
     private bool _hasNoWidgets => !Loading && _context.State.GetActiveLayout().Positions.Count == 0;
 
@@ -182,8 +170,6 @@ else
     private string EmptyContainerClass =>
         "flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground";
 
-    private string GuideOverlayStyle =>
-        $"display: grid; grid-template-columns: repeat({ActiveColumns}, 1fr); grid-auto-rows: {RowHeight}px; gap: {Gap}px;";
 
     protected override void OnInitialized()
     {
