@@ -361,7 +361,7 @@
             <BbButton OnClick="AddWidget" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">Add Widget</BbButton>
             <BbButton OnClick="RemoveLastWidget" Variant="ButtonVariant.Destructive" Size="ButtonSize.Small" Disabled="@(dynamicWidgets.Count == 0)">Remove Last</BbButton>
         </div>
-        <BbDashboardGrid Border="true" Background="DashboardBackground.Squares">
+        <BbDashboardGrid Border="true" Background="DashboardBackground.Squares" OnAddWidget="AddWidget">
             @foreach (var widget in dynamicWidgets)
             {
                 <BbDashboardWidget @key="widget.Id" Id="@widget.Id" Column="@widget.Column" Row="@widget.Row"
@@ -373,10 +373,6 @@
                 </BbDashboardWidget>
             }
         </BbDashboardGrid>
-        @if (dynamicWidgets.Count == 0)
-        {
-            <p class="text-sm text-muted-foreground italic">No widgets — click "Add Widget" to get started.</p>
-        }
     </div>
 
     <!-- ── Different Grid Configurations ──────────────────────────── -->
@@ -405,6 +401,63 @@
                 <div class="flex items-center justify-center h-full text-2xl font-bold text-muted-foreground">E</div>
             </BbDashboardWidget>
         </BbDashboardGrid>
+    </div>
+
+    <!-- ── Data-Driven Dashboard ─────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Data-Driven Dashboard</h2>
+            <p class="text-sm text-muted-foreground">
+                A fully data-driven dashboard where widget layout and content are loaded from JSON
+                at runtime — simulating a backend API call. Users can rearrange, resize, and remove
+                widgets, then save the layout back to JSON for persistence.
+            </p>
+            <p class="text-sm text-muted-foreground leading-relaxed max-w-3xl">
+                This pattern separates <strong>layout</strong> (positions on the grid) from
+                <strong>widget configuration</strong> (what each widget displays). Both are stored
+                together in a single JSON payload and loaded on demand. The grid manages spatial
+                positioning while your code maps widget types to Blazor content.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+            @if (!dataDrivenLoaded)
+            {
+                <BbButton OnClick="LoadDataDrivenDashboard" Variant="ButtonVariant.Default" Size="ButtonSize.Small">
+                    <LucideIcon Name="download" Class="h-4 w-4 mr-2" /> Load Dashboard
+                </BbButton>
+            }
+            else
+            {
+                <BbButton OnClick="SaveDataDrivenDashboard" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+                    <LucideIcon Name="save" Class="h-4 w-4 mr-2" /> Save Layout
+                </BbButton>
+                <BbButton OnClick="UnloadDataDrivenDashboard" Variant="ButtonVariant.Destructive" Size="ButtonSize.Small">
+                    <LucideIcon Name="x" Class="h-4 w-4 mr-2" /> Unload
+                </BbButton>
+            }
+        </div>
+
+        <BbDashboardGrid @ref="dataDrivenGridRef" @bind-State="dataDrivenGridState"
+                         Loading="@dataDrivenLoading" Background="DashboardBackground.Squares" Border="true">
+            @foreach (var widget in dataDrivenWidgets)
+            {
+                <BbDashboardWidget @key="widget.Id" Id="@widget.Id"
+                                  Column="@widget.Column" Row="@widget.Row"
+                                  ColumnSpan="@widget.ColSpan" RowSpan="@widget.RowSpan"
+                                  Title="@widget.Title" OnRemove="RemoveDataDrivenWidget">
+                    @RenderDataDrivenWidgetContent(widget)
+                </BbDashboardWidget>
+            }
+        </BbDashboardGrid>
+
+        @if (dataDrivenSavedJson != null)
+        {
+            <div class="space-y-2">
+                <h3 class="text-sm font-semibold">Saved JSON</h3>
+                <pre class="text-xs bg-muted p-4 rounded-lg overflow-auto max-h-60">@dataDrivenSavedJson</pre>
+            </div>
+        }
     </div>
 
     @* --- Accessibility --- *@
@@ -694,4 +747,294 @@
         public int ColSpan { get; set; } = 8;
         public int RowSpan { get; set; } = 6;
     }
+
+    // ── Data-Driven Dashboard ──
+
+    private BbDashboardGrid? dataDrivenGridRef;
+    private BlazorBlueprint.Primitives.DashboardGrid.DashboardGridState dataDrivenGridState = new();
+    private List<DataDrivenWidgetConfig> dataDrivenWidgets = new();
+    private bool dataDrivenLoaded;
+    private bool dataDrivenLoading;
+    private string? dataDrivenSavedJson;
+
+    private async Task LoadDataDrivenDashboard()
+    {
+        dataDrivenLoading = true;
+        StateHasChanged();
+
+        await Task.Delay(800);
+
+        var payload = JsonSerializer.Deserialize<DataDrivenPayload>(SampleDataDrivenJson, dataDrivenJsonOptions)!;
+        dataDrivenWidgets = payload.Widgets;
+
+        dataDrivenGridState = new BlazorBlueprint.Primitives.DashboardGrid.DashboardGridState();
+        foreach (var w in dataDrivenWidgets)
+        {
+            dataDrivenGridState.RegisterWidget(w.Id, w.Column, w.Row, w.ColSpan, w.RowSpan);
+        }
+
+        dataDrivenLoaded = true;
+        dataDrivenLoading = false;
+        dataDrivenSavedJson = null;
+    }
+
+    private void UnloadDataDrivenDashboard()
+    {
+        dataDrivenWidgets.Clear();
+        dataDrivenGridState = new BlazorBlueprint.Primitives.DashboardGrid.DashboardGridState();
+        dataDrivenLoaded = false;
+        dataDrivenSavedJson = null;
+    }
+
+    private void SaveDataDrivenDashboard()
+    {
+        var config = dataDrivenGridRef?.GetConfig();
+        dataDrivenSavedJson = config != null ? JsonSerializer.Serialize(config, dataDrivenJsonOptions) : null;
+    }
+
+    private void RemoveDataDrivenWidget(string widgetId)
+    {
+        dataDrivenWidgets.RemoveAll(w => w.Id == widgetId);
+    }
+
+    private RenderFragment RenderDataDrivenWidgetContent(DataDrivenWidgetConfig widget) => widget.Type switch
+    {
+        "bar-chart" => __builder =>
+        {
+            <BbBarChart Data="@GetDataDrivenTimeSeries(widget)" Height="100%">
+                <BbXAxis DataKey="month" />
+                <BbYAxis Show="false" />
+                <BbChartTooltip />
+                <BbBar DataKey="value" Name="@widget.Title" Color="var(--chart-1)" />
+            </BbBarChart>
+        },
+        "area-chart" => __builder =>
+        {
+            <BbAreaChart Data="@GetDataDrivenTimeSeries(widget)" Height="100%">
+                <BbXAxis DataKey="month" />
+                <BbYAxis Show="false" />
+                <BbChartTooltip />
+                <BbArea DataKey="value" Name="@widget.Title" Color="var(--chart-2)" Curve="CurveType.Smooth">
+                    <BbFill>
+                        <BbLinearGradient>
+                            <BbGradientStop Offset="0" Color="var(--chart-2)" Opacity="0.5" />
+                            <BbGradientStop Offset="1" Color="var(--chart-2)" Opacity="0.05" />
+                        </BbLinearGradient>
+                    </BbFill>
+                </BbArea>
+            </BbAreaChart>
+        },
+        "line-chart" => __builder =>
+        {
+            <BbLineChart Data="@GetDataDrivenTimeSeries(widget)" Height="100%">
+                <BbXAxis DataKey="month" />
+                <BbYAxis Show="false" />
+                <BbChartTooltip />
+                <BbLine DataKey="value" Name="@widget.Title" Color="var(--chart-3)" Curve="CurveType.Smooth" />
+            </BbLineChart>
+        },
+        "pie-chart" => __builder =>
+        {
+            <BbPieChart Data="@GetDataDrivenCategories(widget)" Height="100%">
+                <BbChartTooltip />
+                <BbChartLegend />
+                <BbPie DataKey="value" NameKey="name" />
+            </BbPieChart>
+        },
+        "kpi" => __builder =>
+        {
+            var kpi = GetDataDrivenKpi(widget);
+            <div class="flex flex-col items-center justify-center h-full gap-1">
+                <span class="text-4xl font-bold tracking-tight">@kpi.Value</span>
+                <span class="text-sm text-muted-foreground">@kpi.Label</span>
+                @if (kpi.Change != null)
+                {
+                    var isPositive = kpi.Change.StartsWith("+");
+                    <span class="text-xs @(isPositive ? "text-green-500" : "text-red-500")">
+                        @kpi.Change from last month
+                    </span>
+                }
+            </div>
+        },
+        "table" => __builder =>
+        {
+            var rows = GetDataDrivenTableRows(widget);
+            <div class="overflow-auto h-full">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b text-left text-muted-foreground">
+                            <th class="py-2 px-3 font-medium">Name</th>
+                            <th class="py-2 px-3 font-medium text-right">Value</th>
+                            <th class="py-2 px-3 font-medium text-right">Change</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in rows)
+                        {
+                            <tr class="border-b last:border-0">
+                                <td class="py-2 px-3">@row.Name</td>
+                                <td class="py-2 px-3 text-right font-medium">@row.Value</td>
+                                <td class="py-2 px-3 text-right @(row.IsPositive ? "text-green-500" : "text-red-500")">
+                                    @row.Change
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        },
+        _ => @<div class="flex items-center justify-center h-full text-muted-foreground text-sm">Unknown widget type: @widget.Type</div>
+    };
+
+    private List<DataDrivenTimeSeriesPoint> GetDataDrivenTimeSeries(DataDrivenWidgetConfig widget) => widget.DataSource switch
+    {
+        "revenue" => new()
+        {
+            new() { Month = "Jan", Value = 4200 }, new() { Month = "Feb", Value = 5100 },
+            new() { Month = "Mar", Value = 4800 }, new() { Month = "Apr", Value = 6200 },
+            new() { Month = "May", Value = 5900 }, new() { Month = "Jun", Value = 7100 },
+        },
+        "users" => new()
+        {
+            new() { Month = "Jan", Value = 1200 }, new() { Month = "Feb", Value = 1350 },
+            new() { Month = "Mar", Value = 1500 }, new() { Month = "Apr", Value = 1420 },
+            new() { Month = "May", Value = 1680 }, new() { Month = "Jun", Value = 1950 },
+        },
+        "orders" => new()
+        {
+            new() { Month = "Jan", Value = 320 }, new() { Month = "Feb", Value = 410 },
+            new() { Month = "Mar", Value = 380 }, new() { Month = "Apr", Value = 450 },
+            new() { Month = "May", Value = 520 }, new() { Month = "Jun", Value = 480 },
+        },
+        "pageviews" => new()
+        {
+            new() { Month = "Jan", Value = 12400 }, new() { Month = "Feb", Value = 14200 },
+            new() { Month = "Mar", Value = 13800 }, new() { Month = "Apr", Value = 15600 },
+            new() { Month = "May", Value = 17200 }, new() { Month = "Jun", Value = 16900 },
+        },
+        _ => new()
+        {
+            new() { Month = "Jan", Value = 100 }, new() { Month = "Feb", Value = 120 },
+            new() { Month = "Mar", Value = 140 }, new() { Month = "Apr", Value = 130 },
+            new() { Month = "May", Value = 150 }, new() { Month = "Jun", Value = 170 },
+        }
+    };
+
+    private List<DataDrivenCategoryPoint> GetDataDrivenCategories(DataDrivenWidgetConfig widget) => widget.DataSource switch
+    {
+        "traffic-sources" => new()
+        {
+            new() { Name = "Direct", Value = 4200, Fill = "var(--chart-1)" },
+            new() { Name = "Organic", Value = 3100, Fill = "var(--chart-2)" },
+            new() { Name = "Referral", Value = 1800, Fill = "var(--chart-3)" },
+            new() { Name = "Social", Value = 1200, Fill = "var(--chart-4)" },
+            new() { Name = "Email", Value = 900, Fill = "var(--chart-5)" },
+        },
+        "browsers" => new()
+        {
+            new() { Name = "Chrome", Value = 5400, Fill = "var(--chart-1)" },
+            new() { Name = "Safari", Value = 2100, Fill = "var(--chart-2)" },
+            new() { Name = "Firefox", Value = 1200, Fill = "var(--chart-3)" },
+            new() { Name = "Edge", Value = 800, Fill = "var(--chart-4)" },
+            new() { Name = "Other", Value = 400, Fill = "var(--chart-5)" },
+        },
+        _ => new()
+        {
+            new() { Name = "A", Value = 40, Fill = "var(--chart-1)" },
+            new() { Name = "B", Value = 30, Fill = "var(--chart-2)" },
+            new() { Name = "C", Value = 20, Fill = "var(--chart-3)" },
+            new() { Name = "D", Value = 10, Fill = "var(--chart-4)" },
+        }
+    };
+
+    private DataDrivenKpiData GetDataDrivenKpi(DataDrivenWidgetConfig widget) => widget.DataSource switch
+    {
+        "total-revenue" => new() { Value = "$48,250", Label = "Total Revenue", Change = "+12.5%" },
+        "active-users" => new() { Value = "2,420", Label = "Active Users", Change = "+8.1%" },
+        "conversion-rate" => new() { Value = "3.2%", Label = "Conversion Rate", Change = "+0.4%" },
+        "total-orders" => new() { Value = "1,210", Label = "Total Orders", Change = "-2.1%" },
+        _ => new() { Value = "—", Label = widget.Title }
+    };
+
+    private List<DataDrivenTableRow> GetDataDrivenTableRows(DataDrivenWidgetConfig widget) => widget.DataSource switch
+    {
+        "top-products" => new()
+        {
+            new() { Name = "Widget Pro", Value = "$12,400", Change = "+14%", IsPositive = true },
+            new() { Name = "Dashboard Kit", Value = "$8,200", Change = "+8%", IsPositive = true },
+            new() { Name = "Analytics Tool", Value = "$6,100", Change = "-3%", IsPositive = false },
+            new() { Name = "Chart Library", Value = "$4,800", Change = "+22%", IsPositive = true },
+            new() { Name = "Form Builder", Value = "$3,600", Change = "+5%", IsPositive = true },
+        },
+        _ => new()
+        {
+            new() { Name = "Item A", Value = "100", Change = "+10%", IsPositive = true },
+            new() { Name = "Item B", Value = "80", Change = "-5%", IsPositive = false },
+        }
+    };
+
+    private static readonly JsonSerializerOptions dataDrivenJsonOptions = new()
+    {
+        WriteIndented = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    private class DataDrivenPayload
+    {
+        public List<DataDrivenWidgetConfig> Widgets { get; set; } = new();
+    }
+
+    private class DataDrivenWidgetConfig
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public string DataSource { get; set; } = string.Empty;
+        public int Column { get; set; } = 1;
+        public int Row { get; set; } = 1;
+        public int ColSpan { get; set; } = 4;
+        public int RowSpan { get; set; } = 3;
+    }
+
+    private class DataDrivenTimeSeriesPoint
+    {
+        public string Month { get; set; } = "";
+        public int Value { get; set; }
+    }
+
+    private class DataDrivenCategoryPoint
+    {
+        public string Name { get; set; } = "";
+        public int Value { get; set; }
+        public string Fill { get; set; } = "";
+    }
+
+    private class DataDrivenKpiData
+    {
+        public string Value { get; set; } = "";
+        public string Label { get; set; } = "";
+        public string? Change { get; set; }
+    }
+
+    private class DataDrivenTableRow
+    {
+        public string Name { get; set; } = "";
+        public string Value { get; set; } = "";
+        public string Change { get; set; } = "";
+        public bool IsPositive { get; set; }
+    }
+
+    private const string SampleDataDrivenJson = @"{
+  ""widgets"": [
+    { ""id"": ""kpi-revenue"", ""title"": ""Total Revenue"", ""type"": ""kpi"", ""dataSource"": ""total-revenue"", ""column"": 1, ""row"": 1, ""colSpan"": 6, ""rowSpan"": 4 },
+    { ""id"": ""kpi-users"", ""title"": ""Active Users"", ""type"": ""kpi"", ""dataSource"": ""active-users"", ""column"": 7, ""row"": 1, ""colSpan"": 6, ""rowSpan"": 4 },
+    { ""id"": ""kpi-conversion"", ""title"": ""Conversion Rate"", ""type"": ""kpi"", ""dataSource"": ""conversion-rate"", ""column"": 13, ""row"": 1, ""colSpan"": 6, ""rowSpan"": 4 },
+    { ""id"": ""kpi-orders"", ""title"": ""Total Orders"", ""type"": ""kpi"", ""dataSource"": ""total-orders"", ""column"": 19, ""row"": 1, ""colSpan"": 6, ""rowSpan"": 4 },
+    { ""id"": ""chart-revenue"", ""title"": ""Revenue Trend"", ""type"": ""area-chart"", ""dataSource"": ""revenue"", ""column"": 1, ""row"": 5, ""colSpan"": 16, ""rowSpan"": 8 },
+    { ""id"": ""chart-traffic"", ""title"": ""Traffic Sources"", ""type"": ""pie-chart"", ""dataSource"": ""traffic-sources"", ""column"": 17, ""row"": 5, ""colSpan"": 8, ""rowSpan"": 8 },
+    { ""id"": ""chart-users"", ""title"": ""User Growth"", ""type"": ""bar-chart"", ""dataSource"": ""users"", ""column"": 1, ""row"": 13, ""colSpan"": 8, ""rowSpan"": 8 },
+    { ""id"": ""chart-orders"", ""title"": ""Order Volume"", ""type"": ""line-chart"", ""dataSource"": ""orders"", ""column"": 9, ""row"": 13, ""colSpan"": 8, ""rowSpan"": 8 },
+    { ""id"": ""table-products"", ""title"": ""Top Products"", ""type"": ""table"", ""dataSource"": ""top-products"", ""column"": 17, ""row"": 13, ""colSpan"": 8, ""rowSpan"": 8 }
+  ]
+}";
 }
