@@ -137,6 +137,13 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
     public IEnumerable<SelectOption<string>>? FilterOptions { get; set; }
 
     /// <summary>
+    /// The aggregate function to compute for this column when grouping is active.
+    /// Default is <see cref="AggregateFunction.None"/>. Requires <see cref="SortBy"/> to provide a value accessor.
+    /// </summary>
+    [Parameter]
+    public AggregateFunction Aggregate { get; set; } = AggregateFunction.None;
+
+    /// <summary>
     /// The parent DataGrid component. Set via cascading parameter.
     /// </summary>
     [CascadingParameter]
@@ -179,6 +186,8 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
     string? IDataGridColumn<TData>.HeaderClass => HeaderClass;
 
     bool IDataGridColumn<TData>.NoWrap => NoWrap;
+
+    AggregateFunction IDataGridColumn<TData>.Aggregate => Aggregate;
 
     public object? GetValue(TData item) => null;
 

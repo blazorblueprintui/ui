@@ -1,4 +1,5 @@
 using BlazorBlueprint.Primitives.Filtering;
+using BlazorBlueprint.Primitives.Table;
 
 namespace BlazorBlueprint.Primitives.DataGrid;
 
@@ -28,6 +29,11 @@ public class DataGridStateSnapshot
     /// Gets or sets the column filter snapshots.
     /// </summary>
     public List<ColumnFilterSnapshot> ColumnFilters { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the group definition snapshot.
+    /// </summary>
+    public GroupDefinitionSnapshot? GroupDefinition { get; set; }
 }
 
 /// <summary>
@@ -96,4 +102,20 @@ public class ColumnFilterSnapshot
     /// Gets or sets the secondary filter value (for range operators).
     /// </summary>
     public object? ValueEnd { get; set; }
+}
+
+/// <summary>
+/// Serializable snapshot of a group definition.
+/// </summary>
+public class GroupDefinitionSnapshot
+{
+    /// <summary>
+    /// Gets or sets the column ID to group by.
+    /// </summary>
+    public string ColumnId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the sort direction for group ordering.
+    /// </summary>
+    public SortDirection GroupSortDirection { get; set; }
 }

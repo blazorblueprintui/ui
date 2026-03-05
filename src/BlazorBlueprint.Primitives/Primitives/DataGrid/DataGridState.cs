@@ -42,6 +42,12 @@ public class DataGridState<TData> where TData : class
     public ExpandedRowState<TData> Expanded { get; } = new();
 
     /// <summary>
+    /// Gets the grouping state. Tracks the active group definition and collapsed groups.
+    /// Collapsed state is transient; the group definition is persisted in snapshots.
+    /// </summary>
+    public DataGridGroupState Grouping { get; } = new();
+
+    /// <summary>
     /// Gets a version counter that increments whenever state is mutated
     /// through <see cref="Restore"/> or <see cref="Reset"/>.
     /// Used by the grid component to detect external state changes.
@@ -79,6 +85,11 @@ public class DataGridState<TData> where TData : class
     public bool HasPagination => Pagination.TotalPages > 1;
 
     /// <summary>
+    /// Gets whether grouping is active.
+    /// </summary>
+    public bool HasGrouping => Grouping.HasGroups;
+
+    /// <summary>
     /// Configures a key-based equality comparer for selection and expansion state.
     /// When set, items are compared by their key (e.g., <c>item => item.Id</c>) instead
     /// of by reference equality, so state survives data re-fetches.
@@ -103,6 +114,7 @@ public class DataGridState<TData> where TData : class
         Expanded.Clear();
         Columns.Reset();
         Filtering.ClearAll();
+        Grouping.Clear();
         Version++;
     }
 
@@ -155,6 +167,15 @@ public class DataGridState<TData> where TData : class
             });
         }
 
+        if (Grouping.ActiveGroup != null)
+        {
+            snapshot.GroupDefinition = new GroupDefinitionSnapshot
+            {
+                ColumnId = Grouping.ActiveGroup.ColumnId,
+                GroupSortDirection = Grouping.ActiveGroup.GroupSortDirection
+            };
+        }
+
         return snapshot;
     }
 
@@ -186,6 +207,19 @@ public class DataGridState<TData> where TData : class
                 Value = filter.Value,
                 ValueEnd = filter.ValueEnd
             });
+        }
+
+        if (snapshot.GroupDefinition != null)
+        {
+            Grouping.SetGroup(new GroupDefinition
+            {
+                ColumnId = snapshot.GroupDefinition.ColumnId,
+                GroupSortDirection = snapshot.GroupDefinition.GroupSortDirection
+            });
+        }
+        else
+        {
+            Grouping.ClearGroup();
         }
 
         Version++;

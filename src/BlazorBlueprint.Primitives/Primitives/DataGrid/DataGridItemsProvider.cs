@@ -44,6 +44,18 @@ public class DataGridRequest
     /// </summary>
     public IReadOnlyDictionary<string, FilterCondition> Filters { get; init; } =
         new Dictionary<string, FilterCondition>();
+
+    /// <summary>
+    /// Gets the active group definition, or null if no grouping is active.
+    /// Server-side providers should use this to apply GROUP BY clauses.
+    /// </summary>
+    public GroupDefinition? GroupDefinition { get; init; }
+
+    /// <summary>
+    /// Gets the column IDs that need aggregate computation when grouping.
+    /// Server-side providers should compute these aggregates per group.
+    /// </summary>
+    public IReadOnlyList<string>? AggregateColumns { get; init; }
 }
 
 /// <summary>

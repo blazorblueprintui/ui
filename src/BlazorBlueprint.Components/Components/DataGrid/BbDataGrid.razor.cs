@@ -27,6 +27,15 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private bool _needsDataRefresh = true;
     private bool columnStateInitialized;
 
+    // Grouping state
+    private List<DataGridRenderItem<TData>>? _groupedRenderItems;
+    private Func<TData, object?>? _groupByAccessor;
+    private string? _groupByColumnId;
+    private string? _groupByColumnTitle;
+    private bool _groupsCollapsedByDefault;
+    private RenderFragment<DataGridGroupContext<TData>>? _groupColumnHeaderTemplate;
+    private List<object>? _allGroupKeys;
+
     // Cached per-render visible column data to avoid recomputing per row
     private List<IDataGridColumn<TData>> _cachedVisibleColumns = new();
     private string? _cachedLastLeftId;
@@ -281,6 +290,45 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     [Parameter]
     public Func<TData, object>? ItemKey { get; set; }
 
+    /// <summary>
+    /// Expression to group rows by. When set, rows are grouped by the value of this expression
+    /// and group headers are rendered between groups.
+    /// </summary>
+    [Parameter]
+    public Expression<Func<TData, object>>? GroupBy { get; set; }
+
+    /// <summary>
+    /// Custom template for group header rows. If not set, a default header is rendered
+    /// showing the group key, item count, and aggregates.
+    /// </summary>
+    [Parameter]
+    public RenderFragment<DataGridGroupContext<TData>>? GroupHeaderTemplate { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when a group is expanded.
+    /// </summary>
+    [Parameter]
+    public EventCallback<DataGridGroupRow<TData>> OnGroupExpand { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when a group is collapsed.
+    /// </summary>
+    [Parameter]
+    public EventCallback<DataGridGroupRow<TData>> OnGroupCollapse { get; set; }
+
+    /// <summary>
+    /// Whether groups should be collapsed by default. Default is false.
+    /// </summary>
+    [Parameter]
+    public bool GroupsCollapsedByDefault { get; set; }
+
+    /// <summary>
+    /// Async grouped data provider for server-side grouped data fetching.
+    /// When set and grouping is active, this provider is called instead of <see cref="ItemsProvider"/>.
+    /// </summary>
+    [Parameter]
+    public DataGridGroupedItemsProvider<TData>? GroupedItemsProvider { get; set; }
+
     internal DataGridState<TData> EffectiveState => State ?? _gridState;
 
     protected override void OnInitialized()
@@ -317,6 +365,41 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             }
         }
 
+        // Apply GroupBy parameter (GroupColumn takes precedence if both are set)
+        if (GroupBy != null && _groupByAccessor == null)
+        {
+            var compiled = GroupBy.Compile();
+            _groupByAccessor = item => compiled(item);
+
+            if (GroupBy.Body is MemberExpression member)
+            {
+                _groupByColumnId = member.Member.Name.ToLowerInvariant();
+                _groupByColumnTitle = member.Member.Name;
+            }
+            else
+            {
+                _groupByColumnId = "group";
+                _groupByColumnTitle = "Group";
+            }
+
+            _groupsCollapsedByDefault = GroupsCollapsedByDefault;
+
+            _gridState.Grouping.SetGroup(new GroupDefinition
+            {
+                ColumnId = _groupByColumnId,
+                GroupSortDirection = SortDirection.Ascending
+            });
+        }
+        else if (GroupBy == null && _groupByAccessor != null && _groupColumnHeaderTemplate == null)
+        {
+            // GroupBy was removed and no GroupColumn is active
+            _groupByAccessor = null;
+            _groupByColumnId = null;
+            _groupByColumnTitle = null;
+            _gridState.Grouping.ClearGroup();
+            _groupedRenderItems = null;
+        }
+
         // Only reprocess data when something meaningful changed
         var itemsChanged = !ReferenceEquals(_lastItems, Items);
         if (itemsChanged || _needsDataRefresh || externalStateChanged)
@@ -328,6 +411,13 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (_needsDataRefresh)
+        {
+            _needsDataRefresh = false;
+            await ProcessDataAsync();
+            StateHasChanged();
+        }
+
         if (!Resizable && !Reorderable)
         {
             return;
@@ -423,6 +513,26 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         _columns.Insert(insertIndex, column);
         _columnsVersion++;
         StateHasChanged();
+    }
+
+    /// <summary>
+    /// Configures grouping from a <see cref="BbDataGridGroupColumn{TData,TProperty}"/> child component.
+    /// </summary>
+    internal void SetGrouping<TProperty>(BbDataGridGroupColumn<TData, TProperty> groupColumn)
+    {
+        _groupByAccessor = groupColumn.GetValueAccessor();
+        _groupByColumnId = groupColumn.GetColumnId();
+        _groupByColumnTitle = groupColumn.GetTitle();
+        _groupsCollapsedByDefault = groupColumn.CollapsedByDefault;
+        _groupColumnHeaderTemplate = groupColumn.HeaderTemplate;
+
+        _gridState.Grouping.SetGroup(new GroupDefinition
+        {
+            ColumnId = _groupByColumnId,
+            GroupSortDirection = groupColumn.GroupSortDirection
+        });
+
+        _needsDataRefresh = true;
     }
 
     /// <summary>
@@ -554,16 +664,24 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             var sorted = filtered.ApplyMultiSort(
                 _gridState.Sorting.Definitions, columns);
 
-            _gridState.Pagination.TotalItems = sorted.Count();
+            var sortedList = sorted.ToList();
+
+            if (_groupByAccessor != null)
+            {
+                ProcessGroupedData(sortedList);
+                return;
+            }
+
+            _groupedRenderItems = null;
+            _gridState.Pagination.TotalItems = sortedList.Count;
 
             if (Virtualize)
             {
-                // Virtualization: skip pagination, pass all data to the Virtualize component
-                _processedData = sorted.ToList();
+                _processedData = sortedList;
             }
             else
             {
-                _processedData = sorted
+                _processedData = sortedList
                     .Skip(_gridState.Pagination.StartIndex)
                     .Take(_gridState.Pagination.PageSize)
                     .ToList();
@@ -578,12 +696,19 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
                 _gridState.Sorting.Definitions, columns);
 
             var list = sorted as IList<TData> ?? sorted.ToList();
+
+            if (_groupByAccessor != null)
+            {
+                ProcessGroupedData(list);
+                return;
+            }
+
+            _groupedRenderItems = null;
             _allSortedData = list;
             _gridState.Pagination.TotalItems = list.Count;
 
             if (Virtualize)
             {
-                // Virtualization: skip pagination, pass all data to the Virtualize component
                 _processedData = list;
             }
             else
@@ -612,7 +737,232 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             }
         }
 
-        // Only recreate the virtualization list when the data reference actually changes
+        UpdateVirtualizationList();
+    }
+
+    private void ProcessGroupedData(IList<TData> sortedData)
+    {
+        var groupDef = _gridState.Grouping.ActiveGroup;
+        var accessor = _groupByAccessor!;
+
+        // Group the sorted data
+        var groups = sortedData
+            .GroupBy(item => accessor(item))
+            .ToList();
+
+        // Sort groups by key
+        if (groupDef?.GroupSortDirection == SortDirection.Descending)
+        {
+            groups = groups.OrderByDescending(g => g.Key).ToList();
+        }
+        else
+        {
+            groups = groups.OrderBy(g => g.Key).ToList();
+        }
+
+        // Handle collapsed-by-default on first process
+        var isFirstProcess = _gridState.Grouping.CollapsedKeys.Count == 0
+            && _groupsCollapsedByDefault
+            && _groupedRenderItems == null;
+
+        // Build ordered list of groups with their metadata
+        var groupInfos = new List<(object Key, List<TData> Items, DataGridGroupRow<TData> Row)>();
+        foreach (var group in groups)
+        {
+            var items = group.ToList();
+            var groupKey = group.Key ?? "(empty)";
+
+            if (isFirstProcess && _groupsCollapsedByDefault)
+            {
+                _gridState.Grouping.CollapseAll(new[] { groupKey });
+            }
+
+            var aggregates = ComputeAggregates(items, _columns);
+            var groupRow = new DataGridGroupRow<TData>
+            {
+                Key = groupKey,
+                ColumnId = _groupByColumnId ?? "group",
+                ColumnTitle = _groupByColumnTitle,
+                ItemCount = items.Count,
+                Items = items,
+                Aggregates = aggregates
+            };
+
+            groupInfos.Add((groupKey, items, groupRow));
+        }
+
+        _allSortedData = sortedData;
+        _allGroupKeys = groupInfos.Select(g => g.Key).ToList();
+
+        // Count total visible data rows (collapsed groups contribute 0 data rows)
+        var totalDataRows = 0;
+        foreach (var (key, items, _) in groupInfos)
+        {
+            if (!_gridState.Grouping.IsCollapsed(key))
+            {
+                totalDataRows += items.Count;
+            }
+        }
+
+        _gridState.Pagination.TotalItems = totalDataRows;
+
+        if (Virtualize)
+        {
+            // For virtualization, build the full flattened list
+            var allRenderItems = new List<DataGridRenderItem<TData>>();
+            var allDataItems = new List<TData>();
+            foreach (var (key, items, row) in groupInfos)
+            {
+                allRenderItems.Add(DataGridRenderItem<TData>.ForGroup(row));
+                if (!_gridState.Grouping.IsCollapsed(key))
+                {
+                    foreach (var item in items)
+                    {
+                        allRenderItems.Add(DataGridRenderItem<TData>.ForData(item));
+                        allDataItems.Add(item);
+                    }
+                }
+            }
+
+            _groupedRenderItems = allRenderItems;
+            _processedData = allDataItems;
+        }
+        else
+        {
+            // Paginate by data rows only — group headers are "free" and don't count.
+            // Groups that span a page boundary get their header repeated on each page.
+            // Collapsed groups appear at their natural position between expanded groups.
+            var pageStart = _gridState.Pagination.StartIndex;
+            var pageSize = _gridState.Pagination.PageSize;
+            var pageEnd = pageStart + pageSize;
+            var pageRenderItems = new List<DataGridRenderItem<TData>>();
+            var pageDataItems = new List<TData>();
+            var dataRowIndex = 0;
+
+            foreach (var (key, items, row) in groupInfos)
+            {
+                var isCollapsed = _gridState.Grouping.IsCollapsed(key);
+
+                if (isCollapsed)
+                {
+                    // Collapsed groups appear at the current data row position.
+                    // Show them if that position falls within (or at the boundary of) the current page.
+                    if (dataRowIndex >= pageStart && dataRowIndex <= pageEnd)
+                    {
+                        pageRenderItems.Add(DataGridRenderItem<TData>.ForGroup(row));
+                    }
+                }
+                else
+                {
+                    var groupDataEnd = dataRowIndex + items.Count;
+
+                    if (groupDataEnd > pageStart && dataRowIndex < pageEnd)
+                    {
+                        // This group has data rows on the current page — emit header
+                        pageRenderItems.Add(DataGridRenderItem<TData>.ForGroup(row));
+
+                        // Emit only the data rows that fall within the page window
+                        var skipInGroup = Math.Max(0, pageStart - dataRowIndex);
+                        var takeFromGroup = Math.Min(items.Count - skipInGroup, pageEnd - (dataRowIndex + skipInGroup));
+
+                        for (var i = skipInGroup; i < skipInGroup + takeFromGroup; i++)
+                        {
+                            pageRenderItems.Add(DataGridRenderItem<TData>.ForData(items[i]));
+                            pageDataItems.Add(items[i]);
+                        }
+                    }
+
+                    dataRowIndex += items.Count;
+                }
+            }
+
+            _groupedRenderItems = pageRenderItems;
+            _processedData = pageDataItems;
+        }
+
+        UpdateVirtualizationList();
+    }
+
+    private static Dictionary<string, AggregateResult> ComputeAggregates(
+        IReadOnlyList<TData> items, IReadOnlyList<IDataGridColumn<TData>> columns)
+    {
+        var results = new Dictionary<string, AggregateResult>();
+
+        foreach (var column in columns)
+        {
+            if (column.Aggregate == AggregateFunction.None)
+            {
+                continue;
+            }
+
+            var value = ComputeAggregate(items, column, column.Aggregate);
+            var format = column.GetType().GetProperty("Format")?.GetValue(column) as string;
+            results[column.ColumnId] = new AggregateResult
+            {
+                Function = column.Aggregate,
+                Value = value,
+                ColumnId = column.ColumnId,
+                Format = format
+            };
+        }
+
+        return results;
+    }
+
+    private static object? ComputeAggregate(
+        IReadOnlyList<TData> items, IDataGridColumn<TData> column, AggregateFunction function)
+    {
+        if (items.Count == 0)
+        {
+            return null;
+        }
+
+        if (function == AggregateFunction.Count)
+        {
+            return items.Count;
+        }
+
+        var values = new List<double>();
+        foreach (var item in items)
+        {
+            var raw = column.GetRawValue(item);
+            if (raw != null && TryConvertToDouble(raw, out var numericValue))
+            {
+                values.Add(numericValue);
+            }
+        }
+
+        if (values.Count == 0)
+        {
+            return null;
+        }
+
+        return function switch
+        {
+            AggregateFunction.Sum => values.Sum(),
+            AggregateFunction.Average => values.Average(),
+            AggregateFunction.Min => values.Min(),
+            AggregateFunction.Max => values.Max(),
+            _ => null
+        };
+    }
+
+    private static bool TryConvertToDouble(object value, out double result)
+    {
+        try
+        {
+            result = Convert.ToDouble(value, System.Globalization.CultureInfo.InvariantCulture);
+            return true;
+        }
+        catch
+        {
+            result = 0;
+            return false;
+        }
+    }
+
+    private void UpdateVirtualizationList()
+    {
         if (Virtualize)
         {
             if (_processedDataList == null || !ReferenceEquals(_lastProcessedData, _processedData))
@@ -638,34 +988,51 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         try
         {
+            var aggregateColumns = _columns
+                .Where(c => c.Aggregate != AggregateFunction.None)
+                .Select(c => c.ColumnId)
+                .ToList();
+
             var request = new DataGridRequest
             {
                 SortDefinitions = _gridState.Sorting.Definitions,
                 StartIndex = Virtualize ? 0 : _gridState.Pagination.StartIndex,
                 Count = Virtualize ? null : _gridState.Pagination.PageSize,
                 CancellationToken = token,
-                Filters = _gridState.Filtering.Filters
+                Filters = _gridState.Filtering.Filters,
+                GroupDefinition = _gridState.Grouping.ActiveGroup,
+                AggregateColumns = aggregateColumns.Count > 0 ? aggregateColumns : null
             };
 
-            var result = await ItemsProvider!(request);
-
-            if (!token.IsCancellationRequested)
+            // Use grouped provider when grouping is active and provider is available
+            if (_groupByAccessor != null && GroupedItemsProvider != null)
             {
-                _processedData = result.Items;
-                _gridState.Pagination.TotalItems = result.TotalItemCount;
+                var groupedResult = await GroupedItemsProvider(request);
 
-                if (Virtualize)
+                if (!token.IsCancellationRequested)
                 {
-                    if (_processedDataList == null || !ReferenceEquals(_lastProcessedData, _processedData))
-                    {
-                        _processedDataList = _processedData as List<TData> ?? _processedData.ToList();
-                        _lastProcessedData = _processedData;
-                    }
+                    BuildRenderItemsFromGroupedResult(groupedResult);
                 }
-                else
+            }
+            else
+            {
+                var result = await ItemsProvider!(request);
+
+                if (!token.IsCancellationRequested)
                 {
-                    _processedDataList = null;
-                    _lastProcessedData = null;
+                    if (_groupByAccessor != null)
+                    {
+                        // Group client-side from flat provider results
+                        var items = result.Items as IList<TData> ?? result.Items.ToList();
+                        ProcessGroupedData(items);
+                    }
+                    else
+                    {
+                        _groupedRenderItems = null;
+                        _processedData = result.Items;
+                        _gridState.Pagination.TotalItems = result.TotalItemCount;
+                        UpdateVirtualizationList();
+                    }
                 }
             }
         }
@@ -673,6 +1040,44 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         {
             // Expected when a new request supersedes the previous
         }
+    }
+
+    private void BuildRenderItemsFromGroupedResult(DataGridGroupedResult<TData> groupedResult)
+    {
+        var allRenderItems = new List<DataGridRenderItem<TData>>();
+        var allDataItems = new List<TData>();
+
+        foreach (var group in groupedResult.Groups)
+        {
+            var groupKey = group.Key ?? "(empty)";
+            var items = group.Items.ToList();
+
+            var groupRow = new DataGridGroupRow<TData>
+            {
+                Key = groupKey,
+                ColumnId = _groupByColumnId ?? "group",
+                ColumnTitle = _groupByColumnTitle,
+                ItemCount = group.ItemCount > 0 ? group.ItemCount : items.Count,
+                Items = items,
+                Aggregates = group.Aggregates ?? new Dictionary<string, AggregateResult>()
+            };
+
+            allRenderItems.Add(DataGridRenderItem<TData>.ForGroup(groupRow));
+
+            if (!_gridState.Grouping.IsCollapsed(groupKey))
+            {
+                foreach (var item in items)
+                {
+                    allRenderItems.Add(DataGridRenderItem<TData>.ForData(item));
+                    allDataItems.Add(item);
+                }
+            }
+        }
+
+        _gridState.Pagination.TotalItems = groupedResult.TotalItemCount;
+        _groupedRenderItems = allRenderItems;
+        _processedData = allDataItems;
+        UpdateVirtualizationList();
     }
 
     private async Task NotifyStateChangedAsync()
@@ -984,6 +1389,60 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
 
         await NotifyStateChangedAsync();
+        StateHasChanged();
+    }
+
+    internal async Task HandleGroupToggle(DataGridGroupRow<TData> groupRow)
+    {
+        var key = groupRow.Key ?? "(empty)";
+        var wasCollapsed = _gridState.Grouping.IsCollapsed(key);
+        _gridState.Grouping.Toggle(key);
+
+        // Reprocess to rebuild the flattened render items
+        await ProcessDataAsync();
+
+        if (wasCollapsed)
+        {
+            if (OnGroupExpand.HasDelegate)
+            {
+                await OnGroupExpand.InvokeAsync(groupRow);
+            }
+        }
+        else
+        {
+            if (OnGroupCollapse.HasDelegate)
+            {
+                await OnGroupCollapse.InvokeAsync(groupRow);
+            }
+        }
+
+        _stateVersion++;
+        await NotifyStateChangedAsync();
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Expands all groups, showing their data rows.
+    /// </summary>
+    public async Task ExpandAllGroups()
+    {
+        _gridState.Grouping.ExpandAll();
+        await ProcessDataAsync();
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Collapses all groups, hiding their data rows.
+    /// </summary>
+    public async Task CollapseAllGroups()
+    {
+        if (_allGroupKeys == null || _allGroupKeys.Count == 0)
+        {
+            return;
+        }
+
+        _gridState.Grouping.CollapseAll(_allGroupKeys);
+        await ProcessDataAsync();
         StateHasChanged();
     }
 
