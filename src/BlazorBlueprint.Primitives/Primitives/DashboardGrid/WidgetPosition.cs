@@ -3,7 +3,7 @@ namespace BlazorBlueprint.Primitives.DashboardGrid;
 /// <summary>
 /// Position and size of a widget within the dashboard grid.
 /// </summary>
-public class WidgetPosition
+public record WidgetPosition
 {
     public string WidgetId { get; set; } = string.Empty;
     public int Column { get; set; } = 1;
@@ -22,6 +22,4 @@ public class WidgetPosition
         RowSpan = rowSpan;
     }
 
-    public WidgetPosition Clone() =>
-        new(WidgetId, Column, Row, ColumnSpan, RowSpan);
 }

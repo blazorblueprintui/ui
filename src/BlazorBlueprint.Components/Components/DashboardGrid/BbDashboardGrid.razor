@@ -12,6 +12,7 @@
     data-dashboard-id="@_instanceId"
     data-show-grid-guide="@(ShowGridGuide ? "true" : "false")"
     data-editable="@(Editable ? "true" : "false")"
+    data-positioned="@(_positioned ? "true" : "false")"
     @attributes="AdditionalAttributes">
 
     @if (Background != DashboardBackground.None)
@@ -36,6 +37,7 @@
     private string _instanceId = Guid.NewGuid().ToString("N");
     private bool _jsInitialized;
     private bool _disposed;
+    private bool _positioned;
     private int _lastStateVersion = -1;
     private DashboardBreakpoint _lastBreakpoint = DashboardBreakpoint.Large;
 
@@ -138,6 +140,7 @@
     {
         if (State != null && State.Version != _lastStateVersion)
         {
+            _context.OnStateChanged -= HandleContextStateChanged;
             _context = new DashboardGridContext(State);
             _context.OnStateChanged += HandleContextStateChanged;
             _lastStateVersion = State.Version;
@@ -167,11 +170,14 @@
 
     private void HandleContextStateChanged()
     {
-        if (StateChanged.HasDelegate && State != null)
+        InvokeAsync(async () =>
         {
-            _ = StateChanged.InvokeAsync(State);
-        }
-        InvokeAsync(StateHasChanged);
+            if (StateChanged.HasDelegate && State != null)
+            {
+                await StateChanged.InvokeAsync(State);
+            }
+            StateHasChanged();
+        });
     }
 
     private async Task InitializeJsAsync()
@@ -220,13 +226,12 @@
             return;
         }
 
-        var oldPos = _context.GetWidgetPosition(widgetId)?.Clone() ?? new WidgetPosition(widgetId, 1, 1, 1, 1);
-        var newPos = oldPos.Clone();
-        newPos.Column = column;
-        newPos.Row = row;
+        var current = _context.GetWidgetPosition(widgetId);
+        var oldPos = current != null ? current with { } : new WidgetPosition(widgetId, 1, 1, 1, 1);
+        var newPos = oldPos with { Column = column, Row = row };
 
         _context.UpdateWidgetPositionSilent(widgetId, column, row, oldPos.ColumnSpan, oldPos.RowSpan);
-        _context.CompactAndNotify(widgetId);
+        _context.Notify();
 
         if (OnWidgetDragEnd.HasDelegate)
         {
@@ -251,15 +256,12 @@
             return;
         }
 
-        var oldPos = _context.GetWidgetPosition(widgetId)?.Clone() ?? new WidgetPosition(widgetId, 1, 1, 1, 1);
-        var newPos = oldPos.Clone();
-        newPos.Column = column;
-        newPos.Row = row;
-        newPos.ColumnSpan = columnSpan;
-        newPos.RowSpan = rowSpan;
+        var current = _context.GetWidgetPosition(widgetId);
+        var oldPos = current != null ? current with { } : new WidgetPosition(widgetId, 1, 1, 1, 1);
+        var newPos = oldPos with { Column = column, Row = row, ColumnSpan = columnSpan, RowSpan = rowSpan };
 
         _context.UpdateWidgetPositionSilent(widgetId, column, row, columnSpan, rowSpan);
-        _context.CompactAndNotify(widgetId);
+        _context.Notify();
 
         if (OnWidgetResizeEnd.HasDelegate)
         {
@@ -315,19 +317,18 @@
 
         foreach (var change in changes)
         {
-            var oldPos = _context.GetWidgetPosition(change.Id)?.Clone();
-            if (oldPos == null)
+            var existing = _context.GetWidgetPosition(change.Id);
+            if (existing == null)
             {
                 continue;
             }
 
+            var oldPos = existing with { };
             _context.UpdateWidgetPositionSilent(change.Id, change.Col, change.Row, oldPos.ColumnSpan, oldPos.RowSpan);
 
             if (change.Id == draggedWidgetId && OnWidgetDragEnd.HasDelegate)
             {
-                var newPos = oldPos.Clone();
-                newPos.Column = change.Col;
-                newPos.Row = change.Row;
+                var newPos = oldPos with { Column = change.Col, Row = change.Row };
                 dragArgs = new WidgetDragEventArgs
                 {
                     WidgetId = draggedWidgetId,
@@ -337,12 +338,34 @@
             }
         }
 
-        _context.CompactAndNotify(draggedWidgetId);
+        _context.Notify();
 
         if (dragArgs != null)
         {
             await OnWidgetDragEnd.InvokeAsync(dragArgs);
         }
+        if (OnLayoutChanged.HasDelegate)
+        {
+            await OnLayoutChanged.InvokeAsync(_context.State.GetActiveLayout());
+        }
+    }
+
+    [JSInvokable]
+    public async Task JsOnCompactComplete(PositionDto[] positions)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        foreach (var pos in positions)
+        {
+            _context.UpdateWidgetPositionSilent(pos.WidgetId, pos.Col, pos.Row, pos.ColSpan, pos.RowSpan);
+        }
+
+        _positioned = true;
+        _context.Notify();
+
         if (OnLayoutChanged.HasDelegate)
         {
             await OnLayoutChanged.InvokeAsync(_context.State.GetActiveLayout());
@@ -356,13 +379,14 @@
         public int Row { get; set; }
     }
 
-    [JSInvokable]
-    public void JsOnWidgetKeyboardMove(string widgetId, int column, int row) =>
-        JsOnWidgetDragEnd(widgetId, column, row).ConfigureAwait(false);
-
-    [JSInvokable]
-    public void JsOnWidgetKeyboardResize(string widgetId, int column, int row, int columnSpan, int rowSpan) =>
-        JsOnWidgetResizeEnd(widgetId, column, row, columnSpan, rowSpan).ConfigureAwait(false);
+    public sealed class PositionDto
+    {
+        public string WidgetId { get; set; } = string.Empty;
+        public int Col { get; set; }
+        public int Row { get; set; }
+        public int ColSpan { get; set; }
+        public int RowSpan { get; set; }
+    }
 
     public async ValueTask DisposeAsync()
     {

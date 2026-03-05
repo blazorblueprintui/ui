@@ -27,14 +27,8 @@ public class DashboardGridContext : PrimitiveContextWithEvents<DashboardGridStat
     /// <summary>
     /// Registers a widget and sets its initial position if not already present.
     /// </summary>
-    public void RegisterWidget(string widgetId, int column, int row, int columnSpan, int rowSpan)
-    {
+    public void RegisterWidget(string widgetId, int column, int row, int columnSpan, int rowSpan) =>
         State.RegisterWidget(widgetId, column, row, columnSpan, rowSpan);
-        if (Compact)
-        {
-            State.GetActiveLayout().Compact(Columns);
-        }
-    }
 
     /// <summary>
     /// Removes a widget from all layouts.
@@ -42,11 +36,7 @@ public class DashboardGridContext : PrimitiveContextWithEvents<DashboardGridStat
     public void UnregisterWidget(string widgetId)
     {
         State.UnregisterWidget(widgetId);
-        if (Compact)
-        {
-            State.GetActiveLayout().Compact(Columns);
-            NotifyStateChanged();
-        }
+        NotifyStateChanged();
     }
 
     /// <summary>
@@ -57,36 +47,25 @@ public class DashboardGridContext : PrimitiveContextWithEvents<DashboardGridStat
             ?? State.Large.GetPosition(widgetId);
 
     /// <summary>
-    /// Updates a widget's position after drag or resize.
+    /// Updates a widget's position and notifies subscribers.
     /// </summary>
     public void UpdateWidgetPosition(string widgetId, int column, int row, int columnSpan, int rowSpan)
     {
         State.UpdateWidgetPosition(widgetId, column, row, columnSpan, rowSpan);
-        if (Compact)
-        {
-            State.GetActiveLayout().Compact(Columns);
-        }
         NotifyStateChanged();
     }
 
     /// <summary>
-    /// Updates a widget's position without compacting or notifying.
-    /// Use for batching multiple updates, then call <see cref="CompactAndNotify"/> once at the end.
+    /// Updates a widget's position without notifying.
+    /// Use for batching multiple updates, then call <see cref="Notify"/> once at the end.
     /// </summary>
     public void UpdateWidgetPositionSilent(string widgetId, int column, int row, int columnSpan, int rowSpan) =>
         State.UpdateWidgetPosition(widgetId, column, row, columnSpan, rowSpan);
 
     /// <summary>
-    /// Compacts the active layout and notifies subscribers. Call after batching silent updates.
+    /// Notifies subscribers that the layout state has changed.
     /// </summary>
-    public void CompactAndNotify(string? fixedWidgetId = null)
-    {
-        if (Compact)
-        {
-            State.GetActiveLayout().CompactVertical(fixedWidgetId);
-        }
-        NotifyStateChanged();
-    }
+    public void Notify() => NotifyStateChanged();
 
     /// <summary>
     /// Sets the active breakpoint.
