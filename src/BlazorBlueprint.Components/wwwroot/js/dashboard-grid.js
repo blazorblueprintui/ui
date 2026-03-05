@@ -612,72 +612,9 @@ function onKeyDown(instanceId, state, e) {
 
   const target = e.target;
 
-  // Handle widget keyboard navigation (arrow keys to move)
-  const widgetTarget = target.closest('[data-widget-id]');
-  if (widgetTarget && state.options.allowDrag && widgetTarget.getAttribute('data-static') !== 'true') {
-    const widgetId = widgetTarget.getAttribute('data-widget-id');
-    const widget = widgetTarget;
-
-    const grid = widget.closest('[role="region"][aria-roledescription="dashboard grid"]');
-    if (!grid) return;
-
-    const style = widget.style;
-    const col = parseGridValue(style.gridColumn, 'start');
-    const row = parseGridValue(style.gridRow, 'start');
-    const colSpan = parseGridValue(style.gridColumn, 'span');
-    const rowSpan = parseGridValue(style.gridRow, 'span');
-    const cols = state.options.columns;
-
-    let newCol = col;
-    let newRow = row;
-    let handled = false;
-
-    if (e.key === 'ArrowLeft') { newCol = Math.max(1, col - 1); handled = true; }
-    else if (e.key === 'ArrowRight') { newCol = Math.min(cols - colSpan + 1, col + 1); handled = true; }
-    else if (e.key === 'ArrowUp') { newRow = Math.max(1, row - 1); handled = true; }
-    else if (e.key === 'ArrowDown') { newRow = row + 1; handled = true; }
-
-    if (handled) {
-      e.preventDefault();
-      if (newCol !== col || newRow !== row) {
-        const allPositions = getWidgetPositions(grid, null);
-
-        let resolved;
-        if (state.options.compact) {
-          resolved = resolveLayoutAfterDrag(allPositions, widgetId, newCol, newRow, col, row, cols);
-          if (resolved) {
-            compact(resolved, widgetId, cols);
-          }
-        } else {
-          resolved = allPositions.map(p => ({...p}));
-          const moved = resolved.find(p => p.id === widgetId);
-          if (moved) { moved.col = newCol; moved.row = newRow; }
-          const others = resolved.filter(p => p.id !== widgetId);
-          if (wouldOverlap(newCol, newRow, colSpan, rowSpan, others)) { return; }
-        }
-
-        if (!resolved) return;
-        applyLayout(grid, resolved);
-
-        const changes = [];
-        for (const r of resolved) {
-          const orig = allPositions.find(p => p.id === r.id);
-          if (!orig) continue;
-          if (r.col !== orig.col || r.row !== orig.row) {
-            changes.push({ id: r.id, col: r.col, row: r.row });
-          }
-        }
-        if (changes.length > 0) {
-          state.dotNetRef.invokeMethodAsync('JsOnLayoutResolved', widgetId, changes)
-            .catch(err => console.error('JsOnLayoutResolved (keyboard) failed:', err));
-        }
-        announceChange(state, `Widget moved to column ${newCol}, row ${newRow}`);
-      }
-    }
-    return;
-  }
-
   // Handle resize handle keyboard (shift+arrow keys to resize)
+  // Must be checked before the widget move handler since resize handles
+  // also carry data-widget-id and would match the move selector.
   const resizeHandle = target.closest('[data-dashboard-resize-handle]');
   if (resizeHandle && state.options.allowResize) {
     const widgetId = resizeHandle.getAttribute('data-widget-id');
@@ -759,6 +696,71 @@ function onKeyDown(instanceId, state, e) {
             .catch(err => console.error('JsOnLayoutResolved (keyboard resize) failed:', err));
         }
         announceChange(state, `Widget resized to ${newColSpan} columns, ${newRowSpan} rows`);
+      }
+    }
+    return;
+  }
+
+  // Handle widget keyboard navigation (arrow keys to move)
+  const widgetTarget = target.closest('[data-widget-id]');
+  if (widgetTarget && state.options.allowDrag && widgetTarget.getAttribute('data-static') !== 'true') {
+    const widgetId = widgetTarget.getAttribute('data-widget-id');
+    const widget = widgetTarget;
+
+    const grid = widget.closest('[role="region"][aria-roledescription="dashboard grid"]');
+    if (!grid) return;
+
+    const style = widget.style;
+    const col = parseGridValue(style.gridColumn, 'start');
+    const row = parseGridValue(style.gridRow, 'start');
+    const colSpan = parseGridValue(style.gridColumn, 'span');
+    const rowSpan = parseGridValue(style.gridRow, 'span');
+    const cols = state.options.columns;
+
+    let newCol = col;
+    let newRow = row;
+    let handled = false;
+
+    if (e.key === 'ArrowLeft') { newCol = Math.max(1, col - 1); handled = true; }
+    else if (e.key === 'ArrowRight') { newCol = Math.min(cols - colSpan + 1, col + 1); handled = true; }
+    else if (e.key === 'ArrowUp') { newRow = Math.max(1, row - 1); handled = true; }
+    else if (e.key === 'ArrowDown') { newRow = row + 1; handled = true; }
+
+    if (handled) {
+      e.preventDefault();
+      if (newCol !== col || newRow !== row) {
+        const allPositions = getWidgetPositions(grid, null);
+
+        let resolved;
+        if (state.options.compact) {
+          resolved = resolveLayoutAfterDrag(allPositions, widgetId, newCol, newRow, col, row, cols);
+          if (resolved) {
+            compact(resolved, widgetId, cols);
+          }
+        } else {
+          resolved = allPositions.map(p => ({...p}));
+          const moved = resolved.find(p => p.id === widgetId);
+          if (moved) { moved.col = newCol; moved.row = newRow; }
+          const others = resolved.filter(p => p.id !== widgetId);
+          if (wouldOverlap(newCol, newRow, colSpan, rowSpan, others)) { return; }
+        }
+
+        if (!resolved) return;
+        applyLayout(grid, resolved);
+
+        const changes = [];
+        for (const r of resolved) {
+          const orig = allPositions.find(p => p.id === r.id);
+          if (!orig) continue;
+          if (r.col !== orig.col || r.row !== orig.row) {
+            changes.push({ id: r.id, col: r.col, row: r.row });
+          }
+        }
+        if (changes.length > 0) {
+          state.dotNetRef.invokeMethodAsync('JsOnLayoutResolved', widgetId, changes)
+            .catch(err => console.error('JsOnLayoutResolved (keyboard) failed:', err));
+        }
+        announceChange(state, `Widget moved to column ${newCol}, row ${newRow}`);
       }
     }
     return;

@@ -225,6 +225,35 @@ else
         {
             await InitializeJsAsync();
         }
+        else if (_jsInitialized && _jsModule != null)
+        {
+            await SyncJsOptionsAsync();
+        }
+    }
+
+    private async Task SyncJsOptionsAsync()
+    {
+        try
+        {
+            await _jsModule!.InvokeVoidAsync("updateGridOptions", _instanceId, new
+            {
+                columns = Columns,
+                rowHeight = RowHeight,
+                gap = Gap,
+                allowDrag = AllowDrag && Editable,
+                allowResize = AllowResize && Editable,
+                editable = Editable,
+                compact = Compact,
+                showGridGuide = ShowGridGuide,
+                mediumBreakpoint = MediumBreakpoint,
+                smallBreakpoint = SmallBreakpoint,
+                mediumColumns = MediumColumns,
+                smallColumns = SmallColumns
+            });
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        {
+        }
     }
 
     private void SyncContextParameters()
