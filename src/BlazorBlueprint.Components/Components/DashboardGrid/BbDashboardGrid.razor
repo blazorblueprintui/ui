@@ -28,23 +28,6 @@
         </div>
     }
 }
-else if (_hasNoWidgets && EmptyContent != null)
-{
-    @EmptyContent
-}
-else if (_hasNoWidgets)
-{
-    <div class="@EmptyContainerClass" role="status">
-        <svg class="h-12 w-12 opacity-20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect width="7" height="9" x="3" y="3" rx="1" />
-            <rect width="7" height="5" x="14" y="3" rx="1" />
-            <rect width="7" height="9" x="14" y="12" rx="1" />
-            <rect width="7" height="5" x="3" y="16" rx="1" />
-        </svg>
-        <p class="text-sm text-muted-foreground">No widgets to display</p>
-    </div>
-}
 else
 {
     <BlazorBlueprint.Primitives.DashboardGrid.BbDashboardGrid
@@ -57,6 +40,27 @@ else
         data-editable="@(Editable ? "true" : "false")"
         data-positioned="@(_positioned ? "true" : "false")"
         @attributes="AdditionalAttributes">
+
+        @if (_hasNoWidgets)
+        {
+            @if (EmptyContent != null)
+            {
+                @EmptyContent
+            }
+            else
+            {
+                <div class="@EmptyContainerClass" role="status" style="grid-column: 1 / -1;">
+                    <svg class="h-12 w-12 opacity-20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="7" height="9" x="3" y="3" rx="1" />
+                        <rect width="7" height="5" x="14" y="3" rx="1" />
+                        <rect width="7" height="9" x="14" y="12" rx="1" />
+                        <rect width="7" height="5" x="3" y="16" rx="1" />
+                    </svg>
+                    <p class="text-sm text-muted-foreground">No widgets to display</p>
+                </div>
+            }
+        }
 
         @if (Background != DashboardBackground.None)
         {
@@ -82,6 +86,7 @@ else
     private bool _jsInitialized;
     private bool _disposed;
     private bool _positioned;
+    private bool _wasLoading;
     private int _lastStateVersion = -1;
     private DashboardBreakpoint _lastBreakpoint = DashboardBreakpoint.Large;
 
@@ -153,8 +158,7 @@ else
 
     private string GuideCellClass => Background switch
     {
-        DashboardBackground.Lines => "bb-guide-cell-lines",
-        DashboardBackground.Dots => "bb-guide-cell-dots",
+        DashboardBackground.Squares => "bb-guide-cell-squares",
         _ => ""
     };
 
@@ -175,10 +179,8 @@ else
         Border ? "rounded-lg border p-4" : ""
     );
 
-    private string EmptyContainerClass => ClassNames.cn(
-        "flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground",
-        Border ? "rounded-lg border border-dashed p-4" : "border border-dashed rounded-lg"
-    );
+    private string EmptyContainerClass =>
+        "flex flex-col items-center justify-center py-16 gap-3 text-muted-foreground";
 
     private string GuideOverlayStyle =>
         $"display: grid; grid-template-columns: repeat({ActiveColumns}, 1fr); grid-auto-rows: {RowHeight}px; gap: {Gap}px;";
@@ -205,12 +207,21 @@ else
             _lastStateVersion = State.Version;
         }
 
+        // When transitioning from loading to not-loading, reset JS so it
+        // re-initialises against the now-visible grid element.
+        if (_wasLoading && !Loading)
+        {
+            _jsInitialized = false;
+            _positioned = false;
+        }
+        _wasLoading = Loading;
+
         SyncContextParameters();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (!Loading && !_jsInitialized)
         {
             await InitializeJsAsync();
         }
@@ -248,8 +259,24 @@ else
 
         try
         {
-            _jsModule = await JS.InvokeAsync<IJSObjectReference>("import",
-                "./_content/BlazorBlueprint.Components/js/dashboard-grid.js");
+            if (_jsModule == null)
+            {
+                _jsModule = await JS.InvokeAsync<IJSObjectReference>("import",
+                    "./_content/BlazorBlueprint.Components/js/dashboard-grid.js");
+            }
+            else
+            {
+                // Clean up previous instance before re-initializing
+                try
+                {
+                    await _jsModule.InvokeVoidAsync("disposeDashboardGrid", _instanceId);
+                }
+                catch
+                {
+                }
+            }
+
+            _dotNetRef?.Dispose();
             _dotNetRef = DotNetObjectReference.Create(this);
 
             await _jsModule.InvokeVoidAsync("initializeDashboardGrid", _dotNetRef, _instanceId, new

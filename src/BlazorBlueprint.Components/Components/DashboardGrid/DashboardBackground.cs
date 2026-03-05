@@ -11,12 +11,7 @@ public enum DashboardBackground
     None,
 
     /// <summary>
-    /// Grid lines background pattern.
+    /// Square grid background pattern aligned to widget anchor points.
     /// </summary>
-    Lines,
-
-    /// <summary>
-    /// Dot grid background pattern.
-    /// </summary>
-    Dots
+    Squares
 }

@@ -39,6 +39,7 @@ public class DashboardGridState
         if (Large.GetPosition(widgetId) == null)
         {
             Large.SetPosition(widgetId, column, row, columnSpan, rowSpan);
+            Version++;
         }
     }
 
