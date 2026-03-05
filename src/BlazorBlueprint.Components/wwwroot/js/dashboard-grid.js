@@ -115,6 +115,10 @@ function setupMutationObserver(state) {
   state.mutationObserver.observe(state.gridEl, { childList: true });
 }
 
+function getActiveColumns(state) {
+  return getColumnsForBreakpoint(state, state.currentBreakpoint || 'large');
+}
+
 function runCompactAndReveal(state) {
   const grid = state.gridEl;
   const positions = getWidgetPositions(grid, null);
@@ -124,8 +128,20 @@ function runCompactAndReveal(state) {
     return;
   }
 
+  const columns = getActiveColumns(state);
+
+  // Clamp column spans to fit within the current column count
+  for (const pos of positions) {
+    if (pos.colSpan > columns) {
+      pos.colSpan = columns;
+    }
+    if (pos.col + pos.colSpan - 1 > columns) {
+      pos.col = Math.max(1, columns - pos.colSpan + 1);
+    }
+  }
+
   if (state.options.compact) {
-    compact(positions, null, state.options.columns);
+    compact(positions, null, columns);
     applyLayout(grid, positions);
   }
 
@@ -145,6 +161,12 @@ function runCompactAndReveal(state) {
 
 // --- Resize Observer for responsive breakpoints ---
 
+function getColumnsForBreakpoint(state, bp) {
+  if (bp === 'small') return state.options.smallColumns;
+  if (bp === 'medium') return state.options.mediumColumns;
+  return state.options.columns;
+}
+
 function setupResizeObserver(instanceId, state) {
   const checkBreakpoint = () => {
     const width = window.innerWidth;
@@ -156,15 +178,81 @@ function setupResizeObserver(instanceId, state) {
     }
 
     if (state.currentBreakpoint !== bp) {
+      const isInitial = state.currentBreakpoint === undefined;
+      const prevBp = state.currentBreakpoint;
       state.currentBreakpoint = bp;
       state.dotNetRef.invokeMethodAsync('JsOnBreakpointChanged', bp)
         .catch(err => console.error('JsOnBreakpointChanged failed:', err));
+
+      // Re-compact widgets for the new column count (skip initial detection)
+      if (!isInitial) {
+        recompactForBreakpoint(state, prevBp, bp);
+      }
     }
   };
 
   checkBreakpoint();
   state.resizeObserver = new ResizeObserver(() => checkBreakpoint());
   state.resizeObserver.observe(document.body);
+}
+
+function recompactForBreakpoint(state, prevBp, bp) {
+  const grid = state.gridEl;
+  if (!grid) return;
+
+  const columns = getColumnsForBreakpoint(state, bp);
+
+  // Save current positions keyed by the breakpoint we're leaving
+  if (!state.savedPositions) {
+    state.savedPositions = {};
+  }
+  state.savedPositions[prevBp] = getWidgetPositions(grid, null);
+
+  // If we have saved positions for the target breakpoint, restore them
+  if (state.savedPositions[bp]) {
+    const positions = state.savedPositions[bp];
+    delete state.savedPositions[bp];
+
+    if (state.options.compact) {
+      compact(positions, null, columns);
+    }
+
+    applyLayout(grid, positions);
+    syncPositionsToNet(state, positions);
+    return;
+  }
+
+  const positions = getWidgetPositions(grid, null);
+  if (positions.length === 0) return;
+
+  // Clamp column spans to fit within the new column count
+  for (const pos of positions) {
+    if (pos.colSpan > columns) {
+      pos.colSpan = columns;
+    }
+    if (pos.col + pos.colSpan - 1 > columns) {
+      pos.col = Math.max(1, columns - pos.colSpan + 1);
+    }
+  }
+
+  if (state.options.compact) {
+    compact(positions, null, columns);
+  }
+
+  applyLayout(grid, positions);
+  syncPositionsToNet(state, positions);
+}
+
+function syncPositionsToNet(state, positions) {
+  const dtos = positions.map(p => ({
+    widgetId: p.id,
+    col: p.col,
+    row: p.row,
+    colSpan: p.colSpan,
+    rowSpan: p.rowSpan
+  }));
+  state.dotNetRef.invokeMethodAsync('JsOnCompactComplete', dtos)
+    .catch(err => console.error('JsOnCompactComplete (breakpoint) failed:', err));
 }
 
 // --- Event Listeners ---
@@ -333,7 +421,7 @@ function updateDrag(state, e) {
   if (!grid) return;
 
   const gridRect = grid.getBoundingClientRect();
-  const cols = state.options.columns;
+  const cols = getActiveColumns(state);
   const gap = state.options.gap;
   const cellWidth = (gridRect.width - (cols - 1) * gap) / cols;
   const rowHeight = state.options.rowHeight;
@@ -400,7 +488,7 @@ function finishDrag(state) {
 
     // Compact after interaction completes
     if (state.options.compact && grid) {
-      compact(finalLayout, null, state.options.columns);
+      compact(finalLayout, null, getActiveColumns(state));
       applyLayout(grid, finalLayout);
     }
 
@@ -446,7 +534,7 @@ function updateResize(state, e) {
   if (!grid || !state.originalResizePositions) return;
 
   const gridRect = grid.getBoundingClientRect();
-  const cols = state.options.columns;
+  const cols = getActiveColumns(state);
   const gap = state.options.gap;
   const cellWidth = (gridRect.width - (cols - 1) * gap) / cols;
   const rowHeight = state.options.rowHeight;
@@ -568,7 +656,7 @@ function finishResize(state) {
   // Compact after interaction completes
   const grid = state.resizeGrid;
   if (state.options.compact && grid) {
-    compact(finalLayout, null, state.options.columns);
+    compact(finalLayout, null, getActiveColumns(state));
     applyLayout(grid, finalLayout);
   }
 
@@ -631,7 +719,7 @@ function onKeyDown(instanceId, state, e) {
     const row = parseGridValue(style.gridRow, 'start');
     const colSpan = parseGridValue(style.gridColumn, 'span');
     const rowSpan = parseGridValue(style.gridRow, 'span');
-    const cols = state.options.columns;
+    const cols = getActiveColumns(state);
 
     const minColSpan = parseInt(widget.getAttribute('data-min-col-span') || '1', 10);
     const minRowSpan = parseInt(widget.getAttribute('data-min-row-span') || '1', 10);
@@ -715,7 +803,7 @@ function onKeyDown(instanceId, state, e) {
     const row = parseGridValue(style.gridRow, 'start');
     const colSpan = parseGridValue(style.gridColumn, 'span');
     const rowSpan = parseGridValue(style.gridRow, 'span');
-    const cols = state.options.columns;
+    const cols = getActiveColumns(state);
 
     let newCol = col;
     let newRow = row;
