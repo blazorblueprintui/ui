@@ -7,7 +7,7 @@ namespace BlazorBlueprint.Primitives.DataGrid;
 /// <typeparam name="TData">The type of data items in the grid.</typeparam>
 public class ExpandedRowState<TData> where TData : class
 {
-    private readonly HashSet<TData> expandedItems = new();
+    private HashSet<TData> expandedItems = new();
 
     /// <summary>
     /// Gets the collection of expanded items.
@@ -112,4 +112,12 @@ public class ExpandedRowState<TData> where TData : class
     /// Clears all expansion state.
     /// </summary>
     public void Clear() => expandedItems.Clear();
+
+    /// <summary>
+    /// Rebuilds the internal HashSet with the given comparer, preserving existing items.
+    /// Pass null to revert to default reference equality.
+    /// </summary>
+    /// <param name="comparer">The equality comparer to use, or null for default.</param>
+    public void SetComparer(IEqualityComparer<TData>? comparer) =>
+        expandedItems = new HashSet<TData>(expandedItems, comparer);
 }

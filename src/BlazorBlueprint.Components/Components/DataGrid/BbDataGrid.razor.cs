@@ -1,5 +1,7 @@
+using System.Linq.Expressions;
 using BlazorBlueprint.Primitives;
 using BlazorBlueprint.Primitives.DataGrid;
+using BlazorBlueprint.Primitives.Filtering;
 using BlazorBlueprint.Primitives.Table;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -36,6 +38,14 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private ElementReference containerRef;
     private readonly string gridId = Guid.NewGuid().ToString("N");
     private bool jsInitialized;
+
+    // Context menu state
+    private BbContextMenu? rowContextMenu;
+    private TData? contextMenuItem;
+    private IJSObjectReference? clipboardModule;
+
+    // ItemKey tracking
+    private Func<TData, object>? _lastItemKey;
 
     // ShouldRender tracking
     private IEnumerable<TData>? _lastItems;
@@ -206,10 +216,31 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     public EventCallback<TData> OnRowCollapse { get; set; }
 
     /// <summary>
+    /// Event callback invoked when a row is clicked.
+    /// </summary>
+    [Parameter]
+    public EventCallback<TData> OnRowClick { get; set; }
+
+    /// <summary>
+    /// Render fragment for the row context menu. When set, right-clicking a row opens
+    /// a context menu with the provided content. Receives a <see cref="DataGridRowMenuContext{TData}"/>
+    /// with the clicked item and a clipboard helper.
+    /// </summary>
+    [Parameter]
+    public RenderFragment<DataGridRowMenuContext<TData>>? RowContextMenu { get; set; }
+
+    /// <summary>
     /// Event callback invoked when sorting changes.
     /// </summary>
     [Parameter]
     public EventCallback<IReadOnlyList<SortDefinition>> OnSort { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when column filters change.
+    /// Receives the active filters keyed by column ID.
+    /// </summary>
+    [Parameter]
+    public EventCallback<IReadOnlyDictionary<string, FilterCondition>> OnFilter { get; set; }
 
     /// <summary>
     /// Enable column resizing by dragging header cell borders. Default is false.
@@ -241,12 +272,22 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     [Parameter]
     public EventCallback<(string ColumnId, int NewIndex)> OnColumnReorder { get; set; }
 
+    /// <summary>
+    /// A function that returns a stable identity key for each data item
+    /// (e.g., <c>item =&gt; item.Id</c>). When set, selection and expansion state
+    /// is tracked by key instead of reference equality, so state survives data re-fetches.
+    /// Also forwarded to the Virtualize component when virtualization is enabled.
+    /// </summary>
+    [Parameter]
+    public Func<TData, object>? ItemKey { get; set; }
+
     internal DataGridState<TData> EffectiveState => State ?? _gridState;
 
     protected override void OnInitialized()
     {
         _gridState.Pagination.PageSize = InitialPageSize;
         _gridState.Selection.Mode = GetPrimitiveSelectionMode();
+        ApplyItemKeyComparer();
     }
 
     protected override async Task OnParametersSetAsync()
@@ -257,6 +298,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
 
         _gridState.Selection.Mode = GetPrimitiveSelectionMode();
+
+        if (!ReferenceEquals(_lastItemKey, ItemKey))
+        {
+            ApplyItemKeyComparer();
+        }
 
         // Detect external state mutations (e.g., Restore() or Reset() called from outside)
         var externalStateChanged = _gridState.Version != _lastGridStateVersion;
@@ -504,7 +550,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         if (data is IQueryable<TData> queryable)
         {
-            var sorted = queryable.ApplyMultiSort(
+            var filtered = ApplyColumnFilters(queryable);
+            var sorted = filtered.ApplyMultiSort(
                 _gridState.Sorting.Definitions, columns);
 
             _gridState.Pagination.TotalItems = sorted.Count();
@@ -526,7 +573,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
         else
         {
-            var sorted = data.ApplyMultiSort(
+            var filtered = ApplyColumnFilters(data);
+            var sorted = filtered.ApplyMultiSort(
                 _gridState.Sorting.Definitions, columns);
 
             var list = sorted as IList<TData> ?? sorted.ToList();
@@ -595,7 +643,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
                 SortDefinitions = _gridState.Sorting.Definitions,
                 StartIndex = Virtualize ? 0 : _gridState.Pagination.StartIndex,
                 Count = Virtualize ? null : _gridState.Pagination.PageSize,
-                CancellationToken = token
+                CancellationToken = token,
+                Filters = _gridState.Filtering.Filters
             };
 
             var result = await ItemsProvider!(request);
@@ -645,6 +694,135 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         await NotifyStateChangedAsync();
         StateHasChanged();
+    }
+
+    /// <summary>
+    /// Handles a column filter being applied or cleared.
+    /// Updates state, resets pagination, reprocesses data, and fires OnFilter.
+    /// </summary>
+    internal async Task HandleColumnFilterChanged(string columnId, FilterCondition? condition)
+    {
+        _gridState.Filtering.SetFilter(columnId, condition);
+        _gridState.Pagination.GoToPage(1);
+        await ProcessDataAsync();
+
+        if (OnFilter.HasDelegate)
+        {
+            await OnFilter.InvokeAsync(_gridState.Filtering.Filters);
+        }
+
+        await NotifyStateChangedAsync();
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Clears all column filters, reprocesses data, and fires OnFilter.
+    /// </summary>
+    internal async Task HandleClearAllFilters()
+    {
+        _gridState.Filtering.ClearAll();
+        _gridState.Pagination.GoToPage(1);
+        await ProcessDataAsync();
+
+        if (OnFilter.HasDelegate)
+        {
+            await OnFilter.InvokeAsync(_gridState.Filtering.Filters);
+        }
+
+        await NotifyStateChangedAsync();
+        StateHasChanged();
+    }
+
+    private IQueryable<TData> ApplyColumnFilters(IQueryable<TData> queryable)
+    {
+        if (!_gridState.Filtering.HasFilters)
+        {
+            return queryable;
+        }
+
+        var columnMap = new Dictionary<string, IDataGridColumn<TData>>(_columns.Count);
+        foreach (var col in _columns)
+        {
+            columnMap[col.ColumnId] = col;
+        }
+
+        foreach (var (columnId, condition) in _gridState.Filtering.Filters)
+        {
+            if (!columnMap.TryGetValue(columnId, out var column) || !column.Filterable)
+            {
+                continue;
+            }
+
+            var field = GetFilterFieldForColumn(column);
+            if (field == null)
+            {
+                continue;
+            }
+
+            var filterDef = new FilterDefinition
+            {
+                Conditions = new List<FilterCondition> { condition }
+            };
+
+            var expression = filterDef.ToExpression<TData>(new[] { field });
+            queryable = queryable.Where(expression);
+        }
+
+        return queryable;
+    }
+
+    private IEnumerable<TData> ApplyColumnFilters(IEnumerable<TData> data)
+    {
+        if (!_gridState.Filtering.HasFilters)
+        {
+            return data;
+        }
+
+        var columnMap = new Dictionary<string, IDataGridColumn<TData>>(_columns.Count);
+        foreach (var col in _columns)
+        {
+            columnMap[col.ColumnId] = col;
+        }
+
+        foreach (var (columnId, condition) in _gridState.Filtering.Filters)
+        {
+            if (!columnMap.TryGetValue(columnId, out var column) || !column.Filterable)
+            {
+                continue;
+            }
+
+            var field = GetFilterFieldForColumn(column);
+            if (field == null)
+            {
+                continue;
+            }
+
+            var filterDef = new FilterDefinition
+            {
+                Conditions = new List<FilterCondition> { condition }
+            };
+
+            var predicate = filterDef.ToFunc<TData>(new[] { field });
+            data = data.Where(predicate);
+        }
+
+        return data;
+    }
+
+    private static FilterField? GetFilterFieldForColumn(IDataGridColumn<TData> column)
+    {
+        if (column is not IFilterableColumn filterable)
+        {
+            return null;
+        }
+
+        return new FilterField
+        {
+            Name = filterable.GetFilterFieldName(),
+            Label = column.Title ?? column.ColumnId,
+            Type = filterable.GetFilterFieldType(),
+            Options = filterable.GetFilterOptions()
+        };
     }
 
     private async Task HandleSelectionChange(IReadOnlyCollection<TData> selectedItems)
@@ -834,6 +1012,43 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         StateHasChanged();
     }
 
+    private List<IDataGridColumn<TData>> GetVisibleDataColumns() =>
+        GetVisibleColumns()
+            .Where(c => c.ColumnId != "__select" && c.ColumnId != "__expand")
+            .ToList();
+
+    private async Task HandleRowClick(TData item)
+    {
+        if (OnRowClick.HasDelegate)
+        {
+            await OnRowClick.InvokeAsync(item);
+        }
+    }
+
+    private async Task HandleRowContextMenu((TData Item, double ClientX, double ClientY) args)
+    {
+        contextMenuItem = args.Item;
+
+        if (rowContextMenu != null)
+        {
+            await rowContextMenu.OpenAt(args.ClientX, args.ClientY);
+        }
+    }
+
+    private async Task<bool> CopyToClipboardAsync(string text)
+    {
+        try
+        {
+            clipboardModule ??= await Js.InvokeAsync<IJSObjectReference>("import",
+                "./_content/BlazorBlueprint.Components/js/clipboard.js");
+            return await clipboardModule.InvokeAsync<bool>("copyToClipboard", text);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private async Task HandlePageChanged(int page)
     {
         _gridState.Pagination.GoToPage(page);
@@ -856,6 +1071,12 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private bool IsSomeSelected() =>
         _gridState.Selection.AreSomeSelected(_processedData);
 
+    private void ApplyItemKeyComparer()
+    {
+        _lastItemKey = ItemKey;
+        EffectiveState.SetItemKey(ItemKey);
+    }
+
     private SelectionMode GetPrimitiveSelectionMode() => SelectionMode switch
     {
         DataTableSelectionMode.Single => Primitives.Table.SelectionMode.Single,
@@ -875,7 +1096,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         if (column.Pinned != ColumnPinning.None)
         {
             var zClass = StickyHeader ? "z-30" : "z-10";
-            pinnedClass = ClassNames.cn("bg-background group-hover/row:bg-muted", zClass);
+            pinnedClass = zClass;
         }
 
         var separatorClass = "";
@@ -893,7 +1114,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             return ClassNames.cn(baseClass, "w-12", pinnedClass, separatorClass);
         }
 
-        var needsGroup = column.Sortable || (Reorderable && column.Reorderable);
+        var needsGroup = column.Sortable || column.Filterable || (Reorderable && column.Reorderable);
         var sortClass = column.Sortable ? "cursor-pointer select-none" : "";
         var groupClass = needsGroup ? "group/header" : "";
         var needsRelative = (Resizable && column.Resizable) || (Reorderable && column.Reorderable);
@@ -905,17 +1126,14 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     }
 
     private string GetCellClass(IDataGridColumn<TData> column, bool isSelectColumn,
-        bool isExpandColumn, bool isLastLeft, bool isFirstRight, bool isRowSelected)
+        bool isExpandColumn, bool isLastLeft, bool isFirstRight)
     {
-        var baseClass = "p-4 align-middle";
+        var baseClass = "p-4 align-middle transition-colors";
 
         var pinnedClass = "";
         if (column.Pinned != ColumnPinning.None)
         {
-            var bgClass = isRowSelected
-                ? "bg-muted group-hover/row:bg-muted"
-                : "bg-background group-hover/row:bg-muted";
-            pinnedClass = ClassNames.cn(bgClass, "z-10");
+            pinnedClass = "z-10";
         }
 
         var separatorClass = "";
@@ -930,13 +1148,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         if (isSelectColumn || isExpandColumn)
         {
-            var selectBg = "";
-            if (column.Pinned == ColumnPinning.None && isRowSelected)
-            {
-                selectBg = "bg-muted";
-            }
-
-            return ClassNames.cn(baseClass, "w-12", selectBg, pinnedClass, separatorClass);
+            return ClassNames.cn(baseClass, "w-12", pinnedClass, separatorClass);
         }
 
         var cellClass = column.CellClass;
@@ -1092,5 +1304,17 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
 
         selfRef?.Dispose();
+
+        if (clipboardModule != null)
+        {
+            try
+            {
+                await clipboardModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+        }
     }
 }

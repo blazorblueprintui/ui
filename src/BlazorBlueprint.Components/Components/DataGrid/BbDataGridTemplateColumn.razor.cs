@@ -9,7 +9,7 @@ namespace BlazorBlueprint.Components;
 /// Use this for columns that display actions, badges, or other custom content.
 /// </summary>
 /// <typeparam name="TData">The type of data items in the grid.</typeparam>
-public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridColumn<TData>
+public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridColumn<TData>, IFilterableColumn
     where TData : class
 {
     private Func<TData, object>? compiledSortBy;
@@ -111,6 +111,32 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
     public bool NoWrap { get; set; }
 
     /// <summary>
+    /// Whether this column supports per-column filtering. Default is false.
+    /// Requires <see cref="FilterBy"/> to be set when true.
+    /// </summary>
+    [Parameter]
+    public bool Filterable { get; set; }
+
+    /// <summary>
+    /// Expression used to build filter Where clauses. Required when <see cref="Filterable"/> is true.
+    /// </summary>
+    [Parameter]
+    public Expression<Func<TData, object>>? FilterBy { get; set; }
+
+    /// <summary>
+    /// Override the auto-inferred filter field type. When null, defaults to <see cref="FilterFieldType.Text"/>.
+    /// </summary>
+    [Parameter]
+    public FilterFieldType? FilterType { get; set; }
+
+    /// <summary>
+    /// Predefined options for Enum filter fields. Required when <see cref="FilterType"/>
+    /// is <see cref="FilterFieldType.Enum"/>.
+    /// </summary>
+    [Parameter]
+    public IEnumerable<SelectOption<string>>? FilterOptions { get; set; }
+
+    /// <summary>
     /// The parent DataGrid component. Set via cascading parameter.
     /// </summary>
     [CascadingParameter]
@@ -123,6 +149,8 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
     string? IDataGridColumn<TData>.Title => Title;
 
     bool IDataGridColumn<TData>.Sortable => Sortable && SortBy != null;
+
+    bool IDataGridColumn<TData>.Filterable => Filterable && FilterBy != null;
 
     bool IDataGridColumn<TData>.Visible => Visible;
 
@@ -188,6 +216,43 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
         }
 
         return SortBy;
+    }
+
+    public LambdaExpression? GetFilterExpression()
+    {
+        if (FilterBy == null)
+        {
+            return null;
+        }
+
+        // Unwrap Convert(..., object) to expose the underlying member's real type.
+        if (FilterBy.Body is UnaryExpression { NodeType: ExpressionType.Convert } unary)
+        {
+            return Expression.Lambda(unary.Operand, FilterBy.Parameters);
+        }
+
+        return FilterBy;
+    }
+
+    // IFilterableColumn implementation
+
+    FilterFieldType IFilterableColumn.GetFilterFieldType() => FilterType ?? FilterFieldType.Text;
+
+    IEnumerable<SelectOption<string>>? IFilterableColumn.GetFilterOptions() => FilterOptions;
+
+    string IFilterableColumn.GetFilterFieldName()
+    {
+        if (FilterBy?.Body is MemberExpression member)
+        {
+            return member.Member.Name;
+        }
+
+        if (FilterBy?.Body is UnaryExpression { Operand: MemberExpression innerMember })
+        {
+            return innerMember.Member.Name;
+        }
+
+        return ColumnId;
     }
 
     protected override void OnInitialized()

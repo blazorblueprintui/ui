@@ -1,0 +1,28 @@
+<BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+            OnRowClick="HandleRowClick">
+    <RowContextMenu Context="menu">
+        <BbContextMenuItem OnClick="@(async () => await menu.CopyToClipboardAsync(menu.Item.Name))">
+            Copy Name
+        </BbContextMenuItem>
+        <BbContextMenuItem OnClick="@(async () => await menu.CopyToClipboardAsync(menu.Item.Email))">
+            Copy Email
+        </BbContextMenuItem>
+        <BbContextMenuSeparator />
+        <BbContextMenuItem OnClick="@(async () => await menu.CopyToClipboardAsync(menu.FormatRow(menu.Item)))">
+            Copy Row
+        </BbContextMenuItem>
+    </RowContextMenu>
+    <Columns>
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private void HandleRowClick(Person person)
+    {
+        // Handle row click
+    }
+}

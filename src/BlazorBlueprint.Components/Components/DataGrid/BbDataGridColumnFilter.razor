@@ -1,0 +1,122 @@
+@namespace BlazorBlueprint.Components
+
+<div class="p-3 space-y-3">
+    <div class="text-sm font-medium">Filter @ColumnTitle</div>
+
+    @* Operator selector *@
+    <BbSelect TValue="FilterOperator"
+              Value="@editCondition.Operator"
+              ValueChanged="HandleOperatorChanged"
+              Options="@operatorOptions"
+              Class="w-full" />
+
+    @* Value input — type-aware *@
+    @if (!FilterOperatorHelper.IsValuelessOperator(editCondition.Operator))
+    {
+        @switch (FieldType)
+        {
+            case FilterFieldType.Text:
+                <BbInput Value="@GetStringValue()"
+                         ValueChanged="HandleStringValueChanged"
+                         Placeholder="Enter value..."
+                         Class="w-full" />
+                break;
+
+            case FilterFieldType.Number when FilterOperatorHelper.IsRangeOperator(editCondition.Operator):
+                <div class="flex items-center gap-2">
+                    <BbNumericInput TValue="double"
+                                    Value="@GetDoubleValue()"
+                                    ValueChanged="HandleDoubleValueChanged"
+                                    Placeholder="Min"
+                                    Class="w-full" />
+                    <span class="text-sm text-muted-foreground shrink-0">and</span>
+                    <BbNumericInput TValue="double"
+                                    Value="@GetDoubleValueEnd()"
+                                    ValueChanged="HandleDoubleValueEndChanged"
+                                    Placeholder="Max"
+                                    Class="w-full" />
+                </div>
+                break;
+
+            case FilterFieldType.Number:
+                <BbNumericInput TValue="double"
+                                Value="@GetDoubleValue()"
+                                ValueChanged="HandleDoubleValueChanged"
+                                Placeholder="Enter value..."
+                                Class="w-full" />
+                break;
+
+            case FilterFieldType.Date or FilterFieldType.DateTime when FilterOperatorHelper.IsRangeOperator(editCondition.Operator):
+                <BbDateRangePicker Value="@GetDateRangeValue()"
+                                   ValueChanged="HandleDateRangeValueChanged"
+                                   Class="w-full" />
+                break;
+
+            case FilterFieldType.Date or FilterFieldType.DateTime when editCondition.Operator is FilterOperator.InLast or FilterOperator.InNext:
+                <div class="flex items-center gap-2">
+                    <BbNumericInput TValue="int"
+                                    Value="@GetInLastAmount()"
+                                    ValueChanged="HandleInLastAmountChanged"
+                                    Min="1"
+                                    Placeholder="Amount"
+                                    Class="w-full" />
+                    <BbSelect TValue="InLastPeriod"
+                              Value="@GetInLastPeriod()"
+                              ValueChanged="HandleInLastPeriodChanged"
+                              Options="@inLastPeriodOptions"
+                              Class="w-full" />
+                </div>
+                break;
+
+            case FilterFieldType.Date or FilterFieldType.DateTime when FilterOperatorHelper.IsDatePresetOperator(editCondition.Operator):
+                <BbSelect TValue="DatePreset"
+                          Value="@GetDatePreset()"
+                          ValueChanged="HandleDatePresetChanged"
+                          Options="@datePresetOptions"
+                          Class="w-full" />
+                break;
+
+            case FilterFieldType.Date or FilterFieldType.DateTime:
+                <BbDatePicker Value="@GetDateTimeValue()"
+                              ValueChanged="HandleDateTimeValueChanged"
+                              Placeholder="Pick a date"
+                              Class="w-full" />
+                break;
+
+            case FilterFieldType.Enum when editCondition.Operator is FilterOperator.In or FilterOperator.NotIn:
+                <BbMultiSelect TValue="string"
+                               Values="@GetMultiSelectValues()"
+                               ValuesChanged="HandleMultiSelectValuesChanged"
+                               Options="@(FilterOptions ?? Array.Empty<SelectOption<string>>())"
+                               Placeholder="Select values..."
+                               Class="w-full" />
+                break;
+
+            case FilterFieldType.Enum:
+                <BbSelect TValue="string"
+                          Value="@GetStringValue()"
+                          ValueChanged="HandleStringValueChanged"
+                          Options="@(FilterOptions ?? Array.Empty<SelectOption<string>>())"
+                          Placeholder="Select value..."
+                          Class="w-full" />
+                break;
+        }
+    }
+
+    @* Action buttons *@
+    <div class="flex items-center justify-end gap-2">
+        @if (CurrentFilter != null)
+        {
+            <BbButton Variant="ButtonVariant.Ghost"
+                      Size="ButtonSize.Small"
+                      OnClick="HandleClear">
+                Clear
+            </BbButton>
+        }
+        <BbButton Variant="ButtonVariant.Default"
+                  Size="ButtonSize.Small"
+                  OnClick="HandleApply">
+            Apply
+        </BbButton>
+    </div>
+</div>

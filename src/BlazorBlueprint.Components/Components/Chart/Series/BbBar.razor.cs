@@ -116,10 +116,7 @@ public partial class BbBar : SeriesBase
             Type = "bar",
             Name = GetResolvedName(),
             BarWidth = BarWidth,
-            Emphasis = new EChartsEmphasisOption
-            {
-                Focus = "series"
-            }
+            Emphasis = new EChartsEmphasisOption { Disabled = true }
         };
 
         if (needsPerItemData)
@@ -147,8 +144,9 @@ public partial class BbBar : SeriesBase
                 Show = true,
                 Position = ToEChartsPosition(LabelPosition),
                 Formatter = LabelFormatter,
-                Color = LabelColor,
-                FontSize = LabelFontSize
+                Color = LabelColor ?? "var(--foreground)",
+                FontSize = LabelFontSize,
+                TextBorderWidth = 0
             };
         }
 

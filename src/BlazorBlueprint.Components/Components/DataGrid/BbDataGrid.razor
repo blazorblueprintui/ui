@@ -48,6 +48,9 @@
                     EnableKeyboardNavigation="@EnableKeyboardNavigation"
                     OnSortChange="HandleSortChange"
                     OnSelectionChange="HandleSelectionChange"
+                    OnRowClick="HandleRowClick"
+                    OnToggleExpand="@(DetailTemplate != null ? EventCallback.Factory.Create<TData>(this, HandleRowExpandToggle) : default)"
+                    OnRowContextMenu="@(RowContextMenu != null ? (EventCallback<(TData, double, double)>)EventCallback.Factory.Create<(TData, double, double)>(this, HandleRowContextMenu) : default)"
                     Class="@ClassNames.cn("w-full caption-bottom text-sm", HasTableFixed() ? "table-fixed" : "")"
                     AriaLabel="@AriaLabel">
                     @if (HasTableFixed())
@@ -59,8 +62,8 @@
                             }
                         </colgroup>
                     }
-                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader Class="@ClassNames.cn("[&_tr]:border-b", StickyHeader ? "sticky top-0 z-20 bg-background" : "")">
-                        <BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Class="group/row border-b transition-colors hover:bg-muted/50">
+                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader Class="@ClassNames.cn("bg-background", StickyHeader ? "sticky top-0 z-20" : "")">
+                        <BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Class="group/row bg-background">
                             @foreach (var column in _cachedVisibleColumns)
                             {
                                 var sortDirection = _gridState.Sorting.GetDirection(column.ColumnId);
@@ -139,6 +142,17 @@
                                             {
                                                 <span>@column.Title</span>
                                             }
+                                            @if (column.Pinned != ColumnPinning.None)
+                                            {
+                                                <BbTooltip>
+                                                    <BbTooltipTrigger AsChild="false" Focusable="false" Class="inline-flex items-center">
+                                                        <LucideIcon Name="pin" Class="w-3.5 h-3.5 text-muted-foreground" />
+                                                    </BbTooltipTrigger>
+                                                    <BbTooltipContent Side="PopoverSide.Bottom">
+                                                        This column is pinned and cannot be moved
+                                                    </BbTooltipContent>
+                                                </BbTooltip>
+                                            }
                                             @if (column.Sortable && sortDirection != SortDirection.None)
                                             {
                                                 @if (sortDirection == SortDirection.Ascending)
@@ -158,6 +172,41 @@
                                             {
                                                 <LucideIcon Name="arrow-up-down" Class="w-4 h-4 opacity-0 group-hover/header:opacity-50 transition-opacity" />
                                             }
+                                            @if (column.Filterable)
+                                            {
+                                                var hasActiveFilter = _gridState.Filtering.HasFilter(column.ColumnId);
+                                                var filterColumn = column;
+                                                <div @onclick:stopPropagation="true" class="inline-flex">
+                                                    <BbPopover>
+                                                        <BbPopoverTrigger AsChild="true">
+                                                            <BbButton Variant="ButtonVariant.Ghost"
+                                                                      Size="ButtonSize.Icon"
+                                                                      Class="@ClassNames.cn("w-7 h-7 transition-colors",
+                                                                          hasActiveFilter ? "text-primary" : "text-muted-foreground opacity-0 group-hover/header:opacity-100")"
+                                                                      AriaLabel="@($"Filter {filterColumn.Title}")">
+                                                                <LucideIcon Name="filter" Class="w-3.5 h-3.5" />
+                                                            </BbButton>
+                                                        </BbPopoverTrigger>
+                                                        <BbPopoverContent Side="PopoverSide.Bottom" Align="PopoverAlign.Start" Class="w-72 p-0">
+                                                            @{
+                                                                var filterField = GetFilterFieldForColumn(filterColumn);
+                                                                if (filterField != null)
+                                                                {
+                                                                    var filterableCol = filterColumn as IFilterableColumn;
+                                                                    <BbDataGridColumnFilter
+                                                                        ColumnTitle="@filterColumn.Title"
+                                                                        FieldType="@filterField.Type"
+                                                                        FieldName="@filterField.Name"
+                                                                        FilterOptions="@filterableCol?.GetFilterOptions()"
+                                                                        CurrentFilter="@_gridState.Filtering.GetFilter(filterColumn.ColumnId)"
+                                                                        OnApply="@(condition => HandleColumnFilterChanged(filterColumn.ColumnId, condition))"
+                                                                        OnClear="@(() => HandleColumnFilterChanged(filterColumn.ColumnId, null))" />
+                                                                }
+                                                            }
+                                                        </BbPopoverContent>
+                                                    </BbPopover>
+                                                </div>
+                                            }
                                         </div>
                                         @if (Resizable && column.Resizable)
                                         {
@@ -169,7 +218,7 @@
                             }
                         </BlazorBlueprint.Primitives.DataGrid.BbDataGridRow>
                     </BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader>
-                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridBody>
+                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridBody Class="bg-background">
                         @if (Virtualize && ItemSize > 0)
                         {
                             <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize Items="@_processedDataList" Context="item" ItemSize="@ItemSize" OverscanCount="5">
@@ -195,6 +244,24 @@
                 </BlazorBlueprint.Primitives.DataGrid.BbDataGrid>
             }
         </div>
+
+        @if (RowContextMenu != null)
+        {
+            <BbContextMenu @ref="rowContextMenu">
+                <BbContextMenuContent>
+                    @if (contextMenuItem != null)
+                    {
+                        @RowContextMenu(new DataGridRowMenuContext<TData>
+                        {
+                            Item = contextMenuItem,
+                            SelectedItems = _gridState.Selection.SelectedItems,
+                            VisibleColumns = GetVisibleDataColumns(),
+                            CopyToClipboardAsync = CopyToClipboardAsync
+                        })
+                    }
+                </BbContextMenuContent>
+            </BbContextMenu>
+        }
 
         @if (ShowPagination && !IsLoading && _processedData.Any())
         {
@@ -232,8 +299,7 @@
 @code {
     private RenderFragment<TData> RenderDataRow => item =>
         @<BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Item="@item"
-            Class="@ClassNames.cn("group/row border-b transition-colors hover:bg-muted/50", _gridState.Selection.IsSelected(item) ? "bg-muted" : "", RowClass?.Invoke(item))">
-            @{var isRowSelected = _gridState.Selection.IsSelected(item);}
+            Class="@ClassNames.cn("group/row bg-background", RowClass?.Invoke(item))">
             @foreach (var column in _cachedVisibleColumns)
             {
                 var isSelectColumn = column.ColumnId == "__select";
@@ -244,8 +310,9 @@
 
                 <BlazorBlueprint.Primitives.DataGrid.BbDataGridCell
                     @key="@column.ColumnId"
-                    Class="@GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight, isRowSelected)"
-                    style="@pinnedStyle">
+                    Class="@GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight)"
+                    style="@pinnedStyle"
+                    data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)">
                     @if (isExpandColumn)
                     {
                         @if (DetailTemplate != null)

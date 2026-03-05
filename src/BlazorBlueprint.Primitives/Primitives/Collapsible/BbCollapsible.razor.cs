@@ -68,6 +68,8 @@ namespace BlazorBlueprint.Primitives.Collapsible;
 public partial class BbCollapsible : ComponentBase
 {
     private CollapsibleContext context = new();
+    private bool _lastOpen;
+    private bool _lastDisabled;
 
     /// <summary>
     /// Gets or sets a value indicating whether the collapsible is currently expanded.
@@ -127,6 +129,8 @@ public partial class BbCollapsible : ComponentBase
         context.Open = Open;
         context.Disabled = Disabled;
         context.Toggle = ToggleAsync;
+        _lastOpen = Open;
+        _lastDisabled = Disabled;
     }
 
     /// <summary>
@@ -136,6 +140,22 @@ public partial class BbCollapsible : ComponentBase
     {
         context.Open = Open;
         context.Disabled = Disabled;
+    }
+
+    /// <summary>
+    /// Skips rendering when Open and Disabled haven't changed, preventing
+    /// unnecessary subtree diffs when a sibling collapsible toggles.
+    /// </summary>
+    protected override bool ShouldRender()
+    {
+        if (Open != _lastOpen || Disabled != _lastDisabled)
+        {
+            _lastOpen = Open;
+            _lastDisabled = Disabled;
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>

@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Components
 @using Microsoft.JSInterop
+@using System.Globalization
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 
@@ -14,11 +15,11 @@
      @onkeydown="HandleKeyDown">
     <div class="@ComputedTrackClass">
         <div class="@ComputedIndicatorClass"
-             style="width: @(Percentage)%;">
+             style="width: @PercentageValue;">
         </div>
     </div>
     <div class="@ComputedThumbClass"
-         style="left: @(Percentage)%;">
+         style="left: @PercentageValue;">
     </div>
 </div>
 
@@ -73,6 +74,8 @@
     private bool IsControlled => ValueChanged.HasDelegate;
     private double CurrentValue => IsControlled ? Value : _internalValue;
     private double Percentage => ((CurrentValue - Min) / (Max - Min)) * 100;
+
+    private string PercentageValue => $"{Percentage.ToString(CultureInfo.InvariantCulture)}%";
 
     protected override void OnInitialized()
     {

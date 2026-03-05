@@ -145,9 +145,8 @@ public partial class BbPie : SeriesBase
             },
             Emphasis = new EChartsEmphasisOption
             {
-                Focus = "self",
-                Scale = ActiveIndex.HasValue ? true : null,
-                ScaleSize = ActiveIndex.HasValue ? 5 : null
+                Disabled = true,
+                Scale = false
             }
         };
 
@@ -168,8 +167,9 @@ public partial class BbPie : SeriesBase
                 Show = showLabel,
                 Position = ToEChartsPosition(LabelPosition),
                 Formatter = LabelFormatter,
-                Color = LabelColor,
-                FontSize = LabelFontSize
+                Color = LabelColor ?? "var(--foreground)",
+                FontSize = LabelFontSize,
+                TextBorderWidth = 0
             };
             series.LabelLine = showLabel
                 ? new EChartsLabelLineOption

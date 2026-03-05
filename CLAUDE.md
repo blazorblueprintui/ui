@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Never commit to git unless explicitly instructed to
 - This application does not support hot-reload — rebuild to see changes
 - Do NOT add `Co-Authored-By` lines to commit messages
+- Always create a new branch from `develop` when starting work, unless explicitly told otherwise
 
 ---
 

@@ -18,6 +18,7 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
     private readonly string chartId = Guid.NewGuid().ToString("N");
     private readonly List<IChartComponent> registeredComponents = [];
     private bool hasRenderedOnce;
+    private string? lastSerializedJson;
 
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
@@ -196,7 +197,11 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
                 "import", "./_content/BlazorBlueprint.Components/js/echarts-renderer.js");
 
             var option = BuildOption();
-            var serialized = SerializeOption(option);
+            var json = JsonSerializer.Serialize(option, SerializerOptions);
+            lastSerializedJson = json;
+
+            using var document = JsonDocument.Parse(json);
+            var serialized = document.RootElement.Clone();
 
             await jsModule.InvokeVoidAsync("initialize", chartId, serialized);
             jsInitialized = true;
@@ -221,7 +226,17 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
         try
         {
             var option = BuildOption();
-            var serialized = SerializeOption(option);
+            var json = JsonSerializer.Serialize(option, SerializerOptions);
+
+            if (json == lastSerializedJson)
+            {
+                return;
+            }
+
+            lastSerializedJson = json;
+
+            using var document = JsonDocument.Parse(json);
+            var serialized = document.RootElement.Clone();
 
             await jsModule.InvokeVoidAsync("update", chartId, serialized);
         }
@@ -233,13 +248,6 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
         {
             // JS interop not available during prerendering
         }
-    }
-
-    private static JsonElement SerializeOption(EChartsOption option)
-    {
-        var json = JsonSerializer.Serialize(option, SerializerOptions);
-        using var document = JsonDocument.Parse(json);
-        return document.RootElement.Clone();
     }
 
     private string ContainerCssClass => ClassNames.cn("w-full", Class);

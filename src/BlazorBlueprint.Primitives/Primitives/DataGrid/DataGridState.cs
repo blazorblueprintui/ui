@@ -1,3 +1,4 @@
+using BlazorBlueprint.Primitives.Filtering;
 using BlazorBlueprint.Primitives.Table;
 
 namespace BlazorBlueprint.Primitives.DataGrid;
@@ -28,6 +29,11 @@ public class DataGridState<TData> where TData : class
     /// Gets the column state (visibility, order, widths).
     /// </summary>
     public DataGridColumnState Columns { get; } = new();
+
+    /// <summary>
+    /// Gets the per-column filter state.
+    /// </summary>
+    public DataGridFilterState Filtering { get; } = new();
 
     /// <summary>
     /// Gets the row expansion state. Tracks which rows have their detail content visible.
@@ -63,9 +69,28 @@ public class DataGridState<TData> where TData : class
     public bool HasExpanded => Expanded.HasExpanded;
 
     /// <summary>
+    /// Gets whether any column filters are active.
+    /// </summary>
+    public bool HasFiltering => Filtering.HasFilters;
+
+    /// <summary>
     /// Gets whether pagination is active (more than one page).
     /// </summary>
     public bool HasPagination => Pagination.TotalPages > 1;
+
+    /// <summary>
+    /// Configures a key-based equality comparer for selection and expansion state.
+    /// When set, items are compared by their key (e.g., <c>item => item.Id</c>) instead
+    /// of by reference equality, so state survives data re-fetches.
+    /// Pass null to revert to default reference equality.
+    /// </summary>
+    /// <param name="itemKey">A function that returns a stable identity key for each item, or null.</param>
+    public void SetItemKey(Func<TData, object>? itemKey)
+    {
+        var comparer = itemKey != null ? new KeyBasedEqualityComparer<TData>(itemKey) : null;
+        Selection.SetComparer(comparer);
+        Expanded.SetComparer(comparer);
+    }
 
     /// <summary>
     /// Resets all state to default values.
@@ -77,6 +102,7 @@ public class DataGridState<TData> where TData : class
         Selection.Clear();
         Expanded.Clear();
         Columns.Reset();
+        Filtering.ClearAll();
         Version++;
     }
 
@@ -118,6 +144,17 @@ public class DataGridState<TData> where TData : class
             });
         }
 
+        foreach (var (columnId, condition) in Filtering.Filters)
+        {
+            snapshot.ColumnFilters.Add(new ColumnFilterSnapshot
+            {
+                ColumnId = columnId,
+                Operator = condition.Operator,
+                Value = condition.Value,
+                ValueEnd = condition.ValueEnd
+            });
+        }
+
         return snapshot;
     }
 
@@ -138,6 +175,19 @@ public class DataGridState<TData> where TData : class
 
         Columns.RestoreFromSnapshots(snapshot.ColumnStates);
         Pagination.PageSize = snapshot.PageSize;
+
+        Filtering.ClearAll();
+        foreach (var filter in snapshot.ColumnFilters)
+        {
+            Filtering.SetFilter(filter.ColumnId, new FilterCondition
+            {
+                Field = filter.ColumnId,
+                Operator = filter.Operator,
+                Value = filter.Value,
+                ValueEnd = filter.ValueEnd
+            });
+        }
+
         Version++;
     }
 }

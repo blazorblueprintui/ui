@@ -92,7 +92,8 @@ public partial class BbCandlestick : SeriesBase
                 Color0 = BearColor,
                 BorderColor = BullColor,
                 BorderColor0 = BearColor
-            }
+            },
+            Emphasis = new EChartsEmphasisOption { Disabled = true }
         };
 
         if (!string.IsNullOrEmpty(OpenKey) &&

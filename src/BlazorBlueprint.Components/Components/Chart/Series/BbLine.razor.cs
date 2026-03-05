@@ -83,10 +83,7 @@ public partial class BbLine : SeriesBase
                 : FillColor != null
                     ? new EChartsItemStyleOption { Color = FillColor }
                     : null,
-            Emphasis = new EChartsEmphasisOption
-            {
-                Focus = "series"
-            }
+            Emphasis = new EChartsEmphasisOption { Disabled = true }
         };
 
         if (Stacked)

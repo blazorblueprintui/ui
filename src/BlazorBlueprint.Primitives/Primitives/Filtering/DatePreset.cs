@@ -1,4 +1,4 @@
-namespace BlazorBlueprint.Components;
+namespace BlazorBlueprint.Primitives.Filtering;
 
 /// <summary>
 /// Defines dynamic date presets for the <see cref="FilterOperator.DateIs"/>
@@ -53,7 +53,7 @@ public enum DatePreset
     NextMonth,
 
     /// <summary>
-    /// The current calendar quarter (Q1: Jan–Mar, Q2: Apr–Jun, Q3: Jul–Sep, Q4: Oct–Dec).
+    /// The current calendar quarter (Q1: Jan-Mar, Q2: Apr-Jun, Q3: Jul-Sep, Q4: Oct-Dec).
     /// </summary>
     ThisQuarter,
 

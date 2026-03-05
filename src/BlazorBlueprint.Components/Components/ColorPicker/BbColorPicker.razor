@@ -1,6 +1,8 @@
 @namespace BlazorBlueprint.Components
 @using Microsoft.AspNetCore.Components.Forms
 @using System.Linq.Expressions
+@inject IJSRuntime JS
+@implements IAsyncDisposable
 
 <BbPopover @bind-Open="_isOpen">
     <BbPopoverTrigger AsChild="true">
@@ -16,13 +18,9 @@
     <BbPopoverContent Class="w-[280px] p-4" Align="@PopoverAlign.Start">
         <div class="space-y-4">
             @* Color Area (Saturation/Brightness) *@
-            <div class="relative h-[150px] w-full rounded-md cursor-crosshair overflow-hidden touch-none"
-                 style="background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(@_hue, 100%, 50%));"
-                 @onpointerdown="HandleAreaPointerDown"
-                 @onpointermove="HandleAreaPointerMove"
-                 @onpointerup="HandleAreaPointerUp"
-                 @onpointerleave="HandleAreaPointerLeave"
-                 @onpointercancel="HandleAreaPointerCancel">
+            <div @ref="_areaRef"
+                 class="relative h-[150px] w-full rounded-md cursor-crosshair overflow-hidden touch-none"
+                 style="background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(@_hue, 100%, 50%));">
                 <div class="absolute h-4 w-4 border-2 border-white rounded-full shadow-md -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                      style="left: @(_saturation * 100)%; top: @((1 - _brightness) * 100)%;">
                 </div>
@@ -30,13 +28,9 @@
 
             @* Hue Slider *@
             <div class="space-y-2">
-                <div class="relative h-3 w-full rounded-md cursor-pointer touch-none"
-                     style="background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);"
-                     @onpointerdown="HandleHuePointerDown"
-                     @onpointermove="HandleHuePointerMove"
-                     @onpointerup="HandleHuePointerUp"
-                     @onpointerleave="HandleHuePointerLeave"
-                     @onpointercancel="HandleHuePointerCancel">
+                <div @ref="_hueRef"
+                     class="relative h-3 w-full rounded-md cursor-pointer touch-none"
+                     style="background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);">
                     <div class="absolute top-1/2 h-5 w-2 bg-white border border-input rounded shadow-sm -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                          style="left: @(_hue / 360 * 100)%;">
                     </div>
@@ -47,13 +41,9 @@
             @if (ShowAlpha)
             {
                 <div class="space-y-2">
-                    <div class="relative h-3 w-full rounded-md cursor-pointer touch-none"
-                         style="background: linear-gradient(to right, transparent, @CurrentColorWithoutAlpha), url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 fill-opacity=%22.1%22><rect x=%220%22 y=%220%22 width=%228%22 height=%228%22 fill=%22%23000%22/><rect x=%228%22 y=%228%22 width=%228%22 height=%228%22 fill=%22%23000%22/></svg>');"
-                         @onpointerdown="HandleAlphaPointerDown"
-                         @onpointermove="HandleAlphaPointerMove"
-                         @onpointerup="HandleAlphaPointerUp"
-                         @onpointerleave="HandleAlphaPointerLeave"
-                         @onpointercancel="HandleAlphaPointerCancel">
+                    <div @ref="_alphaRef"
+                         class="relative h-3 w-full rounded-md cursor-pointer touch-none"
+                         style="background: linear-gradient(to right, transparent, @CurrentColorWithoutAlpha), url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 fill-opacity=%22.1%22><rect x=%220%22 y=%220%22 width=%228%22 height=%228%22 fill=%22%23000%22/><rect x=%228%22 y=%228%22 width=%228%22 height=%228%22 fill=%22%23000%22/></svg>');">
                         <div class="absolute top-1/2 h-5 w-2 bg-white border border-input rounded shadow-sm -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                              style="left: @(_alpha * 100)%;">
                         </div>
@@ -139,11 +129,18 @@
     private int _r, _g, _b;
     private string _hexInput = "#000000";
     private string? _previousValue;
-    private long? _activeAreaPointerId;
-    private long? _activeHuePointerId;
-    private long? _activeAlphaPointerId;
     private FieldIdentifier _fieldIdentifier;
     private EditContext? _editContext;
+
+    private ElementReference _areaRef;
+    private ElementReference _hueRef;
+    private ElementReference _alphaRef;
+    private IJSObjectReference? _jsModule;
+    private DotNetObjectReference<BbColorPicker>? _dotNetRef;
+    private string _pickerId = Guid.NewGuid().ToString("N");
+    private bool _jsInitialized;
+    private bool _disposed;
+    private bool _wasOpen;
 
     [CascadingParameter]
     private EditContext? CascadedEditContext { get; set; }
@@ -261,6 +258,82 @@
         }
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_isOpen && !_wasOpen)
+        {
+            await InitializeJsAsync();
+        }
+
+        _wasOpen = _isOpen;
+    }
+
+    private async Task InitializeJsAsync()
+    {
+        if (_disposed) return;
+
+        try
+        {
+            // Dispose previous state if reinitializing (popover remount)
+            if (_jsModule != null && _jsInitialized)
+            {
+                await _jsModule.InvokeVoidAsync("dispose", _pickerId);
+                _jsInitialized = false;
+            }
+
+            _jsModule ??= await JS.InvokeAsync<IJSObjectReference>("import",
+                "./_content/BlazorBlueprint.Components/js/color-picker.js");
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+
+            await _jsModule.InvokeVoidAsync("initializeArea", _areaRef, _dotNetRef, _pickerId);
+            await _jsModule.InvokeVoidAsync("initializeSlider", _hueRef, _dotNetRef, _pickerId, "hue");
+
+            if (ShowAlpha)
+            {
+                await _jsModule.InvokeVoidAsync("initializeSlider", _alphaRef, _dotNetRef, _pickerId, "alpha");
+            }
+
+            _jsInitialized = true;
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Expected during circuit disconnect in Blazor Server
+        }
+        catch (InvalidOperationException)
+        {
+            // JS interop not available during prerendering
+        }
+    }
+
+    [JSInvokable]
+    public async Task UpdateAreaFromJs(double satPct, double brightPct)
+    {
+        if (_disposed) return;
+
+        _saturation = Math.Max(0, Math.Min(1, satPct));
+        _brightness = Math.Max(0, Math.Min(1, brightPct));
+        await UpdateColor();
+    }
+
+    [JSInvokable]
+    public async Task UpdateSliderFromJs(string type, double pct)
+    {
+        if (_disposed) return;
+
+        pct = Math.Max(0, Math.Min(1, pct));
+
+        if (type == "hue")
+        {
+            _hue = pct * 360;
+        }
+        else if (type == "alpha")
+        {
+            _alpha = pct;
+        }
+
+        await UpdateColor();
+    }
+
     private void ParseValue(string hex)
     {
         if (!ColorUtils.IsValidHex(hex)) return;
@@ -307,140 +380,6 @@
         }
 
         StateHasChanged();
-    }
-
-    // Area (Saturation/Brightness) handlers
-    private async Task HandleAreaPointerDown(PointerEventArgs e)
-    {
-        if (_activeAreaPointerId.HasValue) return; // Ignore multi-touch
-        _activeAreaPointerId = e.PointerId;
-        await UpdateAreaPosition(e);
-    }
-
-    private async Task HandleAreaPointerMove(PointerEventArgs e)
-    {
-        if (_activeAreaPointerId != e.PointerId) return;
-        await UpdateAreaPosition(e);
-    }
-
-    private void HandleAreaPointerUp(PointerEventArgs e)
-    {
-        if (_activeAreaPointerId == e.PointerId)
-        {
-            _activeAreaPointerId = null;
-        }
-    }
-
-    private void HandleAreaPointerLeave(PointerEventArgs e)
-    {
-        if (_activeAreaPointerId == e.PointerId)
-        {
-            _activeAreaPointerId = null;
-        }
-    }
-
-    private void HandleAreaPointerCancel(PointerEventArgs e)
-    {
-        if (_activeAreaPointerId == e.PointerId)
-        {
-            _activeAreaPointerId = null;
-        }
-    }
-
-    private async Task UpdateAreaPosition(PointerEventArgs e)
-    {
-        // Approximate position based on offset
-        _saturation = Math.Max(0, Math.Min(1, e.OffsetX / 248)); // Account for padding
-        _brightness = Math.Max(0, Math.Min(1, 1 - e.OffsetY / 150));
-        await UpdateColor();
-    }
-
-    // Hue slider handlers
-    private async Task HandleHuePointerDown(PointerEventArgs e)
-    {
-        if (_activeHuePointerId.HasValue) return; // Ignore multi-touch
-        _activeHuePointerId = e.PointerId;
-        await UpdateHuePosition(e);
-    }
-
-    private async Task HandleHuePointerMove(PointerEventArgs e)
-    {
-        if (_activeHuePointerId != e.PointerId) return;
-        await UpdateHuePosition(e);
-    }
-
-    private void HandleHuePointerUp(PointerEventArgs e)
-    {
-        if (_activeHuePointerId == e.PointerId)
-        {
-            _activeHuePointerId = null;
-        }
-    }
-
-    private void HandleHuePointerLeave(PointerEventArgs e)
-    {
-        if (_activeHuePointerId == e.PointerId)
-        {
-            _activeHuePointerId = null;
-        }
-    }
-
-    private void HandleHuePointerCancel(PointerEventArgs e)
-    {
-        if (_activeHuePointerId == e.PointerId)
-        {
-            _activeHuePointerId = null;
-        }
-    }
-
-    private async Task UpdateHuePosition(PointerEventArgs e)
-    {
-        _hue = Math.Max(0, Math.Min(360, (e.OffsetX / 248) * 360));
-        await UpdateColor();
-    }
-
-    // Alpha slider handlers
-    private async Task HandleAlphaPointerDown(PointerEventArgs e)
-    {
-        if (_activeAlphaPointerId.HasValue) return; // Ignore multi-touch
-        _activeAlphaPointerId = e.PointerId;
-        await UpdateAlphaPosition(e);
-    }
-
-    private async Task HandleAlphaPointerMove(PointerEventArgs e)
-    {
-        if (_activeAlphaPointerId != e.PointerId) return;
-        await UpdateAlphaPosition(e);
-    }
-
-    private void HandleAlphaPointerUp(PointerEventArgs e)
-    {
-        if (_activeAlphaPointerId == e.PointerId)
-        {
-            _activeAlphaPointerId = null;
-        }
-    }
-
-    private void HandleAlphaPointerLeave(PointerEventArgs e)
-    {
-        if (_activeAlphaPointerId == e.PointerId)
-        {
-            _activeAlphaPointerId = null;
-        }
-    }
-
-    private void HandleAlphaPointerCancel(PointerEventArgs e)
-    {
-        if (_activeAlphaPointerId == e.PointerId)
-        {
-            _activeAlphaPointerId = null;
-        }
-    }
-
-    private async Task UpdateAlphaPosition(PointerEventArgs e)
-    {
-        _alpha = Math.Max(0, Math.Min(1, e.OffsetX / 248));
-        await UpdateColor();
     }
 
     private async Task HandleHexInput(string? value)
@@ -494,4 +433,19 @@
         Disabled ? "opacity-50 pointer-events-none" : null,
         Class
     );
+
+    public async ValueTask DisposeAsync()
+    {
+        _disposed = true;
+        if (_jsModule != null && _jsInitialized)
+        {
+            try
+            {
+                await _jsModule.InvokeVoidAsync("dispose", _pickerId);
+                await _jsModule.DisposeAsync();
+            }
+            catch { }
+        }
+        _dotNetRef?.Dispose();
+    }
 }

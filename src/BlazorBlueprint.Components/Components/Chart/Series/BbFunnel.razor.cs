@@ -120,18 +120,16 @@ public partial class BbFunnel : SeriesBase
                 Show = ShowLabels,
                 Position = ToEChartsPosition(LabelPosition),
                 Formatter = LabelFormatter,
-                Color = LabelColor,
-                FontSize = LabelFontSize
+                Color = LabelColor ?? "var(--foreground)",
+                FontSize = LabelFontSize,
+                TextBorderWidth = 0
             },
             ItemStyle = new EChartsItemStyleOption
             {
                 BorderColor = "var(--background)",
                 BorderWidth = Gap > 0 ? Gap : null
             },
-            Emphasis = new EChartsEmphasisOption
-            {
-                Focus = "self"
-            }
+            Emphasis = new EChartsEmphasisOption { Disabled = true }
         };
 
         if (!string.IsNullOrEmpty(DataKey) && !string.IsNullOrEmpty(NameKey))

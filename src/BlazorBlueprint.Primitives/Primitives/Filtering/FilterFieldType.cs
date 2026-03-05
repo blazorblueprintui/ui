@@ -1,4 +1,4 @@
-namespace BlazorBlueprint.Components;
+namespace BlazorBlueprint.Primitives.Filtering;
 
 /// <summary>
 /// Defines the data type of a filter field, which determines available operators and value input.

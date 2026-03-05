@@ -74,10 +74,7 @@ public partial class BbScatter : SeriesBase
             Type = "scatter",
             Name = GetResolvedName(),
             SymbolSize = SymbolSize,
-            Emphasis = new EChartsEmphasisOption
-            {
-                Focus = "series"
-            }
+            Emphasis = new EChartsEmphasisOption { Disabled = true }
         };
 
         if (!string.IsNullOrEmpty(SymbolSizeKey))
@@ -117,7 +114,9 @@ public partial class BbScatter : SeriesBase
             {
                 Show = true,
                 Position = ToEChartsPosition(LabelPosition),
-                Formatter = LabelFormatter
+                Formatter = LabelFormatter,
+                Color = "var(--foreground)",
+                TextBorderWidth = 0
             };
         }
 

@@ -215,7 +215,8 @@ public partial class BbGauge : SeriesBase
                 FontSize = TitleFontSize,
                 Color = "var(--muted-foreground)",
                 OffsetCenter = [0, "90%"]
-            }
+            },
+            Emphasis = new EChartsEmphasisOption { Disabled = true }
         };
 
         if (ShowProgress)

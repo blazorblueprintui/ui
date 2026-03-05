@@ -1,3 +1,5 @@
+using BlazorBlueprint.Primitives.Filtering;
+
 namespace BlazorBlueprint.Primitives.DataGrid;
 
 /// <summary>
@@ -35,6 +37,13 @@ public class DataGridRequest
     /// Gets the cancellation token for the request.
     /// </summary>
     public CancellationToken CancellationToken { get; init; }
+
+    /// <summary>
+    /// Gets the active column filters, keyed by column ID.
+    /// Server-side providers should apply these as Where clauses.
+    /// </summary>
+    public IReadOnlyDictionary<string, FilterCondition> Filters { get; init; } =
+        new Dictionary<string, FilterCondition>();
 }
 
 /// <summary>

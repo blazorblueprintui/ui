@@ -158,6 +158,26 @@
     private FieldIdentifier _fieldIdentifier;
     private EditContext? _editContext;
 
+    // ShouldRender tracking fields
+    private TimeSpan? _lastValue;
+    private bool _lastIsOpen;
+    private bool _lastDisabled;
+
+    protected override bool ShouldRender()
+    {
+        if (_isOpen != _lastIsOpen
+            || Value != _lastValue
+            || Disabled != _lastDisabled)
+        {
+            _lastIsOpen = _isOpen;
+            _lastValue = Value;
+            _lastDisabled = Disabled;
+            return true;
+        }
+
+        return false;
+    }
+
     [CascadingParameter]
     private EditContext? CascadedEditContext { get; set; }
 
@@ -419,7 +439,7 @@
         Class
     );
 
-    private string ScrollButtonClass => ClassNames.cn(
+    private static string ScrollButtonClass => ClassNames.cn(
         "w-12 h-8 flex items-center justify-center",
         "hover:bg-accent hover:text-accent-foreground",
         "transition-colors",

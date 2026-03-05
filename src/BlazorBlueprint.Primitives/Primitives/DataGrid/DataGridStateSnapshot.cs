@@ -1,3 +1,5 @@
+using BlazorBlueprint.Primitives.Filtering;
+
 namespace BlazorBlueprint.Primitives.DataGrid;
 
 /// <summary>
@@ -21,6 +23,11 @@ public class DataGridStateSnapshot
     /// Gets or sets the page size.
     /// </summary>
     public int PageSize { get; set; }
+
+    /// <summary>
+    /// Gets or sets the column filter snapshots.
+    /// </summary>
+    public List<ColumnFilterSnapshot> ColumnFilters { get; set; } = new();
 }
 
 /// <summary>
@@ -63,4 +70,30 @@ public class ColumnStateSnapshot
     /// Gets or sets the display order of the column.
     /// </summary>
     public int Order { get; set; }
+}
+
+/// <summary>
+/// Serializable snapshot of a single column's filter state.
+/// </summary>
+public class ColumnFilterSnapshot
+{
+    /// <summary>
+    /// Gets or sets the column ID.
+    /// </summary>
+    public string ColumnId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the filter operator.
+    /// </summary>
+    public FilterOperator Operator { get; set; }
+
+    /// <summary>
+    /// Gets or sets the primary filter value.
+    /// </summary>
+    public object? Value { get; set; }
+
+    /// <summary>
+    /// Gets or sets the secondary filter value (for range operators).
+    /// </summary>
+    public object? ValueEnd { get; set; }
 }

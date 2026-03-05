@@ -19,22 +19,23 @@ Beautiful UI components for Blazor, built with accessibility in mind. Inspired b
 </p>
 
 <p align="center">
-  <strong>80 Styled Components</strong> · <strong>15 Headless Primitives</strong> · <strong>6 Chart Types</strong> · <strong>3,200+ Icons</strong>
+  <strong>100+ Components</strong> · <strong>11 Chart Types</strong> · <strong>3,200+ Icons</strong>
 </p>
 
-## What's New in v3
+## Table of Contents
 
-Blazor Blueprint v3 is a major release focused on developer experience, performance, and production readiness. [Full migration guide &rarr;](V3-MIGRATION-GUIDE.md)
-
-**New Components** — CommandDialog (command palette with built-in keyboard shortcuts), CheckboxGroup (managed collection with select-all), SplitButton (primary action + dropdown), AvatarGroup (overlapping layout with automatic borders), DialogService (programmatic confirm dialogs in a single async call), DrawerItem (styled mobile action buttons), and ResponsiveNavItems (define navigation once, render on desktop and mobile).
-
-**Simpler APIs** — Over 30 new convenience parameters eliminate common boilerplate patterns across the library. Button gets built-in `Loading` state. Alert gets `Dismissible`. Textarea gets `ShowCharacterCount`. Progress gets `ShowLabel`. Pagination and TimelineItem support shorthand modes that replace 10+ lines of nested markup with a single component. Select, Combobox, and MultiSelect share a unified `Options` API with full generic `TValue` support — no more string-only values or manual selector functions.
-
-**Performance** — Menu keyboard navigation, dialog escape handling, and text input events have moved from C# interop to JavaScript, eliminating unnecessary server round-trips and re-renders. Floating overlays stay mounted across open/close cycles via ForceMount, removing re-mount overhead. A new two-layer portal architecture ensures that opening a tooltip never causes your dialogs to re-render.
-
-**Architecture** — All components now use a `Bb` prefix (`<BbButton>`, `<BbDialog>`) to prevent naming collisions. Namespaces have been flattened from 10+ imports down to two. Chart components have been rebuilt on Apache ECharts with a clean, declarative composition API. Service registration is a single `AddBlazorBlueprintComponents()` call.
-
-> **Upgrading from v2?** See the [v3 Migration Guide](V3-MIGRATION-GUIDE.md) for step-by-step instructions and a complete checklist of breaking changes.
+- [Why Blazor Blueprint?](#why-blazor-blueprint)
+- [AI Integration](#ai-integration)
+- [Getting Started](#getting-started)
+- [Components](#components)
+- [Primitives](#primitives)
+- [Icons](#icons)
+- [Theming](#theming)
+- [Architecture](#architecture)
+- [Demo Applications](#demo-applications)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
 
 ## Why Blazor Blueprint?
 
@@ -45,6 +46,20 @@ Blazor developers lack a modern, design-system-first UI library equivalent to wh
 - **Built with Accessibility in Mind** — Includes ARIA attributes, keyboard support, and semantic HTML structure.
 - **Dark Mode Built-in** — Light and dark themes with CSS variables, ready out of the box.
 - **Two-Layer Architecture** — Use pre-styled components for speed, or headless primitives for full control.
+
+## AI Integration
+
+Blazor Blueprint ships with a built-in MCP server and llms.txt — so Claude, Cursor, Copilot, and Windsurf generate correct component code on the first try.
+
+- **MCP Server** — 11 tools give your AI structured access to every component, pattern, and API.
+- **llms.txt** — 100+ machine-optimized docs so any LLM can understand the library without hallucinating.
+- **Works Everywhere** — Claude Code, Cursor, GitHub Copilot, Windsurf — any MCP-compatible AI tool.
+
+```bash
+npx blazorblueprint add mcp-server
+```
+
+Learn more at [blazorblueprintui.com](https://blazorblueprintui.com).
 
 ## Getting Started
 
@@ -137,7 +152,21 @@ builder.Services.AddBlazorBlueprintComponents();
 
 ## Components
 
-Blazor Blueprint includes **80 styled components** organized into the following categories.
+Blazor Blueprint includes **87 styled components** organized into the following categories.
+
+### Enterprise Components
+
+Production-ready components for complex data-driven applications:
+
+| Component | Description |
+|-----------|-------------|
+| **DataGrid** | Full-featured data grid with multi-column sorting, per-column filtering, row selection, expandable rows, virtualization, context menus, pinned columns, column reordering/resizing/visibility, and state persistence. Supports `IQueryable`, `IEnumerable`, and `ItemsProvider` data sources. |
+| **Dynamic Form** | Schema-driven form rendering — define fields, validation rules, and layout in a schema object, and the component generates the complete form with appropriate inputs, conditional visibility, and error display. |
+| **Filter Builder** | Visual query builder for constructing complex filter expressions with AND/OR logic, nested condition groups, and type-aware operators. Pairs with DataGrid for interactive data exploration. |
+| **Form Wizard** | Multi-step form wizard with progress indicators, per-step validation, optional/skippable steps, and navigation controls. |
+| **Chart** | 11 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Pie, Radar, Radial Bar, Scatter) built on Apache ECharts with a declarative composition API and automatic theme integration. |
+| **Rich Text Editor** | WYSIWYG editor with formatting toolbar and HTML output. |
+| **Markdown Editor** | Toolbar formatting with split-pane live preview. |
 
 ### Form & Input
 
@@ -153,9 +182,18 @@ Blazor Blueprint includes **80 styled components** organized into the following 
 | **Currency Input** | Currency-formatted numeric input with locale support |
 | **Date Picker** | Date picker with popover calendar and formatting options |
 | **Date Range Picker** | Dual-calendar range selection |
+| **Dynamic Form** | Schema-driven form rendering — generates complete forms from a definition with automatic input selection, validation, conditional visibility, and layout customization |
 | **Field** | Combines label, control, description, and error for structured forms |
+| **Filter Builder** | Visual query builder for data filter expressions with AND/OR logic, condition groups, and two-way binding |
 | **File Upload** | Drag-and-drop file upload with preview |
-| **Form Field** | Pre-configured field wrappers (Input, Checkbox, Switch, RadioGroup, Select, Combobox, MultiSelect) with built-in label, description, and validation |
+| **Form Field Checkbox** | Pre-configured checkbox field with built-in label, description, and validation |
+| **Form Field Combobox** | Pre-configured combobox field with built-in label, description, and validation |
+| **Form Field Input** | Pre-configured input field with built-in label, description, and validation |
+| **Form Field MultiSelect** | Pre-configured multi-select field with built-in label, description, and validation |
+| **Form Field RadioGroup** | Pre-configured radio group field with built-in label, description, and validation |
+| **Form Field Select** | Pre-configured select field with built-in label, description, and validation |
+| **Form Field Switch** | Pre-configured switch field with built-in label, description, and validation |
+| **Form Wizard** | Multi-step form wizard with step navigation, progress indication, per-step validation, and optional/skippable steps |
 | **Input** | Text input with multiple types and validation |
 | **Input Field** | Typed input with automatic conversion, formatting, and validation for 15+ types |
 | **Input Group** | Enhanced inputs with icons, buttons, and addons |
@@ -172,6 +210,7 @@ Blazor Blueprint includes **80 styled components** organized into the following 
 | **Slider** | Range input with drag support |
 | **Split Button** | Primary action with dropdown for secondary actions |
 | **Switch** | Toggle switch with customizable thumb |
+| **Tag Input** | Inline tag/chip input for managing string lists with suggestions, validation, and customizable triggers |
 | **Textarea** | Multi-line text input with auto-sizing and character count |
 | **Time Picker** | Time selection with hour/minute controls |
 | **Toggle** | Two-state toggle button |
@@ -219,11 +258,13 @@ Blazor Blueprint includes **80 styled components** organized into the following 
 
 | Component            | Description                                                                                                        |
 |----------------------|--------------------------------------------------------------------------------------------------------------------|
-| **Chart**            | 6 chart types (Area, Bar, Line, Pie, Radar, Radial) with theme integration                                         |
+| **Chart**            | 11 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Pie, Radar, Radial Bar, Scatter) with theme integration |
+| **DataGrid**         | Enterprise data grid with sorting, per-column filtering, selection, expandable rows, row virtualization, context menu, pinned columns, column reordering/resizing/visibility, and state persistence |
 | **DataTable**        | Tables with sorting, filtering, pagination, and row selection                                                      |
 | **DataView**         | Displays data using templates in a grid or list layout with sorting, filtering, pagination, and infinite scrolling |
 | **Markdown Editor**  | Toolbar formatting with live preview                                                                               |
 | **Rich Text Editor** | WYSIWYG editor with formatting toolbar and HTML output                                                             |
+| **Tree View**        | Hierarchical data display with selection, checkboxes, lazy loading, drag-and-drop, search filtering, and data-driven or declarative modes |
 
 ### Display
 
@@ -241,7 +282,7 @@ Blazor Blueprint includes **80 styled components** organized into the following 
 
 ## Primitives
 
-Blazor Blueprint's **15 headless primitives** provide behavior, ARIA attributes, and keyboard support without any styling. They handle all the complex interaction logic — focus trapping, ARIA attributes, keyboard shortcuts, portal rendering — while giving you complete control over appearance.
+Blazor Blueprint's **17 headless primitives** provide behavior, ARIA attributes, and keyboard support without any styling. They handle all the complex interaction logic — focus trapping, ARIA attributes, keyboard shortcuts, portal rendering — while giving you complete control over appearance.
 
 Use primitives when you need full design freedom or are building a custom design system.
 
@@ -250,6 +291,7 @@ Use primitives when you need full design freedom or are building a custom design
 | **Accordion** | Expand/collapse logic, single/multiple mode, keyboard navigation |
 | **Checkbox** | Checked/unchecked/indeterminate state, ARIA attributes |
 | **Collapsible** | Open/close state, animated transitions |
+| **DataGrid** | Headless data grid with sorting, filtering, pagination, selection, expansion, and state management |
 | **Dialog** | Focus trapping, escape to close, scroll locking, portal rendering |
 | **Dropdown Menu** | Open/close, keyboard navigation, click-outside dismissal |
 | **Hover Card** | Hover intent, delay timing, portal positioning |
@@ -262,6 +304,7 @@ Use primitives when you need full design freedom or are building a custom design
 | **Table** | Sorting, pagination, row selection, keyboard row navigation |
 | **Tabs** | Tab selection, arrow key navigation, ARIA tab roles |
 | **Tooltip** | Hover/focus triggers, delay, portal positioning |
+| **Tree View** | Hierarchical expand/collapse, selection, checkbox state management |
 
 Primitives are completely unstyled — bring your own CSS, Tailwind classes, or inline styles:
 
@@ -369,7 +412,7 @@ If you create derivative works, you must include the contents of the [NOTICE](NO
 
 ## Acknowledgments
 
-Blazor Blueprint is inspired by [shadcn/ui](https://ui.shadcn.com/) and the design principles of [Radix UI](https://www.radix-ui.com/). Additional enhancement ideas from [jimmyps](https://github.com/jimmyps) fork. Blazor Blueprint is a complete reimplementation for Blazor/C# and contains no code from these projects.
+Blazor Blueprint is inspired by [shadcn/ui](https://ui.shadcn.com/) and the design principles of [Radix UI](https://www.radix-ui.com/). Blazor Blueprint is a complete reimplementation for Blazor/C# and contains no code from these projects.
 
 - [shadcn/ui](https://ui.shadcn.com/) — MIT License, Copyright (c) 2023 shadcn
 - [Radix UI](https://www.radix-ui.com/) — MIT License, Copyright (c) 2022-present WorkOS

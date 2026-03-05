@@ -72,42 +72,125 @@ function resolveValue(value, el) {
 }
 
 /**
- * Convert OKLCH or other CSS color formats to hex for ECharts.
- * Uses an offscreen canvas 2D context for color resolution.
- * @param {string} colorValue
- * @returns {string}
+ * Convert any CSS color expression to an rgb()/rgba() string that ECharts can parse.
+ *
+ * ECharts' internal zrender color parser understands hex, rgb/rgba, hsl/hsla, and
+ * named colours, but NOT CSS Level 4 formats such as oklch().
+ *
+ * ## Why pure math is used — and why it works in ALL browsers
+ *
+ * CSS custom properties (e.g. `--chart-1: oklch(81% .1 252)`) are returned
+ * verbatim by `getComputedStyle(el).getPropertyValue('--name')` in every browser
+ * (Chrome, Firefox, Safari, Edge, Brave, Opera…).  The browser never normalises
+ * or resolves a custom-property token value — it simply stores and returns the
+ * raw text.  Therefore the string we receive is always the original oklch()
+ * expression regardless of the browser, and we need to convert it ourselves.
+ *
+ * The `oklchToRgb` function below is self-contained JavaScript math (Oklab
+ * reference matrices).  It uses no browser API, so it produces identical results
+ * in Chrome, Firefox, Safari, and all Chromium forks.
+ *
+ * Additional note: Chrome 111+ also stopped normalising oklch when it appears as
+ * a *resolved* non-custom value (e.g. reading back `element.style.color`).
+ * Firefox and Safari still normalise those to rgb().  Neither behaviour affects
+ * us because we only read from custom properties.
+ *
+ * Other CSS Level 4 expressions (e.g. color-mix()) that do not use oklch are
+ * attempted via a DOM fallback; if that also returns oklch (Chrome behaviour),
+ * the result is passed to the math converter.
+ *
+ * @param {string} colorValue - Any CSS colour string
+ * @returns {string} - ECharts-compatible colour string
  */
 function convertToUsableColor(colorValue) {
-  // If already hex, return as-is
+  // Fast-path: already in a format ECharts understands
   if (/^#[0-9a-fA-F]{3,8}$/.test(colorValue)) return colorValue;
+  if (/^rgba?\(/.test(colorValue)) return colorValue;
+  if (/^hsla?\(/.test(colorValue)) return colorValue;
 
-  // If it looks like a bare OKLCH value (without the oklch() wrapper),
-  // try wrapping it
-  if (/^\d/.test(colorValue) && colorValue.includes(' ')) {
+  // Handle bare OKLCH token without wrapper (e.g. "0.81 0.10 252")
+  if (/^\d/.test(colorValue) && colorValue.includes(' ') && !colorValue.includes('(')) {
     colorValue = `oklch(${colorValue})`;
   }
 
-  // Use canvas 2D context for color conversion
-  const ctx = getCanvasContext();
-  ctx.fillStyle = '#000000'; // Reset
-  ctx.fillStyle = colorValue;
-  return ctx.fillStyle; // Returns as #rrggbb
+  // Convert oklch() using self-contained math — browser APIs are unreliable here
+  if (/^oklch\(/i.test(colorValue)) {
+    const rgb = oklchToRgb(colorValue);
+    if (rgb) return rgb;
+  }
+
+  // Fallback: DOM-based resolution for other expressions (color-mix, etc.)
+  const tmp = document.createElement('div');
+  tmp.style.color = colorValue;
+  document.documentElement.appendChild(tmp);
+  const resolved = getComputedStyle(tmp).color;
+  document.documentElement.removeChild(tmp);
+
+  // If DOM returned a parseable non-oklch value, use it
+  if (resolved && resolved !== 'rgba(0, 0, 0, 0)' && !/^oklch\(/i.test(resolved)) {
+    return resolved;
+  }
+  // If DOM still returned oklch (e.g. color-mix with oklch inputs), try converting it
+  if (resolved && /^oklch\(/i.test(resolved)) {
+    const rgb = oklchToRgb(resolved);
+    if (rgb) return rgb;
+  }
+
+  return colorValue;
 }
 
-/** @type {CanvasRenderingContext2D|null} */
-let canvasCtx = null;
-
 /**
- * @returns {CanvasRenderingContext2D}
+ * Convert an oklch() colour string to an rgb() string using self-contained math.
+ * Implements the official Oklab/OKLCH → sRGB conversion matrices.
+ *
+ * This function is entirely browser-agnostic — it performs pure arithmetic with
+ * no browser API calls, so it produces identical results in Chrome, Firefox,
+ * Safari, Edge, Brave, and any other JavaScript environment.
+ *
+ * Handles both "oklch(L C H)" (L as 0–1) and "oklch(L% C H)" (L as 0–100%).
+ * Accepts both space-separated and comma-separated component syntax.
+ * Optionally ignores a trailing "/ alpha" component.
+ *
+ * @param {string} oklchStr - e.g. "oklch(0.42 0.18 266)" or "oklch(42% .18 266)"
+ * @returns {string|null} - rgb() string, or null if the input could not be parsed
  */
-function getCanvasContext() {
-  if (!canvasCtx) {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1;
-    canvas.height = 1;
-    canvasCtx = canvas.getContext('2d');
-  }
-  return canvasCtx;
+function oklchToRgb(oklchStr) {
+  const m = oklchStr.match(
+    /oklch\(\s*([\d.]+)(%?)\s*,?\s*([\d.]+)\s*,?\s*([\d.]+)\s*(?:\/\s*[\d.]+%?\s*)?\)/i
+  );
+  if (!m) return null;
+
+  let L = parseFloat(m[1]);
+  if (m[2] === '%') L /= 100;       // percentage form → 0–1
+  const C = parseFloat(m[3]);
+  const H = parseFloat(m[4]);
+
+  // 1. oklch → oklab
+  const hRad = (H * Math.PI) / 180;
+  const a = C * Math.cos(hRad);
+  const b = C * Math.sin(hRad);
+
+  // 2. oklab → linear sRGB  (Oklab reference matrix)
+  const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+  const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+  const s_ = L - 0.0894841775 * a - 1.2914855480 * b;
+
+  const l3 = l_ * l_ * l_;
+  const m3 = m_ * m_ * m_;
+  const s3 = s_ * s_ * s_;
+
+  const rLin = +4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3;
+  const gLin = -1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3;
+  const bLin = -0.0041960863 * l3 - 0.7034186147 * m3 + 1.7076147010 * s3;
+
+  // 3. linear sRGB → sRGB gamma + clamp to [0, 255]
+  const toSrgbByte = (linear) => {
+    const v = Math.max(0, Math.min(1, linear));
+    const gamma = v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055;
+    return Math.round(gamma * 255);
+  };
+
+  return `rgb(${toSrgbByte(rLin)}, ${toSrgbByte(gLin)}, ${toSrgbByte(bLin)})`;
 }
 
 /**

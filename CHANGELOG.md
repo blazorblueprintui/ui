@@ -24,6 +24,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-04
+
+### Added
+
+- **BbDataGrid: Per-Column Filtering** — Filter icon on column headers opens a popover with operator dropdown and type-aware value inputs (text, number, date range, enum multi-select, boolean). Auto-infers filter type from `PropertyColumn<TProp>`; `TemplateColumn` supports explicit `FilterBy`/`FilterType`. Works with `IQueryable`, `IEnumerable`, and `ItemsProvider` data sources.
+- **BbDataGrid: Row Click & Context Menu** — `OnRowClick` callback and `RowContextMenu` render fragment. Capture-phase click interceptor prevents interactive elements (buttons, links, inputs) inside cells from triggering row click/selection.
+- **BbDataGrid: ItemKey** — `ItemKey` parameter for stable row identity tracking.
+- **BbFilterBuilder: Customizable Button Text** — `ApplyButtonText` and `ClearButtonText` parameters for localizable filter builder buttons.
+
+### Fixed
+
+- **BbColorPicker**: WASM drag jitter — moved pointer event handling to native JS interop (`color-picker.js`) with `setPointerCapture`, eliminating dropped events during fast cursor movement.
+- **BbSidebarProvider**: WASM sluggishness — set `IsFixed="true"` on `CascadingValue` to prevent unnecessary parameter tree walks.
+- **BbCollapsible**: Added `ShouldRender` guard to prevent unchanged collapsible sections from re-rendering when a sibling toggles.
+- **BbCombobox**: Set `IsFixed="true"` on `CascadingValue` elements and added `ShouldRender` guard to skip redundant re-renders.
+- **BbMultiSelect**: Set `IsFixed="true"` on `CascadingValue` elements to eliminate unnecessary parameter tree walks.
+- **BbDropdownMenuContent** (Primitives): Set `IsFixed="true"` on `CascadingValue` elements.
+- **BbDropdownMenuContent** (Components): Changed `ForceMount` default from `true` to `false` so menu content only exists in the DOM when open.
+- **BbPopoverContent**: Exposed `ForceMount` parameter (was hardcoded `true`), default `false`.
+- **BbTimePicker**: Added `ShouldRender` guard and made `ScrollButtonClass` static.
+- **BbTreeItem** (Primitives): Set `IsFixed="true"` on `CascadingValue`.
+
+---
+
 ## 2026-03-02
 
 ### Added

@@ -1,4 +1,4 @@
-namespace BlazorBlueprint.Components;
+namespace BlazorBlueprint.Primitives.Filtering;
 
 /// <summary>
 /// Provides mappings between <see cref="FilterFieldType"/> and available <see cref="FilterOperator"/> values,

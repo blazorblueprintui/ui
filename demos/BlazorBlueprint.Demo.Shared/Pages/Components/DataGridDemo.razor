@@ -72,6 +72,46 @@
         <CodeBlock Source="Components/DataGrid/multi-sort.txt" />
     </div>
 
+    <!-- ── Column Filtering ──────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Column Filtering</h2>
+            <p class="text-sm text-muted-foreground">
+                Add <code class="bg-muted px-1 py-0.5 rounded">Filterable="true"</code> to property columns to enable
+                per-column filtering. A filter icon appears in the column header — hover to reveal it, or it stays
+                visible when a filter is active. Click the icon to open a popover with operator and value inputs.
+                Filter types are auto-inferred from the property type (text, number, date, boolean, enum).
+            </p>
+        </div>
+        @if (_gridState.Filtering.HasFilters)
+        {
+            <div class="flex items-center gap-2">
+                <BbBadge Variant="BadgeVariant.Secondary">
+                    @_gridState.Filtering.ActiveFilterCount active filter@(_gridState.Filtering.ActiveFilterCount != 1 ? "s" : "")
+                </BbBadge>
+            </div>
+        }
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                   @bind-State="_gridState" Resizable="true">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Filterable Width="200px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable Filterable Width="250px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Filterable
+                    FilterType="FilterFieldType.Enum"
+                    FilterOptions="@(new[] { "Engineering", "Sales", "Marketing", "Support", "HR", "Finance", "Operations", "Product" }.Select(d => new SelectOption<string>(d, d)))"
+                    Width="150px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable Filterable Width="100px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Filterable Width="130px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Sortable Filterable
+                    FilterType="FilterFieldType.Enum"
+                    FilterOptions="@(new[] { "Active", "Inactive", "Pending", "Suspended" }.Select(s => new SelectOption<string>(s, s)))"
+                    Width="120px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="bool" Property="@(p => p.IsActive)" Title="Active" Sortable Filterable Width="100px" />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/column-filtering.txt" />
+    </div>
+
     <!-- ── Row Selection ───────────────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -192,6 +232,417 @@
             </DetailTemplate>
         </BbDataGrid>
         <CodeBlock Source="Components/DataGrid/expandable-nested-table.txt" />
+    </div>
+
+    <!-- ── Row Click & Context Menu ─────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Row Click & Context Menu</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">OnRowClick</code> to respond to row clicks and
+                <code class="bg-muted px-1 py-0.5 rounded">RowContextMenu</code> to show a custom context menu on right-click.
+                The context provides <code class="bg-muted px-1 py-0.5 rounded">CopyToClipboardAsync</code> for clipboard access,
+                <code class="bg-muted px-1 py-0.5 rounded">VisibleColumns</code> for column-aware copying, and built-in
+                <code class="bg-muted px-1 py-0.5 rounded">FormatRow</code> / <code class="bg-muted px-1 py-0.5 rounded">FormatRows</code>
+                helpers that automatically respect column visibility and ordering.
+            </p>
+        </div>
+        @if (!string.IsNullOrEmpty(clickedRowMessage))
+        {
+            <BbAlert Variant="AlertVariant.Default" Class="transition-all">
+                <BbAlertDescription>@clickedRowMessage</BbAlertDescription>
+            </BbAlert>
+        }
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                    OnRowClick="HandleDemoRowClick">
+            <RowContextMenu Context="menu">
+                <BbContextMenuItem OnClick="@(async () => await CopyWithFeedback(menu, menu.Item.Name))">
+                    Copy Name
+                </BbContextMenuItem>
+                <BbContextMenuItem OnClick="@(async () => await CopyWithFeedback(menu, menu.Item.Email))">
+                    Copy Email
+                </BbContextMenuItem>
+                <BbContextMenuSeparator />
+                <BbContextMenuItem OnClick="@(async () => await CopyWithFeedback(menu, menu.FormatRow(menu.Item)))">
+                    Copy Row
+                </BbContextMenuItem>
+            </RowContextMenu>
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/row-click-context-menu.txt" />
+    </div>
+
+    <!-- ── Resizable Columns ────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Resizable Columns</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">Resizable="true"</code> to enable column resizing.
+                Drag the right edge of any column header to resize. Uses <code class="bg-muted px-1 py-0.5 rounded">table-layout: fixed</code>
+                for precise width control. Individual columns can opt out with <code class="bg-muted px-1 py-0.5 rounded">Resizable="false"</code>.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5" Resizable="true">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable NoWrap Width="200px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable Width="250px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Width="150px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" Width="150px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Width="120px" />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/resizable-columns.txt" />
+    </div>
+
+    <!-- ── Reorderable Columns ──────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Reorderable Columns</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">Reorderable="true"</code> to enable drag-and-drop
+                column reordering. Drag a column header to move it to a new position. A visual indicator shows
+                the drop target. Individual columns can opt out with <code class="bg-muted px-1 py-0.5 rounded">Reorderable="false"</code>.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5" Reorderable="true">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/reorderable-columns.txt" />
+    </div>
+
+    <!-- ── Column Visibility ──────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Column Visibility</h2>
+            <p class="text-sm text-muted-foreground">
+                Use the <code class="bg-muted px-1 py-0.5 rounded">Toolbar</code> parameter with
+                <code class="bg-muted px-1 py-0.5 rounded">BbDataGridColumnVisibility</code> to add a
+                dropdown that lets users show or hide columns. Columns with <code class="bg-muted px-1 py-0.5 rounded">Hideable="false"</code>
+                are excluded from the toggle.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
+            <Toolbar>
+                <div class="flex items-center gap-2">
+                    <BbDataGridColumnVisibility TData="Person" />
+                </div>
+            </Toolbar>
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Hideable="false" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/column-visibility.txt" />
+    </div>
+
+    <!-- ── Pinned Columns ──────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Pinned Columns</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left"</code> or
+                <code class="bg-muted px-1 py-0.5 rounded">Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Right"</code> on any column
+                to pin it to the edge of the scrollable viewport using CSS
+                <code class="bg-muted px-1 py-0.5 rounded">position: sticky</code>.
+                Offsets are computed automatically. Scroll horizontally to see pinned columns stay in place.
+            </p>
+        </div>
+        <div style="max-width: 700px; overflow: auto;">
+            <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                       SelectionMode="DataTableSelectionMode.Multiple">
+                <Columns>
+                    <BbDataGridSelectColumn TData="Person" Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)"
+                        Sortable Width="180px" Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)"
+                        Width="220px" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)"
+                        Width="180px" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)"
+                        Width="160px" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)"
+                        Width="100px" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)"
+                        Format="C0" Width="140px" />
+                    <BbDataGridTemplateColumn TData="Person" Title="Actions" Width="200px"
+                        Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Right"
+                        CellClass="text-right">
+                        <HeaderTemplate>
+                            <span class="w-full text-right">Actions</span>
+                        </HeaderTemplate>
+                        <ChildContent Context="person">
+                            <div @onclick:stopPropagation="true" class="inline-flex justify-end w-full">
+                                <BbSplitButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+                                    <ChildContent>Edit</ChildContent>
+                                    <DropdownContent>
+                                        <BbSplitButtonItem>Duplicate</BbSplitButtonItem>
+                                        <BbSplitButtonItem>Archive</BbSplitButtonItem>
+                                        <BbSplitButtonSeparator />
+                                        <BbSplitButtonItem>Delete</BbSplitButtonItem>
+                                    </DropdownContent>
+                                </BbSplitButton>
+                            </div>
+                        </ChildContent>
+                    </BbDataGridTemplateColumn>
+                </Columns>
+            </BbDataGrid>
+        </div>
+        <CodeBlock Source="Components/DataGrid/pinned-columns.txt" />
+    </div>
+
+    <!-- ── Async Data Loading ──────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Async Data Loading (ItemsProvider)</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">ItemsProvider</code> for server-side data fetching.
+                The grid passes sort and pagination parameters and the provider returns the data.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" ItemsProvider="@LoadPeopleAsync" InitialPageSize="5">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/async-loading.txt" />
+    </div>
+
+    <!-- ── Virtualization ──────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Virtualization (1000 rows)</h2>
+            <p class="text-sm text-muted-foreground">
+                Enable <code class="bg-muted px-1 py-0.5 rounded">Virtualize="true"</code> for smooth
+                rendering of large datasets. Only visible rows are rendered in the DOM.
+                Use <code class="bg-muted px-1 py-0.5 rounded">StickyHeader="true"</code> to keep the header
+                visible while scrolling.
+            </p>
+        </div>
+        <div style="height: 400px; overflow: auto;">
+            <BbDataGrid TData="Person" Items="@manyPeople" ShowPagination="false"
+                       Virtualize="true" ItemSize="48" StickyHeader="true">
+                <Columns>
+                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Id)" Title="#" Width="60px" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+                </Columns>
+            </BbDataGrid>
+        </div>
+        <CodeBlock Source="Components/DataGrid/virtualization.txt" />
+    </div>
+
+    <!-- ── Stress Test: 100,000 Rows ─────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Stress Test (100,000 rows)</h2>
+            <p class="text-sm text-muted-foreground">
+                Push the grid to its limits with 100,000 rows. Data is generated on-demand to avoid slowing
+                down page load. Virtualization renders only the visible rows, keeping the DOM lightweight
+                and scrolling smooth even at this scale. Multi-column sorting, selection, and column
+                features all remain fully functional.
+            </p>
+        </div>
+        @if (!stressTestLoaded)
+        {
+            <BbButton Variant="ButtonVariant.Outline" OnClick="@LoadStressTestData" Disabled="@stressTestLoading">
+                @if (stressTestLoading)
+                {
+                    <span>Generating 100,000 records...</span>
+                }
+                else
+                {
+                    <span>Load 100,000 Records</span>
+                }
+            </BbButton>
+        }
+        else
+        {
+            <div class="text-sm text-muted-foreground">
+                <BbBadge>@stressTestPeople.Count.ToString("N0") rows loaded</BbBadge>
+            </div>
+            <div style="height: 500px; overflow: auto;">
+                <BbDataGrid TData="Person" Items="@stressTestPeople" ShowPagination="false"
+                           Virtualize="true" ItemSize="48" StickyHeader="true"
+                           SelectionMode="DataTableSelectionMode.Multiple"
+                           Resizable="true" Reorderable="true">
+                    <Columns>
+                        <BbDataGridSelectColumn TData="Person" Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Id)" Title="#" Width="80px" Sortable Reorderable="false" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Width="200px" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Width="250px" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable Width="80px" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" Sortable Width="150px" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Width="150px" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Width="120px" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Sortable Width="100px" />
+                        <BbDataGridTemplateColumn TData="Person" Title="Active" Sortable SortBy="@(p => (object)p.IsActive)" Width="80px">
+                            @if (context.IsActive)
+                            {
+                                <BbBadge Variant="BadgeVariant.Default">Yes</BbBadge>
+                            }
+                            else
+                            {
+                                <BbBadge Variant="BadgeVariant.Secondary">No</BbBadge>
+                            }
+                        </BbDataGridTemplateColumn>
+                    </Columns>
+                </BbDataGrid>
+            </div>
+            <CodeBlock Source="Components/DataGrid/stress-test.txt" />
+        }
+    </div>
+
+    <!-- ── State Persistence ──────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">State Persistence</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">Save()</code> to capture a serializable
+                snapshot of sort order, column widths, column visibility, and page size.
+                Use <code class="bg-muted px-1 py-0.5 rounded">Restore(snapshot)</code> to reapply it.
+                Snapshots are plain JSON-serializable objects — store them in localStorage, a database, or user preferences.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                   @bind-State="persistenceState"
+                   Resizable="true" Reorderable="true">
+            <Toolbar>
+                <div class="flex items-center gap-2">
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="SaveGridState">
+                        Save State
+                    </BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="RestoreGridState"
+                              Disabled="@(!hasSavedState)">
+                        Restore State
+                    </BbButton>
+                    <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="ResetGridState">
+                        Reset
+                    </BbButton>
+                </div>
+            </Toolbar>
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Width="180px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Width="150px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Width="120px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable Width="80px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Width="120px" />
+            </Columns>
+        </BbDataGrid>
+        @if (hasSavedState)
+        {
+            <p class="text-xs text-muted-foreground">State saved to localStorage.</p>
+        }
+        <CodeBlock Source="Components/DataGrid/state-persistence.txt" />
+    </div>
+
+    <!-- ── All Features Combined ──────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">All Features Combined</h2>
+            <p class="text-sm text-muted-foreground">
+                Every DataGrid feature working together: sorting, column filtering, row selection, expandable rows,
+                column visibility, resize, reorder, pinned columns, row click, and context menu.
+                Right-click a row to copy data — hidden columns are excluded automatically.
+                Select multiple rows and use "Copy Selected Rows" from the context menu.
+                Scroll horizontally to see pinned columns stick in place.
+            </p>
+        </div>
+        @if (!string.IsNullOrEmpty(allFeaturesMessage))
+        {
+            <BbAlert Variant="AlertVariant.Default" Class="transition-all">
+                <BbAlertDescription>@allFeaturesMessage</BbAlertDescription>
+            </BbAlert>
+        }
+        <div style="max-width: 900px; overflow: auto;">
+            <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                       Resizable="true" Reorderable="true"
+                       SelectionMode="DataTableSelectionMode.Multiple"
+                       OnRowClick="HandleAllFeaturesRowClick">
+                <RowContextMenu Context="menu">
+                    <BbContextMenuItem OnClick="@(async () => await CopyAllFeatures(menu, menu.Item.Name))">
+                        Copy Name
+                    </BbContextMenuItem>
+                    <BbContextMenuItem OnClick="@(async () => await CopyAllFeatures(menu, menu.Item.Email))">
+                        Copy Email
+                    </BbContextMenuItem>
+                    <BbContextMenuSeparator />
+                    <BbContextMenuItem OnClick="@(async () => await CopyAllFeatures(menu, menu.FormatRow(menu.Item)))">
+                        Copy Row
+                    </BbContextMenuItem>
+                    @if (menu.SelectedItems.Count > 1)
+                    {
+                        <BbContextMenuItem OnClick="@(async () => await CopyAllFeatures(menu, menu.FormatRows(menu.SelectedItems)))">
+                            Copy @menu.SelectedItems.Count Selected Rows
+                        </BbContextMenuItem>
+                    }
+                </RowContextMenu>
+                <Toolbar>
+                    <div class="flex items-center gap-2">
+                        <BbDataGridColumnVisibility TData="Person" />
+                    </div>
+                </Toolbar>
+                <Columns>
+                    <BbDataGridSelectColumn TData="Person" Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left" />
+                    <BbDataGridExpandColumn TData="Person" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Filterable Hideable="false" Width="200px"
+                        Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable Filterable Width="250px" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Filterable
+                        FilterType="FilterFieldType.Enum"
+                        FilterOptions="@(new[] { "Engineering", "Sales", "Marketing", "Support", "HR", "Finance", "Operations", "Product" }.Select(d => new SelectOption<string>(d, d)))"
+                        Width="150px" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" Width="150px" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Filterable Width="120px" />
+                    <BbDataGridTemplateColumn TData="Person" Title="Actions" Width="120px"
+                        Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Right"
+                        Hideable="false" Resizable="false" Reorderable="false">
+                        <ChildContent Context="person">
+                            <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small">Edit</BbButton>
+                        </ChildContent>
+                    </BbDataGridTemplateColumn>
+                </Columns>
+                <DetailTemplate>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="font-medium text-muted-foreground">Age:</span>
+                            <span class="ml-2">@context.Age</span>
+                        </div>
+                        <div>
+                            <span class="font-medium text-muted-foreground">Status:</span>
+                            <span class="ml-2">@context.Status</span>
+                        </div>
+                        <div>
+                            <span class="font-medium text-muted-foreground">Active:</span>
+                            <span class="ml-2">@(context.IsActive ? "Yes" : "No")</span>
+                        </div>
+                        <div>
+                            <span class="font-medium text-muted-foreground">Join Date:</span>
+                            <span class="ml-2">@context.JoinDate.ToShortDateString()</span>
+                        </div>
+                    </div>
+                </DetailTemplate>
+            </BbDataGrid>
+        </div>
+        <CodeBlock Source="Components/DataGrid/all-column-features.txt" />
     </div>
 
     <!-- ── Custom Cell Templates ───────────────────────────────────── -->
@@ -413,264 +864,6 @@
         </div>
     </div>
 
-    <!-- ── Async Data Loading ──────────────────────────────────────── -->
-    <div class="space-y-4">
-        <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Async Data Loading (ItemsProvider)</h2>
-            <p class="text-sm text-muted-foreground">
-                Use <code class="bg-muted px-1 py-0.5 rounded">ItemsProvider</code> for server-side data fetching.
-                The grid passes sort and pagination parameters and the provider returns the data.
-            </p>
-        </div>
-        <BbDataGrid TData="Person" ItemsProvider="@LoadPeopleAsync" InitialPageSize="5">
-            <Columns>
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" />
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
-                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable />
-            </Columns>
-        </BbDataGrid>
-        <CodeBlock Source="Components/DataGrid/async-loading.txt" />
-    </div>
-
-    <!-- ── Virtualization ──────────────────────────────────────────── -->
-    <div class="space-y-4">
-        <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Virtualization (1000 rows)</h2>
-            <p class="text-sm text-muted-foreground">
-                Enable <code class="bg-muted px-1 py-0.5 rounded">Virtualize="true"</code> for smooth
-                rendering of large datasets. Only visible rows are rendered in the DOM.
-                Use <code class="bg-muted px-1 py-0.5 rounded">StickyHeader="true"</code> to keep the header
-                visible while scrolling.
-            </p>
-        </div>
-        <div style="height: 400px; overflow: auto;">
-            <BbDataGrid TData="Person" Items="@manyPeople" ShowPagination="false"
-                       Virtualize="true" ItemSize="48" StickyHeader="true">
-                <Columns>
-                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Id)" Title="#" Width="60px" />
-                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
-                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" />
-                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
-                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
-                </Columns>
-            </BbDataGrid>
-        </div>
-        <CodeBlock Source="Components/DataGrid/virtualization.txt" />
-    </div>
-
-    <!-- ── Stress Test: 100,000 Rows ─────────────────────────────── -->
-    <div class="space-y-4">
-        <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Stress Test (100,000 rows)</h2>
-            <p class="text-sm text-muted-foreground">
-                Push the grid to its limits with 100,000 rows. Data is generated on-demand to avoid slowing
-                down page load. Virtualization renders only the visible rows, keeping the DOM lightweight
-                and scrolling smooth even at this scale. Multi-column sorting, selection, and column
-                features all remain fully functional.
-            </p>
-        </div>
-        @if (!stressTestLoaded)
-        {
-            <BbButton Variant="ButtonVariant.Outline" OnClick="@LoadStressTestData" Disabled="@stressTestLoading">
-                @if (stressTestLoading)
-                {
-                    <span>Generating 100,000 records...</span>
-                }
-                else
-                {
-                    <span>Load 100,000 Records</span>
-                }
-            </BbButton>
-        }
-        else
-        {
-            <div class="text-sm text-muted-foreground">
-                <BbBadge>@stressTestPeople.Count.ToString("N0") rows loaded</BbBadge>
-            </div>
-            <div style="height: 500px; overflow: auto;">
-                <BbDataGrid TData="Person" Items="@stressTestPeople" ShowPagination="false"
-                           Virtualize="true" ItemSize="48" StickyHeader="true"
-                           SelectionMode="DataTableSelectionMode.Multiple"
-                           Resizable="true" Reorderable="true">
-                    <Columns>
-                        <BbDataGridSelectColumn TData="Person" Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left" />
-                        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Id)" Title="#" Width="80px" Sortable Reorderable="false" />
-                        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Width="200px" />
-                        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Width="250px" />
-                        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable Width="80px" />
-                        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" Sortable Width="150px" />
-                        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Width="150px" />
-                        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Width="120px" />
-                        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Sortable Width="100px" />
-                        <BbDataGridTemplateColumn TData="Person" Title="Active" Sortable SortBy="@(p => (object)p.IsActive)" Width="80px">
-                            @if (context.IsActive)
-                            {
-                                <BbBadge Variant="BadgeVariant.Default">Yes</BbBadge>
-                            }
-                            else
-                            {
-                                <BbBadge Variant="BadgeVariant.Secondary">No</BbBadge>
-                            }
-                        </BbDataGridTemplateColumn>
-                    </Columns>
-                </BbDataGrid>
-            </div>
-            <CodeBlock Source="Components/DataGrid/stress-test.txt" />
-        }
-    </div>
-
-    <!-- ── Column Visibility ──────────────────────────────────────── -->
-    <div class="space-y-4">
-        <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Column Visibility</h2>
-            <p class="text-sm text-muted-foreground">
-                Use the <code class="bg-muted px-1 py-0.5 rounded">Toolbar</code> parameter with
-                <code class="bg-muted px-1 py-0.5 rounded">BbDataGridColumnVisibility</code> to add a
-                dropdown that lets users show or hide columns. Columns with <code class="bg-muted px-1 py-0.5 rounded">Hideable="false"</code>
-                are excluded from the toggle.
-            </p>
-        </div>
-        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
-            <Toolbar>
-                <div class="flex items-center gap-2">
-                    <BbDataGridColumnVisibility TData="Person" />
-                </div>
-            </Toolbar>
-            <Columns>
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Hideable="false" />
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable />
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" />
-                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
-            </Columns>
-        </BbDataGrid>
-        <CodeBlock Source="Components/DataGrid/column-visibility.txt" />
-    </div>
-
-    <!-- ── Resizable Columns ────────────────────────────────────────── -->
-    <div class="space-y-4">
-        <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Resizable Columns</h2>
-            <p class="text-sm text-muted-foreground">
-                Set <code class="bg-muted px-1 py-0.5 rounded">Resizable="true"</code> to enable column resizing.
-                Drag the right edge of any column header to resize. Uses <code class="bg-muted px-1 py-0.5 rounded">table-layout: fixed</code>
-                for precise width control. Individual columns can opt out with <code class="bg-muted px-1 py-0.5 rounded">Resizable="false"</code>.
-            </p>
-        </div>
-        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5" Resizable="true">
-            <Columns>
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable NoWrap Width="200px" />
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable Width="250px" />
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Width="150px" />
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" Width="150px" />
-                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Width="120px" />
-            </Columns>
-        </BbDataGrid>
-        <CodeBlock Source="Components/DataGrid/resizable-columns.txt" />
-    </div>
-
-    <!-- ── Reorderable Columns ──────────────────────────────────────── -->
-    <div class="space-y-4">
-        <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Reorderable Columns</h2>
-            <p class="text-sm text-muted-foreground">
-                Set <code class="bg-muted px-1 py-0.5 rounded">Reorderable="true"</code> to enable drag-and-drop
-                column reordering. Drag a column header to move it to a new position. A visual indicator shows
-                the drop target. Individual columns can opt out with <code class="bg-muted px-1 py-0.5 rounded">Reorderable="false"</code>.
-            </p>
-        </div>
-        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5" Reorderable="true">
-            <Columns>
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable />
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" />
-                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
-            </Columns>
-        </BbDataGrid>
-        <CodeBlock Source="Components/DataGrid/reorderable-columns.txt" />
-    </div>
-
-    <!-- ── Pinned Columns ──────────────────────────────────────────── -->
-    <div class="space-y-4">
-        <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Pinned Columns</h2>
-            <p class="text-sm text-muted-foreground">
-                Set <code class="bg-muted px-1 py-0.5 rounded">Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left"</code> or
-                <code class="bg-muted px-1 py-0.5 rounded">Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Right"</code> on any column
-                to pin it to the edge of the scrollable viewport using CSS
-                <code class="bg-muted px-1 py-0.5 rounded">position: sticky</code>.
-                Offsets are computed automatically. Scroll horizontally to see pinned columns stay in place.
-            </p>
-        </div>
-        <div style="max-width: 700px; overflow: auto;">
-            <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
-                       SelectionMode="DataTableSelectionMode.Multiple">
-                <Columns>
-                    <BbDataGridSelectColumn TData="Person" Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left" />
-                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)"
-                        Sortable Width="180px" Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left" />
-                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)"
-                        Width="220px" />
-                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)"
-                        Width="180px" />
-                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)"
-                        Width="160px" />
-                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)"
-                        Width="100px" />
-                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)"
-                        Format="C0" Width="140px" />
-                    <BbDataGridTemplateColumn TData="Person" Title="Actions" Width="200px"
-                        Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Right">
-                        <ChildContent Context="person">
-                            <div @onclick:stopPropagation="true">
-                                <BbSplitButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
-                                    <ChildContent>Edit</ChildContent>
-                                    <DropdownContent>
-                                        <BbSplitButtonItem>Duplicate</BbSplitButtonItem>
-                                        <BbSplitButtonItem>Archive</BbSplitButtonItem>
-                                        <BbSplitButtonSeparator />
-                                        <BbSplitButtonItem>Delete</BbSplitButtonItem>
-                                    </DropdownContent>
-                                </BbSplitButton>
-                            </div>
-                        </ChildContent>
-                    </BbDataGridTemplateColumn>
-                </Columns>
-            </BbDataGrid>
-        </div>
-        <CodeBlock Source="Components/DataGrid/pinned-columns.txt" />
-    </div>
-
-    <!-- ── All Column Features Combined ─────────────────────────────── -->
-    <div class="space-y-4">
-        <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">All Column Features Combined</h2>
-            <p class="text-sm text-muted-foreground">
-                Column visibility, resize, reorder, sorting, and selection all working together.
-            </p>
-        </div>
-        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
-                   Resizable="true" Reorderable="true"
-                   SelectionMode="DataTableSelectionMode.Multiple">
-            <Toolbar>
-                <div class="flex items-center gap-2">
-                    <BbDataGridColumnVisibility TData="Person" />
-                </div>
-            </Toolbar>
-            <Columns>
-                <BbDataGridSelectColumn TData="Person" />
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Hideable="false" Width="200px" />
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable Width="250px" />
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Width="150px" />
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" Width="150px" />
-                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Width="120px" />
-            </Columns>
-        </BbDataGrid>
-        <CodeBlock Source="Components/DataGrid/all-column-features.txt" />
-    </div>
-
     <!-- ── Empty & Loading States ──────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -692,49 +885,6 @@
             </Columns>
         </BbDataGrid>
         <CodeBlock Source="Components/DataGrid/empty-loading.txt" />
-    </div>
-
-    <!-- ── State Persistence ──────────────────────────────────────── -->
-    <div class="space-y-4">
-        <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">State Persistence</h2>
-            <p class="text-sm text-muted-foreground">
-                Use <code class="bg-muted px-1 py-0.5 rounded">Save()</code> to capture a serializable
-                snapshot of sort order, column widths, column visibility, and page size.
-                Use <code class="bg-muted px-1 py-0.5 rounded">Restore(snapshot)</code> to reapply it.
-                Snapshots are plain JSON-serializable objects — store them in localStorage, a database, or user preferences.
-            </p>
-        </div>
-        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
-                   @bind-State="persistenceState"
-                   Resizable="true" Reorderable="true">
-            <Toolbar>
-                <div class="flex items-center gap-2">
-                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="SaveGridState">
-                        Save State
-                    </BbButton>
-                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="RestoreGridState"
-                              Disabled="@(!hasSavedState)">
-                        Restore State
-                    </BbButton>
-                    <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="ResetGridState">
-                        Reset
-                    </BbButton>
-                </div>
-            </Toolbar>
-            <Columns>
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Width="180px" />
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Width="150px" />
-                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Width="120px" />
-                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable Width="80px" />
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Width="120px" />
-            </Columns>
-        </BbDataGrid>
-        @if (hasSavedState)
-        {
-            <p class="text-xs text-muted-foreground">State saved to localStorage.</p>
-        }
-        <CodeBlock Source="Components/DataGrid/state-persistence.txt" />
     </div>
 
     <AccessibilityList>
@@ -814,6 +964,9 @@
                 <ApiParameter Name="OnSort" Type="EventCallback&lt;IReadOnlyList&lt;SortDefinition&gt;&gt;">
                     Event callback invoked when sorting changes. Receives the list of active sort definitions.
                 </ApiParameter>
+                <ApiParameter Name="OnFilter" Type="EventCallback&lt;IReadOnlyDictionary&lt;string, FilterCondition&gt;&gt;">
+                    Event callback invoked when column filters change. Receives the active filters keyed by column ID.
+                </ApiParameter>
                 <ApiParameter Name="LoadingTemplate" Type="RenderFragment">
                     Custom template displayed when IsLoading is true. Replaces the default loading indicator.
                 </ApiParameter>
@@ -855,6 +1008,24 @@
                 </ApiParameter>
                 <ApiParameter Name="StateChanged" Type="EventCallback&lt;DataGridState&lt;TData&gt;&gt;">
                     Event callback invoked when the grid state changes. Use with @@bind-State for two-way binding.
+                </ApiParameter>
+                <ApiParameter Name="DetailTemplate" Type="RenderFragment&lt;TData&gt;?">
+                    Template for expandable row detail content. When provided, use BbDataGridExpandColumn to add a chevron toggle per row. The context provides the row's data item.
+                </ApiParameter>
+                <ApiParameter Name="OnRowExpand" Type="EventCallback&lt;TData&gt;">
+                    Event callback invoked when a row's detail section is expanded.
+                </ApiParameter>
+                <ApiParameter Name="OnRowCollapse" Type="EventCallback&lt;TData&gt;">
+                    Event callback invoked when a row's detail section is collapsed.
+                </ApiParameter>
+                <ApiParameter Name="OnRowClick" Type="EventCallback&lt;TData&gt;">
+                    Event callback invoked when a data row is clicked. Receives the clicked row's data item.
+                </ApiParameter>
+                <ApiParameter Name="RowContextMenu" Type="RenderFragment&lt;DataGridRowMenuContext&lt;TData&gt;&gt;?">
+                    Custom context menu rendered on right-click. The context provides the clicked item, selected items, visible columns, CopyToClipboardAsync, FormatRow, and FormatRows helpers.
+                </ApiParameter>
+                <ApiParameter Name="ItemKey" Type="Func&lt;TData, object&gt;?">
+                    Key selector for row identity. Used by Blazor's diffing algorithm for efficient rendering. When not set, falls back to the item reference.
                 </ApiParameter>
             </ApiReference>
 
@@ -900,6 +1071,15 @@
                 </ApiParameter>
                 <ApiParameter Name="Pinned" Type="ColumnPinning" Default="None">
                     Whether this column is pinned to an edge of the scrollable viewport. Use BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left or BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Right.
+                </ApiParameter>
+                <ApiParameter Name="Filterable" Type="bool" Default="false">
+                    Whether this column supports per-column filtering. When true, a filter icon appears in the column header that opens a filter popover. The filter field type is auto-inferred from the property type.
+                </ApiParameter>
+                <ApiParameter Name="FilterType" Type="FilterFieldType?" Default="null">
+                    Override the auto-inferred filter field type. Use when the default inference is not correct (e.g., use FilterFieldType.Enum for string properties with known values).
+                </ApiParameter>
+                <ApiParameter Name="FilterOptions" Type="IEnumerable&lt;SelectOption&lt;string&gt;&gt;?" Default="null">
+                    Predefined options for Enum filter fields. Required when FilterType is FilterFieldType.Enum.
                 </ApiParameter>
                 <ApiParameter Name="NoWrap" Type="bool" Default="false">
                     Whether text in this column should not wrap. When true, cell content uses white-space: nowrap and truncates with an ellipsis on overflow.
@@ -949,6 +1129,18 @@
                 <ApiParameter Name="Pinned" Type="ColumnPinning" Default="None">
                     Whether this column is pinned to an edge of the scrollable viewport.
                 </ApiParameter>
+                <ApiParameter Name="Filterable" Type="bool" Default="false">
+                    Whether this column supports per-column filtering. Requires FilterBy to be set.
+                </ApiParameter>
+                <ApiParameter Name="FilterBy" Type="Expression&lt;Func&lt;TData, object&gt;&gt;?" Default="null">
+                    Expression used to build filter Where clauses. Required when Filterable is true.
+                </ApiParameter>
+                <ApiParameter Name="FilterType" Type="FilterFieldType?" Default="null">
+                    Override the filter field type. Defaults to FilterFieldType.Text when not set.
+                </ApiParameter>
+                <ApiParameter Name="FilterOptions" Type="IEnumerable&lt;SelectOption&lt;string&gt;&gt;?" Default="null">
+                    Predefined options for Enum filter fields.
+                </ApiParameter>
                 <ApiParameter Name="NoWrap" Type="bool" Default="false">
                     Whether text in this column should not wrap. When true, cell content uses white-space: nowrap and truncates with an ellipsis on overflow.
                 </ApiParameter>
@@ -962,6 +1154,27 @@
                     Whether this column is pinned. Commonly set to BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left to keep the checkbox column visible when scrolling horizontally.
                 </ApiParameter>
             </ApiReference>
+
+            <ApiReference ComponentName="DataGridExpandColumn">
+                <ApiParameter Name="Width" Type="string?" Default="48px">
+                    Column width for the expand chevron column. Defaults to a compact button width.
+                </ApiParameter>
+                <ApiParameter Name="Pinned" Type="ColumnPinning" Default="None">
+                    Whether this column is pinned to an edge of the scrollable viewport.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="DataGridColumnVisibility">
+                <ApiParameter Name="TriggerContent" Type="RenderFragment?">
+                    Custom trigger content. If not provided, renders a default "Columns" button.
+                </ApiParameter>
+                <ApiParameter Name="AsChild" Type="bool" Default="false">
+                    Whether the trigger uses the AsChild pattern for custom trigger rendering.
+                </ApiParameter>
+                <ApiParameter Name="TriggerClass" Type="string?">
+                    Additional CSS classes applied to the trigger element.
+                </ApiParameter>
+            </ApiReference>
         </div>
     </section>
 </div>
@@ -972,9 +1185,13 @@
     private List<Person> stressTestPeople = new();
     private List<Person> asyncPeople = new();
     private IReadOnlyCollection<Person> _selectedPeople = Array.Empty<Person>();
+    private string? clickedRowMessage;
     private bool _isLoading;
     private bool stressTestLoaded;
     private bool stressTestLoading;
+
+    // Column Filtering demo state
+    private BlazorBlueprint.Primitives.DataGrid.DataGridState<Person> _gridState = new();
 
     // Expandable nested table demo data
     private record Subtask(string Title, string Assignee, string Status, int EstimatedHours);
@@ -1178,4 +1395,33 @@
         persistenceState.Reset();
         hasSavedState = false;
     }
+
+    // --- Row Click & Context Menu ---
+
+    private void HandleDemoRowClick(Person person)
+    {
+        clickedRowMessage = $"Clicked: {person.Name} ({person.Email})";
+    }
+
+    private async Task CopyWithFeedback(DataGridRowMenuContext<Person> menu, string text)
+    {
+        await menu.CopyToClipboardAsync(text);
+        clickedRowMessage = $"Copied to clipboard: {text}";
+    }
+
+    // --- All Features ---
+
+    private string? allFeaturesMessage;
+
+    private void HandleAllFeaturesRowClick(Person person)
+    {
+        allFeaturesMessage = $"Clicked: {person.Name} ({person.Email})";
+    }
+
+    private async Task CopyAllFeatures(DataGridRowMenuContext<Person> menu, string text)
+    {
+        await menu.CopyToClipboardAsync(text);
+        allFeaturesMessage = $"Copied to clipboard: {text}";
+    }
+
 }

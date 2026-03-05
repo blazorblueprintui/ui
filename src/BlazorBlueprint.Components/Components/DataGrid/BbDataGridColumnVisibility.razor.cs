@@ -55,6 +55,16 @@ public partial class BbDataGridColumnVisibility<TData> : ComponentBase
         return ParentGrid.GetAllColumns().Where(c => c.Hideable);
     }
 
+    private int GetVisibleHideableCount()
+    {
+        if (ParentGrid == null)
+        {
+            return 0;
+        }
+
+        return GetHideableColumns().Count(c => ParentGrid.EffectiveState.Columns.IsVisible(c.ColumnId));
+    }
+
     private Task HandleVisibilityChanged(string columnId, bool visible) =>
         ParentGrid?.HandleColumnVisibilityChangedAsync(columnId, visible) ?? Task.CompletedTask;
 }

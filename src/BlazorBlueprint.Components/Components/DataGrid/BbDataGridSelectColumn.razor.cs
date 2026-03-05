@@ -40,6 +40,8 @@ public partial class BbDataGridSelectColumn<TData> : ComponentBase, IDataGridCol
 
     bool IDataGridColumn<TData>.Sortable => false;
 
+    bool IDataGridColumn<TData>.Filterable => false;
+
     bool IDataGridColumn<TData>.Visible => true;
 
     string? IDataGridColumn<TData>.Width => Width;
@@ -67,6 +69,8 @@ public partial class BbDataGridSelectColumn<TData> : ComponentBase, IDataGridCol
     public int Compare(TData x, TData y) => 0;
 
     public LambdaExpression? GetSortExpression() => null;
+
+    public LambdaExpression? GetFilterExpression() => null;
 
     protected override void OnInitialized()
     {

@@ -30,10 +30,18 @@
         {
             var columnId = column.ColumnId;
             var isVisible = ParentGrid!.EffectiveState.Columns.IsVisible(columnId);
+            var isPinned = column.Pinned != BlazorBlueprint.Primitives.DataGrid.ColumnPinning.None;
+            var isLastVisible = isVisible && GetVisibleHideableCount() <= 1;
+            var isDisabled = isPinned || isLastVisible;
             <BbDropdownMenuCheckboxItem
                 Checked="@isVisible"
+                Disabled="@isDisabled"
                 CheckedChanged="@((bool v) => HandleVisibilityChanged(columnId, v))">
                 @(column.Title ?? columnId)
+                @if (isPinned)
+                {
+                    <span class="ml-auto text-xs text-muted-foreground">Pinned</span>
+                }
             </BbDropdownMenuCheckboxItem>
         }
     </BbDropdownMenuContent>
