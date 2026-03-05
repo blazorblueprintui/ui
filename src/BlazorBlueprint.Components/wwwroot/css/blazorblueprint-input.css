@@ -479,6 +479,51 @@
   }
 }
 
+/* DashboardGrid - Guide background rendered via ::before pseudo-element.
+   JS measures the grid's computed padding and sets --bb-grid-pad-* custom
+   properties. The pseudo uses those as inset values so the pattern always
+   aligns with the grid's content area regardless of padding source. */
+@layer components {
+  .bb-guide-background-squares::before {
+    content: '';
+    position: absolute;
+    top: var(--bb-grid-pad-top, 0px);
+    right: var(--bb-grid-pad-right, 0px);
+    bottom: var(--bb-grid-pad-bottom, 0px);
+    left: var(--bb-grid-pad-left, 0px);
+    pointer-events: none;
+    z-index: 0;
+    background-color: color-mix(in oklch, var(--foreground) 8%, transparent);
+    -webkit-mask-image: var(--bb-dashboard-guide-svg);
+    mask-image: var(--bb-dashboard-guide-svg);
+    -webkit-mask-size: var(--bb-dashboard-cell-w) var(--bb-dashboard-cell-h);
+    mask-size: var(--bb-dashboard-cell-w) var(--bb-dashboard-cell-h);
+    -webkit-mask-repeat: repeat;
+    mask-repeat: repeat;
+  }
+
+  /* Hide widgets until JS has compacted the initial layout */
+  [data-positioned="false"] > [data-widget-id] {
+    visibility: hidden;
+  }
+
+  /* Focus ring on the active widget in editable grids.
+     Sets Tailwind's ring variables so the ring composes with the
+     existing shadow-sm utility instead of replacing it. */
+  [data-editable="true"] [data-widget-id]:focus {
+    --tw-ring-offset-shadow: 0 0 0 2px var(--background);
+    --tw-ring-shadow: 0 0 0 4px var(--ring);
+    z-index: 10;
+  }
+
+  /* Active ring on widgets during drag/resize */
+  [data-dragging="true"],
+  [data-resizing="true"] {
+    outline: 2px dashed var(--ring);
+    outline-offset: 2px;
+  }
+}
+
 /* Alert countdown bar animation */
 @keyframes bb-alert-countdown {
   from { width: 100%; }
