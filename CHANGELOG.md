@@ -20,7 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - Remove widget button (trash icon) visible on hover in edit mode via `OnRemove` callback.
   - `BbDashboardWidgetHeader`, `BbDashboardWidgetContent` sub-components for custom widget styling.
   - Keyboard navigation: arrow keys to move, Shift+arrows to resize, Escape to cancel.
-  - Comprehensive demo page with 12 interactive examples and View Code sections.
+  - Comprehensive demo page with 14 interactive examples and View Code sections.
 
 ---
 

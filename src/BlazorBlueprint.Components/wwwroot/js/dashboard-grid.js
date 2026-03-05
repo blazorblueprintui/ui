@@ -32,6 +32,10 @@ export function initializeDashboardGrid(dotNetRef, instanceId, options) {
     startRowSpan: 0,
   };
 
+  // Preserve the configured drag/resize values so setEditable can restore them
+  state.configuredAllowDrag = options.allowDrag;
+  state.configuredAllowResize = options.allowResize;
+
   instances.set(instanceId, state);
   setupResizeObserver(instanceId, state);
   setupEventListeners(instanceId, state);
@@ -45,6 +49,8 @@ export function initializeDashboardGrid(dotNetRef, instanceId, options) {
 export function updateGridOptions(instanceId, options) {
   const state = instances.get(instanceId);
   if (!state) return;
+  state.configuredAllowDrag = options.allowDrag;
+  state.configuredAllowResize = options.allowResize;
   state.options = options;
   syncGridGuide(state);
 }
@@ -52,8 +58,12 @@ export function updateGridOptions(instanceId, options) {
 export function updateWidgetPositions(instanceId, positions) {
   // After a .NET state restore, sync DOM inline styles
   if (!positions) return;
+  const state = instances.get(instanceId);
+  const container = state ? state.gridEl : null;
   for (const pos of positions) {
-    const widget = document.querySelector(`[data-widget-id="${pos.widgetId}"]`);
+    const widget = container
+      ? container.querySelector(`[data-widget-id="${pos.widgetId}"]`)
+      : document.querySelector(`[data-widget-id="${pos.widgetId}"]`);
     if (widget) {
       widget.style.gridColumn = `${pos.column} / span ${pos.columnSpan}`;
       widget.style.gridRow = `${pos.row} / span ${pos.rowSpan}`;
@@ -65,8 +75,10 @@ export function setEditable(instanceId, editable) {
   const state = instances.get(instanceId);
   if (!state) return;
   state.options.editable = editable;
-  state.options.allowDrag = editable && state.options.allowDrag;
-  state.options.allowResize = editable && state.options.allowResize;
+  // Recompute from the original configured values (passed during init/update)
+  // so toggling editable off/on restores the intended behavior.
+  state.options.allowDrag = editable && (state.configuredAllowDrag ?? state.options.allowDrag);
+  state.options.allowResize = editable && (state.configuredAllowResize ?? state.options.allowResize);
 }
 
 export function disposeDashboardGrid(instanceId) {
@@ -952,7 +964,7 @@ function onWidgetFocusOut(instanceId, state, e) {
 
   if (changes.length > 0) {
     applyLayout(grid, positions);
-    state.dotNetRef.invokeMethodAsync('JsOnLayoutResolved', changes[0].id, changes)
+    state.dotNetRef.invokeMethodAsync('JsOnLayoutResolved', '', changes)
       .catch(err => console.error('JsOnLayoutResolved (compact on blur) failed:', err));
   }
 }
@@ -1015,7 +1027,8 @@ function compact(positions, fixedId, columns) {
         break;
       }
     }
-    for (let row = widget.row + 1; !found && row <= widget.row + 100; row++) {
+    // Search downward unbounded until a free slot is found
+    for (let row = widget.row + 1; !found; row++) {
       for (let col = 1; col <= columns - widget.colSpan + 1; col++) {
         if (!wouldOverlap(col, row, widget.colSpan, widget.rowSpan, placed)) {
           widget.row = row;
@@ -1355,13 +1368,13 @@ function resetState(state) {
 }
 
 function announceChange(state, message) {
-  // Find the live region associated with this instance
-  const liveRegions = document.querySelectorAll('[aria-live="polite"]');
-  for (const region of liveRegions) {
-    if (region.classList.contains('sr-only')) {
-      region.textContent = message;
-      setTimeout(() => { region.textContent = ''; }, 1000);
-      return;
-    }
+  // Find the live region scoped to this grid instance
+  const grid = state.gridEl;
+  if (!grid) return;
+  const id = grid.getAttribute('data-dashboard-id');
+  const region = id ? document.getElementById(`${id}-live`) : null;
+  if (region) {
+    region.textContent = message;
+    setTimeout(() => { region.textContent = ''; }, 1000);
   }
 }

@@ -96,7 +96,7 @@ public class DashboardGridState
         Large = new DashboardGridLayout();
         foreach (var s in snapshot.LargeLayout)
         {
-            Large.Positions.Add(FromSnapshot(s));
+            Large.SetPosition(s.WidgetId, s.Column, s.Row, s.ColumnSpan, s.RowSpan);
         }
 
         if (snapshot.MediumLayout != null)
@@ -104,7 +104,7 @@ public class DashboardGridState
             Medium = new DashboardGridLayout();
             foreach (var s in snapshot.MediumLayout)
             {
-                Medium.Positions.Add(FromSnapshot(s));
+                Medium.SetPosition(s.WidgetId, s.Column, s.Row, s.ColumnSpan, s.RowSpan);
             }
         }
         else
@@ -117,7 +117,7 @@ public class DashboardGridState
             Small = new DashboardGridLayout();
             foreach (var s in snapshot.SmallLayout)
             {
-                Small.Positions.Add(FromSnapshot(s));
+                Small.SetPosition(s.WidgetId, s.Column, s.Row, s.ColumnSpan, s.RowSpan);
             }
         }
         else
