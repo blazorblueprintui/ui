@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **BbDataGrid: Row Grouping** — Collapsible row groups with aggregate functions (Count, Sum, Average, Min, Max) and custom group header templates. Groups by column via `GroupBy` parameter with `GroupHeaderTemplate` for full customization.
 - **BbDashboardGrid** — Drag-and-drop, resizable widget layout for composing dashboards. Built on CSS Grid with responsive breakpoints, state persistence, and full keyboard accessibility.
   - Drag widgets to reorder with collision detection and local displacement.
   - Resize from all corners and edges with configurable min/max span constraints.
@@ -21,6 +22,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   - `BbDashboardWidgetHeader`, `BbDashboardWidgetContent` sub-components for custom widget styling.
   - Keyboard navigation: arrow keys to move, Shift+arrows to resize, Escape to cancel.
   - Comprehensive demo page with 14 interactive examples and View Code sections.
+
+### Fixed
+
+- **BbDataGrid: Cell border rendering** — Fixed two issues preventing user-applied borders (e.g. `CellClass="border-r border-border"`) from rendering:
+  - `TailwindMerge` incorrectly classified bare border-side utilities like `border-r` as border-color, dropping them during class merging.
+  - `position: relative` permanently set on body `<tr>` rows triggered a Chromium bug that hides cell borders under `border-collapse: collapse`. Moved to `:focus`-only.
 
 ---
 
