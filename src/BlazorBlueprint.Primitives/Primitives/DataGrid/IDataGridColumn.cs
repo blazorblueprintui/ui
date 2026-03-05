@@ -134,6 +134,12 @@ public interface IDataGridColumn<TData> where TData : class
     /// Default is <see cref="AggregateFunction.None"/>.
     /// </summary>
     public AggregateFunction Aggregate { get; }
+
+    /// <summary>
+    /// Gets the format string used to display aggregate values for this column.
+    /// Returns null if no custom format is set.
+    /// </summary>
+    public string? AggregateFormat => null;
 }
 
 /// <summary>

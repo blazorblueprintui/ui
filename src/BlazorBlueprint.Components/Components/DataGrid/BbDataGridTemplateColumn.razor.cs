@@ -144,6 +144,13 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
     public AggregateFunction Aggregate { get; set; } = AggregateFunction.None;
 
     /// <summary>
+    /// Format string for displaying aggregate values (e.g., "N0", "C2").
+    /// When null, uses default formatting.
+    /// </summary>
+    [Parameter]
+    public string? AggregateFormat { get; set; }
+
+    /// <summary>
     /// The parent DataGrid component. Set via cascading parameter.
     /// </summary>
     [CascadingParameter]
@@ -189,7 +196,25 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
 
     AggregateFunction IDataGridColumn<TData>.Aggregate => Aggregate;
 
+    string? IDataGridColumn<TData>.AggregateFormat => AggregateFormat;
+
     public object? GetValue(TData item) => null;
+
+    object? IDataGridColumn<TData>.GetRawValue(TData item)
+    {
+        if (SortBy == null)
+        {
+            return null;
+        }
+
+        if (compiledSortBy == null || !ReferenceEquals(lastSortBy, SortBy))
+        {
+            compiledSortBy = SortBy.Compile();
+            lastSortBy = SortBy;
+        }
+
+        return compiledSortBy(item);
+    }
 
     public int Compare(TData x, TData y)
     {

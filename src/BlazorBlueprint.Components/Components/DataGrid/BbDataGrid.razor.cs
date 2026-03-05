@@ -34,6 +34,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private string? _groupByColumnTitle;
     private bool _groupsCollapsedByDefault;
     private RenderFragment<DataGridGroupContext<TData>>? _groupColumnHeaderTemplate;
+    private Expression<Func<TData, object>>? _lastGroupBy;
     private List<object>? _allGroupKeys;
 
     // Cached per-render visible column data to avoid recomputing per row
@@ -366,12 +367,21 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
 
         // Apply GroupBy parameter (GroupColumn takes precedence if both are set)
-        if (GroupBy != null && _groupByAccessor == null)
+        if (GroupBy != null && (_groupByAccessor == null || !ReferenceEquals(GroupBy, _lastGroupBy)))
         {
             var compiled = GroupBy.Compile();
             _groupByAccessor = item => compiled(item);
 
-            if (GroupBy.Body is MemberExpression member)
+            // Unwrap boxing conversions (e.g., value-type member to object) so we can
+            // reliably detect the underlying MemberExpression.
+            var body = (Expression)GroupBy.Body;
+            if (body is UnaryExpression unary &&
+                (unary.NodeType == ExpressionType.Convert || unary.NodeType == ExpressionType.ConvertChecked))
+            {
+                body = unary.Operand;
+            }
+
+            if (body is MemberExpression member)
             {
                 _groupByColumnId = member.Member.Name.ToLowerInvariant();
                 _groupByColumnTitle = member.Member.Name;
@@ -383,12 +393,15 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             }
 
             _groupsCollapsedByDefault = GroupsCollapsedByDefault;
+            _lastGroupBy = GroupBy;
 
             _gridState.Grouping.SetGroup(new GroupDefinition
             {
                 ColumnId = _groupByColumnId,
                 GroupSortDirection = SortDirection.Ascending
             });
+
+            _needsDataRefresh = true;
         }
         else if (GroupBy == null && _groupByAccessor != null && _groupColumnHeaderTemplate == null)
         {
@@ -477,8 +490,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     internal void RegisterColumn<TProp>(BbDataGridPropertyColumn<TData, TProp> column)
     {
         _columns.Add(column);
-        _columnsVersion++;
-        StateHasChanged();
+        OnColumnRegistered();
     }
 
     /// <summary>
@@ -487,8 +499,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     internal void RegisterColumn(BbDataGridTemplateColumn<TData> column)
     {
         _columns.Add(column);
-        _columnsVersion++;
-        StateHasChanged();
+        OnColumnRegistered();
     }
 
     /// <summary>
@@ -498,8 +509,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     {
         // Insert select column at the beginning
         _columns.Insert(0, column);
-        _columnsVersion++;
-        StateHasChanged();
+        OnColumnRegistered();
     }
 
     /// <summary>
@@ -511,7 +521,20 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         var selectIndex = _columns.FindIndex(c => c.ColumnId == "__select");
         var insertIndex = selectIndex >= 0 ? selectIndex + 1 : 0;
         _columns.Insert(insertIndex, column);
+        OnColumnRegistered();
+    }
+
+    private void OnColumnRegistered()
+    {
         _columnsVersion++;
+
+        // When grouping is active, aggregates computed before all columns registered
+        // will be empty — mark for reprocessing so aggregates are recomputed.
+        if (_groupedRenderItems != null && _columns.Any(c => c.Aggregate != AggregateFunction.None))
+        {
+            _needsDataRefresh = true;
+        }
+
         StateHasChanged();
     }
 
@@ -847,7 +870,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
                 {
                     // Collapsed groups appear at the current data row position.
                     // Show them if that position falls within (or at the boundary of) the current page.
-                    if (dataRowIndex >= pageStart && dataRowIndex <= pageEnd)
+                    if (dataRowIndex >= pageStart && dataRowIndex < pageEnd)
                     {
                         pageRenderItems.Add(DataGridRenderItem<TData>.ForGroup(row));
                     }
@@ -896,7 +919,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             }
 
             var value = ComputeAggregate(items, column, column.Aggregate);
-            var format = column.GetType().GetProperty("Format")?.GetValue(column) as string;
+            var format = column.AggregateFormat;
             results[column.ColumnId] = new AggregateResult
             {
                 Function = column.Aggregate,
@@ -993,11 +1016,15 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
                 .Select(c => c.ColumnId)
                 .ToList();
 
+            // When grouping client-side from a flat provider, fetch all items so
+            // ProcessGroupedData can correctly paginate across groups.
+            var isClientSideGrouping = _groupByAccessor != null && GroupedItemsProvider == null;
+
             var request = new DataGridRequest
             {
                 SortDefinitions = _gridState.Sorting.Definitions,
-                StartIndex = Virtualize ? 0 : _gridState.Pagination.StartIndex,
-                Count = Virtualize ? null : _gridState.Pagination.PageSize,
+                StartIndex = (Virtualize || isClientSideGrouping) ? 0 : _gridState.Pagination.StartIndex,
+                Count = (Virtualize || isClientSideGrouping) ? null : _gridState.Pagination.PageSize,
                 CancellationToken = token,
                 Filters = _gridState.Filtering.Filters,
                 GroupDefinition = _gridState.Grouping.ActiveGroup,
@@ -1582,6 +1609,35 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         return ClassNames.cn(baseClass, sortClass, groupClass, positionClass, overflowClass,
             pinnedClass, separatorClass, column.HeaderClass);
+    }
+
+    /// <summary>
+    /// Gets the columns that have aggregate results for a given group, in visible order.
+    /// Used to render per-column aggregate cells in the group header row.
+    /// </summary>
+    private IReadOnlyList<IDataGridColumn<TData>> GetGroupAggregateColumns(DataGridGroupRow<TData> group)
+    {
+        if (group.Aggregates.Count == 0)
+        {
+            return Array.Empty<IDataGridColumn<TData>>();
+        }
+
+        return _cachedVisibleColumns
+            .Where(c => group.Aggregates.ContainsKey(c.ColumnId))
+            .ToList();
+    }
+
+    /// <summary>
+    /// Computes how many columns the group label cell should span — all visible columns
+    /// minus those occupied by per-column aggregate cells.
+    /// </summary>
+    private int GetGroupLabelColSpan(DataGridGroupRow<TData> group)
+    {
+        var aggregateColumnCount = group.Aggregates.Count == 0
+            ? 0
+            : _cachedVisibleColumns.Count(c => group.Aggregates.ContainsKey(c.ColumnId));
+
+        return Math.Max(1, _cachedVisibleColumns.Count - aggregateColumnCount);
     }
 
     private string GetCellClass(IDataGridColumn<TData> column, bool isSelectColumn,

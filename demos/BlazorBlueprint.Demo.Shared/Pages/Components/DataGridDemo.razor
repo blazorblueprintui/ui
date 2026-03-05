@@ -595,7 +595,7 @@
                 computed values (Sum, Average, Min, Max, Count) in the group header.
             </p>
         </div>
-        <BbDataGrid TData="Person" Items="@people" GroupBy="@(p => (object)p.Department)" InitialPageSize="50">
+        <BbDataGrid TData="Person" Items="@people" GroupBy="@(p => (object)p.Department)" ShowPagination InitialPageSize="10">
             <Columns>
                 <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
                 <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
@@ -1145,6 +1145,9 @@
                 <ApiParameter Name="Aggregate" Type="AggregateFunction" Default="None">
                     Aggregate function to compute in group headers when grouping is active. Options: None, Count, Sum, Average, Min, Max.
                 </ApiParameter>
+                <ApiParameter Name="AggregateFormat" Type="string?" Default="null">
+                    Format string for displaying aggregate values (e.g., "N0", "C2"). When null, falls back to Format if set, otherwise uses default formatting.
+                </ApiParameter>
             </ApiReference>
 
             <ApiReference ComponentName="DataGridTemplateColumn">
@@ -1207,6 +1210,9 @@
                 </ApiParameter>
                 <ApiParameter Name="Aggregate" Type="AggregateFunction" Default="None">
                     Aggregate function to compute in group headers when grouping is active. Requires SortBy to provide a value accessor for numeric aggregates.
+                </ApiParameter>
+                <ApiParameter Name="AggregateFormat" Type="string?" Default="null">
+                    Format string for displaying aggregate values (e.g., "N0", "C2"). When null, uses default formatting.
                 </ApiParameter>
             </ApiReference>
 

@@ -26,7 +26,7 @@
                     </div>
                 }
             }
-            else if (_groupedRenderItems == null && !_processedData.Any())
+            else if ((_groupedRenderItems == null || !_groupedRenderItems.Any()) && !_processedData.Any())
             {
                 @if (EmptyTemplate != null)
                 {
@@ -237,14 +237,19 @@
                                         ToggleCollapse = EventCallback.Factory.Create(this, () => HandleGroupToggle(group))
                                     };
 
-                                    <tr class="bg-muted/50 border-b font-medium">
-                                        <td colspan="@_cachedVisibleColumns.Count" class="px-4 py-2">
-                                            @if (effectiveTemplate != null)
-                                            {
+                                    @if (effectiveTemplate != null)
+                                    {
+                                        <tr role="row" class="bg-muted/50 border-b font-medium">
+                                            <td role="gridcell" colspan="@_cachedVisibleColumns.Count" class="px-4 py-2">
                                                 @effectiveTemplate(groupContext)
-                                            }
-                                            else
-                                            {
+                                            </td>
+                                        </tr>
+                                    }
+                                    else
+                                    {
+                                        var groupLabelColSpan = GetGroupLabelColSpan(group);
+                                        <tr role="row" class="bg-muted/50 border-b font-medium">
+                                            <td role="gridcell" colspan="@groupLabelColSpan" class="px-4 py-2">
                                                 <div class="flex items-center gap-2">
                                                     <button type="button"
                                                             class="inline-flex items-center justify-center rounded-md w-6 h-6 hover:bg-muted transition-colors"
@@ -256,16 +261,19 @@
                                                     </button>
                                                     <span>@group.ColumnTitle: @(groupKey.ToString())</span>
                                                     <span class="text-muted-foreground text-sm">(@group.ItemCount items)</span>
-                                                    @foreach (var agg in group.Aggregates)
-                                                    {
-                                                        <span class="text-muted-foreground text-sm ml-4">
-                                                            @FormatAggregateName(agg.Value.Function): @FormatAggregateValue(agg.Value.Value, agg.Value.Format)
-                                                        </span>
-                                                    }
                                                 </div>
+                                            </td>
+                                            @foreach (var col in GetGroupAggregateColumns(group))
+                                            {
+                                                <td role="gridcell" class="px-4 py-2 text-muted-foreground text-sm">
+                                                    @if (group.Aggregates.TryGetValue(col.ColumnId, out var agg))
+                                                    {
+                                                        <span>@FormatAggregateName(agg.Function): @FormatAggregateValue(agg.Value, agg.Format)</span>
+                                                    }
+                                                </td>
                                             }
-                                        </td>
-                                    </tr>
+                                        </tr>
+                                    }
                                 }
                                 else
                                 {
@@ -383,7 +391,10 @@
 
         if (value is double d)
         {
-            return d.ToString("N2", System.Globalization.CultureInfo.CurrentCulture);
+            // Use integer format when the value has no fractional part
+            return d == Math.Truncate(d)
+                ? d.ToString("N0", System.Globalization.CultureInfo.CurrentCulture)
+                : d.ToString("N2", System.Globalization.CultureInfo.CurrentCulture);
         }
 
         return value.ToString() ?? "-";

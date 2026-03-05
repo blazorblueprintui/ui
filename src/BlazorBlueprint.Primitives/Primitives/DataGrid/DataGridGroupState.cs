@@ -79,7 +79,7 @@ public class DataGridGroupState
     }
 
     /// <summary>
-    /// Clears all collapsed state without changing the active group definition.
+    /// Clears all collapsed state and the active group definition.
     /// </summary>
     public void Clear()
     {
