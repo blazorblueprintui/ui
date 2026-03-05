@@ -7,9 +7,13 @@ const DRAG_THRESHOLD = 5;
 export function initializeDashboardGrid(dotNetRef, instanceId, options) {
   if (!dotNetRef) return;
 
+  const gridEl = document.querySelector(`[data-dashboard-id="${instanceId}"]`);
+  if (!gridEl) return;
+
   const state = {
     dotNetRef,
     options,
+    gridEl,
     isDragging: false,
     isResizing: false,
     pendingDrag: false,
@@ -85,7 +89,8 @@ function setupResizeObserver(instanceId, state) {
 
     if (state.currentBreakpoint !== bp) {
       state.currentBreakpoint = bp;
-      state.dotNetRef.invokeMethodAsync('JsOnBreakpointChanged', bp).catch(() => {});
+      state.dotNetRef.invokeMethodAsync('JsOnBreakpointChanged', bp)
+        .catch(err => console.error('JsOnBreakpointChanged failed:', err));
     }
   };
 
@@ -123,30 +128,10 @@ function cleanupListeners(state) {
 function onPointerDown(instanceId, state, e) {
   if (!state.options.editable || e.button !== 0) return;
 
-  // Check for drag handle
-  const dragHandle = e.target.closest('[data-dashboard-drag-handle]');
-  if (dragHandle && state.options.allowDrag) {
-    const widgetId = dragHandle.getAttribute('data-widget-id');
-    const widgetEl = document.querySelector(`[data-widget-id="${widgetId}"]`);
-    if (!widgetEl) return;
+  // Only handle events within this grid instance
+  if (!state.gridEl.contains(e.target)) return;
 
-    e.preventDefault();
-    state.pendingDrag = true;
-    state.activeWidgetId = widgetId;
-    state.originalWidget = widgetEl;
-    state.startX = e.clientX;
-    state.startY = e.clientY;
-    state.pointerId = e.pointerId;
-
-    const style = widgetEl.style;
-    state.startCol = parseGridValue(style.gridColumn, 'start');
-    state.startRow = parseGridValue(style.gridRow, 'start');
-    state.startColSpan = parseGridValue(style.gridColumn, 'span');
-    state.startRowSpan = parseGridValue(style.gridRow, 'span');
-    return;
-  }
-
-  // Check for resize handle
+  // Check for resize handle first (takes priority over widget drag)
   const resizeHandle = e.target.closest('[data-dashboard-resize-handle]');
   if (resizeHandle && state.options.allowResize) {
     const widgetId = resizeHandle.getAttribute('data-widget-id');
@@ -168,6 +153,29 @@ function onPointerDown(instanceId, state, e) {
     state.startColSpan = parseGridValue(style.gridColumn, 'span');
     state.startRowSpan = parseGridValue(style.gridRow, 'span');
     return;
+  }
+
+  // Check for widget drag (click anywhere on the widget)
+  if (state.options.allowDrag) {
+    const widgetEl = e.target.closest('[data-widget-id]');
+    if (widgetEl && widgetEl.getAttribute('data-static') !== 'true') {
+      const widgetId = widgetEl.getAttribute('data-widget-id');
+
+      e.preventDefault();
+      state.pendingDrag = true;
+      state.activeWidgetId = widgetId;
+      state.originalWidget = widgetEl;
+      state.startX = e.clientX;
+      state.startY = e.clientY;
+      state.pointerId = e.pointerId;
+
+      const style = widgetEl.style;
+      state.startCol = parseGridValue(style.gridColumn, 'start');
+      state.startRow = parseGridValue(style.gridRow, 'start');
+      state.startColSpan = parseGridValue(style.gridColumn, 'span');
+      state.startRowSpan = parseGridValue(style.gridRow, 'span');
+      return;
+    }
   }
 }
 
@@ -239,6 +247,11 @@ function activateDrag(state) {
     state.originalPositions = getWidgetPositions(grid, null);
   }
 
+  // Capture grab offset (pointer position relative to widget's top-left corner)
+  const widgetRect = state.originalWidget.getBoundingClientRect();
+  state.grabOffsetX = state.startX - widgetRect.left;
+  state.grabOffsetY = state.startY - widgetRect.top;
+
   document.body.style.userSelect = 'none';
   document.body.style.cursor = 'grabbing';
 
@@ -257,9 +270,9 @@ function updateDrag(state, e) {
   const cellWidth = (gridRect.width - (cols - 1) * gap) / cols;
   const rowHeight = state.options.rowHeight;
 
-  // Calculate target column and row from pointer position
-  const relX = e.clientX - gridRect.left;
-  const relY = e.clientY - gridRect.top;
+  // Calculate target column and row from pointer position, adjusted for grab offset
+  const relX = e.clientX - gridRect.left - (state.grabOffsetX || 0);
+  const relY = e.clientY - gridRect.top - (state.grabOffsetY || 0);
 
   let targetCol = Math.round(relX / (cellWidth + gap)) + 1;
   let targetRow = Math.round(relY / (rowHeight + gap)) + 1;
@@ -271,25 +284,31 @@ function updateDrag(state, e) {
   // Skip if target hasn't changed
   if (targetCol === state.lastResolvedCol && targetRow === state.lastResolvedRow) return;
 
-  // Build proposed layout from original positions with dragged widget at target
-  const proposed = state.originalPositions.map(p => ({...p}));
-  const dragged = proposed.find(p => p.id === state.activeWidgetId);
-  if (!dragged) return;
-  dragged.col = targetCol;
-  dragged.row = targetRow;
+  let resolved;
+  if (state.options.compact) {
+    resolved = resolveLayoutAfterDrag(
+      state.originalPositions, state.activeWidgetId,
+      targetCol, targetRow, state.startCol, state.startRow, cols
+    );
+  } else {
+    resolved = state.originalPositions.map(p => ({...p}));
+    const dragged = resolved.find(p => p.id === state.activeWidgetId);
+    if (dragged) {
+      dragged.col = targetCol;
+      dragged.row = targetRow;
+    }
+  }
 
-  // Resolve all overlaps by pushing displaced widgets
-  const resolved = resolveLayout(proposed, state.activeWidgetId,
-    state.startCol, state.startRow, cols);
-
+  // If resolve returned null, reject this drag position (keep last valid layout)
   if (!resolved) {
-    // Couldn't resolve — restore original layout
-    applyLayout(grid, state.originalPositions);
-    state.originalWidget.style.opacity = '0.5';
-    state.originalWidget.style.zIndex = '50';
-    state.lastResolvedCol = undefined;
-    state.lastResolvedRow = undefined;
+    state.lastResolvedCol = targetCol;
+    state.lastResolvedRow = targetRow;
     return;
+  }
+
+  // Close vertical gaps (dragged widget stays fixed)
+  if (state.options.compact) {
+    compactVertical(resolved, state.activeWidgetId);
   }
 
   // Apply resolved layout to DOM
@@ -313,9 +332,11 @@ function finishDrag(state) {
   document.body.style.cursor = '';
 
   if (state.resolvedLayout && state.originalPositions) {
+    const finalLayout = state.resolvedLayout;
+
     // Find all widgets that changed position
     const changes = [];
-    for (const resolved of state.resolvedLayout) {
+    for (const resolved of finalLayout) {
       const original = state.originalPositions.find(p => p.id === resolved.id);
       if (!original) continue;
       if (resolved.col !== original.col || resolved.row !== original.row) {
@@ -325,7 +346,8 @@ function finishDrag(state) {
 
     if (changes.length > 0) {
       state.dotNetRef.invokeMethodAsync('JsOnLayoutResolved',
-        state.activeWidgetId, changes).catch(() => {});
+        state.activeWidgetId, changes)
+        .catch(err => console.error('JsOnLayoutResolved failed:', err));
       announceChange(state, `Dashboard layout updated`);
     }
   }
@@ -337,13 +359,20 @@ function activateResize(state) {
   state.isResizing = true;
   state.pendingResize = false;
 
+  // Capture all widget positions at resize start for stable resolution
+  const grid = state.originalWidget.closest('[role="region"][aria-roledescription="dashboard grid"]');
+  if (grid) {
+    state.resizeGrid = grid;
+    state.originalResizePositions = getWidgetPositions(grid, null);
+  }
+
   document.body.style.userSelect = 'none';
   state.originalWidget.setAttribute('data-resizing', 'true');
 }
 
 function updateResize(state, e) {
-  const grid = state.originalWidget.closest('[role="region"][aria-roledescription="dashboard grid"]');
-  if (!grid) return;
+  const grid = state.resizeGrid;
+  if (!grid || !state.originalResizePositions) return;
 
   const gridRect = grid.getBoundingClientRect();
   const cols = state.options.columns;
@@ -410,37 +439,96 @@ function updateResize(state, e) {
   newRow = Math.max(1, newRow);
   newColSpan = Math.min(newColSpan, cols - newCol + 1);
 
-  // Collision detection — only resize if new bounds don't overlap other widgets
-  const others = getWidgetPositions(grid, state.activeWidgetId);
-  if (wouldOverlap(newCol, newRow, newColSpan, newRowSpan, others)) {
-    return; // Keep current size, don't update
+  // Skip if nothing changed
+  if (newCol === state.lastResizeCol && newRow === state.lastResizeRow &&
+      newColSpan === state.lastResizeColSpan && newRowSpan === state.lastResizeRowSpan) return;
+
+  let resolved;
+  if (state.options.compact) {
+    resolved = resolveLayoutAfterResize(
+      state.originalResizePositions, state.activeWidgetId,
+      newCol, newRow, newColSpan, newRowSpan,
+      state.startCol, state.startRow, state.startColSpan, state.startRowSpan,
+      cols
+    );
+  } else {
+    resolved = state.originalResizePositions.map(p => ({...p}));
+    const resizing = resolved.find(p => p.id === state.activeWidgetId);
+    if (resizing) {
+      resizing.col = newCol;
+      resizing.row = newRow;
+      resizing.colSpan = newColSpan;
+      resizing.rowSpan = newRowSpan;
+    }
   }
 
-  // Live update
-  widget.style.gridColumn = `${newCol} / span ${newColSpan}`;
-  widget.style.gridRow = `${newRow} / span ${newRowSpan}`;
+  // If resolve returned null, reject this resize increment (keep last valid layout)
+  if (!resolved) {
+    state.lastResizeCol = newCol;
+    state.lastResizeRow = newRow;
+    state.lastResizeColSpan = newColSpan;
+    state.lastResizeRowSpan = newRowSpan;
+    return;
+  }
 
+  // Close vertical gaps (resized widget stays fixed)
+  if (state.options.compact) {
+    compactVertical(resolved, state.activeWidgetId);
+  }
+
+  // Apply resolved layout to DOM
+  applyLayout(grid, resolved);
+
+  state.resolvedResizeLayout = resolved;
   state.targetCol = newCol;
   state.targetRow = newRow;
   state.targetColSpan = newColSpan;
   state.targetRowSpan = newRowSpan;
+  state.lastResizeCol = newCol;
+  state.lastResizeRow = newRow;
+  state.lastResizeColSpan = newColSpan;
+  state.lastResizeRowSpan = newRowSpan;
 }
 
 function finishResize(state) {
-  const col = state.targetCol ?? state.startCol;
-  const row = state.targetRow ?? state.startRow;
-  const colSpan = state.targetColSpan || state.startColSpan;
-  const rowSpan = state.targetRowSpan || state.startRowSpan;
-
   state.originalWidget.setAttribute('data-resizing', 'false');
   document.body.style.userSelect = '';
 
-  if (col !== state.startCol || row !== state.startRow ||
-      colSpan !== state.startColSpan || rowSpan !== state.startRowSpan) {
-    state.dotNetRef.invokeMethodAsync('JsOnWidgetResizeEnd',
-      state.activeWidgetId, col, row, colSpan, rowSpan).catch(() => {});
+  const finalLayout = state.resolvedResizeLayout;
+  const originalPositions = state.originalResizePositions;
 
-    announceChange(state, `Widget resized to ${colSpan} columns, ${rowSpan} rows`);
+  if (!finalLayout || !originalPositions) return;
+
+  // Find the resized widget's final position
+  const resized = finalLayout.find(p => p.id === state.activeWidgetId);
+  if (!resized) return;
+
+  const resizeChanged = resized.col !== state.startCol || resized.row !== state.startRow ||
+      resized.colSpan !== state.startColSpan || resized.rowSpan !== state.startRowSpan;
+
+  if (resizeChanged) {
+    // Send resize event for the resized widget
+    state.dotNetRef.invokeMethodAsync('JsOnWidgetResizeEnd',
+      state.activeWidgetId, resized.col, resized.row, resized.colSpan, resized.rowSpan)
+      .catch(err => console.error('JsOnWidgetResizeEnd failed:', err));
+
+    // Send layout changes for all displaced widgets
+    const changes = [];
+    for (const final of finalLayout) {
+      if (final.id === state.activeWidgetId) continue;
+      const original = originalPositions.find(p => p.id === final.id);
+      if (!original) continue;
+      if (final.col !== original.col || final.row !== original.row) {
+        changes.push({ id: final.id, col: final.col, row: final.row });
+      }
+    }
+    if (changes.length > 0) {
+      state.dotNetRef.invokeMethodAsync('JsOnLayoutResolved',
+        state.activeWidgetId, changes)
+        .catch(err => console.error('JsOnLayoutResolved (resize) failed:', err));
+    }
+
+    announceChange(state, `Widget resized to ${resized.colSpan} columns, ${resized.rowSpan} rows`);
   }
 }
 
@@ -448,15 +536,15 @@ function finishResize(state) {
 
 function onKeyDown(instanceId, state, e) {
   if (!state.options.editable) return;
+  if (!state.gridEl.contains(e.target)) return;
 
   const target = e.target;
 
-  // Handle drag handle keyboard (arrow keys to move)
-  const dragHandle = target.closest('[data-dashboard-drag-handle]');
-  if (dragHandle && state.options.allowDrag) {
-    const widgetId = dragHandle.getAttribute('data-widget-id');
-    const widget = document.querySelector(`[data-widget-id="${widgetId}"]`);
-    if (!widget) return;
+  // Handle widget keyboard navigation (arrow keys to move)
+  const widgetTarget = target.closest('[data-widget-id]');
+  if (widgetTarget && state.options.allowDrag && widgetTarget.getAttribute('data-static') !== 'true') {
+    const widgetId = widgetTarget.getAttribute('data-widget-id');
+    const widget = widgetTarget;
 
     const grid = widget.closest('[role="region"][aria-roledescription="dashboard grid"]');
     if (!grid) return;
@@ -482,7 +570,8 @@ function onKeyDown(instanceId, state, e) {
       if (newCol !== col || newRow !== row) {
         const others = getWidgetPositions(grid, widgetId);
         if (wouldOverlap(newCol, newRow, colSpan, rowSpan, others)) { return; }
-        state.dotNetRef.invokeMethodAsync('JsOnWidgetDragEnd', widgetId, newCol, newRow).catch(() => {});
+        state.dotNetRef.invokeMethodAsync('JsOnWidgetDragEnd', widgetId, newCol, newRow)
+          .catch(err => console.error('JsOnWidgetDragEnd (keyboard) failed:', err));
         announceChange(state, `Widget moved to column ${newCol}, row ${newRow}`);
       }
     }
@@ -532,7 +621,8 @@ function onKeyDown(instanceId, state, e) {
       if (newColSpan !== colSpan || newRowSpan !== rowSpan) {
         const others = getWidgetPositions(grid, widgetId);
         if (wouldOverlap(col, row, newColSpan, newRowSpan, others)) { return; }
-        state.dotNetRef.invokeMethodAsync('JsOnWidgetResizeEnd', widgetId, col, row, newColSpan, newRowSpan).catch(() => {});
+        state.dotNetRef.invokeMethodAsync('JsOnWidgetResizeEnd', widgetId, col, row, newColSpan, newRowSpan)
+          .catch(err => console.error('JsOnWidgetResizeEnd (keyboard) failed:', err));
         announceChange(state, `Widget resized to ${newColSpan} columns, ${newRowSpan} rows`);
       }
     }
@@ -560,7 +650,8 @@ function getWidgetPositions(grid, excludeWidgetId) {
     const row = parseGridValue(w.style.gridRow, 'start');
     const colSpan = parseGridValue(w.style.gridColumn, 'span');
     const rowSpan = parseGridValue(w.style.gridRow, 'span');
-    positions.push({ id, col, row, colSpan, rowSpan });
+    const isStatic = w.getAttribute('data-static') === 'true';
+    positions.push({ id, col, row, colSpan, rowSpan, isStatic });
   }
   return positions;
 }
@@ -579,72 +670,30 @@ function wouldOverlap(col, row, colSpan, rowSpan, others) {
   return false;
 }
 
-function rectsOverlap(a, b) {
-  return a.col < b.col + b.colSpan &&
-    b.col < a.col + a.colSpan &&
-    a.row < b.row + b.rowSpan &&
-    b.row < a.row + a.rowSpan;
-}
-
-function findFirstOverlap(layout) {
-  for (let i = 0; i < layout.length; i++) {
-    for (let j = i + 1; j < layout.length; j++) {
-      if (rectsOverlap(layout[i], layout[j])) {
-        return [layout[i], layout[j]];
-      }
-    }
-  }
-  return null;
-}
-
 /**
- * Resolve all overlaps in the layout by pushing displaced widgets.
- * Strategy: displaced widgets try the dragged widget's vacated position first,
- * then get pushed below the widget that displaced them.
+ * Close vertical gaps by sliding widgets upward without changing columns.
+ * The fixedId widget (being dragged/resized) stays in place.
  */
-function resolveLayout(layout, movedId, origCol, origRow, cols) {
-  for (let iter = 0; iter < 100; iter++) {
-    const pair = findFirstOverlap(layout);
-    if (!pair) return layout; // no overlaps — resolved
+function compactVertical(positions, fixedId) {
+  const sorted = [...positions].sort((a, b) => a.row !== b.row ? a.row - b.row : a.col - b.col);
+  const placed = [];
 
-    const [a, b] = pair;
+  // Pre-place fixed widget
+  const fixed = sorted.find(p => p.id === fixedId);
+  if (fixed) placed.push(fixed);
 
-    // The dragged widget always takes priority. For cascade pushes,
-    // the widget at the higher/earlier position pushes the other.
-    let pusher, pushed;
-    if (a.id === movedId) { pusher = a; pushed = b; }
-    else if (b.id === movedId) { pusher = b; pushed = a; }
-    else {
-      if (a.row < b.row || (a.row === b.row && a.col <= b.col)) {
-        pusher = a; pushed = b;
-      } else {
-        pusher = b; pushed = a;
+  for (const widget of sorted) {
+    if (widget.id === fixedId) continue;
+
+    // Slide up to topmost row that doesn't overlap placed widgets
+    for (let row = 1; row <= widget.row; row++) {
+      if (!wouldOverlap(widget.col, row, widget.colSpan, widget.rowSpan, placed)) {
+        widget.row = row;
+        break;
       }
     }
-
-    // Strategy 1: For widgets directly displaced by the dragged widget,
-    // try placing them at the dragged widget's vacated position.
-    if (pusher.id === movedId) {
-      const fits = origCol + pushed.colSpan - 1 <= cols &&
-        !wouldOverlap(origCol, origRow, pushed.colSpan, pushed.rowSpan,
-          layout.filter(w => w.id !== pushed.id));
-      if (fits) {
-        pushed.col = origCol;
-        pushed.row = origRow;
-        continue;
-      }
-    }
-
-    // Strategy 2: Push below the pusher, keep same column.
-    pushed.row = pusher.row + pusher.rowSpan;
-
-    // If pushed off-grid horizontally, move to column 1
-    if (pushed.col + pushed.colSpan - 1 > cols) {
-      pushed.col = 1;
-    }
+    placed.push(widget);
   }
-
-  return null; // couldn't resolve
 }
 
 function applyLayout(grid, layout) {
@@ -655,6 +704,236 @@ function applyLayout(grid, layout) {
       el.style.gridRow = `${pos.row} / span ${pos.rowSpan}`;
     }
   }
+}
+
+/**
+ * Checks if two rectangles overlap on the grid.
+ */
+function rectsOverlap(a, b) {
+  return a.col < b.col + b.colSpan &&
+    b.col < a.col + a.colSpan &&
+    a.row < b.row + b.rowSpan &&
+    b.row < a.row + a.rowSpan;
+}
+
+/**
+ * Find all widgets that overlap with the given widget.
+ */
+function findCollisions(widget, allWidgets) {
+  const collisions = [];
+  for (const other of allWidgets) {
+    if (other.id === widget.id) continue;
+    if (rectsOverlap(widget, other)) {
+      collisions.push(other);
+    }
+  }
+  return collisions;
+}
+
+/**
+ * Push a single widget out of the way of `pusher` along the given axis/direction.
+ * Cascades recursively if the pushed widget now overlaps others.
+ * Returns false if the push is impossible (canvas edge, static widget, cycle).
+ */
+function pushWidget(widget, pusher, axis, direction, allWidgets, columns, visited) {
+  if (widget.isStatic) return false;
+  if (visited.has(widget.id)) return false;
+  visited.add(widget.id);
+
+  // Save original position for rollback
+  const origCol = widget.col;
+  const origRow = widget.row;
+
+  // Move widget to just outside pusher
+  if (axis === 'col') {
+    widget.col = direction > 0
+      ? pusher.col + pusher.colSpan  // push right
+      : pusher.col - widget.colSpan; // push left
+  } else {
+    widget.row = direction > 0
+      ? pusher.row + pusher.rowSpan  // push down
+      : pusher.row - widget.rowSpan; // push up
+  }
+
+  // Check grid bounds (horizontal only — vertical grows downward)
+  if (widget.col < 1 || widget.col + widget.colSpan - 1 > columns || widget.row < 1) {
+    widget.col = origCol;
+    widget.row = origRow;
+    visited.delete(widget.id);
+    return false;
+  }
+
+  // Find new collisions caused by this push
+  const newCollisions = findCollisions(widget, allWidgets);
+  for (const collider of newCollisions) {
+    if (collider.id === pusher.id) continue;
+    if (!pushWidget(collider, widget, axis, direction, allWidgets, columns, visited)) {
+      // Cascade failed — rollback
+      widget.col = origCol;
+      widget.row = origRow;
+      visited.delete(widget.id);
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Resolve layout after dragging a widget to a new position.
+ * Uses collision detection + local displacement instead of global compaction.
+ * Returns the resolved positions array, or null if the move should be rejected.
+ */
+function resolveLayoutAfterDrag(originalPositions, draggedId, targetCol, targetRow, origCol, origRow, columns) {
+  const positions = originalPositions.map(p => ({...p}));
+  const dragged = positions.find(p => p.id === draggedId);
+  if (!dragged) return null;
+
+  // Place dragged widget at target (clamped)
+  dragged.col = Math.max(1, Math.min(targetCol, columns - dragged.colSpan + 1));
+  dragged.row = Math.max(1, targetRow);
+
+  // Find overlapping widgets
+  const collisions = findCollisions(dragged, positions);
+
+  if (collisions.length === 0) {
+    return positions;
+  }
+
+  // Try swap if exactly 1 collision
+  if (collisions.length === 1) {
+    const collider = collisions[0];
+    if (!collider.isStatic) {
+      // Try placing collider at dragged widget's original position
+      const swapPositions = originalPositions.map(p => ({...p}));
+      const swapDragged = swapPositions.find(p => p.id === draggedId);
+      const swapCollider = swapPositions.find(p => p.id === collider.id);
+
+      swapDragged.col = dragged.col;
+      swapDragged.row = dragged.row;
+      swapCollider.col = origCol;
+      swapCollider.row = origRow;
+
+      // Check if collider fits at original position without overlapping anyone else
+      const swapConflicts = findCollisions(swapCollider, swapPositions);
+      if (swapConflicts.length === 0) {
+        return swapPositions;
+      }
+    }
+  }
+
+  // Push colliders along the drag direction
+  const dragDirCol = targetCol - origCol;
+  const dragDirRow = targetRow - origRow;
+
+  // Determine primary push axis and direction from drag movement
+  let pushAxis, pushDirection;
+  if (Math.abs(dragDirCol) >= Math.abs(dragDirRow)) {
+    pushAxis = 'col';
+    pushDirection = dragDirCol >= 0 ? 1 : -1;
+  } else {
+    pushAxis = 'row';
+    pushDirection = dragDirRow >= 0 ? 1 : -1;
+  }
+
+  for (const collider of collisions) {
+    const visited = new Set([draggedId]);
+    if (!pushWidget(collider, dragged, pushAxis, pushDirection, positions, columns, visited)) {
+      // Primary direction failed — try secondary axis
+      const altAxis = pushAxis === 'col' ? 'row' : 'col';
+      const altDirection = pushAxis === 'col' ? (dragDirRow >= 0 ? 1 : -1) : (dragDirCol >= 0 ? 1 : -1);
+      const visited2 = new Set([draggedId]);
+
+      // Re-derive positions from original since previous push may have partially mutated
+      const retryPositions = originalPositions.map(p => ({...p}));
+      const retryDragged = retryPositions.find(p => p.id === draggedId);
+      retryDragged.col = dragged.col;
+      retryDragged.row = dragged.row;
+
+      const retryCollisions = findCollisions(retryDragged, retryPositions);
+      let allPushed = true;
+      for (const rc of retryCollisions) {
+        if (!pushWidget(rc, retryDragged, altAxis, altDirection, retryPositions, columns, visited2)) {
+          // Try pushing down as last resort
+          const visited3 = new Set([draggedId]);
+          if (!pushWidget(rc, retryDragged, 'row', 1, retryPositions, columns, visited3)) {
+            allPushed = false;
+            break;
+          }
+        }
+      }
+
+      if (allPushed) {
+        return retryPositions;
+      }
+
+      return null;
+    }
+  }
+
+  return positions;
+}
+
+/**
+ * Resolve layout after resizing a widget.
+ * Pushes colliders along the direction of the growing edge.
+ * Returns the resolved positions array, or null if the resize should be rejected.
+ */
+function resolveLayoutAfterResize(originalPositions, resizedId, newCol, newRow, newColSpan, newRowSpan, startCol, startRow, startColSpan, startRowSpan, columns) {
+  const positions = originalPositions.map(p => ({...p}));
+  const resized = positions.find(p => p.id === resizedId);
+  if (!resized) return null;
+
+  resized.col = newCol;
+  resized.row = newRow;
+  resized.colSpan = newColSpan;
+  resized.rowSpan = newRowSpan;
+
+  const collisions = findCollisions(resized, positions);
+
+  if (collisions.length === 0) {
+    return positions;
+  }
+
+  // Determine which edges grew
+  const grewRight = (newCol + newColSpan) > (startCol + startColSpan);
+  const grewLeft = newCol < startCol;
+  const grewDown = (newRow + newRowSpan) > (startRow + startRowSpan);
+  const grewUp = newRow < startRow;
+
+  for (const collider of collisions) {
+    let pushed = false;
+    const visited = new Set([resizedId]);
+
+    // Try pushing along the growing edge direction
+    if (grewRight && !pushed) {
+      pushed = pushWidget(collider, resized, 'col', 1, positions, columns, visited);
+    }
+    if (grewLeft && !pushed) {
+      visited.clear(); visited.add(resizedId);
+      pushed = pushWidget(collider, resized, 'col', -1, positions, columns, visited);
+    }
+    if (grewDown && !pushed) {
+      visited.clear(); visited.add(resizedId);
+      pushed = pushWidget(collider, resized, 'row', 1, positions, columns, visited);
+    }
+    if (grewUp && !pushed) {
+      visited.clear(); visited.add(resizedId);
+      pushed = pushWidget(collider, resized, 'row', -1, positions, columns, visited);
+    }
+
+    // Last resort: push down
+    if (!pushed) {
+      visited.clear(); visited.add(resizedId);
+      pushed = pushWidget(collider, resized, 'row', 1, positions, columns, visited);
+    }
+
+    if (!pushed) {
+      return null;
+    }
+  }
+
+  return positions;
 }
 
 // --- Helpers ---
@@ -678,6 +957,9 @@ function cancelInteraction(state) {
   // Restore all widgets to their original positions
   if (state.dragGrid && state.originalPositions) {
     applyLayout(state.dragGrid, state.originalPositions);
+  }
+  if (state.resizeGrid && state.originalResizePositions) {
+    applyLayout(state.resizeGrid, state.originalResizePositions);
   }
 
   if (state.originalWidget) {
@@ -711,6 +993,13 @@ function resetState(state) {
   state.resolvedLayout = null;
   state.lastResolvedCol = undefined;
   state.lastResolvedRow = undefined;
+  state.resizeGrid = null;
+  state.originalResizePositions = null;
+  state.resolvedResizeLayout = null;
+  state.lastResizeCol = undefined;
+  state.lastResizeRow = undefined;
+  state.lastResizeColSpan = undefined;
+  state.lastResizeRowSpan = undefined;
 }
 
 function announceChange(state, message) {

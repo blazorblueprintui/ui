@@ -9,6 +9,7 @@
     AriaLabel="@AriaLabel"
     class="@CssClass"
     style="@GridStyle"
+    data-dashboard-id="@_instanceId"
     data-show-grid-guide="@(ShowGridGuide ? "true" : "false")"
     data-editable="@(Editable ? "true" : "false")"
     @attributes="AdditionalAttributes">
@@ -47,7 +48,7 @@
     [Parameter] public bool AllowDrag { get; set; } = true;
     [Parameter] public bool AllowResize { get; set; } = true;
     [Parameter] public bool Editable { get; set; } = true;
-    [Parameter] public bool CompactVertical { get; set; }
+    [Parameter] public bool Compact { get; set; } = true;
     [Parameter] public bool ShowGridGuide { get; set; } = true;
     [Parameter] public int MediumColumns { get; set; } = 6;
     [Parameter] public int SmallColumns { get; set; } = 1;
@@ -161,6 +162,7 @@
         _context.AllowDrag = AllowDrag;
         _context.AllowResize = AllowResize;
         _context.Editable = Editable;
+        _context.Compact = Compact;
     }
 
     private void HandleContextStateChanged()
@@ -193,6 +195,7 @@
                 allowDrag = AllowDrag && Editable,
                 allowResize = AllowResize && Editable,
                 editable = Editable,
+                compact = Compact,
                 showGridGuide = ShowGridGuide,
                 mediumBreakpoint = MediumBreakpoint,
                 smallBreakpoint = SmallBreakpoint,
@@ -222,7 +225,8 @@
         newPos.Column = column;
         newPos.Row = row;
 
-        _context.UpdateWidgetPosition(widgetId, column, row, oldPos.ColumnSpan, oldPos.RowSpan);
+        _context.UpdateWidgetPositionSilent(widgetId, column, row, oldPos.ColumnSpan, oldPos.RowSpan);
+        _context.CompactAndNotify(widgetId);
 
         if (OnWidgetDragEnd.HasDelegate)
         {
@@ -254,7 +258,8 @@
         newPos.ColumnSpan = columnSpan;
         newPos.RowSpan = rowSpan;
 
-        _context.UpdateWidgetPosition(widgetId, column, row, columnSpan, rowSpan);
+        _context.UpdateWidgetPositionSilent(widgetId, column, row, columnSpan, rowSpan);
+        _context.CompactAndNotify(widgetId);
 
         if (OnWidgetResizeEnd.HasDelegate)
         {
@@ -316,7 +321,7 @@
                 continue;
             }
 
-            _context.UpdateWidgetPosition(change.Id, change.Col, change.Row, oldPos.ColumnSpan, oldPos.RowSpan);
+            _context.UpdateWidgetPositionSilent(change.Id, change.Col, change.Row, oldPos.ColumnSpan, oldPos.RowSpan);
 
             if (change.Id == draggedWidgetId && OnWidgetDragEnd.HasDelegate)
             {
@@ -331,6 +336,8 @@
                 };
             }
         }
+
+        _context.CompactAndNotify(draggedWidgetId);
 
         if (dragArgs != null)
         {

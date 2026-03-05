@@ -101,8 +101,12 @@
     private bool _showResizeHandle =>
         Resizable && !Static && (Context?.AllowResize ?? false) && (Context?.Editable ?? false);
 
+    private bool _isDraggable =>
+        Draggable && !Static && (Context?.AllowDrag ?? false) && (Context?.Editable ?? false);
+
     private string CssClass => ClassNames.cn(
         "rounded-lg border bg-card text-card-foreground shadow-sm relative overflow-hidden group",
+        _isDraggable ? "cursor-move" : "",
         Static ? "opacity-75" : "",
         Class
     );
