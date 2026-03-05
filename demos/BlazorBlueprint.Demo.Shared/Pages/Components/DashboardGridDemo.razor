@@ -3,6 +3,51 @@
 
 <PageTitle>Dashboard Grid - Blazor Blueprint</PageTitle>
 
+<style>
+    .styled-widget-dark {
+        background-color: #18181b !important;
+        border-color: rgba(63, 63, 70, 0.5) !important;
+        color: #fff !important;
+    }
+    .styled-header-gradient {
+        background: linear-gradient(to right, #2563eb, #06b6d4) !important;
+        border-color: rgba(63, 63, 70, 0.5) !important;
+        color: #fff !important;
+    }
+    .styled-widget-warm {
+        --styled-accent: #ea580c;
+        background-color: rgba(255, 247, 237, 0.5) !important;
+        border-color: rgba(253, 186, 116, 0.4) !important;
+    }
+    .styled-header-warm {
+        border-color: rgba(253, 186, 116, 0.4) !important;
+    }
+    .styled-widget-cool {
+        --styled-accent: #0d9488;
+        background-color: rgba(240, 253, 250, 0.5) !important;
+        border-color: rgba(153, 246, 228, 0.4) !important;
+    }
+    .styled-header-cool {
+        border-color: rgba(153, 246, 228, 0.4) !important;
+    }
+    .dark .styled-widget-warm {
+        --styled-accent: #fb923c;
+        background-color: rgba(124, 45, 18, 0.15) !important;
+        border-color: rgba(154, 52, 18, 0.25) !important;
+    }
+    .dark .styled-header-warm {
+        border-color: rgba(154, 52, 18, 0.25) !important;
+    }
+    .dark .styled-widget-cool {
+        --styled-accent: #2dd4bf;
+        background-color: rgba(4, 47, 46, 0.25) !important;
+        border-color: rgba(17, 94, 89, 0.25) !important;
+    }
+    .dark .styled-header-cool {
+        border-color: rgba(17, 94, 89, 0.25) !important;
+    }
+</style>
+
 <div class="space-y-8 max-w-7xl">
     <div class="space-y-4">
         <h1 class="text-4xl font-bold tracking-tight">Dashboard Grid</h1>
@@ -414,6 +459,90 @@
         <CodeBlock Source="Components/DashboardGrid/grid-config.txt" />
     </div>
 
+    <!-- ── Custom Widget Styles ────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Widget Styles</h2>
+            <p class="text-sm text-muted-foreground">
+                Override widget appearance using the <code class="bg-muted px-1 py-0.5 rounded">Class</code> parameter
+                and the <code class="bg-muted px-1 py-0.5 rounded">Header</code> /
+                <code class="bg-muted px-1 py-0.5 rounded">Footer</code> render fragments for full visual control.
+            </p>
+        </div>
+        <BbButton OnClick="() => customStyleEditable = !customStyleEditable" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+            @(customStyleEditable ? "Lock Dashboard" : "Edit Dashboard")
+        </BbButton>
+        <BbDashboardGrid @bind-State="customStyleState" Editable="@customStyleEditable" Border="true"
+                         Background="DashboardBackground.Squares">
+            @* Dark widget with gradient header *@
+            <BbDashboardWidget Id="styled-1" Column="1" Row="1" ColumnSpan="4" RowSpan="8"
+                               Class="styled-widget-dark">
+                <Header>
+                    <BbDashboardWidgetHeader Class="styled-header-gradient">
+                        <div class="flex items-center gap-2">
+                            <LucideIcon Name="dollar-sign" Class="h-4 w-4" />
+                            <span class="text-sm font-semibold">Revenue</span>
+                        </div>
+                    </BbDashboardWidgetHeader>
+                </Header>
+                <ChildContent>
+                    <div class="flex items-center justify-center h-full">
+                        <span class="text-3xl font-bold" style="color: #22d3ee;">$48,290</span>
+                    </div>
+                </ChildContent>
+                <Footer>
+                    <div class="text-xs flex items-center gap-1" style="color: #a1a1aa;">
+                        <LucideIcon Name="trending-up" Class="h-3 w-3" Style="color: #22d3ee;" />
+                        <span style="color: #22d3ee;">+12.5%</span> vs last month
+                    </div>
+                </Footer>
+            </BbDashboardWidget>
+
+            @* Warm tinted widget *@
+            <BbDashboardWidget Id="styled-2" Column="5" Row="1" ColumnSpan="4" RowSpan="8"
+                               Class="styled-widget-warm">
+                <Header>
+                    <BbDashboardWidgetHeader Class="styled-header-warm">
+                        <div class="flex items-center gap-2" style="color: var(--styled-accent);">
+                            <LucideIcon Name="bell" Class="h-4 w-4" />
+                            <span class="text-sm font-semibold">Alerts</span>
+                        </div>
+                    </BbDashboardWidgetHeader>
+                </Header>
+                <ChildContent>
+                    <div class="flex items-center justify-center h-full">
+                        <span class="text-4xl font-bold" style="color: var(--styled-accent);">23</span>
+                    </div>
+                </ChildContent>
+                <Footer>
+                    <div class="text-xs" style="color: var(--styled-accent); opacity: 0.7;">3 critical · 20 warnings</div>
+                </Footer>
+            </BbDashboardWidget>
+
+            @* Cool tinted widget *@
+            <BbDashboardWidget Id="styled-3" Column="9" Row="1" ColumnSpan="4" RowSpan="8"
+                               Class="styled-widget-cool">
+                <Header>
+                    <BbDashboardWidgetHeader Class="styled-header-cool">
+                        <div class="flex items-center gap-2" style="color: var(--styled-accent);">
+                            <LucideIcon Name="activity" Class="h-4 w-4" />
+                            <span class="text-sm font-semibold">Uptime</span>
+                        </div>
+                    </BbDashboardWidgetHeader>
+                </Header>
+                <ChildContent>
+                    <div class="flex items-center justify-center h-full">
+                        <span class="text-3xl font-bold" style="color: var(--styled-accent);">99.9%</span>
+                    </div>
+                </ChildContent>
+                <Footer>
+                    <div class="text-xs" style="color: var(--styled-accent); opacity: 0.8;">All systems operational</div>
+                </Footer>
+            </BbDashboardWidget>
+        </BbDashboardGrid>
+        <CodeBlock Source="Components/DashboardGrid/custom-styles.txt" />
+    </div>
+
     <!-- ── Data-Driven Dashboard ─────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -557,7 +686,19 @@
                     Add a rounded border around the grid container.
                 </ApiParameter>
                 <ApiParameter Name="Background" Type="DashboardBackground" Default="None">
-                    Background pattern for the grid: <code>None</code> or <code>Squares</code>.
+                    Background pattern shown when the grid is in edit mode: <code>None</code> or <code>Squares</code>. Automatically hidden when <code>Editable</code> is <code>false</code>.
+                </ApiParameter>
+                <ApiParameter Name="Loading" Type="bool" Default="false">
+                    When <code>true</code>, displays a skeleton loading state instead of the grid.
+                </ApiParameter>
+                <ApiParameter Name="LoadingContent" Type="RenderFragment?" Default="null">
+                    Custom loading content. Overrides the default skeleton layout when <code>Loading</code> is <code>true</code>.
+                </ApiParameter>
+                <ApiParameter Name="EmptyContent" Type="RenderFragment?" Default="null">
+                    Custom empty state content. Overrides the default empty state when there are no widgets.
+                </ApiParameter>
+                <ApiParameter Name="OnAddWidget" Type="EventCallback" Default="">
+                    Callback for the "Add Widget" button in the default empty state.
                 </ApiParameter>
                 <ApiParameter Name="MediumColumns" Type="int" Default="12">
                     Number of columns at the medium breakpoint.
@@ -637,6 +778,15 @@
                 <ApiParameter Name="Footer" Type="RenderFragment?" Default="null">
                     Optional footer content rendered at the bottom of the widget.
                 </ApiParameter>
+                <ApiParameter Name="Loading" Type="bool" Default="false">
+                    When <code>true</code>, displays a loading skeleton inside the widget content area.
+                </ApiParameter>
+                <ApiParameter Name="LoadingContent" Type="RenderFragment?" Default="null">
+                    Custom loading content for the widget. Overrides the default skeleton.
+                </ApiParameter>
+                <ApiParameter Name="OnRemove" Type="EventCallback&lt;string&gt;">
+                    Callback fired when the remove button is clicked. Passes the widget <code>Id</code>. The remove button is only visible in edit mode.
+                </ApiParameter>
                 <ApiParameter Name="Class" Type="string?" Default="null">
                     Additional CSS classes for the widget card.
                 </ApiParameter>
@@ -666,6 +816,8 @@
 @code {
     // Editable state
     private BlazorBlueprint.Primitives.DashboardGrid.DashboardGridState editableState = new();
+    private BlazorBlueprint.Primitives.DashboardGrid.DashboardGridState customStyleState = new();
+    private bool customStyleEditable = true;
     private List<DynamicWidget> editableWidgets = new()
     {
         new() { Id = "edit-1", Title = "Widget A", Description = "Drag me or resize from the bottom-right corner", Column = 1, Row = 1, ColSpan = 12, RowSpan = 6 },
