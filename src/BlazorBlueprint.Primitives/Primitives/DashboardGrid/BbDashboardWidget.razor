@@ -1,0 +1,90 @@
+@namespace BlazorBlueprint.Primitives.DashboardGrid
+@implements IDisposable
+
+<div role="article"
+     aria-roledescription="dashboard widget"
+     tabindex="0"
+     data-widget-id="@Id"
+     data-dragging="false"
+     data-resizing="false"
+     data-static="@(Static ? "true" : "false")"
+     data-min-col-span="@MinColumnSpan"
+     data-min-row-span="@MinRowSpan"
+     data-max-col-span="@MaxColumnSpan"
+     data-max-row-span="@MaxRowSpan"
+     style="@_gridStyle"
+     @attributes="AdditionalAttributes">
+    <CascadingValue Value="this" IsFixed="true">
+        @ChildContent
+    </CascadingValue>
+</div>
+
+@code {
+    [CascadingParameter] public DashboardGridContext? Context { get; set; }
+
+    [Parameter, EditorRequired] public string Id { get; set; } = string.Empty;
+    [Parameter] public int Column { get; set; } = 1;
+    [Parameter] public int Row { get; set; } = 1;
+    [Parameter] public int ColumnSpan { get; set; } = 1;
+    [Parameter] public int RowSpan { get; set; } = 1;
+    [Parameter] public int MinColumnSpan { get; set; } = 4;
+    [Parameter] public int MinRowSpan { get; set; } = 4;
+    [Parameter] public int MaxColumnSpan { get; set; }
+    [Parameter] public int MaxRowSpan { get; set; }
+    [Parameter] public bool Draggable { get; set; } = true;
+    [Parameter] public bool Resizable { get; set; } = true;
+    [Parameter] public bool Static { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    internal WidgetPosition CurrentPosition => GetCurrentPosition();
+
+    private string _gridStyle
+    {
+        get
+        {
+            var pos = GetCurrentPosition();
+            return $"grid-column: {pos.Column} / span {pos.ColumnSpan}; grid-row: {pos.Row} / span {pos.RowSpan};";
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException("BbDashboardWidget must be used within a BbDashboardGrid component.");
+        }
+
+        Context.RegisterWidget(Id, Column, Row, ColumnSpan, RowSpan);
+        Context.OnStateChanged += StateHasChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Sync parameter defaults into state if this is an uncontrolled widget
+        var pos = Context?.GetWidgetPosition(Id);
+        if (pos == null)
+        {
+            Context?.RegisterWidget(Id, Column, Row, ColumnSpan, RowSpan);
+        }
+    }
+
+    private WidgetPosition GetCurrentPosition()
+    {
+        var pos = Context?.GetWidgetPosition(Id);
+        if (pos != null)
+        {
+            return pos;
+        }
+        return new WidgetPosition(Id, Column, Row, ColumnSpan, RowSpan);
+    }
+
+    public void Dispose()
+    {
+        if (Context != null)
+        {
+            Context.OnStateChanged -= StateHasChanged;
+            Context.UnregisterWidget(Id);
+        }
+    }
+}

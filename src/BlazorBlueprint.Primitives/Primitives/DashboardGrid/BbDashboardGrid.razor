@@ -1,0 +1,21 @@
+@namespace BlazorBlueprint.Primitives.DashboardGrid
+
+<div role="region"
+     aria-roledescription="dashboard grid"
+     aria-label="@AriaLabel"
+     data-editable="@(Context != null && Context.Editable ? "true" : "false")"
+     data-breakpoint="@_breakpointName"
+     @attributes="AdditionalAttributes">
+    <CascadingValue Value="@Context" IsFixed="false">
+        @ChildContent
+    </CascadingValue>
+</div>
+
+@code {
+    private string _breakpointName => Context?.State.ActiveBreakpoint.ToString().ToLowerInvariant() ?? "large";
+
+    [Parameter] public DashboardGridContext? Context { get; set; }
+    [Parameter] public string? AriaLabel { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+}

@@ -1,0 +1,581 @@
+@namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Primitives.DashboardGrid
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+@if (Loading)
+{
+    @if (LoadingContent != null)
+    {
+        @LoadingContent
+    }
+    else
+    {
+        <div class="@LoadingContainerClass" role="status" aria-label="Loading dashboard">
+            <div class="space-y-4 w-full">
+                <div class="grid gap-2" style="grid-template-columns: repeat(@Columns, 1fr);">
+                    @for (var i = 0; i < 4; i++)
+                    {
+                        <div style="grid-column: span @(Columns / 4)">
+                            <BbSkeleton Class="rounded-lg w-full" Height="@($"{RowHeight * 4 + Gap * 3}px")" />
+                        </div>
+                    }
+                </div>
+                <div class="grid gap-2" style="grid-template-columns: repeat(@Columns, 1fr);">
+                    <div style="grid-column: span @(Columns * 2 / 3)">
+                        <BbSkeleton Class="rounded-lg w-full" Height="@($"{RowHeight * 8 + Gap * 7}px")" />
+                    </div>
+                    <div style="grid-column: span @(Columns / 3)">
+                        <BbSkeleton Class="rounded-lg w-full" Height="@($"{RowHeight * 8 + Gap * 7}px")" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <BlazorBlueprint.Primitives.DashboardGrid.BbDashboardGrid
+        Context="@_context"
+        AriaLabel="@AriaLabel"
+        class="@CssClass"
+        style="@GridStyle"
+        data-dashboard-id="@_instanceId"
+        data-show-grid-guide="@(ShowGridGuide ? "true" : "false")"
+        data-positioned="@(_positioned ? "true" : "false")"
+        @attributes="AdditionalAttributes">
+
+        @if (_hasNoWidgets)
+        {
+            <div class="@EmptyContainerClass">
+                @if (EmptyContent != null)
+                {
+                    @EmptyContent
+                }
+                else
+                {
+                    <BbEmpty Title="No widgets to display"
+                             Description="@(OnAddWidget.HasDelegate ? "Get started by adding your first widget." : null)"
+                             Size="EmptySize.Small">
+                        <Icon>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <rect width="7" height="9" x="3" y="3" rx="1" />
+                                <rect width="7" height="5" x="14" y="3" rx="1" />
+                                <rect width="7" height="9" x="14" y="12" rx="1" />
+                                <rect width="7" height="5" x="3" y="16" rx="1" />
+                            </svg>
+                        </Icon>
+                        <ChildContent>
+                            @if (OnAddWidget.HasDelegate)
+                            {
+                                <button type="button" class="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                                        @onclick="OnAddWidget">
+                                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M5 12h14" /><path d="M12 5v14" />
+                                    </svg>
+                                    Add Widget
+                                </button>
+                            }
+                        </ChildContent>
+                    </BbEmpty>
+                }
+            </div>
+        }
+
+        @ChildContent
+    </BlazorBlueprint.Primitives.DashboardGrid.BbDashboardGrid>
+
+    <div aria-live="polite" class="sr-only" id="@(_instanceId)-live"></div>
+}
+
+@code {
+    private DashboardGridContext _context = new();
+    private IJSObjectReference? _jsModule;
+    private DotNetObjectReference<BbDashboardGrid>? _dotNetRef;
+    private string _instanceId = Guid.NewGuid().ToString("N");
+    private bool _jsInitialized;
+    private bool _disposed;
+    private bool _positioned;
+    private bool _wasLoading;
+    private int _lastStateVersion = -1;
+    private DashboardBreakpoint _lastBreakpoint = DashboardBreakpoint.Large;
+
+    [Parameter] public int Columns { get; set; } = 24;
+    [Parameter] public int RowHeight { get; set; } = 40;
+    [Parameter] public int Gap { get; set; } = 8;
+    [Parameter] public int MaxRows { get; set; }
+    [Parameter] public DashboardGridState? State { get; set; }
+    [Parameter] public EventCallback<DashboardGridState> StateChanged { get; set; }
+    [Parameter] public bool AllowDrag { get; set; } = true;
+    [Parameter] public bool AllowResize { get; set; } = true;
+    [Parameter] public bool Editable { get; set; } = true;
+    [Parameter] public bool Compact { get; set; } = true;
+    [Parameter] public bool ShowGridGuide { get; set; } = true;
+    [Parameter] public int MediumColumns { get; set; } = 12;
+    [Parameter] public int SmallColumns { get; set; } = 2;
+    [Parameter] public int MediumBreakpoint { get; set; } = 1024;
+    [Parameter] public int SmallBreakpoint { get; set; } = 768;
+    [Parameter] public EventCallback<WidgetDragEventArgs> OnWidgetDragEnd { get; set; }
+    [Parameter] public EventCallback<WidgetResizeEventArgs> OnWidgetResizeEnd { get; set; }
+    [Parameter] public EventCallback<DashboardGridLayout> OnLayoutChanged { get; set; }
+    [Parameter] public EventCallback<DashboardBreakpoint> OnBreakpointChanged { get; set; }
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public RenderFragment? LoadingContent { get; set; }
+    [Parameter] public RenderFragment? EmptyContent { get; set; }
+    [Parameter] public EventCallback OnAddWidget { get; set; }
+    [Parameter] public bool Border { get; set; }
+    [Parameter] public DashboardBackground Background { get; set; } = DashboardBackground.Squares;
+    [Parameter] public string? AriaLabel { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private int ActiveColumns => _context.State.ActiveBreakpoint switch
+    {
+        DashboardBreakpoint.Small => SmallColumns,
+        DashboardBreakpoint.Medium => MediumColumns,
+        _ => Columns
+    };
+
+    private bool _showBackground => Background != DashboardBackground.None && Editable && ShowGridGuide;
+
+    private string CssClass => ClassNames.cn(
+        "relative grid",
+        Border ? "rounded-lg border p-4" : "",
+        _showBackground ? "bb-guide-background-squares" : "",
+        Class
+    );
+
+    private string GridStyle
+    {
+        get
+        {
+            var style = $"grid-template-columns: repeat({ActiveColumns}, 1fr); grid-auto-rows: {RowHeight}px; gap: {Gap}px;"
+                + $" --bb-dashboard-columns: {ActiveColumns}; --bb-dashboard-row-height: {RowHeight}px; --bb-dashboard-gap: {Gap}px;"
+                + (MaxRows > 0 ? $" grid-template-rows: repeat({MaxRows}, {RowHeight}px);" : "");
+
+            if (_hasNoWidgets)
+            {
+                // Default widget is MinRowSpan(4) rows tall — use that as min-height
+                var minHeight = 4 * RowHeight + 3 * Gap;
+                style += $" min-height: {minHeight}px;";
+            }
+
+            return style;
+        }
+    }
+
+    private bool _hasNoWidgets => !Loading && _context.State.GetActiveLayout().Positions.Count == 0;
+
+    private string LoadingContainerClass => ClassNames.cn(
+        "flex items-center justify-center py-12",
+        Border ? "rounded-lg border p-4" : ""
+    );
+
+    private string EmptyContainerClass =>
+        "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-muted-foreground bg-background";
+
+
+    protected override void OnInitialized()
+    {
+        if (State != null)
+        {
+            _context = new DashboardGridContext(State);
+            _lastStateVersion = State.Version;
+        }
+
+        SyncContextParameters();
+        _context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (State != null && State.Version != _lastStateVersion)
+        {
+            _context.OnStateChanged -= HandleContextStateChanged;
+            _context = new DashboardGridContext(State);
+            _context.OnStateChanged += HandleContextStateChanged;
+            _lastStateVersion = State.Version;
+        }
+
+        // When transitioning from loading to not-loading, reset JS so it
+        // re-initialises against the now-visible grid element.
+        if (_wasLoading && !Loading)
+        {
+            _jsInitialized = false;
+            _positioned = false;
+        }
+        _wasLoading = Loading;
+
+        SyncContextParameters();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!Loading && !_jsInitialized)
+        {
+            await InitializeJsAsync();
+        }
+        else if (_jsInitialized && _jsModule != null)
+        {
+            await SyncJsOptionsAsync();
+        }
+    }
+
+    private async Task SyncJsOptionsAsync()
+    {
+        try
+        {
+            await _jsModule!.InvokeVoidAsync("updateGridOptions", _instanceId, new
+            {
+                columns = Columns,
+                rowHeight = RowHeight,
+                gap = Gap,
+                allowDrag = AllowDrag && Editable,
+                allowResize = AllowResize && Editable,
+                editable = Editable,
+                compact = Compact,
+                showGridGuide = ShowGridGuide,
+                mediumBreakpoint = MediumBreakpoint,
+                smallBreakpoint = SmallBreakpoint,
+                mediumColumns = MediumColumns,
+                smallColumns = SmallColumns
+            });
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        {
+        }
+    }
+
+    private void SyncContextParameters()
+    {
+        _context.Columns = Columns;
+        _context.RowHeight = RowHeight;
+        _context.Gap = Gap;
+        _context.AllowDrag = AllowDrag;
+        _context.AllowResize = AllowResize;
+        _context.Editable = Editable;
+        _context.Compact = Compact;
+    }
+
+    private void HandleContextStateChanged()
+    {
+        InvokeAsync(async () =>
+        {
+            if (StateChanged.HasDelegate && State != null)
+            {
+                await StateChanged.InvokeAsync(State);
+            }
+            StateHasChanged();
+        });
+    }
+
+    private async Task InitializeJsAsync()
+    {
+        if (_jsInitialized)
+        {
+            return;
+        }
+
+        try
+        {
+            if (_jsModule == null)
+            {
+                _jsModule = await JS.InvokeAsync<IJSObjectReference>("import",
+                    "./_content/BlazorBlueprint.Components/js/dashboard-grid.js");
+            }
+            else
+            {
+                // Clean up previous instance before re-initializing
+                try
+                {
+                    await _jsModule.InvokeVoidAsync("disposeDashboardGrid", _instanceId);
+                }
+                catch
+                {
+                }
+            }
+
+            _dotNetRef?.Dispose();
+            _dotNetRef = DotNetObjectReference.Create(this);
+
+            await _jsModule.InvokeVoidAsync("initializeDashboardGrid", _dotNetRef, _instanceId, new
+            {
+                columns = Columns,
+                rowHeight = RowHeight,
+                gap = Gap,
+                allowDrag = AllowDrag && Editable,
+                allowResize = AllowResize && Editable,
+                editable = Editable,
+                compact = Compact,
+                showGridGuide = ShowGridGuide,
+                mediumBreakpoint = MediumBreakpoint,
+                smallBreakpoint = SmallBreakpoint,
+                mediumColumns = MediumColumns,
+                smallColumns = SmallColumns
+            });
+            _jsInitialized = true;
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        {
+        }
+        catch (InvalidOperationException)
+        {
+        }
+    }
+
+    [JSInvokable]
+    public async Task JsOnWidgetDragEnd(string widgetId, int column, int row)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        var current = _context.GetWidgetPosition(widgetId);
+        var oldPos = current != null ? current with { } : new WidgetPosition(widgetId, 1, 1, 1, 1);
+        var newPos = oldPos with { Column = column, Row = row };
+
+        _context.UpdateWidgetPositionSilent(widgetId, column, row, oldPos.ColumnSpan, oldPos.RowSpan);
+        _context.Notify();
+
+        if (OnWidgetDragEnd.HasDelegate)
+        {
+            await OnWidgetDragEnd.InvokeAsync(new WidgetDragEventArgs
+            {
+                WidgetId = widgetId,
+                OldPosition = oldPos,
+                NewPosition = newPos
+            });
+        }
+        if (OnLayoutChanged.HasDelegate)
+        {
+            await OnLayoutChanged.InvokeAsync(_context.State.GetActiveLayout());
+        }
+    }
+
+    [JSInvokable]
+    public async Task JsOnWidgetResizeEnd(string widgetId, int column, int row, int columnSpan, int rowSpan)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        var current = _context.GetWidgetPosition(widgetId);
+        var oldPos = current != null ? current with { } : new WidgetPosition(widgetId, 1, 1, 1, 1);
+        var newPos = oldPos with { Column = column, Row = row, ColumnSpan = columnSpan, RowSpan = rowSpan };
+
+        _context.UpdateWidgetPositionSilent(widgetId, column, row, columnSpan, rowSpan);
+        _context.Notify();
+
+        if (OnWidgetResizeEnd.HasDelegate)
+        {
+            await OnWidgetResizeEnd.InvokeAsync(new WidgetResizeEventArgs
+            {
+                WidgetId = widgetId,
+                OldPosition = oldPos,
+                NewPosition = newPos
+            });
+        }
+        if (OnLayoutChanged.HasDelegate)
+        {
+            await OnLayoutChanged.InvokeAsync(_context.State.GetActiveLayout());
+        }
+    }
+
+    [JSInvokable]
+    public async Task JsOnBreakpointChanged(string breakpoint)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        var bp = breakpoint switch
+        {
+            "small" => DashboardBreakpoint.Small,
+            "medium" => DashboardBreakpoint.Medium,
+            _ => DashboardBreakpoint.Large
+        };
+
+        if (bp != _lastBreakpoint)
+        {
+            _lastBreakpoint = bp;
+            _context.SetActiveBreakpoint(bp);
+            if (OnBreakpointChanged.HasDelegate)
+            {
+                await OnBreakpointChanged.InvokeAsync(bp);
+            }
+            StateHasChanged();
+        }
+    }
+
+    [JSInvokable]
+    public async Task JsOnLayoutResolved(string draggedWidgetId, LayoutChangeDto[] changes)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        WidgetDragEventArgs? dragArgs = null;
+
+        foreach (var change in changes)
+        {
+            var existing = _context.GetWidgetPosition(change.Id);
+            if (existing == null)
+            {
+                continue;
+            }
+
+            var oldPos = existing with { };
+            _context.UpdateWidgetPositionSilent(change.Id, change.Col, change.Row, oldPos.ColumnSpan, oldPos.RowSpan);
+
+            if (change.Id == draggedWidgetId && OnWidgetDragEnd.HasDelegate)
+            {
+                var newPos = oldPos with { Column = change.Col, Row = change.Row };
+                dragArgs = new WidgetDragEventArgs
+                {
+                    WidgetId = draggedWidgetId,
+                    OldPosition = oldPos,
+                    NewPosition = newPos
+                };
+            }
+        }
+
+        _context.Notify();
+
+        if (dragArgs != null)
+        {
+            await OnWidgetDragEnd.InvokeAsync(dragArgs);
+        }
+        if (OnLayoutChanged.HasDelegate)
+        {
+            await OnLayoutChanged.InvokeAsync(_context.State.GetActiveLayout());
+        }
+    }
+
+    [JSInvokable]
+    public async Task JsOnCompactComplete(PositionDto[] positions)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        foreach (var pos in positions)
+        {
+            _context.UpdateWidgetPositionSilent(pos.WidgetId, pos.Col, pos.Row, pos.ColSpan, pos.RowSpan);
+        }
+
+        _positioned = true;
+        _context.Notify();
+
+        if (OnLayoutChanged.HasDelegate)
+        {
+            await OnLayoutChanged.InvokeAsync(_context.State.GetActiveLayout());
+        }
+    }
+
+    /// <summary>
+    /// Returns the complete dashboard configuration: grid settings and all widget positions.
+    /// Serialize this to persist the dashboard and restore it later.
+    /// </summary>
+    public DashboardConfig GetConfig()
+    {
+        var layout = _context.State.GetActiveLayout();
+        var widgets = new List<DashboardWidgetConfig>(layout.Positions.Count);
+        foreach (var pos in layout.Positions)
+        {
+            widgets.Add(new DashboardWidgetConfig
+            {
+                WidgetId = pos.WidgetId,
+                Column = pos.Column,
+                Row = pos.Row,
+                ColumnSpan = pos.ColumnSpan,
+                RowSpan = pos.RowSpan
+            });
+        }
+
+        return new DashboardConfig
+        {
+            Columns = Columns,
+            RowHeight = RowHeight,
+            Gap = Gap,
+            MaxRows = MaxRows,
+            MediumColumns = MediumColumns,
+            SmallColumns = SmallColumns,
+            MediumBreakpoint = MediumBreakpoint,
+            SmallBreakpoint = SmallBreakpoint,
+            Widgets = widgets
+        };
+    }
+
+    public sealed class DashboardConfig
+    {
+        public int Columns { get; set; }
+        public int RowHeight { get; set; }
+        public int Gap { get; set; }
+        public int MaxRows { get; set; }
+        public int MediumColumns { get; set; }
+        public int SmallColumns { get; set; }
+        public int MediumBreakpoint { get; set; }
+        public int SmallBreakpoint { get; set; }
+        public List<DashboardWidgetConfig> Widgets { get; set; } = new();
+    }
+
+    public sealed class DashboardWidgetConfig
+    {
+        public string WidgetId { get; set; } = string.Empty;
+        public int Column { get; set; }
+        public int Row { get; set; }
+        public int ColumnSpan { get; set; }
+        public int RowSpan { get; set; }
+    }
+
+    public sealed class LayoutChangeDto
+    {
+        public string Id { get; set; } = string.Empty;
+        public int Col { get; set; }
+        public int Row { get; set; }
+    }
+
+    public sealed class PositionDto
+    {
+        public string WidgetId { get; set; } = string.Empty;
+        public int Col { get; set; }
+        public int Row { get; set; }
+        public int ColSpan { get; set; }
+        public int RowSpan { get; set; }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _disposed = true;
+        _context.OnStateChanged -= HandleContextStateChanged;
+
+        if (_jsModule != null && _jsInitialized)
+        {
+            try
+            {
+                await _jsModule.InvokeVoidAsync("disposeDashboardGrid", _instanceId);
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                await _jsModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+            }
+        }
+        _dotNetRef?.Dispose();
+    }
+}
