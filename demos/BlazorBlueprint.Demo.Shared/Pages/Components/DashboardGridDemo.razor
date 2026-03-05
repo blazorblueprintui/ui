@@ -74,26 +74,16 @@
             </p>
         </div>
         <BbDashboardGrid Columns="12" RowHeight="80" Gap="16" @bind-State="editableState">
-            <BbDashboardWidget Id="edit-1" Column="1" Row="1" ColumnSpan="6" RowSpan="3" Title="Widget A">
-                <div class="flex items-center justify-center h-full text-muted-foreground">
-                    Drag me or resize from the bottom-right corner
-                </div>
-            </BbDashboardWidget>
-            <BbDashboardWidget Id="edit-2" Column="7" Row="1" ColumnSpan="6" RowSpan="3" Title="Widget B">
-                <div class="flex items-center justify-center h-full text-muted-foreground">
-                    I can also be dragged and resized
-                </div>
-            </BbDashboardWidget>
-            <BbDashboardWidget Id="edit-3" Column="1" Row="4" ColumnSpan="4" RowSpan="3" Title="Widget C">
-                <div class="flex items-center justify-center h-full text-muted-foreground">
-                    Small widget
-                </div>
-            </BbDashboardWidget>
-            <BbDashboardWidget Id="edit-4" Column="5" Row="4" ColumnSpan="8" RowSpan="3" Title="Widget D">
-                <div class="flex items-center justify-center h-full text-muted-foreground">
-                    Wide widget
-                </div>
-            </BbDashboardWidget>
+            @foreach (var widget in editableWidgets)
+            {
+                <BbDashboardWidget @key="widget.Id" Id="@widget.Id" Column="@widget.Column" Row="@widget.Row"
+                                  ColumnSpan="@widget.ColSpan" RowSpan="@widget.RowSpan" Title="@widget.Title"
+                                  OnRemove="RemoveEditableWidget">
+                    <div class="flex items-center justify-center h-full text-muted-foreground">
+                        @widget.Description
+                    </div>
+                </BbDashboardWidget>
+            }
         </BbDashboardGrid>
     </div>
 
@@ -391,12 +381,10 @@
             @foreach (var widget in dynamicWidgets)
             {
                 <BbDashboardWidget @key="widget.Id" Id="@widget.Id" Column="@widget.Column" Row="@widget.Row"
-                                  ColumnSpan="@widget.ColSpan" RowSpan="@widget.RowSpan" Title="@widget.Title">
-                    <div class="flex flex-col items-center justify-center h-full gap-1">
-                        <span class="text-muted-foreground text-sm">@widget.Title</span>
-                        <BbButton OnClick="() => RemoveWidget(widget.Id)" Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" Class="text-destructive">
-                            Remove
-                        </BbButton>
+                                  ColumnSpan="@widget.ColSpan" RowSpan="@widget.RowSpan" Title="@widget.Title"
+                                  OnRemove="RemoveDynamicWidget">
+                    <div class="flex items-center justify-center h-full text-muted-foreground text-sm">
+                        @widget.Title
                     </div>
                 </BbDashboardWidget>
             }
@@ -629,6 +617,13 @@
 @code {
     // Editable state
     private BlazorBlueprint.Primitives.DashboardGrid.DashboardGridState editableState = new();
+    private List<DynamicWidget> editableWidgets = new()
+    {
+        new() { Id = "edit-1", Title = "Widget A", Description = "Drag me or resize from the bottom-right corner", Column = 1, Row = 1, ColSpan = 6, RowSpan = 3 },
+        new() { Id = "edit-2", Title = "Widget B", Description = "I can also be dragged and resized", Column = 7, Row = 1, ColSpan = 6, RowSpan = 3 },
+        new() { Id = "edit-3", Title = "Widget C", Description = "Small widget", Column = 1, Row = 4, ColSpan = 4, RowSpan = 3 },
+        new() { Id = "edit-4", Title = "Widget D", Description = "Wide widget", Column = 5, Row = 4, ColSpan = 8, RowSpan = 3 },
+    };
 
     // Toggle edit mode
     private bool isEditable = true;
@@ -689,6 +684,12 @@
         });
     }
 
+    private void RemoveEditableWidget(string widgetId) =>
+        editableWidgets.RemoveAll(w => w.Id == widgetId);
+
+    private void RemoveDynamicWidget(string widgetId) =>
+        dynamicWidgets.RemoveAll(w => w.Id == widgetId);
+
     private void RemoveWidget(string widgetId) =>
         dynamicWidgets.RemoveAll(w => w.Id == widgetId);
 
@@ -704,6 +705,7 @@
     {
         public string Id { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
         public int Column { get; set; } = 1;
         public int Row { get; set; } = 1;
         public int ColSpan { get; set; } = 4;

@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
 @using BlazorBlueprint.Primitives.DashboardGrid
 
 <BlazorBlueprint.Primitives.DashboardGrid.BbDashboardWidget
@@ -25,6 +26,17 @@
         <BbDashboardWidgetHeader>
             <span class="text-sm font-semibold">@Title</span>
         </BbDashboardWidgetHeader>
+    }
+
+    @if (_isEditable && OnRemove.HasDelegate)
+    {
+        <button type="button"
+                class="absolute top-2 right-2 z-20 p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                aria-label="Remove widget"
+                @onclick="HandleRemove"
+                @onclick:stopPropagation="true">
+            <LucideIcon Name="trash" Class="h-4 w-4" />
+        </button>
     }
 
     <BbDashboardWidgetContent>
@@ -96,7 +108,11 @@
     [Parameter] public RenderFragment? Header { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public RenderFragment? Footer { get; set; }
+    [Parameter] public EventCallback<string> OnRemove { get; set; }
     [Parameter] public string? Class { get; set; }
+
+    private bool _isEditable =>
+        !Static && (Context?.Editable ?? false);
 
     private bool _showResizeHandle =>
         Resizable && !Static && (Context?.AllowResize ?? false) && (Context?.Editable ?? false);
@@ -110,4 +126,9 @@
         Static ? "opacity-75" : "",
         Class
     );
+
+    private async Task HandleRemove()
+    {
+        await OnRemove.InvokeAsync(Id);
+    }
 }
