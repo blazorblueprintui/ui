@@ -36,6 +36,7 @@ export function initializeDashboardGrid(dotNetRef, instanceId, options) {
   setupResizeObserver(instanceId, state);
   setupEventListeners(instanceId, state);
   setupMutationObserver(state);
+  syncGridGuide(state);
 
   // Run initial compaction and reveal widgets
   runCompactAndReveal(state);
@@ -45,6 +46,7 @@ export function updateGridOptions(instanceId, options) {
   const state = instances.get(instanceId);
   if (!state) return;
   state.options = options;
+  syncGridGuide(state);
 }
 
 export function updateWidgetPositions(instanceId, positions) {
@@ -167,6 +169,41 @@ function getColumnsForBreakpoint(state, bp) {
   return state.options.columns;
 }
 
+// Measures the grid's actual rendered dimensions and generates a perfectly
+// aligned SVG mask for the background squares. Called on init and resize.
+function syncGridGuide(state) {
+  const el = state.gridEl;
+  if (!el) return;
+
+  const cs = getComputedStyle(el);
+
+  // Sync padding so the ::before pseudo covers exactly the content area
+  el.style.setProperty('--bb-grid-pad-top', cs.paddingTop);
+  el.style.setProperty('--bb-grid-pad-right', cs.paddingRight);
+  el.style.setProperty('--bb-grid-pad-bottom', cs.paddingBottom);
+  el.style.setProperty('--bb-grid-pad-left', cs.paddingLeft);
+
+  // Measure the actual column width from the rendered grid
+  const contentWidth = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const cols = getActiveColumns(state);
+  const gap = state.options.gap;
+  const rowHeight = state.options.rowHeight;
+  const cellWidth = (contentWidth - (cols - 1) * gap) / cols;
+
+  const tileW = cellWidth + gap;
+  const tileH = rowHeight + gap;
+
+  // Generate SVG with the actual cell dimensions
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${tileW} ${tileH}'>`
+    + `<rect x='1' y='1' width='${cellWidth - 2}' height='${rowHeight - 2}' rx='3' ry='3' fill='none' stroke='white'/>`
+    + `</svg>`;
+  const encoded = encodeURIComponent(svg);
+
+  el.style.setProperty('--bb-dashboard-guide-svg', `url("data:image/svg+xml,${encoded}")`);
+  el.style.setProperty('--bb-dashboard-cell-w', `${tileW}px`);
+  el.style.setProperty('--bb-dashboard-cell-h', `${tileH}px`);
+}
+
 function setupResizeObserver(instanceId, state) {
   const checkBreakpoint = () => {
     const width = window.innerWidth;
@@ -192,7 +229,10 @@ function setupResizeObserver(instanceId, state) {
   };
 
   checkBreakpoint();
-  state.resizeObserver = new ResizeObserver(() => checkBreakpoint());
+  state.resizeObserver = new ResizeObserver(() => {
+    checkBreakpoint();
+    syncGridGuide(state);
+  });
   state.resizeObserver.observe(document.body);
 }
 
@@ -263,18 +303,21 @@ function setupEventListeners(instanceId, state) {
   state.handlePointerUp = (e) => onPointerUp(instanceId, state, e);
   state.handlePointerCancel = (e) => onPointerCancel(instanceId, state, e);
   state.handleKeyDown = (e) => onKeyDown(instanceId, state, e);
+  state.handleFocusOut = (e) => onWidgetFocusOut(instanceId, state, e);
 
   state.gridEl.addEventListener('pointerdown', state.handlePointerDown);
   document.addEventListener('pointermove', state.handlePointerMove);
   document.addEventListener('pointerup', state.handlePointerUp);
   document.addEventListener('pointercancel', state.handlePointerCancel);
   state.gridEl.addEventListener('keydown', state.handleKeyDown);
+  state.gridEl.addEventListener('focusout', state.handleFocusOut);
 }
 
 function cleanupListeners(state) {
   if (state.gridEl) {
     state.gridEl.removeEventListener('pointerdown', state.handlePointerDown);
     state.gridEl.removeEventListener('keydown', state.handleKeyDown);
+    state.gridEl.removeEventListener('focusout', state.handleFocusOut);
   }
   document.removeEventListener('pointermove', state.handlePointerMove);
   document.removeEventListener('pointerup', state.handlePointerUp);
@@ -285,6 +328,12 @@ function cleanupListeners(state) {
 
 function onPointerDown(instanceId, state, e) {
   if (!state.options.editable || e.button !== 0) return;
+
+  // Focus the clicked widget so keyboard navigation works immediately
+  const clickedWidget = e.target.closest('[data-widget-id]');
+  if (clickedWidget) {
+    clickedWidget.focus();
+  }
 
   // Check for resize handle first (takes priority over widget drag)
   const resizeHandle = e.target.closest('[data-dashboard-resize-handle]');
@@ -475,12 +524,16 @@ function updateDrag(state, e) {
 }
 
 function finishDrag(state) {
-  state.originalWidget.style.opacity = '';
-  state.originalWidget.style.zIndex = '';
-  state.originalWidget.setAttribute('data-dragging', 'false');
+  const widgetEl = state.originalWidget;
+  widgetEl.style.opacity = '';
+  widgetEl.style.zIndex = '';
+  widgetEl.setAttribute('data-dragging', 'false');
 
   document.body.style.userSelect = '';
   document.body.style.cursor = '';
+
+  // Re-focus the widget so keyboard navigation continues to work
+  widgetEl.focus();
 
   if (state.resolvedLayout && state.originalPositions) {
     const finalLayout = state.resolvedLayout;
@@ -647,6 +700,9 @@ function updateResize(state, e) {
 function finishResize(state) {
   state.originalWidget.setAttribute('data-resizing', 'false');
   document.body.style.userSelect = '';
+
+  // Re-focus the widget so keyboard navigation continues to work
+  state.originalWidget.focus();
 
   const finalLayout = state.resolvedResizeLayout;
   const originalPositions = state.originalResizePositions;
@@ -858,6 +914,46 @@ function onKeyDown(instanceId, state, e) {
   if (e.key === 'Escape' && (state.isDragging || state.isResizing)) {
     e.preventDefault();
     cancelInteraction(state);
+  }
+}
+
+// --- Focus Out (compact on blur) ---
+
+function onWidgetFocusOut(instanceId, state, e) {
+  if (!state.options.compact || !state.options.editable) return;
+  if (state.isDragging || state.isResizing) return;
+
+  // Only act when a widget loses focus
+  const widget = e.target.closest('[data-widget-id]');
+  if (!widget) return;
+
+  // If focus is moving to another element inside the same widget, ignore
+  if (e.relatedTarget && widget.contains(e.relatedTarget)) return;
+
+  const grid = state.gridEl;
+  if (!grid) return;
+
+  const positions = getWidgetPositions(grid, null);
+  if (positions.length === 0) return;
+
+  // Take a snapshot before compacting to detect changes
+  const before = positions.map(p => ({ ...p }));
+  compact(positions, null, getActiveColumns(state));
+
+  // Check if anything actually moved
+  const changes = [];
+  for (const pos of positions) {
+    const orig = before.find(p => p.id === pos.id);
+    if (!orig) continue;
+    if (pos.col !== orig.col || pos.row !== orig.row) {
+      changes.push({ id: pos.id, col: pos.col, row: pos.row });
+    }
+  }
+
+  if (changes.length > 0) {
+    applyLayout(grid, positions);
+    state.dotNetRef.invokeMethodAsync('JsOnLayoutResolved', changes[0].id, changes)
+      .catch(err => console.error('JsOnLayoutResolved (compact on blur) failed:', err));
   }
 }
 

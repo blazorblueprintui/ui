@@ -418,12 +418,20 @@
   }
 }
 
-/* DashboardGrid - Guide cell styles for the CSS Grid overlay.
-   Lines/dots are positioned at the CENTER of each gap using pseudo-elements
-   that overflow the cell into the gap area. The overlay container's
-   overflow:hidden clips them at the grid boundary. */
+/* DashboardGrid - Guide background rendered via ::before pseudo-element.
+   JS measures the grid's computed padding and sets --bb-grid-pad-* custom
+   properties. The pseudo uses those as inset values so the pattern always
+   aligns with the grid's content area regardless of padding source. */
 @layer components {
-  .bb-guide-background-squares {
+  .bb-guide-background-squares::before {
+    content: '';
+    position: absolute;
+    top: var(--bb-grid-pad-top, 0px);
+    right: var(--bb-grid-pad-right, 0px);
+    bottom: var(--bb-grid-pad-bottom, 0px);
+    left: var(--bb-grid-pad-left, 0px);
+    pointer-events: none;
+    z-index: 0;
     background-color: color-mix(in oklch, var(--foreground) 8%, transparent);
     -webkit-mask-image: var(--bb-dashboard-guide-svg);
     mask-image: var(--bb-dashboard-guide-svg);
@@ -431,10 +439,6 @@
     mask-size: var(--bb-dashboard-cell-w) var(--bb-dashboard-cell-h);
     -webkit-mask-repeat: repeat;
     mask-repeat: repeat;
-    -webkit-mask-origin: content-box;
-    mask-origin: content-box;
-    -webkit-mask-clip: content-box;
-    mask-clip: content-box;
   }
 
   /* Hide widgets until JS has compacted the initial layout */
@@ -442,10 +446,12 @@
     visibility: hidden;
   }
 
-  /* Focus ring on widgets for keyboard navigation */
-  [data-widget-id]:focus-visible {
-    outline: 2px solid var(--ring);
-    outline-offset: 2px;
+  /* Focus ring on the active widget in editable grids.
+     Sets Tailwind's ring variables so the ring composes with the
+     existing shadow-sm utility instead of replacing it. */
+  [data-editable="true"] [data-widget-id]:focus {
+    --tw-ring-offset-shadow: 0 0 0 2px var(--background);
+    --tw-ring-shadow: 0 0 0 4px var(--ring);
     z-index: 10;
   }
 

@@ -86,11 +86,6 @@ else
             </div>
         }
 
-        @if (Background != DashboardBackground.None && Editable)
-        {
-            <div class="@GuideOverlayClass @GuideBackgroundClass" style="@GuideBackgroundStyle" aria-hidden="true"></div>
-        }
-
         @ChildContent
     </BlazorBlueprint.Primitives.DashboardGrid.BbDashboardGrid>
 
@@ -133,7 +128,7 @@ else
     [Parameter] public RenderFragment? EmptyContent { get; set; }
     [Parameter] public EventCallback OnAddWidget { get; set; }
     [Parameter] public bool Border { get; set; }
-    [Parameter] public DashboardBackground Background { get; set; } = DashboardBackground.None;
+    [Parameter] public DashboardBackground Background { get; set; } = DashboardBackground.Squares;
     [Parameter] public string? AriaLabel { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter] public string? Class { get; set; }
@@ -146,9 +141,12 @@ else
         _ => Columns
     };
 
+    private bool _showBackground => Background != DashboardBackground.None && Editable;
+
     private string CssClass => ClassNames.cn(
         "relative grid",
         Border ? "rounded-lg border p-4" : "",
+        _showBackground ? "bb-guide-background-squares" : "",
         Class
     );
 
@@ -168,32 +166,6 @@ else
             }
 
             return style;
-        }
-    }
-
-    private string GuideOverlayClass => ClassNames.cn(
-        "absolute inset-0 pointer-events-none",
-        Border ? "p-4" : ""
-    );
-
-    private string GuideBackgroundClass => Background switch
-    {
-        DashboardBackground.Squares => "bb-guide-background-squares",
-        _ => ""
-    };
-
-    private string GuideBackgroundStyle
-    {
-        get
-        {
-            var tileSize = RowHeight + Gap;
-            var svg = $"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {tileSize} {tileSize}'>"
-                + $"<rect x='1' y='1' width='{RowHeight - 2}' height='{RowHeight - 2}' rx='3' ry='3' fill='none' stroke='white'/>"
-                + "</svg>";
-            var encoded = Uri.EscapeDataString(svg);
-            return $"--bb-dashboard-guide-svg: url(\"data:image/svg+xml,{encoded}\");"
-                + $" --bb-dashboard-cell-w: {tileSize}px;"
-                + $" --bb-dashboard-cell-h: {tileSize}px;";
         }
     }
 

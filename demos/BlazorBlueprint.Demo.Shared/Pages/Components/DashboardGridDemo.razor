@@ -199,6 +199,39 @@
         <CodeBlock Source="Components/DashboardGrid/toggle-edit.txt" />
     </div>
 
+    <!-- ── Freeform Layout ─────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Freeform Layout</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">Compact="false"</code> to disable automatic compaction.
+                Widgets stay exactly where you place them — no snapping to fill gaps. Toggle it at runtime to switch
+                between freeform and compact modes.
+            </p>
+        </div>
+        <BbButton OnClick="() => isFreeformCompact = !isFreeformCompact" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+            @(isFreeformCompact ? "Switch to Freeform" : "Switch to Compact")
+        </BbButton>
+        <BbDashboardGrid Compact="@isFreeformCompact" Border="true">
+            <BbDashboardWidget Id="freeform-1" Column="1" Row="1" ColumnSpan="8" RowSpan="6" Title="Widget A">
+                <div class="flex items-center justify-center h-full text-muted-foreground">
+                    @(isFreeformCompact ? "Compact — widgets snap together" : "Freeform — place anywhere")
+                </div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="freeform-2" Column="1" Row="9" ColumnSpan="8" RowSpan="6" Title="Widget B">
+                <div class="flex items-center justify-center h-full text-muted-foreground">
+                    Try moving me with arrow keys
+                </div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="freeform-3" Column="17" Row="1" ColumnSpan="8" RowSpan="6" Title="Widget C">
+                <div class="flex items-center justify-center h-full text-muted-foreground">
+                    Gaps are preserved in freeform mode
+                </div>
+            </BbDashboardWidget>
+        </BbDashboardGrid>
+        <CodeBlock Source="Components/DashboardGrid/freeform.txt" />
+    </div>
+
     <!-- ── State Persistence ───────────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -677,7 +710,7 @@
                     Master toggle for edit mode. When <code>false</code>, disables both drag and resize.
                 </ApiParameter>
                 <ApiParameter Name="Compact" Type="bool" Default="true">
-                    Automatically compact widgets toward the top-left to fill gaps after drag, resize, or removal.
+                    Automatically compact widgets toward the top-left to fill gaps after drag, resize, or removal. Set to <code>false</code> for a freeform layout where widgets stay exactly where placed.
                 </ApiParameter>
                 <ApiParameter Name="ShowGridGuide" Type="bool" Default="true">
                     Show a dashed grid overlay during drag operations.
@@ -685,7 +718,7 @@
                 <ApiParameter Name="Border" Type="bool" Default="false">
                     Add a rounded border around the grid container.
                 </ApiParameter>
-                <ApiParameter Name="Background" Type="DashboardBackground" Default="None">
+                <ApiParameter Name="Background" Type="DashboardBackground" Default="Squares">
                     Background pattern shown when the grid is in edit mode: <code>None</code> or <code>Squares</code>. Automatically hidden when <code>Editable</code> is <code>false</code>.
                 </ApiParameter>
                 <ApiParameter Name="Loading" Type="bool" Default="false">
@@ -726,6 +759,9 @@
                 </ApiParameter>
                 <ApiParameter Name="AriaLabel" Type="string?" Default="null">
                     Accessible label for the grid region.
+                </ApiParameter>
+                <ApiParameter Name="ChildContent" Type="RenderFragment?" Default="null">
+                    The <code>BbDashboardWidget</code> components to render inside the grid.
                 </ApiParameter>
                 <ApiParameter Name="Class" Type="string?" Default="null">
                     Additional CSS classes for the grid container.
@@ -787,6 +823,9 @@
                 <ApiParameter Name="OnRemove" Type="EventCallback&lt;string&gt;">
                     Callback fired when the remove button is clicked. Passes the widget <code>Id</code>. The remove button is only visible in edit mode.
                 </ApiParameter>
+                <ApiParameter Name="ChildContent" Type="RenderFragment?" Default="null">
+                    The main content rendered inside the widget body.
+                </ApiParameter>
                 <ApiParameter Name="Class" Type="string?" Default="null">
                     Additional CSS classes for the widget card.
                 </ApiParameter>
@@ -828,6 +867,9 @@
 
     // Toggle edit mode
     private bool isEditable = true;
+
+    // Freeform layout
+    private bool isFreeformCompact = true;
 
     // Responsive breakpoint
     private BlazorBlueprint.Primitives.DashboardGrid.DashboardBreakpoint? currentBreakpoint;
