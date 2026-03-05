@@ -3,7 +3,7 @@ namespace BlazorBlueprint.Components;
 public abstract class DialogOptions
 {
     /// <summary>
-    /// The label for the confirm/action button. Default: "Continue".
+    /// The label for the confirm/action button. Default: "OK".
     /// </summary>
     public string ConfirmText { get; set; } = "OK";
 

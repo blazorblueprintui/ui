@@ -1,0 +1,53 @@
+<BbDialog @bind-Open="outerDialogOpen">
+    <BbDialogTrigger>
+        <BbButton Variant="ButtonVariant.Outline">Open Outer Dialog</BbButton>
+    </BbDialogTrigger>
+
+    <BbDialogContent>
+        <BbDialogHeader>
+            <BbDialogTitle>Outer Dialog</BbDialogTitle>
+            <BbDialogDescription>
+                This is the outer dialog. Click the button below to open a nested dialog inside.
+            </BbDialogDescription>
+        </BbDialogHeader>
+
+        <div class="py-4 space-y-4">
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Outer Input</label>
+                <BbInput @bind-Value="outerDialogInput" Placeholder="Type here..." />
+            </div>
+
+            <BbDialog @bind-Open="innerDialogOpen">
+                <BbDialogTrigger>
+                    <BbButton Variant="ButtonVariant.Secondary">Open Inner Dialog</BbButton>
+                </BbDialogTrigger>
+
+                <BbDialogContent>
+                    <BbDialogHeader>
+                        <BbDialogTitle>Inner Dialog</BbDialogTitle>
+                        <BbDialogDescription>
+                            This is the nested inner dialog. Press Escape — only this dialog should close.
+                        </BbDialogDescription>
+                    </BbDialogHeader>
+
+                    <div class="py-4 space-y-2">
+                        <label class="text-sm font-medium">Inner Input</label>
+                        <BbInput @bind-Value="innerDialogInput" Placeholder="Type in the inner dialog..." />
+                    </div>
+
+                    <BbDialogFooter>
+                        <BbDialogClose>
+                            <BbButton Variant="ButtonVariant.Outline">Close Inner</BbButton>
+                        </BbDialogClose>
+                    </BbDialogFooter>
+                </BbDialogContent>
+            </BbDialog>
+        </div>
+
+        <BbDialogFooter>
+            <BbDialogClose>
+                <BbButton Variant="ButtonVariant.Outline">Close Outer</BbButton>
+            </BbDialogClose>
+        </BbDialogFooter>
+    </BbDialogContent>
+</BbDialog>

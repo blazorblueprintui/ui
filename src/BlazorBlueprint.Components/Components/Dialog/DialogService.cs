@@ -85,10 +85,9 @@ public class DialogService
     /// <param name="description">Optional dialog description or message.</param>
     /// <param name="options">Optional customization options.</param>
     /// <returns>
-    /// A task that resolves to a <see cref="ConfirmDialogResult"/>
-    /// indicating whether the user confirmed the action.
+    /// A task that resolves to <see langword="true"/> if the user confirmed, <see langword="false"/> otherwise.
     /// </returns>
-    [Obsolete("This call has been replaced with the new 'Confirm' overload.")]
+    [Obsolete("Use ConfirmAsync instead, which returns a ConfirmDialogResult with richer information.")]
     public async Task<bool> Confirm(
         string title,
         string? description = null,
