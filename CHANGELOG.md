@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-05
+
+### Added
+
+- **BbDashboardGrid** — Drag-and-drop, resizable widget layout for composing dashboards. Built on CSS Grid with responsive breakpoints, state persistence, and full keyboard accessibility.
+  - Drag widgets to reorder with collision detection and local displacement.
+  - Resize from all corners and edges with configurable min/max span constraints.
+  - Responsive breakpoints at `MediumBreakpoint` (1024px) and `SmallBreakpoint` (768px) with independent column counts.
+  - CSS mask-based `Squares` background pattern that auto-hides when `Editable` is `false`.
+  - State persistence via `@bind-State` with `Save()`/`Restore()` and `GetConfig()` for full layout serialization.
+  - Loading state with `BbSkeleton`, empty state with `BbEmpty` and optional `OnAddWidget` callback.
+  - Remove widget button (trash icon) visible on hover in edit mode via `OnRemove` callback.
+  - `BbDashboardWidgetHeader`, `BbDashboardWidgetContent` sub-components for custom widget styling.
+  - Keyboard navigation: arrow keys to move, Shift+arrows to resize, Escape to cancel.
+  - Comprehensive demo page with 12 interactive examples and View Code sections.
+
+---
+
 ## 2026-03-02
 
 ### Added
