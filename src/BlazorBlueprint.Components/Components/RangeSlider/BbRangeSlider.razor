@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Components
 @using Microsoft.JSInterop
+@using System.Globalization
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 
@@ -10,7 +11,7 @@
     <div class="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
         @* Active range track *@
         <div class="absolute h-full bg-primary"
-             style="left: @(StartPercentage)%; width: @(EndPercentage - StartPercentage)%;">
+             style="left: @(StartPercentageValue); width: @(RangePercentageValue);">
         </div>
     </div>
 
@@ -24,7 +25,7 @@
          aria-disabled="@Disabled"
          tabindex="@(Disabled ? -1 : 0)"
          class="@StartThumbClass"
-         style="left: @(StartPercentage)%;"
+         style="left: @(StartPercentageValue);"
          @onpointerdown="@(e => StartThumbDrag(e))"
          @onkeydown="@(e => HandleStartKeyDown(e))">
         @if (ShowTooltips)
@@ -43,7 +44,7 @@
          aria-disabled="@Disabled"
          tabindex="@(Disabled ? -1 : 0)"
          class="@EndThumbClass"
-         style="left: @(EndPercentage)%;"
+         style="left: @(EndPercentageValue);"
          @onpointerdown="@(e => EndThumbDrag(e))"
          @onkeydown="@(e => HandleEndKeyDown(e))">
         @if (ShowTooltips)
@@ -182,6 +183,10 @@
     private double EndValue => IsControlled ? Value.End : _internalEnd;
     private double StartPercentage => ((StartValue - Min) / (Max - Min)) * 100;
     private double EndPercentage => ((EndValue - Min) / (Max - Min)) * 100;
+
+    private string StartPercentageValue => $"{StartPercentage.ToString(CultureInfo.InvariantCulture)}%";
+    private string EndPercentageValue => $"{EndPercentage.ToString(CultureInfo.InvariantCulture)}%";
+    private string RangePercentageValue => $"{(EndPercentage - StartPercentage).ToString(CultureInfo.InvariantCulture)}%";
 
     protected override void OnInitialized()
     {
