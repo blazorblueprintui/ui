@@ -506,20 +506,10 @@ function updateDrag(state, e) {
   // Skip if target hasn't changed
   if (targetCol === state.lastResolvedCol && targetRow === state.lastResolvedRow) return;
 
-  let resolved;
-  if (state.options.compact) {
-    resolved = resolveLayoutAfterDrag(
-      state.originalPositions, state.activeWidgetId,
-      targetCol, targetRow, state.startCol, state.startRow, cols
-    );
-  } else {
-    resolved = state.originalPositions.map(p => ({...p}));
-    const dragged = resolved.find(p => p.id === state.activeWidgetId);
-    if (dragged) {
-      dragged.col = targetCol;
-      dragged.row = targetRow;
-    }
-  }
+  let resolved = resolveLayoutAfterDrag(
+    state.originalPositions, state.activeWidgetId,
+    targetCol, targetRow, state.startCol, state.startRow, cols
+  );
 
   // If resolve returned null, reject this drag position (keep last valid layout)
   if (!resolved) {
@@ -672,24 +662,12 @@ function updateResize(state, e) {
   if (newCol === state.lastResizeCol && newRow === state.lastResizeRow &&
       newColSpan === state.lastResizeColSpan && newRowSpan === state.lastResizeRowSpan) return;
 
-  let resolved;
-  if (state.options.compact) {
-    resolved = resolveLayoutAfterResize(
-      state.originalResizePositions, state.activeWidgetId,
-      newCol, newRow, newColSpan, newRowSpan,
-      state.startCol, state.startRow, state.startColSpan, state.startRowSpan,
-      cols
-    );
-  } else {
-    resolved = state.originalResizePositions.map(p => ({...p}));
-    const resizing = resolved.find(p => p.id === state.activeWidgetId);
-    if (resizing) {
-      resizing.col = newCol;
-      resizing.row = newRow;
-      resizing.colSpan = newColSpan;
-      resizing.rowSpan = newRowSpan;
-    }
-  }
+  let resolved = resolveLayoutAfterResize(
+    state.originalResizePositions, state.activeWidgetId,
+    newCol, newRow, newColSpan, newRowSpan,
+    state.startCol, state.startRow, state.startColSpan, state.startRowSpan,
+    cols
+  );
 
   // If resolve returned null, reject this resize increment (keep last valid layout)
   if (!resolved) {
@@ -818,21 +796,12 @@ function onKeyDown(instanceId, state, e) {
       if (newColSpan !== colSpan || newRowSpan !== rowSpan) {
         const allPositions = getWidgetPositions(grid, null);
 
-        let resolved;
-        if (state.options.compact) {
-          resolved = resolveLayoutAfterResize(
-            allPositions, widgetId, col, row, newColSpan, newRowSpan,
-            col, row, colSpan, rowSpan, cols
-          );
-          if (resolved) {
-            compact(resolved, widgetId, cols);
-          }
-        } else {
-          resolved = allPositions.map(p => ({...p}));
-          const resizing = resolved.find(p => p.id === widgetId);
-          if (resizing) { resizing.colSpan = newColSpan; resizing.rowSpan = newRowSpan; }
-          const others = resolved.filter(p => p.id !== widgetId);
-          if (wouldOverlap(col, row, newColSpan, newRowSpan, others)) { return; }
+        let resolved = resolveLayoutAfterResize(
+          allPositions, widgetId, col, row, newColSpan, newRowSpan,
+          col, row, colSpan, rowSpan, cols
+        );
+        if (resolved && state.options.compact) {
+          compact(resolved, widgetId, cols);
         }
 
         if (!resolved) return;
@@ -892,18 +861,9 @@ function onKeyDown(instanceId, state, e) {
       if (newCol !== col || newRow !== row) {
         const allPositions = getWidgetPositions(grid, null);
 
-        let resolved;
-        if (state.options.compact) {
-          resolved = resolveLayoutAfterDrag(allPositions, widgetId, newCol, newRow, col, row, cols);
-          if (resolved) {
-            compact(resolved, widgetId, cols);
-          }
-        } else {
-          resolved = allPositions.map(p => ({...p}));
-          const moved = resolved.find(p => p.id === widgetId);
-          if (moved) { moved.col = newCol; moved.row = newRow; }
-          const others = resolved.filter(p => p.id !== widgetId);
-          if (wouldOverlap(newCol, newRow, colSpan, rowSpan, others)) { return; }
+        let resolved = resolveLayoutAfterDrag(allPositions, widgetId, newCol, newRow, col, row, cols);
+        if (resolved && state.options.compact) {
+          compact(resolved, widgetId, cols);
         }
 
         if (!resolved) return;
