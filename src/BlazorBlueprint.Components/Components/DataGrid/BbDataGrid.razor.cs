@@ -58,6 +58,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private Func<TData, object>? _lastItemKey;
 
     // ShouldRender tracking
+    private bool _parametersChanged;
     private IEnumerable<TData>? _lastItems;
     private bool _lastIsLoading;
     private int _columnsVersion;
@@ -341,6 +342,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     protected override async Task OnParametersSetAsync()
     {
+        _parametersChanged = true;
+
         if (State != null)
         {
             _gridState = State;
@@ -1790,6 +1793,17 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     protected override bool ShouldRender()
     {
+        if (_parametersChanged)
+        {
+            _parametersChanged = false;
+            _lastItems = Items;
+            _lastIsLoading = IsLoading;
+            _lastColumnsVersion = _columnsVersion;
+            _lastStateVersion = _stateVersion;
+            _lastGridStateVersion = _gridState.Version;
+            return true;
+        }
+
         var itemsChanged = !ReferenceEquals(_lastItems, Items);
         var loadingChanged = _lastIsLoading != IsLoading;
         var columnsChanged = _lastColumnsVersion != _columnsVersion;
