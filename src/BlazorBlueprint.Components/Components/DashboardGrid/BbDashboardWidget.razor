@@ -2,6 +2,8 @@
 @using BlazorBlueprint.Icons.Lucide.Components
 @using BlazorBlueprint.Primitives.DashboardGrid
 
+@if (_removed) { return; }
+
 <BlazorBlueprint.Primitives.DashboardGrid.BbDashboardWidget
     Id="@Id"
     Column="@Column"
@@ -132,6 +134,32 @@
     [Parameter] public EventCallback<string> OnRemove { get; set; }
     [Parameter] public string? Class { get; set; }
 
+    private bool _removed;
+    private DashboardGridContext? _subscribedContext;
+
+    protected override void OnInitialized()
+    {
+        TrackContext();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Context != _subscribedContext)
+        {
+            TrackContext();
+
+            if (_removed && Context?.GetWidgetPosition(Id) == null)
+            {
+                _removed = false;
+            }
+        }
+    }
+
+    private void TrackContext()
+    {
+        _subscribedContext = Context;
+    }
+
     private bool _isEditable =>
         !Static && (Context?.Editable ?? false);
 
@@ -150,6 +178,7 @@
 
     private async Task HandleRemove()
     {
+        _removed = true;
         await OnRemove.InvokeAsync(Id);
     }
 }

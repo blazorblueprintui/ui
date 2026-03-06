@@ -102,6 +102,7 @@ else
     private bool _wasLoading;
     private int _lastStateVersion = -1;
     private DashboardBreakpoint _lastBreakpoint = DashboardBreakpoint.Large;
+    private bool _compactRequested;
 
     [Parameter] public int Columns { get; set; } = 24;
     [Parameter] public int RowHeight { get; set; } = 40;
@@ -222,6 +223,18 @@ else
         else if (_jsInitialized && _jsModule != null)
         {
             await SyncJsOptionsAsync();
+
+            if (_compactRequested)
+            {
+                _compactRequested = false;
+                try
+                {
+                    await _jsModule.InvokeVoidAsync("requestCompact", _instanceId);
+                }
+                catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+                {
+                }
+            }
         }
     }
 
@@ -269,6 +282,7 @@ else
             {
                 await StateChanged.InvokeAsync(State);
             }
+            _compactRequested = true;
             StateHasChanged();
         });
     }

@@ -71,6 +71,12 @@ export function updateWidgetPositions(instanceId, positions) {
   }
 }
 
+export function requestCompact(instanceId) {
+  const state = instances.get(instanceId);
+  if (!state || state.isDragging || state.isResizing) return;
+  runCompactAndReveal(state);
+}
+
 export function setEditable(instanceId, editable) {
   const state = instances.get(instanceId);
   if (!state) return;
