@@ -201,17 +201,16 @@ function syncGridGuide(state) {
   el.style.setProperty('--bb-grid-pad-bottom', cs.paddingBottom);
   el.style.setProperty('--bb-grid-pad-left', cs.paddingLeft);
 
-  // Measure the actual column width from the rendered grid
-  const contentWidth = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-  const cols = getActiveColumns(state);
+  // Read the browser's actual computed column width — no JS math drift
+  const tracks = cs.gridTemplateColumns.split(/\s+/);
+  const cellWidth = parseFloat(tracks[0]) || 0;
   const gap = state.options.gap;
   const rowHeight = state.options.rowHeight;
-  const cellWidth = (contentWidth - (cols - 1) * gap) / cols;
 
   const tileW = cellWidth + gap;
   const tileH = rowHeight + gap;
 
-  // Generate SVG with the actual cell dimensions
+  // Generate SVG tile matching actual grid cell dimensions
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${tileW} ${tileH}'>`
     + `<rect x='1' y='1' width='${cellWidth - 2}' height='${rowHeight - 2}' rx='3' ry='3' fill='none' stroke='white'/>`
     + `</svg>`;

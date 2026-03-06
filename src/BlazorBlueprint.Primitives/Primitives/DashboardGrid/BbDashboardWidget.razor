@@ -8,8 +8,8 @@
      data-dragging="false"
      data-resizing="false"
      data-static="@(Static ? "true" : "false")"
-     data-min-col-span="@MinColumnSpan"
-     data-min-row-span="@MinRowSpan"
+     data-min-col-span="@EffectiveMinColumnSpan"
+     data-min-row-span="@EffectiveMinRowSpan"
      data-max-col-span="@MaxColumnSpan"
      data-max-row-span="@MaxRowSpan"
      style="@_gridStyle"
@@ -38,6 +38,9 @@
     [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     internal WidgetPosition CurrentPosition => GetCurrentPosition();
+
+    private int EffectiveMinColumnSpan => Math.Min(MinColumnSpan, ColumnSpan);
+    private int EffectiveMinRowSpan => Math.Min(MinRowSpan, RowSpan);
 
     private string _gridStyle
     {

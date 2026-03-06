@@ -11,7 +11,7 @@ public enum DashboardBackground
     None,
 
     /// <summary>
-    /// Square grid background pattern aligned to widget anchor points.
+    /// Grid cell outlines aligned to widget snap positions.
     /// </summary>
-    Squares
+    Grid
 }
