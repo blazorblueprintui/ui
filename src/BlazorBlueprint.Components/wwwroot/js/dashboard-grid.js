@@ -518,7 +518,9 @@ function updateDrag(state, e) {
     return;
   }
 
-  // Apply resolved layout to DOM (compact runs on finishDrag, not during preview)
+  if (state.options.compact) {
+    compact(resolved, state.activeWidgetId, cols);
+  }
   applyLayout(grid, resolved);
   state.originalWidget.style.opacity = '0.5';
   state.originalWidget.style.zIndex = '50';
@@ -678,7 +680,9 @@ function updateResize(state, e) {
     return;
   }
 
-  // Apply resolved layout to DOM (compact runs on finishResize, not during preview)
+  if (state.options.compact) {
+    compact(resolved, state.activeWidgetId, cols);
+  }
   applyLayout(grid, resolved);
 
   state.resolvedResizeLayout = resolved;

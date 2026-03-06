@@ -232,6 +232,35 @@
         <CodeBlock Source="Components/DashboardGrid/freeform.txt" />
     </div>
 
+    <!-- ── Fixed Cell Size ────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Fixed Cell Size</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">CellWidth</code> to create a strict grid with fixed-size
+                square cells. Use <code class="bg-muted px-1 py-0.5 rounded">MaxWidth</code> to constrain the container
+                and enable horizontal scrolling when the grid exceeds it.
+            </p>
+        </div>
+        <BbDashboardGrid @bind-State="fixedCellState" Columns="24" RowHeight="40" CellWidth="40" Gap="8" MaxWidth="800" Border="true">
+            <BbDashboardWidget Id="fixed-1" Column="1" Row="1" ColumnSpan="8" RowSpan="6" Title="Widget A">
+                <div class="flex items-center justify-center h-full text-muted-foreground text-sm">
+                    8 × 6 cells
+                </div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="fixed-2" Column="9" Row="1" ColumnSpan="8" RowSpan="6" Title="Widget B">
+                <div class="flex items-center justify-center h-full text-muted-foreground text-sm">
+                    8 × 6 cells
+                </div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="fixed-3" Column="17" Row="1" ColumnSpan="8" RowSpan="6" Title="Widget C">
+                <div class="flex items-center justify-center h-full text-muted-foreground text-sm">
+                    8 × 6 cells
+                </div>
+            </BbDashboardWidget>
+        </BbDashboardGrid>
+    </div>
+
     <!-- ── State Persistence ───────────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -870,6 +899,9 @@
 
     // Freeform layout
     private bool isFreeformCompact = true;
+
+    // Fixed cell size
+    private BlazorBlueprint.Primitives.DashboardGrid.DashboardGridState fixedCellState = new();
 
     // Responsive breakpoint
     private BlazorBlueprint.Primitives.DashboardGrid.DashboardBreakpoint? currentBreakpoint;

@@ -34,6 +34,30 @@
         </div>
     }
 }
+else if (_useScrollWrapper)
+{
+    <div style="@ScrollWrapperStyle" class="@ScrollWrapperClass">
+        <BlazorBlueprint.Primitives.DashboardGrid.BbDashboardGrid
+            Context="@_context"
+            AriaLabel="@AriaLabel"
+            class="@CssClass"
+            style="@GridStyle"
+            data-dashboard-id="@_instanceId"
+            data-show-grid-guide="@(ShowGridGuide ? "true" : "false")"
+            data-positioned="@(_positioned ? "true" : "false")"
+            @attributes="AdditionalAttributes">
+
+            @if (_hasNoWidgets)
+            {
+                @EmptyState
+            }
+
+            @ChildContent
+        </BlazorBlueprint.Primitives.DashboardGrid.BbDashboardGrid>
+    </div>
+
+    <div aria-live="polite" class="sr-only" id="@(_instanceId)-live"></div>
+}
 else
 {
     <BlazorBlueprint.Primitives.DashboardGrid.BbDashboardGrid
@@ -48,41 +72,7 @@ else
 
         @if (_hasNoWidgets)
         {
-            <div class="@EmptyContainerClass">
-                @if (EmptyContent != null)
-                {
-                    @EmptyContent
-                }
-                else
-                {
-                    <BbEmpty Title="No widgets to display"
-                             Description="@(OnAddWidget.HasDelegate ? "Get started by adding your first widget." : null)"
-                             Size="EmptySize.Small">
-                        <Icon>
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <rect width="7" height="9" x="3" y="3" rx="1" />
-                                <rect width="7" height="5" x="14" y="3" rx="1" />
-                                <rect width="7" height="9" x="14" y="12" rx="1" />
-                                <rect width="7" height="5" x="3" y="16" rx="1" />
-                            </svg>
-                        </Icon>
-                        <ChildContent>
-                            @if (OnAddWidget.HasDelegate)
-                            {
-                                <button type="button" class="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                                        @onclick="OnAddWidget">
-                                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M5 12h14" /><path d="M12 5v14" />
-                                    </svg>
-                                    Add Widget
-                                </button>
-                            }
-                        </ChildContent>
-                    </BbEmpty>
-                }
-            </div>
+            @EmptyState
         }
 
         @ChildContent
@@ -108,6 +98,9 @@ else
     [Parameter] public int Columns { get; set; } = 24;
     [Parameter] public int RowHeight { get; set; } = 40;
     [Parameter] public int Gap { get; set; } = 8;
+    [Parameter] public int CellWidth { get; set; }
+    [Parameter] public int MinWidth { get; set; }
+    [Parameter] public int MaxWidth { get; set; }
     [Parameter] public int MaxRows { get; set; }
     [Parameter] public DashboardGridState? State { get; set; }
     [Parameter] public EventCallback<DashboardGridState> StateChanged { get; set; }
@@ -135,29 +128,111 @@ else
     [Parameter] public string? Class { get; set; }
     [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
-    private int ActiveColumns => _context.State.ActiveBreakpoint switch
-    {
-        DashboardBreakpoint.Small => SmallColumns,
-        DashboardBreakpoint.Medium => MediumColumns,
-        _ => Columns
-    };
+    private int ActiveColumns => EffectiveCellWidth > 0
+        ? Columns
+        : _context.State.ActiveBreakpoint switch
+        {
+            DashboardBreakpoint.Small => SmallColumns,
+            DashboardBreakpoint.Medium => MediumColumns,
+            _ => Columns
+        };
 
     private bool _showBackground => Background != DashboardBackground.None && Editable && ShowGridGuide;
 
     private string CssClass => ClassNames.cn(
         "relative grid",
-        Border ? "rounded-lg border p-4" : "",
+        Border && !_useScrollWrapper ? "rounded-lg border p-4" : "",
         _showBackground ? "bb-guide-background-grid" : "",
         Class
     );
+
+    private int EffectiveCellWidth => CellWidth;
+
+    private bool _useScrollWrapper => EffectiveCellWidth > 0 || MinWidth > 0 || MaxWidth > 0;
+
+    private string ScrollWrapperClass => ClassNames.cn(
+        "overflow-auto",
+        Border ? "rounded-lg border p-4" : ""
+    );
+
+    private RenderFragment EmptyState => __builder =>
+    {
+        <div class="@EmptyContainerClass">
+            @if (EmptyContent != null)
+            {
+                @EmptyContent
+            }
+            else
+            {
+                <BbEmpty Title="No widgets to display"
+                         Description="@(OnAddWidget.HasDelegate ? "Get started by adding your first widget." : null)"
+                         Size="EmptySize.Small">
+                    <Icon>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect width="7" height="9" x="3" y="3" rx="1" />
+                            <rect width="7" height="5" x="14" y="3" rx="1" />
+                            <rect width="7" height="9" x="14" y="12" rx="1" />
+                            <rect width="7" height="5" x="3" y="16" rx="1" />
+                        </svg>
+                    </Icon>
+                    <ChildContent>
+                        @if (OnAddWidget.HasDelegate)
+                        {
+                            <button type="button" class="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                                    @onclick="OnAddWidget">
+                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M5 12h14" /><path d="M12 5v14" />
+                                </svg>
+                                Add Widget
+                            </button>
+                        }
+                    </ChildContent>
+                </BbEmpty>
+            }
+        </div>
+    };
+
+    private string ScrollWrapperStyle
+    {
+        get
+        {
+            var parts = new List<string>();
+            if (MinWidth > 0)
+            {
+                parts.Add($"min-width: {MinWidth}px");
+            }
+            if (MaxWidth > 0)
+            {
+                parts.Add($"max-width: {MaxWidth}px");
+            }
+            else
+            {
+                parts.Add("max-width: 100%");
+            }
+            return string.Join("; ", parts) + ";";
+        }
+    }
 
     private string GridStyle
     {
         get
         {
-            var style = $"grid-template-columns: repeat({ActiveColumns}, 1fr); grid-auto-rows: {RowHeight}px; gap: {Gap}px;"
+            var cellW = EffectiveCellWidth;
+            var colTemplate = cellW > 0
+                ? $"repeat({ActiveColumns}, {cellW}px)"
+                : $"repeat({ActiveColumns}, 1fr)";
+
+            var style = $"grid-template-columns: {colTemplate}; grid-auto-rows: {RowHeight}px; gap: {Gap}px;"
                 + $" --bb-dashboard-columns: {ActiveColumns}; --bb-dashboard-row-height: {RowHeight}px; --bb-dashboard-gap: {Gap}px;"
                 + (MaxRows > 0 ? $" grid-template-rows: repeat({MaxRows}, {RowHeight}px);" : "");
+
+            if (cellW > 0)
+            {
+                var gridWidth = ActiveColumns * cellW + (ActiveColumns - 1) * Gap;
+                style += $" width: {gridWidth}px;";
+            }
 
             if (_hasNoWidgets)
             {
@@ -255,8 +330,8 @@ else
                 showGridGuide = ShowGridGuide,
                 mediumBreakpoint = MediumBreakpoint,
                 smallBreakpoint = SmallBreakpoint,
-                mediumColumns = MediumColumns,
-                smallColumns = SmallColumns
+                mediumColumns = EffectiveCellWidth > 0 ? Columns : MediumColumns,
+                smallColumns = EffectiveCellWidth > 0 ? Columns : SmallColumns
             });
         }
         catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
@@ -332,8 +407,8 @@ else
                 showGridGuide = ShowGridGuide,
                 mediumBreakpoint = MediumBreakpoint,
                 smallBreakpoint = SmallBreakpoint,
-                mediumColumns = MediumColumns,
-                smallColumns = SmallColumns
+                mediumColumns = EffectiveCellWidth > 0 ? Columns : MediumColumns,
+                smallColumns = EffectiveCellWidth > 0 ? Columns : SmallColumns
             });
             _jsInitialized = true;
         }
