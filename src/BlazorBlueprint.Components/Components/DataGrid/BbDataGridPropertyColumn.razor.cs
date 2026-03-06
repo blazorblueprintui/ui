@@ -210,7 +210,7 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
 
     FilterFieldType IFilterableColumn.GetFilterFieldType() => FilterType ?? InferFilterFieldType();
 
-    IEnumerable<SelectOption<string>>? IFilterableColumn.GetFilterOptions() => FilterOptions;
+    IEnumerable<SelectOption<string>>? IFilterableColumn.GetFilterOptions() => FilterOptions ?? InferEnumOptions();
 
     string IFilterableColumn.GetFilterFieldName()
     {
@@ -233,7 +233,7 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
         {
             return FilterFieldType.Boolean;
         }
-        if (propType == typeof(DateTime))
+        if (propType == typeof(DateTime) || propType == typeof(DateTimeOffset))
         {
             return FilterFieldType.DateTime;
         }
@@ -252,6 +252,21 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
 
         return FilterFieldType.Text;
     }
+
+    private static IEnumerable<SelectOption<string>>? InferEnumOptions()
+    {
+        var enumType = Nullable.GetUnderlyingType(typeof(TProp)) ?? typeof(TProp);
+        if (!enumType.IsEnum)
+        {
+            return null;
+        }
+
+        return Enum.GetNames(enumType)
+            .Select(name => new SelectOption<string>(name, FormatEnumName(name)));
+    }
+
+    private static string FormatEnumName(string name) =>
+        Regex.Replace(name, "(?<=[a-z])([A-Z])", " $1");
 
     private static bool IsNumericType(Type type) =>
         type == typeof(int) || type == typeof(long) || type == typeof(float) ||

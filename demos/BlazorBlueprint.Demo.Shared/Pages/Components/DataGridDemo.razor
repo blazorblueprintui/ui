@@ -80,7 +80,9 @@
                 Add <code class="bg-muted px-1 py-0.5 rounded">Filterable="true"</code> to property columns to enable
                 per-column filtering. A filter icon appears in the column header — hover to reveal it, or it stays
                 visible when a filter is active. Click the icon to open a popover with operator and value inputs.
-                Filter types are auto-inferred from the property type (text, number, date, boolean, enum).
+                Filter types are auto-inferred from the property type (text, number, date/datetime, boolean, enum).
+                Enum columns auto-generate dropdown options from the type. Nullable types (<code class="bg-muted px-1 py-0.5 rounded">DateTimeOffset?</code>,
+                <code class="bg-muted px-1 py-0.5 rounded">SeniorityLevel?</code>) include an "is empty" operator to find null values.
             </p>
         </div>
         @if (_gridState.Filtering.HasFilters)
@@ -106,6 +108,9 @@
                     FilterType="FilterFieldType.Enum"
                     FilterOptions="@(new[] { "Active", "Inactive", "Pending", "Suspended" }.Select(s => new SelectOption<string>(s, s)))"
                     Width="120px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="PersonStatus" Property="@(p => p.StatusEnum)" Title="Status (Enum)" Sortable Filterable Width="140px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="SeniorityLevel?" Property="@(p => p.Seniority)" Title="Seniority" Sortable Filterable Width="130px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="DateTimeOffset?" Property="@(p => p.LastPromotionDate)" Title="Last Promotion" Format="d" Sortable Filterable Width="160px" />
                 <BbDataGridPropertyColumn TData="Person" TProp="bool" Property="@(p => p.IsActive)" Title="Active" Sortable Filterable Width="100px" />
             </Columns>
         </BbDataGrid>
@@ -1079,7 +1084,7 @@
                     Override the auto-inferred filter field type. Use when the default inference is not correct (e.g., use FilterFieldType.Enum for string properties with known values).
                 </ApiParameter>
                 <ApiParameter Name="FilterOptions" Type="IEnumerable&lt;SelectOption&lt;string&gt;&gt;?" Default="null">
-                    Predefined options for Enum filter fields. Required when FilterType is FilterFieldType.Enum.
+                    Predefined options for Enum filter fields. When the property type is a C# enum, options are auto-generated from the enum values. Use this to override or provide options for string-based enum columns.
                 </ApiParameter>
                 <ApiParameter Name="NoWrap" Type="bool" Default="false">
                     Whether text in this column should not wrap. When true, cell content uses white-space: nowrap and truncates with an ellipsis on overflow.

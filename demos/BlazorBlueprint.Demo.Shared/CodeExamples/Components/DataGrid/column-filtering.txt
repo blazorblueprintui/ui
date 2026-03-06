@@ -5,7 +5,7 @@
         <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Filterable />
         <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable Filterable />
 
-        @* Enum filtering — override FilterType and provide options *@
+        @* Enum filtering via override — for string properties with known values *@
         <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Filterable
             FilterType="FilterFieldType.Enum"
             FilterOptions="@(new[] { "Engineering", "Sales", "Marketing" }.Select(d => new SelectOption<string>(d, d)))" />
@@ -13,6 +13,16 @@
         @* Number filtering — auto-inferred from int/double property *@
         <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable Filterable />
         <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Filterable />
+
+        @* Enum filtering — auto-inferred from enum property, options generated from type *@
+        <BbDataGridPropertyColumn TData="Person" TProp="PersonStatus" Property="@(p => p.StatusEnum)" Sortable Filterable />
+
+        @* Nullable enum — auto-inferred, includes "is empty" operator for null values *@
+        <BbDataGridPropertyColumn TData="Person" TProp="SeniorityLevel?" Property="@(p => p.Seniority)" Sortable Filterable />
+
+        @* Nullable DateTimeOffset — auto-inferred as DateTime filter *@
+        <BbDataGridPropertyColumn TData="Person" TProp="DateTimeOffset?" Property="@(p => p.LastPromotionDate)"
+            Title="Last Promotion" Format="d" Sortable Filterable />
 
         @* Boolean filtering — auto-inferred from bool property *@
         <BbDataGridPropertyColumn TData="Person" TProp="bool" Property="@(p => p.IsActive)" Title="Active" Sortable Filterable />

@@ -121,7 +121,11 @@ public class MockDataService
                 LastPromotionDate = GeneratePromotionDate(),
                 Salary = _random.Next(40000, 150000),
                 JoinDate = DateTime.Now.AddDays(-_random.Next(1, 3650)), // Random date within last 10 years
-                IsActive = _random.Next(100) > 20 // 80% chance of being active
+                IsActive = _random.Next(100) > 20, // 80% chance of being active
+                StatusEnum = (PersonStatus)_random.Next(Enum.GetValues<PersonStatus>().Length),
+                Seniority = _random.Next(100) > 20 // 80% have seniority assigned
+                    ? (SeniorityLevel)_random.Next(Enum.GetValues<SeniorityLevel>().Length)
+                    : null
             });
         }
         return persons;
@@ -151,7 +155,9 @@ public class MockDataService
     }
 
     private static DateTimeOffset? GeneratePromotionDate() =>
-        DateTimeOffset.UtcNow - TimeSpan.FromDays(_random.Next(365, 730));
+        _random.Next(100) > 30 // 70% have a promotion date
+            ? DateTimeOffset.UtcNow - TimeSpan.FromDays(_random.Next(365, 730))
+            : null;
 
     /// <summary>
     /// Generates a list of mock product records.
@@ -202,6 +208,25 @@ public class Person
     public int Salary { get; set; }
     public DateTime JoinDate { get; set; }
     public bool IsActive { get; set; }
+    public PersonStatus StatusEnum { get; set; }
+    public SeniorityLevel? Seniority { get; set; }
+}
+
+public enum PersonStatus
+{
+    Active,
+    Inactive,
+    Pending,
+    Suspended
+}
+
+public enum SeniorityLevel
+{
+    Junior,
+    Mid,
+    Senior,
+    Lead,
+    Principal
 }
 
 /// <summary>
