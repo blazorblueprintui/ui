@@ -103,6 +103,7 @@ else
     private int _lastStateVersion = -1;
     private DashboardBreakpoint _lastBreakpoint = DashboardBreakpoint.Large;
     private bool _compactRequested;
+    private bool _insideCompact;
 
     [Parameter] public int Columns { get; set; } = 24;
     [Parameter] public int RowHeight { get; set; } = 40;
@@ -282,7 +283,10 @@ else
             {
                 await StateChanged.InvokeAsync(State);
             }
-            _compactRequested = true;
+            if (!_insideCompact)
+            {
+                _compactRequested = true;
+            }
             StateHasChanged();
         });
     }
@@ -487,7 +491,9 @@ else
         }
 
         _positioned = true;
+        _insideCompact = true;
         _context.Notify();
+        _insideCompact = false;
 
         if (OnLayoutChanged.HasDelegate)
         {
