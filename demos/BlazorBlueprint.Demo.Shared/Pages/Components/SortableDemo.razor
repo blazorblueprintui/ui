@@ -1,0 +1,464 @@
+@page "/components/sortable"
+
+<PageTitle>Sortable Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Sortable Component</h1>
+            <p class="text-xl text-muted-foreground">
+                Drag-and-drop sortable lists and grids powered by Sortable.js.
+                Supports single lists, connected multi-lists, grid layouts, and Kanban boards.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic List -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic List</h2>
+            <p class="text-sm text-muted-foreground">
+                Drag any item to reorder it. The
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">OnUpdate</code> callback provides
+                the old and new index so you can update your data model.
+            </p>
+        </div>
+
+        <BbSortable TItem="string"
+                    Items="@_basicItems"
+                    AriaLabel="Sortable task list"
+                    OnUpdate="@((args) => MoveWithin(_basicItems, args))">
+            <ItemTemplate Context="item">
+                <div role="listitem"
+                     class="flex items-center gap-3 rounded-md border bg-card px-4 py-3 text-sm shadow-sm cursor-grab active:cursor-grabbing">
+                    <LucideIcon Name="grip-vertical" Size="16" Class="text-muted-foreground shrink-0" />
+                    <span>@item</span>
+                </div>
+            </ItemTemplate>
+        </BbSortable>
+
+        <CodeBlock Source="Components/Sortable/basic.txt" />
+    </div>
+
+    <!-- Handle -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">With Drag Handle</h2>
+            <p class="text-sm text-muted-foreground">
+                Use the <code class="text-xs bg-muted px-1 py-0.5 rounded">Handle</code> parameter to
+                restrict dragging to a specific child element. Only that element initiates the drag;
+                the rest of the item remains interactive.
+            </p>
+        </div>
+
+        <BbSortable TItem="string"
+                    Items="@_handleItems"
+                    Handle=".drag-handle"
+                    AriaLabel="Sortable list with drag handle"
+                    OnUpdate="@((args) => MoveWithin(_handleItems, args))">
+            <ItemTemplate Context="item">
+                <div role="listitem"
+                     class="flex items-center gap-3 rounded-md border bg-card px-4 py-3 text-sm shadow-sm">
+                    <span class="drag-handle cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground">
+                        <LucideIcon Name="grip-vertical" Size="16" />
+                    </span>
+                    <span class="flex-1">@item</span>
+                </div>
+            </ItemTemplate>
+        </BbSortable>
+
+        <CodeBlock Source="Components/Sortable/handle.txt" />
+    </div>
+
+    <!-- Multiple Connected Lists -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Multiple Connected Lists</h2>
+            <p class="text-sm text-muted-foreground">
+                Give multiple <code class="text-xs bg-muted px-1 py-0.5 rounded">BbSortable</code>
+                instances the same <code class="text-xs bg-muted px-1 py-0.5 rounded">Group</code> name to allow items to move between them.
+                For two-list transfers, <code class="text-xs bg-muted px-1 py-0.5 rounded">OnRemove</code>
+                alone is sufficient — the callback provides the landing index in the target so you can
+                insert straight into the other list.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+                <p class="text-sm font-medium">Available</p>
+                <BbSortable TItem="string"
+                            Items="@_available"
+                            Group="@_transferGroup"
+                            AriaLabel="Available items"
+                            OnUpdate="@((args) => MoveWithin(_available, args))"
+                            OnRemove="@((args) => MoveAcross(_available, _selected, args))"
+                            Class="min-h-20 rounded-md border border-dashed p-2">
+                    <ItemTemplate Context="item">
+                        <div role="listitem"
+                             class="flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm shadow-sm cursor-grab active:cursor-grabbing">
+                            <LucideIcon Name="grip-vertical" Size="14" Class="text-muted-foreground shrink-0" />
+                            <span>@item</span>
+                        </div>
+                    </ItemTemplate>
+                </BbSortable>
+            </div>
+
+            <div class="space-y-2">
+                <p class="text-sm font-medium">Selected</p>
+                <BbSortable TItem="string"
+                            Items="@_selected"
+                            Group="@_transferGroup"
+                            AriaLabel="Selected items"
+                            OnUpdate="@((args) => MoveWithin(_selected, args))"
+                            OnRemove="@((args) => MoveAcross(_selected, _available, args))"
+                            Class="min-h-20 rounded-md border border-dashed p-2">
+                    <ItemTemplate Context="item">
+                        <div role="listitem"
+                             class="flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm shadow-sm cursor-grab active:cursor-grabbing">
+                            <LucideIcon Name="grip-vertical" Size="14" Class="text-muted-foreground shrink-0" />
+                            <span>@item</span>
+                        </div>
+                    </ItemTemplate>
+                </BbSortable>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/Sortable/multiple-lists.txt" />
+    </div>
+
+    <!-- Grid Layout -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Grid Layout</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="text-xs bg-muted px-1 py-0.5 rounded">Layout="SortableLayout.Grid"</code>
+                for a two-column grid. Pass a <code class="text-xs bg-muted px-1 py-0.5 rounded">Class</code>
+                like <code class="text-xs bg-muted px-1 py-0.5 rounded">grid-cols-3 gap-3</code> to override
+                the column count.
+            </p>
+        </div>
+
+        <div class="rounded-md border bg-muted/40 px-4 py-3 text-sm text-muted-foreground flex items-start gap-2">
+            <LucideIcon Name="info" Size="16" Class="mt-0.5 shrink-0" />
+            <span>
+                When using Razor components inside <code class="bg-muted px-1 py-0.5 rounded">ItemTemplate</code>,
+                wrap them in a plain <code class="bg-muted px-1 py-0.5 rounded">&lt;div&gt;</code> so Sortable.js
+                can track each item as a single DOM node.
+            </span>
+        </div>
+
+        <BbSortable TItem="ColorCard"
+                    Items="@_gridCards"
+                    Layout="SortableLayout.Grid"
+                    AriaLabel="Sortable card grid"
+                    OnUpdate="@((args) => MoveWithin(_gridCards, args))">
+            <ItemTemplate Context="card">
+                @* Wrap BbCard in a <div> — Sortable.js needs a single DOM root per item. *@
+                <div role="listitem">
+                    <BbCard Class="cursor-grab active:cursor-grabbing select-none">
+                        <BbCardContent Class="pt-6">
+                            <div class="@($"h-16 rounded-md {card.Color} flex items-center justify-center")">
+                                <span class="text-white font-semibold text-sm">@card.Label</span>
+                            </div>
+                        </BbCardContent>
+                    </BbCard>
+                </div>
+            </ItemTemplate>
+        </BbSortable>
+
+        <CodeBlock Source="Components/Sortable/grid.txt" />
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Kanban Board</h2>
+            <p class="text-sm text-muted-foreground">
+                Three connected columns each backed by their own
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">BbSortable</code>.
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">OnRemove</code> fires on the source column
+                and removes the task; <code class="text-xs bg-muted px-1 py-0.5 rounded">OnAdd</code> fires
+                on the target column and inserts it. The parent stages the in-flight task in a
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">_draggedTask</code> field between the
+                two callbacks.
+            </p>
+        </div>
+
+        <div class="rounded-md border bg-muted/40 px-4 py-3 text-sm text-muted-foreground flex items-start gap-2">
+            <LucideIcon Name="info" Size="16" Class="mt-0.5 shrink-0" />
+            <span>
+                When using Razor components inside <code class="bg-muted px-1 py-0.5 rounded">ItemTemplate</code>,
+                wrap them in a plain <code class="bg-muted px-1 py-0.5 rounded">&lt;div&gt;</code> so Sortable.js
+                can track each item as a single DOM node.
+            </span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+            @foreach (var column in _kanbanColumns)
+            {
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm font-semibold">@column.Title</p>
+                        <BbBadge Variant="BadgeVariant.Secondary">@column.Items.Count</BbBadge>
+                    </div>
+                    <BbSortable TItem="KanbanTask"
+                                Items="@column.Items"
+                                Group="@_kanbanGroup"
+                                AriaLabel="@($"{column.Title} column")"
+                                OnUpdate="@((args) => MoveWithin(column.Items, args))"
+                                OnRemove="@((args) => KanbanOnRemove(column, args))"
+                                OnAdd="@((args) => KanbanOnAdd(column, args))"
+                                Class="min-h-24 rounded-lg border border-dashed p-2">
+                        <ItemTemplate Context="task">
+                            @* Wrap BbCard in a <div> — Sortable.js needs a single DOM root per item. *@
+                            <div role="listitem" class="mb-2 last:mb-0">
+                                <BbCard Class="cursor-grab active:cursor-grabbing">
+                                    <BbCardHeader Class="pb-2">
+                                        <BbCardTitle Class="text-sm font-medium">@task.Title</BbCardTitle>
+                                    </BbCardHeader>
+                                    <BbCardContent>
+                                        <BbBadge Variant="@GetPriorityVariant(task.Priority)">
+                                            @task.Priority
+                                        </BbBadge>
+                                    </BbCardContent>
+                                </BbCard>
+                            </div>
+                        </ItemTemplate>
+                    </BbSortable>
+                </div>
+            }
+        </div>
+
+        <CodeBlock Source="Components/Sortable/kanban.txt" />
+    </div>
+
+    <!-- Accessibility -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                The container has <code class="text-xs bg-muted px-1 py-0.5 rounded">role="list"</code>
+                and accepts an accessible label via the
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">AriaLabel</code> parameter.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                A visually-hidden <code class="text-xs bg-muted px-1 py-0.5 rounded">role="status"</code>
+                live region announces each move to screen readers
+                (e.g., "Item moved from position 2 to position 4.").
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Add <code class="text-xs bg-muted px-1 py-0.5 rounded">role="listitem"</code> to the root
+                element of each <code class="text-xs bg-muted px-1 py-0.5 rounded">ItemTemplate</code>
+                to complete the list landmark semantics for screen readers.
+            </AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Drag and drop is pointer-only. Provide alternative move actions (e.g., move-up / move-down buttons) for full keyboard accessibility.">
+                <BbKbd>Mouse / Touch</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+
+        <ApiReference ComponentName="BbSortable&lt;TItem&gt;">
+            <ApiParameter Name="ItemTemplate" Type="RenderFragment&lt;TItem&gt;?">
+                Render fragment used to display each item. The <code>context</code> variable
+                provides the data item. When the root element is a Razor component, wrap it in
+                a <code>&lt;div&gt;</code> so Sortable.js can track it as a single DOM node.
+            </ApiParameter>
+            <ApiParameter Name="Items" Type="List&lt;TItem&gt;">
+                The list of items to render and reorder.
+            </ApiParameter>
+            <ApiParameter Name="OnUpdate" Type="EventCallback&lt;(int OldIndex, int NewIndex)&gt;">
+                Raised when an item is reordered within this list. Remove from
+                <code>OldIndex</code> and insert at <code>NewIndex</code>.
+            </ApiParameter>
+            <ApiParameter Name="OnRemove" Type="EventCallback&lt;(int OldIndex, int NewIndex)&gt;">
+                Raised when an item is moved out of this list into a connected list.
+                <code>OldIndex</code> is the item's position in this list;
+                <code>NewIndex</code> is its landing position in the target list.
+            </ApiParameter>
+            <ApiParameter Name="OnAdd" Type="EventCallback&lt;(int OldIndex, int NewIndex)&gt;">
+                Raised when an item from a connected list is dropped into this list.
+                <code>OldIndex</code> is its position in the source list;
+                <code>NewIndex</code> is its landing position in this list.
+                Use together with <code>OnRemove</code> on the source to stage the item via a
+                shared field and then insert it here.
+            </ApiParameter>
+            <ApiParameter Name="Group" Type="string" Default="Guid">
+                Sortable.js group name. Lists sharing the same name can exchange items.
+                Defaults to a unique GUID (isolated list).
+            </ApiParameter>
+            <ApiParameter Name="Pull" Type="string?" Default="null">
+                Pull behaviour: <code>"clone"</code> copies items; <code>null</code> moves them.
+            </ApiParameter>
+            <ApiParameter Name="Put" Type="bool" Default="true">
+                Whether items from connected lists can be dropped into this one.
+            </ApiParameter>
+            <ApiParameter Name="Sort" Type="bool" Default="true">
+                Whether items within this list can be reordered.
+            </ApiParameter>
+            <ApiParameter Name="Handle" Type="string" Default='""'>
+                CSS selector for the drag-handle element. Only that element initiates a drag.
+            </ApiParameter>
+            <ApiParameter Name="Filter" Type="string?" Default="null">
+                CSS selector for child elements that cannot be dragged.
+            </ApiParameter>
+            <ApiParameter Name="ForceFallback" Type="bool" Default="true">
+                Use the software fallback renderer instead of native HTML5 drag-and-drop.
+                Recommended for consistent cross-browser behaviour.
+            </ApiParameter>
+            <ApiParameter Name="Layout" Type="SortableLayout" Default="SortableLayout.List">
+                Visual layout: <code>List</code> (vertical column) or <code>Grid</code>
+                (two-column grid). Override columns via <code>Class</code>.
+            </ApiParameter>
+            <ApiParameter Name="Id" Type="string" Default="Guid">
+                HTML element id for the sortable container. Auto-generated by default.
+            </ApiParameter>
+            <ApiParameter Name="AriaLabel" Type="string?">
+                Accessible label exposed as <code>aria-label</code> on the container.
+            </ApiParameter>
+            <ApiParameter Name="Class" Type="string?">
+                Additional CSS classes for the container element.
+            </ApiParameter>
+        </ApiReference>
+
+        <div class="rounded-lg border p-6">
+            <h3 class="font-mono text-sm font-semibold mb-3">SortableLayout</h3>
+            <div class="text-sm text-muted-foreground space-y-1">
+                <p><strong>List</strong> — items stacked vertically in a single column (default).</p>
+                <p>
+                    <strong>Grid</strong> — items in a two-column grid. Pass a custom
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Class</code> such as
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">grid-cols-3 gap-4</code>
+                    to change the column count.
+                </p>
+            </div>
+        </div>
+    </section>
+</div>
+
+@code {
+    // ── Shared helpers ────────────────────────────────────────────────────────
+
+    private static void MoveWithin<T>(List<T> list, (int OldIndex, int NewIndex) args)
+    {
+        var item = list[args.OldIndex];
+        list.RemoveAt(args.OldIndex);
+        list.Insert(args.NewIndex, item);
+    }
+
+    private static void MoveAcross<T>(List<T> source, List<T> target, (int OldIndex, int NewIndex) args)
+    {
+        var item = source[args.OldIndex];
+        source.RemoveAt(args.OldIndex);
+        target.Insert(args.NewIndex, item);
+    }
+
+    // ── Basic list ────────────────────────────────────────────────────────────
+
+    private List<string> _basicItems =
+    [
+        "Design mockups",
+        "Set up project",
+        "Implement authentication",
+        "Write unit tests",
+        "Deploy to staging",
+    ];
+
+    // ── Handle list ───────────────────────────────────────────────────────────
+
+    private List<string> _handleItems =
+    [
+        "Dashboard",
+        "Analytics",
+        "Reports",
+        "Settings",
+        "Users",
+    ];
+
+    // ── Multiple lists ────────────────────────────────────────────────────────
+
+    private readonly string _transferGroup = Guid.NewGuid().ToString();
+    private List<string> _available = ["React", "Vue", "Angular", "Svelte", "Solid"];
+    private List<string> _selected = ["Blazor"];
+
+    // ── Grid ──────────────────────────────────────────────────────────────────
+
+    private record ColorCard(string Label, string Color);
+
+    private List<ColorCard> _gridCards =
+    [
+        new("Ocean", "bg-blue-500"),
+        new("Forest", "bg-green-500"),
+        new("Sunset", "bg-orange-500"),
+        new("Berry", "bg-purple-500"),
+        new("Rose", "bg-rose-500"),
+        new("Sky", "bg-cyan-500"),
+    ];
+
+    // ── Kanban ────────────────────────────────────────────────────────────────
+
+    private record KanbanTask(string Title, string Priority);
+
+    private sealed class KanbanColumn(string title, List<KanbanTask> items)
+    {
+        public string Title { get; } = title;
+        public List<KanbanTask> Items { get; } = items;
+    }
+
+    private readonly string _kanbanGroup = Guid.NewGuid().ToString();
+
+    private List<KanbanColumn> _kanbanColumns =
+    [
+        new("To Do",
+        [
+            new("Design system audit", "High"),
+            new("Update README", "Low"),
+            new("Fix login bug", "High"),
+        ]),
+        new("In Progress",
+        [
+            new("Build sortable demo", "Medium"),
+            new("Write unit tests", "Medium"),
+        ]),
+        new("Done",
+        [
+            new("Project setup", "Low"),
+            new("CI pipeline", "Medium"),
+        ]),
+    ];
+
+    // Stages the task that is in-flight between columns.
+    // KanbanOnRemove (source) populates it; KanbanOnAdd (target) consumes it.
+    private KanbanTask? _draggedTask;
+
+    private void KanbanOnRemove(KanbanColumn source, (int OldIndex, int NewIndex) args)
+    {
+        _draggedTask = source.Items[args.OldIndex];
+        source.Items.RemoveAt(args.OldIndex);
+    }
+
+    private void KanbanOnAdd(KanbanColumn target, (int OldIndex, int NewIndex) args)
+    {
+        if (_draggedTask is null)
+        {
+            return;
+        }
+
+        target.Items.Insert(Math.Min(args.NewIndex, target.Items.Count), _draggedTask);
+        _draggedTask = null;
+    }
+
+    private static BadgeVariant GetPriorityVariant(string priority) => priority switch
+    {
+        "High" => BadgeVariant.Destructive,
+        "Medium" => BadgeVariant.Default,
+        _ => BadgeVariant.Secondary,
+    };
+}
