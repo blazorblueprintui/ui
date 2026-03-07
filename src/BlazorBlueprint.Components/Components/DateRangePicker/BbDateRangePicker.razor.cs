@@ -274,7 +274,10 @@ public partial class BbDateRangePicker : ComponentBase
         }
     }
 
-    private async Task Clear()
+    /// <summary>
+    /// Clear slection of the dates
+    /// </summary>
+    public async Task Clear()
     {
         _selectionStart = null;
         _selectionEnd = null;
