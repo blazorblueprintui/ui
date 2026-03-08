@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-08
+
+### Added
+
+- **DialogService: Alert, Prompt & Custom Component Dialogs** — New dialog types via `DialogService` with `AlertAsync()`, `PromptAsync()`, and `OpenAsync<T>()` methods. Includes `DialogData<TResult>` base class for strongly-typed results, `DialogOptions`/`DialogOpenOptions` for sizing and behavior, escape key handling, focus trapping, scroll lock, and proper ARIA roles (`alertdialog`/`dialog`). (#207)
+- **7 New Headless Primitives** — Added Separator, Toggle, ToggleGroup, Progress, AlertDialog, Slider, and ContextMenu primitives with full accessibility, keyboard navigation, and ARIA support. Refactored 18 component files to delegate behavior to the new primitives layer. (#217)
+
+### Fixed
+
+- **Primitives** — Checkbox spacebar toggle regression, context menu re-open positioning, context menu keyboard nav on re-open, toggle group focus visibility, select displaying value instead of text on initial load. (#217)
+- **Primitives** — Popover role changed to `dialog`, HoverCard trigger keyboard focusability, DropdownMenu aria-labelledby, Switch Enter key removed per WAI-ARIA, Checkbox/RadioGroup Required parameter added. (#217)
+
+---
+
+## 2026-03-07
+
+### Fixed
+
+- **BbDataGrid** — Respect initial `Visible` property on columns during initialization. (#205)
+
+---
+
 ## 2026-03-06
 
 ### Fixed
