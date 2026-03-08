@@ -1,0 +1,85 @@
+@namespace BlazorBlueprint.Primitives.Toggle
+
+<button type="button"
+        aria-pressed="@IsPressed.ToString().ToLower()"
+        data-state="@(IsPressed ? "on" : "off")"
+        disabled="@Disabled"
+        @onclick="HandleClick"
+        @attributes="AdditionalAttributes">
+    @ChildContent
+</button>
+
+@code {
+    private bool internalPressed;
+    private bool isControlled;
+
+    /// <summary>
+    /// Gets or sets whether the toggle is pressed (controlled mode).
+    /// </summary>
+    [Parameter]
+    public bool? Pressed { get; set; }
+
+    /// <summary>
+    /// Gets or sets the callback invoked when the pressed state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> PressedChanged { get; set; }
+
+    /// <summary>
+    /// Gets or sets the default pressed state (uncontrolled mode).
+    /// </summary>
+    [Parameter]
+    public bool DefaultPressed { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the toggle is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets the child content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional attributes to be applied to the button element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Gets the current pressed state.
+    /// </summary>
+    public bool IsPressed => isControlled ? (Pressed ?? false) : internalPressed;
+
+    protected override void OnInitialized()
+    {
+        internalPressed = DefaultPressed;
+    }
+
+    protected override void OnParametersSet()
+    {
+        isControlled = PressedChanged.HasDelegate || Pressed.HasValue;
+    }
+
+    private async Task HandleClick()
+    {
+        if (Disabled)
+        {
+            return;
+        }
+
+        var newValue = !IsPressed;
+
+        if (isControlled)
+        {
+            await PressedChanged.InvokeAsync(newValue);
+        }
+        else
+        {
+            internalPressed = newValue;
+        }
+    }
+}

@@ -160,7 +160,8 @@ Production-ready components for complex data-driven applications:
 
 | Component | Description |
 |-----------|-------------|
-| **DataGrid** | Full-featured data grid with multi-column sorting, per-column filtering, row selection, expandable rows, virtualization, context menus, pinned columns, column reordering/resizing/visibility, and state persistence. Supports `IQueryable`, `IEnumerable`, and `ItemsProvider` data sources. |
+| **Dashboard Grid** | Drag-and-drop, resizable widget layout for composing dashboards. Built on CSS Grid with responsive breakpoints, state persistence, keyboard accessibility, and loading/empty states. |
+| **DataGrid** | Full-featured data grid with multi-column sorting, per-column filtering, row grouping with aggregates, row selection, expandable rows, virtualization, context menus, pinned columns, column reordering/resizing/visibility, and state persistence. Supports `IQueryable`, `IEnumerable`, and `ItemsProvider` data sources. |
 | **Dynamic Form** | Schema-driven form rendering — define fields, validation rules, and layout in a schema object, and the component generates the complete form with appropriate inputs, conditional visibility, and error display. |
 | **Filter Builder** | Visual query builder for constructing complex filter expressions with AND/OR logic, nested condition groups, and type-aware operators. Pairs with DataGrid for interactive data exploration. |
 | **Form Wizard** | Multi-step form wizard with progress indicators, per-step validation, optional/skippable steps, and navigation controls. |
@@ -259,7 +260,8 @@ Production-ready components for complex data-driven applications:
 | Component            | Description                                                                                                        |
 |----------------------|--------------------------------------------------------------------------------------------------------------------|
 | **Chart**            | 11 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Pie, Radar, Radial Bar, Scatter) with theme integration |
-| **DataGrid**         | Enterprise data grid with sorting, per-column filtering, selection, expandable rows, row virtualization, context menu, pinned columns, column reordering/resizing/visibility, and state persistence |
+| **Dashboard Grid**   | Drag-and-drop, resizable widget layout for dashboards with responsive breakpoints, state persistence, and keyboard accessibility |
+| **DataGrid**         | Enterprise data grid with sorting, per-column filtering, row grouping with aggregates, selection, expandable rows, row virtualization, context menu, pinned columns, column reordering/resizing/visibility, and state persistence |
 | **DataTable**        | Tables with sorting, filtering, pagination, and row selection                                                      |
 | **DataView**         | Displays data using templates in a grid or list layout with sorting, filtering, pagination, and infinite scrolling |
 | **Markdown Editor**  | Toolbar formatting with live preview                                                                               |
@@ -282,27 +284,35 @@ Production-ready components for complex data-driven applications:
 
 ## Primitives
 
-Blazor Blueprint's **17 headless primitives** provide behavior, ARIA attributes, and keyboard support without any styling. They handle all the complex interaction logic — focus trapping, ARIA attributes, keyboard shortcuts, portal rendering — while giving you complete control over appearance.
+Blazor Blueprint's **25 headless primitives** provide behavior, ARIA attributes, and keyboard support without any styling. They handle all the complex interaction logic — focus trapping, ARIA attributes, keyboard shortcuts, portal rendering — while giving you complete control over appearance.
 
 Use primitives when you need full design freedom or are building a custom design system.
 
 | Primitive | What it handles |
 |-----------|----------------|
 | **Accordion** | Expand/collapse logic, single/multiple mode, keyboard navigation |
+| **Alert Dialog** | Modal requiring explicit acknowledgement, no dismiss via overlay or Escape |
 | **Checkbox** | Checked/unchecked/indeterminate state, ARIA attributes |
 | **Collapsible** | Open/close state, animated transitions |
-| **DataGrid** | Headless data grid with sorting, filtering, pagination, selection, expansion, and state management |
+| **Context Menu** | Right-click menu with keyboard navigation and positioning |
+| **Dashboard Grid** | Widget layout state, drag-and-drop coordination, resize handling, responsive breakpoints |
+| **DataGrid** | Headless data grid with sorting, filtering, pagination, selection, expansion, row grouping, and state management |
 | **Dialog** | Focus trapping, escape to close, scroll locking, portal rendering |
 | **Dropdown Menu** | Open/close, keyboard navigation, click-outside dismissal |
 | **Hover Card** | Hover intent, delay timing, portal positioning |
 | **Label** | Label-control association |
 | **Popover** | Floating positioning, portal rendering, click-outside |
+| **Progress** | Accessible progress bar with determinate and indeterminate states |
 | **Radio Group** | Single selection, arrow key navigation, ARIA roles |
+| **Scroll Area** | Custom scrollbar with accessible ARIA scrollbar role and drag support |
 | **Select** | Dropdown behavior, typeahead, keyboard navigation |
+| **Separator** | Semantic or decorative divider with orientation support |
 | **Sheet** | Side panel, focus trapping, scroll locking |
+| **Slider** | Range input with keyboard navigation and pointer drag support |
 | **Switch** | Toggle state, keyboard support, ARIA switch role |
 | **Table** | Sorting, pagination, row selection, keyboard row navigation |
 | **Tabs** | Tab selection, arrow key navigation, ARIA tab roles |
+| **Toggle** | Pressed/active state with aria-pressed support |
 | **Tooltip** | Hover/focus triggers, delay, portal positioning |
 | **Tree View** | Hierarchical expand/collapse, selection, checkbox state management |
 

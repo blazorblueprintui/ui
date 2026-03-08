@@ -85,4 +85,9 @@ public partial class BbSeparator : ComponentBase
             : "h-full w-[1px]",
         Class
     );
+
+    private BlazorBlueprint.Primitives.Separator.SeparatorOrientation MappedOrientation =>
+        Orientation == SeparatorOrientation.Vertical
+            ? BlazorBlueprint.Primitives.Separator.SeparatorOrientation.Vertical
+            : BlazorBlueprint.Primitives.Separator.SeparatorOrientation.Horizontal;
 }

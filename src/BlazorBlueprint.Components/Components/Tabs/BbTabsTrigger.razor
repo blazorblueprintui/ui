@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Components
+@implements IDisposable
 
 @*
     Styled TabsTrigger component.
@@ -20,6 +21,13 @@
     public string Value { get; set; } = string.Empty;
 
     /// <summary>
+    /// Display text for this tab in the responsive Select dropdown.
+    /// Falls back to Value if not provided.
+    /// </summary>
+    [Parameter]
+    public string? Label { get; set; }
+
+    /// <summary>
     /// Whether this tab trigger is disabled.
     /// </summary>
     [Parameter]
@@ -37,6 +45,17 @@
     [Parameter]
     public string? Class { get; set; }
 
+    /// <summary>
+    /// The parent Components-layer BbTabsList, if responsive mode is enabled.
+    /// </summary>
+    [CascadingParameter]
+    public BbTabsList? ComponentsList { get; set; }
+
+    protected override void OnInitialized()
+    {
+        ComponentsList?.RegisterResponsiveTrigger(Value, Label ?? Value);
+    }
+
     private string CssClass => ClassNames.cn(
         "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5",
         "text-sm font-medium ring-offset-background transition-all",
@@ -45,4 +64,9 @@
         "data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
         Class
     );
+
+    public void Dispose()
+    {
+        ComponentsList?.UnregisterResponsiveTrigger(Value);
+    }
 }

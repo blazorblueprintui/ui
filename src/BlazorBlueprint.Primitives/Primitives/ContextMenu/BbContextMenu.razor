@@ -1,0 +1,103 @@
+@namespace BlazorBlueprint.Primitives.ContextMenu
+@using System.ComponentModel
+@implements IAsyncDisposable
+
+@*
+    ContextMenu primitive - headless context menu triggered by right-click.
+    Manages open/close state and position coordinates.
+*@
+
+<CascadingValue Value="this" IsFixed="false">
+    @ChildContent
+</CascadingValue>
+
+@code {
+    /// <summary>
+    /// The child content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls whether the context menu is open (controlled mode).
+    /// </summary>
+    [Parameter]
+    public bool? Open { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// Gets whether the context menu is open.
+    /// </summary>
+    public bool IsOpen { get; private set; }
+
+    /// <summary>
+    /// Gets the X coordinate where the context menu was triggered.
+    /// </summary>
+    public double X { get; private set; }
+
+    /// <summary>
+    /// Gets the Y coordinate where the context menu was triggered.
+    /// </summary>
+    public double Y { get; private set; }
+
+    internal bool NeedsFocus { get; set; }
+
+    private bool disposed;
+
+    /// <summary>
+    /// Opens the context menu at the specified coordinates.
+    /// </summary>
+    public async Task OpenAt(double x, double y)
+    {
+        X = x;
+        Y = y;
+        IsOpen = true;
+        NeedsFocus = true;
+
+        if (Open.HasValue)
+        {
+            await OpenChanged.InvokeAsync(true);
+        }
+
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Closes the context menu.
+    /// </summary>
+    public async Task Close()
+    {
+        IsOpen = false;
+
+        if (Open.HasValue)
+        {
+            await OpenChanged.InvokeAsync(false);
+        }
+
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public async Task JsOnClickOutside()
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        await Close();
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+        disposed = true;
+        return ValueTask.CompletedTask;
+    }
+}

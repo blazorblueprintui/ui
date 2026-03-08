@@ -137,6 +137,20 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
     public IEnumerable<SelectOption<string>>? FilterOptions { get; set; }
 
     /// <summary>
+    /// The aggregate function to compute for this column when grouping is active.
+    /// Default is <see cref="AggregateFunction.None"/>. Requires <see cref="SortBy"/> to provide a value accessor.
+    /// </summary>
+    [Parameter]
+    public AggregateFunction Aggregate { get; set; } = AggregateFunction.None;
+
+    /// <summary>
+    /// Format string for displaying aggregate values (e.g., "N0", "C2").
+    /// When null, uses default formatting.
+    /// </summary>
+    [Parameter]
+    public string? AggregateFormat { get; set; }
+
+    /// <summary>
     /// The parent DataGrid component. Set via cascading parameter.
     /// </summary>
     [CascadingParameter]
@@ -180,7 +194,27 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
 
     bool IDataGridColumn<TData>.NoWrap => NoWrap;
 
+    AggregateFunction IDataGridColumn<TData>.Aggregate => Aggregate;
+
+    string? IDataGridColumn<TData>.AggregateFormat => AggregateFormat;
+
     public object? GetValue(TData item) => null;
+
+    object? IDataGridColumn<TData>.GetRawValue(TData item)
+    {
+        if (SortBy == null)
+        {
+            return null;
+        }
+
+        if (compiledSortBy == null || !ReferenceEquals(lastSortBy, SortBy))
+        {
+            compiledSortBy = SortBy.Compile();
+            lastSortBy = SortBy;
+        }
+
+        return compiledSortBy(item);
+    }
 
     public int Compare(TData x, TData y)
     {

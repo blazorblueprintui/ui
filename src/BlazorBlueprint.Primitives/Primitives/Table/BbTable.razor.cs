@@ -16,6 +16,7 @@ public partial class BbTable<TData> : ComponentBase, IDisposable where TData : c
     private readonly List<Task> _pendingTasks = new();
 
     // ShouldRender tracking fields
+    private bool _parametersChanged;
     private int _lastRenderVersion;
     private IEnumerable<TData>? _lastData;
     private SelectionMode _lastSelectionMode;
@@ -279,6 +280,8 @@ public partial class BbTable<TData> : ComponentBase, IDisposable where TData : c
     /// </summary>
     protected override void OnParametersSet()
     {
+        _parametersChanged = true;
+
         // Update context with new parameters
         _context.SelectionMode = SelectionMode;
         _context.EnableKeyboardNavigation = EnableKeyboardNavigation;
@@ -366,6 +369,17 @@ public partial class BbTable<TData> : ComponentBase, IDisposable where TData : c
         // For controlled mode, always allow re-render since state may be modified in-place
         if (IsControlled)
         {
+            return true;
+        }
+
+        // Allow re-render when parent re-rendered us (parameters were set)
+        if (_parametersChanged)
+        {
+            _parametersChanged = false;
+            _lastData = Data;
+            _lastSelectionMode = SelectionMode;
+            _lastManualPagination = ManualPagination;
+            _lastRenderVersion = _stateVersion;
             return true;
         }
 

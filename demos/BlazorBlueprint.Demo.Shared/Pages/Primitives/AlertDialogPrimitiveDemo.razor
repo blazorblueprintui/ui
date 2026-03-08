@@ -1,0 +1,227 @@
+@page "/primitives/alert-dialog"
+<PageTitle>Alert Dialog Primitive - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Alert Dialog Primitive</h1>
+            <p class="text-xl text-muted-foreground">
+                Headless, unstyled alert dialog primitive requiring explicit user acknowledgement.
+                Cannot be dismissed via overlay click or Escape key.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Alert Dialog</h2>
+                <p class="text-muted-foreground">
+                    An alert dialog that requires the user to explicitly confirm or cancel.
+                    Clicking outside or pressing Escape will NOT close it.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BlazorBlueprint.Primitives.AlertDialog.BbAlertDialog>
+                    <BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogTrigger>
+                        <button type="button" class="px-4 py-2 bg-destructive text-destructive-foreground rounded text-sm">
+                            Delete Account
+                        </button>
+                    </BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogTrigger>
+
+                    <BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogPortal>
+                        <BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogOverlay
+                            style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50;" />
+
+                        <BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogContent
+                            style="position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 50; background: var(--background); border: 1px solid var(--border); border-radius: 8px; padding: 24px; max-width: 500px; width: 90%;">
+                            <BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogTitle
+                                style="font-size: 1.125rem; font-weight: 600; margin: 0 0 8px 0;">
+                                Are you absolutely sure?
+                            </BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogTitle>
+
+                            <BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogDescription
+                                style="font-size: 0.875rem; color: var(--muted-foreground); margin: 0 0 16px 0;">
+                                This action cannot be undone. This will permanently delete your account
+                                and remove your data from our servers.
+                            </BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogDescription>
+
+                            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                                <BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogCancel>
+                                    <button type="button" class="px-4 py-2 border rounded text-sm">
+                                        Cancel
+                                    </button>
+                                </BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogCancel>
+
+                                <BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogAction>
+                                    <button type="button" class="px-4 py-2 bg-destructive text-destructive-foreground rounded text-sm">
+                                        Yes, delete account
+                                    </button>
+                                </BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogAction>
+                            </div>
+                        </BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogContent>
+                    </BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogPortal>
+                </BlazorBlueprint.Primitives.AlertDialog.BbAlertDialog>
+            </div>
+
+            <CodeBlock Source="Primitives/AlertDialog/basic.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Controlled Alert Dialog</h2>
+                <p class="text-muted-foreground">
+                    Control the open state externally.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <button @onclick="@(() => controlledOpen = true)"
+                        class="px-4 py-2 border rounded text-sm">
+                    Open Controlled Alert Dialog
+                </button>
+
+                <BlazorBlueprint.Primitives.AlertDialog.BbAlertDialog @bind-Open="controlledOpen">
+                    <BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogPortal>
+                        <BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogOverlay
+                            style="position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50;" />
+
+                        <BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogContent
+                            style="position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 50; background: var(--background); border: 1px solid var(--border); border-radius: 8px; padding: 24px; max-width: 400px; width: 90%;">
+                            <BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogTitle
+                                style="font-size: 1.125rem; font-weight: 600; margin: 0 0 8px 0;">
+                                Confirm Action
+                            </BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogTitle>
+
+                            <BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogDescription
+                                style="font-size: 0.875rem; color: var(--muted-foreground); margin: 0 0 16px 0;">
+                                Do you want to proceed with this action?
+                            </BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogDescription>
+
+                            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                                <BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogCancel>
+                                    <button type="button" class="px-4 py-2 border rounded text-sm">
+                                        No
+                                    </button>
+                                </BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogCancel>
+
+                                <BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogAction>
+                                    <button type="button" class="px-4 py-2 bg-primary text-primary-foreground rounded text-sm">
+                                        Yes, continue
+                                    </button>
+                                </BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogAction>
+                            </div>
+                        </BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogContent>
+                    </BlazorBlueprint.Primitives.AlertDialog.BbAlertDialogPortal>
+                </BlazorBlueprint.Primitives.AlertDialog.BbAlertDialog>
+
+                <p class="text-sm text-muted-foreground">Open: @controlledOpen</p>
+            </div>
+
+            <CodeBlock Source="Primitives/AlertDialog/controlled.txt" />
+        </section>
+
+    <!-- Accessibility Notes -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">role="alertdialog"</code> indicates a modal requiring acknowledgement
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-modal="true"</code> always set to indicate modal behavior
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-labelledby</code> points to the title element
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-describedby</code> points to the description element
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Focus is trapped within the dialog when open
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Unlike Dialog, Escape key does NOT close the alert dialog
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Unlike Dialog, clicking outside does NOT close the alert dialog
+            </AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move focus between focusable elements">
+                <BbKbd>Tab</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate the focused button">
+                <BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+
+        <div class="rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-4 text-sm text-muted-foreground">
+            Unlike <code class="text-xs bg-muted px-1 py-0.5 rounded">BbDialog</code>, the Alert Dialog cannot be dismissed via Escape or overlay click.
+            Users must interact with the Action or Cancel buttons.
+        </div>
+
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbAlertDialog">
+                <ApiParameter Name="Open" Type="bool?" Default="null">
+                    Controls the open state (controlled mode). Supports two-way binding with <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Open</code>.
+                </ApiParameter>
+                <ApiParameter Name="DefaultOpen" Type="bool" Default="false">
+                    Default open state for uncontrolled mode.
+                </ApiParameter>
+                <ApiParameter Name="OnOpenChange" Type="EventCallback&lt;bool&gt;">
+                    Callback invoked when the open state changes.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbAlertDialogTrigger">
+                <ApiParameter Name="AsChild" Type="bool" Default="false">
+                    When true, merges props onto the child element instead of rendering a wrapper.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbAlertDialogContent">
+                <ApiParameter Name="ChildContent" Type="RenderFragment?">
+                    The content of the alert dialog.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbAlertDialogTitle">
+                <ApiParameter Name="As" Type="string" Default="&quot;h2&quot;">
+                    HTML heading element tag to render.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbAlertDialogDescription">
+                <ApiParameter Name="ChildContent" Type="RenderFragment?">
+                    The description text content.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbAlertDialogAction">
+                <ApiParameter Name="ChildContent" Type="RenderFragment?">
+                    The action button content. Clicking closes the dialog.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbAlertDialogCancel">
+                <ApiParameter Name="ChildContent" Type="RenderFragment?">
+                    The cancel button content. Clicking closes the dialog.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+    </div>
+</div>
+
+@code {
+    private bool controlledOpen;
+}

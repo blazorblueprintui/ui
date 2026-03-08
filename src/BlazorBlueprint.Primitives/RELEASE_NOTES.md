@@ -1,38 +1,23 @@
-## What's New in v3.0.0
+## What's New in v3.4.0
 
-### Breaking Changes
-- All Razor components now use the `Bb` prefix (e.g., `Dialog` -> `BbDialog`, `Select` -> `BbSelect`)
-- `BlazorBlueprint.Primitives.*` consumer-facing types (`AccordionType`, `SheetSide`, `SortDirection`, `PaginationState`, `PopoverSide`, `PopoverAlign`, `PopoverPlacement`, `PositioningStrategy`) moved to root `BlazorBlueprint.Primitives` namespace
-- `PositioningOptions.Strategy` changed from `string` to `PositioningStrategy` enum
-- `SelectItem.TextValue` renamed to `SelectItem.Text`
-- `IPortalService` redesigned with two-layer portal architecture: `PortalCategory.Container` and `PortalCategory.Overlay`
-- `RegisterPortal(id, content)` replaced by `RegisterPortal(id, content, category)`
-- `GetPortals()` replaced by `GetPortals(PortalCategory)`
-- `OnPortalsChanged` replaced by `OnPortalsCategoryChanged`
+### New Components
 
-### New Components & Sub-Components
-- `BbCheckboxIndicator` — auto-renders check/indeterminate SVG icon based on parent state, with configurable `Size` and `StrokeWidth`
-- `BbSwitchThumb` — auto-syncs `data-state` attribute from parent `BbSwitch` via cascading parameter
-- `BbFloatingPortal` — unified floating content infrastructure with `ForceMount` (default: `true`) and `data-state` attribute for CSS animations
-- `BbCategoryPortalHost`, `BbContainerPortalHost`, `BbOverlayPortalHost` — category-scoped portal hosts for efficient rendering
-- `BbPortalHost` — convenience wrapper rendering both Container and Overlay portals
+- **DashboardGrid** — Headless dashboard grid primitive (`BbDashboardGrid`, `BbDashboardWidget`) with drag, resize, responsive breakpoints (Large/Medium/Small), layout persistence via save/restore snapshots, and compact mode support
 
 ### New Features
-- `ItemClass` parameter on `BbDropdownMenu`, `BbRadioGroup`, and `BbSelect` — cascades CSS classes to all child items
-- `[CascadingTypeParameter]` on `BbSelect<TValue>` — child components infer `TValue` from parent
-- `Href` and `Target` parameters on `BbDropdownMenuItem` — renders as `<a>` for link items
-- `ISelectDisplayContext` interface for non-generic display text access
-- `PortalCategory` enum for scoped portal rendering
-- `IPortalService.HasHost` property and `RegisterHost()`/`UnregisterHost()` methods
-- `ForceMount` on `BbFloatingPortal` — keeps portal content mounted when closed, eliminating re-mount overhead
 
-### Performance
-- Menu keyboard navigation moved from C# to JavaScript via `menu-keyboard.js` — zero interop round-trips for arrow keys, Home, End, Enter, Space
-- Dialog, Sheet, and Drawer escape key handling moved to JavaScript via `escape-keydown.js`
-- `BbFloatingPortal` defaults to `ForceMount=true` — no re-mount overhead on open/close cycles
-- `FocusManager.GetModuleAsync()` now thread-safe with `SemaphoreSlim`
+- **DataGrid** — Row grouping support with `GroupDefinition`, `DataGridGroupState`, and collapsible group headers
+- **DataGrid** — Aggregate functions (Count, Sum, Average, Min, Max) on grouped columns via `AggregateFunction` and `AggregateResult`
+- **DataGrid** — Server-side grouped data provider via `DataGridGroupedItemsProvider` delegate
+- **DataGrid** — `GetRawValue` method on `IDataGridColumn` for unformatted values used in aggregate computation
+- **DataGrid** — `Aggregate` and `AggregateFormat` properties on `IDataGridColumn`
+- **DataGrid** — `GroupDefinition` and `AggregateColumns` properties on `DataGridRequest` for server-side grouping
+- **DataGrid** — Grouping state included in `DataGridStateSnapshot` for persistence
 
 ### Bug Fixes
-- `autoUpdate` callback in positioning.js now guards against stale DOM elements during Blazor render cycles
-- `FocusManager` and `PositioningService` disposal now catches `JSDisconnectedException` for Blazor Server circuit disconnect safety
-- Select display text state change optimization to prevent unnecessary re-renders
+
+- **Collapsible** — Allow parent re-renders to cascade through correctly by tracking parameter changes in `ShouldRender`
+- **DataGrid** — Allow parent re-renders to cascade through correctly by tracking parameter changes in `ShouldRender`
+- **Table** — Allow parent re-renders to cascade through correctly by tracking parameter changes in `ShouldRender`
+- **DataGrid** — Simplified focus ring classes on data grid rows by removing unnecessary positioning styles
+- **DashboardGrid** — Fixed widget position updates during compact mode

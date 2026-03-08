@@ -248,11 +248,13 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
     /// <param name="value">The value of the item.</param>
     /// <param name="disabled">Whether the item is disabled.</param>
     /// <param name="displayText">The display text for the item.</param>
-    /// <returns>The index of the registered item.</returns>
-    public int RegisterItem(TValue? value, bool disabled, string? displayText = null)
+    /// <returns>A stable identifier for the registered item.</returns>
+    public string RegisterItem(TValue? value, bool disabled, string? displayText = null)
     {
+        var id = Guid.NewGuid().ToString("N")[..8];
         var metadata = new SelectItemMetadata<TValue>
         {
+            Id = id,
             Value = value,
             Disabled = disabled,
             DisplayText = displayText
@@ -266,19 +268,49 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
             UpdateState(state => state.DisplayText = displayText);
         }
 
-        return Items.Count - 1;
+        return id;
     }
 
     /// <summary>
-    /// Unregisters an item from the select context.
+    /// Unregisters an item from the select context by its stable identifier.
+    /// Safe to call during disposal — does not corrupt other items' indices.
     /// </summary>
-    /// <param name="index">The index of the item to unregister.</param>
-    public void UnregisterItem(int index)
+    /// <param name="id">The stable identifier returned by <see cref="RegisterItem"/>.</param>
+    public void UnregisterItem(string id)
     {
-        if (index >= 0 && index < Items.Count)
+        var index = Items.FindIndex(i => i.Id == id);
+        if (index >= 0)
         {
             Items.RemoveAt(index);
+
+            // Adjust focused index if needed
+            if (State.FocusedIndex >= Items.Count)
+            {
+                SetFocusedIndex(Items.Count - 1);
+            }
         }
+    }
+
+    /// <summary>
+    /// Gets the current index of an item by its stable identifier.
+    /// Returns -1 if the item is not found.
+    /// </summary>
+    /// <param name="id">The stable identifier returned by <see cref="RegisterItem"/>.</param>
+    /// <returns>The current index in the items list, or -1 if not found.</returns>
+    public int GetItemIndex(string id) =>
+        Items.FindIndex(i => i.Id == id);
+
+    /// <summary>
+    /// Gets the stable identifier of the currently focused item.
+    /// Returns null if no item is focused.
+    /// </summary>
+    public string? GetFocusedItemId()
+    {
+        if (State.FocusedIndex >= 0 && State.FocusedIndex < Items.Count)
+        {
+            return Items[State.FocusedIndex].Id;
+        }
+        return null;
     }
 
     /// <summary>
@@ -415,6 +447,12 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
 /// <typeparam name="TValue">The type of the item value.</typeparam>
 public class SelectItemMetadata<TValue>
 {
+    /// <summary>
+    /// Gets or sets the stable identifier for this item registration.
+    /// Used for safe unregistration without index corruption.
+    /// </summary>
+    public string Id { get; set; } = "";
+
     /// <summary>
     /// Gets or sets the value of the select item.
     /// </summary>

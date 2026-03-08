@@ -1,0 +1,176 @@
+@namespace BlazorBlueprint.Primitives.ContextMenu
+@using System.ComponentModel
+@inherits BlazorBlueprint.Primitives.BbPrimitiveBase
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@*
+    ContextMenu content - the menu panel positioned at click coordinates.
+    Handles keyboard navigation via menu-keyboard.js and escape key dismiss.
+*@
+
+@if (Context?.IsOpen == true)
+{
+    <div @ref="overlayRef"
+         style="position: fixed; inset: 0; z-index: 40;"
+         @onclick="HandleOverlayClick"
+         @onclick:stopPropagation="true"
+         @oncontextmenu="HandleOverlayContextMenu"
+         @oncontextmenu:preventDefault="true">
+    </div>
+    <div @ref="contentRef"
+         role="menu"
+         tabindex="-1"
+         data-state="open"
+         style="@MergedContentStyle"
+         @onclick:stopPropagation="true"
+         @oncontextmenu:preventDefault="true"
+         @attributes="FilteredAttributes">
+        @ChildContent
+    </div>
+}
+
+@code {
+    private ElementReference overlayRef;
+    private ElementReference contentRef;
+    private IJSObjectReference? menuKeyboardModule;
+    private DotNetObjectReference<BbContextMenuContent>? dotNetRef;
+    private readonly string instanceId = Guid.NewGuid().ToString("N")[..8];
+    private bool disposed;
+    private bool wasOpen;
+
+    [CascadingParameter]
+    private BbContextMenu? Context { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "BbContextMenuContent must be used within a BbContextMenu component.");
+        }
+    }
+
+    /// <summary>
+    /// The menu content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Whether keyboard navigation loops from last to first item.
+    /// </summary>
+    [Parameter]
+    public bool Loop { get; set; } = true;
+
+    private string ContentStyle => $"position: fixed; left: {Context?.X}px; top: {Context?.Y}px; z-index: 50";
+
+    private string? MergedContentStyle => MergeStyles(ContentStyle);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Context?.IsOpen == true && (!wasOpen || Context.NeedsFocus))
+        {
+            wasOpen = true;
+            if (Context != null)
+            {
+                Context.NeedsFocus = false;
+            }
+
+            try
+            {
+                menuKeyboardModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/menu-keyboard.js");
+                dotNetRef ??= DotNetObjectReference.Create(this);
+
+                // initialize() disposes any existing instance before re-initializing,
+                // so this is safe to call when re-opening at a new position.
+                await menuKeyboardModule.InvokeVoidAsync("initialize", contentRef, dotNetRef, instanceId,
+                    new { mode = "vertical", loop = Loop, initialFocus = "first" });
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+            catch (InvalidOperationException)
+            {
+                // JS interop not available during prerendering
+            }
+        }
+        else if (Context?.IsOpen != true && wasOpen)
+        {
+            wasOpen = false;
+            await CleanupKeyboardAsync();
+        }
+    }
+
+    [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public async Task JsOnEscapeKey()
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        if (Context != null)
+        {
+            await Context.Close();
+        }
+    }
+
+    private async Task CleanupKeyboardAsync()
+    {
+        if (menuKeyboardModule != null)
+        {
+            try
+            {
+                await menuKeyboardModule.InvokeVoidAsync("dispose", instanceId);
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during cleanup
+            }
+        }
+    }
+
+    private async Task HandleOverlayClick()
+    {
+        if (Context != null)
+        {
+            await Context.Close();
+        }
+    }
+
+    private async Task HandleOverlayContextMenu(MouseEventArgs e)
+    {
+        if (Context != null)
+        {
+            await Context.Close();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+        disposed = true;
+
+        await CleanupKeyboardAsync();
+
+        if (menuKeyboardModule != null)
+        {
+            try
+            {
+                await menuKeyboardModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+        }
+
+        dotNetRef?.Dispose();
+    }
+}

@@ -12,6 +12,9 @@ const instances = new Map();
 
 const menuItemSelector = '[role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"]';
 
+/** Type-ahead search delay in milliseconds. Resets the search buffer after inactivity. */
+const TYPE_AHEAD_DELAY = 350;
+
 /**
  * Gets all enabled menu items in DOM order within a container.
  * Filters by aria-disabled !== 'true'.
@@ -115,6 +118,36 @@ function focusWithDoubleRaf(element) {
 }
 
 /**
+ * Handle type-ahead search: accumulates typed characters and focuses
+ * the next matching menu item. Resets after TYPE_AHEAD_DELAY ms of inactivity.
+ */
+function handleTypeAhead(instance, container, key) {
+  clearTimeout(instance.typeAheadTimer);
+  instance.typeAheadBuffer = (instance.typeAheadBuffer || '') + key.toLowerCase();
+
+  instance.typeAheadTimer = setTimeout(() => {
+    instance.typeAheadBuffer = '';
+  }, TYPE_AHEAD_DELAY);
+
+  const items = getEnabledMenuItems(container);
+  if (items.length === 0) return;
+
+  const search = instance.typeAheadBuffer;
+  const currentIndex = items.findIndex(item => item === document.activeElement);
+  const startIndex = currentIndex >= 0 ? currentIndex + 1 : 0;
+
+  // Search from current position forward, wrapping around
+  for (let i = 0; i < items.length; i++) {
+    const index = (startIndex + i) % items.length;
+    const text = items[index].textContent?.trim().toLowerCase() || '';
+    if (text.startsWith(search)) {
+      focusMenuItem(items[index]);
+      return;
+    }
+  }
+}
+
+/**
  * Initialize keyboard handling for a menu container.
  * @param {HTMLElement} container - The [role="menu"] element
  * @param {DotNetObjectReference} dotNetRef - For Escape/menu-switch callbacks
@@ -133,6 +166,7 @@ export function initialize(container, dotNetRef, instanceId, config) {
   const mode = config?.mode || 'vertical';
   const loop = config?.loop !== false;
   const initialFocus = config?.initialFocus || null;
+  const instance = { container, handler: null, typeAheadBuffer: '', typeAheadTimer: null };
 
   const handleKeyDown = (e) => {
     switch (e.key) {
@@ -182,11 +216,20 @@ export function initialize(container, dotNetRef, instanceId, config) {
           dotNetRef.invokeMethodAsync('JsOnPreviousMenu').catch(() => {});
         }
         break;
+
+      default:
+        // Type-ahead: single printable characters trigger search
+        if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          e.preventDefault();
+          handleTypeAhead(instance, container, e.key);
+        }
+        break;
     }
   };
 
+  instance.handler = handleKeyDown;
   container.addEventListener('keydown', handleKeyDown);
-  instances.set(instanceId, { container, handler: handleKeyDown });
+  instances.set(instanceId, instance);
 
   // Apply initial focus using double rAF for reliable timing
   if (initialFocus === 'first') {
@@ -215,6 +258,7 @@ export function dispose(instanceId) {
   if (!stored) return;
 
   stored.container.removeEventListener('keydown', stored.handler);
+  clearTimeout(stored.typeAheadTimer);
   instances.delete(instanceId);
 }
 

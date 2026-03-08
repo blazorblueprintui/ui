@@ -2,36 +2,35 @@
 
 @*
     Progress component - displays a progress bar indicator.
+    Wraps the Progress primitive for accessibility (role, aria-valuenow, etc).
 *@
 
 @if (ShowLabel)
 {
     <div class="flex items-center gap-3">
-        <div role="progressbar"
-             aria-valuemin="0"
-             aria-valuemax="@Max"
-             aria-valuenow="@Value"
-             class="@ContainerCssClass"
-             @attributes="AdditionalAttributes">
-            <div class="@IndicatorCssClass"
-                 style="transform: translateX(-@((100 - ProgressPercentage))%)">
-            </div>
-        </div>
+        <BlazorBlueprint.Primitives.Progress.BbProgress
+            Value="@Value"
+            Max="@Max"
+            class="@ContainerCssClass"
+            @attributes="AdditionalAttributes">
+            <BlazorBlueprint.Primitives.Progress.BbProgressIndicator
+                class="@IndicatorCssClass"
+                style="@IndicatorStyle" />
+        </BlazorBlueprint.Primitives.Progress.BbProgress>
         <span class="text-sm font-medium text-muted-foreground tabular-nums">@(string.Format(LabelFormat, (int)ProgressPercentage))</span>
     </div>
 }
 else
 {
-    <div role="progressbar"
-         aria-valuemin="0"
-         aria-valuemax="@Max"
-         aria-valuenow="@Value"
-         class="@ContainerCssClass"
-         @attributes="AdditionalAttributes">
-        <div class="@IndicatorCssClass"
-             style="transform: translateX(-@((100 - ProgressPercentage))%)">
-        </div>
-    </div>
+    <BlazorBlueprint.Primitives.Progress.BbProgress
+        Value="@Value"
+        Max="@Max"
+        class="@ContainerCssClass"
+        @attributes="AdditionalAttributes">
+        <BlazorBlueprint.Primitives.Progress.BbProgressIndicator
+            class="@IndicatorCssClass"
+            style="@IndicatorStyle" />
+    </BlazorBlueprint.Primitives.Progress.BbProgress>
 }
 
 @code {
@@ -83,6 +82,8 @@ else
     /// Gets the progress percentage (0-100).
     /// </summary>
     private double ProgressPercentage => Max > 0 ? Math.Min(100, Math.Max(0, (Value / Max) * 100)) : 0;
+
+    private string IndicatorStyle => $"transform: translateX(-{100 - ProgressPercentage}%)";
 
     /// <summary>
     /// Gets the computed CSS classes for the progress container.

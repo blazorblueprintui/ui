@@ -1,0 +1,51 @@
+<BbTreeView AriaLabel="File explorer"
+    SelectionMode="TreeSelectionMode.Single"
+    @bind-SelectedValue="selectedNode"
+    DefaultExpandAll="true">
+    <BbTreeItem Value="documents">
+        <NodeContent>
+            <div class="tree-node">
+                <button data-tree-toggle>&#9654;</button>
+                <span>Documents</span>
+            </div>
+        </NodeContent>
+        <ChildContent>
+            <BbTreeItem Value="resume">
+                <NodeContent>
+                    <span>Resume.pdf</span>
+                </NodeContent>
+            </BbTreeItem>
+            <BbTreeItem Value="cover-letter">
+                <NodeContent>
+                    <span>Cover Letter.docx</span>
+                </NodeContent>
+            </BbTreeItem>
+        </ChildContent>
+    </BbTreeItem>
+    <BbTreeItem Value="photos">
+        <NodeContent>
+            <div class="tree-node">
+                <button data-tree-toggle>&#9654;</button>
+                <span>Photos</span>
+            </div>
+        </NodeContent>
+        <ChildContent>
+            <BbTreeItem Value="vacation">
+                <NodeContent>
+                    <span>Vacation.jpg</span>
+                </NodeContent>
+            </BbTreeItem>
+        </ChildContent>
+    </BbTreeItem>
+</BbTreeView>
+
+@* Style indentation using the data-depth attribute *@
+<style>
+    [role="treeitem"][data-depth="1"] > .tree-node { padding-left: 1.5rem; }
+    [role="treeitem"][data-depth="2"] > .tree-node { padding-left: 3rem; }
+    [role="treeitem"][data-state="open"] .tree-toggle { transform: rotate(90deg); }
+</style>
+
+@code {
+    private string? selectedNode;
+}

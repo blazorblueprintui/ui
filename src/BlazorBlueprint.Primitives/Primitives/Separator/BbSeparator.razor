@@ -1,0 +1,29 @@
+@namespace BlazorBlueprint.Primitives.Separator
+
+<div role="@(Decorative ? "none" : "separator")"
+     aria-orientation="@(Decorative ? null : Orientation.ToString().ToLower())"
+     data-orientation="@Orientation.ToString().ToLower()"
+     @attributes="AdditionalAttributes">
+</div>
+
+@code {
+    /// <summary>
+    /// Gets or sets the orientation of the separator.
+    /// </summary>
+    [Parameter]
+    public SeparatorOrientation Orientation { get; set; } = SeparatorOrientation.Horizontal;
+
+    /// <summary>
+    /// Gets or sets whether the separator is purely decorative.
+    /// When true (default), the separator has role="none" and is hidden from assistive technologies.
+    /// When false, the separator has role="separator" with aria-orientation.
+    /// </summary>
+    [Parameter]
+    public bool Decorative { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets additional attributes to be applied to the separator element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+}

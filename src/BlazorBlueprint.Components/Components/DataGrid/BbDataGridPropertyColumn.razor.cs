@@ -130,6 +130,20 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
     public IEnumerable<SelectOption<string>>? FilterOptions { get; set; }
 
     /// <summary>
+    /// The aggregate function to compute for this column when grouping is active.
+    /// Default is <see cref="AggregateFunction.None"/>.
+    /// </summary>
+    [Parameter]
+    public AggregateFunction Aggregate { get; set; } = AggregateFunction.None;
+
+    /// <summary>
+    /// Format string for displaying aggregate values (e.g., "N0", "C2").
+    /// When null, falls back to <see cref="Format"/> if set, otherwise uses default formatting.
+    /// </summary>
+    [Parameter]
+    public string? AggregateFormat { get; set; }
+
+    /// <summary>
     /// Custom cell template. If provided, overrides the default value rendering.
     /// </summary>
     [Parameter]
@@ -176,6 +190,10 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
 
     bool IDataGridColumn<TData>.NoWrap => NoWrap;
 
+    AggregateFunction IDataGridColumn<TData>.Aggregate => Aggregate;
+
+    string? IDataGridColumn<TData>.AggregateFormat => AggregateFormat ?? Format;
+
     public object? GetValue(TData item)
     {
         compiledProperty ??= Property.Compile();
@@ -192,6 +210,12 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
         }
 
         return value;
+    }
+
+    public object? GetRawValue(TData item)
+    {
+        compiledProperty ??= Property.Compile();
+        return compiledProperty(item);
     }
 
     public int Compare(TData x, TData y)

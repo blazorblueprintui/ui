@@ -64,6 +64,8 @@ public partial class BbDataGridSelectColumn<TData> : ComponentBase, IDataGridCol
 
     bool IDataGridColumn<TData>.NoWrap => false;
 
+    AggregateFunction IDataGridColumn<TData>.Aggregate => AggregateFunction.None;
+
     public object? GetValue(TData item) => null;
 
     public int Compare(TData x, TData y) => 0;

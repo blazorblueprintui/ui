@@ -554,95 +554,129 @@
         <CodeBlock Source="Components/DataGrid/state-persistence.txt" />
     </div>
 
-    <!-- ── All Features Combined ──────────────────────────────────── -->
+    <!-- ── Row Grouping ─────────────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">All Features Combined</h2>
+            <h2 class="text-2xl font-semibold">Row Grouping</h2>
             <p class="text-sm text-muted-foreground">
-                Every DataGrid feature working together: sorting, column filtering, row selection, expandable rows,
-                column visibility, resize, reorder, pinned columns, row click, and context menu.
-                Right-click a row to copy data — hidden columns are excluded automatically.
-                Select multiple rows and use "Copy Selected Rows" from the context menu.
-                Scroll horizontally to see pinned columns stick in place.
+                Group rows by a column value using <code class="bg-muted px-1 py-0.5 rounded">GroupBy</code>.
+                Groups are collapsible and show item counts. Click the chevron to expand or collapse a group.
             </p>
         </div>
-        @if (!string.IsNullOrEmpty(allFeaturesMessage))
-        {
-            <BbAlert Variant="AlertVariant.Default" Class="transition-all">
-                <BbAlertDescription>@allFeaturesMessage</BbAlertDescription>
-            </BbAlert>
-        }
-        <div style="max-width: 900px; overflow: auto;">
-            <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
-                       Resizable="true" Reorderable="true"
-                       SelectionMode="DataTableSelectionMode.Multiple"
-                       OnRowClick="HandleAllFeaturesRowClick">
-                <RowContextMenu Context="menu">
-                    <BbContextMenuItem OnClick="@(async () => await CopyAllFeatures(menu, menu.Item.Name))">
-                        Copy Name
-                    </BbContextMenuItem>
-                    <BbContextMenuItem OnClick="@(async () => await CopyAllFeatures(menu, menu.Item.Email))">
-                        Copy Email
-                    </BbContextMenuItem>
-                    <BbContextMenuSeparator />
-                    <BbContextMenuItem OnClick="@(async () => await CopyAllFeatures(menu, menu.FormatRow(menu.Item)))">
-                        Copy Row
-                    </BbContextMenuItem>
-                    @if (menu.SelectedItems.Count > 1)
-                    {
-                        <BbContextMenuItem OnClick="@(async () => await CopyAllFeatures(menu, menu.FormatRows(menu.SelectedItems)))">
-                            Copy @menu.SelectedItems.Count Selected Rows
-                        </BbContextMenuItem>
-                    }
-                </RowContextMenu>
-                <Toolbar>
-                    <div class="flex items-center gap-2">
-                        <BbDataGridColumnVisibility TData="Person" />
-                    </div>
-                </Toolbar>
-                <Columns>
-                    <BbDataGridSelectColumn TData="Person" Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left" />
-                    <BbDataGridExpandColumn TData="Person" />
-                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Filterable Hideable="false" Width="200px"
-                        Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left" />
-                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable Filterable Width="250px" />
-                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Filterable
-                        FilterType="FilterFieldType.Enum"
-                        FilterOptions="@(new[] { "Engineering", "Sales", "Marketing", "Support", "HR", "Finance", "Operations", "Product" }.Select(d => new SelectOption<string>(d, d)))"
-                        Width="150px" />
-                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" Width="150px" />
-                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Filterable Width="120px" />
-                    <BbDataGridTemplateColumn TData="Person" Title="Actions" Width="120px"
-                        Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Right"
-                        Hideable="false" Resizable="false" Reorderable="false">
-                        <ChildContent Context="person">
-                            <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small">Edit</BbButton>
-                        </ChildContent>
-                    </BbDataGridTemplateColumn>
-                </Columns>
-                <DetailTemplate>
-                    <div class="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <span class="font-medium text-muted-foreground">Age:</span>
-                            <span class="ml-2">@context.Age</span>
-                        </div>
-                        <div>
-                            <span class="font-medium text-muted-foreground">Status:</span>
-                            <span class="ml-2">@context.Status</span>
-                        </div>
-                        <div>
-                            <span class="font-medium text-muted-foreground">Active:</span>
-                            <span class="ml-2">@(context.IsActive ? "Yes" : "No")</span>
-                        </div>
-                        <div>
-                            <span class="font-medium text-muted-foreground">Join Date:</span>
-                            <span class="ml-2">@context.JoinDate.ToShortDateString()</span>
-                        </div>
-                    </div>
-                </DetailTemplate>
-            </BbDataGrid>
+        <BbDataGrid @ref="groupingGrid" TData="Person" Items="@people" GroupBy="@(p => (object)p.Department)" InitialPageSize="50">
+            <Toolbar>
+                <div class="flex items-center gap-2">
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                              OnClick="@(() => groupingGrid!.ExpandAllGroups())">
+                        <LucideIcon Name="chevrons-down" Class="w-4 h-4 mr-1" /> Expand All
+                    </BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                              OnClick="@(() => groupingGrid!.CollapseAllGroups())">
+                        <LucideIcon Name="chevrons-up" Class="w-4 h-4 mr-1" /> Collapse All
+                    </BbButton>
+                </div>
+            </Toolbar>
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/row-grouping.txt" />
+    </div>
+
+    <!-- ── Row Grouping with Aggregates ─────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Row Grouping with Aggregates</h2>
+            <p class="text-sm text-muted-foreground">
+                Add <code class="bg-muted px-1 py-0.5 rounded">Aggregate</code> to property columns to show
+                computed values (Sum, Average, Min, Max, Count) in the group header.
+            </p>
         </div>
-        <CodeBlock Source="Components/DataGrid/all-column-features.txt" />
+        <BbDataGrid TData="Person" Items="@people" GroupBy="@(p => (object)p.Department)" ShowPagination InitialPageSize="10">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable
+                    Aggregate="BlazorBlueprint.Primitives.DataGrid.AggregateFunction.Average" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable
+                    Aggregate="BlazorBlueprint.Primitives.DataGrid.AggregateFunction.Min" />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/row-grouping-aggregates.txt" />
+    </div>
+
+    <!-- ── Row Grouping with Custom Header ──────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Row Grouping with Custom Header</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">BbDataGridGroupColumn</code> for declarative
+                grouping with a custom header template. The template receives a <code class="bg-muted px-1 py-0.5 rounded">DataGridGroupContext</code>
+                with group data and a toggle callback.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="50">
+            <Columns>
+                <BbDataGridGroupColumn TData="Person" TProperty="string" Property="@(p => p.Status)">
+                    <HeaderTemplate>
+                        <div class="flex items-center gap-3">
+                            <button type="button"
+                                    class="inline-flex items-center justify-center rounded-md w-6 h-6 hover:bg-muted transition-colors"
+                                    @onclick="context.ToggleCollapse"
+                                    @onclick:stopPropagation="true">
+                                <BlazorBlueprint.Icons.Lucide.Components.LucideIcon
+                                    Name="@(context.IsCollapsed ? "chevron-right" : "chevron-down")" Class="w-4 h-4" />
+                            </button>
+                            <BbBadge Variant="@(context.Group.Key?.ToString() == "Active" ? BadgeVariant.Default : BadgeVariant.Secondary)">
+                                @context.Group.Key
+                            </BbBadge>
+                            <span class="text-muted-foreground text-sm">@context.Group.ItemCount employees</span>
+                        </div>
+                    </HeaderTemplate>
+                </BbDataGridGroupColumn>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable
+                    Aggregate="BlazorBlueprint.Primitives.DataGrid.AggregateFunction.Sum" />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/row-grouping-custom-header.txt" />
+    </div>
+
+    <!-- ── Grouping + Filtering + Sorting ───────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Grouping + Filtering + Sorting</h2>
+            <p class="text-sm text-muted-foreground">
+                Grouping works with filtering and sorting. Filters are applied before grouping (filtered-out
+                items excluded from groups). Sort applies within each group.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" GroupBy="@(p => (object)p.Department)" InitialPageSize="50">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Filterable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Filterable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Sortable Filterable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable
+                    Aggregate="BlazorBlueprint.Primitives.DataGrid.AggregateFunction.Sum" />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/row-grouping-filtering.txt" />
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!--  Styling & Customization                                      -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <div class="border-t pt-8 mt-4">
+        <div class="space-y-2 mb-8">
+            <h2 class="text-3xl font-bold tracking-tight">Styling & Customization</h2>
+            <p class="text-muted-foreground">
+                Customize cell content, headers, row appearance, and grid styling.
+            </p>
+        </div>
     </div>
 
     <!-- ── Custom Cell Templates ───────────────────────────────────── -->
@@ -1027,6 +1061,30 @@
                 <ApiParameter Name="ItemKey" Type="Func&lt;TData, object&gt;?">
                     Key selector for row identity. Used by Blazor's diffing algorithm for efficient rendering. When not set, falls back to the item reference.
                 </ApiParameter>
+                <ApiParameter Name="GroupBy" Type="Expression&lt;Func&lt;TData, object&gt;&gt;?">
+                    Expression to group rows by. When set, rows are grouped by the value of this expression and collapsible group headers are rendered.
+                </ApiParameter>
+                <ApiParameter Name="GroupHeaderTemplate" Type="RenderFragment&lt;DataGridGroupContext&lt;TData&gt;&gt;?">
+                    Custom template for group header rows. Receives a DataGridGroupContext with group data, collapse state, and a toggle callback.
+                </ApiParameter>
+                <ApiParameter Name="GroupsCollapsedByDefault" Type="bool" Default="false">
+                    Whether groups should be collapsed by default when grouping is first applied.
+                </ApiParameter>
+                <ApiParameter Name="OnGroupExpand" Type="EventCallback&lt;DataGridGroupRow&lt;TData&gt;&gt;">
+                    Event callback invoked when a group is expanded. Receives the group row data.
+                </ApiParameter>
+                <ApiParameter Name="OnGroupCollapse" Type="EventCallback&lt;DataGridGroupRow&lt;TData&gt;&gt;">
+                    Event callback invoked when a group is collapsed. Receives the group row data.
+                </ApiParameter>
+                <ApiParameter Name="GroupedItemsProvider" Type="DataGridGroupedItemsProvider&lt;TData&gt;?">
+                    Async delegate for server-side grouped data fetching. When set and grouping is active, called instead of ItemsProvider.
+                </ApiParameter>
+                <ApiParameter Name="ExpandAllGroups()" Type="Task">
+                    Public method. Expands all groups, showing their data rows. Call via a component reference (<code>@@ref</code>).
+                </ApiParameter>
+                <ApiParameter Name="CollapseAllGroups()" Type="Task">
+                    Public method. Collapses all groups, hiding their data rows. Call via a component reference (<code>@@ref</code>).
+                </ApiParameter>
             </ApiReference>
 
             <ApiReference ComponentName="DataGridPropertyColumn">
@@ -1083,6 +1141,12 @@
                 </ApiParameter>
                 <ApiParameter Name="NoWrap" Type="bool" Default="false">
                     Whether text in this column should not wrap. When true, cell content uses white-space: nowrap and truncates with an ellipsis on overflow.
+                </ApiParameter>
+                <ApiParameter Name="Aggregate" Type="AggregateFunction" Default="None">
+                    Aggregate function to compute in group headers when grouping is active. Options: None, Count, Sum, Average, Min, Max.
+                </ApiParameter>
+                <ApiParameter Name="AggregateFormat" Type="string?" Default="null">
+                    Format string for displaying aggregate values (e.g., "N0", "C2"). When null, falls back to Format if set, otherwise uses default formatting.
                 </ApiParameter>
             </ApiReference>
 
@@ -1144,6 +1208,12 @@
                 <ApiParameter Name="NoWrap" Type="bool" Default="false">
                     Whether text in this column should not wrap. When true, cell content uses white-space: nowrap and truncates with an ellipsis on overflow.
                 </ApiParameter>
+                <ApiParameter Name="Aggregate" Type="AggregateFunction" Default="None">
+                    Aggregate function to compute in group headers when grouping is active. Requires SortBy to provide a value accessor for numeric aggregates.
+                </ApiParameter>
+                <ApiParameter Name="AggregateFormat" Type="string?" Default="null">
+                    Format string for displaying aggregate values (e.g., "N0", "C2"). When null, uses default formatting.
+                </ApiParameter>
             </ApiReference>
 
             <ApiReference ComponentName="DataGridSelectColumn">
@@ -1164,6 +1234,24 @@
                 </ApiParameter>
             </ApiReference>
 
+            <ApiReference ComponentName="DataGridGroupColumn">
+                <ApiParameter Name="Property" Type="Expression&lt;Func&lt;TData, TProperty&gt;&gt;">
+                    The property expression to group rows by.
+                </ApiParameter>
+                <ApiParameter Name="Title" Type="string?" Default="null">
+                    Override the display name for the group column. When null, inferred from the property name.
+                </ApiParameter>
+                <ApiParameter Name="GroupSortDirection" Type="SortDirection" Default="Ascending">
+                    The sort direction for group ordering.
+                </ApiParameter>
+                <ApiParameter Name="CollapsedByDefault" Type="bool" Default="false">
+                    Whether groups should be collapsed by default.
+                </ApiParameter>
+                <ApiParameter Name="HeaderTemplate" Type="RenderFragment&lt;DataGridGroupContext&lt;TData&gt;&gt;?" Default="null">
+                    Custom template for group header row content.
+                </ApiParameter>
+            </ApiReference>
+
             <ApiReference ComponentName="DataGridColumnVisibility">
                 <ApiParameter Name="TriggerContent" Type="RenderFragment?">
                     Custom trigger content. If not provided, renders a default "Columns" button.
@@ -1180,6 +1268,7 @@
 </div>
 
 @code {
+    private BbDataGrid<Person>? groupingGrid;
     private List<Person> people = new();
     private List<Person> manyPeople = new();
     private List<Person> stressTestPeople = new();
@@ -1407,21 +1496,6 @@
     {
         await menu.CopyToClipboardAsync(text);
         clickedRowMessage = $"Copied to clipboard: {text}";
-    }
-
-    // --- All Features ---
-
-    private string? allFeaturesMessage;
-
-    private void HandleAllFeaturesRowClick(Person person)
-    {
-        allFeaturesMessage = $"Clicked: {person.Name} ({person.Email})";
-    }
-
-    private async Task CopyAllFeatures(DataGridRowMenuContext<Person> menu, string text)
-    {
-        await menu.CopyToClipboardAsync(text);
-        allFeaturesMessage = $"Copied to clipboard: {text}";
     }
 
 }

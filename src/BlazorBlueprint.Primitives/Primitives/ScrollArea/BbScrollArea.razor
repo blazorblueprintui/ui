@@ -1,0 +1,64 @@
+@namespace BlazorBlueprint.Primitives.ScrollArea
+
+@* ScrollArea primitive - headless custom scrollbar container with accessibility support. *@
+
+<CascadingValue Value="context" IsFixed="true">
+    <div data-orientation="@Orientation.ToString().ToLower()"
+         data-scrollarea
+         style="@MergedStyle"
+         @attributes="NonStyleAttributes">
+        @ChildContent
+    </div>
+</CascadingValue>
+
+@code {
+    private ScrollAreaContext context = default!;
+
+    /// <summary>
+    /// Gets or sets the scrollable orientation. Default is Vertical.
+    /// </summary>
+    [Parameter]
+    public ScrollAreaOrientation Orientation { get; set; } = ScrollAreaOrientation.Vertical;
+
+    /// <summary>
+    /// Gets or sets the child content (Viewport, Scrollbar sub-components).
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override void OnInitialized()
+    {
+        context = new ScrollAreaContext { Orientation = Orientation };
+    }
+
+    private string MergedStyle
+    {
+        get
+        {
+            var baseStyle = "position: relative; overflow: hidden";
+            var consumerStyle = AdditionalAttributes?.TryGetValue("style", out var s) == true ? s?.ToString() : null;
+            return string.IsNullOrEmpty(consumerStyle) ? baseStyle : $"{baseStyle}; {consumerStyle}";
+        }
+    }
+
+    private Dictionary<string, object>? NonStyleAttributes
+    {
+        get
+        {
+            if (AdditionalAttributes == null || !AdditionalAttributes.ContainsKey("style"))
+            {
+                return AdditionalAttributes;
+            }
+
+            var filtered = new Dictionary<string, object>(AdditionalAttributes);
+            filtered.Remove("style");
+            return filtered.Count > 0 ? filtered : null;
+        }
+    }
+}

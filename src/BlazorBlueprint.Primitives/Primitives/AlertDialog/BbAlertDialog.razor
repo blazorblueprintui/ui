@@ -1,0 +1,46 @@
+@namespace BlazorBlueprint.Primitives.AlertDialog
+
+@*
+    AlertDialog primitive - a modal requiring explicit user acknowledgement.
+    Wraps the Dialog primitive with role="alertdialog" and prevents dismiss via overlay/escape.
+*@
+
+<BlazorBlueprint.Primitives.Dialog.BbDialog Open="@Open"
+                                   OpenChanged="@OpenChanged"
+                                   DefaultOpen="@DefaultOpen"
+                                   OnOpenChange="@OnOpenChange"
+                                   Modal="true">
+    @ChildContent
+</BlazorBlueprint.Primitives.Dialog.BbDialog>
+
+@code {
+    /// <summary>
+    /// The child content to render within the alert dialog.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Controls whether the alert dialog is open (controlled mode).
+    /// </summary>
+    [Parameter]
+    public bool? Open { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the open state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// Default open state when in uncontrolled mode.
+    /// </summary>
+    [Parameter]
+    public bool DefaultOpen { get; set; } = false;
+
+    /// <summary>
+    /// Event callback invoked when the open state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OnOpenChange { get; set; }
+}

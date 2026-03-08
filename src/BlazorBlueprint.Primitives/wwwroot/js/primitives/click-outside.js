@@ -2,7 +2,6 @@
 
 // Store cleanup functions with unique IDs to avoid passing functions through JS interop
 const cleanupRegistry = new Map();
-let cleanupIdCounter = 0;
 
 /**
  * Waits for an element to appear in the DOM by ID.
@@ -33,7 +32,7 @@ async function waitForElementById(elementId, maxWaitMs = 200, intervalMs = 10) {
  * @param {HTMLElement} excludeElement - Optional element to exclude from outside detection (e.g., trigger button)
  * @returns {Object} Disposable object with dispose() method to remove listeners
  */
-export function onClickOutside(element, dotNetRef, methodName = 'HandleClickOutside', excludeElement = null) {
+export function onClickOutside(element, dotNetRef, methodName = 'JsOnClickOutside', excludeElement = null) {
     if (!element || !dotNetRef) {
         console.warn('click-outside: element or dotNetRef is null');
         return {
@@ -72,7 +71,7 @@ export function onClickOutside(element, dotNetRef, methodName = 'HandleClickOuts
         document.removeEventListener('mouseup', handleMouseUp, true);
     };
 
-    const id = cleanupIdCounter++;
+    const id = crypto.randomUUID();
     cleanupRegistry.set(id, cleanupFunc);
 
     // Return disposable object with ID (no arrow functions in the object)
@@ -122,7 +121,7 @@ export function onEscapeKey(dotNetRef, methodName = 'HandleEscape') {
         document.removeEventListener('keydown', handleKeyDown);
     };
 
-    const id = cleanupIdCounter++;
+    const id = crypto.randomUUID();
     cleanupRegistry.set(id, cleanupFunc);
 
     return {
@@ -172,7 +171,7 @@ export function onFocusOutside(element, dotNetRef, methodName = 'HandleFocusOuts
         document.removeEventListener('focusin', handleFocusIn, true);
     };
 
-    const id = cleanupIdCounter++;
+    const id = crypto.randomUUID();
     cleanupRegistry.set(id, cleanupFunc);
 
     return {
@@ -204,7 +203,7 @@ export function onInteractOutside(element, dotNetRef, methodName = 'HandleIntera
         cleanupFocus.dispose();
     };
 
-    const id = cleanupIdCounter++;
+    const id = crypto.randomUUID();
     cleanupRegistry.set(id, cleanupFunc);
 
     return {
@@ -229,7 +228,7 @@ export function onInteractOutside(element, dotNetRef, methodName = 'HandleIntera
  * @param {number} maxWaitMs - Maximum time to wait for elements in milliseconds
  * @returns {Promise<Object>} Disposable object with dispose() method, or no-op if element not found
  */
-export async function onClickOutsideById(elementId, dotNetRef, methodName = 'HandleClickOutside', excludeElementId = null, maxWaitMs = 200) {
+export async function onClickOutsideById(elementId, dotNetRef, methodName = 'JsOnClickOutside', excludeElementId = null, maxWaitMs = 200) {
     const element = await waitForElementById(elementId, maxWaitMs);
     if (!element) {
         console.warn(`onClickOutsideById: Element ${elementId} not found within ${maxWaitMs}ms`);
@@ -262,7 +261,7 @@ export async function onClickOutsideById(elementId, dotNetRef, methodName = 'Han
  * @param {string} excludeElementId - Optional ID of element to exclude from outside detection (e.g., trigger button)
  * @returns {Object} Disposable object with dispose() method
  */
-export function onClickOutsideByIds(elementId, dotNetRef, methodName = 'HandleClickOutside', excludeElementId = null) {
+export function onClickOutsideByIds(elementId, dotNetRef, methodName = 'JsOnClickOutside', excludeElementId = null) {
     if (!elementId || !dotNetRef) {
         console.warn('click-outside: elementId or dotNetRef is null');
         return {
@@ -383,7 +382,7 @@ export function onClickOutsideByIds(elementId, dotNetRef, methodName = 'HandleCl
         document.removeEventListener('pointerup', handlePointerUp, true);
     };
 
-    const id = cleanupIdCounter++;
+    const id = crypto.randomUUID();
     cleanupRegistry.set(id, cleanupFunc);
 
     return {

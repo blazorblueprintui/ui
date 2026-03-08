@@ -94,12 +94,17 @@
             return;
         }
 
-        // Handle navigation keys
-        if (List != null && (e.Key == "ArrowLeft" || e.Key == "ArrowRight" ||
-                             e.Key == "ArrowUp" || e.Key == "ArrowDown" ||
-                             e.Key == "Home" || e.Key == "End"))
+        // Handle navigation keys — only pass orientation-appropriate arrow keys
+        if (List != null)
         {
-            List.HandleKeyNavigation(Value, e.Key);
+            var isHorizontal = Context.Orientation == TabsOrientation.Horizontal;
+            var isRelevantArrow = (isHorizontal && e.Key is "ArrowLeft" or "ArrowRight") ||
+                                 (!isHorizontal && e.Key is "ArrowUp" or "ArrowDown");
+
+            if (isRelevantArrow || e.Key is "Home" or "End")
+            {
+                List.HandleKeyNavigation(Value, e.Key);
+            }
         }
     }
 
@@ -123,9 +128,9 @@
         {
             await _elementRef.FocusAsync();
         }
-        catch
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
         {
-            // Ignore focus errors (element may not be rendered yet)
+            // Element may not be rendered yet or circuit disconnected
         }
     }
 

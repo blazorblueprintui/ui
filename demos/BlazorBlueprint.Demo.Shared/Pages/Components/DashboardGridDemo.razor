@@ -1,0 +1,1278 @@
+@page "/components/dashboard-grid"
+@using System.Text.Json
+
+<PageTitle>Dashboard Grid - Blazor Blueprint</PageTitle>
+
+<style>
+    .styled-widget-dark {
+        background-color: #18181b !important;
+        border-color: rgba(63, 63, 70, 0.5) !important;
+        color: #fff !important;
+    }
+    .styled-header-gradient {
+        background: linear-gradient(to right, #2563eb, #06b6d4) !important;
+        border-color: rgba(63, 63, 70, 0.5) !important;
+        color: #fff !important;
+    }
+    .styled-widget-warm {
+        --styled-accent: #ea580c;
+        background-color: rgba(255, 247, 237, 0.5) !important;
+        border-color: rgba(253, 186, 116, 0.4) !important;
+    }
+    .styled-header-warm {
+        border-color: rgba(253, 186, 116, 0.4) !important;
+    }
+    .styled-widget-cool {
+        --styled-accent: #0d9488;
+        background-color: rgba(240, 253, 250, 0.5) !important;
+        border-color: rgba(153, 246, 228, 0.4) !important;
+    }
+    .styled-header-cool {
+        border-color: rgba(153, 246, 228, 0.4) !important;
+    }
+    .dark .styled-widget-warm {
+        --styled-accent: #fb923c;
+        background-color: rgba(124, 45, 18, 0.15) !important;
+        border-color: rgba(154, 52, 18, 0.25) !important;
+    }
+    .dark .styled-header-warm {
+        border-color: rgba(154, 52, 18, 0.25) !important;
+    }
+    .dark .styled-widget-cool {
+        --styled-accent: #2dd4bf;
+        background-color: rgba(4, 47, 46, 0.25) !important;
+        border-color: rgba(17, 94, 89, 0.25) !important;
+    }
+    .dark .styled-header-cool {
+        border-color: rgba(17, 94, 89, 0.25) !important;
+    }
+</style>
+
+<div class="space-y-8 max-w-7xl">
+    <div class="space-y-4">
+        <h1 class="text-4xl font-bold tracking-tight">Dashboard Grid</h1>
+        <p class="text-xl text-muted-foreground">
+            A drag-and-drop, resizable widget layout for composing dashboards. Built on CSS Grid
+            with responsive breakpoints, state persistence, and full keyboard accessibility.
+        </p>
+        <p class="text-sm text-muted-foreground leading-relaxed max-w-3xl">
+            Place widgets with <code class="bg-muted px-1 py-0.5 rounded">BbDashboardWidget</code> inside a
+            <code class="bg-muted px-1 py-0.5 rounded">BbDashboardGrid</code>. Widgets can be dragged to reorder
+            and resized by their handles. Use <code class="bg-muted px-1 py-0.5 rounded">@@bind-State</code> with
+            <code class="bg-muted px-1 py-0.5 rounded">Save()</code> /
+            <code class="bg-muted px-1 py-0.5 rounded">Restore()</code> to persist layouts across sessions.
+            The grid automatically adapts to responsive breakpoints.
+        </p>
+    </div>
+
+    <!-- ── Basic Static Dashboard ──────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Static Dashboard</h2>
+            <p class="text-sm text-muted-foreground">
+                A simple grid with statically placed widgets. Set
+                <code class="bg-muted px-1 py-0.5 rounded">Editable="false"</code> to disable drag and resize.
+            </p>
+        </div>
+        <BbDashboardGrid Editable="false">
+            <BbDashboardWidget Id="static-1" Column="1" Row="1" ColumnSpan="8" RowSpan="6" Title="Revenue">
+                <div class="flex flex-col items-center justify-center h-full">
+                    <span class="text-3xl font-bold">$48,250</span>
+                    <span class="text-sm text-muted-foreground">+12.5% from last month</span>
+                </div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="static-2" Column="9" Row="1" ColumnSpan="8" RowSpan="6" Title="Users">
+                <div class="flex flex-col items-center justify-center h-full">
+                    <span class="text-3xl font-bold">2,420</span>
+                    <span class="text-sm text-muted-foreground">+8.1% from last month</span>
+                </div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="static-3" Column="17" Row="1" ColumnSpan="8" RowSpan="6" Title="Orders">
+                <div class="flex flex-col items-center justify-center h-full">
+                    <span class="text-3xl font-bold">1,210</span>
+                    <span class="text-sm text-muted-foreground">+3.2% from last month</span>
+                </div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="static-4" Column="1" Row="7" ColumnSpan="16" RowSpan="8" Title="Sales Overview">
+                <div class="flex items-center justify-center h-full text-muted-foreground">
+                    Chart placeholder — use BbAreaChart or BbBarChart here
+                </div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="static-5" Column="17" Row="7" ColumnSpan="8" RowSpan="8" Title="Recent Activity">
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between"><span>New signup</span><span class="text-muted-foreground">2m ago</span></div>
+                    <div class="flex justify-between"><span>Order placed</span><span class="text-muted-foreground">5m ago</span></div>
+                    <div class="flex justify-between"><span>Payment received</span><span class="text-muted-foreground">12m ago</span></div>
+                    <div class="flex justify-between"><span>User upgraded</span><span class="text-muted-foreground">1h ago</span></div>
+                </div>
+            </BbDashboardWidget>
+        </BbDashboardGrid>
+        <CodeBlock Source="Components/DashboardGrid/basic-static.txt" />
+    </div>
+
+    <!-- ── Editable (Drag + Resize) ───────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Editable (Drag + Resize)</h2>
+            <p class="text-sm text-muted-foreground">
+                Hover over a widget to reveal the drag handle (grip icon in the header) and resize handles (corners and edges).
+                Drag to reorder, resize by pulling the handles.
+            </p>
+        </div>
+        <BbDashboardGrid @bind-State="editableState">
+            @foreach (var widget in editableWidgets)
+            {
+                <BbDashboardWidget @key="widget.Id" Id="@widget.Id" Column="@widget.Column" Row="@widget.Row"
+                                  ColumnSpan="@widget.ColSpan" RowSpan="@widget.RowSpan" Title="@widget.Title"
+                                  OnRemove="RemoveEditableWidget">
+                    <div class="flex items-center justify-center h-full text-muted-foreground">
+                        @widget.Description
+                    </div>
+                </BbDashboardWidget>
+            }
+        </BbDashboardGrid>
+        <CodeBlock Source="Components/DashboardGrid/editable.txt" />
+    </div>
+
+    <!-- ── Responsive Breakpoints ──────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Responsive Breakpoints</h2>
+            <p class="text-sm text-muted-foreground">
+                The grid automatically adjusts columns at different viewport widths.
+                <code class="bg-muted px-1 py-0.5 rounded">MediumColumns="12"</code> at 1024px,
+                <code class="bg-muted px-1 py-0.5 rounded">SmallColumns="2"</code> at 768px.
+                Resize your browser to see the layout adapt.
+            </p>
+        </div>
+        <BbDashboardGrid Columns="24" RowHeight="30" Gap="6"
+                         MediumColumns="12" SmallColumns="4"
+                         MediumBreakpoint="1024" SmallBreakpoint="768"
+                         Editable="false"
+                         OnBreakpointChanged="HandleBreakpointChanged">
+            <BbDashboardWidget Id="resp-1" Column="1" Row="1" ColumnSpan="6" RowSpan="4" Title="Metric 1">
+                <div class="flex items-center justify-center h-full font-bold text-2xl">42</div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="resp-2" Column="7" Row="1" ColumnSpan="6" RowSpan="4" Title="Metric 2">
+                <div class="flex items-center justify-center h-full font-bold text-2xl">87</div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="resp-3" Column="13" Row="1" ColumnSpan="6" RowSpan="4" Title="Metric 3">
+                <div class="flex items-center justify-center h-full font-bold text-2xl">156</div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="resp-4" Column="19" Row="1" ColumnSpan="6" RowSpan="4" Title="Metric 4">
+                <div class="flex items-center justify-center h-full font-bold text-2xl">73</div>
+            </BbDashboardWidget>
+        </BbDashboardGrid>
+        @if (currentBreakpoint != null)
+        {
+            <p class="text-sm text-muted-foreground">
+                Current breakpoint: <BbBadge>@currentBreakpoint</BbBadge>
+            </p>
+        }
+        <CodeBlock Source="Components/DashboardGrid/responsive.txt" />
+    </div>
+
+    <!-- ── Toggle Edit Mode ────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Toggle Edit Mode</h2>
+            <p class="text-sm text-muted-foreground">
+                Use the <code class="bg-muted px-1 py-0.5 rounded">Editable</code> parameter to toggle
+                drag and resize at runtime. Click the button to switch modes.
+            </p>
+        </div>
+        <BbButton OnClick="() => isEditable = !isEditable" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+            @(isEditable ? "Lock Dashboard" : "Edit Dashboard")
+        </BbButton>
+        <BbDashboardGrid Editable="@isEditable">
+            <BbDashboardWidget Id="toggle-1" Column="1" Row="1" ColumnSpan="12" RowSpan="6" Title="Editable Widget">
+                <div class="flex items-center justify-center h-full text-muted-foreground">
+                    @(isEditable ? "Drag handles visible on hover" : "Editing disabled")
+                </div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="toggle-2" Column="13" Row="1" ColumnSpan="12" RowSpan="6" Title="Another Widget">
+                <div class="flex items-center justify-center h-full text-muted-foreground">
+                    @(isEditable ? "Resize handles visible on hover" : "Editing disabled")
+                </div>
+            </BbDashboardWidget>
+        </BbDashboardGrid>
+        <CodeBlock Source="Components/DashboardGrid/toggle-edit.txt" />
+    </div>
+
+    <!-- ── Freeform Layout ─────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Freeform Layout</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">Compact="false"</code> to disable automatic compaction.
+                Widgets stay exactly where you place them — no snapping to fill gaps. Toggle it at runtime to switch
+                between freeform and compact modes.
+            </p>
+        </div>
+        <BbButton OnClick="() => isFreeformCompact = !isFreeformCompact" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+            @(isFreeformCompact ? "Switch to Freeform" : "Switch to Compact")
+        </BbButton>
+        <BbDashboardGrid Compact="@isFreeformCompact" Border="true">
+            <BbDashboardWidget Id="freeform-1" Column="1" Row="1" ColumnSpan="8" RowSpan="6" Title="Widget A">
+                <div class="flex items-center justify-center h-full text-muted-foreground">
+                    @(isFreeformCompact ? "Compact — widgets snap together" : "Freeform — place anywhere")
+                </div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="freeform-2" Column="1" Row="9" ColumnSpan="8" RowSpan="6" Title="Widget B">
+                <div class="flex items-center justify-center h-full text-muted-foreground">
+                    Try moving me with arrow keys
+                </div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="freeform-3" Column="17" Row="1" ColumnSpan="8" RowSpan="6" Title="Widget C">
+                <div class="flex items-center justify-center h-full text-muted-foreground">
+                    Gaps are preserved in freeform mode
+                </div>
+            </BbDashboardWidget>
+        </BbDashboardGrid>
+        <CodeBlock Source="Components/DashboardGrid/freeform.txt" />
+    </div>
+
+    <!-- ── Fixed Cell Size ────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Fixed Cell Size</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">CellWidth</code> to create a strict grid with fixed-size
+                square cells. Use <code class="bg-muted px-1 py-0.5 rounded">MaxWidth</code> to constrain the container
+                and enable horizontal scrolling when the grid exceeds it.
+            </p>
+        </div>
+        <BbDashboardGrid @bind-State="fixedCellState" Columns="24" RowHeight="40" CellWidth="40" Gap="8" MaxWidth="800" Border="true">
+            <BbDashboardWidget Id="fixed-1" Column="1" Row="1" ColumnSpan="8" RowSpan="6" Title="Widget A">
+                <div class="flex items-center justify-center h-full text-muted-foreground text-sm">
+                    8 × 6 cells
+                </div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="fixed-2" Column="9" Row="1" ColumnSpan="8" RowSpan="6" Title="Widget B">
+                <div class="flex items-center justify-center h-full text-muted-foreground text-sm">
+                    8 × 6 cells
+                </div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="fixed-3" Column="17" Row="1" ColumnSpan="8" RowSpan="6" Title="Widget C">
+                <div class="flex items-center justify-center h-full text-muted-foreground text-sm">
+                    8 × 6 cells
+                </div>
+            </BbDashboardWidget>
+        </BbDashboardGrid>
+    </div>
+
+    <!-- ── State Persistence ───────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">State Persistence</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">Save()</code> and
+                <code class="bg-muted px-1 py-0.5 rounded">Restore()</code> to serialize and restore
+                the grid layout. The state can be persisted to localStorage, a database, or any other storage.
+            </p>
+        </div>
+        <div class="flex gap-2">
+            <BbButton OnClick="SaveState" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">Save Layout</BbButton>
+            <BbButton OnClick="RestoreState" Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Disabled="@(savedSnapshot == null)">Restore Layout</BbButton>
+            <BbButton OnClick="ResetState" Variant="ButtonVariant.Destructive" Size="ButtonSize.Small">Reset</BbButton>
+        </div>
+        <BbDashboardGrid @bind-State="persistState">
+            <BbDashboardWidget Id="persist-1" Column="1" Row="1" ColumnSpan="8" RowSpan="6" Title="Widget 1">
+                <div class="flex items-center justify-center h-full text-muted-foreground">Drag and resize, then save</div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="persist-2" Column="9" Row="1" ColumnSpan="8" RowSpan="6" Title="Widget 2">
+                <div class="flex items-center justify-center h-full text-muted-foreground">Move me around</div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="persist-3" Column="17" Row="1" ColumnSpan="8" RowSpan="6" Title="Widget 3">
+                <div class="flex items-center justify-center h-full text-muted-foreground">Then restore</div>
+            </BbDashboardWidget>
+        </BbDashboardGrid>
+        @if (savedSnapshot != null)
+        {
+            <pre class="text-xs bg-muted p-3 rounded-lg overflow-auto max-h-40">@JsonSerializer.Serialize(savedSnapshot, jsonOptions)</pre>
+        }
+        <CodeBlock Source="Components/DashboardGrid/state-persistence.txt" />
+    </div>
+
+    <!-- ── Custom Widget Content ───────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Widget Content</h2>
+            <p class="text-sm text-muted-foreground">
+                Widgets can contain any Blazor content — charts, tables, forms, or custom components.
+                Use the <code class="bg-muted px-1 py-0.5 rounded">Header</code>,
+                <code class="bg-muted px-1 py-0.5 rounded">ChildContent</code>, and
+                <code class="bg-muted px-1 py-0.5 rounded">Footer</code> render fragments.
+            </p>
+        </div>
+        <BbDashboardGrid Editable="false">
+            <BbDashboardWidget Id="custom-1" Column="1" Row="1" ColumnSpan="8" RowSpan="8" Title="Progress Metrics">
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1"><span>CPU Usage</span><span>72%</span></div>
+                        <BbProgress Value="72" />
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1"><span>Memory</span><span>58%</span></div>
+                        <BbProgress Value="58" />
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1"><span>Disk</span><span>34%</span></div>
+                        <BbProgress Value="34" />
+                    </div>
+                </div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="custom-2" Column="9" Row="1" ColumnSpan="8" RowSpan="8">
+                <Header>
+                    <BbDashboardWidgetHeader>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-semibold">Custom Header</span>
+                            <BbBadge Variant="BadgeVariant.Secondary">Live</BbBadge>
+                        </div>
+                    </BbDashboardWidgetHeader>
+                </Header>
+                <ChildContent>
+                    <div class="flex items-center justify-center h-full text-muted-foreground">
+                        Widget with custom header and badge
+                    </div>
+                </ChildContent>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="custom-3" Column="17" Row="1" ColumnSpan="8" RowSpan="8" Title="With Footer">
+                <ChildContent>
+                    <div class="flex items-center justify-center h-full text-muted-foreground">
+                        This widget has a footer
+                    </div>
+                </ChildContent>
+                <Footer>
+                    <div class="flex justify-end">
+                        <BbButton Variant="ButtonVariant.Link" Size="ButtonSize.Small">View Details</BbButton>
+                    </div>
+                </Footer>
+            </BbDashboardWidget>
+        </BbDashboardGrid>
+        <CodeBlock Source="Components/DashboardGrid/custom-content.txt" />
+    </div>
+
+    <!-- ── Constrained Widgets ─────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Constrained Widgets</h2>
+            <p class="text-sm text-muted-foreground">
+                Widgets support <code class="bg-muted px-1 py-0.5 rounded">MinColumnSpan</code>,
+                <code class="bg-muted px-1 py-0.5 rounded">MaxColumnSpan</code>, and
+                <code class="bg-muted px-1 py-0.5 rounded">Static</code> to control resizing limits
+                and lock widgets in place.
+            </p>
+        </div>
+        <BbDashboardGrid>
+            <BbDashboardWidget Id="constrained-1" Column="1" Row="1" ColumnSpan="8" RowSpan="4"
+                              MinColumnSpan="6" MaxColumnSpan="12" MinRowSpan="4" MaxRowSpan="8"
+                              Title="Constrained (6-12 cols, 4-8 rows)">
+                <div class="flex items-center justify-center h-full text-sm text-muted-foreground">
+                    Resize is clamped to min/max
+                </div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="constrained-2" Column="9" Row="1" ColumnSpan="8" RowSpan="4"
+                              Static="true" Title="Static (locked)">
+                <div class="flex items-center justify-center h-full text-sm text-muted-foreground">
+                    Cannot be dragged or resized
+                </div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="constrained-3" Column="17" Row="1" ColumnSpan="8" RowSpan="4"
+                              Draggable="false" Title="No Drag (resize only)">
+                <div class="flex items-center justify-center h-full text-sm text-muted-foreground">
+                    Resize allowed, drag disabled
+                </div>
+            </BbDashboardWidget>
+        </BbDashboardGrid>
+        <CodeBlock Source="Components/DashboardGrid/constrained.txt" />
+    </div>
+
+    <!-- ── Border & Background ─────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Border & Background</h2>
+            <p class="text-sm text-muted-foreground">
+                Add a container border with <code class="bg-muted px-1 py-0.5 rounded">Border="true"</code> and
+                choose a background pattern with <code class="bg-muted px-1 py-0.5 rounded">Background</code>:
+                <code class="bg-muted px-1 py-0.5 rounded">None</code> or
+                <code class="bg-muted px-1 py-0.5 rounded">Grid</code>.
+                Drag and resize the widgets to see the background pattern behind them.
+            </p>
+        </div>
+        <div class="space-y-6">
+            <div class="space-y-2">
+                <p class="text-sm font-medium">No background (with border)</p>
+                <BbDashboardGrid Border="true" Background="DashboardBackground.None">
+                    <BbDashboardWidget Id="bg-none-1" Column="1" Row="1" ColumnSpan="8" RowSpan="6" Title="Revenue">
+                        <div class="flex flex-col items-center justify-center h-full">
+                            <span class="text-3xl font-bold">$48,250</span>
+                            <span class="text-sm text-muted-foreground">+12.5% from last month</span>
+                        </div>
+                    </BbDashboardWidget>
+                    <BbDashboardWidget Id="bg-none-2" Column="9" Row="1" ColumnSpan="8" RowSpan="6" Title="Active Users">
+                        <div class="flex flex-col items-center justify-center h-full">
+                            <span class="text-3xl font-bold">2,420</span>
+                            <span class="text-sm text-muted-foreground">+8.1% from last month</span>
+                        </div>
+                    </BbDashboardWidget>
+                    <BbDashboardWidget Id="bg-none-3" Column="17" Row="1" ColumnSpan="8" RowSpan="6" Title="Conversion">
+                        <div class="flex flex-col items-center justify-center h-full">
+                            <span class="text-3xl font-bold">3.2%</span>
+                            <span class="text-sm text-muted-foreground">+0.4% from last month</span>
+                        </div>
+                    </BbDashboardWidget>
+                </BbDashboardGrid>
+            </div>
+            <div class="space-y-2">
+                <p class="text-sm font-medium">Grid background (with border)</p>
+                <BbDashboardGrid Border="true" Background="DashboardBackground.Grid">
+                    <BbDashboardWidget Id="bg-squares-1" Column="1" Row="1" ColumnSpan="12" RowSpan="6" Title="Sales Chart">
+                        <div class="flex items-center justify-center h-full text-muted-foreground">
+                            Drag me around — Grid cells show widget snap positions
+                        </div>
+                    </BbDashboardWidget>
+                    <BbDashboardWidget Id="bg-squares-2" Column="13" Row="1" ColumnSpan="12" RowSpan="6" Title="User Growth">
+                        <div class="flex items-center justify-center h-full text-muted-foreground">
+                            Resize from the bottom-right corner
+                        </div>
+                    </BbDashboardWidget>
+                </BbDashboardGrid>
+            </div>
+        </div>
+        <CodeBlock Source="Components/DashboardGrid/border-background.txt" />
+    </div>
+
+    <!-- ── Fixed Height Container ─────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Fixed Height Container</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">MaxRows</code> to define a fixed grid height.
+                This example has an 8-row grid with a single widget occupying the top-left quarter.
+                Drag the widget around the container or resize it to fill more space.
+            </p>
+        </div>
+        <BbDashboardGrid MaxRows="8" Border="true" Background="DashboardBackground.Grid">
+            <BbDashboardWidget Id="fixed-1" Column="1" Row="1" ColumnSpan="12" RowSpan="4" Title="Top-Left Quarter">
+                <div class="flex items-center justify-center h-full text-muted-foreground">
+                    1/4 of the container — drag or resize me
+                </div>
+            </BbDashboardWidget>
+        </BbDashboardGrid>
+        <CodeBlock Source="Components/DashboardGrid/fixed-height.txt" />
+    </div>
+
+    <!-- ── Add / Remove Widgets ───────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Add / Remove Widgets</h2>
+            <p class="text-sm text-muted-foreground">
+                Widgets are standard Blazor child components — add and remove them dynamically using
+                <code class="bg-muted px-1 py-0.5 rounded">@@foreach</code> over a collection.
+                Click the buttons to add or remove widgets at runtime.
+            </p>
+        </div>
+        <div class="flex gap-2">
+            <BbButton OnClick="AddWidget" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">Add Widget</BbButton>
+            <BbButton OnClick="RemoveLastWidget" Variant="ButtonVariant.Destructive" Size="ButtonSize.Small" Disabled="@(dynamicWidgets.Count == 0)">Remove Last</BbButton>
+        </div>
+        <BbDashboardGrid Border="true" Background="DashboardBackground.Grid" OnAddWidget="AddWidget">
+            @foreach (var widget in dynamicWidgets)
+            {
+                <BbDashboardWidget @key="widget.Id" Id="@widget.Id" Column="@widget.Column" Row="@widget.Row"
+                                  ColumnSpan="@widget.ColSpan" RowSpan="@widget.RowSpan" Title="@widget.Title"
+                                  OnRemove="RemoveDynamicWidget">
+                    <div class="flex items-center justify-center h-full text-muted-foreground text-sm">
+                        @widget.Title
+                    </div>
+                </BbDashboardWidget>
+            }
+        </BbDashboardGrid>
+        <CodeBlock Source="Components/DashboardGrid/add-remove.txt" />
+    </div>
+
+    <!-- ── Different Grid Configurations ──────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Different Grid Configurations</h2>
+            <p class="text-sm text-muted-foreground">
+                Customize the grid with different column counts, row heights, and gaps.
+                This example uses 12 columns with a 30px row height.
+            </p>
+        </div>
+        <BbDashboardGrid Columns="12" RowHeight="30" Gap="4" Editable="false">
+            <BbDashboardWidget Id="compact-1" Column="1" Row="1" ColumnSpan="4" RowSpan="6" Title="A">
+                <div class="flex items-center justify-center h-full text-2xl font-bold text-muted-foreground">A</div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="compact-2" Column="5" Row="1" ColumnSpan="4" RowSpan="6" Title="B">
+                <div class="flex items-center justify-center h-full text-2xl font-bold text-muted-foreground">B</div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="compact-3" Column="9" Row="1" ColumnSpan="4" RowSpan="6" Title="C">
+                <div class="flex items-center justify-center h-full text-2xl font-bold text-muted-foreground">C</div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="compact-4" Column="1" Row="7" ColumnSpan="6" RowSpan="6" Title="D">
+                <div class="flex items-center justify-center h-full text-2xl font-bold text-muted-foreground">D</div>
+            </BbDashboardWidget>
+            <BbDashboardWidget Id="compact-5" Column="7" Row="7" ColumnSpan="6" RowSpan="6" Title="E">
+                <div class="flex items-center justify-center h-full text-2xl font-bold text-muted-foreground">E</div>
+            </BbDashboardWidget>
+        </BbDashboardGrid>
+        <CodeBlock Source="Components/DashboardGrid/grid-config.txt" />
+    </div>
+
+    <!-- ── Custom Widget Styles ────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Widget Styles</h2>
+            <p class="text-sm text-muted-foreground">
+                Override widget appearance using the <code class="bg-muted px-1 py-0.5 rounded">Class</code> parameter
+                and the <code class="bg-muted px-1 py-0.5 rounded">Header</code> /
+                <code class="bg-muted px-1 py-0.5 rounded">Footer</code> render fragments for full visual control.
+            </p>
+        </div>
+        <BbButton OnClick="() => customStyleEditable = !customStyleEditable" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+            @(customStyleEditable ? "Lock Dashboard" : "Edit Dashboard")
+        </BbButton>
+        <BbDashboardGrid @bind-State="customStyleState" Editable="@customStyleEditable" Border="true"
+                         Background="DashboardBackground.Grid">
+            @* Dark widget with gradient header *@
+            <BbDashboardWidget Id="styled-1" Column="1" Row="1" ColumnSpan="4" RowSpan="8"
+                               Class="styled-widget-dark">
+                <Header>
+                    <BbDashboardWidgetHeader Class="styled-header-gradient">
+                        <div class="flex items-center gap-2">
+                            <LucideIcon Name="dollar-sign" Class="h-4 w-4" />
+                            <span class="text-sm font-semibold">Revenue</span>
+                        </div>
+                    </BbDashboardWidgetHeader>
+                </Header>
+                <ChildContent>
+                    <div class="flex items-center justify-center h-full">
+                        <span class="text-3xl font-bold" style="color: #22d3ee;">$48,290</span>
+                    </div>
+                </ChildContent>
+                <Footer>
+                    <div class="text-xs flex items-center gap-1" style="color: #a1a1aa;">
+                        <LucideIcon Name="trending-up" Class="h-3 w-3" Style="color: #22d3ee;" />
+                        <span style="color: #22d3ee;">+12.5%</span> vs last month
+                    </div>
+                </Footer>
+            </BbDashboardWidget>
+
+            @* Warm tinted widget *@
+            <BbDashboardWidget Id="styled-2" Column="5" Row="1" ColumnSpan="4" RowSpan="8"
+                               Class="styled-widget-warm">
+                <Header>
+                    <BbDashboardWidgetHeader Class="styled-header-warm">
+                        <div class="flex items-center gap-2" style="color: var(--styled-accent);">
+                            <LucideIcon Name="bell" Class="h-4 w-4" />
+                            <span class="text-sm font-semibold">Alerts</span>
+                        </div>
+                    </BbDashboardWidgetHeader>
+                </Header>
+                <ChildContent>
+                    <div class="flex items-center justify-center h-full">
+                        <span class="text-4xl font-bold" style="color: var(--styled-accent);">23</span>
+                    </div>
+                </ChildContent>
+                <Footer>
+                    <div class="text-xs" style="color: var(--styled-accent); opacity: 0.7;">3 critical · 20 warnings</div>
+                </Footer>
+            </BbDashboardWidget>
+
+            @* Cool tinted widget *@
+            <BbDashboardWidget Id="styled-3" Column="9" Row="1" ColumnSpan="4" RowSpan="8"
+                               Class="styled-widget-cool">
+                <Header>
+                    <BbDashboardWidgetHeader Class="styled-header-cool">
+                        <div class="flex items-center gap-2" style="color: var(--styled-accent);">
+                            <LucideIcon Name="activity" Class="h-4 w-4" />
+                            <span class="text-sm font-semibold">Uptime</span>
+                        </div>
+                    </BbDashboardWidgetHeader>
+                </Header>
+                <ChildContent>
+                    <div class="flex items-center justify-center h-full">
+                        <span class="text-3xl font-bold" style="color: var(--styled-accent);">99.9%</span>
+                    </div>
+                </ChildContent>
+                <Footer>
+                    <div class="text-xs" style="color: var(--styled-accent); opacity: 0.8;">All systems operational</div>
+                </Footer>
+            </BbDashboardWidget>
+        </BbDashboardGrid>
+        <CodeBlock Source="Components/DashboardGrid/custom-styles.txt" />
+    </div>
+
+    <!-- ── Data-Driven Dashboard ─────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Data-Driven Dashboard</h2>
+            <p class="text-sm text-muted-foreground">
+                A fully data-driven dashboard where widget layout and content are loaded from JSON
+                at runtime — simulating a backend API call. Users can rearrange, resize, and remove
+                widgets, then save the layout back to JSON for persistence.
+            </p>
+            <p class="text-sm text-muted-foreground leading-relaxed max-w-3xl">
+                This pattern separates <strong>layout</strong> (positions on the grid) from
+                <strong>widget configuration</strong> (what each widget displays). Both are stored
+                together in a single JSON payload and loaded on demand. The grid manages spatial
+                positioning while your code maps widget types to Blazor content.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+            @if (!dataDrivenLoaded)
+            {
+                <BbButton OnClick="LoadDataDrivenDashboard" Variant="ButtonVariant.Default" Size="ButtonSize.Small">
+                    <LucideIcon Name="download" Class="h-4 w-4 mr-2" /> Load Dashboard
+                </BbButton>
+            }
+            else
+            {
+                <BbButton OnClick="SaveDataDrivenDashboard" Variant="ButtonVariant.Outline" Size="ButtonSize.Small">
+                    <LucideIcon Name="save" Class="h-4 w-4 mr-2" /> Save Layout
+                </BbButton>
+                <BbButton OnClick="UnloadDataDrivenDashboard" Variant="ButtonVariant.Destructive" Size="ButtonSize.Small">
+                    <LucideIcon Name="x" Class="h-4 w-4 mr-2" /> Unload
+                </BbButton>
+            }
+        </div>
+
+        <BbDashboardGrid @ref="dataDrivenGridRef" @bind-State="dataDrivenGridState"
+                         Loading="@dataDrivenLoading" Background="DashboardBackground.Grid" Border="true">
+            @foreach (var widget in dataDrivenWidgets)
+            {
+                <BbDashboardWidget @key="widget.Id" Id="@widget.Id"
+                                  Column="@widget.Column" Row="@widget.Row"
+                                  ColumnSpan="@widget.ColSpan" RowSpan="@widget.RowSpan"
+                                  Title="@widget.Title" OnRemove="RemoveDataDrivenWidget">
+                    @RenderDataDrivenWidgetContent(widget)
+                </BbDashboardWidget>
+            }
+        </BbDashboardGrid>
+
+        @if (dataDrivenSavedJson != null)
+        {
+            <div class="space-y-2">
+                <h3 class="text-sm font-semibold">Saved JSON</h3>
+                <pre class="text-xs bg-muted p-4 rounded-lg overflow-auto max-h-60">@dataDrivenSavedJson</pre>
+            </div>
+        }
+        <CodeBlock Source="Components/DashboardGrid/data-driven.txt" />
+    </div>
+
+    @* --- Accessibility --- *@
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Grid container uses <code>role="region"</code> with <code>aria-roledescription="dashboard grid"</code></AccessibilityItem>
+            <AccessibilityItem>Supports <code>aria-label</code> on the grid root for screen readers</AccessibilityItem>
+            <AccessibilityItem>Each widget uses <code>role="article"</code> with <code>aria-roledescription="dashboard widget"</code></AccessibilityItem>
+            <AccessibilityItem>Widgets are focusable via <code>tabindex="0"</code></AccessibilityItem>
+            <AccessibilityItem>Drag handle uses <code>role="button"</code> with <code>aria-label="Move widget"</code></AccessibilityItem>
+            <AccessibilityItem>Resize handle uses <code>role="separator"</code> with <code>aria-label="Resize widget"</code></AccessibilityItem>
+            <AccessibilityItem>Live region with <code>aria-live="polite"</code> announces widget move and resize actions</AccessibilityItem>
+            <AccessibilityItem>Grid exposes <code>data-editable</code>, <code>data-breakpoint</code>, <code>data-dragging</code>, and <code>data-resizing</code> state attributes</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move focused widget left by one column">
+                <BbKbd>ArrowLeft</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move focused widget right by one column">
+                <BbKbd>ArrowRight</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move focused widget up by one row">
+                <BbKbd>ArrowUp</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move focused widget down by one row">
+                <BbKbd>ArrowDown</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Increase widget width by one column">
+                <BbKbd>Shift</BbKbd> + <BbKbd>ArrowRight</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Decrease widget width by one column">
+                <BbKbd>Shift</BbKbd> + <BbKbd>ArrowLeft</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Increase widget height by one row">
+                <BbKbd>Shift</BbKbd> + <BbKbd>ArrowDown</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Decrease widget height by one row">
+                <BbKbd>Shift</BbKbd> + <BbKbd>ArrowUp</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Cancel active drag or resize operation">
+                <BbKbd>Escape</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    @* --- API Reference --- *@
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbDashboardGrid">
+                <ApiParameter Name="Columns" Type="int" Default="24">
+                    Number of columns in the grid layout.
+                </ApiParameter>
+                <ApiParameter Name="RowHeight" Type="int" Default="40">
+                    Height of each grid row in pixels.
+                </ApiParameter>
+                <ApiParameter Name="Gap" Type="int" Default="8">
+                    Gap between grid cells in pixels.
+                </ApiParameter>
+                <ApiParameter Name="MaxRows" Type="int" Default="0">
+                    Maximum number of rows. <code>0</code> means auto (unlimited).
+                </ApiParameter>
+                <ApiParameter Name="State" Type="DashboardGridState?" Default="null">
+                    Controlled state object for two-way binding via <code>@@bind-State</code>.
+                </ApiParameter>
+                <ApiParameter Name="AllowDrag" Type="bool" Default="true">
+                    Whether widget dragging is enabled.
+                </ApiParameter>
+                <ApiParameter Name="AllowResize" Type="bool" Default="true">
+                    Whether widget resizing is enabled.
+                </ApiParameter>
+                <ApiParameter Name="Editable" Type="bool" Default="true">
+                    Master toggle for edit mode. When <code>false</code>, disables both drag and resize.
+                </ApiParameter>
+                <ApiParameter Name="Compact" Type="bool" Default="true">
+                    Automatically compact widgets toward the top-left to fill gaps after drag, resize, or removal. Set to <code>false</code> for a freeform layout where widgets stay exactly where placed.
+                </ApiParameter>
+                <ApiParameter Name="ShowGridGuide" Type="bool" Default="true">
+                    Show a dashed grid overlay during drag operations.
+                </ApiParameter>
+                <ApiParameter Name="Border" Type="bool" Default="false">
+                    Add a rounded border around the grid container.
+                </ApiParameter>
+                <ApiParameter Name="Background" Type="DashboardBackground" Default="Grid">
+                    Background pattern shown when the grid is in edit mode: <code>None</code> or <code>Grid</code>. Automatically hidden when <code>Editable</code> is <code>false</code>.
+                </ApiParameter>
+                <ApiParameter Name="Loading" Type="bool" Default="false">
+                    When <code>true</code>, displays a skeleton loading state instead of the grid.
+                </ApiParameter>
+                <ApiParameter Name="LoadingContent" Type="RenderFragment?" Default="null">
+                    Custom loading content. Overrides the default skeleton layout when <code>Loading</code> is <code>true</code>.
+                </ApiParameter>
+                <ApiParameter Name="EmptyContent" Type="RenderFragment?" Default="null">
+                    Custom empty state content. Overrides the default empty state when there are no widgets.
+                </ApiParameter>
+                <ApiParameter Name="OnAddWidget" Type="EventCallback" Default="">
+                    Callback for the "Add Widget" button in the default empty state.
+                </ApiParameter>
+                <ApiParameter Name="MediumColumns" Type="int" Default="12">
+                    Number of columns at the medium breakpoint.
+                </ApiParameter>
+                <ApiParameter Name="SmallColumns" Type="int" Default="2">
+                    Number of columns at the small breakpoint.
+                </ApiParameter>
+                <ApiParameter Name="MediumBreakpoint" Type="int" Default="1024">
+                    Viewport width threshold for medium breakpoint in pixels.
+                </ApiParameter>
+                <ApiParameter Name="SmallBreakpoint" Type="int" Default="768">
+                    Viewport width threshold for small breakpoint in pixels.
+                </ApiParameter>
+                <ApiParameter Name="OnWidgetDragEnd" Type="EventCallback&lt;WidgetDragEventArgs&gt;">
+                    Callback fired when a widget drag operation completes.
+                </ApiParameter>
+                <ApiParameter Name="OnWidgetResizeEnd" Type="EventCallback&lt;WidgetResizeEventArgs&gt;">
+                    Callback fired when a widget resize operation completes.
+                </ApiParameter>
+                <ApiParameter Name="OnLayoutChanged" Type="EventCallback&lt;DashboardGridLayout&gt;">
+                    Callback fired when the layout changes (after drag or resize).
+                </ApiParameter>
+                <ApiParameter Name="OnBreakpointChanged" Type="EventCallback&lt;DashboardBreakpoint&gt;">
+                    Callback fired when the responsive breakpoint changes.
+                </ApiParameter>
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">
+                    Accessible label for the grid region.
+                </ApiParameter>
+                <ApiParameter Name="ChildContent" Type="RenderFragment?" Default="null">
+                    The <code>BbDashboardWidget</code> components to render inside the grid.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?" Default="null">
+                    Additional CSS classes for the grid container.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbDashboardWidget">
+                <ApiParameter Name="Id" Type="string" Default="(required)">
+                    Unique identifier for the widget.
+                </ApiParameter>
+                <ApiParameter Name="Column" Type="int" Default="1">
+                    Starting column position (1-based).
+                </ApiParameter>
+                <ApiParameter Name="Row" Type="int" Default="1">
+                    Starting row position (1-based).
+                </ApiParameter>
+                <ApiParameter Name="ColumnSpan" Type="int" Default="1">
+                    Number of columns the widget spans.
+                </ApiParameter>
+                <ApiParameter Name="RowSpan" Type="int" Default="1">
+                    Number of rows the widget spans.
+                </ApiParameter>
+                <ApiParameter Name="MinColumnSpan" Type="int" Default="4">
+                    Minimum column span when resizing.
+                </ApiParameter>
+                <ApiParameter Name="MinRowSpan" Type="int" Default="4">
+                    Minimum row span when resizing.
+                </ApiParameter>
+                <ApiParameter Name="MaxColumnSpan" Type="int" Default="0">
+                    Maximum column span when resizing. <code>0</code> means grid max.
+                </ApiParameter>
+                <ApiParameter Name="MaxRowSpan" Type="int" Default="0">
+                    Maximum row span when resizing. <code>0</code> means unlimited.
+                </ApiParameter>
+                <ApiParameter Name="Draggable" Type="bool" Default="true">
+                    Whether this widget can be dragged.
+                </ApiParameter>
+                <ApiParameter Name="Resizable" Type="bool" Default="true">
+                    Whether this widget can be resized.
+                </ApiParameter>
+                <ApiParameter Name="Static" Type="bool" Default="false">
+                    When true, the widget cannot be moved or resized.
+                </ApiParameter>
+                <ApiParameter Name="Title" Type="string?" Default="null">
+                    Header title text. Renders a default header with drag handle.
+                </ApiParameter>
+                <ApiParameter Name="Header" Type="RenderFragment?" Default="null">
+                    Custom header content. Overrides <code>Title</code> when provided.
+                </ApiParameter>
+                <ApiParameter Name="Footer" Type="RenderFragment?" Default="null">
+                    Optional footer content rendered at the bottom of the widget.
+                </ApiParameter>
+                <ApiParameter Name="Loading" Type="bool" Default="false">
+                    When <code>true</code>, displays a loading skeleton inside the widget content area.
+                </ApiParameter>
+                <ApiParameter Name="LoadingContent" Type="RenderFragment?" Default="null">
+                    Custom loading content for the widget. Overrides the default skeleton.
+                </ApiParameter>
+                <ApiParameter Name="OnRemove" Type="EventCallback&lt;string&gt;">
+                    Callback fired when the remove button is clicked. Passes the widget <code>Id</code>. The remove button is only visible in edit mode.
+                </ApiParameter>
+                <ApiParameter Name="ChildContent" Type="RenderFragment?" Default="null">
+                    The main content rendered inside the widget body.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?" Default="null">
+                    Additional CSS classes for the widget card.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbDashboardWidgetHeader">
+                <ApiParameter Name="ChildContent" Type="RenderFragment?" Default="null">
+                    Header content displayed next to the drag handle.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?" Default="null">
+                    Additional CSS classes for the header.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbDashboardWidgetContent">
+                <ApiParameter Name="ChildContent" Type="RenderFragment?" Default="null">
+                    Content to display in the widget body area.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?" Default="null">
+                    Additional CSS classes for the content area.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    // Editable state
+    private BlazorBlueprint.Primitives.DashboardGrid.DashboardGridState editableState = new();
+    private BlazorBlueprint.Primitives.DashboardGrid.DashboardGridState customStyleState = new();
+    private bool customStyleEditable = true;
+    private List<DynamicWidget> editableWidgets = new()
+    {
+        new() { Id = "edit-1", Title = "Widget A", Description = "Drag me or resize from the bottom-right corner", Column = 1, Row = 1, ColSpan = 12, RowSpan = 6 },
+        new() { Id = "edit-2", Title = "Widget B", Description = "I can also be dragged and resized", Column = 13, Row = 1, ColSpan = 12, RowSpan = 6 },
+        new() { Id = "edit-3", Title = "Widget C", Description = "Small widget", Column = 1, Row = 7, ColSpan = 8, RowSpan = 6 },
+        new() { Id = "edit-4", Title = "Widget D", Description = "Wide widget", Column = 9, Row = 7, ColSpan = 16, RowSpan = 6 },
+    };
+
+    // Toggle edit mode
+    private bool isEditable = true;
+
+    // Freeform layout
+    private bool isFreeformCompact = true;
+
+    // Fixed cell size
+    private BlazorBlueprint.Primitives.DashboardGrid.DashboardGridState fixedCellState = new();
+
+    // Responsive breakpoint
+    private BlazorBlueprint.Primitives.DashboardGrid.DashboardBreakpoint? currentBreakpoint;
+
+    // State persistence
+    private BlazorBlueprint.Primitives.DashboardGrid.DashboardGridState persistState = new();
+    private BlazorBlueprint.Primitives.DashboardGrid.DashboardGridStateSnapshot? savedSnapshot;
+    private static readonly JsonSerializerOptions jsonOptions = new() { WriteIndented = true };
+
+    // Dynamic widgets
+    private List<DynamicWidget> dynamicWidgets = new();
+    private int nextWidgetId = 1;
+
+    private void HandleBreakpointChanged(BlazorBlueprint.Primitives.DashboardGrid.DashboardBreakpoint bp) =>
+        currentBreakpoint = bp;
+
+    private void SaveState()
+    {
+        savedSnapshot = persistState.Save();
+        StateHasChanged();
+    }
+
+    private void RestoreState()
+    {
+        if (savedSnapshot != null)
+        {
+            persistState.Restore(savedSnapshot);
+            StateHasChanged();
+        }
+    }
+
+    private void ResetState()
+    {
+        persistState.Reset();
+        savedSnapshot = null;
+        StateHasChanged();
+    }
+
+    private void AddWidget()
+    {
+        var id = nextWidgetId++;
+        var index = dynamicWidgets.Count;
+        var col = (index % 3) * 8 + 1;
+        var row = (index / 3) * 6 + 1;
+
+        dynamicWidgets.Add(new DynamicWidget
+        {
+            Id = $"dynamic-{id}",
+            Title = $"Widget {id}",
+            Column = col,
+            Row = row,
+            ColSpan = 8,
+            RowSpan = 6
+        });
+    }
+
+    private void RemoveEditableWidget(string widgetId) =>
+        editableWidgets.RemoveAll(w => w.Id == widgetId);
+
+    private void RemoveDynamicWidget(string widgetId) =>
+        dynamicWidgets.RemoveAll(w => w.Id == widgetId);
+
+    private void RemoveWidget(string widgetId) =>
+        dynamicWidgets.RemoveAll(w => w.Id == widgetId);
+
+    private void RemoveLastWidget()
+    {
+        if (dynamicWidgets.Count > 0)
+        {
+            dynamicWidgets.RemoveAt(dynamicWidgets.Count - 1);
+        }
+    }
+
+    private class DynamicWidget
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public int Column { get; set; } = 1;
+        public int Row { get; set; } = 1;
+        public int ColSpan { get; set; } = 8;
+        public int RowSpan { get; set; } = 6;
+    }
+
+    // ── Data-Driven Dashboard ──
+
+    private BbDashboardGrid? dataDrivenGridRef;
+    private BlazorBlueprint.Primitives.DashboardGrid.DashboardGridState dataDrivenGridState = new();
+    private List<DataDrivenWidgetConfig> dataDrivenWidgets = new();
+    private bool dataDrivenLoaded;
+    private bool dataDrivenLoading;
+    private string? dataDrivenSavedJson;
+
+    private async Task LoadDataDrivenDashboard()
+    {
+        dataDrivenLoading = true;
+        StateHasChanged();
+
+        await Task.Delay(800);
+
+        var payload = JsonSerializer.Deserialize<DataDrivenPayload>(SampleDataDrivenJson, dataDrivenJsonOptions)!;
+        dataDrivenWidgets = payload.Widgets;
+
+        dataDrivenGridState = new BlazorBlueprint.Primitives.DashboardGrid.DashboardGridState();
+        foreach (var w in dataDrivenWidgets)
+        {
+            dataDrivenGridState.RegisterWidget(w.Id, w.Column, w.Row, w.ColSpan, w.RowSpan);
+        }
+
+        dataDrivenLoaded = true;
+        dataDrivenLoading = false;
+        dataDrivenSavedJson = null;
+    }
+
+    private void UnloadDataDrivenDashboard()
+    {
+        dataDrivenWidgets.Clear();
+        dataDrivenGridState = new BlazorBlueprint.Primitives.DashboardGrid.DashboardGridState();
+        dataDrivenLoaded = false;
+        dataDrivenSavedJson = null;
+    }
+
+    private void SaveDataDrivenDashboard()
+    {
+        var config = dataDrivenGridRef?.GetConfig();
+        dataDrivenSavedJson = config != null ? JsonSerializer.Serialize(config, dataDrivenJsonOptions) : null;
+    }
+
+    private void RemoveDataDrivenWidget(string widgetId)
+    {
+        dataDrivenWidgets.RemoveAll(w => w.Id == widgetId);
+    }
+
+    private RenderFragment RenderDataDrivenWidgetContent(DataDrivenWidgetConfig widget) => widget.Type switch
+    {
+        "bar-chart" => __builder =>
+        {
+            <BbBarChart Data="@GetDataDrivenTimeSeries(widget)" Height="100%">
+                <BbXAxis DataKey="month" />
+                <BbYAxis Show="false" />
+                <BbChartTooltip />
+                <BbBar DataKey="value" Name="@widget.Title" Color="var(--chart-1)" />
+            </BbBarChart>
+        },
+        "area-chart" => __builder =>
+        {
+            <BbAreaChart Data="@GetDataDrivenTimeSeries(widget)" Height="100%">
+                <BbXAxis DataKey="month" />
+                <BbYAxis Show="false" />
+                <BbChartTooltip />
+                <BbArea DataKey="value" Name="@widget.Title" Color="var(--chart-2)" Curve="CurveType.Smooth">
+                    <BbFill>
+                        <BbLinearGradient>
+                            <BbGradientStop Offset="0" Color="var(--chart-2)" Opacity="0.5" />
+                            <BbGradientStop Offset="1" Color="var(--chart-2)" Opacity="0.05" />
+                        </BbLinearGradient>
+                    </BbFill>
+                </BbArea>
+            </BbAreaChart>
+        },
+        "line-chart" => __builder =>
+        {
+            <BbLineChart Data="@GetDataDrivenTimeSeries(widget)" Height="100%">
+                <BbXAxis DataKey="month" />
+                <BbYAxis Show="false" />
+                <BbChartTooltip />
+                <BbLine DataKey="value" Name="@widget.Title" Color="var(--chart-3)" Curve="CurveType.Smooth" />
+            </BbLineChart>
+        },
+        "pie-chart" => __builder =>
+        {
+            <BbPieChart Data="@GetDataDrivenCategories(widget)" Height="100%">
+                <BbChartTooltip />
+                <BbChartLegend />
+                <BbPie DataKey="value" NameKey="name" />
+            </BbPieChart>
+        },
+        "kpi" => __builder =>
+        {
+            var kpi = GetDataDrivenKpi(widget);
+            <div class="flex flex-col items-center justify-center h-full gap-1">
+                <span class="text-4xl font-bold tracking-tight">@kpi.Value</span>
+                <span class="text-sm text-muted-foreground">@kpi.Label</span>
+                @if (kpi.Change != null)
+                {
+                    var isPositive = kpi.Change.StartsWith("+");
+                    <span class="text-xs @(isPositive ? "text-green-500" : "text-red-500")">
+                        @kpi.Change from last month
+                    </span>
+                }
+            </div>
+        },
+        "table" => __builder =>
+        {
+            var rows = GetDataDrivenTableRows(widget);
+            <div class="overflow-auto h-full">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b text-left text-muted-foreground">
+                            <th class="py-2 px-3 font-medium">Name</th>
+                            <th class="py-2 px-3 font-medium text-right">Value</th>
+                            <th class="py-2 px-3 font-medium text-right">Change</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in rows)
+                        {
+                            <tr class="border-b last:border-0">
+                                <td class="py-2 px-3">@row.Name</td>
+                                <td class="py-2 px-3 text-right font-medium">@row.Value</td>
+                                <td class="py-2 px-3 text-right @(row.IsPositive ? "text-green-500" : "text-red-500")">
+                                    @row.Change
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        },
+        _ => @<div class="flex items-center justify-center h-full text-muted-foreground text-sm">Unknown widget type: @widget.Type</div>
+    };
+
+    private List<DataDrivenTimeSeriesPoint> GetDataDrivenTimeSeries(DataDrivenWidgetConfig widget) => widget.DataSource switch
+    {
+        "revenue" => new()
+        {
+            new() { Month = "Jan", Value = 4200 }, new() { Month = "Feb", Value = 5100 },
+            new() { Month = "Mar", Value = 4800 }, new() { Month = "Apr", Value = 6200 },
+            new() { Month = "May", Value = 5900 }, new() { Month = "Jun", Value = 7100 },
+        },
+        "users" => new()
+        {
+            new() { Month = "Jan", Value = 1200 }, new() { Month = "Feb", Value = 1350 },
+            new() { Month = "Mar", Value = 1500 }, new() { Month = "Apr", Value = 1420 },
+            new() { Month = "May", Value = 1680 }, new() { Month = "Jun", Value = 1950 },
+        },
+        "orders" => new()
+        {
+            new() { Month = "Jan", Value = 320 }, new() { Month = "Feb", Value = 410 },
+            new() { Month = "Mar", Value = 380 }, new() { Month = "Apr", Value = 450 },
+            new() { Month = "May", Value = 520 }, new() { Month = "Jun", Value = 480 },
+        },
+        "pageviews" => new()
+        {
+            new() { Month = "Jan", Value = 12400 }, new() { Month = "Feb", Value = 14200 },
+            new() { Month = "Mar", Value = 13800 }, new() { Month = "Apr", Value = 15600 },
+            new() { Month = "May", Value = 17200 }, new() { Month = "Jun", Value = 16900 },
+        },
+        _ => new()
+        {
+            new() { Month = "Jan", Value = 100 }, new() { Month = "Feb", Value = 120 },
+            new() { Month = "Mar", Value = 140 }, new() { Month = "Apr", Value = 130 },
+            new() { Month = "May", Value = 150 }, new() { Month = "Jun", Value = 170 },
+        }
+    };
+
+    private List<DataDrivenCategoryPoint> GetDataDrivenCategories(DataDrivenWidgetConfig widget) => widget.DataSource switch
+    {
+        "traffic-sources" => new()
+        {
+            new() { Name = "Direct", Value = 4200, Fill = "var(--chart-1)" },
+            new() { Name = "Organic", Value = 3100, Fill = "var(--chart-2)" },
+            new() { Name = "Referral", Value = 1800, Fill = "var(--chart-3)" },
+            new() { Name = "Social", Value = 1200, Fill = "var(--chart-4)" },
+            new() { Name = "Email", Value = 900, Fill = "var(--chart-5)" },
+        },
+        "browsers" => new()
+        {
+            new() { Name = "Chrome", Value = 5400, Fill = "var(--chart-1)" },
+            new() { Name = "Safari", Value = 2100, Fill = "var(--chart-2)" },
+            new() { Name = "Firefox", Value = 1200, Fill = "var(--chart-3)" },
+            new() { Name = "Edge", Value = 800, Fill = "var(--chart-4)" },
+            new() { Name = "Other", Value = 400, Fill = "var(--chart-5)" },
+        },
+        _ => new()
+        {
+            new() { Name = "A", Value = 40, Fill = "var(--chart-1)" },
+            new() { Name = "B", Value = 30, Fill = "var(--chart-2)" },
+            new() { Name = "C", Value = 20, Fill = "var(--chart-3)" },
+            new() { Name = "D", Value = 10, Fill = "var(--chart-4)" },
+        }
+    };
+
+    private DataDrivenKpiData GetDataDrivenKpi(DataDrivenWidgetConfig widget) => widget.DataSource switch
+    {
+        "total-revenue" => new() { Value = "$48,250", Label = "Total Revenue", Change = "+12.5%" },
+        "active-users" => new() { Value = "2,420", Label = "Active Users", Change = "+8.1%" },
+        "conversion-rate" => new() { Value = "3.2%", Label = "Conversion Rate", Change = "+0.4%" },
+        "total-orders" => new() { Value = "1,210", Label = "Total Orders", Change = "-2.1%" },
+        _ => new() { Value = "—", Label = widget.Title }
+    };
+
+    private List<DataDrivenTableRow> GetDataDrivenTableRows(DataDrivenWidgetConfig widget) => widget.DataSource switch
+    {
+        "top-products" => new()
+        {
+            new() { Name = "Widget Pro", Value = "$12,400", Change = "+14%", IsPositive = true },
+            new() { Name = "Dashboard Kit", Value = "$8,200", Change = "+8%", IsPositive = true },
+            new() { Name = "Analytics Tool", Value = "$6,100", Change = "-3%", IsPositive = false },
+            new() { Name = "Chart Library", Value = "$4,800", Change = "+22%", IsPositive = true },
+            new() { Name = "Form Builder", Value = "$3,600", Change = "+5%", IsPositive = true },
+        },
+        _ => new()
+        {
+            new() { Name = "Item A", Value = "100", Change = "+10%", IsPositive = true },
+            new() { Name = "Item B", Value = "80", Change = "-5%", IsPositive = false },
+        }
+    };
+
+    private static readonly JsonSerializerOptions dataDrivenJsonOptions = new()
+    {
+        WriteIndented = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    private class DataDrivenPayload
+    {
+        public List<DataDrivenWidgetConfig> Widgets { get; set; } = new();
+    }
+
+    private class DataDrivenWidgetConfig
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public string DataSource { get; set; } = string.Empty;
+        public int Column { get; set; } = 1;
+        public int Row { get; set; } = 1;
+        public int ColSpan { get; set; } = 4;
+        public int RowSpan { get; set; } = 3;
+    }
+
+    private class DataDrivenTimeSeriesPoint
+    {
+        public string Month { get; set; } = "";
+        public int Value { get; set; }
+    }
+
+    private class DataDrivenCategoryPoint
+    {
+        public string Name { get; set; } = "";
+        public int Value { get; set; }
+        public string Fill { get; set; } = "";
+    }
+
+    private class DataDrivenKpiData
+    {
+        public string Value { get; set; } = "";
+        public string Label { get; set; } = "";
+        public string? Change { get; set; }
+    }
+
+    private class DataDrivenTableRow
+    {
+        public string Name { get; set; } = "";
+        public string Value { get; set; } = "";
+        public string Change { get; set; } = "";
+        public bool IsPositive { get; set; }
+    }
+
+    private const string SampleDataDrivenJson = @"{
+  ""widgets"": [
+    { ""id"": ""kpi-revenue"", ""title"": ""Total Revenue"", ""type"": ""kpi"", ""dataSource"": ""total-revenue"", ""column"": 1, ""row"": 1, ""colSpan"": 6, ""rowSpan"": 4 },
+    { ""id"": ""kpi-users"", ""title"": ""Active Users"", ""type"": ""kpi"", ""dataSource"": ""active-users"", ""column"": 7, ""row"": 1, ""colSpan"": 6, ""rowSpan"": 4 },
+    { ""id"": ""kpi-conversion"", ""title"": ""Conversion Rate"", ""type"": ""kpi"", ""dataSource"": ""conversion-rate"", ""column"": 13, ""row"": 1, ""colSpan"": 6, ""rowSpan"": 4 },
+    { ""id"": ""kpi-orders"", ""title"": ""Total Orders"", ""type"": ""kpi"", ""dataSource"": ""total-orders"", ""column"": 19, ""row"": 1, ""colSpan"": 6, ""rowSpan"": 4 },
+    { ""id"": ""chart-revenue"", ""title"": ""Revenue Trend"", ""type"": ""area-chart"", ""dataSource"": ""revenue"", ""column"": 1, ""row"": 5, ""colSpan"": 16, ""rowSpan"": 8 },
+    { ""id"": ""chart-traffic"", ""title"": ""Traffic Sources"", ""type"": ""pie-chart"", ""dataSource"": ""traffic-sources"", ""column"": 17, ""row"": 5, ""colSpan"": 8, ""rowSpan"": 8 },
+    { ""id"": ""chart-users"", ""title"": ""User Growth"", ""type"": ""bar-chart"", ""dataSource"": ""users"", ""column"": 1, ""row"": 13, ""colSpan"": 8, ""rowSpan"": 8 },
+    { ""id"": ""chart-orders"", ""title"": ""Order Volume"", ""type"": ""line-chart"", ""dataSource"": ""orders"", ""column"": 9, ""row"": 13, ""colSpan"": 8, ""rowSpan"": 8 },
+    { ""id"": ""table-products"", ""title"": ""Top Products"", ""type"": ""table"", ""dataSource"": ""top-products"", ""column"": 17, ""row"": 13, ""colSpan"": 8, ""rowSpan"": 8 }
+  ]
+}";
+}

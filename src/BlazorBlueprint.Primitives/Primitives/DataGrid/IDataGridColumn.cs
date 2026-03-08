@@ -66,10 +66,20 @@ public interface IDataGridColumn<TData> where TData : class
 
     /// <summary>
     /// Gets the value from a data item for this column (type-erased).
+    /// May return a formatted string if the column has a format specifier.
     /// </summary>
     /// <param name="item">The data item.</param>
     /// <returns>The column value, boxed as object.</returns>
     public object? GetValue(TData item);
+
+    /// <summary>
+    /// Gets the raw, unformatted value from a data item for this column.
+    /// Used for aggregate computations where the numeric value is needed.
+    /// Defaults to <see cref="GetValue"/> if not overridden.
+    /// </summary>
+    /// <param name="item">The data item.</param>
+    /// <returns>The raw column value, boxed as object.</returns>
+    public object? GetRawValue(TData item) => GetValue(item);
 
     /// <summary>
     /// Compares two data items based on this column's values.
@@ -118,6 +128,18 @@ public interface IDataGridColumn<TData> where TData : class
     /// Default is false.
     /// </summary>
     public bool NoWrap { get; }
+
+    /// <summary>
+    /// Gets the aggregate function to compute for this column when grouping is active.
+    /// Default is <see cref="AggregateFunction.None"/>.
+    /// </summary>
+    public AggregateFunction Aggregate { get; }
+
+    /// <summary>
+    /// Gets the format string used to display aggregate values for this column.
+    /// Returns null if no custom format is set.
+    /// </summary>
+    public string? AggregateFormat => null;
 }
 
 /// <summary>

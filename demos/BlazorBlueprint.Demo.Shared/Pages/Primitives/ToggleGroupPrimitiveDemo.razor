@@ -1,0 +1,192 @@
+@page "/primitives/toggle-group"
+<PageTitle>Toggle Group Primitive - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Toggle Group Primitive</h1>
+            <p class="text-xl text-muted-foreground">
+                Headless, unstyled toggle group with single or multiple selection and keyboard navigation.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Single Selection</h2>
+                <p class="text-muted-foreground">
+                    Only one item can be active at a time. Uses roving tabindex for keyboard navigation.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BlazorBlueprint.Primitives.Toggle.BbToggleGroup TValue="string"
+                    @bind-Value="singleValue"
+                    AriaLabel="Text alignment"
+                    class="flex gap-1">
+                    <BlazorBlueprint.Primitives.Toggle.BbToggleGroupItem Value="@("left")"
+                        class="px-3 py-2 border rounded text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                        Left
+                    </BlazorBlueprint.Primitives.Toggle.BbToggleGroupItem>
+                    <BlazorBlueprint.Primitives.Toggle.BbToggleGroupItem Value="@("center")"
+                        class="px-3 py-2 border rounded text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                        Center
+                    </BlazorBlueprint.Primitives.Toggle.BbToggleGroupItem>
+                    <BlazorBlueprint.Primitives.Toggle.BbToggleGroupItem Value="@("right")"
+                        class="px-3 py-2 border rounded text-sm data-[state=on]:bg-primary data-[state=on]:text-primary-foreground outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                        Right
+                    </BlazorBlueprint.Primitives.Toggle.BbToggleGroupItem>
+                </BlazorBlueprint.Primitives.Toggle.BbToggleGroup>
+                <p class="text-sm text-muted-foreground">Selected: @(singleValue ?? "none")</p>
+            </div>
+
+            <CodeBlock Source="Primitives/ToggleGroup/single.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Multiple Selection</h2>
+                <p class="text-muted-foreground">
+                    Multiple items can be active simultaneously.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BlazorBlueprint.Primitives.Toggle.BbToggleGroup TValue="string"
+                    Type="BlazorBlueprint.Primitives.Toggle.ToggleGroupType.Multiple"
+                    @bind-Values="multiValues"
+                    AriaLabel="Text formatting"
+                    class="flex gap-1">
+                    <BlazorBlueprint.Primitives.Toggle.BbToggleGroupItem Value="@("bold")"
+                        class="px-3 py-2 border rounded text-sm font-bold data-[state=on]:bg-primary data-[state=on]:text-primary-foreground outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                        B
+                    </BlazorBlueprint.Primitives.Toggle.BbToggleGroupItem>
+                    <BlazorBlueprint.Primitives.Toggle.BbToggleGroupItem Value="@("italic")"
+                        class="px-3 py-2 border rounded text-sm italic data-[state=on]:bg-primary data-[state=on]:text-primary-foreground outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                        I
+                    </BlazorBlueprint.Primitives.Toggle.BbToggleGroupItem>
+                    <BlazorBlueprint.Primitives.Toggle.BbToggleGroupItem Value="@("underline")"
+                        class="px-3 py-2 border rounded text-sm underline data-[state=on]:bg-primary data-[state=on]:text-primary-foreground outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                        U
+                    </BlazorBlueprint.Primitives.Toggle.BbToggleGroupItem>
+                </BlazorBlueprint.Primitives.Toggle.BbToggleGroup>
+                <p class="text-sm text-muted-foreground">Selected: @(multiValues.Count > 0 ? string.Join(", ", multiValues) : "none")</p>
+            </div>
+
+            <CodeBlock Source="Primitives/ToggleGroup/multiple.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Disabled</h2>
+                <p class="text-muted-foreground">
+                    The entire group can be disabled.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BlazorBlueprint.Primitives.Toggle.BbToggleGroup TValue="string"
+                    Disabled="true"
+                    AriaLabel="Disabled group"
+                    class="flex gap-1">
+                    <BlazorBlueprint.Primitives.Toggle.BbToggleGroupItem Value="@("a")"
+                        class="px-3 py-2 border rounded text-sm opacity-50 cursor-not-allowed">
+                        A
+                    </BlazorBlueprint.Primitives.Toggle.BbToggleGroupItem>
+                    <BlazorBlueprint.Primitives.Toggle.BbToggleGroupItem Value="@("b")"
+                        class="px-3 py-2 border rounded text-sm opacity-50 cursor-not-allowed">
+                        B
+                    </BlazorBlueprint.Primitives.Toggle.BbToggleGroupItem>
+                </BlazorBlueprint.Primitives.Toggle.BbToggleGroup>
+            </div>
+
+            <CodeBlock Source="Primitives/ToggleGroup/disabled.txt" />
+        </section>
+
+    <!-- Accessibility Notes -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">role="group"</code> groups the toggle items semantically
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-pressed</code> set to "true" or "false" on each item
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">data-state</code> set to "on" or "off" on each item for CSS hooks
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">data-orientation</code> set to "horizontal" or "vertical" for layout styling
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Roving tabindex — in single mode, only the active item is tabbable
+            </AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Navigate between items">
+                <BbKbd>ArrowLeft</BbKbd> / <BbKbd>ArrowRight</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Navigate between items (vertical orientation)">
+                <BbKbd>ArrowUp</BbKbd> / <BbKbd>ArrowDown</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Jump to the first item">
+                <BbKbd>Home</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Jump to the last item">
+                <BbKbd>End</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbToggleGroup&lt;TValue&gt;">
+                <ApiParameter Name="Type" Type="ToggleGroupType" Default="ToggleGroupType.Single">
+                    Whether only one item can be active (Single) or multiple items (Multiple).
+                </ApiParameter>
+                <ApiParameter Name="Value" Type="TValue?" Default="null">
+                    The active value in single selection mode. Supports two-way binding with <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Value</code>.
+                </ApiParameter>
+                <ApiParameter Name="DefaultValue" Type="TValue?" Default="null">
+                    Default active value in uncontrolled single selection mode.
+                </ApiParameter>
+                <ApiParameter Name="Values" Type="List&lt;TValue&gt;?" Default="null">
+                    The active values in multiple selection mode. Supports two-way binding with <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Values</code>.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether the entire group is disabled.
+                </ApiParameter>
+                <ApiParameter Name="Orientation" Type="string" Default="&quot;horizontal&quot;">
+                    Orientation of the group. Affects which arrow keys navigate.
+                </ApiParameter>
+                <ApiParameter Name="Loop" Type="bool" Default="true">
+                    Whether keyboard navigation wraps from last to first item.
+                </ApiParameter>
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">
+                    Accessible label for the group.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbToggleGroupItem&lt;TValue&gt;">
+                <ApiParameter Name="Value" Type="TValue?" Default="null">
+                    The value this item represents.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether this individual item is disabled.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+    </div>
+</div>
+
+@code {
+    private string? singleValue = "center";
+    private List<string> multiValues = new() { "bold" };
+}

@@ -1,0 +1,144 @@
+@namespace BlazorBlueprint.Primitives.ScrollArea
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@* ScrollArea scrollbar - custom scrollbar track with ARIA scrollbar role. *@
+
+<div @ref="scrollbarRef"
+     id="@ScrollbarId"
+     role="scrollbar"
+     aria-controls="@Context!.ViewportId"
+     aria-orientation="@Orientation.ToString().ToLower()"
+     aria-valuenow="@scrollValue"
+     aria-valuemin="0"
+     aria-valuemax="100"
+     data-orientation="@Orientation.ToString().ToLower()"
+     data-state="@dataState"
+     @attributes="AdditionalAttributes">
+    @ChildContent
+</div>
+
+@code {
+    private ElementReference scrollbarRef;
+    private IJSObjectReference? jsModule;
+    private DotNetObjectReference<BbScrollAreaScrollbar>? dotNetRef;
+    private string instanceId = Guid.NewGuid().ToString("N");
+    private bool jsInitialized;
+    private bool disposed;
+    private int scrollValue;
+    private string dataState = "hidden";
+
+    [CascadingParameter]
+    private ScrollAreaContext? Context { get; set; }
+
+    /// <summary>
+    /// Gets or sets the scrollbar orientation. Default is Vertical.
+    /// </summary>
+    [Parameter]
+    public ScrollAreaOrientation Orientation { get; set; } = ScrollAreaOrientation.Vertical;
+
+    /// <summary>
+    /// Gets or sets the child content (typically a BbScrollAreaThumb).
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional attributes to apply to the scrollbar element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string ScrollbarId => Orientation == ScrollAreaOrientation.Vertical
+        ? Context!.ScrollbarVerticalId
+        : Context!.ScrollbarHorizontalId;
+
+    /// <summary>
+    /// Gets the element reference for the scrollbar track, for use by JS interop.
+    /// </summary>
+    internal ElementReference ScrollbarElement => scrollbarRef;
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "BbScrollAreaScrollbar must be used within a BbScrollArea component.");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await InitializeJsAsync();
+        }
+    }
+
+    private async Task InitializeJsAsync()
+    {
+        if (jsInitialized)
+        {
+            return;
+        }
+
+        try
+        {
+            jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import",
+                "./_content/BlazorBlueprint.Primitives/js/primitives/scroll-area.js");
+            dotNetRef = DotNetObjectReference.Create(this);
+
+            var viewportEl = await jsModule.InvokeAsync<IJSObjectReference>(
+                "getViewportElement", Context!.ViewportId);
+
+            await jsModule.InvokeVoidAsync("initialize", instanceId, viewportEl,
+                scrollbarRef, dotNetRef,
+                new { orientation = Orientation.ToString().ToLower() });
+            jsInitialized = true;
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Expected during circuit disconnect
+        }
+        catch (InvalidOperationException)
+        {
+            // JS interop not available during prerendering
+        }
+    }
+
+    /// <summary>
+    /// Called from JS when the scroll position changes.
+    /// </summary>
+    [JSInvokable]
+    [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
+    public void JsUpdateScrollState(int value, string state)
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        scrollValue = Math.Max(0, Math.Min(100, value));
+        dataState = state;
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+        disposed = true;
+        if (jsModule != null && jsInitialized)
+        {
+            try
+            {
+                await jsModule.InvokeVoidAsync("dispose", instanceId);
+                await jsModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+        }
+        dotNetRef?.Dispose();
+    }
+}

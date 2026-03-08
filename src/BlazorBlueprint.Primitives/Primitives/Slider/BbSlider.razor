@@ -1,0 +1,240 @@
+@namespace BlazorBlueprint.Primitives.Slider
+@using System.ComponentModel
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@*
+    Slider primitive - headless range input with keyboard navigation and pointer drag.
+    Provides role="slider", ARIA attributes, and data attributes for styling.
+*@
+
+<CascadingValue Value="this" IsFixed="false">
+    <div @ref="trackRef"
+         data-orientation="@Orientation.ToString().ToLower()"
+         data-disabled="@(Disabled ? "true" : null)"
+         @onkeydown="HandleKeyDown"
+         @onkeydown:preventDefault="shouldPreventDefault"
+         @attributes="AdditionalAttributes">
+        @ChildContent
+    </div>
+</CascadingValue>
+
+@code {
+    private ElementReference trackRef;
+    private double internalValue;
+    private IJSObjectReference? jsModule;
+    private DotNetObjectReference<BbSlider>? dotNetRef;
+    private string sliderId = Guid.NewGuid().ToString("N");
+    private bool jsInitialized;
+    private bool disposed;
+    private bool shouldPreventDefault;
+
+    /// <summary>
+    /// Gets or sets the current value (controlled mode).
+    /// </summary>
+    [Parameter]
+    public double? Value { get; set; }
+
+    /// <summary>
+    /// Gets or sets the callback invoked when the value changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<double> ValueChanged { get; set; }
+
+    /// <summary>
+    /// Gets or sets the default value (uncontrolled mode).
+    /// </summary>
+    [Parameter]
+    public double DefaultValue { get; set; }
+
+    /// <summary>
+    /// Gets or sets the minimum value. Default is 0.
+    /// </summary>
+    [Parameter]
+    public double Min { get; set; } = 0;
+
+    /// <summary>
+    /// Gets or sets the maximum value. Default is 100.
+    /// </summary>
+    [Parameter]
+    public double Max { get; set; } = 100;
+
+    /// <summary>
+    /// Gets or sets the step increment. Default is 1.
+    /// </summary>
+    [Parameter]
+    public double Step { get; set; } = 1;
+
+    /// <summary>
+    /// Gets or sets whether the slider is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets the orientation.
+    /// </summary>
+    [Parameter]
+    public SliderOrientation Orientation { get; set; } = SliderOrientation.Horizontal;
+
+    /// <summary>
+    /// Gets or sets the child content (Track, Range, Thumb sub-components).
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private bool IsControlled => ValueChanged.HasDelegate;
+
+    /// <summary>
+    /// Gets the current value.
+    /// </summary>
+    public double CurrentValue => IsControlled ? (Value ?? DefaultValue) : internalValue;
+
+    /// <summary>
+    /// Gets the percentage of the current value (0 to 100).
+    /// </summary>
+    public double Percentage => Max > Min ? ((CurrentValue - Min) / (Max - Min)) * 100 : 0;
+
+    protected override void OnInitialized()
+    {
+        internalValue = DefaultValue;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !Disabled)
+        {
+            await InitializeJsAsync();
+        }
+    }
+
+    private async Task InitializeJsAsync()
+    {
+        if (jsInitialized)
+        {
+            return;
+        }
+
+        try
+        {
+            jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import",
+                "./_content/BlazorBlueprint.Primitives/js/primitives/slider.js");
+            dotNetRef = DotNetObjectReference.Create(this);
+            await jsModule.InvokeVoidAsync("initialize", trackRef, dotNetRef, sliderId,
+                new { orientation = Orientation.ToString().ToLower() });
+            jsInitialized = true;
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Expected during circuit disconnect
+        }
+        catch (InvalidOperationException)
+        {
+            // JS interop not available during prerendering
+        }
+    }
+
+    [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public async Task JsUpdateValueFromPercentage(double percentage)
+    {
+        if (disposed || Disabled)
+        {
+            return;
+        }
+
+        if (double.IsNaN(percentage) || double.IsInfinity(percentage))
+        {
+            return;
+        }
+
+        percentage = Math.Max(0, Math.Min(1, percentage));
+        var newValue = Min + (percentage * (Max - Min));
+        await SetValueAsync(newValue);
+    }
+
+    internal async Task SetValueAsync(double value)
+    {
+        value = Math.Round(value / Step) * Step;
+        value = Math.Max(Min, Math.Min(Max, value));
+
+        if (IsControlled)
+        {
+            await ValueChanged.InvokeAsync(value);
+        }
+        else
+        {
+            internalValue = value;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (Disabled)
+        {
+            return;
+        }
+
+        var stepSize = Step;
+        var largeStep = (Max - Min) / 10;
+
+        switch (e.Key)
+        {
+            case "ArrowRight":
+            case "ArrowUp":
+                shouldPreventDefault = true;
+                await SetValueAsync(CurrentValue + stepSize);
+                break;
+            case "ArrowLeft":
+            case "ArrowDown":
+                shouldPreventDefault = true;
+                await SetValueAsync(CurrentValue - stepSize);
+                break;
+            case "PageUp":
+                shouldPreventDefault = true;
+                await SetValueAsync(CurrentValue + largeStep);
+                break;
+            case "PageDown":
+                shouldPreventDefault = true;
+                await SetValueAsync(CurrentValue - largeStep);
+                break;
+            case "Home":
+                shouldPreventDefault = true;
+                await SetValueAsync(Min);
+                break;
+            case "End":
+                shouldPreventDefault = true;
+                await SetValueAsync(Max);
+                break;
+            default:
+                shouldPreventDefault = false;
+                break;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+        disposed = true;
+        if (jsModule != null && jsInitialized)
+        {
+            try
+            {
+                await jsModule.InvokeVoidAsync("dispose", sliderId);
+                await jsModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+        }
+        dotNetRef?.Dispose();
+    }
+}

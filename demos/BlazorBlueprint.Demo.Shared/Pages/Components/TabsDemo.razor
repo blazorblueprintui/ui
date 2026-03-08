@@ -209,6 +209,101 @@
         <CodeBlock Source="Components/Tabs/controlled.txt" />
     </div>
 
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold">Responsive</h2>
+        <p class="text-sm text-muted-foreground">
+            When <code>Responsive</code> is enabled, the tabs list automatically collapses into a Select dropdown
+            when the tabs overflow their container. Resize the browser to see it in action.
+        </p>
+
+        <BbTabs DefaultValue="overview">
+            <BbTabsList Responsive>
+                <BbTabsTrigger Value="overview" Label="Overview">Overview</BbTabsTrigger>
+                <BbTabsTrigger Value="analytics" Label="Analytics">Analytics</BbTabsTrigger>
+                <BbTabsTrigger Value="reports" Label="Reports">Reports</BbTabsTrigger>
+                <BbTabsTrigger Value="notifications" Label="Notifications">Notifications</BbTabsTrigger>
+                <BbTabsTrigger Value="settings" Label="Settings">Settings</BbTabsTrigger>
+                <BbTabsTrigger Value="billing" Label="Billing">Billing</BbTabsTrigger>
+                <BbTabsTrigger Value="integrations" Label="Integrations">Integrations</BbTabsTrigger>
+                <BbTabsTrigger Value="security" Label="Security">Security</BbTabsTrigger>
+            </BbTabsList>
+
+            <BbTabsContent Value="overview">
+                <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                    <h3 class="text-lg font-semibold mb-2">Overview</h3>
+                    <p class="text-sm text-muted-foreground">
+                        View a summary of your account activity and statistics.
+                    </p>
+                </div>
+            </BbTabsContent>
+
+            <BbTabsContent Value="analytics">
+                <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                    <h3 class="text-lg font-semibold mb-2">Analytics</h3>
+                    <p class="text-sm text-muted-foreground">
+                        Detailed analytics and metrics about your usage patterns.
+                    </p>
+                </div>
+            </BbTabsContent>
+
+            <BbTabsContent Value="reports">
+                <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                    <h3 class="text-lg font-semibold mb-2">Reports</h3>
+                    <p class="text-sm text-muted-foreground">
+                        Generate and download detailed reports for your team.
+                    </p>
+                </div>
+            </BbTabsContent>
+
+            <BbTabsContent Value="notifications">
+                <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                    <h3 class="text-lg font-semibold mb-2">Notifications</h3>
+                    <p class="text-sm text-muted-foreground">
+                        Manage your notification preferences and channels.
+                    </p>
+                </div>
+            </BbTabsContent>
+
+            <BbTabsContent Value="settings">
+                <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                    <h3 class="text-lg font-semibold mb-2">Settings</h3>
+                    <p class="text-sm text-muted-foreground">
+                        Configure your account settings and preferences.
+                    </p>
+                </div>
+            </BbTabsContent>
+
+            <BbTabsContent Value="billing">
+                <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                    <h3 class="text-lg font-semibold mb-2">Billing</h3>
+                    <p class="text-sm text-muted-foreground">
+                        Manage your subscription, payment methods, and invoices.
+                    </p>
+                </div>
+            </BbTabsContent>
+
+            <BbTabsContent Value="integrations">
+                <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                    <h3 class="text-lg font-semibold mb-2">Integrations</h3>
+                    <p class="text-sm text-muted-foreground">
+                        Connect third-party services and manage API keys.
+                    </p>
+                </div>
+            </BbTabsContent>
+
+            <BbTabsContent Value="security">
+                <div class="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                    <h3 class="text-lg font-semibold mb-2">Security</h3>
+                    <p class="text-sm text-muted-foreground">
+                        Two-factor authentication, sessions, and audit log.
+                    </p>
+                </div>
+            </BbTabsContent>
+        </BbTabs>
+
+        <CodeBlock Source="Components/Tabs/responsive.txt" />
+    </div>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>Uses <code>role="tablist"</code>, <code>role="tab"</code>, and <code>role="tabpanel"</code> for proper semantics</AccessibilityItem>
@@ -263,11 +358,20 @@
                 <ApiParameter Name="Class" Type="string?" Default="null">
                     Additional CSS classes for the tabs list container.
                 </ApiParameter>
+                <ApiParameter Name="Responsive" Type="bool" Default="false">
+                    When true, collapses tabs into a Select dropdown when they overflow their container.
+                </ApiParameter>
+                <ApiParameter Name="SelectClass" Type="string?" Default="null">
+                    Additional CSS classes for the responsive Select fallback.
+                </ApiParameter>
             </ApiReference>
 
             <ApiReference ComponentName="TabsTrigger">
                 <ApiParameter Name="Value" Type="string">
                     The value that identifies this tab. Must match a TabsContent Value.
+                </ApiParameter>
+                <ApiParameter Name="Label" Type="string?" Default="null">
+                    Display text for this tab in the responsive Select dropdown. Falls back to Value if not provided.
                 </ApiParameter>
                 <ApiParameter Name="Disabled" Type="bool" Default="false">
                     Whether this tab trigger is disabled.

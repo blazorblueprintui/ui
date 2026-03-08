@@ -1,0 +1,65 @@
+@namespace BlazorBlueprint.Primitives.ContextMenu
+
+@*
+    ContextMenu item - a single menu item with role="menuitem".
+*@
+
+<div role="menuitem"
+     tabindex="-1"
+     aria-disabled="@(Disabled ? "true" : null)"
+     data-disabled="@(Disabled ? "true" : null)"
+     @onclick="HandleClick"
+     @onclick:stopPropagation="true"
+     @attributes="AdditionalAttributes">
+    @ChildContent
+</div>
+
+@code {
+    [CascadingParameter]
+    private BbContextMenu? Context { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "BbContextMenuItem must be used within a BbContextMenu component.");
+        }
+    }
+
+    /// <summary>
+    /// The menu item content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Whether this item is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when the item is clicked.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
+    /// <summary>
+    /// Additional attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private async Task HandleClick()
+    {
+        if (!Disabled)
+        {
+            await OnClick.InvokeAsync();
+            if (Context != null)
+            {
+                await Context.Close();
+            }
+        }
+    }
+}

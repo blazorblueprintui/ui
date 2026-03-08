@@ -1,10 +1,34 @@
 @namespace BlazorBlueprint.Components
+@using PrimitiveOrientation = BlazorBlueprint.Primitives.ScrollArea.ScrollAreaOrientation
 
-<div class="@CssClass">
-    <div class="@ComputedViewportClass" style="@ViewportStyle">
+<BlazorBlueprint.Primitives.ScrollArea.BbScrollArea Orientation="@MappedOrientation"
+                                                    class="@CssClass"
+                                                    style="@RootStyle">
+    <BlazorBlueprint.Primitives.ScrollArea.BbScrollAreaViewport class="@ComputedViewportClass"
+                                                                style="@ViewportStyle">
         @ChildContent
-    </div>
-</div>
+    </BlazorBlueprint.Primitives.ScrollArea.BbScrollAreaViewport>
+
+    @if (Type != ScrollAreaType.Hidden)
+    {
+        @if (Orientation is ScrollAreaOrientation.Vertical or ScrollAreaOrientation.Both)
+        {
+            <BlazorBlueprint.Primitives.ScrollArea.BbScrollAreaScrollbar
+                Orientation="PrimitiveOrientation.Vertical"
+                class="@VerticalScrollbarClass">
+                <BlazorBlueprint.Primitives.ScrollArea.BbScrollAreaThumb class="@ThumbClass" />
+            </BlazorBlueprint.Primitives.ScrollArea.BbScrollAreaScrollbar>
+        }
+        @if (Orientation is ScrollAreaOrientation.Horizontal or ScrollAreaOrientation.Both)
+        {
+            <BlazorBlueprint.Primitives.ScrollArea.BbScrollAreaScrollbar
+                Orientation="PrimitiveOrientation.Horizontal"
+                class="@HorizontalScrollbarClass">
+                <BlazorBlueprint.Primitives.ScrollArea.BbScrollAreaThumb class="@ThumbClass" />
+            </BlazorBlueprint.Primitives.ScrollArea.BbScrollAreaScrollbar>
+        }
+    }
+</BlazorBlueprint.Primitives.ScrollArea.BbScrollArea>
 
 @code {
     [Parameter]
@@ -36,13 +60,21 @@
     [Parameter]
     public bool FillContainer { get; set; }
 
-    private string ViewportStyle
+    private PrimitiveOrientation MappedOrientation => Orientation switch
+    {
+        ScrollAreaOrientation.Vertical => PrimitiveOrientation.Vertical,
+        ScrollAreaOrientation.Horizontal => PrimitiveOrientation.Horizontal,
+        ScrollAreaOrientation.Both => PrimitiveOrientation.Both,
+        _ => PrimitiveOrientation.Vertical
+    };
+
+    private string? RootStyle
     {
         get
         {
             if (FillContainer)
             {
-                return "";
+                return null;
             }
 
             var styles = new List<string>();
@@ -54,35 +86,59 @@
             {
                 styles.Add($"max-height: {MaxHeight}");
             }
-            return string.Join("; ", styles);
+            return styles.Count > 0 ? string.Join("; ", styles) : null;
+        }
+    }
+
+    private string? ViewportStyle
+    {
+        get
+        {
+            if (FillContainer)
+            {
+                return null;
+            }
+
+            // MaxHeight needs to be on the viewport too, otherwise height: 100%
+            // resolves to auto (circular dependency) and the viewport won't scroll.
+            if (!string.IsNullOrEmpty(MaxHeight))
+            {
+                return $"max-height: {MaxHeight}";
+            }
+
+            return null;
         }
     }
 
     private string CssClass => ClassNames.cn(
-        "relative",
+        "relative group/scrollarea",
         FillContainer ? "flex-1 min-h-0" : null,
         Class
     );
 
-    private string ScrollbarClass => Type switch
-    {
-        ScrollAreaType.Always => "[&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border",
-        ScrollAreaType.Hover => "[&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:opacity-0 hover:[&::-webkit-scrollbar-thumb]:opacity-100",
-        ScrollAreaType.Hidden => "scrollbar-none [&::-webkit-scrollbar]:hidden",
-        _ => "[&::-webkit-scrollbar]:w-2.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border"
-    };
-
     private string ComputedViewportClass => ClassNames.cn(
         "w-full rounded-[inherit]",
         FillContainer ? "h-full" : null,
-        Orientation switch
-        {
-            ScrollAreaOrientation.Vertical => "overflow-y-auto overflow-x-hidden",
-            ScrollAreaOrientation.Horizontal => "overflow-x-auto overflow-y-hidden",
-            ScrollAreaOrientation.Both => "overflow-auto",
-            _ => "overflow-y-auto overflow-x-hidden"
-        },
-        ScrollbarClass,
         ViewportClass
     );
+
+    private string ScrollbarVisibilityClass => Type switch
+    {
+        ScrollAreaType.Always => "",
+        ScrollAreaType.Hover => "opacity-0 transition-opacity group-hover/scrollarea:opacity-100",
+        ScrollAreaType.Auto => "data-[state=hidden]:opacity-0 transition-opacity",
+        _ => ""
+    };
+
+    private string VerticalScrollbarClass => ClassNames.cn(
+        "flex touch-none select-none h-full w-2.5 border-l border-l-transparent p-[1px]",
+        ScrollbarVisibilityClass
+    );
+
+    private string HorizontalScrollbarClass => ClassNames.cn(
+        "flex touch-none select-none flex-col h-2.5 border-t border-t-transparent p-[1px]",
+        ScrollbarVisibilityClass
+    );
+
+    private string ThumbClass => "relative rounded-full bg-border flex-1";
 }

@@ -26,7 +26,7 @@
                     </div>
                 }
             }
-            else if (!_processedData.Any())
+            else if ((_groupedRenderItems == null || !_groupedRenderItems.Any()) && !_processedData.Any() && !_gridState.Filtering.HasFilters)
             {
                 @if (EmptyTemplate != null)
                 {
@@ -219,7 +219,85 @@
                         </BlazorBlueprint.Primitives.DataGrid.BbDataGridRow>
                     </BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader>
                     <BlazorBlueprint.Primitives.DataGrid.BbDataGridBody Class="bg-background">
-                        @if (Virtualize && ItemSize > 0)
+                        @if (!_processedData.Any() && _gridState.Filtering.HasFilters)
+                        {
+                            <tr>
+                                <td colspan="@_cachedVisibleColumns.Count" class="py-8 text-center">
+                                    <BbEmpty Title="No results found" Description="Try adjusting or clearing your filters." Size="EmptySize.Small" />
+                                </td>
+                            </tr>
+                        }
+                        else if (_groupedRenderItems != null)
+                        {
+                            @foreach (var renderItem in _groupedRenderItems)
+                            {
+                                @if (renderItem.IsGroupHeader)
+                                {
+                                    var group = renderItem.GroupRow!;
+                                    var groupKey = group.Key ?? "(empty)";
+                                    var isCollapsed = _gridState.Grouping.IsCollapsed(groupKey);
+                                    var effectiveTemplate = _groupColumnHeaderTemplate ?? GroupHeaderTemplate;
+                                    var groupContext = new DataGridGroupContext<TData>
+                                    {
+                                        Group = group,
+                                        IsCollapsed = isCollapsed,
+                                        VisibleColumnCount = _cachedVisibleColumns.Count,
+                                        ToggleCollapse = EventCallback.Factory.Create(this, () => HandleGroupToggle(group))
+                                    };
+
+                                    @if (effectiveTemplate != null)
+                                    {
+                                        <tr role="row" class="bg-muted/50 border-b font-medium">
+                                            <td role="gridcell" colspan="@_cachedVisibleColumns.Count" class="px-4 py-2">
+                                                @effectiveTemplate(groupContext)
+                                            </td>
+                                        </tr>
+                                    }
+                                    else
+                                    {
+                                        var groupLabelColSpan = GetGroupLabelColSpan(group);
+                                        <tr role="row" class="bg-muted/50 border-b font-medium">
+                                            <td role="gridcell" colspan="@groupLabelColSpan" class="px-4 py-2">
+                                                <div class="flex items-center gap-2">
+                                                    <button type="button"
+                                                            class="inline-flex items-center justify-center rounded-md w-6 h-6 hover:bg-muted transition-colors"
+                                                            aria-expanded="@(!isCollapsed)"
+                                                            aria-label="@(isCollapsed ? "Expand group" : "Collapse group")"
+                                                            @onclick="groupContext.ToggleCollapse"
+                                                            @onclick:stopPropagation="true">
+                                                        <LucideIcon Name="@(isCollapsed ? "chevron-right" : "chevron-down")" Class="w-4 h-4" />
+                                                    </button>
+                                                    <span>@group.ColumnTitle: @(groupKey.ToString())</span>
+                                                    <span class="text-muted-foreground text-sm">(@group.ItemCount items)</span>
+                                                </div>
+                                            </td>
+                                            @foreach (var col in GetGroupAggregateColumns(group))
+                                            {
+                                                <td role="gridcell" class="px-4 py-2 text-muted-foreground text-sm">
+                                                    @if (group.Aggregates.TryGetValue(col.ColumnId, out var agg))
+                                                    {
+                                                        <span>@FormatAggregateName(agg.Function): @FormatAggregateValue(agg.Value, agg.Format)</span>
+                                                    }
+                                                </td>
+                                            }
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    @RenderDataRow(renderItem.Item!)
+                                    @if (DetailTemplate != null && _gridState.Expanded.IsExpanded(renderItem.Item!))
+                                    {
+                                        <tr class="border-b">
+                                            <td colspan="@_cachedVisibleColumns.Count" class="p-4">
+                                                @DetailTemplate(renderItem.Item!)
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            }
+                        }
+                        else if (Virtualize && ItemSize > 0)
                         {
                             <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize Items="@_processedDataList" Context="item" ItemSize="@ItemSize" OverscanCount="5">
                                 @RenderDataRow(item)
@@ -297,6 +375,39 @@
 </CascadingValue>
 
 @code {
+    private static string FormatAggregateName(AggregateFunction function) => function switch
+    {
+        AggregateFunction.Count => "Count",
+        AggregateFunction.Sum => "Sum",
+        AggregateFunction.Average => "Avg",
+        AggregateFunction.Min => "Min",
+        AggregateFunction.Max => "Max",
+        _ => ""
+    };
+
+    private static string FormatAggregateValue(object? value, string? format)
+    {
+        if (value == null)
+        {
+            return "-";
+        }
+
+        if (!string.IsNullOrEmpty(format) && value is IFormattable formattable)
+        {
+            return formattable.ToString(format, System.Globalization.CultureInfo.CurrentCulture);
+        }
+
+        if (value is double d)
+        {
+            // Use integer format when the value has no fractional part
+            return d == Math.Truncate(d)
+                ? d.ToString("N0", System.Globalization.CultureInfo.CurrentCulture)
+                : d.ToString("N2", System.Globalization.CultureInfo.CurrentCulture);
+        }
+
+        return value.ToString() ?? "-";
+    }
+
     private RenderFragment<TData> RenderDataRow => item =>
         @<BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Item="@item"
             Class="@ClassNames.cn("group/row bg-background", RowClass?.Invoke(item))">

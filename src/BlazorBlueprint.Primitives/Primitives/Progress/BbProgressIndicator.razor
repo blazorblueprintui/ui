@@ -1,0 +1,39 @@
+@namespace BlazorBlueprint.Primitives.Progress
+
+<div data-state="@Context?.DataState"
+     data-value="@Context?.Value"
+     data-max="@Context?.Max"
+     @attributes="AdditionalAttributes">
+    @ChildContent
+</div>
+
+@code {
+    [CascadingParameter]
+    private BbProgress? Context { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "BbProgressIndicator must be used within a BbProgress component.");
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the child content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional attributes to be applied to the indicator element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Gets the percentage of completion from the parent Progress context. Null if indeterminate.
+    /// </summary>
+    public double? Percentage => Context?.Percentage;
+}

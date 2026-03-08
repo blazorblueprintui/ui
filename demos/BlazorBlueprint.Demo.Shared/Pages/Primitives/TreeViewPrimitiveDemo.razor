@@ -1,0 +1,355 @@
+@page "/primitives/tree-view"
+<PageTitle>Tree View Primitive - Blazor Blueprint</PageTitle>
+
+<style>
+    .tree-demo [role="treeitem"][data-depth="1"] > .tree-node { padding-left: 1.5rem; }
+    .tree-demo [role="treeitem"][data-depth="2"] > .tree-node { padding-left: 3rem; }
+    .tree-demo [role="treeitem"][data-depth="3"] > .tree-node { padding-left: 4.5rem; }
+    .tree-demo [role="treeitem"]:focus { outline: none; }
+    .tree-demo [role="treeitem"]:focus > .tree-node { background: hsl(var(--accent)); border-radius: 0.375rem; }
+    .tree-demo [role="treeitem"][data-selected="true"]:focus > .tree-node { background: hsl(var(--accent)); }
+    .tree-demo [role="treeitem"][data-state="open"] > .tree-node .tree-chevron { transform: rotate(90deg); }
+    .tree-demo .tree-chevron { transition: transform 150ms ease; }
+    .tree-demo [role="treeitem"][aria-checked="true"] > .tree-node .tree-check-on { display: inline; }
+    .tree-demo [role="treeitem"][aria-checked="mixed"] > .tree-node .tree-check-mixed { display: inline; }
+    .tree-demo [role="treeitem"][aria-checked="true"] > .tree-node .tree-checkbox,
+    .tree-demo [role="treeitem"][aria-checked="mixed"] > .tree-node .tree-checkbox { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+    .tree-demo [role="treeitem"][data-selected="true"] > .tree-node .tree-label { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); border-radius: 0.25rem; }
+    .tree-demo [role="treeitem"] > .tree-node .tree-label:hover { background: hsl(var(--accent)); border-radius: 0.25rem; }
+    .tree-demo [role="treeitem"][data-selected="true"] > .tree-node .tree-label:hover { background: hsl(var(--primary)); }
+</style>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Tree View Primitive</h1>
+            <p class="text-xl text-muted-foreground">
+                Headless, unstyled tree view primitive with keyboard navigation, selection, and checkbox support.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Tree View</h2>
+                <p class="text-muted-foreground">
+                    A tree with single selection. Click a node to select it, click the chevron to expand/collapse.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BlazorBlueprint.Primitives.TreeView.BbTreeView
+                    AriaLabel="File explorer"
+                    SelectionMode="BlazorBlueprint.Primitives.TreeSelectionMode.Single"
+                    @bind-SelectedValue="selectedNode"
+                    DefaultExpandAll="true"
+                    class="tree-demo">
+                    <BlazorBlueprint.Primitives.TreeView.BbTreeItem Value="documents">
+                        <NodeContent>
+                            <div class="tree-node flex items-center gap-1 py-1 px-2 cursor-pointer">
+                                <button data-tree-toggle class="w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground shrink-0" tabindex="-1">
+                                    <svg class="w-3 h-3 tree-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                </button>
+                                <span class="tree-label text-sm py-0.5 px-1.5">Documents</span>
+                            </div>
+                        </NodeContent>
+                        <ChildContent>
+                            <BlazorBlueprint.Primitives.TreeView.BbTreeItem Value="resume">
+                                <NodeContent>
+                                    <div class="tree-node flex items-center gap-1 py-1 px-2 cursor-pointer">
+                                        <span class="w-4 shrink-0"></span>
+                                        <span class="tree-label text-sm py-0.5 px-1.5">Resume.pdf</span>
+                                    </div>
+                                </NodeContent>
+                            </BlazorBlueprint.Primitives.TreeView.BbTreeItem>
+                            <BlazorBlueprint.Primitives.TreeView.BbTreeItem Value="cover-letter">
+                                <NodeContent>
+                                    <div class="tree-node flex items-center gap-1 py-1 px-2 cursor-pointer">
+                                        <span class="w-4 shrink-0"></span>
+                                        <span class="tree-label text-sm py-0.5 px-1.5">Cover Letter.docx</span>
+                                    </div>
+                                </NodeContent>
+                            </BlazorBlueprint.Primitives.TreeView.BbTreeItem>
+                        </ChildContent>
+                    </BlazorBlueprint.Primitives.TreeView.BbTreeItem>
+                    <BlazorBlueprint.Primitives.TreeView.BbTreeItem Value="photos">
+                        <NodeContent>
+                            <div class="tree-node flex items-center gap-1 py-1 px-2 cursor-pointer">
+                                <button data-tree-toggle class="w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground shrink-0" tabindex="-1">
+                                    <svg class="w-3 h-3 tree-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                </button>
+                                <span class="tree-label text-sm py-0.5 px-1.5">Photos</span>
+                            </div>
+                        </NodeContent>
+                        <ChildContent>
+                            <BlazorBlueprint.Primitives.TreeView.BbTreeItem Value="vacation">
+                                <NodeContent>
+                                    <div class="tree-node flex items-center gap-1 py-1 px-2 cursor-pointer">
+                                        <span class="w-4 shrink-0"></span>
+                                        <span class="tree-label text-sm py-0.5 px-1.5">Vacation.jpg</span>
+                                    </div>
+                                </NodeContent>
+                            </BlazorBlueprint.Primitives.TreeView.BbTreeItem>
+                        </ChildContent>
+                    </BlazorBlueprint.Primitives.TreeView.BbTreeItem>
+                    <BlazorBlueprint.Primitives.TreeView.BbTreeItem Value="music">
+                        <NodeContent>
+                            <div class="tree-node flex items-center gap-1 py-1 px-2 cursor-pointer">
+                                <span class="w-4 shrink-0"></span>
+                                <span class="tree-label text-sm py-0.5 px-1.5">Music</span>
+                            </div>
+                        </NodeContent>
+                    </BlazorBlueprint.Primitives.TreeView.BbTreeItem>
+                </BlazorBlueprint.Primitives.TreeView.BbTreeView>
+
+                <p class="text-sm text-muted-foreground">Selected: @(selectedNode ?? "none")</p>
+            </div>
+
+            <CodeBlock Source="Primitives/TreeView/basic.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Checkable Tree View</h2>
+                <p class="text-muted-foreground">
+                    A tree with checkboxes. Checking a parent cascades to all children.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BlazorBlueprint.Primitives.TreeView.BbTreeView
+                    AriaLabel="Checkable tree"
+                    Checkable="true"
+                    @bind-CheckedValues="checkedValues"
+                    DefaultExpandAll="true"
+                    class="tree-demo">
+                    <BlazorBlueprint.Primitives.TreeView.BbTreeItem Value="frontend">
+                        <NodeContent>
+                            <div class="tree-node flex items-center gap-1 py-1 px-2">
+                                <button data-tree-toggle class="w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground shrink-0" tabindex="-1">
+                                    <svg class="w-3 h-3 tree-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                </button>
+                                <button data-tree-checkbox class="tree-checkbox w-4 h-4 border rounded flex items-center justify-center text-xs shrink-0" tabindex="-1">
+                                    <span class="tree-check-on hidden">&#10003;</span>
+                                    <span class="tree-check-mixed hidden">&#8722;</span>
+                                </button>
+                                <span class="text-sm">Frontend</span>
+                            </div>
+                        </NodeContent>
+                        <ChildContent>
+                            <BlazorBlueprint.Primitives.TreeView.BbTreeItem Value="react">
+                                <NodeContent>
+                                    <div class="tree-node flex items-center gap-1 py-1 px-2">
+                                        <span class="w-4 shrink-0"></span>
+                                        <button data-tree-checkbox class="tree-checkbox w-4 h-4 border rounded flex items-center justify-center text-xs shrink-0" tabindex="-1">
+                                            <span class="tree-check-on hidden">&#10003;</span>
+                                        </button>
+                                        <span class="text-sm">React</span>
+                                    </div>
+                                </NodeContent>
+                            </BlazorBlueprint.Primitives.TreeView.BbTreeItem>
+                            <BlazorBlueprint.Primitives.TreeView.BbTreeItem Value="vue">
+                                <NodeContent>
+                                    <div class="tree-node flex items-center gap-1 py-1 px-2">
+                                        <span class="w-4 shrink-0"></span>
+                                        <button data-tree-checkbox class="tree-checkbox w-4 h-4 border rounded flex items-center justify-center text-xs shrink-0" tabindex="-1">
+                                            <span class="tree-check-on hidden">&#10003;</span>
+                                        </button>
+                                        <span class="text-sm">Vue</span>
+                                    </div>
+                                </NodeContent>
+                            </BlazorBlueprint.Primitives.TreeView.BbTreeItem>
+                            <BlazorBlueprint.Primitives.TreeView.BbTreeItem Value="angular">
+                                <NodeContent>
+                                    <div class="tree-node flex items-center gap-1 py-1 px-2">
+                                        <span class="w-4 shrink-0"></span>
+                                        <button data-tree-checkbox class="tree-checkbox w-4 h-4 border rounded flex items-center justify-center text-xs shrink-0" tabindex="-1">
+                                            <span class="tree-check-on hidden">&#10003;</span>
+                                        </button>
+                                        <span class="text-sm">Angular</span>
+                                    </div>
+                                </NodeContent>
+                            </BlazorBlueprint.Primitives.TreeView.BbTreeItem>
+                        </ChildContent>
+                    </BlazorBlueprint.Primitives.TreeView.BbTreeItem>
+                    <BlazorBlueprint.Primitives.TreeView.BbTreeItem Value="backend">
+                        <NodeContent>
+                            <div class="tree-node flex items-center gap-1 py-1 px-2">
+                                <button data-tree-toggle class="w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground shrink-0" tabindex="-1">
+                                    <svg class="w-3 h-3 tree-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                                </button>
+                                <button data-tree-checkbox class="tree-checkbox w-4 h-4 border rounded flex items-center justify-center text-xs shrink-0" tabindex="-1">
+                                    <span class="tree-check-on hidden">&#10003;</span>
+                                    <span class="tree-check-mixed hidden">&#8722;</span>
+                                </button>
+                                <span class="text-sm">Backend</span>
+                            </div>
+                        </NodeContent>
+                        <ChildContent>
+                            <BlazorBlueprint.Primitives.TreeView.BbTreeItem Value="dotnet">
+                                <NodeContent>
+                                    <div class="tree-node flex items-center gap-1 py-1 px-2">
+                                        <span class="w-4 shrink-0"></span>
+                                        <button data-tree-checkbox class="tree-checkbox w-4 h-4 border rounded flex items-center justify-center text-xs shrink-0" tabindex="-1">
+                                            <span class="tree-check-on hidden">&#10003;</span>
+                                        </button>
+                                        <span class="text-sm">.NET</span>
+                                    </div>
+                                </NodeContent>
+                            </BlazorBlueprint.Primitives.TreeView.BbTreeItem>
+                            <BlazorBlueprint.Primitives.TreeView.BbTreeItem Value="node">
+                                <NodeContent>
+                                    <div class="tree-node flex items-center gap-1 py-1 px-2">
+                                        <span class="w-4 shrink-0"></span>
+                                        <button data-tree-checkbox class="tree-checkbox w-4 h-4 border rounded flex items-center justify-center text-xs shrink-0" tabindex="-1">
+                                            <span class="tree-check-on hidden">&#10003;</span>
+                                        </button>
+                                        <span class="text-sm">Node.js</span>
+                                    </div>
+                                </NodeContent>
+                            </BlazorBlueprint.Primitives.TreeView.BbTreeItem>
+                        </ChildContent>
+                    </BlazorBlueprint.Primitives.TreeView.BbTreeItem>
+                </BlazorBlueprint.Primitives.TreeView.BbTreeView>
+
+                <p class="text-sm text-muted-foreground">Checked: @(checkedValues.Count > 0 ? string.Join(", ", checkedValues) : "none")</p>
+            </div>
+
+            <CodeBlock Source="Primitives/TreeView/checkable.txt" />
+        </section>
+
+    <!-- Accessibility Notes -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">role="tree"</code> on the root container
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">role="treeitem"</code> on each node
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-expanded</code> indicates expand/collapse state on parent nodes
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-selected</code> indicates selection state
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-checked</code> set to "true", "false", or "mixed" (indeterminate) when checkable
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-level</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-posinset</code>, and <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-setsize</code> convey tree structure
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-multiselectable</code> set on root when using multiple selection
+            </AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move focus to the next visible node">
+                <BbKbd>ArrowDown</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move focus to the previous visible node">
+                <BbKbd>ArrowUp</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Expand the focused node or move to first child">
+                <BbKbd>ArrowRight</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Collapse the focused node or move to parent">
+                <BbKbd>ArrowLeft</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move focus to the first node">
+                <BbKbd>Home</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move focus to the last visible node">
+                <BbKbd>End</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Select or activate the focused node">
+                <BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbTreeView">
+                <ApiParameter Name="SelectionMode" Type="TreeSelectionMode" Default="TreeSelectionMode.None">
+                    Selection behavior: None, Single, or Multiple.
+                </ApiParameter>
+                <ApiParameter Name="SelectedValue" Type="string?" Default="null">
+                    The selected node value in single selection mode. Supports <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-SelectedValue</code>.
+                </ApiParameter>
+                <ApiParameter Name="SelectedValues" Type="HashSet&lt;string&gt;?" Default="null">
+                    The selected node values in multiple selection mode. Supports <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-SelectedValues</code>.
+                </ApiParameter>
+                <ApiParameter Name="ExpandedValues" Type="HashSet&lt;string&gt;?" Default="null">
+                    Controls which nodes are expanded. Supports <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-ExpandedValues</code>.
+                </ApiParameter>
+                <ApiParameter Name="Checkable" Type="bool" Default="false">
+                    Whether nodes display checkboxes.
+                </ApiParameter>
+                <ApiParameter Name="CheckStrictly" Type="bool" Default="false">
+                    When true, checking a parent does not cascade to children.
+                </ApiParameter>
+                <ApiParameter Name="CheckedValues" Type="HashSet&lt;string&gt;?" Default="null">
+                    The checked node values. Supports <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-CheckedValues</code>.
+                </ApiParameter>
+                <ApiParameter Name="DefaultExpandAll" Type="bool" Default="false">
+                    Whether to expand all nodes on initial render.
+                </ApiParameter>
+                <ApiParameter Name="DefaultExpandDepth" Type="int?" Default="null">
+                    Expand nodes up to this depth on initial render.
+                </ApiParameter>
+                <ApiParameter Name="ShowLines" Type="bool" Default="false">
+                    Whether to show connecting lines between nodes.
+                </ApiParameter>
+                <ApiParameter Name="ShowIcons" Type="bool" Default="true">
+                    Whether to show expand/collapse icons.
+                </ApiParameter>
+                <ApiParameter Name="ExpandOnClick" Type="bool" Default="false">
+                    Whether clicking a node expands/collapses it (in addition to the expand icon).
+                </ApiParameter>
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">
+                    Accessible label for the tree.
+                </ApiParameter>
+                <ApiParameter Name="OnNodeClick" Type="EventCallback&lt;string&gt;">
+                    Callback when a node is clicked.
+                </ApiParameter>
+                <ApiParameter Name="OnNodeExpand" Type="EventCallback&lt;string&gt;">
+                    Callback when a node is expanded.
+                </ApiParameter>
+                <ApiParameter Name="OnNodeCollapse" Type="EventCallback&lt;string&gt;">
+                    Callback when a node is collapsed.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbTreeItem">
+                <ApiParameter Name="Value" Type="string" Default="">
+                    Unique identifier for this tree item. Required.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether this item is disabled.
+                </ApiParameter>
+                <ApiParameter Name="IsLeaf" Type="bool?" Default="null">
+                    Override whether this item is treated as a leaf node. When null, determined by whether it has children.
+                </ApiParameter>
+                <ApiParameter Name="NodeContent" Type="RenderFragment?">
+                    Content rendered for the node label area.
+                </ApiParameter>
+                <ApiParameter Name="ChildContent" Type="RenderFragment?">
+                    Child tree items nested under this node.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+    </div>
+</div>
+
+@code {
+    private string? selectedNode;
+    private HashSet<string> checkedValues = new();
+}

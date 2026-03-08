@@ -1,8 +1,11 @@
 @namespace BlazorBlueprint.Components
+@using PrimitiveOrientation = BlazorBlueprint.Primitives.ScrollArea.ScrollAreaOrientation
 
-<div class="@CssClass">
-    <div class="@ThumbClass"></div>
-</div>
+<BlazorBlueprint.Primitives.ScrollArea.BbScrollAreaScrollbar
+    Orientation="@MappedOrientation"
+    class="@CssClass">
+    <BlazorBlueprint.Primitives.ScrollArea.BbScrollAreaThumb class="@ThumbClass" />
+</BlazorBlueprint.Primitives.ScrollArea.BbScrollAreaScrollbar>
 
 @code {
     [Parameter]
@@ -10,6 +13,12 @@
 
     [Parameter]
     public string? Class { get; set; }
+
+    private PrimitiveOrientation MappedOrientation => Orientation switch
+    {
+        ScrollAreaOrientation.Horizontal => PrimitiveOrientation.Horizontal,
+        _ => PrimitiveOrientation.Vertical
+    };
 
     private string CssClass => ClassNames.cn(
         "flex touch-none select-none transition-colors",
@@ -19,8 +28,5 @@
         Class
     );
 
-    private string ThumbClass => ClassNames.cn(
-        "relative rounded-full bg-border",
-        Orientation == ScrollAreaOrientation.Vertical ? "flex-1" : "flex-1"
-    );
+    private string ThumbClass => "relative rounded-full bg-border flex-1";
 }

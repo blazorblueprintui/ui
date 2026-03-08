@@ -43,6 +43,15 @@
     [CascadingParameter]
     private BbCheckbox? ParentCheckbox { get; set; }
 
+    protected override void OnInitialized()
+    {
+        if (ParentCheckbox == null)
+        {
+            throw new InvalidOperationException(
+                "BbCheckboxIndicator must be used within a BbCheckbox component.");
+        }
+    }
+
     /// <summary>
     /// Optional custom content to render instead of the default check/indeterminate icons.
     /// When provided, this content is rendered whenever the checkbox is checked or indeterminate.

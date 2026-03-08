@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using BlazorBlueprint.Primitives.Utilities;
 using Microsoft.JSInterop;
 
@@ -80,6 +81,7 @@ public class KeyboardShortcutService : IKeyboardShortcutService
     /// </summary>
     /// <param name="normalizedKey">The normalized key combination (e.g., "ctrl+n").</param>
     [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public async Task HandleShortcutAsync(string normalizedKey)
     {
         if (_suspended || _disposed)

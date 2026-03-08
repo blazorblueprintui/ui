@@ -30,7 +30,7 @@
     [CascadingParameter]
     private SelectContext<TValue>? _context { get; set; }
 
-    private int _itemIndex = -1;
+    private string _itemId = "";
 
     // ShouldRender tracking fields
     private bool lastIsFocused;
@@ -115,7 +115,9 @@
         }
     }
 
-    private string ItemId => _context != null ? $"{_context.ContentId}-item-{_itemIndex}" : "";
+    private int CurrentIndex => _context != null ? _context.GetItemIndex(_itemId) : -1;
+
+    private string ItemId => _context != null ? $"{_context.ContentId}-item-{_itemId}" : "";
 
     private bool IsSelected
     {
@@ -130,7 +132,7 @@
         }
     }
 
-    private bool IsFocused => _context != null && _context.FocusedIndex == _itemIndex;
+    private bool IsFocused => _context != null && _context.FocusedIndex == CurrentIndex;
 
     protected override bool ShouldRender()
     {
@@ -158,7 +160,7 @@
         var displayText = Text ?? Value?.ToString();
 
         // Register this item with the context for keyboard navigation
-        _itemIndex = _context.RegisterItem(Value, Disabled, displayText);
+        _itemId = _context.RegisterItem(Value, Disabled, displayText);
 
         // Initialize ShouldRender tracking to match initial state
         lastIsFocused = IsFocused;
@@ -191,7 +193,7 @@
         // Update focused index on mouse hover for better UX
         if (!Disabled && !_context.Disabled)
         {
-            _context.SetFocusedIndex(_itemIndex);
+            _context.SetFocusedIndex(CurrentIndex);
         }
     }
 
@@ -200,8 +202,7 @@
         if (_context != null)
         {
             _context.OnStateChanged -= HandleStateChanged;
+            _context.UnregisterItem(_itemId);
         }
-        // Note: We don't unregister the item here as it could mess up indices
-        // The context will be recreated when the select is reopened
     }
 }

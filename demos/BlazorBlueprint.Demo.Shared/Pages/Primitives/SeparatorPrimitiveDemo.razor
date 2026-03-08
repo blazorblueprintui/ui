@@ -1,0 +1,129 @@
+@page "/primitives/separator"
+<PageTitle>Separator Primitive - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Separator Primitive</h1>
+            <p class="text-xl text-muted-foreground">
+                Headless, unstyled separator primitive with proper ARIA semantics.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Horizontal Separator (Semantic)</h2>
+                <p class="text-muted-foreground">
+                    A semantic separator with <code class="text-xs bg-muted px-1 py-0.5 rounded">role="separator"</code> announced to screen readers.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <div>
+                    <h3 class="text-lg font-medium">Section One</h3>
+                    <p class="text-sm text-muted-foreground">Content above the separator.</p>
+                </div>
+
+                <BlazorBlueprint.Primitives.Separator.BbSeparator
+                    Decorative="false"
+                    style="height: 1px; width: 100%; background-color: var(--border);" />
+
+                <div>
+                    <h3 class="text-lg font-medium">Section Two</h3>
+                    <p class="text-sm text-muted-foreground">Content below the separator.</p>
+                </div>
+            </div>
+
+            <CodeBlock Source="Primitives/Separator/horizontal.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Decorative Separator</h2>
+                <p class="text-muted-foreground">
+                    A decorative separator with <code class="text-xs bg-muted px-1 py-0.5 rounded">role="none"</code>, hidden from screen readers.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <p class="text-sm text-muted-foreground">Above decorative separator.</p>
+
+                <BlazorBlueprint.Primitives.Separator.BbSeparator
+                    style="height: 1px; width: 100%; background-color: var(--border);" />
+
+                <p class="text-sm text-muted-foreground">Below decorative separator (default is decorative).</p>
+            </div>
+
+            <CodeBlock Source="Primitives/Separator/decorative.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Vertical Separator</h2>
+                <p class="text-muted-foreground">
+                    A vertical separator between horizontally arranged elements.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <div class="flex items-center gap-4" style="height: 40px;">
+                    <span class="text-sm font-medium">Item A</span>
+
+                    <BlazorBlueprint.Primitives.Separator.BbSeparator
+                        Orientation="BlazorBlueprint.Primitives.Separator.SeparatorOrientation.Vertical"
+                        Decorative="false"
+                        style="width: 1px; height: 100%; background-color: var(--border);" />
+
+                    <span class="text-sm font-medium">Item B</span>
+
+                    <BlazorBlueprint.Primitives.Separator.BbSeparator
+                        Orientation="BlazorBlueprint.Primitives.Separator.SeparatorOrientation.Vertical"
+                        Decorative="false"
+                        style="width: 1px; height: 100%; background-color: var(--border);" />
+
+                    <span class="text-sm font-medium">Item C</span>
+                </div>
+            </div>
+
+            <CodeBlock Source="Primitives/Separator/vertical.txt" />
+        </section>
+
+    <!-- Accessibility Notes -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">role="separator"</code> in semantic mode, announced to screen readers with orientation
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">role="none"</code> in decorative mode (default), hidden from assistive technologies
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-orientation</code> set to "horizontal" or "vertical" in semantic mode
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">data-orientation</code> always present for CSS styling hooks
+            </AccessibilityItem>
+        </AriaAttributes>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbSeparator">
+                <ApiParameter Name="Orientation" Type="SeparatorOrientation" Default="SeparatorOrientation.Horizontal">
+                    The orientation of the separator. Determines the rendered <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-orientation</code> attribute.
+                </ApiParameter>
+                <ApiParameter Name="Decorative" Type="bool" Default="true">
+                    When true, renders <code class="text-xs bg-muted px-1 py-0.5 rounded">role="none"</code> and hides from assistive technology. When false, renders <code class="text-xs bg-muted px-1 py-0.5 rounded">role="separator"</code>.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+    </div>
+</div>

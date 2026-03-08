@@ -159,8 +159,18 @@
 
 /* DataGrid keyboard navigation — focus ring drawn per-cell.
    Each cell renders its own top/bottom ring segment via inset box-shadow so
-   the ring is consistent across pinned (sticky) and non-pinned cells alike. */
+   the ring is consistent across pinned (sticky) and non-pinned cells alike.
+
+   The focused row uses position: relative + z-index ONLY on :focus so the ring
+   paints above adjacent rows. We must NOT set position: relative permanently
+   because Chromium has a bug where position: relative on <tr> hides cell borders
+   under border-collapse: collapse. */
 @layer utilities {
+  [role="row"][tabindex="0"]:focus {
+    position: relative;
+    z-index: 10;
+  }
+
   [role="row"][tabindex="0"]:focus > [role="gridcell"] {
     box-shadow: inset 0 2px 0 0 var(--ring), inset 0 -2px 0 0 var(--ring);
   }
@@ -476,6 +486,50 @@
 @layer components {
   [data-orientation="horizontal"] > [data-slot="field-label"] {
     min-width: var(--bb-label-width, auto);
+  }
+}
+
+/* DashboardGrid - Guide background rendered via ::before pseudo-element.
+   JS reads the browser's actual computed column width to build a perfectly
+   aligned SVG mask. Row height is fixed so no rounding issues. */
+@layer components {
+  .bb-guide-background-grid::before {
+    content: '';
+    position: absolute;
+    top: var(--bb-grid-pad-top, 0px);
+    right: var(--bb-grid-pad-right, 0px);
+    bottom: var(--bb-grid-pad-bottom, 0px);
+    left: var(--bb-grid-pad-left, 0px);
+    pointer-events: none;
+    z-index: 0;
+    background-color: color-mix(in oklch, var(--foreground) 8%, transparent);
+    -webkit-mask-image: var(--bb-dashboard-guide-svg);
+    mask-image: var(--bb-dashboard-guide-svg);
+    -webkit-mask-size: var(--bb-dashboard-cell-w) var(--bb-dashboard-cell-h);
+    mask-size: var(--bb-dashboard-cell-w) var(--bb-dashboard-cell-h);
+    -webkit-mask-repeat: repeat;
+    mask-repeat: repeat;
+  }
+
+  /* Hide widgets until JS has compacted the initial layout */
+  [data-positioned="false"] > [data-widget-id] {
+    visibility: hidden;
+  }
+
+  /* Focus ring on the active widget in editable grids.
+     Sets Tailwind's ring variables so the ring composes with the
+     existing shadow-sm utility instead of replacing it. */
+  [data-editable="true"] [data-widget-id]:focus {
+    --tw-ring-offset-shadow: 0 0 0 2px var(--background);
+    --tw-ring-shadow: 0 0 0 4px var(--ring);
+    z-index: 10;
+  }
+
+  /* Active ring on widgets during drag/resize */
+  [data-dragging="true"],
+  [data-resizing="true"] {
+    outline: 2px dashed var(--ring);
+    outline-offset: 2px;
   }
 }
 
