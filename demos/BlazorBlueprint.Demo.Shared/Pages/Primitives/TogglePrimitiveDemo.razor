@@ -1,0 +1,151 @@
+@page "/primitives/toggle"
+<PageTitle>Toggle Primitive - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Toggle Primitive</h1>
+            <p class="text-xl text-muted-foreground">
+                Headless, unstyled toggle button primitive with <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-pressed</code> support.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Uncontrolled Toggle</h2>
+                <p class="text-muted-foreground">
+                    Manages its own pressed state internally. Starts off by default.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BlazorBlueprint.Primitives.Toggle.BbToggle
+                    class="px-4 py-2 border rounded text-sm cursor-pointer data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:bg-background">
+                    Bold
+                </BlazorBlueprint.Primitives.Toggle.BbToggle>
+            </div>
+
+            <CodeBlock Source="Primitives/Toggle/uncontrolled.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Controlled Toggle</h2>
+                <p class="text-muted-foreground">
+                    Pressed state is controlled externally via binding.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <div class="flex gap-2">
+                    <button @onclick="@(() => controlledPressed = true)"
+                            class="px-3 py-2 border rounded text-sm">
+                        Press On
+                    </button>
+                    <button @onclick="@(() => controlledPressed = false)"
+                            class="px-3 py-2 border rounded text-sm">
+                        Press Off
+                    </button>
+                </div>
+
+                <BlazorBlueprint.Primitives.Toggle.BbToggle
+                    Pressed="controlledPressed"
+                    PressedChanged="@((v) => controlledPressed = v)"
+                    class="px-4 py-2 border rounded text-sm cursor-pointer data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:bg-background">
+                    Italic
+                </BlazorBlueprint.Primitives.Toggle.BbToggle>
+                <p class="text-sm text-muted-foreground">State: @(controlledPressed ? "Pressed" : "Not pressed")</p>
+            </div>
+
+            <CodeBlock Source="Primitives/Toggle/controlled.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Default Pressed</h2>
+                <p class="text-muted-foreground">
+                    Starts in pressed state using <code class="text-xs bg-muted px-1 py-0.5 rounded">DefaultPressed</code>.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BlazorBlueprint.Primitives.Toggle.BbToggle
+                    DefaultPressed="true"
+                    class="px-4 py-2 border rounded text-sm cursor-pointer data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:bg-background">
+                    Underline (starts on)
+                </BlazorBlueprint.Primitives.Toggle.BbToggle>
+            </div>
+
+            <CodeBlock Source="Primitives/Toggle/default-pressed.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Disabled Toggle</h2>
+                <p class="text-muted-foreground">
+                    A disabled toggle that cannot be interacted with.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BlazorBlueprint.Primitives.Toggle.BbToggle
+                    Disabled="true"
+                    class="px-4 py-2 border rounded text-sm opacity-50 cursor-not-allowed">
+                    Disabled
+                </BlazorBlueprint.Primitives.Toggle.BbToggle>
+            </div>
+
+            <CodeBlock Source="Primitives/Toggle/disabled.txt" />
+        </section>
+
+    <!-- Accessibility Notes -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-pressed</code> set to "true" when pressed, "false" when not pressed
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">data-state</code> set to "on" or "off" for CSS styling hooks
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">disabled</code> native HTML attribute prevents interaction when set
+            </AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Toggle the pressed state">
+                <BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbToggle">
+                <ApiParameter Name="Pressed" Type="bool?" Default="null">
+                    Controls the pressed state (controlled mode). When null, the component manages its own state.
+                </ApiParameter>
+                <ApiParameter Name="PressedChanged" Type="EventCallback&lt;bool&gt;">
+                    Callback invoked when the pressed state changes. Use with <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Pressed</code>.
+                </ApiParameter>
+                <ApiParameter Name="DefaultPressed" Type="bool" Default="false">
+                    Default pressed state for uncontrolled mode.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether the toggle is disabled.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+    </div>
+</div>
+
+@code {
+    private bool controlledPressed;
+}

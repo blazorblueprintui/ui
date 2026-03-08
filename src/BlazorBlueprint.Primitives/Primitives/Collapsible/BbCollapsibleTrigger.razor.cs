@@ -49,6 +49,15 @@ namespace BlazorBlueprint.Primitives.Collapsible;
 /// </example>
 public partial class BbCollapsibleTrigger : ComponentBase
 {
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "BbCollapsibleTrigger must be used within a BbCollapsible component.");
+        }
+    }
+
     /// <summary>
     /// Gets the cascaded collapsible context from the parent Collapsible component.
     /// </summary>

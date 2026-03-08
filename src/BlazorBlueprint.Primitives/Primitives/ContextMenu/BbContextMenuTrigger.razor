@@ -1,0 +1,61 @@
+@namespace BlazorBlueprint.Primitives.ContextMenu
+
+@*
+    ContextMenu trigger - captures right-click and opens the menu at the click position.
+    When the menu is open, the trigger sits above the dismiss overlay (z-index: 41 vs 40)
+    so that right-clicking within the trigger area repositions the menu instead of just closing it.
+*@
+
+<div @oncontextmenu="HandleContextMenu"
+     @oncontextmenu:preventDefault
+     @onclick="HandleClick"
+     @onclick:stopPropagation="@(Context?.IsOpen == true)"
+     data-state="@(Context?.IsOpen == true ? "open" : "closed")"
+     style="@MergedTriggerStyle"
+     @attributes="FilteredAttributes">
+    @ChildContent
+</div>
+
+@inherits BlazorBlueprint.Primitives.BbPrimitiveBase
+
+@code {
+    [CascadingParameter]
+    private BbContextMenu? Context { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "BbContextMenuTrigger must be used within a BbContextMenu component.");
+        }
+    }
+
+    /// <summary>
+    /// The trigger content (the area that responds to right-click).
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private string? TriggerStyle => Context?.IsOpen == true ? "position: relative; z-index: 41" : null;
+
+    private string? MergedTriggerStyle => MergeStyles(TriggerStyle);
+
+    private async Task HandleContextMenu(MouseEventArgs e)
+    {
+        if (Context != null)
+        {
+            await Context.OpenAt(e.ClientX, e.ClientY);
+        }
+    }
+
+    private async Task HandleClick()
+    {
+        if (Context?.IsOpen == true)
+        {
+            await Context.Close();
+        }
+    }
+}

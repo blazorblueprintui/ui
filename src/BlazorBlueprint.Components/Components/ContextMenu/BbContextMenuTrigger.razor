@@ -1,33 +1,18 @@
 @namespace BlazorBlueprint.Components
 
-<div class="@CssClass" style="@TriggerStyle" @oncontextmenu="HandleContextMenu" @oncontextmenu:preventDefault>
+<BlazorBlueprint.Primitives.ContextMenu.BbContextMenuTrigger class="@CssClass">
     @ChildContent
-</div>
+</BlazorBlueprint.Primitives.ContextMenu.BbContextMenuTrigger>
 
 @code {
-    [CascadingParameter]
-    public BbContextMenu? Context { get; set; }
-
     [Parameter]
     public string? Class { get; set; }
 
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
-    private async Task HandleContextMenu(MouseEventArgs e)
-    {
-        if (Context != null)
-        {
-            await Context.OpenAt(e.ClientX, e.ClientY);
-        }
-    }
-
     private string CssClass => ClassNames.cn(
         "w-fit",
         Class
     );
-
-    private string? TriggerStyle => Context?.IsOpen == true
-        ? "position: relative; z-index: 41;"
-        : null;
 }

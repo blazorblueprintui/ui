@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
@@ -323,6 +324,7 @@ public partial class BbTreeView : IAsyncDisposable
     /// Called from JavaScript when a node is activated via click or keyboard (Enter/Space).
     /// </summary>
     [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public async Task JsOnNodeActivate(string value, bool hasChildren = false)
     {
         context.FocusedNodeValue = value;
@@ -357,6 +359,7 @@ public partial class BbTreeView : IAsyncDisposable
     /// Called from JavaScript when a node checkbox is toggled via keyboard (Space).
     /// </summary>
     [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public void JsOnNodeCheck(string value)
     {
         context.FocusedNodeValue = value;
@@ -367,6 +370,7 @@ public partial class BbTreeView : IAsyncDisposable
     /// Called from JavaScript when a node should be expanded.
     /// </summary>
     [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public async Task JsOnNodeExpand(string value)
     {
         context.FocusedNodeValue = value;
@@ -381,6 +385,7 @@ public partial class BbTreeView : IAsyncDisposable
     /// Called from JavaScript when a node should be collapsed.
     /// </summary>
     [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public async Task JsOnNodeCollapse(string value)
     {
         context.FocusedNodeValue = value;
@@ -395,6 +400,7 @@ public partial class BbTreeView : IAsyncDisposable
     /// Called from JavaScript to expand all siblings of a node.
     /// </summary>
     [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public void JsOnExpandSiblings(string value)
     {
         context.FocusedNodeValue = value;

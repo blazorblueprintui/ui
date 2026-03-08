@@ -1,27 +1,24 @@
 @namespace BlazorBlueprint.Components
-@using Microsoft.JSInterop
-@using System.Globalization
-@inject IJSRuntime JS
-@implements IAsyncDisposable
 
-<div @ref="_trackRef"
-     role="slider"
-     aria-valuemin="@Min"
-     aria-valuemax="@Max"
-     aria-valuenow="@CurrentValue"
-     aria-disabled="@Disabled"
-     tabindex="@(Disabled ? -1 : 0)"
-     class="@CssClass"
-     @onkeydown="HandleKeyDown">
-    <div class="@ComputedTrackClass">
-        <div class="@ComputedIndicatorClass"
-             style="width: @PercentageValue;">
-        </div>
-    </div>
-    <div class="@ComputedThumbClass"
-         style="left: @PercentageValue;">
-    </div>
-</div>
+@*
+    Slider component - wraps the Slider primitive for drag, keyboard, and ARIA support.
+*@
+
+<BlazorBlueprint.Primitives.Slider.BbSlider
+    Value="@Value"
+    ValueChanged="@ValueChanged"
+    DefaultValue="@DefaultValue"
+    Min="@Min"
+    Max="@Max"
+    Step="@Step"
+    Disabled="@Disabled"
+    Orientation="@MappedOrientation"
+    class="@CssClass">
+    <BlazorBlueprint.Primitives.Slider.BbSliderTrack class="@ComputedTrackClass">
+        <BlazorBlueprint.Primitives.Slider.BbSliderRange class="@ComputedIndicatorClass" />
+    </BlazorBlueprint.Primitives.Slider.BbSliderTrack>
+    <BlazorBlueprint.Primitives.Slider.BbSliderThumb class="@ComputedThumbClass" />
+</BlazorBlueprint.Primitives.Slider.BbSlider>
 
 @code {
     [Parameter]
@@ -63,119 +60,10 @@
     [Parameter]
     public string? ThumbClass { get; set; }
 
-    private ElementReference _trackRef;
-    private double _internalValue;
-    private IJSObjectReference? _jsModule;
-    private DotNetObjectReference<BbSlider>? _dotNetRef;
-    private string _sliderId = Guid.NewGuid().ToString("N");
-    private bool _jsInitialized;
-    private bool _disposed;
-
-    private bool IsControlled => ValueChanged.HasDelegate;
-    private double CurrentValue => IsControlled ? Value : _internalValue;
-    private double Percentage => ((CurrentValue - Min) / (Max - Min)) * 100;
-
-    private string PercentageValue => $"{Percentage.ToString(CultureInfo.InvariantCulture)}%";
-
-    protected override void OnInitialized()
-    {
-        _internalValue = DefaultValue;
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender && !Disabled)
-        {
-            await InitializeJsAsync();
-        }
-    }
-
-    private async Task InitializeJsAsync()
-    {
-        if (_jsInitialized) return;
-
-        try
-        {
-            _jsModule = await JS.InvokeAsync<IJSObjectReference>("import",
-                "./_content/BlazorBlueprint.Components/js/slider.js");
-            _dotNetRef = DotNetObjectReference.Create(this);
-            await _jsModule.InvokeVoidAsync("initializeSlider", _trackRef, _dotNetRef, _sliderId);
-            _jsInitialized = true;
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-        {
-            // Expected during circuit disconnect in Blazor Server
-        }
-        catch (InvalidOperationException)
-        {
-            // JS interop not available during prerendering
-        }
-    }
-
-    [JSInvokable]
-    public async Task UpdateValueFromPercentage(double percentage)
-    {
-        if (_disposed) return;
-        if (Disabled) return;
-
-        // Input validation - reject invalid values
-        if (double.IsNaN(percentage) || double.IsInfinity(percentage))
-            return;
-
-        // Clamp percentage to valid range
-        percentage = Math.Max(0, Math.Min(1, percentage));
-
-        var newValue = Min + (percentage * (Max - Min));
-        await SetValue(newValue);
-    }
-
-    private async Task SetValue(double value)
-    {
-        value = Math.Round(value / Step) * Step;
-        value = Math.Max(Min, Math.Min(Max, value));
-
-        if (IsControlled)
-        {
-            await ValueChanged.InvokeAsync(value);
-        }
-        else
-        {
-            _internalValue = value;
-            StateHasChanged();
-        }
-    }
-
-    private async Task HandleKeyDown(KeyboardEventArgs e)
-    {
-        if (Disabled) return;
-
-        var stepSize = Step;
-        var largeStep = (Max - Min) / 10;
-
-        switch (e.Key)
-        {
-            case "ArrowRight":
-            case "ArrowUp":
-                await SetValue(CurrentValue + stepSize);
-                break;
-            case "ArrowLeft":
-            case "ArrowDown":
-                await SetValue(CurrentValue - stepSize);
-                break;
-            case "PageUp":
-                await SetValue(CurrentValue + largeStep);
-                break;
-            case "PageDown":
-                await SetValue(CurrentValue - largeStep);
-                break;
-            case "Home":
-                await SetValue(Min);
-                break;
-            case "End":
-                await SetValue(Max);
-                break;
-        }
-    }
+    private BlazorBlueprint.Primitives.Slider.SliderOrientation MappedOrientation =>
+        Orientation == SliderOrientation.Vertical
+            ? BlazorBlueprint.Primitives.Slider.SliderOrientation.Vertical
+            : BlazorBlueprint.Primitives.Slider.SliderOrientation.Horizontal;
 
     private string CssClass => ClassNames.cn(
         "relative flex w-full touch-none select-none items-center",
@@ -198,19 +86,4 @@
         Disabled ? "" : "cursor-grab active:cursor-grabbing",
         ThumbClass
     );
-
-    public async ValueTask DisposeAsync()
-    {
-        _disposed = true;
-        if (_jsModule != null && _jsInitialized)
-        {
-            try
-            {
-                await _jsModule.InvokeVoidAsync("disposeSlider", _sliderId);
-                await _jsModule.DisposeAsync();
-            }
-            catch { }
-        }
-        _dotNetRef?.Dispose();
-    }
 }

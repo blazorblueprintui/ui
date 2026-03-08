@@ -1,0 +1,42 @@
+@namespace BlazorBlueprint.Primitives.Slider
+@using System.Globalization
+
+@* Slider range - the filled portion of the track *@
+<div data-orientation="@Context?.Orientation.ToString().ToLower()"
+     style="@MergedStyle"
+     @attributes="FilteredAttributes">
+</div>
+
+@inherits BlazorBlueprint.Primitives.BbPrimitiveBase
+
+@code {
+    [CascadingParameter]
+    private BbSlider? Context { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "BbSliderRange must be used within a BbSlider component.");
+        }
+    }
+
+    private string RangeStyle
+    {
+        get
+        {
+            var percentage = Context?.Percentage ?? 0;
+            var pctStr = percentage.ToString(CultureInfo.InvariantCulture);
+            if (Context?.Orientation == SliderOrientation.Vertical)
+            {
+                return $"height: {pctStr}%";
+            }
+            return $"width: {pctStr}%";
+        }
+    }
+
+    private string? MergedStyle => MergeStyles(RangeStyle);
+}

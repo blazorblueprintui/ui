@@ -284,15 +284,17 @@ Production-ready components for complex data-driven applications:
 
 ## Primitives
 
-Blazor Blueprint's **18 headless primitives** provide behavior, ARIA attributes, and keyboard support without any styling. They handle all the complex interaction logic — focus trapping, ARIA attributes, keyboard shortcuts, portal rendering — while giving you complete control over appearance.
+Blazor Blueprint's **25 headless primitives** provide behavior, ARIA attributes, and keyboard support without any styling. They handle all the complex interaction logic — focus trapping, ARIA attributes, keyboard shortcuts, portal rendering — while giving you complete control over appearance.
 
 Use primitives when you need full design freedom or are building a custom design system.
 
 | Primitive | What it handles |
 |-----------|----------------|
 | **Accordion** | Expand/collapse logic, single/multiple mode, keyboard navigation |
+| **Alert Dialog** | Modal requiring explicit acknowledgement, no dismiss via overlay or Escape |
 | **Checkbox** | Checked/unchecked/indeterminate state, ARIA attributes |
 | **Collapsible** | Open/close state, animated transitions |
+| **Context Menu** | Right-click menu with keyboard navigation and positioning |
 | **Dashboard Grid** | Widget layout state, drag-and-drop coordination, resize handling, responsive breakpoints |
 | **DataGrid** | Headless data grid with sorting, filtering, pagination, selection, expansion, row grouping, and state management |
 | **Dialog** | Focus trapping, escape to close, scroll locking, portal rendering |
@@ -300,12 +302,17 @@ Use primitives when you need full design freedom or are building a custom design
 | **Hover Card** | Hover intent, delay timing, portal positioning |
 | **Label** | Label-control association |
 | **Popover** | Floating positioning, portal rendering, click-outside |
+| **Progress** | Accessible progress bar with determinate and indeterminate states |
 | **Radio Group** | Single selection, arrow key navigation, ARIA roles |
+| **Scroll Area** | Custom scrollbar with accessible ARIA scrollbar role and drag support |
 | **Select** | Dropdown behavior, typeahead, keyboard navigation |
+| **Separator** | Semantic or decorative divider with orientation support |
 | **Sheet** | Side panel, focus trapping, scroll locking |
+| **Slider** | Range input with keyboard navigation and pointer drag support |
 | **Switch** | Toggle state, keyboard support, ARIA switch role |
 | **Table** | Sorting, pagination, row selection, keyboard row navigation |
 | **Tabs** | Tab selection, arrow key navigation, ARIA tab roles |
+| **Toggle** | Pressed/active state with aria-pressed support |
 | **Tooltip** | Hover/focus triggers, delay, portal positioning |
 | **Tree View** | Hierarchical expand/collapse, selection, checkbox state management |
 

@@ -1,0 +1,57 @@
+@namespace BlazorBlueprint.Primitives.Slider
+@using System.Globalization
+
+@* Slider thumb - the draggable handle with ARIA slider role *@
+<div role="slider"
+     aria-valuenow="@Context?.CurrentValue.ToString(CultureInfo.InvariantCulture)"
+     aria-valuemin="@Context?.Min.ToString(CultureInfo.InvariantCulture)"
+     aria-valuemax="@Context?.Max.ToString(CultureInfo.InvariantCulture)"
+     aria-orientation="@Context?.Orientation.ToString().ToLower()"
+     aria-disabled="@(Context?.Disabled == true ? "true" : null)"
+     data-orientation="@Context?.Orientation.ToString().ToLower()"
+     data-disabled="@(Context?.Disabled == true ? "true" : null)"
+     tabindex="@(Context?.Disabled == true ? -1 : 0)"
+     style="@MergedStyle"
+     @attributes="FilteredAttributes">
+    @ChildContent
+</div>
+
+@inherits BlazorBlueprint.Primitives.BbPrimitiveBase
+
+@code {
+    [CascadingParameter]
+    private BbSlider? Context { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "BbSliderThumb must be used within a BbSlider component.");
+        }
+    }
+
+    /// <summary>
+    /// Optional child content inside the thumb.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private string ThumbStyle
+    {
+        get
+        {
+            var percentage = Context?.Percentage ?? 0;
+            var pctStr = percentage.ToString(CultureInfo.InvariantCulture);
+            if (Context?.Orientation == SliderOrientation.Vertical)
+            {
+                return $"bottom: {pctStr}%";
+            }
+            return $"left: {pctStr}%";
+        }
+    }
+
+    private string? MergedStyle => MergeStyles(ThumbStyle);
+}

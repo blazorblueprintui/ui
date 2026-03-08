@@ -73,6 +73,13 @@ public partial class BbRadioGroup<TValue> : ComponentBase
     public bool Disabled { get; set; }
 
     /// <summary>
+    /// Gets or sets whether the radio group is required in a form context.
+    /// When true, sets aria-required="true" for screen readers.
+    /// </summary>
+    [Parameter]
+    public bool Required { get; set; }
+
+    /// <summary>
     /// Gets or sets the ARIA label for the radio group.
     /// </summary>
     /// <remarks>

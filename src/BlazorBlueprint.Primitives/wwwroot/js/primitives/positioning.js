@@ -1,41 +1,12 @@
-// Positioning service using Floating UI
-// CDN: https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.5.3/+esm
+// Positioning service using Floating UI (bundled locally)
 
 let floatingUI = null;
-let stylesInjected = false;
-
-/**
- * Injects required CSS for positioning primitives.
- * This ensures the library works without requiring manual CSS imports.
- */
-function injectRequiredStyles() {
-    if (stylesInjected) return;
-
-    const css = `
-        /* BlazorBlueprint Primitives - Auto-injected positioning styles */
-        [data-positioned="false"] {
-            position: absolute !important;
-            top: -9999px !important;
-            left: -9999px !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-            z-index: 50;
-        }
-    `;
-
-    const style = document.createElement('style');
-    style.setAttribute('data-blazorblueprint-primitives', 'positioning');
-    style.textContent = css;
-    document.head.appendChild(style);
-    stylesInjected = true;
-}
-
 // Store cleanup functions with unique IDs to avoid passing functions through JS interop
 const cleanupRegistry = new Map();
-let cleanupIdCounter = 0;
 
 /**
- * Lazy loads Floating UI from preloaded global or CDN with fallback
+ * Loads Floating UI from preloaded global or bundled local file.
+ * No external CDN dependency — the library ships with the package.
  */
 async function loadFloatingUI() {
     if (floatingUI) return floatingUI;
@@ -47,20 +18,12 @@ async function loadFloatingUI() {
     }
 
     try {
-        // Try CDN first
-        floatingUI = await import('https://cdn.jsdelivr.net/npm/@floating-ui/dom@1.5.3/+esm');
+        // Import bundled local copy (ships with the package)
+        floatingUI = await import('../vendor/floating-ui-dom.esm.min.js');
         return floatingUI;
-    } catch (cdnError) {
-        console.warn('Failed to load Floating UI from CDN, trying local fallback:', cdnError);
-
-        try {
-            // Try unpkg as alternative CDN
-            floatingUI = await import('https://unpkg.com/@floating-ui/dom@1.5.3/+esm');
-            return floatingUI;
-        } catch (fallbackError) {
-            console.error('Failed to load Floating UI from all sources:', fallbackError);
-            throw new Error('Floating UI library could not be loaded. Please check network connection or bundle the library locally.');
-        }
+    } catch (error) {
+        console.error('Failed to load bundled Floating UI:', error);
+        throw new Error('Floating UI library could not be loaded. Ensure the BlazorBlueprint.Primitives static assets are included.');
     }
 }
 
@@ -104,9 +67,6 @@ export async function waitForElement(elementId, maxWaitMs = 100, intervalMs = 10
  * @returns {Promise<Object>} Position result with x, y, placement
  */
 export async function computePosition(reference, floating, options = {}) {
-    // Inject required CSS on first use
-    injectRequiredStyles();
-
     // Validate elements before proceeding
     if (!isElementReady(reference)) {
         throw new Error('Reference element is not ready or not in DOM');
@@ -245,7 +205,7 @@ export async function autoUpdate(reference, floating, options = {}) {
         const cleanupFunc = lib.autoUpdate(reference, floating, update);
 
         // Store cleanup function in registry with unique ID
-        const id = cleanupIdCounter++;
+        const id = crypto.randomUUID();
         cleanupRegistry.set(id, cleanupFunc);
 
         // Return disposable object with ID (no functions in the object)

@@ -217,13 +217,13 @@ export function setupKeyboardNavigation(contentId, dotNetRef) {
             case 'Escape':
                 e.preventDefault();
                 if (dotNetRef) {
-                    await dotNetRef.invokeMethodAsync('HandleEscapeKey');
+                    await dotNetRef.invokeMethodAsync('JsOnEscapeKey');
                 }
                 break;
 
             case 'Tab':
                 if (dotNetRef) {
-                    await dotNetRef.invokeMethodAsync('HandleTabKey');
+                    await dotNetRef.invokeMethodAsync('JsOnTabKey');
                 }
                 break;
         }

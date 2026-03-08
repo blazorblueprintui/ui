@@ -142,11 +142,20 @@
         // Update controlled value if it changed
         if (_state.IsControlled)
         {
+            var valueChanged = !EqualityComparer<TValue>.Default.Equals(_state.ControlledValue, Value);
             _state.ControlledValue = Value;
             _context.State.Value = Value;
-            // Update DisplayText - registered items (always mounted via ForceMount) → DisplayTextSelector/ToString
-            _context.SetDisplayText(_context.GetDisplayTextForValue(Value)
-                ?? GetDisplayText(Value));
+
+            // Only update DisplayText when the value actually changed.
+            // Without this guard, every parent re-render (e.g. sibling control change)
+            // would reset DisplayText. With ForceMount="false", items are destroyed
+            // when the dropdown closes, so GetDisplayTextForValue returns null and
+            // the fallback produces Value.ToString() ("apple" instead of "Apple").
+            if (valueChanged)
+            {
+                _context.SetDisplayText(_context.GetDisplayTextForValue(Value)
+                    ?? GetDisplayText(Value));
+            }
         }
 
         // Sync ItemClass to context

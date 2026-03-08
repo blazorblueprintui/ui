@@ -1,0 +1,61 @@
+@namespace BlazorBlueprint.Primitives.Progress
+
+<CascadingValue Value="this" IsFixed="false">
+    <div role="progressbar"
+         aria-valuenow="@(Value.HasValue ? Value : null)"
+         aria-valuemin="0"
+         aria-valuemax="@Max"
+         aria-valuetext="@ValueText"
+         data-state="@DataState"
+         data-value="@(Value.HasValue ? Value : null)"
+         data-max="@Max"
+         @attributes="AdditionalAttributes">
+        @ChildContent
+    </div>
+</CascadingValue>
+
+@code {
+    /// <summary>
+    /// Gets or sets the current value. Null indicates indeterminate state.
+    /// </summary>
+    [Parameter]
+    public double? Value { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum value. Defaults to 100.
+    /// </summary>
+    [Parameter]
+    public double Max { get; set; } = 100;
+
+    /// <summary>
+    /// Gets or sets a function that returns a human-readable value text for screen readers.
+    /// Receives (value, max) and should return a string like "50% complete".
+    /// </summary>
+    [Parameter]
+    public Func<double, double, string>? GetValueLabel { get; set; }
+
+    /// <summary>
+    /// Gets or sets the child content (typically the indicator).
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional attributes to be applied to the progressbar element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Gets the percentage of completion (0-100). Null if indeterminate.
+    /// </summary>
+    public double? Percentage => Value.HasValue && Max > 0 ? (Value.Value / Max) * 100 : null;
+
+    internal string DataState => Value.HasValue
+        ? (Value.Value >= Max ? "complete" : "loading")
+        : "indeterminate";
+
+    private string? ValueText => Value.HasValue && GetValueLabel != null
+        ? GetValueLabel(Value.Value, Max)
+        : null;
+}

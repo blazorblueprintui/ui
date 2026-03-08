@@ -15,6 +15,7 @@ else
 {
     <div id="@Context.TriggerId"
          @ref="_triggerRef"
+         tabindex="0"
          @onmouseenter="HandleMouseEnter"
          @onmouseleave="HandleMouseLeave"
          @onfocus="HandleFocus"
@@ -28,6 +29,7 @@ else
     private ElementReference _triggerRef;
     private System.Timers.Timer? _openTimer;
     private System.Timers.Timer? _closeTimer;
+    private bool _disposed;
 
     /// <summary>
     /// Cascading parameter to receive the hover card context.
@@ -224,8 +226,9 @@ else
 
     private void OnOpenTimerElapsed(object? sender, ElapsedEventArgs e)
     {
-        InvokeAsync(() =>
+        _ = InvokeAsync(() =>
         {
+            if (_disposed) { return; }
             Context.Open(_triggerRef);
             StateHasChanged();
         });
@@ -233,8 +236,9 @@ else
 
     private void OnOpenTimerElapsedForContext(object? sender, ElapsedEventArgs e)
     {
-        InvokeAsync(() =>
+        _ = InvokeAsync(() =>
         {
+            if (_disposed) { return; }
             Context.Open(_asChildTriggerRef);
             StateHasChanged();
         });
@@ -242,8 +246,9 @@ else
 
     private void OnCloseTimerElapsed(object? sender, ElapsedEventArgs e)
     {
-        InvokeAsync(() =>
+        _ = InvokeAsync(() =>
         {
+            if (_disposed) { return; }
             Context.Close();
             StateHasChanged();
         });
@@ -271,6 +276,7 @@ else
 
     public void Dispose()
     {
+        _disposed = true;
         CancelOpenTimer();
         CancelCloseTimer();
     }

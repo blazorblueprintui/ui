@@ -1,14 +1,14 @@
 @namespace BlazorBlueprint.Components
 
-<button type="button"
-        aria-pressed="@IsPressed"
-        data-state="@(IsPressed ? "on" : "off")"
-        disabled="@Disabled"
-        class="@CssClass"
-        @onclick="HandleClick"
-        @attributes="AdditionalAttributes">
+<BlazorBlueprint.Primitives.Toggle.BbToggle
+    Pressed="@Pressed"
+    PressedChanged="@PressedChanged"
+    DefaultPressed="@DefaultPressed"
+    Disabled="@Disabled"
+    class="@CssClass"
+    @attributes="AdditionalAttributes">
     @ChildContent
-</button>
+</BlazorBlueprint.Primitives.Toggle.BbToggle>
 
 @code {
     [Parameter]
@@ -37,31 +37,6 @@
 
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
-
-    private bool _internalPressed;
-    private bool IsControlled => PressedChanged.HasDelegate;
-    private bool IsPressed => IsControlled ? Pressed : _internalPressed;
-
-    protected override void OnInitialized()
-    {
-        _internalPressed = DefaultPressed;
-    }
-
-    private async Task HandleClick()
-    {
-        if (Disabled) return;
-
-        var newValue = !IsPressed;
-
-        if (IsControlled)
-        {
-            await PressedChanged.InvokeAsync(newValue);
-        }
-        else
-        {
-            _internalPressed = newValue;
-        }
-    }
 
     private string VariantClasses => Variant switch
     {

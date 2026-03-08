@@ -1,0 +1,290 @@
+@typeparam TValue
+@namespace BlazorBlueprint.Primitives.Toggle
+@attribute [CascadingTypeParameter(nameof(TValue))]
+
+<CascadingValue Value="context" IsFixed="false">
+    <div role="group"
+         aria-label="@AriaLabel"
+         aria-disabled="@Disabled.ToString().ToLower()"
+         data-orientation="@Orientation.ToString().ToLower()"
+         @onkeydown="HandleKeyDown"
+         @attributes="AdditionalAttributes">
+        @ChildContent
+    </div>
+</CascadingValue>
+
+@code {
+    private ToggleGroupContext<TValue> context = new();
+    private List<BbToggleGroupItem<TValue>>? cachedEnabledItems;
+    private int lastItemsVersion;
+    private BbToggleGroupItem<TValue>? lastFocusedItem;
+
+    /// <summary>
+    /// Gets or sets the selection type (Single or Multiple).
+    /// </summary>
+    [Parameter]
+    public ToggleGroupType Type { get; set; } = ToggleGroupType.Single;
+
+    /// <summary>
+    /// Gets or sets the currently selected value (single selection mode).
+    /// </summary>
+    [Parameter]
+    public TValue? Value { get; set; }
+
+    /// <summary>
+    /// Gets or sets the callback invoked when the selected value changes (single mode).
+    /// </summary>
+    [Parameter]
+    public EventCallback<TValue?> ValueChanged { get; set; }
+
+    /// <summary>
+    /// Gets or sets the default value for uncontrolled single selection.
+    /// </summary>
+    [Parameter]
+    public TValue? DefaultValue { get; set; }
+
+    /// <summary>
+    /// Gets or sets the currently selected values (multiple selection mode).
+    /// </summary>
+    [Parameter]
+    public List<TValue>? Values { get; set; }
+
+    /// <summary>
+    /// Gets or sets the callback invoked when selected values change (multiple mode).
+    /// </summary>
+    [Parameter]
+    public EventCallback<List<TValue>> ValuesChanged { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the group is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets the orientation for keyboard navigation.
+    /// </summary>
+    [Parameter]
+    public string Orientation { get; set; } = "horizontal";
+
+    /// <summary>
+    /// Gets or sets whether keyboard navigation wraps around.
+    /// </summary>
+    [Parameter]
+    public bool Loop { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the ARIA label for the group.
+    /// </summary>
+    [Parameter]
+    public string? AriaLabel { get; set; }
+
+    /// <summary>
+    /// Gets or sets the child content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private TValue? internalValue;
+    private List<TValue> internalValues = new();
+    private bool IsControlled => ValueChanged.HasDelegate || ValuesChanged.HasDelegate;
+
+    protected override void OnInitialized()
+    {
+        internalValue = DefaultValue;
+    }
+
+    protected override void OnParametersSet()
+    {
+        context.Type = Type;
+        context.Disabled = Disabled;
+        context.Orientation = Orientation;
+        context.ToggleItem = ToggleItemAsync;
+
+        if (Type == ToggleGroupType.Single)
+        {
+            context.Value = IsControlled ? Value : internalValue;
+        }
+        else
+        {
+            context.Values = (IsControlled ? Values : internalValues) ?? new List<TValue>();
+        }
+    }
+
+    internal bool IsItemPressed(TValue? itemValue)
+    {
+        if (itemValue == null)
+        {
+            return false;
+        }
+
+        if (Type == ToggleGroupType.Single)
+        {
+            var currentValue = IsControlled ? Value : internalValue;
+            return EqualityComparer<TValue>.Default.Equals(currentValue, itemValue);
+        }
+        else
+        {
+            var currentValues = IsControlled ? Values : internalValues;
+            return currentValues?.Contains(itemValue) == true;
+        }
+    }
+
+    private async Task ToggleItemAsync(TValue itemValue)
+    {
+        if (Disabled)
+        {
+            return;
+        }
+
+        if (Type == ToggleGroupType.Single)
+        {
+            var currentValue = IsControlled ? Value : internalValue;
+            var newValue = EqualityComparer<TValue>.Default.Equals(currentValue, itemValue) ? default : itemValue;
+
+            if (IsControlled)
+            {
+                await ValueChanged.InvokeAsync(newValue);
+            }
+            else
+            {
+                internalValue = newValue;
+                StateHasChanged();
+            }
+        }
+        else
+        {
+            var currentValues = (IsControlled ? Values : internalValues) ?? new List<TValue>();
+            var newValues = new List<TValue>(currentValues);
+
+            if (newValues.Contains(itemValue))
+            {
+                newValues.Remove(itemValue);
+            }
+            else
+            {
+                newValues.Add(itemValue);
+            }
+
+            if (IsControlled)
+            {
+                await ValuesChanged.InvokeAsync(newValues);
+            }
+            else
+            {
+                internalValues = newValues;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (Disabled)
+        {
+            return;
+        }
+
+        var enabledItems = GetEnabledItems();
+        if (enabledItems.Count == 0)
+        {
+            return;
+        }
+
+        var isHorizontal = Orientation.Equals("horizontal", StringComparison.OrdinalIgnoreCase);
+
+        switch (args.Key)
+        {
+            case "ArrowRight" when isHorizontal:
+            case "ArrowDown" when !isHorizontal:
+                await NavigateNext(enabledItems);
+                break;
+            case "ArrowLeft" when isHorizontal:
+            case "ArrowUp" when !isHorizontal:
+                await NavigatePrevious(enabledItems);
+                break;
+            case "Home":
+                await FocusItem(enabledItems[0]);
+                break;
+            case "End":
+                await FocusItem(enabledItems[^1]);
+                break;
+        }
+    }
+
+    private List<BbToggleGroupItem<TValue>> GetEnabledItems()
+    {
+        var currentVersion = context.Items.Count;
+        if (cachedEnabledItems == null || lastItemsVersion != currentVersion)
+        {
+            cachedEnabledItems = context.Items.Where(i => !i.Disabled).ToList();
+            lastItemsVersion = currentVersion;
+        }
+        return cachedEnabledItems;
+    }
+
+    private async Task NavigateNext(List<BbToggleGroupItem<TValue>> enabledItems)
+    {
+        var currentIndex = GetFocusedIndex(enabledItems);
+        int nextIndex;
+        if (Loop)
+        {
+            nextIndex = (currentIndex + 1) % enabledItems.Count;
+        }
+        else
+        {
+            nextIndex = Math.Min(currentIndex + 1, enabledItems.Count - 1);
+        }
+        await FocusItem(enabledItems[nextIndex]);
+    }
+
+    private async Task NavigatePrevious(List<BbToggleGroupItem<TValue>> enabledItems)
+    {
+        var currentIndex = GetFocusedIndex(enabledItems);
+        int prevIndex;
+        if (Loop)
+        {
+            prevIndex = currentIndex <= 0 ? enabledItems.Count - 1 : currentIndex - 1;
+        }
+        else
+        {
+            prevIndex = Math.Max(currentIndex - 1, 0);
+        }
+        await FocusItem(enabledItems[prevIndex]);
+    }
+
+    private int GetFocusedIndex(List<BbToggleGroupItem<TValue>> enabledItems)
+    {
+        // First, check which item was last focused via keyboard nav
+        if (lastFocusedItem != null)
+        {
+            var idx = enabledItems.IndexOf(lastFocusedItem);
+            if (idx >= 0)
+            {
+                return idx;
+            }
+        }
+
+        // Fall back to pressed item (single mode) or first item
+        for (var i = 0; i < enabledItems.Count; i++)
+        {
+            if (IsItemPressed(enabledItems[i].Value))
+            {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    private async Task FocusItem(BbToggleGroupItem<TValue> item)
+    {
+        lastFocusedItem = item;
+        await item.FocusAsync();
+    }
+}

@@ -58,6 +58,7 @@ namespace BlazorBlueprint.Primitives.Checkbox;
 public partial class BbCheckbox : ComponentBase
 {
     private bool shouldPreventDefault;
+    private bool toggledFromKeyDown;
 
     /// <summary>
     /// Gets or sets whether the checkbox is checked.
@@ -116,6 +117,13 @@ public partial class BbCheckbox : ComponentBase
     /// </remarks>
     [Parameter]
     public string? Id { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the checkbox is required in a form context.
+    /// When true, sets aria-required="true" for screen readers.
+    /// </summary>
+    [Parameter]
+    public bool Required { get; set; }
 
     /// <summary>
     /// Gets or sets the ARIA label for the checkbox.
@@ -190,6 +198,14 @@ public partial class BbCheckbox : ComponentBase
     /// </remarks>
     private async Task HandleClick(MouseEventArgs args)
     {
+        // Skip if this click was a browser-synthesized click from a keyboard event
+        // that we already handled in HandleKeyDown.
+        if (toggledFromKeyDown)
+        {
+            toggledFromKeyDown = false;
+            return;
+        }
+
         if (!Disabled)
         {
             await ToggleChecked();
@@ -201,20 +217,24 @@ public partial class BbCheckbox : ComponentBase
     /// </summary>
     /// <param name="args">The keyboard event arguments.</param>
     /// <remarks>
-    /// Supports Space key to toggle the checkbox state.
-    /// Prevents default behavior to avoid page scrolling.
+    /// Toggles the checkbox on Space or Enter. We must toggle here rather than
+    /// relying on the browser's synthetic click because Blazor's
+    /// <c>@onkeydown:preventDefault</c> is evaluated at render time — once set to
+    /// <c>true</c> (to prevent Space from scrolling the page), subsequent Space
+    /// presses have their default action suppressed before the handler runs,
+    /// which blocks the synthetic click entirely.
     /// </remarks>
     private async Task HandleKeyDown(KeyboardEventArgs args)
     {
-        if (!Disabled && args.Key == " ")
+        if (!Disabled && (args.Key == " " || args.Key == "Enter"))
         {
-            shouldPreventDefault = true;
+            shouldPreventDefault = args.Key == " ";
+            toggledFromKeyDown = true;
             await ToggleChecked();
+            return;
         }
-        else
-        {
-            shouldPreventDefault = false;
-        }
+
+        shouldPreventDefault = false;
     }
 
     /// <summary>

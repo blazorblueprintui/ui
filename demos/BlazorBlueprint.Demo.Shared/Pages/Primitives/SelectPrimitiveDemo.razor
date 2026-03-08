@@ -21,7 +21,7 @@
             </div>
             <div class="rounded-lg border bg-card p-6">
                 <div class="w-[280px]">
-                    <BlazorBlueprint.Primitives.Select.BbSelect TValue="string" @bind-Value="basicValue" ItemClass="px-3 py-2 cursor-pointer hover:bg-accent">
+                    <BlazorBlueprint.Primitives.Select.BbSelect TValue="string" @bind-Value="basicValue" ItemClass="px-3 py-2 cursor-pointer hover:bg-accent" DisplayTextSelector="@(v => fruitOptions.GetValueOrDefault(v, v))">
                         <BlazorBlueprint.Primitives.Select.BbSelectTrigger class="flex items-center justify-between w-full px-3 py-2 border border-input rounded-md bg-background">
                             <BlazorBlueprint.Primitives.Select.BbSelectValue Placeholder="Select a fruit..." />
                             <span>&#9660;</span>
@@ -53,7 +53,7 @@
             <div class="rounded-lg border bg-card p-6">
                 <div class="space-y-4">
                     <div class="w-[280px]">
-                        <BlazorBlueprint.Primitives.Select.BbSelect TValue="string" @bind-Value="controlledValue" ItemClass="px-3 py-2 cursor-pointer hover:bg-accent">
+                        <BlazorBlueprint.Primitives.Select.BbSelect TValue="string" @bind-Value="controlledValue" ItemClass="px-3 py-2 cursor-pointer hover:bg-accent" DisplayTextSelector="@(v => tropicalOptions.GetValueOrDefault(v, v))">
                             <BlazorBlueprint.Primitives.Select.BbSelectTrigger class="flex items-center justify-between w-full px-3 py-2 border border-input rounded-md bg-background">
                                 <BlazorBlueprint.Primitives.Select.BbSelectValue Placeholder="Select a fruit..." />
                                 <span>&#9660;</span>
@@ -276,4 +276,20 @@
 @code {
     private string? basicValue = "apple";
     private string? controlledValue;
+
+    private readonly Dictionary<string, string> fruitOptions = new()
+    {
+        ["apple"] = "Apple",
+        ["banana"] = "Banana",
+        ["orange"] = "Orange",
+        ["grape"] = "Grape"
+    };
+
+    private readonly Dictionary<string, string> tropicalOptions = new()
+    {
+        ["strawberry"] = "Strawberry",
+        ["watermelon"] = "Watermelon",
+        ["pineapple"] = "Pineapple",
+        ["mango"] = "Mango"
+    };
 }

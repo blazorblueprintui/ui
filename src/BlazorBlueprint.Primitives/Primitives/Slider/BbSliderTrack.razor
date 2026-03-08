@@ -1,0 +1,33 @@
+@namespace BlazorBlueprint.Primitives.Slider
+
+@* Slider track - the container for the range indicator *@
+<div data-orientation="@Context?.Orientation.ToString().ToLower()"
+     @attributes="AdditionalAttributes">
+    @ChildContent
+</div>
+
+@code {
+    [CascadingParameter]
+    private BbSlider? Context { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "BbSliderTrack must be used within a BbSlider component.");
+        }
+    }
+
+    /// <summary>
+    /// The child content (typically a BbSliderRange).
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+}
