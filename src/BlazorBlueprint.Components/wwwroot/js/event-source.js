@@ -28,7 +28,7 @@ export function connect(url, dotNetRef, eventTypes) {
 
   for (const eventType of eventTypes) {
     source.addEventListener(eventType, (e) => {
-      dotNetRef.invokeMethodAsync('OnJsMessage', eventType, e.lastEventId, JSON.parse(e.data));
+      dotNetRef.invokeMethodAsync('OnJsMessage', eventType, e.lastEventId, e.data);
     });
   }
 

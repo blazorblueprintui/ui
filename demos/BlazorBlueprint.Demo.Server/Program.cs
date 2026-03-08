@@ -61,8 +61,7 @@ app.MapGet("/sse", async (HttpContext context, [FromHeader(Name = "Last-Event-ID
     {
         await context.Response.WriteAsync($"event: {item.EventType}\n", cancellationToken);
         await context.Response.WriteAsync($"id: {item.EventId}\n", cancellationToken);
-        await context.Response.WriteAsync($"data: ", cancellationToken);
-        await JsonSerializer.SerializeAsync(context.Response.Body, item.Data, cancellationToken: cancellationToken);
+        await context.Response.WriteAsync($"data: {item.Data}", cancellationToken);
         await context.Response.WriteAsync($"\n\n", cancellationToken);
         await context.Response.Body.FlushAsync(cancellationToken);
     }
