@@ -161,9 +161,9 @@ public static class TailwindMerge
     private static readonly Regex GapRegex = new(@"^(gap|gap-x|gap-y)-(\d+\.?\d*)$", RegexOptions.Compiled);
     private static readonly Regex TextColorRegex = new(@"^text-([a-z]+)(?:-(\d+))?$", RegexOptions.Compiled);
     private static readonly Regex BgColorRegex = new(@"^bg-([a-z]+)(?:-(\d+))?$", RegexOptions.Compiled);
-    private static readonly Regex BorderColorRegex = new(@"^border-(?!l-|r-|t-|b-|x-|y-)([a-z]+)(?:-(\d+))?$", RegexOptions.Compiled);
+    private static readonly Regex BorderColorRegex = new(@"^border-(?!l\b|r\b|t\b|b\b|x\b|y\b|l-|r-|t-|b-|x-|y-)([a-z]+)(?:-(\d+))?$", RegexOptions.Compiled);
     private static readonly Regex BorderWidthRegex = new(@"^border(-\d+)?$", RegexOptions.Compiled);
-    private static readonly Regex BorderSideWidthRegex = new(@"^border-([lrtbxy])-(\d+)$", RegexOptions.Compiled);
+    private static readonly Regex BorderSideWidthRegex = new(@"^border-([lrtbxy])(?:-(\d+))?$", RegexOptions.Compiled);
     private static readonly Regex OpacityRegex = new(@"^opacity-(\d+)$", RegexOptions.Compiled);
     private static readonly Regex ZIndexRegex = new(@"^z-(\d+|auto)$", RegexOptions.Compiled);
     private static readonly Regex GridColsRegex = new(@"^grid-cols-(\d+|none)$", RegexOptions.Compiled);

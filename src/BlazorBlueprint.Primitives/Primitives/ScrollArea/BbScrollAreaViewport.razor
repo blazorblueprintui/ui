@@ -1,0 +1,84 @@
+@namespace BlazorBlueprint.Primitives.ScrollArea
+
+@* ScrollArea viewport - the scrollable content area with hidden native scrollbars. *@
+
+<div @ref="viewportRef"
+     id="@Context!.ViewportId"
+     data-scrollarea-viewport
+     style="@MergedStyle"
+     @attributes="NonStyleAttributes">
+    @ChildContent
+</div>
+
+@code {
+    private ElementReference viewportRef;
+
+    [CascadingParameter]
+    private ScrollAreaContext? Context { get; set; }
+
+    /// <summary>
+    /// Gets or sets the child content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional attributes to apply to the viewport element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "BbScrollAreaViewport must be used within a BbScrollArea component.");
+        }
+    }
+
+    /// <summary>
+    /// Gets the element reference for the viewport, for use by JS interop.
+    /// </summary>
+    internal ElementReference ViewportElement => viewportRef;
+
+    private string BaseViewportStyle
+    {
+        get
+        {
+            var overflow = Context!.Orientation switch
+            {
+                ScrollAreaOrientation.Vertical => "overflow-x: hidden; overflow-y: scroll",
+                ScrollAreaOrientation.Horizontal => "overflow-x: scroll; overflow-y: hidden",
+                ScrollAreaOrientation.Both => "overflow: scroll",
+                _ => "overflow-y: scroll"
+            };
+
+            return $"{overflow}; scrollbar-width: none; -ms-overflow-style: none; width: 100%; height: 100%";
+        }
+    }
+
+    private string MergedStyle
+    {
+        get
+        {
+            var consumerStyle = AdditionalAttributes?.TryGetValue("style", out var s) == true ? s?.ToString() : null;
+            return string.IsNullOrEmpty(consumerStyle) ? BaseViewportStyle : $"{BaseViewportStyle}; {consumerStyle}";
+        }
+    }
+
+    private Dictionary<string, object>? NonStyleAttributes
+    {
+        get
+        {
+            if (AdditionalAttributes == null || !AdditionalAttributes.ContainsKey("style"))
+            {
+                return AdditionalAttributes;
+            }
+
+            var filtered = new Dictionary<string, object>(AdditionalAttributes);
+            filtered.Remove("style");
+            return filtered.Count > 0 ? filtered : null;
+        }
+    }
+}

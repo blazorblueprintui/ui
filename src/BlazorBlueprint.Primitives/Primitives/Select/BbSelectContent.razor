@@ -1,5 +1,6 @@
 @typeparam TValue
 @namespace BlazorBlueprint.Primitives.Select
+@using System.ComponentModel
 @using BlazorBlueprint.Primitives.Floating
 @using BlazorBlueprint.Primitives.Services
 @using Microsoft.JSInterop
@@ -185,7 +186,7 @@
                 "onClickOutsideByIds",
                 _context.ContentId,      // Element ID (not ElementReference)
                 _dotNetRef,
-                "HandleClickOutside",
+                "JsOnClickOutside",
                 _context.TriggerId);     // Trigger ID (not ElementReference)
         }
         catch (Exception ex)
@@ -196,22 +197,33 @@
 
     private async void HandleContextStateChanged()
     {
-        // When context closes, clean up
-        if (_context?.IsOpen == false && _isKeyboardSetup)
+        try
         {
-            await InvokeAsync(async () =>
+            // When context closes, clean up
+            if (_context?.IsOpen == false && _isKeyboardSetup)
             {
-                await CleanupAsync();
-                StateHasChanged();
-            });
+                await InvokeAsync(async () =>
+                {
+                    await CleanupAsync();
+                    StateHasChanged();
+                });
+            }
+        }
+        catch (Exception ex) when (ex is ObjectDisposedException or TaskCanceledException)
+        {
+            // Component may be disposed during async operation
         }
     }
 
     private string? GetActiveDescendantId()
     {
-        if (_context != null && _context.FocusedIndex >= 0)
+        if (_context != null)
         {
-            return $"{_context.ContentId}-item-{_context.FocusedIndex}";
+            var focusedId = _context.GetFocusedItemId();
+            if (focusedId != null)
+            {
+                return $"{_context.ContentId}-item-{focusedId}";
+            }
         }
         return null;
     }
@@ -225,9 +237,9 @@
             {
                 await _jsModule.InvokeVoidAsync("cleanupKeyboardNavigation", _context.ContentId);
             }
-            catch
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
-                // JS module may be disposed
+                // JS module may be disposed or circuit disconnected
             }
             _isKeyboardSetup = false;
         }
@@ -240,9 +252,9 @@
                 await _clickOutsideCleanup.InvokeVoidAsync("dispose");
                 await _clickOutsideCleanup.DisposeAsync();
             }
-            catch
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
-                // Cleanup may already be disposed
+                // Cleanup may already be disposed or circuit disconnected
             }
             _clickOutsideCleanup = null;
         }
@@ -252,7 +264,8 @@
     /// Called from JavaScript when clicking outside the select.
     /// </summary>
     [JSInvokable]
-    public void HandleClickOutside()
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public void JsOnClickOutside()
     {
         _context?.Close();
     }
@@ -261,7 +274,8 @@
     /// Called from JavaScript when the Escape key is pressed.
     /// </summary>
     [JSInvokable]
-    public void HandleEscapeKey()
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public void JsOnEscapeKey()
     {
         _context?.Close();
     }
@@ -270,7 +284,8 @@
     /// Called from JavaScript when the Tab key is pressed.
     /// </summary>
     [JSInvokable]
-    public void HandleTabKey()
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public void JsOnTabKey()
     {
         _context?.Close();
     }

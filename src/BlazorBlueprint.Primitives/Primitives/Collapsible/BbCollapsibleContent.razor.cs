@@ -69,6 +69,15 @@ public partial class BbCollapsibleContent : ComponentBase
 {
     private bool _shouldRender => ForceMount || (Context?.Open ?? false);
 
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "BbCollapsibleContent must be used within a BbCollapsible component.");
+        }
+    }
+
     /// <summary>
     /// Gets the cascaded collapsible context from the parent Collapsible component.
     /// </summary>

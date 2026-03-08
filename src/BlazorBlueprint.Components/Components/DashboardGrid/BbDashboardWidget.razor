@@ -1,0 +1,184 @@
+@namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
+@using BlazorBlueprint.Primitives.DashboardGrid
+
+@if (_removed) { return; }
+
+<BlazorBlueprint.Primitives.DashboardGrid.BbDashboardWidget
+    Id="@Id"
+    Column="@Column"
+    Row="@Row"
+    ColumnSpan="@ColumnSpan"
+    RowSpan="@RowSpan"
+    MinColumnSpan="@MinColumnSpan"
+    MinRowSpan="@MinRowSpan"
+    MaxColumnSpan="@MaxColumnSpan"
+    MaxRowSpan="@MaxRowSpan"
+    Draggable="@Draggable"
+    Resizable="@Resizable"
+    Static="@Static"
+    class="@CssClass">
+
+    @if (Header != null)
+    {
+        @Header
+    }
+    else if (Title != null)
+    {
+        <BbDashboardWidgetHeader>
+            <span class="text-sm font-semibold">@Title</span>
+        </BbDashboardWidgetHeader>
+    }
+
+    @if (_isEditable && OnRemove.HasDelegate)
+    {
+        <button type="button"
+                class="absolute top-2 right-2 z-20 p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                aria-label="Remove widget"
+                @onclick="HandleRemove"
+                @onclick:stopPropagation="true">
+            <LucideIcon Name="trash" Class="h-4 w-4" />
+        </button>
+    }
+
+    <BbDashboardWidgetContent>
+        @if (Loading)
+        {
+            @if (LoadingContent != null)
+            {
+                @LoadingContent
+            }
+            else
+            {
+                <div class="flex flex-col gap-3 w-full h-full animate-pulse">
+                    <div class="h-4 bg-muted rounded w-3/4"></div>
+                    <div class="h-4 bg-muted rounded w-1/2"></div>
+                    <div class="flex-1 bg-muted rounded"></div>
+                </div>
+            }
+        }
+        else
+        {
+            @ChildContent
+        }
+    </BbDashboardWidgetContent>
+
+    @if (Footer != null)
+    {
+        <div class="border-t px-4 py-2">
+            @Footer
+        </div>
+    }
+
+    @if (_showResizeHandle)
+    {
+        @* Corner handles *@
+        <div class="absolute top-0 left-0 w-4 h-4 cursor-nw-resize z-10"
+             data-dashboard-resize-handle="nw"
+             data-widget-id="@Id"></div>
+        <div class="absolute top-0 right-0 w-4 h-4 cursor-ne-resize z-10"
+             data-dashboard-resize-handle="ne"
+             data-widget-id="@Id"></div>
+        <div class="absolute bottom-0 left-0 w-4 h-4 cursor-sw-resize z-10"
+             data-dashboard-resize-handle="sw"
+             data-widget-id="@Id"></div>
+        <div class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+             data-dashboard-resize-handle="se"
+             data-widget-id="@Id"
+             role="separator"
+             tabindex="0"
+             aria-label="Resize widget">
+            <svg class="w-4 h-4 text-muted-foreground" viewBox="0 0 16 16" fill="currentColor">
+                <circle cx="11" cy="11" r="1.5" />
+                <circle cx="7" cy="11" r="1.5" />
+                <circle cx="11" cy="7" r="1.5" />
+            </svg>
+        </div>
+        @* Edge handles *@
+        <div class="absolute top-0 left-4 right-4 h-2 cursor-n-resize"
+             data-dashboard-resize-handle="n"
+             data-widget-id="@Id"></div>
+        <div class="absolute bottom-0 left-4 right-4 h-2 cursor-s-resize"
+             data-dashboard-resize-handle="s"
+             data-widget-id="@Id"></div>
+        <div class="absolute top-4 right-0 bottom-4 w-2 cursor-e-resize"
+             data-dashboard-resize-handle="e"
+             data-widget-id="@Id"></div>
+        <div class="absolute top-4 left-0 bottom-4 w-2 cursor-w-resize"
+             data-dashboard-resize-handle="w"
+             data-widget-id="@Id"></div>
+    }
+</BlazorBlueprint.Primitives.DashboardGrid.BbDashboardWidget>
+
+@code {
+    [CascadingParameter] public DashboardGridContext? Context { get; set; }
+
+    [Parameter, EditorRequired] public string Id { get; set; } = string.Empty;
+    [Parameter] public int Column { get; set; } = 1;
+    [Parameter] public int Row { get; set; } = 1;
+    [Parameter] public int ColumnSpan { get; set; } = 1;
+    [Parameter] public int RowSpan { get; set; } = 1;
+    [Parameter] public int MinColumnSpan { get; set; } = 4;
+    [Parameter] public int MinRowSpan { get; set; } = 4;
+    [Parameter] public int MaxColumnSpan { get; set; }
+    [Parameter] public int MaxRowSpan { get; set; }
+    [Parameter] public bool Draggable { get; set; } = true;
+    [Parameter] public bool Resizable { get; set; } = true;
+    [Parameter] public bool Static { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public RenderFragment? Header { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Footer { get; set; }
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public RenderFragment? LoadingContent { get; set; }
+    [Parameter] public EventCallback<string> OnRemove { get; set; }
+    [Parameter] public string? Class { get; set; }
+
+    private bool _removed;
+    private DashboardGridContext? _subscribedContext;
+
+    protected override void OnInitialized()
+    {
+        TrackContext();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Context != _subscribedContext)
+        {
+            TrackContext();
+
+            if (_removed && Context?.GetWidgetPosition(Id) == null)
+            {
+                _removed = false;
+            }
+        }
+    }
+
+    private void TrackContext()
+    {
+        _subscribedContext = Context;
+    }
+
+    private bool _isEditable =>
+        !Static && (Context?.Editable ?? false);
+
+    private bool _showResizeHandle =>
+        Resizable && !Static && (Context?.AllowResize ?? false) && (Context?.Editable ?? false);
+
+    private bool _isDraggable =>
+        Draggable && !Static && (Context?.AllowDrag ?? false) && (Context?.Editable ?? false);
+
+    private string CssClass => ClassNames.cn(
+        "rounded-lg border bg-card text-card-foreground shadow-sm relative overflow-hidden group flex flex-col h-full outline-none",
+        _isDraggable ? "cursor-move" : "",
+        Static ? "opacity-75" : "",
+        Class
+    );
+
+    private async Task HandleRemove()
+    {
+        _removed = true;
+        await OnRemove.InvokeAsync(Id);
+    }
+}

@@ -1,0 +1,25 @@
+@using BlazorBlueprint.Components.Components.Dialog.Internals.Shared
+@inject DialogService DialogService
+
+
+<DialogHeader Title="@Dialog.Title"
+              Description="@Dialog.Description"
+              TitleId="@TitleId"
+              DescriptionId="@DescriptionId" />
+
+<div class="flex justify-end">
+    <BbButton OnClick="Acknowledge">
+        @Dialog.Options.ButtonText
+    </BbButton>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public AlertDialogData Dialog { get; set; } = default!;
+
+    [Parameter] public string? TitleId { get; set; }
+    [Parameter] public string? DescriptionId { get; set; }
+
+    private void Acknowledge()
+        => DialogService.Resolve(Dialog.Id, DialogResult.Ok());
+}

@@ -1,0 +1,66 @@
+@using BlazorBlueprint.Components.Components.Dialog.Internals.Shared
+@inject DialogService DialogService
+
+
+<DialogHeader Title="@Dialog.Title"
+              Description="@Dialog.Description"
+              TitleId="@TitleId"
+              DescriptionId="@DescriptionId" />
+
+<BbField IsInvalid="@IsInvalid">
+    <BbFieldContent>
+        <BbInput @bind-Value="inputValue"
+                 Placeholder="@Dialog.Options.Placeholder" />
+    </BbFieldContent>
+    <BbFieldError Errors="@Errors" />
+</BbField>
+
+
+<div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
+    <BbButton Variant="ButtonVariant.Outline"
+              OnClick="Cancel">
+        @Dialog.Options.CancelText
+    </BbButton>
+
+    <BbButton Disabled="@IsInvalid"
+              OnClick="Submit">
+        @Dialog.Options.ConfirmText
+    </BbButton>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public PromptDialogData Dialog { get; set; } = default!;
+
+    [Parameter] public string? TitleId { get; set; }
+    [Parameter] public string? DescriptionId { get; set; }
+
+    private string? inputValue;
+
+    private IReadOnlyList<string> Errors
+    {
+        get
+        {
+            var errors = new List<string>();
+
+            if (Dialog.Options.Required && string.IsNullOrWhiteSpace(inputValue))
+                errors.Add("The value is required");
+
+            if (Dialog.Options.MaxLength is > 0 && inputValue?.Length > Dialog.Options.MaxLength)
+                errors.Add($"Value must be at most {Dialog.Options.MaxLength} characters.");
+
+            return errors;
+        }
+    }
+
+    private bool IsInvalid => Errors.Count > 0;
+
+    protected override void OnInitialized()
+        => inputValue = Dialog.Options.DefaultValue;
+
+    private void Cancel()
+        => DialogService.Resolve(Dialog.Id, DialogResult.Cancel());
+
+    private void Submit()
+        => DialogService.Resolve(Dialog.Id, DialogResult.Ok(inputValue));
+}

@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Primitives.Sheet
+@using System.ComponentModel
 @inject IFocusManager FocusManager
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
@@ -172,6 +173,7 @@
     }
 
     [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public async Task JsOnEscapeKey()
     {
         if (_disposed) { return; }
@@ -205,9 +207,9 @@
             {
                 await _scrollLockCleanup.InvokeVoidAsync("apply");
             }
-            catch
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
-                // Cleanup may already be disposed
+                // Cleanup may already be disposed or circuit disconnected
             }
             _scrollLockCleanup = null;
         }
@@ -219,9 +221,9 @@
             {
                 await _escapeModule.InvokeVoidAsync("dispose", _instanceId);
             }
-            catch
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
-                // Cleanup may already be disposed
+                // Cleanup may already be disposed or circuit disconnected
             }
         }
 

@@ -2,11 +2,19 @@
 @typeparam TValue
 @attribute [CascadingTypeParameter(nameof(TValue))]
 
-<div role="group" class="@CssClass">
+<BlazorBlueprint.Primitives.Toggle.BbToggleGroup TValue="TValue"
+    Type="@MappedType"
+    Value="@Value"
+    ValueChanged="@ValueChanged"
+    DefaultValue="@DefaultValue"
+    Values="@Values"
+    ValuesChanged="@ValuesChanged"
+    Disabled="@Disabled"
+    class="@CssClass">
     <CascadingValue Value="this" IsFixed="true">
         @ChildContent
     </CascadingValue>
-</div>
+</BlazorBlueprint.Primitives.Toggle.BbToggleGroup>
 
 @code {
     [Parameter]
@@ -42,75 +50,10 @@
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
-    private TValue? _internalValue;
-    private List<TValue> _internalValues = new();
-    private bool IsControlled => ValueChanged.HasDelegate || ValuesChanged.HasDelegate;
-
-    protected override void OnInitialized()
-    {
-        _internalValue = DefaultValue;
-    }
-
-    internal bool IsItemPressed(TValue? itemValue)
-    {
-        if (itemValue == null) return false;
-
-        if (Type == ToggleGroupType.Single)
-        {
-            var currentValue = IsControlled ? Value : _internalValue;
-            return EqualityComparer<TValue>.Default.Equals(currentValue, itemValue);
-        }
-        else
-        {
-            var currentValues = IsControlled ? Values : _internalValues;
-            return currentValues?.Contains(itemValue) == true;
-        }
-    }
-
-    internal async Task ToggleItem(TValue? itemValue)
-    {
-        if (itemValue == null || Disabled) return;
-
-        if (Type == ToggleGroupType.Single)
-        {
-            var currentValue = IsControlled ? Value : _internalValue;
-            var newValue = EqualityComparer<TValue>.Default.Equals(currentValue, itemValue) ? default : itemValue;
-
-            if (IsControlled)
-            {
-                await ValueChanged.InvokeAsync(newValue);
-            }
-            else
-            {
-                _internalValue = newValue;
-                StateHasChanged();
-            }
-        }
-        else
-        {
-            var currentValues = (IsControlled ? Values : _internalValues) ?? new List<TValue>();
-            var newValues = new List<TValue>(currentValues);
-
-            if (newValues.Contains(itemValue))
-            {
-                newValues.Remove(itemValue);
-            }
-            else
-            {
-                newValues.Add(itemValue);
-            }
-
-            if (IsControlled)
-            {
-                await ValuesChanged.InvokeAsync(newValues);
-            }
-            else
-            {
-                _internalValues = newValues;
-                StateHasChanged();
-            }
-        }
-    }
+    private BlazorBlueprint.Primitives.Toggle.ToggleGroupType MappedType =>
+        Type == ToggleGroupType.Multiple
+            ? BlazorBlueprint.Primitives.Toggle.ToggleGroupType.Multiple
+            : BlazorBlueprint.Primitives.Toggle.ToggleGroupType.Single;
 
     private string CssClass => ClassNames.cn(
         "flex items-center justify-center gap-1",

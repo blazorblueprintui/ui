@@ -1,14 +1,12 @@
 @namespace BlazorBlueprint.Components
 @typeparam TValue
 
-<button type="button"
-        aria-pressed="@IsPressed"
-        data-state="@(IsPressed ? "on" : "off")"
-        disabled="@(Disabled || Context?.Disabled == true)"
-        class="@CssClass"
-        @onclick="HandleClick">
+<BlazorBlueprint.Primitives.Toggle.BbToggleGroupItem TValue="TValue"
+    Value="@Value"
+    Disabled="@Disabled"
+    class="@CssClass">
     @ChildContent
-</button>
+</BlazorBlueprint.Primitives.Toggle.BbToggleGroupItem>
 
 @code {
     [CascadingParameter]
@@ -26,17 +24,8 @@
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
-    private bool IsPressed => Context?.IsItemPressed(Value) == true;
     private ToggleVariant Variant => Context?.Variant ?? ToggleVariant.Default;
     private ToggleSize Size => Context?.Size ?? ToggleSize.Default;
-
-    private async Task HandleClick()
-    {
-        if (Context != null && !Disabled && Context.Disabled != true)
-        {
-            await Context.ToggleItem(Value);
-        }
-    }
 
     private string VariantClasses => Variant switch
     {

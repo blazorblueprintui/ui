@@ -1,31 +1,67 @@
+
+using Microsoft.AspNetCore.Components;
+
 namespace BlazorBlueprint.Components;
 
 /// <summary>
-/// Service for showing programmatic confirm dialogs.
-/// Register as scoped in DI for Blazor Server user isolation.
+/// Provides functionality for showing and managing dialogs.
 /// </summary>
+/// <remarks>
+/// Register as scoped in DI for proper isolation in Blazor Server applications.
+/// All dialog operations resolve with a <see cref="DialogResult"/>.
+/// </remarks>
 public class DialogService
 {
-    private readonly List<ConfirmDialogData> dialogs = new();
+    private readonly List<DialogData> dialogs = new();
 
     /// <summary>
-    /// Event fired when the dialog collection changes.
+    /// Occurs when the dialog collection changes.
     /// </summary>
     public event Action? OnChange;
 
     /// <summary>
     /// Gets the current list of pending dialogs.
     /// </summary>
-    public IReadOnlyList<ConfirmDialogData> Dialogs => dialogs.AsReadOnly();
+    public IReadOnlyList<DialogData> Dialogs => dialogs.AsReadOnly();
 
     /// <summary>
-    /// Shows a confirm dialog and returns true if confirmed, false if cancelled.
+    /// Shows an alert dialog with a single acknowledgment button.
+    /// </summary>
+    /// <returns>
+    /// A task that completes when the user dismisses the dialog.
+    /// </returns>
+    public Task<DialogResult> AlertAsync(
+        string title,
+        string? description = null,
+        AlertDialogOptions? options = null)
+    {
+        var data = new AlertDialogData
+        {
+            Title = title,
+            Description = description,
+            Options = options ?? new AlertDialogOptions()
+        };
+
+        dialogs.Add(data);
+        OnChange?.Invoke();
+
+        return data.Completion;
+    }
+
+    /// <summary>
+    /// Shows a confirm dialog.
     /// </summary>
     /// <param name="title">The dialog title.</param>
-    /// <param name="description">The dialog description/message.</param>
-    /// <param name="options">Optional customization options for button labels and variant.</param>
-    /// <returns>True if the user clicked confirm, false if cancelled.</returns>
-    public Task<bool> Confirm(string title, string? description = null, ConfirmDialogOptions? options = null)
+    /// <param name="description">Optional dialog description or message.</param>
+    /// <param name="options">Optional customization options.</param>
+    /// <returns>
+    /// A task that resolves to a <see cref="ConfirmDialogResult"/>
+    /// indicating whether the user confirmed the action.
+    /// </returns>
+    public async Task<ConfirmDialogResult> ConfirmAsync(
+        string title,
+        string? description = null,
+        ConfirmDialogOptions? options = null)
     {
         var data = new ConfirmDialogData
         {
@@ -37,34 +73,121 @@ public class DialogService
         dialogs.Add(data);
         OnChange?.Invoke();
 
-        return data.Tcs.Task;
+        var result = await data.Completion;
+        return new ConfirmDialogResult(result);
+    }
+
+
+    /// <summary>
+    /// Shows a confirm dialog.
+    /// </summary>
+    /// <param name="title">The dialog title.</param>
+    /// <param name="description">Optional dialog description or message.</param>
+    /// <param name="options">Optional customization options.</param>
+    /// <returns>
+    /// A task that resolves to <see langword="true"/> if the user confirmed, <see langword="false"/> otherwise.
+    /// </returns>
+    [Obsolete("Use ConfirmAsync instead, which returns a ConfirmDialogResult with richer information.")]
+    public async Task<bool> Confirm(
+        string title,
+        string? description = null,
+        ConfirmDialogOptions? options = null)
+    {
+        var result = await ConfirmAsync(title, description, options);
+        return result.Confirmed;
     }
 
     /// <summary>
-    /// Resolves a dialog with the given result and removes it from the list.
-    /// Called by DialogProvider when the user clicks confirm or cancel.
+    /// Shows a prompt dialog that collects text input from the user.
     /// </summary>
-    /// <param name="id">The dialog ID to resolve.</param>
-    /// <param name="result">True for confirm, false for cancel.</param>
-    internal void Resolve(string id, bool result)
+    /// <param name="title">The dialog title.</param>
+    /// <param name="description">Optional dialog description or message.</param>
+    /// <param name="options">Optional customization options.</param>
+    /// <returns>
+    /// A task that resolves to a <see cref="PromptDialogResult"/>
+    /// containing the entered value when confirmed.
+    /// </returns>
+    public async Task<PromptDialogResult> PromptAsync(
+        string title,
+        string? description = null,
+        PromptDialogOptions? options = null)
+    {
+        var data = new PromptDialogData
+        {
+            Title = title,
+            Description = description,
+            Options = options ?? new PromptDialogOptions()
+        };
+
+        dialogs.Add(data);
+        OnChange?.Invoke();
+
+        var result = await data.Completion;
+        return new PromptDialogResult(result);
+    }
+
+    /// <summary>
+    /// Opens a custom component inside a dialog.
+    /// </summary>
+    public Task<DialogResult> OpenAsync<TComponent>(
+        DialogOpenOptions? options = null)
+        where TComponent : IComponent
+        => OpenAsync<TComponent>(new Dictionary<string, object?>(), options);
+
+    /// <summary>
+    /// Opens a custom component inside a dialog with the specified parameters.
+    /// </summary>
+    public Task<DialogResult> OpenAsync<TComponent>(
+        Dictionary<string, object?> parameters,
+        DialogOpenOptions? options = null)
+        where TComponent : IComponent
+    {
+        var id = Guid.NewGuid().ToString();
+        var data = new ComponentDialogData
+        {
+            Id = id,
+            Title = options?.Title ?? string.Empty,
+            Description = options?.Description,
+            ComponentType = typeof(TComponent),
+            Parameters = parameters,
+            Options = options ?? new DialogOpenOptions(),
+            CloseCallback = result =>
+            {
+                Resolve(id, result);
+                return Task.CompletedTask;
+            }
+        };
+
+        dialogs.Add(data);
+        OnChange?.Invoke();
+
+        return data.Completion;
+    }
+
+    /// <summary>
+    /// Resolves a dialog with the specified result and removes it from the collection.
+    /// </summary>
+    internal void Resolve(string id, DialogResult result)
     {
         var dialog = dialogs.FirstOrDefault(d => d.Id == id);
-        if (dialog != null)
+        if (dialog is null)
         {
-            dialogs.Remove(dialog);
-            dialog.Tcs.TrySetResult(result);
-            OnChange?.Invoke();
+            return;
         }
+
+        dialogs.Remove(dialog);
+        dialog.SetResult(result);
+        OnChange?.Invoke();
     }
 
     /// <summary>
-    /// Cancels all pending dialogs, resolving each with false.
+    /// Cancels all pending dialogs.
     /// </summary>
     internal void CancelAll()
     {
         foreach (var dialog in dialogs.ToList())
         {
-            dialog.Tcs.TrySetResult(false);
+            dialog.SetResult(DialogResult.Cancel());
         }
 
         dialogs.Clear();

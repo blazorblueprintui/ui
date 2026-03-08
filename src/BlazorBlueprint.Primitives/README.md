@@ -44,21 +44,30 @@ Add a single import to `_Imports.razor`:
 | Primitive | Description |
 |-----------|-------------|
 | **Accordion** | Collapsible content sections with single or multiple item expansion |
+| **Alert Dialog** | Modal requiring explicit acknowledgement, no dismiss via overlay or Escape |
 | **Checkbox** | Binary selection control with indeterminate state and `BbCheckboxIndicator` sub-component |
 | **Collapsible** | Expandable content area with trigger control |
+| **Context Menu** | Right-click menu with keyboard navigation and positioning |
+| **Dashboard Grid** | Widget layout state, drag-and-drop coordination, resize handling, responsive breakpoints |
+| **DataGrid** | Headless data grid with sorting, filtering, pagination, selection, expansion, row grouping, and state management |
 | **Dialog** | Modal dialogs with backdrop, focus management, and portal rendering |
 | **Dropdown Menu** | Context menus with items, checkbox items, separators, and keyboard shortcuts |
-| **Floating Portal** | Unified floating content infrastructure with ForceMount and positioning |
 | **Hover Card** | Rich preview cards on hover with delay control |
 | **Label** | Accessible labels for form controls with automatic association |
 | **Popover** | Floating panels for additional content with positioning |
+| **Progress** | Accessible progress bar with determinate and indeterminate states |
 | **Radio Group** | Mutually exclusive options with keyboard navigation |
+| **Scroll Area** | Custom scrollbar with accessible ARIA scrollbar role and drag support |
 | **Select** | Dropdown selection with cascading type inference and display text resolution |
+| **Separator** | Semantic or decorative divider with orientation support |
 | **Sheet** | Side panels that slide in from viewport edges |
+| **Slider** | Range input with keyboard navigation and pointer drag support |
 | **Switch** | Toggle control with `BbSwitchThumb` sub-component for automatic `data-state` sync |
 | **Table** | Data table with header, body, rows, cells, and pagination |
 | **Tabs** | Tabbed interface with keyboard navigation |
+| **Toggle** | Pressed/active state with `aria-pressed` support |
 | **Tooltip** | Brief informational popups with hover/focus triggers |
+| **Tree View** | Hierarchical expand/collapse, selection, and checkbox state management |
 
 ### Services
 

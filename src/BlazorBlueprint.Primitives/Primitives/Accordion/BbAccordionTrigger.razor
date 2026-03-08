@@ -6,6 +6,7 @@
 
 @code {
     private string _ariaExpanded => Item.IsOpen ? "true" : "false";
+    private bool _shouldPreventDefault;
     private ElementReference _elementRef;
 
     /// <summary>
@@ -74,6 +75,7 @@
                 disabled="@Item.Disabled"
                 @onclick="HandleClick"
                 @onkeydown="HandleKeyDown"
+                @onkeydown:preventDefault="_shouldPreventDefault"
                 @ref="_elementRef"
                 @attributes="AdditionalAttributes">
             @ChildContent
@@ -100,11 +102,16 @@
 
     private void HandleKeyDown(KeyboardEventArgs e)
     {
-        if (Item.Disabled) return;
+        bool isNavKey = e.Key is "ArrowDown" or "ArrowUp" or "Home" or "End";
+        _shouldPreventDefault = isNavKey;
+
+        if (Item.Disabled)
+        {
+            return;
+        }
 
         // Arrow keys, Home, End for navigation between triggers
-        if (Accordion != null && (e.Key == "ArrowDown" || e.Key == "ArrowUp" ||
-                                   e.Key == "Home" || e.Key == "End"))
+        if (Accordion != null && isNavKey)
         {
             Accordion.HandleKeyNavigation(Item.Value, e.Key);
         }

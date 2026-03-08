@@ -298,6 +298,7 @@
                                 <BbSelectItem Value="@("pineapple")" Text="Pineapple" TValue="string">Pineapple</BbSelectItem>
                             </BbSelectContent>
                         </BbSelect>
+                        <p class="text-xs text-muted-foreground">Value: @(selectedDialogFruit ?? "none")</p>
                     </div>
 
                     <div class="space-y-2">
@@ -309,6 +310,7 @@
                                   SearchPlaceholder="Search framework..."
                                   EmptyMessage="No framework found."
                                   MatchTriggerWidth="true" />
+                        <p class="text-xs text-muted-foreground">Value: @(selectedComboboxFramework ?? "none")</p>
                     </div>
 
                     <div class="space-y-2">
@@ -320,6 +322,7 @@
                                      SearchPlaceholder="Search technologies..."
                                      EmptyMessage="No technologies found."
                                      MatchTriggerWidth="true" />
+                        <p class="text-xs text-muted-foreground">Values: @(selectedTechnologies?.Any() == true ? string.Join(", ", selectedTechnologies) : "none")</p>
                     </div>
                 </div>
 
@@ -394,6 +397,84 @@
         <CodeBlock Source="Components/Dialog/confirm-service.txt" />
     </div>
 
+    <div class="mt-10 space-y-4">
+        <h2 class="text-2xl font-semibold">
+            Alert Service
+            <span class="bg-primary/10 text-primary rounded px-1.5 py-0.5 text-xs font-normal">
+                New
+            </span>
+        </h2>
+
+        <p class="text-muted-foreground text-sm">
+            Use <code>DialogService.Alert()</code> for simple acknowledgment dialogs.
+            Returns a <code>Task</code> that completes when the user clicks OK.
+        </p>
+
+        <div class="flex items-center gap-4">
+            <BbButton OnClick="HandleAlert">
+                Show Alert
+            </BbButton>
+
+            <span class="text-muted-foreground text-sm">
+                Status: @alertStatus
+            </span>
+        </div>
+
+        <CodeBlock Source="Components/Dialog/alert-service.txt" />
+    </div>
+
+    <div class="mt-10 space-y-4">
+        <h2 class="text-2xl font-semibold">
+            Prompt Service
+            <span class="bg-primary/10 text-primary rounded px-1.5 py-0.5 text-xs font-normal">
+                New
+            </span>
+        </h2>
+
+        <p class="text-muted-foreground text-sm">
+            Use <code>DialogService.Prompt()</code> to collect text input asynchronously.
+            Returns <code>string?</code>.
+        </p>
+
+        <div class="flex items-center gap-4">
+            <BbButton OnClick="HandlePrompt">
+                Rename File
+            </BbButton>
+
+            <span class="text-muted-foreground text-sm">
+                Result: @promptResult
+            </span>
+        </div>
+
+        <CodeBlock Source="Components/Dialog/prompt-service.txt" />
+    </div>
+
+    <div class="mt-10 space-y-4">
+        <h2 class="text-2xl font-semibold">
+            Custom Component Dialog
+            <span class="bg-primary/10 text-primary rounded px-1.5 py-0.5 text-xs font-normal">
+                New
+            </span>
+        </h2>
+
+        <p class="text-muted-foreground text-sm">
+            Use <code>DialogService.Open&lt;TComponent&gt;()</code> to render a fully custom dialog component.
+            Returns a <code>DialogResult</code>.
+        </p>
+
+        <div class="flex items-center gap-4">
+            <BbButton OnClick="HandleCustomDialog">
+                Edit User
+            </BbButton>
+
+            <span class="text-muted-foreground text-sm">
+                Result: @customResult
+            </span>
+        </div>
+
+        <CodeBlock Source="Components/Dialog/custom-service.txt" />
+    </div>
+
     <div class="space-y-4">
         <h2 class="text-2xl font-semibold">Form in Dialog</h2>
         <p class="text-sm text-muted-foreground">
@@ -441,6 +522,8 @@
                 </BbDialogFooter>
             </BbDialogContent>
         </BbDialog>
+
+        <CodeBlock Source="Components/Dialog/form-in-dialog.txt" />
     </div>
 
     <div class="space-y-4">
@@ -503,6 +586,8 @@
                 </BbDialogFooter>
             </BbDialogContent>
         </BbDialog>
+
+        <CodeBlock Source="Components/Dialog/nested-dialog.txt" />
     </div>
 
     <div class="space-y-4">
@@ -531,6 +616,8 @@
                 </BbDialogFooter>
             </BbDialogContent>
         </BbDialog>
+
+        <CodeBlock Source="Components/Dialog/non-dismissible.txt" />
     </div>
 
     <AccessibilityList>
@@ -564,11 +651,14 @@
                 <ApiParameter Name="Open" Type="bool?" Default="null">
                     Controls whether the dialog is open (controlled mode). When null, the dialog manages its own state.
                 </ApiParameter>
+                <ApiParameter Name="OpenChanged" Type="EventCallback&lt;bool&gt;">
+                    Two-way binding callback for the open state. Use with <code>@@bind-Open</code>.
+                </ApiParameter>
                 <ApiParameter Name="DefaultOpen" Type="bool" Default="false">
                     Default open state when in uncontrolled mode.
                 </ApiParameter>
                 <ApiParameter Name="Modal" Type="bool" Default="true">
-                    Whether the dialog can be dismissed by clicking outside or pressing Escape.
+                    Whether the dialog is modal. Modal dialogs trap focus and lock scroll.
                 </ApiParameter>
                 <ApiParameter Name="OnOpenChange" Type="EventCallback&lt;bool&gt;">
                     Event callback invoked when the dialog open state changes.
@@ -576,6 +666,9 @@
             </ApiReference>
 
             <ApiReference ComponentName="DialogContent">
+                <ApiParameter Name="Class" Type="string?">
+                    Additional CSS classes to apply to the dialog content container.
+                </ApiParameter>
                 <ApiParameter Name="ShowClose" Type="bool" Default="true">
                     Whether to show the close button (X icon).
                 </ApiParameter>
@@ -591,6 +684,12 @@
                 <ApiParameter Name="LockScroll" Type="bool" Default="true">
                     Whether to lock body scroll when dialog is open.
                 </ApiParameter>
+                <ApiParameter Name="Container" Type="string?">
+                    Render inline within a named container instead of portaling to the document body.
+                </ApiParameter>
+                <ApiParameter Name="OnEscapeKeyDown" Type="EventCallback&lt;KeyboardEventArgs&gt;">
+                    Event callback invoked when the Escape key is pressed inside the dialog.
+                </ApiParameter>
             </ApiReference>
 
             <ApiReference ComponentName="DialogTrigger">
@@ -598,17 +697,147 @@
                     When true, passes trigger behavior to child components instead of rendering its own button.
                 </ApiParameter>
             </ApiReference>
+
+            <ApiReference ComponentName="DialogClose">
+                <ApiParameter Name="AsChild" Type="bool" Default="true">
+                    When true, passes close behavior to child components instead of rendering its own button.
+                </ApiParameter>
+                <ApiParameter Name="OnClick" Type="EventCallback&lt;MouseEventArgs&gt;">
+                    Custom click handler invoked after the dialog is closed.
+                </ApiParameter>
+                <ApiParameter Name="PreventClose" Type="bool" Default="false">
+                    When true, prevents the default close behavior. Useful for validation before closing.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="DialogHeader">
+                <ApiParameter Name="Class" Type="string?">
+                    Additional CSS classes for the header container.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="DialogFooter">
+                <ApiParameter Name="Class" Type="string?">
+                    Additional CSS classes for the footer container.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="DialogTitle">
+                <ApiParameter Name="Class" Type="string?">
+                    Additional CSS classes for the title element.
+                </ApiParameter>
+                <ApiParameter Name="As" Type="string" Default="&quot;h2&quot;">
+                    The HTML element tag to render for the title.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="DialogDescription">
+                <ApiParameter Name="Class" Type="string?">
+                    Additional CSS classes for the description element.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+
+    <!-- DialogService API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">DialogService API</h2>
+            <p class="text-muted-foreground">Programmatic dialog methods available via dependency injection.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="DialogService">
+                <ApiParameter Name="ConfirmAsync()" Type="Task&lt;ConfirmDialogResult&gt;">
+                    Shows a confirm dialog. Returns a result with <code>Confirmed</code> (<code>bool</code>) property.
+                </ApiParameter>
+                <ApiParameter Name="AlertAsync()" Type="Task&lt;DialogResult&gt;">
+                    Shows an alert dialog with a single acknowledgment button. Cannot be dismissed via backdrop or Escape.
+                </ApiParameter>
+                <ApiParameter Name="PromptAsync()" Type="Task&lt;PromptDialogResult&gt;">
+                    Shows a prompt dialog that collects text input. Returns a result with <code>Value</code> (<code>string?</code>) property.
+                </ApiParameter>
+                <ApiParameter Name="OpenAsync&lt;T&gt;()" Type="Task&lt;DialogResult&gt;">
+                    Opens a custom component inside a dialog. The component receives <code>IDialogReference</code> as a cascading parameter.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="ConfirmDialogOptions">
+                <ApiParameter Name="ConfirmText" Type="string" Default="&quot;Continue&quot;">
+                    The label for the confirm button.
+                </ApiParameter>
+                <ApiParameter Name="CancelText" Type="string" Default="&quot;Cancel&quot;">
+                    The label for the cancel button.
+                </ApiParameter>
+                <ApiParameter Name="Destructive" Type="bool" Default="false">
+                    Whether the confirm button should use the destructive variant.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="AlertDialogOptions">
+                <ApiParameter Name="ButtonText" Type="string" Default="&quot;OK&quot;">
+                    The label for the acknowledgment button.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="PromptDialogOptions">
+                <ApiParameter Name="ConfirmText" Type="string" Default="&quot;OK&quot;">
+                    The label for the confirm button.
+                </ApiParameter>
+                <ApiParameter Name="CancelText" Type="string" Default="&quot;Cancel&quot;">
+                    The label for the cancel button.
+                </ApiParameter>
+                <ApiParameter Name="DefaultValue" Type="string?">
+                    The initial value of the input field.
+                </ApiParameter>
+                <ApiParameter Name="Placeholder" Type="string?">
+                    Placeholder text displayed in the input field.
+                </ApiParameter>
+                <ApiParameter Name="Required" Type="bool" Default="false">
+                    Whether the input field is required. Disables the confirm button when empty.
+                </ApiParameter>
+                <ApiParameter Name="MaxLength" Type="int?">
+                    Maximum allowed length of the input value.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="DialogOpenOptions">
+                <ApiParameter Name="Title" Type="string?">
+                    Optional dialog title. If null, the component may render its own header.
+                </ApiParameter>
+                <ApiParameter Name="ShowClose" Type="bool" Default="true">
+                    Whether the close (X) button should be displayed.
+                </ApiParameter>
+                <ApiParameter Name="Size" Type="DialogSize" Default="DialogSize.Default">
+                    Controls the dialog width preset. Options: <code>Small</code>, <code>Default</code>, <code>Large</code>, <code>ExtraLarge</code>, <code>Full</code>.
+                </ApiParameter>
+                <ApiParameter Name="PreventClose" Type="bool" Default="false">
+                    Prevents closing via Escape key or backdrop click.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="IDialogReference">
+                <ApiParameter Name="CloseAsync()" Type="Task">
+                    Closes the dialog with a specified <code>DialogResult</code>. Use <code>DialogResult.Ok(data)</code> to return data.
+                </ApiParameter>
+                <ApiParameter Name="CancelAsync()" Type="Task">
+                    Cancels the dialog. Equivalent to closing with <code>DialogResult.Cancel()</code>.
+                </ApiParameter>
+            </ApiReference>
         </div>
     </section>
 </div>
 
 @code {
-    private string confirmResult = "None";
     private bool isDialogOpen = false;
     private DateTime? dialogDatePickerValue;
     private string? selectedComboboxFramework;
     private string? selectedDialogFruit;
     private IEnumerable<string>? selectedTechnologies = new List<string>();
+
+    private string confirmResult = "None";
+    private string alertStatus = "Idle";
+    private string promptResult = "-";
+    private string customResult = "-";
 
     // Form in Dialog
     private string? formFirstName;
@@ -663,16 +892,16 @@
 
     private async Task HandleConfirmDelete()
     {
-        var confirmed = await DialogService.Confirm(
+        var result = await DialogService.ConfirmAsync(
             "Delete item?",
             "This action cannot be undone. The item will be permanently removed.");
 
-        confirmResult = confirmed ? "Confirmed" : "Cancelled";
+        confirmResult = result.Confirmed ? "Confirmed" : "Cancelled";
     }
 
     private async Task HandleDestructiveDelete()
     {
-        var confirmed = await DialogService.Confirm(
+        var data = await DialogService.ConfirmAsync(
             "Delete item?",
             "This action cannot be undone.",
             new ConfirmDialogOptions
@@ -682,6 +911,102 @@
                 Destructive = true
             });
 
-        confirmResult = confirmed ? "Deleted!" : "Kept";
+        confirmResult = data.Confirmed ? "Deleted!" : "Kept";
     }
+
+    private async Task HandleAlert()
+    {
+        alertStatus = "Waiting...";
+        await DialogService.AlertAsync(
+            "Session Expired",
+            "Please log in again.");
+
+        alertStatus = "Acknowledged";
+    }
+
+    private async Task HandlePrompt()
+    {
+        var name = await DialogService.PromptAsync(
+            "Rename File",
+            "Enter a new file name:",
+            new PromptDialogOptions
+            {
+                DefaultValue = "document.txt",
+                Placeholder = "file-name.txt",
+                Required = true,
+                MaxLength = 50
+            });
+
+        promptResult = name.Value ?? "Cancelled";
+    }
+
+    private async Task HandleCustomDialog()
+    {
+        var result = await DialogService.OpenAsync<EditUserDemoComponent>(
+            new Dictionary<string, object?>
+            {
+                ["UserId"] = 42
+            },
+            new DialogOpenOptions
+            {
+                Title = "Edit User",
+                Size = DialogSize.Large
+            });
+
+        if (!result.Cancelled)
+        {
+            var data = result.GetData<UserDto>();
+            customResult = $"Saved: {data}";
+        }
+        else
+        {
+            customResult = "Cancelled";
+        }
+    }
+
+    public sealed class EditUserDemoComponent : ComponentBase
+    {
+        [Parameter] public int UserId { get; set; }
+
+        [CascadingParameter]
+        public IDialogReference DialogRef { get; set; } = default!;
+
+        private string? userName;
+        private string? userEmail;
+
+        protected override void OnInitialized()
+        {
+            // Simulate loading user data
+            userName = $"User {UserId}";
+            userEmail = "example@company.com";
+        }
+
+        private Task Save()
+        {
+            var dto = new UserDto(
+                UserId,
+                userName ?? string.Empty,
+                userEmail ?? string.Empty);
+
+            return DialogRef.CloseAsync(DialogResult.Ok(dto));
+        }
+
+        private Task Cancel()
+            => DialogRef.CancelAsync();
+
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder __builder)
+        {
+            <div class="space-y-4">
+                <div>Editing User @UserId</div>
+                <BbInput @bind-Value="userName" Placeholder="Name" />
+                <BbInput @bind-Value="userEmail" Placeholder="Email" Type="InputType.Email" />
+                <div class="flex justify-end gap-2">
+                    <BbButton Variant="ButtonVariant.Outline" OnClick="Cancel">Cancel</BbButton>
+                    <BbButton OnClick="Save">Save</BbButton>
+                </div>
+            </div>
+        }
+    }
+
+    public sealed record UserDto(int Id, string Name, string Email);
 }

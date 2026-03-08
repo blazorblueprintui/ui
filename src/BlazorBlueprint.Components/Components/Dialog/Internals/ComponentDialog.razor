@@ -1,0 +1,19 @@
+@using BlazorBlueprint.Components.Components.Dialog.Internals.Shared
+
+<DialogHeader Title="@Dialog.Title"
+              Description="@Dialog.Description"
+              TitleId="@TitleId"
+              DescriptionId="@DescriptionId" />
+
+<CascadingValue TValue="IDialogReference" Value="Dialog" IsFixed="true">
+    <DynamicComponent Type="@Dialog.ComponentType"
+                      Parameters="@Dialog.Parameters" />
+</CascadingValue>
+
+@code {
+    [Parameter, EditorRequired]
+    public ComponentDialogData Dialog { get; set; } = default!;
+
+    [Parameter] public string? TitleId { get; set; }
+    [Parameter] public string? DescriptionId { get; set; }
+}

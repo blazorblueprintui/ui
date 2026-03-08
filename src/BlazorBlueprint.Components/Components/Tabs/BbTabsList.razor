@@ -1,30 +1,40 @@
 @namespace BlazorBlueprint.Components
+@implements IAsyncDisposable
 
 @*
     Styled TabsList component.
     Wraps the TabsList primitive with shadcn/ui styling.
+    Supports responsive mode that collapses to a Select on overflow.
 *@
 
-<BlazorBlueprint.Primitives.Tabs.BbTabsList class="@CssClass">
-    @ChildContent
-</BlazorBlueprint.Primitives.Tabs.BbTabsList>
+@if (Responsive)
+{
+    <div @ref="_containerRef" class="relative w-full">
+        @* Tab buttons — use visibility:hidden (not display:none) when overflowing
+           so the element retains its measured width for the ResizeObserver. *@
+        <BlazorBlueprint.Primitives.Tabs.BbTabsList class="@ClassNames.cn(CssClass, TabListVisibilityClass)">
+            <CascadingValue Value="this" IsFixed="true">
+                @ChildContent
+            </CascadingValue>
+        </BlazorBlueprint.Primitives.Tabs.BbTabsList>
 
-@code {
-    /// <summary>
-    /// The child content to render within the tabs list.
-    /// Should contain TabsTrigger components.
-    /// </summary>
-    [Parameter]
-    public RenderFragment? ChildContent { get; set; }
-
-    /// <summary>
-    /// Additional CSS classes to apply to the tabs list.
-    /// </summary>
-    [Parameter]
-    public string? Class { get; set; }
-
-    private string CssClass => ClassNames.cn(
-        "inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
-        Class
-    );
+        @* Select fallback — positioned absolute so it doesn't affect tablist measurement.
+           When not overflowing it is invisible and non-interactive. *@
+        @if (_responsiveTriggers.Count > 0)
+        {
+            <div class="@SelectWrapperClass">
+                <BbSelect TValue="string"
+                          Value="@Context.ActiveValue"
+                          ValueChanged="@HandleSelectChange"
+                          Options="@SelectOptions"
+                          Class="@SelectCssClass" />
+            </div>
+        }
+    </div>
+}
+else
+{
+    <BlazorBlueprint.Primitives.Tabs.BbTabsList class="@CssClass">
+        @ChildContent
+    </BlazorBlueprint.Primitives.Tabs.BbTabsList>
 }

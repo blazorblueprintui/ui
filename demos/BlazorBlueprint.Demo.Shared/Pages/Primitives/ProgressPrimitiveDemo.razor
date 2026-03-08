@@ -1,0 +1,152 @@
+@page "/primitives/progress"
+<PageTitle>Progress Primitive - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Progress Primitive</h1>
+            <p class="text-xl text-muted-foreground">
+                Headless, unstyled progress bar primitive with accessible <code class="text-xs bg-muted px-1 py-0.5 rounded">role="progressbar"</code>.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Progress</h2>
+                <p class="text-muted-foreground">
+                    A determinate progress bar showing completion percentage.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <div class="flex gap-2">
+                    <button @onclick="@(() => progressValue = Math.Max(0, progressValue - 10))"
+                            class="px-3 py-2 border rounded text-sm">-10%</button>
+                    <button @onclick="@(() => progressValue = Math.Min(100, progressValue + 10))"
+                            class="px-3 py-2 border rounded text-sm">+10%</button>
+                </div>
+
+                <BlazorBlueprint.Primitives.Progress.BbProgress
+                    Value="progressValue"
+                    GetValueLabel="@((v, m) => $"{v}% complete")"
+                    style="position: relative; height: 16px; width: 100%; overflow: hidden; border-radius: 9999px; background-color: var(--secondary);">
+                    <BlazorBlueprint.Primitives.Progress.BbProgressIndicator
+                        style="@($"height: 100%; width: {progressValue}%; background-color: var(--primary); transition: width 0.3s;")" />
+                </BlazorBlueprint.Primitives.Progress.BbProgress>
+
+                <p class="text-sm text-muted-foreground">Value: @progressValue%</p>
+            </div>
+
+            <CodeBlock Source="Primitives/Progress/basic.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Indeterminate Progress</h2>
+                <p class="text-muted-foreground">
+                    When <code class="text-xs bg-muted px-1 py-0.5 rounded">Value</code> is null, the progress bar is in an indeterminate state.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BlazorBlueprint.Primitives.Progress.BbProgress
+                    Value="null"
+                    style="position: relative; height: 16px; width: 100%; overflow: hidden; border-radius: 9999px; background-color: var(--secondary);">
+                    <BlazorBlueprint.Primitives.Progress.BbProgressIndicator
+                        style="height: 100%; width: 50%; background-color: var(--primary); animation: indeterminate 1.5s infinite ease-in-out;" />
+                </BlazorBlueprint.Primitives.Progress.BbProgress>
+                <p class="text-sm text-muted-foreground mt-2">
+                    data-state="indeterminate" — no aria-valuenow is set.
+                </p>
+            </div>
+
+            <CodeBlock Source="Primitives/Progress/indeterminate.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Custom Max Value</h2>
+                <p class="text-muted-foreground">
+                    Progress with a custom max value (e.g., steps in a wizard).
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <div class="flex gap-2">
+                    <button @onclick="@(() => stepValue = Math.Max(0, stepValue - 1))"
+                            class="px-3 py-2 border rounded text-sm">Previous Step</button>
+                    <button @onclick="@(() => stepValue = Math.Min(5, stepValue + 1))"
+                            class="px-3 py-2 border rounded text-sm">Next Step</button>
+                </div>
+
+                <BlazorBlueprint.Primitives.Progress.BbProgress
+                    Value="stepValue"
+                    Max="5"
+                    GetValueLabel="@((v, m) => $"Step {v} of {m}")"
+                    style="position: relative; height: 16px; width: 100%; overflow: hidden; border-radius: 9999px; background-color: var(--secondary);">
+                    <BlazorBlueprint.Primitives.Progress.BbProgressIndicator
+                        style="@($"height: 100%; width: {(stepValue / 5.0) * 100}%; background-color: var(--primary); transition: width 0.3s;")" />
+                </BlazorBlueprint.Primitives.Progress.BbProgress>
+
+                <p class="text-sm text-muted-foreground">Step @stepValue of 5</p>
+            </div>
+
+            <CodeBlock Source="Primitives/Progress/custom-max.txt" />
+        </section>
+
+    <!-- Accessibility Notes -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">role="progressbar"</code> semantic role for progress indicators
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-valuenow</code> indicates the current value (omitted when indeterminate)
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-valuemin</code> set to 0 and <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-valuemax</code> set to the max value (default 100)
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-valuetext</code> provides human-readable text via the <code class="text-xs bg-muted px-1 py-0.5 rounded">GetValueLabel</code> callback
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">data-state</code> set to "loading", "complete", or "indeterminate" for CSS hooks
+            </AccessibilityItem>
+        </AriaAttributes>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbProgress">
+                <ApiParameter Name="Value" Type="double?" Default="null">
+                    Current progress value. When null, the progress bar is in an indeterminate state.
+                </ApiParameter>
+                <ApiParameter Name="Max" Type="double" Default="100">
+                    Maximum progress value.
+                </ApiParameter>
+                <ApiParameter Name="GetValueLabel" Type="Func&lt;double, double, string&gt;?" Default="null">
+                    Callback to generate a human-readable label. Receives <code class="text-xs bg-muted px-1 py-0.5 rounded">(value, max)</code> and returns a string for <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-valuetext</code>.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbProgressIndicator">
+                <ApiParameter Name="ChildContent" Type="RenderFragment?" Default="null">
+                    Optional child content rendered inside the indicator.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+    </div>
+</div>
+
+@code {
+    private double progressValue = 50;
+    private double stepValue = 2;
+}

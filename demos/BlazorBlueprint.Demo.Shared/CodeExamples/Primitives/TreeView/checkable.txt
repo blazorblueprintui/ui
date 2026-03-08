@@ -1,0 +1,40 @@
+<BbTreeView AriaLabel="Checkable tree"
+    Checkable="true"
+    @bind-CheckedValues="checkedValues"
+    DefaultExpandAll="true">
+    <BbTreeItem Value="frontend">
+        <NodeContent>
+            <div class="tree-node">
+                <button data-tree-toggle>&#9654;</button>
+                <button data-tree-checkbox>&#9744;</button>
+                <span>Frontend</span>
+            </div>
+        </NodeContent>
+        <ChildContent>
+            <BbTreeItem Value="react">
+                <NodeContent>
+                    <button data-tree-checkbox>&#9744;</button>
+                    <span>React</span>
+                </NodeContent>
+            </BbTreeItem>
+            <BbTreeItem Value="vue">
+                <NodeContent>
+                    <button data-tree-checkbox>&#9744;</button>
+                    <span>Vue</span>
+                </NodeContent>
+            </BbTreeItem>
+        </ChildContent>
+    </BbTreeItem>
+</BbTreeView>
+
+@* Use data-tree-toggle and data-tree-checkbox attributes *@
+@* The primitive's JS handles clicks on these elements *@
+@* Style checked state using aria-checked attribute *@
+<style>
+    [aria-checked="true"] .checkbox { background: var(--primary); }
+    [aria-checked="mixed"] .checkbox { background: var(--primary); }
+</style>
+
+@code {
+    private HashSet<string> checkedValues = new();
+}

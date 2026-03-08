@@ -70,7 +70,7 @@ public partial class BbPie : SeriesBase
     /// Gets or sets the label position relative to pie slices.
     /// </summary>
     /// <remarks>
-    /// Default is <see cref="Components.LabelPosition.Outside"/>. Use <see cref="Components.LabelPosition.Inside"/>
+    /// Default is <see cref="LabelPosition.Outside"/>. Use <see cref="LabelPosition.Inside"/>
     /// to render labels within slice areas.
     /// </remarks>
     [Parameter]

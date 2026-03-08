@@ -1,23 +1,17 @@
 @namespace BlazorBlueprint.Components
-@implements IDisposable
 
-<div @ref="_itemRef"
-     role="menuitem"
-     class="@CssClass"
-     tabindex="-1"
-     @onclick="HandleClick"
-     @onclick:stopPropagation="true">
+<BlazorBlueprint.Primitives.ContextMenu.BbContextMenuItem
+    OnClick="@OnClick"
+    Disabled="@Disabled"
+    class="@CssClass">
     @if (Icon != null)
     {
         <span class="mr-2 h-4 w-4 shrink-0 [&>svg]:h-4 [&>svg]:w-4">@Icon</span>
     }
     @ChildContent
-</div>
+</BlazorBlueprint.Primitives.ContextMenu.BbContextMenuItem>
 
 @code {
-    [CascadingParameter]
-    public BbContextMenu? Context { get; set; }
-
     [Parameter]
     public string? Class { get; set; }
 
@@ -38,38 +32,6 @@
 
     [Parameter]
     public EventCallback OnClick { get; set; }
-
-    private ElementReference _itemRef;
-
-    public bool IsDisabled => Disabled;
-
-    public async Task FocusAsync()
-    {
-        try
-        {
-            await _itemRef.FocusAsync();
-        }
-        catch
-        {
-            // Ignore focus errors (element might not be mounted yet)
-        }
-    }
-
-    private async Task HandleClick()
-    {
-        if (!Disabled)
-        {
-            await OnClick.InvokeAsync();
-            if (Context != null)
-            {
-                await Context.Close();
-            }
-        }
-    }
-
-    public void Dispose()
-    {
-    }
 
     private string CssClass => ClassNames.cn(
         "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",

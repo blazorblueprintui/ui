@@ -1,10 +1,8 @@
 @namespace BlazorBlueprint.Components
-@using Microsoft.JSInterop
-@implements IAsyncDisposable
 
-<CascadingValue Value="this" IsFixed="false">
+<BlazorBlueprint.Primitives.ContextMenu.BbContextMenu @ref="primitiveRef" Open="@Open" OpenChanged="@OpenChanged">
     @ChildContent
-</CascadingValue>
+</BlazorBlueprint.Primitives.ContextMenu.BbContextMenu>
 
 @code {
     [Parameter]
@@ -16,57 +14,21 @@
     [Parameter]
     public EventCallback<bool> OpenChanged { get; set; }
 
-    internal bool IsOpen { get; private set; }
-    internal double X { get; private set; }
-    internal double Y { get; private set; }
-    internal bool NeedsFocus { get; set; }
-
-    private DotNetObjectReference<BbContextMenu>? _dotNetRef;
-    private bool _disposed;
-
-    protected override void OnInitialized()
-    {
-        _dotNetRef = DotNetObjectReference.Create(this);
-    }
+    private BlazorBlueprint.Primitives.ContextMenu.BbContextMenu? primitiveRef;
 
     internal async Task OpenAt(double x, double y)
     {
-        X = x;
-        Y = y;
-        IsOpen = true;
-        NeedsFocus = true;
-
-        if (Open.HasValue)
+        if (primitiveRef != null)
         {
-            await OpenChanged.InvokeAsync(true);
+            await primitiveRef.OpenAt(x, y);
         }
-
-        StateHasChanged();
     }
 
     internal async Task Close()
     {
-        IsOpen = false;
-
-        if (Open.HasValue)
+        if (primitiveRef != null)
         {
-            await OpenChanged.InvokeAsync(false);
+            await primitiveRef.Close();
         }
-
-        StateHasChanged();
-    }
-
-    [JSInvokable]
-    public async Task HandleClickOutside()
-    {
-        if (_disposed) return;
-        await Close();
-    }
-
-    public ValueTask DisposeAsync()
-    {
-        _disposed = true;
-        _dotNetRef?.Dispose();
-        return ValueTask.CompletedTask;
     }
 }

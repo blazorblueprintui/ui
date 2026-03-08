@@ -1,31 +1,39 @@
-## What's New in v3.3.0
+## What's New in v3.4.0
 
 ### New Components
 
-- **BbDataGrid** — Full-featured data grid with column filtering, expandable rows, context menus, row click events, pinned columns, column resize/reorder/visibility, multi-sort, virtualization, state persistence, and async loading
-- **BbDynamicForm** — Schema-driven form rendering with JSON Schema support, conditional field visibility, multi-section and multi-column layouts, inline validation, and a comprehensive field type gallery
-- **BbFilterBuilder** — Visual query builder for constructing filter expressions with nested groups, dynamic date presets, relative date operators, LINQ expression output, and DataTable integration
-- **BbFormWizard** — Multi-step form wizard with step validation, controlled navigation, vertical layout, optional steps, step state retention, and icon support
-- **BbTreeView** — Hierarchical tree component with checkable nodes, drag-and-drop reordering, lazy loading, search filtering, expand-on-click, custom templates, and flat data binding
+- **DashboardGrid** — Drag-and-drop, resizable widget grid layout with CSS Grid, collision detection, responsive breakpoints, state persistence, keyboard navigation, ARIA accessibility, and configurable grid guide backgrounds
+- **BbDashboardWidget** — Dashboard widget with header, content areas, remove button, and loading skeleton support
+- **BbDataGridGroupColumn** — Declarative column component for configuring DataGrid row grouping
 
 ### New Features
 
-- **Charts**: Added Composite, Scatter, Candlestick, Heatmap, Gauge, and Funnel chart types
-- **InputOTP**: Added Mask parameter for character masking and InputMode for mobile keyboard hints; added paste support
-- **Combobox**: Added SearchQuery/SearchQueryChanged parameters for external async filtering
-- **Dialog & Sheet**: Added CloseOnOverlayClick parameter to control overlay dismiss behavior
-- **Recipes**: New Recipes section with a Filterable Data Grid recipe example
+- **DataGrid** — Row grouping with collapsible group headers, aggregate functions (Sum, Average, Min, Max, Count), and custom header templates via `GroupBy` parameter or `BbDataGridGroupColumn`
+- **DataGrid** — Server-side grouping support via `GroupedItemsProvider` delegate
+- **DataGrid** — `ExpandAllGroups()` and `CollapseAllGroups()` public methods for toolbar integration
+- **DataGrid** — `GroupsCollapsedByDefault` parameter to control initial group state
+- **DataGrid** — Pin icon with tooltip on pinned column headers indicating the column is pinned and cannot be moved
+- **DataGrid** — Column visibility dropdown now disables pinned columns and prevents hiding the last visible column
+- **Tabs** — Responsive mode via `Responsive` parameter on `BbTabsList` that collapses to a `BbSelect` dropdown when tabs overflow their container
+- **BbTabsTrigger** — `Label` parameter for display text in the responsive Select fallback
+- **DashboardGrid** — `CellWidth`, `MinWidth`, `MaxWidth` parameters for fixed-size grid cells with scroll wrapper
+- **DashboardGrid** — Built-in loading skeleton, empty state, and `GetConfig()` method for persistence
 
 ### Bug Fixes
 
-- Fixed DataGrid click intercept, keyboard navigation, and row expansion issues
-- Resolved chart display glitches in themed environments
-- Fixed Select and Calendar performance issues and checkmark overlap
-- Improved WASM rendering performance — fixed ColorPicker drag jitter, sidebar menu sluggishness, and CascadingValue overhead
-- Fixed Sheet Modal parameter not being passed through context
-- Fixed DropdownMenu keyboard navigation highlighting container instead of individual items when using Href
+- **Slider / RangeSlider** — Fixed style rendering broken by cultures using `,` as decimal separator by using invariant culture for percentage values
+- **DataGrid** — Fixed cell border rendering broken by `position: relative` on table rows (Chromium border-collapse bug)
+- **DataGrid** — Fixed empty state not rendering when grouping is active
+- **DashboardGrid** — Fixed widget position updates not applying during compact mode
+- **DashboardGrid** — Fixed stale layout after widget removal and widgets not repositioning until user interaction
+- **DashboardGrid** — Fixed resize min-span defaults exceeding widget's declared span
+- **DashboardGrid** — Added collision detection in freeform (non-compact) mode
+- **Container components** — Fixed parent re-renders not cascading through `BbDataTable`, `BbDataGrid`, `BbDataView`, `BbTable`, and `BbCollapsible` when child components trigger `ValueChanged`
 
 ### Improvements
 
-- Added accessibility and API reference sections to 26 demo pages
-- Bumped BlazorBlueprint.Primitives dependency to 3.3.0
+- **DataGrid** — Aggregate values render aligned under their respective column headers with independent `AggregateFormat` parameter
+- **DataGrid** — Pagination counts data rows only; group headers don't consume page slots
+- **DashboardGrid** — Keyboard accessibility with focus-visible ring, keyboard resize, and compact-on-blur
+- **DashboardGrid** — Responsive widget stacking that clamps column spans to fit active breakpoint
+- **Primitives** — Bumped BlazorBlueprint.Primitives dependency to 3.4.0

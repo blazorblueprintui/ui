@@ -1,9 +1,8 @@
 @namespace BlazorBlueprint.Primitives.Accordion
-@implements IAsyncDisposable
-@inject IJSRuntime JSRuntime
+@implements IDisposable
 
 @* Accordion primitive root component - headless, unstyled behavior only *@
-<div @ref="_elementRef" @attributes="AdditionalAttributes">
+<div @attributes="AdditionalAttributes">
     <CascadingValue Value="@_context" IsFixed="false">
         <CascadingValue Value="this" IsFixed="true">
             @ChildContent
@@ -15,9 +14,6 @@
     private AccordionContext _context = new();
     private UseControllableState<HashSet<string>> _state = null!;
     private List<BbAccordionTrigger> _triggers = new();
-    private ElementReference _elementRef;
-    private IJSObjectReference? _keyboardNavModule;
-    private IJSObjectReference? _keyboardNavCleanup;
     private bool _disposed;
 
     /// <summary>
@@ -105,25 +101,6 @@
         // Update type and collapsible settings
         _context.State.Type = Type;
         _context.State.Collapsible = Collapsible;
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            try
-            {
-                _keyboardNavModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/keyboard-nav.js");
-
-                _keyboardNavCleanup = await _keyboardNavModule.InvokeAsync<IJSObjectReference>(
-                    "setupKeyboardNav", _elementRef);
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Circuit disconnected, ignore
-            }
-        }
     }
 
     /// <summary>
@@ -240,7 +217,7 @@
         }
     }
 
-    public async ValueTask DisposeAsync()
+    public void Dispose()
     {
         if (_disposed)
         {
@@ -249,30 +226,5 @@
 
         _disposed = true;
         _context.OnStateChanged -= HandleContextStateChanged;
-
-        if (_keyboardNavCleanup is not null)
-        {
-            try
-            {
-                await _keyboardNavCleanup.InvokeVoidAsync("dispose");
-                await _keyboardNavCleanup.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Circuit disconnected, ignore
-            }
-        }
-
-        if (_keyboardNavModule is not null)
-        {
-            try
-            {
-                await _keyboardNavModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Circuit disconnected, ignore
-            }
-        }
     }
 }

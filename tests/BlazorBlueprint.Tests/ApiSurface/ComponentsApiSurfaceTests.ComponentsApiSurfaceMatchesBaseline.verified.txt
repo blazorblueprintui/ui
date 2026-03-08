@@ -548,7 +548,6 @@
   - ChildContent : RenderFragment
   - Class : String
   - Loop : Boolean
-  - Context : BbContextMenu [CascadingParameter]
 
 ### BbContextMenuItem (BlazorBlueprint.Components)
   - ChildContent : RenderFragment
@@ -557,7 +556,6 @@
   - Icon : RenderFragment
   - Inset : Boolean
   - OnClick : EventCallback
-  - Context : BbContextMenu [CascadingParameter]
 
 ### BbContextMenuLabel (BlazorBlueprint.Components)
   - ChildContent : RenderFragment
@@ -574,7 +572,6 @@
 ### BbContextMenuTrigger (BlazorBlueprint.Components)
   - ChildContent : RenderFragment
   - Class : String
-  - Context : BbContextMenu [CascadingParameter]
 
 ### BbCurrencyInput (BlazorBlueprint.Components)
   - AllowNegative : Boolean
@@ -600,6 +597,71 @@
   - CascadedEditContext : EditContext [CascadingParameter]
   - FieldIsInvalid : Boolean? [CascadingParameter]
 
+### BbDashboardGrid (BlazorBlueprint.Components)
+  - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AllowDrag : Boolean
+  - AllowResize : Boolean
+  - AriaLabel : String
+  - Background : DashboardBackground
+  - Border : Boolean
+  - CellWidth : Int32
+  - ChildContent : RenderFragment
+  - Class : String
+  - Columns : Int32
+  - Compact : Boolean
+  - Editable : Boolean
+  - EmptyContent : RenderFragment
+  - Gap : Int32
+  - Loading : Boolean
+  - LoadingContent : RenderFragment
+  - MaxRows : Int32
+  - MaxWidth : Int32
+  - MediumBreakpoint : Int32
+  - MediumColumns : Int32
+  - MinWidth : Int32
+  - OnAddWidget : EventCallback
+  - OnBreakpointChanged : EventCallback<DashboardBreakpoint>
+  - OnLayoutChanged : EventCallback<DashboardGridLayout>
+  - OnWidgetDragEnd : EventCallback<WidgetDragEventArgs>
+  - OnWidgetResizeEnd : EventCallback<WidgetResizeEventArgs>
+  - RowHeight : Int32
+  - ShowGridGuide : Boolean
+  - SmallBreakpoint : Int32
+  - SmallColumns : Int32
+  - State : DashboardGridState
+  - StateChanged : EventCallback<DashboardGridState>
+
+### BbDashboardWidget (BlazorBlueprint.Components)
+  - ChildContent : RenderFragment
+  - Class : String
+  - Column : Int32
+  - ColumnSpan : Int32
+  - Draggable : Boolean
+  - Footer : RenderFragment
+  - Header : RenderFragment
+  - Id : String [EditorRequired]
+  - Loading : Boolean
+  - LoadingContent : RenderFragment
+  - MaxColumnSpan : Int32
+  - MaxRowSpan : Int32
+  - MinColumnSpan : Int32
+  - MinRowSpan : Int32
+  - OnRemove : EventCallback<String>
+  - Resizable : Boolean
+  - Row : Int32
+  - RowSpan : Int32
+  - Static : Boolean
+  - Title : String
+  - Context : DashboardGridContext [CascadingParameter]
+
+### BbDashboardWidgetContent (BlazorBlueprint.Components)
+  - ChildContent : RenderFragment
+  - Class : String
+
+### BbDashboardWidgetHeader (BlazorBlueprint.Components)
+  - ChildContent : RenderFragment
+  - Class : String
+
 ### BbDataGridColumnFilter (BlazorBlueprint.Components)
   - ColumnTitle : String
   - CurrentFilter : FilterCondition
@@ -620,7 +682,17 @@
   - Width : String
   - ParentGrid : BbDataGrid<TData> [CascadingParameter]
 
+### BbDataGridGroupColumn`2 (BlazorBlueprint.Components)
+  - CollapsedByDefault : Boolean
+  - GroupSortDirection : SortDirection
+  - HeaderTemplate : RenderFragment<DataGridGroupContext<TData>>
+  - Property : Expression<Func<TData, TProperty>> [EditorRequired]
+  - Title : String
+  - ParentGrid : BbDataGrid<TData> [CascadingParameter]
+
 ### BbDataGridPropertyColumn`2 (BlazorBlueprint.Components)
+  - Aggregate : AggregateFunction
+  - AggregateFormat : String
   - CellClass : String
   - CellTemplate : RenderFragment<TData>
   - FilterOptions : IEnumerable<SelectOption<String>>
@@ -647,6 +719,8 @@
   - ParentGrid : BbDataGrid<TData> [CascadingParameter]
 
 ### BbDataGridTemplateColumn`1 (BlazorBlueprint.Components)
+  - Aggregate : AggregateFunction
+  - AggregateFormat : String
   - CellClass : String
   - ChildContent : RenderFragment<TData>
   - FilterBy : Expression<Func<TData, Object>>
@@ -676,6 +750,10 @@
   - DetailTemplate : RenderFragment<TData>
   - EmptyTemplate : RenderFragment
   - EnableKeyboardNavigation : Boolean
+  - GroupBy : Expression<Func<TData, Object>>
+  - GroupHeaderTemplate : RenderFragment<DataGridGroupContext<TData>>
+  - GroupedItemsProvider : DataGridGroupedItemsProvider<TData>
+  - GroupsCollapsedByDefault : Boolean
   - InitialPageSize : Int32
   - IsLoading : Boolean
   - ItemKey : Func<TData, Object>
@@ -687,6 +765,8 @@
   - OnColumnReorder : EventCallback<ValueTuple<String, Int32>>
   - OnColumnResize : EventCallback<ValueTuple<String, String>>
   - OnFilter : EventCallback<IReadOnlyDictionary<String, FilterCondition>>
+  - OnGroupCollapse : EventCallback<DataGridGroupRow<TData>>
+  - OnGroupExpand : EventCallback<DataGridGroupRow<TData>>
   - OnRowClick : EventCallback<TData>
   - OnRowCollapse : EventCallback<TData>
   - OnRowExpand : EventCallback<TData>
@@ -2547,12 +2627,17 @@
 ### BbTabsList (BlazorBlueprint.Components)
   - ChildContent : RenderFragment
   - Class : String
+  - Responsive : Boolean
+  - SelectClass : String
+  - Context : TabsContext [CascadingParameter]
 
 ### BbTabsTrigger (BlazorBlueprint.Components)
   - ChildContent : RenderFragment
   - Class : String
   - Disabled : Boolean
+  - Label : String
   - Value : String [EditorRequired]
+  - ComponentsList : BbTabsList [CascadingParameter]
 
 ### BbTagInput (BlazorBlueprint.Components)
   - AddTrigger : TagInputTrigger
@@ -2930,6 +3015,32 @@
   - Type : AxisType
   - ParentChart : BbChartBase [CascadingParameter]
 
+### AlertDialog (BlazorBlueprint.Components.Components.Dialog.Internals)
+  - DescriptionId : String
+  - Dialog : AlertDialogData [EditorRequired]
+  - TitleId : String
+
+### ComponentDialog (BlazorBlueprint.Components.Components.Dialog.Internals)
+  - DescriptionId : String
+  - Dialog : ComponentDialogData [EditorRequired]
+  - TitleId : String
+
+### ConfirmDialog (BlazorBlueprint.Components.Components.Dialog.Internals)
+  - DescriptionId : String
+  - Dialog : ConfirmDialogData [EditorRequired]
+  - TitleId : String
+
+### PromptDialog (BlazorBlueprint.Components.Components.Dialog.Internals)
+  - DescriptionId : String
+  - Dialog : PromptDialogData [EditorRequired]
+  - TitleId : String
+
+### DialogHeader (BlazorBlueprint.Components.Components.Dialog.Internals.Shared)
+  - Description : String
+  - DescriptionId : String
+  - Title : String
+  - TitleId : String
+
 ### TreeItemNode`1 (BlazorBlueprint.Components)
   - AllowDrag : Func<TItem, Boolean>
   - Checkable : Boolean
@@ -3047,6 +3158,10 @@
   - StepBefore = 3
   - StepAfter = 4
 
+### DashboardBackground (BlazorBlueprint.Components)
+  - None = 0
+  - Grid = 1
+
 ### DataTableSelectionMode (BlazorBlueprint.Components)
   - None = 0
   - Single = 1
@@ -3065,6 +3180,13 @@
   - LastMonth = 5
   - ThisYear = 6
   - Custom = 7
+
+### DialogSize (BlazorBlueprint.Components)
+  - Small = 0
+  - Default = 1
+  - Large = 2
+  - ExtraLarge = 3
+  - Full = 4
 
 ### DrawerDirection (BlazorBlueprint.Components)
   - Top = 0
@@ -3470,6 +3592,10 @@
   - Skipped = 4
 
 ## Interfaces
+
+### IDialogReference (BlazorBlueprint.Components)
+  - CancelAsync() : Task
+  - CloseAsync(DialogResult result) : Task
 
 ### IMenubarItem (BlazorBlueprint.Components)
   - IsDisabled : Boolean { get; }

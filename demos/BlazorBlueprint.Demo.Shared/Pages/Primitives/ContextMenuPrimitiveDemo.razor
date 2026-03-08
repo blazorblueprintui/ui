@@ -1,0 +1,156 @@
+@page "/primitives/context-menu"
+<PageTitle>Context Menu Primitive - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Context Menu Primitive</h1>
+            <p class="text-xl text-muted-foreground">
+                Headless, unstyled context menu triggered by right-click with keyboard navigation.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Context Menu</h2>
+                <p class="text-muted-foreground">
+                    Right-click the bordered area to open the context menu.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BlazorBlueprint.Primitives.ContextMenu.BbContextMenu>
+                    <BlazorBlueprint.Primitives.ContextMenu.BbContextMenuTrigger
+                        style="display: flex; align-items: center; justify-content: center; height: 150px; width: 100%; border: 2px dashed var(--border); border-radius: 8px; user-select: none; cursor: context-menu;">
+                        <span class="text-sm text-muted-foreground">Right-click here</span>
+                    </BlazorBlueprint.Primitives.ContextMenu.BbContextMenuTrigger>
+
+                    <BlazorBlueprint.Primitives.ContextMenu.BbContextMenuContent
+                        style="min-width: 12rem; overflow: hidden; border-radius: 6px; border: 1px solid var(--border); background: var(--popover); color: var(--popover-foreground); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); padding: 4px;">
+                        <BlazorBlueprint.Primitives.ContextMenu.BbContextMenuLabel
+                            style="padding: 4px 8px; font-size: 0.75rem; font-weight: 600; color: var(--muted-foreground);">
+                            Actions
+                        </BlazorBlueprint.Primitives.ContextMenu.BbContextMenuLabel>
+
+                        <BlazorBlueprint.Primitives.ContextMenu.BbContextMenuItem
+                            OnClick="@(() => lastAction = "Cut")"
+                            class="flex cursor-default select-none items-center rounded px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground">
+                            Cut
+                        </BlazorBlueprint.Primitives.ContextMenu.BbContextMenuItem>
+
+                        <BlazorBlueprint.Primitives.ContextMenu.BbContextMenuItem
+                            OnClick="@(() => lastAction = "Copy")"
+                            class="flex cursor-default select-none items-center rounded px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground">
+                            Copy
+                        </BlazorBlueprint.Primitives.ContextMenu.BbContextMenuItem>
+
+                        <BlazorBlueprint.Primitives.ContextMenu.BbContextMenuItem
+                            OnClick="@(() => lastAction = "Paste")"
+                            class="flex cursor-default select-none items-center rounded px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground">
+                            Paste
+                        </BlazorBlueprint.Primitives.ContextMenu.BbContextMenuItem>
+
+                        <BlazorBlueprint.Primitives.ContextMenu.BbContextMenuSeparator
+                            style="height: 1px; margin: 4px 0; background: var(--border);" />
+
+                        <BlazorBlueprint.Primitives.ContextMenu.BbContextMenuItem
+                            Disabled="true"
+                            class="flex cursor-default select-none items-center rounded px-2 py-1.5 text-sm outline-none opacity-50">
+                            Delete (disabled)
+                        </BlazorBlueprint.Primitives.ContextMenu.BbContextMenuItem>
+                    </BlazorBlueprint.Primitives.ContextMenu.BbContextMenuContent>
+                </BlazorBlueprint.Primitives.ContextMenu.BbContextMenu>
+
+                <p class="text-sm text-muted-foreground mt-4">Last action: @(lastAction ?? "none")</p>
+            </div>
+
+            <CodeBlock Source="Primitives/ContextMenu/basic.txt" />
+        </section>
+
+    <!-- Accessibility Notes -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">role="menu"</code> on the content container
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">role="menuitem"</code> on each menu item
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">role="separator"</code> on menu separators
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Disabled items have <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-disabled="true"</code> and are skipped during keyboard navigation
+            </AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Navigate between menu items">
+                <BbKbd>ArrowUp</BbKbd> / <BbKbd>ArrowDown</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Jump to first/last item">
+                <BbKbd>Home</BbKbd> / <BbKbd>End</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate the focused item">
+                <BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Close the menu">
+                <BbKbd>Escape</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbContextMenu">
+                <ApiParameter Name="Open" Type="bool?" Default="null">
+                    Controls the open state (controlled mode). Supports two-way binding with <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Open</code>.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbContextMenuTrigger">
+                <ApiParameter Name="ChildContent" Type="RenderFragment?">
+                    The trigger area content. Right-clicking this area opens the context menu.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbContextMenuContent">
+                <ApiParameter Name="Loop" Type="bool" Default="true">
+                    Whether keyboard navigation wraps from last to first item.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbContextMenuItem">
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether the menu item is disabled.
+                </ApiParameter>
+                <ApiParameter Name="OnClick" Type="EventCallback">
+                    Callback invoked when the item is activated.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbContextMenuLabel">
+                <ApiParameter Name="ChildContent" Type="RenderFragment?">
+                    Label text content. Labels are not interactive.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbContextMenuSeparator">
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                    Additional HTML attributes passed to the separator element.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+    </div>
+</div>
+
+@code {
+    private string? lastAction;
+}

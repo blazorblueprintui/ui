@@ -1,0 +1,132 @@
+@typeparam TValue
+@namespace BlazorBlueprint.Primitives.Toggle
+
+<button @ref="elementRef"
+        type="button"
+        role="@Role"
+        aria-pressed="@IsPressed.ToString().ToLower()"
+        data-state="@(IsPressed ? "on" : "off")"
+        data-orientation="@Context?.Orientation"
+        disabled="@IsDisabled"
+        tabindex="@TabIndex"
+        @onclick="HandleClick"
+        @attributes="AdditionalAttributes">
+    @ChildContent
+</button>
+
+@code {
+    private ElementReference elementRef;
+
+    [CascadingParameter]
+    private ToggleGroupContext<TValue>? Context { get; set; }
+
+    /// <summary>
+    /// Gets or sets the value associated with this toggle item.
+    /// </summary>
+    [Parameter]
+    public TValue? Value { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether this item is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets the child content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private bool IsDisabled => Disabled || (Context?.Disabled ?? false);
+
+    private bool IsPressed
+    {
+        get
+        {
+            if (Value == null || Context == null)
+            {
+                return false;
+            }
+
+            if (Context.Type == ToggleGroupType.Single)
+            {
+                return EqualityComparer<TValue>.Default.Equals(Context.Value, Value);
+            }
+            else
+            {
+                return Context.Values.Contains(Value);
+            }
+        }
+    }
+
+    private string Role => Context?.Type == ToggleGroupType.Single ? "radio" : "button";
+
+    private int TabIndex
+    {
+        get
+        {
+            if (IsDisabled)
+            {
+                return -1;
+            }
+
+            if (Context?.Type == ToggleGroupType.Single)
+            {
+                // Roving tabindex: only the pressed item (or first) is tabbable
+                if (IsPressed)
+                {
+                    return 0;
+                }
+
+                var hasPressed = Context.Value != null;
+                if (!hasPressed && Context.Items.Count > 0 && Context.Items[0] == this)
+                {
+                    return 0;
+                }
+
+                return -1;
+            }
+
+            return 0;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Context?.Items.Add(this);
+    }
+
+    private async Task HandleClick()
+    {
+        if (IsDisabled || Value == null || Context?.ToggleItem == null)
+        {
+            return;
+        }
+
+        await Context.ToggleItem(Value);
+    }
+
+    internal async Task FocusAsync()
+    {
+        try
+        {
+            await elementRef.FocusAsync();
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Expected during circuit disconnect
+        }
+    }
+
+    public void Dispose()
+    {
+        Context?.Items.Remove(this);
+    }
+}

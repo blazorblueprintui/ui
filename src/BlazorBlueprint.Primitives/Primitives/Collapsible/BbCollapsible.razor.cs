@@ -68,6 +68,7 @@ namespace BlazorBlueprint.Primitives.Collapsible;
 public partial class BbCollapsible : ComponentBase
 {
     private CollapsibleContext context = new();
+    private bool _parametersChanged;
     private bool _lastOpen;
     private bool _lastDisabled;
 
@@ -138,6 +139,7 @@ public partial class BbCollapsible : ComponentBase
     /// </summary>
     protected override void OnParametersSet()
     {
+        _parametersChanged = true;
         context.Open = Open;
         context.Disabled = Disabled;
     }
@@ -148,6 +150,14 @@ public partial class BbCollapsible : ComponentBase
     /// </summary>
     protected override bool ShouldRender()
     {
+        if (_parametersChanged)
+        {
+            _parametersChanged = false;
+            _lastOpen = Open;
+            _lastDisabled = Disabled;
+            return true;
+        }
+
         if (Open != _lastOpen || Disabled != _lastDisabled)
         {
             _lastOpen = Open;

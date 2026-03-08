@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Primitives.DropdownMenu
+@using System.ComponentModel
 @using BlazorBlueprint.Primitives.Floating
 @using BlazorBlueprint.Primitives.Services
 @inject IJSRuntime JSRuntime
@@ -158,6 +159,7 @@
         <div @ref="_contentRef"
              id="@Context.ContentId"
              role="menu"
+             aria-labelledby="@Context.TriggerId"
              tabindex="-1"
              data-autofocus
              @attributes="GetAttributesWithoutStyle()"
@@ -206,7 +208,7 @@
 
             // Pass trigger element to exclude it from click-outside detection
             _clickOutsideCleanup = await _clickOutsideModule.InvokeAsync<IJSObjectReference>(
-                "onClickOutside", _contentRef, _dotNetRef, "HandleClickOutside", Context.State.TriggerElement);
+                "onClickOutside", _contentRef, _dotNetRef, "JsOnClickOutside", Context.State.TriggerElement);
         }
         catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
         {
@@ -261,7 +263,8 @@
     }
 
     [JSInvokable]
-    public async Task HandleClickOutside()
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public async Task JsOnClickOutside()
     {
         // Guard against callbacks after disposal
         if (_disposed || !Context.IsOpen) return;
@@ -307,13 +310,14 @@
                 await InvokeAsync(StateHasChanged);
             }
         }
-        catch (ObjectDisposedException)
+        catch (Exception ex) when (ex is ObjectDisposedException or TaskCanceledException)
         {
             // Component may be disposed during async operation
         }
     }
 
     [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public async Task JsOnEscapeKey()
     {
         if (_disposed) { return; }
@@ -338,9 +342,9 @@
                 await _clickOutsideCleanup.InvokeVoidAsync("dispose");
                 await _clickOutsideCleanup.DisposeAsync();
             }
-            catch
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
-                // Cleanup may already be disposed
+                // Cleanup may already be disposed or circuit disconnected
             }
             _clickOutsideCleanup = null;
         }
@@ -351,9 +355,9 @@
             {
                 await _menuKeyboardModule.InvokeVoidAsync("dispose", Context.ContentId);
             }
-            catch
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
-                // Cleanup may already be disposed
+                // Cleanup may already be disposed or circuit disconnected
             }
         }
 
@@ -364,9 +368,9 @@
                 await _matchWidthCleanup.InvokeVoidAsync("dispose");
                 await _matchWidthCleanup.DisposeAsync();
             }
-            catch
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
-                // Cleanup may already be disposed
+                // Cleanup may already be disposed or circuit disconnected
             }
             _matchWidthCleanup = null;
         }

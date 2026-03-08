@@ -1,0 +1,44 @@
+@namespace BlazorBlueprint.Primitives.ScrollArea
+
+@* ScrollArea thumb - the draggable thumb element inside the scrollbar. *@
+
+<div @ref="thumbRef"
+     data-scrollarea-thumb
+     data-state="@dataState"
+     @attributes="AdditionalAttributes">
+    @ChildContent
+</div>
+
+@code {
+    private ElementReference thumbRef;
+    private string dataState = "hidden";
+
+    [CascadingParameter]
+    private ScrollAreaContext? Context { get; set; }
+
+    /// <summary>
+    /// Gets or sets optional child content inside the thumb.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional attributes to apply to the thumb element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Gets the element reference for the thumb, for use by JS interop.
+    /// </summary>
+    internal ElementReference ThumbElement => thumbRef;
+
+    protected override void OnInitialized()
+    {
+        if (Context == null)
+        {
+            throw new InvalidOperationException(
+                "BbScrollAreaThumb must be used within a BbScrollArea component.");
+        }
+    }
+}

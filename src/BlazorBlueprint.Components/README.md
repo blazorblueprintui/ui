@@ -140,6 +140,8 @@ That's it! No Tailwind installation, no build configuration needed.
 | **Split Button** | Button with dropdown action split |
 | **Timeline** | Chronological event display |
 | **Toggle** | Toggle button control |
+| **Toggle Group** | Single or multi-select toggle group |
+| **Tree View** | Hierarchical data display with selection, checkboxes, and keyboard navigation |
 | **Typography** | Typography components for consistent text styling |
 
 ### Overlays & Navigation
@@ -161,6 +163,18 @@ That's it! No Tailwind installation, no build configuration needed.
 | **Tabs** | Tabbed interface for organizing related content |
 | **Toast** | Toast notification system with action support |
 | **Tooltip** | Brief informational popups on hover or focus |
+
+### Data & Enterprise
+
+| Component | Description |
+|-----------|-------------|
+| **Dashboard Grid** | Drag-and-drop, resizable widget layout for dashboards with responsive breakpoints and state persistence |
+| **DataGrid** | Enterprise data grid with sorting, filtering, row grouping, selection, expandable rows, virtualization, and column management |
+| **DataTable** | Tables with sorting, filtering, pagination, and row selection |
+| **DataView** | List and grid layouts with sorting, filtering, pagination, and infinite scroll |
+| **Dynamic Form** | Schema-driven form rendering from JSON or code definitions |
+| **Filter Builder** | Visual query builder for data filter expressions with AND/OR logic and nested groups |
+| **Form Wizard** | Multi-step form wizard with progress tracking, per-step validation, and navigation controls |
 
 ### Form Controls
 
@@ -190,6 +204,7 @@ That's it! No Tailwind installation, no build configuration needed.
 | **Select** | Dropdown selection with groups and labels |
 | **Slider** | Single-handle slider input |
 | **Switch** | Toggle control for on/off states |
+| **Tag Input** | Inline tag/chip input for managing string lists with suggestions and validation |
 | **Textarea** | Multi-line text input field |
 | **Time Picker** | Time selection input |
 

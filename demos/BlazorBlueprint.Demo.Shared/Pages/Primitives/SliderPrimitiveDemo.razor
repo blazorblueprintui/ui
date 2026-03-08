@@ -1,0 +1,182 @@
+@page "/primitives/slider"
+<PageTitle>Slider Primitive - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Slider Primitive</h1>
+            <p class="text-xl text-muted-foreground">
+                Headless, unstyled slider primitive with keyboard navigation and pointer drag support.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Slider</h2>
+                <p class="text-muted-foreground">
+                    A composable slider with Track, Range, and Thumb sub-components.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BlazorBlueprint.Primitives.Slider.BbSlider
+                    @bind-Value="sliderValue"
+                    Min="0" Max="100" Step="1"
+                    style="position: relative; display: flex; width: 100%; touch-action: none; user-select: none; align-items: center; height: 20px; cursor: pointer;">
+                    <BlazorBlueprint.Primitives.Slider.BbSliderTrack
+                        style="position: relative; height: 8px; width: 100%; overflow: hidden; border-radius: 9999px; background-color: var(--secondary);">
+                        <BlazorBlueprint.Primitives.Slider.BbSliderRange
+                            style="position: absolute; height: 100%; background-color: var(--primary);" />
+                    </BlazorBlueprint.Primitives.Slider.BbSliderTrack>
+                    <BlazorBlueprint.Primitives.Slider.BbSliderThumb
+                        style="position: absolute; display: block; height: 20px; width: 20px; border-radius: 9999px; border: 2px solid var(--primary); background: var(--background); transform: translateX(-50%);" />
+                </BlazorBlueprint.Primitives.Slider.BbSlider>
+                <p class="text-sm text-muted-foreground">Value: @sliderValue</p>
+            </div>
+
+            <CodeBlock Source="Primitives/Slider/basic.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Custom Range</h2>
+                <p class="text-muted-foreground">
+                    Slider with custom min/max and step values.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <BlazorBlueprint.Primitives.Slider.BbSlider
+                    @bind-Value="temperatureValue"
+                    Min="0" Max="40" Step="0.5"
+                    style="position: relative; display: flex; width: 100%; touch-action: none; user-select: none; align-items: center; height: 20px; cursor: pointer;">
+                    <BlazorBlueprint.Primitives.Slider.BbSliderTrack
+                        style="position: relative; height: 8px; width: 100%; overflow: hidden; border-radius: 9999px; background-color: var(--secondary);">
+                        <BlazorBlueprint.Primitives.Slider.BbSliderRange
+                            style="position: absolute; height: 100%; background-color: var(--primary);" />
+                    </BlazorBlueprint.Primitives.Slider.BbSliderTrack>
+                    <BlazorBlueprint.Primitives.Slider.BbSliderThumb
+                        style="position: absolute; display: block; height: 20px; width: 20px; border-radius: 9999px; border: 2px solid var(--primary); background: var(--background); transform: translateX(-50%);" />
+                </BlazorBlueprint.Primitives.Slider.BbSlider>
+                <p class="text-sm text-muted-foreground">Temperature: @temperatureValue&deg;C (step: 0.5, range: 0-40)</p>
+            </div>
+
+            <CodeBlock Source="Primitives/Slider/custom-range.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Disabled Slider</h2>
+                <p class="text-muted-foreground">
+                    A disabled slider that cannot be interacted with.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BlazorBlueprint.Primitives.Slider.BbSlider
+                    Value="30" Disabled="true"
+                    style="position: relative; display: flex; width: 100%; touch-action: none; user-select: none; align-items: center; height: 20px; opacity: 0.5; cursor: not-allowed;">
+                    <BlazorBlueprint.Primitives.Slider.BbSliderTrack
+                        style="position: relative; height: 8px; width: 100%; overflow: hidden; border-radius: 9999px; background-color: var(--secondary);">
+                        <BlazorBlueprint.Primitives.Slider.BbSliderRange
+                            style="position: absolute; height: 100%; background-color: var(--primary);" />
+                    </BlazorBlueprint.Primitives.Slider.BbSliderTrack>
+                    <BlazorBlueprint.Primitives.Slider.BbSliderThumb
+                        style="position: absolute; display: block; height: 20px; width: 20px; border-radius: 9999px; border: 2px solid var(--primary); background: var(--background); transform: translateX(-50%);" />
+                </BlazorBlueprint.Primitives.Slider.BbSlider>
+            </div>
+
+            <CodeBlock Source="Primitives/Slider/disabled.txt" />
+        </section>
+
+    <!-- Accessibility Notes -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">role="slider"</code> on the thumb element for screen readers
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-valuenow</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-valuemin</code>, and <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-valuemax</code> convey the current value and range
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-orientation</code> set to "horizontal" or "vertical"
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-disabled</code> conveys the disabled state to assistive technology
+            </AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Increase/decrease value by one step">
+                <BbKbd>ArrowRight</BbKbd> / <BbKbd>ArrowLeft</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Increase/decrease value by one step">
+                <BbKbd>ArrowUp</BbKbd> / <BbKbd>ArrowDown</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Increase/decrease value by 10% of range">
+                <BbKbd>PageUp</BbKbd> / <BbKbd>PageDown</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Jump to minimum/maximum value">
+                <BbKbd>Home</BbKbd> / <BbKbd>End</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbSlider">
+                <ApiParameter Name="Value" Type="double?" Default="null">
+                    Current slider value (controlled mode). Supports two-way binding with <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Value</code>.
+                </ApiParameter>
+                <ApiParameter Name="DefaultValue" Type="double" Default="0">
+                    Default value for uncontrolled mode.
+                </ApiParameter>
+                <ApiParameter Name="Min" Type="double" Default="0">
+                    Minimum value.
+                </ApiParameter>
+                <ApiParameter Name="Max" Type="double" Default="100">
+                    Maximum value.
+                </ApiParameter>
+                <ApiParameter Name="Step" Type="double" Default="1">
+                    Step increment for keyboard and pointer interactions.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether the slider is disabled.
+                </ApiParameter>
+                <ApiParameter Name="Orientation" Type="SliderOrientation" Default="SliderOrientation.Horizontal">
+                    Orientation of the slider. Affects keyboard navigation and layout.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbSliderTrack">
+                <ApiParameter Name="ChildContent" Type="RenderFragment?">
+                    Content rendered inside the track (typically a <code class="text-xs bg-muted px-1 py-0.5 rounded">BbSliderRange</code>).
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbSliderRange">
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                    Additional HTML attributes. The range width/position is computed automatically.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbSliderThumb">
+                <ApiParameter Name="ChildContent" Type="RenderFragment?">
+                    Optional content rendered inside the thumb.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+    </div>
+</div>
+
+@code {
+    private double sliderValue = 50;
+    private double temperatureValue = 22;
+}
