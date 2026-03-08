@@ -130,21 +130,30 @@ public class DialogService
     /// Opens a custom component inside a dialog.
     /// </summary>
     public Task<DialogResult> OpenAsync<TComponent>(
+        DialogOpenOptions? options = null)
+        where TComponent : IComponent
+        => OpenAsync<TComponent>(new Dictionary<string, object?>(), options);
+
+    /// <summary>
+    /// Opens a custom component inside a dialog with the specified parameters.
+    /// </summary>
+    public Task<DialogResult> OpenAsync<TComponent>(
         Dictionary<string, object?> parameters,
         DialogOpenOptions? options = null)
         where TComponent : IComponent
     {
-        ComponentDialogData data = null!;
-
-        data = new ComponentDialogData
+        var id = Guid.NewGuid().ToString();
+        var data = new ComponentDialogData
         {
+            Id = id,
             Title = options?.Title ?? string.Empty,
+            Description = options?.Description,
             ComponentType = typeof(TComponent),
             Parameters = parameters,
             Options = options ?? new DialogOpenOptions(),
             CloseCallback = result =>
             {
-                Resolve(data.Id, result);
+                Resolve(id, result);
                 return Task.CompletedTask;
             }
         };

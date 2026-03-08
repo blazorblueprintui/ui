@@ -40,8 +40,8 @@ public class PromptDialogOptions : DialogOptions
     /// Gets or sets the maximum allowed length of the input value.
     /// </summary>
     /// <remarks>
-    /// When specified, the rendered input element should enforce
-    /// this value via the <c>maxlength</c> attribute.
+    /// When specified, a validation error is shown if the input
+    /// exceeds this length and the confirm button is disabled.
     /// </remarks>
     public int? MaxLength { get; set; }
 }

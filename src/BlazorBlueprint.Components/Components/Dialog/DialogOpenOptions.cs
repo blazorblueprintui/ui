@@ -12,6 +12,11 @@ public sealed class DialogOpenOptions
     public string? Title { get; set; }
 
     /// <summary>
+    /// Optional dialog description displayed below the title.
+    /// </summary>
+    public string? Description { get; set; }
+
+    /// <summary>
     /// Whether the close (X) button should be displayed.
     /// Default: true.
     /// </summary>

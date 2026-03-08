@@ -3,7 +3,9 @@
 
 
 <DialogHeader Title="@Dialog.Title"
-              Description="@Dialog.Description" />
+              Description="@Dialog.Description"
+              TitleId="@TitleId"
+              DescriptionId="@DescriptionId" />
 
 <BbField IsInvalid="@IsInvalid">
     <BbFieldContent>
@@ -30,6 +32,9 @@
     [Parameter, EditorRequired]
     public PromptDialogData Dialog { get; set; } = default!;
 
+    [Parameter] public string? TitleId { get; set; }
+    [Parameter] public string? DescriptionId { get; set; }
+
     private string? inputValue;
 
     private IReadOnlyList<string> Errors
@@ -41,7 +46,7 @@
             if (Dialog.Options.Required && string.IsNullOrWhiteSpace(inputValue))
                 errors.Add("The value is required");
 
-            if (Dialog.Options.MaxLength > 0 && inputValue?.Length > Dialog.Options.MaxLength)
+            if (Dialog.Options.MaxLength is > 0 && inputValue?.Length > Dialog.Options.MaxLength)
                 errors.Add($"Value must be at most {Dialog.Options.MaxLength} characters.");
 
             return errors;

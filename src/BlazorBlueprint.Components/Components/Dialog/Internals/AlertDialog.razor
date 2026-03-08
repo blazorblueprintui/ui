@@ -3,7 +3,9 @@
 
 
 <DialogHeader Title="@Dialog.Title"
-              Description="@Dialog.Description" />
+              Description="@Dialog.Description"
+              TitleId="@TitleId"
+              DescriptionId="@DescriptionId" />
 
 <div class="flex justify-end">
     <BbButton OnClick="Acknowledge">
@@ -14,6 +16,9 @@
 @code {
     [Parameter, EditorRequired]
     public AlertDialogData Dialog { get; set; } = default!;
+
+    [Parameter] public string? TitleId { get; set; }
+    [Parameter] public string? DescriptionId { get; set; }
 
     private void Acknowledge()
         => DialogService.Resolve(Dialog.Id, DialogResult.Ok());

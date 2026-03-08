@@ -3,7 +3,9 @@
 
 
 <DialogHeader Title="@Dialog.Title"
-              Description="@Dialog.Description" />
+              Description="@Dialog.Description"
+              TitleId="@TitleId"
+              DescriptionId="@DescriptionId" />
 
 <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2">
     <BbButton Variant="ButtonVariant.Outline"
@@ -11,7 +13,7 @@
         @Dialog.Options.CancelText
     </BbButton>
 
-    <BbButton Variant="@(Dialog.Options.Destructive? ButtonVariant.Destructive: ButtonVariant.Default)"
+    <BbButton Variant="@(Dialog.Options.Destructive ? ButtonVariant.Destructive : ButtonVariant.Default)"
               OnClick="Confirm">
         @Dialog.Options.ConfirmText
     </BbButton>
@@ -20,6 +22,9 @@
 @code {
     [Parameter, EditorRequired]
     public ConfirmDialogData Dialog { get; set; } = default!;
+
+    [Parameter] public string? TitleId { get; set; }
+    [Parameter] public string? DescriptionId { get; set; }
 
     private void Cancel()
         => DialogService.Resolve(Dialog.Id, DialogResult.Cancel());
