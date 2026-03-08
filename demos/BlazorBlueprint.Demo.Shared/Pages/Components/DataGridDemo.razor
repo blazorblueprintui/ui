@@ -102,10 +102,11 @@
                     Width="150px" />
                 <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable Filterable Width="100px" />
                 <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Filterable Width="130px" />
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Sortable Filterable
-                    FilterType="FilterFieldType.Enum"
-                    FilterOptions="@(new[] { "Active", "Inactive", "Pending", "Suspended" }.Select(s => new SelectOption<string>(s, s)))"
-                    Width="120px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="DateTimeOffset?" Property="@(p => p.LastPromotionDate)" Title="Last Promotion" Format="g" Sortable Filterable Width="180px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="DateTime?"
+                    Property="@(p => p.LastPromotionDate.HasValue ? p.LastPromotionDate.Value.LocalDateTime : (DateTime?)null)"
+                    Title="Promotion (Local)" Format="g" Sortable Filterable Width="180px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="PersonStatus?" Property="@(p => p.NullableStatusEnum)" Title="Status (Enum)" Sortable Filterable Width="150px" />
                 <BbDataGridPropertyColumn TData="Person" TProp="bool" Property="@(p => p.IsActive)" Title="Active" Sortable Filterable Width="100px" />
             </Columns>
         </BbDataGrid>

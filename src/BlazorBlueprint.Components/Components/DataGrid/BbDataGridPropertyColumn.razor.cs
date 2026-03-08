@@ -234,7 +234,22 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
 
     FilterFieldType IFilterableColumn.GetFilterFieldType() => FilterType ?? InferFilterFieldType();
 
-    IEnumerable<SelectOption<string>>? IFilterableColumn.GetFilterOptions() => FilterOptions;
+    IEnumerable<SelectOption<string>>? IFilterableColumn.GetFilterOptions()
+    {
+        if (FilterOptions != null)
+        {
+            return FilterOptions;
+        }
+
+        var propType = Nullable.GetUnderlyingType(typeof(TProp)) ?? typeof(TProp);
+        if (propType.IsEnum)
+        {
+            return Enum.GetNames(propType)
+                .Select(n => new SelectOption<string>(n, SplitPascalCase(n)));
+        }
+
+        return null;
+    }
 
     string IFilterableColumn.GetFilterFieldName()
     {
@@ -243,6 +258,13 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
             return member.Member.Name;
         }
         return ColumnId;
+    }
+
+    Func<object, object?>? IFilterableColumn.GetValueAccessor()
+    {
+        compiledProperty ??= Property.Compile();
+        var func = compiledProperty;
+        return item => func((TData)item);
     }
 
     private static FilterFieldType InferFilterFieldType()
@@ -257,7 +279,7 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
         {
             return FilterFieldType.Boolean;
         }
-        if (propType == typeof(DateTime))
+        if (propType == typeof(DateTime) || propType == typeof(DateTimeOffset))
         {
             return FilterFieldType.DateTime;
         }

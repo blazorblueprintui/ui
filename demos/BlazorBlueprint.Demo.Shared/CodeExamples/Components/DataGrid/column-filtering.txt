@@ -14,6 +14,19 @@
         <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable Filterable />
         <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Filterable />
 
+        @* DateTimeOffset? filtering — auto-inferred as DateTime filter *@
+        <BbDataGridPropertyColumn TData="Person" TProp="DateTimeOffset?"
+            Property="@(p => p.LastPromotionDate)" Title="Last Promotion" Format="g" Sortable Filterable />
+
+        @* Computed expression — converts DateTimeOffset? to DateTime? *@
+        <BbDataGridPropertyColumn TData="Person" TProp="DateTime?"
+            Property="@(p => p.LastPromotionDate.HasValue ? p.LastPromotionDate.Value.LocalDateTime : (DateTime?)null)"
+            Title="Promotion (Local)" Format="g" Sortable Filterable />
+
+        @* Nullable enum — filter options auto-generated from enum type *@
+        <BbDataGridPropertyColumn TData="Person" TProp="PersonStatus?"
+            Property="@(p => p.NullableStatusEnum)" Title="Status" Sortable Filterable />
+
         @* Boolean filtering — auto-inferred from bool property *@
         <BbDataGridPropertyColumn TData="Person" TProp="bool" Property="@(p => p.IsActive)" Title="Active" Sortable Filterable />
     </Columns>

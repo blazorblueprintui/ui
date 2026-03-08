@@ -21,4 +21,10 @@ internal interface IFilterableColumn
     /// Typically the property name from the expression.
     /// </summary>
     internal string GetFilterFieldName();
+
+    /// <summary>
+    /// Gets a function that extracts the filterable value from a data item.
+    /// Used for in-memory filtering when the property expression is not a simple member access.
+    /// </summary>
+    internal Func<object, object?>? GetValueAccessor();
 }

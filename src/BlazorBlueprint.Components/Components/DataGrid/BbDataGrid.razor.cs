@@ -1206,19 +1206,38 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
                 continue;
             }
 
-            var field = GetFilterFieldForColumn(column);
-            if (field == null)
+            var filterExpr = column.GetFilterExpression();
+            if (filterExpr != null)
             {
-                continue;
+                // Use the column's own expression (supports computed expressions)
+                var parameter = Expression.Parameter(typeof(TData), "x");
+                var body = new ParameterReplacer(filterExpr.Parameters[0], parameter).Visit(filterExpr.Body);
+                var valueType = filterExpr.ReturnType;
+
+                var conditionExpr = FilterDefinitionExtensions.BuildConditionExpression(body, valueType, condition);
+                if (conditionExpr != null)
+                {
+                    var lambda = Expression.Lambda<Func<TData, bool>>(conditionExpr, parameter);
+                    queryable = queryable.Where(lambda);
+                }
             }
-
-            var filterDef = new FilterDefinition
+            else
             {
-                Conditions = new List<FilterCondition> { condition }
-            };
+                // Fallback: use property-name-based reflection
+                var field = GetFilterFieldForColumn(column);
+                if (field == null)
+                {
+                    continue;
+                }
 
-            var expression = filterDef.ToExpression<TData>(new[] { field });
-            queryable = queryable.Where(expression);
+                var filterDef = new FilterDefinition
+                {
+                    Conditions = new List<FilterCondition> { condition }
+                };
+
+                var expression = filterDef.ToExpression<TData>(new[] { field });
+                queryable = queryable.Where(expression);
+            }
         }
 
         return queryable;
@@ -1244,6 +1263,20 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
                 continue;
             }
 
+            if (column is IFilterableColumn filterable)
+            {
+                var valueAccessor = filterable.GetValueAccessor();
+                if (valueAccessor != null)
+                {
+                    // Use the column's compiled expression (supports computed expressions)
+                    var capturedCondition = condition;
+                    data = data.Where(item =>
+                        FilterDefinitionExtensions.EvaluateConditionValue(valueAccessor(item!), capturedCondition));
+                    continue;
+                }
+            }
+
+            // Fallback: use property-name-based reflection
             var field = GetFilterFieldForColumn(column);
             if (field == null)
             {
@@ -1260,6 +1293,25 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
 
         return data;
+    }
+
+    /// <summary>
+    /// Expression visitor that replaces one parameter expression with another.
+    /// Used to re-parameterize a column's filter expression to match the query's parameter.
+    /// </summary>
+    private sealed class ParameterReplacer : ExpressionVisitor
+    {
+        private readonly ParameterExpression from;
+        private readonly ParameterExpression to;
+
+        public ParameterReplacer(ParameterExpression from, ParameterExpression to)
+        {
+            this.from = from;
+            this.to = to;
+        }
+
+        protected override Expression VisitParameter(ParameterExpression node) =>
+            node == from ? to : base.VisitParameter(node);
     }
 
     private static FilterField? GetFilterFieldForColumn(IDataGridColumn<TData> column)

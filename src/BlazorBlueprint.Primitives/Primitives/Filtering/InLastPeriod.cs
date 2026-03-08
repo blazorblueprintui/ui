@@ -6,6 +6,11 @@ namespace BlazorBlueprint.Primitives.Filtering;
 public enum InLastPeriod
 {
     /// <summary>
+    /// Number of hours.
+    /// </summary>
+    Hours,
+
+    /// <summary>
     /// Number of days.
     /// </summary>
     Days,
@@ -18,5 +23,10 @@ public enum InLastPeriod
     /// <summary>
     /// Number of months.
     /// </summary>
-    Months
+    Months,
+
+    /// <summary>
+    /// Number of years.
+    /// </summary>
+    Years
 }

@@ -16,9 +16,11 @@ public partial class BbDataGridColumnFilter : ComponentBase
 
     private static readonly IEnumerable<SelectOption<InLastPeriod>> inLastPeriodOptions = new[]
     {
+        new SelectOption<InLastPeriod>(InLastPeriod.Hours, "hours"),
         new SelectOption<InLastPeriod>(InLastPeriod.Days, "days"),
         new SelectOption<InLastPeriod>(InLastPeriod.Weeks, "weeks"),
-        new SelectOption<InLastPeriod>(InLastPeriod.Months, "months")
+        new SelectOption<InLastPeriod>(InLastPeriod.Months, "months"),
+        new SelectOption<InLastPeriod>(InLastPeriod.Years, "years")
     };
 
     private static readonly IEnumerable<SelectOption<DatePreset>> datePresetOptions = new[]

@@ -117,6 +117,8 @@ public class MockDataService
                 Age = _random.Next(18, 70),
                 Role = _roles[_random.Next(_roles.Length)],
                 Status = _statuses[_random.Next(_statuses.Length)],
+                StatusEnum = (PersonStatus)_random.Next(4),
+                NullableStatusEnum = _random.Next(100) > 20 ? (PersonStatus)_random.Next(4) : null,
                 Department = _departments[_random.Next(_departments.Length)],
                 LastPromotionDate = GeneratePromotionDate(),
                 Salary = _random.Next(40000, 150000),
@@ -187,6 +189,17 @@ public class MockDataService
 }
 
 /// <summary>
+/// Typed status for demonstrating enum filtering.
+/// </summary>
+public enum PersonStatus
+{
+    Active,
+    Inactive,
+    Pending,
+    Suspended
+}
+
+/// <summary>
 /// Represents a person with various properties for demo purposes.
 /// </summary>
 public class Person
@@ -202,6 +215,8 @@ public class Person
     public int Salary { get; set; }
     public DateTime JoinDate { get; set; }
     public bool IsActive { get; set; }
+    public PersonStatus StatusEnum { get; set; }
+    public PersonStatus? NullableStatusEnum { get; set; }
 }
 
 /// <summary>

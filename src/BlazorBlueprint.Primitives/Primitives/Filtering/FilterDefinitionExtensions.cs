@@ -125,7 +125,19 @@ public static class FilterDefinitionExtensions
         }
 
         var rawValue = prop.GetValue(item);
+        return EvaluateConditionValue(rawValue, condition);
+    }
 
+    /// <summary>
+    /// Evaluates a filter condition against a pre-extracted value.
+    /// Use this when the value has already been extracted from the data item
+    /// (e.g., via a compiled expression rather than reflection).
+    /// </summary>
+    /// <param name="rawValue">The value to evaluate against the condition.</param>
+    /// <param name="condition">The filter condition to evaluate.</param>
+    /// <returns>True if the value matches the condition.</returns>
+    public static bool EvaluateConditionValue(object? rawValue, FilterCondition condition)
+    {
         // Incomplete condition: user hasn't entered a value yet — ignore (match all)
         // to align with ToExpression behavior and avoid filtering out all rows mid-edit.
         if (IsIncompleteCondition(condition))
@@ -271,9 +283,20 @@ public static class FilterDefinitionExtensions
         };
     }
 
+    private static DateTime? ToDateTime(object? rawValue)
+    {
+        return rawValue switch
+        {
+            DateTime dt => dt,
+            DateTimeOffset dto => dto.LocalDateTime,
+            _ => null
+        };
+    }
+
     private static bool EvaluateInLast(object? rawValue, FilterCondition condition)
     {
-        if (rawValue is not DateTime dateValue)
+        var dateValue = ToDateTime(rawValue);
+        if (dateValue is null)
         {
             return false;
         }
@@ -296,18 +319,21 @@ public static class FilterDefinitionExtensions
         var now = DateTime.Now;
         var cutoff = period switch
         {
+            InLastPeriod.Hours => now.AddHours(-amount),
             InLastPeriod.Days => now.AddDays(-amount),
             InLastPeriod.Weeks => now.AddDays(-amount * 7),
             InLastPeriod.Months => now.AddMonths(-amount),
+            InLastPeriod.Years => now.AddYears(-amount),
             _ => now
         };
 
-        return dateValue >= cutoff;
+        return dateValue.Value >= cutoff;
     }
 
     private static bool EvaluateInNext(object? rawValue, FilterCondition condition)
     {
-        if (rawValue is not DateTime dateValue)
+        var dateValue = ToDateTime(rawValue);
+        if (dateValue is null)
         {
             return false;
         }
@@ -327,20 +353,24 @@ public static class FilterDefinitionExtensions
             _ => InLastPeriod.Days
         };
 
+        var now = DateTime.Now;
         var cutoff = period switch
         {
-            InLastPeriod.Days => DateTime.Now.AddDays(amount),
-            InLastPeriod.Weeks => DateTime.Now.AddDays(amount * 7),
-            InLastPeriod.Months => DateTime.Now.AddMonths(amount),
-            _ => DateTime.Now
+            InLastPeriod.Hours => now.AddHours(amount),
+            InLastPeriod.Days => now.AddDays(amount),
+            InLastPeriod.Weeks => now.AddDays(amount * 7),
+            InLastPeriod.Months => now.AddMonths(amount),
+            InLastPeriod.Years => now.AddYears(amount),
+            _ => now
         };
 
-        return dateValue <= cutoff && dateValue >= DateTime.Now;
+        return dateValue.Value <= cutoff && dateValue.Value >= now;
     }
 
     private static bool EvaluateDatePreset(object? rawValue, FilterCondition condition, bool negate)
     {
-        if (rawValue is not DateTime dateValue)
+        var dateValue = ToDateTime(rawValue);
+        if (dateValue is null)
         {
             return false;
         }
@@ -354,7 +384,7 @@ public static class FilterDefinitionExtensions
         };
 
         var (start, end) = ResolveDatePresetRange(preset);
-        var inRange = dateValue >= start && dateValue < end;
+        var inRange = dateValue.Value >= start && dateValue.Value < end;
         return negate ? !inRange : inRange;
     }
 
@@ -511,7 +541,10 @@ public static class FilterDefinitionExtensions
         };
     }
 
-    private static Expression BuildIsEmptyExpression(MemberExpression propAccess, Type propType, bool isNullable)
+    private static Expression BuildIsEmptyExpression(MemberExpression propAccess, Type propType, bool isNullable) =>
+        BuildIsEmptyExpressionCore(propAccess, propType, isNullable);
+
+    private static Expression BuildIsEmptyExpressionCore(Expression propAccess, Type propType, bool isNullable)
     {
         if (propType == typeof(string))
         {
@@ -527,12 +560,15 @@ public static class FilterDefinitionExtensions
         return Expression.Constant(false);
     }
 
-    private static Expression BuildBoolExpression(MemberExpression propAccess, Type propType, bool expected)
+    private static Expression BuildBoolExpression(MemberExpression propAccess, Type propType, bool expected) =>
+        BuildBoolExpressionCore(propAccess, propType, expected);
+
+    private static Expression BuildBoolExpressionCore(Expression propAccess, Type propType, bool expected)
     {
         if (propType == typeof(bool))
         {
             return expected
-                ? (Expression)propAccess
+                ? propAccess
                 : Expression.Not(propAccess);
         }
 
@@ -552,7 +588,11 @@ public static class FilterDefinitionExtensions
     }
 
     private static Expression BuildComparisonExpression(
-        MemberExpression propAccess, Type propType, object? value, ExpressionType comparison)
+        MemberExpression propAccess, Type propType, object? value, ExpressionType comparison) =>
+        BuildComparisonExpressionCore(propAccess, propType, value, comparison);
+
+    private static Expression BuildComparisonExpressionCore(
+        Expression propAccess, Type propType, object? value, ExpressionType comparison)
     {
         var underlyingType = Nullable.GetUnderlyingType(propType) ?? propType;
         var convertedValue = ConvertValue(value, underlyingType);
@@ -579,7 +619,11 @@ public static class FilterDefinitionExtensions
     }
 
     private static Expression BuildStringMethodExpression(
-        MemberExpression propAccess, Type propType, object? value, string methodName)
+        MemberExpression propAccess, Type propType, object? value, string methodName) =>
+        BuildStringMethodExpressionCore(propAccess, propType, value, methodName);
+
+    private static Expression BuildStringMethodExpressionCore(
+        Expression propAccess, Type propType, object? value, string methodName)
     {
         // Use ToLower(CultureInfo.InvariantCulture) + single-param overloads for EF Core/IQueryable
         // translation compatibility. The StringComparison overloads are not translatable to SQL.
@@ -637,17 +681,28 @@ public static class FilterDefinitionExtensions
     }
 
     private static BinaryExpression BuildBetweenExpression(
-        MemberExpression propAccess, Type propType, object? valueStart, object? valueEnd)
+        MemberExpression propAccess, Type propType, object? valueStart, object? valueEnd) =>
+        BuildBetweenExpressionCore(propAccess, propType, valueStart, valueEnd);
+
+    private static BinaryExpression BuildBetweenExpressionCore(
+        Expression propAccess, Type propType, object? valueStart, object? valueEnd)
     {
-        var gte = BuildComparisonExpression(propAccess, propType, valueStart, ExpressionType.GreaterThanOrEqual);
-        var lte = BuildComparisonExpression(propAccess, propType, valueEnd, ExpressionType.LessThanOrEqual);
+        var gte = BuildComparisonExpressionCore(propAccess, propType, valueStart, ExpressionType.GreaterThanOrEqual);
+        var lte = BuildComparisonExpressionCore(propAccess, propType, valueEnd, ExpressionType.LessThanOrEqual);
         return Expression.AndAlso(gte, lte);
     }
 
     private static Expression BuildInLastExpression(
-        MemberExpression propAccess, Type propType, FilterCondition condition)
+        MemberExpression propAccess, Type propType, FilterCondition condition) =>
+        BuildInLastExpressionCore(propAccess, propType, condition);
+
+    private static Expression BuildInLastExpressionCore(
+        Expression propAccess, Type propType, FilterCondition condition)
     {
-        if (propType != typeof(DateTime) && propType != typeof(DateTime?))
+        var isDateTimeOffset = propType == typeof(DateTimeOffset) || propType == typeof(DateTimeOffset?);
+        var isDateTime = propType == typeof(DateTime) || propType == typeof(DateTime?);
+
+        if (!isDateTime && !isDateTimeOffset)
         {
             return Expression.Constant(true);
         }
@@ -669,19 +724,35 @@ public static class FilterDefinitionExtensions
 
         var cutoff = period switch
         {
+            InLastPeriod.Hours => DateTime.Now.AddHours(-amount),
             InLastPeriod.Days => DateTime.Now.AddDays(-amount),
             InLastPeriod.Weeks => DateTime.Now.AddDays(-amount * 7),
             InLastPeriod.Months => DateTime.Now.AddMonths(-amount),
+            InLastPeriod.Years => DateTime.Now.AddYears(-amount),
             _ => DateTime.Now
         };
 
-        Expression target = propType == typeof(DateTime?)
-            ? Expression.Property(propAccess, "Value")
-            : propAccess;
+        var isNullable = Nullable.GetUnderlyingType(propType) != null;
+
+        Expression target;
+        if (isNullable)
+        {
+            target = Expression.Property(propAccess, "Value");
+        }
+        else
+        {
+            target = propAccess;
+        }
+
+        // For DateTimeOffset, convert to DateTime via .DateTime property
+        if (isDateTimeOffset)
+        {
+            target = Expression.Property(target, "DateTime");
+        }
 
         var gte = Expression.GreaterThanOrEqual(target, Expression.Constant(cutoff));
 
-        if (propType == typeof(DateTime?))
+        if (isNullable)
         {
             var hasValue = Expression.Property(propAccess, "HasValue");
             return Expression.AndAlso(hasValue, gte);
@@ -691,9 +762,16 @@ public static class FilterDefinitionExtensions
     }
 
     private static Expression BuildInNextExpression(
-        MemberExpression propAccess, Type propType, FilterCondition condition)
+        MemberExpression propAccess, Type propType, FilterCondition condition) =>
+        BuildInNextExpressionCore(propAccess, propType, condition);
+
+    private static Expression BuildInNextExpressionCore(
+        Expression propAccess, Type propType, FilterCondition condition)
     {
-        if (propType != typeof(DateTime) && propType != typeof(DateTime?))
+        var isDateTimeOffset = propType == typeof(DateTimeOffset) || propType == typeof(DateTimeOffset?);
+        var isDateTime = propType == typeof(DateTime) || propType == typeof(DateTime?);
+
+        if (!isDateTime && !isDateTimeOffset)
         {
             return Expression.Constant(true);
         }
@@ -716,22 +794,38 @@ public static class FilterDefinitionExtensions
         var now = DateTime.Now;
         var cutoff = period switch
         {
+            InLastPeriod.Hours => now.AddHours(amount),
             InLastPeriod.Days => now.AddDays(amount),
             InLastPeriod.Weeks => now.AddDays(amount * 7),
             InLastPeriod.Months => now.AddMonths(amount),
+            InLastPeriod.Years => now.AddYears(amount),
             _ => now
         };
 
-        Expression target = propType == typeof(DateTime?)
-            ? Expression.Property(propAccess, "Value")
-            : propAccess;
+        var isNullable = Nullable.GetUnderlyingType(propType) != null;
+
+        Expression target;
+        if (isNullable)
+        {
+            target = Expression.Property(propAccess, "Value");
+        }
+        else
+        {
+            target = propAccess;
+        }
+
+        // For DateTimeOffset, convert to DateTime via .DateTime property
+        if (isDateTimeOffset)
+        {
+            target = Expression.Property(target, "DateTime");
+        }
 
         // target >= now AND target <= cutoff
         var gte = Expression.GreaterThanOrEqual(target, Expression.Constant(now));
         var lte = Expression.LessThanOrEqual(target, Expression.Constant(cutoff));
         Expression inRange = Expression.AndAlso(gte, lte);
 
-        if (propType == typeof(DateTime?))
+        if (isNullable)
         {
             var hasValue = Expression.Property(propAccess, "HasValue");
             return Expression.AndAlso(hasValue, inRange);
@@ -741,9 +835,16 @@ public static class FilterDefinitionExtensions
     }
 
     private static Expression BuildDatePresetExpression(
-        MemberExpression propAccess, Type propType, FilterCondition condition, bool negate)
+        MemberExpression propAccess, Type propType, FilterCondition condition, bool negate) =>
+        BuildDatePresetExpressionCore(propAccess, propType, condition, negate);
+
+    private static Expression BuildDatePresetExpressionCore(
+        Expression propAccess, Type propType, FilterCondition condition, bool negate)
     {
-        if (propType != typeof(DateTime) && propType != typeof(DateTime?))
+        var isDateTimeOffset = propType == typeof(DateTimeOffset) || propType == typeof(DateTimeOffset?);
+        var isDateTime = propType == typeof(DateTime) || propType == typeof(DateTime?);
+
+        if (!isDateTime && !isDateTimeOffset)
         {
             return Expression.Constant(true);
         }
@@ -757,10 +858,23 @@ public static class FilterDefinitionExtensions
         };
 
         var (start, end) = ResolveDatePresetRange(preset);
+        var isNullable = Nullable.GetUnderlyingType(propType) != null;
 
-        Expression target = propType == typeof(DateTime?)
-            ? Expression.Property(propAccess, "Value")
-            : propAccess;
+        Expression target;
+        if (isNullable)
+        {
+            target = Expression.Property(propAccess, "Value");
+        }
+        else
+        {
+            target = propAccess;
+        }
+
+        // For DateTimeOffset, convert to DateTime via .DateTime property
+        if (isDateTimeOffset)
+        {
+            target = Expression.Property(target, "DateTime");
+        }
 
         var gte = Expression.GreaterThanOrEqual(target, Expression.Constant(start));
         var lt = Expression.LessThan(target, Expression.Constant(end));
@@ -771,7 +885,7 @@ public static class FilterDefinitionExtensions
             inRange = Expression.Not(inRange);
         }
 
-        if (propType == typeof(DateTime?))
+        if (isNullable)
         {
             var hasValue = Expression.Property(propAccess, "HasValue");
             return negate
@@ -783,7 +897,11 @@ public static class FilterDefinitionExtensions
     }
 
     private static Expression BuildInExpression(
-        MemberExpression propAccess, Type propType, object? filterValue, bool negate)
+        MemberExpression propAccess, Type propType, object? filterValue, bool negate) =>
+        BuildInExpressionCore(propAccess, propType, filterValue, negate);
+
+    private static Expression BuildInExpressionCore(
+        Expression propAccess, Type propType, object? filterValue, bool negate)
     {
         if (filterValue is not IEnumerable<string> values)
         {
@@ -859,6 +977,47 @@ public static class FilterDefinitionExtensions
         return negate ? Expression.Not(combined) : combined;
     }
 
+    /// <summary>
+    /// Builds a filter condition expression using a custom value-access expression
+    /// instead of reflecting over a property name. Use this when the filter value comes from
+    /// a computed expression (e.g. a ternary or method call) rather than a simple property access.
+    /// </summary>
+    /// <param name="valueAccess">Expression that extracts the value from the parameter (e.g. the body of a column's Property lambda, re-parameterized).</param>
+    /// <param name="valueType">The CLR type of the value produced by <paramref name="valueAccess"/>.</param>
+    /// <param name="condition">The filter condition to build.</param>
+    /// <returns>An expression that evaluates the condition, or null if incomplete.</returns>
+    public static Expression? BuildConditionExpression(
+        Expression valueAccess, Type valueType, FilterCondition condition)
+    {
+        var isNullable = Nullable.GetUnderlyingType(valueType) != null || !valueType.IsValueType;
+
+        return condition.Operator switch
+        {
+            FilterOperator.IsEmpty => BuildIsEmptyExpressionCore(valueAccess, valueType, isNullable),
+            FilterOperator.IsNotEmpty => Expression.Not(BuildIsEmptyExpressionCore(valueAccess, valueType, isNullable)),
+            FilterOperator.IsTrue => BuildBoolExpressionCore(valueAccess, valueType, true),
+            FilterOperator.IsFalse => BuildBoolExpressionCore(valueAccess, valueType, false),
+            FilterOperator.Equals => BuildComparisonExpressionCore(valueAccess, valueType, condition.Value, ExpressionType.Equal),
+            FilterOperator.NotEquals => BuildComparisonExpressionCore(valueAccess, valueType, condition.Value, ExpressionType.NotEqual),
+            FilterOperator.GreaterThan => BuildComparisonExpressionCore(valueAccess, valueType, condition.Value, ExpressionType.GreaterThan),
+            FilterOperator.LessThan => BuildComparisonExpressionCore(valueAccess, valueType, condition.Value, ExpressionType.LessThan),
+            FilterOperator.GreaterOrEqual => BuildComparisonExpressionCore(valueAccess, valueType, condition.Value, ExpressionType.GreaterThanOrEqual),
+            FilterOperator.LessOrEqual => BuildComparisonExpressionCore(valueAccess, valueType, condition.Value, ExpressionType.LessThanOrEqual),
+            FilterOperator.Contains => BuildStringMethodExpressionCore(valueAccess, valueType, condition.Value, "Contains"),
+            FilterOperator.NotContains => Expression.Not(BuildStringMethodExpressionCore(valueAccess, valueType, condition.Value, "Contains")),
+            FilterOperator.StartsWith => BuildStringMethodExpressionCore(valueAccess, valueType, condition.Value, "StartsWith"),
+            FilterOperator.EndsWith => BuildStringMethodExpressionCore(valueAccess, valueType, condition.Value, "EndsWith"),
+            FilterOperator.Between => BuildBetweenExpressionCore(valueAccess, valueType, condition.Value, condition.ValueEnd),
+            FilterOperator.InLast => BuildInLastExpressionCore(valueAccess, valueType, condition),
+            FilterOperator.InNext => BuildInNextExpressionCore(valueAccess, valueType, condition),
+            FilterOperator.DateIs => BuildDatePresetExpressionCore(valueAccess, valueType, condition, negate: false),
+            FilterOperator.DateIsNot => BuildDatePresetExpressionCore(valueAccess, valueType, condition, negate: true),
+            FilterOperator.In => BuildInExpressionCore(valueAccess, valueType, condition.Value, negate: false),
+            FilterOperator.NotIn => BuildInExpressionCore(valueAccess, valueType, condition.Value, negate: true),
+            _ => Expression.Constant(true)
+        };
+    }
+
     private static HashSet<string>? BuildAllowedFieldSet(IEnumerable<FilterField> fields)
     {
         var list = fields as IList<FilterField> ?? fields.ToList();
@@ -886,6 +1045,18 @@ public static class FilterDefinitionExtensions
             if (targetType == typeof(DateTime) && value is string dateStr)
             {
                 return DateTime.Parse(dateStr, CultureInfo.InvariantCulture);
+            }
+
+            if (targetType == typeof(DateTimeOffset))
+            {
+                if (value is string dtoStr)
+                {
+                    return DateTimeOffset.Parse(dtoStr, CultureInfo.InvariantCulture);
+                }
+                if (value is DateTime dt)
+                {
+                    return new DateTimeOffset(dt);
+                }
             }
 
             if (targetType == typeof(int))

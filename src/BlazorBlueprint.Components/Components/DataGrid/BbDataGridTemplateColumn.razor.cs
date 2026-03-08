@@ -289,6 +289,17 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
         return ColumnId;
     }
 
+    Func<object, object?>? IFilterableColumn.GetValueAccessor()
+    {
+        if (FilterBy == null)
+        {
+            return null;
+        }
+
+        var compiled = FilterBy.Compile();
+        return item => compiled((TData)item);
+    }
+
     protected override void OnInitialized()
     {
         if (ParentGrid == null)
