@@ -59,9 +59,7 @@
             <div class="border rounded-lg p-4 space-y-4 bg-muted/30">
                 @if (!string.IsNullOrWhiteSpace(sseUrl))
                 {
-                    <BbEventConsumer @ref="consumerRef"
-                                    Url="@(sseUrl.Trim())"
-                                    OnConnectionStateChanged="state => connectionState = state">
+                    <BbEventConsumer @ref="consumerRef" Url="@(sseUrl.Trim())" OnConnectionStateChanged="StateHasChanged">
                         <BbEventTemplate TValue="TickEvent" Event="tick" RenderMode="EventRenderMode.Latest">
                             <div class="text-sm">
                                 <strong>Latest tick:</strong> @context.Timestamp
@@ -85,7 +83,7 @@
 
 @code {
     private BbEventConsumer? consumerRef;
-    private EventSourceState connectionState = EventSourceState.Disconnected;
+    private EventSourceState connectionState => consumerRef?.ConnectionState ?? EventSourceState.Disconnected;
     private string sseUrl = "/sse";
 
     private async Task Connect()

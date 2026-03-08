@@ -57,8 +57,7 @@ public partial class BbEventConsumer : ComponentBase, IAsyncDisposable
 
     /// <summary>
     /// Global render mode applied to all child <see cref="BbEventTemplate{TValue}"/>
-    /// components. When set, overrides individual template <c>RenderMode</c> values.
-    /// When <c>null</c>, each template uses its own <c>RenderMode</c> parameter.
+    /// components.
     /// </summary>
     [Parameter]
     public EventRenderMode? RenderMode { get; set; }
