@@ -833,24 +833,16 @@ public static class TailwindMerge
         ["scale"] = ["scale-x", "scale-y"],
     };
 
-    // Set of known Tailwind color-related prefixes for matching semantic colors
-    private static readonly HashSet<string> FontSizePrefixes = new(StringComparer.Ordinal)
-    {
-        "text-xs", "text-sm", "text-base", "text-lg", "text-xl",
-        "text-2xl", "text-3xl", "text-4xl", "text-5xl", "text-6xl",
-        "text-7xl", "text-8xl", "text-9xl"
-    };
-
     // Known Tailwind color utility prefixes that accept color values
-    private static readonly string[] ColorPrefixes =
-    [
+    private static readonly HashSet<string> ColorPrefixes = new(StringComparer.Ordinal)
+    {
         "text", "bg", "border", "border-t", "border-r", "border-b", "border-l",
         "border-x", "border-y", "border-s", "border-e",
         "ring", "ring-offset", "outline", "divide",
         "accent", "caret", "fill", "stroke",
         "decoration", "shadow", "from", "via", "to",
         "placeholder"
-    ];
+    };
 
     // Cache for utility group lookups to avoid repeated evaluation
     private static readonly ConcurrentDictionary<string, string?> utilityGroupCache = new();
@@ -941,6 +933,8 @@ public static class TailwindMerge
     /// <summary>
     /// Merges an array of CSS class strings, resolving Tailwind utility conflicts.
     /// Later classes in the array take precedence over earlier ones when conflicts occur.
+    /// Classes with the important modifier (!) always win over non-important classes
+    /// in the same utility group.
     /// Variant prefixes (sm:, md:, hover:, dark:, etc.) are handled so that conflicts
     /// are scoped per-variant context.
     /// </summary>
@@ -954,9 +948,9 @@ public static class TailwindMerge
         }
 
         // Dictionary to track the last occurrence of each utility group (scoped by variant prefix)
-        var groupedClasses = new Dictionary<string, (string className, int index)>();
-        var unGroupedClasses = new List<(string className, int index)>();
-        var seenUngrouped = new HashSet<string>(StringComparer.Ordinal);
+        // The bool tracks whether the stored class has the important modifier
+        var groupedClasses = new Dictionary<string, (string className, int index, bool important)>();
+        var unGroupedClasses = new Dictionary<string, (string className, int index)>(StringComparer.Ordinal);
 
         for (var i = 0; i < classes.Length; i++)
         {
@@ -978,7 +972,7 @@ public static class TailwindMerge
                 // Check if this longhand group should remove a previously stored shorthand.
                 // The group key includes the variant prefix (e.g., "md:padding-x"),
                 // so we extract the variant prefix and compare the base group.
-                var (variantPrefix, _) = SplitVariantPrefix(className);
+                var (variantPrefix, baseClass) = SplitVariantPrefix(className);
                 var baseGroup = variantPrefix.Length > 0 ? group[variantPrefix.Length..] : group;
 
                 foreach (var kvp in ShorthandToLonghandGroups)
@@ -994,33 +988,29 @@ public static class TailwindMerge
                     }
                 }
 
-                groupedClasses[group] = (className, i);
+                // Determine if the current class has the important modifier
+                var isImportant = baseClass.Length > 0 && baseClass[0] == '!';
+
+                // Important classes win over non-important classes in the same group
+                if (groupedClasses.TryGetValue(group, out var existing) && existing.important && !isImportant)
+                {
+                    // Existing class is important and current is not — keep the important one
+                    continue;
+                }
+
+                groupedClasses[group] = (className, i, isImportant);
             }
             else
             {
-                // Unknown utility or custom class - preserve it, deduplicate
-                if (seenUngrouped.Add(className))
-                {
-                    unGroupedClasses.Add((className, i));
-                }
-                else
-                {
-                    // Update index so the last occurrence's position is used
-                    for (var j = 0; j < unGroupedClasses.Count; j++)
-                    {
-                        if (unGroupedClasses[j].className == className)
-                        {
-                            unGroupedClasses[j] = (className, i);
-                            break;
-                        }
-                    }
-                }
+                // Unknown utility or custom class - preserve it, deduplicate (last occurrence wins)
+                unGroupedClasses[className] = (className, i);
             }
         }
 
         // Combine grouped and ungrouped classes, maintaining relative order
         var allClasses = groupedClasses.Values
-            .Concat(unGroupedClasses)
+            .Select(x => (x.className, x.index))
+            .Concat(unGroupedClasses.Values)
             .OrderBy(x => x.index)
             .Select(x => x.className);
 
@@ -1030,7 +1020,8 @@ public static class TailwindMerge
     /// <summary>
     /// Identifies which utility group a class belongs to.
     /// Returns null if the class doesn't match any known Tailwind utility pattern.
-    /// Results are cached for performance (cache is bounded).
+    /// Results are cached for performance. When the cache exceeds its size limit,
+    /// it is cleared to prevent unbounded memory growth in long-running server sessions.
     /// </summary>
     private static string? GetUtilityGroup(string className)
     {
@@ -1041,11 +1032,16 @@ public static class TailwindMerge
 
         var group = ComputeUtilityGroup(className);
 
-        // Bound the cache to prevent unbounded memory growth in long-running server sessions
-        if (utilityGroupCache.Count < MaxCacheSize)
+        // When the cache is full, clear it to reclaim memory and allow new entries.
+        // This is simpler and more predictable than LRU eviction for this use case,
+        // since the working set of classes in an app is typically stable and will
+        // quickly repopulate after a clear.
+        if (utilityGroupCache.Count >= MaxCacheSize)
         {
-            utilityGroupCache.TryAdd(className, group);
+            utilityGroupCache.Clear();
         }
+
+        utilityGroupCache.TryAdd(className, group);
 
         return group;
     }
@@ -1129,17 +1125,71 @@ public static class TailwindMerge
     /// <summary>
     /// Checks if a prefix is a known color utility prefix.
     /// </summary>
-    private static bool IsColorPrefix(string prefix)
+    private static bool IsColorPrefix(string prefix) =>
+        ColorPrefixes.Contains(prefix);
+
+    // Non-color values for each color prefix, used to disambiguate utilities like
+    // "text-lg" (font-size) from "text-red-500" (color). Maintained as a dictionary
+    // of HashSets for O(1) lookup and easy extensibility when new Tailwind versions
+    // add utilities.
+    private static readonly Dictionary<string, HashSet<string>> NonColorValues = new(StringComparer.Ordinal)
     {
-        for (var i = 0; i < ColorPrefixes.Length; i++)
+        ["text"] = new(StringComparer.Ordinal)
         {
-            if (prefix == ColorPrefixes[i])
-            {
-                return true;
-            }
+            // Font sizes
+            "xs", "sm", "base", "lg", "xl", "2xl", "3xl", "4xl", "5xl", "6xl", "7xl", "8xl", "9xl",
+            // Text alignment
+            "left", "center", "right", "justify", "start", "end",
+            // Text overflow/wrap
+            "ellipsis", "clip", "wrap", "nowrap", "balance", "pretty"
+        },
+        ["bg"] = new(StringComparer.Ordinal)
+        {
+            "auto", "cover", "contain",
+            "repeat", "no-repeat", "repeat-x", "repeat-y", "repeat-round", "repeat-space",
+            "fixed", "local", "scroll",
+            "bottom", "center", "left", "left-bottom", "left-top",
+            "right", "right-bottom", "right-top", "top",
+            "clip-border", "clip-padding", "clip-content", "clip-text",
+            "origin-border", "origin-padding", "origin-content"
+        },
+        ["border"] = new(StringComparer.Ordinal)
+        {
+            "solid", "dashed", "dotted", "double", "hidden", "none",
+            "collapse", "separate"
+        },
+        ["outline"] = new(StringComparer.Ordinal)
+        {
+            "none", "dashed", "dotted", "double"
+        },
+        ["decoration"] = new(StringComparer.Ordinal)
+        {
+            "solid", "double", "dotted", "dashed", "wavy",
+            "auto", "from-font"
+        },
+        ["shadow"] = new(StringComparer.Ordinal)
+        {
+            "sm", "md", "lg", "xl", "2xl", "none", "inner"
+        },
+        ["divide"] = new(StringComparer.Ordinal)
+        {
+            "solid", "dashed", "dotted", "double", "none",
+            "x", "y", "x-0", "y-0", "x-2", "y-2",
+            "x-4", "y-4", "x-8", "y-8", "x-reverse", "y-reverse"
+        },
+        ["stroke"] = new(StringComparer.Ordinal)
+        {
+            "0", "1", "2"
+        },
+        ["ring"] = new(StringComparer.Ordinal)
+        {
+            "0", "1", "2", "4", "8", "inset"
+        },
+        ["ring-offset"] = new(StringComparer.Ordinal)
+        {
+            "0", "1", "2", "4", "8"
         }
-        return false;
-    }
+    };
 
     /// <summary>
     /// Determines if a value after a color prefix is actually a non-color utility value.
@@ -1153,121 +1203,7 @@ public static class TailwindMerge
             return true;
         }
 
-        // Arbitrary values in brackets (e.g., border-[3px]) are not color when used with
-        // prefixes that also have non-color semantics — but we can't determine intent,
-        // so let the prefix group match handle it by returning false here only for pure color prefixes
-        // that don't have non-color prefix group entries.
-        // text-* has font-size values that should not be treated as colors
-        if (prefix == "text")
-        {
-            var fullClass = $"text-{value}";
-            if (FontSizePrefixes.Contains(fullClass))
-            {
-                return true;
-            }
-            // text-align values
-            if (value is "left" or "center" or "right" or "justify" or "start" or "end")
-            {
-                return true;
-            }
-            // text-overflow/wrap values
-            if (value is "ellipsis" or "clip" or "wrap" or "nowrap" or "balance" or "pretty")
-            {
-                return true;
-            }
-        }
-
-        // bg-* has non-color values
-        if (prefix == "bg")
-        {
-            if (value is "auto" or "cover" or "contain" or "repeat" or "no-repeat"
-                or "repeat-x" or "repeat-y" or "repeat-round" or "repeat-space"
-                or "fixed" or "local" or "scroll"
-                or "bottom" or "center" or "left" or "left-bottom" or "left-top"
-                or "right" or "right-bottom" or "right-top" or "top"
-                or "clip-border" or "clip-padding" or "clip-content" or "clip-text"
-                or "origin-border" or "origin-padding" or "origin-content")
-            {
-                return true;
-            }
-        }
-
-        // border-* has non-color values (style, collapse)
-        if (prefix == "border")
-        {
-            if (value is "solid" or "dashed" or "dotted" or "double" or "hidden" or "none"
-                or "collapse" or "separate")
-            {
-                return true;
-            }
-        }
-
-        // outline-* has non-color values
-        if (prefix == "outline")
-        {
-            if (value is "none" or "dashed" or "dotted" or "double")
-            {
-                return true;
-            }
-        }
-
-        // decoration-* has non-color values (style)
-        if (prefix == "decoration")
-        {
-            if (value is "solid" or "double" or "dotted" or "dashed" or "wavy"
-                or "auto" or "from-font")
-            {
-                return true;
-            }
-        }
-
-        // shadow-* has non-color values handled by exact groups
-        if (prefix == "shadow")
-        {
-            if (value is "sm" or "md" or "lg" or "xl" or "2xl" or "none" or "inner")
-            {
-                return true;
-            }
-        }
-
-        // divide-* has non-color values
-        if (prefix == "divide")
-        {
-            if (value is "solid" or "dashed" or "dotted" or "double" or "none"
-                or "x" or "y" or "x-0" or "y-0" or "x-2" or "y-2"
-                or "x-4" or "y-4" or "x-8" or "y-8" or "x-reverse" or "y-reverse")
-            {
-                return true;
-            }
-        }
-
-        // stroke-* has stroke-width values
-        if (prefix == "stroke")
-        {
-            if (value is "0" or "1" or "2")
-            {
-                return true;
-            }
-        }
-
-        // ring-* has non-color values (width, inset)
-        if (prefix == "ring")
-        {
-            if (value is "0" or "1" or "2" or "4" or "8" or "inset")
-            {
-                return true;
-            }
-        }
-
-        // ring-offset-* has non-color values (width)
-        if (prefix == "ring-offset")
-        {
-            if (value is "0" or "1" or "2" or "4" or "8")
-            {
-                return true;
-            }
-        }
-
-        return false;
+        // Check the prefix-specific non-color values
+        return NonColorValues.TryGetValue(prefix, out var nonColorSet) && nonColorSet.Contains(value);
     }
 }
