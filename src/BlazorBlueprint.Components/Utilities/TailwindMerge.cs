@@ -969,22 +969,19 @@ public static class TailwindMerge
             var group = GetUtilityGroup(className);
             if (!string.IsNullOrEmpty(group))
             {
-                // Check if this longhand group should remove a previously stored shorthand.
-                // The group key includes the variant prefix (e.g., "md:padding-x"),
-                // so we extract the variant prefix and compare the base group.
+                // When a shorthand appears (e.g., p-4), remove all earlier longhands
+                // (e.g., pr-2, pl-6) since the shorthand overrides them all.
+                // When a longhand appears (e.g., pr-10 after p-4), both are kept —
+                // the longhand only overrides its specific side.
                 var (variantPrefix, baseClass) = SplitVariantPrefix(className);
                 var baseGroup = variantPrefix.Length > 0 ? group[variantPrefix.Length..] : group;
 
-                foreach (var kvp in ShorthandToLonghandGroups)
+                if (ShorthandToLonghandGroups.TryGetValue(baseGroup, out var longhands))
                 {
-                    var longhandGroups = kvp.Value;
-                    for (var j = 0; j < longhandGroups.Length; j++)
+                    for (var j = 0; j < longhands.Length; j++)
                     {
-                        if (baseGroup == longhandGroups[j])
-                        {
-                            var shorthandKey = variantPrefix + kvp.Key;
-                            groupedClasses.Remove(shorthandKey);
-                        }
+                        var longhandKey = variantPrefix + longhands[j];
+                        groupedClasses.Remove(longhandKey);
                     }
                 }
 
