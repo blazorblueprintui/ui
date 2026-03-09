@@ -1,0 +1,35 @@
+<BbDataGrid TData="Department" Items="@rootDepartments"
+            ChildrenSelector="@(_ => null)"
+            ItemValueSelector="@(d => d.Id)"
+            HasChildrenPredicate="@(d => d.HasSubDepartments)"
+            LoadChildren="@LoadDepartmentChildrenAsync">
+    <Columns>
+        <BbDataGridHierarchyColumn TData="Department" TProp="string"
+            Property="@(d => d.Name)" Title="Department" Sortable />
+        <BbDataGridPropertyColumn TData="Department" TProp="int"
+            Property="@(d => d.EmployeeCount)" Title="Employees" />
+        <BbDataGridPropertyColumn TData="Department" TProp="string"
+            Property="@(d => d.Head)" Title="Head" />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private List<Department> rootDepartments = new() { /* ... */ };
+
+    private async Task<IEnumerable<Department>> LoadDepartmentChildrenAsync(
+        Department parent)
+    {
+        // Simulate async load (e.g., API call)
+        await Task.Delay(500);
+        return GetChildDepartments(parent.Id);
+    }
+
+    public class Department
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public int EmployeeCount { get; set; }
+        public string Head { get; set; }
+        public bool HasSubDepartments { get; set; }
+    }
+}

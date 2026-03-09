@@ -3,7 +3,9 @@ using BlazorBlueprint.Primitives;
 using BlazorBlueprint.Primitives.DataGrid;
 using BlazorBlueprint.Primitives.Filtering;
 using BlazorBlueprint.Primitives.Table;
+using BlazorBlueprint.Primitives.Utilities;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 
 namespace BlazorBlueprint.Components;
@@ -24,6 +26,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private List<TData>? _processedDataList;
     private CancellationTokenSource? _loadCts;
     private bool _selectAllDropdownOpen;
+    private readonly Dictionary<string, bool> _filterPopoverOpen = new();
     private bool _needsDataRefresh = true;
     private bool columnStateInitialized;
 
@@ -36,6 +39,18 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private RenderFragment<DataGridGroupContext<TData>>? _groupColumnHeaderTemplate;
     private Expression<Func<TData, object>>? _lastGroupBy;
     private List<object>? _allGroupKeys;
+
+    // Hierarchy state
+    private HierarchyManager<TData>? _hierarchyManager;
+    private LazyChildLoader<TData>? _lazyChildLoader;
+    private HashSet<string> _expandedNodes = new();
+    private Dictionary<string, int> _childPageIndexes = new();
+    private bool _hierarchyInitialized;
+    private bool _defaultExpansionApplied;
+    private IDataGridColumn<TData>? _hierarchyColumn;
+    private HashSet<string>? _preFilterExpandedNodes;
+    private int _filterVersion;
+    private int _lastAppliedFilterVersion;
 
     // Cached per-render visible column data to avoid recomputing per row
     private List<IDataGridColumn<TData>> _cachedVisibleColumns = new();
@@ -60,6 +75,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     // ShouldRender tracking
     private bool _parametersChanged;
     private IEnumerable<TData>? _lastItems;
+    private Func<TData, bool>? _lastItemFilter;
+    private HierarchyFilterMode _lastHierarchyFilterMode;
     private bool _lastIsLoading;
     private int _columnsVersion;
     private int _lastColumnsVersion;
@@ -69,6 +86,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     [Inject]
     private IJSRuntime Js { get; set; } = null!;
+
+    [Inject]
+    private ILogger<BbDataGrid<TData>> Logger { get; set; } = null!;
 
     /// <summary>
     /// The data source for the grid. Can be IQueryable&lt;TData&gt; or IEnumerable&lt;TData&gt;.
@@ -193,6 +213,20 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     [Parameter]
     public Func<TData, string?>? RowClass { get; set; }
+
+    /// <summary>
+    /// Whether to show the active-filter indicator bar below the header.
+    /// When shown, it displays a count of active filters and a "Clear all" button.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool ShowFilterBar { get; set; } = true;
+
+    /// <summary>
+    /// Additional CSS classes applied to the active-filter indicator bar.
+    /// </summary>
+    [Parameter]
+    public string? FilterBarClass { get; set; }
 
     /// <summary>
     /// Additional HTML attributes.
@@ -331,6 +365,130 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     [Parameter]
     public DataGridGroupedItemsProvider<TData>? GroupedItemsProvider { get; set; }
 
+    // --- Hierarchy parameters ---
+
+    /// <summary>
+    /// Function that returns the children of an item for nested hierarchical data.
+    /// Mutually exclusive with <see cref="ParentValueSelector"/>.
+    /// </summary>
+    [Parameter]
+    public Func<TData, IEnumerable<TData>?>? ChildrenSelector { get; set; }
+
+    /// <summary>
+    /// Function that returns the parent's value for self-referencing (flat) hierarchical data.
+    /// Mutually exclusive with <see cref="ChildrenSelector"/>.
+    /// </summary>
+    [Parameter]
+    public Func<TData, string?>? ParentValueSelector { get; set; }
+
+    /// <summary>
+    /// Function that extracts a unique string identifier from each item.
+    /// Required when using hierarchy features.
+    /// </summary>
+    [Parameter]
+    public Func<TData, string>? ItemValueSelector { get; set; }
+
+    /// <summary>
+    /// Optional predicate to determine if an item has children before they are loaded.
+    /// Used for lazy loading where children may not be indexed yet.
+    /// </summary>
+    [Parameter]
+    public Func<TData, bool>? HasChildrenPredicate { get; set; }
+
+    /// <summary>
+    /// Optional external filter predicate for hierarchy mode. In hierarchy mode, matching items
+    /// and their ancestors are shown (ancestors at reduced opacity as context). How descendants
+    /// of matching items are handled depends on <see cref="HierarchyFilterMode"/>.
+    /// This is combined with any active column filters.
+    /// </summary>
+    [Parameter]
+    public Func<TData, bool>? ItemFilter { get; set; }
+
+    /// <summary>
+    /// Controls how hierarchy filtering treats descendants of matching nodes.
+    /// <see cref="Primitives.Utilities.HierarchyFilterMode.ShowMatchedSubtree"/> (default) shows the entire
+    /// subtree of matching parents. <see cref="Primitives.Utilities.HierarchyFilterMode.ShowMatchedOnly"/>
+    /// only shows items that independently match the filter.
+    /// </summary>
+    [Parameter]
+    public HierarchyFilterMode HierarchyFilterMode { get; set; } = HierarchyFilterMode.ShowMatchedSubtree;
+
+    /// <summary>
+    /// Async callback to load all children for a node on demand (lazy loading - full).
+    /// </summary>
+    [Parameter]
+    public Func<TData, Task<IEnumerable<TData>>>? LoadChildren { get; set; }
+
+    /// <summary>
+    /// Async callback to load a page of children for a node (lazy loading - paged).
+    /// Parameters: parent item, skip count, take count.
+    /// </summary>
+    [Parameter]
+    public Func<TData, int, int, Task<ChildPageResult<TData>>>? LoadChildrenPaged { get; set; }
+
+    /// <summary>
+    /// The set of expanded node values in hierarchy mode. Use with @bind-ExpandedNodes for controlled state.
+    /// </summary>
+    [Parameter]
+    public HashSet<string>? ExpandedNodes { get; set; }
+
+    /// <summary>
+    /// Event callback for controlled expansion state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<HashSet<string>> ExpandedNodesChanged { get; set; }
+
+    /// <summary>
+    /// Whether all hierarchy nodes should be expanded by default. Default is false.
+    /// </summary>
+    [Parameter]
+    public bool DefaultExpandAll { get; set; }
+
+    /// <summary>
+    /// Maximum depth to expand by default (exclusive). For example, 1 expands only root nodes.
+    /// </summary>
+    [Parameter]
+    public int? DefaultExpandDepth { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when a hierarchy node is expanded.
+    /// </summary>
+    [Parameter]
+    public EventCallback<TData> OnNodeExpand { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when a hierarchy node is collapsed.
+    /// </summary>
+    [Parameter]
+    public EventCallback<TData> OnNodeCollapse { get; set; }
+
+    /// <summary>
+    /// Whether to show a built-in expand/collapse all toggle button in the hierarchy column header.
+    /// Default is false.
+    /// </summary>
+    [Parameter]
+    public bool ShowExpandAll { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when expand all is triggered (via the built-in toggle or <see cref="ExpandAllAsync"/>).
+    /// </summary>
+    [Parameter]
+    public EventCallback OnExpandAll { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when collapse all is triggered (via the built-in toggle or <see cref="CollapseAllAsync"/>).
+    /// </summary>
+    [Parameter]
+    public EventCallback OnCollapseAll { get; set; }
+
+    /// <summary>
+    /// Page size for child-level pagination in hierarchy mode.
+    /// When set, each expanded node shows at most this many children with a compact pager.
+    /// Set to null to show all children inline. Default is null (no child pagination).
+    /// </summary>
+    [Parameter]
+    public int? ChildPageSize { get; set; }
+
     internal DataGridState<TData> EffectiveState => State ?? _gridState;
 
     protected override void OnInitialized()
@@ -397,9 +555,36 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             _groupedRenderItems = null;
         }
 
+        // Initialize hierarchy when hierarchy params are set
+        if (IsHierarchyMode && !_hierarchyInitialized)
+        {
+            InitializeHierarchy();
+        }
+
+        // Sync controlled expansion state
+        if (ExpandedNodes != null)
+        {
+            _expandedNodes = ExpandedNodes;
+        }
+
+        // Detect ItemFilter changes
+        var itemFilterChanged = !ReferenceEquals(_lastItemFilter, ItemFilter);
+        if (itemFilterChanged)
+        {
+            _lastItemFilter = ItemFilter;
+            _filterVersion++;
+        }
+
+        // Detect HierarchyFilterMode changes
+        var filterModeChanged = _lastHierarchyFilterMode != HierarchyFilterMode;
+        if (filterModeChanged)
+        {
+            _lastHierarchyFilterMode = HierarchyFilterMode;
+        }
+
         // Only reprocess data when something meaningful changed
         var itemsChanged = !ReferenceEquals(_lastItems, Items);
-        if (itemsChanged || _needsDataRefresh || externalStateChanged)
+        if (itemsChanged || itemFilterChanged || filterModeChanged || _needsDataRefresh || externalStateChanged)
         {
             _needsDataRefresh = false;
             await ProcessDataAsync();
@@ -493,6 +678,15 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     {
         // Insert select column at the beginning
         _columns.Insert(0, column);
+        OnColumnRegistered();
+    }
+
+    /// <summary>
+    /// Registers a hierarchy column (which also acts as a property column with expand/collapse).
+    /// </summary>
+    internal void RegisterHierarchyColumnDef(IDataGridColumn<TData> column)
+    {
+        _columns.Add(column);
         OnColumnRegistered();
     }
 
@@ -701,6 +895,13 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     {
         var data = Items ?? Array.Empty<TData>();
         var columns = _columns.AsReadOnly();
+
+        // Hierarchy mode: build index and flatten with per-level sort/filter
+        if (IsHierarchyMode && _hierarchyManager != null)
+        {
+            ProcessHierarchicalData(data);
+            return;
+        }
 
         if (data is IQueryable<TData> queryable)
         {
@@ -1022,6 +1223,529 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
     }
 
+    // --- Hierarchy support ---
+
+    private bool IsHierarchyMode =>
+        ItemValueSelector != null && (ChildrenSelector != null || ParentValueSelector != null);
+
+    private void InitializeHierarchy()
+    {
+        if (ItemValueSelector == null)
+        {
+            return;
+        }
+
+        _hierarchyManager = new HierarchyManager<TData>(ItemValueSelector, Logger);
+
+        if (LoadChildren != null || LoadChildrenPaged != null)
+        {
+            _lazyChildLoader = new LazyChildLoader<TData>();
+        }
+
+        _hierarchyInitialized = true;
+    }
+
+    private void ProcessHierarchicalData(IEnumerable<TData> data)
+    {
+        var manager = _hierarchyManager!;
+
+        // Build the index from data
+        if (ChildrenSelector != null)
+        {
+            manager.BuildFromNested(data, ChildrenSelector);
+        }
+        else if (ParentValueSelector != null)
+        {
+            manager.BuildFromFlat(data, ParentValueSelector);
+        }
+
+        // Add lazily loaded children back into the index
+        if (_lazyChildLoader != null)
+        {
+            foreach (var rootItem in manager.GetRootItems())
+            {
+                ReIndexLazyChildren(manager, rootItem);
+            }
+        }
+
+        // Apply default expansion only on first process
+        if (!_defaultExpansionApplied && ExpandedNodes == null)
+        {
+            _defaultExpansionApplied = true;
+            if (DefaultExpandAll)
+            {
+                _expandedNodes = manager.GetExpandAllValues();
+            }
+            else if (DefaultExpandDepth.HasValue)
+            {
+                _expandedNodes = manager.GetExpandToDepthValues(DefaultExpandDepth.Value);
+            }
+        }
+
+        // Build sort comparator from active sort definitions
+        Comparison<TData>? sortComparison = null;
+        if (_gridState.Sorting.Definitions.Count > 0)
+        {
+            sortComparison = BuildSortComparison();
+        }
+
+        // Build filter predicate from active column filters and/or external ItemFilter
+        Func<TData, bool>? filterPredicate = null;
+        var columnFilter = _gridState.Filtering.HasFilters ? BuildFilterPredicate() : null;
+
+        if (columnFilter != null && ItemFilter != null)
+        {
+            filterPredicate = item => columnFilter(item) && ItemFilter(item);
+        }
+        else
+        {
+            filterPredicate = columnFilter ?? ItemFilter;
+        }
+
+        // Only auto-expand ancestors when the filter actually changes,
+        // not on every reprocess (which would override manual collapse).
+        var filterChanged = _filterVersion != _lastAppliedFilterVersion;
+        _lastAppliedFilterVersion = _filterVersion;
+
+        if (filterPredicate != null && filterChanged)
+        {
+            // Save pre-filter state on first filter application
+            if (_preFilterExpandedNodes == null)
+            {
+                _preFilterExpandedNodes = new HashSet<string>(_expandedNodes);
+            }
+
+            // Reset to pre-filter state before expanding for new filter
+            _expandedNodes = new HashSet<string>(_preFilterExpandedNodes);
+
+            // Auto-expand ancestors of matching items so results are visible
+            foreach (var item in GetAllIndexedItems(manager))
+            {
+                if (filterPredicate(item))
+                {
+                    var value = ItemValueSelector!(item);
+                    manager.ExpandAncestorsOf(value, _expandedNodes);
+                }
+            }
+        }
+        else if (filterPredicate == null && _preFilterExpandedNodes != null)
+        {
+            // Restore pre-filter expansion state when filter is cleared
+            _expandedNodes = _preFilterExpandedNodes;
+            _preFilterExpandedNodes = null;
+        }
+
+        // Flatten the hierarchy
+        var flatResult = manager.Flatten(
+            _expandedNodes,
+            sortComparison,
+            filterPredicate,
+            ChildPageSize,
+            _childPageIndexes,
+            HasChildrenPredicate,
+            HierarchyFilterMode);
+
+        // Count root items for root-level pagination
+        var rootCount = 0;
+        foreach (var r in flatResult)
+        {
+            if (r.Depth == 0 && !r.IsChildPagerRow)
+            {
+                rootCount++;
+            }
+        }
+        _gridState.Pagination.TotalItems = rootCount;
+
+        // Build render items with hierarchy metadata
+        var renderItems = new List<DataGridRenderItem<TData>>(flatResult.Count);
+
+        // Apply root-level pagination: count root items and only include
+        // the current page of roots (and all their visible descendants)
+        var pageStart = _gridState.Pagination.StartIndex;
+        var pageSize = _gridState.Pagination.PageSize;
+        var rootIndex = 0;
+        var includeDescendants = false;
+
+        foreach (var r in flatResult)
+        {
+            if (r.Depth == 0 && !r.IsChildPagerRow)
+            {
+                includeDescendants = rootIndex >= pageStart && rootIndex < pageStart + pageSize;
+                rootIndex++;
+            }
+
+            if (!includeDescendants)
+            {
+                continue;
+            }
+
+            if (r.IsChildPagerRow)
+            {
+                renderItems.Add(DataGridRenderItem<TData>.ForChildPager(
+                    r.Depth, r.ParentValue!, r.ChildPageIndex, r.TotalChildren));
+            }
+            else
+            {
+                renderItems.Add(DataGridRenderItem<TData>.ForHierarchyData(
+                    r.Item, r.Depth, r.HasChildren, r.IsExpanded, r.MatchesFilter));
+            }
+        }
+
+        _groupedRenderItems = renderItems;
+        _processedData = renderItems
+            .Where(ri => ri.IsDataRow && ri.Item != null)
+            .Select(ri => ri.Item!)
+            .ToList();
+
+        UpdateVirtualizationList();
+    }
+
+    private void ReIndexLazyChildren(HierarchyManager<TData> manager, TData item)
+    {
+        var value = ItemValueSelector!(item);
+        var cached = _lazyChildLoader!.GetCachedChildren(value);
+        if (cached != null)
+        {
+            manager.AddChildren(value, cached, ChildrenSelector);
+
+            // Recurse into loaded children
+            foreach (var child in cached)
+            {
+                ReIndexLazyChildren(manager, child);
+            }
+        }
+    }
+
+    private static IEnumerable<TData> GetAllIndexedItems(HierarchyManager<TData> manager)
+    {
+        // Flatten entire tree using full expansion to iterate all items
+        var allExpanded = manager.GetExpandAllValues();
+        var flat = manager.Flatten(allExpanded);
+        foreach (var r in flat)
+        {
+            if (!r.IsChildPagerRow)
+            {
+                yield return r.Item;
+            }
+        }
+    }
+
+    private Comparison<TData> BuildSortComparison()
+    {
+        var definitions = _gridState.Sorting.Definitions;
+        var columns = _columns.AsReadOnly();
+
+        return (a, b) =>
+        {
+            foreach (var def in definitions)
+            {
+                var column = columns.FirstOrDefault(c => c.ColumnId == def.ColumnId);
+                if (column == null)
+                {
+                    continue;
+                }
+
+                var comparison = column.Compare(a, b);
+                if (def.Direction == SortDirection.Descending)
+                {
+                    comparison = -comparison;
+                }
+
+                if (comparison != 0)
+                {
+                    return comparison;
+                }
+            }
+            return 0;
+        };
+    }
+
+    private Func<TData, bool>? BuildFilterPredicate()
+    {
+        var filters = _gridState.Filtering.Filters;
+        if (filters.Count == 0)
+        {
+            return null;
+        }
+
+        var columnFilters = new List<(IDataGridColumn<TData> Column, FilterCondition Condition)>();
+        foreach (var (columnId, condition) in filters)
+        {
+            var column = _columns.FirstOrDefault(c => c.ColumnId == columnId);
+            if (column != null)
+            {
+                columnFilters.Add((column, condition));
+            }
+        }
+
+        if (columnFilters.Count == 0)
+        {
+            return null;
+        }
+
+        return item =>
+        {
+            foreach (var (column, condition) in columnFilters)
+            {
+                var value = column.GetRawValue(item);
+                if (!EvaluateFilter(value, condition))
+                {
+                    return false;
+                }
+            }
+            return true;
+        };
+    }
+
+    private static bool EvaluateFilter(object? value, FilterCondition condition)
+    {
+        var valueStr = value?.ToString() ?? "";
+        var filterValueStr = condition.Value?.ToString() ?? "";
+
+        return condition.Operator switch
+        {
+            FilterOperator.Contains => valueStr.Contains(filterValueStr, StringComparison.OrdinalIgnoreCase),
+            FilterOperator.NotContains => !valueStr.Contains(filterValueStr, StringComparison.OrdinalIgnoreCase),
+            FilterOperator.Equals => valueStr.Equals(filterValueStr, StringComparison.OrdinalIgnoreCase),
+            FilterOperator.NotEquals => !valueStr.Equals(filterValueStr, StringComparison.OrdinalIgnoreCase),
+            FilterOperator.StartsWith => valueStr.StartsWith(filterValueStr, StringComparison.OrdinalIgnoreCase),
+            FilterOperator.EndsWith => valueStr.EndsWith(filterValueStr, StringComparison.OrdinalIgnoreCase),
+            FilterOperator.GreaterThan => CompareValues(value, condition.Value) > 0,
+            FilterOperator.GreaterOrEqual => CompareValues(value, condition.Value) >= 0,
+            FilterOperator.LessThan => CompareValues(value, condition.Value) < 0,
+            FilterOperator.LessOrEqual => CompareValues(value, condition.Value) <= 0,
+            FilterOperator.IsEmpty => string.IsNullOrEmpty(valueStr),
+            FilterOperator.IsNotEmpty => !string.IsNullOrEmpty(valueStr),
+            _ => true
+        };
+    }
+
+    private static int CompareValues(object? a, object? b)
+    {
+        if (a == null && b == null)
+        {
+            return 0;
+        }
+        if (a == null)
+        {
+            return -1;
+        }
+        if (b == null)
+        {
+            return 1;
+        }
+
+        if (a is IComparable comparableA)
+        {
+            try
+            {
+                if (b is string bStr && a is not string)
+                {
+                    var converted = Convert.ChangeType(bStr, a.GetType(), System.Globalization.CultureInfo.InvariantCulture);
+                    return comparableA.CompareTo(converted);
+                }
+                return comparableA.CompareTo(b);
+            }
+            catch
+            {
+                return string.Compare(a.ToString(), b.ToString(), StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        return string.Compare(a.ToString(), b.ToString(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    internal async Task HandleHierarchyNodeToggle(TData item)
+    {
+        if (ItemValueSelector == null)
+        {
+            return;
+        }
+
+        var value = ItemValueSelector(item);
+
+        if (_expandedNodes.Remove(value))
+        {
+            // Collapsed
+            await OnNodeCollapse.InvokeAsync(item);
+        }
+        else
+        {
+            // Expand
+            _expandedNodes.Add(value);
+
+            // Lazy load children if needed
+            if (_lazyChildLoader != null && _hierarchyManager != null &&
+                !_hierarchyManager.HasChildren(value))
+            {
+                if (LoadChildren != null)
+                {
+                    try
+                    {
+                        var children = await _lazyChildLoader.LoadAsync(value, item, LoadChildren);
+                        _hierarchyManager.AddChildren(value, children, ChildrenSelector);
+                    }
+                    catch
+                    {
+                        // Error state is tracked by LazyChildLoader
+                    }
+                }
+                else if (LoadChildrenPaged != null && ChildPageSize.HasValue)
+                {
+                    try
+                    {
+                        var pageResult = await _lazyChildLoader.LoadPageAsync(
+                            value, item, 0, ChildPageSize.Value, LoadChildrenPaged);
+                        _hierarchyManager.AddChildren(value, pageResult.Items, ChildrenSelector);
+                    }
+                    catch
+                    {
+                        // Error state is tracked by LazyChildLoader
+                    }
+                }
+            }
+
+            await OnNodeExpand.InvokeAsync(item);
+        }
+
+        // Notify controlled state
+        if (ExpandedNodesChanged.HasDelegate)
+        {
+            await ExpandedNodesChanged.InvokeAsync(_expandedNodes);
+        }
+
+        _needsDataRefresh = true;
+        await ProcessDataAsync();
+        StateHasChanged();
+    }
+
+    internal async Task HandleChildPageChange(string parentValue, int newPageIndex)
+    {
+        _childPageIndexes[parentValue] = newPageIndex;
+
+        // For paged lazy loading, load the new page
+        if (LoadChildrenPaged != null && ChildPageSize.HasValue && _lazyChildLoader != null && _hierarchyManager != null)
+        {
+            var parentItem = _hierarchyManager.GetItemByValue(parentValue);
+            if (parentItem != null)
+            {
+                try
+                {
+                    var skip = newPageIndex * ChildPageSize.Value;
+                    var pageResult = await _lazyChildLoader.LoadPageAsync(
+                        parentValue, parentItem, skip, ChildPageSize.Value, LoadChildrenPaged);
+                    _hierarchyManager.AddChildren(parentValue, pageResult.Items, ChildrenSelector);
+                }
+                catch
+                {
+                    // Error state tracked by LazyChildLoader
+                }
+            }
+        }
+
+        _needsDataRefresh = true;
+        await ProcessDataAsync();
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Gets whether the grid is currently in hierarchy mode.
+    /// </summary>
+    internal bool IsInHierarchyMode => IsHierarchyMode;
+
+    /// <summary>
+    /// Gets the hierarchy column registered with the grid.
+    /// </summary>
+    internal IDataGridColumn<TData>? HierarchyColumn => _hierarchyColumn;
+
+    /// <summary>
+    /// Registers a column as the hierarchy toggle column.
+    /// </summary>
+    internal void RegisterHierarchyColumn(IDataGridColumn<TData> column)
+    {
+        if (_hierarchyColumn != null)
+        {
+            throw new InvalidOperationException(
+                "Only one BbDataGridHierarchyColumn is allowed per DataGrid.");
+        }
+        _hierarchyColumn = column;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Gets the lazy child loader for checking loading/error state.
+    /// </summary>
+    internal LazyChildLoader<TData>? LazyLoader => _lazyChildLoader;
+
+    /// <summary>
+    /// Gets whether all expandable nodes are currently expanded.
+    /// </summary>
+    public bool IsAllExpanded =>
+        _hierarchyManager != null &&
+        _expandedNodes.Count > 0 &&
+        _expandedNodes.IsSupersetOf(_hierarchyManager.GetExpandAllValues());
+
+    /// <summary>
+    /// Expands all hierarchy nodes programmatically.
+    /// </summary>
+    public async Task ExpandAllAsync()
+    {
+        if (_hierarchyManager == null)
+        {
+            return;
+        }
+
+        _expandedNodes = _hierarchyManager.GetExpandAllValues();
+
+        if (OnExpandAll.HasDelegate)
+        {
+            await OnExpandAll.InvokeAsync();
+        }
+
+        if (ExpandedNodesChanged.HasDelegate)
+        {
+            await ExpandedNodesChanged.InvokeAsync(_expandedNodes);
+        }
+
+        _needsDataRefresh = true;
+        await ProcessDataAsync();
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Collapses all hierarchy nodes programmatically.
+    /// </summary>
+    public async Task CollapseAllAsync()
+    {
+        _expandedNodes.Clear();
+
+        if (OnCollapseAll.HasDelegate)
+        {
+            await OnCollapseAll.InvokeAsync();
+        }
+
+        if (ExpandedNodesChanged.HasDelegate)
+        {
+            await ExpandedNodesChanged.InvokeAsync(_expandedNodes);
+        }
+
+        _needsDataRefresh = true;
+        await ProcessDataAsync();
+        StateHasChanged();
+    }
+
+    internal async Task ToggleExpandAllAsync()
+    {
+        if (IsAllExpanded)
+        {
+            await CollapseAllAsync();
+        }
+        else
+        {
+            await ExpandAllAsync();
+        }
+    }
+
     private async Task LoadFromProviderAsync()
     {
         var oldCts = _loadCts;
@@ -1153,8 +1877,16 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// Handles a column filter being applied or cleared.
     /// Updates state, resets pagination, reprocesses data, and fires OnFilter.
     /// </summary>
+    private bool GetFilterPopoverOpen(string columnId) =>
+        _filterPopoverOpen.TryGetValue(columnId, out var open) && open;
+
+    private void SetFilterPopoverOpen(string columnId, bool open) =>
+        _filterPopoverOpen[columnId] = open;
+
     internal async Task HandleColumnFilterChanged(string columnId, FilterCondition? condition)
     {
+        _filterPopoverOpen[columnId] = false;
+        _filterVersion++;
         _gridState.Filtering.SetFilter(columnId, condition);
         _gridState.Pagination.GoToPage(1);
         await ProcessDataAsync();
@@ -1171,8 +1903,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// <summary>
     /// Clears all column filters, reprocesses data, and fires OnFilter.
     /// </summary>
-    internal async Task HandleClearAllFilters()
+    public async Task ClearAllFiltersAsync()
     {
+        _filterVersion++;
         _gridState.Filtering.ClearAll();
         _gridState.Pagination.GoToPage(1);
         await ProcessDataAsync();
