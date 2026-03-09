@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-09
+
+### Fixed
+
+- **TailwindMerge** — Comprehensive rewrite of class conflict resolution. Adds variant-scoped conflicts (e.g., `md:p-4` and `lg:p-4` no longer conflict), shorthand-to-longhand resolution (`p-4` removed when `px-2 py-2` follow), semantic color support (`text-muted-foreground`, `bg-primary/90`), important modifier (`!`) priority, negative values, arbitrary values (`p-[14px]`), 40+ new utility groups, O(1) color prefix lookups, data-driven non-color value disambiguation, bounded cache with eviction, and dictionary-based ungrouped class deduplication.
+
+---
+
 ## 2026-03-08
 
 ### Added
