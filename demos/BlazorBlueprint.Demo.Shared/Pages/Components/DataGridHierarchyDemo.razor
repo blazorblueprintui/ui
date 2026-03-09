@@ -34,6 +34,7 @@
                 <BbDataGridPropertyColumn TData="MedalEntry" TProp="int" Property="@(c => c.Total)" Title="Total" Sortable />
             </Columns>
         </BbDataGrid>
+        <CodeBlock Source="Components/DataGridHierarchy/nested.txt" />
     </div>
 
     <!-- ── Self-Referencing Data (Org Chart) ──────────────────────── -->
@@ -43,15 +44,36 @@
             <p class="text-sm text-muted-foreground">
                 Uses <code class="bg-muted px-1 py-0.5 rounded">ParentValueSelector</code> with
                 <code class="bg-muted px-1 py-0.5 rounded">DefaultExpandDepth="1"</code> to show an
-                org chart from flat data with parent ID references.
+                org chart from flat data with parent ID references. Combined with a
+                <code class="bg-muted px-1 py-0.5 rounded">BbFilterBuilder</code> for advanced filtering.
+                Columns are <code class="bg-muted px-1 py-0.5 rounded">Reorderable</code> — drag column headers to rearrange.
             </p>
+        </div>
+        <div class="flex items-center gap-4">
+            <BbFilterBuilder @bind-Filter="orgFilter"
+                             Fields="@orgFields"
+                             OnFilterChanged="HandleOrgFilterChanged"
+                             MaxDepth="2"
+                             Compact="true"
+                             Class="flex-1" />
+            <div class="flex items-center gap-2 shrink-0">
+                <label class="text-sm text-muted-foreground whitespace-nowrap">Filter mode:</label>
+                <BbSelect TValue="HierarchyFilterMode"
+                          Value="@orgFilterMode"
+                          ValueChanged="@(v => { orgFilterMode = v; })"
+                          Options="@hierarchyFilterModeOptions"
+                          Class="w-52" />
+            </div>
         </div>
         <BbDataGrid TData="Employee" Items="@employees"
                     ParentValueSelector="@(e => e.ReportsToId)"
                     ItemValueSelector="@(e => e.Id)"
+                    ItemFilter="@orgFilterPredicate"
+                    HierarchyFilterMode="@orgFilterMode"
                     DefaultExpandDepth="1"
                     ChildPageSize="5"
-                    ShowExpandAll="true">
+                    ShowExpandAll="true"
+                    Reorderable="true">
             <Columns>
                 <BbDataGridHierarchyColumn TData="Employee" TProp="string" Property="@(e => e.Name)" Title="Name" Sortable>
                     <CellTemplate>
@@ -72,6 +94,7 @@
                 <BbDataGridPropertyColumn TData="Employee" TProp="string" Property="@(e => e.Location)" Title="Location" />
             </Columns>
         </BbDataGrid>
+        <CodeBlock Source="Components/DataGridHierarchy/self-referencing.txt" />
     </div>
 
     <!-- ── Lazy Loading ───────────────────────────────────────────── -->
@@ -94,6 +117,7 @@
                 <BbDataGridPropertyColumn TData="Department" TProp="string" Property="@(d => d.Head)" Title="Head" />
             </Columns>
         </BbDataGrid>
+        <CodeBlock Source="Components/DataGridHierarchy/lazy-loading.txt" />
     </div>
 
     <!-- ── Large Dataset (World Geography) ────────────────────────── -->
@@ -102,17 +126,19 @@
             <h2 class="text-2xl font-semibold">Large Dataset</h2>
             <p class="text-sm text-muted-foreground">
                 A 4-level hierarchy of Continent → Country → State/Province → City with
-                <strong>@totalPlaceCount.ToString("N0")</strong> total rows. Uses child pagination
-                and sorting to navigate the large dataset efficiently.
+                <strong>@totalPlaceCount.ToString("N0")</strong> total rows. The hierarchy column is
+                <code class="bg-muted px-1 py-0.5 rounded">Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left"</code> so it stays
+                visible while scrolling. Columns are <code class="bg-muted px-1 py-0.5 rounded">Reorderable</code>.
             </p>
         </div>
         <BbDataGrid TData="Place" Items="@worldData"
                     ChildrenSelector="@(p => p.Children)"
                     ItemValueSelector="@(p => p.Id)"
                     ChildPageSize="10"
-                    ShowExpandAll="true">
+                    ShowExpandAll="true"
+                    Reorderable="true">
             <Columns>
-                <BbDataGridHierarchyColumn TData="Place" TProp="string" Property="@(p => p.Name)" Title="Name" Sortable Filterable>
+                <BbDataGridHierarchyColumn TData="Place" TProp="string" Property="@(p => p.Name)" Title="Name" Sortable Filterable Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left">
                     <CellTemplate>
                         <div class="flex items-center gap-2">
                             @if (context.Item.Type == "Country" && context.Item.Code.Length == 2)
@@ -128,5 +154,6 @@
                 <BbDataGridPropertyColumn TData="Place" TProp="string" Property="@(p => p.Code)" Title="Code" Sortable Filterable />
             </Columns>
         </BbDataGrid>
+        <CodeBlock Source="Components/DataGridHierarchy/large-dataset.txt" />
     </div>
 </div>

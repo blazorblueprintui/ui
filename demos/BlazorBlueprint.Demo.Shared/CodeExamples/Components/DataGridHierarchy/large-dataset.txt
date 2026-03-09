@@ -1,0 +1,45 @@
+<BbDataGrid TData="Place" Items="@worldData"
+            ChildrenSelector="@(p => p.Children)"
+            ItemValueSelector="@(p => p.Id)"
+            ChildPageSize="10"
+            ShowExpandAll="true">
+    <Columns>
+        <BbDataGridHierarchyColumn TData="Place" TProp="string"
+            Property="@(p => p.Name)" Title="Name" Sortable Filterable>
+            <CellTemplate>
+                <div class="flex items-center gap-2">
+                    @if (context.Item.Type == "Country"
+                         && context.Item.Code.Length == 2)
+                    {
+                        <span class="text-base leading-none">
+                            @CountryCodeToFlag(context.Item.Code)
+                        </span>
+                    }
+                    <span class="truncate">@context.Value</span>
+                </div>
+            </CellTemplate>
+        </BbDataGridHierarchyColumn>
+        <BbDataGridPropertyColumn TData="Place" TProp="string"
+            Property="@(p => p.Type)" Title="Type" Filterable />
+        <BbDataGridPropertyColumn TData="Place" TProp="long"
+            Property="@(p => p.Population)" Title="Population" Sortable />
+        <BbDataGridPropertyColumn TData="Place" TProp="string"
+            Property="@(p => p.Code)" Title="Code" Sortable Filterable />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private static string CountryCodeToFlag(string code) =>
+        string.Concat(code.ToUpperInvariant()
+            .Select(c => char.ConvertFromUtf32(0x1F1E6 + c - 'A')));
+
+    public class Place
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string Type { get; set; }   // Continent, Country, State, City
+        public long Population { get; set; }
+        public string Code { get; set; }
+        public List<Place>? Children { get; set; }
+    }
+}

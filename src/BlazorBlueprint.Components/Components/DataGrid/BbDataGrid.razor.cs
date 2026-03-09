@@ -49,6 +49,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private bool _defaultExpansionApplied;
     private IDataGridColumn<TData>? _hierarchyColumn;
     private HashSet<string>? _preFilterExpandedNodes;
+    private int _filterVersion;
+    private int _lastAppliedFilterVersion;
 
     // Cached per-render visible column data to avoid recomputing per row
     private List<IDataGridColumn<TData>> _cachedVisibleColumns = new();
@@ -73,6 +75,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     // ShouldRender tracking
     private bool _parametersChanged;
     private IEnumerable<TData>? _lastItems;
+    private Func<TData, bool>? _lastItemFilter;
+    private HierarchyFilterMode _lastHierarchyFilterMode;
     private bool _lastIsLoading;
     private int _columnsVersion;
     private int _lastColumnsVersion;
@@ -209,6 +213,20 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     [Parameter]
     public Func<TData, string?>? RowClass { get; set; }
+
+    /// <summary>
+    /// Whether to show the active-filter indicator bar below the header.
+    /// When shown, it displays a count of active filters and a "Clear all" button.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool ShowFilterBar { get; set; } = true;
+
+    /// <summary>
+    /// Additional CSS classes applied to the active-filter indicator bar.
+    /// </summary>
+    [Parameter]
+    public string? FilterBarClass { get; set; }
 
     /// <summary>
     /// Additional HTML attributes.
@@ -378,6 +396,24 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     public Func<TData, bool>? HasChildrenPredicate { get; set; }
 
     /// <summary>
+    /// Optional external filter predicate for hierarchy mode. In hierarchy mode, matching items
+    /// and their ancestors are shown (ancestors at reduced opacity as context). How descendants
+    /// of matching items are handled depends on <see cref="HierarchyFilterMode"/>.
+    /// This is combined with any active column filters.
+    /// </summary>
+    [Parameter]
+    public Func<TData, bool>? ItemFilter { get; set; }
+
+    /// <summary>
+    /// Controls how hierarchy filtering treats descendants of matching nodes.
+    /// <see cref="Primitives.Utilities.HierarchyFilterMode.ShowMatchedSubtree"/> (default) shows the entire
+    /// subtree of matching parents. <see cref="Primitives.Utilities.HierarchyFilterMode.ShowMatchedOnly"/>
+    /// only shows items that independently match the filter.
+    /// </summary>
+    [Parameter]
+    public HierarchyFilterMode HierarchyFilterMode { get; set; } = HierarchyFilterMode.ShowMatchedSubtree;
+
+    /// <summary>
     /// Async callback to load all children for a node on demand (lazy loading - full).
     /// </summary>
     [Parameter]
@@ -531,9 +567,24 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             _expandedNodes = ExpandedNodes;
         }
 
+        // Detect ItemFilter changes
+        var itemFilterChanged = !ReferenceEquals(_lastItemFilter, ItemFilter);
+        if (itemFilterChanged)
+        {
+            _lastItemFilter = ItemFilter;
+            _filterVersion++;
+        }
+
+        // Detect HierarchyFilterMode changes
+        var filterModeChanged = _lastHierarchyFilterMode != HierarchyFilterMode;
+        if (filterModeChanged)
+        {
+            _lastHierarchyFilterMode = HierarchyFilterMode;
+        }
+
         // Only reprocess data when something meaningful changed
         var itemsChanged = !ReferenceEquals(_lastItems, Items);
-        if (itemsChanged || _needsDataRefresh || externalStateChanged)
+        if (itemsChanged || itemFilterChanged || filterModeChanged || _needsDataRefresh || externalStateChanged)
         {
             _needsDataRefresh = false;
             await ProcessDataAsync();
@@ -1238,33 +1289,46 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             sortComparison = BuildSortComparison();
         }
 
-        // Build filter predicate from active column filters
+        // Build filter predicate from active column filters and/or external ItemFilter
         Func<TData, bool>? filterPredicate = null;
-        if (_gridState.Filtering.HasFilters)
+        var columnFilter = _gridState.Filtering.HasFilters ? BuildFilterPredicate() : null;
+
+        if (columnFilter != null && ItemFilter != null)
         {
-            filterPredicate = BuildFilterPredicate();
+            filterPredicate = item => columnFilter(item) && ItemFilter(item);
+        }
+        else
+        {
+            filterPredicate = columnFilter ?? ItemFilter;
+        }
+
+        // Only auto-expand ancestors when the filter actually changes,
+        // not on every reprocess (which would override manual collapse).
+        var filterChanged = _filterVersion != _lastAppliedFilterVersion;
+        _lastAppliedFilterVersion = _filterVersion;
+
+        if (filterPredicate != null && filterChanged)
+        {
+            // Save pre-filter state on first filter application
+            if (_preFilterExpandedNodes == null)
+            {
+                _preFilterExpandedNodes = new HashSet<string>(_expandedNodes);
+            }
+
+            // Reset to pre-filter state before expanding for new filter
+            _expandedNodes = new HashSet<string>(_preFilterExpandedNodes);
 
             // Auto-expand ancestors of matching items so results are visible
-            if (filterPredicate != null)
+            foreach (var item in GetAllIndexedItems(manager))
             {
-                // Save pre-filter state on first filter application
-                if (_preFilterExpandedNodes == null)
+                if (filterPredicate(item))
                 {
-                    _preFilterExpandedNodes = new HashSet<string>(_expandedNodes);
-                }
-
-                // Expand ancestors of all matching items
-                foreach (var item in GetAllIndexedItems(manager))
-                {
-                    if (filterPredicate(item))
-                    {
-                        var value = ItemValueSelector!(item);
-                        manager.ExpandAncestorsOf(value, _expandedNodes);
-                    }
+                    var value = ItemValueSelector!(item);
+                    manager.ExpandAncestorsOf(value, _expandedNodes);
                 }
             }
         }
-        else if (_preFilterExpandedNodes != null)
+        else if (filterPredicate == null && _preFilterExpandedNodes != null)
         {
             // Restore pre-filter expansion state when filter is cleared
             _expandedNodes = _preFilterExpandedNodes;
@@ -1278,7 +1342,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             filterPredicate,
             ChildPageSize,
             _childPageIndexes,
-            HasChildrenPredicate);
+            HasChildrenPredicate,
+            HierarchyFilterMode);
 
         // Count root items for root-level pagination
         var rootCount = 0;
@@ -1821,6 +1886,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     internal async Task HandleColumnFilterChanged(string columnId, FilterCondition? condition)
     {
         _filterPopoverOpen[columnId] = false;
+        _filterVersion++;
         _gridState.Filtering.SetFilter(columnId, condition);
         _gridState.Pagination.GoToPage(1);
         await ProcessDataAsync();
@@ -1839,6 +1905,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     public async Task ClearAllFiltersAsync()
     {
+        _filterVersion++;
         _gridState.Filtering.ClearAll();
         _gridState.Pagination.GoToPage(1);
         await ProcessDataAsync();

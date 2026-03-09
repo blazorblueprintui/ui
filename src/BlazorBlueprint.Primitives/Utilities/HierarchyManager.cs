@@ -403,6 +403,7 @@ public partial class HierarchyManager<TItem>
     /// <param name="childPageSize">Optional page size for child-level pagination. Null means show all children.</param>
     /// <param name="childPageIndexes">Per-node child page indexes (node value → 0-based page index).</param>
     /// <param name="hasChildrenPredicate">Optional predicate to determine if an item has children (for lazy loading where children may not be indexed yet).</param>
+    /// <param name="filterMode">Controls how descendants of matching items are handled. Default is <see cref="HierarchyFilterMode.ShowMatchedSubtree"/>.</param>
     /// <returns>Flattened list of items with hierarchy metadata.</returns>
     public IReadOnlyList<HierarchyFlattenResult<TItem>> Flatten(
         HashSet<string> expandedValues,
@@ -410,7 +411,8 @@ public partial class HierarchyManager<TItem>
         Func<TItem, bool>? filter = null,
         int? childPageSize = null,
         IReadOnlyDictionary<string, int>? childPageIndexes = null,
-        Func<TItem, bool>? hasChildrenPredicate = null)
+        Func<TItem, bool>? hasChildrenPredicate = null,
+        HierarchyFilterMode filterMode = HierarchyFilterMode.ShowMatchedSubtree)
     {
         var result = new List<HierarchyFlattenResult<TItem>>();
 
@@ -439,6 +441,25 @@ public partial class HierarchyManager<TItem>
                     valuesWithMatchingDescendants.Add(ancestor);
                 }
             }
+
+            // In ShowMatchedSubtree mode, when a parent matches the filter,
+            // mark all its descendants as "having matching descendants" so they
+            // are visible as context within the subtree. They still won't appear
+            // in matchingValues unless they independently match the filter.
+            if (filterMode == HierarchyFilterMode.ShowMatchedSubtree)
+            {
+                foreach (var matchValue in matchingValues)
+                {
+                    if (HasChildren(matchValue))
+                    {
+                        var descendants = GetAllDescendantValues(matchValue);
+                        foreach (var desc in descendants)
+                        {
+                            valuesWithMatchingDescendants.Add(desc);
+                        }
+                    }
+                }
+            }
         }
 
         var rootChildren = GetChildValues(RootParentKey);
@@ -452,7 +473,7 @@ public partial class HierarchyManager<TItem>
         FlattenRecursive(
             result, rootItems, 0, expandedValues,
             sortComparison, filter, matchingValues, valuesWithMatchingDescendants,
-            childPageSize, childPageIndexes, hasChildrenPredicate);
+            childPageSize, childPageIndexes, hasChildrenPredicate, filterMode);
 
         return result;
     }
@@ -488,7 +509,8 @@ public partial class HierarchyManager<TItem>
         HashSet<string>? valuesWithMatchingDescendants,
         int? childPageSize,
         IReadOnlyDictionary<string, int>? childPageIndexes,
-        Func<TItem, bool>? hasChildrenPredicate)
+        Func<TItem, bool>? hasChildrenPredicate,
+        HierarchyFilterMode filterMode)
     {
         for (var i = 0; i < items.Count; i++)
         {
@@ -546,13 +568,8 @@ public partial class HierarchyManager<TItem>
                     childItems.Sort(sortComparison);
                 }
 
-                // When a node directly matches the filter, show all its descendants
-                // unfiltered (the match implies "show this subtree").
                 // When filtering is active, disable child pagination so all
                 // matching/context children are visible without paging confusion.
-                var childFilter = directlyMatchesFilter ? null : filter;
-                var childMatchingValues = directlyMatchesFilter ? null : matchingValues;
-                var childMatchingDescendants = directlyMatchesFilter ? null : valuesWithMatchingDescendants;
                 var effectivePageSize = isFilterActive ? null : childPageSize;
 
                 // Apply child pagination (only when no filter is active)
@@ -573,8 +590,8 @@ public partial class HierarchyManager<TItem>
 
                     FlattenRecursive(
                         result, pagedChildren, depth + 1, expandedValues,
-                        sortComparison, childFilter, childMatchingValues, childMatchingDescendants,
-                        effectivePageSize, childPageIndexes, hasChildrenPredicate);
+                        sortComparison, filter, matchingValues, valuesWithMatchingDescendants,
+                        effectivePageSize, childPageIndexes, hasChildrenPredicate, filterMode);
 
                     // Append child pager row
                     result.Add(new HierarchyFlattenResult<TItem>
@@ -591,8 +608,8 @@ public partial class HierarchyManager<TItem>
                 {
                     FlattenRecursive(
                         result, childItems, depth + 1, expandedValues,
-                        sortComparison, childFilter, childMatchingValues, childMatchingDescendants,
-                        effectivePageSize, childPageIndexes, hasChildrenPredicate);
+                        sortComparison, filter, matchingValues, valuesWithMatchingDescendants,
+                        effectivePageSize, childPageIndexes, hasChildrenPredicate, filterMode);
                 }
             }
         }

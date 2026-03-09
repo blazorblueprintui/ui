@@ -1,3 +1,7 @@
+using BlazorBlueprint.Components;
+using BlazorBlueprint.Primitives;
+using BlazorBlueprint.Primitives.Filtering;
+using BlazorBlueprint.Primitives.Utilities;
 using Microsoft.AspNetCore.Components;
 
 namespace BlazorBlueprint.Demo.Pages.Components;
@@ -5,9 +9,66 @@ namespace BlazorBlueprint.Demo.Pages.Components;
 public partial class DataGridHierarchyDemo : ComponentBase
 {
     private int totalPlaceCount;
+    private FilterDefinition orgFilter = new();
+    private Func<Employee, bool>? orgFilterPredicate;
+    private HierarchyFilterMode orgFilterMode = HierarchyFilterMode.ShowMatchedOnly;
+
+    private static readonly SelectOption<HierarchyFilterMode>[] hierarchyFilterModeOptions =
+    {
+        new(HierarchyFilterMode.ShowMatchedSubtree, "Show Matched Subtree"),
+        new(HierarchyFilterMode.ShowMatchedOnly, "Show Matched Only")
+    };
+
+    private static readonly string[] departments = { "Executive", "Engineering", "Product", "Sales" };
+    private static readonly string[] locations = { "Copenhagen", "Seattle", "London", "New York", "San Francisco", "Austin", "Denver", "Portland", "Remote", "Chicago", "Berlin", "Tokyo", "Dublin", "Mumbai", "Madrid", "Singapore", "Dubai", "Boston", "Philadelphia", "Paris" };
+
+    private readonly FilterField[] orgFields =
+    {
+        new() { Name = "Name", Label = "Name", Type = FilterFieldType.Text, Placeholder = "e.g. Alice" },
+        new() { Name = "JobTitle", Label = "Job Title", Type = FilterFieldType.Text, Placeholder = "e.g. Director" },
+        new()
+        {
+            Name = "Department", Label = "Department", Type = FilterFieldType.Enum,
+            Options = departments.Select(d => new SelectOption<string>(d, d)).ToArray()
+        },
+        new()
+        {
+            Name = "Location", Label = "Location", Type = FilterFieldType.Enum,
+            Options = locations.Order().Select(l => new SelectOption<string>(l, l)).ToArray()
+        }
+    };
 
     protected override void OnInitialized() =>
         totalPlaceCount = CountPlaces(worldData);
+
+    private void HandleOrgFilterChanged(FilterDefinition newFilter)
+    {
+        orgFilterPredicate = newFilter.IsEmpty || !HasCompleteConditions(newFilter)
+            ? null
+            : newFilter.ToFunc<Employee>(orgFields);
+        StateHasChanged();
+    }
+
+    private static bool HasCompleteConditions(FilterDefinition filter)
+    {
+        foreach (var c in filter.Conditions)
+        {
+            if (!string.IsNullOrEmpty(c.Field))
+            {
+                return true;
+            }
+        }
+
+        foreach (var g in filter.Groups)
+        {
+            if (HasCompleteConditions(g))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private static int CountPlaces(List<Place>? items)
     {
@@ -120,7 +181,7 @@ public partial class DataGridHierarchyDemo : ComponentBase
     private List<Employee> employees = new()
     {
         // Level 0 — CEO
-        new() { Id = "1", Name = "Mathew Taylor", JobTitle = "CEO", Department = "Executive", Location = "Copenhagen", AvatarUrl = "_content/BlazorBlueprint.Demo.Shared/images/mathew-icon.png" },
+        new() { Id = "1", Name = "Mathew Taylor", JobTitle = "CEO", Department = "Executive", Location = "Singapore", AvatarUrl = "_content/BlazorBlueprint.Demo.Shared/images/mathew-icon.png" },
 
         // Level 1 — C-suite (3 direct reports)
         new() { Id = "2", ReportsToId = "1", Name = "Alice Chen", JobTitle = "VP Engineering", Department = "Engineering", Location = "Seattle", AvatarUrl = Avatar("alice-chen") },
