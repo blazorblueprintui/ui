@@ -1,0 +1,132 @@
+@page "/components/datagrid-hierarchy"
+@using BlazorBlueprint.Primitives.Utilities
+
+<PageTitle>Hierarchical DataGrid - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-7xl">
+    <div class="space-y-4">
+        <h1 class="text-4xl font-bold tracking-tight">Hierarchical DataGrid</h1>
+        <p class="text-xl text-muted-foreground">
+            Display hierarchical tree data within the DataGrid using a flat-row rendering approach,
+            with expand/collapse, depth-based indentation, per-level sorting, and child pagination.
+        </p>
+    </div>
+
+    <!-- ── Nested Data (Continents → Countries) ───────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Nested Data</h2>
+            <p class="text-sm text-muted-foreground">
+                Uses <code class="bg-muted px-1 py-0.5 rounded">ChildrenSelector</code> to display
+                continent → country hierarchy with sorting and child pagination.
+                Click a column header to sort, or <kbd class="bg-muted px-1 py-0.5 rounded text-xs">Ctrl</kbd>+click to multi-sort.
+            </p>
+        </div>
+        <BbDataGrid TData="MedalEntry" Items="@continents"
+                    ChildrenSelector="@(c => c.Children)"
+                    ItemValueSelector="@(c => c.Name)"
+                    ChildPageSize="5">
+            <Columns>
+                <BbDataGridHierarchyColumn TData="MedalEntry" TProp="string" Property="@(c => c.Name)" Title="Name" Sortable />
+                <BbDataGridPropertyColumn TData="MedalEntry" TProp="int" Property="@(c => c.Gold)" Title="Gold" Sortable />
+                <BbDataGridPropertyColumn TData="MedalEntry" TProp="int" Property="@(c => c.Silver)" Title="Silver" Sortable />
+                <BbDataGridPropertyColumn TData="MedalEntry" TProp="int" Property="@(c => c.Bronze)" Title="Bronze" Sortable />
+                <BbDataGridPropertyColumn TData="MedalEntry" TProp="int" Property="@(c => c.Total)" Title="Total" Sortable />
+            </Columns>
+        </BbDataGrid>
+    </div>
+
+    <!-- ── Self-Referencing Data (Org Chart) ──────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Self-Referencing Data (Org Chart)</h2>
+            <p class="text-sm text-muted-foreground">
+                Uses <code class="bg-muted px-1 py-0.5 rounded">ParentValueSelector</code> with
+                <code class="bg-muted px-1 py-0.5 rounded">DefaultExpandDepth="1"</code> to show an
+                org chart from flat data with parent ID references.
+            </p>
+        </div>
+        <BbDataGrid TData="Employee" Items="@employees"
+                    ParentValueSelector="@(e => e.ReportsToId)"
+                    ItemValueSelector="@(e => e.Id)"
+                    DefaultExpandDepth="1"
+                    ChildPageSize="5"
+                    ShowExpandAll="true">
+            <Columns>
+                <BbDataGridHierarchyColumn TData="Employee" TProp="string" Property="@(e => e.Name)" Title="Name" Sortable>
+                    <CellTemplate>
+                        <div class="flex items-center gap-2">
+                            <BbAvatar Size="AvatarSize.Small">
+                                @if (context.Item.AvatarUrl != null)
+                                {
+                                    <BbAvatarImage Source="@context.Item.AvatarUrl" Alt="@context.Item.Name" />
+                                }
+                                <BbAvatarFallback>@GetInitials(context.Item.Name)</BbAvatarFallback>
+                            </BbAvatar>
+                            <span class="truncate">@context.Value</span>
+                        </div>
+                    </CellTemplate>
+                </BbDataGridHierarchyColumn>
+                <BbDataGridPropertyColumn TData="Employee" TProp="string" Property="@(e => e.JobTitle)" Title="Job Title" />
+                <BbDataGridPropertyColumn TData="Employee" TProp="string" Property="@(e => e.Department)" Title="Department" Sortable />
+                <BbDataGridPropertyColumn TData="Employee" TProp="string" Property="@(e => e.Location)" Title="Location" />
+            </Columns>
+        </BbDataGrid>
+    </div>
+
+    <!-- ── Lazy Loading ───────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Lazy Loading</h2>
+            <p class="text-sm text-muted-foreground">
+                Uses <code class="bg-muted px-1 py-0.5 rounded">LoadChildren</code> to fetch children
+                on demand. Expand a department to trigger a simulated async load.
+            </p>
+        </div>
+        <BbDataGrid TData="Department" Items="@rootDepartments"
+                    ChildrenSelector="@(_ => null)"
+                    ItemValueSelector="@(d => d.Id)"
+                    HasChildrenPredicate="@(d => d.HasSubDepartments)"
+                    LoadChildren="@LoadDepartmentChildrenAsync">
+            <Columns>
+                <BbDataGridHierarchyColumn TData="Department" TProp="string" Property="@(d => d.Name)" Title="Department" Sortable />
+                <BbDataGridPropertyColumn TData="Department" TProp="int" Property="@(d => d.EmployeeCount)" Title="Employees" />
+                <BbDataGridPropertyColumn TData="Department" TProp="string" Property="@(d => d.Head)" Title="Head" />
+            </Columns>
+        </BbDataGrid>
+    </div>
+
+    <!-- ── Large Dataset (World Geography) ────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Large Dataset</h2>
+            <p class="text-sm text-muted-foreground">
+                A 4-level hierarchy of Continent → Country → State/Province → City with
+                <strong>@totalPlaceCount.ToString("N0")</strong> total rows. Uses child pagination
+                and sorting to navigate the large dataset efficiently.
+            </p>
+        </div>
+        <BbDataGrid TData="Place" Items="@worldData"
+                    ChildrenSelector="@(p => p.Children)"
+                    ItemValueSelector="@(p => p.Id)"
+                    ChildPageSize="10"
+                    ShowExpandAll="true">
+            <Columns>
+                <BbDataGridHierarchyColumn TData="Place" TProp="string" Property="@(p => p.Name)" Title="Name" Sortable Filterable>
+                    <CellTemplate>
+                        <div class="flex items-center gap-2">
+                            @if (context.Item.Type == "Country" && context.Item.Code.Length == 2)
+                            {
+                                <span class="text-base leading-none">@CountryCodeToFlag(context.Item.Code)</span>
+                            }
+                            <span class="truncate">@context.Value</span>
+                        </div>
+                    </CellTemplate>
+                </BbDataGridHierarchyColumn>
+                <BbDataGridPropertyColumn TData="Place" TProp="string" Property="@(p => p.Type)" Title="Type" Filterable />
+                <BbDataGridPropertyColumn TData="Place" TProp="long" Property="@(p => p.Population)" Title="Population" Sortable />
+                <BbDataGridPropertyColumn TData="Place" TProp="string" Property="@(p => p.Code)" Title="Code" Sortable Filterable />
+            </Columns>
+        </BbDataGrid>
+    </div>
+</div>
