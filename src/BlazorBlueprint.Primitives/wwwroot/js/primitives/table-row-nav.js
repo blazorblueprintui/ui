@@ -60,7 +60,13 @@ export function consumeInteractiveClickFlag(rowElement) {
 }
 
 /**
- * Prevents Space and Arrow keys from scrolling when a table row is focused.
+ * Prevents Space and Arrow keys from scrolling when a table row is focused,
+ * and sets a flag when the keydown originates from an interactive child so
+ * the Blazor-side handler can skip row-level navigation.
+ *
+ * Skips prevention when the event originates from an interactive child element
+ * (e.g. a Combobox dropdown or Popover inside a cell template) so those
+ * elements retain normal keyboard behaviour.
  * Attaches a keydown listener in capture phase.
  * @param {HTMLElement} element - The row element to attach the handler to
  * @returns {Object} Object with dispose function for cleanup
@@ -69,6 +75,12 @@ export function preventSpaceKeyScroll(element) {
     if (!element) return { dispose: () => {} };
 
     const handleKeyDown = (e) => {
+        // Flag interactive child events so Blazor's HandleKeyDown can skip
+        element._bbInteractiveKeyDown = isInteractiveTarget(e.target, element);
+
+        // Let interactive child elements handle their own keys
+        if (element._bbInteractiveKeyDown) return;
+
         // Prevent Space, ArrowUp, and ArrowDown from scrolling
         if (e.key === ' ' || e.keyCode === 32 ||
             e.key === 'ArrowUp' || e.keyCode === 38 ||
@@ -84,6 +96,39 @@ export function preventSpaceKeyScroll(element) {
             element.removeEventListener('keydown', handleKeyDown, { capture: true });
         }
     };
+}
+
+/**
+ * Returns true if the last keydown on this row targeted an interactive
+ * child element, then resets the flag.
+ *
+ * @param {HTMLElement} rowElement - The <tr> element
+ * @returns {boolean}
+ */
+export function consumeInteractiveKeyDownFlag(rowElement) {
+    if (!rowElement) return false;
+    const flag = rowElement._bbInteractiveKeyDown === true;
+    rowElement._bbInteractiveKeyDown = false;
+    return flag;
+}
+
+/**
+ * Checks whether the event target is an interactive child of the row,
+ * or is inside a portal-based overlay (popover, combobox dropdown, etc.)
+ * that was triggered from within the row.
+ * @param {HTMLElement} target - The event target
+ * @param {HTMLElement} rowElement - The <tr> row element
+ * @returns {boolean}
+ */
+function isInteractiveTarget(target, rowElement) {
+    if (!target || target === rowElement) return false;
+
+    // Check if the target is inside a portal overlay (rendered outside the row)
+    if (!rowElement.contains(target)) return false;
+
+    // Check if the target (or an ancestor within the row) is interactive
+    const interactive = target.closest(INTERACTIVE_SELECTOR);
+    return !!(interactive && rowElement.contains(interactive) && interactive !== rowElement);
 }
 
 /**

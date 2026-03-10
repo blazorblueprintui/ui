@@ -138,6 +138,19 @@
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
+        // When the keydown originates from an interactive child element
+        // (e.g. a Combobox dropdown inside a cell template), skip row-level
+        // keyboard handling so the child retains normal keyboard behaviour.
+        if (spaceKeyHandlerAttached && navModule != null)
+        {
+            var wasInteractive = await navModule.InvokeAsync<bool>(
+                "consumeInteractiveKeyDownFlag", elementRef);
+            if (wasInteractive)
+            {
+                return;
+            }
+        }
+
         if (IsKeyboardNavigable)
         {
             switch (e.Key)
