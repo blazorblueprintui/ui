@@ -60,28 +60,34 @@ export function consumeInteractiveClickFlag(rowElement) {
 }
 
 /**
- * Prevents Space and Arrow keys from scrolling when a table row is focused,
- * and sets a flag when the keydown originates from an interactive child so
- * the Blazor-side handler can skip row-level navigation.
+ * Prevents Space and Arrow keys from scrolling when a table row is focused.
  *
- * Skips prevention when the event originates from an interactive child element
- * (e.g. a Combobox dropdown or Popover inside a cell template) so those
- * elements retain normal keyboard behaviour.
- * Attaches a keydown listener in capture phase.
+ * When the keydown originates from an interactive child element (e.g. a
+ * Combobox trigger, Popover button, or any element matching
+ * INTERACTIVE_SELECTOR), the handler:
+ *   1. Skips preventDefault() so the child retains default browser behaviour.
+ *   2. Calls stopPropagation() in bubble phase so Blazor's root-level event
+ *      delegation never dispatches the event to the row's @onkeydown handler.
+ *
+ * This is entirely JS-based — no C# interop round-trip is needed.
+ *
  * @param {HTMLElement} element - The row element to attach the handler to
  * @returns {Object} Object with dispose function for cleanup
  */
 export function preventSpaceKeyScroll(element) {
     if (!element) return { dispose: () => {} };
 
-    const handleKeyDown = (e) => {
-        // Flag interactive child events so Blazor's HandleKeyDown can skip
+    // Capture phase: runs before the event reaches the target.
+    // - For interactive children: skip preventDefault so the child keeps
+    //   normal behaviour, and set a flag for the bubble handler.
+    // - For the row itself: preventDefault to stop page scroll.
+    const captureHandler = (e) => {
         element._bbInteractiveKeyDown = isInteractiveTarget(e.target, element);
 
-        // Let interactive child elements handle their own keys
-        if (element._bbInteractiveKeyDown) return;
+        if (element._bbInteractiveKeyDown) {
+            return;
+        }
 
-        // Prevent Space, ArrowUp, and ArrowDown from scrolling
         if (e.key === ' ' || e.keyCode === 32 ||
             e.key === 'ArrowUp' || e.keyCode === 38 ||
             e.key === 'ArrowDown' || e.keyCode === 40) {
@@ -89,27 +95,26 @@ export function preventSpaceKeyScroll(element) {
         }
     };
 
-    element.addEventListener('keydown', handleKeyDown, { capture: true });
+    // Bubble phase: runs after the target has handled the event.
+    // When the flag is set, stopPropagation prevents the event from
+    // reaching Blazor's document-level event delegation, so the row's
+    // C# HandleKeyDown is never invoked for interactive-child events.
+    const bubbleHandler = (e) => {
+        if (element._bbInteractiveKeyDown) {
+            e.stopPropagation();
+            element._bbInteractiveKeyDown = false;
+        }
+    };
+
+    element.addEventListener('keydown', captureHandler, { capture: true });
+    element.addEventListener('keydown', bubbleHandler, { capture: false });
 
     return {
         dispose: () => {
-            element.removeEventListener('keydown', handleKeyDown, { capture: true });
+            element.removeEventListener('keydown', captureHandler, { capture: true });
+            element.removeEventListener('keydown', bubbleHandler, { capture: false });
         }
     };
-}
-
-/**
- * Returns true if the last keydown on this row targeted an interactive
- * child element, then resets the flag.
- *
- * @param {HTMLElement} rowElement - The <tr> element
- * @returns {boolean}
- */
-export function consumeInteractiveKeyDownFlag(rowElement) {
-    if (!rowElement) return false;
-    const flag = rowElement._bbInteractiveKeyDown === true;
-    rowElement._bbInteractiveKeyDown = false;
-    return flag;
 }
 
 /**
