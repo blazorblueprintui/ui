@@ -1,0 +1,51 @@
+<BbDataGrid TData="FileEntry" Items="@fileTree"
+            ChildrenSelector="@(f => f.Children)"
+            ItemValueSelector="@(f => f.Id)"
+            SelectionMode="DataTableSelectionMode.Multiple"
+            HierarchySelectionMode="HierarchySelectionMode.Cascade"
+            SelectedItemsChanged="@((IReadOnlyCollection<FileEntry> items) => { selectedFiles = items; })"
+            DefaultExpandDepth="1"
+            ShowExpandAll="true"
+            ShowPagination="false"
+            Reorderable="true"
+            Resizable="true">
+    <Columns>
+        <BbDataGridSelectColumn TData="FileEntry" />
+        <BbDataGridHierarchyColumn TData="FileEntry" TProp="string"
+                                   Property="@(f => f.Name)" Title="Name" Sortable>
+            <CellTemplate>
+                <div class="flex items-center gap-2">
+                    <LucideIcon Name="@GetFileIcon(context.Item)"
+                               Class="@(context.Item.IsFolder ? "w-4 h-4 text-blue-500" : "w-4 h-4 text-muted-foreground")" />
+                    <span class="truncate">@context.Value</span>
+                </div>
+            </CellTemplate>
+        </BbDataGridHierarchyColumn>
+        <BbDataGridTemplateColumn TData="FileEntry" Title="Size"
+                                 Sortable SortBy="@(f => (object)(f.Size ?? 0L))">
+            <ChildContent>
+                <span class="text-muted-foreground tabular-nums">@FormatFileSize(context.Size)</span>
+            </ChildContent>
+        </BbDataGridTemplateColumn>
+        <BbDataGridPropertyColumn TData="FileEntry" TProp="string"
+                                 Property="@(f => f.Extension ?? "")" Title="Type" Sortable />
+        <BbDataGridPropertyColumn TData="FileEntry" TProp="DateTime"
+                                 Property="@(f => f.Modified)" Title="Modified"
+                                 Format="yyyy-MM-dd" Sortable />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private IReadOnlyCollection<FileEntry>? selectedFiles;
+
+    private sealed class FileEntry
+    {
+        public string Id { get; init; } = "";
+        public string Name { get; init; } = "";
+        public bool IsFolder { get; init; }
+        public long? Size { get; init; }
+        public string? Extension { get; init; }
+        public DateTime Modified { get; init; }
+        public List<FileEntry>? Children { get; init; }
+    }
+}

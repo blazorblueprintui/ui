@@ -310,6 +310,144 @@ public partial class DataGridHierarchyDemo : ComponentBase
         public List<Place>? Children { get; init; }
     }
 
+    // ── FileEntry (file explorer) ──
+
+    private IReadOnlyCollection<FileEntry>? selectedFiles;
+
+    private sealed class FileEntry
+    {
+        public string Id { get; init; } = "";
+        public string Name { get; init; } = "";
+        public bool IsFolder { get; init; }
+        public long? Size { get; init; }
+        public string? Extension { get; init; }
+        public DateTime Modified { get; init; }
+        public List<FileEntry>? Children { get; init; }
+    }
+
+    private static string GetFileIcon(FileEntry entry)
+    {
+        if (entry.IsFolder)
+        {
+            return "folder";
+        }
+
+        return entry.Extension switch
+        {
+            ".cs" or ".js" or ".ts" or ".razor" or ".html" or ".css" => "file-code",
+            ".json" or ".xml" or ".yaml" or ".yml" => "file-json-2",
+            ".png" or ".jpg" or ".svg" or ".gif" or ".ico" => "file-image",
+            ".md" or ".txt" => "file-text",
+            ".sln" or ".csproj" => "file-cog",
+            _ => "file"
+        };
+    }
+
+    private static string FormatFileSize(long? bytes)
+    {
+        if (bytes == null)
+        {
+            return "--";
+        }
+
+        double b = bytes.Value;
+        string[] units = { "B", "KB", "MB", "GB" };
+        var i = 0;
+        while (b >= 1024 && i < units.Length - 1)
+        {
+            b /= 1024;
+            i++;
+        }
+
+        return $"{b:0.#} {units[i]}";
+    }
+
+    private static readonly List<FileEntry> fileTree = new()
+    {
+        new()
+        {
+            Id = "f1", Name = "src", IsFolder = true, Modified = new(2025, 12, 5),
+            Children = new()
+            {
+                new()
+                {
+                    Id = "f2", Name = "Components", IsFolder = true, Modified = new(2025, 12, 1),
+                    Children = new()
+                    {
+                        new() { Id = "f3", Name = "Button.razor", Extension = ".razor", Size = 2_150, Modified = new(2025, 12, 1) },
+                        new() { Id = "f4", Name = "Button.razor.cs", Extension = ".cs", Size = 1_840, Modified = new(2025, 12, 1) },
+                        new() { Id = "f5", Name = "Dialog.razor", Extension = ".razor", Size = 3_420, Modified = new(2025, 11, 28) },
+                        new() { Id = "f6", Name = "Dialog.razor.cs", Extension = ".cs", Size = 4_200, Modified = new(2025, 11, 28) },
+                        new() { Id = "f7", Name = "DataGrid.razor", Extension = ".razor", Size = 8_960, Modified = new(2025, 12, 1) },
+                        new() { Id = "f8", Name = "DataGrid.razor.cs", Extension = ".cs", Size = 15_300, Modified = new(2025, 12, 1) }
+                    }
+                },
+                new()
+                {
+                    Id = "f9", Name = "Pages", IsFolder = true, Modified = new(2025, 12, 5),
+                    Children = new()
+                    {
+                        new() { Id = "f10", Name = "Home.razor", Extension = ".razor", Size = 1_200, Modified = new(2025, 12, 5) },
+                        new() { Id = "f11", Name = "Settings.razor", Extension = ".razor", Size = 2_800, Modified = new(2025, 11, 30) },
+                        new() { Id = "f12", Name = "Dashboard.razor", Extension = ".razor", Size = 5_100, Modified = new(2025, 12, 3) }
+                    }
+                },
+                new()
+                {
+                    Id = "f13", Name = "wwwroot", IsFolder = true, Modified = new(2025, 11, 15),
+                    Children = new()
+                    {
+                        new()
+                        {
+                            Id = "f14", Name = "css", IsFolder = true, Modified = new(2025, 11, 15),
+                            Children = new()
+                            {
+                                new() { Id = "f15", Name = "app.css", Extension = ".css", Size = 920, Modified = new(2025, 11, 15) },
+                                new() { Id = "f16", Name = "tailwind.css", Extension = ".css", Size = 48_200, Modified = new(2025, 11, 15) }
+                            }
+                        },
+                        new()
+                        {
+                            Id = "f17", Name = "images", IsFolder = true, Modified = new(2025, 10, 20),
+                            Children = new()
+                            {
+                                new() { Id = "f18", Name = "logo.svg", Extension = ".svg", Size = 4_500, Modified = new(2025, 10, 20) },
+                                new() { Id = "f19", Name = "hero.png", Extension = ".png", Size = 131_400, Modified = new(2025, 10, 20) },
+                                new() { Id = "f20", Name = "og-image.jpg", Extension = ".jpg", Size = 89_600, Modified = new(2025, 10, 20) }
+                            }
+                        },
+                        new() { Id = "f21", Name = "favicon.ico", Extension = ".ico", Size = 1_100, Modified = new(2025, 10, 1) }
+                    }
+                },
+                new() { Id = "f22", Name = "App.razor", Extension = ".razor", Size = 520, Modified = new(2025, 12, 5) },
+                new() { Id = "f23", Name = "Program.cs", Extension = ".cs", Size = 1_300, Modified = new(2025, 12, 3) }
+            }
+        },
+        new()
+        {
+            Id = "f24", Name = "tests", IsFolder = true, Modified = new(2025, 12, 4),
+            Children = new()
+            {
+                new() { Id = "f25", Name = "ComponentTests.cs", Extension = ".cs", Size = 3_200, Modified = new(2025, 12, 4) },
+                new() { Id = "f26", Name = "PageTests.cs", Extension = ".cs", Size = 2_100, Modified = new(2025, 12, 2) },
+                new() { Id = "f27", Name = "IntegrationTests.cs", Extension = ".cs", Size = 4_800, Modified = new(2025, 12, 4) }
+            }
+        },
+        new()
+        {
+            Id = "f28", Name = "docs", IsFolder = true, Modified = new(2025, 12, 6),
+            Children = new()
+            {
+                new() { Id = "f29", Name = "README.md", Extension = ".md", Size = 4_800, Modified = new(2025, 12, 6) },
+                new() { Id = "f30", Name = "CHANGELOG.md", Extension = ".md", Size = 12_400, Modified = new(2025, 12, 5) },
+                new() { Id = "f31", Name = "architecture.md", Extension = ".md", Size = 6_200, Modified = new(2025, 11, 20) }
+            }
+        },
+        new() { Id = "f32", Name = ".gitignore", Size = 310, Modified = new(2025, 10, 1) },
+        new() { Id = "f33", Name = "BlazorApp.sln", Extension = ".sln", Size = 1_200, Modified = new(2025, 10, 1) },
+        new() { Id = "f34", Name = "global.json", Extension = ".json", Size = 85, Modified = new(2025, 10, 1) }
+    };
+
     private static List<Place> worldData = AssignIds(BuildWorldData());
 
     private static List<Place> AssignIds(List<Place> places)

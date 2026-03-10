@@ -489,6 +489,17 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     [Parameter]
     public int? ChildPageSize { get; set; }
 
+    /// <summary>
+    /// Controls how row selection interacts with the hierarchy.
+    /// <see cref="HierarchySelectionMode.Independent"/> (default) treats each row independently.
+    /// <see cref="HierarchySelectionMode.Cascade"/> cascades selection to descendants and shows
+    /// an indeterminate state on parents with partially selected children.
+    /// Only applies when <see cref="SelectionMode"/> is <see cref="DataTableSelectionMode.Multiple"/>
+    /// and hierarchy mode is active.
+    /// </summary>
+    [Parameter]
+    public HierarchySelectionMode HierarchySelectionMode { get; set; } = HierarchySelectionMode.Independent;
+
     internal DataGridState<TData> EffectiveState => State ?? _gridState;
 
     protected override void OnInitialized()
@@ -2162,6 +2173,14 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             _gridState.Selection.Deselect(item);
         }
 
+        if (HierarchySelectionMode == HierarchySelectionMode.Cascade
+            && IsHierarchyMode && _hierarchyManager != null && ItemValueSelector != null)
+        {
+            var value = ItemValueSelector(item);
+            CascadeSelectionToDescendants(value, isChecked);
+            UpdateAncestorSelection(value);
+        }
+
         _stateVersion++;
 
         if (SelectedItemsChanged.HasDelegate)
@@ -2171,6 +2190,92 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         await NotifyStateChangedAsync();
         StateHasChanged();
+    }
+
+    private void CascadeSelectionToDescendants(string value, bool select)
+    {
+        if (_hierarchyManager == null)
+        {
+            return;
+        }
+
+        var descendantValues = _hierarchyManager.GetAllDescendantValues(value);
+        foreach (var dv in descendantValues)
+        {
+            var descendant = _hierarchyManager.GetItemByValue(dv);
+            if (descendant != null)
+            {
+                if (select)
+                {
+                    _gridState.Selection.Select(descendant);
+                }
+                else
+                {
+                    _gridState.Selection.Deselect(descendant);
+                }
+            }
+        }
+    }
+
+    private void UpdateAncestorSelection(string value)
+    {
+        if (_hierarchyManager == null)
+        {
+            return;
+        }
+
+        var ancestors = _hierarchyManager.GetAncestorValues(value);
+        foreach (var ancestorValue in ancestors)
+        {
+            var ancestor = _hierarchyManager.GetItemByValue(ancestorValue);
+            if (ancestor == null)
+            {
+                continue;
+            }
+
+            var childValues = _hierarchyManager.GetDirectChildValues(ancestorValue);
+            var allSelected = childValues.Count > 0 && childValues.All(cv =>
+            {
+                var child = _hierarchyManager.GetItemByValue(cv);
+                return child != null && _gridState.Selection.IsSelected(child);
+            });
+
+            if (allSelected)
+            {
+                _gridState.Selection.Select(ancestor);
+            }
+            else
+            {
+                _gridState.Selection.Deselect(ancestor);
+            }
+        }
+    }
+
+    private bool IsHierarchyItemIndeterminate(TData item)
+    {
+        if (HierarchySelectionMode != HierarchySelectionMode.Cascade
+            || _hierarchyManager == null || ItemValueSelector == null)
+        {
+            return false;
+        }
+
+        var value = ItemValueSelector(item);
+        if (!_hierarchyManager.HasChildren(value))
+        {
+            return false;
+        }
+
+        if (_gridState.Selection.IsSelected(item))
+        {
+            return false;
+        }
+
+        var descendantValues = _hierarchyManager.GetAllDescendantValues(value);
+        return descendantValues.Any(dv =>
+        {
+            var desc = _hierarchyManager.GetItemByValue(dv);
+            return desc != null && _gridState.Selection.IsSelected(desc);
+        });
     }
 
     internal async Task HandleGroupToggle(DataGridGroupRow<TData> groupRow)

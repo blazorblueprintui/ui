@@ -120,6 +120,58 @@
         <CodeBlock Source="Components/DataGridHierarchy/lazy-loading.txt" />
     </div>
 
+    <!-- ── File Explorer ────────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">File Explorer</h2>
+            <p class="text-sm text-muted-foreground">
+                A file-explorer-style tree with icons, file sizes, and dates.
+                Uses <code class="bg-muted px-1 py-0.5 rounded">HierarchySelectionMode.Cascade</code>
+                to cascade selection to children — selecting a folder selects all its contents.
+                Parents show an indeterminate state when partially selected.
+                All columns are sortable, <code class="bg-muted px-1 py-0.5 rounded">Reorderable</code>, and <code class="bg-muted px-1 py-0.5 rounded">Resizable</code>.
+            </p>
+        </div>
+        <BbDataGrid TData="FileEntry" Items="@fileTree"
+                    ChildrenSelector="@(f => f.Children)"
+                    ItemValueSelector="@(f => f.Id)"
+                    SelectionMode="DataTableSelectionMode.Multiple"
+                    HierarchySelectionMode="HierarchySelectionMode.Cascade"
+                    SelectedItemsChanged="@((IReadOnlyCollection<FileEntry> items) => { selectedFiles = items; })"
+                    DefaultExpandDepth="1"
+                    ShowExpandAll="true"
+                    ShowPagination="false"
+                    Reorderable="true"
+                    Resizable="true">
+            <Columns>
+                <BbDataGridSelectColumn TData="FileEntry" />
+                <BbDataGridHierarchyColumn TData="FileEntry" TProp="string" Property="@(f => f.Name)" Title="Name" Sortable>
+                    <CellTemplate>
+                        <div class="flex items-center gap-2">
+                            <LucideIcon Name="@GetFileIcon(context.Item)"
+                                       Class="@ClassNames.cn("w-4 h-4 shrink-0", context.Item.IsFolder ? "text-blue-500" : "text-muted-foreground")" />
+                            <span class="truncate">@context.Value</span>
+                        </div>
+                    </CellTemplate>
+                </BbDataGridHierarchyColumn>
+                <BbDataGridTemplateColumn TData="FileEntry" Title="Size" Sortable SortBy="@(f => (object)(f.Size ?? 0L))">
+                    <ChildContent>
+                        <span class="text-muted-foreground tabular-nums">@FormatFileSize(context.Size)</span>
+                    </ChildContent>
+                </BbDataGridTemplateColumn>
+                <BbDataGridPropertyColumn TData="FileEntry" TProp="string" Property="@(f => f.Extension ?? "")" Title="Type" Sortable />
+                <BbDataGridPropertyColumn TData="FileEntry" TProp="DateTime" Property="@(f => f.Modified)" Title="Modified" Format="yyyy-MM-dd" Sortable />
+            </Columns>
+        </BbDataGrid>
+        @if (selectedFiles?.Count > 0)
+        {
+            <p class="text-sm text-muted-foreground">
+                @selectedFiles.Count item(s) selected
+            </p>
+        }
+        <CodeBlock Source="Components/DataGridHierarchy/file-explorer.txt" />
+    </div>
+
     <!-- ── Large Dataset (World Geography) ────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">

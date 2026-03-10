@@ -282,6 +282,17 @@ public partial class HierarchyManager<TItem>
     /// </summary>
     public bool IsRegistered(string value) => itemsByValue.ContainsKey(value);
 
+    /// <summary>
+    /// Gets the direct child values of a parent. Pass null for root items.
+    /// </summary>
+    public IReadOnlyList<string> GetDirectChildValues(string? parentValue)
+    {
+        var key = parentValue ?? RootParentKey;
+        return childrenByParent.TryGetValue(key, out var children)
+            ? children
+            : Array.Empty<string>();
+    }
+
     // --- Traversal ---
 
     /// <summary>
