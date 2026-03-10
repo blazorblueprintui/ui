@@ -48,6 +48,8 @@ namespace BlazorBlueprint.Components;
 /// </example>
 public partial class BbCombobox<TValue> : ComponentBase
 {
+    [Inject] private BbLocalizationOptions Localization { get; set; } = default!;
+
     private FieldIdentifier _fieldIdentifier;
     private EditContext? _editContext;
     private static readonly Func<CommandItemMetadata, string, bool> PassthroughFilter = (_, _) => true;
@@ -135,19 +137,23 @@ public partial class BbCombobox<TValue> : ComponentBase
     /// Gets or sets the placeholder text shown in the button when no item is selected.
     /// </summary>
     [Parameter]
-    public string Placeholder { get; set; } = "Select an option...";
+    public string? Placeholder { get; set; }
 
     /// <summary>
     /// Gets or sets the placeholder text shown in the search input.
     /// </summary>
     [Parameter]
-    public string SearchPlaceholder { get; set; } = "Search...";
+    public string? SearchPlaceholder { get; set; }
 
     /// <summary>
     /// Gets or sets the message displayed when no items match the search.
     /// </summary>
     [Parameter]
-    public string EmptyMessage { get; set; } = "No results found.";
+    public string? EmptyMessage { get; set; }
+
+    private string EffectivePlaceholder => Placeholder ?? Localization.Combobox.Placeholder;
+    private string EffectiveSearchPlaceholder => SearchPlaceholder ?? Localization.Combobox.SearchPlaceholder;
+    private string EffectiveEmptyMessage => EmptyMessage ?? Localization.Combobox.EmptyMessage;
 
     /// <summary>
     /// Gets or sets the current search query text.
@@ -276,7 +282,7 @@ public partial class BbCombobox<TValue> : ComponentBase
         {
             if (Value is null)
             {
-                return Placeholder;
+                return EffectivePlaceholder;
             }
 
             // Options mode: look up from Options collection
@@ -294,7 +300,7 @@ public partial class BbCombobox<TValue> : ComponentBase
 
             // Fallback: cached display text from last selection survives Options array changes
             // during async filtering (e.g. selected option filtered out of current results).
-            return _selectedDisplayTextCache ?? Placeholder;
+            return _selectedDisplayTextCache ?? EffectivePlaceholder;
         }
     }
 

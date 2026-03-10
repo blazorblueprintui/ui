@@ -11,6 +11,8 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public partial class BbTagInput : ComponentBase, IAsyncDisposable
 {
+    [Inject] private BbLocalizationOptions Localization { get; set; } = default!;
+
     // ── Infrastructure ─────────────────────────────────────────────────
     private ElementReference _containerRef;
     private ElementReference _inputRef;
@@ -68,7 +70,9 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
     /// Placeholder text shown when no tags are present.
     /// </summary>
     [Parameter]
-    public string Placeholder { get; set; } = "Add tag...";
+    public string? Placeholder { get; set; }
+
+    private string ResolvedPlaceholder => Placeholder ?? Localization.TagInput.Placeholder;
 
     /// <summary>
     /// Maximum number of tags allowed.
@@ -172,7 +176,7 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
 
     private bool HasSuggestions => Suggestions is not null || OnSearchSuggestions is not null;
 
-    private string? EffectivePlaceholder => _currentTags.Count == 0 ? Placeholder : null;
+    private string? EffectivePlaceholder => _currentTags.Count == 0 ? ResolvedPlaceholder : null;
 
     private string? ActiveDescendantId =>
         _suggestionsOpen && _suggestionIndex >= 0

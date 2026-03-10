@@ -1,7 +1,7 @@
 @namespace BlazorBlueprint.Components
 
 <form @onsubmit="HandleApply" @onsubmit:preventDefault="true" class="p-3 space-y-3">
-    <div class="text-sm font-medium">Filter @ColumnTitle</div>
+    <div class="text-sm font-medium">@Localization.DataGrid.FilterPlaceholder(ColumnTitle ?? "")</div>
 
     @* Operator selector *@
     <BbSelect TValue="FilterOperator"
@@ -18,7 +18,7 @@
             case FilterFieldType.Text:
                 <BbInput Value="@GetStringValue()"
                          ValueChanged="HandleStringValueChanged"
-                         Placeholder="Enter value..."
+                         Placeholder="@Localization.DataGrid.FilterColumnEnterValue"
                          Class="w-full" />
                 break;
 
@@ -27,13 +27,13 @@
                     <BbNumericInput TValue="double"
                                     Value="@GetDoubleValue()"
                                     ValueChanged="HandleDoubleValueChanged"
-                                    Placeholder="Min"
+                                    Placeholder="@Localization.DataGrid.FilterColumnMin"
                                     Class="w-full" />
-                    <span class="text-sm text-muted-foreground shrink-0">and</span>
+                    <span class="text-sm text-muted-foreground shrink-0">@Localization.DataGrid.FilterColumnAnd</span>
                     <BbNumericInput TValue="double"
                                     Value="@GetDoubleValueEnd()"
                                     ValueChanged="HandleDoubleValueEndChanged"
-                                    Placeholder="Max"
+                                    Placeholder="@Localization.DataGrid.FilterColumnMax"
                                     Class="w-full" />
                 </div>
                 break;
@@ -42,7 +42,7 @@
                 <BbNumericInput TValue="double"
                                 Value="@GetDoubleValue()"
                                 ValueChanged="HandleDoubleValueChanged"
-                                Placeholder="Enter value..."
+                                Placeholder="@Localization.DataGrid.FilterColumnEnterValue"
                                 Class="w-full" />
                 break;
 
@@ -58,12 +58,12 @@
                                     Value="@GetInLastAmount()"
                                     ValueChanged="HandleInLastAmountChanged"
                                     Min="1"
-                                    Placeholder="Amount"
+                                    Placeholder="@Localization.DataGrid.FilterColumnAmount"
                                     Class="w-full" />
                     <BbSelect TValue="InLastPeriod"
                               Value="@GetInLastPeriod()"
                               ValueChanged="HandleInLastPeriodChanged"
-                              Options="@inLastPeriodOptions"
+                              Options="@InLastPeriodOptions"
                               Class="w-full" />
                 </div>
                 break;
@@ -72,14 +72,14 @@
                 <BbSelect TValue="DatePreset"
                           Value="@GetDatePreset()"
                           ValueChanged="HandleDatePresetChanged"
-                          Options="@datePresetOptions"
+                          Options="@DatePresetOptions"
                           Class="w-full" />
                 break;
 
             case FilterFieldType.Date or FilterFieldType.DateTime:
                 <BbDatePicker Value="@GetDateTimeValue()"
                               ValueChanged="HandleDateTimeValueChanged"
-                              Placeholder="Pick a date"
+                              Placeholder="@Localization.DataGrid.FilterColumnPickDate"
                               Class="w-full" />
                 break;
 
@@ -88,7 +88,7 @@
                                Values="@GetMultiSelectValues()"
                                ValuesChanged="HandleMultiSelectValuesChanged"
                                Options="@(FilterOptions ?? Array.Empty<SelectOption<string>>())"
-                               Placeholder="Select values..."
+                               Placeholder="@Localization.DataGrid.FilterColumnSelectValues"
                                Class="w-full" />
                 break;
 
@@ -97,7 +97,7 @@
                           Value="@GetStringValue()"
                           ValueChanged="HandleStringValueChanged"
                           Options="@(FilterOptions ?? Array.Empty<SelectOption<string>>())"
-                          Placeholder="Select value..."
+                          Placeholder="@Localization.DataGrid.FilterColumnSelectValue"
                           Class="w-full" />
                 break;
         }
@@ -111,13 +111,13 @@
                       Size="ButtonSize.Small"
                       Type="ButtonType.Button"
                       OnClick="HandleClear">
-                Clear
+                @Localization.DataGrid.FilterColumnClear
             </BbButton>
         }
         <BbButton Variant="ButtonVariant.Default"
                   Size="ButtonSize.Small"
                   Type="ButtonType.Submit">
-            Apply
+            @Localization.DataGrid.FilterColumnApply
         </BbButton>
     </div>
 </form>

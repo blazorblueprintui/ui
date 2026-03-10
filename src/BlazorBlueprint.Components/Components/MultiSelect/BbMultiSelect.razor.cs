@@ -15,6 +15,9 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
 
+    [Inject]
+    private BbLocalizationOptions Localization { get; set; } = default!;
+
     private FieldIdentifier _fieldIdentifier;
     private EditContext? _editContext;
     private IJSObjectReference? _multiSelectModule;
@@ -85,25 +88,25 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// Gets or sets the placeholder text shown when no items are selected.
     /// </summary>
     [Parameter]
-    public string Placeholder { get; set; } = "Select items...";
+    public string? Placeholder { get; set; }
 
     /// <summary>
     /// Gets or sets the placeholder text shown in the search input.
     /// </summary>
     [Parameter]
-    public string SearchPlaceholder { get; set; } = "Search...";
+    public string? SearchPlaceholder { get; set; }
 
     /// <summary>
     /// Gets or sets the message displayed when no items match the search.
     /// </summary>
     [Parameter]
-    public string EmptyMessage { get; set; } = "No results found.";
+    public string? EmptyMessage { get; set; }
 
     /// <summary>
     /// Gets or sets the label for the Select All option.
     /// </summary>
     [Parameter]
-    public string SelectAllLabel { get; set; } = "Select All";
+    public string? SelectAllLabel { get; set; }
 
     /// <summary>
     /// Gets or sets whether to show the Select All option.
@@ -115,13 +118,20 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// Gets or sets the label for the Clear button.
     /// </summary>
     [Parameter]
-    public string ClearLabel { get; set; } = "Clear";
+    public string? ClearLabel { get; set; }
 
     /// <summary>
     /// Gets or sets the label for the Close button.
     /// </summary>
     [Parameter]
-    public string CloseLabel { get; set; } = "Close";
+    public string? CloseLabel { get; set; }
+
+    private string EffectivePlaceholder => Placeholder ?? Localization.MultiSelect.Placeholder;
+    private string EffectiveSearchPlaceholder => SearchPlaceholder ?? Localization.MultiSelect.SearchPlaceholder;
+    private string EffectiveEmptyMessage => EmptyMessage ?? Localization.MultiSelect.EmptyMessage;
+    private string EffectiveSelectAllLabel => SelectAllLabel ?? Localization.MultiSelect.SelectAll;
+    private string EffectiveClearLabel => ClearLabel ?? Localization.MultiSelect.Clear;
+    private string EffectiveCloseLabel => CloseLabel ?? Localization.MultiSelect.Close;
 
     /// <summary>
     /// Gets or sets additional CSS classes to apply to the multiselect container.

@@ -3,6 +3,7 @@
 @attribute [CascadingTypeParameter(nameof(TData))]
 @using BlazorBlueprint.Icons.Lucide.Components
 @using BlazorBlueprint.Primitives.DataGrid
+@inject BbLocalizationOptions Localization
 
 <CascadingValue Value="this" IsFixed="true">
     <div class="@ClassNames.cn("w-full", Class)">
@@ -22,7 +23,7 @@
                 else
                 {
                     <div class="flex items-center justify-center p-8 text-muted-foreground">
-                        <div class="text-sm">Loading...</div>
+                        <div class="text-sm">@Localization.DataGrid.Loading</div>
                     </div>
                 }
             }
@@ -34,7 +35,7 @@
                 }
                 else
                 {
-                    <BbEmpty Title="No results found" Size="EmptySize.Small" />
+                    <BbEmpty Title="@Localization.DataGrid.NoResultsFound" Size="EmptySize.Small" />
                 }
             }
             else
@@ -95,21 +96,21 @@
                                                     <BbDropdownMenuTrigger AsChild="false" Class="inline-flex items-center justify-center p-0 bg-transparent border-0 hover:bg-transparent focus:outline-none">
                                                         <BbCheckbox Checked="@IsAllSelected()"
                                                                   Indeterminate="@IsSomeSelected()"
-                                                                  AriaLabel="Select rows - click to see options"
+                                                                  AriaLabel="@Localization.DataGrid.SelectRowsAriaLabel"
                                                                   Class="pointer-events-none" />
                                                     </BbDropdownMenuTrigger>
                                                     <BbDropdownMenuContent Side="PopoverSide.Bottom" Align="PopoverAlign.Start">
                                                         <BbDropdownMenuItem OnClick="@HandleSelectAllOnCurrentPage">
-                                                            Select all on this page (@_processedData.Count() items)
+                                                            @Localization.DataGrid.SelectAllOnPage(_processedData.Count())
                                                         </BbDropdownMenuItem>
                                                         <BbDropdownMenuItem OnClick="@HandleSelectAllItems">
-                                                            Select all @_gridState.Pagination.TotalItems items
+                                                            @Localization.DataGrid.SelectAllItems(_gridState.Pagination.TotalItems)
                                                         </BbDropdownMenuItem>
                                                         @if (_gridState.Selection.HasSelection)
                                                         {
                                                             <BbDropdownMenuSeparator />
                                                             <BbDropdownMenuItem OnClick="@HandleClearSelection">
-                                                                Clear selection
+                                                                @Localization.DataGrid.ClearSelection
                                                             </BbDropdownMenuItem>
                                                         }
                                                     </BbDropdownMenuContent>
@@ -120,7 +121,7 @@
                                                 <BbCheckbox Checked="@IsAllSelected()"
                                                           CheckedChanged="@HandleSelectAllChanged"
                                                           Indeterminate="@IsSomeSelected()"
-                                                          AriaLabel="Select all rows" />
+                                                          AriaLabel="@Localization.DataGrid.SelectAllRows" />
                                             }
                                         </div>
                                     }
@@ -135,7 +136,7 @@
                                             {
                                                 <button type="button"
                                                         class="inline-flex items-center justify-center rounded-md w-6 h-6 hover:bg-muted transition-colors shrink-0"
-                                                        aria-label="@(IsAllExpanded ? "Collapse all" : "Expand all")"
+                                                        aria-label="@(IsAllExpanded ? Localization.DataGrid.CollapseAll : Localization.DataGrid.ExpandAll)"
                                                         @onclick="@ToggleExpandAllAsync"
                                                         @onclick:stopPropagation="true">
                                                     <LucideIcon Name="@(IsAllExpanded ? "chevrons-down-up" : "chevrons-up-down")"
@@ -161,7 +162,7 @@
                                                         <LucideIcon Name="pin" Class="w-3.5 h-3.5 text-muted-foreground" />
                                                     </BbTooltipTrigger>
                                                     <BbTooltipContent Side="PopoverSide.Bottom">
-                                                        This column is pinned and cannot be moved
+                                                        @Localization.DataGrid.PinnedColumnTooltip
                                                     </BbTooltipContent>
                                                 </BbTooltip>
                                             }
@@ -238,13 +239,13 @@
                                 <td colspan="@_cachedVisibleColumns.Count" class="px-4 py-1.5">
                                     <div class="flex items-center gap-2 text-xs text-muted-foreground">
                                         <LucideIcon Name="filter" Class="w-3.5 h-3.5" />
-                                        <span>@_gridState.Filtering.ActiveFilterCount active @(_gridState.Filtering.ActiveFilterCount == 1 ? "filter" : "filters")</span>
+                                        <span>@Localization.DataGrid.ActiveFilters(_gridState.Filtering.ActiveFilterCount)</span>
                                         <button type="button"
                                                 class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium hover:bg-muted transition-colors"
                                                 @onclick="ClearAllFiltersAsync"
                                                 @onclick:stopPropagation="true">
                                             <LucideIcon Name="x" Class="w-3 h-3" />
-                                            Clear all
+                                            @Localization.DataGrid.ClearAll
                                         </button>
                                     </div>
                                 </td>
@@ -254,7 +255,7 @@
                         {
                             <tr>
                                 <td colspan="@_cachedVisibleColumns.Count" class="py-8 text-center">
-                                    <BbEmpty Title="No results found" Description="Try adjusting or clearing your filters." Size="EmptySize.Small" />
+                                    <BbEmpty Title="@Localization.DataGrid.NoResultsFound" Description="@Localization.DataGrid.NoResultsFilterDescription" Size="EmptySize.Small" />
                                 </td>
                             </tr>
                         }
@@ -293,13 +294,13 @@
                                                     <button type="button"
                                                             class="inline-flex items-center justify-center rounded-md w-6 h-6 hover:bg-muted transition-colors"
                                                             aria-expanded="@(!isCollapsed)"
-                                                            aria-label="@(isCollapsed ? "Expand group" : "Collapse group")"
+                                                            aria-label="@(isCollapsed ? Localization.DataGrid.ExpandGroup : Localization.DataGrid.CollapseGroup)"
                                                             @onclick="groupContext.ToggleCollapse"
                                                             @onclick:stopPropagation="true">
                                                         <LucideIcon Name="@(isCollapsed ? "chevron-right" : "chevron-down")" Class="w-4 h-4" />
                                                     </button>
                                                     <span>@group.ColumnTitle: @(groupKey.ToString())</span>
-                                                    <span class="text-muted-foreground text-sm">(@group.ItemCount items)</span>
+                                                    <span class="text-muted-foreground text-sm">@Localization.DataGrid.GroupItemCount(group.ItemCount)</span>
                                                 </div>
                                             </td>
                                             @foreach (var col in GetGroupAggregateColumns(group))
@@ -329,14 +330,14 @@
                                     <tr role="row" class="border-b bg-muted/30">
                                         <td role="gridcell" colspan="@_cachedVisibleColumns.Count" class="px-4 py-1.5">
                                             <div class="flex items-center gap-2 text-xs text-muted-foreground" style="@($"padding-left: {pagerIndent}px")">
-                                                <span>Showing @pagerStart–@pagerEnd of @pagerTotalChildren</span>
+                                                <span>@Localization.DataGrid.ShowingRange(pagerStart, pagerEnd, pagerTotalChildren)</span>
                                                 <div class="flex items-center gap-0.5">
                                                     <button type="button"
                                                             class="inline-flex items-center justify-center rounded w-6 h-6 hover:bg-muted transition-colors disabled:opacity-50"
                                                             disabled="@(pagerPageIndex <= 0)"
                                                             @onclick="@(() => HandleChildPageChange(pagerParentValue, pagerPageIndex - 1))"
                                                             @onclick:stopPropagation="true"
-                                                            aria-label="Previous page">
+                                                            aria-label="@Localization.DataGrid.PreviousPage">
                                                         <LucideIcon Name="chevron-left" Class="w-3.5 h-3.5" />
                                                     </button>
                                                     <span class="tabular-nums px-1">@(pagerPageIndex + 1) / @pagerTotalPages</span>
@@ -345,7 +346,7 @@
                                                             disabled="@(pagerPageIndex >= pagerTotalPages - 1)"
                                                             @onclick="@(() => HandleChildPageChange(pagerParentValue, pagerPageIndex + 1))"
                                                             @onclick:stopPropagation="true"
-                                                            aria-label="Next page">
+                                                            aria-label="@Localization.DataGrid.NextPage">
                                                         <LucideIcon Name="chevron-right" Class="w-3.5 h-3.5" />
                                                     </button>
                                                 </div>
@@ -425,7 +426,7 @@
                 <BbPaginationInfo>
                     @if (_gridState.Selection.HasSelection)
                     {
-                        <span>@_gridState.Selection.SelectedCount of @_gridState.Pagination.TotalItems row(s) selected</span>
+                        <span>@Localization.DataGrid.RowsSelected(_gridState.Selection.SelectedCount, _gridState.Pagination.TotalItems)</span>
                     }
                 </BbPaginationInfo>
                 <BbPaginationContent Class="flex items-center gap-6 lg:gap-8">
@@ -449,13 +450,13 @@
 </CascadingValue>
 
 @code {
-    private static string FormatAggregateName(AggregateFunction function) => function switch
+    private string FormatAggregateName(AggregateFunction function) => function switch
     {
-        AggregateFunction.Count => "Count",
-        AggregateFunction.Sum => "Sum",
-        AggregateFunction.Average => "Avg",
-        AggregateFunction.Min => "Min",
-        AggregateFunction.Max => "Max",
+        AggregateFunction.Count => Localization.DataGrid.CountLabel,
+        AggregateFunction.Sum => Localization.DataGrid.SumLabel,
+        AggregateFunction.Average => Localization.DataGrid.AverageLabel,
+        AggregateFunction.Min => Localization.DataGrid.MinLabel,
+        AggregateFunction.Max => Localization.DataGrid.MaxLabel,
         _ => ""
     };
 
@@ -506,7 +507,7 @@
                             <button type="button"
                                     class="inline-flex items-center justify-center rounded-md w-8 h-8 hover:bg-muted transition-colors"
                                     aria-expanded="@isExpanded.ToString().ToLowerInvariant()"
-                                    aria-label="@(isExpanded ? "Collapse row" : "Expand row")"
+                                    aria-label="@(isExpanded ? Localization.DataGrid.CollapseRow : Localization.DataGrid.ExpandRow)"
                                     @onclick="@(() => HandleRowExpandToggle(item))"
                                     @onclick:stopPropagation="true">
                                 <LucideIcon Name="@(isExpanded ? "chevron-down" : "chevron-right")" Class="w-4 h-4" />
@@ -518,7 +519,7 @@
                         <div @onclick:stopPropagation="true">
                             <BbCheckbox Checked="@_gridState.Selection.IsSelected(item)"
                                       CheckedChanged="@((bool isChecked) => HandleRowSelectionChanged(item, isChecked))"
-                                      AriaLabel="Select this row" />
+                                      AriaLabel="@Localization.DataGrid.SelectThisRow" />
                         </div>
                     }
                     else if (column.CellTemplate != null)
@@ -568,7 +569,7 @@
                             <BbCheckbox Checked="@_gridState.Selection.IsSelected(item)"
                                       Indeterminate="@IsHierarchyItemIndeterminate(item)"
                                       CheckedChanged="@((bool isChecked) => HandleRowSelectionChanged(item, isChecked))"
-                                      AriaLabel="Select this row" />
+                                      AriaLabel="@Localization.DataGrid.SelectThisRow" />
                         </div>
                     }
                     else if (isHierarchyColumn)
@@ -580,7 +581,7 @@
                                 <button type="button"
                                         class="inline-flex items-center justify-center rounded-md w-6 h-6 mr-1 hover:bg-muted transition-colors shrink-0"
                                         aria-expanded="@renderItem.IsExpanded.ToString().ToLowerInvariant()"
-                                        aria-label="@(renderItem.IsExpanded ? "Collapse" : "Expand")"
+                                        aria-label="@(renderItem.IsExpanded ? Localization.DataGrid.Collapse : Localization.DataGrid.Expand)"
                                         @onclick="@(() => HandleHierarchyNodeToggle(item))"
                                         @onclick:stopPropagation="true">
                                     <LucideIcon Name="@(renderItem.IsExpanded ? "chevron-down" : "chevron-right")"
