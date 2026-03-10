@@ -55,6 +55,7 @@ public partial class BbCombobox<TValue> : ComponentBase
     private string? _selectedDisplayTextCache;
 
     // ShouldRender tracking fields
+    private bool _parametersChanged;
     private bool _lastIsOpen;
     private IEnumerable<SelectOption<TValue>>? _lastOptions;
     private TValue? _lastValue;
@@ -63,6 +64,17 @@ public partial class BbCombobox<TValue> : ComponentBase
 
     protected override bool ShouldRender()
     {
+        if (_parametersChanged)
+        {
+            _parametersChanged = false;
+            _lastIsOpen = _isOpen;
+            _lastValue = Value;
+            _lastDisabled = Disabled;
+            _lastSearchQuery = SearchQuery;
+            _lastOptions = Options;
+            return true;
+        }
+
         if (_isOpen != _lastIsOpen
             || !EqualityComparer<TValue>.Default.Equals(Value, _lastValue)
             || Disabled != _lastDisabled
@@ -236,6 +248,7 @@ public partial class BbCombobox<TValue> : ComponentBase
     /// </summary>
     protected override void OnParametersSet()
     {
+        _parametersChanged = true;
         base.OnParametersSet();
 
         // Filter out null options for safety (Options mode only)

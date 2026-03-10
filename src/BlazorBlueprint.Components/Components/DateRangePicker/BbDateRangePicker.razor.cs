@@ -24,6 +24,7 @@ public partial class BbDateRangePicker : ComponentBase
     private List<List<DateTime?>>? _cachedWeeksMonth2;
 
     // ShouldRender tracking fields
+    private bool _parametersChanged;
     private bool _lastIsOpen;
     private DateTime _lastDisplayMonth1;
     private DateTime _lastDisplayMonth2;
@@ -167,6 +168,8 @@ public partial class BbDateRangePicker : ComponentBase
 
     protected override void OnParametersSet()
     {
+        _parametersChanged = true;
+
         // Only sync when Value actually changes from external source
         if (Value != _previousValue)
         {
@@ -548,6 +551,23 @@ public partial class BbDateRangePicker : ComponentBase
     /// </summary>
     protected override bool ShouldRender()
     {
+        if (_parametersChanged)
+        {
+            _parametersChanged = false;
+            _lastIsOpen = _isOpen;
+            _lastDisplayMonth1 = _displayMonth1;
+            _lastDisplayMonth2 = _displayMonth2;
+            _lastSelectionStart = _selectionStart;
+            _lastSelectionEnd = _selectionEnd;
+            _lastValue = Value;
+            _lastMinDate = MinDate;
+            _lastMaxDate = MaxDate;
+            _lastShowTwoMonths = ShowTwoMonths;
+            _lastShowPresets = ShowPresets;
+            _lastDisabled = Disabled;
+            return true;
+        }
+
         var changed = _lastIsOpen != _isOpen
             || _lastDisplayMonth1 != _displayMonth1
             || _lastDisplayMonth2 != _displayMonth2

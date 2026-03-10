@@ -24,6 +24,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     private bool _focusDone;
 
     // ShouldRender tracking fields
+    private bool _parametersChanged;
     private IEnumerable<SelectOption<TValue>>? _lastOptions;
     private IEnumerable<TValue>? _lastValues;
     private bool _lastIsOpen;
@@ -271,6 +272,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// </summary>
     protected override void OnParametersSet()
     {
+        _parametersChanged = true;
         base.OnParametersSet();
 
         // Filter out null options for safety (Options mode only)
@@ -618,6 +620,17 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// </summary>
     protected override bool ShouldRender()
     {
+        if (_parametersChanged)
+        {
+            _parametersChanged = false;
+            _lastOptions = Options;
+            _lastValues = Values;
+            _lastIsOpen = _isOpen;
+            _lastSearchQuery = _searchQuery;
+            _lastDisabled = Disabled;
+            return true;
+        }
+
         var optionsChanged = !ReferenceEquals(_lastOptions, Options);
         var valuesChanged = !ReferenceEquals(_lastValues, Values);
         var openChanged = _lastIsOpen != _isOpen;
