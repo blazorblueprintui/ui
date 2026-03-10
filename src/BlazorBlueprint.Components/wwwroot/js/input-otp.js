@@ -27,7 +27,7 @@ export function initialize(element, dotNetRef, instanceId, otpMode) {
     element.addEventListener('paste', handlePaste);
 
     const handleOnKeyDown = (event) => {
-      const otpMode = instances.get(instanceId)?.otpMode;
+      const currentMode = instances.get(instanceId)?.otpMode;
 
       if (_isControlKey(event.key)) {
         return; // Allow control keys (e.g. Backspace, Arrow keys)
@@ -37,8 +37,8 @@ export function initialize(element, dotNetRef, instanceId, otpMode) {
       }
       else if (event.ctrlKey || event.metaKey)
         return; // Allow paste via Ctrl+V or Cmd+V
-      else if (otpMode) {
-        if (!_isCharAllowed(event.key, otpMode)) {
+      else if (currentMode) {
+        if (!_isCharAllowed(event.key, currentMode)) {
           event.preventDefault();
         }
       }
@@ -47,7 +47,7 @@ export function initialize(element, dotNetRef, instanceId, otpMode) {
 
     element.addEventListener('keydown', handleOnKeyDown);
 
-    instances.set(instanceId, { element, handlePaste, otpMode });
+  instances.set(instanceId, { element, handlePaste, handleOnKeyDown, otpMode });
 }
 
 export function updateOtpMode(instanceId, otpMode) {
@@ -68,6 +68,7 @@ function _isCharAllowed(char, otpMode) {
     return /[a-zA-Z0-9]/.test(char);
   }
   console.warn(`Unknown OTP mode: ${otpMode}`);
+  return true; // Default to allowing all characters if mode is unknown
 }
 
 /**
