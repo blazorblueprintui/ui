@@ -15,7 +15,10 @@ public partial class BbFilterCondition : ComponentBase
     {
         new SelectOption<InLastPeriod>(InLastPeriod.Days, "days"),
         new SelectOption<InLastPeriod>(InLastPeriod.Weeks, "weeks"),
-        new SelectOption<InLastPeriod>(InLastPeriod.Months, "months")
+        new SelectOption<InLastPeriod>(InLastPeriod.Months, "months"),
+        new SelectOption<InLastPeriod>(InLastPeriod.Hours, "hours"),
+        new SelectOption<InLastPeriod>(InLastPeriod.Minutes, "minutes"),
+        new SelectOption<InLastPeriod>(InLastPeriod.Seconds, "seconds")
     };
 
     private static readonly IEnumerable<SelectOption<DatePreset>> datePresetOptions = new[]

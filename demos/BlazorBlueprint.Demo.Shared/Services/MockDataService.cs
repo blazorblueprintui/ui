@@ -121,6 +121,7 @@ public class MockDataService
                 LastPromotionDate = GeneratePromotionDate(),
                 Salary = _random.Next(40000, 150000),
                 JoinDate = DateTime.Now.AddDays(-_random.Next(1, 3650)), // Random date within last 10 years
+                LastActivity = GenerateLastActivity(i, count),
                 IsActive = _random.Next(100) > 20 // 80% chance of being active
             });
         }
@@ -152,6 +153,26 @@ public class MockDataService
 
     private static DateTimeOffset? GeneratePromotionDate() =>
         DateTimeOffset.UtcNow - TimeSpan.FromDays(_random.Next(365, 730));
+
+    private static DateTime GenerateLastActivity(int index, int count)
+    {
+        var now = DateTime.Now;
+
+        // Distribute records across time ranges so every filter unit is testable:
+        // ~10% within last 60 seconds, ~10% within last 60 minutes,
+        // ~15% within last 24 hours, ~20% within last 7 days,
+        // ~20% within last 4 weeks, ~25% within last 12 months
+        var bucket = index * 6 / count;
+        return bucket switch
+        {
+            0 => now.AddSeconds(-_random.Next(1, 60)),
+            1 => now.AddMinutes(-_random.Next(1, 60)),
+            2 => now.AddHours(-_random.Next(1, 24)),
+            3 => now.AddDays(-_random.Next(1, 7)),
+            4 => now.AddDays(-_random.Next(7, 28)),
+            _ => now.AddDays(-_random.Next(28, 365))
+        };
+    }
 
     /// <summary>
     /// Generates a list of mock product records.
@@ -201,6 +222,7 @@ public class Person
     public DateTimeOffset? LastPromotionDate { get; set; }
     public int Salary { get; set; }
     public DateTime JoinDate { get; set; }
+    public DateTime LastActivity { get; set; }
     public bool IsActive { get; set; }
 }
 

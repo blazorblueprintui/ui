@@ -299,6 +299,9 @@ public static class FilterDefinitionExtensions
             InLastPeriod.Days => now.AddDays(-amount),
             InLastPeriod.Weeks => now.AddDays(-amount * 7),
             InLastPeriod.Months => now.AddMonths(-amount),
+            InLastPeriod.Hours => now.AddHours(-amount),
+            InLastPeriod.Minutes => now.AddMinutes(-amount),
+            InLastPeriod.Seconds => now.AddSeconds(-amount),
             _ => now
         };
 
@@ -332,6 +335,9 @@ public static class FilterDefinitionExtensions
             InLastPeriod.Days => DateTime.Now.AddDays(amount),
             InLastPeriod.Weeks => DateTime.Now.AddDays(amount * 7),
             InLastPeriod.Months => DateTime.Now.AddMonths(amount),
+            InLastPeriod.Hours => DateTime.Now.AddHours(amount),
+            InLastPeriod.Minutes => DateTime.Now.AddMinutes(amount),
+            InLastPeriod.Seconds => DateTime.Now.AddSeconds(amount),
             _ => DateTime.Now
         };
 
@@ -672,6 +678,9 @@ public static class FilterDefinitionExtensions
             InLastPeriod.Days => DateTime.Now.AddDays(-amount),
             InLastPeriod.Weeks => DateTime.Now.AddDays(-amount * 7),
             InLastPeriod.Months => DateTime.Now.AddMonths(-amount),
+            InLastPeriod.Hours => DateTime.Now.AddHours(-amount),
+            InLastPeriod.Minutes => DateTime.Now.AddMinutes(-amount),
+            InLastPeriod.Seconds => DateTime.Now.AddSeconds(-amount),
             _ => DateTime.Now
         };
 
@@ -719,6 +728,9 @@ public static class FilterDefinitionExtensions
             InLastPeriod.Days => now.AddDays(amount),
             InLastPeriod.Weeks => now.AddDays(amount * 7),
             InLastPeriod.Months => now.AddMonths(amount),
+            InLastPeriod.Hours => now.AddHours(amount),
+            InLastPeriod.Minutes => now.AddMinutes(amount),
+            InLastPeriod.Seconds => now.AddSeconds(amount),
             _ => now
         };
 
