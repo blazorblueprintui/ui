@@ -18,5 +18,20 @@ public enum InLastPeriod
     /// <summary>
     /// Number of months.
     /// </summary>
-    Months
+    Months,
+
+    /// <summary>
+    /// Number of hours.
+    /// </summary>
+    Hours,
+
+    /// <summary>
+    /// Number of minutes.
+    /// </summary>
+    Minutes,
+
+    /// <summary>
+    /// Number of seconds.
+    /// </summary>
+    Seconds
 }
