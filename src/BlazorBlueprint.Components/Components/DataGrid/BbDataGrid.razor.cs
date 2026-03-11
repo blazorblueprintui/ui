@@ -1527,8 +1527,28 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             FilterOperator.LessOrEqual => CompareValues(value, condition.Value) <= 0,
             FilterOperator.IsEmpty => string.IsNullOrEmpty(valueStr),
             FilterOperator.IsNotEmpty => !string.IsNullOrEmpty(valueStr),
+            FilterOperator.In => EvaluateIn(value, condition.Value, true),
+            FilterOperator.NotIn => EvaluateIn(value, condition.Value, false),
             _ => true
         };
+    }
+
+    private static bool EvaluateIn(object? rawValue, object? filterValue, bool contains)
+    {
+        if (filterValue is not IEnumerable<string> values)
+        {
+            return contains;
+        }
+
+        var valueList = values as IList<string> ?? values.ToList();
+        if (valueList.Count == 0)
+        {
+            return contains;
+        }
+
+        var itemValue = rawValue?.ToString() ?? "";
+        var isIn = valueList.Any(v => string.Equals(v, itemValue, StringComparison.OrdinalIgnoreCase));
+        return contains ? isIn : !isIn;
     }
 
     private static int CompareValues(object? a, object? b)

@@ -12,6 +12,7 @@ public partial class DataGridHierarchyDemo : ComponentBase
     private FilterDefinition orgFilter = new();
     private Func<Employee, bool>? orgFilterPredicate;
     private HierarchyFilterMode orgFilterMode = HierarchyFilterMode.ShowMatchedOnly;
+    private HierarchyFilterMode columnFilterMode = HierarchyFilterMode.ShowMatchedOnly;
 
     private static readonly SelectOption<HierarchyFilterMode>[] hierarchyFilterModeOptions =
     {

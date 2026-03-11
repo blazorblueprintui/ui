@@ -97,6 +97,61 @@
         <CodeBlock Source="Components/DataGridHierarchy/self-referencing.txt" />
     </div>
 
+    <!-- ── Self-Referencing Data with Column Filters ─────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Self-Referencing Data with Column Filters</h2>
+            <p class="text-sm text-muted-foreground">
+                The same org chart data using per-column <code class="bg-muted px-1 py-0.5 rounded">Filterable</code>
+                filters instead of the <code class="bg-muted px-1 py-0.5 rounded">BbFilterBuilder</code>.
+                Hover a column header to reveal its filter icon, then click to open a filter popover.
+                Department and Location use <code class="bg-muted px-1 py-0.5 rounded">FilterType="FilterFieldType.Enum"</code>
+                with predefined options.
+            </p>
+        </div>
+        <div class="flex items-center gap-2">
+            <label class="text-sm text-muted-foreground whitespace-nowrap">Filter mode:</label>
+            <BbSelect TValue="HierarchyFilterMode"
+                      Value="@columnFilterMode"
+                      ValueChanged="@(v => { columnFilterMode = v; })"
+                      Options="@hierarchyFilterModeOptions"
+                      Class="w-52" />
+        </div>
+        <BbDataGrid TData="Employee" Items="@employees"
+                    ParentValueSelector="@(e => e.ReportsToId)"
+                    ItemValueSelector="@(e => e.Id)"
+                    HierarchyFilterMode="@columnFilterMode"
+                    DefaultExpandDepth="1"
+                    ChildPageSize="5"
+                    ShowExpandAll="true"
+                    Reorderable="true">
+            <Columns>
+                <BbDataGridHierarchyColumn TData="Employee" TProp="string" Property="@(e => e.Name)" Title="Name" Sortable Filterable>
+                    <CellTemplate>
+                        <div class="flex items-center gap-2">
+                            <BbAvatar Size="AvatarSize.Small">
+                                @if (context.Item.AvatarUrl != null)
+                                {
+                                    <BbAvatarImage Source="@context.Item.AvatarUrl" Alt="@context.Item.Name" />
+                                }
+                                <BbAvatarFallback>@GetInitials(context.Item.Name)</BbAvatarFallback>
+                            </BbAvatar>
+                            <span class="truncate">@context.Value</span>
+                        </div>
+                    </CellTemplate>
+                </BbDataGridHierarchyColumn>
+                <BbDataGridPropertyColumn TData="Employee" TProp="string" Property="@(e => e.JobTitle)" Title="Job Title" Sortable Filterable />
+                <BbDataGridPropertyColumn TData="Employee" TProp="string" Property="@(e => e.Department)" Title="Department" Sortable Filterable
+                    FilterType="FilterFieldType.Enum"
+                    FilterOptions="@(departments.Select(d => new SelectOption<string>(d, d)))" />
+                <BbDataGridPropertyColumn TData="Employee" TProp="string" Property="@(e => e.Location)" Title="Location" Sortable Filterable
+                    FilterType="FilterFieldType.Enum"
+                    FilterOptions="@(locations.Order().Select(l => new SelectOption<string>(l, l)))" />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGridHierarchy/self-referencing-column-filters.txt" />
+    </div>
+
     <!-- ── Lazy Loading ───────────────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
