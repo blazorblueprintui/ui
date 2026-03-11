@@ -273,7 +273,16 @@ public static class FilterDefinitionExtensions
 
     private static bool EvaluateInLast(object? rawValue, FilterCondition condition)
     {
-        if (rawValue is not DateTime dateValue)
+        DateTime dateValue;
+        if (rawValue is DateTime dt)
+        {
+            dateValue = dt;
+        }
+        else if (rawValue is DateTimeOffset dto)
+        {
+            dateValue = dto.LocalDateTime;
+        }
+        else
         {
             return false;
         }
@@ -310,7 +319,16 @@ public static class FilterDefinitionExtensions
 
     private static bool EvaluateInNext(object? rawValue, FilterCondition condition)
     {
-        if (rawValue is not DateTime dateValue)
+        DateTime dateValue;
+        if (rawValue is DateTime dt)
+        {
+            dateValue = dt;
+        }
+        else if (rawValue is DateTimeOffset dto)
+        {
+            dateValue = dto.LocalDateTime;
+        }
+        else
         {
             return false;
         }
@@ -346,7 +364,16 @@ public static class FilterDefinitionExtensions
 
     private static bool EvaluateDatePreset(object? rawValue, FilterCondition condition, bool negate)
     {
-        if (rawValue is not DateTime dateValue)
+        DateTime dateValue;
+        if (rawValue is DateTime dt)
+        {
+            dateValue = dt;
+        }
+        else if (rawValue is DateTimeOffset dto)
+        {
+            dateValue = dto.LocalDateTime;
+        }
+        else
         {
             return false;
         }
@@ -569,19 +596,27 @@ public static class FilterDefinitionExtensions
             return Expression.Constant(true);
         }
 
-        // For nullable types, build the constant with the underlying type then lift to nullable
-        Expression constant;
+        // For nullable types, use explicit HasValue/Value checks instead of lifted operators
+        // which can produce incorrect results (e.g. null != X evaluates to null, not true).
         if (Nullable.GetUnderlyingType(propType) != null)
         {
-            var underlyingConstant = Expression.Constant(convertedValue, underlyingType);
-            constant = Expression.Convert(underlyingConstant, propType);
-        }
-        else
-        {
-            constant = Expression.Constant(convertedValue, propType);
+            var hasValue = Expression.Property(propAccess, "HasValue");
+            var valueProperty = Expression.Property(propAccess, "Value");
+            var constant = Expression.Constant(convertedValue, underlyingType);
+            var comp = Expression.MakeBinary(comparison, valueProperty, constant);
+
+            if (comparison == ExpressionType.NotEqual)
+            {
+                // null != X should be true (null is not equal to any value)
+                return Expression.OrElse(Expression.Not(hasValue), Expression.AndAlso(hasValue, comp));
+            }
+
+            // For all other operators, null fails the comparison
+            return Expression.AndAlso(hasValue, comp);
         }
 
-        return Expression.MakeBinary(comparison, propAccess, constant);
+        var nonNullableConstant = Expression.Constant(convertedValue, propType);
+        return Expression.MakeBinary(comparison, propAccess, nonNullableConstant);
     }
 
     private static Expression BuildStringMethodExpression(
@@ -653,7 +688,8 @@ public static class FilterDefinitionExtensions
     private static Expression BuildInLastExpression(
         MemberExpression propAccess, Type propType, FilterCondition condition)
     {
-        if (propType != typeof(DateTime) && propType != typeof(DateTime?))
+        var dateTarget = ResolveDateTimeTarget(propAccess, propType, out var isNullable);
+        if (dateTarget == null)
         {
             return Expression.Constant(true);
         }
@@ -684,13 +720,9 @@ public static class FilterDefinitionExtensions
             _ => DateTime.Now
         };
 
-        Expression target = propType == typeof(DateTime?)
-            ? Expression.Property(propAccess, "Value")
-            : propAccess;
+        var gte = Expression.GreaterThanOrEqual(dateTarget, Expression.Constant(cutoff));
 
-        var gte = Expression.GreaterThanOrEqual(target, Expression.Constant(cutoff));
-
-        if (propType == typeof(DateTime?))
+        if (isNullable)
         {
             var hasValue = Expression.Property(propAccess, "HasValue");
             return Expression.AndAlso(hasValue, gte);
@@ -702,7 +734,8 @@ public static class FilterDefinitionExtensions
     private static Expression BuildInNextExpression(
         MemberExpression propAccess, Type propType, FilterCondition condition)
     {
-        if (propType != typeof(DateTime) && propType != typeof(DateTime?))
+        var dateTarget = ResolveDateTimeTarget(propAccess, propType, out var isNullable);
+        if (dateTarget == null)
         {
             return Expression.Constant(true);
         }
@@ -734,16 +767,12 @@ public static class FilterDefinitionExtensions
             _ => now
         };
 
-        Expression target = propType == typeof(DateTime?)
-            ? Expression.Property(propAccess, "Value")
-            : propAccess;
-
         // target >= now AND target <= cutoff
-        var gte = Expression.GreaterThanOrEqual(target, Expression.Constant(now));
-        var lte = Expression.LessThanOrEqual(target, Expression.Constant(cutoff));
+        var gte = Expression.GreaterThanOrEqual(dateTarget, Expression.Constant(now));
+        var lte = Expression.LessThanOrEqual(dateTarget, Expression.Constant(cutoff));
         Expression inRange = Expression.AndAlso(gte, lte);
 
-        if (propType == typeof(DateTime?))
+        if (isNullable)
         {
             var hasValue = Expression.Property(propAccess, "HasValue");
             return Expression.AndAlso(hasValue, inRange);
@@ -755,7 +784,8 @@ public static class FilterDefinitionExtensions
     private static Expression BuildDatePresetExpression(
         MemberExpression propAccess, Type propType, FilterCondition condition, bool negate)
     {
-        if (propType != typeof(DateTime) && propType != typeof(DateTime?))
+        var dateTarget = ResolveDateTimeTarget(propAccess, propType, out var isNullable);
+        if (dateTarget == null)
         {
             return Expression.Constant(true);
         }
@@ -770,12 +800,8 @@ public static class FilterDefinitionExtensions
 
         var (start, end) = ResolveDatePresetRange(preset);
 
-        Expression target = propType == typeof(DateTime?)
-            ? Expression.Property(propAccess, "Value")
-            : propAccess;
-
-        var gte = Expression.GreaterThanOrEqual(target, Expression.Constant(start));
-        var lt = Expression.LessThan(target, Expression.Constant(end));
+        var gte = Expression.GreaterThanOrEqual(dateTarget, Expression.Constant(start));
+        var lt = Expression.LessThan(dateTarget, Expression.Constant(end));
         Expression inRange = Expression.AndAlso(gte, lt);
 
         if (negate)
@@ -783,7 +809,7 @@ public static class FilterDefinitionExtensions
             inRange = Expression.Not(inRange);
         }
 
-        if (propType == typeof(DateTime?))
+        if (isNullable)
         {
             var hasValue = Expression.Property(propAccess, "HasValue");
             return negate
@@ -792,6 +818,43 @@ public static class FilterDefinitionExtensions
         }
 
         return inRange;
+    }
+
+    /// <summary>
+    /// Resolves a property access expression to a DateTime expression for date-based filtering.
+    /// Handles DateTime, DateTime?, DateTimeOffset, and DateTimeOffset? by accessing .LocalDateTime
+    /// on DateTimeOffset types.
+    /// </summary>
+    private static MemberExpression? ResolveDateTimeTarget(
+        MemberExpression propAccess, Type propType, out bool isNullable)
+    {
+        isNullable = false;
+
+        if (propType == typeof(DateTime))
+        {
+            return propAccess;
+        }
+
+        if (propType == typeof(DateTime?))
+        {
+            isNullable = true;
+            return Expression.Property(propAccess, "Value");
+        }
+
+        if (propType == typeof(DateTimeOffset))
+        {
+            return Expression.Property(propAccess, nameof(DateTimeOffset.LocalDateTime));
+        }
+
+        if (propType == typeof(DateTimeOffset?))
+        {
+            isNullable = true;
+            return Expression.Property(
+                Expression.Property(propAccess, "Value"),
+                nameof(DateTimeOffset.LocalDateTime));
+        }
+
+        return null;
     }
 
     private static Expression BuildInExpression(
@@ -898,6 +961,28 @@ public static class FilterDefinitionExtensions
             if (targetType == typeof(DateTime) && value is string dateStr)
             {
                 return DateTime.Parse(dateStr, CultureInfo.InvariantCulture);
+            }
+
+            if (targetType == typeof(DateOnly))
+            {
+                return value switch
+                {
+                    DateOnly d => d,
+                    DateTime dt => DateOnly.FromDateTime(dt),
+                    string s => DateOnly.Parse(s, CultureInfo.InvariantCulture),
+                    _ => null
+                };
+            }
+
+            if (targetType == typeof(DateTimeOffset))
+            {
+                return value switch
+                {
+                    DateTimeOffset dto => dto,
+                    DateTime dt => new DateTimeOffset(dt),
+                    string s => DateTimeOffset.Parse(s, CultureInfo.InvariantCulture),
+                    _ => null
+                };
             }
 
             if (targetType == typeof(int))
