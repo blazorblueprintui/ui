@@ -9,6 +9,21 @@ namespace BlazorBlueprint.Components;
 /// All properties are pre-populated with English defaults. Override individual labels
 /// at startup or use scoped registration for dynamic culture switching.
 /// </para>
+/// <para>
+/// <b>Thread safety:</b> Label properties are not thread-safe for concurrent write access.
+/// Configure labels during startup in the <c>AddBlazorBlueprintComponents</c> callback.
+/// For dynamic culture switching (e.g., Blazor Server per-circuit localization), register
+/// <c>BbLocalizationOptions</c> as scoped instead of singleton — see the Localization Guide.
+/// </para>
+/// <para>
+/// <b>Localization patterns:</b> Components use two access patterns depending on whether
+/// a per-instance parameter override exists. Strings exposed as component <c>[Parameter]</c>
+/// properties (e.g., <c>Placeholder</c>) use an <c>EffectiveX</c> fallback: the parameter
+/// value wins if set, otherwise the DI label is used. Strings without a corresponding
+/// parameter (e.g., internal button text, aria-labels) are read directly from the DI service.
+/// Both patterns are intentional — the first supports instance-level overrides while the
+/// second avoids API bloat for rarely-customized chrome strings.
+/// </para>
 /// <example>
 /// <code>
 /// // Static configuration at startup
@@ -31,28 +46,30 @@ namespace BlazorBlueprint.Components;
 /// </remarks>
 public class BbLocalizationOptions
 {
-    public BbCalendarLabels Calendar { get; set; } = new();
-    public BbDataGridLabels DataGrid { get; set; } = new();
-    public BbDataTableLabels DataTable { get; set; } = new();
-    public BbPaginationLabels Pagination { get; set; } = new();
-    public BbComboboxLabels Combobox { get; set; } = new();
-    public BbMultiSelectLabels MultiSelect { get; set; } = new();
-    public BbFilterBuilderLabels FilterBuilder { get; set; } = new();
-    public BbSidebarLabels Sidebar { get; set; } = new();
-    public BbCarouselLabels Carousel { get; set; } = new();
-    public BbAlertLabels Alert { get; set; } = new();
-    public BbDashboardGridLabels DashboardGrid { get; set; } = new();
-    public BbDatePickerLabels DatePicker { get; set; } = new();
-    public BbDateRangePickerLabels DateRangePicker { get; set; } = new();
-    public BbNumericInputLabels NumericInput { get; set; } = new();
-    public BbTagInputLabels TagInput { get; set; } = new();
-    public BbCommandLabels Command { get; set; } = new();
-    public BbDataViewLabels DataView { get; set; } = new();
-    public BbDialogLabels Dialog { get; set; } = new();
-    public BbSheetLabels Sheet { get; set; } = new();
-    public BbFormWizardLabels FormWizard { get; set; } = new();
-    public BbRatingLabels Rating { get; set; } = new();
-    public BbBreadcrumbLabels Breadcrumb { get; set; } = new();
-    public BbResponsiveNavLabels ResponsiveNav { get; set; } = new();
-    public BbTimelineLabels Timeline { get; set; } = new();
+    public BbCalendarLabels Calendar { get; } = new();
+    public BbDataGridLabels DataGrid { get; } = new();
+    public BbDataTableLabels DataTable { get; } = new();
+    public BbPaginationLabels Pagination { get; } = new();
+    public BbComboboxLabels Combobox { get; } = new();
+    public BbMultiSelectLabels MultiSelect { get; } = new();
+    public BbFilterBuilderLabels FilterBuilder { get; } = new();
+    public BbSidebarLabels Sidebar { get; } = new();
+    public BbCarouselLabels Carousel { get; } = new();
+    public BbAlertLabels Alert { get; } = new();
+    public BbDashboardGridLabels DashboardGrid { get; } = new();
+    public BbDatePickerLabels DatePicker { get; } = new();
+    public BbDateRangePickerLabels DateRangePicker { get; } = new();
+    public BbNumericInputLabels NumericInput { get; } = new();
+    public BbTagInputLabels TagInput { get; } = new();
+    public BbCommandLabels Command { get; } = new();
+    public BbDataViewLabels DataView { get; } = new();
+    public BbDialogLabels Dialog { get; } = new();
+    public BbSheetLabels Sheet { get; } = new();
+    public BbFormWizardLabels FormWizard { get; } = new();
+    public BbRatingLabels Rating { get; } = new();
+    public BbBreadcrumbLabels Breadcrumb { get; } = new();
+    public BbResponsiveNavLabels ResponsiveNav { get; } = new();
+    public BbTimelineLabels Timeline { get; } = new();
+    public BbMarkdownEditorLabels MarkdownEditor { get; } = new();
+    public BbRichTextEditorLabels RichTextEditor { get; } = new();
 }

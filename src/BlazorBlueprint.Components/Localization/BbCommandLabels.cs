@@ -1,10 +1,12 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace BlazorBlueprint.Components;
 
 /// <summary>
 /// Localizable labels for Command components.
 /// </summary>
-public class BbCommandLabels
+public sealed class BbCommandLabels
 {
-    public string CommandMenu { get; set; } = "Command menu";
-    public string CommandList { get; set; } = "Command list";
+    [DisallowNull] public string CommandMenu { get; set; } = "Command menu";
+    [DisallowNull] public string CommandList { get; set; } = "Command list";
 }

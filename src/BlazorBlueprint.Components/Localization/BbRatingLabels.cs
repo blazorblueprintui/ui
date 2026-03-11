@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace BlazorBlueprint.Components;
 
 /// <summary>
 /// Localizable labels for the Rating component.
 /// </summary>
-public class BbRatingLabels
+public sealed class BbRatingLabels
 {
-    public string Rating { get; set; } = "Rating";
+    [DisallowNull] public string Rating { get; set; } = "Rating";
 }

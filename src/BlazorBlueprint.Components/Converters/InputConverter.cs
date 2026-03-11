@@ -35,8 +35,8 @@ namespace BlazorBlueprint.Components;
     Justification = "Global converter registration requires per-type-argument static state (e.g., InputConverter<int>.GlobalGetFunc).")]
 public class InputConverter<TValue>
 {
-    private static Func<string, TValue>? _globalGetFunc;
-    private static Func<TValue, string?>? _globalSetFunc;
+    private static volatile Func<string, TValue>? _globalGetFunc;
+    private static volatile Func<TValue, string?>? _globalSetFunc;
 
     /// <summary>
     /// Gets or sets the culture used for parsing and formatting.
@@ -44,12 +44,18 @@ public class InputConverter<TValue>
     /// </summary>
     public CultureInfo? Culture { get; set; }
 
+    private static volatile CultureInfo? _globalCulture;
+
     /// <summary>
     /// Gets or sets the global (app-wide) culture for parsing and formatting.
     /// </summary>
     [SuppressMessage("Design", "CA1000:Do not declare static members on generic types",
         Justification = "Global culture setting requires per-type-argument static state.")]
-    public static CultureInfo? GlobalCulture { get; set; }
+    public static CultureInfo? GlobalCulture
+    {
+        get => _globalCulture;
+        set => _globalCulture = value;
+    }
 
     /// <summary>
     /// Gets or sets the global (app-wide) parse function for converting a string to <typeparamref name="TValue"/>.

@@ -1,13 +1,15 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace BlazorBlueprint.Components;
 
 /// <summary>
 /// Localizable labels for the FormWizard component.
 /// </summary>
-public class BbFormWizardLabels
+public sealed class BbFormWizardLabels
 {
-    public string WizardProgress { get; set; } = "Wizard progress";
-    public string Back { get; set; } = "Back";
-    public string Next { get; set; } = "Next";
-    public string Skip { get; set; } = "Skip";
-    public string Complete { get; set; } = "Complete";
+    [DisallowNull] public string WizardProgress { get; set; } = "Wizard progress";
+    [DisallowNull] public string Back { get; set; } = "Back";
+    [DisallowNull] public string Next { get; set; } = "Next";
+    [DisallowNull] public string Skip { get; set; } = "Skip";
+    [DisallowNull] public string Complete { get; set; } = "Complete";
 }

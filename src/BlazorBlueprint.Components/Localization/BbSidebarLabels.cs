@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace BlazorBlueprint.Components;
 
 /// <summary>
 /// Localizable labels for Sidebar components.
 /// </summary>
-public class BbSidebarLabels
+public sealed class BbSidebarLabels
 {
-    public string ToggleSidebar { get; set; } = "Toggle Sidebar";
+    [DisallowNull] public string ToggleSidebar { get; set; } = "Toggle Sidebar";
 }

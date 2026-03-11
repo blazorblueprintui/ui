@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace BlazorBlueprint.Components;
 
 /// <summary>
 /// Localizable labels for the Alert component.
 /// </summary>
-public class BbAlertLabels
+public sealed class BbAlertLabels
 {
-    public string Dismiss { get; set; } = "Dismiss";
+    [DisallowNull] public string Dismiss { get; set; } = "Dismiss";
 }

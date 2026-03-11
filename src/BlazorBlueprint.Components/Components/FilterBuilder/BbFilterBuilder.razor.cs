@@ -9,6 +9,8 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public partial class BbFilterBuilder : ComponentBase, IDisposable
 {
+    [Inject] private BbLocalizationOptions Localization { get; set; } = default!;
+
     private FilterBuilderContext? context;
     private Timer? debounceTimer;
     private int debounceVersion;

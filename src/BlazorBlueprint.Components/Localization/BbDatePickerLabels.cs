@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace BlazorBlueprint.Components;
 
 /// <summary>
 /// Localizable labels for the DatePicker component.
 /// </summary>
-public class BbDatePickerLabels
+public sealed class BbDatePickerLabels
 {
-    public string Placeholder { get; set; } = "Pick a date";
+    [DisallowNull] public string Placeholder { get; set; } = "Pick a date";
 }
