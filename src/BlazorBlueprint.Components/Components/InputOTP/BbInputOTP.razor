@@ -149,8 +149,8 @@
     /// </summary>
     [Parameter]
     public InputOTPInputMode InputMode { get; set; } = InputOTPInputMode.Numbers;
-    private InputOTPInputMode? _previousInputMode = null;
 
+    private InputOTPInputMode? _previousInputMode;
     private ElementReference[] _inputRefs = Array.Empty<ElementReference>();
     private string[] _values = Array.Empty<string>();
     private string? _generatedId;
@@ -199,21 +199,18 @@
 
     protected override async Task OnParametersSetAsync()
     {
-
         await base.OnParametersSetAsync();
 
-        if (_previousInputMode != InputMode)// Prev & current state strategy to detect InputMode changes and call JS interop to update allowed character.
+        if (_previousInputMode != InputMode)
         {
-            bool previousInputModeHasValue = _previousInputMode.HasValue;
+            var isFirstRender = !_previousInputMode.HasValue;
             _previousInputMode = InputMode;
-            // If previousInputModeHasValue does not have value, it means this is the first render and JS interop will be initialized in OnAfterRenderAsync,
-            // so we can skip calling updateOtpMode until then.
-            // For subsequent changes to InputMode, we need to call updateOtpMode to update the allowed character set in JS.
-            if (previousInputModeHasValue && _jsModule != null)
+
+            // Skip on first render — JS interop will be initialized in OnAfterRenderAsync
+            if (!isFirstRender && _jsModule != null)
             {
                 await _jsModule.InvokeVoidAsync("updateOtpMode", EffectiveId, InputMode.ToString());
             }
-
         }
     }
 

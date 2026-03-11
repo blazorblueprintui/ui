@@ -26,49 +26,49 @@ export function initialize(element, dotNetRef, instanceId, otpMode) {
 
     element.addEventListener('paste', handlePaste);
 
-    const handleOnKeyDown = (event) => {
-      const currentMode = instances.get(instanceId)?.otpMode;
+    const handleKeyDown = (event) => {
+        const currentMode = instances.get(instanceId)?.otpMode;
 
-      if (_isControlKey(event.key)) {
-        return; // Allow control keys (e.g. Backspace, Arrow keys)
-      }
-      else if (event.isComposing) {
-        return; // Allow IME composition
-      }
-      else if (event.ctrlKey || event.metaKey)
-        return; // Allow paste via Ctrl+V or Cmd+V
-      else if (currentMode) {
-        if (!_isCharAllowed(event.key, currentMode)) {
-          event.preventDefault();
+        if (_isControlKey(event.key)) {
+            return;
+        } else if (event.isComposing) {
+            return;
+        } else if (event.ctrlKey || event.metaKey) {
+            return;
+        } else if (currentMode && !_isCharAllowed(event.key, currentMode)) {
+            event.preventDefault();
         }
-      }
-
     };
 
-    element.addEventListener('keydown', handleOnKeyDown);
+    element.addEventListener('keydown', handleKeyDown);
 
-  instances.set(instanceId, { element, handlePaste, handleOnKeyDown, otpMode });
+    instances.set(instanceId, { element, handlePaste, handleKeyDown, otpMode });
 }
 
+/**
+ * Updates the allowed character mode for an existing OTP instance.
+ * @param {string} instanceId - The instance to update.
+ * @param {string} otpMode - The new InputOTPInputMode value.
+ */
 export function updateOtpMode(instanceId, otpMode) {
-  const instance = instances.get(instanceId);
-  if (!instance) return;
-  instance.otpMode = otpMode;
+    const instance = instances.get(instanceId);
+    if (!instance) return;
+    instance.otpMode = otpMode;
 }
 
 function _isControlKey(key) {
-  return key.length !== 1; // Since control keys (e.g. Backspace, Arrow keys) typically have a key value longer than 1 character
+    return key.length !== 1;
 }
+
 function _isCharAllowed(char, otpMode) {
-  if (otpMode === 'Numbers') {
-    return /\d/.test(char);
-  } else if (otpMode === 'Letters') {
-    return /[a-zA-Z]/.test(char);
-  } else if (otpMode === 'LettersAndNumbers') {
-    return /[a-zA-Z0-9]/.test(char);
-  }
-  console.warn(`Unknown OTP mode: ${otpMode}`);
-  return true; // Default to allowing all characters if mode is unknown
+    if (otpMode === 'Numbers') {
+        return /\d/.test(char);
+    } else if (otpMode === 'Letters') {
+        return /[a-zA-Z]/.test(char);
+    } else if (otpMode === 'LettersAndNumbers') {
+        return /[a-zA-Z0-9]/.test(char);
+    }
+    return true;
 }
 
 /**
@@ -79,6 +79,6 @@ export function dispose(instanceId) {
     const instance = instances.get(instanceId);
     if (!instance) return;
     instance.element.removeEventListener('paste', instance.handlePaste);
-    instance.element.removeEventListener('keydown', instance.handleOnKeyDown);
+    instance.element.removeEventListener('keydown', instance.handleKeyDown);
     instances.delete(instanceId);
 }
