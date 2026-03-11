@@ -11,6 +11,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - **Localization: IBbLocalizer Interface** — New `IBbLocalizer` interface and `DefaultBbLocalizer` with English defaults for all 189 component chrome strings. Components use string-key lookup (e.g., `Localizer["DataGrid.Loading"]`) with `string.Format` for parameterized strings. Consumers can subclass `DefaultBbLocalizer` to integrate with `IStringLocalizer<T>` and `.resx` resource files. Calendar, DatePicker, DateRangePicker, and NumericInput automatically adapt to `CultureInfo.CurrentCulture`.
+- **BbDateRangePicker** — Changed visibility of the `Clear` method to public. (#216)
+
+### Fixed
+
+- **DataGrid** — Fix column filtering for nullable types and empty result visibility. (#204)
+- **Textarea** — Correct `UpdateTiming.OnChange` documentation to not mention Enter key. (#231)
+- **InputOtp** — Prevent invalid characters based on `InputMode`. (#223)
 
 ---
 
