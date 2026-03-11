@@ -53,10 +53,15 @@ public static class ClassNamesTests
             ClassNames.cn("px-4", "px-2"),
             "px-2");
 
-        // Test 9: Tailwind conflict - padding specificity
-        Test("Tailwind conflict - padding specificity",
+        // Test 9: Tailwind conflict - longhand refines shorthand (both kept)
+        Test("Tailwind conflict - longhand refines shorthand",
             ClassNames.cn("p-4", "px-2", "py-6"),
-            "px-2 py-6");
+            "p-4 px-2 py-6");
+
+        // Test 9b: Tailwind conflict - shorthand overrides earlier longhands
+        Test("Tailwind conflict - shorthand overrides longhands",
+            ClassNames.cn("px-2", "py-6", "p-4"),
+            "p-4");
 
         // Test 10: Tailwind conflict - colors
         Test("Tailwind conflict - text color",

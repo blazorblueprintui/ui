@@ -38,6 +38,8 @@ namespace BlazorBlueprint.Components;
 /// </example>
 public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where TItem : class
 {
+    [Inject] private IBbLocalizer Localizer { get; set; } = default!;
+
     /// <summary>
     /// Internal class for storing field metadata without component parameters.
     /// This avoids BL0005 warnings when creating field instances programmatically.
@@ -646,11 +648,11 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     {
         if (string.IsNullOrEmpty(_sortingState.SortedColumn))
         {
-            return "Sort";
+            return Localizer["DataView.Sort"];
         }
 
         var field = _fields.FirstOrDefault(f => f.Id == _sortingState.SortedColumn);
-        return field?.Header ?? "Sort";
+        return field?.Header ?? Localizer["DataView.Sort"];
     }
 
     // ── ShouldRender ─────────────────────────────────────────────────────────

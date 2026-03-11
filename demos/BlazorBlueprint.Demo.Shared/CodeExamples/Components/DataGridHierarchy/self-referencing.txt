@@ -1,0 +1,71 @@
+<BbFilterBuilder @bind-Filter="orgFilter"
+                 Fields="@orgFields"
+                 OnFilterChanged="HandleOrgFilterChanged"
+                 MaxDepth="2"
+                 Compact="true" />
+
+<BbDataGrid TData="Employee" Items="@employees"
+            ParentValueSelector="@(e => e.ReportsToId)"
+            ItemValueSelector="@(e => e.Id)"
+            ItemFilter="@orgFilterPredicate"
+            HierarchyFilterMode="@orgFilterMode"
+            DefaultExpandDepth="1"
+            ChildPageSize="5"
+            ShowExpandAll="true">
+    <Columns>
+        <BbDataGridHierarchyColumn TData="Employee" TProp="string"
+            Property="@(e => e.Name)" Title="Name" Sortable>
+            <CellTemplate>
+                <div class="flex items-center gap-2">
+                    <BbAvatar Size="AvatarSize.Small">
+                        @if (context.Item.AvatarUrl != null)
+                        {
+                            <BbAvatarImage Source="@context.Item.AvatarUrl"
+                                           Alt="@context.Item.Name" />
+                        }
+                        <BbAvatarFallback>
+                            @GetInitials(context.Item.Name)
+                        </BbAvatarFallback>
+                    </BbAvatar>
+                    <span class="truncate">@context.Value</span>
+                </div>
+            </CellTemplate>
+        </BbDataGridHierarchyColumn>
+        <BbDataGridPropertyColumn TData="Employee" TProp="string"
+            Property="@(e => e.JobTitle)" Title="Job Title" />
+        <BbDataGridPropertyColumn TData="Employee" TProp="string"
+            Property="@(e => e.Department)" Title="Department" Sortable />
+        <BbDataGridPropertyColumn TData="Employee" TProp="string"
+            Property="@(e => e.Location)" Title="Location" />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private HierarchyFilterMode orgFilterMode = HierarchyFilterMode.ShowMatchedOnly;
+    private FilterDefinition orgFilter = new();
+    private Func<Employee, bool>? orgFilterPredicate;
+
+    private readonly FilterField[] orgFields =
+    {
+        new() { Name = "Name", Label = "Name", Type = FilterFieldType.Text },
+        new() { Name = "JobTitle", Label = "Job Title", Type = FilterFieldType.Text },
+        new() { Name = "Department", Label = "Department", Type = FilterFieldType.Enum,
+            Options = departments.Select(d => new SelectOption<string>(d, d)).ToArray() },
+    };
+
+    private void HandleOrgFilterChanged(FilterDefinition newFilter)
+    {
+        orgFilterPredicate = newFilter.IsEmpty || !HasCompleteConditions(newFilter)
+            ? null
+            : newFilter.ToFunc<Employee>(orgFields);
+    }
+
+    public class Employee
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public string JobTitle { get; set; }
+        public string Department { get; set; }
+        public string? ReportsToId { get; set; }  // null = root
+    }
+}

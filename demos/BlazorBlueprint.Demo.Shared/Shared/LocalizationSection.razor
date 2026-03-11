@@ -1,0 +1,70 @@
+@namespace BlazorBlueprint.Demo
+
+<section class="space-y-4">
+    <h2 class="text-2xl font-semibold tracking-tight">Localization</h2>
+    <p class="text-muted-foreground leading-relaxed">
+        @Description
+    </p>
+
+    @if (Labels.Length > 0)
+    {
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm border-collapse">
+                <thead>
+                    <tr class="border-b">
+                        <th class="text-left py-2 px-3 font-medium">Property</th>
+                        <th class="text-left py-2 px-3 font-medium">Default</th>
+                        <th class="text-left py-2 px-3 font-medium">Description</th>
+                    </tr>
+                </thead>
+                <tbody class="text-muted-foreground">
+                    @foreach (var label in Labels)
+                    {
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">@label.Property</code></td>
+                            <td class="py-2 px-3">@label.Default</td>
+                            <td class="py-2 px-3">@label.Description</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (CultureAware)
+    {
+        <div class="p-4 border-l-4 border-primary bg-primary/5 rounded-r-lg">
+            <p class="text-sm text-muted-foreground">
+                <strong>Culture-aware:</strong> @CultureDescription
+            </p>
+        </div>
+    }
+
+    <div class="rounded-lg border bg-muted/50 p-4">
+        <pre class="text-sm overflow-x-auto"><code>@CodeExample</code></pre>
+    </div>
+
+    <p class="text-sm text-muted-foreground">
+        See the <a href="guides/localization" class="text-primary underline hover:no-underline">Localization Guide</a>
+        for full configuration options including IStringLocalizer and JSON integration.
+    </p>
+</section>
+
+@code {
+    [Parameter]
+    public string Description { get; set; } = "All component chrome strings are configurable via IBbLocalizer.";
+
+    [Parameter]
+    public LabelInfo[] Labels { get; set; } = [];
+
+    [Parameter]
+    public bool CultureAware { get; set; }
+
+    [Parameter]
+    public string? CultureDescription { get; set; }
+
+    [Parameter, EditorRequired]
+    public string CodeExample { get; set; } = "";
+
+    public record LabelInfo(string Property, string Default, string Description);
+}

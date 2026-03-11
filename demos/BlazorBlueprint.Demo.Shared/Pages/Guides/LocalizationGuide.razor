@@ -1,0 +1,347 @@
+@page "/guides/localization"
+
+<PageTitle>Localization - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Localization</h1>
+        <p class="text-xl text-muted-foreground">
+            Customize all component labels, integrate with any localization framework, and leverage
+            automatic culture-aware formatting for dates and numbers.
+        </p>
+    </div>
+
+    <div class="space-y-6">
+
+        <!-- Overview -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Overview</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                BlazorBlueprint ships with English defaults for all component chrome &mdash; placeholders, button labels,
+                aria attributes, pagination text, and empty states. Every string is configurable through
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">IBbLocalizer</code>, an interface
+                registered via DI.
+            </p>
+            <p class="text-muted-foreground leading-relaxed">
+                The library does <strong>not</strong> take a dependency on <code class="text-xs bg-muted px-1 py-0.5 rounded">IStringLocalizer</code>
+                or any specific localization framework. Instead, it provides the abstraction &mdash; you bring your own
+                localization strategy (resource files, JSON, database, or anything else).
+            </p>
+        </section>
+
+        <!-- What Gets Localized -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">What Gets Localized</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                There are two categories of localization in BlazorBlueprint:
+            </p>
+
+            <div class="grid gap-4 md:grid-cols-2">
+                <div class="p-4 border rounded-lg space-y-2">
+                    <h3 class="font-semibold">Library Chrome (via IBbLocalizer)</h3>
+                    <p class="text-sm text-muted-foreground">
+                        Strings owned by the library: placeholders, button labels, empty states,
+                        pagination text, aria-labels, and screen-reader text.
+                    </p>
+                    <div class="text-sm text-muted-foreground">
+                        <span class="font-medium">Examples:</span> "Search...", "No results found",
+                        "Rows per page", "Next", "Select all rows"
+                    </div>
+                </div>
+                <div class="p-4 border rounded-lg space-y-2">
+                    <h3 class="font-semibold">Culture-Aware Formatting (automatic)</h3>
+                    <p class="text-sm text-muted-foreground">
+                        Calendar month/day names, date formats, numeric decimal/thousand separators,
+                        and week start day all follow
+                        <code class="text-xs bg-muted px-1 py-0.5 rounded">CultureInfo.CurrentCulture</code>.
+                    </p>
+                    <div class="text-sm text-muted-foreground">
+                        <span class="font-medium">Examples:</span> "March" vs "Mars", "1,234.56" vs "1.234,56"
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 border-l-4 border-primary bg-primary/5 rounded-r-lg">
+                <p class="text-sm text-muted-foreground">
+                    <strong>Application data</strong> (column headers, option labels, content text) is your responsibility.
+                    The library only localizes its own UI chrome.
+                </p>
+            </div>
+        </section>
+
+        <!-- Quick Start -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Quick Start</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                Use English defaults with no configuration, or override specific keys at startup:
+            </p>
+            <div class="rounded-lg border bg-muted/50 p-4">
+                <pre class="text-sm overflow-x-auto"><code>builder.Services.AddBlazorBlueprintComponents(localizer =>
+{
+    localizer.Set("DataGrid.NoResultsFound", "Keine Ergebnisse gefunden");
+    localizer.Set("DataGrid.Loading", "Laden...");
+    localizer.Set("Calendar.GoToPreviousMonth", "Zum vorherigen Monat");
+    localizer.Set("DatePicker.Placeholder", "Datum auswählen");
+    localizer.Set("Pagination.RowsPerPage", "Zeilen pro Seite");
+    localizer.Set("Pagination.PageFormat", "Seite {0} von {1}");
+    localizer.Set("FormWizard.Next", "Weiter");
+    localizer.Set("FormWizard.Back", "Zurück");
+});</code></pre>
+            </div>
+            <p class="text-muted-foreground leading-relaxed">
+                Keys use dot notation: <code class="text-xs bg-muted px-1 py-0.5 rounded">ComponentName.PropertyName</code>.
+                Format strings use standard <code class="text-xs bg-muted px-1 py-0.5 rounded">string.Format</code>
+                placeholders (e.g., <code class="text-xs bg-muted px-1 py-0.5 rounded">"Showing {0}–{1} of {2}"</code>).
+            </p>
+        </section>
+
+        <!-- Integration with IStringLocalizer -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Integration with IStringLocalizer</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                Create a custom <code class="text-xs bg-muted px-1 py-0.5 rounded">IBbLocalizer</code> implementation
+                that delegates to <code class="text-xs bg-muted px-1 py-0.5 rounded">IStringLocalizer&lt;T&gt;</code>:
+            </p>
+            <div class="rounded-lg border bg-muted/50 p-4">
+                <pre class="text-sm overflow-x-auto"><code>public class AppBbLocalizer(IStringLocalizer&lt;SharedResources&gt; localizer)
+    : DefaultBbLocalizer
+{
+    public override string this[string key] =>
+        localizer[key] is { ResourceNotFound: false } found
+            ? found.Value : base[key];
+
+    public override string this[string key, params object[] arguments] =>
+        localizer[key, arguments] is { ResourceNotFound: false } found
+            ? found.Value : base[key, arguments];
+}</code></pre>
+            </div>
+            <div class="rounded-lg border bg-muted/50 p-4">
+                <pre class="text-sm overflow-x-auto"><code>// Register as scoped for per-circuit culture switching
+builder.Services.AddBlazorBlueprintComponents();
+builder.Services.AddScoped&lt;IBbLocalizer, AppBbLocalizer&gt;();</code></pre>
+            </div>
+            <p class="text-muted-foreground leading-relaxed">
+                Keys that don't exist in your resource files automatically fall back to English defaults
+                in <code class="text-xs bg-muted px-1 py-0.5 rounded">DefaultBbLocalizer</code>.
+            </p>
+        </section>
+
+        <!-- Per-Component Overrides -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Per-Component Overrides</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                Component parameters always take priority over the localizer. This lets you override a single
+                instance without changing the global configuration:
+            </p>
+            <div class="rounded-lg border bg-muted/50 p-4">
+                <pre class="text-sm overflow-x-auto"><code>&lt;!-- This Combobox uses a custom message regardless of IBbLocalizer --&gt;
+&lt;BbCombobox TValue="string"
+            Options="options"
+            EmptyMessage="No matching frameworks found"
+            @@bind-Value="selected" /&gt;
+
+&lt;!-- This one uses whatever Localizer["Combobox.EmptyMessage"] returns --&gt;
+&lt;BbCombobox TValue="string"
+            Options="options"
+            @@bind-Value="selected" /&gt;</code></pre>
+            </div>
+            <p class="text-muted-foreground leading-relaxed">
+                The resolution order is: <strong>Parameter value</strong> &rarr; <strong>IBbLocalizer</strong> &rarr; <strong>English default</strong>.
+            </p>
+        </section>
+
+        <!-- Culture-Aware Formatting -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Culture-Aware Formatting</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                Several components automatically adapt to <code class="text-xs bg-muted px-1 py-0.5 rounded">CultureInfo.CurrentCulture</code>
+                without any configuration:
+            </p>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm border-collapse">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-2 px-3 font-medium">Component</th>
+                            <th class="text-left py-2 px-3 font-medium">What Adapts</th>
+                            <th class="text-left py-2 px-3 font-medium">Override Parameter</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-muted-foreground">
+                        <tr class="border-b">
+                            <td class="py-2 px-3">BbCalendar</td>
+                            <td class="py-2 px-3">Month names, day names, first day of week</td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">MonthNames</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">CustomDayNames</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">FirstDayOfWeek</code></td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3">BbDatePicker</td>
+                            <td class="py-2 px-3">Date display format (defaults to short date "d")</td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">DateFormat</code></td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3">BbDateRangePicker</td>
+                            <td class="py-2 px-3">Month/day names, date format, first day of week</td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">MonthNames</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">CustomDayNames</code>, <code class="text-xs bg-muted px-1 py-0.5 rounded">DateFormat</code></td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3">BbNumericInput</td>
+                            <td class="py-2 px-3">Decimal separator, thousand separator</td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">InputConverter.Culture</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="p-4 border-l-4 border-primary bg-primary/5 rounded-r-lg">
+                <p class="text-sm text-muted-foreground">
+                    <strong>Tip:</strong> To revert to invariant formatting globally (e.g., for internal tools),
+                    set <code class="text-xs bg-muted px-1 py-0.5 rounded">InputConverter.GlobalCulture = CultureInfo.InvariantCulture</code>
+                    at startup.
+                </p>
+            </div>
+        </section>
+
+        <!-- Available Keys -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Available Keys</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                All keys use dot notation: <code class="text-xs bg-muted px-1 py-0.5 rounded">ComponentName.PropertyName</code>.
+                Keys marked with <strong>(format)</strong> accept <code class="text-xs bg-muted px-1 py-0.5 rounded">string.Format</code> arguments.
+            </p>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm border-collapse">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-2 px-3 font-medium">Component</th>
+                            <th class="text-left py-2 px-3 font-medium">Keys</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-muted-foreground">
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Calendar</code></td>
+                            <td class="py-2 px-3">GoToPreviousMonth, GoToNextMonth</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">DataGrid</code></td>
+                            <td class="py-2 px-3">Loading, NoResultsFound, SelectAllRows, ExpandAll, CollapseAll, PreviousPage, NextPage, FilterPlaceholder <strong>(format)</strong>, ShowingRange <strong>(format)</strong>, RowsSelected <strong>(format)</strong>, +30 more</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">DataTable</code></td>
+                            <td class="py-2 px-3">Loading, NoResultsFound, Search, Columns, ToggleColumns, SelectAllRows, SelectThisRow, +6 more</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Pagination</code></td>
+                            <td class="py-2 px-3">Previous, Next, RowsPerPage, ShowingFormat, PageFormat, GoToFirstPage, GoToLastPage, MorePages, NoItems</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Combobox</code></td>
+                            <td class="py-2 px-3">Placeholder, SearchPlaceholder, EmptyMessage</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">MultiSelect</code></td>
+                            <td class="py-2 px-3">Placeholder, SearchPlaceholder, EmptyMessage, SelectAll, Clear, Close</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">DatePicker</code></td>
+                            <td class="py-2 px-3">Placeholder</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">DateRangePicker</code></td>
+                            <td class="py-2 px-3">Placeholder, QuickSelect, Today, Yesterday, Last7Days, Last30Days, Clear, Apply, DaysSelected <strong>(format)</strong>, +4 more</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">FormWizard</code></td>
+                            <td class="py-2 px-3">Next, Back, Skip, Complete, WizardProgress</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">FilterBuilder</code></td>
+                            <td class="py-2 px-3">SelectField, AddCondition, AddGroup, RemoveCondition, date preset labels, period labels, +28 more</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Dialog</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">Sheet</code></td>
+                            <td class="py-2 px-3">Close</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Sidebar</code></td>
+                            <td class="py-2 px-3">ToggleSidebar</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Carousel</code></td>
+                            <td class="py-2 px-3">NextSlide, PreviousSlide</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">DataView</code></td>
+                            <td class="py-2 px-3">SearchPlaceholder, NoResultsFound, Loading, LoadMore, ListView, GridView, Sort</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">MarkdownEditor</code></td>
+                            <td class="py-2 px-3">SelectHeadingLevel, Bold, Italic, Underline, BulletList, NumberedList</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">RichTextEditor</code></td>
+                            <td class="py-2 px-3">Normal, Heading1/2/3, Bold, Italic, Underline, Strikethrough, BulletList, NumberedList, InsertLink, Blockquote, CodeBlock, EditLink, RemoveLink, Cancel, Update, Insert</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Alert</code></td>
+                            <td class="py-2 px-3">Dismiss</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Breadcrumb</code></td>
+                            <td class="py-2 px-3">Breadcrumb, More</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Command</code></td>
+                            <td class="py-2 px-3">CommandMenu, CommandList</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">DashboardGrid</code></td>
+                            <td class="py-2 px-3">Loading, NoWidgets, AddWidget, RemoveWidget, ResizeWidget</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">NumericInput</code></td>
+                            <td class="py-2 px-3">IncreaseValue, DecreaseValue</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">TagInput</code></td>
+                            <td class="py-2 px-3">Placeholder, RemoveTag <strong>(format)</strong>, ClearAllTags, TagSuggestions</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Rating</code></td>
+                            <td class="py-2 px-3">Rating</td>
+                        </tr>
+                        <tr class="border-b">
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">ResponsiveNav</code></td>
+                            <td class="py-2 px-3">ToggleMenu</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Timeline</code></td>
+                            <td class="py-2 px-3">Timeline</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Dynamic Culture Switching -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Dynamic Culture Switching</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                For multi-language apps, subclass <code class="text-xs bg-muted px-1 py-0.5 rounded">DefaultBbLocalizer</code>
+                and register as scoped. Each Blazor Server circuit gets its own localizer resolved from
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">IStringLocalizer</code>:
+            </p>
+            <div class="rounded-lg border bg-muted/50 p-4">
+                <pre class="text-sm overflow-x-auto"><code>builder.Services.AddBlazorBlueprintComponents();
+builder.Services.AddScoped&lt;IBbLocalizer, AppBbLocalizer&gt;();</code></pre>
+            </div>
+            <div class="p-4 border-l-4 border-primary bg-primary/5 rounded-r-lg">
+                <p class="text-sm text-muted-foreground">
+                    <strong>Tip:</strong> Missing keys automatically fall back to the English defaults in
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">DefaultBbLocalizer</code>, so you only
+                    need to translate the keys your users will actually see.
+                </p>
+            </div>
+        </section>
+
+    </div>
+</div>

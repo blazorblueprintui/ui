@@ -39,6 +39,7 @@
             <BbBadge Variant="BadgeVariant.Outline">Role (Enum)</BbBadge>
             <BbBadge Variant="BadgeVariant.Outline">Status (Enum)</BbBadge>
             <BbBadge Variant="BadgeVariant.Outline">Join Date (Date)</BbBadge>
+            <BbBadge Variant="BadgeVariant.Outline">Last Activity (DateTime)</BbBadge>
             <BbBadge Variant="BadgeVariant.Outline">Last Promotion (Date)</BbBadge>
             <BbBadge Variant="BadgeVariant.Outline">Active (Boolean)</BbBadge>
         </div>
@@ -100,6 +101,7 @@
             <BbDataGridPropertyColumn Property="@(e => e.Age)" Title="Age" Sortable="true" Width="80px" />
             <BbDataGridPropertyColumn Property="@(e => e.Salary)" Title="Salary" Sortable="true" Format="C0" Width="120px" />
             <BbDataGridPropertyColumn Property="@(e => e.JoinDate)" Title="Join Date" Sortable="true" Format="d" Width="130px" />
+            <BbDataGridPropertyColumn Property="@(e => e.LastActivity)" Title="Last Activity" Sortable="true" Format="g" Width="170px" />
             <BbDataGridTemplateColumn Title="Last Promotion" Sortable="true" SortBy="@(e => e.LastPromotionDate)" Width="150px">
                 @{
                     var emp = context;
@@ -169,6 +171,7 @@
             Options = Statuses.Select(s => new SelectOption<string>(s, s)).ToArray()
         },
         new FilterField { Name = "JoinDate", Label = "Join Date", Type = FilterFieldType.Date },
+        new FilterField { Name = "LastActivity", Label = "Last Activity", Type = FilterFieldType.DateTime },
         new FilterField { Name = "LastPromotionDate", Label = "Last Promotion", Type = FilterFieldType.Date },
         new FilterField { Name = "IsActive", Label = "Active", Type = FilterFieldType.Boolean }
     };
@@ -258,6 +261,7 @@
                 Status = Statuses[Rng.Next(Statuses.Length)],
                 Salary = RoundToNearest500(Rng.Next(35000, 200000)),
                 JoinDate = joinDate,
+                LastActivity = GenerateLastActivity(i, count),
                 LastPromotionDate = hasPromotion ? joinDate.AddDays(Rng.Next(90, 1500)) : null,
                 IsActive = Rng.Next(100) > 15
             });
@@ -267,6 +271,21 @@
     }
 
     private static int RoundToNearest500(int value) => (int)(Math.Round(value / 500.0) * 500);
+
+    private static DateTime GenerateLastActivity(int index, int count)
+    {
+        var now = DateTime.Now;
+        var bucket = (index * 6) / count;
+        return bucket switch
+        {
+            0 => now.AddSeconds(-Rng.Next(1, 60)),
+            1 => now.AddMinutes(-Rng.Next(1, 60)),
+            2 => now.AddHours(-Rng.Next(1, 24)),
+            3 => now.AddDays(-Rng.Next(1, 7)),
+            4 => now.AddDays(-Rng.Next(7, 28)),
+            _ => now.AddDays(-Rng.Next(28, 365))
+        };
+    }
 
     public class Employee
     {
@@ -279,6 +298,7 @@
         public string Status { get; set; } = string.Empty;
         public int Salary { get; set; }
         public DateTime JoinDate { get; set; }
+        public DateTime LastActivity { get; set; }
         public DateTime? LastPromotionDate { get; set; }
         public bool IsActive { get; set; }
     }

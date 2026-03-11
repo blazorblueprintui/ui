@@ -1,9 +1,10 @@
 @namespace BlazorBlueprint.Components
+@inject IBbLocalizer Localizer
 
 <div class="@CssClass">
     @if (ShowLabel)
     {
-        <p class="text-sm font-medium">@Label</p>
+        <p class="text-sm font-medium">@EffectiveLabel</p>
     }
     <BbSelect TValue="string"
             Value="@_pageSizeValue"
@@ -43,10 +44,12 @@
     public bool ShowLabel { get; set; } = true;
 
     /// <summary>
-    /// Label text for the page size selector. Default: "Rows per page"
+    /// Label text for the page size selector. Falls back to localization default.
     /// </summary>
     [Parameter]
-    public string Label { get; set; } = "Rows per page";
+    public string? Label { get; set; }
+
+    private string EffectiveLabel => Label ?? Localizer["Pagination.RowsPerPage"];
 
     /// <summary>
     /// Override page sizes from context. When null, uses context's PageSizes.

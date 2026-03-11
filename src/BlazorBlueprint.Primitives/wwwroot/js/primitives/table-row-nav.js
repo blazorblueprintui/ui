@@ -61,15 +61,33 @@ export function consumeInteractiveClickFlag(rowElement) {
 
 /**
  * Prevents Space and Arrow keys from scrolling when a table row is focused.
- * Attaches a keydown listener in capture phase.
+ *
+ * When the keydown originates from an interactive child element (e.g. a
+ * Combobox trigger, Popover button, or any element matching
+ * INTERACTIVE_SELECTOR), the handler:
+ *   1. Skips preventDefault() so the child retains default browser behaviour.
+ *   2. Calls stopPropagation() in bubble phase so Blazor's root-level event
+ *      delegation never dispatches the event to the row's @onkeydown handler.
+ *
+ * This is entirely JS-based — no C# interop round-trip is needed.
+ *
  * @param {HTMLElement} element - The row element to attach the handler to
  * @returns {Object} Object with dispose function for cleanup
  */
 export function preventSpaceKeyScroll(element) {
     if (!element) return { dispose: () => {} };
 
-    const handleKeyDown = (e) => {
-        // Prevent Space, ArrowUp, and ArrowDown from scrolling
+    // Capture phase: runs before the event reaches the target.
+    // - For interactive children: skip preventDefault so the child keeps
+    //   normal behaviour, and set a flag for the bubble handler.
+    // - For the row itself: preventDefault to stop page scroll.
+    const captureHandler = (e) => {
+        element._bbInteractiveKeyDown = isInteractiveTarget(e.target, element);
+
+        if (element._bbInteractiveKeyDown) {
+            return;
+        }
+
         if (e.key === ' ' || e.keyCode === 32 ||
             e.key === 'ArrowUp' || e.keyCode === 38 ||
             e.key === 'ArrowDown' || e.keyCode === 40) {
@@ -77,13 +95,45 @@ export function preventSpaceKeyScroll(element) {
         }
     };
 
-    element.addEventListener('keydown', handleKeyDown, { capture: true });
+    // Bubble phase: runs after the target has handled the event.
+    // When the flag is set, stopPropagation prevents the event from
+    // reaching Blazor's document-level event delegation, so the row's
+    // C# HandleKeyDown is never invoked for interactive-child events.
+    const bubbleHandler = (e) => {
+        if (element._bbInteractiveKeyDown) {
+            e.stopPropagation();
+            element._bbInteractiveKeyDown = false;
+        }
+    };
+
+    element.addEventListener('keydown', captureHandler, { capture: true });
+    element.addEventListener('keydown', bubbleHandler, { capture: false });
 
     return {
         dispose: () => {
-            element.removeEventListener('keydown', handleKeyDown, { capture: true });
+            element.removeEventListener('keydown', captureHandler, { capture: true });
+            element.removeEventListener('keydown', bubbleHandler, { capture: false });
         }
     };
+}
+
+/**
+ * Checks whether the event target is an interactive child of the row,
+ * or is inside a portal-based overlay (popover, combobox dropdown, etc.)
+ * that was triggered from within the row.
+ * @param {HTMLElement} target - The event target
+ * @param {HTMLElement} rowElement - The <tr> row element
+ * @returns {boolean}
+ */
+function isInteractiveTarget(target, rowElement) {
+    if (!target || target === rowElement) return false;
+
+    // Check if the target is inside a portal overlay (rendered outside the row)
+    if (!rowElement.contains(target)) return false;
+
+    // Check if the target (or an ancestor within the row) is interactive
+    const interactive = target.closest(INTERACTIVE_SELECTOR);
+    return !!(interactive && rowElement.contains(interactive) && interactive !== rowElement);
 }
 
 /**

@@ -1,7 +1,9 @@
 @namespace BlazorBlueprint.Components
+@using System.Globalization
 @using BlazorBlueprint.Icons.Lucide.Components
 @implements IAsyncDisposable
 @inject IJSRuntime JS
+@inject IBbLocalizer Localizer
 
 @*
     Calendar component - displays a month view with selectable dates.
@@ -17,7 +19,7 @@
                         Size="ButtonSize.Icon"
                         Class="h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
                         OnClick="@PreviousMonth"
-                        AriaLabel="Go to previous month">
+                        AriaLabel="@Localizer["Calendar.GoToPreviousMonth"]">
                     <LucideIcon Name="chevron-left" Class="h-4 w-4" />
                 </BbButton>
                 <div class="flex items-center gap-1">
@@ -58,7 +60,7 @@
                         Size="ButtonSize.Icon"
                         Class="h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
                         OnClick="@NextMonth"
-                        AriaLabel="Go to next month">
+                        AriaLabel="@Localizer["Calendar.GoToNextMonth"]">
                     <LucideIcon Name="chevron-right" Class="h-4 w-4" />
                 </BbButton>
             </div>
@@ -123,12 +125,14 @@
     private readonly string _calendarId = $"calendar-{Guid.NewGuid():N}";
 
     // Caching fields
+    private CultureInfo _resolvedCulture = CultureInfo.CurrentCulture;
     private DayOfWeek _cachedFirstDayOfWeek;
     private bool _cachedShowOutsideDays;
     private string[]? _cachedDayNames;
     private List<List<DateTime?>>? _cachedWeeks;
 
     // ShouldRender tracking fields
+    private bool _parametersChanged;
     private DateTime? _lastSelected;
     private DateTime _lastDisplayDate;
     private DateTime? _lastMinDate;
@@ -188,10 +192,24 @@
     public Func<DateTime, bool>? DisabledDates { get; set; }
 
     /// <summary>
-    /// The first day of the week.
+    /// The first day of the week. Defaults to the current culture's first day of the week.
     /// </summary>
     [Parameter]
-    public DayOfWeek FirstDayOfWeek { get; set; } = DayOfWeek.Sunday;
+    public DayOfWeek? FirstDayOfWeek { get; set; }
+
+    private DayOfWeek EffectiveFirstDayOfWeek => FirstDayOfWeek ?? _resolvedCulture.DateTimeFormat.FirstDayOfWeek;
+
+    /// <summary>
+    /// Custom month names to override culture defaults. Must be 12 elements.
+    /// </summary>
+    [Parameter]
+    public string[]? MonthNames { get; set; }
+
+    /// <summary>
+    /// Custom abbreviated day names to override culture defaults. Must be 7 elements starting from Sunday.
+    /// </summary>
+    [Parameter]
+    public string[]? CustomDayNames { get; set; }
 
     /// <summary>
     /// Whether to show days from previous and next months.
@@ -238,6 +256,7 @@
 
     protected override void OnInitialized()
     {
+        _resolvedCulture = CultureInfo.CurrentCulture;
         _displayDate = Selected ?? DateTime.Today;
         _previousSelected = Selected;
         InitializeFocusedDate();
@@ -245,6 +264,8 @@
 
     protected override void OnParametersSet()
     {
+        _parametersChanged = true;
+
         // Only sync display date when Selected actually changes from external source
         // This prevents overwriting user's month/year navigation
         if (Selected != _previousSelected)
@@ -257,10 +278,19 @@
             }
         }
 
-        // Invalidate caches when relevant parameters change
-        if (_cachedFirstDayOfWeek != FirstDayOfWeek)
+        // Capture culture at parameter-set time so it's stable across render cycles
+        var currentCulture = CultureInfo.CurrentCulture;
+        if (!ReferenceEquals(_resolvedCulture, currentCulture) && _resolvedCulture.Name != currentCulture.Name)
         {
-            _cachedFirstDayOfWeek = FirstDayOfWeek;
+            _resolvedCulture = currentCulture;
+            _cachedDayNames = null;
+            _cachedWeeks = null;
+        }
+
+        // Invalidate caches when relevant parameters change
+        if (_cachedFirstDayOfWeek != EffectiveFirstDayOfWeek)
+        {
+            _cachedFirstDayOfWeek = EffectiveFirstDayOfWeek;
             _cachedDayNames = null;
             _cachedWeeks = null;
         }
@@ -313,19 +343,29 @@
         return date >= firstDay ? date : new DateTime(DisplayDate.Year, DisplayDate.Month, 1).AddMonths(1).AddDays(-1);
     }
 
-    private static readonly string[] BaseDayNames = { "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa" };
-
     private string[] DayNames => _cachedDayNames ??= BuildDayNames();
 
     private string[] BuildDayNames()
     {
-        var start = (int)FirstDayOfWeek;
-        var result = new string[7];
+        if (CustomDayNames is { Length: 7 })
+        {
+            var start = (int)EffectiveFirstDayOfWeek;
+            var result = new string[7];
+            for (int i = 0; i < 7; i++)
+            {
+                result[i] = CustomDayNames[(start + i) % 7];
+            }
+            return result;
+        }
+
+        var cultureNames = _resolvedCulture.DateTimeFormat.AbbreviatedDayNames;
+        var startIdx = (int)EffectiveFirstDayOfWeek;
+        var cultureDays = new string[7];
         for (int i = 0; i < 7; i++)
         {
-            result[i] = BaseDayNames[(start + i) % 7];
+            cultureDays[i] = cultureNames[(startIdx + i) % 7];
         }
-        return result;
+        return cultureDays;
     }
 
     #region Navigation
@@ -525,9 +565,6 @@
 
     #region Month/Year Data
 
-    private static readonly string[] MonthNames = { "January", "February", "March", "April", "May", "June",
-                                                     "July", "August", "September", "October", "November", "December" };
-
     // Cached CSS class constants for performance
     private const string CellBaseClasses = "h-9 w-9 text-center text-sm p-0 relative";
     private const string CellSelectedClasses = "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md";
@@ -538,13 +575,15 @@
     private const string DayTodayClasses = "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground bg-accent text-accent-foreground";
     private const string DayDisabledClasses = "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground text-muted-foreground opacity-50";
 
-    private string GetMonthName(int month) => MonthNames[month - 1];
+    private string GetMonthName(int month) => MonthNames is { Length: 12 }
+        ? MonthNames[month - 1]
+        : _resolvedCulture.DateTimeFormat.GetMonthName(month);
 
     private IEnumerable<(int Number, string Name)> GetMonths()
     {
         for (int i = 1; i <= 12; i++)
         {
-            yield return (i, MonthNames[i - 1]);
+            yield return (i, GetMonthName(i));
         }
     }
 
@@ -602,7 +641,7 @@
 
         // Find the start date (first day of the first week)
         var startDate = firstOfMonth;
-        while (startDate.DayOfWeek != FirstDayOfWeek)
+        while (startDate.DayOfWeek != EffectiveFirstDayOfWeek)
         {
             startDate = startDate.AddDays(-1);
         }
@@ -678,6 +717,19 @@
     /// </summary>
     protected override bool ShouldRender()
     {
+        if (_parametersChanged)
+        {
+            _parametersChanged = false;
+            _lastSelected = Selected;
+            _lastDisplayDate = _displayDate;
+            _lastMinDate = MinDate;
+            _lastMaxDate = MaxDate;
+            _lastShowMonthYearDropdowns = ShowMonthYearDropdowns;
+            _lastFocusedDate = _focusedDate;
+            _lastIsKeyboardNavigating = _isKeyboardNavigating;
+            return true;
+        }
+
         var selectedChanged = _lastSelected != Selected;
         var displayDateChanged = _lastDisplayDate != _displayDate;
         var minDateChanged = _lastMinDate != MinDate;

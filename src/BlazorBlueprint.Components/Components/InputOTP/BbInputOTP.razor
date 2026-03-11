@@ -150,6 +150,7 @@
     [Parameter]
     public InputOTPInputMode InputMode { get; set; } = InputOTPInputMode.Numbers;
 
+    private InputOTPInputMode? _previousInputMode;
     private ElementReference[] _inputRefs = Array.Empty<ElementReference>();
     private string[] _values = Array.Empty<string>();
     private string? _generatedId;
@@ -196,6 +197,23 @@
         }
     }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        if (_previousInputMode != InputMode)
+        {
+            var isFirstRender = !_previousInputMode.HasValue;
+            _previousInputMode = InputMode;
+
+            // Skip on first render — JS interop will be initialized in OnAfterRenderAsync
+            if (!isFirstRender && _jsModule != null)
+            {
+                await _jsModule.InvokeVoidAsync("updateOtpMode", EffectiveId, InputMode.ToString());
+            }
+        }
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && !_jsInitialized)
@@ -205,7 +223,7 @@
                 _jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import",
                     "./_content/BlazorBlueprint.Components/js/input-otp.js");
                 _dotNetRef = DotNetObjectReference.Create(this);
-                await _jsModule.InvokeVoidAsync("initialize", _containerRef, _dotNetRef, EffectiveId);
+                await _jsModule.InvokeVoidAsync("initialize", _containerRef, _dotNetRef, EffectiveId, InputMode.ToString());
                 _jsInitialized = true;
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)

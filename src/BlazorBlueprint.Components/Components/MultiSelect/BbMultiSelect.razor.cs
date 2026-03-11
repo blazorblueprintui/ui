@@ -15,6 +15,9 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
 
+    [Inject]
+    private IBbLocalizer Localizer { get; set; } = default!;
+
     private FieldIdentifier _fieldIdentifier;
     private EditContext? _editContext;
     private IJSObjectReference? _multiSelectModule;
@@ -24,6 +27,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     private bool _focusDone;
 
     // ShouldRender tracking fields
+    private bool _parametersChanged;
     private IEnumerable<SelectOption<TValue>>? _lastOptions;
     private IEnumerable<TValue>? _lastValues;
     private bool _lastIsOpen;
@@ -84,25 +88,25 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// Gets or sets the placeholder text shown when no items are selected.
     /// </summary>
     [Parameter]
-    public string Placeholder { get; set; } = "Select items...";
+    public string? Placeholder { get; set; }
 
     /// <summary>
     /// Gets or sets the placeholder text shown in the search input.
     /// </summary>
     [Parameter]
-    public string SearchPlaceholder { get; set; } = "Search...";
+    public string? SearchPlaceholder { get; set; }
 
     /// <summary>
     /// Gets or sets the message displayed when no items match the search.
     /// </summary>
     [Parameter]
-    public string EmptyMessage { get; set; } = "No results found.";
+    public string? EmptyMessage { get; set; }
 
     /// <summary>
     /// Gets or sets the label for the Select All option.
     /// </summary>
     [Parameter]
-    public string SelectAllLabel { get; set; } = "Select All";
+    public string? SelectAllLabel { get; set; }
 
     /// <summary>
     /// Gets or sets whether to show the Select All option.
@@ -114,13 +118,20 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// Gets or sets the label for the Clear button.
     /// </summary>
     [Parameter]
-    public string ClearLabel { get; set; } = "Clear";
+    public string? ClearLabel { get; set; }
 
     /// <summary>
     /// Gets or sets the label for the Close button.
     /// </summary>
     [Parameter]
-    public string CloseLabel { get; set; } = "Close";
+    public string? CloseLabel { get; set; }
+
+    private string EffectivePlaceholder => Placeholder ?? Localizer["MultiSelect.Placeholder"];
+    private string EffectiveSearchPlaceholder => SearchPlaceholder ?? Localizer["MultiSelect.SearchPlaceholder"];
+    private string EffectiveEmptyMessage => EmptyMessage ?? Localizer["MultiSelect.EmptyMessage"];
+    private string EffectiveSelectAllLabel => SelectAllLabel ?? Localizer["MultiSelect.SelectAll"];
+    private string EffectiveClearLabel => ClearLabel ?? Localizer["MultiSelect.Clear"];
+    private string EffectiveCloseLabel => CloseLabel ?? Localizer["MultiSelect.Close"];
 
     /// <summary>
     /// Gets or sets additional CSS classes to apply to the multiselect container.
@@ -271,6 +282,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// </summary>
     protected override void OnParametersSet()
     {
+        _parametersChanged = true;
         base.OnParametersSet();
 
         // Filter out null options for safety (Options mode only)
@@ -618,6 +630,17 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// </summary>
     protected override bool ShouldRender()
     {
+        if (_parametersChanged)
+        {
+            _parametersChanged = false;
+            _lastOptions = Options;
+            _lastValues = Values;
+            _lastIsOpen = _isOpen;
+            _lastSearchQuery = _searchQuery;
+            _lastDisabled = Disabled;
+            return true;
+        }
+
         var optionsChanged = !ReferenceEquals(_lastOptions, Options);
         var valuesChanged = !ReferenceEquals(_lastValues, Values);
         var openChanged = _lastIsOpen != _isOpen;

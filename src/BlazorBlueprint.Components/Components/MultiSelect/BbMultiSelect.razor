@@ -37,7 +37,7 @@
                 }
                 else
                 {
-                    <span class="text-muted-foreground">@Placeholder</span>
+                    <span class="text-muted-foreground">@EffectivePlaceholder</span>
                 }
             </div>
             <div class="flex items-center gap-1 ml-2">
@@ -45,7 +45,7 @@
                 {
                     <button type="button"
                             class="rounded-sm opacity-70 hover:opacity-100 focus:outline-none"
-                            aria-label="Clear all"
+                            aria-label="@Localizer["MultiSelect.Clear"]"
                             @onclick="ClearAll"
                             @onclick:stopPropagation="true">
                         <LucideIcon Name="x" Size="14" Class="h-3.5 w-3.5" />
@@ -83,7 +83,7 @@
                 <input @ref="_searchInputRef"
                        id="@($"{Id}-search")"
                        type="text"
-                       placeholder="@SearchPlaceholder"
+                       placeholder="@EffectiveSearchPlaceholder"
                        @bind="_searchQuery"
                        @bind:event="oninput"
                        class="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 ml-2" />
@@ -105,7 +105,7 @@
                             <BlazorBlueprint.Primitives.Checkbox.BbCheckbox Checked="@(selectAllState == SelectAllState.All)"
                                       Indeterminate="@(selectAllState == SelectAllState.Indeterminate)"
                                       class="@CheckboxCssClass"
-                                      AriaLabel="@SelectAllLabel">
+                                      AriaLabel="@EffectiveSelectAllLabel">
                                 @if (selectAllState == SelectAllState.All)
                                 {
                                     <LucideIcon Name="check" Size="14" Class="h-3.5 w-3.5 stroke-current" />
@@ -115,14 +115,14 @@
                                     <LucideIcon Name="minus" Size="14" Class="h-3.5 w-3.5 stroke-current" />
                                 }
                             </BlazorBlueprint.Primitives.Checkbox.BbCheckbox>
-                            <span class="font-medium">@SelectAllLabel</span>
+                            <span class="font-medium">@EffectiveSelectAllLabel</span>
                         </div>
                         <BbSeparator Decorative="false" Class="my-1" />
                     }
                     @ChildContent
                     @if (_itemTextRegistry.Count > 0 && !HasFilteredItems)
                     {
-                        <div class="py-6 text-center text-sm text-muted-foreground">@EmptyMessage</div>
+                        <div class="py-6 text-center text-sm text-muted-foreground">@EffectiveEmptyMessage</div>
                     }
                 }
                 else
@@ -130,7 +130,7 @@
                     @* Options mode: existing rendering *@
                     @if (!HasFilteredItems)
                     {
-                        <div class="py-6 text-center text-sm text-muted-foreground">@EmptyMessage</div>
+                        <div class="py-6 text-center text-sm text-muted-foreground">@EffectiveEmptyMessage</div>
                     }
                     else
                     {
@@ -146,7 +146,7 @@
                                 <BlazorBlueprint.Primitives.Checkbox.BbCheckbox Checked="@(selectAllState == SelectAllState.All)"
                                           Indeterminate="@(selectAllState == SelectAllState.Indeterminate)"
                                           class="@CheckboxCssClass"
-                                          AriaLabel="@SelectAllLabel">
+                                          AriaLabel="@EffectiveSelectAllLabel">
                                     @if (selectAllState == SelectAllState.All)
                                     {
                                         <LucideIcon Name="check" Size="14" Class="h-3.5 w-3.5 stroke-current" />
@@ -156,7 +156,7 @@
                                         <LucideIcon Name="minus" Size="14" Class="h-3.5 w-3.5 stroke-current" />
                                     }
                                 </BlazorBlueprint.Primitives.Checkbox.BbCheckbox>
-                                <span class="font-medium">@SelectAllLabel</span>
+                                <span class="font-medium">@EffectiveSelectAllLabel</span>
                             </div>
                             <BbSeparator Decorative="false" Class="my-1" />
                         }
@@ -195,13 +195,13 @@
                         class="text-xs text-muted-foreground hover:text-foreground transition-colors"
                         @onclick="ClearAll"
                         @onclick:stopPropagation="true">
-                    @ClearLabel
+                    @EffectiveClearLabel
                 </button>
                 <button type="button"
                         class="text-xs text-muted-foreground hover:text-foreground transition-colors"
                         @onclick="Close"
                         @onclick:stopPropagation="true">
-                    @CloseLabel
+                    @EffectiveCloseLabel
                 </button>
             </div>
             </CascadingValue>

@@ -38,6 +38,7 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
     private EditorRange? _savedSelection;
 
     // === ShouldRender Tracking ===
+    private bool _parametersChanged;
     private string? _lastValue;
     private bool _lastDisabled;
     private bool _lastReadOnly;
@@ -199,6 +200,8 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
 
     protected override async Task OnParametersSetAsync()
     {
+        _parametersChanged = true;
+
         // If Value changed externally, update the editor
         if (_jsInitialized && Value != _lastKnownValue && !_pendingValueUpdate)
         {
@@ -402,6 +405,17 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
     /// </summary>
     protected override bool ShouldRender()
     {
+        if (_parametersChanged)
+        {
+            _parametersChanged = false;
+            _lastValue = Value;
+            _lastDisabled = Disabled;
+            _lastReadOnly = ReadOnly;
+            _lastLinkDialogOpen = _linkDialogOpen;
+            _formatStateChanged = false;
+            return true;
+        }
+
         var valueChanged = _lastValue != Value;
         var disabledChanged = _lastDisabled != Disabled;
         var readOnlyChanged = _lastReadOnly != ReadOnly;

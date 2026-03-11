@@ -8,6 +8,8 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public partial class BbFilterGroup : ComponentBase
 {
+    [Inject] private IBbLocalizer Localizer { get; set; } = default!;
+
     private static readonly IEnumerable<SelectOption<LogicalOperator>> logicalOperatorOptions = new[]
     {
         new SelectOption<LogicalOperator>(LogicalOperator.And, "AND"),

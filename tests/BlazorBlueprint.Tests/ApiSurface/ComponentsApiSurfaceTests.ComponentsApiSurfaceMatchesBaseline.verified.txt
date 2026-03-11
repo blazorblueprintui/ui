@@ -247,12 +247,14 @@
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - CellClass : String
   - Class : String
+  - CustomDayNames : String[]
   - DayClass : String
   - DisabledDates : Func<DateTime, Boolean>
-  - FirstDayOfWeek : DayOfWeek
+  - FirstDayOfWeek : DayOfWeek?
   - MaxDate : DateTime?
   - MinDate : DateTime?
   - Mode : CalendarMode
+  - MonthNames : String[]
   - OnSelect : EventCallback<DateTime>
   - Selected : DateTime?
   - SelectedChanged : EventCallback<DateTime?>
@@ -690,6 +692,28 @@
   - Title : String
   - ParentGrid : BbDataGrid<TData> [CascadingParameter]
 
+### BbDataGridHierarchyColumn`2 (BlazorBlueprint.Components)
+  - CellClass : String
+  - CellTemplate : RenderFragment<DataGridCellContext<TData>>
+  - FilterOptions : IEnumerable<SelectOption<String>>
+  - FilterType : FilterFieldType?
+  - Filterable : Boolean
+  - Format : String
+  - HeaderClass : String
+  - Hideable : Boolean
+  - Id : String
+  - IndentSize : Int32
+  - NoWrap : Boolean
+  - Pinned : ColumnPinning
+  - Property : Expression<Func<TData, TProp>> [EditorRequired]
+  - Reorderable : Boolean
+  - Resizable : Boolean
+  - Sortable : Boolean
+  - Title : String
+  - Visible : Boolean
+  - Width : String
+  - ParentGrid : BbDataGrid<TData> [CascadingParameter]
+
 ### BbDataGridPropertyColumn`2 (BlazorBlueprint.Components)
   - Aggregate : AggregateFunction
   - AggregateFormat : String
@@ -745,39 +769,60 @@
 ### BbDataGrid`1 (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - AriaLabel : String
+  - ChildPageSize : Int32?
+  - ChildrenSelector : Func<TData, IEnumerable<TData>>
   - Class : String
   - Columns : RenderFragment
+  - DefaultExpandAll : Boolean
+  - DefaultExpandDepth : Int32?
   - DetailTemplate : RenderFragment<TData>
   - EmptyTemplate : RenderFragment
   - EnableKeyboardNavigation : Boolean
+  - ExpandedNodes : HashSet<String>
+  - ExpandedNodesChanged : EventCallback<HashSet<String>>
+  - FilterBarClass : String
   - GroupBy : Expression<Func<TData, Object>>
   - GroupHeaderTemplate : RenderFragment<DataGridGroupContext<TData>>
   - GroupedItemsProvider : DataGridGroupedItemsProvider<TData>
   - GroupsCollapsedByDefault : Boolean
+  - HasChildrenPredicate : Func<TData, Boolean>
+  - HierarchyFilterMode : HierarchyFilterMode
+  - HierarchySelectionMode : HierarchySelectionMode
   - InitialPageSize : Int32
   - IsLoading : Boolean
+  - ItemFilter : Func<TData, Boolean>
   - ItemKey : Func<TData, Object>
   - ItemSize : Single
+  - ItemValueSelector : Func<TData, String>
   - Items : IEnumerable<TData>
   - ItemsProvider : DataGridItemsProvider<TData>
+  - LoadChildren : Func<TData, Task<IEnumerable<TData>>>
+  - LoadChildrenPaged : Func<TData, Int32, Int32, Task<ChildPageResult<TData>>>
   - LoadingTemplate : RenderFragment
   - MinColumnWidth : Int32
+  - OnCollapseAll : EventCallback
   - OnColumnReorder : EventCallback<ValueTuple<String, Int32>>
   - OnColumnResize : EventCallback<ValueTuple<String, String>>
+  - OnExpandAll : EventCallback
   - OnFilter : EventCallback<IReadOnlyDictionary<String, FilterCondition>>
   - OnGroupCollapse : EventCallback<DataGridGroupRow<TData>>
   - OnGroupExpand : EventCallback<DataGridGroupRow<TData>>
+  - OnNodeCollapse : EventCallback<TData>
+  - OnNodeExpand : EventCallback<TData>
   - OnRowClick : EventCallback<TData>
   - OnRowCollapse : EventCallback<TData>
   - OnRowExpand : EventCallback<TData>
   - OnSort : EventCallback<IReadOnlyList<SortDefinition>>
   - PageSizes : Int32[]
+  - ParentValueSelector : Func<TData, String>
   - Reorderable : Boolean
   - Resizable : Boolean
   - RowClass : Func<TData, String>
   - RowContextMenu : RenderFragment<DataGridRowMenuContext<TData>>
   - SelectedItemsChanged : EventCallback<IReadOnlyCollection<TData>>
   - SelectionMode : DataTableSelectionMode
+  - ShowExpandAll : Boolean
+  - ShowFilterBar : Boolean
   - ShowPagination : Boolean
   - State : DataGridState<TData>
   - StateChanged : EventCallback<DataGridState<TData>>
@@ -877,7 +922,7 @@
   - DateFormat : String
   - Disabled : Boolean
   - DisabledDates : Func<DateTime, Boolean>
-  - FirstDayOfWeek : DayOfWeek
+  - FirstDayOfWeek : DayOfWeek?
   - MaxDate : DateTime?
   - MinDate : DateTime?
   - Placeholder : String
@@ -888,14 +933,16 @@
 
 ### BbDateRangePicker (BlazorBlueprint.Components)
   - Class : String
+  - CustomDayNames : String[]
   - DateFormat : String
   - Disabled : Boolean
   - DisabledDates : Func<DateTime, Boolean>
-  - FirstDayOfWeek : DayOfWeek
+  - FirstDayOfWeek : DayOfWeek?
   - MaxDate : DateTime?
   - MaxDays : Int32?
   - MinDate : DateTime?
   - MinDays : Int32?
+  - MonthNames : String[]
   - Placeholder : String
   - ShowPresets : Boolean
   - ShowTwoMonths : Boolean
@@ -3269,6 +3316,10 @@
   - Vertical = 0
   - Horizontal = 1
 
+### HierarchySelectionMode (BlazorBlueprint.Components)
+  - Independent = 0
+  - Cascade = 1
+
 ### IconPosition (BlazorBlueprint.Components)
   - Start = 0
   - End = 1
@@ -3592,6 +3643,10 @@
   - Skipped = 4
 
 ## Interfaces
+
+### IBbLocalizer (BlazorBlueprint.Components)
+  - Item : String { get; }
+  - Item : String { get; }
 
 ### IDialogReference (BlazorBlueprint.Components)
   - CancelAsync() : Task

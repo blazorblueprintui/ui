@@ -159,12 +159,22 @@
     private EditContext? _editContext;
 
     // ShouldRender tracking fields
+    private bool _parametersChanged;
     private TimeSpan? _lastValue;
     private bool _lastIsOpen;
     private bool _lastDisabled;
 
     protected override bool ShouldRender()
     {
+        if (_parametersChanged)
+        {
+            _parametersChanged = false;
+            _lastIsOpen = _isOpen;
+            _lastValue = Value;
+            _lastDisabled = Disabled;
+            return true;
+        }
+
         if (_isOpen != _lastIsOpen
             || Value != _lastValue
             || Disabled != _lastDisabled)
@@ -267,6 +277,8 @@
 
     protected override void OnParametersSet()
     {
+        _parametersChanged = true;
+
         if (Value.HasValue)
         {
             _internalHour = Value.Value.Hours;

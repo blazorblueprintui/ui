@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-11
+
+### Added
+
+- **Localization: IBbLocalizer Interface** — New `IBbLocalizer` interface and `DefaultBbLocalizer` with English defaults for all 189 component chrome strings. Components use string-key lookup (e.g., `Localizer["DataGrid.Loading"]`) with `string.Format` for parameterized strings. Consumers can subclass `DefaultBbLocalizer` to integrate with `IStringLocalizer<T>` and `.resx` resource files. Calendar, DatePicker, DateRangePicker, and NumericInput automatically adapt to `CultureInfo.CurrentCulture`.
+
+---
+
+## 2026-03-10
+
+### Added
+
+- **DataGrid: Hierarchical Tree Data** — Support for hierarchical/tree data rendering in the DataGrid with cascading hierarchy selection and file explorer demo. (#221, #224)
+- **Filtering: InLast/InNext Date Filters** — Added Hours, Minutes, and Seconds period options to InLast/InNext date filters. (#227)
+
+### Fixed
+
+- **DataGrid** — Yield keyboard navigation to interactive children inside grid cells. (#226)
+- **Components** — Allow parent re-renders to cascade through remaining optimized components. (#225)
+
+---
+
+## 2026-03-09
+
+### Fixed
+
+- **TailwindMerge** — Comprehensive rewrite of class conflict resolution. Adds variant-scoped conflicts (e.g., `md:p-4` and `lg:p-4` no longer conflict), shorthand-to-longhand resolution (`p-4` removed when `px-2 py-2` follow), semantic color support (`text-muted-foreground`, `bg-primary/90`), important modifier (`!`) priority, negative values, arbitrary values (`p-[14px]`), 40+ new utility groups, O(1) color prefix lookups, data-driven non-color value disambiguation, bounded cache with eviction, and dictionary-based ungrouped class deduplication.
+
+---
+
 ## 2026-03-08
 
 ### Added

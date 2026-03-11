@@ -21,7 +21,10 @@ namespace BlazorBlueprint.Components;
 /// Tailwind conflict resolution:
 /// <code>
 /// ClassNames.cn("px-4", "px-2") // "px-2" (later value wins)
-/// ClassNames.cn("p-4", "px-2", "py-6") // "px-2 py-6" (specific overrides general)
+/// ClassNames.cn("p-4", "pr-10") // "p-4 pr-10" (longhand refines shorthand)
+/// ClassNames.cn("pr-10", "p-4") // "p-4" (shorthand overrides earlier longhands)
+/// ClassNames.cn("md:p-4", "md:p-8") // "md:p-8" (conflicts scoped per variant)
+/// ClassNames.cn("text-red-500", "text-primary-foreground") // "text-primary-foreground" (semantic colors supported)
 /// </code>
 ///
 /// Array support:

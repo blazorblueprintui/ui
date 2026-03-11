@@ -138,6 +138,11 @@
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
+        // Interactive child interception is handled entirely in JS.
+        // The bubble-phase handler in preventSpaceKeyScroll calls
+        // stopPropagation() for interactive targets, so this method
+        // is only invoked for row-level keyboard events.
+
         if (IsKeyboardNavigable)
         {
             switch (e.Key)

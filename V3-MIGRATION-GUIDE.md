@@ -27,6 +27,11 @@ These are the **breaking changes** that require code updates. Address them in or
 | 15 | Input components: `IDisposable` → `IAsyncDisposable` | **Low** | Only affects code that explicitly casts to `IDisposable` |
 | 16 | `IPortalService` Two-Layer Portal Architecture | **High** | Update `RegisterPortal` calls to include `PortalCategory`; replace `OnPortalsChanged` with `OnPortalsCategoryChanged`; replace `GetPortals()` with `GetPortals(PortalCategory)` |
 | 17 | `ToastService.Success()` visual change | **Low** | Now renders with `ToastVariant.Success` (green accent + icon) instead of `ToastVariant.Default` (neutral); use `ToastService.Show()` to restore neutral style |
+| 18 | Localization: string parameters now nullable | **Low** | Some component string parameters changed from `string` to `string?` with defaults from `BbLocalizationOptions` — only affects code that relied on non-null parameter types |
+| 19 | Calendar: `FirstDayOfWeek` default changed | **Medium** | Default changed from `DayOfWeek.Sunday` to `CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek` — set explicitly if Sunday is required |
+| 20 | Calendar: month/day names from CultureInfo | **Low** | Hardcoded English month/day name arrays replaced with `CultureInfo.CurrentCulture.DateTimeFormat` — override with `MonthNames`/`DayNames` parameters if needed |
+| 21 | DatePicker: `DateFormat` default changed | **Medium** | Default changed from `"MMMM d, yyyy"` to `"d"` (culture-aware short date) — set `DateFormat="MMMM d, yyyy"` explicitly to restore old behavior |
+| 22 | `InputConverter` uses `CurrentCulture` | **Medium** | Numeric parsing/formatting now uses `CultureInfo.CurrentCulture` instead of `InvariantCulture` — set `InputConverter.GlobalCulture = CultureInfo.InvariantCulture` to restore old behavior |
 
 ---
 
@@ -47,6 +52,7 @@ These are the **breaking changes** that require code updates. Address them in or
   - [UpdateTiming Default Change](#updatetiming-default-change)
   - [Input Components: IDisposable → IAsyncDisposable](#input-components-idisposable--iasyncdisposable)
   - [IPortalService: Two-Layer Portal Architecture](#iportalservice-two-layer-portal-architecture)
+  - [Localization Support](#localization-support)
 - [Setup Changes](#setup-changes)
   - [Service Registration (DI)](#service-registration-di)
   - [PortalHost Runtime Warning](#portalhost-runtime-warning)
@@ -981,6 +987,75 @@ public enum PortalCategory
 @* Option B: Separate hosts (each only re-renders for its own category) *@
 <BbContainerPortalHost />
 <BbOverlayPortalHost />
+```
+
+---
+
+### Localization Support
+
+v3 introduces a built-in localization system via `BbLocalizationOptions`. All hardcoded English strings are now configurable.
+
+#### Breaking: String parameter nullability
+
+Some component string parameters changed from `string` to `string?`. The component resolves the effective value from `BbLocalizationOptions` when the parameter is `null`. This only affects code that relied on the non-null type (e.g., assigning to a `string` variable without null check).
+
+**Affected components:** `BbCombobox`, `BbMultiSelect`, `BbTagInput`, `BbDatePicker`, `BbDateRangePicker`, `BbDataView`
+
+#### Breaking: Calendar `FirstDayOfWeek` default
+
+The `FirstDayOfWeek` parameter changed from a hardcoded `DayOfWeek.Sunday` to `CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek`. This means the calendar respects the user's culture by default.
+
+```razor
+@* Restore old behavior *@
+<BbCalendar FirstDayOfWeek="DayOfWeek.Sunday" />
+```
+
+#### Breaking: Calendar month/day names from CultureInfo
+
+Hardcoded English month and day name arrays were replaced with `CultureInfo.CurrentCulture.DateTimeFormat`. Month and day names now automatically localize. Use optional `MonthNames` and `DayNames` parameters to override.
+
+#### Breaking: DatePicker `DateFormat` default
+
+Changed from `"MMMM d, yyyy"` (English-only) to `"d"` (culture-aware short date pattern).
+
+```razor
+@* Restore old behavior *@
+<BbDatePicker DateFormat="MMMM d, yyyy" />
+```
+
+#### Breaking: `InputConverter` uses `CurrentCulture`
+
+`InputConverter` now uses `CultureInfo.CurrentCulture` instead of `CultureInfo.InvariantCulture` for parsing and formatting numeric values. This means locale-formatted numbers (e.g., `1.234,56` in German) parse correctly by default.
+
+```csharp
+// Restore old behavior globally
+InputConverter.GlobalCulture = CultureInfo.InvariantCulture;
+
+// Or per-instance
+var converter = new InputConverter<decimal> { Culture = CultureInfo.InvariantCulture };
+```
+
+#### Configuring localization
+
+```csharp
+// Option A: Static at startup
+builder.Services.AddBlazorBlueprintComponents(opts => {
+    opts.DataGrid.NoResultsFound = "Keine Ergebnisse gefunden";
+    opts.Calendar.GoToPreviousMonth = "Zum vorherigen Monat";
+});
+
+// Option B: Dynamic with IStringLocalizer (register as scoped)
+builder.Services.AddScoped(sp => {
+    var loc = sp.GetRequiredService<IStringLocalizer<SharedResources>>();
+    return new BbLocalizationOptions {
+        DataGrid = { NoResultsFound = loc["NoResults"] }
+    };
+});
+```
+
+For `Func<>` labels (dynamic strings with parameters):
+```csharp
+opts.DataGrid.SelectAllOnPage = n => loc["SelectAll", n];
 ```
 
 ---
@@ -2433,6 +2508,10 @@ Non-breaking changes for informational purposes.
 15. **Update `IDisposable` casts** — `BbInput`, `BbTextarea`, `BbInputGroupInput`, `BbInputGroupTextarea`, `BbInputField`, `BbNumericInput`, `BbCurrencyInput` now implement `IAsyncDisposable` instead of `IDisposable`
 16. **Update `IPortalService` usage** — `RegisterPortal` now requires a `PortalCategory` parameter; `GetPortals()` replaced by `GetPortals(PortalCategory)`; `OnPortalsChanged` replaced by `OnPortalsCategoryChanged`
 17. **Review `ToastService.Success()` visual change** — now renders with `ToastVariant.Success` (green accent + icon) instead of neutral; use `ToastService.Show()` directly to restore old neutral style
+18. **Review nullable string parameters** — `BbCombobox`, `BbMultiSelect`, `BbTagInput`, `BbDatePicker`, `BbDateRangePicker`, `BbDataView` changed some string params to `string?`
+19. **Set `FirstDayOfWeek` explicitly** if you relied on Sunday default — now defaults to `CultureInfo.CurrentCulture`
+20. **Set `DateFormat` explicitly** on `BbDatePicker` if you relied on `"MMMM d, yyyy"` — now defaults to `"d"`
+21. **Review `InputConverter` culture behavior** — now uses `CurrentCulture` instead of `InvariantCulture`; set `InputConverter.GlobalCulture = CultureInfo.InvariantCulture` to restore
 
 ### Recommended actions (non-breaking)
 

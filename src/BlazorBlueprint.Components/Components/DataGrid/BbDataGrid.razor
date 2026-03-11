@@ -3,6 +3,7 @@
 @attribute [CascadingTypeParameter(nameof(TData))]
 @using BlazorBlueprint.Icons.Lucide.Components
 @using BlazorBlueprint.Primitives.DataGrid
+@inject IBbLocalizer Localizer
 
 <CascadingValue Value="this" IsFixed="true">
     <div class="@ClassNames.cn("w-full", Class)">
@@ -22,7 +23,7 @@
                 else
                 {
                     <div class="flex items-center justify-center p-8 text-muted-foreground">
-                        <div class="text-sm">Loading...</div>
+                        <div class="text-sm">@Localizer["DataGrid.Loading"]</div>
                     </div>
                 }
             }
@@ -34,7 +35,7 @@
                 }
                 else
                 {
-                    <BbEmpty Title="No results found" Size="EmptySize.Small" />
+                    <BbEmpty Title="@Localizer["DataGrid.NoResultsFound"]" Size="EmptySize.Small" />
                 }
             }
             else
@@ -70,6 +71,7 @@
                                 var sortPriority = _gridState.Sorting.GetPriority(column.ColumnId);
                                 var isSelectColumn = column.ColumnId == "__select";
                                 var isExpandColumn = column.ColumnId == "__expand";
+                                var isHierarchyColumn = _hierarchyColumn != null && column.ColumnId == _hierarchyColumn.ColumnId;
                                 var isLastLeft = column.ColumnId == _cachedLastLeftId;
                                 var isFirstRight = column.ColumnId == _cachedFirstRightId;
 
@@ -94,21 +96,21 @@
                                                     <BbDropdownMenuTrigger AsChild="false" Class="inline-flex items-center justify-center p-0 bg-transparent border-0 hover:bg-transparent focus:outline-none">
                                                         <BbCheckbox Checked="@IsAllSelected()"
                                                                   Indeterminate="@IsSomeSelected()"
-                                                                  AriaLabel="Select rows - click to see options"
+                                                                  AriaLabel="@Localizer["DataGrid.SelectRowsAriaLabel"]"
                                                                   Class="pointer-events-none" />
                                                     </BbDropdownMenuTrigger>
                                                     <BbDropdownMenuContent Side="PopoverSide.Bottom" Align="PopoverAlign.Start">
                                                         <BbDropdownMenuItem OnClick="@HandleSelectAllOnCurrentPage">
-                                                            Select all on this page (@_processedData.Count() items)
+                                                            @Localizer["DataGrid.SelectAllOnPage", _processedData.Count()]
                                                         </BbDropdownMenuItem>
                                                         <BbDropdownMenuItem OnClick="@HandleSelectAllItems">
-                                                            Select all @_gridState.Pagination.TotalItems items
+                                                            @Localizer["DataGrid.SelectAllItems", _gridState.Pagination.TotalItems]
                                                         </BbDropdownMenuItem>
                                                         @if (_gridState.Selection.HasSelection)
                                                         {
                                                             <BbDropdownMenuSeparator />
                                                             <BbDropdownMenuItem OnClick="@HandleClearSelection">
-                                                                Clear selection
+                                                                @Localizer["DataGrid.ClearSelection"]
                                                             </BbDropdownMenuItem>
                                                         }
                                                     </BbDropdownMenuContent>
@@ -119,7 +121,7 @@
                                                 <BbCheckbox Checked="@IsAllSelected()"
                                                           CheckedChanged="@HandleSelectAllChanged"
                                                           Indeterminate="@IsSomeSelected()"
-                                                          AriaLabel="Select all rows" />
+                                                          AriaLabel="@Localizer["DataGrid.SelectAllRows"]" />
                                             }
                                         </div>
                                     }
@@ -130,6 +132,17 @@
                                             <LucideIcon Name="grip-vertical" Class="absolute left-1 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground/40 opacity-0 group-hover/header:opacity-100 transition-opacity pointer-events-none" />
                                         }
                                         <div class="flex items-center gap-2">
+                                            @if (ShowExpandAll && isHierarchyColumn)
+                                            {
+                                                <button type="button"
+                                                        class="inline-flex items-center justify-center rounded-md w-6 h-6 hover:bg-muted transition-colors shrink-0"
+                                                        aria-label="@(IsAllExpanded ? Localizer["DataGrid.CollapseAll"] : Localizer["DataGrid.ExpandAll"])"
+                                                        @onclick="@ToggleExpandAllAsync"
+                                                        @onclick:stopPropagation="true">
+                                                    <LucideIcon Name="@(IsAllExpanded ? "chevrons-down-up" : "chevrons-up-down")"
+                                                               Class="w-4 h-4 text-muted-foreground" />
+                                                </button>
+                                            }
                                             @if (column.HeaderTemplate != null)
                                             {
                                                 @column.HeaderTemplate(new BlazorBlueprint.Primitives.DataGrid.DataGridHeaderContext<TData>
@@ -149,7 +162,7 @@
                                                         <LucideIcon Name="pin" Class="w-3.5 h-3.5 text-muted-foreground" />
                                                     </BbTooltipTrigger>
                                                     <BbTooltipContent Side="PopoverSide.Bottom">
-                                                        This column is pinned and cannot be moved
+                                                        @Localizer["DataGrid.PinnedColumnTooltip"]
                                                     </BbTooltipContent>
                                                 </BbTooltip>
                                             }
@@ -177,7 +190,8 @@
                                                 var hasActiveFilter = _gridState.Filtering.HasFilter(column.ColumnId);
                                                 var filterColumn = column;
                                                 <div @onclick:stopPropagation="true" class="inline-flex">
-                                                    <BbPopover>
+                                                    <BbPopover Open="@(GetFilterPopoverOpen(filterColumn.ColumnId))"
+                                                               OpenChanged="@(open => SetFilterPopoverOpen(filterColumn.ColumnId, open))">
                                                         <BbPopoverTrigger AsChild="true">
                                                             <BbButton Variant="ButtonVariant.Ghost"
                                                                       Size="ButtonSize.Icon"
@@ -219,11 +233,29 @@
                         </BlazorBlueprint.Primitives.DataGrid.BbDataGridRow>
                     </BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader>
                     <BlazorBlueprint.Primitives.DataGrid.BbDataGridBody Class="bg-background">
+                        @if (ShowFilterBar && _gridState.Filtering.HasFilters)
+                        {
+                            <tr class="@ClassNames.cn("border-b bg-muted/30", FilterBarClass)">
+                                <td colspan="@_cachedVisibleColumns.Count" class="px-4 py-1.5">
+                                    <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                                        <LucideIcon Name="filter" Class="w-3.5 h-3.5" />
+                                        <span>@Localizer["DataGrid.ActiveFilters", _gridState.Filtering.ActiveFilterCount]</span>
+                                        <button type="button"
+                                                class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium hover:bg-muted transition-colors"
+                                                @onclick="ClearAllFiltersAsync"
+                                                @onclick:stopPropagation="true">
+                                            <LucideIcon Name="x" Class="w-3 h-3" />
+                                            @Localizer["DataGrid.ClearAll"]
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                         @if (!_processedData.Any() && _gridState.Filtering.HasFilters)
                         {
                             <tr>
                                 <td colspan="@_cachedVisibleColumns.Count" class="py-8 text-center">
-                                    <BbEmpty Title="No results found" Description="Try adjusting or clearing your filters." Size="EmptySize.Small" />
+                                    <BbEmpty Title="@Localizer["DataGrid.NoResultsFound"]" Description="@Localizer["DataGrid.NoResultsFilterDescription"]" Size="EmptySize.Small" />
                                 </td>
                             </tr>
                         }
@@ -262,13 +294,13 @@
                                                     <button type="button"
                                                             class="inline-flex items-center justify-center rounded-md w-6 h-6 hover:bg-muted transition-colors"
                                                             aria-expanded="@(!isCollapsed)"
-                                                            aria-label="@(isCollapsed ? "Expand group" : "Collapse group")"
+                                                            aria-label="@(isCollapsed ? Localizer["DataGrid.ExpandGroup"] : Localizer["DataGrid.CollapseGroup"])"
                                                             @onclick="groupContext.ToggleCollapse"
                                                             @onclick:stopPropagation="true">
                                                         <LucideIcon Name="@(isCollapsed ? "chevron-right" : "chevron-down")" Class="w-4 h-4" />
                                                     </button>
                                                     <span>@group.ColumnTitle: @(groupKey.ToString())</span>
-                                                    <span class="text-muted-foreground text-sm">(@group.ItemCount items)</span>
+                                                    <span class="text-muted-foreground text-sm">@Localizer["DataGrid.GroupItemCount", group.ItemCount]</span>
                                                 </div>
                                             </td>
                                             @foreach (var col in GetGroupAggregateColumns(group))
@@ -282,6 +314,49 @@
                                             }
                                         </tr>
                                     }
+                                }
+                                else if (renderItem.IsChildPagerRow)
+                                {
+                                    var pagerDepth = renderItem.Depth;
+                                    var pagerParentValue = renderItem.ParentValue!;
+                                    var pagerPageIndex = renderItem.ChildPageIndex;
+                                    var pagerTotalChildren = renderItem.TotalChildren;
+                                    var pagerPageSize = ChildPageSize ?? 10;
+                                    var pagerStart = pagerPageIndex * pagerPageSize + 1;
+                                    var pagerEnd = Math.Min((pagerPageIndex + 1) * pagerPageSize, pagerTotalChildren);
+                                    var pagerTotalPages = (int)Math.Ceiling((double)pagerTotalChildren / pagerPageSize);
+                                    var pagerIndent = pagerDepth * GetHierarchyIndentSize();
+
+                                    <tr role="row" class="border-b bg-muted/30">
+                                        <td role="gridcell" colspan="@_cachedVisibleColumns.Count" class="px-4 py-1.5">
+                                            <div class="flex items-center gap-2 text-xs text-muted-foreground" style="@($"padding-left: {pagerIndent}px")">
+                                                <span>@Localizer["DataGrid.ShowingRange", pagerStart, pagerEnd, pagerTotalChildren]</span>
+                                                <div class="flex items-center gap-0.5">
+                                                    <button type="button"
+                                                            class="inline-flex items-center justify-center rounded w-6 h-6 hover:bg-muted transition-colors disabled:opacity-50"
+                                                            disabled="@(pagerPageIndex <= 0)"
+                                                            @onclick="@(() => HandleChildPageChange(pagerParentValue, pagerPageIndex - 1))"
+                                                            @onclick:stopPropagation="true"
+                                                            aria-label="@Localizer["DataGrid.PreviousPage"]">
+                                                        <LucideIcon Name="chevron-left" Class="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <span class="tabular-nums px-1">@(pagerPageIndex + 1) / @pagerTotalPages</span>
+                                                    <button type="button"
+                                                            class="inline-flex items-center justify-center rounded w-6 h-6 hover:bg-muted transition-colors disabled:opacity-50"
+                                                            disabled="@(pagerPageIndex >= pagerTotalPages - 1)"
+                                                            @onclick="@(() => HandleChildPageChange(pagerParentValue, pagerPageIndex + 1))"
+                                                            @onclick:stopPropagation="true"
+                                                            aria-label="@Localizer["DataGrid.NextPage"]">
+                                                        <LucideIcon Name="chevron-right" Class="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                                else if (renderItem.IsDataRow && IsInHierarchyMode)
+                                {
+                                    @RenderHierarchyRow(renderItem)
                                 }
                                 else
                                 {
@@ -351,7 +426,7 @@
                 <BbPaginationInfo>
                     @if (_gridState.Selection.HasSelection)
                     {
-                        <span>@_gridState.Selection.SelectedCount of @_gridState.Pagination.TotalItems row(s) selected</span>
+                        <span>@Localizer["DataGrid.RowsSelected", _gridState.Selection.SelectedCount, _gridState.Pagination.TotalItems]</span>
                     }
                 </BbPaginationInfo>
                 <BbPaginationContent Class="flex items-center gap-6 lg:gap-8">
@@ -375,13 +450,13 @@
 </CascadingValue>
 
 @code {
-    private static string FormatAggregateName(AggregateFunction function) => function switch
+    private string FormatAggregateName(AggregateFunction function) => function switch
     {
-        AggregateFunction.Count => "Count",
-        AggregateFunction.Sum => "Sum",
-        AggregateFunction.Average => "Avg",
-        AggregateFunction.Min => "Min",
-        AggregateFunction.Max => "Max",
+        AggregateFunction.Count => Localizer["DataGrid.CountLabel"],
+        AggregateFunction.Sum => Localizer["DataGrid.SumLabel"],
+        AggregateFunction.Average => Localizer["DataGrid.AverageLabel"],
+        AggregateFunction.Min => Localizer["DataGrid.MinLabel"],
+        AggregateFunction.Max => Localizer["DataGrid.MaxLabel"],
         _ => ""
     };
 
@@ -432,7 +507,7 @@
                             <button type="button"
                                     class="inline-flex items-center justify-center rounded-md w-8 h-8 hover:bg-muted transition-colors"
                                     aria-expanded="@isExpanded.ToString().ToLowerInvariant()"
-                                    aria-label="@(isExpanded ? "Collapse row" : "Expand row")"
+                                    aria-label="@(isExpanded ? Localizer["DataGrid.CollapseRow"] : Localizer["DataGrid.ExpandRow"])"
                                     @onclick="@(() => HandleRowExpandToggle(item))"
                                     @onclick:stopPropagation="true">
                                 <LucideIcon Name="@(isExpanded ? "chevron-down" : "chevron-right")" Class="w-4 h-4" />
@@ -444,7 +519,7 @@
                         <div @onclick:stopPropagation="true">
                             <BbCheckbox Checked="@_gridState.Selection.IsSelected(item)"
                                       CheckedChanged="@((bool isChecked) => HandleRowSelectionChanged(item, isChecked))"
-                                      AriaLabel="Select this row" />
+                                      AriaLabel="@Localizer["DataGrid.SelectThisRow"]" />
                         </div>
                     }
                     else if (column.CellTemplate != null)
@@ -463,4 +538,97 @@
                 </BlazorBlueprint.Primitives.DataGrid.BbDataGridCell>
             }
         </BlazorBlueprint.Primitives.DataGrid.BbDataGridRow>;
+
+    private RenderFragment<DataGridRenderItem<TData>> RenderHierarchyRow => renderItem =>
+    {
+        var item = renderItem.Item!;
+        var rowClass = ClassNames.cn("group/row bg-background",
+            !renderItem.MatchesFilter ? "opacity-50" : "",
+            RowClass?.Invoke(item));
+
+        return @<BlazorBlueprint.Primitives.DataGrid.BbDataGridRow @key="@ItemValueSelector!(item)" TData="TData" Item="@item"
+            Class="@rowClass"
+            aria-level="@(renderItem.Depth + 1)">
+            @foreach (var column in _cachedVisibleColumns)
+            {
+                var isSelectColumn = column.ColumnId == "__select";
+                var isExpandColumn = column.ColumnId == "__expand";
+                var isHierarchyColumn = _hierarchyColumn != null && column.ColumnId == _hierarchyColumn.ColumnId;
+                var isLastLeft = column.ColumnId == _cachedLastLeftId;
+                var isFirstRight = column.ColumnId == _cachedFirstRightId;
+                var pinnedStyle = GetPinnedStyle(column, _cachedVisibleColumns);
+
+                <BlazorBlueprint.Primitives.DataGrid.BbDataGridCell
+                    @key="@column.ColumnId"
+                    Class="@GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight)"
+                    style="@pinnedStyle"
+                    data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)">
+                    @if (isSelectColumn)
+                    {
+                        <div @onclick:stopPropagation="true">
+                            <BbCheckbox Checked="@_gridState.Selection.IsSelected(item)"
+                                      Indeterminate="@IsHierarchyItemIndeterminate(item)"
+                                      CheckedChanged="@((bool isChecked) => HandleRowSelectionChanged(item, isChecked))"
+                                      AriaLabel="@Localizer["DataGrid.SelectThisRow"]" />
+                        </div>
+                    }
+                    else if (isHierarchyColumn)
+                    {
+                        var indent = renderItem.Depth * GetHierarchyIndentSize();
+                        <div class="flex items-center" style="@($"padding-left: {indent}px")">
+                            @if (renderItem.HasChildren)
+                            {
+                                <button type="button"
+                                        class="inline-flex items-center justify-center rounded-md w-6 h-6 mr-1 hover:bg-muted transition-colors shrink-0"
+                                        aria-expanded="@renderItem.IsExpanded.ToString().ToLowerInvariant()"
+                                        aria-label="@(renderItem.IsExpanded ? Localizer["DataGrid.Collapse"] : Localizer["DataGrid.Expand"])"
+                                        @onclick="@(() => HandleHierarchyNodeToggle(item))"
+                                        @onclick:stopPropagation="true">
+                                    <LucideIcon Name="@(renderItem.IsExpanded ? "chevron-down" : "chevron-right")"
+                                               Class="w-4 h-4 transition-transform" />
+                                </button>
+                            }
+                            else
+                            {
+                                <span class="inline-block w-6 mr-1 shrink-0"></span>
+                            }
+                            @if (column.CellTemplate != null)
+                            {
+                                @column.CellTemplate(new BlazorBlueprint.Primitives.DataGrid.DataGridCellContext<TData>
+                                {
+                                    Item = item,
+                                    Column = column,
+                                    Value = column.GetValue(item)
+                                })
+                            }
+                            else
+                            {
+                                <span class="truncate">@(column.GetValue(item)?.ToString() ?? "")</span>
+                            }
+                        </div>
+                    }
+                    else if (column.CellTemplate != null)
+                    {
+                        @column.CellTemplate(new BlazorBlueprint.Primitives.DataGrid.DataGridCellContext<TData>
+                        {
+                            Item = item,
+                            Column = column,
+                            Value = column.GetValue(item)
+                        })
+                    }
+                    else
+                    {
+                        @(column.GetValue(item)?.ToString() ?? "")
+                    }
+                </BlazorBlueprint.Primitives.DataGrid.BbDataGridCell>
+            }
+        </BlazorBlueprint.Primitives.DataGrid.BbDataGridRow>;
+    };
+
+    private int GetHierarchyIndentSize()
+    {
+        // Check if the hierarchy column has a custom indent size
+        // Default to 24px
+        return 24;
+    }
 }

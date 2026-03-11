@@ -35,8 +35,27 @@ namespace BlazorBlueprint.Components;
     Justification = "Global converter registration requires per-type-argument static state (e.g., InputConverter<int>.GlobalGetFunc).")]
 public class InputConverter<TValue>
 {
-    private static Func<string, TValue>? _globalGetFunc;
-    private static Func<TValue, string?>? _globalSetFunc;
+    private static volatile Func<string, TValue>? _globalGetFunc;
+    private static volatile Func<TValue, string?>? _globalSetFunc;
+
+    /// <summary>
+    /// Gets or sets the culture used for parsing and formatting.
+    /// Resolution: Culture → GlobalCulture → CultureInfo.CurrentCulture.
+    /// </summary>
+    public CultureInfo? Culture { get; set; }
+
+    private static volatile CultureInfo? _globalCulture;
+
+    /// <summary>
+    /// Gets or sets the global (app-wide) culture for parsing and formatting.
+    /// </summary>
+    [SuppressMessage("Design", "CA1000:Do not declare static members on generic types",
+        Justification = "Global culture setting requires per-type-argument static state.")]
+    public static CultureInfo? GlobalCulture
+    {
+        get => _globalCulture;
+        set => _globalCulture = value;
+    }
 
     /// <summary>
     /// Gets or sets the global (app-wide) parse function for converting a string to <typeparamref name="TValue"/>.
@@ -81,6 +100,8 @@ public class InputConverter<TValue>
     /// and built-in defaults.
     /// </remarks>
     public Func<TValue, string?>? SetFunc { get; set; }
+
+    private CultureInfo ResolvedCulture => Culture ?? GlobalCulture ?? CultureInfo.CurrentCulture;
 
     /// <summary>
     /// Converts a string input to <typeparamref name="TValue"/>.
@@ -152,13 +173,13 @@ public class InputConverter<TValue>
 
         if (value is IFormattable formattable)
         {
-            return formattable.ToString(format, CultureInfo.InvariantCulture);
+            return formattable.ToString(format, ResolvedCulture);
         }
 
         return Set(value);
     }
 
-    private static TValue DefaultGet(string input)
+    private TValue DefaultGet(string input)
     {
         var targetType = typeof(TValue);
         var underlyingType = Nullable.GetUnderlyingType(targetType);
@@ -170,19 +191,21 @@ public class InputConverter<TValue>
             return default!;
         }
 
+        var culture = ResolvedCulture;
+
         object result = parseType switch
         {
             Type t when t == typeof(string) => input,
-            Type t when t == typeof(int) => int.Parse(input, CultureInfo.InvariantCulture),
-            Type t when t == typeof(long) => long.Parse(input, CultureInfo.InvariantCulture),
-            Type t when t == typeof(float) => float.Parse(input, CultureInfo.InvariantCulture),
-            Type t when t == typeof(double) => double.Parse(input, CultureInfo.InvariantCulture),
-            Type t when t == typeof(decimal) => decimal.Parse(input, CultureInfo.InvariantCulture),
+            Type t when t == typeof(int) => int.Parse(input, culture),
+            Type t when t == typeof(long) => long.Parse(input, culture),
+            Type t when t == typeof(float) => float.Parse(input, culture),
+            Type t when t == typeof(double) => double.Parse(input, culture),
+            Type t when t == typeof(decimal) => decimal.Parse(input, culture),
             Type t when t == typeof(bool) => bool.Parse(input),
-            Type t when t == typeof(DateTime) => DateTime.Parse(input, CultureInfo.InvariantCulture),
-            Type t when t == typeof(DateTimeOffset) => DateTimeOffset.Parse(input, CultureInfo.InvariantCulture),
-            Type t when t == typeof(DateOnly) => DateOnly.Parse(input, CultureInfo.InvariantCulture),
-            Type t when t == typeof(TimeOnly) => TimeOnly.Parse(input, CultureInfo.InvariantCulture),
+            Type t when t == typeof(DateTime) => DateTime.Parse(input, culture),
+            Type t when t == typeof(DateTimeOffset) => DateTimeOffset.Parse(input, culture),
+            Type t when t == typeof(DateOnly) => DateOnly.Parse(input, culture),
+            Type t when t == typeof(TimeOnly) => TimeOnly.Parse(input, culture),
             Type t when t == typeof(Guid) => Guid.Parse(input),
             _ => throw new InvalidOperationException(
                 $"No converter registered for type '{targetType.FullName}'. " +
@@ -198,7 +221,7 @@ public class InputConverter<TValue>
         return (TValue)result;
     }
 
-    private static string? DefaultSet(TValue value)
+    private string? DefaultSet(TValue value)
     {
         if (value is null)
         {
@@ -216,7 +239,7 @@ public class InputConverter<TValue>
 
         if (value is IFormattable formattable)
         {
-            return formattable.ToString(null, CultureInfo.InvariantCulture);
+            return formattable.ToString(null, ResolvedCulture);
         }
 
         return value.ToString();

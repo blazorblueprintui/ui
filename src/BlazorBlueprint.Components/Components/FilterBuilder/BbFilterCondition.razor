@@ -1,12 +1,12 @@
 @namespace BlazorBlueprint.Components
 
-<div class="@RowCssClass" role="group" aria-label="Filter condition">
+<div class="@RowCssClass" role="group" aria-label="@Localizer["FilterBuilder.FilterCondition"]">
     @* Field selector *@
     <BbSelect TValue="string"
               Value="@Condition.Field"
               ValueChanged="HandleFieldChanged"
               Options="@fieldOptions"
-              Placeholder="Select field..."
+              Placeholder="@Localizer["FilterBuilder.SelectField"]"
               Class="@FieldSelectClass" />
 
     @* Operator selector *@
@@ -26,7 +26,7 @@
                 case FilterFieldType.Text:
                     <BbInput Value="@GetStringValue()"
                              ValueChanged="HandleStringValueChanged"
-                             Placeholder="@(selectedField.Placeholder ?? "Enter value...")"
+                             Placeholder="@(selectedField.Placeholder ?? Localizer["FilterBuilder.EnterValue"])"
                              Class="@ValueInputClass" />
                     break;
 
@@ -35,13 +35,13 @@
                         <BbNumericInput TValue="double"
                                         Value="@GetDoubleValue()"
                                         ValueChanged="HandleDoubleValueChanged"
-                                        Placeholder="Min"
+                                        Placeholder="@Localizer["FilterBuilder.Min"]"
                                         Class="@ValueInputClass" />
-                        <span class="text-sm text-muted-foreground shrink-0">and</span>
+                        <span class="text-sm text-muted-foreground shrink-0">@Localizer["FilterBuilder.And"]</span>
                         <BbNumericInput TValue="double"
                                         Value="@GetDoubleValueEnd()"
                                         ValueChanged="HandleDoubleValueEndChanged"
-                                        Placeholder="Max"
+                                        Placeholder="@Localizer["FilterBuilder.Max"]"
                                         Class="@ValueInputClass" />
                     </div>
                     break;
@@ -50,7 +50,7 @@
                     <BbNumericInput TValue="double"
                                     Value="@GetDoubleValue()"
                                     ValueChanged="HandleDoubleValueChanged"
-                                    Placeholder="@(selectedField.Placeholder ?? "Enter value...")"
+                                    Placeholder="@(selectedField.Placeholder ?? Localizer["FilterBuilder.EnterValue"])"
                                     Class="@ValueInputClass" />
                     break;
 
@@ -66,12 +66,12 @@
                                         Value="@GetInLastAmount()"
                                         ValueChanged="HandleInLastAmountChanged"
                                         Min="1"
-                                        Placeholder="Amount"
+                                        Placeholder="@Localizer["FilterBuilder.Amount"]"
                                         Class="@ValueInputClass" />
                         <BbSelect TValue="InLastPeriod"
                                   Value="@GetInLastPeriod()"
                                   ValueChanged="HandleInLastPeriodChanged"
-                                  Options="@inLastPeriodOptions"
+                                  Options="@InLastPeriodOptions"
                                   Class="@OperatorSelectClass" />
                     </div>
                     break;
@@ -80,14 +80,14 @@
                     <BbSelect TValue="DatePreset"
                               Value="@GetDatePreset()"
                               ValueChanged="HandleDatePresetChanged"
-                              Options="@datePresetOptions"
+                              Options="@DatePresetOptions"
                               Class="@ValueInputClass" />
                     break;
 
                 case FilterFieldType.Date or FilterFieldType.DateTime:
                     <BbDatePicker Value="@GetDateTimeValue()"
                                   ValueChanged="HandleDateTimeValueChanged"
-                                  Placeholder="@(selectedField.Placeholder ?? "Pick a date")"
+                                  Placeholder="@(selectedField.Placeholder ?? Localizer["FilterBuilder.PickDate"])"
                                   Class="@ValueInputClass" />
                     break;
 
@@ -96,7 +96,7 @@
                                    Values="@GetMultiSelectValues()"
                                    ValuesChanged="HandleMultiSelectValuesChanged"
                                    Options="@(selectedField.Options ?? Array.Empty<SelectOption<string>>())"
-                                   Placeholder="Select values..."
+                                   Placeholder="@Localizer["FilterBuilder.SelectValues"]"
                                    Class="@ValueInputClass" />
                     break;
 
@@ -105,7 +105,7 @@
                               Value="@GetStringValue()"
                               ValueChanged="HandleStringValueChanged"
                               Options="@(selectedField.Options ?? Array.Empty<SelectOption<string>>())"
-                              Placeholder="Select value..."
+                              Placeholder="@Localizer["FilterBuilder.SelectValue"]"
                               Class="@ValueInputClass" />
                     break;
             }
@@ -117,7 +117,7 @@
               Size="ButtonSize.IconSmall"
               OnClick="HandleRemove"
               Class="shrink-0 text-muted-foreground hover:text-destructive"
-              aria-label="Remove condition">
+              aria-label="@Localizer["FilterBuilder.RemoveCondition"]">
         <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
