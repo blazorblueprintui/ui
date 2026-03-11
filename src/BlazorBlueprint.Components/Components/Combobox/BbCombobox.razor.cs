@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.JSInterop;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
@@ -329,9 +330,9 @@ public partial class BbCombobox<TValue> : ComponentBase
             await Task.Delay(50);
             await _commandInputRef.FocusAsync();
         }
-        catch
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
         {
-            // Ignore focus errors
+            // Expected during circuit disconnect or disposal
         }
     }
 

@@ -214,9 +214,9 @@
                 "JsOnClickOutside",
                 Context.TriggerId);     // Trigger ID (not ElementReference)
         }
-        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
         {
-            // Expected during circuit disconnect in Blazor Server
+            // Expected during circuit disconnect or module loading failure
         }
         catch (InvalidOperationException)
         {
@@ -244,21 +244,23 @@
         }
     }
 
-    private async void HandleContextStateChanged()
+    private void HandleContextStateChanged()
+    {
+        _ = InvokeAsync(HandleContextStateChangedAsync);
+    }
+
+    private async Task HandleContextStateChangedAsync()
     {
         try
         {
             if (!Context.IsOpen)
             {
-                await InvokeAsync(async () =>
-                {
-                    await CleanupAsync();
-                    StateHasChanged();
-                });
+                await CleanupAsync();
+                StateHasChanged();
             }
             else
             {
-                await InvokeAsync(StateHasChanged);
+                StateHasChanged();
             }
         }
         catch (Exception ex) when (ex is ObjectDisposedException or TaskCanceledException)

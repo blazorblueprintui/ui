@@ -7,6 +7,7 @@ namespace BlazorBlueprint.Components;
 public class ToastService
 {
     private readonly List<ToastData> toasts = new();
+    private readonly object sync = new();
 
     /// <summary>
     /// Event fired when the toast collection changes.
@@ -16,7 +17,16 @@ public class ToastService
     /// <summary>
     /// Gets the current list of toasts.
     /// </summary>
-    public IReadOnlyList<ToastData> Toasts => toasts.AsReadOnly();
+    public IReadOnlyList<ToastData> Toasts
+    {
+        get
+        {
+            lock (sync)
+            {
+                return toasts.ToArray();
+            }
+        }
+    }
 
     /// <summary>
     /// Gets or sets the runtime toast position override.
@@ -50,7 +60,10 @@ public class ToastService
     /// <param name="toast">The toast data to display.</param>
     public void Show(ToastData toast)
     {
-        toasts.Add(toast);
+        lock (sync)
+        {
+            toasts.Add(toast);
+        }
         OnChange?.Invoke();
     }
 
@@ -110,10 +123,14 @@ public class ToastService
     /// <param name="id">The toast ID to dismiss.</param>
     public void Dismiss(string id)
     {
-        var toast = toasts.FirstOrDefault(t => t.Id == id);
-        if (toast != null)
+        bool removed;
+        lock (sync)
         {
-            toasts.Remove(toast);
+            var toast = toasts.FirstOrDefault(t => t.Id == id);
+            removed = toast != null && toasts.Remove(toast);
+        }
+        if (removed)
+        {
             OnChange?.Invoke();
         }
     }
@@ -123,7 +140,10 @@ public class ToastService
     /// </summary>
     public void DismissAll()
     {
-        toasts.Clear();
+        lock (sync)
+        {
+            toasts.Clear();
+        }
         OnChange?.Invoke();
     }
 }

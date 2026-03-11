@@ -297,6 +297,11 @@
                 await OnReady.InvokeAsync();
             }
         }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Expected during circuit disconnect or module loading failure (e.g. offline)
+            _isPositioned = true;
+        }
         catch (Exception ex)
         {
             LogSetupFailed(Logger, PortalId, ex.Message, ex);
@@ -372,6 +377,10 @@
                 AnchorElement.Value,
                 _portalContentRef,
                 options);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Expected during circuit disconnect or module loading failure (e.g. offline)
         }
         catch (Exception ex)
         {

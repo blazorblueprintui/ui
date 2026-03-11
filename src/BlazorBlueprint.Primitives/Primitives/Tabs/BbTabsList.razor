@@ -188,9 +188,9 @@
                 _keyboardNavCleanup = await _keyboardNavModule.InvokeAsync<IJSObjectReference>(
                     "setupKeyboardNav", _elementRef);
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
-                // Circuit disconnected, ignore
+                // Circuit disconnected or module loading failure, ignore
             }
         }
     }

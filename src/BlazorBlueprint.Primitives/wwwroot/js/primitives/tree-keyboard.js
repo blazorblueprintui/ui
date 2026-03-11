@@ -149,7 +149,7 @@ export function initialize(containerElement, dotNetRef, instanceId) {
 
         if (hasChildren && !isExpanded) {
           // Expand the node
-          dotNetRef.invokeMethodAsync('JsOnNodeExpand', value);
+          dotNetRef.invokeMethodAsync('JsOnNodeExpand', value).catch(() => {});
         } else if (hasChildren && isExpanded) {
           // Move to first child
           const group = currentItem.querySelector('[role="group"]');
@@ -169,7 +169,7 @@ export function initialize(containerElement, dotNetRef, instanceId) {
 
         if (isExpanded) {
           // Collapse the node
-          dotNetRef.invokeMethodAsync('JsOnNodeCollapse', value);
+          dotNetRef.invokeMethodAsync('JsOnNodeCollapse', value).catch(() => {});
         } else {
           // Move to parent
           const group = currentItem.parentElement;
@@ -187,7 +187,7 @@ export function initialize(containerElement, dotNetRef, instanceId) {
         e.preventDefault();
         if (!isDisabled(currentItem)) {
           const hasChildren = currentItem.getAttribute('data-has-children') === 'true';
-          dotNetRef.invokeMethodAsync('JsOnNodeActivate', value, hasChildren);
+          dotNetRef.invokeMethodAsync('JsOnNodeActivate', value, hasChildren).catch(() => {});
         }
         break;
       }
@@ -198,10 +198,10 @@ export function initialize(containerElement, dotNetRef, instanceId) {
           // If checkable, toggle checkbox; otherwise, activate/select
           const isCheckable = currentItem.getAttribute('aria-checked') !== null;
           if (isCheckable) {
-            dotNetRef.invokeMethodAsync('JsOnNodeCheck', value);
+            dotNetRef.invokeMethodAsync('JsOnNodeCheck', value).catch(() => {});
           } else {
             const hasChildren = currentItem.getAttribute('data-has-children') === 'true';
-            dotNetRef.invokeMethodAsync('JsOnNodeActivate', value, hasChildren);
+            dotNetRef.invokeMethodAsync('JsOnNodeActivate', value, hasChildren).catch(() => {});
           }
         }
         break;
@@ -234,7 +234,7 @@ export function initialize(containerElement, dotNetRef, instanceId) {
       case '*': {
         e.preventDefault();
         // Expand all siblings of the focused node
-        dotNetRef.invokeMethodAsync('JsOnExpandSiblings', value);
+        dotNetRef.invokeMethodAsync('JsOnExpandSiblings', value).catch(() => {});
         break;
       }
 
@@ -259,9 +259,9 @@ export function initialize(containerElement, dotNetRef, instanceId) {
     if (toggle) {
       const isExpanded = treeItem.getAttribute('aria-expanded') === 'true';
       if (isExpanded) {
-        dotNetRef.invokeMethodAsync('JsOnNodeCollapse', value);
+        dotNetRef.invokeMethodAsync('JsOnNodeCollapse', value).catch(() => {});
       } else {
-        dotNetRef.invokeMethodAsync('JsOnNodeExpand', value);
+        dotNetRef.invokeMethodAsync('JsOnNodeExpand', value).catch(() => {});
       }
       return;
     }
@@ -269,7 +269,7 @@ export function initialize(containerElement, dotNetRef, instanceId) {
     // Check if click was on a checkbox
     const checkbox = clickTarget ? clickTarget.closest('[data-tree-checkbox]') : null;
     if (checkbox) {
-      dotNetRef.invokeMethodAsync('JsOnNodeCheck', value);
+      dotNetRef.invokeMethodAsync('JsOnNodeCheck', value).catch(() => {});
       return;
     }
 
@@ -278,7 +278,7 @@ export function initialize(containerElement, dotNetRef, instanceId) {
 
     // Otherwise, select the node
     const hasChildren = treeItem.getAttribute('data-has-children') === 'true';
-    dotNetRef.invokeMethodAsync('JsOnNodeActivate', value, hasChildren);
+    dotNetRef.invokeMethodAsync('JsOnNodeActivate', value, hasChildren).catch(() => {});
 
     // Make sure the clicked item gets focus and update roving tabindex
     focusTreeItem(treeItem);

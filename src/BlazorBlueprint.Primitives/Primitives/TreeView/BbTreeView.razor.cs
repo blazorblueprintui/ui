@@ -281,9 +281,9 @@ public partial class BbTreeView : IAsyncDisposable
 
                 await keyboardModule.InvokeVoidAsync("initialize", elementRef, dotNetRef, context.Id);
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
-                // Circuit disconnected, ignore
+                // Circuit disconnected or module loading failure, ignore
             }
         }
     }
@@ -407,7 +407,10 @@ public partial class BbTreeView : IAsyncDisposable
         context.ExpandSiblings(value);
     }
 
-    private async void HandleContextStateChanged()
+    private void HandleContextStateChanged() =>
+        _ = InvokeAsync(HandleContextStateChangedAsync);
+
+    private async Task HandleContextStateChangedAsync()
     {
         // Propagate context state changes to bound parameters via EventCallbacks.
         // Do NOT call StateHasChanged() here — BbTreeItem instances re-render via their
@@ -436,10 +439,9 @@ public partial class BbTreeView : IAsyncDisposable
                 await CheckedValuesChanged.InvokeAsync(new HashSet<string>(context.State.CheckedValues));
             }
         }
-        catch (Exception)
+        catch (Exception ex) when (ex is ObjectDisposedException or TaskCanceledException)
         {
-            // Consumer callback exception — prevent unobserved task exceptions
-            // from crashing the application.
+            // Component may be disposed during async operation
         }
     }
 

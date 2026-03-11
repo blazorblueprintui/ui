@@ -42,6 +42,7 @@
     private IJSObjectReference? _clickOutsideCleanup;
     private DotNetObjectReference<BbSelectContent<TValue>>? _dotNetRef;
     private bool _isKeyboardSetup = false;
+    private bool _disposed = false;
     private string _portalId = "";
 
     /// <summary>
@@ -161,7 +162,7 @@
         // Set up JavaScript-based keyboard navigation
         if (!_isKeyboardSetup)
         {
-            _dotNetRef = DotNetObjectReference.Create(this);
+            _dotNetRef ??= DotNetObjectReference.Create(this);
             await _jsModule.InvokeVoidAsync("setupKeyboardNavigation", _context.ContentId, _dotNetRef);
             _isKeyboardSetup = true;
         }
@@ -189,24 +190,30 @@
                 "JsOnClickOutside",
                 _context.TriggerId);     // Trigger ID (not ElementReference)
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
         {
-            Console.WriteLine($"Failed to set up click-outside: {ex.Message}");
+            // Expected during circuit disconnect or module loading failure
+        }
+        catch (InvalidOperationException)
+        {
+            // JS interop not available during prerendering
         }
     }
 
-    private async void HandleContextStateChanged()
+    private void HandleContextStateChanged()
+    {
+        _ = InvokeAsync(HandleContextStateChangedAsync);
+    }
+
+    private async Task HandleContextStateChangedAsync()
     {
         try
         {
             // When context closes, clean up
             if (_context?.IsOpen == false && _isKeyboardSetup)
             {
-                await InvokeAsync(async () =>
-                {
-                    await CleanupAsync();
-                    StateHasChanged();
-                });
+                await CleanupAsync();
+                StateHasChanged();
             }
         }
         catch (Exception ex) when (ex is ObjectDisposedException or TaskCanceledException)
@@ -267,6 +274,7 @@
     [EditorBrowsable(EditorBrowsableState.Never)]
     public void JsOnClickOutside()
     {
+        if (_disposed) { return; }
         _context?.Close();
     }
 
@@ -277,6 +285,7 @@
     [EditorBrowsable(EditorBrowsableState.Never)]
     public void JsOnEscapeKey()
     {
+        if (_disposed) { return; }
         _context?.Close();
     }
 
@@ -287,11 +296,14 @@
     [EditorBrowsable(EditorBrowsableState.Never)]
     public void JsOnTabKey()
     {
+        if (_disposed) { return; }
         _context?.Close();
     }
 
     public async ValueTask DisposeAsync()
     {
+        _disposed = true;
+
         if (_context != null)
         {
             _context.OnStateChanged -= HandleContextStateChanged;

@@ -82,11 +82,16 @@ else
     private ElementReference? _asChildTriggerRef;
 
     /// <summary>
+    /// Cached trigger context to avoid creating new instances on every render.
+    /// </summary>
+    private TriggerContext? _cachedTriggerContext;
+
+    /// <summary>
     /// Context passed to child components when AsChild is true.
     /// When a parent TriggerContext exists (e.g., from DialogTrigger), merges parent click/aria
     /// behavior with tooltip hover/focus behavior so nested triggers work correctly.
     /// </summary>
-    private TriggerContext TriggerContext => new()
+    private TriggerContext TriggerContext => _cachedTriggerContext ??= new()
     {
         TriggerId = ParentTriggerContext?.TriggerId ?? Context.TriggerId,
         IsOpen = ParentTriggerContext?.IsOpen ?? Context.IsOpen,

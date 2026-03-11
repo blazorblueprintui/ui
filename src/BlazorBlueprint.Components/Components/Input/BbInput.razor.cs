@@ -169,6 +169,12 @@ public partial class BbInput : ComponentBase
     public bool? AriaInvalid { get; set; }
 
     /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the input element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
     /// Gets or sets the HTML name attribute for the input element.
     /// </summary>
     /// <remarks>

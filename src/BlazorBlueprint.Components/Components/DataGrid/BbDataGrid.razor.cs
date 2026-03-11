@@ -1548,16 +1548,29 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         if (a is IComparable comparableA)
         {
-            try
+            if (a.GetType() == b.GetType())
             {
-                if (b is string bStr && a is not string)
+                return comparableA.CompareTo(b);
+            }
+
+            if (b is string bStr && a is not string)
+            {
+                try
                 {
                     var converted = Convert.ChangeType(bStr, a.GetType(), System.Globalization.CultureInfo.InvariantCulture);
                     return comparableA.CompareTo(converted);
                 }
+                catch (Exception ex) when (ex is InvalidCastException or FormatException or OverflowException)
+                {
+                    return string.Compare(a.ToString(), b.ToString(), StringComparison.OrdinalIgnoreCase);
+                }
+            }
+
+            try
+            {
                 return comparableA.CompareTo(b);
             }
-            catch
+            catch (Exception ex) when (ex is ArgumentException or InvalidCastException)
             {
                 return string.Compare(a.ToString(), b.ToString(), StringComparison.OrdinalIgnoreCase);
             }

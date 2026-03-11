@@ -255,7 +255,7 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
             return true;
         }
 
-        return true; // Allow re-renders triggered by parent parameter changes
+        return false;
     }
 
     // ══════════════════════════════════════════════════════════════════

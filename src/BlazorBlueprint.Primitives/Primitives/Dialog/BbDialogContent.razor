@@ -122,9 +122,9 @@
                         "import", "./_content/BlazorBlueprint.Primitives/js/primitives/portal.js");
                     _scrollLockCleanup = await _portalModule.InvokeAsync<IJSObjectReference>("lockBodyScroll");
                 }
-                catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+                catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
                 {
-                    // Expected during circuit disconnect in Blazor Server
+                    // Expected during circuit disconnect or module loading failure
                 }
                 catch (InvalidOperationException)
                 {
@@ -140,9 +140,9 @@
                 _dotNetRef = DotNetObjectReference.Create(this);
                 await _escapeModule.InvokeVoidAsync("initialize", _dotNetRef, _instanceId);
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
-                // Expected during circuit disconnect in Blazor Server
+                // Expected during circuit disconnect or module loading failure
             }
             catch (InvalidOperationException)
             {

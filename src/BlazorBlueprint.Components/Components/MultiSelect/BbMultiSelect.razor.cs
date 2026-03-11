@@ -323,9 +323,19 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
                     $"{Id}-search",
                     $"{Id}-listbox");
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
-                Console.WriteLine($"MultiSelect JS setup failed: {ex.Message}");
+                // Expected during circuit disconnect
+                _jsSetupDone = false;
+                _dotNetRef?.Dispose();
+                _dotNetRef = null;
+            }
+            catch (InvalidOperationException)
+            {
+                // JS interop not available during prerendering
+                _jsSetupDone = false;
+                _dotNetRef?.Dispose();
+                _dotNetRef = null;
             }
         }
         // Cleanup JS when popover closes
@@ -343,9 +353,9 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
             {
                 await _multiSelectModule.InvokeVoidAsync("removeMultiSelectInput", $"{Id}-search");
             }
-            catch
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
-                // Module may already be disposed
+                // Module may already be disposed or circuit disconnected
             }
         }
         _jsSetupDone = false;
@@ -424,9 +434,9 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
             await Task.Delay(50);
             await _searchInputRef.FocusAsync();
         }
-        catch
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
         {
-            // Ignore focus errors
+            // Expected during circuit disconnect or disposal
         }
     }
 

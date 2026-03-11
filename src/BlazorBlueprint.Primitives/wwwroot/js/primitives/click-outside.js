@@ -372,12 +372,17 @@ export function onClickOutsideByIds(elementId, dotNetRef, methodName = 'JsOnClic
     document.addEventListener('pointerup', handlePointerUp, true);
 
     // Enable after current event loop to avoid triggering on opening click
-    setTimeout(() => {
-        isEnabled = true;
+    let disposed = false;
+    const enableTimeout = setTimeout(() => {
+        if (!disposed) {
+            isEnabled = true;
+        }
     }, 0);
 
     const cleanupFunc = () => {
+        disposed = true;
         isEnabled = false;
+        clearTimeout(enableTimeout);
         document.removeEventListener('pointerdown', handlePointerDown, true);
         document.removeEventListener('pointerup', handlePointerUp, true);
     };

@@ -166,9 +166,6 @@ export function applyPosition(floating, position, makeVisible = false) {
             floating.style.setProperty('visibility', 'visible', 'important');
             floating.style.setProperty('opacity', '1', 'important');
             floating.style.setProperty('pointer-events', 'auto', 'important');
-            // Also ensure position is not being reset by CSS
-            floating.style.setProperty('top', floating.style.top, 'important');
-            floating.style.setProperty('left', floating.style.left, 'important');
 
             // Dispatch event to signal element is now visible and positioned
             floating.dispatchEvent(new CustomEvent('blazorblueprint:visible', { bubbles: true }));

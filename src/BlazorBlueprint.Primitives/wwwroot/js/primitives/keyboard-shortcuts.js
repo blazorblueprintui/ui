@@ -74,6 +74,7 @@ function handleKeyDown(event) {
  */
 function shouldSkipEvent(event) {
     const target = event.target;
+    if (!target) return false;
 
     // Skip if typing in input elements
     if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
