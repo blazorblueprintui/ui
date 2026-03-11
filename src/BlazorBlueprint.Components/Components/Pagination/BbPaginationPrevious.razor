@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Components
 @using BlazorBlueprint.Icons.Lucide.Components
+@inject IBbLocalizer Localizer
 
 <BbPaginationLink Href="@Href"
                 Size="@EffectiveSize"
@@ -9,11 +10,11 @@
     <LucideIcon Name="chevron-left" Class="h-4 w-4" />
     @if (ShowText)
     {
-        <span>@Text</span>
+        <span>@EffectiveText</span>
     }
     else
     {
-        <span class="sr-only">@Text</span>
+        <span class="sr-only">@EffectiveText</span>
     }
 </BbPaginationLink>
 
@@ -46,10 +47,12 @@
     public bool ShowText { get; set; } = true;
 
     /// <summary>
-    /// Custom text for the button. Default: "Previous"
+    /// Custom text for the button. When null, uses IBbLocalizer with key "Pagination.Previous".
     /// </summary>
     [Parameter]
-    public string Text { get; set; } = "Previous";
+    public string? Text { get; set; }
+
+    private string EffectiveText => Text ?? Localizer["Pagination.Previous"];
 
     /// <summary>
     /// Size of the pagination link. Default: PaginationLinkSize.Default

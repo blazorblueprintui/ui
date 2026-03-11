@@ -13,7 +13,7 @@
             }
             else
             {
-                <span class="text-muted-foreground">@Placeholder</span>
+                <span class="text-muted-foreground">@EffectivePlaceholder</span>
             }
         </BbButton>
     </BbPopoverTrigger>
@@ -23,7 +23,7 @@
             {
                 <div class="flex flex-col border-b" data-drp-body>
                     <div class="flex flex-row overflow-x-auto gap-1 p-3 border-b" data-drp-presets>
-                        <span class="hidden text-xs font-medium text-muted-foreground mb-1" data-drp-presets-label>Quick Select</span>
+                        <span class="hidden text-xs font-medium text-muted-foreground mb-1" data-drp-presets-label>@Localizer["DateRangePicker.QuickSelect"]</span>
                         @foreach (var preset in GetAvailablePresets())
                         {
                             var capturedPreset = preset;
@@ -147,12 +147,12 @@
                 <div class="text-sm text-muted-foreground">
                     @if (_selectionStart.HasValue && !_selectionEnd.HasValue)
                     {
-                        <span>Select end date</span>
+                        <span>@Localizer["DateRangePicker.SelectEndDate"]</span>
                     }
                     else if (_selectionStart.HasValue && _selectionEnd.HasValue)
                     {
                         var days = CountSelectedDays(_selectionStart.Value, _selectionEnd.Value);
-                        <span>@days day(s) selected</span>
+                        <span>@Localizer["DateRangePicker.DaysSelected", days]</span>
                     }
                 </div>
                 <div class="flex gap-2">
@@ -160,13 +160,13 @@
                             class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 px-3"
                             disabled="@(Value == null && !_selectionStart.HasValue)"
                             @onclick="Clear">
-                        Clear
+                        @Localizer["DateRangePicker.Clear"]
                     </button>
                     <button type="button"
                             class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-3"
                             disabled="@(!CanApply)"
                             @onclick="Apply">
-                        Apply
+                        @Localizer["DateRangePicker.Apply"]
                     </button>
                 </div>
             </div>

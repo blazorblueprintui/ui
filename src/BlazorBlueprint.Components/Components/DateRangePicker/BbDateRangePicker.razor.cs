@@ -8,6 +8,8 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public partial class BbDateRangePicker : ComponentBase
 {
+    [Inject] private IBbLocalizer Localizer { get; set; } = default!;
+
     private bool _isOpen;
     private DateTime _displayMonth1;
     private DateTime _displayMonth2;
@@ -18,6 +20,7 @@ public partial class BbDateRangePicker : ComponentBase
     private DateRange? _previousValue;
 
     // Caching fields
+    private CultureInfo _resolvedCulture = CultureInfo.CurrentCulture;
     private DayOfWeek _cachedFirstDayOfWeek;
     private string[]? _cachedDayNames;
     private List<List<DateTime?>>? _cachedWeeksMonth1;
@@ -92,22 +95,38 @@ public partial class BbDateRangePicker : ComponentBase
     public bool ShowPresets { get; set; } = true;
 
     /// <summary>
-    /// The first day of the week.
+    /// The first day of the week. Defaults to the current culture's first day of week.
     /// </summary>
     [Parameter]
-    public DayOfWeek FirstDayOfWeek { get; set; } = DayOfWeek.Sunday;
+    public DayOfWeek? FirstDayOfWeek { get; set; }
+
+    private DayOfWeek EffectiveFirstDayOfWeek => FirstDayOfWeek ?? _resolvedCulture.DateTimeFormat.FirstDayOfWeek;
 
     /// <summary>
-    /// The date format for display.
+    /// The date format for display. Defaults to "d" (culture-aware short date).
     /// </summary>
     [Parameter]
-    public string DateFormat { get; set; } = "MMM d, yyyy";
+    public string DateFormat { get; set; } = "d";
 
     /// <summary>
     /// Placeholder text when no range is selected.
     /// </summary>
     [Parameter]
-    public string Placeholder { get; set; } = "Select date range";
+    public string? Placeholder { get; set; }
+
+    private string EffectivePlaceholder => Placeholder ?? Localizer["DateRangePicker.Placeholder"];
+
+    /// <summary>
+    /// Custom month names to override culture defaults. Must be 12 elements.
+    /// </summary>
+    [Parameter]
+    public string[]? MonthNames { get; set; }
+
+    /// <summary>
+    /// Custom abbreviated day names to override culture defaults. Must be 7 elements starting from Sunday.
+    /// </summary>
+    [Parameter]
+    public string[]? CustomDayNames { get; set; }
 
     /// <summary>
     /// Whether the picker is disabled.
@@ -121,23 +140,30 @@ public partial class BbDateRangePicker : ComponentBase
     [Parameter]
     public string? Class { get; set; }
 
-    private static readonly string[] BaseDayNames = { "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa" };
-
     private string[] DayNames => _cachedDayNames ??= BuildDayNames();
 
     private string[] BuildDayNames()
     {
-        var start = (int)FirstDayOfWeek;
-        var result = new string[7];
+        if (CustomDayNames is { Length: 7 })
+        {
+            var start = (int)EffectiveFirstDayOfWeek;
+            var result = new string[7];
+            for (var i = 0; i < 7; i++)
+            {
+                result[i] = CustomDayNames[(start + i) % 7];
+            }
+            return result;
+        }
+
+        var cultureNames = _resolvedCulture.DateTimeFormat.AbbreviatedDayNames;
+        var startIdx = (int)EffectiveFirstDayOfWeek;
+        var cultureDays = new string[7];
         for (var i = 0; i < 7; i++)
         {
-            result[i] = BaseDayNames[(start + i) % 7];
+            cultureDays[i] = cultureNames[(startIdx + i) % 7];
         }
-        return result;
+        return cultureDays;
     }
-
-    private static readonly string[] MonthNames = { "January", "February", "March", "April", "May", "June",
-                                                     "July", "August", "September", "October", "November", "December" };
 
     // Pre-computed CSS class constants — eliminates ~168 ClassNames.cn()/TailwindMerge calls per render
     private const string CellEmpty = "h-9 w-9 flex-1 text-center text-sm p-0";
@@ -157,6 +183,7 @@ public partial class BbDateRangePicker : ComponentBase
 
     protected override void OnInitialized()
     {
+        _resolvedCulture = CultureInfo.CurrentCulture;
         InitializeDisplayMonths();
         if (Value != null)
         {
@@ -181,10 +208,20 @@ public partial class BbDateRangePicker : ComponentBase
             }
         }
 
-        // Invalidate caches when FirstDayOfWeek changes
-        if (_cachedFirstDayOfWeek != FirstDayOfWeek)
+        // Capture culture at parameter-set time so it's stable across render cycles
+        var currentCulture = CultureInfo.CurrentCulture;
+        if (!ReferenceEquals(_resolvedCulture, currentCulture) && _resolvedCulture.Name != currentCulture.Name)
         {
-            _cachedFirstDayOfWeek = FirstDayOfWeek;
+            _resolvedCulture = currentCulture;
+            _cachedDayNames = null;
+            _cachedWeeksMonth1 = null;
+            _cachedWeeksMonth2 = null;
+        }
+
+        // Invalidate caches when FirstDayOfWeek changes
+        if (_cachedFirstDayOfWeek != EffectiveFirstDayOfWeek)
+        {
+            _cachedFirstDayOfWeek = EffectiveFirstDayOfWeek;
             _cachedDayNames = null;
             _cachedWeeksMonth1 = null;
             _cachedWeeksMonth2 = null;
@@ -205,7 +242,7 @@ public partial class BbDateRangePicker : ComponentBase
     }
 
     private string FormatRange(DateRange range) =>
-        $"{range.Start.ToString(DateFormat, CultureInfo.InvariantCulture)} - {range.End.ToString(DateFormat, CultureInfo.InvariantCulture)}";
+        $"{range.Start.ToString(DateFormat, _resolvedCulture)} - {range.End.ToString(DateFormat, _resolvedCulture)}";
 
     private void PreviousMonth()
     {
@@ -328,16 +365,16 @@ public partial class BbDateRangePicker : ComponentBase
         yield return DateRangePreset.LastMonth;
     }
 
-    private static string GetPresetLabel(DateRangePreset preset) => preset switch
+    private string GetPresetLabel(DateRangePreset preset) => preset switch
     {
-        DateRangePreset.Today => "Today",
-        DateRangePreset.Yesterday => "Yesterday",
-        DateRangePreset.Last7Days => "Last 7 days",
-        DateRangePreset.Last30Days => "Last 30 days",
-        DateRangePreset.ThisMonth => "This month",
-        DateRangePreset.LastMonth => "Last month",
-        DateRangePreset.ThisYear => "This year",
-        _ => "Custom"
+        DateRangePreset.Today => Localizer["DateRangePicker.Today"],
+        DateRangePreset.Yesterday => Localizer["DateRangePicker.Yesterday"],
+        DateRangePreset.Last7Days => Localizer["DateRangePicker.Last7Days"],
+        DateRangePreset.Last30Days => Localizer["DateRangePicker.Last30Days"],
+        DateRangePreset.ThisMonth => Localizer["DateRangePicker.ThisMonth"],
+        DateRangePreset.LastMonth => Localizer["DateRangePicker.LastMonth"],
+        DateRangePreset.ThisYear => Localizer["DateRangePicker.ThisYear"],
+        _ => Localizer["DateRangePicker.Custom"]
     };
 
     private bool IsDateDisabled(DateTime date)
@@ -441,7 +478,7 @@ public partial class BbDateRangePicker : ComponentBase
         var lastOfMonth = firstOfMonth.AddMonths(1).AddDays(-1);
 
         var startDate = firstOfMonth;
-        while (startDate.DayOfWeek != FirstDayOfWeek)
+        while (startDate.DayOfWeek != EffectiveFirstDayOfWeek)
         {
             startDate = startDate.AddDays(-1);
         }
@@ -473,7 +510,9 @@ public partial class BbDateRangePicker : ComponentBase
         return weeks;
     }
 
-    private static string GetMonthName(int month) => MonthNames[month - 1];
+    private string GetMonthName(int month) => MonthNames is { Length: 12 }
+        ? MonthNames[month - 1]
+        : _resolvedCulture.DateTimeFormat.GetMonthName(month);
 
     private string ButtonCssClass => ClassNames.cn(
         ShowTwoMonths ? "w-[300px]" : "w-[240px]",

@@ -2,6 +2,7 @@
 @using BlazorBlueprint.Primitives.DashboardGrid
 @using Microsoft.JSInterop
 @inject IJSRuntime JS
+@inject IBbLocalizer Localizer
 @implements IAsyncDisposable
 
 @if (Loading)
@@ -12,7 +13,7 @@
     }
     else
     {
-        <div class="@LoadingContainerClass" role="status" aria-label="Loading dashboard">
+        <div class="@LoadingContainerClass" role="status" aria-label="@Localizer["DashboardGrid.Loading"]">
             <div class="space-y-4 w-full">
                 <div class="grid gap-2" style="grid-template-columns: repeat(@Columns, 1fr);">
                     @for (var i = 0; i < 4; i++)
@@ -164,8 +165,8 @@ else
             }
             else
             {
-                <BbEmpty Title="No widgets to display"
-                         Description="@(OnAddWidget.HasDelegate ? "Get started by adding your first widget." : null)"
+                <BbEmpty Title="@Localizer["DashboardGrid.NoWidgets"]"
+                         Description="@(OnAddWidget.HasDelegate ? Localizer["DashboardGrid.NoWidgetsDescription"] : null)"
                          Size="EmptySize.Small">
                     <Icon>
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -185,7 +186,7 @@ else
                                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M5 12h14" /><path d="M12 5v14" />
                                 </svg>
-                                Add Widget
+                                @Localizer["DashboardGrid.AddWidget"]
                             </button>
                         }
                     </ChildContent>

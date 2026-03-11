@@ -1,10 +1,11 @@
 @namespace BlazorBlueprint.Components
+@inject IBbLocalizer Localizer
 
 <div class="@CssClass">
     @if (Context?.State != null)
     {
         var state = Context.State;
-        <span>@string.Format(Format, state.CurrentPage, state.TotalPages)</span>
+        <span>@string.Format(EffectiveFormat, state.CurrentPage, state.TotalPages)</span>
     }
     else
     {
@@ -21,10 +22,12 @@
 
     /// <summary>
     /// Format string for displaying page info. Use {0} for current page, {1} for total pages.
-    /// Default: "Page {0} of {1}"
+    /// Falls back to localization default.
     /// </summary>
     [Parameter]
-    public string Format { get; set; } = "Page {0} of {1}";
+    public string? Format { get; set; }
+
+    private string EffectiveFormat => Format ?? Localizer["Pagination.PageFormat"];
 
     /// <summary>
     /// Custom content to display when not using pagination state.

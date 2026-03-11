@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Components
 @typeparam TData where TData : class
+@inject IBbLocalizer Localizer
 
 <CascadingValue Value="this" IsFixed="true">
     <div class="@ContainerCssClass">
@@ -24,7 +25,7 @@
                 else
                 {
                     <div class="flex items-center justify-center p-8 text-muted-foreground">
-                        <div class="text-sm">Loading...</div>
+                        <div class="text-sm">@Localizer["DataTable.Loading"]</div>
                     </div>
                 }
             }
@@ -36,7 +37,7 @@
                 }
                 else
                 {
-                    <BbEmpty Title="No results found" Size="EmptySize.Small" />
+                    <BbEmpty Title="@Localizer["DataTable.NoResultsFound"]" Size="EmptySize.Small" />
                 }
             }
             else
@@ -63,21 +64,21 @@
                                                 <BbDropdownMenuTrigger AsChild="false" Class="inline-flex items-center justify-center p-0 bg-transparent border-0 hover:bg-transparent focus:outline-none">
                                                     <BbCheckbox Checked="@IsAllSelected()"
                                                               Indeterminate="@IsSomeSelected()"
-                                                              AriaLabel="Select rows - click to see options"
+                                                              AriaLabel="@Localizer["DataTable.SelectRowsAriaLabel"]"
                                                               Class="pointer-events-none" />
                                                 </BbDropdownMenuTrigger>
                                                 <BbDropdownMenuContent Side="PopoverSide.Bottom" Align="PopoverAlign.Start">
                                                     <BbDropdownMenuItem OnClick="@HandleSelectAllOnCurrentPage">
-                                                        Select all on this page (@_processedData.Count() items)
+                                                        @Localizer["DataTable.SelectAllOnPage", _processedData.Count()]
                                                     </BbDropdownMenuItem>
                                                     <BbDropdownMenuItem OnClick="@HandleSelectAllItems">
-                                                        Select all @GetTotalFilteredItemCount() items
+                                                        @Localizer["DataTable.SelectAllItems", GetTotalFilteredItemCount()]
                                                     </BbDropdownMenuItem>
                                                     @if (_tableState.Selection.HasSelection)
                                                     {
                                                         <BbDropdownMenuSeparator />
                                                         <BbDropdownMenuItem OnClick="@HandleClearSelection">
-                                                            Clear selection
+                                                            @Localizer["DataTable.ClearSelection"]
                                                         </BbDropdownMenuItem>
                                                     }
                                                 </BbDropdownMenuContent>
@@ -88,7 +89,7 @@
                                             <BbCheckbox Checked="@IsAllSelected()"
                                                       CheckedChanged="@(async (bool isChecked) => await HandleSelectAllChanged(isChecked))"
                                                       Indeterminate="@IsSomeSelected()"
-                                                      AriaLabel="Select all rows" />
+                                                      AriaLabel="@Localizer["DataTable.SelectAllRows"]" />
                                         }
                                     </div>
                                 </BlazorBlueprint.Primitives.Table.BbTableHeaderCell>
@@ -142,7 +143,7 @@
                                         <div @onclick:stopPropagation="true">
                                             <BbCheckbox Checked="@isSelected"
                                                       CheckedChanged="@(async (bool isChecked) => await HandleRowSelectionChanged(item, isChecked))"
-                                                      AriaLabel="@($"Select this row")" />
+                                                      AriaLabel="@Localizer["DataTable.SelectThisRow"]" />
                                         </div>
                                     </BlazorBlueprint.Primitives.Table.BbTableCell>
                                 }

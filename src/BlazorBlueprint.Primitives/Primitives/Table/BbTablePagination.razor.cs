@@ -71,6 +71,82 @@ public partial class BbTablePagination<TData> : ComponentBase, IDisposable
     public string? Class { get; set; }
 
     /// <summary>
+    /// Gets or sets the label for the navigation landmark.
+    /// </summary>
+    [Parameter]
+    public string PaginationAriaLabel { get; set; } = "Pagination Navigation";
+
+    /// <summary>
+    /// Gets or sets the label for the first page button.
+    /// </summary>
+    [Parameter]
+    public string FirstPageLabel { get; set; } = "First";
+
+    /// <summary>
+    /// Gets or sets the aria-label for the first page button.
+    /// </summary>
+    [Parameter]
+    public string FirstPageAriaLabel { get; set; } = "Go to first page";
+
+    /// <summary>
+    /// Gets or sets the label for the previous page button.
+    /// </summary>
+    [Parameter]
+    public string PreviousPageLabel { get; set; } = "Previous";
+
+    /// <summary>
+    /// Gets or sets the aria-label for the previous page button.
+    /// </summary>
+    [Parameter]
+    public string PreviousPageAriaLabel { get; set; } = "Go to previous page";
+
+    /// <summary>
+    /// Gets or sets the label for the next page button.
+    /// </summary>
+    [Parameter]
+    public string NextPageLabel { get; set; } = "Next";
+
+    /// <summary>
+    /// Gets or sets the aria-label for the next page button.
+    /// </summary>
+    [Parameter]
+    public string NextPageAriaLabel { get; set; } = "Go to next page";
+
+    /// <summary>
+    /// Gets or sets the label for the last page button.
+    /// </summary>
+    [Parameter]
+    public string LastPageLabel { get; set; } = "Last";
+
+    /// <summary>
+    /// Gets or sets the aria-label for the last page button.
+    /// </summary>
+    [Parameter]
+    public string LastPageAriaLabel { get; set; } = "Go to last page";
+
+    /// <summary>
+    /// Gets or sets the label for items per page.
+    /// </summary>
+    [Parameter]
+    public string ItemsPerPageLabel { get; set; } = "Items per page:";
+
+    /// <summary>
+    /// Gets or sets the aria-label for the page size selector.
+    /// </summary>
+    [Parameter]
+    public string PageSizeSelectorAriaLabel { get; set; } = "Select page size";
+
+    /// <summary>
+    /// Gets or sets a function that generates the page info text.
+    /// Receives (currentPage, totalPages) and returns the display text.
+    /// </summary>
+    [Parameter]
+    public Func<int, int, string>? PageInfoFormat { get; set; }
+
+    private string GetPageInfoLabel() => PageInfoFormat?.Invoke(State.CurrentPage, State.TotalPages)
+        ?? $"Page {State.CurrentPage} of {State.TotalPages}";
+
+    /// <summary>
     /// Gets the pagination context for the template.
     /// </summary>
     private PaginationContext Context => _context;

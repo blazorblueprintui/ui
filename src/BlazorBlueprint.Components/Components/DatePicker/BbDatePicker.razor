@@ -2,6 +2,7 @@
 @using BlazorBlueprint.Icons.Lucide.Components
 @using Microsoft.AspNetCore.Components.Forms
 @using System.Linq.Expressions
+@inject IBbLocalizer Localizer
 
 @*
     Date Picker component - combines a button trigger with a calendar popover.
@@ -18,7 +19,7 @@
             }
             else
             {
-                <span class="text-muted-foreground">@Placeholder</span>
+                <span class="text-muted-foreground">@EffectivePlaceholder</span>
             }
         </BbButton>
     </BbPopoverTrigger>
@@ -60,16 +61,18 @@
 
     /// <summary>
     /// The date format to display.
-    /// Default is "PPP" style (e.g., "January 20, 2026").
+    /// Default is "d" (culture-aware short date pattern).
     /// </summary>
     [Parameter]
-    public string DateFormat { get; set; } = "MMMM d, yyyy";
+    public string DateFormat { get; set; } = "d";
 
     /// <summary>
     /// Placeholder text when no date is selected.
     /// </summary>
     [Parameter]
-    public string Placeholder { get; set; } = "Pick a date";
+    public string? Placeholder { get; set; }
+
+    private string EffectivePlaceholder => Placeholder ?? Localizer["DatePicker.Placeholder"];
 
     /// <summary>
     /// The minimum selectable date.
@@ -90,10 +93,10 @@
     public Func<DateTime, bool>? DisabledDates { get; set; }
 
     /// <summary>
-    /// The first day of the week.
+    /// The first day of the week. Defaults to the current culture's first day of week.
     /// </summary>
     [Parameter]
-    public DayOfWeek FirstDayOfWeek { get; set; } = DayOfWeek.Sunday;
+    public DayOfWeek? FirstDayOfWeek { get; set; }
 
     /// <summary>
     /// Whether the date picker is disabled.

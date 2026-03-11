@@ -1,9 +1,10 @@
 @namespace BlazorBlueprint.Components
 @using BlazorBlueprint.Icons.Lucide.Components
+@inject IBbLocalizer Localizer
 
 <div class="@CssClass" data-slot="form-wizard" @attributes="AdditionalAttributes">
     @* Step Indicator *@
-    <nav class="@IndicatorCssClass" aria-label="Wizard progress">
+    <nav class="@IndicatorCssClass" aria-label="@Localizer["FormWizard.WizardProgress"]">
         @for (int i = 0; i < steps.Count; i++)
         {
             var index = i;
@@ -82,7 +83,7 @@
                               Disabled="@(!CanGoBack)"
                               OnClick="GoToBackAsync"
                               Class="@(IsFirstStep ? "invisible" : "")">
-                        @(BackLabel ?? "Back")
+                        @(BackLabel ?? Localizer["FormWizard.Back"])
                     </BbButton>
 
                     <div class="flex items-center gap-2">
@@ -90,20 +91,20 @@
                         {
                             <BbButton Variant="ButtonVariant.Ghost"
                                       OnClick="SkipCurrentStepAsync">
-                                Skip
+                                @Localizer["FormWizard.Skip"]
                             </BbButton>
                         }
 
                         @if (IsLastStep)
                         {
                             <BbButton OnClick="CompleteAsync">
-                                @(CompleteLabel ?? "Complete")
+                                @(CompleteLabel ?? Localizer["FormWizard.Complete"])
                             </BbButton>
                         }
                         else
                         {
                             <BbButton OnClick="GoToNextAsync">
-                                @(NextLabel ?? "Next")
+                                @(NextLabel ?? Localizer["FormWizard.Next"])
                             </BbButton>
                         }
                     </div>

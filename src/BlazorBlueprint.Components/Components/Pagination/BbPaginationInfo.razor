@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Components
+@inject IBbLocalizer Localizer
 
 <div class="@CssClass">
     @if (Context?.State != null)
@@ -6,11 +7,11 @@
         var state = Context.State;
         @if (state.TotalItems > 0)
         {
-            <span>@string.Format(Format, state.FirstItemIndex, state.LastItemIndex, state.TotalItems)</span>
+            <span>@string.Format(EffectiveFormat, state.FirstItemIndex, state.LastItemIndex, state.TotalItems)</span>
         }
         else
         {
-            <span>@EmptyText</span>
+            <span>@EffectiveEmptyText</span>
         }
     }
     else
@@ -28,16 +29,20 @@
 
     /// <summary>
     /// Format string for displaying item range. Use {0} for start, {1} for end, {2} for total.
-    /// Default: "Showing {0}-{1} of {2}"
+    /// Falls back to localization default.
     /// </summary>
     [Parameter]
-    public string Format { get; set; } = "Showing {0}-{1} of {2}";
+    public string? Format { get; set; }
+
+    private string EffectiveFormat => Format ?? Localizer["Pagination.ShowingFormat"];
 
     /// <summary>
-    /// Text to display when there are no items. Default: "No items"
+    /// Text to display when there are no items. Falls back to localization default.
     /// </summary>
     [Parameter]
-    public string EmptyText { get; set; } = "No items";
+    public string? EmptyText { get; set; }
+
+    private string EffectiveEmptyText => EmptyText ?? Localizer["Pagination.NoItems"];
 
     /// <summary>
     /// Custom content to display when not using pagination state.
