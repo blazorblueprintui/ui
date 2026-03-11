@@ -38,7 +38,7 @@ namespace BlazorBlueprint.Components;
 /// </example>
 public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where TItem : class
 {
-    [Inject] private BbLocalizationOptions Localization { get; set; } = default!;
+    [Inject] private IBbLocalizer Localizer { get; set; } = default!;
 
     /// <summary>
     /// Internal class for storing field metadata without component parameters.
@@ -648,11 +648,11 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     {
         if (string.IsNullOrEmpty(_sortingState.SortedColumn))
         {
-            return Localization.DataView.Sort;
+            return Localizer["DataView.Sort"];
         }
 
         var field = _fields.FirstOrDefault(f => f.Id == _sortingState.SortedColumn);
-        return field?.Header ?? Localization.DataView.Sort;
+        return field?.Header ?? Localizer["DataView.Sort"];
     }
 
     // ── ShouldRender ─────────────────────────────────────────────────────────

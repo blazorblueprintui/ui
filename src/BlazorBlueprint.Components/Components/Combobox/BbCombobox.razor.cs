@@ -48,7 +48,7 @@ namespace BlazorBlueprint.Components;
 /// </example>
 public partial class BbCombobox<TValue> : ComponentBase
 {
-    [Inject] private BbLocalizationOptions Localization { get; set; } = default!;
+    [Inject] private IBbLocalizer Localizer { get; set; } = default!;
 
     private FieldIdentifier _fieldIdentifier;
     private EditContext? _editContext;
@@ -151,9 +151,9 @@ public partial class BbCombobox<TValue> : ComponentBase
     [Parameter]
     public string? EmptyMessage { get; set; }
 
-    private string EffectivePlaceholder => Placeholder ?? Localization.Combobox.Placeholder;
-    private string EffectiveSearchPlaceholder => SearchPlaceholder ?? Localization.Combobox.SearchPlaceholder;
-    private string EffectiveEmptyMessage => EmptyMessage ?? Localization.Combobox.EmptyMessage;
+    private string EffectivePlaceholder => Placeholder ?? Localizer["Combobox.Placeholder"];
+    private string EffectiveSearchPlaceholder => SearchPlaceholder ?? Localizer["Combobox.SearchPlaceholder"];
+    private string EffectiveEmptyMessage => EmptyMessage ?? Localizer["Combobox.EmptyMessage"];
 
     /// <summary>
     /// Gets or sets the current search query text.

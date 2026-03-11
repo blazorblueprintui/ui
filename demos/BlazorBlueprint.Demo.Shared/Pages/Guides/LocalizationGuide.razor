@@ -19,12 +19,12 @@
             <p class="text-muted-foreground leading-relaxed">
                 BlazorBlueprint ships with English defaults for all component chrome &mdash; placeholders, button labels,
                 aria attributes, pagination text, and empty states. Every string is configurable through
-                <code class="text-xs bg-muted px-1 py-0.5 rounded">BbLocalizationOptions</code>, a simple POCO
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">IBbLocalizer</code>, an interface
                 registered via DI.
             </p>
             <p class="text-muted-foreground leading-relaxed">
                 The library does <strong>not</strong> take a dependency on <code class="text-xs bg-muted px-1 py-0.5 rounded">IStringLocalizer</code>
-                or any specific localization framework. Instead, it provides the hooks &mdash; you bring your own
+                or any specific localization framework. Instead, it provides the abstraction &mdash; you bring your own
                 localization strategy (resource files, JSON, database, or anything else).
             </p>
         </section>
@@ -38,7 +38,7 @@
 
             <div class="grid gap-4 md:grid-cols-2">
                 <div class="p-4 border rounded-lg space-y-2">
-                    <h3 class="font-semibold">Library Chrome (automatic)</h3>
+                    <h3 class="font-semibold">Library Chrome (via IBbLocalizer)</h3>
                     <p class="text-sm text-muted-foreground">
                         Strings owned by the library: placeholders, button labels, empty states,
                         pagination text, aria-labels, and screen-reader text.
@@ -73,25 +73,25 @@
         <section class="space-y-4">
             <h2 class="text-2xl font-semibold">Quick Start</h2>
             <p class="text-muted-foreground leading-relaxed">
-                Pass a configuration action to <code class="text-xs bg-muted px-1 py-0.5 rounded">AddBlazorBlueprintComponents()</code>
-                to override any default label:
+                Use English defaults with no configuration, or override specific keys at startup:
             </p>
             <div class="rounded-lg border bg-muted/50 p-4">
-                <pre class="text-sm overflow-x-auto"><code>builder.Services.AddBlazorBlueprintComponents(opts =>
+                <pre class="text-sm overflow-x-auto"><code>builder.Services.AddBlazorBlueprintComponents(localizer =>
 {
-    opts.DataGrid.NoResultsFound = "Keine Ergebnisse gefunden";
-    opts.DataGrid.Loading = "Laden...";
-    opts.Calendar.GoToPreviousMonth = "Zum vorherigen Monat";
-    opts.DatePicker.Placeholder = "Datum auswählen";
-    opts.Pagination.RowsPerPage = "Zeilen pro Seite";
-    opts.Pagination.PageFormat = "Seite {0} von {1}";
-    opts.FormWizard.Next = "Weiter";
-    opts.FormWizard.Back = "Zurück";
+    localizer.Set("DataGrid.NoResultsFound", "Keine Ergebnisse gefunden");
+    localizer.Set("DataGrid.Loading", "Laden...");
+    localizer.Set("Calendar.GoToPreviousMonth", "Zum vorherigen Monat");
+    localizer.Set("DatePicker.Placeholder", "Datum auswählen");
+    localizer.Set("Pagination.RowsPerPage", "Zeilen pro Seite");
+    localizer.Set("Pagination.PageFormat", "Seite {0} von {1}");
+    localizer.Set("FormWizard.Next", "Weiter");
+    localizer.Set("FormWizard.Back", "Zurück");
 });</code></pre>
             </div>
             <p class="text-muted-foreground leading-relaxed">
-                This registers <code class="text-xs bg-muted px-1 py-0.5 rounded">BbLocalizationOptions</code>
-                as a singleton with your overrides applied. All components resolve their labels from this service.
+                Keys use dot notation: <code class="text-xs bg-muted px-1 py-0.5 rounded">ComponentName.PropertyName</code>.
+                Format strings use standard <code class="text-xs bg-muted px-1 py-0.5 rounded">string.Format</code>
+                placeholders (e.g., <code class="text-xs bg-muted px-1 py-0.5 rounded">"Showing {0}–{1} of {2}"</code>).
             </p>
         </section>
 
@@ -99,94 +99,54 @@
         <section class="space-y-4">
             <h2 class="text-2xl font-semibold">Integration with IStringLocalizer</h2>
             <p class="text-muted-foreground leading-relaxed">
-                For dynamic, multi-language apps, register
-                <code class="text-xs bg-muted px-1 py-0.5 rounded">BbLocalizationOptions</code> as
-                <strong>scoped</strong> so it re-resolves per circuit (Blazor Server) or per request (Blazor WASM):
+                Create a custom <code class="text-xs bg-muted px-1 py-0.5 rounded">IBbLocalizer</code> implementation
+                that delegates to <code class="text-xs bg-muted px-1 py-0.5 rounded">IStringLocalizer&lt;T&gt;</code>:
             </p>
             <div class="rounded-lg border bg-muted/50 p-4">
-                <pre class="text-sm overflow-x-auto"><code>// Register base services (without localization config)
-builder.Services.AddBlazorBlueprintComponents();
-
-// Override with a scoped factory that reads from IStringLocalizer
-builder.Services.AddScoped(sp =>
+                <pre class="text-sm overflow-x-auto"><code>public class AppBbLocalizer(IStringLocalizer&lt;SharedResources&gt; localizer)
+    : DefaultBbLocalizer
 {
-    var loc = sp.GetRequiredService&lt;IStringLocalizer&lt;SharedResources&gt;&gt;();
-    var opts = new BbLocalizationOptions();
+    public override string this[string key] =>
+        localizer[key] is { ResourceNotFound: false } found
+            ? found.Value : base[key];
 
-    opts.DataGrid.NoResultsFound = loc["DataGrid_NoResultsFound"];
-    opts.DataGrid.Loading = loc["DataGrid_Loading"];
-    opts.Combobox.Placeholder = loc["Combobox_Placeholder"];
-    opts.Combobox.SearchPlaceholder = loc["Combobox_SearchPlaceholder"];
-    opts.Combobox.EmptyMessage = loc["Combobox_EmptyMessage"];
-    opts.Pagination.RowsPerPage = loc["Pagination_RowsPerPage"];
-    opts.Pagination.PageFormat = loc["Pagination_PageFormat"];
-    opts.Pagination.ShowingFormat = loc["Pagination_ShowingFormat"];
-    opts.FormWizard.Next = loc["FormWizard_Next"];
-    opts.FormWizard.Back = loc["FormWizard_Back"];
-
-    // Func&lt;&gt; labels support parameterized strings
-    opts.DataGrid.SelectAllOnPage = n => loc["SelectAllOnPage", n];
-    opts.DateRangePicker.DaysSelected = d => loc["DaysSelected", d];
-
-    return opts;
-});</code></pre>
-            </div>
-            <p class="text-muted-foreground leading-relaxed">
-                The scoped registration takes precedence over the singleton. When
-                <code class="text-xs bg-muted px-1 py-0.5 rounded">CultureInfo.CurrentCulture</code> changes,
-                <code class="text-xs bg-muted px-1 py-0.5 rounded">IStringLocalizer</code> automatically
-                resolves the correct language from your <code class="text-xs bg-muted px-1 py-0.5 rounded">.resx</code> files.
-            </p>
-        </section>
-
-        <!-- JSON Configuration -->
-        <section class="space-y-4">
-            <h2 class="text-2xl font-semibold">JSON Configuration</h2>
-            <p class="text-muted-foreground leading-relaxed">
-                You can also load labels from a JSON file using
-                <code class="text-xs bg-muted px-1 py-0.5 rounded">IConfiguration</code> binding:
-            </p>
-            <div class="rounded-lg border bg-muted/50 p-4">
-                <pre class="text-sm overflow-x-auto"><code>// blazorblueprint.de.json
-{
-  "FormWizard": { "Next": "Weiter", "Back": "Zurück", "Skip": "Überspringen" },
-  "DataTable": { "Search": "Suchen...", "NoResultsFound": "Keine Ergebnisse" },
-  "Pagination": { "RowsPerPage": "Zeilen pro Seite" }
+    public override string this[string key, params object[] arguments] =>
+        localizer[key, arguments] is { ResourceNotFound: false } found
+            ? found.Value : base[key, arguments];
 }</code></pre>
             </div>
             <div class="rounded-lg border bg-muted/50 p-4">
-                <pre class="text-sm overflow-x-auto"><code>builder.Configuration.AddJsonFile("blazorblueprint.de.json");
-
-builder.Services.AddBlazorBlueprintComponents(opts =>
-{
-    builder.Configuration.GetSection("FormWizard").Bind(opts.FormWizard);
-    builder.Configuration.GetSection("DataTable").Bind(opts.DataTable);
-    builder.Configuration.GetSection("Pagination").Bind(opts.Pagination);
-});</code></pre>
+                <pre class="text-sm overflow-x-auto"><code>// Register as scoped for per-circuit culture switching
+builder.Services.AddBlazorBlueprintComponents();
+builder.Services.AddScoped&lt;IBbLocalizer, AppBbLocalizer&gt;();</code></pre>
             </div>
+            <p class="text-muted-foreground leading-relaxed">
+                Keys that don't exist in your resource files automatically fall back to English defaults
+                in <code class="text-xs bg-muted px-1 py-0.5 rounded">DefaultBbLocalizer</code>.
+            </p>
         </section>
 
         <!-- Per-Component Overrides -->
         <section class="space-y-4">
             <h2 class="text-2xl font-semibold">Per-Component Overrides</h2>
             <p class="text-muted-foreground leading-relaxed">
-                Component parameters always take priority over DI labels. This lets you override a single
+                Component parameters always take priority over the localizer. This lets you override a single
                 instance without changing the global configuration:
             </p>
             <div class="rounded-lg border bg-muted/50 p-4">
-                <pre class="text-sm overflow-x-auto"><code>&lt;!-- This Combobox uses a custom message regardless of DI config --&gt;
+                <pre class="text-sm overflow-x-auto"><code>&lt;!-- This Combobox uses a custom message regardless of IBbLocalizer --&gt;
 &lt;BbCombobox TValue="string"
             Options="options"
             EmptyMessage="No matching frameworks found"
             @@bind-Value="selected" /&gt;
 
-&lt;!-- This one uses whatever BbLocalizationOptions.Combobox.EmptyMessage is --&gt;
+&lt;!-- This one uses whatever Localizer["Combobox.EmptyMessage"] returns --&gt;
 &lt;BbCombobox TValue="string"
             Options="options"
             @@bind-Value="selected" /&gt;</code></pre>
             </div>
             <p class="text-muted-foreground leading-relaxed">
-                The resolution order is: <strong>Parameter value</strong> &rarr; <strong>BbLocalizationOptions</strong> &rarr; <strong>English default</strong>.
+                The resolution order is: <strong>Parameter value</strong> &rarr; <strong>IBbLocalizer</strong> &rarr; <strong>English default</strong>.
             </p>
         </section>
 
@@ -241,121 +201,120 @@ builder.Services.AddBlazorBlueprintComponents(opts =>
             </div>
         </section>
 
-        <!-- Available Label Classes -->
+        <!-- Available Keys -->
         <section class="space-y-4">
-            <h2 class="text-2xl font-semibold">Available Label Classes</h2>
+            <h2 class="text-2xl font-semibold">Available Keys</h2>
             <p class="text-muted-foreground leading-relaxed">
-                <code class="text-xs bg-muted px-1 py-0.5 rounded">BbLocalizationOptions</code> contains a
-                property for each component's labels. Each labels class is a POCO with
-                <code class="text-xs bg-muted px-1 py-0.5 rounded">{ get; set; }</code> properties and English defaults.
+                All keys use dot notation: <code class="text-xs bg-muted px-1 py-0.5 rounded">ComponentName.PropertyName</code>.
+                Keys marked with <strong>(format)</strong> accept <code class="text-xs bg-muted px-1 py-0.5 rounded">string.Format</code> arguments.
             </p>
             <div class="overflow-x-auto">
                 <table class="w-full text-sm border-collapse">
                     <thead>
                         <tr class="border-b">
-                            <th class="text-left py-2 px-3 font-medium">Property</th>
-                            <th class="text-left py-2 px-3 font-medium">Key Labels</th>
+                            <th class="text-left py-2 px-3 font-medium">Component</th>
+                            <th class="text-left py-2 px-3 font-medium">Keys</th>
                         </tr>
                     </thead>
                     <tbody class="text-muted-foreground">
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.Calendar</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Calendar</code></td>
                             <td class="py-2 px-3">GoToPreviousMonth, GoToNextMonth</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.DataGrid</code></td>
-                            <td class="py-2 px-3">Loading, NoResultsFound, SelectAllRows, ExpandAll, CollapseAll, PreviousPage, NextPage, FilterPlaceholder(...)</td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">DataGrid</code></td>
+                            <td class="py-2 px-3">Loading, NoResultsFound, SelectAllRows, ExpandAll, CollapseAll, PreviousPage, NextPage, FilterPlaceholder <strong>(format)</strong>, ShowingRange <strong>(format)</strong>, RowsSelected <strong>(format)</strong>, +30 more</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.DataTable</code></td>
-                            <td class="py-2 px-3">Loading, NoResultsFound, Search, Columns, ToggleColumns, SelectAllRows, SelectThisRow</td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">DataTable</code></td>
+                            <td class="py-2 px-3">Loading, NoResultsFound, Search, Columns, ToggleColumns, SelectAllRows, SelectThisRow, +6 more</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.Pagination</code></td>
-                            <td class="py-2 px-3">Previous, Next, RowsPerPage, ShowingFormat, PageFormat, GoToFirstPage, GoToLastPage</td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Pagination</code></td>
+                            <td class="py-2 px-3">Previous, Next, RowsPerPage, ShowingFormat, PageFormat, GoToFirstPage, GoToLastPage, MorePages, NoItems</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.Combobox</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Combobox</code></td>
                             <td class="py-2 px-3">Placeholder, SearchPlaceholder, EmptyMessage</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.MultiSelect</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">MultiSelect</code></td>
                             <td class="py-2 px-3">Placeholder, SearchPlaceholder, EmptyMessage, SelectAll, Clear, Close</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.DatePicker</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">DatePicker</code></td>
                             <td class="py-2 px-3">Placeholder</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.DateRangePicker</code></td>
-                            <td class="py-2 px-3">Placeholder, QuickSelect, Today, Yesterday, Last7Days, Last30Days, Clear, Apply, DaysSelected(...)</td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">DateRangePicker</code></td>
+                            <td class="py-2 px-3">Placeholder, QuickSelect, Today, Yesterday, Last7Days, Last30Days, Clear, Apply, DaysSelected <strong>(format)</strong>, +4 more</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.FormWizard</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">FormWizard</code></td>
                             <td class="py-2 px-3">Next, Back, Skip, Complete, WizardProgress</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.FilterBuilder</code></td>
-                            <td class="py-2 px-3">SelectField, RemoveCondition, AddCondition, AddGroup, date preset labels, period labels</td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">FilterBuilder</code></td>
+                            <td class="py-2 px-3">SelectField, AddCondition, AddGroup, RemoveCondition, date preset labels, period labels, +28 more</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.Dialog</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">opts.Sheet</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Dialog</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">Sheet</code></td>
                             <td class="py-2 px-3">Close</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.Sidebar</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Sidebar</code></td>
                             <td class="py-2 px-3">ToggleSidebar</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.Carousel</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Carousel</code></td>
                             <td class="py-2 px-3">NextSlide, PreviousSlide</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.DataView</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">DataView</code></td>
                             <td class="py-2 px-3">SearchPlaceholder, NoResultsFound, Loading, LoadMore, ListView, GridView, Sort</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.MarkdownEditor</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">MarkdownEditor</code></td>
                             <td class="py-2 px-3">SelectHeadingLevel, Bold, Italic, Underline, BulletList, NumberedList</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.RichTextEditor</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">RichTextEditor</code></td>
                             <td class="py-2 px-3">Normal, Heading1/2/3, Bold, Italic, Underline, Strikethrough, BulletList, NumberedList, InsertLink, Blockquote, CodeBlock, EditLink, RemoveLink, Cancel, Update, Insert</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.Alert</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Alert</code></td>
                             <td class="py-2 px-3">Dismiss</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.Breadcrumb</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Breadcrumb</code></td>
                             <td class="py-2 px-3">Breadcrumb, More</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.Command</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Command</code></td>
                             <td class="py-2 px-3">CommandMenu, CommandList</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.DashboardGrid</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">DashboardGrid</code></td>
                             <td class="py-2 px-3">Loading, NoWidgets, AddWidget, RemoveWidget, ResizeWidget</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.NumericInput</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">NumericInput</code></td>
                             <td class="py-2 px-3">IncreaseValue, DecreaseValue</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.TagInput</code></td>
-                            <td class="py-2 px-3">Placeholder, RemoveTag(...), ClearAllTags, TagSuggestions</td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">TagInput</code></td>
+                            <td class="py-2 px-3">Placeholder, RemoveTag <strong>(format)</strong>, ClearAllTags, TagSuggestions</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.Rating</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Rating</code></td>
                             <td class="py-2 px-3">Rating</td>
                         </tr>
                         <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.ResponsiveNav</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">ResponsiveNav</code></td>
                             <td class="py-2 px-3">ToggleMenu</td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">opts.Timeline</code></td>
+                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Timeline</code></td>
                             <td class="py-2 px-3">Timeline</td>
                         </tr>
                     </tbody>
@@ -363,40 +322,23 @@ builder.Services.AddBlazorBlueprintComponents(opts =>
             </div>
         </section>
 
-        <!-- Singleton vs Scoped -->
+        <!-- Dynamic Culture Switching -->
         <section class="space-y-4">
-            <h2 class="text-2xl font-semibold">Singleton vs Scoped Registration</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm border-collapse">
-                    <thead>
-                        <tr class="border-b">
-                            <th class="text-left py-2 px-3 font-medium">Approach</th>
-                            <th class="text-left py-2 px-3 font-medium">When to Use</th>
-                            <th class="text-left py-2 px-3 font-medium">Registration</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-muted-foreground">
-                        <tr class="border-b">
-                            <td class="py-2 px-3 font-medium">Singleton (default)</td>
-                            <td class="py-2 px-3">Single-language app, or language set once at startup</td>
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">AddBlazorBlueprintComponents(opts => ...)</code></td>
-                        </tr>
-                        <tr>
-                            <td class="py-2 px-3 font-medium">Scoped</td>
-                            <td class="py-2 px-3">Multi-language app with runtime culture switching</td>
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">services.AddScoped(sp => ...)</code></td>
-                        </tr>
-                    </tbody>
-                </table>
+            <h2 class="text-2xl font-semibold">Dynamic Culture Switching</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                For multi-language apps, subclass <code class="text-xs bg-muted px-1 py-0.5 rounded">DefaultBbLocalizer</code>
+                and register as scoped. Each Blazor Server circuit gets its own localizer resolved from
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">IStringLocalizer</code>:
+            </p>
+            <div class="rounded-lg border bg-muted/50 p-4">
+                <pre class="text-sm overflow-x-auto"><code>builder.Services.AddBlazorBlueprintComponents();
+builder.Services.AddScoped&lt;IBbLocalizer, AppBbLocalizer&gt;();</code></pre>
             </div>
             <div class="p-4 border-l-4 border-primary bg-primary/5 rounded-r-lg">
                 <p class="text-sm text-muted-foreground">
-                    <strong>Note:</strong> Register your scoped
-                    <code class="text-xs bg-muted px-1 py-0.5 rounded">BbLocalizationOptions</code> factory
-                    <em>before</em> calling
-                    <code class="text-xs bg-muted px-1 py-0.5 rounded">AddBlazorBlueprintComponents()</code>.
-                    The library uses <code class="text-xs bg-muted px-1 py-0.5 rounded">TryAddSingleton</code>,
-                    so your existing registration won't be overwritten.
+                    <strong>Tip:</strong> Missing keys automatically fall back to the English defaults in
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">DefaultBbLocalizer</code>, so you only
+                    need to translate the keys your users will actually see.
                 </p>
             </div>
         </section>

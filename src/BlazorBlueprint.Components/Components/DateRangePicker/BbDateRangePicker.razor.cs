@@ -8,7 +8,7 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public partial class BbDateRangePicker : ComponentBase
 {
-    [Inject] private BbLocalizationOptions Localization { get; set; } = default!;
+    [Inject] private IBbLocalizer Localizer { get; set; } = default!;
 
     private bool _isOpen;
     private DateTime _displayMonth1;
@@ -114,7 +114,7 @@ public partial class BbDateRangePicker : ComponentBase
     [Parameter]
     public string? Placeholder { get; set; }
 
-    private string EffectivePlaceholder => Placeholder ?? Localization.DateRangePicker.Placeholder;
+    private string EffectivePlaceholder => Placeholder ?? Localizer["DateRangePicker.Placeholder"];
 
     /// <summary>
     /// Custom month names to override culture defaults. Must be 12 elements.
@@ -367,14 +367,14 @@ public partial class BbDateRangePicker : ComponentBase
 
     private string GetPresetLabel(DateRangePreset preset) => preset switch
     {
-        DateRangePreset.Today => Localization.DateRangePicker.Today,
-        DateRangePreset.Yesterday => Localization.DateRangePicker.Yesterday,
-        DateRangePreset.Last7Days => Localization.DateRangePicker.Last7Days,
-        DateRangePreset.Last30Days => Localization.DateRangePicker.Last30Days,
-        DateRangePreset.ThisMonth => Localization.DateRangePicker.ThisMonth,
-        DateRangePreset.LastMonth => Localization.DateRangePicker.LastMonth,
-        DateRangePreset.ThisYear => Localization.DateRangePicker.ThisYear,
-        _ => Localization.DateRangePicker.Custom
+        DateRangePreset.Today => Localizer["DateRangePicker.Today"],
+        DateRangePreset.Yesterday => Localizer["DateRangePicker.Yesterday"],
+        DateRangePreset.Last7Days => Localizer["DateRangePicker.Last7Days"],
+        DateRangePreset.Last30Days => Localizer["DateRangePicker.Last30Days"],
+        DateRangePreset.ThisMonth => Localizer["DateRangePicker.ThisMonth"],
+        DateRangePreset.LastMonth => Localizer["DateRangePicker.LastMonth"],
+        DateRangePreset.ThisYear => Localizer["DateRangePicker.ThisYear"],
+        _ => Localizer["DateRangePicker.Custom"]
     };
 
     private bool IsDateDisabled(DateTime date)

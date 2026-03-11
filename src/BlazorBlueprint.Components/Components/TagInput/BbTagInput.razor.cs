@@ -11,7 +11,7 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public partial class BbTagInput : ComponentBase, IAsyncDisposable
 {
-    [Inject] private BbLocalizationOptions Localization { get; set; } = default!;
+    [Inject] private IBbLocalizer Localizer { get; set; } = default!;
 
     // ── Infrastructure ─────────────────────────────────────────────────
     private ElementReference _containerRef;
@@ -72,7 +72,7 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
     [Parameter]
     public string? Placeholder { get; set; }
 
-    private string ResolvedPlaceholder => Placeholder ?? Localization.TagInput.Placeholder;
+    private string ResolvedPlaceholder => Placeholder ?? Localizer["TagInput.Placeholder"];
 
     /// <summary>
     /// Maximum number of tags allowed.

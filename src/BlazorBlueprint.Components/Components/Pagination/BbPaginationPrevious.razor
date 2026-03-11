@@ -1,6 +1,6 @@
 @namespace BlazorBlueprint.Components
 @using BlazorBlueprint.Icons.Lucide.Components
-@inject BbLocalizationOptions Localization
+@inject IBbLocalizer Localizer
 
 <BbPaginationLink Href="@Href"
                 Size="@EffectiveSize"
@@ -47,12 +47,12 @@
     public bool ShowText { get; set; } = true;
 
     /// <summary>
-    /// Custom text for the button. When null, uses BbLocalizationOptions.Pagination.Previous.
+    /// Custom text for the button. When null, uses IBbLocalizer with key "Pagination.Previous".
     /// </summary>
     [Parameter]
     public string? Text { get; set; }
 
-    private string EffectiveText => Text ?? Localization.Pagination.Previous;
+    private string EffectiveText => Text ?? Localizer["Pagination.Previous"];
 
     /// <summary>
     /// Size of the pagination link. Default: PaginationLinkSize.Default

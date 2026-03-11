@@ -8,7 +8,7 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public partial class BbFilterGroup : ComponentBase
 {
-    [Inject] private BbLocalizationOptions Localization { get; set; } = default!;
+    [Inject] private IBbLocalizer Localizer { get; set; } = default!;
 
     private static readonly IEnumerable<SelectOption<LogicalOperator>> logicalOperatorOptions = new[]
     {

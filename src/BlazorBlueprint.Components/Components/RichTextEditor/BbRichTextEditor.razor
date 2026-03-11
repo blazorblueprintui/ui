@@ -2,7 +2,7 @@
 @using Microsoft.JSInterop
 @using BlazorBlueprint.Icons.Lucide.Components
 @inject IJSRuntime JS
-@inject BbLocalizationOptions Localization
+@inject IBbLocalizer Localizer
 @implements IAsyncDisposable
 
 <div class="@ContainerCssClass" data-slot="rich-text-editor" id="@Id">
@@ -18,10 +18,10 @@
                                  Disabled="@Disabled"
                                  Size="NativeSelectSize.Small"
                                  Class="w-auto min-w-[100px]">
-                        <option value="">@Localization.RichTextEditor.Normal</option>
-                        <option value="1">@Localization.RichTextEditor.Heading1</option>
-                        <option value="2">@Localization.RichTextEditor.Heading2</option>
-                        <option value="3">@Localization.RichTextEditor.Heading3</option>
+                        <option value="">@Localizer["RichTextEditor.Normal"]</option>
+                        <option value="1">@Localizer["RichTextEditor.Heading1"]</option>
+                        <option value="2">@Localizer["RichTextEditor.Heading2"]</option>
+                        <option value="3">@Localizer["RichTextEditor.Heading3"]</option>
                     </BbNativeSelect>
                     <BbSeparator Orientation="SeparatorOrientation.Vertical" Class="h-6 mx-1" />
                 }
@@ -31,7 +31,7 @@
                         Size="ToggleSize.Small"
                         Disabled="@Disabled"
                         Class="h-8 w-8 p-0"
-                        title="@Localization.RichTextEditor.Bold">
+                        title="@Localizer["RichTextEditor.Bold"]">
                     <LucideIcon Name="bold" Size="16" />
                 </BbToggle>
                 <BbToggle Pressed="@_isItalic"
@@ -39,7 +39,7 @@
                         Size="ToggleSize.Small"
                         Disabled="@Disabled"
                         Class="h-8 w-8 p-0"
-                        title="@Localization.RichTextEditor.Italic">
+                        title="@Localizer["RichTextEditor.Italic"]">
                     <LucideIcon Name="italic" Size="16" />
                 </BbToggle>
                 <BbToggle Pressed="@_isUnderline"
@@ -47,7 +47,7 @@
                         Size="ToggleSize.Small"
                         Disabled="@Disabled"
                         Class="h-8 w-8 p-0"
-                        title="@Localization.RichTextEditor.Underline">
+                        title="@Localizer["RichTextEditor.Underline"]">
                     <LucideIcon Name="underline" Size="16" />
                 </BbToggle>
 
@@ -58,7 +58,7 @@
                             Size="ToggleSize.Small"
                             Disabled="@Disabled"
                             Class="h-8 w-8 p-0"
-                            title="@Localization.RichTextEditor.Strikethrough">
+                            title="@Localizer["RichTextEditor.Strikethrough"]">
                         <LucideIcon Name="strikethrough" Size="16" />
                     </BbToggle>
                 }
@@ -70,7 +70,7 @@
                         Size="ToggleSize.Small"
                         Disabled="@Disabled"
                         Class="h-8 w-8 p-0"
-                        title="@Localization.RichTextEditor.BulletList">
+                        title="@Localizer["RichTextEditor.BulletList"]">
                     <LucideIcon Name="list" Size="16" />
                 </BbToggle>
                 <BbToggle Pressed="@_isOrderedList"
@@ -78,7 +78,7 @@
                         Size="ToggleSize.Small"
                         Disabled="@Disabled"
                         Class="h-8 w-8 p-0"
-                        title="@Localization.RichTextEditor.NumberedList">
+                        title="@Localizer["RichTextEditor.NumberedList"]">
                     <LucideIcon Name="list-ordered" Size="16" />
                 </BbToggle>
 
@@ -90,8 +90,8 @@
                             OnClick="@(async _ => await InsertLinkAsync())"
                             Disabled="@Disabled"
                             Class="h-8 w-8"
-                            AriaLabel="@Localization.RichTextEditor.InsertLink"
-                            title="@Localization.RichTextEditor.InsertLink">
+                            AriaLabel="@Localizer["RichTextEditor.InsertLink"]"
+                            title="@Localizer["RichTextEditor.InsertLink"]">
                         <LucideIcon Name="link" Size="16" />
                     </BbButton>
                 }
@@ -104,7 +104,7 @@
                             Size="ToggleSize.Small"
                             Disabled="@Disabled"
                             Class="h-8 w-8 p-0"
-                            title="@Localization.RichTextEditor.Blockquote">
+                            title="@Localizer["RichTextEditor.Blockquote"]">
                         <LucideIcon Name="quote" Size="16" />
                     </BbToggle>
                     <BbToggle Pressed="@_isCodeBlock"
@@ -112,7 +112,7 @@
                             Size="ToggleSize.Small"
                             Disabled="@Disabled"
                             Class="h-8 w-8 p-0"
-                            title="@Localization.RichTextEditor.CodeBlock">
+                            title="@Localizer["RichTextEditor.CodeBlock"]">
                         <LucideIcon Name="code" Size="16" />
                     </BbToggle>
                 }
@@ -140,9 +140,9 @@
     <BbDialog @bind-Open="_linkDialogOpen">
         <BbDialogContent Class="sm:max-w-md">
             <BbDialogHeader>
-                <BbDialogTitle>@(_hasExistingLink ? Localization.RichTextEditor.EditLink : Localization.RichTextEditor.InsertLinkTitle)</BbDialogTitle>
+                <BbDialogTitle>@(_hasExistingLink ? Localizer["RichTextEditor.EditLink"] : Localizer["RichTextEditor.InsertLinkTitle"])</BbDialogTitle>
                 <BbDialogDescription>
-                    @(_hasExistingLink ? Localization.RichTextEditor.EditLinkDescription : Localization.RichTextEditor.InsertLinkDescription)
+                    @(_hasExistingLink ? Localizer["RichTextEditor.EditLinkDescription"] : Localizer["RichTextEditor.InsertLinkDescription"])
                 </BbDialogDescription>
             </BbDialogHeader>
             <div class="grid gap-4 py-4">
@@ -165,14 +165,14 @@
                     <BbButton Variant="ButtonVariant.Destructive"
                             OnClick="RemoveLinkAsync"
                             Class="sm:mr-auto">
-                        @Localization.RichTextEditor.RemoveLink
+                        @Localizer["RichTextEditor.RemoveLink"]
                     </BbButton>
                 }
                 <BbButton Variant="ButtonVariant.Outline" OnClick="CloseLinkDialog">
-                    @Localization.RichTextEditor.Cancel
+                    @Localizer["RichTextEditor.Cancel"]
                 </BbButton>
                 <BbButton OnClick="ApplyLinkAsync" Disabled="@(!IsValidUrl(_linkUrl))">
-                    @(_hasExistingLink ? Localization.RichTextEditor.Update : Localization.RichTextEditor.Insert)
+                    @(_hasExistingLink ? Localizer["RichTextEditor.Update"] : Localizer["RichTextEditor.Insert"])
                 </BbButton>
             </BbDialogFooter>
         </BbDialogContent>

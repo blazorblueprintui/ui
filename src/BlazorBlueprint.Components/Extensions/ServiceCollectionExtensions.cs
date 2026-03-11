@@ -13,19 +13,18 @@ public static class ServiceCollectionExtensions
     /// Adds all BlazorBlueprint services (Primitives + Components) to the service collection.
     /// </summary>
     /// <param name="services">The service collection.</param>
-    /// <param name="configureLocalization">Optional action to configure localization labels.</param>
+    /// <param name="configureLocalizer">Optional action to configure localization keys via <see cref="DefaultBbLocalizer.Set"/>.</param>
     /// <returns>The service collection for chaining.</returns>
     /// <remarks>
     /// <para>
-    /// Localization options are registered as singleton by default. If you need dynamic
-    /// culture switching (e.g., per-circuit in Blazor Server), register
-    /// <see cref="BbLocalizationOptions"/> as scoped <b>before</b> calling this method —
-    /// <c>TryAddSingleton</c> will not overwrite an existing registration.
+    /// The localizer is registered as singleton by default via <c>TryAddSingleton</c>.
+    /// To enable dynamic culture switching (e.g., per-circuit in Blazor Server), register
+    /// your own <see cref="IBbLocalizer"/> implementation as scoped before calling this method.
     /// </para>
     /// </remarks>
     public static IServiceCollection AddBlazorBlueprintComponents(
         this IServiceCollection services,
-        Action<BbLocalizationOptions>? configureLocalization = null)
+        Action<DefaultBbLocalizer>? configureLocalizer = null)
     {
         // Register all primitive services (portal, focus, positioning, dropdown manager, keyboard shortcuts)
         services.AddBlazorBlueprintPrimitives();
@@ -37,10 +36,10 @@ public static class ServiceCollectionExtensions
         // Register DialogService as scoped for programmatic confirm dialogs
         services.AddScoped<DialogService>();
 
-        // Register localization options (singleton by default; consumers can pre-register as scoped for dynamic cultures)
-        var options = new BbLocalizationOptions();
-        configureLocalization?.Invoke(options);
-        services.TryAddSingleton(options);
+        // Register localizer (singleton by default; consumers can pre-register IBbLocalizer as scoped)
+        var localizer = new DefaultBbLocalizer();
+        configureLocalizer?.Invoke(localizer);
+        services.TryAddSingleton<IBbLocalizer>(localizer);
 
         return services;
     }

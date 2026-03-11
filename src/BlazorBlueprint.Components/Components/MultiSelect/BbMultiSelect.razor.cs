@@ -16,7 +16,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     private IJSRuntime JSRuntime { get; set; } = default!;
 
     [Inject]
-    private BbLocalizationOptions Localization { get; set; } = default!;
+    private IBbLocalizer Localizer { get; set; } = default!;
 
     private FieldIdentifier _fieldIdentifier;
     private EditContext? _editContext;
@@ -126,12 +126,12 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     [Parameter]
     public string? CloseLabel { get; set; }
 
-    private string EffectivePlaceholder => Placeholder ?? Localization.MultiSelect.Placeholder;
-    private string EffectiveSearchPlaceholder => SearchPlaceholder ?? Localization.MultiSelect.SearchPlaceholder;
-    private string EffectiveEmptyMessage => EmptyMessage ?? Localization.MultiSelect.EmptyMessage;
-    private string EffectiveSelectAllLabel => SelectAllLabel ?? Localization.MultiSelect.SelectAll;
-    private string EffectiveClearLabel => ClearLabel ?? Localization.MultiSelect.Clear;
-    private string EffectiveCloseLabel => CloseLabel ?? Localization.MultiSelect.Close;
+    private string EffectivePlaceholder => Placeholder ?? Localizer["MultiSelect.Placeholder"];
+    private string EffectiveSearchPlaceholder => SearchPlaceholder ?? Localizer["MultiSelect.SearchPlaceholder"];
+    private string EffectiveEmptyMessage => EmptyMessage ?? Localizer["MultiSelect.EmptyMessage"];
+    private string EffectiveSelectAllLabel => SelectAllLabel ?? Localizer["MultiSelect.SelectAll"];
+    private string EffectiveClearLabel => ClearLabel ?? Localizer["MultiSelect.Clear"];
+    private string EffectiveCloseLabel => CloseLabel ?? Localizer["MultiSelect.Close"];
 
     /// <summary>
     /// Gets or sets additional CSS classes to apply to the multiselect container.

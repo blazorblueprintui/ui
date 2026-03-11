@@ -14,33 +14,33 @@ public partial class BbDataGridColumnFilter : ComponentBase
     private bool hasInitializedEditCondition;
     private FilterCondition? trackedCurrentFilter;
 
-    [Inject] private BbLocalizationOptions Localization { get; set; } = default!;
+    [Inject] private IBbLocalizer Localizer { get; set; } = default!;
 
     private IEnumerable<SelectOption<InLastPeriod>> InLastPeriodOptions => new[]
     {
-        new SelectOption<InLastPeriod>(InLastPeriod.Days, Localization.FilterBuilder.Days),
-        new SelectOption<InLastPeriod>(InLastPeriod.Weeks, Localization.FilterBuilder.Weeks),
-        new SelectOption<InLastPeriod>(InLastPeriod.Months, Localization.FilterBuilder.Months),
-        new SelectOption<InLastPeriod>(InLastPeriod.Hours, Localization.FilterBuilder.Hours),
-        new SelectOption<InLastPeriod>(InLastPeriod.Minutes, Localization.FilterBuilder.Minutes),
-        new SelectOption<InLastPeriod>(InLastPeriod.Seconds, Localization.FilterBuilder.Seconds)
+        new SelectOption<InLastPeriod>(InLastPeriod.Days, Localizer["FilterBuilder.Days"]),
+        new SelectOption<InLastPeriod>(InLastPeriod.Weeks, Localizer["FilterBuilder.Weeks"]),
+        new SelectOption<InLastPeriod>(InLastPeriod.Months, Localizer["FilterBuilder.Months"]),
+        new SelectOption<InLastPeriod>(InLastPeriod.Hours, Localizer["FilterBuilder.Hours"]),
+        new SelectOption<InLastPeriod>(InLastPeriod.Minutes, Localizer["FilterBuilder.Minutes"]),
+        new SelectOption<InLastPeriod>(InLastPeriod.Seconds, Localizer["FilterBuilder.Seconds"])
     };
 
     private IEnumerable<SelectOption<DatePreset>> DatePresetOptions => new[]
     {
-        new SelectOption<DatePreset>(DatePreset.Today, Localization.FilterBuilder.Today),
-        new SelectOption<DatePreset>(DatePreset.Yesterday, Localization.FilterBuilder.Yesterday),
-        new SelectOption<DatePreset>(DatePreset.Tomorrow, Localization.FilterBuilder.Tomorrow),
-        new SelectOption<DatePreset>(DatePreset.ThisWeek, Localization.FilterBuilder.ThisWeek),
-        new SelectOption<DatePreset>(DatePreset.LastWeek, Localization.FilterBuilder.LastWeek),
-        new SelectOption<DatePreset>(DatePreset.NextWeek, Localization.FilterBuilder.NextWeek),
-        new SelectOption<DatePreset>(DatePreset.ThisMonth, Localization.FilterBuilder.ThisMonth),
-        new SelectOption<DatePreset>(DatePreset.LastMonth, Localization.FilterBuilder.LastMonth),
-        new SelectOption<DatePreset>(DatePreset.NextMonth, Localization.FilterBuilder.NextMonth),
-        new SelectOption<DatePreset>(DatePreset.ThisQuarter, Localization.FilterBuilder.ThisQuarter),
-        new SelectOption<DatePreset>(DatePreset.LastQuarter, Localization.FilterBuilder.LastQuarter),
-        new SelectOption<DatePreset>(DatePreset.ThisYear, Localization.FilterBuilder.ThisYear),
-        new SelectOption<DatePreset>(DatePreset.LastYear, Localization.FilterBuilder.LastYear)
+        new SelectOption<DatePreset>(DatePreset.Today, Localizer["FilterBuilder.Today"]),
+        new SelectOption<DatePreset>(DatePreset.Yesterday, Localizer["FilterBuilder.Yesterday"]),
+        new SelectOption<DatePreset>(DatePreset.Tomorrow, Localizer["FilterBuilder.Tomorrow"]),
+        new SelectOption<DatePreset>(DatePreset.ThisWeek, Localizer["FilterBuilder.ThisWeek"]),
+        new SelectOption<DatePreset>(DatePreset.LastWeek, Localizer["FilterBuilder.LastWeek"]),
+        new SelectOption<DatePreset>(DatePreset.NextWeek, Localizer["FilterBuilder.NextWeek"]),
+        new SelectOption<DatePreset>(DatePreset.ThisMonth, Localizer["FilterBuilder.ThisMonth"]),
+        new SelectOption<DatePreset>(DatePreset.LastMonth, Localizer["FilterBuilder.LastMonth"]),
+        new SelectOption<DatePreset>(DatePreset.NextMonth, Localizer["FilterBuilder.NextMonth"]),
+        new SelectOption<DatePreset>(DatePreset.ThisQuarter, Localizer["FilterBuilder.ThisQuarter"]),
+        new SelectOption<DatePreset>(DatePreset.LastQuarter, Localizer["FilterBuilder.LastQuarter"]),
+        new SelectOption<DatePreset>(DatePreset.ThisYear, Localizer["FilterBuilder.ThisYear"]),
+        new SelectOption<DatePreset>(DatePreset.LastYear, Localizer["FilterBuilder.LastYear"])
     };
 
     /// <summary>
