@@ -252,7 +252,7 @@ public partial class BbInputGroupTextarea : ComponentBase
     }
 
     /// <summary>
-    /// Called from JavaScript on blur/Enter (all modes).
+    /// Called from JavaScript on blur (all modes).
     /// </summary>
     [JSInvokable]
     public async Task JsOnChange(string? value)

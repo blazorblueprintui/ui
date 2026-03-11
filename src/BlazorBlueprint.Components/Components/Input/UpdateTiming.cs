@@ -11,7 +11,8 @@ public enum UpdateTiming
     Immediate,
 
     /// <summary>
-    /// Fires <c>ValueChanged</c> only when the input loses focus or the user presses Enter (default).
+    /// Fires <c>ValueChanged</c> only when the element loses focus (default).
+    /// For single-line inputs, also fires when the user presses Enter.
     /// Zero C# interop calls during typing.
     /// </summary>
     OnChange,

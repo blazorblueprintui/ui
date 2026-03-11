@@ -3,7 +3,8 @@
  * Handles input/change events in JS to minimize C# interop calls.
  *
  * Modes:
- *   - onchange:  JS only calls C# on blur/Enter (zero interop during typing).
+ *   - onchange:  JS only calls C# on the native change event (zero interop during typing).
+ *                For inputs this fires on blur and Enter; for textareas it fires on blur only.
  *   - immediate: JS batches calls via requestAnimationFrame.
  *   - debounced: JS debounces calls via setTimeout.
  */

@@ -70,7 +70,7 @@ public partial class BbTextarea : ComponentBase
     /// </summary>
     /// <remarks>
     /// When <see cref="UpdateTiming"/> is <see cref="UpdateTiming.OnChange"/> (default),
-    /// fires only on blur or Enter. Use <see cref="UpdateTiming.Immediate"/> for per-keystroke updates.
+    /// fires only on blur. Use <see cref="UpdateTiming.Immediate"/> for per-keystroke updates.
     /// </remarks>
     [Parameter]
     public EventCallback<string?> ValueChanged { get; set; }
@@ -200,7 +200,7 @@ public partial class BbTextarea : ComponentBase
     /// <remarks>
     /// <list type="bullet">
     /// <item><see cref="UpdateTiming.Immediate"/> — every keystroke (batched via requestAnimationFrame).</item>
-    /// <item><see cref="UpdateTiming.OnChange"/> — only on blur / Enter (default).</item>
+    /// <item><see cref="UpdateTiming.OnChange"/> — only on blur (default).</item>
     /// <item><see cref="UpdateTiming.Debounced"/> — after typing pauses for <see cref="DebounceInterval"/> ms.</item>
     /// </list>
     /// </remarks>
@@ -339,7 +339,7 @@ public partial class BbTextarea : ComponentBase
     }
 
     /// <summary>
-    /// Called from JavaScript on blur/Enter (all modes).
+    /// Called from JavaScript on blur (all modes).
     /// </summary>
     [JSInvokable]
     public async Task JsOnChange(string? value)
