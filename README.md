@@ -31,6 +31,7 @@ Beautiful UI components for Blazor, built with accessibility in mind. Inspired b
 - [Primitives](#primitives)
 - [Icons](#icons)
 - [Theming](#theming)
+- [Localization](#localization)
 - [Architecture](#architecture)
 - [Demo Applications](#demo-applications)
 - [Contributing](#contributing)
@@ -161,7 +162,7 @@ Production-ready components for complex data-driven applications:
 | Component | Description |
 |-----------|-------------|
 | **Dashboard Grid** | Drag-and-drop, resizable widget layout for composing dashboards. Built on CSS Grid with responsive breakpoints, state persistence, keyboard accessibility, and loading/empty states. |
-| **DataGrid** | Full-featured data grid with multi-column sorting, per-column filtering, row grouping with aggregates, row selection, expandable rows, virtualization, context menus, pinned columns, column reordering/resizing/visibility, and state persistence. Supports `IQueryable`, `IEnumerable`, and `ItemsProvider` data sources. |
+| **DataGrid** | Full-featured data grid with multi-column sorting, per-column filtering, row grouping with aggregates, hierarchical tree data, row selection, expandable rows, virtualization, context menus, pinned columns, column reordering/resizing/visibility, and state persistence. Supports `IQueryable`, `IEnumerable`, and `ItemsProvider` data sources. |
 | **Dynamic Form** | Schema-driven form rendering — define fields, validation rules, and layout in a schema object, and the component generates the complete form with appropriate inputs, conditional visibility, and error display. |
 | **Filter Builder** | Visual query builder for constructing complex filter expressions with AND/OR logic, nested condition groups, and type-aware operators. Pairs with DataGrid for interactive data exploration. |
 | **Form Wizard** | Multi-step form wizard with progress indicators, per-step validation, optional/skippable steps, and navigation controls. |
@@ -245,7 +246,7 @@ Production-ready components for complex data-driven applications:
 | **Alert Dialog** | Modal requiring user acknowledgement |
 | **Command** | Command palette with keyboard navigation, filtering, and dialog mode |
 | **Context Menu** | Right-click menu with customizable items |
-| **Dialog** | Modal dialogs with programmatic `DialogService` |
+| **Dialog** | Modal dialogs with programmatic `DialogService` supporting alert, prompt, and custom component dialogs |
 | **Drawer** | Mobile-friendly panel sliding from screen edge |
 | **Dropdown Menu** | Menus with checkbox items and keyboard navigation |
 | **Hover Card** | Rich hover previews |
@@ -261,7 +262,7 @@ Production-ready components for complex data-driven applications:
 |----------------------|--------------------------------------------------------------------------------------------------------------------|
 | **Chart**            | 11 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Pie, Radar, Radial Bar, Scatter) with theme integration |
 | **Dashboard Grid**   | Drag-and-drop, resizable widget layout for dashboards with responsive breakpoints, state persistence, and keyboard accessibility |
-| **DataGrid**         | Enterprise data grid with sorting, per-column filtering, row grouping with aggregates, selection, expandable rows, row virtualization, context menu, pinned columns, column reordering/resizing/visibility, and state persistence |
+| **DataGrid**         | Enterprise data grid with sorting, per-column filtering, row grouping with aggregates, hierarchical tree data, selection, expandable rows, row virtualization, context menu, pinned columns, column reordering/resizing/visibility, and state persistence |
 | **DataTable**        | Tables with sorting, filtering, pagination, and row selection                                                      |
 | **DataView**         | Displays data using templates in a grid or list layout with sorting, filtering, pagination, and infinite scrolling |
 | **Markdown Editor**  | Toolbar formatting with live preview                                                                               |
@@ -375,6 +376,33 @@ Load your theme **before** `blazorblueprint.css` so the variables are defined wh
 
 Apply the `.dark` class to your `<html>` element. All components automatically switch to dark mode colors.
 
+## Localization
+
+All component chrome strings (button labels, placeholders, ARIA labels, status messages) are localizable via the `IBbLocalizer` interface. The built-in `DefaultBbLocalizer` provides English defaults for all 189 strings.
+
+### Quick Start
+
+Subclass `DefaultBbLocalizer` to integrate with your localization strategy:
+
+```csharp
+public class AppLocalizer : DefaultBbLocalizer
+{
+    private readonly IStringLocalizer<SharedResources> localizer;
+
+    public AppLocalizer(IStringLocalizer<SharedResources> localizer)
+    {
+        this.localizer = localizer;
+    }
+
+    public override string this[string key] => localizer[key] ?? base[key];
+}
+
+// Register in Program.cs
+builder.Services.AddSingleton<IBbLocalizer, AppLocalizer>();
+```
+
+Components use string-key lookup (e.g., `Localizer["DataGrid.Loading"]`) with `string.Format` for parameterized strings. Calendar, DatePicker, DateRangePicker, and NumericInput automatically adapt to `CultureInfo.CurrentCulture` for date/number formatting.
+
 ## Architecture
 
 Blazor Blueprint uses a **two-layer architecture** inspired by [Radix UI](https://www.radix-ui.com/):
@@ -396,7 +424,7 @@ Services are registered via dependency injection:
 - `AddBlazorBlueprintComponents()` — registers everything (Components + Primitives)
 - `AddBlazorBlueprintPrimitives()` — registers only Primitives services
 
-Key services include `IPortalService` (overlay rendering), `IFocusManager` (focus trapping), `IPositioningService` (floating element positioning), `IKeyboardShortcutService` (global shortcuts), `DialogService` (programmatic dialogs), and `ToastService` (notifications).
+Key services include `IPortalService` (overlay rendering), `IFocusManager` (focus trapping), `IPositioningService` (floating element positioning), `IKeyboardShortcutService` (global shortcuts), `DialogService` (programmatic dialogs), `ToastService` (notifications), and `IBbLocalizer` (localization).
 
 ## Demo Applications
 
