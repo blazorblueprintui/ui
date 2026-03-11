@@ -275,7 +275,7 @@ public partial class BbDateRangePicker : ComponentBase
     }
 
     /// <summary>
-    /// Clear slection of the dates
+    /// Clear selection of the dates.
     /// </summary>
     public async Task Clear()
     {
@@ -283,6 +283,7 @@ public partial class BbDateRangePicker : ComponentBase
         _selectionEnd = null;
         Value = null;
         await ValueChanged.InvokeAsync(null);
+        StateHasChanged();
     }
 
     private void ApplyPreset(DateRangePreset preset)
