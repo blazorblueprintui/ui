@@ -6,13 +6,13 @@
 <select id="@EffectiveId"
         class="@CssClass"
         name="@EffectiveName"
-        value="@Value"
+        value="@CurrentStringValue"
         disabled="@Disabled"
         data-bb-native-select
         @onchange="HandleChange">
     @if (!string.IsNullOrEmpty(Placeholder))
     {
-        <option value="" disabled selected="@(Value == null || Value.Equals(default(TValue)))">@Placeholder</option>
+        <option value="" disabled selected="@IsPlaceholderSelected">@Placeholder</option>
     }
     @ChildContent
 </select>
@@ -90,6 +90,7 @@
     public string? Id { get; set; }
 
     private string? _generatedId;
+    private bool _hasSelection;
 
     protected override void OnParametersSet()
     {
@@ -102,12 +103,17 @@
         }
     }
 
+    private bool IsPlaceholderSelected => !_hasSelection && Value == null;
+
+    private string CurrentStringValue => _hasSelection ? Value?.ToString() ?? "" : "";
+
     private async Task HandleChange(ChangeEventArgs e)
     {
         var stringValue = e.Value?.ToString();
 
         if (string.IsNullOrEmpty(stringValue))
         {
+            _hasSelection = false;
             await ValueChanged.InvokeAsync(default);
         }
         else
@@ -116,10 +122,12 @@
             {
                 var targetType = Nullable.GetUnderlyingType(typeof(TValue)) ?? typeof(TValue);
                 var convertedValue = (TValue)Convert.ChangeType(stringValue, targetType);
+                _hasSelection = true;
                 await ValueChanged.InvokeAsync(convertedValue);
             }
             catch
             {
+                _hasSelection = false;
                 await ValueChanged.InvokeAsync(default);
             }
         }

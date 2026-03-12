@@ -347,14 +347,14 @@ public partial class BbDateRangePicker : ComponentBase
         StateHasChanged();
     }
 
-    private int? _selectedPresetIndex;
+    private int _selectedPresetIndex;
 
-    private void OnPresetSelectChanged(int? index)
+    private void OnPresetSelectChanged(int index)
     {
-        if (index.HasValue && index.Value >= 0 && index.Value < EffectivePresets.Count)
+        if (index >= 0 && index < EffectivePresets.Count)
         {
-            _selectedPresetIndex = index.Value;
-            ApplyPreset(EffectivePresets[index.Value]);
+            _selectedPresetIndex = index;
+            ApplyPreset(EffectivePresets[index]);
         }
     }
 
