@@ -1,0 +1,19 @@
+<BbDateRangePicker @bind-Value="_mixedPresets" Presets="_mixedPresetList" />
+
+@code {
+    private DateRange? _mixedPresets;
+
+    private readonly List<DateRangeQuickPick> _mixedPresetList = new()
+    {
+        DateRangePreset.Today,       // built-in (auto-localized)
+        DateRangePreset.Last7Days,   // built-in (auto-localized)
+        DateRangePreset.ThisMonth,   // built-in (auto-localized)
+        DateRangePreset.ThisYear,    // built-in (not shown by default)
+        DateRangeQuickPick.Custom("Last Quarter", () =>
+        {
+            var today = DateTime.Today;
+            var quarterStart = new DateTime(today.Year, ((today.Month - 1) / 3) * 3 + 1, 1).AddMonths(-3);
+            return new DateRange(quarterStart, quarterStart.AddMonths(3).AddDays(-1));
+        }),
+    };
+}

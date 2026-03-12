@@ -39,6 +39,7 @@ public partial class BbDateRangePicker : ComponentBase
     private bool _lastShowTwoMonths;
     private bool _lastShowPresets;
     private bool _lastDisabled;
+    private IReadOnlyList<DateRangeQuickPick>? _lastPresets;
 
     /// <summary>
     /// The selected date range.
@@ -93,6 +94,26 @@ public partial class BbDateRangePicker : ComponentBase
     /// </summary>
     [Parameter]
     public bool ShowPresets { get; set; } = true;
+
+    /// <summary>
+    /// Custom list of quick-pick presets. When null, the default built-in presets are shown.
+    /// Supports both built-in presets (via <see cref="DateRangeQuickPick.FromPreset"/> or implicit conversion
+    /// from <see cref="DateRangePreset"/>) and fully custom entries (via <see cref="DateRangeQuickPick.Custom"/>).
+    /// </summary>
+    [Parameter]
+    public IReadOnlyList<DateRangeQuickPick>? Presets { get; set; }
+
+    private static readonly IReadOnlyList<DateRangeQuickPick> DefaultPresets = new List<DateRangeQuickPick>
+    {
+        DateRangePreset.Today,
+        DateRangePreset.Yesterday,
+        DateRangePreset.Last7Days,
+        DateRangePreset.Last30Days,
+        DateRangePreset.ThisMonth,
+        DateRangePreset.LastMonth
+    };
+
+    private IReadOnlyList<DateRangeQuickPick> EffectivePresets => Presets ?? DefaultPresets;
 
     /// <summary>
     /// The first day of the week. Defaults to the current culture's first day of week.
@@ -326,9 +347,20 @@ public partial class BbDateRangePicker : ComponentBase
         StateHasChanged();
     }
 
-    private void ApplyPreset(DateRangePreset preset)
+    private int _selectedPresetIndex;
+
+    private void OnPresetSelectChanged(int index)
     {
-        var range = GetPresetRange(preset);
+        if (index >= 0 && index < EffectivePresets.Count)
+        {
+            _selectedPresetIndex = index;
+            ApplyPreset(EffectivePresets[index]);
+        }
+    }
+
+    private void ApplyPreset(DateRangeQuickPick quickPick)
+    {
+        var range = ResolveRange(quickPick);
         if (range != null && CountSelectedDays(range.Start, range.End) > 0)
         {
             _selectionStart = range.Start;
@@ -339,6 +371,12 @@ public partial class BbDateRangePicker : ComponentBase
             _cachedWeeksMonth2 = null;
         }
     }
+
+    private static DateRange? ResolveRange(DateRangeQuickPick quickPick) =>
+        quickPick.Preset.HasValue ? GetPresetRange(quickPick.Preset.Value) : quickPick.RangeFactory?.Invoke();
+
+    private string ResolveLabel(DateRangeQuickPick quickPick) =>
+        quickPick.Preset.HasValue ? GetPresetLabel(quickPick.Preset.Value) : quickPick.Label ?? string.Empty;
 
     private static DateRange? GetPresetRange(DateRangePreset preset)
     {
@@ -357,16 +395,6 @@ public partial class BbDateRangePicker : ComponentBase
                                                        new DateTime(today.Year, 12, 31)),
             _ => null
         };
-    }
-
-    private static IEnumerable<DateRangePreset> GetAvailablePresets()
-    {
-        yield return DateRangePreset.Today;
-        yield return DateRangePreset.Yesterday;
-        yield return DateRangePreset.Last7Days;
-        yield return DateRangePreset.Last30Days;
-        yield return DateRangePreset.ThisMonth;
-        yield return DateRangePreset.LastMonth;
     }
 
     private string GetPresetLabel(DateRangePreset preset) => preset switch
@@ -526,15 +554,15 @@ public partial class BbDateRangePicker : ComponentBase
         Class
     );
 
-    private string GetPresetButtonClass(DateRangePreset preset)
+    private string GetPresetButtonClass(DateRangeQuickPick quickPick)
     {
-        var range = GetPresetRange(preset);
+        var range = ResolveRange(quickPick);
         var isSelected = range != null && _selectionStart.HasValue && _selectionEnd.HasValue &&
                          range.Start == _selectionStart.Value && range.End == _selectionEnd.Value;
 
         return ClassNames.cn(
-            "text-left px-2 py-1.5 text-sm rounded-md transition-colors whitespace-nowrap shrink-0",
-            isSelected ? "bg-primary text-primary-foreground" : "hover:bg-accent hover:text-accent-foreground"
+            "whitespace-nowrap shrink-0 justify-start",
+            isSelected ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground" : null
         );
     }
 
@@ -608,6 +636,7 @@ public partial class BbDateRangePicker : ComponentBase
             _lastShowTwoMonths = ShowTwoMonths;
             _lastShowPresets = ShowPresets;
             _lastDisabled = Disabled;
+            _lastPresets = Presets;
             return true;
         }
 
@@ -621,7 +650,8 @@ public partial class BbDateRangePicker : ComponentBase
             || _lastMaxDate != MaxDate
             || _lastShowTwoMonths != ShowTwoMonths
             || _lastShowPresets != ShowPresets
-            || _lastDisabled != Disabled;
+            || _lastDisabled != Disabled
+            || !ReferenceEquals(_lastPresets, Presets);
 
         if (changed)
         {
@@ -636,6 +666,7 @@ public partial class BbDateRangePicker : ComponentBase
             _lastShowTwoMonths = ShowTwoMonths;
             _lastShowPresets = ShowPresets;
             _lastDisabled = Disabled;
+            _lastPresets = Presets;
             return true;
         }
 

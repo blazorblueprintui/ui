@@ -6,12 +6,13 @@
 <select id="@EffectiveId"
         class="@CssClass"
         name="@EffectiveName"
-        value="@Value"
+        value="@CurrentStringValue"
         disabled="@Disabled"
+        data-bb-native-select
         @onchange="HandleChange">
     @if (!string.IsNullOrEmpty(Placeholder))
     {
-        <option value="" disabled selected="@(Value == null || Value.Equals(default(TValue)))">@Placeholder</option>
+        <option value="" disabled selected="@IsPlaceholderSelected">@Placeholder</option>
     }
     @ChildContent
 </select>
@@ -89,6 +90,7 @@
     public string? Id { get; set; }
 
     private string? _generatedId;
+    private bool _hasSelection;
 
     protected override void OnParametersSet()
     {
@@ -101,23 +103,31 @@
         }
     }
 
+    private bool IsPlaceholderSelected => !_hasSelection && Value == null;
+
+    private string CurrentStringValue => _hasSelection ? Value?.ToString() ?? "" : "";
+
     private async Task HandleChange(ChangeEventArgs e)
     {
         var stringValue = e.Value?.ToString();
 
         if (string.IsNullOrEmpty(stringValue))
         {
+            _hasSelection = false;
             await ValueChanged.InvokeAsync(default);
         }
         else
         {
             try
             {
-                var convertedValue = (TValue)Convert.ChangeType(stringValue, typeof(TValue));
+                var targetType = Nullable.GetUnderlyingType(typeof(TValue)) ?? typeof(TValue);
+                var convertedValue = (TValue)Convert.ChangeType(stringValue, targetType);
+                _hasSelection = true;
                 await ValueChanged.InvokeAsync(convertedValue);
             }
             catch
             {
+                _hasSelection = false;
                 await ValueChanged.InvokeAsync(default);
             }
         }
@@ -147,9 +157,7 @@
         "flex w-full rounded-md border border-input bg-background py-2",
         "focus:outline-none",
         "disabled:cursor-not-allowed disabled:opacity-50",
-        "appearance-none bg-no-repeat",
-        "bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%236b7280%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22m6%209%206%206%206-6%22%2F%3E%3C%2Fsvg%3E')]",
-        "bg-[length:1rem] bg-[right_0.5rem_center] pr-8",
+        "appearance-none pr-8",
         SizeClasses,
         Class
     );

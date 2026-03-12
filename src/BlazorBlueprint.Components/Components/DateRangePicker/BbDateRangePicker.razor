@@ -22,18 +22,35 @@
             @if (ShowPresets)
             {
                 <div class="flex flex-col border-b" data-drp-body>
-                    <div class="flex flex-row overflow-x-auto gap-1 p-3 border-b" data-drp-presets>
-                        <span class="hidden text-xs font-medium text-muted-foreground mb-1" data-drp-presets-label>@Localizer["DateRangePicker.QuickSelect"]</span>
-                        @foreach (var preset in GetAvailablePresets())
-                        {
-                            var capturedPreset = preset;
-                            <button type="button"
-                                    class="@GetPresetButtonClass(capturedPreset)"
-                                    data-drp-preset-btn
-                                    @onclick="@(() => ApplyPreset(capturedPreset))">
-                                @GetPresetLabel(capturedPreset)
-                            </button>
-                        }
+                    <div class="p-3 border-b" data-drp-presets>
+                        @* Mobile: native select *@
+                        <div data-drp-presets-select>
+                            <BbNativeSelect TValue="int"
+                                            Value="_selectedPresetIndex"
+                                            ValueChanged="OnPresetSelectChanged"
+                                            Placeholder="@Localizer["DateRangePicker.QuickSelect"]"
+                                            Size="NativeSelectSize.Small">
+                                @for (var i = 0; i < EffectivePresets.Count; i++)
+                                {
+                                    <option value="@i">@ResolveLabel(EffectivePresets[i])</option>
+                                }
+                            </BbNativeSelect>
+                        </div>
+                        @* Desktop: button sidebar *@
+                        <div class="hidden" data-drp-presets-inner>
+                            <span class="hidden text-xs font-medium text-muted-foreground mb-1" data-drp-presets-label>@Localizer["DateRangePicker.QuickSelect"]</span>
+                            @foreach (var quickPick in EffectivePresets)
+                            {
+                                var captured = quickPick;
+                                <BbButton Variant="ButtonVariant.Ghost"
+                                          Size="ButtonSize.Small"
+                                          Class="@GetPresetButtonClass(captured)"
+                                          data-drp-preset-btn
+                                          OnClick="@(() => ApplyPreset(captured))">
+                                    @ResolveLabel(captured)
+                                </BbButton>
+                            }
+                        </div>
                     </div>
                     <div class="flex-1">
                         @* Inline Calendars *@

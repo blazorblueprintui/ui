@@ -63,6 +63,60 @@
         <CodeBlock Source="Components/DateRangePicker/without-presets.txt" />
     </div>
 
+    <!-- Custom Presets -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Presets</h2>
+            <p class="text-sm text-muted-foreground">
+                Fully custom quick-pick presets with user-defined labels and date range logic.
+            </p>
+        </div>
+        <BbDateRangePicker @bind-Value="_customPresets" Presets="_fullyCustomPresets" />
+        <p class="text-sm text-muted-foreground">
+            @if (_customPresets != null)
+            {
+                @($"Selected: {_customPresets.Start:MMM d, yyyy} - {_customPresets.End:MMM d, yyyy} ({_customPresets.Days} days)")
+            }
+        </p>
+        <CodeBlock Source="Components/DateRangePicker/custom-presets.txt" />
+    </div>
+
+    <!-- Mixed Presets -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Mixed Presets</h2>
+            <p class="text-sm text-muted-foreground">
+                Combine built-in presets (with automatic localization) and custom entries.
+                Built-in presets use implicit conversion from <code class="text-xs bg-muted px-1 py-0.5 rounded">DateRangePreset</code>.
+            </p>
+        </div>
+        <BbDateRangePicker @bind-Value="_mixedPresets" Presets="_mixedPresetList" />
+        <p class="text-sm text-muted-foreground">
+            @if (_mixedPresets != null)
+            {
+                @($"Selected: {_mixedPresets.Start:MMM d, yyyy} - {_mixedPresets.End:MMM d, yyyy} ({_mixedPresets.Days} days)")
+            }
+        </p>
+        <CodeBlock Source="Components/DateRangePicker/mixed-presets.txt" />
+    </div>
+
+    <!-- Many Presets (Scroll) -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Many Presets (Scroll)</h2>
+            <p class="text-sm text-muted-foreground">
+                When many presets are provided, the sidebar becomes scrollable on desktop.
+            </p>
+        </div>
+        <BbDateRangePicker @bind-Value="_manyPresets" Presets="_manyPresetList" />
+        <p class="text-sm text-muted-foreground">
+            @if (_manyPresets != null)
+            {
+                @($"Selected: {_manyPresets.Start:MMM d, yyyy} - {_manyPresets.End:MMM d, yyyy} ({_manyPresets.Days} days)")
+            }
+        </p>
+    </div>
+
     <!-- With Date Constraints -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -227,6 +281,9 @@
                 <ApiParameter Name="ShowPresets" Type="bool" Default="true">
                     Show quick select presets.
                 </ApiParameter>
+                <ApiParameter Name="Presets" Type="IReadOnlyList&lt;DateRangeQuickPick&gt;?" Default="null">
+                    Custom list of quick-pick presets. Supports built-in presets via implicit conversion from <code class="text-xs bg-muted px-1 py-0.5 rounded">DateRangePreset</code> and custom entries via <code class="text-xs bg-muted px-1 py-0.5 rounded">DateRangeQuickPick.Custom(label, rangeFactory)</code>. When null, the default built-in presets are shown.
+                </ApiParameter>
                 <ApiParameter Name="FirstDayOfWeek" Type="DayOfWeek" Default="Sunday">
                     First day of week.
                 </ApiParameter>
@@ -255,8 +312,10 @@
 
             <div class="border rounded-lg p-6">
                 <h3 class="font-mono text-sm font-semibold mb-2">Preset Ranges</h3>
-                <div class="text-sm text-muted-foreground">
-                    <p>Today, Yesterday, Last 7 days, Last 30 days, This month, Last month</p>
+                <div class="text-sm text-muted-foreground space-y-2">
+                    <p><strong>Default:</strong> Today, Yesterday, Last 7 days, Last 30 days, This month, Last month</p>
+                    <p><strong>Available built-in:</strong> Today, Yesterday, Last7Days, Last30Days, ThisMonth, LastMonth, ThisYear</p>
+                    <p>Use <code class="text-xs bg-muted px-1 py-0.5 rounded">DateRangeQuickPick.Custom(label, rangeFactory)</code> for fully custom presets.</p>
                 </div>
             </div>
         </div>
@@ -296,6 +355,8 @@
     private DateRange? _basicRange;
     private DateRange? _singleMonth;
     private DateRange? _noPresets;
+    private DateRange? _customPresets;
+    private DateRange? _mixedPresets;
     private DateRange? _constrained;
     private DateRange? _minMaxDays;
     private DateRange? _noWeekends;
@@ -303,4 +364,79 @@
     private DateRange? _customFormat;
     private DateRange? _placeholder;
     private DateRange? _mondayFirst;
+
+    private readonly List<DateRangeQuickPick> _fullyCustomPresets = new()
+    {
+        DateRangeQuickPick.Custom("Last Quarter", () =>
+        {
+            var today = DateTime.Today;
+            var quarterStart = new DateTime(today.Year, ((today.Month - 1) / 3) * 3 + 1, 1).AddMonths(-3);
+            return new DateRange(quarterStart, quarterStart.AddMonths(3).AddDays(-1));
+        }),
+        DateRangeQuickPick.Custom("Next 14 Days", () =>
+            new DateRange(DateTime.Today, DateTime.Today.AddDays(13))),
+        DateRangeQuickPick.Custom("Year to Date", () =>
+            new DateRange(new DateTime(DateTime.Today.Year, 1, 1), DateTime.Today)),
+    };
+
+    private DateRange? _manyPresets;
+
+    private readonly List<DateRangeQuickPick> _manyPresetList = new()
+    {
+        DateRangePreset.Today,
+        DateRangePreset.Yesterday,
+        DateRangePreset.Last7Days,
+        DateRangePreset.Last30Days,
+        DateRangePreset.ThisMonth,
+        DateRangePreset.LastMonth,
+        DateRangePreset.ThisYear,
+        DateRangeQuickPick.Custom("Last Quarter", () =>
+        {
+            var today = DateTime.Today;
+            var quarterStart = new DateTime(today.Year, ((today.Month - 1) / 3) * 3 + 1, 1).AddMonths(-3);
+            return new DateRange(quarterStart, quarterStart.AddMonths(3).AddDays(-1));
+        }),
+        DateRangeQuickPick.Custom("Next 14 Days", () =>
+            new DateRange(DateTime.Today, DateTime.Today.AddDays(13))),
+        DateRangeQuickPick.Custom("Next 30 Days", () =>
+            new DateRange(DateTime.Today, DateTime.Today.AddDays(29))),
+        DateRangeQuickPick.Custom("Last 60 Days", () =>
+            new DateRange(DateTime.Today.AddDays(-59), DateTime.Today)),
+        DateRangeQuickPick.Custom("Last 90 Days", () =>
+            new DateRange(DateTime.Today.AddDays(-89), DateTime.Today)),
+        DateRangeQuickPick.Custom("Last 6 Months", () =>
+            new DateRange(DateTime.Today.AddMonths(-6), DateTime.Today)),
+        DateRangeQuickPick.Custom("Last 12 Months", () =>
+            new DateRange(DateTime.Today.AddMonths(-12), DateTime.Today)),
+        DateRangeQuickPick.Custom("Next 7 Days", () =>
+            new DateRange(DateTime.Today, DateTime.Today.AddDays(6))),
+        DateRangeQuickPick.Custom("Next Quarter", () =>
+        {
+            var today = DateTime.Today;
+            var quarterStart = new DateTime(today.Year, ((today.Month - 1) / 3) * 3 + 1, 1).AddMonths(3);
+            return new DateRange(quarterStart, quarterStart.AddMonths(3).AddDays(-1));
+        }),
+        DateRangeQuickPick.Custom("Next 60 Days", () =>
+            new DateRange(DateTime.Today, DateTime.Today.AddDays(59))),
+        DateRangeQuickPick.Custom("Next 90 Days", () =>
+            new DateRange(DateTime.Today, DateTime.Today.AddDays(89))),
+        DateRangeQuickPick.Custom("Next 6 Months", () =>
+            new DateRange(DateTime.Today, DateTime.Today.AddMonths(6))),
+        DateRangeQuickPick.Custom("Next 12 Months", () =>
+            new DateRange(DateTime.Today, DateTime.Today.AddMonths(12))),
+    };
+
+    private readonly List<DateRangeQuickPick> _mixedPresetList = new()
+    {
+        DateRangePreset.Today,
+        DateRangePreset.Last7Days,
+        DateRangePreset.ThisMonth,
+        DateRangePreset.ThisYear,
+        DateRangeQuickPick.Custom("Last Quarter", () =>
+        {
+            var today = DateTime.Today;
+            var quarterStart = new DateTime(today.Year, ((today.Month - 1) / 3) * 3 + 1, 1).AddMonths(-3);
+            return new DateRange(quarterStart, quarterStart.AddMonths(3).AddDays(-1));
+        }),
+    };
 }

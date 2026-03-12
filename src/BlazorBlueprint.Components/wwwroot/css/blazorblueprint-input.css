@@ -402,6 +402,14 @@
   }
 }
 
+/* NativeSelect chevron — inline SVG that Tailwind v4 cannot extract from arbitrary-value classes */
+[data-bb-native-select] {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: 1rem;
+  background-position: right 0.5rem center;
+}
+
 /* DateRangePicker responsive layout — desktop (≥640px)
    Doubled data-attribute selectors give specificity 0,2,0 which beats single-class Tailwind
    utilities (0,1,0) regardless of source order, keeping these rules inside the layer system. */
@@ -416,12 +424,30 @@
     }
 
     [data-drp-presets][data-drp-presets] {
-      flex-direction: column;
+      /* Position context for the absolute inner scroller */
+      position: relative;
       overflow-x: visible;
       border-bottom-width: 0;
       border-right-style: var(--tw-border-style);
       border-right-width: 1px;
       min-width: 140px;
+      padding: 0;
+    }
+
+    /* Hide the mobile select on desktop */
+    [data-drp-presets][data-drp-presets] > [data-drp-presets-select] {
+      display: none;
+    }
+
+    /* Inner scroller fills the sidebar and scrolls independently of the calendar */
+    [data-drp-presets][data-drp-presets] > [data-drp-presets-inner] {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      gap: calc(var(--spacing) * 1);
+      padding: calc(var(--spacing) * 3);
     }
 
     [data-drp-presets-label][data-drp-presets-label] {
@@ -450,7 +476,7 @@
     }
 
     [data-drp-preset-btn][data-drp-preset-btn] {
-      flex-shrink: 1;
+      flex-shrink: 0;
       white-space: normal;
     }
 
