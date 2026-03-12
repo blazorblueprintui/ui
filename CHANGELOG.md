@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - **BbNativeSelect** — Fix placeholder not displaying for value types and chevron icon not rendering. Moved SVG chevron from Tailwind arbitrary-value classes to CSS for Tailwind v4 compatibility. Fixed `Convert.ChangeType` failing silently for nullable `TValue` types.
+- **BbSidebarProvider** — Add missing `bg-sidebar` background class to the provider wrapper when using the `Inset` variant, so the inset content area renders with proper visual contrast. (#239)
 
 ---
 
