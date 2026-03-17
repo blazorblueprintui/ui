@@ -86,6 +86,41 @@
         <CodeBlock Source="Components/FormFieldCheckboxGroup/disabled.txt" />
     </div>
 
+    <!-- Validation with ErrorText -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Validation with ErrorText</h2>
+            <p class="text-sm text-muted-foreground">
+                CheckboxGroup doesn't support <code class="text-xs bg-muted px-1 py-0.5 rounded">EditForm</code> directly.
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">ErrorText</code> for manual validation.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldCheckboxGroup TValue="string"
+                                     @bind-Values="_validatedTopics"
+                                     Label="Topics of interest"
+                                     HelperText="Select at least one topic."
+                                     ErrorText="@_topicsError">
+                <BbCheckboxGroupItem Value="@("tech")" Label="Technology" />
+                <BbCheckboxGroupItem Value="@("science")" Label="Science" />
+                <BbCheckboxGroupItem Value="@("art")" Label="Art" />
+                <BbCheckboxGroupItem Value="@("sports")" Label="Sports" />
+            </BbFormFieldCheckboxGroup>
+            <div class="mt-3">
+                <BbButton OnClick="ValidateTopics">Submit</BbButton>
+            </div>
+            @if (_topicsSubmitted)
+            {
+                <div class="mt-4 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 p-4">
+                    <p class="text-sm font-medium text-green-800 dark:text-green-200">
+                        Submitted: @string.Join(", ", _validatedTopics)
+                    </p>
+                </div>
+            }
+        </div>
+        <CodeBlock Source="Components/FormFieldCheckboxGroup/validation.txt" />
+    </div>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>Label visually associated with the checkbox group</AccessibilityItem>
@@ -120,4 +155,21 @@
 @code {
     private IReadOnlyCollection<string> _selectedFruits = Array.Empty<string>();
     private IReadOnlyCollection<string> _selectedPermissions = Array.Empty<string>();
+    private IReadOnlyCollection<string> _validatedTopics = Array.Empty<string>();
+    private string? _topicsError;
+    private bool _topicsSubmitted;
+
+    private void ValidateTopics()
+    {
+        _topicsSubmitted = false;
+
+        if (!_validatedTopics.Any())
+        {
+            _topicsError = "Please select at least one topic.";
+            return;
+        }
+
+        _topicsError = null;
+        _topicsSubmitted = true;
+    }
 }
