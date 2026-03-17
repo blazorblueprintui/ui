@@ -1,0 +1,39 @@
+@* Layout="SortableLayout.Grid" applies a two-column grid. *@
+@* Override columns via Class, e.g., Class="grid-cols-3 gap-3". *@
+
+<BbSortable TItem="ColorCard"
+            Items="@_cards"
+            Layout="SortableLayout.Grid"
+            AriaLabel="Sortable card grid"
+            OnUpdate="HandleUpdate">
+    <ItemTemplate Context="card">
+        <BbCard Class="cursor-grab active:cursor-grabbing select-none">
+            <BbCardContent Class="pt-6">
+                <div class="@($"h-16 rounded-md {card.Color} flex items-center justify-center")">
+                    <span class="text-white font-semibold text-sm">@card.Label</span>
+                </div>
+            </BbCardContent>
+        </BbCard>
+    </ItemTemplate>
+</BbSortable>
+
+@code {
+    private record ColorCard(string Label, string Color);
+
+    private List<ColorCard> _cards =
+    [
+        new("Ocean", "bg-blue-500"),
+        new("Forest", "bg-green-500"),
+        new("Sunset", "bg-orange-500"),
+        new("Berry", "bg-purple-500"),
+        new("Rose", "bg-rose-500"),
+        new("Sky", "bg-cyan-500"),
+    ];
+
+    private void HandleUpdate((int OldIndex, int NewIndex) args)
+    {
+        var card = _cards[args.OldIndex];
+        _cards.RemoveAt(args.OldIndex);
+        _cards.Insert(args.NewIndex, card);
+    }
+}
