@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-17
+
+### Added
+
+- **BbSortable Primitive** (`BlazorBlueprint.Primitives.Sortable`) — New headless drag-and-drop sortable primitive powered by SortableJS. Handles all JS interop lifecycle (init, destroy, re-init on parameter changes), ARIA live announcements, `@key`-based Blazor diffing, and `IAsyncDisposable` cleanup. Supports within-list reorder, connected multi-list transfers, drag handles, and configurable group/pull/put/sort/filter options.
+- **BbSortable Component** (`BlazorBlueprint.Components`) — Styled wrapper over the Sortable primitive adding `SortableLayout` enum (`List`/`Grid`) with pre-built Tailwind CSS layout classes and `Class` parameter for customization.
+- **Sortable demo pages** — Component demo at `/components/sortable` (basic list, drag handle, connected lists, grid, Kanban board) and Primitive demo at `/primitives/sortable` (basic, handle, connected lists).
+
+---
+
 ## 2026-03-12
 
 ### Added
