@@ -1,0 +1,229 @@
+@page "/components/form-field-time-picker"
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>FormFieldTimePicker Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">FormFieldTimePicker</h1>
+            <p class="text-xl text-muted-foreground">
+                A form field wrapper for TimePicker with built-in label, helper text, and error messages.
+            </p>
+        </div>
+    </div>
+
+    <!-- Which form component? -->
+    <div class="rounded-lg border border-dashed bg-muted/30 p-6 space-y-3">
+        <h2 class="text-lg font-semibold">Which form component?</h2>
+        <div class="space-y-2 text-sm text-muted-foreground">
+            <p><strong>Text input</strong> (string, int, date, etc.)? &rarr; <a href="/components/form-field-input" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldInput&lt;T&gt;</a></p>
+            <p><strong>Textarea</strong>? &rarr; <a href="/components/form-field-textarea" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldTextarea</a></p>
+            <p><strong>Numeric input</strong>? &rarr; <a href="/components/form-field-numeric-input" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldNumericInput</a></p>
+            <p><strong>Date picker</strong>? &rarr; <a href="/components/form-field-date-picker" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldDatePicker</a></p>
+            <p><strong>Time picker</strong>? &rarr; <strong>FormFieldTimePicker</strong> (this page)</p>
+            <p><strong>Checkbox</strong>? &rarr; <a href="/components/form-field-checkbox" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldCheckbox</a></p>
+            <p><strong>Switch</strong>? &rarr; <a href="/components/form-field-switch" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldSwitch</a></p>
+            <p><strong>Select dropdown</strong>? &rarr; <a href="/components/form-field-select" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldSelect</a></p>
+            <p><strong>Native select</strong>? &rarr; <a href="/components/form-field-native-select" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldNativeSelect</a></p>
+            <p><strong>Radio group</strong>? &rarr; <a href="/components/form-field-radio-group" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldRadioGroup</a></p>
+            <p><strong>Searchable select</strong>? &rarr; <a href="/components/form-field-combobox" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldCombobox</a></p>
+            <p><strong>Multi-select</strong>? &rarr; <a href="/components/form-field-multi-select" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldMultiSelect</a></p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-sm text-muted-foreground">
+                A time picker with an auto-associated label and helper text.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldTimePicker @bind-Value="_meetingTime"
+                                  Label="Meeting time"
+                                  HelperText="Select a time for the meeting." />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Selected:</p>
+            <p class="text-sm font-mono">@(_meetingTime?.ToString(@"hh\:mm") ?? "(none)")</p>
+        </div>
+        <CodeBlock Source="Components/FormFieldTimePicker/basic.txt" />
+    </div>
+
+    <!-- 24-Hour Format -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">24-Hour Format</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="text-xs bg-muted px-1 py-0.5 rounded">Format</code> to
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">TimeFormat.Hour24</code> for 24-hour display.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldTimePicker @bind-Value="_departureTime"
+                                  Label="Departure time"
+                                  HelperText="Using 24-hour clock."
+                                  Format="TimeFormat.Hour24" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Selected:</p>
+            <p class="text-sm font-mono">@(_departureTime?.ToString(@"hh\:mm") ?? "(none)")</p>
+        </div>
+        <CodeBlock Source="Components/FormFieldTimePicker/hour24.txt" />
+    </div>
+
+    <!-- With Seconds -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">With Seconds</h2>
+            <p class="text-sm text-muted-foreground">
+                Enable the seconds selector with <code class="text-xs bg-muted px-1 py-0.5 rounded">ShowSeconds</code>.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldTimePicker @bind-Value="_preciseTime"
+                                  Label="Precise time"
+                                  HelperText="Includes seconds."
+                                  ShowSeconds="true"
+                                  Format="TimeFormat.Hour24" />
+        </div>
+        <CodeBlock Source="Components/FormFieldTimePicker/seconds.txt" />
+    </div>
+
+    <!-- Disabled -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">
+                A disabled time picker form field.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldTimePicker Value="@(new TimeSpan(9, 0, 0))"
+                                  Label="Office hours start"
+                                  HelperText="Set by your organization."
+                                  Disabled="true" />
+        </div>
+        <CodeBlock Source="Components/FormFieldTimePicker/disabled.txt" />
+    </div>
+
+    <!-- EditForm Integration -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">EditForm Integration</h2>
+            <p class="text-sm text-muted-foreground">
+                Validation errors display automatically inside an EditForm.
+                Try submitting without selecting a time.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <EditForm Model="_formModel" OnValidSubmit="HandleFormSubmit">
+                <DataAnnotationsValidator />
+                <div class="space-y-4">
+                    <BbFormFieldTimePicker @bind-Value="_formModel.ReminderTime"
+                                          Label="Reminder time"
+                                          Placeholder="Pick a time..." />
+                    <BbButton Type="ButtonType.Submit">Submit</BbButton>
+                </div>
+            </EditForm>
+            @if (_formSubmitted)
+            {
+                <div class="mt-4 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 p-4">
+                    <p class="text-sm font-medium text-green-800 dark:text-green-200">
+                        Submitted: @_formModel.ReminderTime?.ToString(@"hh\:mm")
+                    </p>
+                </div>
+            }
+        </div>
+        <CodeBlock Source="Components/FormFieldTimePicker/editform.txt" />
+    </div>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Label visually associated with the time picker trigger</AccessibilityItem>
+            <AccessibilityItem>Description linked via aria-describedby</AccessibilityItem>
+            <AccessibilityItem>Validation errors displayed with aria-invalid</AccessibilityItem>
+        </AriaAttributes>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="FormFieldTimePicker">
+                <ApiParameter Name="Label" Type="string?" Default="null">
+                    The label text displayed above the time picker.
+                </ApiParameter>
+                <ApiParameter Name="HelperText" Type="string?" Default="null">
+                    Helper text displayed below the time picker. Hidden during error state.
+                </ApiParameter>
+                <ApiParameter Name="ErrorText" Type="string?" Default="null">
+                    Manual error text override. When the field is invalid and this is set, replaces auto-generated messages.
+                </ApiParameter>
+                <ApiParameter Name="Orientation" Type="FieldOrientation" Default="Vertical">
+                    Layout orientation of the field.
+                </ApiParameter>
+                <ApiParameter Name="Value" Type="TimeSpan?" Default="null">
+                    The selected time value. Use @@bind-Value for two-way binding.
+                </ApiParameter>
+                <ApiParameter Name="ValueChanged" Type="EventCallback&lt;TimeSpan?&gt;">
+                    Callback invoked when the selected time changes.
+                </ApiParameter>
+                <ApiParameter Name="Format" Type="TimeFormat" Default="Hour12">
+                    The time format (Hour12 or Hour24).
+                </ApiParameter>
+                <ApiParameter Name="ShowSeconds" Type="bool" Default="false">
+                    Whether to show the seconds selector.
+                </ApiParameter>
+                <ApiParameter Name="MinuteStep" Type="int" Default="1">
+                    The minute step interval.
+                </ApiParameter>
+                <ApiParameter Name="MinTime" Type="TimeSpan?" Default="null">
+                    The minimum allowed time.
+                </ApiParameter>
+                <ApiParameter Name="MaxTime" Type="TimeSpan?" Default="null">
+                    The maximum allowed time.
+                </ApiParameter>
+                <ApiParameter Name="Placeholder" Type="string" Default="&quot;Select time&quot;">
+                    Placeholder text when no time is selected.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether the time picker is disabled.
+                </ApiParameter>
+                <ApiParameter Name="InputClass" Type="string?" Default="null">
+                    Additional CSS classes applied to the inner TimePicker trigger button.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?" Default="null">
+                    Additional CSS classes applied to the outer Field container.
+                </ApiParameter>
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">
+                    ARIA label for the control.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    private TimeSpan? _meetingTime;
+    private TimeSpan? _departureTime;
+    private TimeSpan? _preciseTime;
+    private bool _formSubmitted;
+    private TimePickerFormModel _formModel = new();
+
+    private void HandleFormSubmit()
+    {
+        _formSubmitted = true;
+    }
+
+    private class TimePickerFormModel
+    {
+        [Required(ErrorMessage = "Please select a reminder time.")]
+        public TimeSpan? ReminderTime { get; set; }
+    }
+}

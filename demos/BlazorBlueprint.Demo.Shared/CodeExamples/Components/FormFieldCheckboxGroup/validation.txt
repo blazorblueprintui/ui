@@ -1,0 +1,30 @@
+<BbFormFieldCheckboxGroup TValue="string"
+                         Values="selectedTopics"
+                         ValuesChanged="OnTopicsChanged"
+                         Label="Topics of interest"
+                         HelperText="Select at least one topic."
+                         ErrorText="@errorMessage">
+    <BbCheckboxGroupItem Value="@("tech")" Label="Technology" />
+    <BbCheckboxGroupItem Value="@("science")" Label="Science" />
+    <BbCheckboxGroupItem Value="@("art")" Label="Art" />
+    <BbCheckboxGroupItem Value="@("sports")" Label="Sports" />
+</BbFormFieldCheckboxGroup>
+<BbButton OnClick="Validate">Submit</BbButton>
+
+@code {
+    private IReadOnlyCollection<string> selectedTopics = Array.Empty<string>();
+    private string? errorMessage;
+
+    private void OnTopicsChanged(IReadOnlyCollection<string> values)
+    {
+        selectedTopics = values;
+        errorMessage = null; // Clear error on change
+    }
+
+    private void Validate()
+    {
+        errorMessage = !selectedTopics.Any()
+            ? "Please select at least one topic."
+            : null;
+    }
+}

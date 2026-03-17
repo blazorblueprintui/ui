@@ -1,0 +1,34 @@
+@namespace BlazorBlueprint.Components
+@inherits FormFieldBase
+
+<BbField Orientation="@Orientation" IsInvalid="@IsInvalid" Class="@Class">
+    @if (Label is not null)
+    {
+        <BbFieldLabel>@Label</BbFieldLabel>
+    }
+    <BbFieldContent>
+        <BbTimePicker Value="@Value"
+                      ValueChanged="HandleValueChanged"
+                      ValueExpression="@ValueExpression"
+                      Format="@Format"
+                      ShowSeconds="@ShowSeconds"
+                      MinuteStep="@MinuteStep"
+                      MinTime="@MinTime"
+                      MaxTime="@MaxTime"
+                      Placeholder="@Placeholder"
+                      Disabled="@Disabled"
+                      Class="@InputClass" />
+        @if (!string.IsNullOrEmpty(HelperText) && !IsInvalid)
+        {
+            <BbFieldDescription Id="@DescriptionId">@HelperText</BbFieldDescription>
+        }
+        @if (IsInvalid && !string.IsNullOrEmpty(ErrorText))
+        {
+            <BbFieldError Id="@ErrorId">@ErrorText</BbFieldError>
+        }
+        else if (HasEditContextErrors)
+        {
+            <BbFieldError Id="@ErrorId" Errors="@EditContextErrors" />
+        }
+    </BbFieldContent>
+</BbField>

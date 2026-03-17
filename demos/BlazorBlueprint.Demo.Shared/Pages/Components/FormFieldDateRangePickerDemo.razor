@@ -1,0 +1,163 @@
+@page "/components/form-field-date-range-picker"
+
+<PageTitle>FormFieldDateRangePicker Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">FormFieldDateRangePicker</h1>
+            <p class="text-xl text-muted-foreground">
+                A form field wrapper for DateRangePicker with built-in label, helper text, and error messages.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-sm text-muted-foreground">
+                A date range picker with a label and helper text.
+            </p>
+        </div>
+        <div class="max-w-lg">
+            <BbFormFieldDateRangePicker @bind-Value="_dateRange"
+                                       Label="Date range"
+                                       HelperText="Select a start and end date." />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Selected:</p>
+            <p class="text-sm font-mono">@(_dateRange is not null ? $"{_dateRange.Start:d} – {_dateRange.End:d} ({_dateRange.Days} days)" : "(none)")</p>
+        </div>
+        <CodeBlock Source="Components/FormFieldDateRangePicker/basic.txt" />
+    </div>
+
+    <!-- With Constraints -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">With Constraints</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">MinDays</code>,
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">MaxDays</code>,
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">MinDate</code>, and
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">MaxDate</code> to restrict the range.
+            </p>
+        </div>
+        <div class="max-w-lg">
+            <BbFormFieldDateRangePicker @bind-Value="_vacationRange"
+                                       Label="Vacation dates"
+                                       HelperText="Select between 3 and 14 days, starting from today."
+                                       MinDate="DateTime.Today"
+                                       MinDays="3"
+                                       MaxDays="14" />
+        </div>
+        <CodeBlock Source="Components/FormFieldDateRangePicker/constraints.txt" />
+    </div>
+
+    <!-- Disabled -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">
+                A disabled date range picker form field.
+            </p>
+        </div>
+        <div class="max-w-lg">
+            <BbFormFieldDateRangePicker Label="Report period"
+                                       HelperText="Locked to the current quarter."
+                                       Disabled="true" />
+        </div>
+        <CodeBlock Source="Components/FormFieldDateRangePicker/disabled.txt" />
+    </div>
+
+    <!-- Validation with ErrorText -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Validation with ErrorText</h2>
+            <p class="text-sm text-muted-foreground">
+                DateRangePicker doesn't support <code class="text-xs bg-muted px-1 py-0.5 rounded">EditForm</code> directly.
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">ErrorText</code> for manual validation.
+            </p>
+        </div>
+        <div class="max-w-lg">
+            <BbFormFieldDateRangePicker Value="_validatedRange"
+                                       ValueChanged="OnValidatedRangeChanged"
+                                       Label="Booking dates"
+                                       HelperText="Required. Select your check-in and check-out dates."
+                                       ErrorText="@_rangeError" />
+            <div class="mt-3">
+                <BbButton OnClick="ValidateRange">Submit</BbButton>
+            </div>
+            @if (_rangeSubmitted)
+            {
+                <div class="mt-4 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 p-4">
+                    <p class="text-sm font-medium text-green-800 dark:text-green-200">
+                        Booked: @_validatedRange!.Start.ToString("d") – @_validatedRange!.End.ToString("d")
+                    </p>
+                </div>
+            }
+        </div>
+        <CodeBlock Source="Components/FormFieldDateRangePicker/validation.txt" />
+    </div>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Label visually associated with the date range picker</AccessibilityItem>
+            <AccessibilityItem>Description linked via aria-describedby</AccessibilityItem>
+        </AriaAttributes>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="FormFieldDateRangePicker">
+                <ApiParameter Name="Label" Type="string?" Default="null">The label text.</ApiParameter>
+                <ApiParameter Name="HelperText" Type="string?" Default="null">Helper text below the control.</ApiParameter>
+                <ApiParameter Name="ErrorText" Type="string?" Default="null">Manual error text override.</ApiParameter>
+                <ApiParameter Name="Value" Type="DateRange?" Default="null">The selected date range. Use @@bind-Value for two-way binding.</ApiParameter>
+                <ApiParameter Name="ValueChanged" Type="EventCallback&lt;DateRange?&gt;">Callback when the range changes.</ApiParameter>
+                <ApiParameter Name="MinDate" Type="DateTime?" Default="null">Minimum selectable date.</ApiParameter>
+                <ApiParameter Name="MaxDate" Type="DateTime?" Default="null">Maximum selectable date.</ApiParameter>
+                <ApiParameter Name="MinDays" Type="int?" Default="null">Minimum days in the range.</ApiParameter>
+                <ApiParameter Name="MaxDays" Type="int?" Default="null">Maximum days in the range.</ApiParameter>
+                <ApiParameter Name="ShowTwoMonths" Type="bool" Default="true">Show two months side by side.</ApiParameter>
+                <ApiParameter Name="ShowPresets" Type="bool" Default="true">Show quick-pick presets.</ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">Whether the picker is disabled.</ApiParameter>
+                <ApiParameter Name="InputClass" Type="string?" Default="null">CSS classes for the inner trigger.</ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    private DateRange? _dateRange;
+    private DateRange? _vacationRange;
+    private DateRange? _validatedRange;
+    private string? _rangeError;
+    private bool _rangeSubmitted;
+
+    private void OnValidatedRangeChanged(DateRange? value)
+    {
+        _validatedRange = value;
+        _rangeError = null;
+        _rangeSubmitted = false;
+    }
+
+    private void ValidateRange()
+    {
+        _rangeSubmitted = false;
+
+        if (_validatedRange is null)
+        {
+            _rangeError = "Please select a date range.";
+            return;
+        }
+
+        _rangeError = null;
+        _rangeSubmitted = true;
+    }
+}

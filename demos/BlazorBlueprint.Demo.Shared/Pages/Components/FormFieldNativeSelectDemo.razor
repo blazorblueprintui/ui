@@ -1,0 +1,223 @@
+@page "/components/form-field-native-select"
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>FormFieldNativeSelect Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">FormFieldNativeSelect</h1>
+            <p class="text-xl text-muted-foreground">
+                A form field wrapper for NativeSelect with built-in label, helper text, and error messages.
+            </p>
+        </div>
+    </div>
+
+    <!-- Which form component? -->
+    <div class="rounded-lg border border-dashed bg-muted/30 p-6 space-y-3">
+        <h2 class="text-lg font-semibold">Which form component?</h2>
+        <div class="space-y-2 text-sm text-muted-foreground">
+            <p><strong>Text input</strong> (string, int, date, etc.)? &rarr; <a href="/components/form-field-input" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldInput&lt;T&gt;</a></p>
+            <p><strong>Textarea</strong>? &rarr; <a href="/components/form-field-textarea" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldTextarea</a></p>
+            <p><strong>Numeric input</strong>? &rarr; <a href="/components/form-field-numeric-input" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldNumericInput</a></p>
+            <p><strong>Date picker</strong>? &rarr; <a href="/components/form-field-date-picker" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldDatePicker</a></p>
+            <p><strong>Time picker</strong>? &rarr; <a href="/components/form-field-time-picker" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldTimePicker</a></p>
+            <p><strong>Checkbox</strong>? &rarr; <a href="/components/form-field-checkbox" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldCheckbox</a></p>
+            <p><strong>Switch</strong>? &rarr; <a href="/components/form-field-switch" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldSwitch</a></p>
+            <p><strong>Select dropdown</strong>? &rarr; <a href="/components/form-field-select" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldSelect</a></p>
+            <p><strong>Native select</strong>? &rarr; <strong>FormFieldNativeSelect</strong> (this page)</p>
+            <p><strong>Radio group</strong>? &rarr; <a href="/components/form-field-radio-group" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldRadioGroup</a></p>
+            <p><strong>Searchable select</strong>? &rarr; <a href="/components/form-field-combobox" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldCombobox</a></p>
+            <p><strong>Multi-select</strong>? &rarr; <a href="/components/form-field-multi-select" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldMultiSelect</a></p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-sm text-muted-foreground">
+                A native select with an auto-associated label and helper text.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldNativeSelect TValue="string"
+                                    @bind-Value="_country"
+                                    Label="Country"
+                                    Placeholder="Select a country..."
+                                    HelperText="Choose your country of residence.">
+                <option value="us">United States</option>
+                <option value="ca">Canada</option>
+                <option value="gb">United Kingdom</option>
+                <option value="de">Germany</option>
+                <option value="fr">France</option>
+            </BbFormFieldNativeSelect>
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Selected:</p>
+            <p class="text-sm font-mono">@(string.IsNullOrEmpty(_country) ? "(none)" : _country)</p>
+        </div>
+        <CodeBlock Source="Components/FormFieldNativeSelect/basic.txt" />
+    </div>
+
+    <!-- Size Variants -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Size Variants</h2>
+            <p class="text-sm text-muted-foreground">
+                Pass the <code class="text-xs bg-muted px-1 py-0.5 rounded">Size</code> parameter to control the select size.
+            </p>
+        </div>
+        <div class="max-w-md space-y-4">
+            <BbFormFieldNativeSelect TValue="string" @bind-Value="_sizeSmall" Label="Small" Placeholder="Select..." Size="NativeSelectSize.Small">
+                <option value="a">Option A</option>
+                <option value="b">Option B</option>
+            </BbFormFieldNativeSelect>
+            <BbFormFieldNativeSelect TValue="string" @bind-Value="_sizeDefault" Label="Default" Placeholder="Select..." Size="NativeSelectSize.Default">
+                <option value="a">Option A</option>
+                <option value="b">Option B</option>
+            </BbFormFieldNativeSelect>
+            <BbFormFieldNativeSelect TValue="string" @bind-Value="_sizeLarge" Label="Large" Placeholder="Select..." Size="NativeSelectSize.Large">
+                <option value="a">Option A</option>
+                <option value="b">Option B</option>
+            </BbFormFieldNativeSelect>
+        </div>
+        <CodeBlock Source="Components/FormFieldNativeSelect/sizes.txt" />
+    </div>
+
+    <!-- Disabled -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">
+                A disabled native select form field.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldNativeSelect TValue="string"
+                                    Value="@("usd")"
+                                    Label="Currency"
+                                    HelperText="Locked to your region."
+                                    Disabled="true">
+                <option value="usd">USD ($)</option>
+                <option value="eur">EUR</option>
+            </BbFormFieldNativeSelect>
+        </div>
+        <CodeBlock Source="Components/FormFieldNativeSelect/disabled.txt" />
+    </div>
+
+    <!-- EditForm Integration -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">EditForm Integration</h2>
+            <p class="text-sm text-muted-foreground">
+                Validation errors display automatically inside an EditForm.
+                Try submitting without selecting a role.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <EditForm Model="_formModel" OnValidSubmit="HandleFormSubmit">
+                <DataAnnotationsValidator />
+                <div class="space-y-4">
+                    <BbFormFieldNativeSelect TValue="string"
+                                            @bind-Value="_formModel.Role"
+                                            Label="Role"
+                                            Placeholder="Select a role...">
+                        <option value="admin">Administrator</option>
+                        <option value="editor">Editor</option>
+                        <option value="viewer">Viewer</option>
+                    </BbFormFieldNativeSelect>
+                    <BbButton Type="ButtonType.Submit">Submit</BbButton>
+                </div>
+            </EditForm>
+            @if (_formSubmitted)
+            {
+                <div class="mt-4 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 p-4">
+                    <p class="text-sm font-medium text-green-800 dark:text-green-200">
+                        Submitted: @_formModel.Role
+                    </p>
+                </div>
+            }
+        </div>
+        <CodeBlock Source="Components/FormFieldNativeSelect/editform.txt" />
+    </div>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Automatically associates label with select via generated ID</AccessibilityItem>
+            <AccessibilityItem>Description linked via aria-describedby</AccessibilityItem>
+            <AccessibilityItem>Validation errors displayed with aria-invalid</AccessibilityItem>
+        </AriaAttributes>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="FormFieldNativeSelect&lt;TValue&gt;">
+                <ApiParameter Name="Label" Type="string?" Default="null">
+                    The label text displayed above the select.
+                </ApiParameter>
+                <ApiParameter Name="HelperText" Type="string?" Default="null">
+                    Helper text displayed below the select. Hidden during error state.
+                </ApiParameter>
+                <ApiParameter Name="ErrorText" Type="string?" Default="null">
+                    Manual error text override.
+                </ApiParameter>
+                <ApiParameter Name="Orientation" Type="FieldOrientation" Default="Vertical">
+                    Layout orientation of the field.
+                </ApiParameter>
+                <ApiParameter Name="Value" Type="TValue?" Default="null">
+                    The currently selected value. Use @@bind-Value for two-way binding.
+                </ApiParameter>
+                <ApiParameter Name="ValueChanged" Type="EventCallback&lt;TValue?&gt;">
+                    Callback invoked when the selected value changes.
+                </ApiParameter>
+                <ApiParameter Name="Placeholder" Type="string?" Default="null">
+                    Placeholder text shown when no value is selected.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether the select is disabled.
+                </ApiParameter>
+                <ApiParameter Name="Size" Type="NativeSelectSize" Default="Default">
+                    Size variant (Small, Default, Large).
+                </ApiParameter>
+                <ApiParameter Name="ChildContent" Type="RenderFragment?" Default="null">
+                    The option elements to display inside the select.
+                </ApiParameter>
+                <ApiParameter Name="InputClass" Type="string?" Default="null">
+                    Additional CSS classes applied to the inner NativeSelect element.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?" Default="null">
+                    Additional CSS classes applied to the outer Field container.
+                </ApiParameter>
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">
+                    ARIA label for the control.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    private string? _country;
+    private string? _sizeSmall;
+    private string? _sizeDefault;
+    private string? _sizeLarge;
+    private bool _formSubmitted;
+    private NativeSelectFormModel _formModel = new();
+
+    private void HandleFormSubmit()
+    {
+        _formSubmitted = true;
+    }
+
+    private class NativeSelectFormModel
+    {
+        [Required(ErrorMessage = "Please select a role.")]
+        public string? Role { get; set; }
+    }
+}

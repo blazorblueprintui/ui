@@ -1,0 +1,34 @@
+@namespace BlazorBlueprint.Components
+@typeparam TValue
+@inherits FormFieldBase
+@attribute [CascadingTypeParameter(nameof(TValue))]
+
+<BbField Orientation="@Orientation" IsInvalid="@IsInvalid" Class="@Class">
+    @if (Label is not null)
+    {
+        <BbFieldLabel>@Label</BbFieldLabel>
+    }
+    <BbFieldContent>
+        <BbCheckboxGroup TValue="TValue"
+                         Values="@Values"
+                         ValuesChanged="HandleValuesChanged"
+                         ShowSelectAll="@ShowSelectAll"
+                         SelectAllLabel="@SelectAllLabel"
+                         Disabled="@Disabled"
+                         Class="@InputClass">
+            @ChildContent
+        </BbCheckboxGroup>
+        @if (!string.IsNullOrEmpty(HelperText) && !IsInvalid)
+        {
+            <BbFieldDescription Id="@DescriptionId">@HelperText</BbFieldDescription>
+        }
+        @if (IsInvalid && !string.IsNullOrEmpty(ErrorText))
+        {
+            <BbFieldError Id="@ErrorId">@ErrorText</BbFieldError>
+        }
+        else if (HasEditContextErrors)
+        {
+            <BbFieldError Id="@ErrorId" Errors="@EditContextErrors" />
+        }
+    </BbFieldContent>
+</BbField>

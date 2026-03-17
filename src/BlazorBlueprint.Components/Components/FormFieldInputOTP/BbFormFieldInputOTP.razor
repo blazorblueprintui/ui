@@ -1,0 +1,37 @@
+@namespace BlazorBlueprint.Components
+@inherits FormFieldBase
+
+<BbField Orientation="@Orientation" IsInvalid="@IsInvalid" Class="@Class">
+    @if (Label is not null)
+    {
+        <BbFieldLabel>@Label</BbFieldLabel>
+    }
+    <BbFieldContent>
+        <BbInputOTP Value="@Value"
+                    ValueChanged="HandleValueChanged"
+                    ValueExpression="@ValueExpression"
+                    Name="@Name"
+                    Length="@Length"
+                    OnComplete="@OnComplete"
+                    Disabled="@Disabled"
+                    ShowSeparator="@ShowSeparator"
+                    GroupSize="@GroupSize"
+                    Separator="@Separator"
+                    Size="@Size"
+                    Mask="@MaskInput"
+                    InputMode="@InputMode"
+                    InputClass="@InputClass" />
+        @if (!string.IsNullOrEmpty(HelperText) && !IsInvalid)
+        {
+            <BbFieldDescription Id="@DescriptionId">@HelperText</BbFieldDescription>
+        }
+        @if (IsInvalid && !string.IsNullOrEmpty(ErrorText))
+        {
+            <BbFieldError Id="@ErrorId">@ErrorText</BbFieldError>
+        }
+        else if (HasEditContextErrors)
+        {
+            <BbFieldError Id="@ErrorId" Errors="@EditContextErrors" />
+        }
+    </BbFieldContent>
+</BbField>

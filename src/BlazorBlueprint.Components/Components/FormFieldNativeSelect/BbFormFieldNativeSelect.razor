@@ -1,0 +1,36 @@
+@namespace BlazorBlueprint.Components
+@typeparam TValue
+@inherits FormFieldBase
+@attribute [CascadingTypeParameter(nameof(TValue))]
+
+<BbField Orientation="@Orientation" IsInvalid="@IsInvalid" Class="@Class">
+    @if (Label is not null)
+    {
+        <BbFieldLabel For="@ControlId">@Label</BbFieldLabel>
+    }
+    <BbFieldContent>
+        <BbNativeSelect TValue="TValue"
+                        Value="@Value"
+                        ValueChanged="HandleValueChanged"
+                        ValueExpression="@ValueExpression"
+                        Placeholder="@Placeholder"
+                        Disabled="@Disabled"
+                        Size="@Size"
+                        Id="@ControlId"
+                        Class="@InputClass">
+            @ChildContent
+        </BbNativeSelect>
+        @if (!string.IsNullOrEmpty(HelperText) && !IsInvalid)
+        {
+            <BbFieldDescription Id="@DescriptionId">@HelperText</BbFieldDescription>
+        }
+        @if (IsInvalid && !string.IsNullOrEmpty(ErrorText))
+        {
+            <BbFieldError Id="@ErrorId">@ErrorText</BbFieldError>
+        }
+        else if (HasEditContextErrors)
+        {
+            <BbFieldError Id="@ErrorId" Errors="@EditContextErrors" />
+        }
+    </BbFieldContent>
+</BbField>

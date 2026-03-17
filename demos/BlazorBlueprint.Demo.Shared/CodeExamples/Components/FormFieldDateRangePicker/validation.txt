@@ -1,0 +1,24 @@
+<BbFormFieldDateRangePicker Value="dateRange"
+                           ValueChanged="OnDateRangeChanged"
+                           Label="Booking dates"
+                           HelperText="Required. Select your check-in and check-out dates."
+                           ErrorText="@errorMessage" />
+<BbButton OnClick="Validate">Submit</BbButton>
+
+@code {
+    private DateRange? dateRange;
+    private string? errorMessage;
+
+    private void OnDateRangeChanged(DateRange? value)
+    {
+        dateRange = value;
+        errorMessage = null; // Clear error on change
+    }
+
+    private void Validate()
+    {
+        errorMessage = dateRange is null
+            ? "Please select a date range."
+            : null;
+    }
+}

@@ -153,7 +153,7 @@ builder.Services.AddBlazorBlueprintComponents();
 
 ## Components
 
-Blazor Blueprint includes **87 styled components** organized into the following categories.
+Blazor Blueprint includes **99 styled components** organized into the following categories.
 
 ### Enterprise Components
 
@@ -189,12 +189,24 @@ Production-ready components for complex data-driven applications:
 | **Filter Builder** | Visual query builder for data filter expressions with AND/OR logic, condition groups, and two-way binding |
 | **File Upload** | Drag-and-drop file upload with preview |
 | **Form Field Checkbox** | Pre-configured checkbox field with built-in label, description, and validation |
+| **Form Field Checkbox Group** | Pre-configured checkbox group field with built-in label, description, and manual validation |
 | **Form Field Combobox** | Pre-configured combobox field with built-in label, description, and validation |
+| **Form Field Currency Input** | Pre-configured currency input field with built-in label, description, and validation |
+| **Form Field Date Picker** | Pre-configured date picker field with built-in label, description, and validation |
+| **Form Field Date Range Picker** | Pre-configured date range picker field with built-in label, description, and manual validation |
+| **Form Field File Upload** | Pre-configured file upload field with built-in label, description, and manual validation |
 | **Form Field Input** | Pre-configured input field with built-in label, description, and validation |
+| **Form Field Input OTP** | Pre-configured OTP input field with built-in label, description, and validation |
+| **Form Field Masked Input** | Pre-configured masked input field with built-in label, description, and validation |
 | **Form Field MultiSelect** | Pre-configured multi-select field with built-in label, description, and validation |
+| **Form Field Native Select** | Pre-configured native select field with built-in label, description, and validation |
+| **Form Field Numeric Input** | Pre-configured numeric input field with built-in label, description, and validation |
 | **Form Field RadioGroup** | Pre-configured radio group field with built-in label, description, and validation |
 | **Form Field Select** | Pre-configured select field with built-in label, description, and validation |
 | **Form Field Switch** | Pre-configured switch field with built-in label, description, and validation |
+| **Form Field Tag Input** | Pre-configured tag input field with built-in label, description, and validation |
+| **Form Field Textarea** | Pre-configured textarea field with built-in label, description, and validation |
+| **Form Field Time Picker** | Pre-configured time picker field with built-in label, description, and validation |
 | **Form Wizard** | Multi-step form wizard with step navigation, progress indication, per-step validation, and optional/skippable steps |
 | **Input** | Text input with multiple types and validation |
 | **Input Field** | Typed input with automatic conversion, formatting, and validation for 15+ types |

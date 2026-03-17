@@ -1,0 +1,46 @@
+@namespace BlazorBlueprint.Components
+@typeparam TValue where TValue : struct, System.Numerics.INumber<TValue>
+@inherits FormFieldBase
+
+<BbField Orientation="@Orientation" IsInvalid="@IsInvalid" Class="@Class">
+    @if (Label is not null)
+    {
+        <BbFieldLabel For="@ControlId">@Label</BbFieldLabel>
+    }
+    <BbFieldContent>
+        <BbNumericInput TValue="TValue"
+                        Value="@Value"
+                        ValueChanged="HandleValueChanged"
+                        ValueExpression="@ValueExpression"
+                        Name="@Name"
+                        Min="@Min"
+                        Max="@Max"
+                        Step="@Step"
+                        DecimalPlaces="@DecimalPlaces"
+                        AllowNegative="@AllowNegative"
+                        ShowButtons="@ShowButtons"
+                        Placeholder="@Placeholder"
+                        Disabled="@Disabled"
+                        Required="@Required"
+                        Format="@Format"
+                        DisableDebounce="@DisableDebounce"
+                        DebounceInterval="@DebounceInterval"
+                        Id="@ControlId"
+                        AriaLabel="@AriaLabel"
+                        AriaDescribedBy="@DescribedById"
+                        AriaInvalid="@(IsInvalid ? true : null)"
+                        Class="@InputClass" />
+        @if (!string.IsNullOrEmpty(HelperText) && !IsInvalid)
+        {
+            <BbFieldDescription Id="@DescriptionId">@HelperText</BbFieldDescription>
+        }
+        @if (IsInvalid && !string.IsNullOrEmpty(ErrorText))
+        {
+            <BbFieldError Id="@ErrorId">@ErrorText</BbFieldError>
+        }
+        else if (HasEditContextErrors)
+        {
+            <BbFieldError Id="@ErrorId" Errors="@EditContextErrors" />
+        }
+    </BbFieldContent>
+</BbField>

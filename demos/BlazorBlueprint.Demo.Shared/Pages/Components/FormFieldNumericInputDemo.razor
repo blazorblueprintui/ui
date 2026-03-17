@@ -1,0 +1,264 @@
+@page "/components/form-field-numeric-input"
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>FormFieldNumericInput Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">FormFieldNumericInput</h1>
+            <p class="text-xl text-muted-foreground">
+                A form field wrapper for NumericInput with built-in label, helper text, and error messages.
+            </p>
+        </div>
+    </div>
+
+    <!-- Which form component? -->
+    <div class="rounded-lg border border-dashed bg-muted/30 p-6 space-y-3">
+        <h2 class="text-lg font-semibold">Which form component?</h2>
+        <div class="space-y-2 text-sm text-muted-foreground">
+            <p><strong>Text input</strong> (string, int, date, etc.)? &rarr; <a href="/components/form-field-input" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldInput&lt;T&gt;</a></p>
+            <p><strong>Textarea</strong>? &rarr; <a href="/components/form-field-textarea" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldTextarea</a></p>
+            <p><strong>Numeric input</strong>? &rarr; <strong>FormFieldNumericInput</strong> (this page)</p>
+            <p><strong>Date picker</strong>? &rarr; <a href="/components/form-field-date-picker" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldDatePicker</a></p>
+            <p><strong>Time picker</strong>? &rarr; <a href="/components/form-field-time-picker" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldTimePicker</a></p>
+            <p><strong>Checkbox</strong>? &rarr; <a href="/components/form-field-checkbox" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldCheckbox</a></p>
+            <p><strong>Switch</strong>? &rarr; <a href="/components/form-field-switch" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldSwitch</a></p>
+            <p><strong>Select dropdown</strong>? &rarr; <a href="/components/form-field-select" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldSelect</a></p>
+            <p><strong>Native select</strong>? &rarr; <a href="/components/form-field-native-select" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldNativeSelect</a></p>
+            <p><strong>Radio group</strong>? &rarr; <a href="/components/form-field-radio-group" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldRadioGroup</a></p>
+            <p><strong>Searchable select</strong>? &rarr; <a href="/components/form-field-combobox" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldCombobox</a></p>
+            <p><strong>Multi-select</strong>? &rarr; <a href="/components/form-field-multi-select" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldMultiSelect</a></p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-sm text-muted-foreground">
+                A numeric input with an auto-associated label and helper text.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldNumericInput TValue="int"
+                                    @bind-Value="_quantity"
+                                    Label="Quantity"
+                                    Placeholder="0"
+                                    HelperText="Enter the number of items." />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Value:</p>
+            <p class="text-sm font-mono">@_quantity</p>
+        </div>
+        <CodeBlock Source="Components/FormFieldNumericInput/basic.txt" />
+    </div>
+
+    <!-- With Buttons and Range -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">With Buttons and Range</h2>
+            <p class="text-sm text-muted-foreground">
+                Show increment/decrement buttons and constrain the value with
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">Min</code> and
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">Max</code>.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldNumericInput TValue="int"
+                                    @bind-Value="_rating"
+                                    Label="Rating"
+                                    HelperText="Rate from 1 to 10."
+                                    Min="1"
+                                    Max="10"
+                                    ShowButtons="true" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Value:</p>
+            <p class="text-sm font-mono">@_rating</p>
+        </div>
+        <CodeBlock Source="Components/FormFieldNumericInput/buttons-range.txt" />
+    </div>
+
+    <!-- Decimal Type -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Decimal Values</h2>
+            <p class="text-sm text-muted-foreground">
+                Works with any numeric type. Use <code class="text-xs bg-muted px-1 py-0.5 rounded">DecimalPlaces</code>
+                to control display precision.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldNumericInput TValue="decimal"
+                                    @bind-Value="_price"
+                                    Label="Price"
+                                    HelperText="Enter the unit price."
+                                    DecimalPlaces="2"
+                                    Min="0m"
+                                    Step="0.01m"
+                                    ShowButtons="true" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Value:</p>
+            <p class="text-sm font-mono">@_price.ToString("F2")</p>
+        </div>
+        <CodeBlock Source="Components/FormFieldNumericInput/decimal.txt" />
+    </div>
+
+    <!-- Disabled -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">
+                A disabled numeric input form field.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldNumericInput TValue="int"
+                                    Value="42"
+                                    Label="Fixed value"
+                                    HelperText="Cannot be changed."
+                                    Disabled="true" />
+        </div>
+        <CodeBlock Source="Components/FormFieldNumericInput/disabled.txt" />
+    </div>
+
+    <!-- EditForm Integration -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">EditForm Integration</h2>
+            <p class="text-sm text-muted-foreground">
+                Validation errors display automatically inside an EditForm.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <EditForm Model="_formModel" OnValidSubmit="HandleFormSubmit">
+                <DataAnnotationsValidator />
+                <div class="space-y-4">
+                    <BbFormFieldNumericInput TValue="int"
+                                            @bind-Value="_formModel.Age"
+                                            Label="Age"
+                                            Placeholder="0"
+                                            HelperText="Must be between 18 and 120." />
+                    <BbButton Type="ButtonType.Submit">Submit</BbButton>
+                </div>
+            </EditForm>
+            @if (_formSubmitted)
+            {
+                <div class="mt-4 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 p-4">
+                    <p class="text-sm font-medium text-green-800 dark:text-green-200">
+                        Submitted: Age = @_formModel.Age
+                    </p>
+                </div>
+            }
+        </div>
+        <CodeBlock Source="Components/FormFieldNumericInput/editform.txt" />
+    </div>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Automatically associates label with input via generated ID</AccessibilityItem>
+            <AccessibilityItem>Description linked via aria-describedby</AccessibilityItem>
+            <AccessibilityItem>Validation errors displayed with aria-invalid</AccessibilityItem>
+            <AccessibilityItem>Spinbutton role when increment/decrement buttons are shown</AccessibilityItem>
+        </AriaAttributes>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="FormFieldNumericInput&lt;TValue&gt;">
+                <ApiParameter Name="Label" Type="string?" Default="null">
+                    The label text displayed above the numeric input.
+                </ApiParameter>
+                <ApiParameter Name="HelperText" Type="string?" Default="null">
+                    Helper text displayed below the input. Hidden during error state.
+                </ApiParameter>
+                <ApiParameter Name="ErrorText" Type="string?" Default="null">
+                    Manual error text override.
+                </ApiParameter>
+                <ApiParameter Name="Orientation" Type="FieldOrientation" Default="Vertical">
+                    Layout orientation of the field.
+                </ApiParameter>
+                <ApiParameter Name="Value" Type="TValue" Default="default">
+                    The current numeric value. Use @@bind-Value for two-way binding.
+                </ApiParameter>
+                <ApiParameter Name="ValueChanged" Type="EventCallback&lt;TValue&gt;">
+                    Callback invoked when the value changes.
+                </ApiParameter>
+                <ApiParameter Name="Min" Type="TValue?" Default="null">
+                    Minimum allowed value.
+                </ApiParameter>
+                <ApiParameter Name="Max" Type="TValue?" Default="null">
+                    Maximum allowed value.
+                </ApiParameter>
+                <ApiParameter Name="Step" Type="TValue?" Default="null">
+                    Step increment for arrow key/button changes (defaults to 1).
+                </ApiParameter>
+                <ApiParameter Name="DecimalPlaces" Type="int?" Default="null">
+                    Number of decimal places to display.
+                </ApiParameter>
+                <ApiParameter Name="AllowNegative" Type="bool" Default="true">
+                    Whether negative values are allowed.
+                </ApiParameter>
+                <ApiParameter Name="ShowButtons" Type="bool" Default="false">
+                    Whether to show increment/decrement buttons.
+                </ApiParameter>
+                <ApiParameter Name="Placeholder" Type="string?" Default="null">
+                    Placeholder text.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether the input is disabled.
+                </ApiParameter>
+                <ApiParameter Name="Required" Type="bool" Default="false">
+                    Whether the input is required.
+                </ApiParameter>
+                <ApiParameter Name="Format" Type="string?" Default="null">
+                    Format string for displaying the value.
+                </ApiParameter>
+                <ApiParameter Name="DisableDebounce" Type="bool" Default="false">
+                    Whether to disable debounce during typing.
+                </ApiParameter>
+                <ApiParameter Name="DebounceInterval" Type="int" Default="500">
+                    Debounce delay in milliseconds.
+                </ApiParameter>
+                <ApiParameter Name="Name" Type="string?" Default="null">
+                    HTML name attribute.
+                </ApiParameter>
+                <ApiParameter Name="InputClass" Type="string?" Default="null">
+                    Additional CSS classes applied to the inner NumericInput element.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?" Default="null">
+                    Additional CSS classes applied to the outer Field container.
+                </ApiParameter>
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">
+                    ARIA label for the control.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    private int _quantity;
+    private int _rating = 5;
+    private decimal _price = 9.99m;
+    private bool _formSubmitted;
+    private NumericFormModel _formModel = new();
+
+    private void HandleFormSubmit()
+    {
+        _formSubmitted = true;
+    }
+
+    private class NumericFormModel
+    {
+        [Range(18, 120, ErrorMessage = "Age must be between 18 and 120.")]
+        public int Age { get; set; }
+    }
+}

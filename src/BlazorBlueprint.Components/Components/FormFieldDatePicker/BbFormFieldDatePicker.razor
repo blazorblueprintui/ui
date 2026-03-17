@@ -1,0 +1,34 @@
+@namespace BlazorBlueprint.Components
+@inherits FormFieldBase
+
+<BbField Orientation="@Orientation" IsInvalid="@IsInvalid" Class="@Class">
+    @if (Label is not null)
+    {
+        <BbFieldLabel>@Label</BbFieldLabel>
+    }
+    <BbFieldContent>
+        <BbDatePicker Value="@Value"
+                      ValueChanged="HandleValueChanged"
+                      ValueExpression="@ValueExpression"
+                      DateFormat="@DateFormat"
+                      Placeholder="@Placeholder"
+                      MinDate="@MinDate"
+                      MaxDate="@MaxDate"
+                      DisabledDates="@DisabledDates"
+                      FirstDayOfWeek="@FirstDayOfWeek"
+                      Disabled="@Disabled"
+                      Class="@InputClass" />
+        @if (!string.IsNullOrEmpty(HelperText) && !IsInvalid)
+        {
+            <BbFieldDescription Id="@DescriptionId">@HelperText</BbFieldDescription>
+        }
+        @if (IsInvalid && !string.IsNullOrEmpty(ErrorText))
+        {
+            <BbFieldError Id="@ErrorId">@ErrorText</BbFieldError>
+        }
+        else if (HasEditContextErrors)
+        {
+            <BbFieldError Id="@ErrorId" Errors="@EditContextErrors" />
+        }
+    </BbFieldContent>
+</BbField>

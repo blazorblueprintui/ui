@@ -1,0 +1,151 @@
+@page "/components/form-field-input-otp"
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>FormFieldInputOTP Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">FormFieldInputOTP</h1>
+            <p class="text-xl text-muted-foreground">
+                A form field wrapper for InputOTP with built-in label, helper text, and error messages.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-sm text-muted-foreground">
+                A 6-digit OTP input with label and helper text.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldInputOTP @bind-Value="_otpCode"
+                                Label="Verification code"
+                                HelperText="Enter the 6-digit code sent to your phone." />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Value:</p>
+            <p class="text-sm font-mono">@(string.IsNullOrEmpty(_otpCode) ? "(empty)" : _otpCode)</p>
+        </div>
+        <CodeBlock Source="Components/FormFieldInputOTP/basic.txt" />
+    </div>
+
+    <!-- 4-Digit with Mask -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">4-Digit PIN (Masked)</h2>
+            <p class="text-sm text-muted-foreground">
+                A shorter code with masked input for sensitive values.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldInputOTP @bind-Value="_pin"
+                                Label="PIN"
+                                HelperText="Enter your 4-digit PIN."
+                                Length="4"
+                                GroupSize="4"
+                                ShowSeparator="false"
+                                MaskInput="true" />
+        </div>
+        <CodeBlock Source="Components/FormFieldInputOTP/pin.txt" />
+    </div>
+
+    <!-- Disabled -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">A disabled OTP input form field.</p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldInputOTP Value="123456"
+                                Label="Code (locked)"
+                                HelperText="Already verified."
+                                Disabled="true" />
+        </div>
+        <CodeBlock Source="Components/FormFieldInputOTP/disabled.txt" />
+    </div>
+
+    <!-- EditForm Integration -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">EditForm Integration</h2>
+            <p class="text-sm text-muted-foreground">
+                Validation errors display automatically inside an EditForm.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <EditForm Model="_formModel" OnValidSubmit="HandleFormSubmit">
+                <DataAnnotationsValidator />
+                <div class="space-y-4">
+                    <BbFormFieldInputOTP @bind-Value="_formModel.Code"
+                                        Label="Verification code"
+                                        HelperText="Required to proceed." />
+                    <BbButton Type="ButtonType.Submit">Verify</BbButton>
+                </div>
+            </EditForm>
+            @if (_formSubmitted)
+            {
+                <div class="mt-4 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 p-4">
+                    <p class="text-sm font-medium text-green-800 dark:text-green-200">Verified!</p>
+                </div>
+            }
+        </div>
+        <CodeBlock Source="Components/FormFieldInputOTP/editform.txt" />
+    </div>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Label visually associated with the OTP input group</AccessibilityItem>
+            <AccessibilityItem>Description linked via aria-describedby</AccessibilityItem>
+            <AccessibilityItem>Validation errors displayed with aria-invalid</AccessibilityItem>
+        </AriaAttributes>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="FormFieldInputOTP">
+                <ApiParameter Name="Label" Type="string?" Default="null">The label text.</ApiParameter>
+                <ApiParameter Name="HelperText" Type="string?" Default="null">Helper text below the input.</ApiParameter>
+                <ApiParameter Name="ErrorText" Type="string?" Default="null">Manual error text override.</ApiParameter>
+                <ApiParameter Name="Value" Type="string?" Default="null">The current OTP value. Use @@bind-Value.</ApiParameter>
+                <ApiParameter Name="ValueChanged" Type="EventCallback&lt;string&gt;">Callback when value changes.</ApiParameter>
+                <ApiParameter Name="Length" Type="int" Default="6">Number of OTP digits.</ApiParameter>
+                <ApiParameter Name="OnComplete" Type="EventCallback&lt;string&gt;">Callback when all digits are filled.</ApiParameter>
+                <ApiParameter Name="ShowSeparator" Type="bool" Default="true">Show separators between groups.</ApiParameter>
+                <ApiParameter Name="GroupSize" Type="int" Default="3">Digits per group.</ApiParameter>
+                <ApiParameter Name="Size" Type="InputOTPSize" Default="Default">Size variant (Small, Default, Large).</ApiParameter>
+                <ApiParameter Name="MaskInput" Type="bool" Default="false">Mask values with asterisks.</ApiParameter>
+                <ApiParameter Name="InputMode" Type="InputOTPInputMode" Default="Numbers">Accepted character types.</ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">Whether the input is disabled.</ApiParameter>
+                <ApiParameter Name="InputClass" Type="string?" Default="null">CSS classes for each OTP input box.</ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    private string? _otpCode;
+    private string? _pin;
+    private bool _formSubmitted;
+    private OTPFormModel _formModel = new();
+
+    private void HandleFormSubmit()
+    {
+        _formSubmitted = true;
+    }
+
+    private class OTPFormModel
+    {
+        [Required(ErrorMessage = "Verification code is required.")]
+        [StringLength(6, MinimumLength = 6, ErrorMessage = "Please enter all 6 digits.")]
+        public string? Code { get; set; }
+    }
+}
