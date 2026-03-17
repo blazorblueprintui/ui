@@ -13,6 +13,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **BbSortable Primitive** (`BlazorBlueprint.Primitives.Sortable`) — New headless drag-and-drop sortable primitive powered by SortableJS. Handles all JS interop lifecycle (init, destroy, re-init on parameter changes), ARIA live announcements, `@key`-based Blazor diffing, and `IAsyncDisposable` cleanup. Supports within-list reorder, connected multi-list transfers, drag handles, and configurable group/pull/put/sort/filter options.
 - **BbSortable Component** (`BlazorBlueprint.Components`) — Styled wrapper over the Sortable primitive adding `SortableLayout` enum (`List`/`Grid`) with pre-built Tailwind CSS layout classes and `Class` parameter for customization.
 - **Sortable demo pages** — Component demo at `/components/sortable` (basic list, drag handle, connected lists, grid, Kanban board) and Primitive demo at `/primitives/sortable` (basic, handle, connected lists).
+- **FormField wrappers (12 new components)** — High-level form field components that compose underlying controls with `BbField`, `BbFieldLabel`, `BbFieldDescription`, and `BbFieldError` for ready-to-use form fields with label association, helper text, error messages, and EditForm integration:
+  - `BbFormFieldTextarea`, `BbFormFieldDatePicker`, `BbFormFieldTimePicker`, `BbFormFieldNumericInput`, `BbFormFieldNativeSelect` (full ARIA/EditForm wiring)
+  - `BbFormFieldCurrencyInput`, `BbFormFieldMaskedInput`, `BbFormFieldInputOTP`, `BbFormFieldTagInput` (EditForm wiring via ValueExpression/TagsExpression)
+  - `BbFormFieldDateRangePicker`, `BbFormFieldCheckboxGroup`, `BbFormFieldFileUpload` (label/helper/error layout with manual ErrorText validation)
+- **FormField demo pages** — Demo pages with interactive examples, code snippets, and API references for all 12 new FormField components, plus sidebar navigation entries.
 
 ---
 
