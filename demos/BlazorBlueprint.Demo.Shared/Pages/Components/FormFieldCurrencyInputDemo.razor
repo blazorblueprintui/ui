@@ -1,0 +1,176 @@
+@page "/components/form-field-currency-input"
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>FormFieldCurrencyInput Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">FormFieldCurrencyInput</h1>
+            <p class="text-xl text-muted-foreground">
+                A form field wrapper for CurrencyInput with built-in label, helper text, and error messages.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-sm text-muted-foreground">
+                A currency input with a label and helper text, defaulting to USD.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldCurrencyInput @bind-Value="_amount"
+                                     Label="Amount"
+                                     Placeholder="0.00"
+                                     HelperText="Enter the payment amount." />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Value:</p>
+            <p class="text-sm font-mono">@_amount.ToString("F2")</p>
+        </div>
+        <CodeBlock Source="Components/FormFieldCurrencyInput/basic.txt" />
+    </div>
+
+    <!-- Different Currencies -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Different Currencies</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="text-xs bg-muted px-1 py-0.5 rounded">CurrencyCode</code> to any ISO 4217 code.
+            </p>
+        </div>
+        <div class="max-w-md space-y-4">
+            <BbFormFieldCurrencyInput @bind-Value="_eurAmount"
+                                     Label="Price (EUR)"
+                                     CurrencyCode="EUR"
+                                     HelperText="Euro amount." />
+            <BbFormFieldCurrencyInput @bind-Value="_gbpAmount"
+                                     Label="Price (GBP)"
+                                     CurrencyCode="GBP"
+                                     HelperText="British pounds." />
+        </div>
+        <CodeBlock Source="Components/FormFieldCurrencyInput/currencies.txt" />
+    </div>
+
+    <!-- With Range -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">With Range Constraints</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">Min</code> and
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">Max</code> to clamp the value.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldCurrencyInput @bind-Value="_donationAmount"
+                                     Label="Donation"
+                                     HelperText="Between $5.00 and $10,000.00."
+                                     Min="5"
+                                     Max="10000"
+                                     AllowNegative="false" />
+        </div>
+        <CodeBlock Source="Components/FormFieldCurrencyInput/range.txt" />
+    </div>
+
+    <!-- Disabled -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">A disabled currency input form field.</p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldCurrencyInput Value="99.99m"
+                                     Label="Fixed price"
+                                     HelperText="Cannot be changed."
+                                     Disabled="true" />
+        </div>
+        <CodeBlock Source="Components/FormFieldCurrencyInput/disabled.txt" />
+    </div>
+
+    <!-- EditForm Integration -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">EditForm Integration</h2>
+            <p class="text-sm text-muted-foreground">
+                Validation errors display automatically inside an EditForm.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <EditForm Model="_formModel" OnValidSubmit="HandleFormSubmit">
+                <DataAnnotationsValidator />
+                <div class="space-y-4">
+                    <BbFormFieldCurrencyInput @bind-Value="_formModel.Budget"
+                                             Label="Budget"
+                                             HelperText="Must be at least $100." />
+                    <BbButton Type="ButtonType.Submit">Submit</BbButton>
+                </div>
+            </EditForm>
+            @if (_formSubmitted)
+            {
+                <div class="mt-4 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 p-4">
+                    <p class="text-sm font-medium text-green-800 dark:text-green-200">
+                        Submitted: $@_formModel.Budget.ToString("F2")
+                    </p>
+                </div>
+            }
+        </div>
+        <CodeBlock Source="Components/FormFieldCurrencyInput/editform.txt" />
+    </div>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Automatically associates label with input via generated ID</AccessibilityItem>
+            <AccessibilityItem>Description linked via aria-describedby</AccessibilityItem>
+            <AccessibilityItem>Validation errors displayed with aria-invalid</AccessibilityItem>
+        </AriaAttributes>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="FormFieldCurrencyInput">
+                <ApiParameter Name="Label" Type="string?" Default="null">The label text.</ApiParameter>
+                <ApiParameter Name="HelperText" Type="string?" Default="null">Helper text below the input.</ApiParameter>
+                <ApiParameter Name="ErrorText" Type="string?" Default="null">Manual error text override.</ApiParameter>
+                <ApiParameter Name="Value" Type="decimal" Default="0">The current value. Use @@bind-Value.</ApiParameter>
+                <ApiParameter Name="ValueChanged" Type="EventCallback&lt;decimal&gt;">Callback when value changes.</ApiParameter>
+                <ApiParameter Name="CurrencyCode" Type="string" Default="&quot;USD&quot;">ISO 4217 currency code.</ApiParameter>
+                <ApiParameter Name="ShowSymbol" Type="bool" Default="true">Show the currency symbol.</ApiParameter>
+                <ApiParameter Name="Min" Type="decimal?" Default="null">Minimum allowed value.</ApiParameter>
+                <ApiParameter Name="Max" Type="decimal?" Default="null">Maximum allowed value.</ApiParameter>
+                <ApiParameter Name="AllowNegative" Type="bool" Default="true">Allow negative values.</ApiParameter>
+                <ApiParameter Name="UseThousandSeparator" Type="bool" Default="true">Use thousand separators.</ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">Whether the input is disabled.</ApiParameter>
+                <ApiParameter Name="Required" Type="bool" Default="false">Whether the input is required.</ApiParameter>
+                <ApiParameter Name="InputClass" Type="string?" Default="null">CSS classes for the inner input.</ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    private decimal _amount;
+    private decimal _eurAmount;
+    private decimal _gbpAmount;
+    private decimal _donationAmount = 25m;
+    private bool _formSubmitted;
+    private CurrencyFormModel _formModel = new();
+
+    private void HandleFormSubmit()
+    {
+        _formSubmitted = true;
+    }
+
+    private class CurrencyFormModel
+    {
+        [Range(100, double.MaxValue, ErrorMessage = "Budget must be at least $100.")]
+        public decimal Budget { get; set; }
+    }
+}

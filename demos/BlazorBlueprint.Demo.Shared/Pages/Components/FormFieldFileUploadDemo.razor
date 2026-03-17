@@ -1,0 +1,136 @@
+@page "/components/form-field-file-upload"
+
+<PageTitle>FormFieldFileUpload Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">FormFieldFileUpload</h1>
+            <p class="text-xl text-muted-foreground">
+                A form field wrapper for FileUpload with built-in label, helper text, and error messages.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-sm text-muted-foreground">
+                A single file upload with a label and helper text.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldFileUpload @bind-Files="_singleFile"
+                                  Label="Attachment"
+                                  HelperText="Upload a file (max 10 MB)." />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Files:</p>
+            <p class="text-sm font-mono">@((_singleFile?.Any() == true) ? string.Join(", ", _singleFile.Select(f => f.Name)) : "(none)")</p>
+        </div>
+        <CodeBlock Source="Components/FormFieldFileUpload/basic.txt" />
+    </div>
+
+    <!-- Multiple Files with Type Restriction -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Multiple Images</h2>
+            <p class="text-sm text-muted-foreground">
+                Accept multiple image files with preview.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldFileUpload @bind-Files="_imageFiles"
+                                  Label="Photos"
+                                  HelperText="Upload up to 5 images (PNG, JPG, GIF)."
+                                  Multiple="true"
+                                  MaxFileCount="5"
+                                  Accept="image/png, image/jpeg, image/gif" />
+        </div>
+        <CodeBlock Source="Components/FormFieldFileUpload/images.txt" />
+    </div>
+
+    <!-- Disabled -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">A disabled file upload form field.</p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldFileUpload Label="Documents (locked)"
+                                  HelperText="Upload is currently disabled."
+                                  Disabled="true" />
+        </div>
+        <CodeBlock Source="Components/FormFieldFileUpload/disabled.txt" />
+    </div>
+
+    <!-- Error Text -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Manual Error</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">ErrorText</code> to display a manual error message.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldFileUpload @bind-Files="_errorFiles"
+                                  Label="Resume"
+                                  HelperText="PDF files only."
+                                  Accept=".pdf"
+                                  ErrorText="@_uploadError" />
+            @if (string.IsNullOrEmpty(_uploadError))
+            {
+                <BbButton Class="mt-2" Variant="ButtonVariant.Outline" OnClick="@(() => _uploadError = "Please upload your resume to continue.")">
+                    Simulate error
+                </BbButton>
+            }
+            else
+            {
+                <BbButton Class="mt-2" Variant="ButtonVariant.Outline" OnClick="@(() => _uploadError = null)">
+                    Clear error
+                </BbButton>
+            }
+        </div>
+        <CodeBlock Source="Components/FormFieldFileUpload/error.txt" />
+    </div>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Label visually associated with the file upload</AccessibilityItem>
+            <AccessibilityItem>Description linked via aria-describedby</AccessibilityItem>
+        </AriaAttributes>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="FormFieldFileUpload">
+                <ApiParameter Name="Label" Type="string?" Default="null">The label text.</ApiParameter>
+                <ApiParameter Name="HelperText" Type="string?" Default="null">Helper text below the upload.</ApiParameter>
+                <ApiParameter Name="ErrorText" Type="string?" Default="null">Manual error text override.</ApiParameter>
+                <ApiParameter Name="Files" Type="IReadOnlyList&lt;FileUploadItem&gt;?" Default="null">The selected files. Use @@bind-Files.</ApiParameter>
+                <ApiParameter Name="FilesChanged" Type="EventCallback&lt;IReadOnlyList&lt;FileUploadItem&gt;&gt;">Callback when files change.</ApiParameter>
+                <ApiParameter Name="Multiple" Type="bool" Default="false">Allow multiple file selection.</ApiParameter>
+                <ApiParameter Name="Accept" Type="string?" Default="null">Accepted file types (MIME or extension).</ApiParameter>
+                <ApiParameter Name="MaxFileSize" Type="long" Default="10485760">Maximum file size in bytes (10 MB).</ApiParameter>
+                <ApiParameter Name="MaxFileCount" Type="int" Default="10">Maximum number of files.</ApiParameter>
+                <ApiParameter Name="ShowPreview" Type="bool" Default="true">Show image previews.</ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">Whether the upload is disabled.</ApiParameter>
+                <ApiParameter Name="DropzoneContent" Type="RenderFragment?" Default="null">Custom dropzone content.</ApiParameter>
+                <ApiParameter Name="InputClass" Type="string?" Default="null">CSS classes for the inner FileUpload.</ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    private IReadOnlyList<FileUploadItem>? _singleFile;
+    private IReadOnlyList<FileUploadItem>? _imageFiles;
+    private IReadOnlyList<FileUploadItem>? _errorFiles;
+    private string? _uploadError;
+}
