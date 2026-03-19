@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## 2026-03-19
 
+### Added
+
+- **BbFileUpload: ClearFiles() method** (#249) — Added a public `ClearFiles()` method to `BbFileUpload` and `BbFormFieldFileUpload` that programmatically clears all selected files, validation errors, and resets the native file input. Consumers capture a `@ref` and call `ClearFiles()` from any trigger.
+
 ### Changed
 
 - **TailwindMerge: replaced custom implementation with TailwindMerge.NET** — Removed the 1,287-line custom `TailwindMerge` class and adopted the [TailwindMerge.NET](https://github.com/nicoll-douglas/tailwind-merge-net) v1.3.0 NuGet package. This eliminates ongoing maintenance burden, provides better arbitrary value handling (fixing issue #253 where arbitrary font sizes like `text-[.5rem]` incorrectly conflicted with text color utilities), and supports Tailwind CSS v4 through v4.2. CSS injection validation is preserved as defense-in-depth.
