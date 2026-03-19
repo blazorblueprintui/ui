@@ -802,6 +802,9 @@ public static class TailwindMerge
         ["fill"] = "fill",
         ["stroke"] = "stroke",
         ["stroke-w"] = "stroke-width",
+
+        // Font Size (for arbitrary values like text-[.5rem])
+        ["text"] = "font-size",
     };
 
     // Maps shorthand padding/margin prefixes to the longhand groups they encompass.
@@ -1200,7 +1203,84 @@ public static class TailwindMerge
             return true;
         }
 
+        // Arbitrary values in brackets (e.g., text-[.5rem], w-[calc(100%-2rem)])
+        if (value.Length > 2 && value[0] == '[' && value[^1] == ']')
+        {
+            return IsArbitraryNonColorValue(value.AsSpan(1, value.Length - 2));
+        }
+
         // Check the prefix-specific non-color values
         return NonColorValues.TryGetValue(prefix, out var nonColorSet) && nonColorSet.Contains(value);
+    }
+
+    /// <summary>
+    /// Determines if an arbitrary value (content inside brackets) represents a non-color value
+    /// such as a length, percentage, or math function.
+    /// </summary>
+    private static bool IsArbitraryNonColorValue(ReadOnlySpan<char> inner)
+    {
+        if (inner.IsEmpty)
+        {
+            return false;
+        }
+
+        // Starts with a digit or decimal point → likely a length (e.g., .5rem, 14px)
+        if (char.IsDigit(inner[0]) || inner[0] == '.')
+        {
+            return true;
+        }
+
+        // Negative number (e.g., -0.5rem)
+        if (inner[0] == '-' && inner.Length > 1 && (char.IsDigit(inner[1]) || inner[1] == '.'))
+        {
+            return true;
+        }
+
+        // CSS color patterns are NOT non-color values
+        if (inner[0] == '#')
+        {
+            return false;
+        }
+
+        // CSS math functions produce lengths, not colors
+        if (inner.StartsWith("calc(", StringComparison.OrdinalIgnoreCase) ||
+            inner.StartsWith("clamp(", StringComparison.OrdinalIgnoreCase) ||
+            inner.StartsWith("min(", StringComparison.OrdinalIgnoreCase) ||
+            inner.StartsWith("max(", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // CSS color functions are color values
+        if (inner.StartsWith("rgb", StringComparison.OrdinalIgnoreCase) ||
+            inner.StartsWith("hsl", StringComparison.OrdinalIgnoreCase) ||
+            inner.StartsWith("oklch", StringComparison.OrdinalIgnoreCase) ||
+            inner.StartsWith("oklab", StringComparison.OrdinalIgnoreCase) ||
+            inner.StartsWith("hwb", StringComparison.OrdinalIgnoreCase) ||
+            inner.StartsWith("lch", StringComparison.OrdinalIgnoreCase) ||
+            inner.StartsWith("lab", StringComparison.OrdinalIgnoreCase) ||
+            inner.StartsWith("color-mix", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        // Check for CSS length units at the end of the value
+        string[] lengthUnits =
+        [
+            "px", "rem", "em", "ex", "ch", "lh", "rlh", "cap",
+            "vw", "vh", "vmin", "vmax", "svw", "svh", "dvw", "dvh", "lvw", "lvh",
+            "cqw", "cqh", "cm", "mm", "in", "pt", "pc", "%"
+        ];
+
+        foreach (var unit in lengthUnits)
+        {
+            if (inner.EndsWith(unit, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        // Unknown arbitrary value — assume it could be a color
+        return false;
     }
 }
