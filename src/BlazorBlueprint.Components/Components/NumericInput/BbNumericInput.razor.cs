@@ -34,16 +34,16 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
     private bool? FieldIsInvalid { get; set; }
 
     /// <summary>
-    /// Gets or sets the current value.
+    /// Gets or sets the current value. A null value represents an empty/unset input.
     /// </summary>
     [Parameter]
-    public TValue Value { get; set; }
+    public TValue? Value { get; set; }
 
     /// <summary>
     /// Gets or sets the callback invoked when the value changes.
     /// </summary>
     [Parameter]
-    public EventCallback<TValue> ValueChanged { get; set; }
+    public EventCallback<TValue?> ValueChanged { get; set; }
 
     /// <summary>
     /// Gets or sets the minimum allowed value.
@@ -143,7 +143,7 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
     /// Gets or sets an expression that identifies the bound value.
     /// </summary>
     [Parameter]
-    public Expression<Func<TValue>>? ValueExpression { get; set; }
+    public Expression<Func<TValue?>>? ValueExpression { get; set; }
 
     /// <summary>
     /// Gets the effective aria-invalid value combining manual AriaInvalid and EditContext validation.
@@ -224,8 +224,8 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
 
     private TValue StepValue => Step ?? TValue.One;
 
-    private bool IsAtMax => Max.HasValue && Value >= Max.Value;
-    private bool IsAtMin => Min.HasValue && Value <= Min.Value;
+    private bool IsAtMax => Max.HasValue && Value.HasValue && Value.Value >= Max.Value;
+    private bool IsAtMin => Min.HasValue && Value.HasValue && Value.Value <= Min.Value;
 
     private string DisplayValue
     {
@@ -236,17 +236,22 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
                 return editingValue;
             }
 
+            if (!Value.HasValue)
+            {
+                return string.Empty;
+            }
+
             if (Format != null)
             {
-                return string.Format(CultureInfo.InvariantCulture, $"{{0:{Format}}}", Value);
+                return string.Format(CultureInfo.InvariantCulture, $"{{0:{Format}}}", Value.Value);
             }
 
             if (DecimalPlaces.HasValue && IsFloatingPoint)
             {
-                return string.Format(CultureInfo.InvariantCulture, $"{{0:F{DecimalPlaces.Value}}}", Value);
+                return string.Format(CultureInfo.InvariantCulture, $"{{0:F{DecimalPlaces.Value}}}", Value.Value);
             }
 
-            return Value.ToString() ?? string.Empty;
+            return Value.Value.ToString() ?? string.Empty;
         }
     }
 
@@ -299,7 +304,7 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         if (TryParseValue(inputValue, out var parsedValue))
         {
             var clampedValue = ClampValue(parsedValue);
-            if (!clampedValue.Equals(Value))
+            if (!Nullable.Equals(clampedValue, Value))
             {
                 Value = clampedValue;
                 await ValueChanged.InvokeAsync(clampedValue);
@@ -324,7 +329,7 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         if (TryParseValue(inputValue, out var parsedValue))
         {
             var clampedValue = ClampValue(parsedValue);
-            if (!clampedValue.Equals(Value))
+            if (!Nullable.Equals(clampedValue, Value))
             {
                 Value = clampedValue;
             }
@@ -344,7 +349,7 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
     {
         if (disposed) { return; }
 
-        editingValue = Value.ToString() ?? string.Empty;
+        editingValue = Value.HasValue ? (Value.Value.ToString() ?? string.Empty) : string.Empty;
         isEditing = true;
         StateHasChanged();
     }
@@ -389,13 +394,15 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         StateHasChanged();
     }
 
+    private TValue EffectiveValue => Value ?? TValue.Zero;
+
     private async Task Increment()
     {
         if (Disabled || IsAtMax)
         {
             return;
         }
-        await SetValue(Value + StepValue);
+        await SetValue(EffectiveValue + StepValue);
     }
 
     private async Task Decrement()
@@ -404,7 +411,7 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         {
             return;
         }
-        await SetValue(Value - StepValue);
+        await SetValue(EffectiveValue - StepValue);
     }
 
     private async Task IncrementBy(TValue amount)
@@ -413,7 +420,7 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         {
             return;
         }
-        await SetValue(Value + amount);
+        await SetValue(EffectiveValue + amount);
     }
 
     private async Task DecrementBy(TValue amount)
@@ -422,14 +429,14 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         {
             return;
         }
-        await SetValue(Value - amount);
+        await SetValue(EffectiveValue - amount);
     }
 
     private async Task SetValue(TValue value)
     {
         var clampedValue = ClampValue(value);
 
-        if (!clampedValue.Equals(Value))
+        if (!Nullable.Equals<TValue>(clampedValue, Value))
         {
             Value = clampedValue;
             editingValue = clampedValue.ToString() ?? string.Empty;
@@ -438,33 +445,39 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         }
     }
 
-    private TValue ClampValue(TValue value)
+    private TValue? ClampValue(TValue? value)
     {
-        if (!AllowNegative && value < TValue.Zero)
+        if (!value.HasValue)
         {
-            value = TValue.Zero;
+            return null;
         }
 
-        if (Min.HasValue && value < Min.Value)
+        var v = value.Value;
+
+        if (!AllowNegative && v < TValue.Zero)
         {
-            value = Min.Value;
+            v = TValue.Zero;
         }
 
-        if (Max.HasValue && value > Max.Value)
+        if (Min.HasValue && v < Min.Value)
         {
-            value = Max.Value;
+            v = Min.Value;
         }
 
-        return value;
+        if (Max.HasValue && v > Max.Value)
+        {
+            v = Max.Value;
+        }
+
+        return v;
     }
 
-    private bool TryParseValue(string? input, out TValue result)
+    private bool TryParseValue(string? input, out TValue? result)
     {
-        result = default;
+        result = null;
 
         if (string.IsNullOrWhiteSpace(input))
         {
-            result = TValue.Zero;
             return true;
         }
 
@@ -477,7 +490,13 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
             return false;
         }
 
-        return TValue.TryParse(input, CultureInfo.InvariantCulture, out result);
+        if (TValue.TryParse(input, CultureInfo.InvariantCulture, out var parsed))
+        {
+            result = parsed;
+            return true;
+        }
+
+        return false;
     }
 
     public async ValueTask DisposeAsync()

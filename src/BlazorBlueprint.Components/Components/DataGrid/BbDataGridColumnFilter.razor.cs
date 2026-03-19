@@ -158,27 +158,27 @@ public partial class BbDataGridColumnFilter : ComponentBase
     private void HandleStringValueChanged(string? value) => editCondition.Value = value;
 
     // Double value helpers
-    private double GetDoubleValue() => editCondition.Value switch
+    private double? GetDoubleValue() => editCondition.Value switch
     {
         double d => d,
         int i => i,
         float f => f,
         decimal m => (double)m,
-        _ => 0
+        _ => null
     };
 
-    private double GetDoubleValueEnd() => editCondition.ValueEnd switch
+    private double? GetDoubleValueEnd() => editCondition.ValueEnd switch
     {
         double d => d,
         int i => i,
         float f => f,
         decimal m => (double)m,
-        _ => 0
+        _ => null
     };
 
-    private void HandleDoubleValueChanged(double value) => editCondition.Value = value;
+    private void HandleDoubleValueChanged(double? value) => editCondition.Value = value;
 
-    private void HandleDoubleValueEndChanged(double value) => editCondition.ValueEnd = value;
+    private void HandleDoubleValueEndChanged(double? value) => editCondition.ValueEnd = value;
 
     // DateTime value helpers
     private DateTime? GetDateTimeValue() => editCondition.Value switch
@@ -225,11 +225,11 @@ public partial class BbDataGridColumnFilter : ComponentBase
     private void HandleDatePresetChanged(DatePreset value) => editCondition.Value = value;
 
     // InLast helpers
-    private int GetInLastAmount() => editCondition.Value switch
+    private int? GetInLastAmount() => editCondition.Value switch
     {
         int i => i,
         double d => (int)d,
-        _ => 0
+        _ => null
     };
 
     private InLastPeriod GetInLastPeriod() => editCondition.ValueEnd switch
@@ -240,7 +240,7 @@ public partial class BbDataGridColumnFilter : ComponentBase
         _ => InLastPeriod.Days
     };
 
-    private void HandleInLastAmountChanged(int value) => editCondition.Value = value;
+    private void HandleInLastAmountChanged(int? value) => editCondition.Value = value;
 
     private void HandleInLastPeriodChanged(InLastPeriod value) => editCondition.ValueEnd = value;
 

@@ -35,23 +35,23 @@ public partial class BbFormFieldNumericInput<TValue> : FormFieldBase where TValu
     // --- NumericInput Pass-Through Parameters ---
 
     /// <summary>
-    /// Gets or sets the current numeric value.
+    /// Gets or sets the current numeric value. A null value represents an empty/unset input.
     /// </summary>
     [Parameter]
-    public TValue Value { get; set; }
+    public TValue? Value { get; set; }
 
     /// <summary>
     /// Gets or sets the callback invoked when the value changes.
     /// </summary>
     [Parameter]
-    public EventCallback<TValue> ValueChanged { get; set; }
+    public EventCallback<TValue?> ValueChanged { get; set; }
 
     /// <summary>
     /// Gets or sets an expression that identifies the bound value for EditForm integration.
     /// Automatically provided by <c>@bind-Value</c>.
     /// </summary>
     [Parameter]
-    public Expression<Func<TValue>>? ValueExpression { get; set; }
+    public Expression<Func<TValue?>>? ValueExpression { get; set; }
 
     /// <summary>
     /// Gets or sets the HTML name attribute. Passed through to the inner NumericInput.
@@ -140,7 +140,7 @@ public partial class BbFormFieldNumericInput<TValue> : FormFieldBase where TValu
     /// <inheritdoc />
     protected override LambdaExpression? GetFieldExpression() => ValueExpression;
 
-    private async Task HandleValueChanged(TValue value)
+    private async Task HandleValueChanged(TValue? value)
     {
         Value = value;
         await ValueChanged.InvokeAsync(value);

@@ -39,7 +39,7 @@
         <div class="w-64">
             <BbNumericInput TValue="double" @bind-Value="_doubleValue" DecimalPlaces="2" Placeholder="0.00" />
         </div>
-        <p class="text-sm text-muted-foreground">Value: @_doubleValue.ToString("F2")</p>
+        <p class="text-sm text-muted-foreground">Value: @_doubleValue?.ToString("F2")</p>
         <CodeBlock Source="Components/NumericInput/double-decimal.txt" />
     </div>
 
@@ -99,7 +99,7 @@
         <div class="w-64">
             <BbNumericInput TValue="decimal" @bind-Value="_decimalValue" DecimalPlaces="2" Step="0.01m" Min="0m" />
         </div>
-        <p class="text-sm text-muted-foreground">Value: $@_decimalValue.ToString("F2")</p>
+        <p class="text-sm text-muted-foreground">Value: $@(_decimalValue?.ToString("F2"))</p>
     </div>
 
     <!-- Positive Only -->
@@ -140,7 +140,7 @@
         <div class="w-64">
             <BbNumericInput TValue="float" @bind-Value="_floatValue" Format="F3" Step="0.1f" />
         </div>
-        <p class="text-sm text-muted-foreground">Value: @_floatValue.ToString("F3")</p>
+        <p class="text-sm text-muted-foreground">Value: @_floatValue?.ToString("F3")</p>
     </div>
 
     <!-- Long Type -->
@@ -154,7 +154,7 @@
         <div class="w-64">
             <BbNumericInput TValue="long" @bind-Value="_longValue" Step="1000" Placeholder="Large number" />
         </div>
-        <p class="text-sm text-muted-foreground">Value: @_longValue.ToString("N0")</p>
+        <p class="text-sm text-muted-foreground">Value: @_longValue?.ToString("N0")</p>
     </div>
 
     <!-- Debounce -->
@@ -173,7 +173,7 @@
                 <div class="w-64">
                     <BbNumericInput TValue="int"
                                   Value="@_debouncedInt"
-                                  ValueChanged="@((v) => _debouncedInt = v)"
+                                  ValueChanged="@((int? v) => _debouncedInt = v)"
                                   Placeholder="Type to see delay" />
                 </div>
                 <div class="rounded-lg border p-3 bg-muted/50">
@@ -187,7 +187,7 @@
                     <BbNumericInput TValue="int"
                                   DisableDebounce="true"
                                   Value="@_immediateInt"
-                                  ValueChanged="@((v) => _immediateInt = v)"
+                                  ValueChanged="@((int? v) => _immediateInt = v)"
                                   Placeholder="Updates instantly" />
                 </div>
                 <div class="rounded-lg border p-3 bg-muted/50">
@@ -328,17 +328,17 @@
 </div>
 
 @code {
-    private int _intValue = 0;
-    private double _doubleValue = 0.0;
-    private int _constrainedValue = 50;
-    private int _steppedValue = 0;
-    private int _buttonValue = 1;
-    private decimal _decimalValue = 99.99m;
-    private int _positiveValue = 0;
-    private float _floatValue = 3.14f;
-    private long _longValue = 0;
-    private int _debouncedInt = 0;
-    private int _immediateInt = 0;
+    private int? _intValue = 0;
+    private double? _doubleValue = 0.0;
+    private int? _constrainedValue = 50;
+    private int? _steppedValue = 0;
+    private int? _buttonValue = 1;
+    private decimal? _decimalValue = 99.99m;
+    private int? _positiveValue = 0;
+    private float? _floatValue = 3.14f;
+    private long? _longValue = 0;
+    private int? _debouncedInt = 0;
+    private int? _immediateInt = 0;
     private NumericFormModel numericFormModel = new();
     private string? numericFormMessage;
 
@@ -356,9 +356,9 @@
     private class NumericFormModel
     {
         [Range(1, 120, ErrorMessage = "Age must be between 1 and 120.")]
-        public int Age { get; set; }
+        public int? Age { get; set; }
 
         [Range(1, 999, ErrorMessage = "Quantity must be between 1 and 999.")]
-        public int Quantity { get; set; }
+        public int? Quantity { get; set; }
     }
 }

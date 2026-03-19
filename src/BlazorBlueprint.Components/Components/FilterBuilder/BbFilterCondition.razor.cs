@@ -143,7 +143,7 @@ public partial class BbFilterCondition : ComponentBase
     }
 
     // Double value helpers
-    private double GetDoubleValue()
+    private double? GetDoubleValue()
     {
         return Condition.Value switch
         {
@@ -151,11 +151,11 @@ public partial class BbFilterCondition : ComponentBase
             int i => i,
             float f => f,
             decimal m => (double)m,
-            _ => 0
+            _ => null
         };
     }
 
-    private double GetDoubleValueEnd()
+    private double? GetDoubleValueEnd()
     {
         return Condition.ValueEnd switch
         {
@@ -163,17 +163,17 @@ public partial class BbFilterCondition : ComponentBase
             int i => i,
             float f => f,
             decimal m => (double)m,
-            _ => 0
+            _ => null
         };
     }
 
-    private async Task HandleDoubleValueChanged(double value)
+    private async Task HandleDoubleValueChanged(double? value)
     {
         Condition.Value = value;
         await OnChanged.InvokeAsync();
     }
 
-    private async Task HandleDoubleValueEndChanged(double value)
+    private async Task HandleDoubleValueEndChanged(double? value)
     {
         Condition.ValueEnd = value;
         await OnChanged.InvokeAsync();
@@ -239,13 +239,13 @@ public partial class BbFilterCondition : ComponentBase
     }
 
     // InLast helpers — Value stores the amount (int), ValueEnd stores the period (InLastPeriod)
-    private int GetInLastAmount()
+    private int? GetInLastAmount()
     {
         return Condition.Value switch
         {
             int i => i,
             double d => (int)d,
-            _ => 0
+            _ => null
         };
     }
 
@@ -260,7 +260,7 @@ public partial class BbFilterCondition : ComponentBase
         };
     }
 
-    private async Task HandleInLastAmountChanged(int value)
+    private async Task HandleInLastAmountChanged(int? value)
     {
         Condition.Value = value;
         await OnChanged.InvokeAsync();
