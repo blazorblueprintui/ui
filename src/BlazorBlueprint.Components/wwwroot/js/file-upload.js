@@ -4,6 +4,16 @@
  */
 
 /**
+ * Resets the value of a file input element.
+ * @param {HTMLInputElement} inputFileElement - The InputFile element to reset.
+ */
+export function resetInput(inputFileElement) {
+    if (inputFileElement) {
+        inputFileElement.value = '';
+    }
+}
+
+/**
  * Initializes the drop zone for file uploads.
  * @param {HTMLElement} dropZoneElement - The drop zone container element.
  * @param {HTMLInputElement} inputFileElement - The InputFile element.

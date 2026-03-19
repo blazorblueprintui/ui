@@ -121,6 +121,27 @@
         <CodeBlock Source="Components/FileUpload/single.txt" />
     </div>
 
+    <!-- Clear Files -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Clear Files</h2>
+            <p class="text-sm text-muted-foreground">
+                Use the <code class="text-xs bg-muted px-1 py-0.5 rounded">ClearFiles()</code> method to programmatically reset the upload.
+            </p>
+        </div>
+        <BbFileUpload @ref="_clearUploader" @bind-Files="_clearFiles" Multiple="true" />
+        <BbButton Variant="ButtonVariant.Outline"
+                  OnClick="() => _clearUploader!.ClearFiles()"
+                  Disabled="@(_clearFiles is null || _clearFiles.Count == 0)">
+            Clear Files
+        </BbButton>
+        <p class="text-sm text-muted-foreground">
+            Files: @(_clearFiles?.Count ?? 0)
+        </p>
+
+        <CodeBlock Source="Components/FileUpload/clear-files.txt" />
+    </div>
+
     <!-- Disabled -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -190,6 +211,9 @@
                 <ApiParameter Name="DropzoneContent" Type="RenderFragment?">
                     Custom dropzone content.
                 </ApiParameter>
+                <ApiParameter Name="ClearFiles()" Type="Task">
+                    Clears all files and validation errors, resetting the component.
+                </ApiParameter>
             </ApiReference>
 
             <ApiReference ComponentName="FileUploadItem">
@@ -236,6 +260,8 @@
     private IReadOnlyList<FileUploadItem>? _smallFiles;
     private IReadOnlyList<FileUploadItem>? _noPreviewFiles;
     private IReadOnlyList<FileUploadItem>? _singleFile;
+    private BbFileUpload? _clearUploader;
+    private IReadOnlyList<FileUploadItem>? _clearFiles;
     private string? _lastError;
 
     private void HandleValidationError(FileValidationError error)

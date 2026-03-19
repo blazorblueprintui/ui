@@ -358,6 +358,30 @@
         return null;
     }
 
+    /// <summary>
+    /// Clears all files and validation errors, resetting the component to its initial state.
+    /// </summary>
+    public async Task ClearFiles()
+    {
+        _files.Clear();
+        _errors.Clear();
+        await FilesChanged.InvokeAsync(_files);
+
+        if (_jsModule != null && _inputFile?.Element != null)
+        {
+            try
+            {
+                await _jsModule.InvokeVoidAsync("resetInput", _inputFile.Element);
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+        }
+
+        StateHasChanged();
+    }
+
     private async Task RemoveFile(FileUploadItem file)
     {
         _files.Remove(file);

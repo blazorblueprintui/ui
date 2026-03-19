@@ -78,6 +78,19 @@ public partial class BbFormFieldFileUpload : FormFieldBase
     /// <inheritdoc />
     protected override LambdaExpression? GetFieldExpression() => null;
 
+    private BbFileUpload? fileUploadRef;
+
+    /// <summary>
+    /// Clears all files and validation errors, resetting the component to its initial state.
+    /// </summary>
+    public async Task ClearFiles()
+    {
+        if (fileUploadRef != null)
+        {
+            await fileUploadRef.ClearFiles();
+        }
+    }
+
     private async Task HandleFilesChanged(IReadOnlyList<FileUploadItem> files)
     {
         Files = files;
