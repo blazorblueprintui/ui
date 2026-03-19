@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-19
+
+### Changed
+
+- **TailwindMerge: replaced custom implementation with TailwindMerge.NET** — Removed the 1,287-line custom `TailwindMerge` class and adopted the [TailwindMerge.NET](https://github.com/nicoll-douglas/tailwind-merge-net) v1.3.0 NuGet package. This eliminates ongoing maintenance burden, provides better arbitrary value handling (fixing issue #253 where arbitrary font sizes like `text-[.5rem]` incorrectly conflicted with text color utilities), and supports Tailwind CSS v4 through v4.2. CSS injection validation is preserved as defense-in-depth.
+
+### Fixed
+
+- **TailwindMerge: arbitrary non-color values no longer conflict with text color** (#253) — Arbitrary values like `text-[.5rem]`, `text-[calc(1rem+2px)]` are correctly recognized as font-size (not color), so they no longer strip `text-white` or other color classes.
+
+---
+
 ## 2026-03-17
 
 ### Added
