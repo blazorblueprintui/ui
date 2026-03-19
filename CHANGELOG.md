@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - **TailwindMerge: arbitrary non-color values no longer conflict with text color** (#253) — Arbitrary values like `text-[.5rem]`, `text-[calc(1rem+2px)]` are correctly recognized as font-size (not color), so they no longer strip `text-white` or other color classes.
+- **Sortable: fix case-sensitive file path for Linux** (#251) — Corrected `Sortable.min.js` → `sortable.min.js` import path in `sortable.js`, fixing a 404 on case-sensitive file systems.
 
 ---
 
