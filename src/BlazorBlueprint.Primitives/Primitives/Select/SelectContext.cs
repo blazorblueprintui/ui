@@ -82,12 +82,15 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
     /// </summary>
     public SelectContext() : base(new SelectState<TValue>(), "select")
     {
+        TriggerId = GetScopedId("trigger");
     }
 
     /// <summary>
     /// Gets the ID for the select trigger button.
+    /// Can be overridden via <see cref="SetTriggerId"/> when the trigger element
+    /// uses a custom id (e.g. for label association in form fields).
     /// </summary>
-    public string TriggerId => GetScopedId("trigger");
+    public string TriggerId { get; private set; }
 
     /// <summary>
     /// Gets the ID for the select content container.
@@ -230,6 +233,16 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
             }
         });
     }
+
+    /// <summary>
+    /// Overrides the auto-generated trigger ID with a custom value.
+    /// Used when the trigger element has a custom <c>id</c> attribute
+    /// (e.g. for label association in form fields). Ensures click-outside
+    /// detection and ARIA references use the correct ID.
+    /// </summary>
+    /// <param name="id">The custom trigger element ID.</param>
+    public void SetTriggerId(string id) =>
+        TriggerId = id;
 
     /// <summary>
     /// Sets the focused item index for keyboard navigation.

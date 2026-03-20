@@ -17,7 +17,7 @@
             @onclick="HandleClick"
             @onkeydown="HandleKeyDown"
             @onkeydown:preventDefault="@_shouldPreventDefault"
-            @attributes="AdditionalAttributes">
+            @attributes="FilteredAttributes">
         @ChildContent
     </button>
 }
@@ -41,6 +41,40 @@
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Returns AdditionalAttributes with "id" removed (if present),
+    /// since the button always uses the context's TriggerId.
+    /// </summary>
+    private Dictionary<string, object>? FilteredAttributes
+    {
+        get
+        {
+            if (AdditionalAttributes == null || !AdditionalAttributes.ContainsKey("id"))
+            {
+                return AdditionalAttributes;
+            }
+
+            var filtered = new Dictionary<string, object>(AdditionalAttributes);
+            filtered.Remove("id");
+            return filtered.Count > 0 ? filtered : null;
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        // If a custom id was passed (e.g. for label association in form fields),
+        // sync it to the context so click-outside detection and ARIA references
+        // use the same id as the actual DOM element.
+        if (_context != null
+            && AdditionalAttributes != null
+            && AdditionalAttributes.TryGetValue("id", out var idObj)
+            && idObj is string customId
+            && !string.IsNullOrEmpty(customId))
+        {
+            _context.SetTriggerId(customId);
+        }
+    }
 
     private void HandleClick()
     {
