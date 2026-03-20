@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-20
+
+### Fixed
+
+- **FormFieldSelect: dropdown reopening on second trigger click** — Fixed a bug where clicking the `BbFormFieldSelect` trigger a second time (to close the dropdown) caused it to close and immediately reopen in a degraded state (all items highlighted, dropdown narrower than trigger). The root cause was the custom `id` attribute (used for label association) overriding the context-generated trigger ID, causing the click-outside handler to not recognize the trigger as an excluded element.
+
+---
+
 ## 2026-03-19
 
 ### Added
