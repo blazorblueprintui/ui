@@ -1,5 +1,5 @@
-## What's New in v3.6.1
+## What's New in v3.7.0
 
-### Bug Fixes
+### New Features
 
-- **Select** — Fixed dropdown reopening when clicking the trigger button a second time to close it. The trigger now correctly syncs its element ID with the select context, ensuring click-outside detection works properly when a custom `id` attribute is present (e.g. inside form fields).
+- **Infinite scroll utility** — Added `isNearBottom` scroll-detection function to `element-utils.js`, enabling infinite scroll support for Combobox, Select, and MultiSelect at the Primitives layer.
