@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-21
+
+### Added
+
+- **Infinite scroll for selection components** — Added `OnLoadMore`, `IsLoading`, and `EndOfListMessage` parameters to `BbCombobox`, `BbSelect`, `BbMultiSelect`, and their FormField variants (`BbFormFieldCombobox`, `BbFormFieldSelect`, `BbFormFieldMultiSelect`). Enables loading large datasets in batches as the user scrolls, with a loading spinner and optional end-of-list message. Works with both Options mode and compositional (ChildContent) mode.
+- **`SearchQueryChanged` for MultiSelect** — Added `SearchQueryChanged` callback to `BbMultiSelect` and `BbFormFieldMultiSelect` for external/async search filtering (same pattern as Combobox). When set, bypasses internal text filter so the consumer controls displayed items.
+- **Missing parameter passthrough on FormFieldCombobox** — Added `SearchQuery`, `SearchQueryChanged`, `OnLoadMore`, `IsLoading`, `EndOfListMessage`, and `ActiveClass` parameters that were not being passed through to the inner Combobox.
+- **Infinite scroll demos** — Added Options and Compositional mode demos with country flag listings (loading 20 at a time) to Combobox, Select, MultiSelect, FormFieldCombobox, FormFieldSelect, and FormFieldMultiSelect demo pages, with matching code example files.
+
+### Fixed
+
+- **FormFieldCombobox: search input clearing on type** — Fixed a bug where typing in the search input of `BbFormFieldCombobox` would clear after each keystroke. The `SearchQueryChanged` callback was passed directly to the inner Combobox, so when the consumer's handler triggered a re-render, FormFieldCombobox pushed its stale empty `SearchQuery` back down.
+- **Combobox/MultiSelect: "No results found" not showing with external filtering** — Fixed `CommandContext.HasVisibleItems()` incorrectly returning `true` when external filtering was active and no items matched. Also fixed `CommandContext.UnregisterItem()` not calling `NotifyStateChanged()`, preventing `BbCommandEmpty` from re-evaluating after items were removed.
+- **MultiSelect: space key blocked in search input** — Fixed the JS keyboard handler intercepting the space key even when no list item was focused, preventing users from typing spaces in the search input.
+- **MultiSelect: selected item badges showing ID instead of display text** — Added a display text cache so badge text survives when the selected item is no longer in the current Options page after async filtering reloads.
+- **Select: infinite scroll not triggering** — Fixed the `@onscroll` handler being on the inner padding div while scrolling occurred on the outer Primitives div. Restructured so the inner div owns both the scroll handler and the `overflow-auto` style.
+
+### Changed
+
+- **Moved `isNearBottom` JS utility to Primitives** — Moved the scroll-near-bottom detection function from `Components/js/data-view.js` to `Primitives/js/primitives/element-utils.js` so it's available at the Primitives layer for reuse across Select, Combobox, and MultiSelect. Deleted the now-empty `data-view.js`.
+
+---
+
 ## 2026-03-20
 
 ### Fixed
