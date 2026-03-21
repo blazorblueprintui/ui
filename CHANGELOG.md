@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`SearchQueryChanged` for MultiSelect** — Added `SearchQueryChanged` callback to `BbMultiSelect` and `BbFormFieldMultiSelect` for external/async search filtering (same pattern as Combobox). When set, bypasses internal text filter so the consumer controls displayed items.
 - **Missing parameter passthrough on FormFieldCombobox** — Added `SearchQuery`, `SearchQueryChanged`, `OnLoadMore`, `IsLoading`, `EndOfListMessage`, and `ActiveClass` parameters that were not being passed through to the inner Combobox.
 - **Infinite scroll demos** — Added Options and Compositional mode demos with country flag listings (loading 20 at a time) to Combobox, Select, MultiSelect, FormFieldCombobox, FormFieldSelect, and FormFieldMultiSelect demo pages, with matching code example files.
+- **DataGrid: virtualization for hierarchy mode** — When `Virtualize="true"`, hierarchy and grouped render items now use the `<Virtualize>` component, so only visible rows are in the DOM regardless of total count.
+- **DataGrid: `HierarchyLargeDatasetThreshold` parameter** — Item count threshold (default 500) above which hierarchy filtering automatically uses `ShowMatchedOnly` instead of `ShowMatchedSubtree` to prevent rendering thousands of subtree context rows. Set to 0 to disable.
+- **`HierarchyManager.Count` and `GetAllItems()`** — New public members for efficient item count and iteration without a full tree flatten.
+- **Virtualized large org chart demo** — 4,200-employee hierarchy demo with DiceBear avatars, FilterBuilder, and virtualization enabled.
 
 ### Fixed
 
@@ -22,6 +26,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **MultiSelect: space key blocked in search input** — Fixed the JS keyboard handler intercepting the space key even when no list item was focused, preventing users from typing spaces in the search input.
 - **MultiSelect: selected item badges showing ID instead of display text** — Added a display text cache so badge text survives when the selected item is no longer in the current Options page after async filtering reloads.
 - **Select: infinite scroll not triggering** — Fixed the `@onscroll` handler being on the inner padding div while scrolling occurred on the outer Primitives div. Restructured so the inner div owns both the scroll handler and the `overflow-auto` style.
+- **DataGrid: hierarchy filter expanding entire tree with no-op filters** — Fixed auto-expansion logic running when the filter predicate matches every item (e.g., incomplete FilterBuilder condition with no value entered). Now skips expansion when the filter is non-selective.
+- **DataGrid: filtered hierarchy pagination rendering thousands of rows on one page** — When filtering in hierarchy mode, pagination now counts visible rows instead of only root items, preventing a single root with thousands of expanded descendants from all rendering on one page.
 
 ### Changed
 
