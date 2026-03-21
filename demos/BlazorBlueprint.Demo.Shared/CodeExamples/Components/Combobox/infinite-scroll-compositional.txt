@@ -1,0 +1,66 @@
+<BbCombobox TValue="string"
+         @bind-Value="selectedCountry"
+         SearchQueryChanged="@HandleSearch"
+         OnLoadMore="@HandleLoadMore"
+         IsLoading="@isLoading"
+         EndOfListMessage="@(visible.Length >= totalCount
+             ? "All countries loaded." : null)"
+         Placeholder="Select a country..."
+         SearchPlaceholder="Search countries..."
+         EmptyMessage="No countries found."
+         MatchTriggerWidth="true"
+         Class="w-[320px]">
+    @foreach (var c in visible)
+    {
+        <BbComboboxItem Value="@c.Code" Text="@c.Name">
+            <div class="flex items-center gap-2">
+                <span>@c.Flag</span>
+                <span>@c.Name</span>
+            </div>
+        </BbComboboxItem>
+    }
+</BbCombobox>
+
+@code {
+    private string? selectedCountry;
+    private CountryInfo[] visible = [];
+    private bool isLoading;
+    private string currentQuery = string.Empty;
+    private int totalCount;
+    private int pageSize = 20;
+
+    record CountryInfo(string Code, string Name, string Flag);
+
+    protected override void OnInitialized()
+    {
+        totalCount = allCountries.Length;
+        visible = allCountries.Take(pageSize).ToArray();
+    }
+
+    private async Task HandleSearch(string query)
+    {
+        isLoading = true;
+        currentQuery = query;
+        StateHasChanged();
+
+        var filtered = await MyApi.SearchAsync(query);
+        totalCount = filtered.Length;
+        visible = filtered.Take(pageSize).ToArray();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleLoadMore()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        var filtered = await MyApi.SearchAsync(currentQuery);
+        totalCount = filtered.Length;
+        visible = filtered.Take(visible.Length + pageSize).ToArray();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+}

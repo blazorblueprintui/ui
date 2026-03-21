@@ -1,0 +1,58 @@
+<BbFormFieldCombobox TValue="string"
+                   Options="employees"
+                   @bind-Value="selectedEmployee"
+                   SearchQueryChanged="@HandleSearch"
+                   OnLoadMore="@HandleLoadMore"
+                   IsLoading="@isLoading"
+                   EndOfListMessage="@(employees.Length >= totalCount ? "All employees loaded." : null)"
+                   Label="Employee"
+                   Placeholder="Select employee..."
+                   SearchPlaceholder="Search employees..."
+                   EmptyMessage="@(isLoading ? "Loading..." : "No employees found.")"
+                   HelperText="Choose an employee."
+                   MatchTriggerWidth="true"
+                   InputClass="w-full" />
+
+@code {
+    private string? selectedEmployee;
+    private SelectOption<string>[] employees = [];
+    private bool isLoading;
+    private string currentQuery = string.Empty;
+    private int totalCount;
+    private const int PageSize = 20;
+
+    protected override void OnInitialized()
+    {
+        totalCount = allEmployees.Length;
+        employees = allEmployees.Take(PageSize).ToArray();
+    }
+
+    private async Task HandleSearch(string query)
+    {
+        isLoading = true;
+        currentQuery = query;
+        StateHasChanged();
+
+        // Replace with your actual API call
+        var filtered = await MyApi.SearchAsync(query);
+        totalCount = filtered.Length;
+        employees = filtered.Take(PageSize).ToArray();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleLoadMore()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        var filtered = await MyApi.SearchAsync(currentQuery);
+        totalCount = filtered.Length;
+        var nextCount = employees.Length + PageSize;
+        employees = filtered.Take(nextCount).ToArray();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+}

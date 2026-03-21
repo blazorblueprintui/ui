@@ -232,6 +232,76 @@
         <CodeBlock Source="Components/Combobox/async-data-loading.txt" />
     </section>
 
+    <!-- Infinite Scroll -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Infinite Scroll</h2>
+        <p class="text-sm text-muted-foreground">
+            For large datasets, use <code class="bg-muted px-1 py-0.5 rounded text-sm">OnLoadMore</code> to load items
+            in batches as the user scrolls. Combine with
+            <code class="bg-muted px-1 py-0.5 rounded text-sm">IsLoading</code> to show a spinner and prevent duplicate requests.
+            This example has 200 products and loads 20 at a time.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <BbCombobox TValue="string"
+                     Options="infiniteScrollProducts"
+                     @bind-Value="infiniteScrollSelected"
+                     SearchQueryChanged="@HandleProductSearch"
+                     OnLoadMore="@HandleLoadMoreProducts"
+                     IsLoading="@infiniteScrollIsLoading"
+                     EndOfListMessage="@(infiniteScrollProducts.Length >= infiniteScrollFilteredTotal && infiniteScrollFilteredTotal > 0 ? "All products loaded." : null)"
+                     Placeholder="Select a product..."
+                     SearchPlaceholder="Search products..."
+                     EmptyMessage="@(infiniteScrollIsLoading ? "Loading..." : "No products found.")"
+                     MatchTriggerWidth="true"
+                     Class="w-[320px]" />
+            <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+                <p class="text-sm"><span class="font-medium">Selected value:</span> <span class="font-mono">@(string.IsNullOrEmpty(infiniteScrollSelected) ? "(none)" : infiniteScrollSelected)</span></p>
+                <p class="text-sm"><span class="font-medium">Loaded:</span> @infiniteScrollProducts.Length of @infiniteScrollFilteredTotal matching</p>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/Combobox/infinite-scroll.txt" />
+    </section>
+
+    <!-- Infinite Scroll (Compositional) -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Infinite Scroll (Compositional)</h2>
+        <p class="text-sm text-muted-foreground">
+            Infinite scroll works with compositional mode too. This example renders 100 countries with flag emojis
+            using <code class="bg-muted px-1 py-0.5 rounded text-sm">BbComboboxItem</code> children, loading 20 at a time.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <BbCombobox TValue="string"
+                     @bind-Value="countryScrollSelected"
+                     SearchQueryChanged="@HandleCountrySearch"
+                     OnLoadMore="@HandleLoadMoreCountries"
+                     IsLoading="@countryScrollIsLoading"
+                     Placeholder="Select a country..."
+                     SearchPlaceholder="Search countries..."
+                     EmptyMessage="@(countryScrollIsLoading ? "Loading..." : "No countries found.")"
+                     MatchTriggerWidth="true"
+                     Class="w-[320px]">
+                @foreach (var c in countryScrollVisible)
+                {
+                    <BbComboboxItem Value="@c.Code" Text="@($"{c.Flag} {c.Name}")">
+                        <div class="flex items-center gap-2">
+                            <span>@c.Flag</span>
+                            <span>@c.Name</span>
+                        </div>
+                    </BbComboboxItem>
+                }
+            </BbCombobox>
+            <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+                <p class="text-sm"><span class="font-medium">Selected value:</span> <span class="font-mono">@(string.IsNullOrEmpty(countryScrollSelected) ? "(none)" : countryScrollSelected)</span></p>
+                <p class="text-sm"><span class="font-medium">Loaded:</span> @countryScrollVisible.Length of @countryScrollFilteredTotal matching</p>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/Combobox/infinite-scroll-compositional.txt" />
+    </section>
+
     <!-- Disabled State -->
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">Disabled State</h2>
@@ -513,6 +583,15 @@
                 <ApiParameter Name="SearchQueryChanged" Type="EventCallback&lt;string&gt;">
                     Callback invoked when the search query changes. Use for server-side filtering or loading external data.
                 </ApiParameter>
+                <ApiParameter Name="OnLoadMore" Type="EventCallback">
+                    Callback invoked when the user scrolls near the bottom of the dropdown list. Use to load additional items for infinite scroll scenarios.
+                </ApiParameter>
+                <ApiParameter Name="IsLoading" Type="bool" Default="false">
+                    Whether additional items are currently being loaded. Shows a spinner at the bottom and suppresses OnLoadMore until loading completes.
+                </ApiParameter>
+                <ApiParameter Name="EndOfListMessage" Type="string?" Default="null">
+                    Message displayed at the bottom of the dropdown when all items have been loaded. Set dynamically based on whether more items are available.
+                </ApiParameter>
                 <ApiParameter Name="ChildContent" Type="RenderFragment?">
                     Content for compositional mode. Use ComboboxItem components as children.
                 </ApiParameter>
@@ -665,6 +744,231 @@
 
     private string GetCompositionalLabel(string? value) =>
         value is not null && compositionalLabels.TryGetValue(value, out var label) ? label : "(none)";
+
+    // Infinite scroll example
+    private string? infiniteScrollSelected;
+    private SelectOption<string>[] infiniteScrollProducts = Array.Empty<SelectOption<string>>();
+    private bool infiniteScrollIsLoading;
+    private string infiniteScrollCurrentQuery = string.Empty;
+    private int infiniteScrollFilteredTotal;
+    private CancellationTokenSource? productSearchCts;
+    private const int ProductPageSize = 20;
+
+    private static readonly SelectOption<string>[] allProducts = GenerateProducts();
+
+    private static SelectOption<string>[] GenerateProducts()
+    {
+        var categories = new[] { "Widget", "Gadget", "Module", "Adapter", "Sensor", "Controller", "Display", "Connector", "Filter", "Driver" };
+        var materials = new[] { "Steel", "Carbon", "Titanium", "Copper", "Ceramic", "Polymer", "Silicon", "Aluminum", "Glass", "Platinum" };
+        var products = new List<SelectOption<string>>();
+
+        for (int i = 1; i <= 200; i++)
+        {
+            var category = categories[(i - 1) % categories.Length];
+            var material = materials[(i - 1) / categories.Length % materials.Length];
+            var id = $"prod-{i:D4}";
+            var name = $"{material} {category} {i:D4}";
+            products.Add(new SelectOption<string>(id, name));
+        }
+
+        return products.ToArray();
+    }
+
+    protected override void OnInitialized()
+    {
+        // Load initial page for Options mode demo
+        infiniteScrollFilteredTotal = allProducts.Length;
+        infiniteScrollProducts = allProducts.Take(ProductPageSize).ToArray();
+
+        // Load initial page for compositional mode demo
+        InitCountryScroll();
+    }
+
+    private async Task HandleProductSearch(string query)
+    {
+        productSearchCts?.Cancel();
+        var cts = productSearchCts = new CancellationTokenSource();
+
+        infiniteScrollIsLoading = true;
+        infiniteScrollCurrentQuery = query;
+        StateHasChanged();
+
+        try
+        {
+            await Task.Delay(200, cts.Token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        var filtered = GetFilteredProducts(query);
+        infiniteScrollFilteredTotal = filtered.Length;
+        infiniteScrollProducts = filtered.Take(ProductPageSize).ToArray();
+        infiniteScrollIsLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleLoadMoreProducts()
+    {
+        infiniteScrollIsLoading = true;
+        StateHasChanged();
+
+        // Simulate network latency
+        await Task.Delay(300);
+
+        var filtered = GetFilteredProducts(infiniteScrollCurrentQuery);
+        infiniteScrollFilteredTotal = filtered.Length;
+        var nextCount = infiniteScrollProducts.Length + ProductPageSize;
+        infiniteScrollProducts = filtered.Take(nextCount).ToArray();
+        infiniteScrollIsLoading = false;
+        StateHasChanged();
+    }
+
+    private SelectOption<string>[] GetFilteredProducts(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return allProducts;
+        }
+
+        return allProducts
+            .Where(p => p.Text.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+    }
+
+    // Infinite scroll compositional example (countries with flags)
+    private string? countryScrollSelected;
+    private CountryInfo[] countryScrollVisible = Array.Empty<CountryInfo>();
+    private bool countryScrollIsLoading;
+    private string countryScrollCurrentQuery = string.Empty;
+    private int countryScrollFilteredTotal;
+    private CancellationTokenSource? countrySearchCts;
+    private const int CountryPageSize = 20;
+
+    private record CountryInfo(string Code, string Name, string Flag);
+
+    private static readonly CountryInfo[] allCountryData =
+    [
+        new("AF", "Afghanistan", "\U0001F1E6\U0001F1EB"), new("AL", "Albania", "\U0001F1E6\U0001F1F1"),
+        new("DZ", "Algeria", "\U0001F1E9\U0001F1FF"), new("AD", "Andorra", "\U0001F1E6\U0001F1E9"),
+        new("AO", "Angola", "\U0001F1E6\U0001F1F4"), new("AG", "Antigua and Barbuda", "\U0001F1E6\U0001F1EC"),
+        new("AR", "Argentina", "\U0001F1E6\U0001F1F7"), new("AM", "Armenia", "\U0001F1E6\U0001F1F2"),
+        new("AU", "Australia", "\U0001F1E6\U0001F1FA"), new("AT", "Austria", "\U0001F1E6\U0001F1F9"),
+        new("AZ", "Azerbaijan", "\U0001F1E6\U0001F1FF"), new("BS", "Bahamas", "\U0001F1E7\U0001F1F8"),
+        new("BH", "Bahrain", "\U0001F1E7\U0001F1ED"), new("BD", "Bangladesh", "\U0001F1E7\U0001F1E9"),
+        new("BB", "Barbados", "\U0001F1E7\U0001F1E7"), new("BY", "Belarus", "\U0001F1E7\U0001F1FE"),
+        new("BE", "Belgium", "\U0001F1E7\U0001F1EA"), new("BZ", "Belize", "\U0001F1E7\U0001F1FF"),
+        new("BJ", "Benin", "\U0001F1E7\U0001F1EF"), new("BT", "Bhutan", "\U0001F1E7\U0001F1F9"),
+        new("BO", "Bolivia", "\U0001F1E7\U0001F1F4"), new("BA", "Bosnia and Herzegovina", "\U0001F1E7\U0001F1E6"),
+        new("BW", "Botswana", "\U0001F1E7\U0001F1FC"), new("BR", "Brazil", "\U0001F1E7\U0001F1F7"),
+        new("BN", "Brunei", "\U0001F1E7\U0001F1F3"), new("BG", "Bulgaria", "\U0001F1E7\U0001F1EC"),
+        new("BF", "Burkina Faso", "\U0001F1E7\U0001F1EB"), new("BI", "Burundi", "\U0001F1E7\U0001F1EE"),
+        new("KH", "Cambodia", "\U0001F1F0\U0001F1ED"), new("CM", "Cameroon", "\U0001F1E8\U0001F1F2"),
+        new("CA", "Canada", "\U0001F1E8\U0001F1E6"), new("TD", "Chad", "\U0001F1F9\U0001F1E9"),
+        new("CL", "Chile", "\U0001F1E8\U0001F1F1"), new("CN", "China", "\U0001F1E8\U0001F1F3"),
+        new("CO", "Colombia", "\U0001F1E8\U0001F1F4"), new("CR", "Costa Rica", "\U0001F1E8\U0001F1F7"),
+        new("HR", "Croatia", "\U0001F1ED\U0001F1F7"), new("CU", "Cuba", "\U0001F1E8\U0001F1FA"),
+        new("CY", "Cyprus", "\U0001F1E8\U0001F1FE"), new("CZ", "Czech Republic", "\U0001F1E8\U0001F1FF"),
+        new("DK", "Denmark", "\U0001F1E9\U0001F1F0"), new("DO", "Dominican Republic", "\U0001F1E9\U0001F1F4"),
+        new("EC", "Ecuador", "\U0001F1EA\U0001F1E8"), new("EG", "Egypt", "\U0001F1EA\U0001F1EC"),
+        new("SV", "El Salvador", "\U0001F1F8\U0001F1FB"), new("EE", "Estonia", "\U0001F1EA\U0001F1EA"),
+        new("ET", "Ethiopia", "\U0001F1EA\U0001F1F9"), new("FI", "Finland", "\U0001F1EB\U0001F1EE"),
+        new("FR", "France", "\U0001F1EB\U0001F1F7"), new("DE", "Germany", "\U0001F1E9\U0001F1EA"),
+        new("GH", "Ghana", "\U0001F1EC\U0001F1ED"), new("GR", "Greece", "\U0001F1EC\U0001F1F7"),
+        new("GT", "Guatemala", "\U0001F1EC\U0001F1F9"), new("HT", "Haiti", "\U0001F1ED\U0001F1F9"),
+        new("HN", "Honduras", "\U0001F1ED\U0001F1F3"), new("HU", "Hungary", "\U0001F1ED\U0001F1FA"),
+        new("IS", "Iceland", "\U0001F1EE\U0001F1F8"), new("IN", "India", "\U0001F1EE\U0001F1F3"),
+        new("ID", "Indonesia", "\U0001F1EE\U0001F1E9"), new("IR", "Iran", "\U0001F1EE\U0001F1F7"),
+        new("IQ", "Iraq", "\U0001F1EE\U0001F1F6"), new("IE", "Ireland", "\U0001F1EE\U0001F1EA"),
+        new("IL", "Israel", "\U0001F1EE\U0001F1F1"), new("IT", "Italy", "\U0001F1EE\U0001F1F9"),
+        new("JM", "Jamaica", "\U0001F1EF\U0001F1F2"), new("JP", "Japan", "\U0001F1EF\U0001F1F5"),
+        new("JO", "Jordan", "\U0001F1EF\U0001F1F4"), new("KZ", "Kazakhstan", "\U0001F1F0\U0001F1FF"),
+        new("KE", "Kenya", "\U0001F1F0\U0001F1EA"), new("KR", "South Korea", "\U0001F1F0\U0001F1F7"),
+        new("KW", "Kuwait", "\U0001F1F0\U0001F1FC"), new("LV", "Latvia", "\U0001F1F1\U0001F1FB"),
+        new("LB", "Lebanon", "\U0001F1F1\U0001F1E7"), new("LY", "Libya", "\U0001F1F1\U0001F1FE"),
+        new("LT", "Lithuania", "\U0001F1F1\U0001F1F9"), new("LU", "Luxembourg", "\U0001F1F1\U0001F1FA"),
+        new("MY", "Malaysia", "\U0001F1F2\U0001F1FE"), new("MX", "Mexico", "\U0001F1F2\U0001F1FD"),
+        new("MA", "Morocco", "\U0001F1F2\U0001F1E6"), new("MZ", "Mozambique", "\U0001F1F2\U0001F1FF"),
+        new("MM", "Myanmar", "\U0001F1F2\U0001F1F2"), new("NP", "Nepal", "\U0001F1F3\U0001F1F5"),
+        new("NL", "Netherlands", "\U0001F1F3\U0001F1F1"), new("NZ", "New Zealand", "\U0001F1F3\U0001F1FF"),
+        new("NI", "Nicaragua", "\U0001F1F3\U0001F1EE"), new("NG", "Nigeria", "\U0001F1F3\U0001F1EC"),
+        new("NO", "Norway", "\U0001F1F3\U0001F1F4"), new("OM", "Oman", "\U0001F1F4\U0001F1F2"),
+        new("PK", "Pakistan", "\U0001F1F5\U0001F1F0"), new("PA", "Panama", "\U0001F1F5\U0001F1E6"),
+        new("PY", "Paraguay", "\U0001F1F5\U0001F1FE"), new("PE", "Peru", "\U0001F1F5\U0001F1EA"),
+        new("PH", "Philippines", "\U0001F1F5\U0001F1ED"), new("PL", "Poland", "\U0001F1F5\U0001F1F1"),
+        new("PT", "Portugal", "\U0001F1F5\U0001F1F9"), new("QA", "Qatar", "\U0001F1F6\U0001F1E6"),
+        new("RO", "Romania", "\U0001F1F7\U0001F1F4"), new("RU", "Russia", "\U0001F1F7\U0001F1FA"),
+        new("SA", "Saudi Arabia", "\U0001F1F8\U0001F1E6"), new("SN", "Senegal", "\U0001F1F8\U0001F1F3"),
+        new("RS", "Serbia", "\U0001F1F7\U0001F1F8"), new("SG", "Singapore", "\U0001F1F8\U0001F1EC"),
+        new("SK", "Slovakia", "\U0001F1F8\U0001F1F0"), new("ZA", "South Africa", "\U0001F1FF\U0001F1E6"),
+        new("ES", "Spain", "\U0001F1EA\U0001F1F8"), new("LK", "Sri Lanka", "\U0001F1F1\U0001F1F0"),
+        new("SE", "Sweden", "\U0001F1F8\U0001F1EA"), new("CH", "Switzerland", "\U0001F1E8\U0001F1ED"),
+        new("TW", "Taiwan", "\U0001F1F9\U0001F1FC"), new("TH", "Thailand", "\U0001F1F9\U0001F1ED"),
+        new("TR", "Turkey", "\U0001F1F9\U0001F1F7"), new("UA", "Ukraine", "\U0001F1FA\U0001F1E6"),
+        new("AE", "United Arab Emirates", "\U0001F1E6\U0001F1EA"), new("GB", "United Kingdom", "\U0001F1EC\U0001F1E7"),
+        new("US", "United States", "\U0001F1FA\U0001F1F8"), new("UY", "Uruguay", "\U0001F1FA\U0001F1FE"),
+        new("VE", "Venezuela", "\U0001F1FB\U0001F1EA"), new("VN", "Vietnam", "\U0001F1FB\U0001F1F3"),
+    ];
+
+    private void InitCountryScroll()
+    {
+        countryScrollFilteredTotal = allCountryData.Length;
+        countryScrollVisible = allCountryData.Take(CountryPageSize).ToArray();
+    }
+
+    private async Task HandleCountrySearch(string query)
+    {
+        countrySearchCts?.Cancel();
+        var cts = countrySearchCts = new CancellationTokenSource();
+
+        countryScrollIsLoading = true;
+        countryScrollCurrentQuery = query;
+        StateHasChanged();
+
+        try
+        {
+            await Task.Delay(200, cts.Token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        var filtered = GetFilteredCountries(query);
+        countryScrollFilteredTotal = filtered.Length;
+        countryScrollVisible = filtered.Take(CountryPageSize).ToArray();
+        countryScrollIsLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleLoadMoreCountries()
+    {
+        countryScrollIsLoading = true;
+        StateHasChanged();
+
+        await Task.Delay(300);
+
+        var filtered = GetFilteredCountries(countryScrollCurrentQuery);
+        countryScrollFilteredTotal = filtered.Length;
+        var nextCount = countryScrollVisible.Length + CountryPageSize;
+        countryScrollVisible = filtered.Take(nextCount).ToArray();
+        countryScrollIsLoading = false;
+        StateHasChanged();
+    }
+
+    private CountryInfo[] GetFilteredCountries(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return allCountryData;
+        }
+
+        return allCountryData
+            .Where(c => c.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
+                     || c.Code.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+    }
 
     // Async data loading example
     private string? asyncSelectedCity;

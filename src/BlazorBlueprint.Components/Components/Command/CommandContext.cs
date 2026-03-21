@@ -303,6 +303,7 @@ public class CommandContext
         if (index >= 0 && index < _items.Count)
         {
             _items[index] = null!; // Mark as null, don't remove to preserve indices
+            NotifyStateChanged(); // Notify so CommandEmpty can update
         }
     }
 
@@ -345,12 +346,16 @@ public class CommandContext
 
     /// <summary>
     /// Gets whether there are any visible items.
-    /// Returns true if no items have been registered yet (to avoid showing "No results" on initial load).
+    /// Returns true if no items have been registered yet (to avoid showing "No results" on initial load),
+    /// unless external filtering is active (FilterFunction is set), in which case the consumer
+    /// controls the item list and an empty list genuinely means "no results".
     /// </summary>
     public bool HasVisibleItems()
     {
-        // Don't show "No results" until items have had a chance to register
-        if (!_hasRegisteredItems)
+        // When using external filtering, trust the item state — an empty list means no results.
+        // Without external filtering, wait until items have had a chance to register
+        // so we don't flash "No results" during initial render.
+        if (!_hasRegisteredItems && FilterFunction == null)
         {
             return true;
         }

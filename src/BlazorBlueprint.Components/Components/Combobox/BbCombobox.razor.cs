@@ -211,6 +211,32 @@ public partial class BbCombobox<TValue> : ComponentBase
     public bool MatchTriggerWidth { get; set; }
 
     /// <summary>
+    /// Gets or sets the callback invoked when the user scrolls near the bottom of the dropdown list.
+    /// Use this to load additional items for infinite scroll scenarios (e.g. paging through large datasets).
+    /// </summary>
+    /// <remarks>
+    /// Typically used together with <see cref="IsLoading"/> to prevent duplicate requests
+    /// and show a loading indicator while more items are being fetched.
+    /// </remarks>
+    [Parameter]
+    public EventCallback OnLoadMore { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether additional items are currently being loaded.
+    /// When true, a loading spinner is shown at the bottom of the dropdown list and
+    /// <see cref="OnLoadMore"/> is suppressed until loading completes.
+    /// </summary>
+    [Parameter]
+    public bool IsLoading { get; set; }
+
+    /// <summary>
+    /// Gets or sets a message displayed at the bottom of the dropdown list when all items have been loaded.
+    /// Only shown when <see cref="IsLoading"/> is false. Set to <c>null</c> or empty to hide.
+    /// </summary>
+    [Parameter]
+    public string? EndOfListMessage { get; set; }
+
+    /// <summary>
     /// Gets or sets CSS classes applied to the trigger when the dropdown is open.
     /// Default is <c>"bg-accent text-accent-foreground"</c>.
     /// Set to <c>null</c> or empty to disable the active style.
