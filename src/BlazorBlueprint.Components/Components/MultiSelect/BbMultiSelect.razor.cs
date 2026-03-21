@@ -49,6 +49,13 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// </summary>
 #pragma warning disable CS8714 // TValue may be null but dictionary keys are non-null in practice
     private readonly Dictionary<TValue, string> _itemTextRegistry = new(EqualityComparer<TValue>.Default);
+
+    /// <summary>
+    /// Cache of display text for selected values. Survives Options array changes during
+    /// async filtering so badge text remains correct when the selected item is no longer
+    /// in the current Options page.
+    /// </summary>
+    private readonly Dictionary<TValue, string> _displayTextCache = new(EqualityComparer<TValue>.Default);
 #pragma warning restore CS8714
 
     /// <summary>
@@ -101,6 +108,14 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// </summary>
     [Parameter]
     public string? EmptyMessage { get; set; }
+
+    /// <summary>
+    /// Gets or sets the callback invoked when the search query changes.
+    /// Use for server-side filtering or loading external data. When set, the component
+    /// bypasses its internal text filter and trusts the consumer to control the displayed items.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> SearchQueryChanged { get; set; }
 
     /// <summary>
     /// Gets or sets the label for the Select All option.
@@ -188,11 +203,36 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     public bool AutoClose { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets the callback invoked when the user scrolls near the bottom of the dropdown list.
+    /// Use this to load additional items for infinite scroll scenarios.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnLoadMore { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether additional items are currently being loaded.
+    /// When true, a loading spinner is shown at the bottom of the list and
+    /// <see cref="OnLoadMore"/> is suppressed until loading completes.
+    /// </summary>
+    [Parameter]
+    public bool IsLoading { get; set; }
+
+    /// <summary>
+    /// Gets or sets a message displayed at the bottom of the list when all items have been loaded.
+    /// Only shown when <see cref="IsLoading"/> is false. Set to <c>null</c> or empty to hide.
+    /// </summary>
+    [Parameter]
+    public string? EndOfListMessage { get; set; }
+
+    /// <summary>
     /// Gets or sets an expression that identifies the bound values.
     /// Used for form validation integration.
     /// </summary>
     [Parameter]
     public Expression<Func<IEnumerable<TValue>?>>? ValuesExpression { get; set; }
+
+    private ElementReference _listboxScrollRef;
+    private IJSObjectReference? _elementUtilsModule;
 
     /// <summary>
     /// Tracks whether the popover is currently open.
@@ -248,10 +288,18 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
 
     /// <summary>
     /// Gets the options that match the current search query.
+    /// When <see cref="SearchQueryChanged"/> has a delegate, bypasses internal filtering
+    /// (the consumer controls the items externally).
     /// </summary>
     private IEnumerable<SelectOption<TValue>> GetFilteredOptions()
     {
         var options = EffectiveOptions;
+
+        // When external filtering is active, trust the consumer's item list
+        if (SearchQueryChanged.HasDelegate)
+        {
+            return options;
+        }
 
         if (string.IsNullOrWhiteSpace(_searchQuery))
         {
@@ -260,6 +308,14 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
 
         return options.Where(o =>
             o.Text.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private async Task HandleSearchQueryChangedAsync()
+    {
+        if (SearchQueryChanged.HasDelegate)
+        {
+            await SearchQueryChanged.InvokeAsync(_searchQuery);
+        }
     }
 
     /// <summary>
@@ -392,10 +448,16 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// <summary>
     /// Closes the dropdown.
     /// </summary>
-    private void Close()
+    private async Task Close()
     {
         _isOpen = false;
         _searchQuery = string.Empty;
+
+        // Notify consumer so they can reload the default dataset for the next open
+        if (SearchQueryChanged.HasDelegate)
+        {
+            await SearchQueryChanged.InvokeAsync(string.Empty);
+        }
     }
 
     /// <summary>
@@ -412,7 +474,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// <summary>
     /// Handles click-outside events when AutoClose is enabled.
     /// </summary>
-    private void HandleClickOutside() => Close();
+    private async Task HandleClickOutside() => await Close();
 
     /// <summary>
     /// Handles the popover content ready event to focus the search input.
@@ -450,6 +512,15 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
         if (!currentValues.Remove(option.Value))
         {
             currentValues.Add(option.Value);
+            // Cache display text so it survives Options array changes during async filtering
+            if (option.Value is not null)
+            {
+                _displayTextCache[option.Value] = option.Text;
+            }
+        }
+        else if (option.Value is not null)
+        {
+            _displayTextCache.Remove(option.Value);
         }
 
         await UpdateValues(currentValues);
@@ -487,7 +558,8 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// </summary>
     private async Task HandleSelectAllToggle()
     {
-        var filteredValues = FilteredOptions.Select(o => o.Value).ToList();
+        var filteredOptions = FilteredOptions.ToList();
+        var filteredValues = filteredOptions.Select(o => o.Value).ToList();
         var currentValues = SelectedValues;
 
         // Check if all FILTERED items are selected
@@ -497,13 +569,21 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
         {
             // Deselect only the filtered items
             currentValues.RemoveAll(v => filteredValues.Contains(v));
+            foreach (var v in filteredValues.Where(v => v is not null))
+            {
+                _displayTextCache.Remove(v);
+            }
         }
         else
         {
             // Select all filtered items (add to existing selection)
-            foreach (var value in filteredValues.Where(v => !currentValues.Contains(v)))
+            foreach (var option in filteredOptions.Where(o => !currentValues.Contains(o.Value)))
             {
-                currentValues.Add(value);
+                currentValues.Add(option.Value);
+                if (option.Value is not null)
+                {
+                    _displayTextCache[option.Value] = option.Text;
+                }
             }
         }
 
@@ -517,14 +597,21 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     {
         var currentValues = SelectedValues;
         currentValues.Remove(value);
+        if (value is not null)
+        {
+            _displayTextCache.Remove(value);
+        }
         await UpdateValues(currentValues);
     }
 
     /// <summary>
     /// Clears all selections.
     /// </summary>
-    private async Task ClearAll() =>
+    private async Task ClearAll()
+    {
+        _displayTextCache.Clear();
         await UpdateValues(new List<TValue>());
+    }
 
     /// <summary>
     /// Updates the selected values and notifies parent.
@@ -585,6 +672,13 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
             return registeredText;
         }
 
+        // Fallback: cached display text from when the item was selected.
+        // Survives Options array changes during async filtering.
+        if (value is not null && _displayTextCache.TryGetValue(value, out var cachedText))
+        {
+            return cachedText;
+        }
+
         return value?.ToString() ?? "";
     }
 
@@ -597,19 +691,43 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     }
 
     [JSInvokable]
-    public void HandleEnter()
+    public async Task HandleEnter()
     {
         // Enter closes the dropdown after item toggle
-        Close();
+        await Close();
         StateHasChanged();
     }
 
     [JSInvokable]
-    public void HandleEscape()
+    public async Task HandleEscape()
     {
         // Escape closes the dropdown
-        Close();
+        await Close();
         StateHasChanged();
+    }
+
+    private async Task HandleListboxScroll()
+    {
+        if (!OnLoadMore.HasDelegate || IsLoading)
+        {
+            return;
+        }
+
+        _elementUtilsModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
+            "import", "./_content/BlazorBlueprint.Primitives/js/primitives/element-utils.js");
+
+        try
+        {
+            var nearBottom = await _elementUtilsModule.InvokeAsync<bool>("isNearBottom", _listboxScrollRef, 80.0);
+            if (nearBottom)
+            {
+                await OnLoadMore.InvokeAsync();
+            }
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Expected during circuit disconnect or disposal
+        }
     }
 
     public async ValueTask DisposeAsync()
@@ -628,6 +746,19 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
                 // Expected during circuit disconnect
             }
             _multiSelectModule = null;
+        }
+
+        if (_elementUtilsModule != null)
+        {
+            try
+            {
+                await _elementUtilsModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+            _elementUtilsModule = null;
         }
 
         _dotNetRef?.Dispose();
@@ -724,6 +855,11 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     internal string SearchQuery => _searchQuery;
 
     /// <summary>
+    /// Whether external filtering is active (consumer handles search via SearchQueryChanged).
+    /// </summary>
+    internal bool IsExternalFiltering => SearchQueryChanged.HasDelegate;
+
+    /// <summary>
     /// Registers an item's value and display text for badge display and EffectiveOptions.
     /// Called by MultiSelectItem on initialization.
     /// </summary>
@@ -765,6 +901,15 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
         if (!currentValues.Remove(value))
         {
             currentValues.Add(value);
+            // Cache display text so it survives item re-renders during async filtering
+            if (value is not null && _itemTextRegistry.TryGetValue(value, out var text))
+            {
+                _displayTextCache[value] = text;
+            }
+        }
+        else if (value is not null)
+        {
+            _displayTextCache.Remove(value);
         }
 
         await UpdateValues(currentValues);

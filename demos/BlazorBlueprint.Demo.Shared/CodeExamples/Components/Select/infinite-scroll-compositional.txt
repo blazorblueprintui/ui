@@ -1,0 +1,40 @@
+<BbSelect TValue="string" @bind-Value="selectedCountry" Class="w-[320px]">
+    <BbSelectTrigger TValue="string">
+        <BbSelectValue Placeholder="Select a country..." />
+    </BbSelectTrigger>
+    <BbSelectContent TValue="string"
+                     OnLoadMore="@HandleLoadMore"
+                     IsLoading="@isLoading">
+        @foreach (var c in visible)
+        {
+            <BbSelectItem TValue="string"
+                          Value="@c.Code"
+                          Text="@($"{c.Flag} {c.Name}")" />
+        }
+    </BbSelectContent>
+</BbSelect>
+
+@code {
+    private string? selectedCountry;
+    private CountryInfo[] visible = [];
+    private bool isLoading;
+    private const int PageSize = 20;
+
+    record CountryInfo(string Code, string Name, string Flag);
+
+    protected override void OnInitialized()
+    {
+        visible = allCountries.Take(PageSize).ToArray();
+    }
+
+    private async Task HandleLoadMore()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        visible = allCountries.Take(visible.Length + PageSize).ToArray();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+}

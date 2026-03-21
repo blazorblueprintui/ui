@@ -104,7 +104,11 @@ export function setupMultiSelectInput(inputElement, dotNetRef, inputId, contentI
                 updateFocusedItem(options.length - 1);
                 break;
 
-            case ' ': // Space - toggle checkbox, don't close
+            case ' ': // Space - toggle checkbox, don't close (only when an item is focused)
+                if (state.focusedIndex < 0 || state.focusedIndex >= options.length) {
+                    // No item focused — let the space character through to the search input
+                    return;
+                }
                 e.preventDefault();
                 if (state.focusedIndex >= 0 && state.focusedIndex < options.length) {
                     const focusedEl = options[state.focusedIndex];

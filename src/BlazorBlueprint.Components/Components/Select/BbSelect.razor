@@ -17,7 +17,7 @@
         <BbSelectTrigger TValue="TValue">
             <BbSelectValue Placeholder="@Placeholder" />
         </BbSelectTrigger>
-        <BbSelectContent TValue="TValue">
+        <BbSelectContent TValue="TValue" OnLoadMore="@OnLoadMore" IsLoading="@IsLoading" EndOfListMessage="@EndOfListMessage">
             @foreach (var option in Options)
             {
                 <BbSelectItem TValue="TValue" Value="@option.Value" Text="@option.Text" />
@@ -106,6 +106,31 @@
     /// </summary>
     [Parameter]
     public string? Placeholder { get; set; }
+
+    /// <summary>
+    /// Gets or sets the callback invoked when the user scrolls near the bottom of the dropdown list.
+    /// Use this to load additional items for infinite scroll scenarios.
+    /// Only applies in Options mode; in compositional mode, set this on BbSelectContent directly.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnLoadMore { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether additional items are currently being loaded.
+    /// When true, a loading spinner is shown at the bottom of the list and
+    /// <see cref="OnLoadMore"/> is suppressed until loading completes.
+    /// Only applies in Options mode; in compositional mode, set this on BbSelectContent directly.
+    /// </summary>
+    [Parameter]
+    public bool IsLoading { get; set; }
+
+    /// <summary>
+    /// Gets or sets a message displayed at the bottom of the list when all items have been loaded.
+    /// Only shown when <see cref="IsLoading"/> is false. Set to <c>null</c> or empty to hide.
+    /// Only applies in Options mode; in compositional mode, set this on BbSelectContent directly.
+    /// </summary>
+    [Parameter]
+    public string? EndOfListMessage { get; set; }
 
     /// <summary>
     /// Gets or sets the content to be rendered inside the select component.

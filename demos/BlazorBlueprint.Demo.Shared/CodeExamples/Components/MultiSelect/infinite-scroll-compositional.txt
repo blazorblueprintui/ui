@@ -1,0 +1,55 @@
+<BbMultiSelect TValue="string"
+             @bind-Values="selectedCountries"
+             SearchQueryChanged="@HandleSearch"
+             OnLoadMore="@HandleLoadMore"
+             IsLoading="@isLoading"
+             Placeholder="Select countries..."
+             SearchPlaceholder="Search countries..."
+             MatchTriggerWidth="true"
+             Class="w-[320px]">
+    @foreach (var c in visible)
+    {
+        <BbMultiSelectItem Value="@c.Code"
+                           Text="@($"{c.Flag} {c.Name}")" />
+    }
+</BbMultiSelect>
+
+@code {
+    private IEnumerable<string>? selectedCountries;
+    private CountryInfo[] visible = [];
+    private bool isLoading;
+    private string currentQuery = string.Empty;
+    private const int PageSize = 20;
+
+    record CountryInfo(string Code, string Name, string Flag);
+
+    protected override void OnInitialized()
+    {
+        visible = allCountries.Take(PageSize).ToArray();
+    }
+
+    private async Task HandleSearch(string query)
+    {
+        isLoading = true;
+        currentQuery = query;
+        StateHasChanged();
+
+        var filtered = await MyApi.SearchAsync(query);
+        visible = filtered.Take(PageSize).ToArray();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleLoadMore()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        var filtered = await MyApi.SearchAsync(currentQuery);
+        visible = filtered.Take(visible.Length + PageSize).ToArray();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+}

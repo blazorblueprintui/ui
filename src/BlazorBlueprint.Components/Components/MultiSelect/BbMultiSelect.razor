@@ -86,11 +86,12 @@
                        placeholder="@EffectiveSearchPlaceholder"
                        @bind="_searchQuery"
                        @bind:event="oninput"
+                       @bind:after="HandleSearchQueryChangedAsync"
                        class="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 ml-2" />
             </div>
 
             @* Items list section *@
-            <div id="@($"{Id}-listbox")" role="listbox" aria-multiselectable="true" class="max-h-[300px] overflow-y-auto p-1">
+            <div id="@($"{Id}-listbox")" @ref="_listboxScrollRef" @onscroll="HandleListboxScroll" role="listbox" aria-multiselectable="true" class="max-h-[300px] overflow-y-auto p-1">
                 @if (IsCompositionalMode)
                 {
                     @* Compositional mode: Select All + ChildContent *@
@@ -186,6 +187,18 @@
                             </div>
                         }
                     }
+                }
+                @if (IsLoading)
+                {
+                    <div class="flex items-center justify-center py-2">
+                        <BbSpinner Size="SpinnerSize.Small" />
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(EndOfListMessage))
+                {
+                    <div class="py-2 text-center text-xs text-muted-foreground">
+                        @EndOfListMessage
+                    </div>
                 }
             </div>
 

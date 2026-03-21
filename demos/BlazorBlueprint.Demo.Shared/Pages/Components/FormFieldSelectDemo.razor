@@ -331,6 +331,68 @@
         <CodeBlock Source="Components/FormFieldSelect/editform.txt" />
     </div>
 
+    <!-- Infinite Scroll (Options Mode) -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Infinite Scroll (Options Mode)</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">OnLoadMore</code> and
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">IsLoading</code> to load items in batches
+                as the user scrolls. This example has 100 countries with flags, loading 20 at a time.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldSelect TValue="string"
+                             Options="@_ffsScrollCountries"
+                             @bind-Value="_ffsScrollSelected"
+                             OnLoadMore="@HandleFfsLoadMore"
+                             IsLoading="@_ffsScrollIsLoading"
+                             Label="Country"
+                             Placeholder="Select a country..."
+                             HelperText="@($"Showing {_ffsScrollCountries.Length} of {_allFfsCountries.Length} countries.")"
+                             InputClass="w-full" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Selected:</p>
+            <p class="text-sm font-mono">@(string.IsNullOrEmpty(_ffsScrollSelected) ? "(none)" : _ffsScrollSelected)</p>
+        </div>
+        <CodeBlock Source="Components/FormFieldSelect/infinite-scroll.txt" />
+    </div>
+
+    <!-- Infinite Scroll (Compositional Mode) -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Infinite Scroll (Compositional Mode)</h2>
+            <p class="text-sm text-muted-foreground">
+                Infinite scroll with compositional mode using
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">BbSelectItem</code> children.
+                Set <code class="text-xs bg-muted px-1 py-0.5 rounded">OnLoadMore</code> and
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">IsLoading</code> on the FormFieldSelect
+                &mdash; they flow through to the internal SelectContent.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldSelect TValue="string"
+                             @bind-Value="_ffsCompScrollSelected"
+                             OnLoadMore="@HandleFfsCompLoadMore"
+                             IsLoading="@_ffsCompScrollIsLoading"
+                             Label="Country"
+                             Placeholder="Select a country..."
+                             HelperText="@($"Showing {_ffsCompScrollVisible.Length} of {_allFfsCompCountries.Length} countries.")"
+                             InputClass="w-full">
+                @foreach (var c in _ffsCompScrollVisible)
+                {
+                    <BbSelectItem TValue="string" Value="@c.Code" Text="@($"{c.Flag} {c.Name}")" />
+                }
+            </BbFormFieldSelect>
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Selected:</p>
+            <p class="text-sm font-mono">@(string.IsNullOrEmpty(_ffsCompScrollSelected) ? "(none)" : _ffsCompScrollSelected)</p>
+        </div>
+        <CodeBlock Source="Components/FormFieldSelect/infinite-scroll-compositional.txt" />
+    </div>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>Automatically associates label with input via generated ID</AccessibilityItem>
@@ -395,6 +457,12 @@
 </div>
 
 @code {
+    protected override void OnInitialized()
+    {
+        InitFfsScroll();
+        InitFfsCompScroll();
+    }
+
     private string? _fruit;
     private string? _fruitDataBound;
     private string? _country;
@@ -457,5 +525,154 @@
     {
         [Required(ErrorMessage = "Please select a country.")]
         public string? Country { get; set; }
+    }
+
+    // Infinite scroll (Options mode)
+    private string? _ffsScrollSelected;
+    private SelectOption<string>[] _ffsScrollCountries = Array.Empty<SelectOption<string>>();
+    private bool _ffsScrollIsLoading;
+    private const int FfsPageSize = 20;
+
+    private static readonly SelectOption<string>[] _allFfsCountries =
+    [
+        new("AF", "\U0001F1E6\U0001F1EB Afghanistan"), new("AL", "\U0001F1E6\U0001F1F1 Albania"),
+        new("DZ", "\U0001F1E9\U0001F1FF Algeria"), new("AD", "\U0001F1E6\U0001F1E9 Andorra"),
+        new("AO", "\U0001F1E6\U0001F1F4 Angola"), new("AG", "\U0001F1E6\U0001F1EC Antigua and Barbuda"),
+        new("AR", "\U0001F1E6\U0001F1F7 Argentina"), new("AM", "\U0001F1E6\U0001F1F2 Armenia"),
+        new("AU", "\U0001F1E6\U0001F1FA Australia"), new("AT", "\U0001F1E6\U0001F1F9 Austria"),
+        new("AZ", "\U0001F1E6\U0001F1FF Azerbaijan"), new("BS", "\U0001F1E7\U0001F1F8 Bahamas"),
+        new("BH", "\U0001F1E7\U0001F1ED Bahrain"), new("BD", "\U0001F1E7\U0001F1E9 Bangladesh"),
+        new("BB", "\U0001F1E7\U0001F1E7 Barbados"), new("BY", "\U0001F1E7\U0001F1FE Belarus"),
+        new("BE", "\U0001F1E7\U0001F1EA Belgium"), new("BZ", "\U0001F1E7\U0001F1FF Belize"),
+        new("BJ", "\U0001F1E7\U0001F1EF Benin"), new("BT", "\U0001F1E7\U0001F1F9 Bhutan"),
+        new("BO", "\U0001F1E7\U0001F1F4 Bolivia"), new("BA", "\U0001F1E7\U0001F1E6 Bosnia and Herzegovina"),
+        new("BW", "\U0001F1E7\U0001F1FC Botswana"), new("BR", "\U0001F1E7\U0001F1F7 Brazil"),
+        new("BN", "\U0001F1E7\U0001F1F3 Brunei"), new("BG", "\U0001F1E7\U0001F1EC Bulgaria"),
+        new("BF", "\U0001F1E7\U0001F1EB Burkina Faso"), new("BI", "\U0001F1E7\U0001F1EE Burundi"),
+        new("KH", "\U0001F1F0\U0001F1ED Cambodia"), new("CM", "\U0001F1E8\U0001F1F2 Cameroon"),
+        new("CA", "\U0001F1E8\U0001F1E6 Canada"), new("TD", "\U0001F1F9\U0001F1E9 Chad"),
+        new("CL", "\U0001F1E8\U0001F1F1 Chile"), new("CN", "\U0001F1E8\U0001F1F3 China"),
+        new("CO", "\U0001F1E8\U0001F1F4 Colombia"), new("CR", "\U0001F1E8\U0001F1F7 Costa Rica"),
+        new("HR", "\U0001F1ED\U0001F1F7 Croatia"), new("CU", "\U0001F1E8\U0001F1FA Cuba"),
+        new("CY", "\U0001F1E8\U0001F1FE Cyprus"), new("CZ", "\U0001F1E8\U0001F1FF Czech Republic"),
+        new("DK", "\U0001F1E9\U0001F1F0 Denmark"), new("DO", "\U0001F1E9\U0001F1F4 Dominican Republic"),
+        new("EC", "\U0001F1EA\U0001F1E8 Ecuador"), new("EG", "\U0001F1EA\U0001F1EC Egypt"),
+        new("SV", "\U0001F1F8\U0001F1FB El Salvador"), new("EE", "\U0001F1EA\U0001F1EA Estonia"),
+        new("ET", "\U0001F1EA\U0001F1F9 Ethiopia"), new("FI", "\U0001F1EB\U0001F1EE Finland"),
+        new("FR", "\U0001F1EB\U0001F1F7 France"), new("DE", "\U0001F1E9\U0001F1EA Germany"),
+        new("GH", "\U0001F1EC\U0001F1ED Ghana"), new("GR", "\U0001F1EC\U0001F1F7 Greece"),
+        new("GT", "\U0001F1EC\U0001F1F9 Guatemala"), new("HT", "\U0001F1ED\U0001F1F9 Haiti"),
+        new("HN", "\U0001F1ED\U0001F1F3 Honduras"), new("HU", "\U0001F1ED\U0001F1FA Hungary"),
+        new("IS", "\U0001F1EE\U0001F1F8 Iceland"), new("IN", "\U0001F1EE\U0001F1F3 India"),
+        new("ID", "\U0001F1EE\U0001F1E9 Indonesia"), new("IR", "\U0001F1EE\U0001F1F7 Iran"),
+        new("IQ", "\U0001F1EE\U0001F1F6 Iraq"), new("IE", "\U0001F1EE\U0001F1EA Ireland"),
+        new("IL", "\U0001F1EE\U0001F1F1 Israel"), new("IT", "\U0001F1EE\U0001F1F9 Italy"),
+        new("JM", "\U0001F1EF\U0001F1F2 Jamaica"), new("JP", "\U0001F1EF\U0001F1F5 Japan"),
+        new("JO", "\U0001F1EF\U0001F1F4 Jordan"), new("KZ", "\U0001F1F0\U0001F1FF Kazakhstan"),
+        new("KE", "\U0001F1F0\U0001F1EA Kenya"), new("KR", "\U0001F1F0\U0001F1F7 South Korea"),
+        new("KW", "\U0001F1F0\U0001F1FC Kuwait"), new("LV", "\U0001F1F1\U0001F1FB Latvia"),
+        new("LB", "\U0001F1F1\U0001F1E7 Lebanon"), new("LY", "\U0001F1F1\U0001F1FE Libya"),
+        new("LT", "\U0001F1F1\U0001F1F9 Lithuania"), new("LU", "\U0001F1F1\U0001F1FA Luxembourg"),
+        new("MY", "\U0001F1F2\U0001F1FE Malaysia"), new("MX", "\U0001F1F2\U0001F1FD Mexico"),
+        new("MA", "\U0001F1F2\U0001F1E6 Morocco"), new("NL", "\U0001F1F3\U0001F1F1 Netherlands"),
+        new("NZ", "\U0001F1F3\U0001F1FF New Zealand"), new("NG", "\U0001F1F3\U0001F1EC Nigeria"),
+        new("NO", "\U0001F1F3\U0001F1F4 Norway"), new("PK", "\U0001F1F5\U0001F1F0 Pakistan"),
+        new("PA", "\U0001F1F5\U0001F1E6 Panama"), new("PE", "\U0001F1F5\U0001F1EA Peru"),
+        new("PH", "\U0001F1F5\U0001F1ED Philippines"), new("PL", "\U0001F1F5\U0001F1F1 Poland"),
+        new("PT", "\U0001F1F5\U0001F1F9 Portugal"), new("RO", "\U0001F1F7\U0001F1F4 Romania"),
+        new("RU", "\U0001F1F7\U0001F1FA Russia"), new("SA", "\U0001F1F8\U0001F1E6 Saudi Arabia"),
+        new("SG", "\U0001F1F8\U0001F1EC Singapore"), new("ZA", "\U0001F1FF\U0001F1E6 South Africa"),
+        new("ES", "\U0001F1EA\U0001F1F8 Spain"), new("SE", "\U0001F1F8\U0001F1EA Sweden"),
+        new("CH", "\U0001F1E8\U0001F1ED Switzerland"), new("TH", "\U0001F1F9\U0001F1ED Thailand"),
+        new("TR", "\U0001F1F9\U0001F1F7 Turkey"), new("UA", "\U0001F1FA\U0001F1E6 Ukraine"),
+        new("AE", "\U0001F1E6\U0001F1EA United Arab Emirates"), new("GB", "\U0001F1EC\U0001F1E7 United Kingdom"),
+        new("US", "\U0001F1FA\U0001F1F8 United States"), new("VN", "\U0001F1FB\U0001F1F3 Vietnam"),
+    ];
+
+    private void InitFfsScroll()
+    {
+        _ffsScrollCountries = _allFfsCountries.Take(FfsPageSize).ToArray();
+    }
+
+    private async Task HandleFfsLoadMore()
+    {
+        _ffsScrollIsLoading = true;
+        StateHasChanged();
+
+        await Task.Delay(300);
+
+        var nextCount = _ffsScrollCountries.Length + FfsPageSize;
+        _ffsScrollCountries = _allFfsCountries.Take(nextCount).ToArray();
+        _ffsScrollIsLoading = false;
+        StateHasChanged();
+    }
+
+    // Infinite scroll (Compositional mode)
+    private record FfsCountryInfo(string Code, string Name, string Flag);
+
+    private string? _ffsCompScrollSelected;
+    private FfsCountryInfo[] _ffsCompScrollVisible = Array.Empty<FfsCountryInfo>();
+    private bool _ffsCompScrollIsLoading;
+
+    private static readonly FfsCountryInfo[] _allFfsCompCountries =
+    [
+        new("AF", "Afghanistan", "\U0001F1E6\U0001F1EB"), new("AL", "Albania", "\U0001F1E6\U0001F1F1"),
+        new("DZ", "Algeria", "\U0001F1E9\U0001F1FF"), new("AD", "Andorra", "\U0001F1E6\U0001F1E9"),
+        new("AO", "Angola", "\U0001F1E6\U0001F1F4"), new("AG", "Antigua and Barbuda", "\U0001F1E6\U0001F1EC"),
+        new("AR", "Argentina", "\U0001F1E6\U0001F1F7"), new("AM", "Armenia", "\U0001F1E6\U0001F1F2"),
+        new("AU", "Australia", "\U0001F1E6\U0001F1FA"), new("AT", "Austria", "\U0001F1E6\U0001F1F9"),
+        new("AZ", "Azerbaijan", "\U0001F1E6\U0001F1FF"), new("BS", "Bahamas", "\U0001F1E7\U0001F1F8"),
+        new("BH", "Bahrain", "\U0001F1E7\U0001F1ED"), new("BD", "Bangladesh", "\U0001F1E7\U0001F1E9"),
+        new("BB", "Barbados", "\U0001F1E7\U0001F1E7"), new("BY", "Belarus", "\U0001F1E7\U0001F1FE"),
+        new("BE", "Belgium", "\U0001F1E7\U0001F1EA"), new("BZ", "Belize", "\U0001F1E7\U0001F1FF"),
+        new("BJ", "Benin", "\U0001F1E7\U0001F1EF"), new("BT", "Bhutan", "\U0001F1E7\U0001F1F9"),
+        new("BO", "Bolivia", "\U0001F1E7\U0001F1F4"), new("BA", "Bosnia and Herzegovina", "\U0001F1E7\U0001F1E6"),
+        new("BW", "Botswana", "\U0001F1E7\U0001F1FC"), new("BR", "Brazil", "\U0001F1E7\U0001F1F7"),
+        new("BN", "Brunei", "\U0001F1E7\U0001F1F3"), new("BG", "Bulgaria", "\U0001F1E7\U0001F1EC"),
+        new("BF", "Burkina Faso", "\U0001F1E7\U0001F1EB"), new("BI", "Burundi", "\U0001F1E7\U0001F1EE"),
+        new("KH", "Cambodia", "\U0001F1F0\U0001F1ED"), new("CM", "Cameroon", "\U0001F1E8\U0001F1F2"),
+        new("CA", "Canada", "\U0001F1E8\U0001F1E6"), new("TD", "Chad", "\U0001F1F9\U0001F1E9"),
+        new("CL", "Chile", "\U0001F1E8\U0001F1F1"), new("CN", "China", "\U0001F1E8\U0001F1F3"),
+        new("CO", "Colombia", "\U0001F1E8\U0001F1F4"), new("CR", "Costa Rica", "\U0001F1E8\U0001F1F7"),
+        new("HR", "Croatia", "\U0001F1ED\U0001F1F7"), new("CU", "Cuba", "\U0001F1E8\U0001F1FA"),
+        new("CY", "Cyprus", "\U0001F1E8\U0001F1FE"), new("CZ", "Czech Republic", "\U0001F1E8\U0001F1FF"),
+        new("DK", "Denmark", "\U0001F1E9\U0001F1F0"), new("EG", "Egypt", "\U0001F1EA\U0001F1EC"),
+        new("FI", "Finland", "\U0001F1EB\U0001F1EE"), new("FR", "France", "\U0001F1EB\U0001F1F7"),
+        new("DE", "Germany", "\U0001F1E9\U0001F1EA"), new("GR", "Greece", "\U0001F1EC\U0001F1F7"),
+        new("IN", "India", "\U0001F1EE\U0001F1F3"), new("ID", "Indonesia", "\U0001F1EE\U0001F1E9"),
+        new("IE", "Ireland", "\U0001F1EE\U0001F1EA"), new("IL", "Israel", "\U0001F1EE\U0001F1F1"),
+        new("IT", "Italy", "\U0001F1EE\U0001F1F9"), new("JP", "Japan", "\U0001F1EF\U0001F1F5"),
+        new("KE", "Kenya", "\U0001F1F0\U0001F1EA"), new("KR", "South Korea", "\U0001F1F0\U0001F1F7"),
+        new("MY", "Malaysia", "\U0001F1F2\U0001F1FE"), new("MX", "Mexico", "\U0001F1F2\U0001F1FD"),
+        new("NL", "Netherlands", "\U0001F1F3\U0001F1F1"), new("NZ", "New Zealand", "\U0001F1F3\U0001F1FF"),
+        new("NG", "Nigeria", "\U0001F1F3\U0001F1EC"), new("NO", "Norway", "\U0001F1F3\U0001F1F4"),
+        new("PK", "Pakistan", "\U0001F1F5\U0001F1F0"), new("PE", "Peru", "\U0001F1F5\U0001F1EA"),
+        new("PH", "Philippines", "\U0001F1F5\U0001F1ED"), new("PL", "Poland", "\U0001F1F5\U0001F1F1"),
+        new("PT", "Portugal", "\U0001F1F5\U0001F1F9"), new("RU", "Russia", "\U0001F1F7\U0001F1FA"),
+        new("SA", "Saudi Arabia", "\U0001F1F8\U0001F1E6"), new("SG", "Singapore", "\U0001F1F8\U0001F1EC"),
+        new("ZA", "South Africa", "\U0001F1FF\U0001F1E6"), new("ES", "Spain", "\U0001F1EA\U0001F1F8"),
+        new("SE", "Sweden", "\U0001F1F8\U0001F1EA"), new("CH", "Switzerland", "\U0001F1E8\U0001F1ED"),
+        new("TH", "Thailand", "\U0001F1F9\U0001F1ED"), new("TR", "Turkey", "\U0001F1F9\U0001F1F7"),
+        new("UA", "Ukraine", "\U0001F1FA\U0001F1E6"), new("AE", "United Arab Emirates", "\U0001F1E6\U0001F1EA"),
+        new("GB", "United Kingdom", "\U0001F1EC\U0001F1E7"), new("US", "United States", "\U0001F1FA\U0001F1F8"),
+        new("VN", "Vietnam", "\U0001F1FB\U0001F1F3"),
+    ];
+
+    private void InitFfsCompScroll()
+    {
+        _ffsCompScrollVisible = _allFfsCompCountries.Take(FfsPageSize).ToArray();
+    }
+
+    private async Task HandleFfsCompLoadMore()
+    {
+        _ffsCompScrollIsLoading = true;
+        StateHasChanged();
+
+        await Task.Delay(300);
+
+        var nextCount = _ffsCompScrollVisible.Length + FfsPageSize;
+        _ffsCompScrollVisible = _allFfsCompCountries.Take(nextCount).ToArray();
+        _ffsCompScrollIsLoading = false;
+        StateHasChanged();
     }
 }
