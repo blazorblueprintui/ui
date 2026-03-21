@@ -263,4 +263,60 @@
         </BbDataGrid>
         <CodeBlock Source="Components/DataGridHierarchy/large-dataset.txt" />
     </div>
+
+    <!-- ── Virtualized Large Org Chart (4,000 employees) ────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Virtualized Large Org Chart</h2>
+            <p class="text-sm text-muted-foreground">
+                A generated org chart with <strong>@largeOrgEmployees.Count.ToString("N0")</strong> employees,
+                each with a DiceBear avatar. Uses <code class="bg-muted px-1 py-0.5 rounded">Virtualize="true"</code>
+                with <code class="bg-muted px-1 py-0.5 rounded">ItemSize="52"</code> so only visible rows are rendered
+                in the DOM. Combined with a <code class="bg-muted px-1 py-0.5 rounded">BbFilterBuilder</code> for filtering.
+                For large datasets, <code class="bg-muted px-1 py-0.5 rounded">HierarchyFilterMode</code> automatically
+                switches to <code class="bg-muted px-1 py-0.5 rounded">ShowMatchedOnly</code> when the item count exceeds
+                <code class="bg-muted px-1 py-0.5 rounded">HierarchyLargeDatasetThreshold</code> (default 500),
+                and filtered results paginate by visible rows instead of root count.
+            </p>
+        </div>
+        <div class="flex items-center gap-4">
+            <BbFilterBuilder @bind-Filter="largeOrgFilter"
+                             Fields="@largeOrgFields"
+                             OnFilterChanged="HandleLargeOrgFilterChanged"
+                             MaxDepth="2"
+                             Compact="true"
+                             Class="flex-1" />
+        </div>
+        <BbDataGrid TData="LargeOrgEmployee" Items="@largeOrgEmployees"
+                    ParentValueSelector="@(e => e.ReportsToId)"
+                    ItemValueSelector="@(e => e.Id)"
+                    ItemFilter="@largeOrgFilterPredicate"
+                    DefaultExpandDepth="1"
+                    ChildPageSize="10"
+                    ShowExpandAll="true"
+                    Virtualize="true"
+                    StickyHeader="true"
+                    ItemSize="52"
+                    Class="h-[600px] overflow-auto">
+            <Columns>
+                <BbDataGridHierarchyColumn TData="LargeOrgEmployee" TProp="string" Property="@(e => e.Name)" Title="Name" Sortable Filterable>
+                    <CellTemplate>
+                        <div class="flex items-center gap-2">
+                            <BbAvatar Size="AvatarSize.Small">
+                                <BbAvatarImage Source="@context.Item.AvatarUrl" Alt="@context.Item.Name" />
+                                <BbAvatarFallback>@GetInitials(context.Item.Name)</BbAvatarFallback>
+                            </BbAvatar>
+                            <span class="truncate">@context.Value</span>
+                        </div>
+                    </CellTemplate>
+                </BbDataGridHierarchyColumn>
+                <BbDataGridPropertyColumn TData="LargeOrgEmployee" TProp="string" Property="@(e => e.Code)" Title="Code" Sortable />
+                <BbDataGridPropertyColumn TData="LargeOrgEmployee" TProp="string" Property="@(e => e.JobTitle)" Title="Job Title" Sortable Filterable />
+                <BbDataGridPropertyColumn TData="LargeOrgEmployee" TProp="string" Property="@(e => e.Department)" Title="Department" Sortable Filterable />
+                <BbDataGridPropertyColumn TData="LargeOrgEmployee" TProp="string" Property="@(e => e.Location)" Title="Location" Sortable />
+                <BbDataGridPropertyColumn TData="LargeOrgEmployee" TProp="int" Property="@(e => e.DirectReports)" Title="Direct Reports" Sortable />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGridHierarchy/virtualized-large-org.txt" />
+    </div>
 </div>

@@ -1,0 +1,58 @@
+<BbFilterBuilder @bind-Filter="orgFilter"
+                 Fields="@orgFields"
+                 OnFilterChanged="HandleOrgFilterChanged"
+                 MaxDepth="2"
+                 Compact="true" />
+
+<BbDataGrid TData="Employee" Items="@employees"
+            ParentValueSelector="@(e => e.ReportsToId)"
+            ItemValueSelector="@(e => e.Id)"
+            ItemFilter="@orgFilterPredicate"
+            DefaultExpandDepth="1"
+            ChildPageSize="10"
+            ShowExpandAll="true"
+            Virtualize="true"
+            StickyHeader="true"
+            ItemSize="52"
+            Class="h-[600px] overflow-auto">
+    <Columns>
+        <BbDataGridHierarchyColumn TData="Employee" TProp="string"
+            Property="@(e => e.Name)" Title="Name" Sortable Filterable>
+            <CellTemplate>
+                <div class="flex items-center gap-2">
+                    <BbAvatar Size="AvatarSize.Small">
+                        <BbAvatarImage Source="@context.Item.AvatarUrl"
+                                       Alt="@context.Item.Name" />
+                        <BbAvatarFallback>
+                            @GetInitials(context.Item.Name)
+                        </BbAvatarFallback>
+                    </BbAvatar>
+                    <span class="truncate">@context.Value</span>
+                </div>
+            </CellTemplate>
+        </BbDataGridHierarchyColumn>
+        <BbDataGridPropertyColumn TData="Employee" TProp="string"
+            Property="@(e => e.Code)" Title="Code" Sortable />
+        <BbDataGridPropertyColumn TData="Employee" TProp="string"
+            Property="@(e => e.JobTitle)" Title="Job Title" Sortable />
+        <BbDataGridPropertyColumn TData="Employee" TProp="string"
+            Property="@(e => e.Department)" Title="Department" Sortable />
+        <BbDataGridPropertyColumn TData="Employee" TProp="string"
+            Property="@(e => e.Location)" Title="Location" Sortable />
+        <BbDataGridPropertyColumn TData="Employee" TProp="int"
+            Property="@(e => e.DirectReports)" Title="Direct Reports" />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    // Virtualize="true" enables row virtualization — only ~20-30 rows
+    // exist in the DOM at any time, regardless of total data size.
+    //
+    // For large datasets (>500 items by default), filtering automatically
+    // uses ShowMatchedOnly instead of ShowMatchedSubtree to prevent
+    // rendering explosion. Filtered results paginate by visible row
+    // count instead of root count.
+    //
+    // Avatar URLs use DiceBear for generated SVG avatars:
+    // https://api.dicebear.com/9.x/avataaars/svg?seed={name}
+}

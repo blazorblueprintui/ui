@@ -1080,4 +1080,248 @@ public partial class DataGridHierarchyDemo : ComponentBase
             }
         }
     };
+
+    // ── Large Org Chart (virtualized, ~4,000 employees) ──
+
+    private FilterDefinition largeOrgFilter = new();
+    private Func<LargeOrgEmployee, bool>? largeOrgFilterPredicate;
+
+    private readonly FilterField[] largeOrgFields =
+    {
+        new() { Name = "Name", Label = "Name", Type = FilterFieldType.Text, Placeholder = "e.g. Smith" },
+        new() { Name = "Code", Label = "Code", Type = FilterFieldType.Text, Placeholder = "e.g. EMP-0100" },
+        new() { Name = "JobTitle", Label = "Job Title", Type = FilterFieldType.Text, Placeholder = "e.g. Manager" },
+        new()
+        {
+            Name = "Department", Label = "Department", Type = FilterFieldType.Enum,
+            Options = new[] { "Executive", "Engineering", "Product", "Sales", "Marketing", "Finance", "Human Resources", "Operations", "Legal", "Customer Success" }
+                .Select(d => new SelectOption<string>(d, d)).ToArray()
+        }
+    };
+
+    private void HandleLargeOrgFilterChanged(FilterDefinition newFilter)
+    {
+        largeOrgFilterPredicate = newFilter.IsEmpty || !HasCompleteConditions(newFilter)
+            ? null
+            : newFilter.ToFunc<LargeOrgEmployee>(largeOrgFields);
+        StateHasChanged();
+    }
+
+    private sealed class LargeOrgEmployee
+    {
+        public string Id { get; init; } = "";
+        public string? ReportsToId { get; init; }
+        public string Name { get; init; } = "";
+        public string Code { get; init; } = "";
+        public string JobTitle { get; init; } = "";
+        public string Department { get; init; } = "";
+        public string Location { get; init; } = "";
+        public string AvatarUrl { get; init; } = "";
+        public int DirectReports { get; set; }
+    }
+
+    private static readonly string[] largeOrgDepartments =
+        { "Engineering", "Product", "Sales", "Marketing", "Finance", "Human Resources", "Operations", "Legal", "Customer Success" };
+
+    private static readonly string[] largeOrgLocations =
+        { "New York", "San Francisco", "London", "Singapore", "Berlin", "Tokyo", "Sydney", "Toronto", "Dublin", "Mumbai", "Austin", "Seattle", "Chicago", "Remote" };
+
+    private static readonly string[] firstNames =
+    {
+        "James", "Mary", "Robert", "Patricia", "John", "Jennifer", "Michael", "Linda", "David", "Elizabeth",
+        "William", "Barbara", "Richard", "Susan", "Joseph", "Jessica", "Thomas", "Sarah", "Christopher", "Karen",
+        "Charles", "Lisa", "Daniel", "Nancy", "Matthew", "Betty", "Anthony", "Margaret", "Mark", "Sandra",
+        "Donald", "Ashley", "Steven", "Kimberly", "Paul", "Emily", "Andrew", "Donna", "Joshua", "Michelle",
+        "Kenneth", "Carol", "Kevin", "Amanda", "Brian", "Dorothy", "George", "Melissa", "Timothy", "Deborah",
+        "Ronald", "Stephanie", "Edward", "Rebecca", "Jason", "Sharon", "Jeffrey", "Laura", "Ryan", "Cynthia",
+        "Jacob", "Kathleen", "Gary", "Amy", "Nicholas", "Angela", "Eric", "Shirley", "Jonathan", "Anna",
+        "Stephen", "Brenda", "Larry", "Pamela", "Justin", "Emma", "Scott", "Nicole", "Brandon", "Helen",
+        "Benjamin", "Samantha", "Samuel", "Katherine", "Raymond", "Christine", "Gregory", "Debra", "Frank", "Rachel",
+        "Alexander", "Carolyn", "Patrick", "Janet", "Jack", "Catherine", "Dennis", "Maria", "Jerry", "Heather",
+        "Tyler", "Diane", "Aaron", "Ruth", "Jose", "Julie", "Adam", "Olivia", "Nathan", "Joyce",
+        "Henry", "Virginia", "Douglas", "Victoria", "Peter", "Kelly", "Zachary", "Lauren", "Kyle", "Christina",
+        "Arun", "Priya", "Wei", "Yuki", "Liam", "Sofia", "Mateo", "Aisha", "Omar", "Fatima",
+        "Raj", "Mei", "Hans", "Ingrid", "Carlos", "Elena", "Takeshi", "Nadia", "Ibrahim", "Leila"
+    };
+
+    private static readonly string[] lastNames =
+    {
+        "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez",
+        "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin",
+        "Lee", "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson",
+        "Walker", "Young", "Allen", "King", "Wright", "Scott", "Torres", "Nguyen", "Hill", "Flores",
+        "Green", "Adams", "Nelson", "Baker", "Hall", "Rivera", "Campbell", "Mitchell", "Carter", "Roberts",
+        "Chen", "Patel", "Kumar", "Singh", "Kim", "Park", "Tanaka", "Sato", "Muller", "Schmidt",
+        "Weber", "Meyer", "Wagner", "Fischer", "Becker", "Schulz", "Eriksson", "Johansson", "Larsson", "Nilsson",
+        "O'Brien", "O'Connor", "Murphy", "Kelly", "Walsh", "Fernandez", "Morales", "Costa", "Santos", "Silva",
+        "Nakamura", "Yamamoto", "Watanabe", "Ito", "Khan", "Ali", "Hassan", "Al-Rashid", "Volkov", "Ivanov"
+    };
+
+    private static readonly string[][] jobTitlesByLevel =
+    {
+        new[] { "Chief Executive Officer" },
+        new[] { "Chief Technology Officer", "Chief Product Officer", "Chief Revenue Officer", "Chief Marketing Officer", "Chief Financial Officer", "Chief People Officer", "Chief Operating Officer", "General Counsel", "VP Customer Success" },
+        new[] { "Senior Vice President", "Vice President", "Division President" },
+        new[] { "Senior Director", "Director", "Head of" },
+        new[] { "Senior Manager", "Manager", "Principal Engineer", "Staff Engineer" },
+        new[] { "Senior Engineer", "Senior Analyst", "Senior Designer", "Team Lead", "Senior Specialist" },
+        new[] { "Engineer", "Analyst", "Designer", "Specialist", "Coordinator", "Associate" }
+    };
+
+    private static List<LargeOrgEmployee> GenerateLargeOrg(int targetSize)
+    {
+        var rng = new Random(42); // deterministic for consistent demo
+        var employees = new List<LargeOrgEmployee>(targetSize);
+        var nextId = 1;
+        var directReportCounts = new Dictionary<string, int>();
+
+        string MakeId() => (nextId++).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        string MakeCode(int num) => $"EMP-{num:D4}";
+        string MakeName() => $"{firstNames[rng.Next(firstNames.Length)]} {lastNames[rng.Next(lastNames.Length)]}";
+        string MakeAvatar(string name) => $"https://api.dicebear.com/9.x/avataaars/svg?seed={Uri.EscapeDataString(name)}";
+
+        void IncrementReportCount(string? parentId)
+        {
+            if (parentId != null)
+            {
+                if (directReportCounts.TryGetValue(parentId, out var c))
+                {
+                    directReportCounts[parentId] = c + 1;
+                }
+                else
+                {
+                    directReportCounts[parentId] = 1;
+                }
+            }
+        }
+
+        // Level 0: CEO
+        var ceoId = MakeId();
+        var ceoName = "Victoria Ashworth";
+        employees.Add(new LargeOrgEmployee
+        {
+            Id = ceoId, Name = ceoName, Code = MakeCode(1),
+            JobTitle = "Chief Executive Officer", Department = "Executive",
+            Location = "New York", AvatarUrl = MakeAvatar(ceoName)
+        });
+
+        // Level 1: C-suite (one per department + CEO's dept)
+        var cSuiteIds = new List<(string id, string dept)>();
+        for (var i = 0; i < largeOrgDepartments.Length; i++)
+        {
+            var id = MakeId();
+            var name = MakeName();
+            var dept = largeOrgDepartments[i];
+            employees.Add(new LargeOrgEmployee
+            {
+                Id = id, ReportsToId = ceoId, Name = name, Code = MakeCode(nextId - 1),
+                JobTitle = jobTitlesByLevel[1][i % jobTitlesByLevel[1].Length],
+                Department = dept, Location = largeOrgLocations[rng.Next(largeOrgLocations.Length)],
+                AvatarUrl = MakeAvatar(name)
+            });
+            IncrementReportCount(ceoId);
+            cSuiteIds.Add((id, dept));
+        }
+
+        // Level 2: VPs (3-5 per C-suite)
+        var vpIds = new List<(string id, string dept)>();
+        foreach (var (cId, dept) in cSuiteIds)
+        {
+            var vpCount = rng.Next(3, 6);
+            for (var i = 0; i < vpCount; i++)
+            {
+                var id = MakeId();
+                var name = MakeName();
+                employees.Add(new LargeOrgEmployee
+                {
+                    Id = id, ReportsToId = cId, Name = name, Code = MakeCode(nextId - 1),
+                    JobTitle = jobTitlesByLevel[2][rng.Next(jobTitlesByLevel[2].Length)],
+                    Department = dept, Location = largeOrgLocations[rng.Next(largeOrgLocations.Length)],
+                    AvatarUrl = MakeAvatar(name)
+                });
+                IncrementReportCount(cId);
+                vpIds.Add((id, dept));
+            }
+        }
+
+        // Level 3: Directors (3-6 per VP)
+        var directorIds = new List<(string id, string dept)>();
+        foreach (var (vpId, dept) in vpIds)
+        {
+            var dirCount = rng.Next(3, 7);
+            for (var i = 0; i < dirCount; i++)
+            {
+                var id = MakeId();
+                var name = MakeName();
+                employees.Add(new LargeOrgEmployee
+                {
+                    Id = id, ReportsToId = vpId, Name = name, Code = MakeCode(nextId - 1),
+                    JobTitle = jobTitlesByLevel[3][rng.Next(jobTitlesByLevel[3].Length)],
+                    Department = dept, Location = largeOrgLocations[rng.Next(largeOrgLocations.Length)],
+                    AvatarUrl = MakeAvatar(name)
+                });
+                IncrementReportCount(vpId);
+                directorIds.Add((id, dept));
+            }
+        }
+
+        // Level 4: Managers (2-5 per Director)
+        var managerIds = new List<(string id, string dept)>();
+        foreach (var (dirId, dept) in directorIds)
+        {
+            var mgrCount = rng.Next(2, 6);
+            for (var i = 0; i < mgrCount; i++)
+            {
+                var id = MakeId();
+                var name = MakeName();
+                employees.Add(new LargeOrgEmployee
+                {
+                    Id = id, ReportsToId = dirId, Name = name, Code = MakeCode(nextId - 1),
+                    JobTitle = jobTitlesByLevel[4][rng.Next(jobTitlesByLevel[4].Length)],
+                    Department = dept, Location = largeOrgLocations[rng.Next(largeOrgLocations.Length)],
+                    AvatarUrl = MakeAvatar(name)
+                });
+                IncrementReportCount(dirId);
+                managerIds.Add((id, dept));
+            }
+        }
+
+        // Level 5-6: ICs (fill remaining to reach target)
+        var remaining = targetSize - employees.Count;
+        var icPerManager = remaining / Math.Max(managerIds.Count, 1);
+        var leftover = remaining - (icPerManager * managerIds.Count);
+
+        for (var m = 0; m < managerIds.Count; m++)
+        {
+            var (mgrId, dept) = managerIds[m];
+            var icCount = icPerManager + (m < leftover ? 1 : 0);
+            for (var i = 0; i < icCount; i++)
+            {
+                var id = MakeId();
+                var name = MakeName();
+                var level = rng.Next(2) == 0 ? 5 : 6;
+                employees.Add(new LargeOrgEmployee
+                {
+                    Id = id, ReportsToId = mgrId, Name = name, Code = MakeCode(nextId - 1),
+                    JobTitle = jobTitlesByLevel[level][rng.Next(jobTitlesByLevel[level].Length)],
+                    Department = dept, Location = largeOrgLocations[rng.Next(largeOrgLocations.Length)],
+                    AvatarUrl = MakeAvatar(name)
+                });
+                IncrementReportCount(mgrId);
+            }
+        }
+
+        // Set DirectReports count on each employee
+        foreach (var emp in employees)
+        {
+            if (directReportCounts.TryGetValue(emp.Id, out var count))
+            {
+                emp.DirectReports = count;
+            }
+        }
+
+        return employees;
+    }
+
+    private static readonly List<LargeOrgEmployee> largeOrgEmployees = GenerateLargeOrg(4200);
 }

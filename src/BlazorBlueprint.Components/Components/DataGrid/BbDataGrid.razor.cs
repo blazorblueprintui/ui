@@ -30,8 +30,10 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private bool _needsDataRefresh = true;
     private bool columnStateInitialized;
 
-    // Grouping state
+    // Grouping/hierarchy state
     private List<DataGridRenderItem<TData>>? _groupedRenderItems;
+    private List<DataGridRenderItem<TData>>? _groupedRenderItemsList;
+    private List<DataGridRenderItem<TData>>? _lastGroupedRenderItems;
     private Func<TData, object?>? _groupByAccessor;
     private string? _groupByColumnId;
     private string? _groupByColumnTitle;
@@ -409,9 +411,22 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// <see cref="Primitives.Utilities.HierarchyFilterMode.ShowMatchedSubtree"/> (default) shows the entire
     /// subtree of matching parents. <see cref="Primitives.Utilities.HierarchyFilterMode.ShowMatchedOnly"/>
     /// only shows items that independently match the filter.
+    /// When the total item count exceeds <see cref="HierarchyLargeDatasetThreshold"/>,
+    /// ShowMatchedSubtree is automatically downgraded to ShowMatchedOnly during filtering
+    /// to prevent performance issues with large trees.
     /// </summary>
     [Parameter]
     public HierarchyFilterMode HierarchyFilterMode { get; set; } = HierarchyFilterMode.ShowMatchedSubtree;
+
+    /// <summary>
+    /// Item count threshold above which hierarchy filtering automatically uses
+    /// <see cref="Primitives.Utilities.HierarchyFilterMode.ShowMatchedOnly"/> instead of
+    /// <see cref="Primitives.Utilities.HierarchyFilterMode.ShowMatchedSubtree"/> to prevent
+    /// rendering thousands of subtree context rows. Default is 500.
+    /// Set to 0 to disable automatic downgrade.
+    /// </summary>
+    [Parameter]
+    public int HierarchyLargeDatasetThreshold { get; set; } = 500;
 
     /// <summary>
     /// Async callback to load all children for a node on demand (lazy loading - full).
@@ -1226,11 +1241,27 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
                 _processedDataList = _processedData as List<TData> ?? _processedData.ToList();
                 _lastProcessedData = _processedData;
             }
+
+            if (_groupedRenderItems != null)
+            {
+                if (_groupedRenderItemsList == null || !ReferenceEquals(_lastGroupedRenderItems, _groupedRenderItems))
+                {
+                    _groupedRenderItemsList = _groupedRenderItems;
+                    _lastGroupedRenderItems = _groupedRenderItems;
+                }
+            }
+            else
+            {
+                _groupedRenderItemsList = null;
+                _lastGroupedRenderItems = null;
+            }
         }
         else
         {
             _processedDataList = null;
             _lastProcessedData = null;
+            _groupedRenderItemsList = null;
+            _lastGroupedRenderItems = null;
         }
     }
 
@@ -1320,23 +1351,46 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         if (filterPredicate != null && filterChanged)
         {
-            // Save pre-filter state on first filter application
-            if (_preFilterExpandedNodes == null)
-            {
-                _preFilterExpandedNodes = new HashSet<string>(_expandedNodes);
-            }
+            // Count matches first — if the filter matches everything (e.g., an incomplete
+            // FilterBuilder condition with no value entered yet), it's effectively a no-op
+            // and we should not auto-expand the entire tree.
+            var totalCount = manager.Count;
+            var matchCount = 0;
+            var matchingItems = new List<(TData item, string value)>();
 
-            // Reset to pre-filter state before expanding for new filter
-            _expandedNodes = new HashSet<string>(_preFilterExpandedNodes);
-
-            // Auto-expand ancestors of matching items so results are visible
             foreach (var item in GetAllIndexedItems(manager))
             {
                 if (filterPredicate(item))
                 {
-                    var value = ItemValueSelector!(item);
+                    matchCount++;
+                    matchingItems.Add((item, ItemValueSelector!(item)));
+                }
+            }
+
+            var isSelectiveFilter = matchCount < totalCount;
+
+            if (isSelectiveFilter)
+            {
+                // Save pre-filter state on first filter application
+                if (_preFilterExpandedNodes == null)
+                {
+                    _preFilterExpandedNodes = new HashSet<string>(_expandedNodes);
+                }
+
+                // Reset to pre-filter state before expanding for new filter
+                _expandedNodes = new HashSet<string>(_preFilterExpandedNodes);
+
+                // Auto-expand ancestors of matching items so results are visible
+                foreach (var (_, value) in matchingItems)
+                {
                     manager.ExpandAncestorsOf(value, _expandedNodes);
                 }
+            }
+            else if (_preFilterExpandedNodes != null)
+            {
+                // Filter matches everything — restore pre-filter state
+                _expandedNodes = _preFilterExpandedNodes;
+                _preFilterExpandedNodes = null;
             }
         }
         else if (filterPredicate == null && _preFilterExpandedNodes != null)
@@ -1344,6 +1398,18 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             // Restore pre-filter expansion state when filter is cleared
             _expandedNodes = _preFilterExpandedNodes;
             _preFilterExpandedNodes = null;
+        }
+
+        // For large datasets, auto-switch to ShowMatchedOnly when filtering
+        // to prevent ShowMatchedSubtree from exploding the visible row count
+        // (e.g., matching a VP would expose their entire org subtree).
+        var effectiveFilterMode = HierarchyFilterMode;
+        if (filterPredicate != null
+            && effectiveFilterMode == HierarchyFilterMode.ShowMatchedSubtree
+            && HierarchyLargeDatasetThreshold > 0
+            && manager.Count > HierarchyLargeDatasetThreshold)
+        {
+            effectiveFilterMode = HierarchyFilterMode.ShowMatchedOnly;
         }
 
         // Flatten the hierarchy
@@ -1354,51 +1420,98 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             ChildPageSize,
             _childPageIndexes,
             HasChildrenPredicate,
-            HierarchyFilterMode);
+            effectiveFilterMode);
 
-        // Count root items for root-level pagination
-        var rootCount = 0;
-        foreach (var r in flatResult)
-        {
-            if (r.Depth == 0 && !r.IsChildPagerRow)
-            {
-                rootCount++;
-            }
-        }
-        _gridState.Pagination.TotalItems = rootCount;
-
-        // Build render items with hierarchy metadata
+        // Build render items with hierarchy metadata, applying pagination.
+        // When a filter is active, paginate by total visible rows to prevent
+        // a single root with thousands of expanded descendants from rendering
+        // on one page. Without a filter, paginate by root items as before.
         var renderItems = new List<DataGridRenderItem<TData>>(flatResult.Count);
-
-        // Apply root-level pagination: count root items and only include
-        // the current page of roots (and all their visible descendants)
         var pageStart = _gridState.Pagination.StartIndex;
         var pageSize = _gridState.Pagination.PageSize;
-        var rootIndex = 0;
-        var includeDescendants = false;
+        var paginateByVisibleRows = filterPredicate != null;
 
-        foreach (var r in flatResult)
+        if (paginateByVisibleRows)
         {
-            if (r.Depth == 0 && !r.IsChildPagerRow)
+            // Count total visible data rows (excluding child pager rows)
+            var totalVisibleRows = 0;
+            foreach (var r in flatResult)
             {
-                includeDescendants = rootIndex >= pageStart && rootIndex < pageStart + pageSize;
-                rootIndex++;
+                if (!r.IsChildPagerRow)
+                {
+                    totalVisibleRows++;
+                }
             }
+            _gridState.Pagination.TotalItems = totalVisibleRows;
 
-            if (!includeDescendants)
+            // Slice the flat list by visible row index
+            var visibleIndex = 0;
+            foreach (var r in flatResult)
             {
-                continue;
-            }
+                if (r.IsChildPagerRow)
+                {
+                    // Include child pager rows if the surrounding rows are in range
+                    if (renderItems.Count > 0 && visibleIndex > pageStart)
+                    {
+                        renderItems.Add(DataGridRenderItem<TData>.ForChildPager(
+                            r.Depth, r.ParentValue!, r.ChildPageIndex, r.TotalChildren));
+                    }
+                    continue;
+                }
 
-            if (r.IsChildPagerRow)
-            {
-                renderItems.Add(DataGridRenderItem<TData>.ForChildPager(
-                    r.Depth, r.ParentValue!, r.ChildPageIndex, r.TotalChildren));
+                if (visibleIndex >= pageStart && visibleIndex < pageStart + pageSize)
+                {
+                    renderItems.Add(DataGridRenderItem<TData>.ForHierarchyData(
+                        r.Item, r.Depth, r.HasChildren, r.IsExpanded, r.MatchesFilter));
+                }
+
+                visibleIndex++;
+
+                if (visibleIndex >= pageStart + pageSize)
+                {
+                    break;
+                }
             }
-            else
+        }
+        else
+        {
+            // Normal mode: paginate by root items, including all their descendants
+            var rootCount = 0;
+            foreach (var r in flatResult)
             {
-                renderItems.Add(DataGridRenderItem<TData>.ForHierarchyData(
-                    r.Item, r.Depth, r.HasChildren, r.IsExpanded, r.MatchesFilter));
+                if (r.Depth == 0 && !r.IsChildPagerRow)
+                {
+                    rootCount++;
+                }
+            }
+            _gridState.Pagination.TotalItems = rootCount;
+
+            var rootIndex = 0;
+            var includeDescendants = false;
+
+            foreach (var r in flatResult)
+            {
+                if (r.Depth == 0 && !r.IsChildPagerRow)
+                {
+                    includeDescendants = rootIndex >= pageStart && rootIndex < pageStart + pageSize;
+                    rootIndex++;
+                }
+
+                if (!includeDescendants)
+                {
+                    continue;
+                }
+
+                if (r.IsChildPagerRow)
+                {
+                    renderItems.Add(DataGridRenderItem<TData>.ForChildPager(
+                        r.Depth, r.ParentValue!, r.ChildPageIndex, r.TotalChildren));
+                }
+                else
+                {
+                    renderItems.Add(DataGridRenderItem<TData>.ForHierarchyData(
+                        r.Item, r.Depth, r.HasChildren, r.IsExpanded, r.MatchesFilter));
+                }
             }
         }
 
@@ -1427,19 +1540,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
     }
 
-    private static IEnumerable<TData> GetAllIndexedItems(HierarchyManager<TData> manager)
-    {
-        // Flatten entire tree using full expansion to iterate all items
-        var allExpanded = manager.GetExpandAllValues();
-        var flat = manager.Flatten(allExpanded);
-        foreach (var r in flat)
-        {
-            if (!r.IsChildPagerRow)
-            {
-                yield return r.Item;
-            }
-        }
-    }
+    private static IEnumerable<TData> GetAllIndexedItems(HierarchyManager<TData> manager) =>
+        manager.GetAllItems();
 
     private Comparison<TData> BuildSortComparison()
     {

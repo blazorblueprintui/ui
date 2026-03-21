@@ -261,114 +261,17 @@
                         }
                         else if (_groupedRenderItems != null)
                         {
-                            @foreach (var renderItem in _groupedRenderItems)
+                            if (Virtualize && ItemSize > 0 && _groupedRenderItemsList != null)
                             {
-                                @if (renderItem.IsGroupHeader)
+                                <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize Items="@_groupedRenderItemsList" Context="renderItem" ItemSize="@ItemSize" OverscanCount="5">
+                                    @RenderGroupedOrHierarchyItem(renderItem)
+                                </Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize>
+                            }
+                            else
+                            {
+                                @foreach (var renderItem in _groupedRenderItems)
                                 {
-                                    var group = renderItem.GroupRow!;
-                                    var groupKey = group.Key ?? "(empty)";
-                                    var isCollapsed = _gridState.Grouping.IsCollapsed(groupKey);
-                                    var effectiveTemplate = _groupColumnHeaderTemplate ?? GroupHeaderTemplate;
-                                    var groupContext = new DataGridGroupContext<TData>
-                                    {
-                                        Group = group,
-                                        IsCollapsed = isCollapsed,
-                                        VisibleColumnCount = _cachedVisibleColumns.Count,
-                                        ToggleCollapse = EventCallback.Factory.Create(this, () => HandleGroupToggle(group))
-                                    };
-
-                                    @if (effectiveTemplate != null)
-                                    {
-                                        <tr role="row" class="bg-muted/50 border-b font-medium">
-                                            <td role="gridcell" colspan="@_cachedVisibleColumns.Count" class="px-4 py-2">
-                                                @effectiveTemplate(groupContext)
-                                            </td>
-                                        </tr>
-                                    }
-                                    else
-                                    {
-                                        var groupLabelColSpan = GetGroupLabelColSpan(group);
-                                        <tr role="row" class="bg-muted/50 border-b font-medium">
-                                            <td role="gridcell" colspan="@groupLabelColSpan" class="px-4 py-2">
-                                                <div class="flex items-center gap-2">
-                                                    <button type="button"
-                                                            class="inline-flex items-center justify-center rounded-md w-6 h-6 hover:bg-muted transition-colors"
-                                                            aria-expanded="@(!isCollapsed)"
-                                                            aria-label="@(isCollapsed ? Localizer["DataGrid.ExpandGroup"] : Localizer["DataGrid.CollapseGroup"])"
-                                                            @onclick="groupContext.ToggleCollapse"
-                                                            @onclick:stopPropagation="true">
-                                                        <LucideIcon Name="@(isCollapsed ? "chevron-right" : "chevron-down")" Class="w-4 h-4" />
-                                                    </button>
-                                                    <span>@group.ColumnTitle: @(groupKey.ToString())</span>
-                                                    <span class="text-muted-foreground text-sm">@Localizer["DataGrid.GroupItemCount", group.ItemCount]</span>
-                                                </div>
-                                            </td>
-                                            @foreach (var col in GetGroupAggregateColumns(group))
-                                            {
-                                                <td role="gridcell" class="px-4 py-2 text-muted-foreground text-sm">
-                                                    @if (group.Aggregates.TryGetValue(col.ColumnId, out var agg))
-                                                    {
-                                                        <span>@FormatAggregateName(agg.Function): @FormatAggregateValue(agg.Value, agg.Format)</span>
-                                                    }
-                                                </td>
-                                            }
-                                        </tr>
-                                    }
-                                }
-                                else if (renderItem.IsChildPagerRow)
-                                {
-                                    var pagerDepth = renderItem.Depth;
-                                    var pagerParentValue = renderItem.ParentValue!;
-                                    var pagerPageIndex = renderItem.ChildPageIndex;
-                                    var pagerTotalChildren = renderItem.TotalChildren;
-                                    var pagerPageSize = ChildPageSize ?? 10;
-                                    var pagerStart = pagerPageIndex * pagerPageSize + 1;
-                                    var pagerEnd = Math.Min((pagerPageIndex + 1) * pagerPageSize, pagerTotalChildren);
-                                    var pagerTotalPages = (int)Math.Ceiling((double)pagerTotalChildren / pagerPageSize);
-                                    var pagerIndent = pagerDepth * GetHierarchyIndentSize();
-
-                                    <tr role="row" class="border-b bg-muted/30">
-                                        <td role="gridcell" colspan="@_cachedVisibleColumns.Count" class="px-4 py-1.5">
-                                            <div class="flex items-center gap-2 text-xs text-muted-foreground" style="@($"padding-left: {pagerIndent}px")">
-                                                <span>@Localizer["DataGrid.ShowingRange", pagerStart, pagerEnd, pagerTotalChildren]</span>
-                                                <div class="flex items-center gap-0.5">
-                                                    <button type="button"
-                                                            class="inline-flex items-center justify-center rounded w-6 h-6 hover:bg-muted transition-colors disabled:opacity-50"
-                                                            disabled="@(pagerPageIndex <= 0)"
-                                                            @onclick="@(() => HandleChildPageChange(pagerParentValue, pagerPageIndex - 1))"
-                                                            @onclick:stopPropagation="true"
-                                                            aria-label="@Localizer["DataGrid.PreviousPage"]">
-                                                        <LucideIcon Name="chevron-left" Class="w-3.5 h-3.5" />
-                                                    </button>
-                                                    <span class="tabular-nums px-1">@(pagerPageIndex + 1) / @pagerTotalPages</span>
-                                                    <button type="button"
-                                                            class="inline-flex items-center justify-center rounded w-6 h-6 hover:bg-muted transition-colors disabled:opacity-50"
-                                                            disabled="@(pagerPageIndex >= pagerTotalPages - 1)"
-                                                            @onclick="@(() => HandleChildPageChange(pagerParentValue, pagerPageIndex + 1))"
-                                                            @onclick:stopPropagation="true"
-                                                            aria-label="@Localizer["DataGrid.NextPage"]">
-                                                        <LucideIcon Name="chevron-right" Class="w-3.5 h-3.5" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                }
-                                else if (renderItem.IsDataRow && IsInHierarchyMode)
-                                {
-                                    @RenderHierarchyRow(renderItem)
-                                }
-                                else
-                                {
-                                    @RenderDataRow(renderItem.Item!)
-                                    @if (DetailTemplate != null && _gridState.Expanded.IsExpanded(renderItem.Item!))
-                                    {
-                                        <tr class="border-b">
-                                            <td colspan="@_cachedVisibleColumns.Count" class="p-4">
-                                                @DetailTemplate(renderItem.Item!)
-                                            </td>
-                                        </tr>
-                                    }
+                                    @RenderGroupedOrHierarchyItem(renderItem)
                                 }
                             }
                         }
@@ -538,6 +441,119 @@
                 </BlazorBlueprint.Primitives.DataGrid.BbDataGridCell>
             }
         </BlazorBlueprint.Primitives.DataGrid.BbDataGridRow>;
+
+    private RenderFragment<DataGridRenderItem<TData>> RenderGroupedOrHierarchyItem => renderItem =>
+    {
+        if (renderItem.IsGroupHeader)
+        {
+            var group = renderItem.GroupRow!;
+            var groupKey = group.Key ?? "(empty)";
+            var isCollapsed = _gridState.Grouping.IsCollapsed(groupKey);
+            var effectiveTemplate = _groupColumnHeaderTemplate ?? GroupHeaderTemplate;
+            var groupContext = new DataGridGroupContext<TData>
+            {
+                Group = group,
+                IsCollapsed = isCollapsed,
+                VisibleColumnCount = _cachedVisibleColumns.Count,
+                ToggleCollapse = EventCallback.Factory.Create(this, () => HandleGroupToggle(group))
+            };
+
+            if (effectiveTemplate != null)
+            {
+                return @<tr role="row" class="bg-muted/50 border-b font-medium">
+                    <td role="gridcell" colspan="@_cachedVisibleColumns.Count" class="px-4 py-2">
+                        @effectiveTemplate(groupContext)
+                    </td>
+                </tr>;
+            }
+            else
+            {
+                var groupLabelColSpan = GetGroupLabelColSpan(group);
+                return @<tr role="row" class="bg-muted/50 border-b font-medium">
+                    <td role="gridcell" colspan="@groupLabelColSpan" class="px-4 py-2">
+                        <div class="flex items-center gap-2">
+                            <button type="button"
+                                    class="inline-flex items-center justify-center rounded-md w-6 h-6 hover:bg-muted transition-colors"
+                                    aria-expanded="@(!isCollapsed)"
+                                    aria-label="@(isCollapsed ? Localizer["DataGrid.ExpandGroup"] : Localizer["DataGrid.CollapseGroup"])"
+                                    @onclick="groupContext.ToggleCollapse"
+                                    @onclick:stopPropagation="true">
+                                <LucideIcon Name="@(isCollapsed ? "chevron-right" : "chevron-down")" Class="w-4 h-4" />
+                            </button>
+                            <span>@group.ColumnTitle: @(groupKey.ToString())</span>
+                            <span class="text-muted-foreground text-sm">@Localizer["DataGrid.GroupItemCount", group.ItemCount]</span>
+                        </div>
+                    </td>
+                    @foreach (var col in GetGroupAggregateColumns(group))
+                    {
+                        <td role="gridcell" class="px-4 py-2 text-muted-foreground text-sm">
+                            @if (group.Aggregates.TryGetValue(col.ColumnId, out var agg))
+                            {
+                                <span>@FormatAggregateName(agg.Function): @FormatAggregateValue(agg.Value, agg.Format)</span>
+                            }
+                        </td>
+                    }
+                </tr>;
+            }
+        }
+        else if (renderItem.IsChildPagerRow)
+        {
+            var pagerDepth = renderItem.Depth;
+            var pagerParentValue = renderItem.ParentValue!;
+            var pagerPageIndex = renderItem.ChildPageIndex;
+            var pagerTotalChildren = renderItem.TotalChildren;
+            var pagerPageSize = ChildPageSize ?? 10;
+            var pagerStart = pagerPageIndex * pagerPageSize + 1;
+            var pagerEnd = Math.Min((pagerPageIndex + 1) * pagerPageSize, pagerTotalChildren);
+            var pagerTotalPages = (int)Math.Ceiling((double)pagerTotalChildren / pagerPageSize);
+            var pagerIndent = pagerDepth * GetHierarchyIndentSize();
+
+            return @<tr role="row" class="border-b bg-muted/30">
+                <td role="gridcell" colspan="@_cachedVisibleColumns.Count" class="px-4 py-1.5">
+                    <div class="flex items-center gap-2 text-xs text-muted-foreground" style="@($"padding-left: {pagerIndent}px")">
+                        <span>@Localizer["DataGrid.ShowingRange", pagerStart, pagerEnd, pagerTotalChildren]</span>
+                        <div class="flex items-center gap-0.5">
+                            <button type="button"
+                                    class="inline-flex items-center justify-center rounded w-6 h-6 hover:bg-muted transition-colors disabled:opacity-50"
+                                    disabled="@(pagerPageIndex <= 0)"
+                                    @onclick="@(() => HandleChildPageChange(pagerParentValue, pagerPageIndex - 1))"
+                                    @onclick:stopPropagation="true"
+                                    aria-label="@Localizer["DataGrid.PreviousPage"]">
+                                <LucideIcon Name="chevron-left" Class="w-3.5 h-3.5" />
+                            </button>
+                            <span class="tabular-nums px-1">@(pagerPageIndex + 1) / @pagerTotalPages</span>
+                            <button type="button"
+                                    class="inline-flex items-center justify-center rounded w-6 h-6 hover:bg-muted transition-colors disabled:opacity-50"
+                                    disabled="@(pagerPageIndex >= pagerTotalPages - 1)"
+                                    @onclick="@(() => HandleChildPageChange(pagerParentValue, pagerPageIndex + 1))"
+                                    @onclick:stopPropagation="true"
+                                    aria-label="@Localizer["DataGrid.NextPage"]">
+                                <LucideIcon Name="chevron-right" Class="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    </div>
+                </td>
+            </tr>;
+        }
+        else if (renderItem.IsDataRow && IsInHierarchyMode)
+        {
+            return @<text>@RenderHierarchyRow(renderItem)</text>;
+        }
+        else
+        {
+            return @<text>
+                @RenderDataRow(renderItem.Item!)
+                @if (DetailTemplate != null && _gridState.Expanded.IsExpanded(renderItem.Item!))
+                {
+                    <tr class="border-b">
+                        <td colspan="@_cachedVisibleColumns.Count" class="p-4">
+                            @DetailTemplate(renderItem.Item!)
+                        </td>
+                    </tr>
+                }
+            </text>;
+        }
+    };
 
     private RenderFragment<DataGridRenderItem<TData>> RenderHierarchyRow => renderItem =>
     {
