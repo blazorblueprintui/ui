@@ -367,7 +367,7 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
         if (firstRender && EnableInfiniteScroll && !ShowLoadMoreButton && _jsModule == null)
         {
             _jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Components/js/data-view.js");
+                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/element-utils.js");
         }
     }
 
