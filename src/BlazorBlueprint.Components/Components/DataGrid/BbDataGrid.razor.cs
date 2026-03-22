@@ -59,6 +59,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private string? _cachedLastLeftId;
     private string? _cachedFirstRightId;
 
+    // Expand column reference for detail rows
+    private BbDataGridExpandColumn<TData>? _expandColumn;
+
     // JS interop state
     private IJSObjectReference? columnsModule;
     private DotNetObjectReference<BbDataGrid<TData>>? selfRef;
@@ -722,10 +725,16 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     internal void RegisterColumn(BbDataGridExpandColumn<TData> column)
     {
+        _expandColumn = column;
         var selectIndex = _columns.FindIndex(c => c.ColumnId == "__select");
         var insertIndex = selectIndex >= 0 ? selectIndex + 1 : 0;
         _columns.Insert(insertIndex, column);
         OnColumnRegistered();
+
+        if (column.DetailRows != null)
+        {
+            StateHasChanged();
+        }
     }
 
     private void OnColumnRegistered()
@@ -1803,6 +1812,39 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// Gets the hierarchy column registered with the grid.
     /// </summary>
     internal IDataGridColumn<TData>? HierarchyColumn => _hierarchyColumn;
+
+    /// <summary>
+    /// Gets whether the expand column has detail rows configured.
+    /// </summary>
+    internal bool HasDetailRows => _expandColumn?.DetailRows != null;
+
+    /// <summary>
+    /// Gets the detail rows template from the expand column.
+    /// </summary>
+    internal RenderFragment<TData>? ExpandColumnDetailRows => _expandColumn?.DetailRows;
+
+    /// <summary>
+    /// Gets the cached visible columns for detail row rendering.
+    /// </summary>
+    internal IReadOnlyList<IDataGridColumn<TData>> VisibleColumnsForDetailRow => _cachedVisibleColumns;
+
+    /// <summary>
+    /// Computes the CSS class for a detail row cell.
+    /// </summary>
+    internal string ComputeDetailCellClass(IDataGridColumn<TData> column)
+    {
+        var isSelectColumn = column.ColumnId == "__select";
+        var isExpandColumn = column.ColumnId == "__expand";
+        var isLastLeft = column.ColumnId == _cachedLastLeftId;
+        var isFirstRight = column.ColumnId == _cachedFirstRightId;
+        return GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight);
+    }
+
+    /// <summary>
+    /// Computes the pinned style for a detail row cell.
+    /// </summary>
+    internal string? ComputeDetailPinnedStyle(IDataGridColumn<TData> column) =>
+        GetPinnedStyle(column, _cachedVisibleColumns);
 
     /// <summary>
     /// Registers a column as the hierarchy toggle column.
