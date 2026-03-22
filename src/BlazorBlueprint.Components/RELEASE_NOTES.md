@@ -1,9 +1,9 @@
-## What's New in v3.7.2
+## What's New in v3.7.3
 
-### New Features
+### Bug Fixes
 
-- **DataGrid Detail Rows** — Added `BbDataGridDetailRow` and `BbDataGridDetailHeader` components for rendering column-aligned expandable content beneath data rows. Use the new `DetailRows` parameter on `BbDataGridExpandColumn` to define structured detail sections that align with the grid's column layout.
+- **DataGrid Date/DateTime filtering** — Comparison operators (Equals, NotEquals, GreaterThan, LessThan, Between) now use whole-day semantics, treating the selected date as the entire day rather than an exact midnight timestamp. Fixes incorrect filtering when data contains non-midnight time components (#259).
 
 ### Improvements
 
-- Bumped **BlazorBlueprint.Primitives** dependency to 3.7.2
+- Bumped **BlazorBlueprint.Primitives** dependency to 3.7.3.
