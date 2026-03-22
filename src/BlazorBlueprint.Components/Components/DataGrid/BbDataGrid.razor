@@ -50,7 +50,7 @@
                     OnSortChange="HandleSortChange"
                     OnSelectionChange="HandleSelectionChange"
                     OnRowClick="HandleRowClick"
-                    OnToggleExpand="@(DetailTemplate != null ? EventCallback.Factory.Create<TData>(this, HandleRowExpandToggle) : default)"
+                    OnToggleExpand="@(DetailTemplate != null || HasDetailRows ? EventCallback.Factory.Create<TData>(this, HandleRowExpandToggle) : default)"
                     OnRowContextMenu="@(RowContextMenu != null ? (EventCallback<(TData, double, double)>)EventCallback.Factory.Create<(TData, double, double)>(this, HandleRowContextMenu) : default)"
                     Class="@ClassNames.cn("w-full caption-bottom text-sm", HasTableFixed() ? "table-fixed" : "")"
                     AriaLabel="@AriaLabel">
@@ -286,13 +286,20 @@
                             @foreach (var item in _processedData)
                             {
                                 @RenderDataRow(item)
-                                @if (DetailTemplate != null && _gridState.Expanded.IsExpanded(item))
+                                @if (_gridState.Expanded.IsExpanded(item))
                                 {
-                                    <tr class="border-b">
-                                        <td colspan="@_cachedVisibleColumns.Count" class="p-4">
-                                            @DetailTemplate(item)
-                                        </td>
-                                    </tr>
+                                    @if (HasDetailRows)
+                                    {
+                                        @ExpandColumnDetailRows!(item)
+                                    }
+                                    @if (DetailTemplate != null)
+                                    {
+                                        <tr class="border-b">
+                                            <td colspan="@_cachedVisibleColumns.Count" class="p-4">
+                                                @DetailTemplate(item)
+                                            </td>
+                                        </tr>
+                                    }
                                 }
                             }
                         }
@@ -404,7 +411,7 @@
                     data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)">
                     @if (isExpandColumn)
                     {
-                        @if (DetailTemplate != null)
+                        @if (DetailTemplate != null || HasDetailRows)
                         {
                             var isExpanded = _gridState.Expanded.IsExpanded(item);
                             <button type="button"
@@ -543,13 +550,20 @@
         {
             return @<text>
                 @RenderDataRow(renderItem.Item!)
-                @if (DetailTemplate != null && _gridState.Expanded.IsExpanded(renderItem.Item!))
+                @if (_gridState.Expanded.IsExpanded(renderItem.Item!))
                 {
-                    <tr class="border-b">
-                        <td colspan="@_cachedVisibleColumns.Count" class="p-4">
-                            @DetailTemplate(renderItem.Item!)
-                        </td>
-                    </tr>
+                    @if (HasDetailRows)
+                    {
+                        @ExpandColumnDetailRows!(renderItem.Item!)
+                    }
+                    @if (DetailTemplate != null)
+                    {
+                        <tr class="border-b">
+                            <td colspan="@_cachedVisibleColumns.Count" class="p-4">
+                                @DetailTemplate(renderItem.Item!)
+                            </td>
+                        </tr>
+                    }
                 }
             </text>;
         }
