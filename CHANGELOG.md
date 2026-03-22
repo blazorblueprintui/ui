@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-22
+
+### Added
+
+- **DataGrid: detail rows with column-aligned expansion** — Added `DetailRows` RenderFragment on `BbDataGridExpandColumn` for rendering expanded child items as proper table rows that align with the parent grid's column structure. New `BbDataGridDetailRow` component renders each child item using the grid's column templates, and `BbDataGridDetailHeader` renders an optional section label. Both accept a `Class` parameter for custom styling.
+
+### Fixed
+
+- **FilterBuilder: DateTime field comparisons ignoring time component** — Fixed `FilterFieldType.DateTime` (and `Date`) comparison operators (Equals, NotEquals, GreaterThan, LessThan, Between) treating the selected date as an exact midnight timestamp instead of the entire day. Entries with non-midnight times were incorrectly included or excluded.
+
+---
+
 ## 2026-03-21
 
 ### Added

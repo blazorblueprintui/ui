@@ -241,6 +241,42 @@
         <CodeBlock Source="Components/DataGrid/expandable-nested-table.txt" />
     </div>
 
+    <!-- ── Expandable Rows: Detail Rows ──────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Expandable Rows: Detail Rows</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">DetailRows</code> on the
+                <code class="bg-muted px-1 py-0.5 rounded">BbDataGridExpandColumn</code> to render child items
+                as proper table rows that align with the parent grid's columns. Use
+                <code class="bg-muted px-1 py-0.5 rounded">BbDataGridDetailRow</code> for each child item and
+                <code class="bg-muted px-1 py-0.5 rounded">BbDataGridDetailHeader</code> for an optional section label.
+            </p>
+        </div>
+        <BbDataGrid TData="TeamMember" Items="@teamMembers" InitialPageSize="5" ShowPagination="false">
+            <Columns>
+                <BbDataGridExpandColumn>
+                    <DetailRows Context="member">
+                        <BbDataGridDetailHeader Class="bg-muted/30">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Direct Reports (@member.DirectReports.Count)
+                            </span>
+                        </BbDataGridDetailHeader>
+                        @foreach (var report in member.DirectReports)
+                        {
+                            <BbDataGridDetailRow Item="@report" Class="text-muted-foreground" />
+                        }
+                    </DetailRows>
+                </BbDataGridExpandColumn>
+                <BbDataGridPropertyColumn TData="TeamMember" TProp="string" Property="@(m => m.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="TeamMember" TProp="string" Property="@(m => m.Title)" Title="Job Title" />
+                <BbDataGridPropertyColumn TData="TeamMember" TProp="string" Property="@(m => m.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="TeamMember" TProp="int" Property="@(m => m.DirectReports.Count)" Title="Reports" />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/expandable-detail-rows.txt" />
+    </div>
+
     <!-- ── Row Click & Context Menu ─────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -1059,6 +1095,35 @@
 
     // Column Filtering demo state
     private BlazorBlueprint.Primitives.DataGrid.DataGridState<Person> _gridState = new();
+
+    // Expandable detail rows demo data
+    private record TeamMember(string Name, string Title, string Department, List<TeamMember> DirectReports);
+
+    private List<TeamMember> teamMembers = new()
+    {
+        new("Sarah Chen", "VP of Engineering", "Engineering", new()
+        {
+            new("James Rodriguez", "Senior Engineer", "Engineering", new()),
+            new("Priya Patel", "Senior Engineer", "Engineering", new()),
+            new("Marcus Johnson", "Engineer", "Engineering", new()),
+        }),
+        new("David Kim", "VP of Product", "Product", new()
+        {
+            new("Emma Wilson", "Product Manager", "Product", new()),
+            new("Alex Thompson", "Product Analyst", "Product", new()),
+        }),
+        new("Rachel Foster", "VP of Design", "Design", new()
+        {
+            new("Liam O'Brien", "Senior Designer", "Design", new()),
+            new("Sofia Martinez", "UX Researcher", "Design", new()),
+            new("Noah Garcia", "Designer", "Design", new()),
+            new("Olivia Lee", "Designer", "Design", new()),
+        }),
+        new("Michael Brooks", "VP of Marketing", "Marketing", new()
+        {
+            new("Ashley Davis", "Content Lead", "Marketing", new()),
+        }),
+    };
 
     // Expandable nested table demo data
     private record Subtask(string Title, string Assignee, string Status, int EstimatedHours);
