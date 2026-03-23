@@ -1,0 +1,196 @@
+@page "/components/theme"
+
+<PageTitle>Theme System - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Theme System</h1>
+        <p class="text-xl text-muted-foreground">
+            Built-in theme management with dark mode, color palettes, border radius, and localStorage persistence.
+        </p>
+    </div>
+
+    <div class="space-y-6">
+
+        <!-- ── Quick Start ── -->
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Quick Start</h2>
+                <p class="text-muted-foreground">
+                    Two steps to add theming to your app. No manual initialization needed — the components
+                    handle everything on first render.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <div class="space-y-2">
+                    <h3 class="text-sm font-semibold">1. Add the theme CSS to your App.razor</h3>
+                    <pre class="rounded-md bg-muted p-3 text-xs font-mono overflow-x-auto"><code>&lt;link href="_content/BlazorBlueprint.Components/css/themes.css" rel="stylesheet" /&gt;</code></pre>
+                </div>
+                <div class="space-y-2">
+                    <h3 class="text-sm font-semibold">2. Drop in the component</h3>
+                    <pre class="rounded-md bg-muted p-3 text-xs font-mono overflow-x-auto"><code>&lt;BbThemeSwitcher /&gt;
+@* or just dark mode: *@
+&lt;BbDarkModeToggle /&gt;</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── BbThemeSwitcher ── -->
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Theme Switcher</h2>
+                <p class="text-muted-foreground">
+                    A popover panel with color selection (base grays + primary accents), border radius
+                    presets, and a light/dark mode toggle. Click the paintbrush icon to open.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 flex items-center gap-4">
+                <BbThemeSwitcher />
+                <span class="text-sm text-muted-foreground">Click the icon to open the theme panel</span>
+            </div>
+        </section>
+
+        <!-- ── BbDarkModeToggle ── -->
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Dark Mode Toggle</h2>
+                <p class="text-muted-foreground">
+                    A standalone button that toggles dark mode. Shows a sun icon in light mode and
+                    a moon icon in dark mode. Works without <code class="text-xs bg-muted px-1 py-0.5 rounded">themes.css</code>
+                    — it only toggles the <code class="text-xs bg-muted px-1 py-0.5 rounded">.dark</code> class.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 space-y-4">
+                <div class="space-y-2">
+                    <p class="text-sm font-medium">Default (icon only)</p>
+                    <BbDarkModeToggle />
+                </div>
+
+                <div class="space-y-2">
+                    <p class="text-sm font-medium">With label</p>
+                    <BbDarkModeToggle ShowLabel="true" Size="ButtonSize.Default" />
+                </div>
+
+                <div class="space-y-2">
+                    <p class="text-sm font-medium">Label only, no icon</p>
+                    <BbDarkModeToggle ShowIcon="false" ShowLabel="true" Size="ButtonSize.Default" />
+                </div>
+
+                <div class="space-y-2">
+                    <p class="text-sm font-medium">Custom icons</p>
+                    <BbDarkModeToggle>
+                        <LightIcon>
+                            <LucideIcon Name="sun-medium" Class="h-[1.2rem] w-[1.2rem]" />
+                        </LightIcon>
+                        <DarkIcon>
+                            <LucideIcon Name="moon-star" Class="h-[1.2rem] w-[1.2rem]" />
+                        </DarkIcon>
+                    </BbDarkModeToggle>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── ThemeService Configuration ── -->
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Configuration</h2>
+                <p class="text-muted-foreground">
+                    Configure defaults in <code class="text-xs bg-muted px-1 py-0.5 rounded">Program.cs</code>
+                    via the <code class="text-xs bg-muted px-1 py-0.5 rounded">configureTheme</code> parameter.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <pre class="rounded-md bg-muted p-3 text-xs font-mono overflow-x-auto"><code>builder.Services.AddBlazorBlueprintComponents(
+    configureTheme: options =>
+    {
+        options.DefaultBaseColor = BaseColor.Slate;
+        options.DefaultPrimaryColor = PrimaryColor.Blue;
+        options.DefaultRadius = 0.75;
+        options.DefaultDarkMode = false;
+        options.DetectSystemPreference = true;
+        options.PersistToLocalStorage = true;
+    });</code></pre>
+            </div>
+        </section>
+
+        <!-- ── Programmatic Access ── -->
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Programmatic Access</h2>
+                <p class="text-muted-foreground">
+                    Inject <code class="text-xs bg-muted px-1 py-0.5 rounded">ThemeService</code> to read
+                    or change the theme from code.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <pre class="rounded-md bg-muted p-3 text-xs font-mono overflow-x-auto"><code>@@inject ThemeService ThemeService
+
+// Read current state
+var isDark = ThemeService.IsDarkMode;
+var baseColor = ThemeService.BaseColor;
+var primaryColor = ThemeService.PrimaryColor;
+var radius = ThemeService.Radius;
+
+// Change programmatically
+await ThemeService.SetDarkModeAsync(true);
+await ThemeService.SetBaseColorAsync(BaseColor.Slate);
+await ThemeService.SetPrimaryColorAsync(PrimaryColor.Blue);
+await ThemeService.SetRadiusAsync(0.75);
+await ThemeService.ToggleDarkModeAsync();</code></pre>
+            </div>
+        </section>
+
+        <!-- ── API Reference ── -->
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">API Reference</h2>
+                <p class="text-muted-foreground">Component parameters.</p>
+            </div>
+            <div class="space-y-4">
+                <ApiReference ComponentName="BbThemeSwitcher">
+                    <ApiParameter Name="TriggerClass" Type="string?" Default="null">
+                        Additional CSS classes for the trigger button.
+                    </ApiParameter>
+                    <ApiParameter Name="PopoverContentClass" Type="string?" Default="null">
+                        Additional CSS classes for the popover content panel.
+                    </ApiParameter>
+                    <ApiParameter Name="Align" Type="PopoverAlign" Default="PopoverAlign.End">
+                        Horizontal alignment of the popover relative to the trigger.
+                    </ApiParameter>
+                </ApiReference>
+
+                <ApiReference ComponentName="BbDarkModeToggle">
+                    <ApiParameter Name="LightIcon" Type="RenderFragment?" Default="Sun icon">
+                        Custom icon to show when light mode is active.
+                    </ApiParameter>
+                    <ApiParameter Name="DarkIcon" Type="RenderFragment?" Default="Moon icon">
+                        Custom icon to show when dark mode is active.
+                    </ApiParameter>
+                    <ApiParameter Name="ShowIcon" Type="bool" Default="true">
+                        Whether to show the mode icon.
+                    </ApiParameter>
+                    <ApiParameter Name="ShowLabel" Type="bool" Default="false">
+                        Whether to show a text label indicating the current mode.
+                    </ApiParameter>
+                    <ApiParameter Name="LightLabel" Type="string?" Default="&quot;Light&quot;">
+                        Custom label text for light mode.
+                    </ApiParameter>
+                    <ApiParameter Name="DarkLabel" Type="string?" Default="&quot;Dark&quot;">
+                        Custom label text for dark mode.
+                    </ApiParameter>
+                    <ApiParameter Name="Variant" Type="ButtonVariant" Default="ButtonVariant.Outline">
+                        Button styling variant.
+                    </ApiParameter>
+                    <ApiParameter Name="Size" Type="ButtonSize" Default="ButtonSize.Icon">
+                        Button size.
+                    </ApiParameter>
+                </ApiReference>
+            </div>
+        </section>
+    </div>
+</div>

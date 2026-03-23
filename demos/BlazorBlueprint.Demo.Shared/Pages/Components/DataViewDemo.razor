@@ -301,6 +301,44 @@
         <CodeBlock Source="Components/DataView/layout-customization.txt" />
     </div>
 
+    <!-- ── Adaptive Auto-Fill Grid ───────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Adaptive Auto-Fill Grid</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">GridColumnMinWidth</code> to create a
+                fluid grid that adapts to the container width. Uses CSS
+                <code class="bg-muted px-1 py-0.5 rounded">repeat(auto-fill, minmax(value, 1fr))</code>
+                instead of fixed breakpoint columns. Resize the browser to see columns added or removed.
+            </p>
+        </div>
+
+        <BbDataView TItem="Product" Data="@products" InitialPageSize="12"
+                    PageSizes="@(new[] { 6, 12, 24 })"
+                    GridColumnMinWidth="200px">
+            <GridTemplate Context="product">
+                <BbCard Class="overflow-hidden flex flex-col">
+                    <div class="aspect-square overflow-hidden bg-muted">
+                        <img src="@product.ImageUrl" alt="@product.Name"
+                             class="object-cover w-full h-full" loading="lazy" />
+                    </div>
+                    <BbCardHeader Class="p-3">
+                        <BbCardTitle Class="text-xs line-clamp-2">@product.Name</BbCardTitle>
+                    </BbCardHeader>
+                    <BbCardFooter Class="p-3 pt-0 justify-start">
+                        <span class="text-sm font-bold">$@product.Price.ToString("F2")</span>
+                    </BbCardFooter>
+                </BbCard>
+            </GridTemplate>
+            <Fields>
+                <BbDataViewColumn TItem="Product" TValue="string" Property="@(p => p.Name)" Header="Name" Sortable Filterable />
+                <BbDataViewColumn TItem="Product" TValue="decimal" Property="@(p => p.Price)" Header="Price" Sortable />
+            </Fields>
+        </BbDataView>
+
+        <CodeBlock Source="Components/DataView/adaptive-grid.txt" />
+    </div>
+
     <!-- ── Infinite Scroll – Product Grid (Auto, GridTemplate only) ───────── -->
     <div class="space-y-4">
         <div class="space-y-2">
