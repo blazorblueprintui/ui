@@ -69,6 +69,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private readonly string gridId = Guid.NewGuid().ToString("N");
     private bool jsInitialized;
 
+    // Virtualized provider state
+    private Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize<TData>? _virtualizeRef;
+
     // Context menu state
     private BbContextMenu? rowContextMenu;
     private TData? contextMenuItem;
@@ -88,6 +91,12 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private int _stateVersion;
     private int _lastStateVersion;
     private int _lastGridStateVersion;
+
+    /// <summary>
+    /// Whether the grid is in server-side virtual scroll mode
+    /// (both Virtualize and ItemsProvider set with a valid ItemSize).
+    /// </summary>
+    private bool IsVirtualizedProvider => Virtualize && ItemSize > 0 && ItemsProvider != null;
 
     [Inject]
     private IJSRuntime Js { get; set; } = null!;
@@ -240,6 +249,15 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     [Parameter]
     public int OverscanCount { get; set; } = 5;
+
+    /// <summary>
+    /// CSS height for the scroll container when using virtualized server-side mode
+    /// (both <see cref="Virtualize"/> and <see cref="ItemsProvider"/> are set).
+    /// Required in this mode to give the Virtualize component a bounded scroll area.
+    /// Accepts any CSS length value. Default is <c>"400px"</c>.
+    /// </summary>
+    [Parameter]
+    public string VirtualScrollHeight { get; set; } = "400px";
 
     /// <summary>
     /// Additional CSS classes applied to the inner scrollable container that wraps the
@@ -1270,6 +1288,45 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
     }
 
+    /// <summary>
+    /// Bridge between Blazor's <see cref="Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderRequest"/>
+    /// and BlazorBlueprint's <see cref="DataGridRequest"/>. Called by the Virtualize component as the user scrolls.
+    /// </summary>
+    private async ValueTask<Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<TData>> VirtualItemsProviderAsync(
+        Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderRequest request)
+    {
+        // Grouping is not supported with virtualized provider mode
+        if (_groupByAccessor != null)
+        {
+            return new Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<TData>(
+                Array.Empty<TData>(), 0);
+        }
+
+        var aggregateColumns = _columns
+            .Where(c => c.Aggregate != AggregateFunction.None)
+            .Select(c => c.ColumnId)
+            .ToList();
+
+        var dataGridRequest = new DataGridRequest
+        {
+            SortDefinitions = _gridState.Sorting.Definitions,
+            StartIndex = request.StartIndex,
+            Count = request.Count,
+            CancellationToken = request.CancellationToken,
+            Filters = _gridState.Filtering.Filters,
+            GroupDefinition = _gridState.Grouping.ActiveGroup,
+            AggregateColumns = aggregateColumns.Count > 0 ? aggregateColumns : null
+        };
+
+        var result = await ItemsProvider!(dataGridRequest);
+
+        // Update pagination total for info display (e.g., "Showing X of Y")
+        _gridState.Pagination.TotalItems = result.TotalItemCount;
+
+        return new Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<TData>(
+            result.Items, result.TotalItemCount);
+    }
+
     private void UpdateVirtualizationList()
     {
         if (Virtualize)
@@ -1965,6 +2022,18 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     private async Task LoadFromProviderAsync()
     {
+        // In virtualized provider mode, the Virtualize component drives data loading.
+        // Refresh it so it re-queries with the current sort/filter state.
+        if (IsVirtualizedProvider)
+        {
+            if (_virtualizeRef != null)
+            {
+                await _virtualizeRef.RefreshDataAsync();
+            }
+
+            return;
+        }
+
         var oldCts = _loadCts;
         oldCts?.Cancel();
         oldCts?.Dispose();

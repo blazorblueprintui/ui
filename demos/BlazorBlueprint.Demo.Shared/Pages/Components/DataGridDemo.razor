@@ -493,6 +493,36 @@
         <CodeBlock Source="Components/DataGrid/virtualization.txt" />
     </div>
 
+    <!-- ── Server-Side Virtual Scroll ─────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Server-Side Virtual Scroll</h2>
+            <p class="text-sm text-muted-foreground">
+                Combine <code class="bg-muted px-1 py-0.5 rounded">Virtualize="true"</code> with
+                <code class="bg-muted px-1 py-0.5 rounded">ItemsProvider</code> for true server-side
+                infinite scroll. The Virtualize component requests only the visible rows plus overscan
+                from the server as the user scrolls. Pagination is automatically hidden.
+                Use <code class="bg-muted px-1 py-0.5 rounded">VirtualScrollHeight</code> to set the
+                scroll container height.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" ItemsProvider="@VirtualServerProviderAsync"
+                   Virtualize="true" ItemSize="48" VirtualScrollHeight="400px"
+                   StickyHeader="true">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Id)" Title="#" Width="60px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+            </Columns>
+        </BbDataGrid>
+        <p class="text-xs text-muted-foreground">
+            Scrolling through 10,000 records — only visible rows are fetched from the simulated server.
+        </p>
+        <CodeBlock Source="Components/DataGrid/virtual-server-scroll.txt" />
+    </div>
+
     <!-- ── Stress Test: 100,000 Rows ─────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -1169,11 +1199,62 @@
         _ => BadgeVariant.Outline
     };
 
+    // Server-side virtual scroll demo data (generated lazily)
+    private List<Person>? virtualServerPeople;
+
     protected override void OnInitialized()
     {
         people = MockDataService.GeneratePersons(50);
         manyPeople = MockDataService.GeneratePersons(1000);
         asyncPeople = MockDataService.GeneratePersons(100);
+    }
+
+    private async ValueTask<BlazorBlueprint.Primitives.DataGrid.DataGridResult<Person>> VirtualServerProviderAsync(
+        BlazorBlueprint.Primitives.DataGrid.DataGridRequest request)
+    {
+        // Generate data on first request (simulates a large remote dataset)
+        virtualServerPeople ??= MockDataService.GeneratePersons(10_000);
+
+        // Simulate network latency
+        await Task.Delay(30, request.CancellationToken);
+
+        IEnumerable<Person> query = virtualServerPeople;
+
+        // Apply sorting
+        var isFirst = true;
+        foreach (var sort in request.SortDefinitions)
+        {
+            Func<Person, object> selector = sort.ColumnId switch
+            {
+                "name" => p => p.Name,
+                "department" => p => p.Department,
+                "salary" => p => p.Salary,
+                _ => p => p.Id
+            };
+
+            if (isFirst)
+            {
+                query = sort.Direction == SortDirection.Ascending
+                    ? query.OrderBy(selector)
+                    : query.OrderByDescending(selector);
+                isFirst = false;
+            }
+            else if (query is IOrderedEnumerable<Person> ordered)
+            {
+                query = sort.Direction == SortDirection.Ascending
+                    ? ordered.ThenBy(selector)
+                    : ordered.ThenByDescending(selector);
+            }
+        }
+
+        var total = virtualServerPeople.Count;
+        var items = query.Skip(request.StartIndex).Take(request.Count ?? 50).ToList();
+
+        return new BlazorBlueprint.Primitives.DataGrid.DataGridResult<Person>
+        {
+            Items = items,
+            TotalItemCount = total
+        };
     }
 
     private async Task LoadStressTestData()

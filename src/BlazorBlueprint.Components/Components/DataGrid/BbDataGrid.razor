@@ -13,7 +13,9 @@
                 @Toolbar
             </div>
         }
-        <div @ref="containerRef" class="@ClassNames.cn("relative w-full", Virtualize ? "" : "overflow-auto", TableContainerClass)">
+        <div @ref="containerRef"
+             class="@ClassNames.cn("relative w-full", Virtualize ? "" : "overflow-auto", TableContainerClass)"
+             style="@(IsVirtualizedProvider ? $"height: {VirtualScrollHeight}; overflow-y: auto;" : null)">
             @if (IsLoading)
             {
                 @if (LoadingTemplate != null)
@@ -27,7 +29,7 @@
                     </div>
                 }
             }
-            else if ((_groupedRenderItems == null || !_groupedRenderItems.Any()) && !_processedData.Any() && !_gridState.Filtering.HasFilters)
+            else if (!IsVirtualizedProvider && (_groupedRenderItems == null || !_groupedRenderItems.Any()) && !_processedData.Any() && !_gridState.Filtering.HasFilters)
             {
                 @if (EmptyTemplate != null)
                 {
@@ -275,6 +277,14 @@
                                 }
                             }
                         }
+                        else if (IsVirtualizedProvider)
+                        {
+                            <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize @ref="_virtualizeRef"
+                                ItemsProvider="@VirtualItemsProviderAsync" Context="item"
+                                ItemSize="@ItemSize" OverscanCount="@OverscanCount">
+                                @RenderDataRow(item)
+                            </Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize>
+                        }
                         else if (Virtualize && ItemSize > 0)
                         {
                             <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize Items="@_processedDataList" Context="item" ItemSize="@ItemSize" OverscanCount="@OverscanCount">
@@ -326,7 +336,7 @@
             </BbContextMenu>
         }
 
-        @if (ShowPagination && !IsLoading && _processedData.Any())
+        @if (ShowPagination && !IsLoading && !IsVirtualizedProvider && _processedData.Any())
         {
             <BbPagination State="@_gridState.Pagination"
                         PageSizes="@PageSizes"
