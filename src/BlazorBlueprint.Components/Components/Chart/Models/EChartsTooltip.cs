@@ -31,6 +31,10 @@ internal sealed class EChartsTooltipOption
     [JsonPropertyName("extraCssText")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? ExtraCssText { get; set; }
+
+    [JsonPropertyName("appendToBody")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? AppendToBody { get; set; }
 }
 
 internal sealed class EChartsAxisPointerOption

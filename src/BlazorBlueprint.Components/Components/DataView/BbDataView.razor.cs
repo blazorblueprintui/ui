@@ -262,6 +262,16 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     public string? ListClass { get; set; }
 
     /// <summary>
+    /// Minimum column width for auto-fill grid layout.
+    /// When set, uses CSS <c>repeat(auto-fill, minmax(value, 1fr))</c> instead of
+    /// fixed breakpoint columns. Accepts any CSS length (e.g., "160px", "10rem").
+    /// Overrides the default responsive grid classes when set.
+    /// <see cref="GridClass"/> merges on top in both cases.
+    /// </summary>
+    [Parameter]
+    public string? GridColumnMinWidth { get; set; }
+
+    /// <summary>
     /// Event callback invoked when sorting changes.
     /// </summary>
     [Parameter]
@@ -278,8 +288,14 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     private string ContainerCssClass => ClassNames.cn("w-full space-y-4", Class);
 
     private string ItemContainerCssClass => _effectiveLayout == DataViewLayout.Grid
-        ? ClassNames.cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4", GridClass)
+        ? ClassNames.cn(GridColumnMinWidth is null
+            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            : "grid gap-4", GridClass)
         : ClassNames.cn("flex flex-col gap-2", ListClass);
+
+    private string? ItemContainerStyle => _effectiveLayout == DataViewLayout.Grid && GridColumnMinWidth is not null
+        ? $"grid-template-columns: repeat(auto-fill, minmax({GridColumnMinWidth}, 1fr))"
+        : null;
 
     /// <summary>
     /// The resolved layout, accounting for which templates are available.

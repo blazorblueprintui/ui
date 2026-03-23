@@ -68,6 +68,17 @@ public partial class BbChartTooltip : ComponentBase, IChartComponent, IDisposabl
     [Parameter]
     public string? TextColor { get; set; }
 
+    /// <summary>
+    /// Gets or sets whether the tooltip DOM node is appended to <c>&lt;body&gt;</c>.
+    /// </summary>
+    /// <remarks>
+    /// When <c>true</c>, the tooltip is rendered outside the chart's container, preventing
+    /// clipping by parent elements with <c>overflow: hidden</c>. Maps to ECharts'
+    /// <c>tooltip.appendToBody</c> option.
+    /// </remarks>
+    [Parameter]
+    public bool? AppendToBody { get; set; }
+
     protected override void OnInitialized() =>
         ParentChart?.RegisterComponent(this);
 
@@ -84,7 +95,8 @@ public partial class BbChartTooltip : ComponentBase, IChartComponent, IDisposabl
             {
                 Color = TextColor ?? "var(--popover-foreground)"
             },
-            ExtraCssText = "border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1); pointer-events: none;"
+            ExtraCssText = "border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1); pointer-events: none;",
+            AppendToBody = AppendToBody
         };
 
         if (trigger == "axis")

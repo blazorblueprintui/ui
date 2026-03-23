@@ -246,6 +246,10 @@ export function initialize(container, dotNetRef, instanceId, config) {
         navigateLast(container);
       });
     });
+  } else if (initialFocus === 'container') {
+    // Focus the container itself (enables keyboard events) without
+    // navigating to any item. ArrowDown will move to the first item.
+    focusWithDoubleRaf(container);
   }
 }
 
