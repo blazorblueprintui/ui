@@ -447,6 +447,29 @@
         <CodeBlock Source="Components/DataGrid/pinned-columns.txt" />
     </div>
 
+    <!-- ── Global Search ─────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Global Search</h2>
+            <p class="text-sm text-muted-foreground">
+                Add <code class="bg-muted px-1 py-0.5 rounded">ShowSearch="true"</code> to render a
+                debounced search input that filters across all columns with
+                <code class="bg-muted px-1 py-0.5 rounded">Filterable=true</code>.
+                For server-side grids, the search text is passed via
+                <code class="bg-muted px-1 py-0.5 rounded">DataGridRequest.SearchText</code>.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5" ShowSearch>
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Filterable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Filterable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Filterable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/global-search.txt" />
+    </div>
+
     <!-- ── Async Data Loading ──────────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">

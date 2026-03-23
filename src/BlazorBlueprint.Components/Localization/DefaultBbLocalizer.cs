@@ -93,6 +93,7 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["DataGrid.FilterColumnSelectValue"] = "Select value...",
         ["DataGrid.FilterColumnClear"] = "Clear",
         ["DataGrid.FilterColumnApply"] = "Apply",
+        ["DataGrid.SearchPlaceholder"] = "Search...",
 
         // DataTable
         ["DataTable.Loading"] = "Loading...",

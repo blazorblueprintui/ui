@@ -69,6 +69,10 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private readonly string gridId = Guid.NewGuid().ToString("N");
     private bool jsInitialized;
 
+    // Search state
+    private string? _searchInputValue;
+    private CancellationTokenSource? _searchDebounceCts;
+
     // Virtualized provider state
     private Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize<TData>? _virtualizeRef;
 
@@ -285,6 +289,40 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// When <c>true</c>, renders a built-in search input above the grid.
+    /// Filters across all columns with <c>Filterable=true</c> (client-side)
+    /// or passes <see cref="SearchText"/> to the <see cref="ItemsProvider"/> via
+    /// <see cref="DataGridRequest.SearchText"/> (server-side).
+    /// </summary>
+    [Parameter]
+    public bool ShowSearch { get; set; }
+
+    /// <summary>
+    /// The current global search text. Use with <c>@bind-SearchText</c> for two-way binding.
+    /// </summary>
+    [Parameter]
+    public string? SearchText { get; set; }
+
+    /// <summary>
+    /// Callback invoked when the search text changes (after debounce).
+    /// </summary>
+    [Parameter]
+    public EventCallback<string?> SearchTextChanged { get; set; }
+
+    /// <summary>
+    /// Placeholder text for the search input.
+    /// Defaults to the localized <c>"DataGrid.SearchPlaceholder"</c> string.
+    /// </summary>
+    [Parameter]
+    public string? SearchPlaceholder { get; set; }
+
+    /// <summary>
+    /// Debounce delay in milliseconds for the search input. Default is 300.
+    /// </summary>
+    [Parameter]
+    public int SearchDebounceMs { get; set; } = 300;
 
     /// <summary>
     /// Toolbar content rendered above the grid. Use for column visibility toggles,
@@ -991,7 +1029,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             var sorted = filtered.ApplyMultiSort(
                 _gridState.Sorting.Definitions, columns);
 
-            var sortedList = sorted.ToList();
+            var sortedList = ApplyGlobalSearch(sorted.ToList()).ToList();
 
             if (_groupByAccessor != null)
             {
@@ -1022,7 +1060,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             var sorted = filtered.ApplyMultiSort(
                 _gridState.Sorting.Definitions, columns);
 
-            var list = sorted as IList<TData> ?? sorted.ToList();
+            var searched = ApplyGlobalSearch(sorted);
+            var list = searched as IList<TData> ?? searched.ToList();
 
             if (_groupByAccessor != null)
             {
@@ -1315,7 +1354,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             CancellationToken = request.CancellationToken,
             Filters = _gridState.Filtering.Filters,
             GroupDefinition = _gridState.Grouping.ActiveGroup,
-            AggregateColumns = aggregateColumns.Count > 0 ? aggregateColumns : null
+            AggregateColumns = aggregateColumns.Count > 0 ? aggregateColumns : null,
+            SearchText = SearchText
         };
 
         var result = await ItemsProvider!(dataGridRequest);
@@ -2059,7 +2099,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
                 CancellationToken = token,
                 Filters = _gridState.Filtering.Filters,
                 GroupDefinition = _gridState.Grouping.ActiveGroup,
-                AggregateColumns = aggregateColumns.Count > 0 ? aggregateColumns : null
+                AggregateColumns = aggregateColumns.Count > 0 ? aggregateColumns : null,
+                SearchText = SearchText
             };
 
             // Use grouped provider when grouping is active and provider is available
@@ -2241,6 +2282,65 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
 
         return queryable;
+    }
+
+    private async Task HandleSearchInput(string? value)
+    {
+        _searchInputValue = value;
+
+        _searchDebounceCts?.Cancel();
+        _searchDebounceCts?.Dispose();
+        _searchDebounceCts = new CancellationTokenSource();
+
+        try
+        {
+            await Task.Delay(SearchDebounceMs, _searchDebounceCts.Token);
+
+            SearchText = string.IsNullOrWhiteSpace(value) ? null : value;
+            await SearchTextChanged.InvokeAsync(SearchText);
+
+            _gridState.Pagination.CurrentPage = 1;
+            await ProcessDataAsync();
+            StateHasChanged();
+        }
+        catch (TaskCanceledException)
+        {
+            // Debounce superseded
+        }
+    }
+
+    private IEnumerable<TData> ApplyGlobalSearch(IEnumerable<TData> data)
+    {
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            return data;
+        }
+
+        var searchText = SearchText.Trim();
+        var searchableColumns = _columns.Where(c => c.Filterable).ToList();
+
+        if (searchableColumns.Count == 0)
+        {
+            return data;
+        }
+
+        return data.Where(item =>
+        {
+            foreach (var column in searchableColumns)
+            {
+                var value = column.GetValue(item);
+                if (value != null)
+                {
+                    var str = value.ToString();
+                    if (str != null && str.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        });
     }
 
     private IEnumerable<TData> ApplyColumnFilters(IEnumerable<TData> data)

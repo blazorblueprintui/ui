@@ -7,9 +7,16 @@
 
 <CascadingValue Value="this" IsFixed="true">
     <div class="@ClassNames.cn("w-full", Class)">
-        @if (Toolbar != null)
+        @if (ShowSearch || Toolbar != null)
         {
-            <div class="flex items-center justify-between py-4">
+            <div class="flex items-center justify-between gap-2 py-4">
+                @if (ShowSearch)
+                {
+                    <BbInput Value="@(_searchInputValue ?? SearchText)"
+                             ValueChanged="@HandleSearchInput"
+                             Placeholder="@(SearchPlaceholder ?? Localizer["DataGrid.SearchPlaceholder"])"
+                             Class="max-w-sm" />
+                }
                 @Toolbar
             </div>
         }
