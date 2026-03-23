@@ -1,0 +1,258 @@
+@namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
+@inject ThemeService ThemeService
+@inject IBbLocalizer Localizer
+@implements IDisposable
+
+<BbPopover @bind-Open="isOpen">
+    <BbPopoverTrigger AsChild="true">
+        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Icon" Class="@TriggerClass"
+                  aria-label="@Localizer["Theme.Switcher.Label"]">
+            <LucideIcon Name="paintbrush" Class="h-4 w-4" />
+        </BbButton>
+    </BbPopoverTrigger>
+    <BbPopoverContent Class="@ClassNames.cn("w-[340px] p-0", PopoverContentClass)"
+                      Align="@Align"
+                      Strategy="@Strategy">
+
+        @* ── Header ── *@
+        <div class="p-4 pb-1">
+            <p class="text-sm font-semibold leading-none">@Localizer["Theme.Switcher.Title"]</p>
+            <p class="mt-1 text-xs text-muted-foreground">@Localizer["Theme.Switcher.Description"]</p>
+        </div>
+
+        <BbSeparator Class="my-2" />
+
+        @* ── Color ── *@
+        <div class="px-4 py-2 space-y-2">
+            <p class="text-xs font-medium text-muted-foreground">@Localizer["Theme.Color"]</p>
+            <div class="grid grid-cols-3 gap-1.5">
+                @foreach (var color in allColors)
+                {
+                    var isSelected = IsColorSelected(color);
+                    <button type="button"
+                            class="@ClassNames.cn(
+                                "inline-flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-xs transition-colors",
+                                isSelected ? "border-foreground bg-accent" : "border-input hover:bg-accent/50")"
+                            @onclick="() => OnColorSelected(color)"
+                            aria-pressed="@isSelected.ToString().ToLowerInvariant()">
+                        @if (isSelected)
+                        {
+                            <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 border-foreground"
+                                  style="background-color: @color.Swatch;">
+                                <LucideIcon Name="check" Class="h-2.5 w-2.5 text-white" />
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="h-4 w-4 shrink-0 rounded-full" style="background-color: @color.Swatch;"></span>
+                        }
+                        @color.Label
+                    </button>
+                }
+            </div>
+        </div>
+
+        <BbSeparator Class="my-2" />
+
+        @* ── Radius ── *@
+        <div class="px-4 py-2 space-y-2">
+            <p class="text-xs font-medium text-muted-foreground">@Localizer["Theme.Radius"]</p>
+            <div class="flex gap-1.5">
+                @foreach (var r in radiusOptions)
+                {
+                    var isSelected = Math.Abs(ThemeService.Radius - r) < 0.001;
+                    <button type="button"
+                            class="@ClassNames.cn(
+                                "flex-1 rounded-md border px-2 py-1.5 text-xs text-center transition-colors",
+                                isSelected ? "border-foreground bg-accent" : "border-input hover:bg-accent/50")"
+                            @onclick="() => OnRadiusSelected(r)"
+                            aria-pressed="@isSelected.ToString().ToLowerInvariant()">
+                        @r.ToString("0.0##", System.Globalization.CultureInfo.InvariantCulture)
+                    </button>
+                }
+            </div>
+        </div>
+
+        <BbSeparator Class="my-2" />
+
+        @* ── Mode ── *@
+        <div class="px-4 pt-2 pb-4 space-y-2">
+            <p class="text-xs font-medium text-muted-foreground">@Localizer["Theme.Mode"]</p>
+            <div class="grid grid-cols-2 gap-1.5">
+                <button type="button"
+                        class="@ClassNames.cn(
+                            "inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors",
+                            !ThemeService.IsDarkMode ? "border-foreground bg-accent" : "border-input hover:bg-accent/50")"
+                        @onclick="() => OnModeSelected(false)"
+                        aria-pressed="@((!ThemeService.IsDarkMode).ToString().ToLowerInvariant())">
+                    <LucideIcon Name="sun" Class="h-3.5 w-3.5" />
+                    @Localizer["Theme.Light"]
+                </button>
+                <button type="button"
+                        class="@ClassNames.cn(
+                            "inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors",
+                            ThemeService.IsDarkMode ? "border-foreground bg-accent" : "border-input hover:bg-accent/50")"
+                        @onclick="() => OnModeSelected(true)"
+                        aria-pressed="@ThemeService.IsDarkMode.ToString().ToLowerInvariant()">
+                    <LucideIcon Name="moon" Class="h-3.5 w-3.5" />
+                    @Localizer["Theme.Dark"]
+                </button>
+            </div>
+        </div>
+
+    </BbPopoverContent>
+</BbPopover>
+
+@code {
+    private bool isOpen;
+
+    /// <summary>
+    /// Additional CSS classes for the trigger button.
+    /// </summary>
+    [Parameter]
+    public string? TriggerClass { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes for the popover content panel.
+    /// </summary>
+    [Parameter]
+    public string? PopoverContentClass { get; set; }
+
+    /// <summary>
+    /// Horizontal alignment of the popover relative to the trigger.
+    /// Defaults to <see cref="PopoverAlign.End"/>.
+    /// </summary>
+    [Parameter]
+    public PopoverAlign Align { get; set; } = PopoverAlign.End;
+
+    /// <summary>
+    /// Positioning strategy for the popover. Defaults to <see cref="PositioningStrategy.Absolute"/>.
+    /// </summary>
+    [Parameter]
+    public PositioningStrategy Strategy { get; set; } = PositioningStrategy.Absolute;
+
+    /// <inheritdoc />
+    protected override void OnInitialized() =>
+        ThemeService.OnThemeChanged += HandleThemeChanged;
+
+    /// <inheritdoc />
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !ThemeService.IsInitialized)
+        {
+            await ThemeService.InitializeAsync();
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Determines if a color chip is the currently active selection.
+    /// Only one chip can be selected at a time:
+    /// - If the user picked a primary color (non-Default), that primary chip is selected.
+    /// - If PrimaryColor is Default, the current BaseColor chip is selected.
+    /// </summary>
+    private bool IsColorSelected(ColorInfo color)
+    {
+        if (color.IsBase)
+        {
+            // A base chip is selected only when PrimaryColor == Default AND it matches the active base
+            return ThemeService.PrimaryColor == PrimaryColor.Default
+                && ThemeService.BaseColor == color.BaseValue;
+        }
+
+        // A primary chip is selected when it matches the active primary
+        return ThemeService.PrimaryColor == color.PrimaryValue;
+    }
+
+    /// <summary>
+    /// When a base color is picked, set the base AND reset primary to Default
+    /// so the base's own accent is used. When a primary is picked, just set primary.
+    /// </summary>
+    private async Task OnColorSelected(ColorInfo color)
+    {
+        if (color.IsBase)
+        {
+            // Reset primary so the base's built-in accent is used
+            await ThemeService.SetPrimaryColorAsync(PrimaryColor.Default);
+            await ThemeService.SetBaseColorAsync(color.BaseValue);
+        }
+        else
+        {
+            await ThemeService.SetPrimaryColorAsync(color.PrimaryValue);
+        }
+    }
+
+    private async Task OnRadiusSelected(double value) =>
+        await ThemeService.SetRadiusAsync(value);
+
+    private async Task OnModeSelected(bool dark) =>
+        await ThemeService.SetDarkModeAsync(dark);
+
+    private void HandleThemeChanged() =>
+        InvokeAsync(StateHasChanged);
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        ThemeService.OnThemeChanged -= HandleThemeChanged;
+        GC.SuppressFinalize(this);
+    }
+
+    // ── Data ──────────────────────────────────────────────────────────────
+
+    private static readonly double[] radiusOptions = [0, 0.3, 0.5, 0.75, 1.0];
+
+    private static readonly ColorInfo[] allColors =
+    [
+        // Base colors — selecting one resets primary to Default
+        new("Zinc", "oklch(0.552 0.016 285.94)", BaseColor.Zinc),
+        new("Slate", "oklch(0.554 0.046 257.42)", BaseColor.Slate),
+        new("Stone", "oklch(0.553 0.013 58.07)", BaseColor.Stone),
+        new("Gray", "oklch(0.551 0.027 264.36)", BaseColor.Gray),
+        new("Neutral", "oklch(0.556 0 0)", BaseColor.Neutral),
+        // Primary colors — selecting one overrides the accent only
+        new("Red", "oklch(0.577 0.245 27.33)", PrimaryColor.Red),
+        new("Rose", "oklch(0.585 0.22 3.96)", PrimaryColor.Rose),
+        new("Orange", "oklch(0.705 0.213 47.60)", PrimaryColor.Orange),
+        new("Amber", "oklch(0.769 0.188 70.08)", PrimaryColor.Amber),
+        new("Yellow", "oklch(0.852 0.199 91.94)", PrimaryColor.Yellow),
+        new("Lime", "oklch(0.768 0.233 130.85)", PrimaryColor.Lime),
+        new("Green", "oklch(0.596 0.145 163.23)", PrimaryColor.Green),
+        new("Emerald", "oklch(0.596 0.145 163.23)", PrimaryColor.Emerald),
+        new("Teal", "oklch(0.627 0.134 184.13)", PrimaryColor.Teal),
+        new("Cyan", "oklch(0.655 0.151 207.08)", PrimaryColor.Cyan),
+        new("Sky", "oklch(0.6 0.118 184.71)", PrimaryColor.Sky),
+        new("Blue", "oklch(0.546 0.245 262.88)", PrimaryColor.Blue),
+        new("Indigo", "oklch(0.488 0.243 264.38)", PrimaryColor.Indigo),
+        new("Violet", "oklch(0.541 0.281 293.01)", PrimaryColor.Violet),
+        new("Purple", "oklch(0.553 0.261 301.92)", PrimaryColor.Purple),
+        new("Fuchsia", "oklch(0.591 0.293 322.90)", PrimaryColor.Fuchsia),
+        new("Pink", "oklch(0.592 0.249 0.58)", PrimaryColor.Pink),
+    ];
+
+    private sealed class ColorInfo
+    {
+        public string Label { get; }
+        public string Swatch { get; }
+        public bool IsBase { get; }
+        public BaseColor BaseValue { get; }
+        public PrimaryColor PrimaryValue { get; }
+
+        public ColorInfo(string label, string swatch, BaseColor baseValue)
+        {
+            Label = label;
+            Swatch = swatch;
+            IsBase = true;
+            BaseValue = baseValue;
+        }
+
+        public ColorInfo(string label, string swatch, PrimaryColor primaryValue)
+        {
+            Label = label;
+            Swatch = swatch;
+            IsBase = false;
+            PrimaryValue = primaryValue;
+        }
+    }
+}
