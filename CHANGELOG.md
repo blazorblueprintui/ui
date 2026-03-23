@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-23
+
+### Added
+
+- **Theme system: ThemeService, BbThemeSwitcher, and BbDarkModeToggle** — Added a complete, opt-in theme system to the Components library. `ThemeService` manages dark mode, base color (Zinc, Slate, Stone, Gray, Neutral), primary accent color (17 options), and border radius — with localStorage persistence and OS color scheme detection. `BbThemeSwitcher` is a popover panel with a color grid, radius picker, and light/dark mode toggle matching the shadcn/ui website design. `BbDarkModeToggle` is a standalone button that toggles dark mode with customizable icons (via `LightIcon`/`DarkIcon` RenderFragments), optional label, and configurable button variant/size. Both components auto-initialize on first render — no manual setup needed. Ships `themes.css` with 5 base color palettes and 17 primary color overrides using data-attribute selectors, and a CSP-compliant JS module (no `eval`). Theme options configurable via `AddBlazorBlueprintComponents(configureTheme: ...)`.
+
+---
+
 ## 2026-03-22
 
 ### Added
