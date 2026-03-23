@@ -2328,11 +2328,23 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         {
             foreach (var column in searchableColumns)
             {
+                // Check formatted value (e.g., "$113,876")
                 var value = column.GetValue(item);
                 if (value != null)
                 {
                     var str = value.ToString();
                     if (str != null && str.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+
+                // Also check raw value (e.g., 113876) for numeric/date columns with formatting
+                var rawValue = column.GetRawValue(item);
+                if (rawValue != null && !ReferenceEquals(rawValue, value))
+                {
+                    var rawStr = rawValue.ToString();
+                    if (rawStr != null && rawStr.Contains(searchText, StringComparison.OrdinalIgnoreCase))
                     {
                         return true;
                     }
