@@ -13,7 +13,7 @@
                 @Toolbar
             </div>
         }
-        <div @ref="containerRef" class="@ClassNames.cn("relative w-full", Virtualize ? "" : "overflow-auto")">
+        <div @ref="containerRef" class="@ClassNames.cn("relative w-full", Virtualize ? "" : "overflow-auto", TableContainerClass)">
             @if (IsLoading)
             {
                 @if (LoadingTemplate != null)
@@ -263,7 +263,7 @@
                         {
                             if (Virtualize && ItemSize > 0 && _groupedRenderItemsList != null)
                             {
-                                <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize Items="@_groupedRenderItemsList" Context="renderItem" ItemSize="@ItemSize" OverscanCount="5">
+                                <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize Items="@_groupedRenderItemsList" Context="renderItem" ItemSize="@ItemSize" OverscanCount="@OverscanCount">
                                     @RenderGroupedOrHierarchyItem(renderItem)
                                 </Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize>
                             }
@@ -277,7 +277,7 @@
                         }
                         else if (Virtualize && ItemSize > 0)
                         {
-                            <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize Items="@_processedDataList" Context="item" ItemSize="@ItemSize" OverscanCount="5">
+                            <Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize Items="@_processedDataList" Context="item" ItemSize="@ItemSize" OverscanCount="@OverscanCount">
                                 @RenderDataRow(item)
                             </Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize>
                         }
@@ -340,14 +340,14 @@
                     }
                 </BbPaginationInfo>
                 <BbPaginationContent Class="flex items-center gap-6 lg:gap-8">
-                    <BbPaginationPageSizeSelector />
+                    <div class="hidden sm:flex"><BbPaginationPageSizeSelector /></div>
                     <div class="flex items-center gap-2">
-                        <BbPaginationPageDisplay />
+                        <div class="hidden lg:flex"><BbPaginationPageDisplay /></div>
                         <div class="flex items-center gap-1">
-                            <BbPaginationItem><BbPaginationFirst /></BbPaginationItem>
+                            <div class="hidden sm:flex"><BbPaginationItem><BbPaginationFirst /></BbPaginationItem></div>
                             <BbPaginationItem><BbPaginationPrevious ShowText="false" /></BbPaginationItem>
                             <BbPaginationItem><BbPaginationNext ShowText="false" /></BbPaginationItem>
-                            <BbPaginationItem><BbPaginationLast /></BbPaginationItem>
+                            <div class="hidden sm:flex"><BbPaginationItem><BbPaginationLast /></BbPaginationItem></div>
                         </div>
                     </div>
                 </BbPaginationContent>
@@ -395,7 +395,7 @@
 
     private RenderFragment<TData> RenderDataRow => item =>
         @<BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Item="@item"
-            Class="@ClassNames.cn("group/row bg-background", RowClass?.Invoke(item))">
+            Class="@ClassNames.cn("group/row bg-background", Striped ? StripeClass : null, RowClass?.Invoke(item))">
             @foreach (var column in _cachedVisibleColumns)
             {
                 var isSelectColumn = column.ColumnId == "__select";
@@ -573,6 +573,7 @@
     {
         var item = renderItem.Item!;
         var rowClass = ClassNames.cn("group/row bg-background",
+            Striped ? StripeClass : null,
             !renderItem.MatchesFilter ? "opacity-50" : "",
             RowClass?.Invoke(item));
 

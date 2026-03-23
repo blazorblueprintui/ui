@@ -220,6 +220,35 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     public Func<TData, string?>? RowClass { get; set; }
 
     /// <summary>
+    /// When <c>true</c>, applies alternating row background colors using <see cref="StripeClass"/>.
+    /// Composes with <see cref="RowClass"/> — user-provided classes take precedence for conflicts.
+    /// </summary>
+    [Parameter]
+    public bool Striped { get; set; }
+
+    /// <summary>
+    /// CSS classes applied to even rows when <see cref="Striped"/> is <c>true</c>.
+    /// Defaults to <c>"even:bg-muted/30 even:hover:bg-muted/70"</c>.
+    /// </summary>
+    [Parameter]
+    public string StripeClass { get; set; } = "even:bg-muted/30 even:hover:bg-muted/70";
+
+    /// <summary>
+    /// Number of extra items rendered outside the visible area when <see cref="Virtualize"/>
+    /// is <c>true</c>. Higher values reduce blank flashes during fast scrolling at the cost
+    /// of more DOM nodes. Default is 5.
+    /// </summary>
+    [Parameter]
+    public int OverscanCount { get; set; } = 5;
+
+    /// <summary>
+    /// Additional CSS classes applied to the inner scrollable container that wraps the
+    /// <c>&lt;table&gt;</c> element. Use this to control border radius, borders, max-height, etc.
+    /// </summary>
+    [Parameter]
+    public string? TableContainerClass { get; set; }
+
+    /// <summary>
     /// Whether to show the active-filter indicator bar below the header.
     /// When shown, it displays a count of active filters and a "Clear all" button.
     /// Default is true.
