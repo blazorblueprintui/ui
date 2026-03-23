@@ -160,18 +160,19 @@
             <CodeBlock Source="Components/DataGrid/custom-grid-lines.txt" />
         </div>
 
-        <!-- Striped Rows -->
+        <!-- Striped Rows (Built-in) -->
         <div class="space-y-4">
             <div class="space-y-1">
                 <h3 class="text-lg font-medium">Striped Rows</h3>
                 <p class="text-sm text-muted-foreground">
-                    Use <code class="bg-muted px-1 py-0.5 rounded">RowClass</code> with Tailwind's
-                    <code class="bg-muted px-1 py-0.5 rounded">even:</code> variant to alternate
-                    row background colours. The hover effect remains visible on all rows.
+                    Use the built-in <code class="bg-muted px-1 py-0.5 rounded">Striped</code> parameter
+                    for alternating row backgrounds. Customize the stripe appearance with
+                    <code class="bg-muted px-1 py-0.5 rounded">StripeClass</code> (defaults to
+                    <code class="bg-muted px-1 py-0.5 rounded">even:bg-muted/30 even:hover:bg-muted/70</code>).
+                    Composes with <code class="bg-muted px-1 py-0.5 rounded">RowClass</code>.
                 </p>
             </div>
-            <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
-                       RowClass="@(_ => "even:bg-muted/40")">
+            <BbDataGrid TData="Person" Items="@people" InitialPageSize="5" Striped>
                 <Columns>
                     <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
                     <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
@@ -180,6 +181,28 @@
                 </Columns>
             </BbDataGrid>
             <CodeBlock Source="Components/DataGrid/custom-striped-rows.txt" />
+        </div>
+
+        <!-- Table Container Styling -->
+        <div class="space-y-4">
+            <div class="space-y-1">
+                <h3 class="text-lg font-medium">Table Container Styling</h3>
+                <p class="text-sm text-muted-foreground">
+                    Use <code class="bg-muted px-1 py-0.5 rounded">TableContainerClass</code> to style
+                    the inner scrollable container that wraps the table. Useful for adding borders,
+                    rounded corners, or constraining height.
+                </p>
+            </div>
+            <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                       TableContainerClass="rounded-xl border-2 border-primary/20">
+                <Columns>
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" />
+                </Columns>
+            </BbDataGrid>
+            <CodeBlock Source="Components/DataGrid/custom-table-container.txt" />
         </div>
 
         <!-- Striped Columns -->
