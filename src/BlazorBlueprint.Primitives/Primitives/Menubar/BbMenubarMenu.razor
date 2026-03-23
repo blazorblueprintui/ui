@@ -1,0 +1,33 @@
+@namespace BlazorBlueprint.Primitives.Menubar
+@implements IDisposable
+
+<CascadingValue Value="menuContext" IsFixed="false">
+    @ChildContent
+</CascadingValue>
+
+@code {
+    private MenubarMenuContext menuContext = null!;
+
+    [CascadingParameter]
+    private MenubarContext? Context { get; set; }
+
+    /// <summary>
+    /// Child content (trigger + content).
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// The per-menu context, exposed for Components layer access.
+    /// </summary>
+    public MenubarMenuContext MenuContext => menuContext;
+
+    protected override void OnInitialized()
+    {
+        menuContext = new MenubarMenuContext(Context!);
+        Context?.RegisterMenu(menuContext);
+    }
+
+    public void Dispose() =>
+        Context?.UnregisterMenu(menuContext);
+}

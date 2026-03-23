@@ -1,12 +1,14 @@
 @namespace BlazorBlueprint.Components
 
-<div role="menubar" class="@CssClass">
+<BlazorBlueprint.Primitives.Menubar.BbMenubar @ref="primitiveRef" class="@CssClass">
     <CascadingValue Value="this" IsFixed="false">
         @ChildContent
     </CascadingValue>
-</div>
+</BlazorBlueprint.Primitives.Menubar.BbMenubar>
 
 @code {
+    private BlazorBlueprint.Primitives.Menubar.BbMenubar? primitiveRef;
+
     [Parameter]
     public string? Class { get; set; }
 
@@ -19,52 +21,8 @@
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
-    internal string? ActiveMenu { get; private set; }
-
-    private List<BbMenubarMenu> _menus = new();
-
-    internal void RegisterMenu(BbMenubarMenu menu)
-    {
-        if (!_menus.Contains(menu))
-        {
-            _menus.Add(menu);
-        }
-    }
-
-    internal void UnregisterMenu(BbMenubarMenu menu)
-    {
-        _menus.Remove(menu);
-    }
-
-    internal List<BbMenubarMenu> GetMenus() => _menus;
-
-    internal void SetActiveMenu(string? menuId)
-    {
-        ActiveMenu = menuId;
-        StateHasChanged();
-    }
-
-    internal void NavigateToNextMenu()
-    {
-        if (_menus.Count == 0 || ActiveMenu == null) return;
-
-        var currentIndex = _menus.FindIndex(m => m.MenuId == ActiveMenu);
-        if (currentIndex == -1) return;
-
-        var nextIndex = (currentIndex + 1) % _menus.Count;
-        _menus[nextIndex].Open();
-    }
-
-    internal void NavigateToPreviousMenu()
-    {
-        if (_menus.Count == 0 || ActiveMenu == null) return;
-
-        var currentIndex = _menus.FindIndex(m => m.MenuId == ActiveMenu);
-        if (currentIndex == -1) return;
-
-        var prevIndex = currentIndex == 0 ? _menus.Count - 1 : currentIndex - 1;
-        _menus[prevIndex].Open();
-    }
+    internal BlazorBlueprint.Primitives.Menubar.MenubarContext? PrimitiveContext =>
+        primitiveRef?.Context;
 
     private string CssClass => ClassNames.cn(
         "relative z-50 flex h-10 items-center space-x-1 rounded-md border bg-background p-1",

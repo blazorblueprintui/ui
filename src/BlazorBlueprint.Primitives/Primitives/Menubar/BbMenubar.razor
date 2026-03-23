@@ -1,0 +1,31 @@
+@namespace BlazorBlueprint.Primitives.Menubar
+
+<div role="menubar" @attributes="AdditionalAttributes">
+    <CascadingValue Value="context" IsFixed="false">
+        @ChildContent
+    </CascadingValue>
+</div>
+
+@code {
+    private MenubarContext context = null!;
+
+    /// <summary>
+    /// Child content (BbMenubarMenu components).
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional HTML attributes applied to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// The menubar context, exposed for child components in the Components layer.
+    /// </summary>
+    public MenubarContext Context => context;
+
+    protected override void OnInitialized() =>
+        context = new MenubarContext(StateHasChanged);
+}

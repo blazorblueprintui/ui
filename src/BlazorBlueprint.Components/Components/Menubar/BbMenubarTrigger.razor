@@ -1,20 +1,10 @@
 @namespace BlazorBlueprint.Components
 
-<button type="button"
-        role="menuitem"
-        aria-haspopup="menu"
-        aria-expanded="@(Menu?.IsOpen == true)"
-        data-state="@(Menu?.IsOpen == true ? "open" : "closed")"
-        class="@CssClass"
-        @onclick="HandleClick"
-        @onmouseenter="HandleMouseEnter">
+<BlazorBlueprint.Primitives.Menubar.BbMenubarTrigger class="@CssClass">
     @ChildContent
-</button>
+</BlazorBlueprint.Primitives.Menubar.BbMenubarTrigger>
 
 @code {
-    [CascadingParameter]
-    public BbMenubarMenu? Menu { get; set; }
-
     [CascadingParameter]
     public BbMenubar? Context { get; set; }
 
@@ -23,20 +13,6 @@
 
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
-
-    private void HandleClick()
-    {
-        Menu?.Toggle();
-    }
-
-    private void HandleMouseEnter()
-    {
-        // If another menu is open, switch to this one on hover
-        if (Context?.ActiveMenu != null && Context.ActiveMenu != Menu?.MenuId)
-        {
-            Menu?.Open();
-        }
-    }
 
     private string CssClass => ClassNames.cn(
         "relative z-50 flex cursor-default select-none items-center rounded-sm px-3 py-1.5 text-sm font-medium outline-none",

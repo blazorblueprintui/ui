@@ -1,17 +1,15 @@
 @namespace BlazorBlueprint.Components
 @using BlazorBlueprint.Primitives.Services
 @inject IKeyboardShortcutService KeyboardShortcuts
-@implements IMenubarItem
 @implements IDisposable
 @implements IAsyncDisposable
 
-<div @ref="_itemRef"
-     role="menuitem"
-     class="@CssClass"
-     tabindex="-1"
-     @onclick="HandleClick">
+<BlazorBlueprint.Primitives.Menubar.BbMenubarItem
+    Disabled="@Disabled"
+    OnClick="@HandleClick"
+    class="@CssClass">
     @ChildContent
-</div>
+</BlazorBlueprint.Primitives.Menubar.BbMenubarItem>
 
 @code {
     [CascadingParameter]
@@ -40,10 +38,7 @@
     [Parameter]
     public string? Shortcut { get; set; }
 
-    private ElementReference _itemRef;
     private IDisposable? shortcutRegistration;
-
-    public bool IsDisabled => Disabled;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -59,31 +54,11 @@
         }
     }
 
-    public async Task FocusAsync()
-    {
-        try
-        {
-            await _itemRef.FocusAsync();
-        }
-        catch
-        {
-            // Ignore focus errors
-        }
-    }
+    private async Task HandleClick() =>
+        await OnClick.InvokeAsync();
 
-    private async Task HandleClick()
-    {
-        if (!Disabled)
-        {
-            await OnClick.InvokeAsync();
-            Menu?.Close();
-        }
-    }
-
-    public void Dispose()
-    {
+    public void Dispose() =>
         shortcutRegistration?.Dispose();
-    }
 
     public async ValueTask DisposeAsync()
     {
