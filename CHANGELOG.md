@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-25
+
+### Added
+
+- **Sidebar: CSS custom property theming** — Replaced hardcoded Tailwind layout classes with ~70 CSS custom properties across 12 sidebar components (`BbSidebarMenuButton`, `BbSidebarGroup`, `BbSidebarGroupLabel`, `BbSidebarMenu`, `BbSidebarHeader`, `BbSidebarFooter`, `BbSidebarContent`, `BbSidebarHeaderContent`, `BbSidebarMenuSubButton`, `BbSidebarMenuBadge`, `BbSidebarMenuItem`, `BbSidebarMenuSub`). Consumers can now theme sidebar padding, gap, font-size, line-height, border-radius, height, icon-size, active state styling, and badge appearance by setting variables on `:root` — no `!important` or specificity battles needed. Added `data-sidebar` attributes to 10 components that were missing them, and `data-size` attributes to `BbSidebarMenuButton` and `BbSidebarMenuSubButton` for size variant CSS targeting. Collapsible icon-mode overrides preserved via CSS rules. Zero breaking changes — all defaults match previous hardcoded values.
+- **BbSidebarMenuButton: `OnClick` EventCallback** — New `OnClick` parameter for custom click handling (e.g. programmatic sidebar toggle). Fires after the existing collapsible toggle logic.
+- **DataGrid: server-side virtual scroll and global search** — Added server-side virtual scrolling support and global search across all columns, matching both formatted and raw values.
+
+### Fixed
+
+- **Sidebar: `data-active` attribute rendering** — Fixed boolean `IsActive` rendering as `"True"` (capital T from C# `bool.ToString()`) instead of `"true"` (lowercase), which caused CSS `[data-active="true"]` selectors to never match. Affected `BbSidebarMenuButton` and `BbSidebarMenuSubButton`.
+- **Sidebar: size variant classes not applying** — Fixed `BbSidebarMenuButton` size switch checking `"small"`/`"large"` strings while `ToValue()` returns `"sm"`/`"lg"`. Size variants now work correctly via CSS variable rules keyed on `data-size`.
+
+---
+
+## 2026-03-23
+
+### Added
+
+- **Theme system** — Added `ThemeService`, `BbThemeSwitcher`, and `BbDarkModeToggle` for runtime theme management and switching.
+- **Menubar and NavigationMenu headless primitives** — New headless primitives with demo pages for building accessible menu bars and navigation menus.
+- **DataGrid enhancements** — Added `OverscanCount` parameter for virtualization tuning, `Striped` parameter for alternating row styling, `TableContainerClass` for custom wrapper styling, and responsive pagination layout.
+- **DataGrid: global search** — Search across all columns matching both formatted and raw column values.
+- **DataGrid: server-side virtual scroll** — Virtual scrolling support for server-side data sources.
+- **ChartTooltip: `AppendToBody`** — New parameter to render chart tooltips in a portal, preventing overflow clipping.
+- **DataView: `GridColumnMinWidth`** — New parameter to control minimum column width in grid layout mode.
+
+### Fixed
+
+- **Menubar: focus behaviour** — Reverted `initialFocus` to `"first"` for correct keyboard navigation.
+
+---
+
 ## 2026-03-22
 
 ### Added
