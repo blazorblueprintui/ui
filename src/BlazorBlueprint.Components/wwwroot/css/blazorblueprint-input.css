@@ -15,6 +15,93 @@
     --sidebar-width-mobile: 18rem;
     --sidebar-width-icon: 3rem;
 
+    /* ── Sidebar Menu Button ── */
+    --sidebar-menu-button-height: auto;
+    --sidebar-menu-button-px: 0.5rem;
+    --sidebar-menu-button-py: 0.375rem;
+    --sidebar-menu-button-font-size: 0.875rem;
+    --sidebar-menu-button-line-height: 1.25rem;
+    --sidebar-menu-button-font-size-sm: 0.75rem;
+    --sidebar-menu-button-line-height-sm: 1rem;
+    --sidebar-menu-button-font-size-lg: 1rem;
+    --sidebar-menu-button-line-height-lg: 1.5rem;
+    --sidebar-menu-button-font-weight: 400;
+    --sidebar-menu-button-active-font-weight: 500;
+    --sidebar-menu-button-active-bg: var(--sidebar-accent);
+    --sidebar-menu-button-active-color: var(--sidebar-accent-foreground);
+    --sidebar-menu-button-active-shadow: none;
+    --sidebar-menu-button-radius: 0.375rem;
+    --sidebar-menu-button-gap: 0.5rem;
+    --sidebar-menu-button-icon-size: 1rem;
+    --sidebar-menu-button-collapsed-size: 2rem;
+    --sidebar-menu-button-collapsed-padding: 0.5rem;
+    --sidebar-menu-button-collapsed-padding-lg: 0.75rem;
+
+    /* ── Sidebar Group ── */
+    --sidebar-group-py: 0.5rem;
+    --sidebar-group-px: 0.5rem;
+
+    /* ── Sidebar Group Label ── */
+    --sidebar-group-label-height: 2rem;
+    --sidebar-group-label-px: 0.5rem;
+    --sidebar-group-label-font-size: 0.75rem;
+    --sidebar-group-label-line-height: 1rem;
+    --sidebar-group-label-font-weight: 500;
+    --sidebar-group-label-radius: 0.375rem;
+    --sidebar-group-label-icon-size: 1rem;
+
+    /* ── Sidebar Menu ── */
+    --sidebar-menu-gap: 0.25rem;
+
+    /* ── Sidebar Header ── */
+    --sidebar-header-py: 0.5rem;
+    --sidebar-header-px: 0.5rem;
+    --sidebar-header-gap: 0.5rem;
+
+    /* ── Sidebar Header Content ── */
+    --sidebar-header-content-gap: 0.5rem;
+    --sidebar-header-content-py: 0.5rem;
+    --sidebar-header-content-px: 0.5rem;
+
+    /* ── Sidebar Footer ── */
+    --sidebar-footer-py: 0.5rem;
+    --sidebar-footer-px: 0.5rem;
+    --sidebar-footer-gap: 0.5rem;
+
+    /* ── Sidebar Content ── */
+    --sidebar-content-py: 0.5rem;
+    --sidebar-content-px: 0.5rem;
+    --sidebar-content-gap: 0.5rem;
+
+    /* ── Sidebar Menu Badge ── */
+    --sidebar-badge-height: 1.25rem;
+    --sidebar-badge-min-width: 1.25rem;
+    --sidebar-badge-px: 0.25rem;
+    --sidebar-badge-font-size: 0.75rem;
+    --sidebar-badge-line-height: 1rem;
+    --sidebar-badge-font-weight: 500;
+    --sidebar-badge-radius: 0.375rem;
+    --sidebar-badge-right: 0.25rem;
+    --sidebar-badge-bg: transparent;
+    --sidebar-badge-color: var(--sidebar-foreground);
+
+    /* ── Sidebar Sub Menu ── */
+    --sidebar-sub-mx: 0.875rem;
+    --sidebar-sub-px: 0.625rem;
+    --sidebar-sub-py: 0.125rem;
+    --sidebar-sub-gap: 0.25rem;
+
+    /* ── Sidebar Sub Menu Button ── */
+    --sidebar-sub-button-height: 1.75rem;
+    --sidebar-sub-button-px: 0.5rem;
+    --sidebar-sub-button-gap: 0.5rem;
+    --sidebar-sub-button-radius: 0.375rem;
+    --sidebar-sub-button-font-size: 0.875rem;
+    --sidebar-sub-button-line-height: 1.25rem;
+    --sidebar-sub-button-font-size-sm: 0.75rem;
+    --sidebar-sub-button-line-height-sm: 1rem;
+    --sidebar-sub-button-icon-size: 1rem;
+
     /* Default alert colors — override in your theme to customize */
     --alert-success: oklch(0.55 0.20 142);
     --alert-success-foreground: oklch(0.30 0.09 142);
@@ -114,6 +201,167 @@
   [role="option"][data-focused="true"] {
     background-color: var(--accent);
     color: var(--accent-foreground);
+  }
+}
+
+/* ── Sidebar component layout/sizing via CSS variables ──
+   Replaces hardcoded Tailwind utility classes with customizable variables.
+   Consumers override these by setting variables on :root or a wrapper element. */
+@layer components {
+  /* ── Menu Button ── */
+  [data-sidebar="menu-button"] {
+    padding: var(--sidebar-menu-button-py) var(--sidebar-menu-button-px);
+    font-size: var(--sidebar-menu-button-font-size);
+    line-height: var(--sidebar-menu-button-line-height);
+    border-radius: var(--sidebar-menu-button-radius);
+    gap: var(--sidebar-menu-button-gap);
+    height: var(--sidebar-menu-button-height);
+    font-weight: var(--sidebar-menu-button-font-weight);
+  }
+
+  [data-sidebar="menu-button"][data-size="sm"] {
+    font-size: var(--sidebar-menu-button-font-size-sm);
+    line-height: var(--sidebar-menu-button-line-height-sm);
+  }
+
+  [data-sidebar="menu-button"][data-size="lg"] {
+    font-size: var(--sidebar-menu-button-font-size-lg);
+    line-height: var(--sidebar-menu-button-line-height-lg);
+  }
+
+  [data-sidebar="menu-button"] > svg {
+    width: var(--sidebar-menu-button-icon-size);
+    height: var(--sidebar-menu-button-icon-size);
+  }
+
+  [data-sidebar="menu-button"][data-active="true"] {
+    font-weight: var(--sidebar-menu-button-active-font-weight);
+    background-color: var(--sidebar-menu-button-active-bg);
+    color: var(--sidebar-menu-button-active-color);
+    box-shadow: var(--sidebar-menu-button-active-shadow);
+  }
+
+  /* Menu Button — collapsible icon mode */
+  [data-collapsible="icon"] [data-sidebar="menu-button"] {
+    width: var(--sidebar-menu-button-collapsed-size);
+    height: var(--sidebar-menu-button-collapsed-size);
+    padding: var(--sidebar-menu-button-collapsed-padding);
+    gap: 0;
+  }
+
+  [data-collapsible="icon"] [data-sidebar="menu-button"][data-size="lg"] {
+    padding: var(--sidebar-menu-button-collapsed-padding-lg);
+  }
+
+  /* ── Group ── */
+  [data-sidebar="group"] {
+    padding: var(--sidebar-group-py) var(--sidebar-group-px);
+  }
+
+  [data-collapsible="icon"] [data-sidebar="group"] {
+    padding: 0;
+  }
+
+  /* ── Group Label ── */
+  [data-sidebar="group-label"] {
+    height: var(--sidebar-group-label-height);
+    padding-left: var(--sidebar-group-label-px);
+    padding-right: var(--sidebar-group-label-px);
+    font-size: var(--sidebar-group-label-font-size);
+    line-height: var(--sidebar-group-label-line-height);
+    font-weight: var(--sidebar-group-label-font-weight);
+    border-radius: var(--sidebar-group-label-radius);
+  }
+
+  [data-sidebar="group-label"] > svg {
+    width: var(--sidebar-group-label-icon-size);
+    height: var(--sidebar-group-label-icon-size);
+  }
+
+  [data-collapsible="icon"] [data-sidebar="group-label"] {
+    margin-top: calc(-1 * var(--sidebar-group-label-height));
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* ── Menu ── */
+  [data-sidebar="menu"] {
+    gap: var(--sidebar-menu-gap);
+  }
+
+  /* ── Header ── */
+  [data-sidebar="header"] {
+    padding: var(--sidebar-header-py) var(--sidebar-header-px);
+    gap: var(--sidebar-header-gap);
+  }
+
+  /* ── Header Content ── */
+  [data-sidebar="header-content"] {
+    gap: var(--sidebar-header-content-gap);
+    padding: var(--sidebar-header-content-py) var(--sidebar-header-content-px);
+  }
+
+  [data-collapsible="icon"] [data-sidebar="header-content"] {
+    padding: 0;
+  }
+
+  /* ── Footer ── */
+  [data-sidebar="footer"] {
+    padding: var(--sidebar-footer-py) var(--sidebar-footer-px);
+    gap: var(--sidebar-footer-gap);
+  }
+
+  /* ── Content ── */
+  [data-sidebar="content"] {
+    padding: var(--sidebar-content-py) var(--sidebar-content-px);
+    gap: var(--sidebar-content-gap);
+  }
+
+  /* ── Menu Badge ── */
+  [data-sidebar="menu-badge"] {
+    height: var(--sidebar-badge-height);
+    min-width: var(--sidebar-badge-min-width);
+    padding-left: var(--sidebar-badge-px);
+    padding-right: var(--sidebar-badge-px);
+    font-size: var(--sidebar-badge-font-size);
+    line-height: var(--sidebar-badge-line-height);
+    font-weight: var(--sidebar-badge-font-weight);
+    border-radius: var(--sidebar-badge-radius);
+    right: var(--sidebar-badge-right);
+    background-color: var(--sidebar-badge-bg);
+    color: var(--sidebar-badge-color);
+  }
+
+  /* ── Menu Sub ── */
+  [data-sidebar="menu-sub"] {
+    margin-left: var(--sidebar-sub-mx);
+    margin-right: var(--sidebar-sub-mx);
+    padding-left: var(--sidebar-sub-px);
+    padding-right: var(--sidebar-sub-px);
+    padding-top: var(--sidebar-sub-py);
+    padding-bottom: var(--sidebar-sub-py);
+    gap: var(--sidebar-sub-gap);
+  }
+
+  /* ── Menu Sub Button ── */
+  [data-sidebar="menu-sub-button"] {
+    height: var(--sidebar-sub-button-height);
+    padding-left: var(--sidebar-sub-button-px);
+    padding-right: var(--sidebar-sub-button-px);
+    gap: var(--sidebar-sub-button-gap);
+    border-radius: var(--sidebar-sub-button-radius);
+    font-size: var(--sidebar-sub-button-font-size);
+    line-height: var(--sidebar-sub-button-line-height);
+  }
+
+  [data-sidebar="menu-sub-button"][data-size="sm"] {
+    font-size: var(--sidebar-sub-button-font-size-sm);
+    line-height: var(--sidebar-sub-button-line-height-sm);
+  }
+
+  [data-sidebar="menu-sub-button"] > svg {
+    width: var(--sidebar-sub-button-icon-size);
+    height: var(--sidebar-sub-button-icon-size);
   }
 }
 
