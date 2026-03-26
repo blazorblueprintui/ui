@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-25
+
+### Added
+
+- **Sidebar: CSS custom property theming** — Replaced hardcoded Tailwind layout classes with ~70 CSS custom properties across 12 sidebar components (`BbSidebarMenuButton`, `BbSidebarGroup`, `BbSidebarGroupLabel`, `BbSidebarMenu`, `BbSidebarHeader`, `BbSidebarFooter`, `BbSidebarContent`, `BbSidebarHeaderContent`, `BbSidebarMenuSubButton`, `BbSidebarMenuBadge`, `BbSidebarMenuItem`, `BbSidebarMenuSub`). Consumers can now theme sidebar padding, gap, font-size, line-height, border-radius, height, icon-size, active state styling, and badge appearance by setting variables on `:root` — no `!important` or specificity battles needed. Added `data-sidebar` attributes to 10 components that were missing them, and `data-size` attributes to `BbSidebarMenuButton` and `BbSidebarMenuSubButton` for size variant CSS targeting. Collapsible icon-mode overrides preserved via CSS rules. Zero breaking changes — all defaults match previous hardcoded values.
+- **BbSidebarMenuButton: `OnClick` EventCallback** — New `OnClick` parameter for custom click handling (e.g. programmatic sidebar toggle). Fires after the existing collapsible toggle logic.
+
+### Fixed
+
+- **Sidebar: `data-active` attribute rendering** — Fixed boolean `IsActive` rendering as `"True"` (capital T from C# `bool.ToString()`) instead of `"true"` (lowercase), which caused CSS `[data-active="true"]` selectors to never match. Affected `BbSidebarMenuButton` and `BbSidebarMenuSubButton`.
+- **Sidebar: size variant classes not applying** — Fixed `BbSidebarMenuButton` size switch checking `"small"`/`"large"` strings while `ToValue()` returns `"sm"`/`"lg"`. Size variants now work correctly via CSS variable rules keyed on `data-size`.
+
+---
+
+
 ## 2026-03-23
 
 ### Added
@@ -17,6 +32,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Menubar and NavigationMenu headless primitives** — Extracted headless primitive layers into `BlazorBlueprint.Primitives.Menubar` (8 components: BbMenubar, BbMenubarMenu, BbMenubarTrigger, BbMenubarContent, BbMenubarItem, BbMenubarCheckboxItem, BbMenubarLabel, BbMenubarSeparator) and `BlazorBlueprint.Primitives.NavigationMenu` (6 components: BbNavigationMenu, BbNavigationMenuItem, BbNavigationMenuTrigger, BbNavigationMenuContent, BbNavigationMenuList, BbNavigationMenuLink). Components layer refactored to wrap primitives with Tailwind styling. Added demo pages for both primitives with sidebar and index page entries.
 - **DataGrid: server-side virtual scroll** — When both `Virtualize="true"` and `ItemsProvider` are set, Blazor's native `<Virtualize>` component drives data requests on demand as the user scrolls, fetching only the visible rows plus overscan from the server. Adds `VirtualScrollHeight` parameter (default `"400px"`) for the scroll container. Pagination is automatically hidden in this mode. Sort and filter changes trigger a full refresh via `RefreshDataAsync()`. Grouped/hierarchy mode is not supported with virtual provider.
 - **DataGrid: global search** — Added `ShowSearch` parameter that renders a debounced search input above the grid, filtering across all columns with `Filterable=true` using case-insensitive string matching. Searches both formatted values (e.g., `$113,876`) and raw values (e.g., `113876`). For server-side grids, search text is passed via `DataGridRequest.SearchText`. Additional parameters: `SearchText` (two-way bindable), `SearchTextChanged`, `SearchPlaceholder`, and `SearchDebounceMs` (default 300ms). Search resets pagination to page 1.
+
+### Fixed
+
+- **Menubar: focus behaviour** — Reverted `initialFocus` to `"first"` for correct keyboard navigation.
 
 ---
 

@@ -13,13 +13,13 @@
 
 @if (shouldRenderAsAnchor)
 {
-    <NavLink href="@Href" class="@GetClasses()" data-active="@IsActive" aria-current="@(IsActive ? "page" : null)" Match="@Match" ActiveClass="data-[active=true]:bg-sidebar-accent" @attributes="AdditionalAttributes">
+    <NavLink href="@Href" class="@GetClasses()" data-sidebar="menu-sub-button" data-size="@Size.ToValue()" data-active="@(IsActive ? "true" : "false")" aria-current="@(IsActive ? "page" : null)" Match="@Match" ActiveClass="data-[active=true]:bg-sidebar-accent" @attributes="AdditionalAttributes">
         @ChildContent
     </NavLink>
 }
 else
 {
-    <button type="button" class="@GetClasses()" data-active="@IsActive" aria-current="@(IsActive ? "page" : null)" @attributes="AdditionalAttributes">
+    <button type="button" class="@GetClasses()" data-sidebar="menu-sub-button" data-size="@Size.ToValue()" data-active="@(IsActive ? "true" : "false")" aria-current="@(IsActive ? "page" : null)" @attributes="AdditionalAttributes">
         @ChildContent
     </button>
 }
@@ -75,15 +75,8 @@ else
 
     private string GetClasses()
     {
-        var baseClasses = "flex w-full h-7 min-w-0 items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-muted-foreground hover:[&>svg]:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground";
+        var baseClasses = "flex w-full min-w-0 items-center overflow-hidden text-sidebar-foreground outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:shrink-0 [&>svg]:text-muted-foreground hover:[&>svg]:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground";
 
-        var sizeClasses = Size.ToValue() switch
-        {
-            "sm" => "text-xs",
-            "md" => "text-sm",
-            _ => ""
-        };
-
-        return ClassNames.cn(baseClasses, sizeClasses, Class);
+        return ClassNames.cn(baseClasses, Class);
     }
 }
