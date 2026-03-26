@@ -81,6 +81,12 @@ public partial class BbRadioGroup<TValue> : ComponentBase
     public bool Disabled { get; set; }
 
     /// <summary>
+    /// Gets or sets whether the radio group is required in a form context.
+    /// </summary>
+    [Parameter]
+    public bool Required { get; set; }
+
+    /// <summary>
     /// Gets or sets additional CSS classes to apply to the radio group container.
     /// </summary>
     [Parameter]

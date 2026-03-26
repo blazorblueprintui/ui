@@ -39,6 +39,12 @@ public partial class BbFormFieldSelect<TValue> : FormFieldBase
     public bool Disabled { get; set; }
 
     /// <summary>
+    /// Gets or sets whether the select is required.
+    /// </summary>
+    [Parameter]
+    public bool Required { get; set; }
+
+    /// <summary>
     /// Gets or sets the placeholder text displayed when no value is selected.
     /// </summary>
     [Parameter]

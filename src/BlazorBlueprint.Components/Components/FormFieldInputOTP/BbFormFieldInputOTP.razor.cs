@@ -52,6 +52,12 @@ public partial class BbFormFieldInputOTP : FormFieldBase
     public bool Disabled { get; set; }
 
     /// <summary>
+    /// Gets or sets whether the input is required.
+    /// </summary>
+    [Parameter]
+    public bool Required { get; set; }
+
+    /// <summary>
     /// Gets or sets whether to show separators between groups.
     /// </summary>
     [Parameter]

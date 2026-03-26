@@ -91,6 +91,12 @@ public partial class BbFormFieldTimePicker : FormFieldBase
     public bool Disabled { get; set; }
 
     /// <summary>
+    /// Gets or sets whether the time picker is required.
+    /// </summary>
+    [Parameter]
+    public bool Required { get; set; }
+
+    /// <summary>
     /// Gets or sets additional CSS classes applied to the inner TimePicker trigger button.
     /// </summary>
     [Parameter]

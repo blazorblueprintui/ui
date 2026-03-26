@@ -97,6 +97,12 @@ public partial class BbCheckbox : ComponentBase
     public bool Disabled { get; set; }
 
     /// <summary>
+    /// Gets or sets whether the checkbox is required in a form context.
+    /// </summary>
+    [Parameter]
+    public bool Required { get; set; }
+
+    /// <summary>
     /// Gets or sets additional CSS classes to apply to the checkbox.
     /// </summary>
     /// <remarks>

@@ -58,6 +58,12 @@ public partial class BbFormFieldFileUpload : FormFieldBase
     public bool Disabled { get; set; }
 
     /// <summary>
+    /// Gets or sets whether the file upload is required.
+    /// </summary>
+    [Parameter]
+    public bool Required { get; set; }
+
+    /// <summary>
     /// Gets or sets the callback when validation errors occur.
     /// </summary>
     [Parameter]

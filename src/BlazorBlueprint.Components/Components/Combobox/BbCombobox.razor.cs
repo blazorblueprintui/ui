@@ -188,6 +188,12 @@ public partial class BbCombobox<TValue> : ComponentBase
     public bool Disabled { get; set; }
 
     /// <summary>
+    /// Gets or sets whether the combobox is required.
+    /// </summary>
+    [Parameter]
+    public bool Required { get; set; }
+
+    /// <summary>
     /// Gets or sets the ID(s) of the element(s) that describe this combobox for accessibility.
     /// </summary>
     [Parameter]

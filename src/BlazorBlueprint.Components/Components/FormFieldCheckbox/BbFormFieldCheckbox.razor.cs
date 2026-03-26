@@ -46,6 +46,12 @@ public partial class BbFormFieldCheckbox : FormFieldBase
     public bool Disabled { get; set; }
 
     /// <summary>
+    /// Gets or sets whether the checkbox is required in a form context.
+    /// </summary>
+    [Parameter]
+    public bool Required { get; set; }
+
+    /// <summary>
     /// Gets or sets additional CSS classes applied to the inner Checkbox element.
     /// </summary>
     [Parameter]

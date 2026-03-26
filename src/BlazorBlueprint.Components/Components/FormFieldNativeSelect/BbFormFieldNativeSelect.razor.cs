@@ -66,6 +66,12 @@ public partial class BbFormFieldNativeSelect<TValue> : FormFieldBase
     public bool Disabled { get; set; }
 
     /// <summary>
+    /// Gets or sets whether the select is required.
+    /// </summary>
+    [Parameter]
+    public bool Required { get; set; }
+
+    /// <summary>
     /// Gets or sets the size variant of the select.
     /// </summary>
     [Parameter]
