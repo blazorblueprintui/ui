@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - **Required parameter expansion** — Added `Required` parameter to 10 base components (`BbSelect`, `BbNativeSelect`, `BbCombobox`, `BbDatePicker`, `BbTimePicker`, `BbInputOTP`, `BbColorPicker`, `BbFileUpload`, `BbCheckbox`, `BbRadioGroup`) and 9 FormField wrappers (`BbFormFieldSelect`, `BbFormFieldCombobox`, `BbFormFieldDatePicker`, `BbFormFieldTimePicker`, `BbFormFieldInputOTP`, `BbFormFieldCheckbox`, `BbFormFieldRadioGroup`, `BbFormFieldFileUpload`, `BbFormFieldNativeSelect`). Native elements use the HTML `required` attribute; ARIA-based triggers use `aria-required`; `BbCheckbox` and `BbRadioGroup` pass `Required` through to their Primitives.
+- **Select Primitive: Required parameter** — Added `Required` parameter to the headless `BbSelect` Primitive, flowing through `SelectContext` to render `aria-required` on `BbSelectTrigger`. The Components layer `BbSelect` now passes `Required` to the Primitive instead of setting `aria-required` manually.
 
 ### Changed
 
