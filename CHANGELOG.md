@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-26
+
+### Added
+
+- **Required parameter expansion** — Added `Required` parameter to 10 base components (`BbSelect`, `BbNativeSelect`, `BbCombobox`, `BbDatePicker`, `BbTimePicker`, `BbInputOTP`, `BbColorPicker`, `BbFileUpload`, `BbCheckbox`, `BbRadioGroup`) and 9 FormField wrappers (`BbFormFieldSelect`, `BbFormFieldCombobox`, `BbFormFieldDatePicker`, `BbFormFieldTimePicker`, `BbFormFieldInputOTP`, `BbFormFieldCheckbox`, `BbFormFieldRadioGroup`, `BbFormFieldFileUpload`, `BbFormFieldNativeSelect`). Native elements use the HTML `required` attribute; ARIA-based triggers use `aria-required`; `BbCheckbox` and `BbRadioGroup` pass `Required` through to their Primitives.
+
+### Changed
+
+- **BbCheckbox: explicit Required parameter** — `BbCheckbox` no longer infers `aria-required` from `CheckedExpression` binding. Consumers must set `Required="true"` explicitly.
+
+---
+
 ## 2026-03-25
 
 ### Added

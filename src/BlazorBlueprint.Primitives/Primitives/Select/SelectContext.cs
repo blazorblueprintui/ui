@@ -57,6 +57,11 @@ public class SelectState<TValue>
     /// Gets or sets whether the select is disabled.
     /// </summary>
     public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the select is required.
+    /// </summary>
+    public bool Required { get; set; }
 }
 
 /// <summary>
@@ -126,6 +131,23 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
     /// Gets whether the select is disabled.
     /// </summary>
     public bool Disabled => State.Disabled;
+
+    /// <summary>
+    /// Gets whether the select is required.
+    /// </summary>
+    public bool Required => State.Required;
+
+    /// <summary>
+    /// Sets the required state.
+    /// </summary>
+    /// <param name="required">Whether the select is required.</param>
+    public void SetRequired(bool required)
+    {
+        if (State.Required != required)
+        {
+            UpdateState(state => state.Required = required);
+        }
+    }
 
     /// <summary>
     /// Opens the select dropdown.

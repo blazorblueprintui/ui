@@ -62,6 +62,13 @@
     public bool Disabled { get; set; }
 
     /// <summary>
+    /// Gets or sets whether the select is required in a form context.
+    /// When true, sets aria-required="true" on the trigger for screen readers.
+    /// </summary>
+    [Parameter]
+    public bool Required { get; set; }
+
+    /// <summary>
     /// Controls whether the select dropdown is open (controlled mode).
     /// When null, the select manages its own open state (uncontrolled mode).
     /// </summary>
@@ -110,6 +117,7 @@
         // Sync initial value to context
         _context.State.Value = _state.Value;
         _context.State.Disabled = Disabled;
+        _context.State.Required = Required;
         // Set initial DisplayText using DisplayTextSelector or Value.ToString().
         // Items will update this with correct display text once they register via ForceMount portal.
         _context.SetDisplayText(GetDisplayText(_state.Value));
@@ -138,6 +146,9 @@
         {
             _context.SetDisabled(Disabled);
         }
+
+        // Update required state
+        _context.SetRequired(Required);
 
         // Update controlled value if it changed
         if (_state.IsControlled)
