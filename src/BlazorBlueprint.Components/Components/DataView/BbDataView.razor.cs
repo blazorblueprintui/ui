@@ -727,6 +727,10 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
             {
                 await _jsModule.DisposeAsync();
             }
+            catch (JSException ex) when (ex.Message.Contains("does not exist"))
+            {
+                // Expected on page reload using WebView2
+            }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Circuit disconnected during navigation — safe to ignore
