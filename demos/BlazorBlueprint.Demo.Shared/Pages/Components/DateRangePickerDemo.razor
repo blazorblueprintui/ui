@@ -213,6 +213,25 @@
         <CodeBlock Source="Components/DateRangePicker/monday-first.txt" />
     </div>
 
+    <!-- Auto Apply and Hidden Buttons -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Buttons reset and apply hidden and auto apply</h2>
+            <p class="text-sm text-muted-foreground">
+                The user doesn't have to click on Apply to validate the selection.
+            </p>
+        </div>
+        <BbDateRangePicker AutoApply="true" DisplayButtons="false"  @bind-Value="_autoApply"/>
+        <p class="text-sm text-muted-foreground">
+            @if (_autoApply != null)
+            {
+                @($"Selected: {_autoApply.Start} - {_autoApply.End}")
+            }
+        </p>
+        <CodeBlock Source="Components/DateRangePicker/display-buttons-auto-apply.txt" />
+    </div>
+
+
     <!-- Disabled -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -439,4 +458,7 @@
             return new DateRange(quarterStart, quarterStart.AddMonths(3).AddDays(-1));
         }),
     };
+
+
+ private DateRange? _autoApply;
 }
