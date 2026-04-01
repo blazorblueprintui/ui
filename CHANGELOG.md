@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-04-01
+
+### Fixed
+
+- **BbFormFieldSelect: label click opening dropdown** — The `For` attribute on the field label created a native HTML `<label for>` → `<button id>` association that forwarded clicks to the select trigger, causing the dropdown to open on label click and select-all on a second click. Removed the association to match `BbFormFieldCombobox` and `BbFormFieldMultiSelect` behavior.
+
+---
+
 ## 2026-03-31
 
 ### Fixed
