@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-03-31
+
+### Fixed
+
+- **BbTagInput: stale UI after tag removal** — `ShouldRender()` did not track tag collection changes, so removing a tag only updated the bound state without re-rendering. The component now tracks tag count to trigger re-renders correctly. ([#279](https://github.com/blazorblueprintui/ui/issues/279))
+
+---
+
+## 2026-03-30
+
+### Changed
+
+- **Lucide Icons: updated icon set** — Updated from 1,665 to 1,753 icons (88 new icons added).
+
+---
+
 ## 2026-03-26
 
 ### Added
