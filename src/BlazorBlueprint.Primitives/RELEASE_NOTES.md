@@ -1,5 +1,5 @@
-## What's New in v3.9.0
+## What's New in v3.9.3
 
-### New Features
+### Bug Fixes
 
-- **Select** — Added `Required` parameter to `BbSelect`. When true, sets `aria-required="true"` on the select trigger for improved form accessibility.
+- **Select** — Fixed dropdown not scrolling to the active item when opened, by resolving the nearest scrollable ancestor instead of relying solely on the direct container
