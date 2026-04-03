@@ -660,6 +660,10 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
                 await _jsModule.InvokeVoidAsync("dispose", _instanceId);
                 await _jsModule.DisposeAsync();
             }
+            catch (JSException ex) when (ex.Message.Contains("does not exist"))
+            {
+                // Expected on page reload using WebView2
+            }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
