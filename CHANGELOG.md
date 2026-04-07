@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-04-07
+
+### Added
+
+- **BbComboboxGroup: grouped items support** — New `BbComboboxGroup` component for organizing combobox items under labeled sections in compositional mode. Groups automatically hide when search filters out all their items. Label styling is customizable via `LabelClass` parameter.
+
+---
+
+## 2026-04-06
+
+### Fixed
+
+- **README: missing setup code** — Added missing out-of-box setup code to README. (PR [#290](https://github.com/blazorblueprintui/ui/pull/290), community contribution by [@mxmissile](https://github.com/mxmissile))
+
+---
+
 ## 2026-04-03
 
 ### Added
