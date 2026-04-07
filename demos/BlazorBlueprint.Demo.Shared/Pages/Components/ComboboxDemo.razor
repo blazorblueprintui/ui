@@ -466,6 +466,77 @@
         <CodeBlock Source="Components/Combobox/compositional.txt" />
     </section>
 
+    <!-- Grouped Items -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Grouped Items</h2>
+        <p class="text-sm text-muted-foreground">
+            Use <code class="bg-muted px-1 py-0.5 rounded text-sm">BbComboboxGroup</code> to organize items
+            under labeled sections. Groups automatically hide when their items are filtered out by the search query.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <BbCombobox TValue="string"
+                     @bind-Value="groupedValue"
+                     Placeholder="Select attribute..."
+                     SearchPlaceholder="Search..."
+                     EmptyMessage="No attribute found."
+                     PopoverWidth="w-[250px]">
+                <BbComboboxGroup Label="Employee">
+                    <BbComboboxItem Value="@("gender")" Text="Gender">Gender</BbComboboxItem>
+                    <BbComboboxItem Value="@("nationality")" Text="Nationality">Nationality</BbComboboxItem>
+                    <BbComboboxItem Value="@("age")" Text="Age">Age</BbComboboxItem>
+                </BbComboboxGroup>
+                <BbComboboxGroup Label="Employment">
+                    <BbComboboxItem Value="@("company")" Text="Company">Company</BbComboboxItem>
+                    <BbComboboxItem Value="@("jobTitle")" Text="Job Title">Job Title</BbComboboxItem>
+                    <BbComboboxItem Value="@("department")" Text="Department">Department</BbComboboxItem>
+                </BbComboboxGroup>
+                <BbComboboxGroup Label="Location">
+                    <BbComboboxItem Value="@("country")" Text="Country">Country</BbComboboxItem>
+                    <BbComboboxItem Value="@("city")" Text="City">City</BbComboboxItem>
+                </BbComboboxGroup>
+            </BbCombobox>
+            <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+                <p class="text-sm"><span class="font-medium">Selected value:</span> <span class="font-mono">@(string.IsNullOrEmpty(groupedValue) ? "(none)" : groupedValue)</span></p>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/Combobox/grouped.txt" />
+    </section>
+
+    <!-- Grouped Items with Custom Label -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Grouped Items (Custom Label)</h2>
+        <p class="text-sm text-muted-foreground">
+            Use <code class="bg-muted px-1 py-0.5 rounded text-sm">LabelClass</code> to override the default label styling.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <BbCombobox TValue="string"
+                     @bind-Value="groupedCustomLabelValue"
+                     Placeholder="Select fruit..."
+                     SearchPlaceholder="Search..."
+                     EmptyMessage="No fruit found."
+                     PopoverWidth="w-[250px]">
+                <BbComboboxGroup Label="Tropical" LabelClass="text-sm font-bold text-primary">
+                    <BbComboboxItem Value="@("mango")" Text="Mango">Mango</BbComboboxItem>
+                    <BbComboboxItem Value="@("pineapple")" Text="Pineapple">Pineapple</BbComboboxItem>
+                    <BbComboboxItem Value="@("papaya")" Text="Papaya">Papaya</BbComboboxItem>
+                </BbComboboxGroup>
+                <BbComboboxGroup Label="Berries" LabelClass="text-sm font-bold text-primary">
+                    <BbComboboxItem Value="@("strawberry")" Text="Strawberry">Strawberry</BbComboboxItem>
+                    <BbComboboxItem Value="@("blueberry")" Text="Blueberry">Blueberry</BbComboboxItem>
+                    <BbComboboxItem Value="@("raspberry")" Text="Raspberry">Raspberry</BbComboboxItem>
+                </BbComboboxGroup>
+            </BbCombobox>
+            <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+                <p class="text-sm"><span class="font-medium">Selected value:</span> <span class="font-mono">@(string.IsNullOrEmpty(groupedCustomLabelValue) ? "(none)" : groupedCustomLabelValue)</span></p>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/Combobox/grouped-custom-label.txt" />
+    </section>
+
     <!-- Async Compositional Mode -->
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">Async Compositional Mode</h2>
@@ -614,6 +685,18 @@
                     Custom content to render. When null, renders Text as plain text.
                 </ApiParameter>
             </ApiReference>
+
+            <ApiReference ComponentName="ComboboxGroup">
+                <ApiParameter Name="Label" Type="string?" Default="null">
+                    Label text displayed above the group items. The entire group hides when its items are filtered out.
+                </ApiParameter>
+                <ApiParameter Name="LabelClass" Type="string?" Default="null">
+                    Additional CSS classes applied to the label element.
+                </ApiParameter>
+                <ApiParameter Name="ChildContent" Type="RenderFragment?">
+                    Content for the group. Typically contains ComboboxItem components.
+                </ApiParameter>
+            </ApiReference>
         </div>
     </section>
 
@@ -735,6 +818,10 @@
 
     // Compositional mode example
     private string? compositionalValue;
+
+    // Grouped examples
+    private string? groupedValue;
+    private string? groupedCustomLabelValue;
 
     private static readonly Dictionary<string, string> compositionalLabels = new()
     {

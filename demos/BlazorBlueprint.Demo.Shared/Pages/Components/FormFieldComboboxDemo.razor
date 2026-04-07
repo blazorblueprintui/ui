@@ -129,6 +129,43 @@
         <CodeBlock Source="Components/FormFieldCombobox/compositional.txt" />
     </div>
 
+    <!-- Grouped Items -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Grouped Items</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">BbComboboxGroup</code> to organize items
+                under labeled sections. Groups automatically hide when their items are filtered out.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldCombobox TValue="string"
+                               @bind-Value="_groupedValue"
+                               Label="Attribute"
+                               Placeholder="Select attribute..."
+                               SearchPlaceholder="Search..."
+                               EmptyMessage="No attribute found."
+                               HelperText="Choose an attribute to filter by."
+                               MatchTriggerWidth="true"
+                               InputClass="w-full">
+                <BbComboboxGroup Label="Employee">
+                    <BbComboboxItem Value="@("gender")" Text="Gender">Gender</BbComboboxItem>
+                    <BbComboboxItem Value="@("nationality")" Text="Nationality">Nationality</BbComboboxItem>
+                    <BbComboboxItem Value="@("age")" Text="Age">Age</BbComboboxItem>
+                </BbComboboxGroup>
+                <BbComboboxGroup Label="Employment">
+                    <BbComboboxItem Value="@("company")" Text="Company">Company</BbComboboxItem>
+                    <BbComboboxItem Value="@("jobTitle")" Text="Job Title">Job Title</BbComboboxItem>
+                    <BbComboboxItem Value="@("department")" Text="Department">Department</BbComboboxItem>
+                </BbComboboxGroup>
+            </BbFormFieldCombobox>
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50 space-y-1">
+            <p class="text-sm"><span class="font-medium">Selected value:</span> <span class="font-mono">@(string.IsNullOrEmpty(_groupedValue) ? "(none)" : _groupedValue)</span></p>
+        </div>
+        <CodeBlock Source="Components/FormFieldCombobox/grouped.txt" />
+    </div>
+
     <!-- Non-String Value Types -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -417,6 +454,7 @@
 @code {
     private string? _selectedFramework;
     private string? _compositionalValue;
+    private string? _groupedValue;
     private int? _selectedPriority;
     private Guid? _selectedProject;
     private bool _formSubmitted;
