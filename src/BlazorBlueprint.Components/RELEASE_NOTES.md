@@ -1,11 +1,9 @@
-## What's New in v3.9.3
+## What's New in v3.9.5
 
-### Bug Fixes
+### New Components
 
-- **BbFormFieldSelect** — Fixed label click incorrectly opening the dropdown by removing the `For` attribute from the field label
-- **BbTagInput** — Fixed stale UI after tag removal by tracking tag count changes in the render-check logic
-- **Border radius** — Aligned `--radius-md` and `--radius-sm` calculations with shadcn/ui docs, using proportional scaling (`0.8` / `0.6`) instead of fixed pixel offsets
+- **BbComboboxGroup** — A new component for visually grouping combobox items under an optional label. Supports `Label`, `LabelClass`, and `ChildContent` parameters.
 
 ### Improvements
 
-- Bumped **BlazorBlueprint.Primitives** dependency to v3.9.3
+- **BbCombobox** — When using `ChildContent` instead of the `Options` parameter, the wrapping `BbCommandGroup` is no longer automatically applied, allowing users to define their own grouping structure with `BbComboboxGroup`.
