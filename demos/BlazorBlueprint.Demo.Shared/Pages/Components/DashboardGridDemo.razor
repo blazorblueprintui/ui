@@ -1054,92 +1054,96 @@
 
     private RenderFragment RenderDataDrivenWidgetContent(DataDrivenWidgetConfig widget) => widget.Type switch
     {
-        "bar-chart" => __builder =>
-        {
-            <BbBarChart Data="@GetDataDrivenTimeSeries(widget)" Height="100%">
-                <BbXAxis DataKey="month" />
-                <BbYAxis Show="false" />
-                <BbChartTooltip />
-                <BbBar DataKey="value" Name="@widget.Title" Color="var(--chart-1)" />
-            </BbBarChart>
-        },
-        "area-chart" => __builder =>
-        {
-            <BbAreaChart Data="@GetDataDrivenTimeSeries(widget)" Height="100%">
-                <BbXAxis DataKey="month" />
-                <BbYAxis Show="false" />
-                <BbChartTooltip />
-                <BbArea DataKey="value" Name="@widget.Title" Color="var(--chart-2)" Curve="CurveType.Smooth">
-                    <BbFill>
-                        <BbLinearGradient>
-                            <BbGradientStop Offset="0" Color="var(--chart-2)" Opacity="0.5" />
-                            <BbGradientStop Offset="1" Color="var(--chart-2)" Opacity="0.05" />
-                        </BbLinearGradient>
-                    </BbFill>
-                </BbArea>
-            </BbAreaChart>
-        },
-        "line-chart" => __builder =>
-        {
-            <BbLineChart Data="@GetDataDrivenTimeSeries(widget)" Height="100%">
-                <BbXAxis DataKey="month" />
-                <BbYAxis Show="false" />
-                <BbChartTooltip />
-                <BbLine DataKey="value" Name="@widget.Title" Color="var(--chart-3)" Curve="CurveType.Smooth" />
-            </BbLineChart>
-        },
-        "pie-chart" => __builder =>
-        {
-            <BbPieChart Data="@GetDataDrivenCategories(widget)" Height="100%">
-                <BbChartTooltip />
-                <BbChartLegend />
-                <BbPie DataKey="value" NameKey="name" />
-            </BbPieChart>
-        },
-        "kpi" => __builder =>
-        {
-            var kpi = GetDataDrivenKpi(widget);
-            <div class="flex flex-col items-center justify-center h-full gap-1">
-                <span class="text-4xl font-bold tracking-tight">@kpi.Value</span>
-                <span class="text-sm text-muted-foreground">@kpi.Label</span>
-                @if (kpi.Change != null)
-                {
-                    var isPositive = kpi.Change.StartsWith("+");
-                    <span class="text-xs @(isPositive ? "text-green-500" : "text-red-500")">
-                        @kpi.Change from last month
-                    </span>
-                }
-            </div>
-        },
-        "table" => __builder =>
-        {
-            var rows = GetDataDrivenTableRows(widget);
-            <div class="overflow-auto h-full">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="border-b text-left text-muted-foreground">
-                            <th class="py-2 px-3 font-medium">Name</th>
-                            <th class="py-2 px-3 font-medium text-right">Value</th>
-                            <th class="py-2 px-3 font-medium text-right">Change</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var row in rows)
-                        {
-                            <tr class="border-b last:border-0">
-                                <td class="py-2 px-3">@row.Name</td>
-                                <td class="py-2 px-3 text-right font-medium">@row.Value</td>
-                                <td class="py-2 px-3 text-right @(row.IsPositive ? "text-green-500" : "text-red-500")">
-                                    @row.Change
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        },
+        "bar-chart" => RenderBarChartWidget(widget),
+        "area-chart" => RenderAreaChartWidget(widget),
+        "line-chart" => RenderLineChartWidget(widget),
+        "pie-chart" => RenderPieChartWidget(widget),
+        "kpi" => RenderKpiWidget(widget),
+        "table" => RenderTableWidget(widget),
         _ => @<div class="flex items-center justify-center h-full text-muted-foreground text-sm">Unknown widget type: @widget.Type</div>
     };
+
+    private RenderFragment RenderBarChartWidget(DataDrivenWidgetConfig widget) =>
+        @<BbBarChart Data="@GetDataDrivenTimeSeries(widget)" Height="100%">
+            <BbXAxis DataKey="month" />
+            <BbYAxis Show="false" />
+            <BbChartTooltip />
+            <BbBar DataKey="value" Name="@widget.Title" Color="var(--chart-1)" />
+        </BbBarChart>;
+
+    private RenderFragment RenderAreaChartWidget(DataDrivenWidgetConfig widget) =>
+        @<BbAreaChart Data="@GetDataDrivenTimeSeries(widget)" Height="100%">
+            <BbXAxis DataKey="month" />
+            <BbYAxis Show="false" />
+            <BbChartTooltip />
+            <BbArea DataKey="value" Name="@widget.Title" Color="var(--chart-2)" Curve="CurveType.Smooth">
+                <BbFill>
+                    <BbLinearGradient>
+                        <BbGradientStop Offset="0" Color="var(--chart-2)" Opacity="0.5" />
+                        <BbGradientStop Offset="1" Color="var(--chart-2)" Opacity="0.05" />
+                    </BbLinearGradient>
+                </BbFill>
+            </BbArea>
+        </BbAreaChart>;
+
+    private RenderFragment RenderLineChartWidget(DataDrivenWidgetConfig widget) =>
+        @<BbLineChart Data="@GetDataDrivenTimeSeries(widget)" Height="100%">
+            <BbXAxis DataKey="month" />
+            <BbYAxis Show="false" />
+            <BbChartTooltip />
+            <BbLine DataKey="value" Name="@widget.Title" Color="var(--chart-3)" Curve="CurveType.Smooth" />
+        </BbLineChart>;
+
+    private RenderFragment RenderPieChartWidget(DataDrivenWidgetConfig widget) =>
+        @<BbPieChart Data="@GetDataDrivenCategories(widget)" Height="100%">
+            <BbChartTooltip />
+            <BbChartLegend />
+            <BbPie DataKey="value" NameKey="name" />
+        </BbPieChart>;
+
+    private RenderFragment RenderKpiWidget(DataDrivenWidgetConfig widget)
+    {
+        var kpi = GetDataDrivenKpi(widget);
+        return @<div class="flex flex-col items-center justify-center h-full gap-1">
+            <span class="text-4xl font-bold tracking-tight">@kpi.Value</span>
+            <span class="text-sm text-muted-foreground">@kpi.Label</span>
+            @if (kpi.Change != null)
+            {
+                var isPositive = kpi.Change.StartsWith("+");
+                <span class="text-xs @(isPositive ? "text-green-500" : "text-red-500")">
+                    @kpi.Change from last month
+                </span>
+            }
+        </div>;
+    }
+
+    private RenderFragment RenderTableWidget(DataDrivenWidgetConfig widget)
+    {
+        var rows = GetDataDrivenTableRows(widget);
+        return @<div class="overflow-auto h-full">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b text-left text-muted-foreground">
+                        <th class="py-2 px-3 font-medium">Name</th>
+                        <th class="py-2 px-3 font-medium text-right">Value</th>
+                        <th class="py-2 px-3 font-medium text-right">Change</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in rows)
+                    {
+                        <tr class="border-b last:border-0">
+                            <td class="py-2 px-3">@row.Name</td>
+                            <td class="py-2 px-3 text-right font-medium">@row.Value</td>
+                            <td class="py-2 px-3 text-right @(row.IsPositive ? "text-green-500" : "text-red-500")">
+                                @row.Change
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>;
+    }
 
     private List<DataDrivenTimeSeriesPoint> GetDataDrivenTimeSeries(DataDrivenWidgetConfig widget) => widget.DataSource switch
     {
