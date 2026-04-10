@@ -741,6 +741,10 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
             {
                 await _multiSelectModule.DisposeAsync();
             }
+            catch (JSException ex) when (ex.Message.Contains("does not exist"))
+            {
+                // Expected on page reload using WebView2
+            }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
@@ -753,6 +757,10 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
             try
             {
                 await _elementUtilsModule.DisposeAsync();
+            }
+            catch (JSException ex) when (ex.Message.Contains("does not exist"))
+            {
+                // Expected on page reload using WebView2
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
