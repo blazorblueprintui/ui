@@ -138,6 +138,24 @@ public partial class BbFormFieldCombobox<TValue> : FormFieldBase
     /// <inheritdoc />
     protected override LambdaExpression? GetFieldExpression() => ValueExpression;
 
+    /// <summary>
+    /// The search query forwarded to the inner combobox. Only surfaces the local
+    /// <see cref="SearchQuery"/> value when the consumer is actively binding it;
+    /// otherwise returns an empty string so the inner combobox can manage its own
+    /// search state without being clobbered by parent re-renders.
+    /// </summary>
+    private string InnerSearchQuery => SearchQueryChanged.HasDelegate ? SearchQuery : string.Empty;
+
+    /// <summary>
+    /// The search query change callback forwarded to the inner combobox. Only wires
+    /// when the consumer is binding <see cref="SearchQueryChanged"/>; otherwise returns
+    /// the default (no delegate) so the inner combobox keeps its internal text filter
+    /// instead of switching into external-filtering mode.
+    /// </summary>
+    private EventCallback<string> InnerSearchQueryChanged => SearchQueryChanged.HasDelegate
+        ? EventCallback.Factory.Create<string>(this, HandleSearchQueryChanged)
+        : default;
+
     private async Task HandleValueChanged(TValue? value)
     {
         Value = value;
