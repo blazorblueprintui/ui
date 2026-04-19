@@ -913,6 +913,10 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
                 await dragDropModule.InvokeVoidAsync("disposeDragDrop", instanceId);
                 await dragDropModule.DisposeAsync();
             }
+            catch (JSException ex) when (ex.Message.Contains("does not exist"))
+            {
+                // Expected on page reload using WebView2
+            }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Circuit disconnected, ignore

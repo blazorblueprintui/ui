@@ -79,6 +79,10 @@ public partial class BbResponsiveNavProvider
                 await _module.InvokeVoidAsync("cleanup");
                 await _module.DisposeAsync();
             }
+            catch (JSException ex) when (ex.Message.Contains("does not exist"))
+            {
+                // Expected on page reload using WebView2
+            }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Circuit disconnected, ignore
