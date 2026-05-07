@@ -107,8 +107,6 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["DataTable.Search"] = "Search...",
         ["DataTable.Columns"] = "Columns",
         ["DataTable.ToggleColumns"] = "Toggle columns",
-        ["DataTable.Filter"] = "Filter",
-        ["DataTable.FilterColumns"] = "Filter columns",
 
         // DataView
         ["DataView.SearchPlaceholder"] = "Search...",

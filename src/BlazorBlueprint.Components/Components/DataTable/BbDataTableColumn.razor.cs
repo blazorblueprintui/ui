@@ -70,9 +70,15 @@ public partial class BbDataTableColumn<TData, TValue> : ComponentBase where TDat
     public bool Sortable { get; set; }
 
     /// <summary>
-    /// Gets or sets whether this column can be filtered.
+    /// Gets or sets whether this column is included in the toolbar's global search.
+    /// When at least one column has <c>Filterable="true"</c>, the global search box
+    /// only probes those columns; otherwise it probes every column.
     /// Default is false.
     /// </summary>
+    /// <remarks>
+    /// For per-column filter UIs (operator + value editor per column),
+    /// use <see cref="BbDataGrid{TData}"/> which ships full column-filter support.
+    /// </remarks>
     [Parameter]
     public bool Filterable { get; set; }
 

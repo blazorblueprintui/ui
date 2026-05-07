@@ -290,7 +290,7 @@ public partial class BbFilterCondition : ComponentBase
 
     // CSS classes
     private string RowCssClass => ClassNames.cn(
-        "flex items-center gap-2",
+        "flex flex-wrap items-center",
         Context?.Compact == true ? "gap-1" : "gap-2"
     );
 

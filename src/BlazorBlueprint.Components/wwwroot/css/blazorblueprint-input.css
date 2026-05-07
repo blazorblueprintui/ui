@@ -1,5 +1,16 @@
 /* BlazorBlueprint Components - Pre-built Tailwind CSS */
-@import 'tailwindcss';
+
+/* Cascade-layer order. `bb` is declared last so component utilities
+   (e.g. md:flex on the sidebar) always win at parity regardless of which
+   <link> tag a consumer's app.css loads in relative to ours. Consumers
+   override with !important (which inverts layer priority) or unlayered CSS. */
+@layer properties, theme, base, components, utilities, bb;
+
+@import 'tailwindcss' layer(bb);
+/* tw-animate.css uses @utility (a Tailwind v4 source directive) which cannot
+   be nested inside a layer. Imported unlayered; its utilities land in the
+   default `utilities` layer. Anything in tw-animate that absolutely must win
+   should use the doubled-data-attribute trick or live inside @layer bb below. */
 @import './tw-animate.css';
 
 /* Configure source paths for scanning Razor files */
@@ -195,6 +206,11 @@
   --tracking-wider: calc(var(--tracking-normal) + 0.05em);
   --tracking-widest: calc(var(--tracking-normal) + 0.1em);
 }
+
+/* All component utility/component layer blocks live inside `@layer bb` so they win
+   the cascade-layer parity against consumer Tailwind output. The inner @layer
+   declarations (base/components/utilities) become sublayers of bb. */
+@layer bb {
 
 /* Required for keyboard navigation visual feedback in Select/Combobox/DropdownMenu */
 @layer components {
@@ -745,7 +761,10 @@
   }
 }
 
-/* Accessibility — respect user's reduced-motion preference */
+} /* end @layer bb */
+
+/* Accessibility — respect user's reduced-motion preference.
+   Left UNLAYERED on purpose so it cannot be defeated by any layered rule. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -755,6 +774,8 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+@layer bb {
 
 /* DynamicForm - Horizontal layout label width via CSS variable */
 @layer components {
@@ -818,7 +839,10 @@
   }
 }
 
-/* Alert countdown bar animation */
+} /* end @layer bb */
+
+/* Alert countdown bar animation. Keyframes are not subject to cascade
+   layers, so left at top level. */
 @keyframes bb-alert-countdown {
   from { width: 100%; }
   to { width: 0%; }
