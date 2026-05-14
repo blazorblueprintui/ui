@@ -1,10 +1,14 @@
-## What's New in v3.10.1
+## What's New in v3.10.2
+
+### New Features
+
+- **FilterBuilder**: Localized the `WHERE` label, `AND`/`OR` logical operators, and all operator labels via `IBbLocalizer` (#319).
+- **BbDataGridColumnFilter**: Operator options are now localized through `IBbLocalizer` (#319).
 
 ### Bug Fixes
 
-- **CSS cascade**: Scoped the `@layer bb` layer to BlazorBlueprint's hand-authored component CSS only; Tailwind's bulk output now imports into its native layers so emitted utilities tie with consumer utilities instead of beating them (#318).
-- **BbSidebar**: Added a higher-specificity attribute-selector rule so the sidebar's mobile/desktop visibility is authoritative regardless of consumer stylesheet load order (#308).
+- **BbToastProvider**: Stopped the empty toast container from blocking clicks to the UI behind it (#316).
 
 ### Improvements
 
-- Bumped the `BlazorBlueprint.Primitives` dependency to 3.10.1.
+- Bumped the `BlazorBlueprint.Primitives` dependency to 3.10.2.
