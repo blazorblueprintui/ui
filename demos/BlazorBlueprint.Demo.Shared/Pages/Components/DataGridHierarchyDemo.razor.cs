@@ -1086,6 +1086,12 @@ public partial class DataGridHierarchyDemo : ComponentBase
     private FilterDefinition largeOrgFilter = new();
     private Func<LargeOrgEmployee, bool>? largeOrgFilterPredicate;
 
+    private static readonly string[] largeOrgFilterDepartments =
+    {
+        "Executive", "Engineering", "Product", "Sales", "Marketing",
+        "Finance", "Human Resources", "Operations", "Legal", "Customer Success"
+    };
+
     private readonly FilterField[] largeOrgFields =
     {
         new() { Name = "Name", Label = "Name", Type = FilterFieldType.Text, Placeholder = "e.g. Smith" },
@@ -1094,8 +1100,7 @@ public partial class DataGridHierarchyDemo : ComponentBase
         new()
         {
             Name = "Department", Label = "Department", Type = FilterFieldType.Enum,
-            Options = new[] { "Executive", "Engineering", "Product", "Sales", "Marketing", "Finance", "Human Resources", "Operations", "Legal", "Customer Success" }
-                .Select(d => new SelectOption<string>(d, d)).ToArray()
+            Options = largeOrgFilterDepartments.Select(d => new SelectOption<string>(d, d)).ToArray()
         }
     };
 

@@ -1,12 +1,15 @@
 /* BlazorBlueprint Components - Pre-built Tailwind CSS */
 
-/* Cascade-layer order. `bb` is declared last so component utilities
-   (e.g. md:flex on the sidebar) always win at parity regardless of which
-   <link> tag a consumer's app.css loads in relative to ours. Consumers
-   override with !important (which inverts layer priority) or unlayered CSS. */
+/* Cascade-layer order. `bb` is declared last as a dedicated priority layer
+   for BB's hand-authored component CSS (the high-specificity attribute-selector
+   rules below) — those need to win against consumer Tailwind utilities and
+   preflight resets. Tailwind's bulk output is imported into its native layers
+   so BB's emitted utilities tie with the consumer's instead of beating them
+   (which was the cause of #318). Consumer overrides work normally via
+   specificity or by loading their stylesheet after ours. */
 @layer properties, theme, base, components, utilities, bb;
 
-@import 'tailwindcss' layer(bb);
+@import 'tailwindcss';
 /* tw-animate.css uses @utility (a Tailwind v4 source directive) which cannot
    be nested inside a layer. Imported unlayered; its utilities land in the
    default `utilities` layer. Anything in tw-animate that absolutely must win
@@ -217,6 +220,18 @@
   [role="option"][data-focused="true"] {
     background-color: var(--accent);
     color: var(--accent-foreground);
+  }
+}
+
+/* BB Sidebar root visibility — needs to win against consumer Tailwind cascade.
+   The Sidebar <aside> uses `hidden md:flex` Tailwind utilities to hide on mobile
+   and show on desktop, but those utilities can tie or lose to consumer rules
+   depending on stylesheet load order (the bug seen in #308). This higher-
+   specificity attribute selector inside @layer bb is authoritative regardless. */
+@layer components {
+  aside[data-variant][data-side] { display: none; }
+  @media (min-width: 768px) {
+    aside[data-variant][data-side] { display: flex; }
   }
 }
 
