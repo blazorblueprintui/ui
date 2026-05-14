@@ -85,7 +85,7 @@ public partial class BbFilterCondition : ComponentBase
         selectedField = Context.Fields.FirstOrDefault(f => string.Equals(f.Name, Condition.Field, StringComparison.OrdinalIgnoreCase));
         if (selectedField != null)
         {
-            operatorOptions = FilterOperatorHelper.GetOperatorOptions(selectedField.Type);
+            operatorOptions = FilterOperatorHelper.GetOperatorOptions(selectedField.Type, key => Localizer[key]);
         }
     }
 
