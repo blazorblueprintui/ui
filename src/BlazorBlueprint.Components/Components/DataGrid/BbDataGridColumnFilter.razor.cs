@@ -87,7 +87,7 @@ public partial class BbDataGridColumnFilter : ComponentBase
 
     protected override void OnParametersSet()
     {
-        operatorOptions = FilterOperatorHelper.GetOperatorOptions(FieldType);
+        operatorOptions = FilterOperatorHelper.GetOperatorOptions(FieldType, key => Localizer[key]);
 
         // Only reset the edit condition when the external CurrentFilter actually changes.
         // Re-renders caused by portal registrations (e.g. BbSelect opening its dropdown)

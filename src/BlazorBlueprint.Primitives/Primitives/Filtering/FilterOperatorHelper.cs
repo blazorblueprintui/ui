@@ -115,12 +115,38 @@ public static class FilterOperatorHelper
     /// <summary>
     /// Gets the display label for an operator, optionally adjusted for a specific field type.
     /// </summary>
-    public static string GetOperatorLabel(FilterOperator op, FilterFieldType? fieldType = null)
+    /// <param name="op">The operator to label.</param>
+    /// <param name="fieldType">The field type, used to pick date-specific wording where applicable.</param>
+    /// <param name="localize">
+    /// Optional key resolver (e.g. an <c>IBbLocalizer</c> indexer). Called with a key of the form
+    /// <c>FilterBuilder.Operator{Op}</c> (or <c>FilterBuilder.Operator{Op}Date</c> for the date variant).
+    /// If it returns the key unchanged — the convention for "not found" — the built-in English label is
+    /// used. This indirection lets the localizer (which lives in the Components layer) drive labels
+    /// without the Primitives layer taking a dependency on it.
+    /// </param>
+    public static string GetOperatorLabel(
+        FilterOperator op,
+        FilterFieldType? fieldType = null,
+        Func<string, string>? localize = null)
     {
-        if (fieldType is FilterFieldType.Date or FilterFieldType.DateTime
-            && DateOperatorLabels.TryGetValue(op, out var dateLabel))
+        var isDateVariant = fieldType is FilterFieldType.Date or FilterFieldType.DateTime
+            && DateOperatorLabels.ContainsKey(op);
+        var key = isDateVariant
+            ? $"FilterBuilder.Operator{op}Date"
+            : $"FilterBuilder.Operator{op}";
+
+        if (localize is not null)
         {
-            return dateLabel;
+            var localized = localize(key);
+            if (!string.Equals(localized, key, StringComparison.Ordinal))
+            {
+                return localized;
+            }
+        }
+
+        if (isDateVariant)
+        {
+            return DateOperatorLabels[op];
         }
 
         return OperatorLabels.TryGetValue(op, out var label) ? label : op.ToString();
@@ -129,10 +155,14 @@ public static class FilterOperatorHelper
     /// <summary>
     /// Gets <see cref="SelectOption{TValue}"/> items for the operators of a given field type.
     /// </summary>
-    public static IEnumerable<SelectOption<FilterOperator>> GetOperatorOptions(FilterFieldType type)
+    /// <param name="type">The field type whose operators to list.</param>
+    /// <param name="localize">Optional key resolver — see <see cref="GetOperatorLabel"/>.</param>
+    public static IEnumerable<SelectOption<FilterOperator>> GetOperatorOptions(
+        FilterFieldType type,
+        Func<string, string>? localize = null)
     {
         return GetOperatorsForType(type)
-            .Select(op => new SelectOption<FilterOperator>(op, GetOperatorLabel(op, type)));
+            .Select(op => new SelectOption<FilterOperator>(op, GetOperatorLabel(op, type, localize)));
     }
 
     /// <summary>
