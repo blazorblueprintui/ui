@@ -1368,11 +1368,11 @@ A new component that renders child `Avatar` components with overlapping negative
 ```razor
 <BbAvatarGroup>
     <BbAvatar>
-        <BbAvatarImage Src="/user1.jpg" Alt="User 1" />
+        <BbAvatarImage Source="/user1.jpg" Alt="User 1" />
         <BbAvatarFallback>U1</BbAvatarFallback>
     </BbAvatar>
     <BbAvatar>
-        <BbAvatarImage Src="/user2.jpg" Alt="User 2" />
+        <BbAvatarImage Source="/user2.jpg" Alt="User 2" />
         <BbAvatarFallback>U2</BbAvatarFallback>
     </BbAvatar>
 </BbAvatarGroup>

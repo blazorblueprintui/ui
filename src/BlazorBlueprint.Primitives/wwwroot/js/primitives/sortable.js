@@ -24,7 +24,7 @@ async function loadSortable() {
   if (!sortableLoadPromise) {
     sortableLoadPromise = (async () => {
       // Resolve relative to this module's own URL
-      const libPath = new URL('../../lib/sortable/Sortable.min.js', import.meta.url).href;
+      const libPath = new URL('../../lib/sortable/sortable.min.js', import.meta.url).href;
       const mod = await import(libPath);
       return mod;
     })();

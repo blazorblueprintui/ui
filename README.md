@@ -103,6 +103,7 @@ builder.Services.AddBlazorBlueprintComponents();
 
 ```razor
 @using BlazorBlueprint.Components
+@using BlazorBlueprint.Primitives.Services
 ```
 
 **3. Add CSS** to your `App.razor` `<head>`:

@@ -280,7 +280,7 @@ Convenience wrappers that combine a form control with `BbField` for label, descr
 
 ```razor
 <BbAvatar Size="AvatarSize.Default">
-    <BbAvatarImage Src="user.jpg" Alt="User" />
+    <BbAvatarImage Source="user.jpg" Alt="User" />
     <BbAvatarFallback>JD</BbAvatarFallback>
 </BbAvatar>
 ```
