@@ -1,5 +1,5 @@
-## What's New in v3.9.3
+## What's New in v3.10.2
 
-### Bug Fixes
+### New Features
 
-- **Select** — Fixed dropdown not scrolling to the active item when opened, by resolving the nearest scrollable ancestor instead of relying solely on the direct container
+- **FilterOperatorHelper** — `GetOperatorLabel` and `GetOperatorOptions` now accept an optional key resolver, allowing operator labels to be localized without the Primitives layer depending on the Components localizer

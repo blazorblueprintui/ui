@@ -6,6 +6,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-05-14
+
+### Added
+
+- **BbFilterBuilder: full localization** — The `WHERE` label, the AND/OR logical operators, and all filter operator labels now resolve through `IBbLocalizer`, so they can be customized the same way as the rest of the component. New keys: `FilterBuilder.Where`, `FilterBuilder.OperatorAnd`/`OperatorOr`, `FilterBuilder.Operator{Name}` (e.g. `FilterBuilder.OperatorEquals`), and `OperatorGreaterThanDate`/`OperatorLessThanDate` for date-field variants. ([#319](https://github.com/blazorblueprintui/ui/issues/319))
+
+### Fixed
+
+- **BbToastProvider: empty container blocking clicks** — The toast container `<div>` is always rendered, even with zero toasts. As a fixed-position, full-height element pinned to the bottom-right corner, it silently blocked all mouse interaction in that region. Added `pointer-events-none` to the container so clicks pass through; individual toasts retain `pointer-events-auto` and stay fully interactive. ([#316](https://github.com/blazorblueprintui/ui/issues/316))
+
+### Changed
+
+- **Component CSS cascade layer** — Component CSS is now wrapped in a dedicated `@layer bb` cascade layer, declared as the strongest layer so authored component styles win against a consumer's `app.css` regardless of `<link>` order. The layer is scoped to BlazorBlueprint's *authored* styles only — Tailwind's bulk utility output stays in its native layers — so consumer Tailwind utilities (`grid-cols-*`, `col-span-*`, etc.) cascade normally and are not overridden. ([#308](https://github.com/blazorblueprintui/ui/issues/308), [#318](https://github.com/blazorblueprintui/ui/issues/318), [#314](https://github.com/blazorblueprintui/ui/issues/314))
+
+---
+
+## 2026-05-02
+
+### Fixed
+
+- **BbFilterBuilder: condition rows not wrapping on small screens** — Condition rows now wrap on narrow viewports instead of overflowing horizontally. ([#311](https://github.com/blazorblueprintui/ui/issues/311))
+- **BbDataTable: unfinished column-filter placeholder** — Removed the non-functional Phase 2 column-filter placeholder from the DataTable toolbar. ([#309](https://github.com/blazorblueprintui/ui/issues/309))
+
+---
+
+## 2026-04-18
+
+### Fixed
+
+- **BbTabs: AdditionalAttributes not forwarded** — `BbTabs` now forwards `AdditionalAttributes` to the primitive root element, so attributes like `class`, `id`, and `data-*` applied to the component reach the rendered DOM. ([#293](https://github.com/blazorblueprintui/ui/issues/293))
+
+---
+
+## 2026-04-10
+
+### Fixed
+
+- **BbFormFieldCombobox: search filter bypassed with wrapper** — When `BbFormFieldCombobox` wrapped `BbCombobox`, the form-field wrapper always wired a `SearchQueryChanged` handler, flipping the combobox into external-filtering mode and bypassing its internal text filter. The wrapper now only forwards search handling when the consumer opts into external filtering. ([#296](https://github.com/blazorblueprintui/ui/issues/296))
+
+---
+
 ## 2026-04-07
 
 ### Added

@@ -10,11 +10,17 @@ public partial class BbFilterGroup : ComponentBase
 {
     [Inject] private IBbLocalizer Localizer { get; set; } = default!;
 
-    private static readonly IEnumerable<SelectOption<LogicalOperator>> logicalOperatorOptions = new[]
+    // Built from the localizer in OnInitialized — can't be static since it depends on injected state.
+    private IEnumerable<SelectOption<LogicalOperator>> logicalOperatorOptions = default!;
+
+    protected override void OnInitialized()
     {
-        new SelectOption<LogicalOperator>(LogicalOperator.And, "AND"),
-        new SelectOption<LogicalOperator>(LogicalOperator.Or, "OR")
-    };
+        logicalOperatorOptions = new[]
+        {
+            new SelectOption<LogicalOperator>(LogicalOperator.And, Localizer["FilterBuilder.OperatorAnd"]),
+            new SelectOption<LogicalOperator>(LogicalOperator.Or, Localizer["FilterBuilder.OperatorOr"])
+        };
+    }
 
     /// <summary>
     /// Gets or sets the filter group data.

@@ -40,6 +40,9 @@ public static class ApiSurfaceGenerator
     {
         var componentTypes = types
             .Where(t => typeof(ComponentBase).IsAssignableFrom(t) && !t.IsAbstract)
+            // Exclude Razor build-convention types (_Imports.razor compiles into a
+            // public ComponentBase-derived class but is not a real API surface).
+            .Where(t => !t.Name.StartsWith('_'))
             .ToList();
 
         if (componentTypes.Count == 0)

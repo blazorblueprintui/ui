@@ -1,14 +1,14 @@
-## What's New in v3.10.0
+## What's New in v3.10.2
 
-### Breaking Changes
+### New Features
 
-- **BbDataTable**: Removed the placeholder Filter popover from the toolbar along with the `DataTable.Filter` and `DataTable.FilterColumns` localization keys. Use `BbDataGrid` for per-column filter UIs.
-
-### Improvements
-
-- **CSS cascade**: Component styles now ship inside a dedicated `@layer bb` cascade layer declared as the strongest layer, so component utilities win the cascade regardless of consumer stylesheet load order.
+- **FilterBuilder**: Localized the `WHERE` label, `AND`/`OR` logical operators, and all operator labels via `IBbLocalizer` (#319).
+- **BbDataGridColumnFilter**: Operator options are now localized through `IBbLocalizer` (#319).
 
 ### Bug Fixes
 
-- **BbTabs**: `class` and `AdditionalAttributes` (e.g. `id`, `data-*`) are now forwarded to the primitive root element; the redundant outer wrapper div has been dropped.
-- **BbFilterBuilder**: Filter condition rows and inner range / InLast sub-rows now wrap onto multiple lines on small screens instead of overflowing the parent card.
+- **BbToastProvider**: Stopped the empty toast container from blocking clicks to the UI behind it (#316).
+
+### Improvements
+
+- Bumped the `BlazorBlueprint.Primitives` dependency to 3.10.2.
