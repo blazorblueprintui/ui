@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-05-21
+
+### Fixed
+
+- **bb-no-animate: spinners frozen** — The global `bb-no-animate` switch disabled *all* CSS animations, including loading spinners — freezing them mid-rotation so they no longer conveyed ongoing work. The kill rule now exempts looping status indicators: `.animate-spin` (spinners) and `.animate-pulse` (skeletons) keep animating, while transitions and decorative entrance/exit animations (dropdowns, sheets, modals) are still disabled. Add the new `.bb-animate-keep` class to exempt any other element. ([#330](https://github.com/blazorblueprintui/ui/issues/330))
+
+---
+
 ## 2026-05-14
 
 ### Added

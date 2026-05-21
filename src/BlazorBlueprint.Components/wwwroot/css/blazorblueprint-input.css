@@ -765,11 +765,16 @@
   }
 }
 
-/* Global animation disable — add class="bb-no-animate" to <html> to turn off all animations */
+/* Global animation disable — add class="bb-no-animate" to <html> to turn off
+   transitions and decorative animations.
+
+   Looping status indicators are exempt: spinners (.animate-spin) and pulse
+   (.animate-pulse) communicate ongoing work, not decoration, so freezing them
+   would misrepresent state. Add .bb-animate-keep to exempt anything else. */
 @layer utilities {
-  .bb-no-animate *,
-  .bb-no-animate *::before,
-  .bb-no-animate *::after {
+  .bb-no-animate *:not(.animate-spin, .animate-pulse, .bb-animate-keep),
+  .bb-no-animate *:not(.animate-spin, .animate-pulse, .bb-animate-keep)::before,
+  .bb-no-animate *:not(.animate-spin, .animate-pulse, .bb-animate-keep)::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
