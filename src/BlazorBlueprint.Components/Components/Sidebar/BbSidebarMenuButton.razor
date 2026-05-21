@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Components
 @using Microsoft.AspNetCore.Components.Routing
+@implements IDisposable
 
 @*
     SidebarMenuButton component for clickable menu items with tooltip support.
@@ -27,6 +28,9 @@ else
 
     [CascadingParameter]
     private BlazorBlueprint.Primitives.Collapsible.CollapsibleContext? CollapsibleContext { get; set; }
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
 
     /// <summary>
     /// The button content.
@@ -99,6 +103,39 @@ else
         return !string.IsNullOrEmpty(Tooltip) && Context != null && !Context.Open;
     }
 
+    private bool isActiveByLocation;
+
+    /// <summary>
+    /// Whether the button should render as active — either explicitly via <see cref="IsActive"/>
+    /// or because its <see cref="Href"/> matches the current location.
+    /// </summary>
+    private bool ResolvedActive => IsActive || isActiveByLocation;
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        isActiveByLocation = NavLinkMatcher.IsMatch(NavigationManager, NavigationManager.Uri, Href, Match);
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        var nowActive = NavLinkMatcher.IsMatch(NavigationManager, e.Location, Href, Match);
+        if (nowActive != isActiveByLocation)
+        {
+            isActiveByLocation = nowActive;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+
     private RenderFragment RenderButton() => __builder =>
     {
         // Auto-detect: if Href is provided and AsChild wasn't explicitly set to Button, render as Anchor
@@ -107,19 +144,17 @@ else
 
         if (shouldRenderAsAnchor)
         {
-            <NavLink href="@Href"
-                     class="@GetClasses()"
-                     data-sidebar="menu-button"
-                     data-size="@Size.ToValue()"
-                     data-active="@(IsActive ? "true" : "false")"
-                     data-state="@(CollapsibleContext?.Open ?? false ? "open" : "closed")"
-                     aria-current="@(IsActive ? "page" : null)"
-                     aria-expanded="@(CollapsibleContext?.Open ?? false)"
-                     Match="@Match"
-                     ActiveClass="data-[active=true]:bg-sidebar-accent"
-                     @attributes="AdditionalAttributes">
+            <a href="@Href"
+               class="@GetClasses()"
+               data-sidebar="menu-button"
+               data-size="@Size.ToValue()"
+               data-active="@(ResolvedActive ? "true" : "false")"
+               data-state="@(CollapsibleContext?.Open ?? false ? "open" : "closed")"
+               aria-current="@(ResolvedActive ? "page" : null)"
+               aria-expanded="@(CollapsibleContext?.Open ?? false)"
+               @attributes="AdditionalAttributes">
                 @ChildContent
-            </NavLink>
+            </a>
         }
         else
         {
@@ -127,9 +162,9 @@ else
                     class="@GetClasses()"
                     data-sidebar="menu-button"
                     data-size="@Size.ToValue()"
-                    data-active="@(IsActive ? "true" : "false")"
+                    data-active="@(ResolvedActive ? "true" : "false")"
                     data-state="@(CollapsibleContext?.Open ?? false ? "open" : "closed")"
-                    aria-current="@(IsActive ? "page" : null)"
+                    aria-current="@(ResolvedActive ? "page" : null)"
                     aria-expanded="@(CollapsibleContext?.Open ?? false)"
                     @onclick="HandleClick"
                     @attributes="AdditionalAttributes">
@@ -153,7 +188,7 @@ else
 
     private string GetClasses()
     {
-        var baseClasses = "group peer/menu-button flex w-full items-center overflow-hidden text-left outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:[&>span]:hidden [&>span:last-child]:truncate [&>svg]:shrink-0";
+        var baseClasses = "group peer/menu-button flex w-full items-center overflow-hidden text-left outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:[&>span]:hidden [&>span:last-child]:truncate [&>svg]:shrink-0";
 
         var variantClasses = Variant.ToValue() switch
         {

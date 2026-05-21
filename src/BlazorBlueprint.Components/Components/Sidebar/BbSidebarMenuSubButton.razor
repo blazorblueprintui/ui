@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Components
 @using Microsoft.AspNetCore.Components.Routing
+@implements IDisposable
 
 @*
     SidebarMenuSubButton component for clickable submenu items.
@@ -13,13 +14,13 @@
 
 @if (shouldRenderAsAnchor)
 {
-    <NavLink href="@Href" class="@GetClasses()" data-sidebar="menu-sub-button" data-size="@Size.ToValue()" data-active="@(IsActive ? "true" : "false")" aria-current="@(IsActive ? "page" : null)" Match="@Match" ActiveClass="data-[active=true]:bg-sidebar-accent" @attributes="AdditionalAttributes">
+    <a href="@Href" class="@GetClasses()" data-sidebar="menu-sub-button" data-size="@Size.ToValue()" data-active="@(ResolvedActive ? "true" : "false")" aria-current="@(ResolvedActive ? "page" : null)" @attributes="AdditionalAttributes">
         @ChildContent
-    </NavLink>
+    </a>
 }
 else
 {
-    <button type="button" class="@GetClasses()" data-sidebar="menu-sub-button" data-size="@Size.ToValue()" data-active="@(IsActive ? "true" : "false")" aria-current="@(IsActive ? "page" : null)" @attributes="AdditionalAttributes">
+    <button type="button" class="@GetClasses()" data-sidebar="menu-sub-button" data-size="@Size.ToValue()" data-active="@(ResolvedActive ? "true" : "false")" aria-current="@(ResolvedActive ? "page" : null)" @attributes="AdditionalAttributes">
         @ChildContent
     </button>
 }
@@ -72,6 +73,42 @@ else
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
+    private bool isActiveByLocation;
+
+    /// <summary>
+    /// Whether the button should render as active — either explicitly via <see cref="IsActive"/>
+    /// or because its <see cref="Href"/> matches the current location.
+    /// </summary>
+    private bool ResolvedActive => IsActive || isActiveByLocation;
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        isActiveByLocation = NavLinkMatcher.IsMatch(NavigationManager, NavigationManager.Uri, Href, Match);
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        var nowActive = NavLinkMatcher.IsMatch(NavigationManager, e.Location, Href, Match);
+        if (nowActive != isActiveByLocation)
+        {
+            isActiveByLocation = nowActive;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
 
     private string GetClasses()
     {

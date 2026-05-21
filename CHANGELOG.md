@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **BbSidebarMenuButton: active item not highlighted on navigation** — When a sidebar menu button or sub-button used `Href` for routing, its `data-active` attribute stayed bound to the static `IsActive` parameter and never updated on navigation, so the active item received only `aria-current="page"` and not the accent background. `BbSidebarMenuButton` and `BbSidebarMenuSubButton` now detect the active route themselves — using the same matching rules as the `Match` parameter always implied — and drive `data-active`, `aria-current`, and styling from a single resolved state. ([#331](https://github.com/blazorblueprintui/ui/issues/331))
 - **bb-no-animate: spinners frozen** — The global `bb-no-animate` switch disabled *all* CSS animations, including loading spinners — freezing them mid-rotation so they no longer conveyed ongoing work. The kill rule now exempts looping status indicators: `.animate-spin` (spinners) and `.animate-pulse` (skeletons) keep animating, while transitions and decorative entrance/exit animations (dropdowns, sheets, modals) are still disabled. Add the new `.bb-animate-keep` class to exempt any other element. ([#330](https://github.com/blazorblueprintui/ui/issues/330))
 
 ---
