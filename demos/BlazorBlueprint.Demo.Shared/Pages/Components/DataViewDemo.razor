@@ -1,5 +1,7 @@
 @page "/components/dataview"
 @using BlazorBlueprint.Demo.Services
+@using BlazorBlueprint.Primitives.DataView
+@using BlazorBlueprint.Primitives.Table
 @inject MockDataService MockDataService
 
 <PageTitle>Data View Component - Blazor Blueprint</PageTitle>
@@ -431,6 +433,45 @@
         <CodeBlock Source="Components/DataView/infinite-scroll.txt" />
     </div>
 
+    <!-- ── Async Data Loading (ItemsProvider) ─────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Async Data Loading</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">ItemsProvider</code> for server-side data fetching.
+                The view passes the current pagination, sort, and search state and the provider returns the
+                matching page plus a total count. The built-in loading overlay is shown automatically while
+                the request is in flight, and rapid search keystrokes cancel the previous request. Provide
+                either <code class="bg-muted px-1 py-0.5 rounded">Data</code> or
+                <code class="bg-muted px-1 py-0.5 rounded">ItemsProvider</code>, not both.
+            </p>
+        </div>
+        <BbDataView TItem="Person" ItemsProvider="@LoadPeopleAsync" InitialPageSize="5">
+            <ListTemplate Context="person">
+                <BbCard Class="flex items-center gap-4 p-4 shadow-none hover:bg-accent/50 transition-colors">
+                    <BbAvatar>
+                        <BbAvatarFallback>@GetInitials(person.Name)</BbAvatarFallback>
+                    </BbAvatar>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold truncate">@person.Name</p>
+                        <BbTypographyMuted Class="truncate">@person.Email</BbTypographyMuted>
+                        <BbTypographyMuted Class="text-xs">@person.Department · @person.Role</BbTypographyMuted>
+                    </div>
+                    <BbBadge Variant="@(person.Status == "Active" ? BadgeVariant.Default : BadgeVariant.Outline)">
+                        @person.Status
+                    </BbBadge>
+                </BbCard>
+            </ListTemplate>
+            <Fields>
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Name)"       Header="Name"       Sortable Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Email)"      Header="Email"      Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Department)" Header="Department" Sortable Filterable />
+                <BbDataViewColumn TItem="Person" TValue="string" Property="@(p => p.Role)"       Header="Role"       Sortable Filterable />
+            </Fields>
+        </BbDataView>
+        <CodeBlock Source="Components/DataView/items-provider.txt" />
+    </div>
+
     <!-- ── Loading State ──────────────────────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -525,8 +566,13 @@
         </div>
         <div class="space-y-4">
             <ApiReference ComponentName="DataView">
-                <ApiParameter Name="Data" Type="IEnumerable&lt;TItem&gt;">
-                    The data source for the view.
+                <ApiParameter Name="Data" Type="IEnumerable&lt;TItem&gt;?">
+                    In-memory data source for the view. Mutually exclusive with ItemsProvider.
+                </ApiParameter>
+                <ApiParameter Name="ItemsProvider" Type="DataViewItemsProvider&lt;TItem&gt;?">
+                    Async delegate for server-side data fetching. Receives the current pagination,
+                    sort, search, and a cancellation token and returns the matching page plus a total
+                    count. Mutually exclusive with Data.
                 </ApiParameter>
                 <ApiParameter Name="ListTemplate" Type="RenderFragment&lt;TItem&gt;?" Default="null">
                     Template used to render each item in list layout. When set without GridTemplate the
@@ -653,12 +699,14 @@
     private List<Person> people = new();
     private List<Person> emptyPeople = new();
     private List<Product> products = new();
+    private List<Person> asyncPeople = new();
     private bool isLoading;
 
     protected override void OnInitialized()
     {
         people = MockDataService.GeneratePersons(500);
         products = MockDataService.GenerateProducts(60);
+        asyncPeople = MockDataService.GeneratePersons(200);
     }
 
     private static string GetInitials(string name)
@@ -667,5 +715,44 @@
         return parts.Length >= 2
             ? $"{parts[0][0]}{parts[^1][0]}"
             : name.Length > 0 ? name[0].ToString() : "?";
+    }
+
+    private async ValueTask<DataViewResult<Person>> LoadPeopleAsync(DataViewRequest request)
+    {
+        IEnumerable<Person> query = asyncPeople;
+
+        if (!string.IsNullOrWhiteSpace(request.SearchText))
+        {
+            var search = request.SearchText;
+            query = query.Where(p =>
+                p.Name.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                p.Email.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                p.Department.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                p.Role.Contains(search, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrEmpty(request.SortField) && request.SortDirection != SortDirection.None)
+        {
+            var asc = request.SortDirection == SortDirection.Ascending;
+            query = request.SortField switch
+            {
+                "name"       => asc ? query.OrderBy(p => p.Name)       : query.OrderByDescending(p => p.Name),
+                "department" => asc ? query.OrderBy(p => p.Department) : query.OrderByDescending(p => p.Department),
+                "role"       => asc ? query.OrderBy(p => p.Role)       : query.OrderByDescending(p => p.Role),
+                _ => query
+            };
+        }
+
+        var materialized = query.ToList();
+        var items = materialized
+            .Skip(request.StartIndex)
+            .Take(request.Count ?? materialized.Count)
+            .ToList();
+
+        return new DataViewResult<Person>
+        {
+            Items = items,
+            TotalItemCount = materialized.Count
+        };
     }
 }

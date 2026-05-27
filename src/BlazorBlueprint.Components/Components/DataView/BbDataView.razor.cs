@@ -1,4 +1,5 @@
 using BlazorBlueprint.Primitives;
+using BlazorBlueprint.Primitives.DataView;
 using BlazorBlueprint.Primitives.Table;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -75,6 +76,14 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     private int _infiniteScrollVersion;
     private int _sortingVersion;
 
+    // ItemsProvider
+    private CancellationTokenSource? _loadCts;
+    private bool _isProviderLoading;
+    private int _providerLoadingVersion;
+    private int _lastProviderLoadingVersion;
+    private DataViewItemsProvider<TItem>? _lastItemsProvider;
+    private List<TItem> _accumulatedProviderItems = new();
+
     // ShouldRender tracking fields
     private bool _parametersChanged;
     private IEnumerable<TItem>? _lastData;
@@ -95,9 +104,18 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
 
     /// <summary>
     /// Gets or sets the data source for the view.
+    /// Provide either <see cref="Data"/> or <see cref="ItemsProvider"/>, not both.
     /// </summary>
-    [Parameter, EditorRequired]
-    public IEnumerable<TItem> Data { get; set; } = Array.Empty<TItem>();
+    [Parameter]
+    public IEnumerable<TItem>? Data { get; set; }
+
+    /// <summary>
+    /// Gets or sets an async callback for server-side data loading.
+    /// Invoked whenever pagination, sort, or search state changes.
+    /// Provide either <see cref="Data"/> or <see cref="ItemsProvider"/>, not both.
+    /// </summary>
+    [Parameter]
+    public DataViewItemsProvider<TItem>? ItemsProvider { get; set; }
 
     /// <summary>
     /// Gets or sets the template used to render each item in list layout mode.
@@ -332,7 +350,9 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     /// True when there are more batched items to reveal in infinite scroll mode.
     /// </summary>
     private bool CanLoadMore => EnableInfiniteScroll
-        && _currentInfinitePage * _paginationState.PageSize < _filteredSortedData.Count;
+        && (ItemsProvider != null
+            ? _accumulatedProviderItems.Count < _paginationState.TotalItems
+            : _currentInfinitePage * _paginationState.PageSize < _filteredSortedData.Count);
 
     /// <summary>
     /// The list template in effect: the named parameter takes precedence over any
@@ -368,8 +388,10 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
         // Sync the backing field when the Layout parameter changes externally.
         currentLayout = Layout;
 
-        // Skip reprocessing when the data source has not changed.
-        if (ReferenceEquals(_lastData, Data) && _lastData != null)
+        // Skip reprocessing when neither data source has changed.
+        if (ReferenceEquals(_lastData, Data)
+            && ReferenceEquals(_lastItemsProvider, ItemsProvider)
+            && (_lastData != null || _lastItemsProvider != null))
         {
             return;
         }
@@ -411,6 +433,7 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
         });
 
         _fieldsVersion++;
+        StateHasChanged();
     }
 
     /// <summary>
@@ -439,32 +462,108 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
 
     private async Task ProcessDataAsync()
     {
-        var data = Data ?? Array.Empty<TItem>();
-
-        if (PreprocessData != null)
+        if (ItemsProvider != null)
         {
-            data = await PreprocessData(data);
-        }
+            if (EnableInfiniteScroll)
+            {
+                _accumulatedProviderItems.Clear();
+            }
 
-        var filtered = ApplyFiltering(data);
-        var sorted = ApplySorting(filtered);
-
-        _filteredSortedData = sorted.ToList();
-        _paginationState.TotalItems = _filteredSortedData.Count;
-
-        if (EnableInfiniteScroll)
-        {
-            // Reveal items from pages 1..N; N is incremented by LoadMore / scroll.
-            _visibleData = _filteredSortedData
-                .Take(_currentInfinitePage * _paginationState.PageSize)
-                .ToList();
+            await LoadFromProviderAsync();
         }
         else
         {
-            _visibleData = _filteredSortedData
-                .Skip(_paginationState.StartIndex)
-                .Take(_paginationState.PageSize)
-                .ToList();
+            var data = Data ?? Array.Empty<TItem>();
+
+            if (PreprocessData != null)
+            {
+                data = await PreprocessData(data);
+            }
+
+            var filtered = ApplyFiltering(data);
+            var sorted = ApplySorting(filtered);
+
+            _filteredSortedData = sorted.ToList();
+            _paginationState.TotalItems = _filteredSortedData.Count;
+
+            if (EnableInfiniteScroll)
+            {
+                // Reveal items from pages 1..N; N is incremented by LoadMore / scroll.
+                _visibleData = _filteredSortedData
+                    .Take(_currentInfinitePage * _paginationState.PageSize)
+                    .ToList();
+            }
+            else
+            {
+                _visibleData = _filteredSortedData
+                    .Skip(_paginationState.StartIndex)
+                    .Take(_paginationState.PageSize)
+                    .ToList();
+            }
+        }
+    }
+
+    private async Task LoadFromProviderAsync()
+    {
+        var oldCts = _loadCts;
+        oldCts?.Cancel();
+        oldCts?.Dispose();
+        _loadCts = new CancellationTokenSource();
+        var token = _loadCts.Token;
+
+        _isProviderLoading = true;
+        _providerLoadingVersion++;
+        StateHasChanged();
+
+        try
+        {
+            var startIndex = EnableInfiniteScroll
+                ? _accumulatedProviderItems.Count
+                : _paginationState.StartIndex;
+
+            var request = new DataViewRequest
+            {
+                StartIndex = startIndex,
+                Count = _paginationState.PageSize,
+                SortField = _sortingState.SortedColumn,
+                SortDirection = _sortingState.Direction,
+                SearchText = string.IsNullOrWhiteSpace(_searchValue) ? null : _searchValue,
+                CancellationToken = token
+            };
+
+            var result = await ItemsProvider!(request);
+
+            if (token.IsCancellationRequested)
+            {
+                return;
+            }
+
+            if (EnableInfiniteScroll)
+            {
+                _accumulatedProviderItems.AddRange(result.Items);
+                _filteredSortedData = _accumulatedProviderItems;
+                _visibleData = _accumulatedProviderItems;
+            }
+            else
+            {
+                _filteredSortedData = result.Items.ToList();
+                _visibleData = _filteredSortedData;
+            }
+
+            _paginationState.TotalItems = result.TotalItemCount;
+        }
+        catch (OperationCanceledException)
+        {
+            // Superseded by a newer request — the new request manages loading state.
+            return;
+        }
+        finally
+        {
+            if (!token.IsCancellationRequested)
+            {
+                _isProviderLoading = false;
+                _providerLoadingVersion++;
+            }
         }
     }
 
@@ -642,9 +741,19 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
         }
 
         _isLoadingMore = true;
-        _currentInfinitePage++;
         _infiniteScrollVersion++;
-        await ProcessDataAsync();
+
+        if (ItemsProvider != null)
+        {
+            // startIndex is derived from _accumulatedProviderItems.Count inside LoadFromProviderAsync
+            await LoadFromProviderAsync();
+        }
+        else
+        {
+            _currentInfinitePage++;
+            await ProcessDataAsync();
+        }
+
         _isLoadingMore = false;
         StateHasChanged();
     }
@@ -679,6 +788,7 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
         {
             _parametersChanged = false;
             _lastData = Data;
+            _lastItemsProvider = ItemsProvider;
             _lastLayout = currentLayout;
             _lastIsLoading = IsLoading;
             _lastFieldsVersion = _fieldsVersion;
@@ -687,6 +797,7 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
             _lastSlotVersion = _slotVersion;
             _lastInfiniteScrollVersion = _infiniteScrollVersion;
             _lastSortingVersion = _sortingVersion;
+            _lastProviderLoadingVersion = _providerLoadingVersion;
             return true;
         }
 
@@ -699,10 +810,12 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
         var slotChanged = _lastSlotVersion != _slotVersion;
         var infiniteScrollChanged = _lastInfiniteScrollVersion != _infiniteScrollVersion;
         var sortingChanged = _lastSortingVersion != _sortingVersion;
+        var providerLoadingChanged = _lastProviderLoadingVersion != _providerLoadingVersion;
 
-        if (dataChanged || layoutChanged || loadingChanged || fieldsChanged || searchChanged || paginationChanged || slotChanged || infiniteScrollChanged || sortingChanged)
+        if (dataChanged || layoutChanged || loadingChanged || fieldsChanged || searchChanged || paginationChanged || slotChanged || infiniteScrollChanged || sortingChanged || providerLoadingChanged)
         {
             _lastData = Data;
+            _lastItemsProvider = ItemsProvider;
             _lastLayout = currentLayout;
             _lastIsLoading = IsLoading;
             _lastFieldsVersion = _fieldsVersion;
@@ -711,6 +824,7 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
             _lastSlotVersion = _slotVersion;
             _lastInfiniteScrollVersion = _infiniteScrollVersion;
             _lastSortingVersion = _sortingVersion;
+            _lastProviderLoadingVersion = _providerLoadingVersion;
             return true;
         }
 
@@ -721,6 +835,10 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
 
     public async ValueTask DisposeAsync()
     {
+        _loadCts?.Cancel();
+        _loadCts?.Dispose();
+        _loadCts = null;
+
         if (_jsModule != null)
         {
             try

@@ -101,7 +101,7 @@
             }
 
             @* ── Content ─────────────────────────────────────────────────── *@
-            @if (IsLoading)
+            @if (IsLoading || _isProviderLoading)
             {
                 @if (LoadingTemplate != null)
                 {
@@ -191,7 +191,7 @@
             }
 
             @* ── Pagination – hidden in infinite scroll mode ─────────────── *@
-            @if (ShowPagination && !EnableInfiniteScroll && !IsLoading && _filteredSortedData.Count > 0)
+            @if (ShowPagination && !EnableInfiniteScroll && !IsLoading && !_isProviderLoading && _filteredSortedData.Count > 0)
             {
                 <BbPagination State="@_paginationState"
                               PageSizes="@PageSizes"
