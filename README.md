@@ -77,9 +77,10 @@ dotnet add package BlazorBlueprint.Primitives
 Optionally add an icon library:
 
 ```bash
-dotnet add package BlazorBlueprint.Icons.Lucide      # 1,640+ icons
+dotnet add package BlazorBlueprint.Icons.Lucide       # 1,640+ icons
 dotnet add package BlazorBlueprint.Icons.Heroicons    # 1,288 icons (4 variants)
 dotnet add package BlazorBlueprint.Icons.Feather      # 286 icons
+dotnet add package BlazorBlueprint.Icons.FontAwesome  # 2,066 icons (3 variants, includes brand logos)
 ```
 
 ### Project Template
@@ -345,13 +346,14 @@ Primitives are completely unstyled — bring your own CSS, Tailwind classes, or 
 
 ## Icons
 
-Three icon library packages with **3,200+ total icons**:
+Four icon library packages with **5,200+ total icons**:
 
 | Package | Icons | Style | License |
 |---------|-------|-------|---------|
 | `BlazorBlueprint.Icons.Lucide` | 1,640+ | Stroke-based, consistent 24x24 | ISC |
 | `BlazorBlueprint.Icons.Heroicons` | 1,288 | 4 variants (Outline, Solid, Mini, Micro) | MIT |
 | `BlazorBlueprint.Icons.Feather` | 286 | Minimalist, stroke-based 24x24 | MIT |
+| `BlazorBlueprint.Icons.FontAwesome` | 2,066 | 3 variants (Solid, Regular, Brands — includes brand logos) | CC BY 4.0 / SIL OFL 1.1 / MIT (Free tier) |
 
 ## Theming
 
@@ -473,5 +475,6 @@ Blazor Blueprint is inspired by [shadcn/ui](https://ui.shadcn.com/) and the desi
 - [Lucide Icons](https://lucide.dev/) — ISC License
 - [Heroicons](https://heroicons.com/) — MIT License, Tailwind Labs
 - [Feather Icons](https://feathericons.com/) — MIT License
+- [Font Awesome Free](https://fontawesome.com/) — CC BY 4.0 / SIL OFL 1.1 / MIT, Fonticons Inc.
 - [Apache ECharts](https://echarts.apache.org/) — Apache License 2.0
 - [SortableJS](https://sortablejs.github.io/Sortable/) — MIT License
