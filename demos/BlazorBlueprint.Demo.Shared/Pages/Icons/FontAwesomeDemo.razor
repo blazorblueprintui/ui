@@ -1,0 +1,312 @@
+@page "/icons/fontawesome"
+@using BlazorBlueprint.Icons.FontAwesome.Components
+@using BlazorBlueprint.Icons.FontAwesome.Data
+
+<PageTitle>Font Awesome - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <div class="flex items-center gap-3">
+                <a href="/icons" class="text-muted-foreground hover:text-foreground transition-colors">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"/>
+                    </svg>
+                </a>
+                <h1 class="text-4xl font-bold tracking-tight">Font Awesome</h1>
+            </div>
+            <p class="text-xl text-muted-foreground">
+                Browse and search through @TotalIconCount icons from Font Awesome Free, available in 3 variants.
+            </p>
+        </div>
+    </div>
+
+    <!-- Variant Selector Tabs -->
+    <div class="flex gap-2 border-b border-border">
+        <button
+            class="px-4 py-2 font-medium transition-colors @(selectedVariant == FontAwesomeIconVariant.Solid ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground")"
+            @onclick="() => SelectVariant(FontAwesomeIconVariant.Solid)">
+            Solid (@FontAwesomeIconData.SolidIconCount)
+        </button>
+        <button
+            class="px-4 py-2 font-medium transition-colors @(selectedVariant == FontAwesomeIconVariant.Regular ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground")"
+            @onclick="() => SelectVariant(FontAwesomeIconVariant.Regular)">
+            Regular (@FontAwesomeIconData.RegularIconCount)
+        </button>
+        <button
+            class="px-4 py-2 font-medium transition-colors @(selectedVariant == FontAwesomeIconVariant.Brands ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground")"
+            @onclick="() => SelectVariant(FontAwesomeIconVariant.Brands)">
+            Brands (@FontAwesomeIconData.BrandsIconCount)
+        </button>
+    </div>
+
+    <!-- Variant Description -->
+    <div class="p-4 bg-muted rounded-lg">
+        <div class="flex items-start gap-3">
+            <div class="flex-shrink-0 mt-1">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="16" x2="12" y2="12"/>
+                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+            </div>
+            <div>
+                @switch (selectedVariant)
+                {
+                    case FontAwesomeIconVariant.Solid:
+                        <p class="text-sm">
+                            <strong>Solid:</strong> Filled glyphs — the largest variant in Font Awesome Free and the default. Great for primary UI, navigation, and emphasis.
+                        </p>
+                        break;
+                    case FontAwesomeIconVariant.Regular:
+                        <p class="text-sm">
+                            <strong>Regular:</strong> Outline glyphs. A small curated subset of icons; the Free tier ships far fewer Regular icons than Solid.
+                        </p>
+                        break;
+                    case FontAwesomeIconVariant.Brands:
+                        <p class="text-sm">
+                            <strong>Brands:</strong> Logos for third-party services and products (GitHub, Twitter, etc.). Icons in this set are not all square — width/height vary per icon.
+                        </p>
+                        break;
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Stats -->
+    <div class="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+        <div class="w-full md:w-96">
+            <div class="relative">
+                <FontAwesomeIcon Name="magnifying-glass" Variant="FontAwesomeIconVariant.Solid" Size="20" Class="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                <input
+                    type="text"
+                    placeholder="Search icons..."
+                    class="w-full pl-10 pr-4 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                    @bind="searchQuery"
+                    @bind:event="oninput" />
+            </div>
+        </div>
+
+        <div class="text-sm text-muted-foreground">
+            Showing <span class="font-semibold text-foreground">@FilteredIcons.Count()</span> of @CurrentVariantCount icons
+        </div>
+    </div>
+
+    <!-- Icon Grid -->
+    @if (FilteredIcons.Any())
+    {
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+            @foreach (var iconName in FilteredIcons)
+            {
+                <div class="flex flex-col items-center justify-center p-4 border border-border rounded-lg hover:bg-accent hover:border-accent-foreground/20 transition-colors cursor-pointer group"
+                     title="@iconName">
+                    <div class="mb-2 text-foreground group-hover:scale-110 transition-transform">
+                        <FontAwesomeIcon Name="@iconName" Variant="@selectedVariant" Size="32" />
+                    </div>
+                    <span class="text-xs text-center text-muted-foreground group-hover:text-foreground font-mono break-all">
+                        @iconName
+                    </span>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="flex flex-col items-center justify-center py-16 text-center">
+            <FontAwesomeIcon Name="magnifying-glass-minus" Variant="FontAwesomeIconVariant.Solid" Size="48" Class="text-muted-foreground mb-4" />
+            <h3 class="text-lg font-semibold mb-2">No icons found</h3>
+            <p class="text-muted-foreground">
+                Try adjusting your search query
+            </p>
+        </div>
+    }
+
+    <!-- Usage Examples -->
+    <div class="mt-12 space-y-6">
+        <h2 class="text-2xl font-bold">Usage Examples</h2>
+
+        <!-- Basic Usage with Variants -->
+        <div class="space-y-4">
+            <h3 class="text-xl font-semibold">Basic Usage - All Variants</h3>
+            <div class="p-6 border border-border rounded-lg bg-card space-y-4">
+                <div class="space-y-4">
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm text-muted-foreground w-24">Solid:</span>
+                        <FontAwesomeIcon Name="house" Variant="FontAwesomeIconVariant.Solid" />
+                        <FontAwesomeIcon Name="heart" Variant="FontAwesomeIconVariant.Solid" />
+                        <FontAwesomeIcon Name="star" Variant="FontAwesomeIconVariant.Solid" />
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm text-muted-foreground w-24">Regular:</span>
+                        <FontAwesomeIcon Name="heart" Variant="FontAwesomeIconVariant.Regular" />
+                        <FontAwesomeIcon Name="star" Variant="FontAwesomeIconVariant.Regular" />
+                        <FontAwesomeIcon Name="user" Variant="FontAwesomeIconVariant.Regular" />
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm text-muted-foreground w-24">Brands:</span>
+                        <FontAwesomeIcon Name="github" Variant="FontAwesomeIconVariant.Brands" />
+                        <FontAwesomeIcon Name="microsoft" Variant="FontAwesomeIconVariant.Brands" />
+                        <FontAwesomeIcon Name="apple" Variant="FontAwesomeIconVariant.Brands" />
+                    </div>
+                </div>
+                <pre class="bg-muted p-4 rounded text-sm overflow-x-auto"><code>@@using BlazorBlueprint.Icons.FontAwesome.Components
+
+&lt;FontAwesomeIcon Name="house" Variant="FontAwesomeIconVariant.Solid" /&gt;
+&lt;FontAwesomeIcon Name="heart" Variant="FontAwesomeIconVariant.Regular" /&gt;
+&lt;FontAwesomeIcon Name="github" Variant="FontAwesomeIconVariant.Brands" /&gt;</code></pre>
+            </div>
+        </div>
+
+        <!-- Different Sizes -->
+        <div class="space-y-4">
+            <h3 class="text-xl font-semibold">Custom Sizes</h3>
+            <div class="p-6 border border-border rounded-lg bg-card space-y-4">
+                <div class="flex items-center gap-6">
+                    <FontAwesomeIcon Name="camera" Variant="@selectedVariant" Size="16" />
+                    <FontAwesomeIcon Name="camera" Variant="@selectedVariant" Size="24" />
+                    <FontAwesomeIcon Name="camera" Variant="@selectedVariant" Size="32" />
+                    <FontAwesomeIcon Name="camera" Variant="@selectedVariant" Size="48" />
+                    <FontAwesomeIcon Name="camera" Variant="@selectedVariant" Size="64" />
+                </div>
+                <pre class="bg-muted p-4 rounded text-sm overflow-x-auto"><code>&lt;FontAwesomeIcon Name="camera" Variant="FontAwesomeIconVariant.Solid" Size="16" /&gt;
+&lt;FontAwesomeIcon Name="camera" Variant="FontAwesomeIconVariant.Solid" Size="32" /&gt;
+&lt;FontAwesomeIcon Name="camera" Variant="FontAwesomeIconVariant.Solid" Size="64" /&gt;</code></pre>
+            </div>
+        </div>
+
+        <!-- Custom Colors -->
+        <div class="space-y-4">
+            <h3 class="text-xl font-semibold">Custom Colors</h3>
+            <div class="p-6 border border-border rounded-lg bg-card space-y-4">
+                <div class="flex items-center gap-6">
+                    <FontAwesomeIcon Name="heart" Variant="FontAwesomeIconVariant.Solid" Size="32" Color="red" />
+                    <FontAwesomeIcon Name="star" Variant="FontAwesomeIconVariant.Solid" Size="32" Color="gold" />
+                    <FontAwesomeIcon Name="circle-check" Variant="FontAwesomeIconVariant.Solid" Size="32" Color="green" />
+                    <FontAwesomeIcon Name="circle-exclamation" Variant="FontAwesomeIconVariant.Solid" Size="32" Color="orange" />
+                    <FontAwesomeIcon Name="circle-xmark" Variant="FontAwesomeIconVariant.Solid" Size="32" Color="#ef4444" />
+                </div>
+                <pre class="bg-muted p-4 rounded text-sm overflow-x-auto"><code>&lt;FontAwesomeIcon Name="heart" Variant="FontAwesomeIconVariant.Solid" Size="32" Color="red" /&gt;
+&lt;FontAwesomeIcon Name="star" Variant="FontAwesomeIconVariant.Solid" Size="32" Color="gold" /&gt;</code></pre>
+            </div>
+        </div>
+
+        <!-- With Buttons -->
+        <div class="space-y-4">
+            <h3 class="text-xl font-semibold">Integration with Button Component</h3>
+            <div class="p-6 border border-border rounded-lg bg-card space-y-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <BbButton>
+                        <Icon>
+                            <FontAwesomeIcon Name="download" Variant="FontAwesomeIconVariant.Solid" Size="16" />
+                        </Icon>
+                        <ChildContent>Download</ChildContent>
+                    </BbButton>
+
+                    <BbButton Variant="ButtonVariant.Outline">
+                        <Icon>
+                            <FontAwesomeIcon Name="trash" Variant="FontAwesomeIconVariant.Solid" Size="16" />
+                        </Icon>
+                        <ChildContent>Delete</ChildContent>
+                    </BbButton>
+
+                    <BbButton Variant="ButtonVariant.Secondary">
+                        <Icon>
+                            <FontAwesomeIcon Name="gear" Variant="FontAwesomeIconVariant.Solid" Size="16" />
+                        </Icon>
+                        <ChildContent>Settings</ChildContent>
+                    </BbButton>
+
+                    <BbButton Variant="ButtonVariant.Destructive">
+                        <Icon>
+                            <FontAwesomeIcon Name="triangle-exclamation" Variant="FontAwesomeIconVariant.Solid" Size="16" />
+                        </Icon>
+                        <ChildContent>Warning</ChildContent>
+                    </BbButton>
+                </div>
+                <pre class="bg-muted p-4 rounded text-sm overflow-x-auto"><code>&lt;Button&gt;
+    &lt;Icon&gt;
+        &lt;FontAwesomeIcon Name="download" Variant="FontAwesomeIconVariant.Solid" Size="16" /&gt;
+    &lt;/Icon&gt;
+    Download
+&lt;/Button&gt;</code></pre>
+            </div>
+        </div>
+
+        <!-- Variant Use Cases -->
+        <div class="space-y-4">
+            <h3 class="text-xl font-semibold">When to Use Each Variant</h3>
+            <div class="p-6 border border-border rounded-lg bg-card space-y-4">
+                <div class="grid gap-4">
+                    <div class="flex items-start gap-3">
+                        <FontAwesomeIcon Name="square" Variant="FontAwesomeIconVariant.Solid" Size="24" Class="flex-shrink-0" />
+                        <div>
+                            <p class="font-medium">Solid</p>
+                            <p class="text-sm text-muted-foreground">Default, primary UI, navigation, emphasis — by far the largest set</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <FontAwesomeIcon Name="square" Variant="FontAwesomeIconVariant.Regular" Size="24" Class="flex-shrink-0" />
+                        <div>
+                            <p class="font-medium">Regular</p>
+                            <p class="text-sm text-muted-foreground">Outline alternative for the small subset of icons available in the Free tier</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <FontAwesomeIcon Name="github" Variant="FontAwesomeIconVariant.Brands" Size="24" Class="flex-shrink-0" />
+                        <div>
+                            <p class="font-medium">Brands</p>
+                            <p class="text-sm text-muted-foreground">Third-party logos (GitHub, Microsoft, Apple, etc.) — width and height vary per icon</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string searchQuery = string.Empty;
+    private FontAwesomeIconVariant selectedVariant = FontAwesomeIconVariant.Solid;
+    private IEnumerable<string> allIcons = Enumerable.Empty<string>();
+
+    private int TotalIconCount => FontAwesomeIconData.TotalIconCount;
+
+    private int CurrentVariantCount => selectedVariant switch
+    {
+        FontAwesomeIconVariant.Solid => FontAwesomeIconData.SolidIconCount,
+        FontAwesomeIconVariant.Regular => FontAwesomeIconData.RegularIconCount,
+        FontAwesomeIconVariant.Brands => FontAwesomeIconData.BrandsIconCount,
+        _ => 0
+    };
+
+    private IEnumerable<string> FilteredIcons
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(searchQuery))
+            {
+                return allIcons;
+            }
+
+            return allIcons.Where(icon =>
+                icon.Contains(searchQuery, StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        LoadIconsForVariant();
+    }
+
+    private void SelectVariant(FontAwesomeIconVariant variant)
+    {
+        selectedVariant = variant;
+        searchQuery = string.Empty; // Reset search when switching variants
+        LoadIconsForVariant();
+    }
+
+    private void LoadIconsForVariant()
+    {
+        allIcons = FontAwesomeIconData.GetAvailableIcons(selectedVariant).OrderBy(x => x).ToList();
+    }
+}
