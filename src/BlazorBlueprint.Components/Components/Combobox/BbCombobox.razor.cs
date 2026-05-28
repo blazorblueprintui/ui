@@ -65,11 +65,18 @@ public partial class BbCombobox<TValue> : ComponentBase
     private bool _lastDisabled;
     private string _lastSearchQuery = string.Empty;
 
+    // Bypass for ShouldRender when the trigger needs to pick up a freshly-registered
+    // display text for the current selection. ComboboxItem children live inside the
+    // popover portal and only mount on first open, so their RegisterItem call
+    // arrives well after the surrounding render-skipping state has settled.
+    private bool _triggerTextDirty;
+
     protected override bool ShouldRender()
     {
-        if (_parametersChanged)
+        if (_parametersChanged || _triggerTextDirty)
         {
             _parametersChanged = false;
+            _triggerTextDirty = false;
             _lastIsOpen = _isOpen;
             _lastValue = Value;
             _lastDisabled = Disabled;
@@ -139,6 +146,24 @@ public partial class BbCombobox<TValue> : ComponentBase
     /// </summary>
     [Parameter]
     public string? Placeholder { get; set; }
+
+    /// <summary>
+    /// Gets or sets the display text shown in the trigger when a value is preselected
+    /// via <see cref="Value"/> in compositional mode and no matching
+    /// <c>BbComboboxItem</c> has registered yet.
+    /// </summary>
+    /// <remarks>
+    /// Items live inside the popover portal and only mount when it opens, so the
+    /// internal text registry is empty on initial render. Set this when you already
+    /// know the display text for the preselected value (typically right after resolving
+    /// it from an API) so the trigger can render the correct caption before the user
+    /// has opened the popover. Options mode does not need this — it resolves the text
+    /// synchronously from the <see cref="Options"/> collection. Ignored once a matching
+    /// item registers, so re-registration (e.g. Text updated by the parent) still
+    /// corrects stale captions.
+    /// </remarks>
+    [Parameter]
+    public string? SelectedItemText { get; set; }
 
     /// <summary>
     /// Gets or sets the placeholder text shown in the search input.
@@ -305,9 +330,10 @@ public partial class BbCombobox<TValue> : ComponentBase
     }
 
     /// <summary>
-    /// Gets the display text for the currently selected item.
-    /// Checks Options first (Options mode), then the item text registry (Compositional mode),
-    /// then falls back to the cached display text from the last selection.
+    /// Gets the display text for the currently selected item. Resolution order:
+    /// Options (Options mode) → registered items (Compositional mode, after first open) →
+    /// caller-supplied <see cref="SelectedItemText"/> (covers the pre-mount gap) →
+    /// cached text from the last user selection → placeholder.
     /// </summary>
     private string SelectedDisplayText
     {
@@ -318,21 +344,30 @@ public partial class BbCombobox<TValue> : ComponentBase
                 return EffectivePlaceholder;
             }
 
-            // Options mode: look up from Options collection
+            // Options mode: synchronous lookup from the Options collection.
             var selectedOption = Options?.FirstOrDefault(o => EqualityComparer<TValue>.Default.Equals(o.Value, Value));
             if (selectedOption is not null)
             {
                 return selectedOption.Text;
             }
 
-            // Compositional mode: look up from registered items
+            // Compositional mode: a registered item wins over the caller-provided hint so
+            // that re-registration (e.g. Text updated by the parent) corrects stale captions.
             if (_itemTextRegistry.GetValueOrDefault(Value) is { } registryText)
             {
                 return registryText;
             }
 
-            // Fallback: cached display text from last selection survives Options array changes
-            // during async filtering (e.g. selected option filtered out of current results).
+            // Caller-provided initial text — covers the "popover has never opened so
+            // children have not mounted" gap that the registry alone cannot fill.
+            if (!string.IsNullOrEmpty(SelectedItemText))
+            {
+                return SelectedItemText;
+            }
+
+            // Last-resort: cached text from a previous user selection, which survives
+            // Options array changes during async filtering (e.g. selected option filtered
+            // out of current results).
             return _selectedDisplayTextCache ?? EffectivePlaceholder;
         }
     }
@@ -452,13 +487,31 @@ public partial class BbCombobox<TValue> : ComponentBase
 
     /// <summary>
     /// Registers an item's value and display text for trigger display text lookup.
-    /// Called by ComboboxItem on initialization.
+    /// Called by ComboboxItem on initialization and on parameter cascade.
     /// </summary>
     internal void RegisterItem(TValue value, string text)
     {
-        if (value is not null)
+        if (value is null)
         {
-            _itemTextRegistry[value] = text;
+            return;
+        }
+
+        // Only mark dirty when the text genuinely changed — without this guard the
+        // OnParametersSet-side RegisterItem call would queue a render on every parent
+        // cascade because identical text is re-registered each cycle.
+        var textChanged = !_itemTextRegistry.TryGetValue(value, out var existing)
+            || !string.Equals(existing, text, StringComparison.Ordinal);
+
+        _itemTextRegistry[value] = text;
+
+        // If the registered item is the current selection and its display text actually
+        // changed (covers first-mount and Text-updates), re-render so the trigger picks
+        // up the new caption. Items mount lazily inside the popover portal, so without
+        // this the trigger would stay on the placeholder until the user interacted.
+        if (textChanged && EqualityComparer<TValue>.Default.Equals(value, Value))
+        {
+            _triggerTextDirty = true;
+            StateHasChanged();
         }
     }
 
