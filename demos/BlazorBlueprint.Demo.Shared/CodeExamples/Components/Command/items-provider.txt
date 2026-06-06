@@ -1,0 +1,47 @@
+<BbCommand OnValueChange="@HandleSelect">
+    <BbCommandInput Placeholder="Search 25,000 records..." />
+    <BbCommandList Class="max-h-[300px]">
+        <BbCommandEmpty>No records found.</BbCommandEmpty>
+        <BbCommandVirtualizedGroup TItem="(string Name, int Index)"
+            Heading="Records"
+            ItemsProvider="@LoadRecordsAsync"
+            ItemValue="@(r => r.Name)"
+            EnableLazyLoading="true">
+            <ItemTemplate Context="record">
+                <span class="flex-1">@record.Name</span>
+                <span class="text-xs text-muted-foreground ml-2">#@record.Index</span>
+            </ItemTemplate>
+        </BbCommandVirtualizedGroup>
+    </BbCommandList>
+</BbCommand>
+
+@code {
+    private string? selected;
+    private void HandleSelect(string value) => selected = value;
+
+    // ItemsProvider replaces the eager Items list: it is invoked as the user scrolls and
+    // whenever the search changes, so only the visible slice is ever fetched. Apply the
+    // search yourself (request.SearchText) and return the matching slice + total count.
+    private async ValueTask<CommandItemsProviderResult<(string Name, int Index)>> LoadRecordsAsync(
+        CommandItemsProviderRequest request)
+    {
+        // In a real app this is a DB/API call, e.g.:
+        //   var query = db.Records.Where(...);
+        //   var total = await query.CountAsync(request.CancellationToken);
+        //   var items = await query.Skip(request.StartIndex).Take(request.Count).ToListAsync(...);
+        var query = AllRecords.AsEnumerable();
+        if (!string.IsNullOrWhiteSpace(request.SearchText))
+        {
+            query = query.Where(r => r.Name.Contains(request.SearchText, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var matched = query.ToList();
+        var slice = matched.Skip(request.StartIndex).Take(request.Count).ToList();
+
+        return new CommandItemsProviderResult<(string Name, int Index)>
+        {
+            Items = slice,
+            TotalItemCount = matched.Count,
+        };
+    }
+}
