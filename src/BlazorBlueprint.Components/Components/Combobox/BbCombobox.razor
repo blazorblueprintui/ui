@@ -72,5 +72,19 @@
                 </CascadingValue>
             </BbPopoverContent>
         </BbPopover>
+        @* Hidden registration pass (compositional mode only). The interactive items above live
+           inside the popover portal, which doesn't mount until the first open — so for a pre-bound
+           Value the trigger would show the placeholder until the user opens the dropdown once.
+           Rendering the items again here, invisibly and non-interactively (see RegistrationOnly),
+           lets each one register its display text on initial load so the trigger resolves the
+           selected caption immediately. *@
+        @if (Options is null && ChildContent is not null)
+        {
+            <div style="display:none" aria-hidden="true">
+                <CascadingValue Name="@BbComboboxConstants.RegistrationScopeName" Value="true" IsFixed="true">
+                    @ChildContent
+                </CascadingValue>
+            </div>
+        }
     </div>
 </CascadingValue>

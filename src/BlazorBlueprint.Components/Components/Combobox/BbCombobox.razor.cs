@@ -66,9 +66,10 @@ public partial class BbCombobox<TValue> : ComponentBase
     private string _lastSearchQuery = string.Empty;
 
     // Bypass for ShouldRender when the trigger needs to pick up a freshly-registered
-    // display text for the current selection. ComboboxItem children live inside the
-    // popover portal and only mount on first open, so their RegisterItem call
-    // arrives well after the surrounding render-skipping state has settled.
+    // display text for the current selection. ComboboxItem children register their text on
+    // initial render via the hidden registration pass, but that happens after the trigger's
+    // first render — so RegisterItem arrives once the render-skipping state has already
+    // settled and must force a follow-up render.
     private bool _triggerTextDirty;
 
     protected override bool ShouldRender()
@@ -153,14 +154,14 @@ public partial class BbCombobox<TValue> : ComponentBase
     /// <c>BbComboboxItem</c> has registered yet.
     /// </summary>
     /// <remarks>
-    /// Items live inside the popover portal and only mount when it opens, so the
-    /// internal text registry is empty on initial render. Set this when you already
-    /// know the display text for the preselected value (typically right after resolving
-    /// it from an API) so the trigger can render the correct caption before the user
-    /// has opened the popover. Options mode does not need this — it resolves the text
-    /// synchronously from the <see cref="Options"/> collection. Ignored once a matching
-    /// item registers, so re-registration (e.g. Text updated by the parent) still
-    /// corrects stale captions.
+    /// Compositional items now register their text on initial render (via a hidden
+    /// registration pass), so the trigger resolves a pre-bound <see cref="Value"/> without
+    /// this in the common case. Set it only when the matching item isn't present in the
+    /// markup at first render — e.g. the selection is loaded asynchronously and added later —
+    /// so the trigger can still show a caption in the meantime. Options mode never needs this;
+    /// it resolves text synchronously from the <see cref="Options"/> collection. A registered
+    /// item always wins over this hint, so re-registration (e.g. Text updated by the parent)
+    /// still corrects stale captions.
     /// </remarks>
     [Parameter]
     public string? SelectedItemText { get; set; }
@@ -331,9 +332,9 @@ public partial class BbCombobox<TValue> : ComponentBase
 
     /// <summary>
     /// Gets the display text for the currently selected item. Resolution order:
-    /// Options (Options mode) → registered items (Compositional mode, after first open) →
-    /// caller-supplied <see cref="SelectedItemText"/> (covers the pre-mount gap) →
-    /// cached text from the last user selection → placeholder.
+    /// Options (Options mode) → registered items (Compositional mode) →
+    /// caller-supplied <see cref="SelectedItemText"/> (fallback when no matching item is in
+    /// the markup yet) → cached text from the last user selection → placeholder.
     /// </summary>
     private string SelectedDisplayText
     {
@@ -358,8 +359,8 @@ public partial class BbCombobox<TValue> : ComponentBase
                 return registryText;
             }
 
-            // Caller-provided initial text — covers the "popover has never opened so
-            // children have not mounted" gap that the registry alone cannot fill.
+            // Caller-provided initial text — fallback when the selected value has no matching
+            // item in the markup yet (e.g. the selection is loaded asynchronously).
             if (!string.IsNullOrEmpty(SelectedItemText))
             {
                 return SelectedItemText;
@@ -506,8 +507,9 @@ public partial class BbCombobox<TValue> : ComponentBase
 
         // If the registered item is the current selection and its display text actually
         // changed (covers first-mount and Text-updates), re-render so the trigger picks
-        // up the new caption. Items mount lazily inside the popover portal, so without
-        // this the trigger would stay on the placeholder until the user interacted.
+        // up the new caption. Registration happens after the trigger's first render (the
+        // hidden registration pass mounts children later in the same initial render cycle),
+        // so without this the trigger would stay on the placeholder.
         if (textChanged && EqualityComparer<TValue>.Default.Equals(value, Value))
         {
             _triggerTextDirty = true;
