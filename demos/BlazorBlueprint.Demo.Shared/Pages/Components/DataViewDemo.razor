@@ -717,7 +717,7 @@
             : name.Length > 0 ? name[0].ToString() : "?";
     }
 
-    private async ValueTask<DataViewResult<Person>> LoadPeopleAsync(DataViewRequest request)
+    private ValueTask<DataViewResult<Person>> LoadPeopleAsync(DataViewRequest request)
     {
         IEnumerable<Person> query = asyncPeople;
 
@@ -749,10 +749,10 @@
             .Take(request.Count ?? materialized.Count)
             .ToList();
 
-        return new DataViewResult<Person>
+        return ValueTask.FromResult(new DataViewResult<Person>
         {
             Items = items,
             TotalItemCount = materialized.Count
-        };
+        });
     }
 }

@@ -5,6 +5,7 @@
 @using BlazorBlueprint.Primitives.Services
 @using Microsoft.JSInterop
 @inject IJSRuntime JS
+@inject IFocusManager FocusManager
 @implements IAsyncDisposable
 
 @*
@@ -212,8 +213,23 @@
             // When context closes, clean up
             if (_context?.IsOpen == false && _isKeyboardSetup)
             {
+                // Capture both the trigger ref and the restore flag before teardown.
+                // State.TriggerElement is still populated at this point (Close() doesn't
+                // clear it), but we read it eagerly in case anything else mutates state.
+                var trigger = _context.State.TriggerElement;
+                var shouldRestoreFocus = _context.State.RestoreFocusOnClose;
+
                 await CleanupAsync();
                 StateHasChanged();
+
+                // Restore focus to the trigger AFTER cleanup so the now-unmounted listbox
+                // isn't the active element when the user next presses Tab. Only restore
+                // for intentional closes (Escape, selection) — click-outside and Tab
+                // leave focus where the user intentionally moved it.
+                if (shouldRestoreFocus && trigger.HasValue)
+                {
+                    await FocusManager.RestoreFocus(trigger);
+                }
             }
         }
         catch (Exception ex) when (ex is ObjectDisposedException or TaskCanceledException)
@@ -286,7 +302,8 @@
     public void JsOnEscapeKey()
     {
         if (_disposed) { return; }
-        _context?.Close();
+        // Escape is an intentional dismiss — return focus to the trigger.
+        _context?.Close(restoreFocus: true);
     }
 
     /// <summary>

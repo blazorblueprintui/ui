@@ -18,6 +18,14 @@ public class PopoverState
     /// Used for positioning and focus management.
     /// </summary>
     public ElementReference? TriggerElement { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether focus should be returned to the trigger element when the
+    /// popover closes. Set to <c>true</c> by intentional close paths (Escape) and left
+    /// <c>false</c> for external dismissals (click-outside) where focus is already
+    /// where the user wants it.
+    /// </summary>
+    public bool RestoreFocusOnClose { get; set; }
 }
 
 /// <summary>
@@ -58,14 +66,25 @@ public class PopoverContext : PrimitiveContextWithEvents<PopoverState>
         {
             state.IsOpen = true;
             state.TriggerElement = triggerElement;
+            state.RestoreFocusOnClose = false; // Cleared so the next Close() decides afresh
         });
     }
 
     /// <summary>
     /// Closes the popover.
     /// </summary>
-    public void Close() =>
-        UpdateState(state => state.IsOpen = false);
+    /// <param name="restoreFocus">
+    /// When <c>true</c>, signals that focus should be returned to the trigger element
+    /// after the content tears down. Pass <c>true</c> for intentional close paths
+    /// (Escape) and leave <c>false</c> for external dismissals (click-outside) where
+    /// focus is already where the user wants it.
+    /// </param>
+    public void Close(bool restoreFocus = false) =>
+        UpdateState(state =>
+        {
+            state.IsOpen = false;
+            state.RestoreFocusOnClose = restoreFocus;
+        });
 
     /// <summary>
     /// Toggles the popover open/closed state.

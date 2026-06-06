@@ -62,6 +62,14 @@ public class SelectState<TValue>
     /// Gets or sets whether the select is required.
     /// </summary>
     public bool Required { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether focus should be returned to the trigger element when the
+    /// dropdown closes. Set to <c>true</c> by intentional close paths (item selection,
+    /// Escape) and left <c>false</c> for external dismissals (click-outside, Tab) where
+    /// focus is already on whatever the user moved to.
+    /// </summary>
+    public bool RestoreFocusOnClose { get; set; }
 }
 
 /// <summary>
@@ -172,18 +180,26 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
             state.IsOpen = true;
             state.TriggerElement = triggerElement;
             state.FocusedIndex = -1; // Reset focus on open
+            state.RestoreFocusOnClose = false; // Cleared so the next Close() decides afresh
         });
     }
 
     /// <summary>
     /// Closes the select dropdown.
     /// </summary>
-    public void Close()
+    /// <param name="restoreFocus">
+    /// When <c>true</c>, signals that focus should be returned to the trigger element
+    /// after the content tears down. Pass <c>true</c> for intentional close paths
+    /// (Escape, keyboard activation) and leave <c>false</c> for external dismissals
+    /// (click-outside, Tab) where focus is already where the user wants it.
+    /// </param>
+    public void Close(bool restoreFocus = false)
     {
         UpdateState(state =>
         {
             state.IsOpen = false;
             state.FocusedIndex = -1;
+            state.RestoreFocusOnClose = restoreFocus;
         });
     }
 
@@ -221,6 +237,9 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
             state.DisplayText = displayText;
             state.IsOpen = false; // Close after selection
             state.FocusedIndex = -1;
+            // Selection is an intentional close — return focus to the trigger so
+            // keyboard navigation (Tab) continues from the right place.
+            state.RestoreFocusOnClose = true;
         });
 
         // Invoke value change callback

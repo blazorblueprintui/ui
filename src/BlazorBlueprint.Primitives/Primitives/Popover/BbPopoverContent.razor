@@ -3,6 +3,7 @@
 @using BlazorBlueprint.Primitives.Floating
 @using BlazorBlueprint.Primitives.Services
 @inject IJSRuntime JSRuntime
+@inject IFocusManager FocusManager
 @implements IAsyncDisposable
 
 @*
@@ -255,8 +256,21 @@
         {
             if (!Context.IsOpen)
             {
+                // Capture both the trigger ref and the restore flag before teardown.
+                var trigger = Context.State.TriggerElement;
+                var shouldRestoreFocus = Context.State.RestoreFocusOnClose;
+
                 await CleanupAsync();
                 StateHasChanged();
+
+                // Restore focus to the trigger AFTER cleanup so the now-unmounted popover
+                // isn't the active element when the user next presses Tab. Only restore
+                // for intentional closes (Escape) — click-outside leaves focus where the
+                // user clicked.
+                if (shouldRestoreFocus && trigger.HasValue)
+                {
+                    await FocusManager.RestoreFocus(trigger);
+                }
             }
             else
             {
@@ -282,7 +296,8 @@
             // Close popover if configured
             if (CloseOnEscape)
             {
-                Context.Close();
+                // Escape is an intentional dismiss — return focus to the trigger.
+                Context.Close(restoreFocus: true);
             }
         }
     }
