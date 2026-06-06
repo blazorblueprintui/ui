@@ -149,6 +149,31 @@
         <CodeBlock Source="Components/DataGrid/row-selection.txt" />
     </div>
 
+    <!-- ── Compact Rows (CellClass / HeaderClass) ─────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Compact Rows (CellClass / HeaderClass)</h2>
+            <p class="text-sm text-muted-foreground">
+                Every column &mdash; including <code class="bg-muted px-1 py-0.5 rounded">BbDataGridSelectColumn</code> &mdash;
+                accepts <code class="bg-muted px-1 py-0.5 rounded">CellClass</code> and
+                <code class="bg-muted px-1 py-0.5 rounded">HeaderClass</code>. Apply a smaller padding such as
+                <code class="bg-muted px-1 py-0.5 rounded">CellClass="p-1"</code> to every column, the checkbox column
+                included, for a dense grid &mdash; the select column no longer forces a taller row.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                   SelectionMode="DataTableSelectionMode.Multiple">
+            <Columns>
+                <BbDataGridSelectColumn TData="Person" CellClass="p-1" HeaderClass="p-1" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" CellClass="p-1" HeaderClass="p-1" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" CellClass="p-1" HeaderClass="p-1" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" CellClass="p-1" HeaderClass="p-1" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" CellClass="p-1" HeaderClass="p-1" Sortable />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/compact-rows.txt" />
+    </div>
+
     <!-- ── Expandable Rows ────────────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -1061,6 +1086,12 @@
             <ApiReference ComponentName="DataGridSelectColumn">
                 <ApiParameter Name="Width" Type="string?" Default="48px">
                     Column width for the checkbox column. Defaults to a compact checkbox width.
+                </ApiParameter>
+                <ApiParameter Name="CellClass" Type="string?">
+                    Additional CSS classes applied to the selection cells. Use e.g. "p-1" to override the default padding for a compact row height.
+                </ApiParameter>
+                <ApiParameter Name="HeaderClass" Type="string?">
+                    Additional CSS classes applied to the header cell (the select-all checkbox).
                 </ApiParameter>
                 <ApiParameter Name="Pinned" Type="ColumnPinning" Default="None">
                     Whether this column is pinned. Commonly set to BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left to keep the checkbox column visible when scrolling horizontally.
