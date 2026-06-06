@@ -153,6 +153,16 @@ builder.Services.AddBlazorBlueprintComponents();
 </BbDialog>
 ```
 
+**6. Render modes** — Blazor Blueprint components handle user input and JavaScript interop, so they require an **interactive** render mode (`InteractiveServer`, `InteractiveWebAssembly`, or `InteractiveAuto`). The simplest setup is to enable interactivity globally on the router:
+
+```razor
+<!-- App.razor -->
+<HeadOutlet @rendermode="InteractiveServer" />
+<Routes @rendermode="InteractiveServer" />
+```
+
+> **Important:** A routed page's layout inherits the page's render mode. If you use *per-page* interactivity (e.g. because some auth pages must stay static for `HttpContext`), `MainLayout` renders statically — so buttons, theme toggles, and providers placed in it won't respond. In that case, render the interactive layout chrome (and `BbPortalHost` / `BbToastProvider` / `BbDialogProvider`) as interactive *islands* with `@rendermode`. See the [Render Modes guide](https://blazorblueprintui.com/guides/render-modes) for the full pattern.
+
 ## Components
 
 Blazor Blueprint includes **99 styled components** organized into the following categories.
