@@ -498,6 +498,48 @@
         <CodeBlock Source="Components/Command/lazy-loading.txt" />
     </section>
 
+    <!-- Server-Side Lazy Loading (ItemsProvider) -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Server-Side Lazy Loading (ItemsProvider)</h2>
+        <p class="text-sm text-muted-foreground">
+            With <code class="text-xs bg-muted px-1 py-0.5 rounded">EnableLazyLoading</code> plus the
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">Items</code> parameter you still have to
+            materialize the whole collection up front. Supply an
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">ItemsProvider</code> instead to fetch only
+            the slice currently in view — ideal for data that lives in a database or API. The provider
+            receives the scroll range and the current search text and returns the matching slice plus a
+            total count. This example pages through <strong>25,000</strong> records (with a simulated
+            150&nbsp;ms latency) and never holds more than a screenful in the component.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <div class="border rounded-lg shadow-sm max-w-md">
+                <BlazorBlueprint.Components.BbCommand OnValueChange="@HandleProviderSelect">
+                    <BbCommandInput Placeholder="Search 25,000 records..." />
+                    <BbCommandList Class="max-h-[300px]">
+                        <BbCommandEmpty>No records found.</BbCommandEmpty>
+                        <BbCommandVirtualizedGroup TItem="(string Name, int Index)"
+                            Heading="Records"
+                            ItemsProvider="@LoadProductsAsync"
+                            ItemValue="@(p => p.Name)"
+                            EnableLazyLoading="true">
+                            <ItemTemplate Context="product">
+                                <span class="flex-1">@product.Name</span>
+                                <span class="text-xs text-muted-foreground ml-2">#@product.Index</span>
+                            </ItemTemplate>
+                        </BbCommandVirtualizedGroup>
+                    </BbCommandList>
+                </BlazorBlueprint.Components.BbCommand>
+            </div>
+            @if (!string.IsNullOrEmpty(providerSelected))
+            {
+                <p class="text-sm">Selected: <strong>@providerSelected</strong></p>
+            }
+        </div>
+
+        <CodeBlock Source="Components/Command/items-provider.txt" />
+    </section>
+
     <!-- Debounce -->
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">Debounce</h2>
@@ -717,6 +759,11 @@
         .ToArray();
     private static int TotalIconCount => _lucideIcons.Length + _featherIcons.Length + _heroIcons.Length;
 
+    // Stands in for a database/API for the ItemsProvider demo. The component never receives this list —
+    // only the slices the provider returns for the current scroll range + search.
+    private static readonly List<(string Name, int Index)> _allRecords =
+        Enumerable.Range(0, 25000).Select(i => ($"Record {i:00000}", i)).ToList();
+
     private IDisposable? _shortcutRegistration;
 
     // Independent state for each section
@@ -730,6 +777,7 @@
     private string? disabledSelected;
     private string? complexSelected;
     private string? lazySelected;
+    private string? providerSelected;
 
     // Individual handlers for each section
     private void HandlePaletteSelect(string value)
@@ -745,6 +793,30 @@
     private void HandleDisabledSelect(string value) => disabledSelected = value;
     private void HandleComplexSelect(string value) => complexSelected = value;
     private void HandleLazySelect(string value) => lazySelected = value;
+    private void HandleProviderSelect(string value) => providerSelected = value;
+
+    // ItemsProvider for the server-side lazy-loading demo. In a real app this would query a DB or API;
+    // here it filters the in-memory stand-in, pages it, and adds a small delay to simulate latency.
+    private async ValueTask<CommandItemsProviderResult<(string Name, int Index)>> LoadProductsAsync(
+        CommandItemsProviderRequest request)
+    {
+        await Task.Delay(150, request.CancellationToken); // simulate network/db latency
+
+        IEnumerable<(string Name, int Index)> query = _allRecords;
+        if (!string.IsNullOrWhiteSpace(request.SearchText))
+        {
+            query = query.Where(r => r.Name.Contains(request.SearchText, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var matched = query.ToList();
+        var slice = matched.Skip(request.StartIndex).Take(request.Count).ToList();
+
+        return new CommandItemsProviderResult<(string Name, int Index)>
+        {
+            Items = slice,
+            TotalItemCount = matched.Count,
+        };
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
