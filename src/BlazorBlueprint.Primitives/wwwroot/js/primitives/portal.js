@@ -87,26 +87,59 @@ export function getComputedZIndex(element) {
     return isNaN(zIndex) ? 0 : zIndex;
 }
 
+// ============================================================================
+// Body scroll lock (reference counted)
+// Stacked/nested overlays (e.g. a Dialog opening an AlertDialog) each acquire a
+// lock. We must only restore the body's original scroll state once the LAST lock
+// is released — otherwise a nested overlay's cleanup, capturing the already-locked
+// "hidden" state, would clobber the outer overlay's restore and leave the page
+// permanently frozen regardless of disposal order.
+// ============================================================================
+
+let scrollLockCount = 0;
+let savedScrollState = null;
+
 /**
- * Locks body scroll (useful for modals).
- * @returns {Object} Object with cleanup method to restore scroll
+ * Locks body scroll (useful for modals). Reference counted so nested overlays
+ * share a single underlying lock.
+ * @returns {Object} Object with an apply() method that releases this lock
  */
 export function lockBodyScroll() {
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-    const originalOverflow = document.body.style.overflow;
-    const originalPaddingRight = document.body.style.paddingRight;
+    if (scrollLockCount === 0) {
+        // First lock: capture the true original state before mutating it.
+        const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+        savedScrollState = {
+            overflow: document.body.style.overflow,
+            paddingRight: document.body.style.paddingRight
+        };
 
-    document.body.style.overflow = 'hidden';
+        document.body.style.overflow = 'hidden';
 
-    // Prevent layout shift by adding padding for scrollbar
-    if (scrollbarWidth > 0) {
-        document.body.style.paddingRight = `${scrollbarWidth}px`;
+        // Prevent layout shift by adding padding for scrollbar
+        if (scrollbarWidth > 0) {
+            document.body.style.paddingRight = `${scrollbarWidth}px`;
+        }
     }
+
+    scrollLockCount++;
+
+    // Guard against this handle being released more than once (e.g. close + dispose).
+    let released = false;
 
     // Return cleanup function wrapped in object for C# interop
     const cleanup = () => {
-        document.body.style.overflow = originalOverflow;
-        document.body.style.paddingRight = originalPaddingRight;
+        if (released) {
+            return;
+        }
+        released = true;
+        scrollLockCount = Math.max(0, scrollLockCount - 1);
+
+        // Only restore once every lock has been released.
+        if (scrollLockCount === 0 && savedScrollState) {
+            document.body.style.overflow = savedScrollState.overflow;
+            document.body.style.paddingRight = savedScrollState.paddingRight;
+            savedScrollState = null;
+        }
     };
 
     return {
