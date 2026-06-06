@@ -2843,7 +2843,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         if (isSelectColumn || isExpandColumn)
         {
-            return ClassNames.cn(baseClass, "w-12", pinnedClass, separatorClass);
+            // column.HeaderClass last so callers can override the baked-in width/padding
+            // (e.g. compact select column). cn() is tailwind-merge, so later classes win.
+            return ClassNames.cn(baseClass, "w-12", pinnedClass, separatorClass, column.HeaderClass);
         }
 
         var needsGroup = column.Sortable || column.Filterable || (Reorderable && column.Reorderable);
@@ -2909,7 +2911,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         if (isSelectColumn || isExpandColumn)
         {
-            return ClassNames.cn(baseClass, "w-12", pinnedClass, separatorClass);
+            // column.CellClass last so callers can override the baked-in width/padding
+            // (e.g. CellClass="p-1" for a compact select column). cn() is tailwind-merge.
+            return ClassNames.cn(baseClass, "w-12", pinnedClass, separatorClass, column.CellClass);
         }
 
         var cellClass = column.CellClass;

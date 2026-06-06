@@ -27,6 +27,20 @@ public partial class BbDataGridSelectColumn<TData> : ComponentBase, IDataGridCol
     public ColumnPinning Pinned { get; set; } = ColumnPinning.None;
 
     /// <summary>
+    /// Additional CSS classes for the selection cells. Useful for matching a compact row height —
+    /// e.g. <c>CellClass="p-1"</c> to override the default cell padding so the checkbox column
+    /// doesn't force a taller row than the rest of the grid.
+    /// </summary>
+    [Parameter]
+    public string? CellClass { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes for the header cell (the select-all checkbox).
+    /// </summary>
+    [Parameter]
+    public string? HeaderClass { get; set; }
+
+    /// <summary>
     /// The parent DataGrid component. Set via cascading parameter.
     /// </summary>
     [CascadingParameter]
@@ -58,9 +72,9 @@ public partial class BbDataGridSelectColumn<TData> : ComponentBase, IDataGridCol
 
     RenderFragment<DataGridHeaderContext<TData>>? IDataGridColumn<TData>.HeaderTemplate => null;
 
-    string? IDataGridColumn<TData>.CellClass => null;
+    string? IDataGridColumn<TData>.CellClass => CellClass;
 
-    string? IDataGridColumn<TData>.HeaderClass => null;
+    string? IDataGridColumn<TData>.HeaderClass => HeaderClass;
 
     bool IDataGridColumn<TData>.NoWrap => false;
 
