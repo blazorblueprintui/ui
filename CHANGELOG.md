@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - **BbCombobox & BbMultiSelect: keyboard focus lost after selecting** — Selecting an item in `BbCombobox`, or closing `BbMultiSelect` via Escape or its Close button, left keyboard focus on the now-unmounted popover content, so focus fell back to the page root and the next Tab resumed from the top of the page. Focus is now returned to the trigger on these intentional closes — extending the behavior added for Select/DropdownMenu/Popover — while click-outside still leaves focus where the user clicked. A new `RestoreFocusOnClose` parameter on `BbPopover` carries the consumer's focus-restore intent. ([#349](https://github.com/blazorblueprintui/ui/pull/349))
+- **BbCollapsible & BbDropdownMenu: Space/Enter double-toggled the trigger** — Pressing Space or Enter on a `BbCollapsibleTrigger` (e.g. the docs "View Code" toggles) or a `BbDropdownMenuTrigger` opened then immediately closed it in a single press. The triggers render native `<button>` elements, which the browser already activates on Space/Enter by firing a click, but they also toggled in a keydown handler — so each press fired twice. The redundant keydown toggle was removed (Collapsible) or scoped to arrow keys only (DropdownMenu), so one press now performs exactly one toggle. ([#350](https://github.com/blazorblueprintui/ui/pull/350))
 
 ---
 
