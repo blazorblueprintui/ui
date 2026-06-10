@@ -28,6 +28,9 @@ public partial class BbDockTabGroup : ComponentBase
 
     private DockTabGroupNode group => (DockTabGroupNode)Group;
 
+    private BbContextMenu? tabMenu;
+    private BbDockPanel? contextPanel;
+
     private bool IsFloating => FloatingWindowId is not null;
 
     private bool IsMaximized => Dock is not null && Dock.IsMaximized(group);
@@ -52,6 +55,16 @@ public partial class BbDockTabGroup : ComponentBase
         await Dock.StartTabDragAsync(panel.Id, e);
     }
 
+    private async Task HandleTabContextMenu(BbDockPanel panel, MouseEventArgs e)
+    {
+        contextPanel = panel;
+
+        if (tabMenu is not null)
+        {
+            await tabMenu.OpenAt(e.ClientX, e.ClientY);
+        }
+    }
+
     private async Task HandleStripPointerDown(PointerEventArgs e)
     {
         if (IsFloating && e.Button == 0 && FloatingWindowId is not null)
@@ -71,7 +84,7 @@ public partial class BbDockTabGroup : ComponentBase
         IsFloating ? "cursor-move" : null);
 
     private static string TabClass(bool isActive) => ClassNames.cn(
-        "group/tab relative flex h-full min-w-[88px] max-w-[200px] cursor-grab items-center gap-1.5 border-r border-border/40 px-2.5 text-xs transition-colors active:cursor-grabbing",
+        "group/tab relative flex h-full min-w-[88px] max-w-[200px] cursor-default items-center gap-1.5 border-r border-border/40 px-2.5 text-xs transition-colors",
         isActive
             ? "z-10 -mb-px border-b border-background bg-background text-foreground after:absolute after:inset-x-0 after:top-0 after:h-[2px] after:bg-primary"
             : "bg-transparent text-muted-foreground hover:bg-background/50 hover:text-foreground");

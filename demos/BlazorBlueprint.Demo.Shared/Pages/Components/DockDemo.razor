@@ -25,6 +25,7 @@
             <li>• <strong class="text-foreground">Drag a floating window</strong> by its tab strip; resize it from the corner.</li>
             <li>• <strong class="text-foreground">Maximize</strong> a group with the button in the tab bar.</li>
             <li>• <strong class="text-foreground">Close</strong> a tab with its ✕, then reopen it (see below).</li>
+            <li>• <strong class="text-foreground">Right-click a tab</strong> to close others, close all, or pin it to the front.</li>
         </ul>
     </div>
 
@@ -180,6 +181,52 @@ $ _</code></pre>
         </div>
 
         <CodeBlock Source="Components/Dock/reorder.txt" />
+    </div>
+
+    <!-- Tab context menu -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Tab Context Menu &amp; Pinning</h2>
+            <p class="text-sm text-muted-foreground">
+                Right-click any tab for a context menu with <strong>Close</strong>,
+                <strong>Close Other Tabs</strong> (enabled only when the group has more than one tab),
+                <strong>Close All Tabs</strong> and <strong>Pin Tab</strong>. Pinned tabs show a pin
+                marker and sit at the front of the strip in the order they were pinned. Pinned tabs can
+                only be reordered amongst themselves, and unpinned tabs cannot be dragged ahead of them.
+            </p>
+        </div>
+
+        <div class="h-[360px] rounded-lg border shadow-sm">
+            <BbDock>
+                <BbDockPanel Id="c-index" Title="Index.razor" Region="DockZone.Center">
+                    <Icon><LucideIcon Name="house" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="space-y-2 p-4 text-sm text-muted-foreground">
+                            <p>Right-click any tab above to open its context menu.</p>
+                            <p>Pin a couple of tabs, then drag to reorder — pinned tabs stay grouped at the front.</p>
+                        </div>
+                    </ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="c-layout" Title="Layout.razor" Region="DockZone.Center" Order="1">
+                    <Icon><LucideIcon Name="layout-template" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Shared layout.</div></ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="c-counter" Title="Counter.razor" Region="DockZone.Center" Order="2">
+                    <Icon><LucideIcon Name="plus" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Counter page.</div></ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="c-weather" Title="Weather.razor" Region="DockZone.Center" Order="3">
+                    <Icon><LucideIcon Name="cloud-sun" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Weather page.</div></ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="c-fetch" Title="FetchData.razor" Region="DockZone.Center" Order="4">
+                    <Icon><LucideIcon Name="database" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Fetch data page.</div></ChildContent>
+                </BbDockPanel>
+            </BbDock>
+        </div>
+
+        <CodeBlock Source="Components/Dock/contextmenu.txt" />
     </div>
 
     <!-- Close & reopen -->

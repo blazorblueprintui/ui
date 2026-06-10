@@ -92,7 +92,7 @@ function onTabMove(state, e) {
         }
         state.active = true;
         state.ghost = createGhost(state.title);
-        document.body.style.cursor = "grabbing";
+        document.body.style.cursor = "default";
     }
 
     moveGhost(state.ghost, e.clientX, e.clientY);

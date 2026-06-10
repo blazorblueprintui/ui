@@ -49,6 +49,7 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
     private readonly Dictionary<string, BbDockPanel> panels = new();
     private readonly List<string> registrationOrder = new();
     private readonly HashSet<string> closedPanels = new();
+    private readonly HashSet<string> pinnedPanels = new();
     private readonly List<DockFloatingWindow> floatingWindows = new();
 
     private DockNode? layout;
@@ -474,7 +475,64 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
             target.PanelIds.Insert(insert, panelId);
         }
 
+        // Pinned tabs occupy the front of the strip: a pinned tab cannot be reordered
+        // behind an unpinned one, and an unpinned tab cannot jump ahead of a pinned one.
+        // The drop index above is honoured within whichever region the tab belongs to.
+        EnforcePinOrder(target);
+
         target.ActivePanelId = panelId;
+    }
+
+    // ----------------------------------------------------------------- Pinning
+
+    internal bool IsPinned(string panelId) => pinnedPanels.Contains(panelId);
+
+    /// <summary>
+    /// The number of pinned panels at the front of the given group's tab strip.
+    /// </summary>
+    private int PinnedCount(DockTabGroupNode group) =>
+        group.PanelIds.Count(pinnedPanels.Contains);
+
+    /// <summary>
+    /// Stable-partitions a group's tabs so pinned tabs sit at the front in pin order,
+    /// followed by unpinned tabs in their existing order.
+    /// </summary>
+    private void EnforcePinOrder(DockTabGroupNode group)
+    {
+        if (group.PanelIds.Count < 2)
+        {
+            return;
+        }
+
+        var pinnedHere = group.PanelIds.Where(pinnedPanels.Contains).ToList();
+        if (pinnedHere.Count == 0)
+        {
+            return;
+        }
+
+        var unpinnedHere = group.PanelIds.Where(id => !pinnedPanels.Contains(id));
+        group.PanelIds = pinnedHere.Concat(unpinnedHere).ToList();
+    }
+
+    /// <summary>
+    /// Toggles the pinned state of a panel. Pinning moves the tab to the back of the pinned
+    /// queue at the front of its group; unpinning returns it to the front of the unpinned tabs.
+    /// </summary>
+    internal async Task TogglePinAsync(string panelId)
+    {
+        var group = FindGroupContaining(panelId);
+        if (group is null)
+        {
+            return;
+        }
+
+        if (!pinnedPanels.Remove(panelId))
+        {
+            pinnedPanels.Add(panelId);
+        }
+
+        EnforcePinOrder(group);
+        await AfterMutateAsync();
     }
 
     private void AddPanelToDefaultLocation(string panelId)
@@ -483,6 +541,7 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
         if (existing is not null)
         {
             existing.PanelIds.Add(panelId);
+            EnforcePinOrder(existing);
             existing.ActivePanelId = panelId;
         }
         else
@@ -552,6 +611,7 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
                     {
                         RemovePanelFromLayout(panelId);
                         target.PanelIds.Add(panelId);
+                        EnforcePinOrder(target);
                     }
                     target.ActivePanelId = panelId;
                 }
@@ -607,6 +667,7 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
         }
 
         RemovePanelFromLayout(panelId);
+        pinnedPanels.Remove(panelId);
         closedPanels.Add(panelId);
 
         if (OnPanelClosed.HasDelegate)
@@ -615,6 +676,56 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
         }
 
         await AfterMutateAsync();
+    }
+
+    /// <summary>
+    /// Closes every closable panel that shares a tab group with the given panel.
+    /// </summary>
+    internal Task CloseAllPanelsInGroupAsync(string panelId)
+    {
+        var group = FindGroupContaining(panelId);
+        return group is null
+            ? Task.CompletedTask
+            : CloseManyAsync(group.PanelIds.ToList());
+    }
+
+    /// <summary>
+    /// Closes every closable panel in the given panel's tab group except the panel itself.
+    /// </summary>
+    internal Task CloseOtherPanelsInGroupAsync(string panelId)
+    {
+        var group = FindGroupContaining(panelId);
+        return group is null
+            ? Task.CompletedTask
+            : CloseManyAsync(group.PanelIds.Where(id => id != panelId).ToList());
+    }
+
+    private async Task CloseManyAsync(IReadOnlyList<string> panelIds)
+    {
+        var closedAny = false;
+
+        foreach (var id in panelIds)
+        {
+            if (!panels.TryGetValue(id, out var panel) || !panel.Closable)
+            {
+                continue;
+            }
+
+            RemovePanelFromLayout(id);
+            pinnedPanels.Remove(id);
+            closedPanels.Add(id);
+            closedAny = true;
+
+            if (OnPanelClosed.HasDelegate)
+            {
+                await OnPanelClosed.InvokeAsync(id);
+            }
+        }
+
+        if (closedAny)
+        {
+            await AfterMutateAsync();
+        }
     }
 
     /// <summary>

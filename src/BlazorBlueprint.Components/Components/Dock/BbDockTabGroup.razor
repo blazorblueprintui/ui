@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
 
 <div class="@RootClass" data-dock-group="@group.Id">
     <div class="@StripClass"
@@ -20,8 +21,20 @@
                      data-dock-tab="@panel.Id"
                      @onpointerdown="e => HandleTabPointerDown(panel, e)"
                      @onpointerdown:stopPropagation="true"
-                     @onclick="() => Dock.ActivatePanel(group, panel.Id)">
-                    @if (panel.Icon is not null)
+                     @onclick="() => Dock.ActivatePanel(group, panel.Id)"
+                     @oncontextmenu="e => HandleTabContextMenu(panel, e)"
+                     @oncontextmenu:preventDefault="true"
+                     @oncontextmenu:stopPropagation="true">
+                    @if (Dock.IsPinned(panel.Id))
+                    {
+                        <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center text-primary" aria-hidden="true">
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                                <line x1="12" y1="17" x2="12" y2="22" />
+                                <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
+                            </svg>
+                        </span>
+                    }
+                    else if (panel.Icon is not null)
                     {
                         <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center">@panel.Icon</span>
                     }
@@ -45,25 +58,13 @@
 
         @if (!IsFloating)
         {
-            <div class="flex shrink-0 items-center gap-0.5 border-l border-border/50 px-1">
+            <div class="flex shrink-0 items-center gap-0.5 px-1">
                 <button type="button"
                         class="inline-flex h-6 w-6 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
                         aria-label="@(IsMaximized ? "Restore panel group" : "Maximize panel group")"
                         @onclick="() => Dock.ToggleMaximize(group)"
                         @onpointerdown:stopPropagation="true">
-                    @if (IsMaximized)
-                    {
-                        <svg width="14" height="14" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                            <path d="M5.5 9.5h-3v-1h2v-2h1v3Zm4-4h-1v-3h1v2h2v1h-2Z" fill="currentColor" />
-                            <rect x="1.5" y="1.5" width="12" height="12" rx="1.5" stroke="currentColor" fill="none" />
-                        </svg>
-                    }
-                    else
-                    {
-                        <svg width="14" height="14" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                            <rect x="2.5" y="2.5" width="10" height="10" rx="1.5" stroke="currentColor" fill="none" />
-                        </svg>
-                    }
+                    <LucideIcon Name="@(IsMaximized ? "minimize-2" : "maximize-2")" Size="14" />
                 </button>
             </div>
         }
@@ -84,4 +85,27 @@
             </div>
         }
     </div>
+
+    <BbContextMenu @ref="tabMenu">
+        <BbContextMenuContent>
+            @if (contextPanel is not null)
+            {
+                var panel = contextPanel;
+                var pinned = Dock.IsPinned(panel.Id);
+                <BbContextMenuItem Disabled="@(!panel.Closable)" OnClick="() => Dock.ClosePanelAsync(panel.Id)">
+                    Close
+                </BbContextMenuItem>
+                <BbContextMenuItem Disabled="@(group.PanelIds.Count <= 1)" OnClick="() => Dock.CloseOtherPanelsInGroupAsync(panel.Id)">
+                    Close Other Tabs
+                </BbContextMenuItem>
+                <BbContextMenuItem OnClick="() => Dock.CloseAllPanelsInGroupAsync(panel.Id)">
+                    Close All Tabs
+                </BbContextMenuItem>
+                <BbContextMenuSeparator />
+                <BbContextMenuItem OnClick="() => Dock.TogglePinAsync(panel.Id)">
+                    @(pinned ? "Unpin Tab" : "Pin Tab")
+                </BbContextMenuItem>
+            }
+        </BbContextMenuContent>
+    </BbContextMenu>
 </div>
