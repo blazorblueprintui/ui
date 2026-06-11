@@ -28,7 +28,170 @@
             <li>• <strong class="text-foreground">Right-click a tab</strong> to close others, close all, or pin it to the front.</li>
         </ul>
     </div>
+    
+    <!-- Basic -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic</h2>
+            <p class="text-sm text-muted-foreground">
+                Panels are placed by <code>Region</code>. Panels sharing a region become tabs in the same group.
+            </p>
+        </div>
 
+        <div class="h-[400px] border">
+            <BbDock>
+                <BbDockPanel Id="b-editor" Title="Editor" Region="DockZone.Center" Closable="false">
+                    <div class="p-4 text-sm text-muted-foreground">Main editor content</div>
+                </BbDockPanel>
+                <BbDockPanel Id="b-explorer" Title="Explorer" Region="DockZone.Left">
+                    <div class="p-4 text-sm text-muted-foreground">File tree</div>
+                </BbDockPanel>
+                <BbDockPanel Id="b-output" Title="Output" Region="DockZone.Bottom">
+                    <div class="p-4 text-sm text-muted-foreground">Build output</div>
+                </BbDockPanel>
+            </BbDock>
+        </div>
+
+        <CodeBlock Source="Components/Dock/basic.txt" />
+    </div>
+
+    <!-- Tab reordering -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Tab Reordering</h2>
+            <p class="text-sm text-muted-foreground">
+                Drag a tab along the strip to reorder it — an insertion line shows where it will land and the
+                surrounding layout stays put. Tabs can also be dropped onto another group's strip at a precise position.
+            </p>
+        </div>
+
+        <div class="h-[360px] border">
+            <BbDock>
+                <BbDockPanel Id="r-home" Title="Home.razor" Region="DockZone.Center" Closable="false">
+                    <Icon><LucideIcon Name="house" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="p-4 text-sm text-muted-foreground">Drag the tabs above to reorder them. The insertion line marks the drop slot.</div>
+                    </ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="r-about" Title="About.razor" Region="DockZone.Center" Order="1">
+                    <Icon><LucideIcon Name="info" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">About page.</div></ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="r-contact" Title="Contact.razor" Region="DockZone.Center" Order="2">
+                    <Icon><LucideIcon Name="mail" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Contact page.</div></ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="r-settings" Title="Settings.razor" Region="DockZone.Center" Order="3">
+                    <Icon><LucideIcon Name="settings" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Settings page.</div></ChildContent>
+                </BbDockPanel>
+
+                <BbDockPanel Id="r-outline" Title="Outline" Region="DockZone.Right">
+                    <Icon><LucideIcon Name="list-tree" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Drop a tab onto this strip to move it here at a precise position.</div></ChildContent>
+                </BbDockPanel>
+            </BbDock>
+        </div>
+
+        <CodeBlock Source="Components/Dock/reorder.txt" />
+    </div>
+
+    <!-- Tab context menu -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Tab Context Menu &amp; Pinning</h2>
+            <p class="text-sm text-muted-foreground">
+                Right-click any tab for a context menu with <strong>Close</strong>,
+                <strong>Close Other Tabs</strong> (enabled only when the group has more than one tab),
+                <strong>Close All Tabs</strong> and <strong>Pin Tab</strong>. Pinned tabs show a pin
+                marker and sit at the front of the strip in the order they were pinned. Pinned tabs can
+                only be reordered amongst themselves, and unpinned tabs cannot be dragged ahead of them.
+            </p>
+        </div>
+
+        <div class="h-[360px] border">
+            <BbDock>
+                <BbDockPanel Id="c-index" Title="Index.razor" Region="DockZone.Center">
+                    <Icon><LucideIcon Name="house" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="space-y-2 p-4 text-sm text-muted-foreground">
+                            <p>Right-click any tab above to open its context menu.</p>
+                            <p>Pin a couple of tabs, then drag to reorder — pinned tabs stay grouped at the front.</p>
+                        </div>
+                    </ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="c-layout" Title="Layout.razor" Region="DockZone.Center" Order="1">
+                    <Icon><LucideIcon Name="layout-template" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Shared layout.</div></ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="c-counter" Title="Counter.razor" Region="DockZone.Center" Order="2">
+                    <Icon><LucideIcon Name="plus" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Counter page.</div></ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="c-weather" Title="Weather.razor" Region="DockZone.Center" Order="3">
+                    <Icon><LucideIcon Name="cloud-sun" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Weather page.</div></ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="c-fetch" Title="FetchData.razor" Region="DockZone.Center" Order="4">
+                    <Icon><LucideIcon Name="database" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Fetch data page.</div></ChildContent>
+                </BbDockPanel>
+            </BbDock>
+        </div>
+
+        <CodeBlock Source="Components/Dock/contextmenu.txt" />
+    </div>
+
+    <!-- Close & reopen -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Close &amp; Reopen Panels</h2>
+            <p class="text-sm text-muted-foreground">
+                Closing a panel raises <code>OnPanelClosed</code>. Use the dock's
+                <code>OpenPanelAsync</code> method to bring it back.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+            @if (closedPanels.Count == 0)
+            {
+                <span class="text-sm text-muted-foreground">Close a tab below to reopen it here.</span>
+            }
+            @foreach (var id in closedPanels)
+            {
+                <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Outline" OnClick="() => Reopen(id)">
+                    <LucideIcon Name="plus" Size="14" Class="mr-1" /> Reopen @titles[id]
+                </BbButton>
+            }
+        </div>
+
+        <div class="h-[420px] border">
+            <BbDock @ref="reopenDock" OnPanelClosed="OnPanelClosed">
+                <BbDockPanel Id="document" Title="Document" Region="DockZone.Center">
+                    <Icon><LucideIcon Name="file-text" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="p-4 text-sm text-muted-foreground">The main document. This tab can be closed and reopened.</div>
+                    </ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="comments" Title="Comments" Region="DockZone.Right">
+                    <Icon><LucideIcon Name="message-square" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="p-4 text-sm text-muted-foreground">Reviewer comments.</div>
+                    </ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="history" Title="History" Region="DockZone.Bottom">
+                    <Icon><LucideIcon Name="history" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="p-4 text-sm text-muted-foreground">Revision history.</div>
+                    </ChildContent>
+                </BbDockPanel>
+            </BbDock>
+        </div>
+
+        <CodeBlock Source="Components/Dock/reopen.txt" />
+    </div>
+    
+    
     <!-- IDE workspace -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -39,7 +202,7 @@
             </p>
         </div>
 
-        <div class="h-[600px] rounded-lg border shadow-sm">
+        <div class="h-[600px] border">
             <BbDock OnLayoutChanged="() => layoutChanges++">
                 <BbDockPanel Id="explorer" Title="Explorer" Region="DockZone.Left">
                     <Icon><LucideIcon Name="files" Size="14" /></Icon>
@@ -142,167 +305,6 @@ $ _</code></pre>
         <CodeBlock Source="Components/Dock/ide.txt" />
     </div>
 
-    <!-- Tab reordering -->
-    <div class="space-y-4">
-        <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Tab Reordering</h2>
-            <p class="text-sm text-muted-foreground">
-                Drag a tab along the strip to reorder it — an insertion line shows where it will land and the
-                surrounding layout stays put. Tabs can also be dropped onto another group's strip at a precise position.
-            </p>
-        </div>
-
-        <div class="h-[360px] rounded-lg border shadow-sm">
-            <BbDock>
-                <BbDockPanel Id="r-home" Title="Home.razor" Region="DockZone.Center" Closable="false">
-                    <Icon><LucideIcon Name="house" Size="14" /></Icon>
-                    <ChildContent>
-                        <div class="p-4 text-sm text-muted-foreground">Drag the tabs above to reorder them. The insertion line marks the drop slot.</div>
-                    </ChildContent>
-                </BbDockPanel>
-                <BbDockPanel Id="r-about" Title="About.razor" Region="DockZone.Center" Order="1">
-                    <Icon><LucideIcon Name="info" Size="14" /></Icon>
-                    <ChildContent><div class="p-4 text-sm text-muted-foreground">About page.</div></ChildContent>
-                </BbDockPanel>
-                <BbDockPanel Id="r-contact" Title="Contact.razor" Region="DockZone.Center" Order="2">
-                    <Icon><LucideIcon Name="mail" Size="14" /></Icon>
-                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Contact page.</div></ChildContent>
-                </BbDockPanel>
-                <BbDockPanel Id="r-settings" Title="Settings.razor" Region="DockZone.Center" Order="3">
-                    <Icon><LucideIcon Name="settings" Size="14" /></Icon>
-                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Settings page.</div></ChildContent>
-                </BbDockPanel>
-
-                <BbDockPanel Id="r-outline" Title="Outline" Region="DockZone.Right">
-                    <Icon><LucideIcon Name="list-tree" Size="14" /></Icon>
-                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Drop a tab onto this strip to move it here at a precise position.</div></ChildContent>
-                </BbDockPanel>
-            </BbDock>
-        </div>
-
-        <CodeBlock Source="Components/Dock/reorder.txt" />
-    </div>
-
-    <!-- Tab context menu -->
-    <div class="space-y-4">
-        <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Tab Context Menu &amp; Pinning</h2>
-            <p class="text-sm text-muted-foreground">
-                Right-click any tab for a context menu with <strong>Close</strong>,
-                <strong>Close Other Tabs</strong> (enabled only when the group has more than one tab),
-                <strong>Close All Tabs</strong> and <strong>Pin Tab</strong>. Pinned tabs show a pin
-                marker and sit at the front of the strip in the order they were pinned. Pinned tabs can
-                only be reordered amongst themselves, and unpinned tabs cannot be dragged ahead of them.
-            </p>
-        </div>
-
-        <div class="h-[360px] rounded-lg border shadow-sm">
-            <BbDock>
-                <BbDockPanel Id="c-index" Title="Index.razor" Region="DockZone.Center">
-                    <Icon><LucideIcon Name="house" Size="14" /></Icon>
-                    <ChildContent>
-                        <div class="space-y-2 p-4 text-sm text-muted-foreground">
-                            <p>Right-click any tab above to open its context menu.</p>
-                            <p>Pin a couple of tabs, then drag to reorder — pinned tabs stay grouped at the front.</p>
-                        </div>
-                    </ChildContent>
-                </BbDockPanel>
-                <BbDockPanel Id="c-layout" Title="Layout.razor" Region="DockZone.Center" Order="1">
-                    <Icon><LucideIcon Name="layout-template" Size="14" /></Icon>
-                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Shared layout.</div></ChildContent>
-                </BbDockPanel>
-                <BbDockPanel Id="c-counter" Title="Counter.razor" Region="DockZone.Center" Order="2">
-                    <Icon><LucideIcon Name="plus" Size="14" /></Icon>
-                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Counter page.</div></ChildContent>
-                </BbDockPanel>
-                <BbDockPanel Id="c-weather" Title="Weather.razor" Region="DockZone.Center" Order="3">
-                    <Icon><LucideIcon Name="cloud-sun" Size="14" /></Icon>
-                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Weather page.</div></ChildContent>
-                </BbDockPanel>
-                <BbDockPanel Id="c-fetch" Title="FetchData.razor" Region="DockZone.Center" Order="4">
-                    <Icon><LucideIcon Name="database" Size="14" /></Icon>
-                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Fetch data page.</div></ChildContent>
-                </BbDockPanel>
-            </BbDock>
-        </div>
-
-        <CodeBlock Source="Components/Dock/contextmenu.txt" />
-    </div>
-
-    <!-- Close & reopen -->
-    <div class="space-y-4">
-        <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Close &amp; Reopen Panels</h2>
-            <p class="text-sm text-muted-foreground">
-                Closing a panel raises <code>OnPanelClosed</code>. Use the dock's
-                <code>OpenPanelAsync</code> method to bring it back.
-            </p>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2">
-            @if (closedPanels.Count == 0)
-            {
-                <span class="text-sm text-muted-foreground">Close a tab below to reopen it here.</span>
-            }
-            @foreach (var id in closedPanels)
-            {
-                <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Outline" OnClick="() => Reopen(id)">
-                    <LucideIcon Name="plus" Size="14" Class="mr-1" /> Reopen @titles[id]
-                </BbButton>
-            }
-        </div>
-
-        <div class="h-[420px] rounded-lg border shadow-sm">
-            <BbDock @ref="reopenDock" OnPanelClosed="OnPanelClosed">
-                <BbDockPanel Id="document" Title="Document" Region="DockZone.Center">
-                    <Icon><LucideIcon Name="file-text" Size="14" /></Icon>
-                    <ChildContent>
-                        <div class="p-4 text-sm text-muted-foreground">The main document. This tab can be closed and reopened.</div>
-                    </ChildContent>
-                </BbDockPanel>
-                <BbDockPanel Id="comments" Title="Comments" Region="DockZone.Right">
-                    <Icon><LucideIcon Name="message-square" Size="14" /></Icon>
-                    <ChildContent>
-                        <div class="p-4 text-sm text-muted-foreground">Reviewer comments.</div>
-                    </ChildContent>
-                </BbDockPanel>
-                <BbDockPanel Id="history" Title="History" Region="DockZone.Bottom">
-                    <Icon><LucideIcon Name="history" Size="14" /></Icon>
-                    <ChildContent>
-                        <div class="p-4 text-sm text-muted-foreground">Revision history.</div>
-                    </ChildContent>
-                </BbDockPanel>
-            </BbDock>
-        </div>
-
-        <CodeBlock Source="Components/Dock/reopen.txt" />
-    </div>
-
-    <!-- Basic -->
-    <div class="space-y-4">
-        <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Basic</h2>
-            <p class="text-sm text-muted-foreground">
-                Panels are placed by <code>Region</code>. Panels sharing a region become tabs in the same group.
-            </p>
-        </div>
-
-        <div class="h-[400px] rounded-lg border shadow-sm">
-            <BbDock>
-                <BbDockPanel Id="b-editor" Title="Editor" Region="DockZone.Center" Closable="false">
-                    <div class="p-4 text-sm text-muted-foreground">Main editor content</div>
-                </BbDockPanel>
-                <BbDockPanel Id="b-explorer" Title="Explorer" Region="DockZone.Left">
-                    <div class="p-4 text-sm text-muted-foreground">File tree</div>
-                </BbDockPanel>
-                <BbDockPanel Id="b-output" Title="Output" Region="DockZone.Bottom">
-                    <div class="p-4 text-sm text-muted-foreground">Build output</div>
-                </BbDockPanel>
-            </BbDock>
-        </div>
-
-        <CodeBlock Source="Components/Dock/basic.txt" />
-    </div>
 
     <AccessibilityList>
         <AriaAttributes>
