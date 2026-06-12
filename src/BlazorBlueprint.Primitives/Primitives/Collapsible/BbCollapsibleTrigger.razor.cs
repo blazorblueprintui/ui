@@ -116,27 +116,7 @@ public partial class BbCollapsibleTrigger : ComponentBase
         }
     }
 
-    /// <summary>
-    /// Handles keyboard events to support keyboard navigation (Space/Enter keys).
-    /// </summary>
-    /// <param name="args">The keyboard event arguments.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    /// <remarks>
-    /// Responds to Space and Enter keys for keyboard interaction.
-    /// </remarks>
-    private async Task HandleKeyDown(KeyboardEventArgs args)
-    {
-        if (Context?.Disabled ?? true)
-        {
-            return;
-        }
-
-        if (args.Key == " " || args.Key == "Enter")
-        {
-            if (Context?.Toggle != null)
-            {
-                await Context.Toggle.Invoke();
-            }
-        }
-    }
+    // Note: no keydown handler. The rendered element is a native <button>, which the browser
+    // activates on Space/Enter by dispatching a click — handled by HandleClick. Adding a keydown
+    // toggle as well caused a double-toggle (open + close) on each Space/Enter press.
 }

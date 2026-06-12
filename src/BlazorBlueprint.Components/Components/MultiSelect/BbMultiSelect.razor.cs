@@ -240,6 +240,13 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     private bool _isOpen { get; set; }
 
     /// <summary>
+    /// Whether the next close should return focus to the trigger. True for intentional
+    /// dismissals (Escape, the Close button); false for click-outside (focus stays where the
+    /// user clicked). Bound to the popover's RestoreFocusOnClose.
+    /// </summary>
+    private bool _restoreFocusOnClose;
+
+    /// <summary>
     /// Tracks the current search query for filtering.
     /// </summary>
     private string _searchQuery = string.Empty;
@@ -442,14 +449,23 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
             return;
         }
 
+        _restoreFocusOnClose = false; // reset; intentional closes opt back in
         _isOpen = true;
     }
 
     /// <summary>
-    /// Closes the dropdown.
+    /// Closes the dropdown as an intentional dismissal (Escape, Close button), returning focus
+    /// to the trigger so keyboard navigation continues from the right place.
     /// </summary>
-    private async Task Close()
+    private Task Close() => CloseCore(restoreFocus: true);
+
+    /// <summary>
+    /// Closes the dropdown. <paramref name="restoreFocus"/> controls whether focus returns to the
+    /// trigger — true for intentional dismissals, false for click-outside (leave focus where clicked).
+    /// </summary>
+    private async Task CloseCore(bool restoreFocus)
     {
+        _restoreFocusOnClose = restoreFocus;
         _isOpen = false;
         _searchQuery = string.Empty;
 
@@ -474,7 +490,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// <summary>
     /// Handles click-outside events when AutoClose is enabled.
     /// </summary>
-    private async Task HandleClickOutside() => await Close();
+    private async Task HandleClickOutside() => await CloseCore(restoreFocus: false);
 
     /// <summary>
     /// Handles the popover content ready event to focus the search input.

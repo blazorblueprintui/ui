@@ -292,6 +292,12 @@ public partial class BbCombobox<TValue> : ComponentBase
     private bool _focusDone;
 
     /// <summary>
+    /// Whether the next controlled close should return focus to the trigger. Set true on
+    /// selection (intentional close) and reset on open. Bound to the popover's RestoreFocusOnClose.
+    /// </summary>
+    private bool _restoreFocusOnClose;
+
+    /// <summary>
     /// Item text registry for compositional mode display text lookup.
     /// </summary>
 #pragma warning disable CS8714 // TValue may be null but dictionary keys are non-null in practice
@@ -412,6 +418,12 @@ public partial class BbCombobox<TValue> : ComponentBase
     private async Task HandleOpenChanged(bool isOpen)
     {
         _isOpen = isOpen;
+        if (isOpen)
+        {
+            // Default to NOT restoring focus; only a selection-close opts in (see HandleSelect).
+            // This keeps click-outside dismissal leaving focus where the user clicked.
+            _restoreFocusOnClose = false;
+        }
         if (!isOpen)
         {
             _focusDone = false; // Reset for next open
@@ -453,7 +465,10 @@ public partial class BbCombobox<TValue> : ComponentBase
             _editContext.NotifyFieldChanged(_fieldIdentifier);
         }
 
-        // Close the popover after selection
+        // Close the popover after selection — an intentional close, so return focus to the
+        // trigger (the popover content unmounts; without this, focus is lost to <body> and the
+        // next Tab restarts from the top of the document).
+        _restoreFocusOnClose = true;
         _isOpen = false;
         // Note: _focusDone is reset by HandleOpenChanged
     }

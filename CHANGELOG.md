@@ -6,12 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-06-08
+
+### Fixed
+
+- **BbCombobox & BbMultiSelect: keyboard focus lost after selecting** — Selecting an item in `BbCombobox`, or closing `BbMultiSelect` via Escape or its Close button, left keyboard focus on the now-unmounted popover content, so focus fell back to the page root and the next Tab resumed from the top of the page. Focus is now returned to the trigger on these intentional closes — extending the behavior added for Select/DropdownMenu/Popover — while click-outside still leaves focus where the user clicked. A new `RestoreFocusOnClose` parameter on `BbPopover` carries the consumer's focus-restore intent. ([#349](https://github.com/blazorblueprintui/ui/pull/349))
+- **BbCollapsible & BbDropdownMenu: Space/Enter double-toggled the trigger** — Pressing Space or Enter on a `BbCollapsibleTrigger` (e.g. the docs "View Code" toggles) or a `BbDropdownMenuTrigger` opened then immediately closed it in a single press. The triggers render native `<button>` elements, which the browser already activates on Space/Enter by firing a click, but they also toggled in a keydown handler — so each press fired twice. The redundant keydown toggle was removed (Collapsible) or scoped to arrow keys only (DropdownMenu), so one press now performs exactly one toggle. ([#350](https://github.com/blazorblueprintui/ui/pull/350))
+
+---
+
 ## 2026-06-06
+
+### Added
+
+- **BbCommandVirtualizedGroup: ItemsProvider for server-side lazy loading** — New `ItemsProvider` parameter (`CommandItemsProvider<TItem>`) lets the virtualized command group fetch only the slice currently in view on demand — with the active search delegated to the provider — instead of materializing the entire collection, so `EnableLazyLoading` now supports true server-side data. `Items` is no longer required when a provider is supplied. A demo example was added. ([#338](https://github.com/blazorblueprintui/ui/pull/338))
+- **BbDataGridSelectColumn: CellClass and HeaderClass** — The selection (checkbox) column now accepts `CellClass` and `HeaderClass`, matching property columns, so it can adopt compact padding (e.g. `CellClass="p-1"`) instead of forcing a taller row than the rest of the grid. A "Compact Rows" demo example was added. ([#332](https://github.com/blazorblueprintui/ui/pull/332))
+- **Render Modes guide** — New documentation guide, "Render Modes & Interactive Layouts," explaining why interactive components in a layout require an interactive render mode and how to combine per-page interactivity islands with static `HttpContext`-dependent pages, plus a README setup note. ([#339](https://github.com/blazorblueprintui/ui/pull/339))
 
 ### Fixed
 
 - **BbCombobox: trigger showed placeholder for pre-bound values** — In compositional mode, when `Value` was bound before the dropdown was first opened, the combobox trigger displayed the placeholder instead of the selected item's text, because the item's text was only registered once the item mounted. The trigger now resolves its display text from a caller-supplied `SelectedItemText` parameter and from item registration, so pre-selected values render correctly on first paint. ([#337](https://github.com/blazorblueprintui/ui/pull/337))
 - **Select, DropdownMenu, Popover: keyboard focus lost after closing** — Closing one of these overlays by an intentional action (pressing Escape or selecting an item) left keyboard focus on the now-unmounted content, so focus fell back to the page root and a subsequent Tab resumed from the top of the page. Focus is now returned to the trigger on intentional close; external dismissals (click-outside, Tab) deliberately leave focus where the user moved it. ([#336](https://github.com/blazorblueprintui/ui/issues/336))
+- **BbCombobox: pre-bound value blank in compositional mode until opened** — Building on [#337](https://github.com/blazorblueprintui/ui/pull/337), compositional `BbComboboxItem` children now register their display text on initial render (via a hidden registration pass), so a value bound before the dropdown is first opened shows its label immediately on refresh instead of staying blank until the dropdown is opened and closed. ([#340](https://github.com/blazorblueprintui/ui/pull/340))
+- **Nested overlays froze the page** — The body scroll lock shared by Dialog, Sheet, Drawer, and AlertDialog was not reference-counted, so closing a nested overlay could re-apply a stale "locked" state and leave the page unscrollable until a refresh. The lock is now reference-counted — the original scroll state is captured once on the first lock and restored only when the last overlay closes (with a guard against double-release). ([#329](https://github.com/blazorblueprintui/ui/pull/329))
 
 ---
 
