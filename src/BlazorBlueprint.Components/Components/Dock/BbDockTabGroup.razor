@@ -134,17 +134,25 @@
                 var panel = contextPanel;
                 var pinned = Dock.IsPinned(panel.Id);
                 <BbContextMenuItem Disabled="@(!panel.Closable)" OnClick="() => Dock.ClosePanelAsync(panel.Id)">
-                    Close
+                    <Icon><LucideIcon Name="x" Size="16" /></Icon>
+                    <ChildContent>Close</ChildContent>
                 </BbContextMenuItem>
                 <BbContextMenuItem Disabled="@(group.PanelIds.Count <= 1)" OnClick="() => Dock.CloseOtherPanelsInGroupAsync(panel.Id)">
-                    Close Other Tabs
+                    <Icon><LucideIcon Name="list-x" Size="16" /></Icon>
+                    <ChildContent>Close Other Tabs</ChildContent>
                 </BbContextMenuItem>
-                <BbContextMenuItem OnClick="() => Dock.CloseAllPanelsInGroupAsync(panel.Id)">
-                    Close All Tabs
+                <BbContextMenuItem Disabled="@(!group.PanelIds.Any(id => !Dock.IsPinned(id) && Dock.GetPanel(id)?.Closable == true))" OnClick="() => Dock.CloseAllButPinnedPanelsInGroupAsync(panel.Id)">
+                    <Icon><LucideIcon Name="pin" Size="16" /></Icon>
+                    <ChildContent>Close All But Pinned</ChildContent>
+                </BbContextMenuItem>
+                <BbContextMenuItem Disabled="@(group.PanelIds.All(id => Dock.GetPanel(id)?.Closable != true))" OnClick="() => Dock.CloseAllPanelsInGroupAsync(panel.Id)">
+                    <Icon><LucideIcon Name="circle-x" Size="16" /></Icon>
+                    <ChildContent>Close All Tabs</ChildContent>
                 </BbContextMenuItem>
                 <BbContextMenuSeparator />
                 <BbContextMenuItem OnClick="() => Dock.TogglePinAsync(panel.Id)">
-                    @(pinned ? "Unpin Tab" : "Pin Tab")
+                    <Icon><LucideIcon Name="@(pinned ? "pin-off" : "pin")" Size="16" /></Icon>
+                    <ChildContent>@(pinned ? "Unpin Tab" : "Pin Tab")</ChildContent>
                 </BbContextMenuItem>
             }
         </BbContextMenuContent>

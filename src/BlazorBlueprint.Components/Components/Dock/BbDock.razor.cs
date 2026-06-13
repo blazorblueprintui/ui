@@ -690,6 +690,17 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
     }
 
     /// <summary>
+    /// Closes every closable, unpinned panel that shares a tab group with the given panel.
+    /// </summary>
+    internal Task CloseAllButPinnedPanelsInGroupAsync(string panelId)
+    {
+        var group = FindGroupContaining(panelId);
+        return group is null
+            ? Task.CompletedTask
+            : CloseManyAsync(group.PanelIds.Where(id => !pinnedPanels.Contains(id)).ToList());
+    }
+
+    /// <summary>
     /// Closes every closable panel in the given panel's tab group except the panel itself.
     /// </summary>
     internal Task CloseOtherPanelsInGroupAsync(string panelId)
