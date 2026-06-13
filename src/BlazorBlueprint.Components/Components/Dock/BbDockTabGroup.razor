@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Components
 @using BlazorBlueprint.Icons.Lucide.Components
+@inject IBbLocalizer Localizer
 
 <div class="@RootClass" data-dock-group="@group.Id">
     <div class="@StripClass"
@@ -41,8 +42,8 @@
                     {
                         <button type="button"
                                 class="@CloseClass()"
-                                aria-label="@($"Close {panel.Title}")"
-                                title="@($"Close {panel.Title}")"
+                                aria-label="@Localizer["Dock.CloseTab", panel.Title]"
+                                title="@Localizer["Dock.CloseTab", panel.Title]"
                                 @onclick="() => Dock.ClosePanelAsync(panel.Id)"
                                 @onclick:stopPropagation="true"
                                 @onpointerdown:stopPropagation="true">
@@ -61,8 +62,8 @@
                     <BbDropdownMenu>
                         <BbDropdownMenuTrigger AsChild="false"
                                                Class="inline-flex h-6 items-center justify-center gap-0.5 rounded-sm px-1 text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
-                                               aria-label="@($"Show {overflowPanelIds.Count} hidden tab(s)")"
-                                               title="@($"Show {overflowPanelIds.Count} hidden tab(s)")">
+                                               aria-label="@Localizer["Dock.ShowHiddenTabs", overflowPanelIds.Count]"
+                                               title="@Localizer["Dock.ShowHiddenTabs", overflowPanelIds.Count]">
                             <LucideIcon Name="ellipsis" Size="14" />
                             <span class="text-[10px] font-medium leading-none">@overflowPanelIds.Count</span>
                         </BbDropdownMenuTrigger>
@@ -86,8 +87,8 @@
                                         {
                                             <button type="button"
                                                     class="ml-auto inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
-                                                    aria-label="@($"Close {hiddenPanel.Title}")"
-                                                    title="@($"Close {hiddenPanel.Title}")"
+                                                    aria-label="@Localizer["Dock.CloseTab", hiddenPanel.Title]"
+                                                    title="@Localizer["Dock.CloseTab", hiddenPanel.Title]"
                                                     @onclick="() => Dock.ClosePanelAsync(hiddenPanel.Id)"
                                                     @onclick:stopPropagation="true">
                                                 <LucideIcon Name="x" Size="11" />
@@ -104,8 +105,8 @@
                 {
                     <button type="button"
                             class="inline-flex h-6 w-6 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
-                            aria-label="@(IsMaximized ? "Restore panel group" : "Maximize panel group")"
-                            title="@(IsMaximized ? "Restore panel group" : "Maximize panel group")"
+                            aria-label="@(IsMaximized ? Localizer["Dock.RestorePanelGroup"] : Localizer["Dock.MaximizePanelGroup"])"
+                            title="@(IsMaximized ? Localizer["Dock.RestorePanelGroup"] : Localizer["Dock.MaximizePanelGroup"])"
                             @onclick="() => Dock.ToggleMaximize(group)"
                             @onpointerdown:stopPropagation="true">
                         <LucideIcon Name="@(IsMaximized ? "minimize-2" : "maximize-2")" Size="14" />
@@ -139,24 +140,24 @@
                 var pinned = Dock.IsPinned(panel.Id);
                 <BbContextMenuItem Disabled="@(!panel.Closable)" OnClick="() => Dock.ClosePanelAsync(panel.Id)">
                     <Icon><LucideIcon Name="x" Size="16" /></Icon>
-                    <ChildContent>Close</ChildContent>
+                    <ChildContent>@Localizer["Dock.Close"]</ChildContent>
                 </BbContextMenuItem>
                 <BbContextMenuItem Disabled="@(group.PanelIds.Count <= 1)" OnClick="() => Dock.CloseOtherPanelsInGroupAsync(panel.Id)">
                     <Icon><LucideIcon Name="list-x" Size="16" /></Icon>
-                    <ChildContent>Close Other Tabs</ChildContent>
+                    <ChildContent>@Localizer["Dock.CloseOtherTabs"]</ChildContent>
                 </BbContextMenuItem>
                 <BbContextMenuItem Disabled="@(!group.PanelIds.Any(id => !Dock.IsPinned(id) && Dock.GetPanel(id)?.Closable == true))" OnClick="() => Dock.CloseAllButPinnedPanelsInGroupAsync(panel.Id)">
                     <Icon><LucideIcon Name="pin" Size="16" /></Icon>
-                    <ChildContent>Close All But Pinned</ChildContent>
+                    <ChildContent>@Localizer["Dock.CloseAllButPinned"]</ChildContent>
                 </BbContextMenuItem>
                 <BbContextMenuItem Disabled="@(group.PanelIds.All(id => Dock.GetPanel(id)?.Closable != true))" OnClick="() => Dock.CloseAllPanelsInGroupAsync(panel.Id)">
                     <Icon><LucideIcon Name="circle-x" Size="16" /></Icon>
-                    <ChildContent>Close All Tabs</ChildContent>
+                    <ChildContent>@Localizer["Dock.CloseAllTabs"]</ChildContent>
                 </BbContextMenuItem>
                 <BbContextMenuSeparator />
                 <BbContextMenuItem OnClick="() => Dock.TogglePinAsync(panel.Id)">
                     <Icon><LucideIcon Name="@(pinned ? "pin-off" : "pin")" Size="16" /></Icon>
-                    <ChildContent>@(pinned ? "Unpin Tab" : "Pin Tab")</ChildContent>
+                    <ChildContent>@(pinned ? Localizer["Dock.UnpinTab"] : Localizer["Dock.PinTab"])</ChildContent>
                 </BbContextMenuItem>
             }
         </BbContextMenuContent>
