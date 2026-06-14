@@ -41,6 +41,15 @@ public partial class BbDataGridSelectColumn<TData> : ComponentBase, IDataGridCol
     public string? HeaderClass { get; set; }
 
     /// <summary>
+    /// Controls the select-all header checkbox behaviour when the grid is paginated.
+    /// <see cref="DataGridSelectAllScope.Prompt"/> (the default) offers a "this page / all items"
+    /// menu across pages; <see cref="DataGridSelectAllScope.CurrentPage"/> removes the menu and makes
+    /// the header checkbox toggle only the current page's rows, leaving other pages' selections intact.
+    /// </summary>
+    [Parameter]
+    public DataGridSelectAllScope SelectAllScope { get; set; } = DataGridSelectAllScope.Prompt;
+
+    /// <summary>
     /// The parent DataGrid component. Set via cascading parameter.
     /// </summary>
     [CascadingParameter]

@@ -89,6 +89,41 @@
         <CodeBlock Source="Components/MultiSelect/country.txt" />
     </section>
 
+    <!-- Single Line -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Single Line</h2>
+        <p class="text-sm text-muted-foreground">
+            By default the trigger wraps tags onto additional rows and grows to fit. Set
+            <code>SingleLine="true"</code> to keep it one row at a fixed height — overflowing tags are
+            clipped while the "+N more" indicator and chevron stay pinned and visible. Both controls
+            below share the same selection.
+        </p>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+            <div class="flex flex-col gap-2">
+                <span class="text-xs font-medium text-muted-foreground">Default (wraps &amp; grows)</span>
+                <BbMultiSelect TValue="string"
+                            Options="technologies"
+                            @bind-Values="singleLineValues"
+                            Placeholder="Select technologies..."
+                            MaxDisplayTags="3"
+                            PopoverWidth="w-[240px]" />
+            </div>
+            <div class="flex flex-col gap-2">
+                <span class="text-xs font-medium text-muted-foreground">SingleLine="true"</span>
+                <BbMultiSelect TValue="string"
+                            Options="technologies"
+                            @bind-Values="singleLineValues"
+                            Placeholder="Select technologies..."
+                            MaxDisplayTags="3"
+                            SingleLine="true"
+                            PopoverWidth="w-[240px]" />
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/MultiSelect/single-line.txt" />
+    </section>
+
     <!-- Non-String Value Types -->
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">Non-String Value Types</h2>
@@ -470,6 +505,10 @@
                 <ApiParameter Name="MaxDisplayTags" Type="int" Default="3">
                     Maximum number of tags to display before showing "+N more".
                 </ApiParameter>
+                <ApiParameter Name="SingleLine" Type="bool" Default="false">
+                    Keep the trigger on a single row at a fixed height, clipping overflowing tags
+                    (the "+N more" indicator and chevron stay pinned). Default wraps and grows.
+                </ApiParameter>
                 <ApiParameter Name="Disabled" Type="bool" Default="false">
                     Whether the multiselect is disabled.
                 </ApiParameter>
@@ -539,6 +578,10 @@
 
     // Country example
     private IEnumerable<string>? selectedCountries;
+
+    // Single line example (shared by the wrap/single-line comparison)
+    private IEnumerable<string>? singleLineValues =
+        new[] { "react", "vue", "angular", "blazor", "nextjs", "dotnet" };
 
     // Framework example
     private IEnumerable<string>? selectedFrameworks;

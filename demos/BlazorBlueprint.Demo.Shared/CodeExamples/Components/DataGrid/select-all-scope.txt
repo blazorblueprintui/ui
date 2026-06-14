@@ -1,0 +1,21 @@
+@* CurrentPage: the header checkbox toggles only the current page's rows and
+   leaves selections on other pages untouched (no "this page / all items" menu).
+   Default is DataGridSelectAllScope.Prompt. *@
+<BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+            SelectionMode="DataTableSelectionMode.Multiple"
+            SelectedItemsChanged="HandleSelectionChanged">
+    <Columns>
+        <BbDataGridSelectColumn TData="Person"
+                                SelectAllScope="DataGridSelectAllScope.CurrentPage" />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private List<Person> people = MockDataService.GeneratePersons(50);
+    private IReadOnlyCollection<Person> selected = Array.Empty<Person>();
+
+    private void HandleSelectionChanged(IReadOnlyCollection<Person> items) => selected = items;
+}

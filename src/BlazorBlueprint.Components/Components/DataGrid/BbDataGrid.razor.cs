@@ -2426,7 +2426,16 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     {
         if (!isChecked)
         {
-            await HandleClearSelection();
+            // In current-page scope the header only governs the current page, so unchecking it
+            // deselects this page's rows and leaves selections on other pages intact.
+            if (SelectAllScope == DataGridSelectAllScope.CurrentPage)
+            {
+                await HandleDeselectCurrentPage();
+            }
+            else
+            {
+                await HandleClearSelection();
+            }
             return;
         }
 
@@ -2440,12 +2449,47 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         await HandleSelectAllOnCurrentPage();
     }
 
+    private async Task HandleDeselectCurrentPage()
+    {
+        _gridState.Selection.DeselectAll(_processedData);
+        _selectAllDropdownOpen = false;
+        _stateVersion++;
+
+        if (SelectedItemsChanged.HasDelegate)
+        {
+            await SelectedItemsChanged.InvokeAsync(_gridState.Selection.SelectedItems);
+        }
+
+        await NotifyStateChangedAsync();
+        StateHasChanged();
+    }
+
     private async Task HandleSelectAllOnCurrentPage()
     {
         foreach (var item in _processedData)
         {
             _gridState.Selection.Select(item);
         }
+
+        _selectAllDropdownOpen = false;
+        _stateVersion++;
+
+        if (SelectedItemsChanged.HasDelegate)
+        {
+            await SelectedItemsChanged.InvokeAsync(_gridState.Selection.SelectedItems);
+        }
+
+        await NotifyStateChangedAsync();
+        StateHasChanged();
+    }
+
+    private async Task HandleSelectOnlyCurrentPage()
+    {
+        // From the multi-page menu, "select all on this page" is an exclusive choice: it replaces the
+        // entire selection (including rows on other pages) with just the current page's rows. This is
+        // distinct from the additive current-page header checkbox used by DataGridSelectAllScope.CurrentPage.
+        _gridState.Selection.Clear();
+        _gridState.Selection.SelectAll(_processedData);
 
         _selectAllDropdownOpen = false;
         _stateVersion++;
@@ -2546,8 +2590,14 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         StateHasChanged();
     }
 
+    private DataGridSelectAllScope SelectAllScope =>
+        _columns.OfType<BbDataGridSelectColumn<TData>>().FirstOrDefault()?.SelectAllScope
+            ?? DataGridSelectAllScope.Prompt;
+
     private bool ShouldShowSelectAllPrompt() =>
-        _allSortedData.Any() && _gridState.Pagination.TotalItems > _processedData.Count();
+        SelectAllScope == DataGridSelectAllScope.Prompt
+        && _allSortedData.Any()
+        && _gridState.Pagination.TotalItems > _processedData.Count();
 
     private async Task HandleRowSelectionChanged(TData item, bool isChecked)
     {

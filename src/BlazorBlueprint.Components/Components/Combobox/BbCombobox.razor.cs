@@ -494,7 +494,7 @@ public partial class BbCombobox<TValue> : ComponentBase
         "disabled:opacity-50 disabled:pointer-events-none",
         "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         _isOpen ? ActiveClass : null,
-        "h-9 px-3",
+        "h-10 px-3",
         string.IsNullOrWhiteSpace(Class) ? PopoverWidth : null,
         Class
     );

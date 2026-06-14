@@ -51,10 +51,13 @@ else
     public NavLinkMatch Match { get; set; } = NavLinkMatch.Prefix;
 
     /// <summary>
-    /// Whether this submenu item is active/selected.
+    /// Explicitly controls whether this submenu item is active/selected. When set, this value takes
+    /// precedence over automatic <see cref="Href"/>/<see cref="Match"/> location matching — so
+    /// <c>false</c> forces the item inactive even if its href matches the current URL. Leave
+    /// <c>null</c> (the default) to derive the active state from the current location.
     /// </summary>
     [Parameter]
-    public bool IsActive { get; set; }
+    public bool? IsActive { get; set; }
 
     /// <summary>
     /// Button size variant.
@@ -80,10 +83,10 @@ else
     private bool isActiveByLocation;
 
     /// <summary>
-    /// Whether the button should render as active — either explicitly via <see cref="IsActive"/>
-    /// or because its <see cref="Href"/> matches the current location.
+    /// Whether the button should render as active. An explicit <see cref="IsActive"/> value wins;
+    /// otherwise the state is derived from whether <see cref="Href"/> matches the current location.
     /// </summary>
-    private bool ResolvedActive => IsActive || isActiveByLocation;
+    private bool ResolvedActive => IsActive ?? isActiveByLocation;
 
     protected override void OnInitialized()
     {

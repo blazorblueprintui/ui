@@ -173,6 +173,14 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     public int MaxDisplayTags { get; set; } = 3;
 
     /// <summary>
+    /// When <c>true</c>, the trigger stays a single row at a fixed height: selected tags that
+    /// don't fit are clipped, while the "+N more" indicator and chevron remain pinned and visible.
+    /// When <c>false</c> (the default), tags wrap onto additional rows and the trigger grows to fit.
+    /// </summary>
+    [Parameter]
+    public bool SingleLine { get; set; }
+
+    /// <summary>
     /// Gets or sets the width of the popover content.
     /// Ignored when MatchTriggerWidth is true.
     /// </summary>
@@ -832,10 +840,26 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
         "disabled:opacity-50 disabled:pointer-events-none",
         "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         _isOpen ? ActiveClass : null,
-        "min-h-9 px-3 py-1.5",
+        // Single-line keeps a fixed height so wrapping tags can't grow the trigger; the default
+        // uses a min-height so the trigger expands to fit tags that wrap onto further rows.
+        SingleLine ? "h-10 px-3 py-1.5" : "min-h-10 px-3 py-1.5",
         PopoverWidth,
         Class
     );
+
+    /// <summary>
+    /// CSS for the tag list container. Single-line clips overflowing tags on one row; the default
+    /// wraps them onto additional rows.
+    /// </summary>
+    private string TagListClass => SingleLine
+        ? "flex flex-nowrap items-center gap-1 flex-1 min-w-0 overflow-hidden"
+        : "flex flex-wrap items-center gap-1 flex-1 min-w-0";
+
+    /// <summary>
+    /// CSS for each selected tag badge. In single-line mode tags keep their size (and clip) rather
+    /// than shrinking to fit.
+    /// </summary>
+    private string TagBadgeClass => SingleLine ? "gap-1 shrink-0" : "gap-1";
 
     /// <summary>
     /// Gets the CSS class for the tag remove button.
