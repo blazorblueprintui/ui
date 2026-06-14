@@ -14,12 +14,12 @@
                         aria-describedby="@AriaDescribedBy"
                         disabled="@Disabled"
                         class="@TriggerCssClass">
-            <div class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
+            <div class="@TagListClass">
                 @if (HasSelectedItems)
                 {
                     @foreach (var value in SelectedValues.Take(MaxDisplayTags))
                     {
-                        <BbBadge @key="value" Variant="BadgeVariant.Secondary" Class="gap-1">
+                        <BbBadge @key="value" Variant="BadgeVariant.Secondary" Class="@TagBadgeClass">
                             @GetDisplayText(value)
                             <button type="button"
                                     class="@TagRemoveButtonCssClass"
@@ -30,7 +30,9 @@
                             </button>
                         </BbBadge>
                     }
-                    @if (OverflowCount > 0)
+                    @* In wrap mode "+N more" flows with the tags; in single-line mode it is pinned
+                       to the right group below so it stays visible while the tags clip. *@
+                    @if (OverflowCount > 0 && !SingleLine)
                     {
                         <span class="text-xs text-muted-foreground">+@OverflowCount more</span>
                     }
@@ -40,7 +42,11 @@
                     <span class="text-muted-foreground">@EffectivePlaceholder</span>
                 }
             </div>
-            <div class="flex items-center gap-1 ml-2">
+            <div class="flex shrink-0 items-center gap-1 ml-2">
+                @if (HasSelectedItems && OverflowCount > 0 && SingleLine)
+                {
+                    <span class="shrink-0 whitespace-nowrap text-xs text-muted-foreground">+@OverflowCount more</span>
+                }
                 @if (HasSelectedItems)
                 {
                     <button type="button"
