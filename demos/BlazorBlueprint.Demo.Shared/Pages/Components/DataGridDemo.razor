@@ -149,6 +149,35 @@
         <CodeBlock Source="Components/DataGrid/row-selection.txt" />
     </div>
 
+    <!-- ── Per-Page Select-All (SelectAllScope) ──────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Per-Page Select-All</h2>
+            <p class="text-sm text-muted-foreground">
+                By default, the header checkbox of a paginated grid opens a menu to select all rows on the
+                current page or across every page. Set
+                <code class="bg-muted px-1 py-0.5 rounded">SelectAllScope="DataGridSelectAllScope.CurrentPage"</code>
+                to remove that menu — the header checkbox then toggles only the current page's rows and leaves
+                selections on other pages untouched. Select some rows, change pages, and the previous page's
+                selection is preserved.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                   SelectionMode="DataTableSelectionMode.Multiple"
+                   SelectedItemsChanged="HandlePerPageSelectionChanged">
+            <Columns>
+                <BbDataGridSelectColumn TData="Person" SelectAllScope="DataGridSelectAllScope.CurrentPage" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+            </Columns>
+        </BbDataGrid>
+        <p class="text-sm text-muted-foreground">
+            Selected across all pages: <span class="font-medium">@_perPageSelectedCount</span>
+        </p>
+        <CodeBlock Source="Components/DataGrid/select-all-scope.txt" />
+    </div>
+
     <!-- ── Compact Rows (CellClass / HeaderClass) ─────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -1096,6 +1125,9 @@
                 <ApiParameter Name="Pinned" Type="ColumnPinning" Default="None">
                     Whether this column is pinned. Commonly set to BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left to keep the checkbox column visible when scrolling horizontally.
                 </ApiParameter>
+                <ApiParameter Name="SelectAllScope" Type="DataGridSelectAllScope" Default="Prompt">
+                    Select-all header behaviour when paginated. <code>Prompt</code> (default) shows a "this page / all items" menu across pages; <code>CurrentPage</code> removes the menu so the header checkbox toggles only the current page's rows, leaving other pages' selections intact.
+                </ApiParameter>
             </ApiReference>
 
             <ApiReference ComponentName="DataGridExpandColumn">
@@ -1346,6 +1378,13 @@
     private void HandleSelectionChanged(IReadOnlyCollection<Person> selected)
     {
         _selectedPeople = selected;
+    }
+
+    private int _perPageSelectedCount;
+
+    private void HandlePerPageSelectionChanged(IReadOnlyCollection<Person> selected)
+    {
+        _perPageSelectedCount = selected.Count;
     }
 
     private async ValueTask<BlazorBlueprint.Primitives.DataGrid.DataGridResult<Person>> LoadPeopleAsync(
