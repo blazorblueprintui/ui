@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-06-14
+
+### Added
+
+- **BbAccordionTrigger: custom icon** — New `Icon` parameter (`RenderFragment<bool>`) renders a custom icon in place of the default chevron; the `bool` context exposes the open state for animation, and it falls back to the chevron when unset. ([#347](https://github.com/blazorblueprintui/ui/pull/347))
+- **BbThemeSwitcher: Variant parameter** — The trigger button was hard-coded to `Outline`; a new `Variant` parameter (default `Outline`) lets it match the surrounding UI. ([#363](https://github.com/blazorblueprintui/ui/pull/363))
+- **BbCombobox & BbMultiSelect: consistent trigger height + MultiSelect single-line mode** — Combobox and MultiSelect triggers now use the `h-10` (40px) house height to align with `BbSelect`/`BbInput`/`BbButton` (were `h-9`/`min-h-9`). `BbMultiSelect` also gains a `SingleLine` option that keeps the trigger on one fixed-height row — overflowing tags clip while "+N more" and the chevron stay pinned. ([#366](https://github.com/blazorblueprintui/ui/pull/366))
+- **BbDataGridSelectColumn: SelectAllScope** — New `SelectAllScope` parameter; `CurrentPage` removes the cross-page select-all menu so the header checkbox toggles only the current page, leaving other pages' selections intact. ([#367](https://github.com/blazorblueprintui/ui/pull/367))
+
+### Fixed
+
+- **BbInputOTP: OnComplete never fired when typing** — The completion check was gated on `!newValue.Contains("")`, which is always false, so `OnComplete` never fired on manual entry (paste worked). It now fires once every slot is filled. ([#362](https://github.com/blazorblueprintui/ui/pull/362))
+- **BbDialog: ShowClose ignored for programmatic dialogs** — Dialogs opened via `DialogService.OpenAsync<T>` never rendered a close button, so `DialogOpenOptions.ShowClose` had no effect. They now render a close (×) button honoring `ShowClose`. ([#364](https://github.com/blazorblueprintui/ui/pull/364))
+- **BbSidebarMenuButton & BbSidebarMenuSubButton: stuck active with `Href="/"`** — Active state was `IsActive || location-match`, so an explicit `IsActive="false"` could never deactivate an item whose `Href` matched the URL (most visibly `Href="/"`). `IsActive` is now `bool?` — an explicit value wins; `null` keeps automatic location matching. ([#365](https://github.com/blazorblueprintui/ui/pull/365))
+- **BbDataGrid: "select all on this page" was additive** — In the paginated select-all menu, "select all on this page" now replaces the whole selection with just the current page instead of leaving other pages selected. ([#367](https://github.com/blazorblueprintui/ui/pull/367))
+
+---
+
 ## 2026-06-08
 
 ### Fixed
