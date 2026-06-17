@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-06-17
+
+### Added
+
+- **BbCalendar: selectable previous/next-month days** — "Outside" days shown for the adjacent months were rendered disabled purely for belonging to another month; they now keep their muted styling but are selectable. Clicking one selects that date and moves the view to its month. Dates disabled via `MinDate`/`MaxDate`/`DisabledDates` stay non-interactive. ([#370](https://github.com/blazorblueprintui/ui/pull/370))
+- **BbCalendar: `AutoFocus` parameter + `FocusActiveDayAsync()`** — New opt-in `AutoFocus` parameter moves focus to the active day on first render so arrow-key navigation works immediately (ideal for inline/revealed calendars), plus a public `FocusActiveDayAsync()` method for overlays that position their content asynchronously. ([#370](https://github.com/blazorblueprintui/ui/pull/370))
+
+### Fixed
+
+- **BbDatePicker: keyboard navigation didn't work when the calendar opened** — The calendar grid's key handler only runs once a day has focus, but opening the date-picker popover left focus on the trigger, so arrow keys scrolled the page instead of moving between days. The date picker now focuses the active day once the popover is positioned (via the calendar's new `FocusActiveDayAsync()`), re-focusing on each open. ([#370](https://github.com/blazorblueprintui/ui/pull/370))
+
+---
+
 ## 2026-06-14
 
 ### Added
