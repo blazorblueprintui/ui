@@ -8,7 +8,7 @@
     Date Picker component - combines a button trigger with a calendar popover.
 *@
 
-<BbPopover @bind-Open="_isOpen">
+<BbPopover Open="_isOpen" OpenChanged="HandleOpenChanged">
     <BbPopoverTrigger AsChild="true">
         <BbButton Variant="ButtonVariant.Outline"
                 Class="@ButtonCssClass"
@@ -24,8 +24,9 @@
             }
         </BbButton>
     </BbPopoverTrigger>
-    <BbPopoverContent Class="w-auto p-0" Align="PopoverAlign.Start">
-        <BbCalendar Selected="@Value"
+    <BbPopoverContent Class="w-auto p-0" Align="PopoverAlign.Start" OnContentReady="@HandleContentReady">
+        <BbCalendar @ref="_calendar"
+                  Selected="@Value"
                   SelectedChanged="@HandleDateSelected"
                   MinDate="@MinDate"
                   MaxDate="@MaxDate"
@@ -36,6 +37,8 @@
 
 @code {
     private bool _isOpen;
+    private BbCalendar? _calendar;
+    private bool _focusDone;
     private FieldIdentifier _fieldIdentifier;
     private EditContext? _editContext;
 
@@ -145,6 +148,33 @@
         }
 
         _isOpen = false;
+    }
+
+    private void HandleOpenChanged(bool isOpen)
+    {
+        _isOpen = isOpen;
+
+        // Re-arm focus-on-open every time the popover opens, so the active day is
+        // focused again on the next open regardless of how the previous one closed
+        // (selecting a date closes via _isOpen directly, bypassing this callback).
+        if (isOpen)
+        {
+            _focusDone = false;
+        }
+    }
+
+    private async Task HandleContentReady()
+    {
+        // Move focus into the calendar once the popover is positioned, so the active
+        // day is focused and arrow-key navigation works immediately on open. Guard so
+        // a repositioning re-fire doesn't yank focus back from where the user navigated.
+        if (_focusDone || _calendar is null)
+        {
+            return;
+        }
+
+        _focusDone = true;
+        await _calendar.FocusActiveDayAsync();
     }
 
     /// <summary>

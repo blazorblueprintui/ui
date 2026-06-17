@@ -86,7 +86,8 @@
                             @foreach (var day in week)
                             {
                                 var isSelected = day.HasValue && Selected.HasValue && day.Value.Date == Selected.Value.Date;
-                                var isDisabled = day.HasValue && (IsDisabled(day.Value) || day.Value.Month != DisplayDate.Month);
+                                var isOutside = day.HasValue && (day.Value.Month != DisplayDate.Month || day.Value.Year != DisplayDate.Year);
+                                var isDisabled = day.HasValue && IsDisabled(day.Value);
                                 var isFocused = day.HasValue && _focusedDate.HasValue && day.Value.Date == _focusedDate.Value.Date;
                                 <td class="@GetCellClasses(day, isSelected)"
                                     role="gridcell"
@@ -95,7 +96,7 @@
                                     {
                                         <button type="button"
                                                 id="@GetDayId(day.Value)"
-                                                class="@GetDayClasses(day.Value, isSelected, isDisabled, isFocused)"
+                                                class="@GetDayClasses(day.Value, isSelected, isDisabled, isFocused, isOutside)"
                                                 disabled="@isDisabled"
                                                 tabindex="@(isFocused ? 0 : -1)"
                                                 @onclick="@(() => SelectDate(day.Value))"
@@ -225,6 +226,17 @@
     public bool ShowMonthYearDropdowns { get; set; } = true;
 
     /// <summary>
+    /// Whether to move keyboard focus to the active day when the calendar first renders,
+    /// so arrow-key navigation works immediately. Best for calendars that become visible
+    /// on demand (e.g. revealed inline). For calendars inside a portal-based popover or
+    /// dialog, call <see cref="FocusActiveDayAsync"/> from the container's content-ready
+    /// event instead, since first render happens before the overlay is positioned.
+    /// Leave false for always-visible inline calendars to avoid stealing focus on load.
+    /// </summary>
+    [Parameter]
+    public bool AutoFocus { get; set; }
+
+    /// <summary>
     /// Additional CSS classes to apply to the calendar.
     /// </summary>
     [Parameter]
@@ -300,6 +312,30 @@
             _cachedShowOutsideDays = ShowOutsideDays;
             _cachedWeeks = null;
         }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // When requested, move focus to the active day on first render so an inline
+        // calendar is immediately keyboard-navigable. Calendars rendered inside a
+        // portal-based popover/dialog should instead call FocusActiveDayAsync() once
+        // their container reports it is ready (the date picker does this).
+        if (firstRender && AutoFocus)
+        {
+            await FocusActiveDayAsync();
+        }
+    }
+
+    /// <summary>
+    /// Moves keyboard focus to the currently active day so the calendar is ready for
+    /// arrow-key navigation. Call this after the calendar has become visible — for
+    /// example from a popover's content-ready callback when embedding the calendar in
+    /// your own overlay.
+    /// </summary>
+    public async Task FocusActiveDayAsync()
+    {
+        _focusedDate ??= GetFirstEnabledDayOfMonth();
+        await FocusCurrentButton();
     }
 
     private void InitializeFocusedDate()
@@ -574,6 +610,8 @@
     private const string DaySelectedClasses = "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground";
     private const string DayTodayClasses = "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground bg-accent text-accent-foreground";
     private const string DayDisabledClasses = "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground text-muted-foreground opacity-50";
+    // Outside (previous/next month) days: muted like disabled, but still interactive/clickable.
+    private const string DayOutsideClasses = "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground text-muted-foreground opacity-50";
 
     private string GetMonthName(int month) => MonthNames is { Length: 12 }
         ? MonthNames[month - 1]
@@ -610,6 +648,13 @@
         // Reset keyboard navigation mode on click selection
         _isKeyboardNavigating = false;
         _focusedDate = date;
+
+        // When an outside (previous/next month) day is selected, bring it into view
+        // by navigating the displayed month to match the selected date.
+        if (date.Month != DisplayDate.Month || date.Year != DisplayDate.Year)
+        {
+            DisplayDate = new DateTime(date.Year, date.Month, 1);
+        }
 
         Selected = date;
         await SelectedChanged.InvokeAsync(date);
@@ -688,13 +733,15 @@
         return string.IsNullOrEmpty(CellClass) ? baseClass : ClassNames.cn(baseClass, CellClass);
     }
 
-    private string GetDayClasses(DateTime date, bool isSelected, bool isDisabled, bool isFocused)
+    private string GetDayClasses(DateTime date, bool isSelected, bool isDisabled, bool isFocused, bool isOutside)
     {
         string baseClass;
         if (isSelected)
             baseClass = DaySelectedClasses;
         else if (isDisabled)
             baseClass = DayDisabledClasses;
+        else if (isOutside)
+            baseClass = DayOutsideClasses;
         else if (date.Date == DateTime.Today)
             baseClass = DayTodayClasses;
         else
