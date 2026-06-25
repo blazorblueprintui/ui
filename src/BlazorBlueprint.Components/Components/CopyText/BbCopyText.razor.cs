@@ -44,13 +44,11 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
-    private bool TooltipVisible => isHovered;
-
     private string CurrentIconName => copied ? "check" : "copy";
 
     private string CurrentTooltipText => copied ? Localizer["CopyText.Copied"] : Localizer["CopyText.ClickToCopy"];
 
-    private string TooltipIconCssClass => copied ? "h-3 w-3 text-alert-success" : "h-3 w-3 text-primary";
+    private string TooltipIconCssClass => copied && isHovered ? "h-3 w-3 text-alert-success" : "h-3 w-3 text-primary";
 
     private string TooltipTextCssClass => copied ? "text-alert-success" : "text-foreground";
 
@@ -62,7 +60,7 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
         "pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 inline-flex " +
         "-translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-md border " +
         "bg-popover px-2.5 py-1 text-xs font-medium shadow-md ",
-        TooltipVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0");
+        isHovered ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0");
 
     private void HandleMouseEnter()
     {
