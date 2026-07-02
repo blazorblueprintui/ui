@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-06-17
+
+### Added
+
+- **BbCalendar: selectable previous/next-month days** — "Outside" days shown for the adjacent months were rendered disabled purely for belonging to another month; they now keep their muted styling but are selectable. Clicking one selects that date and moves the view to its month. Dates disabled via `MinDate`/`MaxDate`/`DisabledDates` stay non-interactive. ([#370](https://github.com/blazorblueprintui/ui/pull/370))
+- **BbCalendar: `AutoFocus` parameter + `FocusActiveDayAsync()`** — New opt-in `AutoFocus` parameter moves focus to the active day on first render so arrow-key navigation works immediately (ideal for inline/revealed calendars), plus a public `FocusActiveDayAsync()` method for overlays that position their content asynchronously. ([#370](https://github.com/blazorblueprintui/ui/pull/370))
+
+### Fixed
+
+- **BbDatePicker: keyboard navigation didn't work when the calendar opened** — The calendar grid's key handler only runs once a day has focus, but opening the date-picker popover left focus on the trigger, so arrow keys scrolled the page instead of moving between days. The date picker now focuses the active day once the popover is positioned (via the calendar's new `FocusActiveDayAsync()`), re-focusing on each open. ([#370](https://github.com/blazorblueprintui/ui/pull/370))
+
+---
+
+## 2026-06-14
+
+### Added
+
+- **BbAccordionTrigger: custom icon** — New `Icon` parameter (`RenderFragment<bool>`) renders a custom icon in place of the default chevron; the `bool` context exposes the open state for animation, and it falls back to the chevron when unset. ([#347](https://github.com/blazorblueprintui/ui/pull/347))
+- **BbThemeSwitcher: Variant parameter** — The trigger button was hard-coded to `Outline`; a new `Variant` parameter (default `Outline`) lets it match the surrounding UI. ([#363](https://github.com/blazorblueprintui/ui/pull/363))
+- **BbCombobox & BbMultiSelect: consistent trigger height + MultiSelect single-line mode** — Combobox and MultiSelect triggers now use the `h-10` (40px) house height to align with `BbSelect`/`BbInput`/`BbButton` (were `h-9`/`min-h-9`). `BbMultiSelect` also gains a `SingleLine` option that keeps the trigger on one fixed-height row — overflowing tags clip while "+N more" and the chevron stay pinned. ([#366](https://github.com/blazorblueprintui/ui/pull/366))
+- **BbDataGridSelectColumn: SelectAllScope** — New `SelectAllScope` parameter; `CurrentPage` removes the cross-page select-all menu so the header checkbox toggles only the current page, leaving other pages' selections intact. ([#367](https://github.com/blazorblueprintui/ui/pull/367))
+
+### Fixed
+
+- **BbInputOTP: OnComplete never fired when typing** — The completion check was gated on `!newValue.Contains("")`, which is always false, so `OnComplete` never fired on manual entry (paste worked). It now fires once every slot is filled. ([#362](https://github.com/blazorblueprintui/ui/pull/362))
+- **BbDialog: ShowClose ignored for programmatic dialogs** — Dialogs opened via `DialogService.OpenAsync<T>` never rendered a close button, so `DialogOpenOptions.ShowClose` had no effect. They now render a close (×) button honoring `ShowClose`. ([#364](https://github.com/blazorblueprintui/ui/pull/364))
+- **BbSidebarMenuButton & BbSidebarMenuSubButton: stuck active with `Href="/"`** — Active state was `IsActive || location-match`, so an explicit `IsActive="false"` could never deactivate an item whose `Href` matched the URL (most visibly `Href="/"`). `IsActive` is now `bool?` — an explicit value wins; `null` keeps automatic location matching. ([#365](https://github.com/blazorblueprintui/ui/pull/365))
+- **BbDataGrid: "select all on this page" was additive** — In the paginated select-all menu, "select all on this page" now replaces the whole selection with just the current page instead of leaving other pages selected. ([#367](https://github.com/blazorblueprintui/ui/pull/367))
+
+---
+
 ## 2026-06-08
 
 ### Fixed

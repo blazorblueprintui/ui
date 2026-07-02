@@ -1,4 +1,7 @@
 @using BlazorBlueprint.Components.Components.Dialog.Internals.Shared
+@using BlazorBlueprint.Icons.Lucide.Components
+@inject DialogService DialogService
+@inject IBbLocalizer Localizer
 
 <DialogHeader Title="@Dialog.Title"
               Description="@Dialog.Description"
@@ -10,10 +13,26 @@
                       Parameters="@Dialog.Parameters" />
 </CascadingValue>
 
+@* Close (X) button — gated on the ShowClose option. Rendered last so it is not the first
+   focusable element when focus is trapped. Independent of PreventClose, which only governs
+   Escape/backdrop dismissal: an explicit X is always a deliberate close. *@
+@if (Dialog.Options.ShowClose)
+{
+    <button type="button"
+            class="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+            @onclick="Close">
+        <LucideIcon Name="x" Class="h-4 w-4" />
+        <span class="sr-only">@Localizer["Dialog.Close"]</span>
+    </button>
+}
+
 @code {
     [Parameter, EditorRequired]
     public ComponentDialogData Dialog { get; set; } = default!;
 
     [Parameter] public string? TitleId { get; set; }
     [Parameter] public string? DescriptionId { get; set; }
+
+    private void Close()
+        => DialogService.Resolve(Dialog.Id, DialogResult.Cancel());
 }
