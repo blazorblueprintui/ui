@@ -89,4 +89,13 @@ public class TriggerContext
     /// Used by components that need to position content relative to the trigger (DropdownMenu, Popover, etc.).
     /// </summary>
     public Action<Microsoft.AspNetCore.Components.ElementReference>? SetTriggerElement { get; init; }
+
+    /// <summary>
+    /// When true, the child trigger element should apply <c>pointer-events: none</c>
+    /// while <see cref="IsOpen"/> is true. This mirrors the guard the non-AsChild
+    /// trigger button applies, so a single gesture can't both close the overlay via
+    /// click-outside detection and immediately re-open it via the trigger's click
+    /// handler (Blazor Server can deliver both for one click).
+    /// </summary>
+    public bool SuppressPointerEventsWhenOpen { get; init; }
 }
