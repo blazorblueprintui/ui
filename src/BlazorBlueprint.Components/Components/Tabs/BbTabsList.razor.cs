@@ -136,7 +136,7 @@ public partial class BbTabsList : IAsyncDisposable
                 await _jsModule.InvokeVoidAsync("dispose", _componentId);
                 await _jsModule.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Circuit disconnected, ignore
             }

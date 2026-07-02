@@ -138,7 +138,7 @@ public partial class BbSidebarProvider
                 await _module.InvokeVoidAsync("cleanup");
                 await _module.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Circuit disconnected, ignore
             }
