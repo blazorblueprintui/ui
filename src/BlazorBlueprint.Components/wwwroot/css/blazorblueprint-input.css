@@ -1,5 +1,19 @@
 /* BlazorBlueprint Components - Pre-built Tailwind CSS */
+
+/* Cascade-layer order. `bb` is declared last as a dedicated priority layer
+   for BB's hand-authored component CSS (the high-specificity attribute-selector
+   rules below) — those need to win against consumer Tailwind utilities and
+   preflight resets. Tailwind's bulk output is imported into its native layers
+   so BB's emitted utilities tie with the consumer's instead of beating them
+   (which was the cause of #318). Consumer overrides work normally via
+   specificity or by loading their stylesheet after ours. */
+@layer properties, theme, base, components, utilities, bb;
+
 @import 'tailwindcss';
+/* tw-animate.css uses @utility (a Tailwind v4 source directive) which cannot
+   be nested inside a layer. Imported unlayered; its utilities land in the
+   default `utilities` layer. Anything in tw-animate that absolutely must win
+   should use the doubled-data-attribute trick or live inside @layer bb below. */
 @import './tw-animate.css';
 
 /* Configure source paths for scanning Razor files */
@@ -14,6 +28,93 @@
     --sidebar-width: 16rem;
     --sidebar-width-mobile: 18rem;
     --sidebar-width-icon: 3rem;
+
+    /* ── Sidebar Menu Button ── */
+    --sidebar-menu-button-height: auto;
+    --sidebar-menu-button-px: 0.5rem;
+    --sidebar-menu-button-py: 0.375rem;
+    --sidebar-menu-button-font-size: 0.875rem;
+    --sidebar-menu-button-line-height: 1.25rem;
+    --sidebar-menu-button-font-size-sm: 0.75rem;
+    --sidebar-menu-button-line-height-sm: 1rem;
+    --sidebar-menu-button-font-size-lg: 1rem;
+    --sidebar-menu-button-line-height-lg: 1.5rem;
+    --sidebar-menu-button-font-weight: 400;
+    --sidebar-menu-button-active-font-weight: 500;
+    --sidebar-menu-button-active-bg: var(--sidebar-accent);
+    --sidebar-menu-button-active-color: var(--sidebar-accent-foreground);
+    --sidebar-menu-button-active-shadow: none;
+    --sidebar-menu-button-radius: 0.375rem;
+    --sidebar-menu-button-gap: 0.5rem;
+    --sidebar-menu-button-icon-size: 1rem;
+    --sidebar-menu-button-collapsed-size: 2rem;
+    --sidebar-menu-button-collapsed-padding: 0.5rem;
+    --sidebar-menu-button-collapsed-padding-lg: 0.75rem;
+
+    /* ── Sidebar Group ── */
+    --sidebar-group-py: 0.5rem;
+    --sidebar-group-px: 0.5rem;
+
+    /* ── Sidebar Group Label ── */
+    --sidebar-group-label-height: 2rem;
+    --sidebar-group-label-px: 0.5rem;
+    --sidebar-group-label-font-size: 0.75rem;
+    --sidebar-group-label-line-height: 1rem;
+    --sidebar-group-label-font-weight: 500;
+    --sidebar-group-label-radius: 0.375rem;
+    --sidebar-group-label-icon-size: 1rem;
+
+    /* ── Sidebar Menu ── */
+    --sidebar-menu-gap: 0.25rem;
+
+    /* ── Sidebar Header ── */
+    --sidebar-header-py: 0.5rem;
+    --sidebar-header-px: 0.5rem;
+    --sidebar-header-gap: 0.5rem;
+
+    /* ── Sidebar Header Content ── */
+    --sidebar-header-content-gap: 0.5rem;
+    --sidebar-header-content-py: 0.5rem;
+    --sidebar-header-content-px: 0.5rem;
+
+    /* ── Sidebar Footer ── */
+    --sidebar-footer-py: 0.5rem;
+    --sidebar-footer-px: 0.5rem;
+    --sidebar-footer-gap: 0.5rem;
+
+    /* ── Sidebar Content ── */
+    --sidebar-content-py: 0.5rem;
+    --sidebar-content-px: 0.5rem;
+    --sidebar-content-gap: 0.5rem;
+
+    /* ── Sidebar Menu Badge ── */
+    --sidebar-badge-height: 1.25rem;
+    --sidebar-badge-min-width: 1.25rem;
+    --sidebar-badge-px: 0.25rem;
+    --sidebar-badge-font-size: 0.75rem;
+    --sidebar-badge-line-height: 1rem;
+    --sidebar-badge-font-weight: 500;
+    --sidebar-badge-radius: 0.375rem;
+    --sidebar-badge-right: 0.25rem;
+    --sidebar-badge-bg: transparent;
+    --sidebar-badge-color: var(--sidebar-foreground);
+
+    /* ── Sidebar Sub Menu ── */
+    --sidebar-sub-mx: 0.875rem;
+    --sidebar-sub-px: 0.625rem;
+    --sidebar-sub-py: 0.125rem;
+    --sidebar-sub-gap: 0.25rem;
+
+    /* ── Sidebar Sub Menu Button ── */
+    --sidebar-sub-button-height: 1.75rem;
+    --sidebar-sub-button-px: 0.5rem;
+    --sidebar-sub-button-gap: 0.5rem;
+    --sidebar-sub-button-radius: 0.375rem;
+    --sidebar-sub-button-font-size: 0.875rem;
+    --sidebar-sub-button-line-height: 1.25rem;
+    --sidebar-sub-button-font-size-sm: 0.75rem;
+    --sidebar-sub-button-line-height-sm: 1rem;
+    --sidebar-sub-button-icon-size: 1rem;
 
     /* Default alert colors — override in your theme to customize */
     --alert-success: oklch(0.55 0.20 142);
@@ -97,8 +198,8 @@
 
   /* Border Radius */
   --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-sm: calc(var(--radius) * 0.6);
 
   /* Tracking (letter-spacing) — relative to --tracking-normal from the user's theme */
   --tracking-tighter: calc(var(--tracking-normal) - 0.05em);
@@ -109,11 +210,189 @@
   --tracking-widest: calc(var(--tracking-normal) + 0.1em);
 }
 
+/* All component utility/component layer blocks live inside `@layer bb` so they win
+   the cascade-layer parity against consumer Tailwind output. The inner @layer
+   declarations (base/components/utilities) become sublayers of bb. */
+@layer bb {
+
 /* Required for keyboard navigation visual feedback in Select/Combobox/DropdownMenu */
 @layer components {
   [role="option"][data-focused="true"] {
     background-color: var(--accent);
     color: var(--accent-foreground);
+  }
+}
+
+/* BB Sidebar root visibility — needs to win against consumer Tailwind cascade.
+   The Sidebar <aside> uses `hidden md:flex` Tailwind utilities to hide on mobile
+   and show on desktop, but those utilities can tie or lose to consumer rules
+   depending on stylesheet load order (the bug seen in #308). This higher-
+   specificity attribute selector inside @layer bb is authoritative regardless. */
+@layer components {
+  aside[data-variant][data-side] { display: none; }
+  @media (min-width: 768px) {
+    aside[data-variant][data-side] { display: flex; }
+  }
+}
+
+/* ── Sidebar component layout/sizing via CSS variables ──
+   Replaces hardcoded Tailwind utility classes with customizable variables.
+   Consumers override these by setting variables on :root or a wrapper element. */
+@layer components {
+  /* ── Menu Button ── */
+  [data-sidebar="menu-button"] {
+    padding: var(--sidebar-menu-button-py) var(--sidebar-menu-button-px);
+    font-size: var(--sidebar-menu-button-font-size);
+    line-height: var(--sidebar-menu-button-line-height);
+    border-radius: var(--sidebar-menu-button-radius);
+    gap: var(--sidebar-menu-button-gap);
+    height: var(--sidebar-menu-button-height);
+    font-weight: var(--sidebar-menu-button-font-weight);
+  }
+
+  [data-sidebar="menu-button"][data-size="sm"] {
+    font-size: var(--sidebar-menu-button-font-size-sm);
+    line-height: var(--sidebar-menu-button-line-height-sm);
+  }
+
+  [data-sidebar="menu-button"][data-size="lg"] {
+    font-size: var(--sidebar-menu-button-font-size-lg);
+    line-height: var(--sidebar-menu-button-line-height-lg);
+  }
+
+  [data-sidebar="menu-button"] > svg {
+    width: var(--sidebar-menu-button-icon-size);
+    height: var(--sidebar-menu-button-icon-size);
+  }
+
+  [data-sidebar="menu-button"][data-active="true"] {
+    font-weight: var(--sidebar-menu-button-active-font-weight);
+    background-color: var(--sidebar-menu-button-active-bg);
+    color: var(--sidebar-menu-button-active-color);
+    box-shadow: var(--sidebar-menu-button-active-shadow);
+  }
+
+  /* Menu Button — collapsible icon mode */
+  [data-collapsible="icon"] [data-sidebar="menu-button"] {
+    width: var(--sidebar-menu-button-collapsed-size);
+    height: var(--sidebar-menu-button-collapsed-size);
+    padding: var(--sidebar-menu-button-collapsed-padding);
+    gap: 0;
+  }
+
+  [data-collapsible="icon"] [data-sidebar="menu-button"][data-size="lg"] {
+    padding: var(--sidebar-menu-button-collapsed-padding-lg);
+  }
+
+  /* ── Group ── */
+  [data-sidebar="group"] {
+    padding: var(--sidebar-group-py) var(--sidebar-group-px);
+  }
+
+  [data-collapsible="icon"] [data-sidebar="group"] {
+    padding: 0;
+  }
+
+  /* ── Group Label ── */
+  [data-sidebar="group-label"] {
+    height: var(--sidebar-group-label-height);
+    padding-left: var(--sidebar-group-label-px);
+    padding-right: var(--sidebar-group-label-px);
+    font-size: var(--sidebar-group-label-font-size);
+    line-height: var(--sidebar-group-label-line-height);
+    font-weight: var(--sidebar-group-label-font-weight);
+    border-radius: var(--sidebar-group-label-radius);
+  }
+
+  [data-sidebar="group-label"] > svg {
+    width: var(--sidebar-group-label-icon-size);
+    height: var(--sidebar-group-label-icon-size);
+  }
+
+  [data-collapsible="icon"] [data-sidebar="group-label"] {
+    margin-top: calc(-1 * var(--sidebar-group-label-height));
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* ── Menu ── */
+  [data-sidebar="menu"] {
+    gap: var(--sidebar-menu-gap);
+  }
+
+  /* ── Header ── */
+  [data-sidebar="header"] {
+    padding: var(--sidebar-header-py) var(--sidebar-header-px);
+    gap: var(--sidebar-header-gap);
+  }
+
+  /* ── Header Content ── */
+  [data-sidebar="header-content"] {
+    gap: var(--sidebar-header-content-gap);
+    padding: var(--sidebar-header-content-py) var(--sidebar-header-content-px);
+  }
+
+  [data-collapsible="icon"] [data-sidebar="header-content"] {
+    padding: 0;
+  }
+
+  /* ── Footer ── */
+  [data-sidebar="footer"] {
+    padding: var(--sidebar-footer-py) var(--sidebar-footer-px);
+    gap: var(--sidebar-footer-gap);
+  }
+
+  /* ── Content ── */
+  [data-sidebar="content"] {
+    padding: var(--sidebar-content-py) var(--sidebar-content-px);
+    gap: var(--sidebar-content-gap);
+  }
+
+  /* ── Menu Badge ── */
+  [data-sidebar="menu-badge"] {
+    height: var(--sidebar-badge-height);
+    min-width: var(--sidebar-badge-min-width);
+    padding-left: var(--sidebar-badge-px);
+    padding-right: var(--sidebar-badge-px);
+    font-size: var(--sidebar-badge-font-size);
+    line-height: var(--sidebar-badge-line-height);
+    font-weight: var(--sidebar-badge-font-weight);
+    border-radius: var(--sidebar-badge-radius);
+    right: var(--sidebar-badge-right);
+    background-color: var(--sidebar-badge-bg);
+    color: var(--sidebar-badge-color);
+  }
+
+  /* ── Menu Sub ── */
+  [data-sidebar="menu-sub"] {
+    margin-left: var(--sidebar-sub-mx);
+    margin-right: var(--sidebar-sub-mx);
+    padding-left: var(--sidebar-sub-px);
+    padding-right: var(--sidebar-sub-px);
+    padding-top: var(--sidebar-sub-py);
+    padding-bottom: var(--sidebar-sub-py);
+    gap: var(--sidebar-sub-gap);
+  }
+
+  /* ── Menu Sub Button ── */
+  [data-sidebar="menu-sub-button"] {
+    height: var(--sidebar-sub-button-height);
+    padding-left: var(--sidebar-sub-button-px);
+    padding-right: var(--sidebar-sub-button-px);
+    gap: var(--sidebar-sub-button-gap);
+    border-radius: var(--sidebar-sub-button-radius);
+    font-size: var(--sidebar-sub-button-font-size);
+    line-height: var(--sidebar-sub-button-line-height);
+  }
+
+  [data-sidebar="menu-sub-button"][data-size="sm"] {
+    font-size: var(--sidebar-sub-button-font-size-sm);
+    line-height: var(--sidebar-sub-button-line-height-sm);
+  }
+
+  [data-sidebar="menu-sub-button"] > svg {
+    width: var(--sidebar-sub-button-icon-size);
+    height: var(--sidebar-sub-button-icon-size);
   }
 }
 
@@ -486,18 +765,26 @@
   }
 }
 
-/* Global animation disable — add class="bb-no-animate" to <html> to turn off all animations */
+/* Global animation disable — add class="bb-no-animate" to <html> to turn off
+   transitions and decorative animations.
+
+   Looping status indicators are exempt: spinners (.animate-spin) and pulse
+   (.animate-pulse) communicate ongoing work, not decoration, so freezing them
+   would misrepresent state. Add .bb-animate-keep to exempt anything else. */
 @layer utilities {
-  .bb-no-animate *,
-  .bb-no-animate *::before,
-  .bb-no-animate *::after {
+  .bb-no-animate *:not(.animate-spin, .animate-pulse, .bb-animate-keep),
+  .bb-no-animate *:not(.animate-spin, .animate-pulse, .bb-animate-keep)::before,
+  .bb-no-animate *:not(.animate-spin, .animate-pulse, .bb-animate-keep)::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
 }
 
-/* Accessibility — respect user's reduced-motion preference */
+} /* end @layer bb */
+
+/* Accessibility — respect user's reduced-motion preference.
+   Left UNLAYERED on purpose so it cannot be defeated by any layered rule. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -508,10 +795,23 @@
   }
 }
 
+@layer bb {
+
 /* DynamicForm - Horizontal layout label width via CSS variable */
 @layer components {
   [data-orientation="horizontal"] > [data-slot="field-label"] {
     min-width: var(--bb-label-width, auto);
+  }
+}
+
+/* Sortable — global styles for ghost/fallback elements created outside the component tree */
+@layer utilities {
+  .sortable-ghost {
+    visibility: hidden;
+  }
+
+  .sortable-fallback {
+    opacity: 1 !important;
   }
 }
 
@@ -559,7 +859,10 @@
   }
 }
 
-/* Alert countdown bar animation */
+} /* end @layer bb */
+
+/* Alert countdown bar animation. Keyframes are not subject to cascade
+   layers, so left at top level. */
 @keyframes bb-alert-countdown {
   from { width: 100%; }
   to { width: 0%; }

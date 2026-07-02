@@ -1,0 +1,252 @@
+@page "/primitives/sortable"
+<PageTitle>Sortable Primitive - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Sortable Primitive</h1>
+            <p class="text-xl text-muted-foreground">
+                Unstyled, accessible drag-and-drop sortable primitive powered by Sortable.js.
+                Provides all the behavior without imposing layout or styling.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <!-- Basic List -->
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Headless Primitive</h2>
+                <p class="text-muted-foreground">
+                    The primitive provides drag-and-drop behavior, ARIA attributes, and live
+                    announcements without any styling. Apply your own classes via
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">class</code>.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 max-w-md">
+                <BlazorBlueprint.Primitives.Sortable.BbSortable TItem="string"
+                                                                 Items="@_basicItems"
+                                                                 AriaLabel="Sortable task list"
+                                                                 OnUpdate="@((args) => MoveWithin(_basicItems, args))"
+                                                                 class="space-y-2">
+                    <ItemTemplate Context="item">
+                        <div class="flex items-center gap-3 rounded-md border px-4 py-3 text-sm cursor-grab active:cursor-grabbing">
+                            <span>@item</span>
+                        </div>
+                    </ItemTemplate>
+                </BlazorBlueprint.Primitives.Sortable.BbSortable>
+            </div>
+
+            <CodeBlock Source="Primitives/Sortable/basic.txt" />
+        </section>
+
+        <!-- Handle -->
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">With Drag Handle</h2>
+                <p class="text-muted-foreground">
+                    Use the <code class="text-xs bg-muted px-1 py-0.5 rounded">Handle</code> parameter to
+                    restrict dragging to a specific child element.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6 max-w-md">
+                <BlazorBlueprint.Primitives.Sortable.BbSortable TItem="string"
+                                                                 Items="@_handleItems"
+                                                                 Handle=".drag-handle"
+                                                                 AriaLabel="Sortable list with drag handle"
+                                                                 OnUpdate="@((args) => MoveWithin(_handleItems, args))"
+                                                                 class="space-y-2">
+                    <ItemTemplate Context="item">
+                        <div class="flex items-center gap-3 rounded-md border px-4 py-3 text-sm">
+                            <span class="drag-handle cursor-grab active:cursor-grabbing">&#x2630;</span>
+                            <span class="flex-1">@item</span>
+                        </div>
+                    </ItemTemplate>
+                </BlazorBlueprint.Primitives.Sortable.BbSortable>
+            </div>
+
+            <CodeBlock Source="Primitives/Sortable/handle.txt" />
+        </section>
+
+        <!-- Connected Lists -->
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Connected Lists</h2>
+                <p class="text-muted-foreground">
+                    Give multiple instances the same
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Group</code> name to allow
+                    items to move between them.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <p class="text-sm font-medium">Available</p>
+                    <BlazorBlueprint.Primitives.Sortable.BbSortable TItem="string"
+                                                                     Items="@_available"
+                                                                     Group="@_transferGroup"
+                                                                     AriaLabel="Available items"
+                                                                     OnUpdate="@((args) => MoveWithin(_available, args))"
+                                                                     OnRemove="@((args) => MoveAcross(_available, _selected, args))"
+                                                                     class="min-h-20 space-y-2 rounded-md border border-dashed p-2">
+                        <ItemTemplate Context="item">
+                            <div class="rounded-md border px-3 py-2 text-sm cursor-grab active:cursor-grabbing">
+                                @item
+                            </div>
+                        </ItemTemplate>
+                    </BlazorBlueprint.Primitives.Sortable.BbSortable>
+                </div>
+
+                <div class="space-y-2">
+                    <p class="text-sm font-medium">Selected</p>
+                    <BlazorBlueprint.Primitives.Sortable.BbSortable TItem="string"
+                                                                     Items="@_selected"
+                                                                     Group="@_transferGroup"
+                                                                     AriaLabel="Selected items"
+                                                                     OnUpdate="@((args) => MoveWithin(_selected, args))"
+                                                                     OnRemove="@((args) => MoveAcross(_selected, _available, args))"
+                                                                     class="min-h-20 space-y-2 rounded-md border border-dashed p-2">
+                        <ItemTemplate Context="item">
+                            <div class="rounded-md border px-3 py-2 text-sm cursor-grab active:cursor-grabbing">
+                                @item
+                            </div>
+                        </ItemTemplate>
+                    </BlazorBlueprint.Primitives.Sortable.BbSortable>
+                </div>
+            </div>
+
+            <CodeBlock Source="Primitives/Sortable/connected.txt" />
+        </section>
+
+        <AccessibilityList>
+            <AriaAttributes>
+                <AccessibilityItem>
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">role="list"</code> on the container element
+                </AccessibilityItem>
+                <AccessibilityItem>
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-label</code> via the
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">AriaLabel</code> parameter
+                </AccessibilityItem>
+                <AccessibilityItem>
+                    Visually-hidden <code class="text-xs bg-muted px-1 py-0.5 rounded">role="status"</code>
+                    live region announces each move to screen readers
+                </AccessibilityItem>
+                <AccessibilityItem>
+                    Each item is automatically wrapped in a keyed container for stable Blazor diffing
+                </AccessibilityItem>
+            </AriaAttributes>
+            <KeyboardNavigation>
+                <KeyboardShortcutItem Description="Drag and drop is pointer-only. Provide alternative move actions (e.g., move-up / move-down buttons) for full keyboard accessibility.">
+                    <BbKbd>Mouse / Touch</BbKbd>
+                </KeyboardShortcutItem>
+            </KeyboardNavigation>
+        </AccessibilityList>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">API Reference</h2>
+                <p class="text-muted-foreground">
+                    Component properties and parameters.
+                </p>
+            </div>
+
+            <ApiReference ComponentName="Sortable&lt;TItem&gt;">
+                <ApiParameter Name="ItemTemplate" Type="RenderFragment&lt;TItem&gt;?">
+                    Render fragment used to display each item. The <code>context</code> variable
+                    provides the data item.
+                </ApiParameter>
+                <ApiParameter Name="Items" Type="IList&lt;TItem&gt;">
+                    The list of items to render and reorder.
+                </ApiParameter>
+                <ApiParameter Name="OnUpdate" Type="EventCallback&lt;(int OldIndex, int NewIndex)&gt;">
+                    Raised when an item is reordered within this list.
+                </ApiParameter>
+                <ApiParameter Name="OnRemove" Type="EventCallback&lt;(int OldIndex, int NewIndex)&gt;">
+                    Raised when an item is moved out of this list into a connected list.
+                </ApiParameter>
+                <ApiParameter Name="OnAdd" Type="EventCallback&lt;(int OldIndex, int NewIndex)&gt;">
+                    Raised when an item from a connected list is dropped into this list.
+                </ApiParameter>
+                <ApiParameter Name="Id" Type="string" Default="auto">
+                    HTML element id for the sortable container. Auto-generated by default.
+                </ApiParameter>
+                <ApiParameter Name="Group" Type="string" Default="auto">
+                    Sortable.js group name. Lists sharing the same name can exchange items.
+                    Defaults to a unique auto-generated value (isolated list).
+                </ApiParameter>
+                <ApiParameter Name="Pull" Type="string?" Default="null">
+                    Pull behaviour: <code>"clone"</code> copies items; <code>null</code> moves them.
+                </ApiParameter>
+                <ApiParameter Name="Put" Type="bool" Default="true">
+                    Whether items from connected lists can be dropped into this one.
+                </ApiParameter>
+                <ApiParameter Name="Sort" Type="bool" Default="true">
+                    Whether items within this list can be reordered.
+                </ApiParameter>
+                <ApiParameter Name="Handle" Type="string" Default='""'>
+                    CSS selector for the drag-handle element. Only that element initiates a drag.
+                </ApiParameter>
+                <ApiParameter Name="Filter" Type="string?" Default="null">
+                    CSS selector for child elements that cannot be dragged.
+                </ApiParameter>
+                <ApiParameter Name="ForceFallback" Type="bool" Default="true">
+                    Use the software fallback renderer instead of native HTML5 drag-and-drop.
+                </ApiParameter>
+                <ApiParameter Name="AriaLabel" Type="string?">
+                    Accessible label exposed as <code>aria-label</code> on the container.
+                </ApiParameter>
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                    Additional HTML attributes applied to the container element (e.g. <code>class</code>, <code>style</code>).
+                </ApiParameter>
+            </ApiReference>
+        </section>
+    </div>
+</div>
+
+@code {
+    // ── Shared helper ────────────────────────────────────────────────────────
+
+    private static void MoveWithin<T>(List<T> list, (int OldIndex, int NewIndex) args)
+    {
+        var item = list[args.OldIndex];
+        list.RemoveAt(args.OldIndex);
+        list.Insert(args.NewIndex, item);
+    }
+
+    private static void MoveAcross<T>(List<T> source, List<T> target, (int OldIndex, int NewIndex) args)
+    {
+        var item = source[args.OldIndex];
+        source.RemoveAt(args.OldIndex);
+        target.Insert(args.NewIndex, item);
+    }
+
+    // ── Basic list ────────────────────────────────────────────────────────────
+
+    private List<string> _basicItems =
+    [
+        "Design mockups",
+        "Set up project",
+        "Implement authentication",
+        "Write unit tests",
+        "Deploy to staging",
+    ];
+
+    // ── Handle list ───────────────────────────────────────────────────────────
+
+    private List<string> _handleItems =
+    [
+        "Dashboard",
+        "Analytics",
+        "Reports",
+        "Settings",
+        "Users",
+    ];
+
+    // ── Connected lists ──────────────────────────────────────────────────────
+
+    private readonly string _transferGroup = Guid.NewGuid().ToString();
+    private List<string> _available = ["React", "Vue", "Angular", "Svelte", "Solid"];
+    private List<string> _selected = ["Blazor"];
+}

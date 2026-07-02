@@ -9,6 +9,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Never commit to git unless explicitly instructed to
 - This application does not support hot-reload — rebuild to see changes
 - Do NOT add `Co-Authored-By` lines to commit messages
+- Do NOT add "Generated with Claude" / AI-attribution footers to PR bodies or GitHub issue/PR comments
+- When adding/changing public component API (new params, components, or features), add a demo example in `demos/BlazorBlueprint.Demo.Shared` (live example + `CodeExamples/.../*.txt` snippet + API Reference entry) — don't just temp-add an example to test and then revert it
 - Always create a new branch from `develop` when starting work, unless explicitly told otherwise
 
 ---

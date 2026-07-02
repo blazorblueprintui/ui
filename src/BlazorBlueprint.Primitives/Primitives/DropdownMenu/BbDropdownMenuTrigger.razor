@@ -117,13 +117,12 @@ else
     {
         if (Disabled) return;
 
-        // Enter or Space to toggle
-        if (args.Key == "Enter" || args.Key == " ")
-        {
-            Context.Toggle(_triggerRef);
-        }
+        // Space/Enter intentionally NOT handled here: this is a native <button>, so the browser
+        // activates it on Space/Enter and fires a click (handled by HandleClick). Toggling here as
+        // well opened then closed the menu in one press. Arrow keys still need explicit handling —
+        // they open the menu AND move focus to the first/last item, which a click does not.
         // Arrow Down to open and focus first item
-        else if (args.Key == "ArrowDown" && !Context.IsOpen)
+        if (args.Key == "ArrowDown" && !Context.IsOpen)
         {
             Context.Open(_triggerRef);
             Context.SetFocusedIndex(0);

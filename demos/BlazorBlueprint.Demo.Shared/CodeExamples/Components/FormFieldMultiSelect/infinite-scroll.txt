@@ -1,0 +1,49 @@
+<BbFormFieldMultiSelect TValue="string"
+                      Options="@countries"
+                      @bind-Values="selectedCountries"
+                      SearchQueryChanged="@HandleSearch"
+                      OnLoadMore="@HandleLoadMore"
+                      IsLoading="@isLoading"
+                      Label="Countries"
+                      Placeholder="Select countries..."
+                      SearchPlaceholder="Search countries..."
+                      MatchTriggerWidth="true"
+                      InputClass="w-full" />
+
+@code {
+    private IEnumerable<string>? selectedCountries;
+    private SelectOption<string>[] countries = [];
+    private bool isLoading;
+    private string currentQuery = string.Empty;
+    private const int PageSize = 20;
+
+    protected override void OnInitialized()
+    {
+        countries = allCountries.Take(PageSize).ToArray();
+    }
+
+    private async Task HandleSearch(string query)
+    {
+        isLoading = true;
+        currentQuery = query;
+        StateHasChanged();
+
+        var filtered = await MyApi.SearchAsync(query);
+        countries = filtered.Take(PageSize).ToArray();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleLoadMore()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        var filtered = await MyApi.SearchAsync(currentQuery);
+        countries = filtered.Take(countries.Length + PageSize).ToArray();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,31 @@
+<BbSelect TValue="string"
+        Options="@countries"
+        @bind-Value="selectedCountry"
+        OnLoadMore="@HandleLoadMore"
+        IsLoading="@isLoading"
+        Placeholder="Select a country..."
+        Class="w-[320px]" />
+
+@code {
+    private string? selectedCountry;
+    private SelectOption<string>[] countries = [];
+    private bool isLoading;
+    private const int PageSize = 20;
+
+    protected override void OnInitialized()
+    {
+        countries = allCountries.Take(PageSize).ToArray();
+    }
+
+    private async Task HandleLoadMore()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        var nextCount = countries.Length + PageSize;
+        countries = allCountries.Take(nextCount).ToArray();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+}

@@ -9,6 +9,7 @@
     @* Dropzone *@
     <div @ref="_dropzoneRef"
          class="@DropzoneClass"
+         aria-required="@(Required ? "true" : null)"
          @ondragenter="HandleDragEnter"
          @ondragleave="HandleDragLeave"
          @ondragover="HandleDragOver"
@@ -180,6 +181,12 @@
     /// </summary>
     [Parameter]
     public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the file upload is required.
+    /// </summary>
+    [Parameter]
+    public bool Required { get; set; }
 
     /// <summary>
     /// Callback when validation errors occur.
@@ -356,6 +363,30 @@
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Clears all files and validation errors, resetting the component to its initial state.
+    /// </summary>
+    public async Task ClearFiles()
+    {
+        _files.Clear();
+        _errors.Clear();
+        await FilesChanged.InvokeAsync(_files);
+
+        if (_jsModule != null && _inputFile?.Element != null)
+        {
+            try
+            {
+                await _jsModule.InvokeVoidAsync("resetInput", _inputFile.Element);
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+        }
+
+        StateHasChanged();
     }
 
     private async Task RemoveFile(FileUploadItem file)

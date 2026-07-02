@@ -1,24 +1,8 @@
 @namespace BlazorBlueprint.Components
-@inject IJSRuntime JSRuntime
-@implements IAsyncDisposable
 
-@{
-    var isOpen = Menu?.IsOpen == true;
-}
-
-@if (isOpen)
-{
-    <div class="fixed inset-0 z-40" @onclick="HandleOverlayClick" @onclick:stopPropagation="true"></div>
-}
-<div @ref="_contentRef"
-     class="@CssClass"
-     style="@(isOpen ? null : "display:none")"
-     data-state="@(isOpen ? "open" : "closed")"
-     role="menu"
-     tabindex="-1"
-     @onclick:stopPropagation="true">
+<BlazorBlueprint.Primitives.Menubar.BbMenubarContent Loop="@Loop" class="@CssClass">
     @ChildContent
-</div>
+</BlazorBlueprint.Primitives.Menubar.BbMenubarContent>
 
 @code {
     [CascadingParameter]
@@ -38,106 +22,6 @@
 
     [Parameter]
     public bool Loop { get; set; } = true;
-
-    private ElementReference _contentRef;
-    private bool _wasClosed = true;
-    private IJSObjectReference? _menuKeyboardModule;
-    private DotNetObjectReference<BbMenubarContent>? _dotNetRef;
-    private readonly string _instanceId = Guid.NewGuid().ToString("N")[..8];
-    private bool _disposed;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (Menu?.IsOpen == true && _wasClosed)
-        {
-            _wasClosed = false;
-            try
-            {
-                _menuKeyboardModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/menu-keyboard.js");
-                _dotNetRef ??= DotNetObjectReference.Create(this);
-
-                await _menuKeyboardModule.InvokeVoidAsync("initialize", _contentRef, _dotNetRef, _instanceId,
-                    new { mode = "menubar", loop = Loop, initialFocus = "first" });
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect in Blazor Server
-            }
-            catch (InvalidOperationException)
-            {
-                // JS interop not available during prerendering
-            }
-        }
-        else if (Menu?.IsOpen != true && !_wasClosed)
-        {
-            _wasClosed = true;
-            await CleanupKeyboardAsync();
-        }
-    }
-
-    [JSInvokable]
-    public void JsOnEscapeKey()
-    {
-        if (_disposed) { return; }
-        Menu?.Close();
-    }
-
-    [JSInvokable]
-    public void JsOnNextMenu()
-    {
-        if (_disposed) { return; }
-        Context?.NavigateToNextMenu();
-    }
-
-    [JSInvokable]
-    public void JsOnPreviousMenu()
-    {
-        if (_disposed) { return; }
-        Context?.NavigateToPreviousMenu();
-    }
-
-    private async Task CleanupKeyboardAsync()
-    {
-        if (_menuKeyboardModule != null)
-        {
-            try
-            {
-                await _menuKeyboardModule.InvokeVoidAsync("dispose", _instanceId);
-            }
-            catch
-            {
-                // Cleanup may already be disposed
-            }
-        }
-    }
-
-    private void HandleOverlayClick()
-    {
-        Menu?.Close();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        GC.SuppressFinalize(this);
-        _disposed = true;
-
-        await CleanupKeyboardAsync();
-
-        try
-        {
-            if (_menuKeyboardModule != null)
-            {
-                await _menuKeyboardModule.DisposeAsync();
-            }
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-        {
-            // Expected during circuit disconnect
-        }
-
-        _dotNetRef?.Dispose();
-    }
 
     private string AlignClass => Align switch
     {

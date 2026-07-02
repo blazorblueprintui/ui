@@ -1,0 +1,38 @@
+@namespace BlazorBlueprint.Components
+
+<BbCommandGroup>
+    @if (!string.IsNullOrWhiteSpace(Label))
+    {
+        <div class="@LabelCssClass">
+            @Label
+        </div>
+    }
+    @ChildContent
+</BbCommandGroup>
+
+@code {
+    /// <summary>
+    /// Gets or sets the label text displayed above the group items.
+    /// When the search query filters out all items in this group, the entire group (including the label) is hidden.
+    /// </summary>
+    [Parameter]
+    public string? Label { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional CSS classes to apply to the label element.
+    /// </summary>
+    [Parameter]
+    public string? LabelClass { get; set; }
+
+    /// <summary>
+    /// Gets or sets the content to be rendered inside the group.
+    /// Typically contains <see cref="BbComboboxItem{TValue}"/> components.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private string LabelCssClass => ClassNames.cn(
+        "px-2 py-1.5 text-xs font-semibold text-muted-foreground",
+        LabelClass
+    );
+}

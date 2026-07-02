@@ -1,0 +1,42 @@
+@namespace BlazorBlueprint.Components
+@inherits FormFieldBase
+
+<BbField Orientation="@Orientation" IsInvalid="@IsInvalid" Class="@Class">
+    @if (Label is not null)
+    {
+        <BbFieldLabel>@Label</BbFieldLabel>
+    }
+    <BbFieldContent>
+        <BbTagInput Tags="@Tags"
+                    TagsChanged="HandleTagsChanged"
+                    TagsExpression="@TagsExpression"
+                    Placeholder="@Placeholder"
+                    MaxTags="@MaxTags"
+                    MaxTagLength="@MaxTagLength"
+                    AllowDuplicates="@AllowDuplicates"
+                    AddTrigger="@AddTrigger"
+                    Validate="@Validate"
+                    OnTagRejected="@OnTagRejected"
+                    Suggestions="@Suggestions"
+                    OnSearchSuggestions="@OnSearchSuggestions"
+                    SuggestionDebounceMs="@SuggestionDebounceMs"
+                    Variant="@Variant"
+                    Clearable="@Clearable"
+                    Disabled="@Disabled"
+                    TagTemplate="@TagTemplate"
+                    AriaLabel="@AriaLabel"
+                    Class="@InputClass" />
+        @if (!string.IsNullOrEmpty(HelperText) && !IsInvalid)
+        {
+            <BbFieldDescription Id="@DescriptionId">@HelperText</BbFieldDescription>
+        }
+        @if (IsInvalid && !string.IsNullOrEmpty(ErrorText))
+        {
+            <BbFieldError Id="@ErrorId">@ErrorText</BbFieldError>
+        }
+        else if (HasEditContextErrors)
+        {
+            <BbFieldError Id="@ErrorId" Errors="@EditContextErrors" />
+        }
+    </BbFieldContent>
+</BbField>

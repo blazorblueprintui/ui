@@ -1,0 +1,58 @@
+<BbCombobox TValue="string"
+         Options="products"
+         @bind-Value="selectedProduct"
+         SearchQueryChanged="@HandleSearch"
+         OnLoadMore="@HandleLoadMore"
+         IsLoading="@isLoading"
+         EndOfListMessage="@(products.Length >= totalCount ? "All products loaded." : null)"
+         Placeholder="Select a product..."
+         SearchPlaceholder="Search products..."
+         EmptyMessage="@(isLoading ? "Loading..." : "No products found.")"
+         MatchTriggerWidth="true"
+         Class="w-[320px]" />
+
+@code {
+    private string? selectedProduct;
+    private SelectOption<string>[] products = [];
+    private bool isLoading;
+    private string currentQuery = string.Empty;
+    private int totalCount;
+    private const int PageSize = 20;
+
+    protected override void OnInitialized()
+    {
+        // Load the initial page
+        totalCount = allProducts.Length;
+        products = allProducts.Take(PageSize).ToArray();
+    }
+
+    private async Task HandleSearch(string query)
+    {
+        isLoading = true;
+        currentQuery = query;
+        StateHasChanged();
+
+        // Replace with your actual API call
+        var filtered = await MyApi.SearchAsync(query);
+        totalCount = filtered.Length;
+        products = filtered.Take(PageSize).ToArray();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task HandleLoadMore()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        // Load the next page, appending to existing results
+        var filtered = await MyApi.SearchAsync(currentQuery);
+        totalCount = filtered.Length;
+        var nextCount = products.Length + PageSize;
+        products = filtered.Take(nextCount).ToArray();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,170 @@
+@page "/primitives/menubar"
+<PageTitle>Menubar Primitive - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Menubar Primitive</h1>
+            <p class="text-xl text-muted-foreground">
+                Headless menubar with keyboard navigation, ARIA semantics, and hover-to-switch behavior.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Basic Menubar</h2>
+                <p class="text-muted-foreground">
+                    A headless menubar with two menus. All behavior (open/close, hover-switch, keyboard nav) is built in.
+                    Style with your own CSS via <code class="text-xs bg-muted px-1 py-0.5 rounded">class</code> or inline styles.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BlazorBlueprint.Primitives.Menubar.BbMenubar
+                    class="relative flex items-center gap-1 rounded-md border bg-background p-1">
+                    <BlazorBlueprint.Primitives.Menubar.BbMenubarMenu>
+                        <BlazorBlueprint.Primitives.Menubar.BbMenubarTrigger
+                            class="flex cursor-default select-none items-center rounded-sm px-3 py-1.5 text-sm font-medium outline-none hover:bg-accent data-[state=open]:bg-accent">
+                            File
+                        </BlazorBlueprint.Primitives.Menubar.BbMenubarTrigger>
+                        <BlazorBlueprint.Primitives.Menubar.BbMenubarContent
+                            class="absolute top-full mt-1 z-50 min-w-[10rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+                            <BlazorBlueprint.Primitives.Menubar.BbMenubarItem OnClick="@(() => lastAction = "New File")"
+                                class="flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent focus:bg-accent">
+                                New File
+                            </BlazorBlueprint.Primitives.Menubar.BbMenubarItem>
+                            <BlazorBlueprint.Primitives.Menubar.BbMenubarItem OnClick="@(() => lastAction = "Open")"
+                                class="flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent focus:bg-accent">
+                                Open
+                            </BlazorBlueprint.Primitives.Menubar.BbMenubarItem>
+                            <BlazorBlueprint.Primitives.Menubar.BbMenubarSeparator class="-mx-1 my-1 h-px bg-muted" />
+                            <BlazorBlueprint.Primitives.Menubar.BbMenubarItem OnClick="@(() => lastAction = "Save")"
+                                class="flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent focus:bg-accent">
+                                Save
+                            </BlazorBlueprint.Primitives.Menubar.BbMenubarItem>
+                        </BlazorBlueprint.Primitives.Menubar.BbMenubarContent>
+                    </BlazorBlueprint.Primitives.Menubar.BbMenubarMenu>
+
+                    <BlazorBlueprint.Primitives.Menubar.BbMenubarMenu>
+                        <BlazorBlueprint.Primitives.Menubar.BbMenubarTrigger
+                            class="flex cursor-default select-none items-center rounded-sm px-3 py-1.5 text-sm font-medium outline-none hover:bg-accent data-[state=open]:bg-accent">
+                            Edit
+                        </BlazorBlueprint.Primitives.Menubar.BbMenubarTrigger>
+                        <BlazorBlueprint.Primitives.Menubar.BbMenubarContent
+                            class="absolute top-full mt-1 z-50 min-w-[10rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+                            <BlazorBlueprint.Primitives.Menubar.BbMenubarItem OnClick="@(() => lastAction = "Undo")"
+                                class="flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent focus:bg-accent">
+                                Undo
+                            </BlazorBlueprint.Primitives.Menubar.BbMenubarItem>
+                            <BlazorBlueprint.Primitives.Menubar.BbMenubarItem OnClick="@(() => lastAction = "Redo")"
+                                class="flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent focus:bg-accent">
+                                Redo
+                            </BlazorBlueprint.Primitives.Menubar.BbMenubarItem>
+                        </BlazorBlueprint.Primitives.Menubar.BbMenubarContent>
+                    </BlazorBlueprint.Primitives.Menubar.BbMenubarMenu>
+                </BlazorBlueprint.Primitives.Menubar.BbMenubar>
+
+                @if (lastAction != null)
+                {
+                    <p class="mt-4 text-sm text-muted-foreground">Last action: <strong>@lastAction</strong></p>
+                }
+            </div>
+
+            <CodeBlock Source="Primitives/Menubar/basic.txt" />
+        </section>
+
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Checkbox Items</h2>
+                <p class="text-muted-foreground">
+                    Checkbox items toggle state without closing the menu. Uses
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">role="menuitemcheckbox"</code> and
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-checked</code>.
+                </p>
+            </div>
+
+            <div class="rounded-lg border bg-card p-6">
+                <BlazorBlueprint.Primitives.Menubar.BbMenubar
+                    class="relative flex items-center gap-1 rounded-md border bg-background p-1">
+                    <BlazorBlueprint.Primitives.Menubar.BbMenubarMenu>
+                        <BlazorBlueprint.Primitives.Menubar.BbMenubarTrigger
+                            class="flex cursor-default select-none items-center rounded-sm px-3 py-1.5 text-sm font-medium outline-none hover:bg-accent data-[state=open]:bg-accent">
+                            View
+                        </BlazorBlueprint.Primitives.Menubar.BbMenubarTrigger>
+                        <BlazorBlueprint.Primitives.Menubar.BbMenubarContent
+                            class="absolute top-full mt-1 z-50 min-w-[10rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md">
+                            <BlazorBlueprint.Primitives.Menubar.BbMenubarLabel class="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                                Panels
+                            </BlazorBlueprint.Primitives.Menubar.BbMenubarLabel>
+                            <BlazorBlueprint.Primitives.Menubar.BbMenubarCheckboxItem
+                                Checked="@showSidebar" CheckedChanged="@(v => showSidebar = v)"
+                                class="flex cursor-default select-none items-center rounded-sm pl-6 pr-2 py-1.5 text-sm outline-none hover:bg-accent focus:bg-accent">
+                                @(showSidebar ? "✓ " : "  ")Sidebar
+                            </BlazorBlueprint.Primitives.Menubar.BbMenubarCheckboxItem>
+                            <BlazorBlueprint.Primitives.Menubar.BbMenubarCheckboxItem
+                                Checked="@showMinimap" CheckedChanged="@(v => showMinimap = v)"
+                                class="flex cursor-default select-none items-center rounded-sm pl-6 pr-2 py-1.5 text-sm outline-none hover:bg-accent focus:bg-accent">
+                                @(showMinimap ? "✓ " : "  ")Minimap
+                            </BlazorBlueprint.Primitives.Menubar.BbMenubarCheckboxItem>
+                        </BlazorBlueprint.Primitives.Menubar.BbMenubarContent>
+                    </BlazorBlueprint.Primitives.Menubar.BbMenubarMenu>
+                </BlazorBlueprint.Primitives.Menubar.BbMenubar>
+
+                <p class="mt-4 text-sm text-muted-foreground">
+                    Sidebar: @(showSidebar ? "visible" : "hidden") | Minimap: @(showMinimap ? "visible" : "hidden")
+                </p>
+            </div>
+
+            <CodeBlock Source="Primitives/Menubar/checkbox-items.txt" />
+        </section>
+
+        <!-- Accessibility Notes -->
+        <AccessibilityList>
+            <AriaAttributes>
+                <AccessibilityItem>
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">role="menubar"</code> on the root container
+                </AccessibilityItem>
+                <AccessibilityItem>
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">role="menu"</code> on content panels
+                </AccessibilityItem>
+                <AccessibilityItem>
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">role="menuitem"</code> on items and triggers
+                </AccessibilityItem>
+                <AccessibilityItem>
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">role="menuitemcheckbox"</code> with <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-checked</code> on checkbox items
+                </AccessibilityItem>
+                <AccessibilityItem>
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-haspopup="menu"</code> and <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-expanded</code> on triggers
+                </AccessibilityItem>
+                <AccessibilityItem>
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">role="separator"</code> on separator elements
+                </AccessibilityItem>
+            </AriaAttributes>
+            <KeyboardNavigation>
+                <KeyboardShortcutItem Description="Navigate between menu items">
+                    <BbKbd>Arrow Down</BbKbd> / <BbKbd>Arrow Up</BbKbd>
+                </KeyboardShortcutItem>
+                <KeyboardShortcutItem Description="Switch between menus">
+                    <BbKbd>Arrow Right</BbKbd> / <BbKbd>Arrow Left</BbKbd>
+                </KeyboardShortcutItem>
+                <KeyboardShortcutItem Description="Activate the focused item">
+                    <BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd>
+                </KeyboardShortcutItem>
+                <KeyboardShortcutItem Description="Close the current menu">
+                    <BbKbd>Escape</BbKbd>
+                </KeyboardShortcutItem>
+                <KeyboardShortcutItem Description="Jump to first/last item">
+                    <BbKbd>Home</BbKbd> / <BbKbd>End</BbKbd>
+                </KeyboardShortcutItem>
+            </KeyboardNavigation>
+        </AccessibilityList>
+    </div>
+</div>
+
+@code {
+    private string? lastAction;
+    private bool showSidebar = true;
+    private bool showMinimap;
+}

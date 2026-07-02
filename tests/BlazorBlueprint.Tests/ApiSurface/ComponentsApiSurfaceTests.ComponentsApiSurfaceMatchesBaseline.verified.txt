@@ -27,6 +27,7 @@
   - As : String
   - ChildContent : RenderFragment
   - Class : String
+  - Icon : RenderFragment<Boolean>
   - Item : BbAccordionItem [CascadingParameter]
 
 ### BbAlert (BlazorBlueprint.Components)
@@ -245,6 +246,7 @@
 
 ### BbCalendar (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AutoFocus : Boolean
   - CellClass : String
   - Class : String
   - CustomDayNames : String[]
@@ -371,6 +373,7 @@
   - ParentChart : BbChartBase [CascadingParameter]
 
 ### BbChartTooltip (BlazorBlueprint.Components)
+  - AppendToBody : Boolean?
   - BackgroundColor : String
   - BorderColor : String
   - Indicator : TooltipIndicator
@@ -388,6 +391,7 @@
   - Id : String
   - Indeterminate : Boolean
   - IndeterminateChanged : EventCallback<Boolean>
+  - Required : Boolean
   - CascadedEditContext : EditContext [CascadingParameter]
 
 ### BbCheckboxGroupItem`1 (BlazorBlueprint.Components)
@@ -431,6 +435,7 @@
   - Disabled : Boolean
   - Format : ColorFormat
   - PresetColors : String[]
+  - Required : Boolean
   - ShowAlpha : Boolean
   - ShowInputs : Boolean
   - ShowPresets : Boolean
@@ -439,12 +444,18 @@
   - ValueExpression : Expression<Func<String>>
   - CascadedEditContext : EditContext [CascadingParameter]
 
+### BbComboboxGroup (BlazorBlueprint.Components)
+  - ChildContent : RenderFragment
+  - Label : String
+  - LabelClass : String
+
 ### BbComboboxItem`1 (BlazorBlueprint.Components)
   - ChildContent : RenderFragment
   - Disabled : Boolean
   - Text : String [EditorRequired]
   - Value : TValue [EditorRequired]
   - Parent : BbCombobox<TValue> [CascadingParameter]
+  - RegistrationOnly : Boolean [CascadingParameter]
 
 ### BbCombobox`1 (BlazorBlueprint.Components)
   - ActiveClass : String
@@ -453,13 +464,18 @@
   - Class : String
   - Disabled : Boolean
   - EmptyMessage : String
+  - EndOfListMessage : String
+  - IsLoading : Boolean
   - MatchTriggerWidth : Boolean
+  - OnLoadMore : EventCallback
   - Options : IEnumerable<SelectOption<TValue>>
   - Placeholder : String
   - PopoverWidth : String
+  - Required : Boolean
   - SearchPlaceholder : String
   - SearchQuery : String
   - SearchQueryChanged : EventCallback<String>
+  - SelectedItemText : String
   - Value : TValue
   - ValueChanged : EventCallback<TValue>
   - ValueExpression : Expression<Func<TValue>>
@@ -480,9 +496,11 @@
   - ChildContent : RenderFragment
   - Class : String
   - CloseOnSelect : Boolean
+  - FilterFunction : Func<CommandItemMetadata, String, Boolean>
   - OnValueChange : EventCallback<String>
   - Open : Boolean
   - OpenChanged : EventCallback<Boolean>
+  - SearchQueryChanged : EventCallback<String>
   - Shortcut : String
 
 ### BbCommandEmpty (BlazorBlueprint.Components)
@@ -519,6 +537,9 @@
 ### BbCommandList (BlazorBlueprint.Components)
   - ChildContent : RenderFragment
   - Class : String
+  - EndOfListMessage : String
+  - IsLoading : Boolean
+  - OnLoadMore : EventCallback
   - Context : CommandContext [CascadingParameter]
 
 ### BbCommandSeparator (BlazorBlueprint.Components)
@@ -536,7 +557,8 @@
   - ItemSearchText : Func<TItem, String>
   - ItemTemplate : RenderFragment<TItem> [EditorRequired]
   - ItemValue : Func<TItem, String> [EditorRequired]
-  - Items : IReadOnlyList<TItem> [EditorRequired]
+  - Items : IReadOnlyList<TItem>
+  - ItemsProvider : CommandItemsProvider<TItem>
   - LazyLoadBatchSize : Int32
   - MaxDisplayCount : Int32
   - Context : CommandContext [CascadingParameter]
@@ -598,6 +620,17 @@
   - ValueExpression : Expression<Func<Decimal>>
   - CascadedEditContext : EditContext [CascadingParameter]
   - FieldIsInvalid : Boolean? [CascadingParameter]
+
+### BbDarkModeToggle (BlazorBlueprint.Components)
+  - Class : String
+  - DarkIcon : RenderFragment
+  - DarkLabel : String
+  - LightIcon : RenderFragment
+  - LightLabel : String
+  - ShowIcon : Boolean
+  - ShowLabel : Boolean
+  - Size : ButtonSize
+  - Variant : ButtonVariant
 
 ### BbDashboardGrid (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -679,7 +712,18 @@
   - TriggerContent : RenderFragment
   - ParentGrid : BbDataGrid<TData> [CascadingParameter]
 
+### BbDataGridDetailHeader`1 (BlazorBlueprint.Components)
+  - ChildContent : RenderFragment
+  - Class : String
+  - ParentGrid : BbDataGrid<TData> [CascadingParameter]
+
+### BbDataGridDetailRow`1 (BlazorBlueprint.Components)
+  - Class : String
+  - Item : TData [EditorRequired]
+  - ParentGrid : BbDataGrid<TData> [CascadingParameter]
+
 ### BbDataGridExpandColumn`1 (BlazorBlueprint.Components)
+  - DetailRows : RenderFragment<TData>
   - Pinned : ColumnPinning
   - Width : String
   - ParentGrid : BbDataGrid<TData> [CascadingParameter]
@@ -738,7 +782,10 @@
   - ParentGrid : BbDataGrid<TData> [CascadingParameter]
 
 ### BbDataGridSelectColumn`1 (BlazorBlueprint.Components)
+  - CellClass : String
+  - HeaderClass : String
   - Pinned : ColumnPinning
+  - SelectAllScope : DataGridSelectAllScope
   - Width : String
   - ParentGrid : BbDataGrid<TData> [CascadingParameter]
 
@@ -787,6 +834,7 @@
   - GroupsCollapsedByDefault : Boolean
   - HasChildrenPredicate : Func<TData, Boolean>
   - HierarchyFilterMode : HierarchyFilterMode
+  - HierarchyLargeDatasetThreshold : Int32
   - HierarchySelectionMode : HierarchySelectionMode
   - InitialPageSize : Int32
   - IsLoading : Boolean
@@ -813,21 +861,31 @@
   - OnRowCollapse : EventCallback<TData>
   - OnRowExpand : EventCallback<TData>
   - OnSort : EventCallback<IReadOnlyList<SortDefinition>>
+  - OverscanCount : Int32
   - PageSizes : Int32[]
   - ParentValueSelector : Func<TData, String>
   - Reorderable : Boolean
   - Resizable : Boolean
   - RowClass : Func<TData, String>
   - RowContextMenu : RenderFragment<DataGridRowMenuContext<TData>>
+  - SearchDebounceMs : Int32
+  - SearchPlaceholder : String
+  - SearchText : String
+  - SearchTextChanged : EventCallback<String>
   - SelectedItemsChanged : EventCallback<IReadOnlyCollection<TData>>
   - SelectionMode : DataTableSelectionMode
   - ShowExpandAll : Boolean
   - ShowFilterBar : Boolean
   - ShowPagination : Boolean
+  - ShowSearch : Boolean
   - State : DataGridState<TData>
   - StateChanged : EventCallback<DataGridState<TData>>
   - StickyHeader : Boolean
+  - StripeClass : String
+  - Striped : Boolean
+  - TableContainerClass : String
   - Toolbar : RenderFragment
+  - VirtualScrollHeight : String
   - Virtualize : Boolean
 
 ### BbDataTableColumn`2 (BlazorBlueprint.Components)
@@ -894,14 +952,16 @@
 
 ### BbDataView`1 (BlazorBlueprint.Components)
   - Class : String
-  - Data : IEnumerable<TItem> [EditorRequired]
+  - Data : IEnumerable<TItem>
   - EmptyTemplate : RenderFragment
   - EnableInfiniteScroll : Boolean
   - Fields : RenderFragment
   - GridClass : String
+  - GridColumnMinWidth : String
   - GridTemplate : RenderFragment<TItem>
   - InitialPageSize : Int32
   - IsLoading : Boolean
+  - ItemsProvider : DataViewItemsProvider<TItem>
   - Layout : DataViewLayout
   - ListClass : String
   - ListTemplate : RenderFragment<TItem>
@@ -926,6 +986,7 @@
   - MaxDate : DateTime?
   - MinDate : DateTime?
   - Placeholder : String
+  - Required : Boolean
   - Value : DateTime?
   - ValueChanged : EventCallback<DateTime?>
   - ValueExpression : Expression<Func<DateTime?>>
@@ -1221,6 +1282,7 @@
   - MaxFileSize : Int64
   - Multiple : Boolean
   - OnValidationError : EventCallback<FileValidationError>
+  - Required : Boolean
   - ShowPreview : Boolean
 
 ### BbFill (BlazorBlueprint.Components)
@@ -1268,26 +1330,159 @@
   - InputClass : String
   - Label : String
   - Orientation : FieldOrientation
+  - Required : Boolean
+
+### BbFormFieldCheckboxGroup`1 (BlazorBlueprint.Components)
+  - AriaLabel : String
+  - ChildContent : RenderFragment
+  - Class : String
+  - Disabled : Boolean
+  - ErrorText : String
+  - HelperText : String
+  - InputClass : String
+  - Label : String
+  - Orientation : FieldOrientation
+  - SelectAllLabel : String
+  - ShowSelectAll : Boolean
+  - Values : IReadOnlyCollection<TValue>
+  - ValuesChanged : EventCallback<IReadOnlyCollection<TValue>>
 
 ### BbFormFieldCombobox`1 (BlazorBlueprint.Components)
+  - ActiveClass : String
   - AriaLabel : String
   - ChildContent : RenderFragment
   - Class : String
   - Disabled : Boolean
   - EmptyMessage : String
+  - EndOfListMessage : String
   - ErrorText : String
   - HelperText : String
   - InputClass : String
+  - IsLoading : Boolean
   - Label : String
   - MatchTriggerWidth : Boolean
+  - OnLoadMore : EventCallback
   - Options : IEnumerable<SelectOption<TValue>>
   - Orientation : FieldOrientation
   - Placeholder : String
   - PopoverWidth : String
+  - Required : Boolean
   - SearchPlaceholder : String
+  - SearchQuery : String
+  - SearchQueryChanged : EventCallback<String>
   - Value : TValue
   - ValueChanged : EventCallback<TValue>
   - ValueExpression : Expression<Func<TValue>>
+
+### BbFormFieldCurrencyInput (BlazorBlueprint.Components)
+  - AllowNegative : Boolean
+  - AriaLabel : String
+  - Class : String
+  - CurrencyCode : String
+  - DebounceInterval : Int32
+  - DisableDebounce : Boolean
+  - Disabled : Boolean
+  - ErrorText : String
+  - HelperText : String
+  - InputClass : String
+  - Label : String
+  - Max : Decimal?
+  - Min : Decimal?
+  - Name : String
+  - Orientation : FieldOrientation
+  - Placeholder : String
+  - Required : Boolean
+  - ShowSymbol : Boolean
+  - UseThousandSeparator : Boolean
+  - Value : Decimal
+  - ValueChanged : EventCallback<Decimal>
+  - ValueExpression : Expression<Func<Decimal>>
+
+### BbFormFieldDatePicker (BlazorBlueprint.Components)
+  - AriaLabel : String
+  - Class : String
+  - DateFormat : String
+  - Disabled : Boolean
+  - DisabledDates : Func<DateTime, Boolean>
+  - ErrorText : String
+  - FirstDayOfWeek : DayOfWeek?
+  - HelperText : String
+  - InputClass : String
+  - Label : String
+  - MaxDate : DateTime?
+  - MinDate : DateTime?
+  - Orientation : FieldOrientation
+  - Placeholder : String
+  - Required : Boolean
+  - Value : DateTime?
+  - ValueChanged : EventCallback<DateTime?>
+  - ValueExpression : Expression<Func<DateTime?>>
+
+### BbFormFieldDateRangePicker (BlazorBlueprint.Components)
+  - AriaLabel : String
+  - Class : String
+  - DateFormat : String
+  - Disabled : Boolean
+  - DisabledDates : Func<DateTime, Boolean>
+  - ErrorText : String
+  - FirstDayOfWeek : DayOfWeek?
+  - HelperText : String
+  - InputClass : String
+  - Label : String
+  - MaxDate : DateTime?
+  - MaxDays : Int32?
+  - MinDate : DateTime?
+  - MinDays : Int32?
+  - Orientation : FieldOrientation
+  - Placeholder : String
+  - Presets : IReadOnlyList<DateRangeQuickPick>
+  - ShowPresets : Boolean
+  - ShowTwoMonths : Boolean
+  - Value : DateRange
+  - ValueChanged : EventCallback<DateRange>
+
+### BbFormFieldFileUpload (BlazorBlueprint.Components)
+  - Accept : String
+  - AriaLabel : String
+  - Class : String
+  - Disabled : Boolean
+  - DropzoneContent : RenderFragment
+  - ErrorText : String
+  - Files : IReadOnlyList<FileUploadItem>
+  - FilesChanged : EventCallback<IReadOnlyList<FileUploadItem>>
+  - HelperText : String
+  - InputClass : String
+  - Label : String
+  - MaxFileCount : Int32
+  - MaxFileSize : Int64
+  - Multiple : Boolean
+  - OnValidationError : EventCallback<FileValidationError>
+  - Orientation : FieldOrientation
+  - Required : Boolean
+  - ShowPreview : Boolean
+
+### BbFormFieldInputOTP (BlazorBlueprint.Components)
+  - AriaLabel : String
+  - Class : String
+  - Disabled : Boolean
+  - ErrorText : String
+  - GroupSize : Int32
+  - HelperText : String
+  - InputClass : String
+  - InputMode : InputOTPInputMode
+  - Label : String
+  - Length : Int32
+  - MaskInput : Boolean
+  - Name : String
+  - OnComplete : EventCallback<String>
+  - Orientation : FieldOrientation
+  - Required : Boolean
+  - Separator : RenderFragment
+  - ShowSeparator : Boolean
+  - Size : InputOTPSize
+  - Value : String
+  - ValueChanged : EventCallback<String>
+  - ValueExpression : Expression<Func<String>>
 
 ### BbFormFieldInput`1 (BlazorBlueprint.Components)
   - AriaLabel : String
@@ -1314,6 +1509,26 @@
   - ValueChanged : EventCallback<TValue>
   - ValueExpression : Expression<Func<TValue>>
 
+### BbFormFieldMaskedInput (BlazorBlueprint.Components)
+  - AriaLabel : String
+  - Class : String
+  - Disabled : Boolean
+  - ErrorText : String
+  - HelperText : String
+  - InputClass : String
+  - Label : String
+  - Mask : String
+  - Name : String
+  - Orientation : FieldOrientation
+  - Placeholder : String
+  - PlaceholderChar : Char
+  - Preset : MaskPreset
+  - Required : Boolean
+  - ShowMask : Boolean
+  - Value : String
+  - ValueChanged : EventCallback<String>
+  - ValueExpression : Expression<Func<String>>
+
 ### BbFormFieldMultiSelect`1 (BlazorBlueprint.Components)
   - AriaLabel : String
   - AutoClose : Boolean
@@ -1323,22 +1538,68 @@
   - CloseLabel : String
   - Disabled : Boolean
   - EmptyMessage : String
+  - EndOfListMessage : String
   - ErrorText : String
   - HelperText : String
   - InputClass : String
+  - IsLoading : Boolean
   - Label : String
   - MatchTriggerWidth : Boolean
   - MaxDisplayTags : Int32
+  - OnLoadMore : EventCallback
   - Options : IEnumerable<SelectOption<TValue>>
   - Orientation : FieldOrientation
   - Placeholder : String
   - PopoverWidth : String
   - SearchPlaceholder : String
+  - SearchQueryChanged : EventCallback<String>
   - SelectAllLabel : String
   - ShowSelectAll : Boolean
   - Values : IEnumerable<TValue>
   - ValuesChanged : EventCallback<IEnumerable<TValue>>
   - ValuesExpression : Expression<Func<IEnumerable<TValue>>>
+
+### BbFormFieldNativeSelect`1 (BlazorBlueprint.Components)
+  - AriaLabel : String
+  - ChildContent : RenderFragment
+  - Class : String
+  - Disabled : Boolean
+  - ErrorText : String
+  - HelperText : String
+  - InputClass : String
+  - Label : String
+  - Orientation : FieldOrientation
+  - Placeholder : String
+  - Required : Boolean
+  - Size : NativeSelectSize
+  - Value : TValue
+  - ValueChanged : EventCallback<TValue>
+  - ValueExpression : Expression<Func<TValue>>
+
+### BbFormFieldNumericInput`1 (BlazorBlueprint.Components)
+  - AllowNegative : Boolean
+  - AriaLabel : String
+  - Class : String
+  - DebounceInterval : Int32
+  - DecimalPlaces : Int32?
+  - DisableDebounce : Boolean
+  - Disabled : Boolean
+  - ErrorText : String
+  - Format : String
+  - HelperText : String
+  - InputClass : String
+  - Label : String
+  - Max : TValue?
+  - Min : TValue?
+  - Name : String
+  - Orientation : FieldOrientation
+  - Placeholder : String
+  - Required : Boolean
+  - ShowButtons : Boolean
+  - Step : TValue?
+  - Value : TValue
+  - ValueChanged : EventCallback<TValue>
+  - ValueExpression : Expression<Func<TValue>>
 
 ### BbFormFieldRadioGroup`1 (BlazorBlueprint.Components)
   - AriaLabel : String
@@ -1350,6 +1611,7 @@
   - InputClass : String
   - Label : String
   - Orientation : FieldOrientation
+  - Required : Boolean
   - Value : TValue
   - ValueChanged : EventCallback<TValue>
   - ValueExpression : Expression<Func<TValue>>
@@ -1360,13 +1622,17 @@
   - Class : String
   - Disabled : Boolean
   - DisplayTextSelector : Func<TValue, String>
+  - EndOfListMessage : String
   - ErrorText : String
   - HelperText : String
   - InputClass : String
+  - IsLoading : Boolean
   - Label : String
+  - OnLoadMore : EventCallback
   - Options : IEnumerable<SelectOption<TValue>>
   - Orientation : FieldOrientation
   - Placeholder : String
+  - Required : Boolean
   - Value : TValue
   - ValueChanged : EventCallback<TValue>
   - ValueExpression : Expression<Func<TValue>>
@@ -1384,6 +1650,72 @@
   - Label : String
   - Orientation : FieldOrientation
   - Size : SwitchSize
+
+### BbFormFieldTagInput (BlazorBlueprint.Components)
+  - AddTrigger : TagInputTrigger
+  - AllowDuplicates : Boolean
+  - AriaLabel : String
+  - Class : String
+  - Clearable : Boolean
+  - Disabled : Boolean
+  - ErrorText : String
+  - HelperText : String
+  - InputClass : String
+  - Label : String
+  - MaxTagLength : Int32
+  - MaxTags : Int32
+  - OnSearchSuggestions : Func<String, CancellationToken, Task<IEnumerable<String>>>
+  - OnTagRejected : EventCallback<String>
+  - Orientation : FieldOrientation
+  - Placeholder : String
+  - SuggestionDebounceMs : Int32
+  - Suggestions : IEnumerable<String>
+  - TagTemplate : RenderFragment<String>
+  - Tags : IReadOnlyList<String>
+  - TagsChanged : EventCallback<IReadOnlyList<String>>
+  - TagsExpression : Expression<Func<IReadOnlyList<String>>>
+  - Validate : Func<String, Boolean>
+  - Variant : TagInputVariant
+
+### BbFormFieldTextarea (BlazorBlueprint.Components)
+  - AriaLabel : String
+  - Class : String
+  - DebounceInterval : Int32
+  - Disabled : Boolean
+  - ErrorText : String
+  - HelperText : String
+  - InputClass : String
+  - Label : String
+  - MaxLength : Int32?
+  - Name : String
+  - Orientation : FieldOrientation
+  - Placeholder : String
+  - Required : Boolean
+  - ShowCharacterCount : Boolean
+  - UpdateTiming : UpdateTiming
+  - Value : String
+  - ValueChanged : EventCallback<String>
+  - ValueExpression : Expression<Func<String>>
+
+### BbFormFieldTimePicker (BlazorBlueprint.Components)
+  - AriaLabel : String
+  - Class : String
+  - Disabled : Boolean
+  - ErrorText : String
+  - Format : TimeFormat
+  - HelperText : String
+  - InputClass : String
+  - Label : String
+  - MaxTime : TimeSpan?
+  - MinTime : TimeSpan?
+  - MinuteStep : Int32
+  - Orientation : FieldOrientation
+  - Placeholder : String
+  - Required : Boolean
+  - ShowSeconds : Boolean
+  - Value : TimeSpan?
+  - ValueChanged : EventCallback<TimeSpan?>
+  - ValueExpression : Expression<Func<TimeSpan?>>
 
 ### BbFormSection (BlazorBlueprint.Components)
   - ChildContent : RenderFragment
@@ -1670,6 +2002,7 @@
   - Mask : Boolean
   - Name : String
   - OnComplete : EventCallback<String>
+  - Required : Boolean
   - Separator : RenderFragment
   - ShowSeparator : Boolean
   - Size : InputOTPSize
@@ -1806,7 +2139,6 @@
   - ChildContent : RenderFragment
   - Class : String
   - Disabled : Boolean
-  - Menu : BbMenubarMenu [CascadingParameter]
 
 ### BbMenubarContent (BlazorBlueprint.Components)
   - Align : MenubarContentAlign
@@ -1845,7 +2177,6 @@
   - ChildContent : RenderFragment
   - Class : String
   - Context : BbMenubar [CascadingParameter]
-  - Menu : BbMenubarMenu [CascadingParameter]
 
 ### BbMultiSelectItem`1 (BlazorBlueprint.Components)
   - ChildContent : RenderFragment
@@ -1864,14 +2195,19 @@
   - CloseLabel : String
   - Disabled : Boolean
   - EmptyMessage : String
+  - EndOfListMessage : String
+  - IsLoading : Boolean
   - MatchTriggerWidth : Boolean
   - MaxDisplayTags : Int32
+  - OnLoadMore : EventCallback
   - Options : IEnumerable<SelectOption<TValue>>
   - Placeholder : String
   - PopoverWidth : String
   - SearchPlaceholder : String
+  - SearchQueryChanged : EventCallback<String>
   - SelectAllLabel : String
   - ShowSelectAll : Boolean
+  - SingleLine : Boolean
   - Values : IEnumerable<TValue>
   - ValuesChanged : EventCallback<IEnumerable<TValue>>
   - ValuesExpression : Expression<Func<IEnumerable<TValue>>>
@@ -1884,6 +2220,7 @@
   - Id : String
   - Name : String
   - Placeholder : String
+  - Required : Boolean
   - Size : NativeSelectSize
   - Value : TValue
   - ValueChanged : EventCallback<TValue>
@@ -2078,6 +2415,7 @@
   - OnOpenChange : EventCallback<Boolean>
   - Open : Boolean?
   - OpenChanged : EventCallback<Boolean>
+  - RestoreFocusOnClose : Boolean
 
 ### BbPopoverContent (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -2184,6 +2522,7 @@
   - ChildContent : RenderFragment
   - Class : String
   - Disabled : Boolean
+  - Required : Boolean
   - Value : TValue
   - ValueChanged : EventCallback<TValue>
   - ValueExpression : Expression<Func<TValue>>
@@ -2335,6 +2674,9 @@
 ### BbSelectContent`1 (BlazorBlueprint.Components)
   - ChildContent : RenderFragment
   - Class : String
+  - EndOfListMessage : String
+  - IsLoading : Boolean
+  - OnLoadMore : EventCallback
   - Context : SelectContext<TValue> [CascadingParameter]
 
 ### BbSelectGroup (BlazorBlueprint.Components)
@@ -2370,10 +2712,14 @@
   - Class : String
   - Disabled : Boolean
   - DisplayTextSelector : Func<TValue, String>
+  - EndOfListMessage : String
+  - IsLoading : Boolean
+  - OnLoadMore : EventCallback
   - Open : Boolean?
   - OpenChanged : EventCallback<Boolean>
   - Options : IEnumerable<SelectOption<TValue>>
   - Placeholder : String
+  - Required : Boolean
   - Value : TValue
   - ValueChanged : EventCallback<TValue>
   - ValueExpression : Expression<Func<TValue>>
@@ -2524,8 +2870,9 @@
   - ChildContent : RenderFragment
   - Class : String
   - Href : String
-  - IsActive : Boolean
+  - IsActive : Boolean?
   - Match : NavLinkMatch
+  - OnClick : EventCallback<MouseEventArgs>
   - Size : SidebarMenuButtonSize
   - Tooltip : String
   - Variant : SidebarMenuButtonVariant
@@ -2558,7 +2905,7 @@
   - ChildContent : RenderFragment
   - Class : String
   - Href : String
-  - IsActive : Boolean
+  - IsActive : Boolean?
   - Match : NavLinkMatch
   - Size : SidebarMenuSubButtonSize
 
@@ -2609,6 +2956,24 @@
   - TrackClass : String
   - Value : Double
   - ValueChanged : EventCallback<Double>
+
+### BbSortable`1 (BlazorBlueprint.Components)
+  - AriaLabel : String
+  - Class : String
+  - Filter : String
+  - ForceFallback : Boolean
+  - Group : String
+  - Handle : String
+  - Id : String
+  - ItemTemplate : RenderFragment<TItem>
+  - Items : IList<TItem>
+  - Layout : SortableLayout
+  - OnAdd : EventCallback<ValueTuple<Int32, Int32>>
+  - OnRemove : EventCallback<ValueTuple<Int32, Int32>>
+  - OnUpdate : EventCallback<ValueTuple<Int32, Int32>>
+  - Pull : String
+  - Put : Boolean
+  - Sort : Boolean
 
 ### BbSpinner (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -2732,6 +3097,13 @@
   - CascadedEditContext : EditContext [CascadingParameter]
   - FieldIsInvalid : Boolean? [CascadingParameter]
 
+### BbThemeSwitcher (BlazorBlueprint.Components)
+  - Align : PopoverAlign
+  - PopoverContentClass : String
+  - Strategy : PositioningStrategy
+  - TriggerClass : String
+  - Variant : ButtonVariant
+
 ### BbTimePicker (BlazorBlueprint.Components)
   - Class : String
   - Disabled : Boolean
@@ -2740,6 +3112,7 @@
   - MinTime : TimeSpan?
   - MinuteStep : Int32
   - Placeholder : String
+  - Required : Boolean
   - ShowSeconds : Boolean
   - Value : TimeSpan?
   - ValueChanged : EventCallback<TimeSpan?>
@@ -3143,6 +3516,13 @@
   - Destructive = 2
   - Outline = 3
 
+### BaseColor (BlazorBlueprint.Components)
+  - Zinc = 0
+  - Slate = 1
+  - Gray = 2
+  - Neutral = 3
+  - Stone = 4
+
 ### ButtonGroupOrientation (BlazorBlueprint.Components)
   - Horizontal = 0
   - Vertical = 1
@@ -3210,6 +3590,10 @@
 ### DashboardBackground (BlazorBlueprint.Components)
   - None = 0
   - Grid = 1
+
+### DataGridSelectAllScope (BlazorBlueprint.Components)
+  - Prompt = 0
+  - CurrentPage = 1
 
 ### DataTableSelectionMode (BlazorBlueprint.Components)
   - None = 0
@@ -3429,6 +3813,26 @@
   - Default = 0
   - Icon = 1
 
+### PrimaryColor (BlazorBlueprint.Components)
+  - Default = 0
+  - Blue = 1
+  - Violet = 2
+  - Purple = 3
+  - Rose = 4
+  - Red = 5
+  - Orange = 6
+  - Amber = 7
+  - Yellow = 8
+  - Lime = 9
+  - Green = 10
+  - Emerald = 11
+  - Teal = 12
+  - Cyan = 13
+  - Sky = 14
+  - Indigo = 15
+  - Fuchsia = 16
+  - Pink = 17
+
 ### RadarShape (BlazorBlueprint.Components)
   - Polygon = 0
   - Circle = 1
@@ -3508,6 +3912,10 @@
 ### SliderOrientation (BlazorBlueprint.Components)
   - Horizontal = 0
   - Vertical = 1
+
+### SortableLayout (BlazorBlueprint.Components)
+  - List = 0
+  - Grid = 1
 
 ### SpinnerSize (BlazorBlueprint.Components)
   - Small = 0

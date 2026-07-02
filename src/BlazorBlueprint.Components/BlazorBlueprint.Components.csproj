@@ -32,6 +32,7 @@
 
   <ItemGroup>
     <PackageReference Include="HtmlSanitizer" Version="9.0.892" />
+    <PackageReference Include="TailwindMerge.NET" Version="1.3.0" />
     <PackageReference Include="Markdig" Version="0.37.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.14" />
     <PackageReference Include="MinVer" Version="5.0.0">
@@ -40,7 +41,16 @@
     </PackageReference>
   </ItemGroup>
 
-  <!-- Use ProjectReference for local development, PackageReference for packing -->
+  <!-- Use ProjectReference for local development, PackageReference for packing.
+       The release script passes -p:UsePackageReferences=true so the nupkg always
+       references stable published versions rather than MinVer-computed prerelease
+       versions from ProjectReference. NU5104 is suppressed because
+       TreatWarningsAsErrors promotes it to an error when packing with ProjectReference
+       during development; the release script handles this correctly via UsePackageReferences. -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);NU5104</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup Condition="'$(UsePackageReferences)' != 'true'">
     <ProjectReference Include="..\BlazorBlueprint.Icons.Lucide\BlazorBlueprint.Icons.Lucide.csproj" />
     <ProjectReference Include="..\BlazorBlueprint.Primitives\BlazorBlueprint.Primitives.csproj" />
@@ -48,7 +58,7 @@
 
   <ItemGroup Condition="'$(UsePackageReferences)' == 'true'">
     <PackageReference Include="BlazorBlueprint.Icons.Lucide" Version="2.0.0" />
-    <PackageReference Include="BlazorBlueprint.Primitives" Version="3.5.0" />
+    <PackageReference Include="BlazorBlueprint.Primitives" Version="3.12.0" />
   </ItemGroup>
 
   <ItemGroup>

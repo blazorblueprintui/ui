@@ -189,6 +189,27 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
         context.EnableKeyboardNavigation = EnableKeyboardNavigation;
         EffectiveState.Selection.Mode = SelectionMode;
 
+        // Update expand handler when OnToggleExpand changes (e.g. when
+        // DetailRows registers after initial render).
+        if (OnToggleExpand.HasDelegate && context.OnToggleExpand == null)
+        {
+            context.OnToggleExpand = (item) =>
+            {
+                var task = InvokeAsync(async () =>
+                {
+                    try
+                    {
+                        await OnToggleExpand.InvokeAsync(item);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine($"Error in OnToggleExpand: {ex.Message}");
+                    }
+                });
+                TrackTask(task);
+            };
+        }
+
         if (IsControlled && context.State != State)
         {
             context.State = State!;

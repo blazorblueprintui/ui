@@ -5,7 +5,9 @@
 
 <BbDialog @bind-Open="_isOpen" OnOpenChange="HandleOpenChange">
     <BbDialogContent Class="@ClassNames.cn("overflow-hidden p-0 shadow-lg", Class)">
-        <BlazorBlueprint.Components.BbCommand OnValueChange="HandleValueChange">
+        <BlazorBlueprint.Components.BbCommand OnValueChange="HandleValueChange"
+                                                   SearchQueryChanged="SearchQueryChanged"
+                                                   FilterFunction="FilterFunction">
             @ChildContent
         </BlazorBlueprint.Components.BbCommand>
     </BbDialogContent>
@@ -57,6 +59,19 @@
     /// </summary>
     [Parameter]
     public bool CloseOnSelect { get; set; } = true;
+
+    /// <summary>
+    /// Event callback invoked when the search query changes (after debounce).
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> SearchQueryChanged { get; set; }
+
+    /// <summary>
+    /// Custom filter function for command items. When provided, overrides the default
+    /// contains-match filtering. Receives the item metadata and current search query.
+    /// </summary>
+    [Parameter]
+    public Func<CommandItemMetadata, string, bool>? FilterFunction { get; set; }
 
     protected override void OnParametersSet()
     {

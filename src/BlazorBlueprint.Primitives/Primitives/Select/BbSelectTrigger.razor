@@ -12,12 +12,13 @@
             aria-controls="@_context.ContentId"
             aria-haspopup="listbox"
             aria-disabled="@_context.Disabled.ToString().ToLower()"
+            aria-required="@(_context.Required ? "true" : null)"
             disabled="@_context.Disabled"
             data-state="@(_context.IsOpen ? "open" : "closed")"
             @onclick="HandleClick"
             @onkeydown="HandleKeyDown"
             @onkeydown:preventDefault="@_shouldPreventDefault"
-            @attributes="AdditionalAttributes">
+            @attributes="FilteredAttributes">
         @ChildContent
     </button>
 }
@@ -41,6 +42,40 @@
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Returns AdditionalAttributes with "id" removed (if present),
+    /// since the button always uses the context's TriggerId.
+    /// </summary>
+    private Dictionary<string, object>? FilteredAttributes
+    {
+        get
+        {
+            if (AdditionalAttributes == null || !AdditionalAttributes.ContainsKey("id"))
+            {
+                return AdditionalAttributes;
+            }
+
+            var filtered = new Dictionary<string, object>(AdditionalAttributes);
+            filtered.Remove("id");
+            return filtered.Count > 0 ? filtered : null;
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        // If a custom id was passed (e.g. for label association in form fields),
+        // sync it to the context so click-outside detection and ARIA references
+        // use the same id as the actual DOM element.
+        if (_context != null
+            && AdditionalAttributes != null
+            && AdditionalAttributes.TryGetValue("id", out var idObj)
+            && idObj is string customId
+            && !string.IsNullOrEmpty(customId))
+        {
+            _context.SetTriggerId(customId);
+        }
+    }
 
     private void HandleClick()
     {
@@ -68,7 +103,8 @@
                 _shouldPreventDefault = true;
                 if (_context.IsOpen)
                 {
-                    _context.Close();
+                    // Escape is an intentional dismiss — return focus to the trigger.
+                    _context.Close(restoreFocus: true);
                 }
                 break;
             default:

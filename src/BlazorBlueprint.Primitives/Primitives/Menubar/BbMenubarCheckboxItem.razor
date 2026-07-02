@@ -1,0 +1,56 @@
+@namespace BlazorBlueprint.Primitives.Menubar
+
+<div @ref="itemRef"
+     role="menuitemcheckbox"
+     tabindex="-1"
+     aria-checked="@Checked.ToString().ToLower()"
+     aria-disabled="@(Disabled ? "true" : null)"
+     data-state="@(Checked ? "checked" : "unchecked")"
+     @onclick="HandleClick"
+     @attributes="AdditionalAttributes">
+    @ChildContent
+</div>
+
+@code {
+    /// <summary>
+    /// Child content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Whether the checkbox is checked.
+    /// </summary>
+    [Parameter]
+    public bool Checked { get; set; }
+
+    /// <summary>
+    /// Callback invoked when the checked state changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> CheckedChanged { get; set; }
+
+    /// <summary>
+    /// Whether this item is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Additional HTML attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private ElementReference itemRef;
+
+    private async Task HandleClick()
+    {
+        if (!Disabled)
+        {
+            Checked = !Checked;
+            await CheckedChanged.InvokeAsync(Checked);
+            // Checkbox items don't close the menu
+        }
+    }
+}

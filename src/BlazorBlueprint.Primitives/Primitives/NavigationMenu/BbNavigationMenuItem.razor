@@ -1,0 +1,40 @@
+@namespace BlazorBlueprint.Primitives.NavigationMenu
+
+<li @attributes="AdditionalAttributes">
+    <CascadingValue Value="itemContext" IsFixed="true">
+        @ChildContent
+    </CascadingValue>
+</li>
+
+@code {
+    private NavigationMenuItemContext itemContext = null!;
+
+    [CascadingParameter]
+    private NavigationMenuContext? MenuContext { get; set; }
+
+    /// <summary>
+    /// Child content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Unique identifier for this menu item.
+    /// </summary>
+    [Parameter]
+    public string? Value { get; set; }
+
+    /// <summary>
+    /// Additional HTML attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// The per-item context, exposed for Components layer.
+    /// </summary>
+    public NavigationMenuItemContext ItemContext => itemContext;
+
+    protected override void OnInitialized() =>
+        itemContext = new NavigationMenuItemContext(MenuContext!, Value);
+}

@@ -1,0 +1,154 @@
+@namespace BlazorBlueprint.Primitives.Menubar
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+@{
+    var isOpen = Menu?.IsOpen == true;
+}
+
+@if (isOpen)
+{
+    <div class="fixed inset-0 z-40" @onclick="HandleOverlayClick" @onclick:stopPropagation="true"></div>
+}
+<div @ref="contentRef"
+     style="@(isOpen ? null : "display:none")"
+     data-state="@(isOpen ? "open" : "closed")"
+     role="menu"
+     tabindex="-1"
+     @onclick:stopPropagation="true"
+     @attributes="AdditionalAttributes">
+    @ChildContent
+</div>
+
+@code {
+    [CascadingParameter]
+    private MenubarMenuContext? Menu { get; set; }
+
+    [CascadingParameter]
+    private MenubarContext? Context { get; set; }
+
+    /// <summary>
+    /// Child content (menu items).
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Whether keyboard navigation wraps around. Default is <c>true</c>.
+    /// </summary>
+    [Parameter]
+    public bool Loop { get; set; } = true;
+
+    /// <summary>
+    /// Additional HTML attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private ElementReference contentRef;
+    private bool wasClosed = true;
+    private IJSObjectReference? menuKeyboardModule;
+    private DotNetObjectReference<BbMenubarContent>? dotNetRef;
+    private readonly string instanceId = Guid.NewGuid().ToString("N")[..8];
+    private bool disposed;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Menu?.IsOpen == true && wasClosed)
+        {
+            wasClosed = false;
+            try
+            {
+                menuKeyboardModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/menu-keyboard.js");
+                dotNetRef ??= DotNetObjectReference.Create(this);
+
+                await menuKeyboardModule.InvokeVoidAsync("initialize", contentRef, dotNetRef, instanceId,
+                    new { mode = "menubar", loop = Loop, initialFocus = "first" });
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+            catch (InvalidOperationException)
+            {
+                // JS interop not available during prerendering
+            }
+        }
+        else if (Menu?.IsOpen != true && !wasClosed)
+        {
+            wasClosed = true;
+            await CleanupKeyboardAsync();
+        }
+    }
+
+    /// <summary>Called from JS when Escape is pressed.</summary>
+    [JSInvokable]
+    public void JsOnEscapeKey()
+    {
+        if (!disposed)
+        {
+            Menu?.Close();
+        }
+    }
+
+    /// <summary>Called from JS when ArrowRight is pressed.</summary>
+    [JSInvokable]
+    public void JsOnNextMenu()
+    {
+        if (!disposed)
+        {
+            Context?.NavigateToNextMenu();
+        }
+    }
+
+    /// <summary>Called from JS when ArrowLeft is pressed.</summary>
+    [JSInvokable]
+    public void JsOnPreviousMenu()
+    {
+        if (!disposed)
+        {
+            Context?.NavigateToPreviousMenu();
+        }
+    }
+
+    private async Task CleanupKeyboardAsync()
+    {
+        if (menuKeyboardModule != null)
+        {
+            try
+            {
+                await menuKeyboardModule.InvokeVoidAsync("dispose", instanceId);
+            }
+            catch
+            {
+                // Cleanup may already be disposed
+            }
+        }
+    }
+
+    private void HandleOverlayClick() =>
+        Menu?.Close();
+
+    public async ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+        disposed = true;
+
+        await CleanupKeyboardAsync();
+
+        try
+        {
+            if (menuKeyboardModule != null)
+            {
+                await menuKeyboardModule.DisposeAsync();
+            }
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Expected during circuit disconnect
+        }
+
+        dotNetRef?.Dispose();
+    }
+}

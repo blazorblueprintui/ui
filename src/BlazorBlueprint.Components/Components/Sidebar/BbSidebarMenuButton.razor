@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Components
 @using Microsoft.AspNetCore.Components.Routing
+@implements IDisposable
 
 @*
     SidebarMenuButton component for clickable menu items with tooltip support.
@@ -28,6 +29,9 @@ else
     [CascadingParameter]
     private BlazorBlueprint.Primitives.Collapsible.CollapsibleContext? CollapsibleContext { get; set; }
 
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
     /// <summary>
     /// The button content.
     /// </summary>
@@ -53,10 +57,13 @@ else
     public SidebarMenuButtonVariant Variant { get; set; } = SidebarMenuButtonVariant.Default;
 
     /// <summary>
-    /// Whether this menu item is active/selected.
+    /// Explicitly controls whether this menu item is active/selected. When set, this value takes
+    /// precedence over automatic <see cref="Href"/>/<see cref="Match"/> location matching — so
+    /// <c>false</c> forces the item inactive even if its href matches the current URL. Leave
+    /// <c>null</c> (the default) to derive the active state from the current location.
     /// </summary>
     [Parameter]
-    public bool IsActive { get; set; }
+    public bool? IsActive { get; set; }
 
     /// <summary>
     /// The element type to render. Defaults to Button, but automatically switches to Anchor if Href is provided.
@@ -77,6 +84,12 @@ else
     public NavLinkMatch Match { get; set; } = NavLinkMatch.Prefix;
 
     /// <summary>
+    /// Click handler for custom behavior.
+    /// </summary>
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnClick { get; set; }
+
+    /// <summary>
     /// Additional CSS classes.
     /// </summary>
     [Parameter]
@@ -93,6 +106,39 @@ else
         return !string.IsNullOrEmpty(Tooltip) && Context != null && !Context.Open;
     }
 
+    private bool isActiveByLocation;
+
+    /// <summary>
+    /// Whether the button should render as active. An explicit <see cref="IsActive"/> value wins;
+    /// otherwise the state is derived from whether <see cref="Href"/> matches the current location.
+    /// </summary>
+    private bool ResolvedActive => IsActive ?? isActiveByLocation;
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        isActiveByLocation = NavLinkMatcher.IsMatch(NavigationManager, NavigationManager.Uri, Href, Match);
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        var nowActive = NavLinkMatcher.IsMatch(NavigationManager, e.Location, Href, Match);
+        if (nowActive != isActiveByLocation)
+        {
+            isActiveByLocation = nowActive;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+
     private RenderFragment RenderButton() => __builder =>
     {
         // Auto-detect: if Href is provided and AsChild wasn't explicitly set to Button, render as Anchor
@@ -101,25 +147,27 @@ else
 
         if (shouldRenderAsAnchor)
         {
-            <NavLink href="@Href"
-                     class="@GetClasses()"
-                     data-active="@IsActive"
-                     data-state="@(CollapsibleContext?.Open ?? false ? "open" : "closed")"
-                     aria-current="@(IsActive ? "page" : null)"
-                     aria-expanded="@(CollapsibleContext?.Open ?? false)"
-                     Match="@Match"
-                     ActiveClass="data-[active=true]:bg-sidebar-accent"
-                     @attributes="AdditionalAttributes">
+            <a href="@Href"
+               class="@GetClasses()"
+               data-sidebar="menu-button"
+               data-size="@Size.ToValue()"
+               data-active="@(ResolvedActive ? "true" : "false")"
+               data-state="@(CollapsibleContext?.Open ?? false ? "open" : "closed")"
+               aria-current="@(ResolvedActive ? "page" : null)"
+               aria-expanded="@(CollapsibleContext?.Open ?? false)"
+               @attributes="AdditionalAttributes">
                 @ChildContent
-            </NavLink>
+            </a>
         }
         else
         {
             <button type="button"
                     class="@GetClasses()"
-                    data-active="@IsActive"
+                    data-sidebar="menu-button"
+                    data-size="@Size.ToValue()"
+                    data-active="@(ResolvedActive ? "true" : "false")"
                     data-state="@(CollapsibleContext?.Open ?? false ? "open" : "closed")"
-                    aria-current="@(IsActive ? "page" : null)"
+                    aria-current="@(ResolvedActive ? "page" : null)"
                     aria-expanded="@(CollapsibleContext?.Open ?? false)"
                     @onclick="HandleClick"
                     @attributes="AdditionalAttributes">
@@ -134,18 +182,16 @@ else
         {
             await CollapsibleContext.Toggle.Invoke();
         }
+
+        if (OnClick.HasDelegate)
+        {
+            await OnClick.InvokeAsync(args);
+        }
     }
 
     private string GetClasses()
     {
-        var baseClasses = "group peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md px-2 py-1.5 text-left text-sm outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:[&>span]:hidden [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0";
-
-        var sizeClasses = Size.ToValue() switch
-        {
-            "small" => "text-xs",
-            "large" => "text-base group-data-[collapsible=icon]:!p-3",
-            _ => ""
-        };
+        var baseClasses = "group peer/menu-button flex w-full items-center overflow-hidden text-left outline-none ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:[&>span]:hidden [&>span:last-child]:truncate [&>svg]:shrink-0";
 
         var variantClasses = Variant.ToValue() switch
         {
@@ -153,6 +199,6 @@ else
             _ => ""
         };
 
-        return ClassNames.cn(baseClasses, sizeClasses, variantClasses, Class);
+        return ClassNames.cn(baseClasses, variantClasses, Class);
     }
 }

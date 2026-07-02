@@ -26,7 +26,9 @@
         </div>
     }
 
-    @if (_hasVisibleItems)
+    @* In provider mode the Virtualize stays in the tree even at count 0 (container hidden via
+       display:none above) so it remains mounted and re-queries the provider when the search changes. *@
+    @if (_hasVisibleItems || UseProvider)
     {
         @if (EnableLazyLoading)
         {
@@ -93,9 +95,24 @@
 
     /// <summary>
     /// Gets or sets the collection of items to display.
+    /// Required unless <see cref="ItemsProvider"/> is supplied (provider mode), in which case it is ignored.
     /// </summary>
-    [Parameter, EditorRequired]
+    [Parameter]
     public IReadOnlyList<TItem> Items { get; set; } = Array.Empty<TItem>();
+
+    /// <summary>
+    /// Gets or sets an async callback that fetches items on demand for true lazy loading,
+    /// instead of materializing the whole collection into <see cref="Items"/>.
+    /// </summary>
+    /// <remarks>
+    /// Requires <see cref="EnableLazyLoading"/> to be <c>true</c>. The provider is invoked as the user
+    /// scrolls and whenever the search query changes; it is responsible for applying the search
+    /// (<see cref="CommandItemsProviderRequest.SearchText"/>) and returning the matching slice plus the
+    /// total matching count. When set, <see cref="Items"/>, <see cref="MaxDisplayCount"/>, and the
+    /// component's built-in local filtering are not used.
+    /// </remarks>
+    [Parameter]
+    public CommandItemsProvider<TItem>? ItemsProvider { get; set; }
 
     /// <summary>
     /// Gets or sets the template for rendering each item.
@@ -155,6 +172,16 @@
     private List<TItem>? _lazyFilteredSource; // Full filtered list for lazy loading
     private int _lazyLoadedCount; // How many items currently loaded for lazy loading
 
+    // Provider mode (ItemsProvider supplied): the full set never lives in memory, so cache
+    // each slice the provider returns by absolute index for keyboard selection.
+    private CommandItemsProvider<TItem>? _cachedProvider;
+    private readonly Dictionary<int, TItem> _loadedItems = new();
+
+    /// <summary>
+    /// Whether items are sourced from <see cref="ItemsProvider"/> rather than the in-memory <see cref="Items"/>.
+    /// </summary>
+    private bool UseProvider => ItemsProvider is not null;
+
     private readonly struct IndexedItem
     {
         public readonly TItem Item;
@@ -182,7 +209,15 @@
 
     async Task IVirtualizedGroupHandler.SelectFocusedItemAsync()
     {
-        if (EnableLazyLoading)
+        if (UseProvider)
+        {
+            // The full set isn't in memory; the focused item must have been loaded into view to be focused.
+            if (_focusedIndex >= 0 && _loadedItems.TryGetValue(_focusedIndex, out var providerItem))
+            {
+                await SelectItem(providerItem);
+            }
+        }
+        else if (EnableLazyLoading)
         {
             var source = _lazyFilteredSource ?? (IReadOnlyList<TItem>)Items;
             if (source != null && _focusedIndex >= 0 && _focusedIndex < source.Count)
@@ -246,6 +281,13 @@
 
     protected override void OnInitialized()
     {
+        if (UseProvider && !EnableLazyLoading)
+        {
+            throw new InvalidOperationException(
+                $"{nameof(BbCommandVirtualizedGroup<TItem>)}.{nameof(ItemsProvider)} requires {nameof(EnableLazyLoading)}=\"true\". " +
+                $"Set {nameof(EnableLazyLoading)} or supply {nameof(Items)} instead.");
+        }
+
         if (Context != null)
         {
             Context.OnSearchChanged += HandleSearchChanged;
@@ -253,8 +295,15 @@
             Context.RegisterVirtualizedGroup(this);
         }
         _cachedItems = Items;
+        _cachedProvider = ItemsProvider;
 
-        if (EnableLazyLoading)
+        if (UseProvider)
+        {
+            // Counts and visibility are learned from the provider's first response; show the
+            // Virtualize so it can issue that first request.
+            _hasVisibleItems = true;
+        }
+        else if (EnableLazyLoading)
         {
             UpdateLazyFilteredSource();
         }
@@ -266,6 +315,24 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        if (UseProvider)
+        {
+            // Re-query if the provider delegate itself was swapped at runtime.
+            if (!ReferenceEquals(ItemsProvider, _cachedProvider))
+            {
+                _cachedProvider = ItemsProvider;
+                _loadedItems.Clear();
+                _lazyLoadedCount = 0;
+                _cachedSearchQuery = null;
+                _hasVisibleItems = true;
+                if (_virtualizeRef != null)
+                {
+                    await _virtualizeRef.RefreshDataAsync();
+                }
+            }
+            return;
+        }
+
         // Only re-filter if Items reference actually changed
         if (!ReferenceEquals(Items, _cachedItems))
         {
@@ -427,9 +494,14 @@
         _hasVisibleItems = _filteredCount > 0;
     }
 
-    private ValueTask<Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<IndexedItem>> LoadItemsAsync(
+    private async ValueTask<Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<IndexedItem>> LoadItemsAsync(
         Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderRequest request)
     {
+        if (UseProvider)
+        {
+            return await LoadFromProviderAsync(request);
+        }
+
         // Determine the source list
         var source = _lazyFilteredSource ?? (IReadOnlyList<TItem>)Items;
         var totalItems = source.Count;
@@ -442,8 +514,8 @@
         
         if (count <= 0)
         {
-                        return ValueTask.FromResult(new Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<IndexedItem>(
-                Array.Empty<IndexedItem>(), totalItems));
+            return new Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<IndexedItem>(
+                Array.Empty<IndexedItem>(), totalItems);
         }
 
         // Build the items for this batch
@@ -457,14 +529,80 @@
         // Track loaded count for keyboard navigation
         _lazyLoadedCount = Math.Max(_lazyLoadedCount, startIndex + count);
 
-        
-        return ValueTask.FromResult(new Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<IndexedItem>(
-            items, totalItems));
+        return new Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<IndexedItem>(
+            items, totalItems);
+    }
+
+    private async ValueTask<Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<IndexedItem>> LoadFromProviderAsync(
+        Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderRequest request)
+    {
+        var searchText = Context?.SearchQuery;
+        var providerRequest = new CommandItemsProviderRequest
+        {
+            StartIndex = request.StartIndex,
+            Count = request.Count,
+            SearchText = string.IsNullOrWhiteSpace(searchText) ? null : searchText,
+            CancellationToken = request.CancellationToken,
+        };
+
+        CommandItemsProviderResult<TItem> result;
+        try
+        {
+            result = await ItemsProvider!(providerRequest);
+        }
+        catch (OperationCanceledException)
+        {
+            // Request superseded (further scroll / new search) or component disposed — let Virtualize
+            // discard this batch without surfacing an error.
+            return new Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<IndexedItem>(
+                Array.Empty<IndexedItem>(), _filteredCount);
+        }
+
+        var batch = result.Items as IList<TItem> ?? result.Items.ToList();
+        var indexed = new IndexedItem[batch.Count];
+        for (int i = 0; i < batch.Count; i++)
+        {
+            var index = request.StartIndex + i;
+            indexed[i] = new IndexedItem(batch[i], index);
+            _loadedItems[index] = batch[i]; // cache by absolute index for keyboard selection
+        }
+
+        _lazyLoadedCount = Math.Max(_lazyLoadedCount, request.StartIndex + batch.Count);
+
+        // The provider is the source of truth for counts; reflect its total in the heading and
+        // visibility. Re-render the group (not just Virtualize) when those change.
+        var hadVisible = _hasVisibleItems;
+        if (_totalCount != result.TotalItemCount || _filteredCount != result.TotalItemCount || hadVisible != result.TotalItemCount > 0)
+        {
+            _totalCount = result.TotalItemCount;
+            _filteredCount = result.TotalItemCount;
+            _hasVisibleItems = result.TotalItemCount > 0;
+            StateHasChanged();
+        }
+
+        return new Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<IndexedItem>(
+            indexed, result.TotalItemCount);
     }
 
     private async void HandleSearchChanged()
     {
         _cachedSearchQuery = null; // Force rebuild
+
+        if (UseProvider)
+        {
+            // Drop the cached slices and optimistically re-show so the (kept-mounted) Virtualize
+            // re-queries the provider with the new search; the response resets the real count.
+            _loadedItems.Clear();
+            _lazyLoadedCount = 0;
+            _hasVisibleItems = true;
+            _focusedIndex = -1;
+            StateHasChanged();
+            if (_virtualizeRef != null)
+            {
+                await _virtualizeRef.RefreshDataAsync();
+            }
+            return;
+        }
 
         if (EnableLazyLoading)
         {

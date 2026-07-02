@@ -39,34 +39,54 @@ function getFocusedIndex(container) {
 }
 
 /**
+ * Finds the nearest scrollable ancestor of an element.
+ * @param {HTMLElement} element - The element to find the scroll parent for
+ * @returns {HTMLElement|null} The nearest scrollable ancestor, or null
+ */
+function getScrollParent(element) {
+    let parent = element.parentElement;
+    while (parent) {
+        const overflowY = getComputedStyle(parent).overflowY;
+        if (overflowY === 'auto' || overflowY === 'scroll') {
+            return parent;
+        }
+        parent = parent.parentElement;
+    }
+    return null;
+}
+
+/**
  * Scrolls an element into view within a scrollable container, without scrolling the page.
  * @param {HTMLElement} element - The element to scroll into view
- * @param {HTMLElement} container - The scroll container
+ * @param {HTMLElement} container - The fallback scroll container
  * @param {boolean} center - Whether to center the item in the container
  */
 function scrollIntoContainerView(element, container, center = false) {
     if (!element || !container) return;
 
-    // Calculate the element's position relative to the container's scroll position
+    // Use the nearest scrollable ancestor if the container itself isn't scrollable
+    const scrollContainer = getScrollParent(element) || container;
+
+    // Calculate the element's position relative to the scroll container
     const elementTop = element.offsetTop;
     const elementHeight = element.offsetHeight;
-    const containerScrollTop = container.scrollTop;
-    const containerHeight = container.clientHeight;
+    const containerScrollTop = scrollContainer.scrollTop;
+    const containerHeight = scrollContainer.clientHeight;
 
     if (containerHeight <= 0 || elementHeight <= 0) return;
 
     if (center) {
         // Center the element in the container
         const targetScrollTop = elementTop - (containerHeight / 2) + (elementHeight / 2);
-        container.scrollTop = Math.max(0, targetScrollTop);
+        scrollContainer.scrollTop = Math.max(0, targetScrollTop);
     } else {
         // Scroll only if element is outside visible area
         if (elementTop < containerScrollTop) {
             // Element is above visible area
-            container.scrollTop = elementTop;
+            scrollContainer.scrollTop = elementTop;
         } else if (elementTop + elementHeight > containerScrollTop + containerHeight) {
             // Element is below visible area
-            container.scrollTop = elementTop + elementHeight - containerHeight;
+            scrollContainer.scrollTop = elementTop + elementHeight - containerHeight;
         }
     }
 }

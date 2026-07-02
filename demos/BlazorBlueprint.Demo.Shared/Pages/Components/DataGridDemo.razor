@@ -149,6 +149,60 @@
         <CodeBlock Source="Components/DataGrid/row-selection.txt" />
     </div>
 
+    <!-- ── Per-Page Select-All (SelectAllScope) ──────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Per-Page Select-All</h2>
+            <p class="text-sm text-muted-foreground">
+                By default, the header checkbox of a paginated grid opens a menu to select all rows on the
+                current page or across every page. Set
+                <code class="bg-muted px-1 py-0.5 rounded">SelectAllScope="DataGridSelectAllScope.CurrentPage"</code>
+                to remove that menu — the header checkbox then toggles only the current page's rows and leaves
+                selections on other pages untouched. Select some rows, change pages, and the previous page's
+                selection is preserved.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                   SelectionMode="DataTableSelectionMode.Multiple"
+                   SelectedItemsChanged="HandlePerPageSelectionChanged">
+            <Columns>
+                <BbDataGridSelectColumn TData="Person" SelectAllScope="DataGridSelectAllScope.CurrentPage" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+            </Columns>
+        </BbDataGrid>
+        <p class="text-sm text-muted-foreground">
+            Selected across all pages: <span class="font-medium">@_perPageSelectedCount</span>
+        </p>
+        <CodeBlock Source="Components/DataGrid/select-all-scope.txt" />
+    </div>
+
+    <!-- ── Compact Rows (CellClass / HeaderClass) ─────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Compact Rows (CellClass / HeaderClass)</h2>
+            <p class="text-sm text-muted-foreground">
+                Every column &mdash; including <code class="bg-muted px-1 py-0.5 rounded">BbDataGridSelectColumn</code> &mdash;
+                accepts <code class="bg-muted px-1 py-0.5 rounded">CellClass</code> and
+                <code class="bg-muted px-1 py-0.5 rounded">HeaderClass</code>. Apply a smaller padding such as
+                <code class="bg-muted px-1 py-0.5 rounded">CellClass="p-1"</code> to every column, the checkbox column
+                included, for a dense grid &mdash; the select column no longer forces a taller row.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                   SelectionMode="DataTableSelectionMode.Multiple">
+            <Columns>
+                <BbDataGridSelectColumn TData="Person" CellClass="p-1" HeaderClass="p-1" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" CellClass="p-1" HeaderClass="p-1" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" CellClass="p-1" HeaderClass="p-1" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" CellClass="p-1" HeaderClass="p-1" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" CellClass="p-1" HeaderClass="p-1" Sortable />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/compact-rows.txt" />
+    </div>
+
     <!-- ── Expandable Rows ────────────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -239,6 +293,42 @@
             </DetailTemplate>
         </BbDataGrid>
         <CodeBlock Source="Components/DataGrid/expandable-nested-table.txt" />
+    </div>
+
+    <!-- ── Expandable Rows: Detail Rows ──────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Expandable Rows: Detail Rows</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">DetailRows</code> on the
+                <code class="bg-muted px-1 py-0.5 rounded">BbDataGridExpandColumn</code> to render child items
+                as proper table rows that align with the parent grid's columns. Use
+                <code class="bg-muted px-1 py-0.5 rounded">BbDataGridDetailRow</code> for each child item and
+                <code class="bg-muted px-1 py-0.5 rounded">BbDataGridDetailHeader</code> for an optional section label.
+            </p>
+        </div>
+        <BbDataGrid TData="TeamMember" Items="@teamMembers" InitialPageSize="5" ShowPagination="false">
+            <Columns>
+                <BbDataGridExpandColumn>
+                    <DetailRows Context="member">
+                        <BbDataGridDetailHeader Class="bg-muted/30">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                Direct Reports (@member.DirectReports.Count)
+                            </span>
+                        </BbDataGridDetailHeader>
+                        @foreach (var report in member.DirectReports)
+                        {
+                            <BbDataGridDetailRow Item="@report" Class="text-muted-foreground" />
+                        }
+                    </DetailRows>
+                </BbDataGridExpandColumn>
+                <BbDataGridPropertyColumn TData="TeamMember" TProp="string" Property="@(m => m.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="TeamMember" TProp="string" Property="@(m => m.Title)" Title="Job Title" />
+                <BbDataGridPropertyColumn TData="TeamMember" TProp="string" Property="@(m => m.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="TeamMember" TProp="int" Property="@(m => m.DirectReports.Count)" Title="Reports" />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/expandable-detail-rows.txt" />
     </div>
 
     <!-- ── Row Click & Context Menu ─────────────────────────────────── -->
@@ -411,6 +501,29 @@
         <CodeBlock Source="Components/DataGrid/pinned-columns.txt" />
     </div>
 
+    <!-- ── Global Search ─────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Global Search</h2>
+            <p class="text-sm text-muted-foreground">
+                Add <code class="bg-muted px-1 py-0.5 rounded">ShowSearch="true"</code> to render a
+                debounced search input that filters across all columns with
+                <code class="bg-muted px-1 py-0.5 rounded">Filterable=true</code>.
+                For server-side grids, the search text is passed via
+                <code class="bg-muted px-1 py-0.5 rounded">DataGridRequest.SearchText</code>.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5" ShowSearch>
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Filterable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Filterable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Filterable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Filterable />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/global-search.txt" />
+    </div>
+
     <!-- ── Async Data Loading ──────────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -455,6 +568,36 @@
             </BbDataGrid>
         </div>
         <CodeBlock Source="Components/DataGrid/virtualization.txt" />
+    </div>
+
+    <!-- ── Server-Side Virtual Scroll ─────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Server-Side Virtual Scroll</h2>
+            <p class="text-sm text-muted-foreground">
+                Combine <code class="bg-muted px-1 py-0.5 rounded">Virtualize="true"</code> with
+                <code class="bg-muted px-1 py-0.5 rounded">ItemsProvider</code> for true server-side
+                infinite scroll. The Virtualize component requests only the visible rows plus overscan
+                from the server as the user scrolls. Pagination is automatically hidden.
+                Use <code class="bg-muted px-1 py-0.5 rounded">VirtualScrollHeight</code> to set the
+                scroll container height.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" ItemsProvider="@VirtualServerProviderAsync"
+                   Virtualize="true" ItemSize="48" VirtualScrollHeight="400px"
+                   StickyHeader="true">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Id)" Title="#" Width="60px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+            </Columns>
+        </BbDataGrid>
+        <p class="text-xs text-muted-foreground">
+            Scrolling through 10,000 records — only visible rows are fetched from the simulated server.
+        </p>
+        <CodeBlock Source="Components/DataGrid/virtual-server-scroll.txt" />
     </div>
 
     <!-- ── Stress Test: 100,000 Rows ─────────────────────────────── -->
@@ -973,8 +1116,17 @@
                 <ApiParameter Name="Width" Type="string?" Default="48px">
                     Column width for the checkbox column. Defaults to a compact checkbox width.
                 </ApiParameter>
+                <ApiParameter Name="CellClass" Type="string?">
+                    Additional CSS classes applied to the selection cells. Use e.g. "p-1" to override the default padding for a compact row height.
+                </ApiParameter>
+                <ApiParameter Name="HeaderClass" Type="string?">
+                    Additional CSS classes applied to the header cell (the select-all checkbox).
+                </ApiParameter>
                 <ApiParameter Name="Pinned" Type="ColumnPinning" Default="None">
                     Whether this column is pinned. Commonly set to BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left to keep the checkbox column visible when scrolling horizontally.
+                </ApiParameter>
+                <ApiParameter Name="SelectAllScope" Type="DataGridSelectAllScope" Default="Prompt">
+                    Select-all header behaviour when paginated. <code>Prompt</code> (default) shows a "this page / all items" menu across pages; <code>CurrentPage</code> removes the menu so the header checkbox toggles only the current page's rows, leaving other pages' selections intact.
                 </ApiParameter>
             </ApiReference>
 
@@ -1060,6 +1212,35 @@
     // Column Filtering demo state
     private BlazorBlueprint.Primitives.DataGrid.DataGridState<Person> _gridState = new();
 
+    // Expandable detail rows demo data
+    private record TeamMember(string Name, string Title, string Department, List<TeamMember> DirectReports);
+
+    private List<TeamMember> teamMembers = new()
+    {
+        new("Sarah Chen", "VP of Engineering", "Engineering", new()
+        {
+            new("James Rodriguez", "Senior Engineer", "Engineering", new()),
+            new("Priya Patel", "Senior Engineer", "Engineering", new()),
+            new("Marcus Johnson", "Engineer", "Engineering", new()),
+        }),
+        new("David Kim", "VP of Product", "Product", new()
+        {
+            new("Emma Wilson", "Product Manager", "Product", new()),
+            new("Alex Thompson", "Product Analyst", "Product", new()),
+        }),
+        new("Rachel Foster", "VP of Design", "Design", new()
+        {
+            new("Liam O'Brien", "Senior Designer", "Design", new()),
+            new("Sofia Martinez", "UX Researcher", "Design", new()),
+            new("Noah Garcia", "Designer", "Design", new()),
+            new("Olivia Lee", "Designer", "Design", new()),
+        }),
+        new("Michael Brooks", "VP of Marketing", "Marketing", new()
+        {
+            new("Ashley Davis", "Content Lead", "Marketing", new()),
+        }),
+    };
+
     // Expandable nested table demo data
     private record Subtask(string Title, string Assignee, string Status, int EstimatedHours);
     private record ProjectTask(string Title, string Assignee, string Status, string Priority, List<Subtask> Subtasks);
@@ -1104,11 +1285,62 @@
         _ => BadgeVariant.Outline
     };
 
+    // Server-side virtual scroll demo data (generated lazily)
+    private List<Person>? virtualServerPeople;
+
     protected override void OnInitialized()
     {
         people = MockDataService.GeneratePersons(50);
         manyPeople = MockDataService.GeneratePersons(1000);
         asyncPeople = MockDataService.GeneratePersons(100);
+    }
+
+    private async ValueTask<BlazorBlueprint.Primitives.DataGrid.DataGridResult<Person>> VirtualServerProviderAsync(
+        BlazorBlueprint.Primitives.DataGrid.DataGridRequest request)
+    {
+        // Generate data on first request (simulates a large remote dataset)
+        virtualServerPeople ??= MockDataService.GeneratePersons(10_000);
+
+        // Simulate network latency
+        await Task.Delay(30, request.CancellationToken);
+
+        IEnumerable<Person> query = virtualServerPeople;
+
+        // Apply sorting
+        var isFirst = true;
+        foreach (var sort in request.SortDefinitions)
+        {
+            Func<Person, object> selector = sort.ColumnId switch
+            {
+                "name" => p => p.Name,
+                "department" => p => p.Department,
+                "salary" => p => p.Salary,
+                _ => p => p.Id
+            };
+
+            if (isFirst)
+            {
+                query = sort.Direction == SortDirection.Ascending
+                    ? query.OrderBy(selector)
+                    : query.OrderByDescending(selector);
+                isFirst = false;
+            }
+            else if (query is IOrderedEnumerable<Person> ordered)
+            {
+                query = sort.Direction == SortDirection.Ascending
+                    ? ordered.ThenBy(selector)
+                    : ordered.ThenByDescending(selector);
+            }
+        }
+
+        var total = virtualServerPeople.Count;
+        var items = query.Skip(request.StartIndex).Take(request.Count ?? 50).ToList();
+
+        return new BlazorBlueprint.Primitives.DataGrid.DataGridResult<Person>
+        {
+            Items = items,
+            TotalItemCount = total
+        };
     }
 
     private async Task LoadStressTestData()
@@ -1146,6 +1378,13 @@
     private void HandleSelectionChanged(IReadOnlyCollection<Person> selected)
     {
         _selectedPeople = selected;
+    }
+
+    private int _perPageSelectedCount;
+
+    private void HandlePerPageSelectionChanged(IReadOnlyCollection<Person> selected)
+    {
+        _perPageSelectedCount = selected.Count;
     }
 
     private async ValueTask<BlazorBlueprint.Primitives.DataGrid.DataGridResult<Person>> LoadPeopleAsync(

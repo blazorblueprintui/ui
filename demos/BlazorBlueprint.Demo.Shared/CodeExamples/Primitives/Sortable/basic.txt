@@ -1,0 +1,29 @@
+<BlazorBlueprint.Primitives.Sortable.BbSortable TItem="string"
+                                               Items="@_items"
+                                               AriaLabel="Sortable task list"
+                                               OnUpdate="HandleUpdate"
+                                               class="space-y-2">
+    <ItemTemplate Context="item">
+        <div class="flex items-center gap-3 rounded-md border px-4 py-3 text-sm cursor-grab active:cursor-grabbing">
+            <span>@item</span>
+        </div>
+    </ItemTemplate>
+</BlazorBlueprint.Primitives.Sortable.BbSortable>
+
+@code {
+    private List<string> _items =
+    [
+        "Design mockups",
+        "Set up project",
+        "Implement authentication",
+        "Write unit tests",
+        "Deploy to staging",
+    ];
+
+    private void HandleUpdate((int OldIndex, int NewIndex) args)
+    {
+        var item = _items[args.OldIndex];
+        _items.RemoveAt(args.OldIndex);
+        _items.Insert(args.NewIndex, item);
+    }
+}

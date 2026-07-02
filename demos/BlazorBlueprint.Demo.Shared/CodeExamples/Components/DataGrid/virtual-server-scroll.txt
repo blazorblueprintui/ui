@@ -1,0 +1,35 @@
+<BbDataGrid TData="Person" ItemsProvider="@LoadPeopleAsync"
+           Virtualize="true" ItemSize="48" VirtualScrollHeight="400px"
+           StickyHeader="true">
+    <Columns>
+        <BbDataGridPropertyColumn TData="Person" TProp="int"
+            Property="@(p => p.Id)" Title="#" Width="60px" />
+        <BbDataGridPropertyColumn TData="Person" TProp="string"
+            Property="@(p => p.Name)" Sortable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string"
+            Property="@(p => p.Email)" />
+        <BbDataGridPropertyColumn TData="Person" TProp="string"
+            Property="@(p => p.Department)" Sortable />
+        <BbDataGridPropertyColumn TData="Person" TProp="int"
+            Property="@(p => p.Salary)" Format="C0" Sortable />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private async ValueTask<DataGridResult<Person>> LoadPeopleAsync(
+        DataGridRequest request)
+    {
+        // Your server/API call here — only the requested window is fetched
+        var result = await MyApi.GetPeopleAsync(
+            skip: request.StartIndex,
+            take: request.Count ?? 50,
+            sort: request.SortDefinitions,
+            cancellationToken: request.CancellationToken);
+
+        return new DataGridResult<Person>
+        {
+            Items = result.Items,
+            TotalItemCount = result.TotalCount
+        };
+    }
+}

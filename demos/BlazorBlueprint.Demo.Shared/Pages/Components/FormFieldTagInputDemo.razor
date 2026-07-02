@@ -1,0 +1,134 @@
+@page "/components/form-field-tag-input"
+
+<PageTitle>FormFieldTagInput Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">FormFieldTagInput</h1>
+            <p class="text-xl text-muted-foreground">
+                A form field wrapper for TagInput with built-in label, helper text, and error messages.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-sm text-muted-foreground">
+                A tag input with a label and helper text. Press Enter or comma to add tags.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldTagInput @bind-Tags="_skills"
+                                Label="Skills"
+                                Placeholder="Type a skill..."
+                                HelperText="Press Enter or comma to add." />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Tags:</p>
+            <p class="text-sm font-mono">@((_skills?.Any() == true) ? string.Join(", ", _skills) : "(none)")</p>
+        </div>
+        <CodeBlock Source="Components/FormFieldTagInput/basic.txt" />
+    </div>
+
+    <!-- With Constraints -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">With Constraints</h2>
+            <p class="text-sm text-muted-foreground">
+                Limit the number of tags with <code class="text-xs bg-muted px-1 py-0.5 rounded">MaxTags</code>
+                and enable <code class="text-xs bg-muted px-1 py-0.5 rounded">Clearable</code>.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldTagInput @bind-Tags="_categories"
+                                Label="Categories"
+                                Placeholder="Add a category..."
+                                HelperText="Up to 5 categories."
+                                MaxTags="5"
+                                Clearable="true" />
+        </div>
+        <CodeBlock Source="Components/FormFieldTagInput/constraints.txt" />
+    </div>
+
+    <!-- With Suggestions -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">With Suggestions</h2>
+            <p class="text-sm text-muted-foreground">
+                Provide a static list of suggestions to help users add tags.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldTagInput @bind-Tags="_languages"
+                                Label="Programming languages"
+                                Placeholder="Type to search..."
+                                HelperText="Select from suggestions or type your own."
+                                Suggestions="@_languageSuggestions" />
+        </div>
+        <CodeBlock Source="Components/FormFieldTagInput/suggestions.txt" />
+    </div>
+
+    <!-- Disabled -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">A disabled tag input form field.</p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldTagInput Tags="@_readOnlyTags"
+                                Label="Tags (locked)"
+                                HelperText="These tags cannot be modified."
+                                Disabled="true" />
+        </div>
+        <CodeBlock Source="Components/FormFieldTagInput/disabled.txt" />
+    </div>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Label visually associated with the tag input</AccessibilityItem>
+            <AccessibilityItem>Description linked via aria-describedby</AccessibilityItem>
+        </AriaAttributes>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="FormFieldTagInput">
+                <ApiParameter Name="Label" Type="string?" Default="null">The label text.</ApiParameter>
+                <ApiParameter Name="HelperText" Type="string?" Default="null">Helper text below the input.</ApiParameter>
+                <ApiParameter Name="ErrorText" Type="string?" Default="null">Manual error text override.</ApiParameter>
+                <ApiParameter Name="Tags" Type="IReadOnlyList&lt;string&gt;?" Default="null">The tag list. Use @@bind-Tags.</ApiParameter>
+                <ApiParameter Name="TagsChanged" Type="EventCallback&lt;IReadOnlyList&lt;string&gt;?&gt;">Callback when tags change.</ApiParameter>
+                <ApiParameter Name="Placeholder" Type="string?" Default="null">Placeholder text.</ApiParameter>
+                <ApiParameter Name="MaxTags" Type="int" Default="int.MaxValue">Maximum tags allowed.</ApiParameter>
+                <ApiParameter Name="MaxTagLength" Type="int" Default="50">Maximum characters per tag.</ApiParameter>
+                <ApiParameter Name="AllowDuplicates" Type="bool" Default="false">Allow duplicate tags.</ApiParameter>
+                <ApiParameter Name="AddTrigger" Type="TagInputTrigger" Default="Enter | Comma">Keys that trigger tag creation.</ApiParameter>
+                <ApiParameter Name="Suggestions" Type="IEnumerable&lt;string&gt;?" Default="null">Static suggestion list.</ApiParameter>
+                <ApiParameter Name="Variant" Type="TagInputVariant" Default="Default">Visual variant for tags.</ApiParameter>
+                <ApiParameter Name="Clearable" Type="bool" Default="false">Show a clear-all button.</ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">Whether the input is disabled.</ApiParameter>
+                <ApiParameter Name="InputClass" Type="string?" Default="null">CSS classes for the inner container.</ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    private IReadOnlyList<string>? _skills;
+    private IReadOnlyList<string>? _categories;
+    private IReadOnlyList<string>? _languages;
+    private IReadOnlyList<string> _readOnlyTags = new[] { "blazor", "dotnet", "csharp" };
+
+    private static readonly string[] _languageSuggestions =
+    [
+        "C#", "JavaScript", "TypeScript", "Python", "Go", "Rust", "Java", "Kotlin", "Swift", "Ruby"
+    ];
+}

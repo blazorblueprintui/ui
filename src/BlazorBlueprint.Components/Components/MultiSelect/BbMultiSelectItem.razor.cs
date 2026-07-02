@@ -53,6 +53,13 @@ public partial class BbMultiSelectItem<TValue> : ComponentBase, IDisposable
                 return false;
             }
 
+            // When external filtering is active, the consumer controls which items
+            // are rendered — show all of them without internal text filtering.
+            if (Parent.IsExternalFiltering)
+            {
+                return true;
+            }
+
             var query = Parent.SearchQuery;
             if (string.IsNullOrWhiteSpace(query))
             {

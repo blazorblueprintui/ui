@@ -194,6 +194,53 @@
         <CodeBlock Source="Components/Accordion/rich-content.txt" />
         </section>
 
+        <section class="space-y-4">
+            <div class="space-y-2">
+                <h2 class="text-2xl font-semibold">Custom Icon</h2>
+                <p class="text-muted-foreground">
+                    Replace the default chevron with any icon component
+                    (<code>&lt;LucideIcon&gt;</code>, <code>&lt;FontAwesomeIcon&gt;</code>,
+                    <code>&lt;FeatherIcon&gt;</code>, <code>&lt;HeroIcon&gt;</code>) or ad-hoc SVG.
+                    The icon receives a <code>bool</code> context with the open state for animation.
+                </p>
+            </div>
+
+        <BbAccordion Type="AccordionType.Single" Collapsible="true" Class="w-full">
+            <BbAccordionItem Value="icon-1">
+                <BbAccordionTrigger>
+                    <ChildContent>How do I use a Lucide icon?</ChildContent>
+                    <Icon Context="isOpen">
+                        <LucideIcon Name="plus"
+                                    Size="16"
+                                    Class="@($"shrink-0 transition-transform duration-200 {(isOpen ? "rotate-45" : "")}")" />
+                    </Icon>
+                </BbAccordionTrigger>
+                <BbAccordionContent>
+                    Pass any icon component to the <code>Icon</code> parameter. The context
+                    parameter exposes the open state so you can animate it.
+                </BbAccordionContent>
+            </BbAccordionItem>
+
+            <BbAccordionItem Value="icon-2">
+                <BbAccordionTrigger>
+                    <ChildContent>Can I use ad-hoc SVG?</ChildContent>
+                    <Icon Context="isOpen">
+                        <svg class="@($"h-4 w-4 shrink-0 transition-transform duration-200 {(isOpen ? "rotate-45" : "")}")"
+                             xmlns="http://www.w3.org/2000/svg"
+                             viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 5v14M5 12h14" />
+                        </svg>
+                    </Icon>
+                </BbAccordionTrigger>
+                <BbAccordionContent>
+                    Yes. The <code>Icon</code> parameter accepts any markup, including raw SVG.
+                </BbAccordionContent>
+            </BbAccordionItem>
+        </BbAccordion>
+
+        <CodeBlock Source="Components/Accordion/custom-icon.txt" />
+        </section>
+
     <!-- Accessibility Notes -->
     <AccessibilityList>
         <AriaAttributes>
@@ -266,6 +313,11 @@
             <ApiReference ComponentName="BbAccordionTrigger">
                 <ApiParameter Name="As" Type="string" Default="&quot;h3&quot;">
                     HTML heading element tag to wrap the trigger button.
+                </ApiParameter>
+                <ApiParameter Name="Icon" Type="RenderFragment&lt;bool&gt;?" Default="null">
+                    Custom icon rendered in place of the default chevron. Accepts any icon
+                    component or ad-hoc SVG. The <code>bool</code> context is the open state.
+                    When not set, the default rotating chevron is used.
                 </ApiParameter>
             </ApiReference>
 

@@ -10,12 +10,14 @@
 }
 else
 {
+    @* A native <button> already activates on Space/Enter (firing a click), so the trigger toggles
+       via @onclick. We intentionally do NOT also handle Space/Enter in keydown — doing so toggled
+       twice per press (keydown + the native click), which opened and closed in one go. *@
     <button type="button"
             data-state="@(Context?.Open ?? false ? "open" : "closed")"
             aria-expanded="@(Context?.Open ?? false)"
             disabled="@(Context?.Disabled ?? false)"
             @onclick="HandleClick"
-            @onkeydown="HandleKeyDown"
             @attributes="AdditionalAttributes">
         @ChildContent
     </button>

@@ -1,0 +1,31 @@
+<BlazorBlueprint.Primitives.Sortable.BbSortable TItem="string"
+                                               Items="@_items"
+                                               Handle=".drag-handle"
+                                               AriaLabel="Sortable list with drag handle"
+                                               OnUpdate="HandleUpdate"
+                                               class="space-y-2">
+    <ItemTemplate Context="item">
+        <div class="flex items-center gap-3 rounded-md border px-4 py-3 text-sm">
+            <span class="drag-handle cursor-grab active:cursor-grabbing">&#x2630;</span>
+            <span class="flex-1">@item</span>
+        </div>
+    </ItemTemplate>
+</BlazorBlueprint.Primitives.Sortable.BbSortable>
+
+@code {
+    private List<string> _items =
+    [
+        "Dashboard",
+        "Analytics",
+        "Reports",
+        "Settings",
+        "Users",
+    ];
+
+    private void HandleUpdate((int OldIndex, int NewIndex) args)
+    {
+        var item = _items[args.OldIndex];
+        _items.RemoveAt(args.OldIndex);
+        _items.Insert(args.NewIndex, item);
+    }
+}

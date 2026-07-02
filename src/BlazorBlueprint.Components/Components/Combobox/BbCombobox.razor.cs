@@ -65,11 +65,19 @@ public partial class BbCombobox<TValue> : ComponentBase
     private bool _lastDisabled;
     private string _lastSearchQuery = string.Empty;
 
+    // Bypass for ShouldRender when the trigger needs to pick up a freshly-registered
+    // display text for the current selection. ComboboxItem children register their text on
+    // initial render via the hidden registration pass, but that happens after the trigger's
+    // first render — so RegisterItem arrives once the render-skipping state has already
+    // settled and must force a follow-up render.
+    private bool _triggerTextDirty;
+
     protected override bool ShouldRender()
     {
-        if (_parametersChanged)
+        if (_parametersChanged || _triggerTextDirty)
         {
             _parametersChanged = false;
+            _triggerTextDirty = false;
             _lastIsOpen = _isOpen;
             _lastValue = Value;
             _lastDisabled = Disabled;
@@ -141,6 +149,24 @@ public partial class BbCombobox<TValue> : ComponentBase
     public string? Placeholder { get; set; }
 
     /// <summary>
+    /// Gets or sets the display text shown in the trigger when a value is preselected
+    /// via <see cref="Value"/> in compositional mode and no matching
+    /// <c>BbComboboxItem</c> has registered yet.
+    /// </summary>
+    /// <remarks>
+    /// Compositional items now register their text on initial render (via a hidden
+    /// registration pass), so the trigger resolves a pre-bound <see cref="Value"/> without
+    /// this in the common case. Set it only when the matching item isn't present in the
+    /// markup at first render — e.g. the selection is loaded asynchronously and added later —
+    /// so the trigger can still show a caption in the meantime. Options mode never needs this;
+    /// it resolves text synchronously from the <see cref="Options"/> collection. A registered
+    /// item always wins over this hint, so re-registration (e.g. Text updated by the parent)
+    /// still corrects stale captions.
+    /// </remarks>
+    [Parameter]
+    public string? SelectedItemText { get; set; }
+
+    /// <summary>
     /// Gets or sets the placeholder text shown in the search input.
     /// </summary>
     [Parameter]
@@ -188,6 +214,12 @@ public partial class BbCombobox<TValue> : ComponentBase
     public bool Disabled { get; set; }
 
     /// <summary>
+    /// Gets or sets whether the combobox is required.
+    /// </summary>
+    [Parameter]
+    public bool Required { get; set; }
+
+    /// <summary>
     /// Gets or sets the ID(s) of the element(s) that describe this combobox for accessibility.
     /// </summary>
     [Parameter]
@@ -211,6 +243,32 @@ public partial class BbCombobox<TValue> : ComponentBase
     public bool MatchTriggerWidth { get; set; }
 
     /// <summary>
+    /// Gets or sets the callback invoked when the user scrolls near the bottom of the dropdown list.
+    /// Use this to load additional items for infinite scroll scenarios (e.g. paging through large datasets).
+    /// </summary>
+    /// <remarks>
+    /// Typically used together with <see cref="IsLoading"/> to prevent duplicate requests
+    /// and show a loading indicator while more items are being fetched.
+    /// </remarks>
+    [Parameter]
+    public EventCallback OnLoadMore { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether additional items are currently being loaded.
+    /// When true, a loading spinner is shown at the bottom of the dropdown list and
+    /// <see cref="OnLoadMore"/> is suppressed until loading completes.
+    /// </summary>
+    [Parameter]
+    public bool IsLoading { get; set; }
+
+    /// <summary>
+    /// Gets or sets a message displayed at the bottom of the dropdown list when all items have been loaded.
+    /// Only shown when <see cref="IsLoading"/> is false. Set to <c>null</c> or empty to hide.
+    /// </summary>
+    [Parameter]
+    public string? EndOfListMessage { get; set; }
+
+    /// <summary>
     /// Gets or sets CSS classes applied to the trigger when the dropdown is open.
     /// Default is <c>"bg-accent text-accent-foreground"</c>.
     /// Set to <c>null</c> or empty to disable the active style.
@@ -232,6 +290,12 @@ public partial class BbCombobox<TValue> : ComponentBase
     /// Tracks whether focus has been done for the current open.
     /// </summary>
     private bool _focusDone;
+
+    /// <summary>
+    /// Whether the next controlled close should return focus to the trigger. Set true on
+    /// selection (intentional close) and reset on open. Bound to the popover's RestoreFocusOnClose.
+    /// </summary>
+    private bool _restoreFocusOnClose;
 
     /// <summary>
     /// Item text registry for compositional mode display text lookup.
@@ -273,9 +337,10 @@ public partial class BbCombobox<TValue> : ComponentBase
     }
 
     /// <summary>
-    /// Gets the display text for the currently selected item.
-    /// Checks Options first (Options mode), then the item text registry (Compositional mode),
-    /// then falls back to the cached display text from the last selection.
+    /// Gets the display text for the currently selected item. Resolution order:
+    /// Options (Options mode) → registered items (Compositional mode) →
+    /// caller-supplied <see cref="SelectedItemText"/> (fallback when no matching item is in
+    /// the markup yet) → cached text from the last user selection → placeholder.
     /// </summary>
     private string SelectedDisplayText
     {
@@ -286,21 +351,30 @@ public partial class BbCombobox<TValue> : ComponentBase
                 return EffectivePlaceholder;
             }
 
-            // Options mode: look up from Options collection
+            // Options mode: synchronous lookup from the Options collection.
             var selectedOption = Options?.FirstOrDefault(o => EqualityComparer<TValue>.Default.Equals(o.Value, Value));
             if (selectedOption is not null)
             {
                 return selectedOption.Text;
             }
 
-            // Compositional mode: look up from registered items
+            // Compositional mode: a registered item wins over the caller-provided hint so
+            // that re-registration (e.g. Text updated by the parent) corrects stale captions.
             if (_itemTextRegistry.GetValueOrDefault(Value) is { } registryText)
             {
                 return registryText;
             }
 
-            // Fallback: cached display text from last selection survives Options array changes
-            // during async filtering (e.g. selected option filtered out of current results).
+            // Caller-provided initial text — fallback when the selected value has no matching
+            // item in the markup yet (e.g. the selection is loaded asynchronously).
+            if (!string.IsNullOrEmpty(SelectedItemText))
+            {
+                return SelectedItemText;
+            }
+
+            // Last-resort: cached text from a previous user selection, which survives
+            // Options array changes during async filtering (e.g. selected option filtered
+            // out of current results).
             return _selectedDisplayTextCache ?? EffectivePlaceholder;
         }
     }
@@ -344,6 +418,12 @@ public partial class BbCombobox<TValue> : ComponentBase
     private async Task HandleOpenChanged(bool isOpen)
     {
         _isOpen = isOpen;
+        if (isOpen)
+        {
+            // Default to NOT restoring focus; only a selection-close opts in (see HandleSelect).
+            // This keeps click-outside dismissal leaving focus where the user clicked.
+            _restoreFocusOnClose = false;
+        }
         if (!isOpen)
         {
             _focusDone = false; // Reset for next open
@@ -385,7 +465,10 @@ public partial class BbCombobox<TValue> : ComponentBase
             _editContext.NotifyFieldChanged(_fieldIdentifier);
         }
 
-        // Close the popover after selection
+        // Close the popover after selection — an intentional close, so return focus to the
+        // trigger (the popover content unmounts; without this, focus is lost to <body> and the
+        // next Tab restarts from the top of the document).
+        _restoreFocusOnClose = true;
         _isOpen = false;
         // Note: _focusDone is reset by HandleOpenChanged
     }
@@ -411,7 +494,7 @@ public partial class BbCombobox<TValue> : ComponentBase
         "disabled:opacity-50 disabled:pointer-events-none",
         "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         _isOpen ? ActiveClass : null,
-        "h-9 px-3",
+        "h-10 px-3",
         string.IsNullOrWhiteSpace(Class) ? PopoverWidth : null,
         Class
     );
@@ -420,13 +503,32 @@ public partial class BbCombobox<TValue> : ComponentBase
 
     /// <summary>
     /// Registers an item's value and display text for trigger display text lookup.
-    /// Called by ComboboxItem on initialization.
+    /// Called by ComboboxItem on initialization and on parameter cascade.
     /// </summary>
     internal void RegisterItem(TValue value, string text)
     {
-        if (value is not null)
+        if (value is null)
         {
-            _itemTextRegistry[value] = text;
+            return;
+        }
+
+        // Only mark dirty when the text genuinely changed — without this guard the
+        // OnParametersSet-side RegisterItem call would queue a render on every parent
+        // cascade because identical text is re-registered each cycle.
+        var textChanged = !_itemTextRegistry.TryGetValue(value, out var existing)
+            || !string.Equals(existing, text, StringComparison.Ordinal);
+
+        _itemTextRegistry[value] = text;
+
+        // If the registered item is the current selection and its display text actually
+        // changed (covers first-mount and Text-updates), re-render so the trigger picks
+        // up the new caption. Registration happens after the trigger's first render (the
+        // hidden registration pass mounts children later in the same initial render cycle),
+        // so without this the trigger would stay on the placeholder.
+        if (textChanged && EqualityComparer<TValue>.Default.Equals(value, Value))
+        {
+            _triggerTextDirty = true;
+            StateHasChanged();
         }
     }
 

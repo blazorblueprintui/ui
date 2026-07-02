@@ -24,6 +24,14 @@ public class DropdownMenuState
     /// Used for keyboard navigation.
     /// </summary>
     public int FocusedIndex { get; set; } = -1;
+
+    /// <summary>
+    /// Gets or sets whether focus should be returned to the trigger element when the
+    /// menu closes. Set to <c>true</c> by intentional close paths (item activation,
+    /// Escape) and left <c>false</c> for external dismissals (click-outside) where
+    /// focus is already where the user wants it.
+    /// </summary>
+    public bool RestoreFocusOnClose { get; set; }
 }
 
 /// <summary>
@@ -76,18 +84,26 @@ public class DropdownMenuContext : PrimitiveContextWithEvents<DropdownMenuState>
             state.IsOpen = true;
             state.TriggerElement = triggerElement;
             state.FocusedIndex = -1; // Reset focus on open
+            state.RestoreFocusOnClose = false; // Cleared so the next Close() decides afresh
         });
     }
 
     /// <summary>
     /// Closes the dropdown menu.
     /// </summary>
-    public void Close()
+    /// <param name="restoreFocus">
+    /// When <c>true</c>, signals that focus should be returned to the trigger element
+    /// after the content tears down. Pass <c>true</c> for intentional close paths
+    /// (Escape, item activation) and leave <c>false</c> for external dismissals
+    /// (click-outside) where focus is already where the user wants it.
+    /// </param>
+    public void Close(bool restoreFocus = false)
     {
         UpdateState(state =>
         {
             state.IsOpen = false;
             state.FocusedIndex = -1;
+            state.RestoreFocusOnClose = restoreFocus;
         });
     }
 

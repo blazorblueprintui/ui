@@ -1,0 +1,78 @@
+@namespace BlazorBlueprint.Primitives.NavigationMenu
+
+<button @ref="buttonRef"
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded="@(Item?.IsOpen == true ? "true" : "false")"
+        data-state="@(Item?.IsOpen == true ? "open" : "closed")"
+        @onclick="HandleClick"
+        @onmouseenter="HandleMouseEnter"
+        @onmouseleave="HandleMouseLeave"
+        @attributes="AdditionalAttributes">
+    @ChildContent
+</button>
+
+@code {
+    private ElementReference buttonRef;
+
+    [CascadingParameter]
+    private NavigationMenuItemContext? Item { get; set; }
+
+    [CascadingParameter]
+    private NavigationMenuContext? Menu { get; set; }
+
+    /// <summary>
+    /// Child content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional HTML attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// The button element reference, exposed for focus management.
+    /// </summary>
+    public ElementReference ButtonRef => buttonRef;
+
+    protected override void OnInitialized()
+    {
+        if (Menu != null)
+        {
+            Menu.RegisterTrigger(buttonRef);
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && Menu != null)
+        {
+            // Update the ref now that the element is rendered
+            var index = Menu.TriggerCount - 1;
+            Menu.UpdateTriggerRef(index, buttonRef);
+        }
+    }
+
+    private void HandleClick()
+    {
+        if (Item != null && !Item.IsOpen)
+        {
+            Item.Open();
+        }
+    }
+
+    private void HandleMouseEnter()
+    {
+        if (Item != null)
+        {
+            Item.CancelCloseTimer();
+            Item.Open();
+        }
+    }
+
+    private void HandleMouseLeave() =>
+        Item?.StartCloseTimer();
+}

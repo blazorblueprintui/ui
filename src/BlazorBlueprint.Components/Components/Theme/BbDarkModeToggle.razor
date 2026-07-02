@@ -1,0 +1,132 @@
+@namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
+@inject ThemeService ThemeService
+@inject IBbLocalizer Localizer
+@implements IDisposable
+
+<BbButton Variant="@Variant"
+          Size="@Size"
+          Class="@Class"
+          OnClick="@OnClick"
+          aria-label="@AriaLabel">
+    @if (ShowIcon)
+    {
+        @if (ThemeService.IsDarkMode)
+        {
+            @if (DarkIcon is not null)
+            {
+                @DarkIcon
+            }
+            else
+            {
+                <LucideIcon Name="moon" Class="h-[1.2rem] w-[1.2rem]" />
+            }
+        }
+        else
+        {
+            @if (LightIcon is not null)
+            {
+                @LightIcon
+            }
+            else
+            {
+                <LucideIcon Name="sun" Class="h-[1.2rem] w-[1.2rem]" />
+            }
+        }
+    }
+    @if (ShowLabel)
+    {
+        <span>@CurrentLabel</span>
+    }
+</BbButton>
+
+@code {
+    /// <summary>
+    /// Custom icon to show when light mode is active. Defaults to a sun icon.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? LightIcon { get; set; }
+
+    /// <summary>
+    /// Custom icon to show when dark mode is active. Defaults to a moon icon.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? DarkIcon { get; set; }
+
+    /// <summary>
+    /// Whether to show the mode icon. Defaults to <c>true</c>.
+    /// </summary>
+    [Parameter]
+    public bool ShowIcon { get; set; } = true;
+
+    /// <summary>
+    /// Whether to show a text label indicating the current mode. Defaults to <c>false</c>.
+    /// </summary>
+    [Parameter]
+    public bool ShowLabel { get; set; }
+
+    /// <summary>
+    /// Custom label for light mode. Defaults to the localized "Light" string.
+    /// </summary>
+    [Parameter]
+    public string? LightLabel { get; set; }
+
+    /// <summary>
+    /// Custom label for dark mode. Defaults to the localized "Dark" string.
+    /// </summary>
+    [Parameter]
+    public string? DarkLabel { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes for the button.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Button variant styling. Defaults to <see cref="ButtonVariant.Outline"/>.
+    /// </summary>
+    [Parameter]
+    public ButtonVariant Variant { get; set; } = ButtonVariant.Outline;
+
+    /// <summary>
+    /// Button size. Defaults to <see cref="ButtonSize.Icon"/>.
+    /// </summary>
+    [Parameter]
+    public ButtonSize Size { get; set; } = ButtonSize.Icon;
+
+    private string CurrentLabel => ThemeService.IsDarkMode
+        ? (DarkLabel ?? Localizer["Theme.Dark"])
+        : (LightLabel ?? Localizer["Theme.Light"]);
+
+    private string AriaLabel => ThemeService.IsDarkMode
+        ? Localizer["Theme.SwitchToLight"]
+        : Localizer["Theme.SwitchToDark"];
+
+    /// <inheritdoc />
+    protected override void OnInitialized() =>
+        ThemeService.OnThemeChanged += HandleThemeChanged;
+
+    /// <inheritdoc />
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !ThemeService.IsInitialized)
+        {
+            await ThemeService.InitializeAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnClick() =>
+        await ThemeService.ToggleDarkModeAsync();
+
+    private void HandleThemeChanged() =>
+        InvokeAsync(StateHasChanged);
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        ThemeService.OnThemeChanged -= HandleThemeChanged;
+        GC.SuppressFinalize(this);
+    }
+}

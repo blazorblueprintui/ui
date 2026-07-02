@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Components
+@using System.Globalization
 
 <div class="@CssClass" style="@Style">
     @ChildContent
@@ -72,10 +73,12 @@
     {
         get
         {
-            var size = CurrentSize;
+            var size = CurrentSize.ToString("F2", CultureInfo.InvariantCulture);
+            var min = MinSize.ToString(CultureInfo.InvariantCulture);
+            var max = MaxSize.ToString(CultureInfo.InvariantCulture);
             return IsHorizontal
-                ? $"flex: 1 0 {size:F2}%; min-width: {MinSize}%; max-width: {MaxSize}%; overflow: auto;"
-                : $"flex: 1 0 {size:F2}%; min-height: {MinSize}%; max-height: {MaxSize}%; overflow: auto;";
+                ? $"flex: 1 0 {size}%; min-width: {min}%; max-width: {max}%; overflow: auto;"
+                : $"flex: 1 0 {size}%; min-height: {min}%; max-height: {max}%; overflow: auto;";
         }
     }
 

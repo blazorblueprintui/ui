@@ -1,0 +1,32 @@
+<BbFormFieldSelect TValue="string"
+                 Options="@countries"
+                 @bind-Value="selectedCountry"
+                 OnLoadMore="@HandleLoadMore"
+                 IsLoading="@isLoading"
+                 Label="Country"
+                 Placeholder="Select a country..."
+                 HelperText="Choose a country."
+                 InputClass="w-full" />
+
+@code {
+    private string? selectedCountry;
+    private SelectOption<string>[] countries = [];
+    private bool isLoading;
+    private const int PageSize = 20;
+
+    protected override void OnInitialized()
+    {
+        countries = allCountries.Take(PageSize).ToArray();
+    }
+
+    private async Task HandleLoadMore()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        countries = allCountries.Take(countries.Length + PageSize).ToArray();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+}

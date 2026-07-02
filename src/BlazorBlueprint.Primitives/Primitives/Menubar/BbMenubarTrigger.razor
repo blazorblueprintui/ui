@@ -1,0 +1,44 @@
+@namespace BlazorBlueprint.Primitives.Menubar
+
+<button type="button"
+        role="menuitem"
+        aria-haspopup="menu"
+        aria-expanded="@(Menu?.IsOpen == true)"
+        data-state="@(Menu?.IsOpen == true ? "open" : "closed")"
+        @onclick="HandleClick"
+        @onmouseenter="HandleMouseEnter"
+        @attributes="AdditionalAttributes">
+    @ChildContent
+</button>
+
+@code {
+    [CascadingParameter]
+    private MenubarMenuContext? Menu { get; set; }
+
+    [CascadingParameter]
+    private MenubarContext? Context { get; set; }
+
+    /// <summary>
+    /// Child content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional HTML attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private void HandleClick() =>
+        Menu?.Toggle();
+
+    private void HandleMouseEnter()
+    {
+        // If another menu is open, switch to this one on hover
+        if (Context?.ActiveMenu != null && Context.ActiveMenu != Menu?.MenuId)
+        {
+            Menu?.Open();
+        }
+    }
+}

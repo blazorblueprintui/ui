@@ -93,6 +93,7 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["DataGrid.FilterColumnSelectValue"] = "Select value...",
         ["DataGrid.FilterColumnClear"] = "Clear",
         ["DataGrid.FilterColumnApply"] = "Apply",
+        ["DataGrid.SearchPlaceholder"] = "Search...",
 
         // DataTable
         ["DataTable.Loading"] = "Loading...",
@@ -106,8 +107,6 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["DataTable.Search"] = "Search...",
         ["DataTable.Columns"] = "Columns",
         ["DataTable.ToggleColumns"] = "Toggle columns",
-        ["DataTable.Filter"] = "Filter",
-        ["DataTable.FilterColumns"] = "Filter columns",
 
         // DataView
         ["DataView.SearchPlaceholder"] = "Search...",
@@ -176,6 +175,34 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["FilterBuilder.Hours"] = "hours",
         ["FilterBuilder.Minutes"] = "minutes",
         ["FilterBuilder.Seconds"] = "seconds",
+        ["FilterBuilder.Where"] = "Where",
+        ["FilterBuilder.OperatorAnd"] = "AND",
+        ["FilterBuilder.OperatorOr"] = "OR",
+        // Operator labels — keys are FilterBuilder.Operator{FilterOperator}, resolved via
+        // FilterOperatorHelper. The two *Date keys are date/datetime-field overrides.
+        ["FilterBuilder.OperatorEquals"] = "equals",
+        ["FilterBuilder.OperatorNotEquals"] = "not equals",
+        ["FilterBuilder.OperatorIsEmpty"] = "is empty",
+        ["FilterBuilder.OperatorIsNotEmpty"] = "is not empty",
+        ["FilterBuilder.OperatorContains"] = "contains",
+        ["FilterBuilder.OperatorNotContains"] = "not contains",
+        ["FilterBuilder.OperatorStartsWith"] = "starts with",
+        ["FilterBuilder.OperatorEndsWith"] = "ends with",
+        ["FilterBuilder.OperatorGreaterThan"] = "greater than",
+        ["FilterBuilder.OperatorLessThan"] = "less than",
+        ["FilterBuilder.OperatorGreaterOrEqual"] = "greater or equal",
+        ["FilterBuilder.OperatorLessOrEqual"] = "less or equal",
+        ["FilterBuilder.OperatorBetween"] = "between",
+        ["FilterBuilder.OperatorInLast"] = "in the last",
+        ["FilterBuilder.OperatorInNext"] = "in the next",
+        ["FilterBuilder.OperatorIn"] = "is any of",
+        ["FilterBuilder.OperatorNotIn"] = "is none of",
+        ["FilterBuilder.OperatorIsTrue"] = "is true",
+        ["FilterBuilder.OperatorIsFalse"] = "is false",
+        ["FilterBuilder.OperatorDateIs"] = "is",
+        ["FilterBuilder.OperatorDateIsNot"] = "is not",
+        ["FilterBuilder.OperatorGreaterThanDate"] = "is after",
+        ["FilterBuilder.OperatorLessThanDate"] = "is before",
 
         // FormWizard
         ["FormWizard.WizardProgress"] = "Wizard progress",
@@ -256,6 +283,18 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["TagInput.RemoveTag"] = "Remove {0}",
         ["TagInput.ClearAllTags"] = "Clear all tags",
         ["TagInput.TagSuggestions"] = "Tag suggestions",
+
+        // Theme
+        ["Theme.Switcher.Label"] = "Customize theme",
+        ["Theme.Switcher.Title"] = "Customize",
+        ["Theme.Switcher.Description"] = "Pick a color and radius for your components.",
+        ["Theme.Color"] = "Color",
+        ["Theme.Radius"] = "Radius",
+        ["Theme.Mode"] = "Mode",
+        ["Theme.Light"] = "Light",
+        ["Theme.Dark"] = "Dark",
+        ["Theme.SwitchToLight"] = "Switch to light mode",
+        ["Theme.SwitchToDark"] = "Switch to dark mode",
 
         // Timeline
         ["Timeline.Timeline"] = "Timeline",

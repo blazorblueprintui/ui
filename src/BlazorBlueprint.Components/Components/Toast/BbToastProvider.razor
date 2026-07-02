@@ -218,7 +218,10 @@
     }
 
     private string GetContainerCssClass(ToastPosition position) => ClassNames.cn(
-        "fixed z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:flex-col md:max-w-[420px]",
+        // pointer-events-none lets clicks pass through the fixed-position container
+        // (which always renders, even with zero toasts) so it doesn't block the UI
+        // behind it. Each BbToast re-enables pointer-events-auto on its own root.
+        "pointer-events-none fixed z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:flex-col md:max-w-[420px]",
         position switch
         {
             ToastPosition.TopRight => "top-0 right-0",

@@ -1,0 +1,40 @@
+<BbFormFieldSelect TValue="string"
+                 @bind-Value="selectedCountry"
+                 OnLoadMore="@HandleLoadMore"
+                 IsLoading="@isLoading"
+                 Label="Country"
+                 Placeholder="Select a country..."
+                 HelperText="Choose a country."
+                 InputClass="w-full">
+    @foreach (var c in visible)
+    {
+        <BbSelectItem TValue="string"
+                      Value="@c.Code"
+                      Text="@($"{c.Flag} {c.Name}")" />
+    }
+</BbFormFieldSelect>
+
+@code {
+    private string? selectedCountry;
+    private CountryInfo[] visible = [];
+    private bool isLoading;
+    private const int PageSize = 20;
+
+    record CountryInfo(string Code, string Name, string Flag);
+
+    protected override void OnInitialized()
+    {
+        visible = allCountries.Take(PageSize).ToArray();
+    }
+
+    private async Task HandleLoadMore()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        visible = allCountries.Take(visible.Length + PageSize).ToArray();
+
+        isLoading = false;
+        StateHasChanged();
+    }
+}

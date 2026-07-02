@@ -1,4 +1,6 @@
 using System.Collections;
+using System.Text.RegularExpressions;
+using TailwindMerge;
 
 namespace BlazorBlueprint.Components;
 
@@ -41,6 +43,35 @@ namespace BlazorBlueprint.Components;
 public static class ClassNames
 {
     private static readonly char[] WhitespaceSeparators = [' ', '\t', '\n', '\r'];
+    private static readonly TwMerge twMerge = new();
+
+    // Regex to validate CSS class names - allows alphanumeric, hyphens, underscores, colons, slashes, brackets, dots, percentages, and CSS combinator characters
+    // This covers Tailwind classes like "w-1/2", "hover:bg-blue-500", "data-[state=open]:block", "text-[14px]", "[&>svg]:absolute"
+    private static readonly Regex ValidClassNameRegex = new(@"^[a-zA-Z0-9_\-:/.[\]()%!@#&>+~=*,' ]+$", RegexOptions.Compiled);
+
+    /// <summary>
+    /// Validates that a CSS class name contains only safe characters.
+    /// Rejects classes that could be used for CSS injection attacks.
+    /// </summary>
+    private static bool IsValidClassName(string className)
+    {
+        if (string.IsNullOrWhiteSpace(className) || className.Length > 200)
+        {
+            return false;
+        }
+
+        // Check for potentially dangerous patterns
+        if (className.Contains("expression", StringComparison.OrdinalIgnoreCase) ||
+            className.Contains("javascript", StringComparison.OrdinalIgnoreCase) ||
+            className.Contains("url(", StringComparison.OrdinalIgnoreCase) ||
+            className.Contains("import", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return ValidClassNameRegex.IsMatch(className);
+    }
+
     /// <summary>
     /// Combines multiple class names intelligently, handling Tailwind CSS conflicts.
     /// Equivalent to shadcn's cn() utility.
@@ -78,8 +109,8 @@ public static class ClassNames
             return string.Empty;
         }
 
-        // Use TailwindMerge to resolve conflicts
-        return TailwindMerge.Merge(classes.ToArray());
+        // Use TailwindMerge.NET to resolve conflicts
+        return twMerge.Merge(string.Join(" ", classes)) ?? string.Empty;
     }
 
     /// <summary>
@@ -99,7 +130,13 @@ public static class ClassNames
             {
                 // Split on whitespace to handle multi-class strings
                 var parts = str.Split(WhitespaceSeparators, StringSplitOptions.RemoveEmptyEntries);
-                classes.AddRange(parts);
+                foreach (var part in parts)
+                {
+                    if (IsValidClassName(part))
+                    {
+                        classes.Add(part);
+                    }
+                }
             }
             return;
         }
@@ -126,7 +163,7 @@ public static class ClassNames
         // Handle other types by converting to string
         // This covers cases like numbers, enums, etc.
         var strValue = input.ToString();
-        if (!string.IsNullOrWhiteSpace(strValue))
+        if (!string.IsNullOrWhiteSpace(strValue) && IsValidClassName(strValue))
         {
             classes.Add(strValue);
         }

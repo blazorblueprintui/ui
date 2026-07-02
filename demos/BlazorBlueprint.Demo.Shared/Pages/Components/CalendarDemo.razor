@@ -124,6 +124,35 @@
         <CodeBlock Source="Components/Calendar/week-start.txt" />
     </div>
 
+    <!-- Auto Focus -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Auto Focus</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code>AutoFocus</code> to move keyboard focus to the active day as soon as the calendar
+                renders, so arrow keys work immediately without clicking first. Ideal when the calendar
+                appears in a popover or dialog (the date picker uses this internally). Leave it off for
+                always-visible inline calendars to avoid stealing focus on page load.
+            </p>
+        </div>
+        <div class="space-y-3">
+            <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => _showAutoFocusCalendar = !_showAutoFocusCalendar)">
+                @(_showAutoFocusCalendar ? "Hide calendar" : "Show calendar")
+            </BbButton>
+            @if (_showAutoFocusCalendar)
+            {
+                <div class="border rounded-lg w-fit">
+                    <BbCalendar @bind-Selected="_autoFocusDate" AutoFocus="true" />
+                </div>
+                <p class="text-sm text-muted-foreground">
+                    Focus lands on the active day &mdash; use the arrow keys straight away. Selected:
+                    @(_autoFocusDate?.ToString("MMMM d, yyyy") ?? "None")
+                </p>
+            }
+        </div>
+        <CodeBlock Source="Components/Calendar/auto-focus.txt" />
+    </div>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>Uses role="grid" for the calendar table</AccessibilityItem>
@@ -179,6 +208,9 @@
                 <ApiParameter Name="ShowMonthYearDropdowns" Type="bool" Default="true">
                     Whether to show month/year dropdown selectors. When false, displays a simple text header.
                 </ApiParameter>
+                <ApiParameter Name="AutoFocus" Type="bool" Default="false">
+                    Whether to move keyboard focus to the active day when the calendar first renders, so arrow-key navigation works immediately. Useful for calendars shown in a popover or dialog.
+                </ApiParameter>
                 <ApiParameter Name="OnSelect" Type="EventCallback&lt;DateTime&gt;">
                     Callback when a date is selected.
                 </ApiParameter>
@@ -210,6 +242,8 @@
     private DateTime? _noWeekendsDate;
     private DateTime? _sundayStart;
     private DateTime? _mondayStart;
+    private DateTime? _autoFocusDate;
+    private bool _showAutoFocusCalendar;
 
     private DateTime _minDate = DateTime.Today;
     private DateTime _maxDate = DateTime.Today.AddDays(30);

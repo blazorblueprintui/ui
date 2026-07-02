@@ -1,0 +1,199 @@
+@page "/guides/render-modes"
+
+<PageTitle>Render Modes - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Render Modes &amp; Interactive Layouts</h1>
+        <p class="text-xl text-muted-foreground">
+            Why buttons, toggles, and dialogs in your layout sometimes do nothing &mdash; and how to make
+            them work alongside static, <code class="text-xs bg-muted px-1 py-0.5 rounded">HttpContext</code>-dependent pages.
+        </p>
+    </div>
+
+    <div class="space-y-6">
+
+        <!-- Overview -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Why interactivity matters</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                Most Blazor Blueprint components respond to user input (clicks, typing, keyboard navigation)
+                or call JavaScript interop (positioning, scroll-lock, focus). All of that requires an
+                <strong>interactive</strong> render mode &mdash;
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">InteractiveServer</code>,
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">InteractiveWebAssembly</code>, or
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">InteractiveAuto</code>.
+            </p>
+            <p class="text-muted-foreground leading-relaxed">
+                Under <strong>static server-side rendering (SSR)</strong> &mdash; the .NET 8 default when no
+                interactive render mode is applied &mdash; a component's HTML is produced once and its event
+                handlers are never wired up. A <code class="text-xs bg-muted px-1 py-0.5 rounded">BbButton</code>
+                renders, looks correct, and silently does nothing when clicked. The same applies to
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">BbDarkModeToggle</code>,
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">BbThemeSwitcher</code>, and any overlay.
+            </p>
+        </section>
+
+        <!-- The layout rule -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">The layout adopts the page's render mode</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                This is the part that surprises people. A routed page's <strong>layout inherits the render
+                mode of the page being rendered</strong>. If the page is static (or you never set a global
+                interactive render mode), then <code class="text-xs bg-muted px-1 py-0.5 rounded">MainLayout</code>
+                &mdash; and everything in it &mdash; renders statically too. Buttons, theme toggles, the sidebar
+                trigger, and providers placed in the layout will not respond.
+            </p>
+            <div class="p-4 border-l-4 border-primary bg-primary/5 rounded-r-lg">
+                <p class="text-sm text-muted-foreground">
+                    You <strong>cannot</strong> fix this by adding
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">@@rendermode</code> to the
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">@@layout</code> directive or to the layout
+                    component itself. The page content flows into the layout as
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">@@Body</code> from a statically-rendered
+                    parent, and Blazor does not allow that render-fragment to cross a static &rarr; interactive
+                    boundary. Render mode is applied where a component is <em>used</em>, not where a layout is
+                    <em>defined</em>.
+                </p>
+            </div>
+        </section>
+
+        <!-- Option 1 -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Option 1 &mdash; Global interactivity (simplest)</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                If you do <strong>not</strong> have pages that must render statically, apply an interactive
+                render mode globally on the router in <code class="text-xs bg-muted px-1 py-0.5 rounded">App.razor</code>.
+                This is what the Blazor Blueprint demo apps do, and it makes every component &mdash; including the
+                ones in your layout &mdash; interactive with no further work.
+            </p>
+            <div class="rounded-lg border bg-muted/50 p-4">
+                <pre class="text-sm overflow-x-auto"><code>&lt;!-- App.razor --&gt;
+&lt;head&gt;
+    ...
+    &lt;HeadOutlet @@rendermode="InteractiveServer" /&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;Routes @@rendermode="InteractiveServer" /&gt;
+    ...
+&lt;/body&gt;</code></pre>
+            </div>
+            <p class="text-muted-foreground leading-relaxed">
+                With this in place, <code class="text-xs bg-muted px-1 py-0.5 rounded">BbPortalHost</code>,
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">BbToastProvider</code>, and
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">BbDialogProvider</code> in your
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">MainLayout</code> work exactly as documented.
+            </p>
+        </section>
+
+        <!-- Option 2 -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Option 2 &mdash; Per-page interactivity with islands</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                If some pages must stay static &mdash; for example, authentication pages that read or write
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">HttpContext</code>, which is only available
+                during static rendering &mdash; do not set a global interactive mode. Instead:
+            </p>
+            <ol class="list-decimal list-inside space-y-2 text-muted-foreground leading-relaxed">
+                <li>Mark each interactive page with a per-page render mode.</li>
+                <li>
+                    Move the interactive UI that lives in your layout (theme toggle, sidebar controls, your
+                    own buttons) into small child components, and render <em>those</em> with
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">@@rendermode</code> &mdash; creating an
+                    <strong>interactivity island</strong> inside the otherwise static layout.
+                </li>
+            </ol>
+
+            <p class="text-muted-foreground leading-relaxed font-medium">Per-page interactivity:</p>
+            <div class="rounded-lg border bg-muted/50 p-4">
+                <pre class="text-sm overflow-x-auto"><code>@@page "/dashboard"
+@@rendermode InteractiveServer
+
+&lt;BbButton OnClick="DoSomething"&gt;Works&lt;/BbButton&gt;</code></pre>
+            </div>
+
+            <p class="text-muted-foreground leading-relaxed font-medium">An island for shared layout chrome:</p>
+            <div class="rounded-lg border bg-muted/50 p-4">
+                <pre class="text-sm overflow-x-auto"><code>@@* InteractiveChrome.razor &mdash; the bits of the layout that need to be live *@@
+&lt;div class="flex items-center gap-2"&gt;
+    &lt;BbDarkModeToggle /&gt;
+    &lt;BbThemeSwitcher /&gt;
+&lt;/div&gt;</code></pre>
+            </div>
+            <div class="rounded-lg border bg-muted/50 p-4">
+                <pre class="text-sm overflow-x-auto"><code>@@* MainLayout.razor &mdash; static layout, interactive islands *@@
+@@inherits LayoutComponentBase
+
+&lt;header&gt;
+    &lt;InteractiveChrome @@rendermode="InteractiveServer" /&gt;
+&lt;/header&gt;
+
+&lt;main&gt;@@Body&lt;/main&gt;
+
+&lt;BbPortalHost @@rendermode="InteractiveServer" /&gt;
+&lt;BbToastProvider @@rendermode="InteractiveServer" /&gt;
+&lt;BbDialogProvider @@rendermode="InteractiveServer" /&gt;</code></pre>
+            </div>
+            <div class="p-4 border-l-4 border-amber-500 bg-amber-500/5 rounded-r-lg space-y-2">
+                <p class="text-sm text-muted-foreground">
+                    <strong>Caveats with islands.</strong> A component you mark with
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">@@rendermode</code> can't receive
+                    <em>non-serializable</em> parameters from its static parent, and you can't pass child
+                    content (a <code class="text-xs bg-muted px-1 py-0.5 rounded">RenderFragment</code>) across
+                    the boundary &mdash; which is exactly why <code class="text-xs bg-muted px-1 py-0.5 rounded">@@Body</code>
+                    has to stay in the static layout. Islands work best for self-contained chrome. If your
+                    layout is heavily interactive (a collapsible sidebar, command palette, etc.), Option 1 is
+                    usually the better fit &mdash; and you can keep authentication on static endpoints or move
+                    it to an interactivity-friendly auth flow (<code class="text-xs bg-muted px-1 py-0.5 rounded">AuthenticationStateProvider</code>)
+                    instead of <code class="text-xs bg-muted px-1 py-0.5 rounded">HttpContext</code>.
+                </p>
+            </div>
+        </section>
+
+        <!-- Prerendering note -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">A note on prerendering</h2>
+            <p class="text-muted-foreground leading-relaxed">
+                Interactive components still <strong>prerender</strong> statically first, then become
+                interactive once the circuit (Server) or runtime (WebAssembly) is ready. During that brief
+                first pass, event handlers aren't attached yet &mdash; this is expected and resolves on its own.
+                It only becomes a bug when the component <em>never</em> reaches interactivity, which is the
+                static-layout situation above.
+            </p>
+        </section>
+
+        <!-- Troubleshooting -->
+        <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Troubleshooting checklist</h2>
+            <div class="space-y-2 text-sm text-muted-foreground">
+                <div class="flex items-start gap-2">
+                    <span class="text-primary mt-0.5">1.</span>
+                    <span>A <code class="text-xs bg-muted px-1 py-0.5 rounded">BbButton</code> renders but its
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">OnClick</code> never fires &rarr; the
+                    component is rendering statically. Confirm its page (or the component itself) has an
+                    interactive render mode.</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-primary mt-0.5">2.</span>
+                    <span>It works only after adding a global
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">&lt;Routes @@rendermode="InteractiveServer" /&gt;</code>
+                    &rarr; your layout was static. Use Option 1, or move the interactive chrome into an island
+                    (Option 2).</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-primary mt-0.5">3.</span>
+                    <span>Overlays (Dialog, Sheet, Popover, Tooltip, Toast) don't appear &rarr; ensure
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">BbPortalHost</code> is present and in an
+                    interactive context, not a static layout.</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-primary mt-0.5">4.</span>
+                    <span>Auth pages break under global interactivity &rarr; they likely depend on
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">HttpContext</code>, which isn't
+                    available in interactive renders. Keep those pages static and use Option 2 for the rest.</span>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</div>

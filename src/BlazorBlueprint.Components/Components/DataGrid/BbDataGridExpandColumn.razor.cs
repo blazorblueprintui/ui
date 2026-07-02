@@ -26,6 +26,16 @@ public partial class BbDataGridExpandColumn<TData> : ComponentBase, IDataGridCol
     public ColumnPinning Pinned { get; set; } = ColumnPinning.None;
 
     /// <summary>
+    /// Template for rendering detail rows when a row is expanded.
+    /// Detail rows use the same column structure as the parent grid,
+    /// rendering proper table rows aligned with the grid's columns.
+    /// Use <see cref="BbDataGridDetailRow{TData}"/> and
+    /// <see cref="BbDataGridDetailHeader{TData}"/> inside this template.
+    /// </summary>
+    [Parameter]
+    public RenderFragment<TData>? DetailRows { get; set; }
+
+    /// <summary>
     /// The parent DataGrid component. Set via cascading parameter.
     /// </summary>
     [CascadingParameter]

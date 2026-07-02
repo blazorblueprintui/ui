@@ -35,6 +35,12 @@ public partial class BbFormFieldRadioGroup<TValue> : FormFieldBase
     public bool Disabled { get; set; }
 
     /// <summary>
+    /// Gets or sets whether the radio group is required.
+    /// </summary>
+    [Parameter]
+    public bool Required { get; set; }
+
+    /// <summary>
     /// Gets or sets additional CSS classes applied to the inner RadioGroup element.
     /// </summary>
     [Parameter]

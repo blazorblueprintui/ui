@@ -1,53 +1,34 @@
 @namespace BlazorBlueprint.Components
+@implements IDisposable
 
 <div class="relative">
-    <CascadingValue Value="this" IsFixed="false">
-        @ChildContent
-    </CascadingValue>
+    <BlazorBlueprint.Primitives.Menubar.BbMenubarMenu @ref="primitiveRef">
+        <CascadingValue Value="this" IsFixed="false">
+            @ChildContent
+        </CascadingValue>
+    </BlazorBlueprint.Primitives.Menubar.BbMenubarMenu>
 </div>
 
 @code {
+    private BlazorBlueprint.Primitives.Menubar.BbMenubarMenu? primitiveRef;
+
     [CascadingParameter]
     public BbMenubar? Context { get; set; }
 
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
-    internal string MenuId { get; } = Guid.NewGuid().ToString();
-    internal bool IsOpen => Context?.ActiveMenu == MenuId;
+    internal BlazorBlueprint.Primitives.Menubar.MenubarMenuContext? MenuContext =>
+        primitiveRef?.MenuContext;
 
-    protected override void OnInitialized()
-    {
-        Context?.RegisterMenu(this);
-    }
+    internal bool IsOpen => MenuContext?.IsOpen == true;
 
-    internal void Open()
-    {
-        Context?.SetActiveMenu(MenuId);
-    }
-
-    internal void Close()
-    {
-        if (IsOpen)
-        {
-            Context?.SetActiveMenu(null);
-        }
-    }
-
-    internal void Toggle()
-    {
-        if (IsOpen)
-        {
-            Close();
-        }
-        else
-        {
-            Open();
-        }
-    }
+    internal void Open() => MenuContext?.Open();
+    internal void Close() => MenuContext?.Close();
+    internal void Toggle() => MenuContext?.Toggle();
 
     public void Dispose()
     {
-        Context?.UnregisterMenu(this);
+        // Primitive handles unregistration via its own Dispose
     }
 }

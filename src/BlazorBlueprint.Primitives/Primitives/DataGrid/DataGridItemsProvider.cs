@@ -56,6 +56,12 @@ public class DataGridRequest
     /// Server-side providers should compute these aggregates per group.
     /// </summary>
     public IReadOnlyList<string>? AggregateColumns { get; init; }
+
+    /// <summary>
+    /// Gets the global search text, or <c>null</c> if no search is active.
+    /// Server-side providers should filter across all searchable columns using this value.
+    /// </summary>
+    public string? SearchText { get; init; }
 }
 
 /// <summary>

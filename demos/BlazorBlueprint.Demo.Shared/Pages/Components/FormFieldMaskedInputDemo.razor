@@ -1,0 +1,180 @@
+@page "/components/form-field-masked-input"
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>FormFieldMaskedInput Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">FormFieldMaskedInput</h1>
+            <p class="text-xl text-muted-foreground">
+                A form field wrapper for MaskedInput with built-in label, helper text, and error messages.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic Example with Preset -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Phone Number (Preset)</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">Preset</code> for common mask patterns.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldMaskedInput @bind-Value="_phone"
+                                   Label="Phone number"
+                                   Preset="MaskPreset.Phone"
+                                   HelperText="US phone format: (999) 999-9999" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Raw value:</p>
+            <p class="text-sm font-mono">@(string.IsNullOrEmpty(_phone) ? "(empty)" : _phone)</p>
+        </div>
+        <CodeBlock Source="Components/FormFieldMaskedInput/phone.txt" />
+    </div>
+
+    <!-- Custom Mask -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Mask</h2>
+            <p class="text-sm text-muted-foreground">
+                Define a custom mask: <code class="text-xs bg-muted px-1 py-0.5 rounded">9</code>=digit,
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">A</code>=letter,
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">*</code>=alphanumeric.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldMaskedInput @bind-Value="_productCode"
+                                   Label="Product code"
+                                   Mask="AA-9999-***"
+                                   HelperText="Format: AA-0000-XXX" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Raw value:</p>
+            <p class="text-sm font-mono">@(string.IsNullOrEmpty(_productCode) ? "(empty)" : _productCode)</p>
+        </div>
+        <CodeBlock Source="Components/FormFieldMaskedInput/custom.txt" />
+    </div>
+
+    <!-- More Presets -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">More Presets</h2>
+            <p class="text-sm text-muted-foreground">
+                Built-in presets for common formats.
+            </p>
+        </div>
+        <div class="max-w-md space-y-4">
+            <BbFormFieldMaskedInput @bind-Value="_creditCard"
+                                   Label="Credit card"
+                                   Preset="MaskPreset.CreditCard" />
+            <BbFormFieldMaskedInput @bind-Value="_ssn"
+                                   Label="SSN"
+                                   Preset="MaskPreset.SSN"
+                                   HelperText="Social Security Number" />
+            <BbFormFieldMaskedInput @bind-Value="_zipCode"
+                                   Label="ZIP code"
+                                   Preset="MaskPreset.ZipCode" />
+        </div>
+        <CodeBlock Source="Components/FormFieldMaskedInput/presets.txt" />
+    </div>
+
+    <!-- Disabled -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">A disabled masked input form field.</p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldMaskedInput Value="5551234567"
+                                   Label="Phone (locked)"
+                                   Preset="MaskPreset.Phone"
+                                   Disabled="true" />
+        </div>
+        <CodeBlock Source="Components/FormFieldMaskedInput/disabled.txt" />
+    </div>
+
+    <!-- EditForm Integration -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">EditForm Integration</h2>
+            <p class="text-sm text-muted-foreground">
+                Validation errors display automatically inside an EditForm.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <EditForm Model="_formModel" OnValidSubmit="HandleFormSubmit">
+                <DataAnnotationsValidator />
+                <div class="space-y-4">
+                    <BbFormFieldMaskedInput @bind-Value="_formModel.PhoneNumber"
+                                           Label="Phone number"
+                                           Preset="MaskPreset.Phone"
+                                           HelperText="Required for account verification." />
+                    <BbButton Type="ButtonType.Submit">Submit</BbButton>
+                </div>
+            </EditForm>
+            @if (_formSubmitted)
+            {
+                <div class="mt-4 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 p-4">
+                    <p class="text-sm font-medium text-green-800 dark:text-green-200">Submitted: @_formModel.PhoneNumber</p>
+                </div>
+            }
+        </div>
+        <CodeBlock Source="Components/FormFieldMaskedInput/editform.txt" />
+    </div>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Automatically associates label with input via generated ID</AccessibilityItem>
+            <AccessibilityItem>Description linked via aria-describedby</AccessibilityItem>
+            <AccessibilityItem>Validation errors displayed with aria-invalid</AccessibilityItem>
+        </AriaAttributes>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="FormFieldMaskedInput">
+                <ApiParameter Name="Label" Type="string?" Default="null">The label text.</ApiParameter>
+                <ApiParameter Name="HelperText" Type="string?" Default="null">Helper text below the input.</ApiParameter>
+                <ApiParameter Name="ErrorText" Type="string?" Default="null">Manual error text override.</ApiParameter>
+                <ApiParameter Name="Value" Type="string" Default="&quot;&quot;">The unmasked (raw) value. Use @@bind-Value.</ApiParameter>
+                <ApiParameter Name="ValueChanged" Type="EventCallback&lt;string&gt;">Callback when value changes.</ApiParameter>
+                <ApiParameter Name="Preset" Type="MaskPreset" Default="Custom">Predefined mask (Phone, SSN, CreditCard, etc.).</ApiParameter>
+                <ApiParameter Name="Mask" Type="string?" Default="null">Custom mask pattern (9=digit, A=letter, *=alphanumeric).</ApiParameter>
+                <ApiParameter Name="PlaceholderChar" Type="char" Default="'_'">Placeholder character for unfilled positions.</ApiParameter>
+                <ApiParameter Name="ShowMask" Type="bool" Default="true">Show mask with placeholders.</ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">Whether the input is disabled.</ApiParameter>
+                <ApiParameter Name="Required" Type="bool" Default="false">Whether the input is required.</ApiParameter>
+                <ApiParameter Name="InputClass" Type="string?" Default="null">CSS classes for the inner input.</ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    private string _phone = string.Empty;
+    private string _productCode = string.Empty;
+    private string _creditCard = string.Empty;
+    private string _ssn = string.Empty;
+    private string _zipCode = string.Empty;
+    private bool _formSubmitted;
+    private MaskedInputFormModel _formModel = new();
+
+    private void HandleFormSubmit()
+    {
+        _formSubmitted = true;
+    }
+
+    private class MaskedInputFormModel
+    {
+        [Required(ErrorMessage = "Phone number is required.")]
+        [MinLength(10, ErrorMessage = "Please enter a complete phone number.")]
+        public string PhoneNumber { get; set; } = string.Empty;
+    }
+}

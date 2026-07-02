@@ -283,6 +283,16 @@ public partial class HierarchyManager<TItem>
     public bool IsRegistered(string value) => itemsByValue.ContainsKey(value);
 
     /// <summary>
+    /// Gets the total number of items in the hierarchy.
+    /// </summary>
+    public int Count => itemsByValue.Count;
+
+    /// <summary>
+    /// Gets all items in the hierarchy (unordered).
+    /// </summary>
+    public IEnumerable<TItem> GetAllItems() => itemsByValue.Values;
+
+    /// <summary>
     /// Gets the direct child values of a parent. Pass null for root items.
     /// </summary>
     public IReadOnlyList<string> GetDirectChildValues(string? parentValue)

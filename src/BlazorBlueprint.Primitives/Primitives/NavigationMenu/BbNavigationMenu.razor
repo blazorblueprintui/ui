@@ -1,0 +1,57 @@
+@namespace BlazorBlueprint.Primitives.NavigationMenu
+@using Microsoft.AspNetCore.Components.Routing
+@inject NavigationManager NavigationManager
+@implements IDisposable
+
+<nav @attributes="AdditionalAttributes">
+    <CascadingValue Value="context" IsFixed="true">
+        @ChildContent
+    </CascadingValue>
+</nav>
+
+@code {
+    private NavigationMenuContext context = null!;
+
+    /// <summary>
+    /// Child content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Enables keyboard navigation within dropdown menus. Default is <c>false</c>.
+    /// </summary>
+    [Parameter]
+    public bool EnableKeyboardNavigation { get; set; }
+
+    /// <summary>
+    /// Additional HTML attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// The navigation menu context, exposed for Components layer.
+    /// </summary>
+    public NavigationMenuContext Context => context;
+
+    protected override void OnInitialized()
+    {
+        context = new NavigationMenuContext(StateHasChanged, EnableKeyboardNavigation);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        if (context.ActiveItem != null)
+        {
+            context.SetActiveItem(null);
+        }
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+        context.Dispose();
+    }
+}

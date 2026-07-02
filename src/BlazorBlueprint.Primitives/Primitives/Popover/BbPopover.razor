@@ -51,6 +51,16 @@
     [Parameter]
     public bool Modal { get; set; } = true;
 
+    /// <summary>
+    /// When the popover is closed via the controlled <see cref="Open"/> binding (i.e. the consumer
+    /// set it to false — e.g. after selecting an item), whether to return focus to the trigger so
+    /// keyboard navigation (Tab) continues from the right place. Defaults to <c>false</c> to preserve
+    /// existing behavior. Dismissals that originate inside the popover (click-outside, Escape) are
+    /// unaffected — they already manage focus themselves.
+    /// </summary>
+    [Parameter]
+    public bool RestoreFocusOnClose { get; set; }
+
     protected override void OnInitialized()
     {
         // Initialize controllable state
@@ -92,7 +102,10 @@
                 }
                 else
                 {
-                    _context.Close();
+                    // Parent-initiated close (consumer set Open=false). Honour the consumer's
+                    // focus-restore intent — click-outside/Escape never reach here (they update
+                    // the context first, so this runs only when the parent drives the close).
+                    _context.Close(RestoreFocusOnClose);
                 }
 
                 _state.ControlledValue = Open.Value;

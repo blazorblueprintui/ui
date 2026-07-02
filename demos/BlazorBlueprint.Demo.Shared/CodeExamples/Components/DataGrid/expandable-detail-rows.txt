@@ -1,0 +1,32 @@
+<BbDataGrid TData="TeamMember" Items="@teamMembers"
+            InitialPageSize="5" ShowPagination="false">
+    <Columns>
+        <BbDataGridExpandColumn>
+            <DetailRows Context="member">
+                <BbDataGridDetailHeader Class="bg-muted/30">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Direct Reports (@member.DirectReports.Count)
+                    </span>
+                </BbDataGridDetailHeader>
+                @foreach (var report in member.DirectReports)
+                {
+                    <BbDataGridDetailRow Item="@report"
+                        Class="text-muted-foreground" />
+                }
+            </DetailRows>
+        </BbDataGridExpandColumn>
+        <BbDataGridPropertyColumn TData="TeamMember" TProp="string"
+            Property="@(m => m.Name)" Sortable />
+        <BbDataGridPropertyColumn TData="TeamMember" TProp="string"
+            Property="@(m => m.Title)" Title="Job Title" />
+        <BbDataGridPropertyColumn TData="TeamMember" TProp="string"
+            Property="@(m => m.Department)" Sortable />
+        <BbDataGridPropertyColumn TData="TeamMember" TProp="int"
+            Property="@(m => m.DirectReports.Count)" Title="Reports" />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    record TeamMember(string Name, string Title,
+        string Department, List<TeamMember> DirectReports);
+}

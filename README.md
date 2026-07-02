@@ -77,9 +77,10 @@ dotnet add package BlazorBlueprint.Primitives
 Optionally add an icon library:
 
 ```bash
-dotnet add package BlazorBlueprint.Icons.Lucide      # 1,640+ icons
+dotnet add package BlazorBlueprint.Icons.Lucide       # 1,640+ icons
 dotnet add package BlazorBlueprint.Icons.Heroicons    # 1,288 icons (4 variants)
 dotnet add package BlazorBlueprint.Icons.Feather      # 286 icons
+dotnet add package BlazorBlueprint.Icons.FontAwesome  # 2,066 icons (3 variants, includes brand logos)
 ```
 
 ### Project Template
@@ -103,6 +104,7 @@ builder.Services.AddBlazorBlueprintComponents();
 
 ```razor
 @using BlazorBlueprint.Components
+@using BlazorBlueprint.Primitives.Services
 ```
 
 **3. Add CSS** to your `App.razor` `<head>`:
@@ -151,9 +153,19 @@ builder.Services.AddBlazorBlueprintComponents();
 </BbDialog>
 ```
 
+**6. Render modes** — Blazor Blueprint components handle user input and JavaScript interop, so they require an **interactive** render mode (`InteractiveServer`, `InteractiveWebAssembly`, or `InteractiveAuto`). The simplest setup is to enable interactivity globally on the router:
+
+```razor
+<!-- App.razor -->
+<HeadOutlet @rendermode="InteractiveServer" />
+<Routes @rendermode="InteractiveServer" />
+```
+
+> **Important:** A routed page's layout inherits the page's render mode. If you use *per-page* interactivity (e.g. because some auth pages must stay static for `HttpContext`), `MainLayout` renders statically — so buttons, theme toggles, and providers placed in it won't respond. In that case, render the interactive layout chrome (and `BbPortalHost` / `BbToastProvider` / `BbDialogProvider`) as interactive *islands* with `@rendermode`. See the [Render Modes guide](https://blazorblueprintui.com/guides/render-modes) for the full pattern.
+
 ## Components
 
-Blazor Blueprint includes **87 styled components** organized into the following categories.
+Blazor Blueprint includes **99 styled components** organized into the following categories.
 
 ### Enterprise Components
 
@@ -189,12 +201,24 @@ Production-ready components for complex data-driven applications:
 | **Filter Builder** | Visual query builder for data filter expressions with AND/OR logic, condition groups, and two-way binding |
 | **File Upload** | Drag-and-drop file upload with preview |
 | **Form Field Checkbox** | Pre-configured checkbox field with built-in label, description, and validation |
+| **Form Field Checkbox Group** | Pre-configured checkbox group field with built-in label, description, and manual validation |
 | **Form Field Combobox** | Pre-configured combobox field with built-in label, description, and validation |
+| **Form Field Currency Input** | Pre-configured currency input field with built-in label, description, and validation |
+| **Form Field Date Picker** | Pre-configured date picker field with built-in label, description, and validation |
+| **Form Field Date Range Picker** | Pre-configured date range picker field with built-in label, description, and manual validation |
+| **Form Field File Upload** | Pre-configured file upload field with built-in label, description, and manual validation |
 | **Form Field Input** | Pre-configured input field with built-in label, description, and validation |
+| **Form Field Input OTP** | Pre-configured OTP input field with built-in label, description, and validation |
+| **Form Field Masked Input** | Pre-configured masked input field with built-in label, description, and validation |
 | **Form Field MultiSelect** | Pre-configured multi-select field with built-in label, description, and validation |
+| **Form Field Native Select** | Pre-configured native select field with built-in label, description, and validation |
+| **Form Field Numeric Input** | Pre-configured numeric input field with built-in label, description, and validation |
 | **Form Field RadioGroup** | Pre-configured radio group field with built-in label, description, and validation |
 | **Form Field Select** | Pre-configured select field with built-in label, description, and validation |
 | **Form Field Switch** | Pre-configured switch field with built-in label, description, and validation |
+| **Form Field Tag Input** | Pre-configured tag input field with built-in label, description, and validation |
+| **Form Field Textarea** | Pre-configured textarea field with built-in label, description, and validation |
+| **Form Field Time Picker** | Pre-configured time picker field with built-in label, description, and validation |
 | **Form Wizard** | Multi-step form wizard with step navigation, progress indication, per-step validation, and optional/skippable steps |
 | **Input** | Text input with multiple types and validation |
 | **Input Field** | Typed input with automatic conversion, formatting, and validation for 15+ types |
@@ -210,6 +234,7 @@ Production-ready components for complex data-driven applications:
 | **Rating** | Star/icon rating input |
 | **Select** | Dropdown select with search and keyboard navigation |
 | **Slider** | Range input with drag support |
+| **Sortable** | Drag-and-drop sortable lists and grids powered by SortableJS, with connected multi-list support and Kanban-style boards |
 | **Split Button** | Primary action with dropdown for secondary actions |
 | **Switch** | Toggle switch with customizable thumb |
 | **Tag Input** | Inline tag/chip input for managing string lists with suggestions, validation, and customizable triggers |
@@ -285,7 +310,7 @@ Production-ready components for complex data-driven applications:
 
 ## Primitives
 
-Blazor Blueprint's **25 headless primitives** provide behavior, ARIA attributes, and keyboard support without any styling. They handle all the complex interaction logic — focus trapping, ARIA attributes, keyboard shortcuts, portal rendering — while giving you complete control over appearance.
+Blazor Blueprint's **26 headless primitives** provide behavior, ARIA attributes, and keyboard support without any styling. They handle all the complex interaction logic — focus trapping, ARIA attributes, keyboard shortcuts, portal rendering — while giving you complete control over appearance.
 
 Use primitives when you need full design freedom or are building a custom design system.
 
@@ -310,6 +335,7 @@ Use primitives when you need full design freedom or are building a custom design
 | **Separator** | Semantic or decorative divider with orientation support |
 | **Sheet** | Side panel, focus trapping, scroll locking |
 | **Slider** | Range input with keyboard navigation and pointer drag support |
+| **Sortable** | Drag-and-drop sortable lists with SortableJS interop, ARIA live announcements, and connected multi-list support |
 | **Switch** | Toggle state, keyboard support, ARIA switch role |
 | **Table** | Sorting, pagination, row selection, keyboard row navigation |
 | **Tabs** | Tab selection, arrow key navigation, ARIA tab roles |
@@ -330,13 +356,14 @@ Primitives are completely unstyled — bring your own CSS, Tailwind classes, or 
 
 ## Icons
 
-Three icon library packages with **3,200+ total icons**:
+Four icon library packages with **5,200+ total icons**:
 
 | Package | Icons | Style | License |
 |---------|-------|-------|---------|
 | `BlazorBlueprint.Icons.Lucide` | 1,640+ | Stroke-based, consistent 24x24 | ISC |
 | `BlazorBlueprint.Icons.Heroicons` | 1,288 | 4 variants (Outline, Solid, Mini, Micro) | MIT |
 | `BlazorBlueprint.Icons.Feather` | 286 | Minimalist, stroke-based 24x24 | MIT |
+| `BlazorBlueprint.Icons.FontAwesome` | 2,066 | 3 variants (Solid, Regular, Brands — includes brand logos) | CC BY 4.0 / SIL OFL 1.1 / MIT (Free tier) |
 
 ## Theming
 
@@ -458,4 +485,6 @@ Blazor Blueprint is inspired by [shadcn/ui](https://ui.shadcn.com/) and the desi
 - [Lucide Icons](https://lucide.dev/) — ISC License
 - [Heroicons](https://heroicons.com/) — MIT License, Tailwind Labs
 - [Feather Icons](https://feathericons.com/) — MIT License
+- [Font Awesome Free](https://fontawesome.com/) — CC BY 4.0 / SIL OFL 1.1 / MIT, Fonticons Inc.
 - [Apache ECharts](https://echarts.apache.org/) — Apache License 2.0
+- [SortableJS](https://sortablejs.github.io/Sortable/) — MIT License

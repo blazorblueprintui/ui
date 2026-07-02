@@ -13,6 +13,15 @@ public partial class BbComboboxItem<TValue> : ComponentBase, IDisposable
     private BbCombobox<TValue>? Parent { get; set; }
 
     /// <summary>
+    /// When true, this item is part of the parent's hidden registration pass: it registers
+    /// its display text with the parent but renders no DOM. The parent renders the items a
+    /// second time, eagerly and invisibly, so their captions are known on initial load —
+    /// before the popover (and therefore the real, interactive items) has ever mounted.
+    /// </summary>
+    [CascadingParameter(Name = BbComboboxConstants.RegistrationScopeName)]
+    private bool RegistrationOnly { get; set; }
+
+    /// <summary>
     /// Gets or sets the value of this item.
     /// </summary>
     [Parameter, EditorRequired]

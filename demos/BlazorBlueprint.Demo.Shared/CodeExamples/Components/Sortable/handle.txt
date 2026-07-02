@@ -1,0 +1,32 @@
+<BbSortable TItem="string"
+            Items="@_items"
+            Handle=".drag-handle"
+            AriaLabel="Sortable list with drag handle"
+            OnUpdate="HandleUpdate">
+    <ItemTemplate Context="item">
+        <div class="flex items-center gap-3 rounded-md border bg-card px-4 py-3 text-sm shadow-sm">
+            <span class="drag-handle cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground">
+                <LucideIcon Name="grip-vertical" Size="16" />
+            </span>
+            <span class="flex-1">@item</span>
+        </div>
+    </ItemTemplate>
+</BbSortable>
+
+@code {
+    private List<string> _items =
+    [
+        "Dashboard",
+        "Analytics",
+        "Reports",
+        "Settings",
+        "Users",
+    ];
+
+    private void HandleUpdate((int OldIndex, int NewIndex) args)
+    {
+        var item = _items[args.OldIndex];
+        _items.RemoveAt(args.OldIndex);
+        _items.Insert(args.NewIndex, item);
+    }
+}

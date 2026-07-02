@@ -5,7 +5,7 @@
 
 <CascadingValue Value="this" IsFixed="true">
 <div class="@ContainerClass">
-    <BbPopover Open="_isOpen" OpenChanged="HandleOpenChanged">
+    <BbPopover Open="_isOpen" OpenChanged="HandleOpenChanged" RestoreFocusOnClose="_restoreFocusOnClose">
         <BbPopoverTrigger AsChild="false" role="combobox"
                         aria-expanded="@_isOpen.ToString().ToLower()"
                         aria-controls="@($"{Id}-listbox")"
@@ -14,12 +14,12 @@
                         aria-describedby="@AriaDescribedBy"
                         disabled="@Disabled"
                         class="@TriggerCssClass">
-            <div class="flex flex-wrap items-center gap-1 flex-1 min-w-0">
+            <div class="@TagListClass">
                 @if (HasSelectedItems)
                 {
                     @foreach (var value in SelectedValues.Take(MaxDisplayTags))
                     {
-                        <BbBadge @key="value" Variant="BadgeVariant.Secondary" Class="gap-1">
+                        <BbBadge @key="value" Variant="BadgeVariant.Secondary" Class="@TagBadgeClass">
                             @GetDisplayText(value)
                             <button type="button"
                                     class="@TagRemoveButtonCssClass"
@@ -30,7 +30,9 @@
                             </button>
                         </BbBadge>
                     }
-                    @if (OverflowCount > 0)
+                    @* In wrap mode "+N more" flows with the tags; in single-line mode it is pinned
+                       to the right group below so it stays visible while the tags clip. *@
+                    @if (OverflowCount > 0 && !SingleLine)
                     {
                         <span class="text-xs text-muted-foreground">+@OverflowCount more</span>
                     }
@@ -40,7 +42,11 @@
                     <span class="text-muted-foreground">@EffectivePlaceholder</span>
                 }
             </div>
-            <div class="flex items-center gap-1 ml-2">
+            <div class="flex shrink-0 items-center gap-1 ml-2">
+                @if (HasSelectedItems && OverflowCount > 0 && SingleLine)
+                {
+                    <span class="shrink-0 whitespace-nowrap text-xs text-muted-foreground">+@OverflowCount more</span>
+                }
                 @if (HasSelectedItems)
                 {
                     <button type="button"
@@ -86,11 +92,12 @@
                        placeholder="@EffectiveSearchPlaceholder"
                        @bind="_searchQuery"
                        @bind:event="oninput"
+                       @bind:after="HandleSearchQueryChangedAsync"
                        class="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 ml-2" />
             </div>
 
             @* Items list section *@
-            <div id="@($"{Id}-listbox")" role="listbox" aria-multiselectable="true" class="max-h-[300px] overflow-y-auto p-1">
+            <div id="@($"{Id}-listbox")" @ref="_listboxScrollRef" @onscroll="HandleListboxScroll" role="listbox" aria-multiselectable="true" class="max-h-[300px] overflow-y-auto p-1">
                 @if (IsCompositionalMode)
                 {
                     @* Compositional mode: Select All + ChildContent *@
@@ -186,6 +193,18 @@
                             </div>
                         }
                     }
+                }
+                @if (IsLoading)
+                {
+                    <div class="flex items-center justify-center py-2">
+                        <BbSpinner Size="SpinnerSize.Small" />
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(EndOfListMessage))
+                {
+                    <div class="py-2 text-center text-xs text-muted-foreground">
+                        @EndOfListMessage
+                    </div>
                 }
             </div>
 

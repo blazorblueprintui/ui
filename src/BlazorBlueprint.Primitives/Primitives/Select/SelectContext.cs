@@ -57,6 +57,19 @@ public class SelectState<TValue>
     /// Gets or sets whether the select is disabled.
     /// </summary>
     public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the select is required.
+    /// </summary>
+    public bool Required { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether focus should be returned to the trigger element when the
+    /// dropdown closes. Set to <c>true</c> by intentional close paths (item selection,
+    /// Escape) and left <c>false</c> for external dismissals (click-outside, Tab) where
+    /// focus is already on whatever the user moved to.
+    /// </summary>
+    public bool RestoreFocusOnClose { get; set; }
 }
 
 /// <summary>
@@ -82,12 +95,15 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
     /// </summary>
     public SelectContext() : base(new SelectState<TValue>(), "select")
     {
+        TriggerId = GetScopedId("trigger");
     }
 
     /// <summary>
     /// Gets the ID for the select trigger button.
+    /// Can be overridden via <see cref="SetTriggerId"/> when the trigger element
+    /// uses a custom id (e.g. for label association in form fields).
     /// </summary>
-    public string TriggerId => GetScopedId("trigger");
+    public string TriggerId { get; private set; }
 
     /// <summary>
     /// Gets the ID for the select content container.
@@ -125,6 +141,23 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
     public bool Disabled => State.Disabled;
 
     /// <summary>
+    /// Gets whether the select is required.
+    /// </summary>
+    public bool Required => State.Required;
+
+    /// <summary>
+    /// Sets the required state.
+    /// </summary>
+    /// <param name="required">Whether the select is required.</param>
+    public void SetRequired(bool required)
+    {
+        if (State.Required != required)
+        {
+            UpdateState(state => state.Required = required);
+        }
+    }
+
+    /// <summary>
     /// Opens the select dropdown.
     /// </summary>
     /// <param name="triggerElement">Optional element that triggered the dropdown.</param>
@@ -147,18 +180,26 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
             state.IsOpen = true;
             state.TriggerElement = triggerElement;
             state.FocusedIndex = -1; // Reset focus on open
+            state.RestoreFocusOnClose = false; // Cleared so the next Close() decides afresh
         });
     }
 
     /// <summary>
     /// Closes the select dropdown.
     /// </summary>
-    public void Close()
+    /// <param name="restoreFocus">
+    /// When <c>true</c>, signals that focus should be returned to the trigger element
+    /// after the content tears down. Pass <c>true</c> for intentional close paths
+    /// (Escape, keyboard activation) and leave <c>false</c> for external dismissals
+    /// (click-outside, Tab) where focus is already where the user wants it.
+    /// </param>
+    public void Close(bool restoreFocus = false)
     {
         UpdateState(state =>
         {
             state.IsOpen = false;
             state.FocusedIndex = -1;
+            state.RestoreFocusOnClose = restoreFocus;
         });
     }
 
@@ -196,6 +237,9 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
             state.DisplayText = displayText;
             state.IsOpen = false; // Close after selection
             state.FocusedIndex = -1;
+            // Selection is an intentional close — return focus to the trigger so
+            // keyboard navigation (Tab) continues from the right place.
+            state.RestoreFocusOnClose = true;
         });
 
         // Invoke value change callback
@@ -230,6 +274,16 @@ public class SelectContext<TValue> : PrimitiveContextWithEvents<SelectState<TVal
             }
         });
     }
+
+    /// <summary>
+    /// Overrides the auto-generated trigger ID with a custom value.
+    /// Used when the trigger element has a custom <c>id</c> attribute
+    /// (e.g. for label association in form fields). Ensures click-outside
+    /// detection and ARIA references use the correct ID.
+    /// </summary>
+    /// <param name="id">The custom trigger element ID.</param>
+    public void SetTriggerId(string id) =>
+        TriggerId = id;
 
     /// <summary>
     /// Sets the focused item index for keyboard navigation.

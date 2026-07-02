@@ -1,0 +1,41 @@
+@namespace BlazorBlueprint.Primitives.NavigationMenu
+
+@if (Item?.IsOpen == true)
+{
+    <div role="menu"
+         data-state="@(Item?.IsOpen == true ? "open" : "closed")"
+         @onmouseenter="HandleMouseEnter"
+         @onmouseleave="HandleMouseLeave"
+         @attributes="AdditionalAttributes">
+        @ChildContent
+    </div>
+}
+
+@code {
+    [CascadingParameter]
+    private NavigationMenuItemContext? Item { get; set; }
+
+    /// <summary>
+    /// Child content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Additional HTML attributes.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private void HandleMouseEnter()
+    {
+        if (Item != null)
+        {
+            Item.CancelCloseTimer();
+            Item.Open();
+        }
+    }
+
+    private void HandleMouseLeave() =>
+        Item?.StartCloseTimer();
+}

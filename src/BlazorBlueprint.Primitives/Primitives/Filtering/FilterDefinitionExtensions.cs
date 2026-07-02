@@ -41,8 +41,8 @@ public static class FilterDefinitionExtensions
         }
 
         var itemType = typeof(T);
-        var allowedFields = BuildAllowedFieldSet(fields);
-        return item => EvaluateGroup(item!, filter, itemType, allowedFields);
+        var fieldTypeMap = BuildFieldTypeMap(fields);
+        return item => EvaluateGroup(item!, filter, itemType, fieldTypeMap);
     }
 
     /// <summary>
@@ -61,8 +61,8 @@ public static class FilterDefinitionExtensions
             return Expression.Lambda<Func<T, bool>>(Expression.Constant(true), parameter);
         }
 
-        var allowedFields = BuildAllowedFieldSet(fields);
-        var body = BuildGroupExpression(parameter, filter, allowedFields);
+        var fieldTypeMap = BuildFieldTypeMap(fields);
+        var body = BuildGroupExpression(parameter, filter, fieldTypeMap);
 
         return Expression.Lambda<Func<T, bool>>(body, parameter);
     }
@@ -81,7 +81,7 @@ public static class FilterDefinitionExtensions
 
     #region ToFunc implementation
 
-    private static bool EvaluateGroup<T>(T item, FilterDefinition group, Type itemType, HashSet<string>? allowedFields)
+    private static bool EvaluateGroup<T>(T item, FilterDefinition group, Type itemType, Dictionary<string, FilterFieldType>? fieldTypeMap)
     {
         var results = new List<bool>();
 
@@ -91,18 +91,19 @@ public static class FilterDefinitionExtensions
             {
                 continue;
             }
-            if (allowedFields != null && !allowedFields.Contains(condition.Field))
+            if (fieldTypeMap != null && !fieldTypeMap.ContainsKey(condition.Field))
             {
                 continue;
             }
-            results.Add(EvaluateCondition(item, condition, itemType));
+            FilterFieldType? fieldType = fieldTypeMap != null && fieldTypeMap.TryGetValue(condition.Field, out var ft) ? ft : null;
+            results.Add(EvaluateCondition(item, condition, itemType, fieldType));
         }
 
         foreach (var nestedGroup in group.Groups)
         {
             if (!nestedGroup.IsEmpty)
             {
-                results.Add(EvaluateGroup(item, nestedGroup, itemType, allowedFields));
+                results.Add(EvaluateGroup(item, nestedGroup, itemType, fieldTypeMap));
             }
         }
 
@@ -116,7 +117,7 @@ public static class FilterDefinitionExtensions
             : results.Any(r => r);
     }
 
-    private static bool EvaluateCondition<T>(T item, FilterCondition condition, Type itemType)
+    private static bool EvaluateCondition<T>(T item, FilterCondition condition, Type itemType, FilterFieldType? fieldType)
     {
         var prop = GetProperty(itemType, condition.Field);
         if (prop == null)
@@ -131,6 +132,28 @@ public static class FilterDefinitionExtensions
         if (IsIncompleteCondition(condition))
         {
             return true;
+        }
+
+        // For Date/DateTime field types, use "whole day" semantics for comparison operators
+        // because the date picker does not include a time component.
+        if (fieldType is FilterFieldType.Date or FilterFieldType.DateTime
+            && TryGetDateTime(rawValue, out var dateValue)
+            && ConvertToDateTime(condition.Value) is { } condDate
+            && condition.Operator is FilterOperator.Equals or FilterOperator.NotEquals
+                or FilterOperator.GreaterThan or FilterOperator.LessThan or FilterOperator.Between)
+        {
+            var startOfDay = condDate.Date;
+            var startOfNextDay = startOfDay.AddDays(1);
+            return condition.Operator switch
+            {
+                FilterOperator.Equals => dateValue >= startOfDay && dateValue < startOfNextDay,
+                FilterOperator.NotEquals => dateValue < startOfDay || dateValue >= startOfNextDay,
+                FilterOperator.GreaterThan => dateValue >= startOfNextDay,
+                FilterOperator.LessThan => dateValue < startOfDay,
+                FilterOperator.Between when ConvertToDateTime(condition.ValueEnd) is { } endDate =>
+                    dateValue >= startOfDay && dateValue < endDate.Date.AddDays(1),
+                _ => true
+            };
         }
 
         return condition.Operator switch
@@ -267,6 +290,32 @@ public static class FilterDefinitionExtensions
         return value switch
         {
             IComparable c => c,
+            _ => null
+        };
+    }
+
+    private static bool TryGetDateTime(object? value, out DateTime result)
+    {
+        if (value is DateTime dt)
+        {
+            result = dt;
+            return true;
+        }
+        if (value is DateTimeOffset dto)
+        {
+            result = dto.LocalDateTime;
+            return true;
+        }
+        result = default;
+        return false;
+    }
+
+    private static DateTime? ConvertToDateTime(object? value)
+    {
+        return value switch
+        {
+            DateTime dt => dt,
+            DateTimeOffset dto => dto.LocalDateTime,
             _ => null
         };
     }
@@ -461,7 +510,7 @@ public static class FilterDefinitionExtensions
     private static Expression BuildGroupExpression(
         ParameterExpression parameter,
         FilterDefinition group,
-        HashSet<string>? allowedFields)
+        Dictionary<string, FilterFieldType>? fieldTypeMap)
     {
         var expressions = new List<Expression>();
 
@@ -471,12 +520,13 @@ public static class FilterDefinitionExtensions
             {
                 continue;
             }
-            if (allowedFields != null && !allowedFields.Contains(condition.Field))
+            if (fieldTypeMap != null && !fieldTypeMap.ContainsKey(condition.Field))
             {
                 continue;
             }
 
-            var condExpr = BuildConditionExpression(parameter, condition);
+            FilterFieldType? fieldType = fieldTypeMap != null && fieldTypeMap.TryGetValue(condition.Field, out var ft) ? ft : null;
+            var condExpr = BuildConditionExpression(parameter, condition, fieldType);
             if (condExpr != null)
             {
                 expressions.Add(condExpr);
@@ -487,7 +537,7 @@ public static class FilterDefinitionExtensions
         {
             if (!nestedGroup.IsEmpty)
             {
-                expressions.Add(BuildGroupExpression(parameter, nestedGroup, allowedFields));
+                expressions.Add(BuildGroupExpression(parameter, nestedGroup, fieldTypeMap));
             }
         }
 
@@ -503,7 +553,8 @@ public static class FilterDefinitionExtensions
 
     private static Expression? BuildConditionExpression(
         ParameterExpression parameter,
-        FilterCondition condition)
+        FilterCondition condition,
+        FilterFieldType? fieldType)
     {
         var property = parameter.Type.GetProperty(condition.Field,
             BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
@@ -516,6 +567,42 @@ public static class FilterDefinitionExtensions
         var propAccess = Expression.Property(parameter, property);
         var propType = property.PropertyType;
         var isNullable = Nullable.GetUnderlyingType(propType) != null || !propType.IsValueType;
+
+        // For Date/DateTime field types, use "whole day" semantics for comparison operators
+        // because the date picker does not include a time component.
+        if (fieldType is FilterFieldType.Date or FilterFieldType.DateTime
+            && ConvertToDateTime(condition.Value) is { } condDate
+            && condition.Operator is FilterOperator.Equals or FilterOperator.NotEquals
+                or FilterOperator.GreaterThan or FilterOperator.LessThan or FilterOperator.Between)
+        {
+            var startOfDay = condDate.Date;
+            var startOfNextDay = startOfDay.AddDays(1);
+            var dateExpr = condition.Operator switch
+            {
+                FilterOperator.Equals =>
+                    Expression.AndAlso(
+                        BuildComparisonExpression(propAccess, propType, startOfDay, ExpressionType.GreaterThanOrEqual),
+                        BuildComparisonExpression(propAccess, propType, startOfNextDay, ExpressionType.LessThan)),
+                FilterOperator.NotEquals =>
+                    Expression.Not(
+                        Expression.AndAlso(
+                            BuildComparisonExpression(propAccess, propType, startOfDay, ExpressionType.GreaterThanOrEqual),
+                            BuildComparisonExpression(propAccess, propType, startOfNextDay, ExpressionType.LessThan))),
+                FilterOperator.GreaterThan =>
+                    BuildComparisonExpression(propAccess, propType, startOfNextDay, ExpressionType.GreaterThanOrEqual),
+                FilterOperator.LessThan =>
+                    BuildComparisonExpression(propAccess, propType, startOfDay, ExpressionType.LessThan),
+                FilterOperator.Between when ConvertToDateTime(condition.ValueEnd) is { } endDate =>
+                    Expression.AndAlso(
+                        BuildComparisonExpression(propAccess, propType, startOfDay, ExpressionType.GreaterThanOrEqual),
+                        BuildComparisonExpression(propAccess, propType, endDate.Date.AddDays(1), ExpressionType.LessThan)),
+                _ => (Expression?)null
+            };
+            if (dateExpr != null)
+            {
+                return dateExpr;
+            }
+        }
 
         return condition.Operator switch
         {
@@ -934,14 +1021,14 @@ public static class FilterDefinitionExtensions
         return negate ? Expression.Not(combined) : combined;
     }
 
-    private static HashSet<string>? BuildAllowedFieldSet(IEnumerable<FilterField> fields)
+    private static Dictionary<string, FilterFieldType>? BuildFieldTypeMap(IEnumerable<FilterField> fields)
     {
         var list = fields as IList<FilterField> ?? fields.ToList();
         if (list.Count == 0)
         {
             return null;
         }
-        return new HashSet<string>(list.Select(f => f.Name), StringComparer.OrdinalIgnoreCase);
+        return list.ToDictionary(f => f.Name, f => f.Type, StringComparer.OrdinalIgnoreCase);
     }
 
     private static object? ConvertValue(object? value, Type targetType)

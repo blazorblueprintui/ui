@@ -37,6 +37,7 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
     private bool _lastSuggestionsOpen;
     private int _lastSuggestionIndex = -1;
     private bool _lastDisabled;
+    private int _lastTagCount;
 
     // ── Remove handler cache ───────────────────────────────────────────
     private readonly Dictionary<string, Func<Task>> _removeHandlerCache = new();
@@ -244,7 +245,8 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
             _lastInputText != _inputText ||
             _lastSuggestionsOpen != _suggestionsOpen ||
             _lastSuggestionIndex != _suggestionIndex ||
-            _lastDisabled != Disabled;
+            _lastDisabled != Disabled ||
+            _lastTagCount != _currentTags.Count;
 
         if (changed)
         {
@@ -252,6 +254,7 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
             _lastSuggestionsOpen = _suggestionsOpen;
             _lastSuggestionIndex = _suggestionIndex;
             _lastDisabled = Disabled;
+            _lastTagCount = _currentTags.Count;
             return true;
         }
 

@@ -1,26 +1,31 @@
 @namespace BlazorBlueprint.Components
 @typeparam TValue
 
-<BbCommandItem Value="@Value?.ToString()" OnSelect="@HandleSelect" SearchText="@Text" Disabled="@Disabled">
-    @if (ChildContent is not null)
-    {
-        @ChildContent
-    }
-    else
-    {
-        @Text
-    }
-    <svg xmlns="http://www.w3.org/2000/svg"
-         width="16"
-         height="16"
-         viewBox="0 0 24 24"
-         fill="none"
-         stroke="currentColor"
-         stroke-width="2"
-         stroke-linecap="round"
-         stroke-linejoin="round"
-         class="@($"ml-auto h-4 w-4 shrink-0 {(IsSelected ? "opacity-100" : "opacity-0")}")"
-         aria-label="@(IsSelected ? "Selected" : "")">
-        <path d="M20 6 9 17l-5-5" />
-    </svg>
-</BbCommandItem>
+@* In the parent's hidden registration pass we register text (via lifecycle) but emit no
+   DOM — BbCommandItem needs a CommandContext that only exists inside the popover's BbCommand. *@
+@if (!RegistrationOnly)
+{
+    <BbCommandItem Value="@Value?.ToString()" OnSelect="@HandleSelect" SearchText="@Text" Disabled="@Disabled">
+        @if (ChildContent is not null)
+        {
+            @ChildContent
+        }
+        else
+        {
+            @Text
+        }
+        <svg xmlns="http://www.w3.org/2000/svg"
+             width="16"
+             height="16"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2"
+             stroke-linecap="round"
+             stroke-linejoin="round"
+             class="@($"ml-auto h-4 w-4 shrink-0 {(IsSelected ? "opacity-100" : "opacity-0")}")"
+             aria-label="@(IsSelected ? "Selected" : "")">
+            <path d="M20 6 9 17l-5-5" />
+        </svg>
+    </BbCommandItem>
+}

@@ -1,21 +1,37 @@
 @typeparam TValue
 @namespace BlazorBlueprint.Components
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
 
 @* Styled SelectContent wrapper around SelectContent primitive *@
 <BlazorBlueprint.Primitives.Select.BbSelectContent TValue="TValue"
-                                               class="@CssClass">
-    <div class="p-1">
+                                               class="@OuterCssClass">
+    <div @ref="_scrollRef" @onscroll="HandleScroll" class="@InnerCssClass">
         @ChildContent
+        @if (IsLoading)
+        {
+            <div class="flex items-center justify-center py-2">
+                <BbSpinner Size="SpinnerSize.Small" />
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(EndOfListMessage))
+        {
+            <div class="py-2 text-center text-xs text-muted-foreground">
+                @EndOfListMessage
+            </div>
+        }
     </div>
 </BlazorBlueprint.Primitives.Select.BbSelectContent>
 
 @code {
+    private ElementReference _scrollRef;
+    private IJSObjectReference? _jsModule;
+
     /// <summary>
     /// Cascading parameter to infer TValue from parent Select context.
     /// </summary>
     [CascadingParameter]
     private BlazorBlueprint.Primitives.Select.SelectContext<TValue>? Context { get; set; }
-
 
     /// <summary>
     /// Gets or sets additional CSS classes to apply to the content container.
@@ -30,17 +46,83 @@
     public RenderFragment? ChildContent { get; set; }
 
     /// <summary>
-    /// Gets the computed CSS classes for the content container.
+    /// Gets or sets the callback invoked when the user scrolls near the bottom of the dropdown list.
+    /// Use this to load additional items for infinite scroll scenarios.
     /// </summary>
-    private string CssClass => ClassNames.cn(
-        "z-50 max-h-60 w-full overflow-auto rounded-md border",
+    [Parameter]
+    public EventCallback OnLoadMore { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether additional items are currently being loaded.
+    /// When true, a loading spinner is shown at the bottom of the list and
+    /// <see cref="OnLoadMore"/> is suppressed until loading completes.
+    /// </summary>
+    [Parameter]
+    public bool IsLoading { get; set; }
+
+    /// <summary>
+    /// Gets or sets a message displayed at the bottom of the list when all items have been loaded.
+    /// Only shown when <see cref="IsLoading"/> is false. Set to <c>null</c> or empty to hide.
+    /// </summary>
+    [Parameter]
+    public string? EndOfListMessage { get; set; }
+
+    /// <summary>
+    /// Outer container: border, shadow, animation — no scrolling.
+    /// </summary>
+    private string OuterCssClass => ClassNames.cn(
+        "z-50 w-full overflow-hidden rounded-md border",
         "bg-popover text-popover-foreground shadow-md",
         "data-[state=open]:animate-in data-[state=closed]:animate-out",
         "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
         "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
-        // Hide scrollbar but keep scroll functionality
-        "[&::-webkit-scrollbar]:hidden",
         Class
     );
+
+    /// <summary>
+    /// Inner container: scrollable area with max height.
+    /// </summary>
+    private static string InnerCssClass => "max-h-60 overflow-auto p-1 [&::-webkit-scrollbar]:hidden";
+
+    private async Task HandleScroll()
+    {
+        if (!OnLoadMore.HasDelegate || IsLoading)
+        {
+            return;
+        }
+
+        _jsModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
+            "import", "./_content/BlazorBlueprint.Primitives/js/primitives/element-utils.js");
+
+        try
+        {
+            var nearBottom = await _jsModule.InvokeAsync<bool>("isNearBottom", _scrollRef, 80.0);
+            if (nearBottom)
+            {
+                await OnLoadMore.InvokeAsync();
+            }
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Expected during circuit disconnect or disposal
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_jsModule != null)
+        {
+            try
+            {
+                await _jsModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Circuit disconnected — safe to ignore
+            }
+
+            _jsModule = null;
+        }
+    }
 }

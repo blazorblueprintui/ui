@@ -1,14 +1,33 @@
 @namespace BlazorBlueprint.Components
 @inject IBbLocalizer Localizer
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
 
 <div id="@Context?.ListId"
+     @ref="_scrollRef"
+     @onscroll="HandleScroll"
      class="@CssClass"
      role="listbox"
      aria-label="@Localizer["Command.CommandList"]">
     @ChildContent
+    @if (IsLoading)
+    {
+        <div class="flex items-center justify-center py-2">
+            <BbSpinner Size="SpinnerSize.Small" />
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(EndOfListMessage))
+    {
+        <div class="py-2 text-center text-xs text-muted-foreground">
+            @EndOfListMessage
+        </div>
+    }
 </div>
 
 @code {
+    private ElementReference _scrollRef;
+    private IJSObjectReference? _jsModule;
+
     [CascadingParameter]
     public CommandContext? Context { get; set; }
 
@@ -25,10 +44,73 @@
     public RenderFragment? ChildContent { get; set; }
 
     /// <summary>
+    /// Gets or sets the callback invoked when the user scrolls near the bottom of the list.
+    /// Use this to load additional items for infinite scroll scenarios.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnLoadMore { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether additional items are currently being loaded.
+    /// When true, a loading spinner is shown at the bottom of the list and
+    /// <see cref="OnLoadMore"/> is suppressed until loading completes.
+    /// </summary>
+    [Parameter]
+    public bool IsLoading { get; set; }
+
+    /// <summary>
+    /// Gets or sets a message displayed at the bottom of the list when all items have been loaded.
+    /// Only shown when <see cref="IsLoading"/> is false. Set to <c>null</c> or empty to hide.
+    /// </summary>
+    [Parameter]
+    public string? EndOfListMessage { get; set; }
+
+    /// <summary>
     /// Gets the computed CSS classes for the list container.
     /// </summary>
     private string CssClass => ClassNames.cn(
         "max-h-[300px] overflow-y-auto overflow-x-hidden",
         Class
     );
+
+    private async Task HandleScroll()
+    {
+        if (!OnLoadMore.HasDelegate || IsLoading)
+        {
+            return;
+        }
+
+        _jsModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
+            "import", "./_content/BlazorBlueprint.Primitives/js/primitives/element-utils.js");
+
+        try
+        {
+            var nearBottom = await _jsModule.InvokeAsync<bool>("isNearBottom", _scrollRef, 80.0);
+            if (nearBottom)
+            {
+                await OnLoadMore.InvokeAsync();
+            }
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Expected during circuit disconnect or disposal
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_jsModule != null)
+        {
+            try
+            {
+                await _jsModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Circuit disconnected — safe to ignore
+            }
+
+            _jsModule = null;
+        }
+    }
 }

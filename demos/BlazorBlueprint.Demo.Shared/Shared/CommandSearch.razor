@@ -4,6 +4,8 @@
 @using BlazorBlueprint.Icons.Heroicons.Data
 @using BlazorBlueprint.Icons.Feather.Components
 @using BlazorBlueprint.Icons.Feather.Data
+@using BlazorBlueprint.Icons.FontAwesome.Components
+@using BlazorBlueprint.Icons.FontAwesome.Data
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.JSInterop
 @inject NavigationManager NavigationManager
@@ -112,6 +114,22 @@
                             <span class="ml-auto text-xs text-muted-foreground">Feather</span>
                         </ItemTemplate>
                     </BbCommandVirtualizedGroup>
+
+                    <BbCommandSeparator />
+
+                    <BbCommandVirtualizedGroup TItem="string"
+                        Heading="Font Awesome Icons"
+                        Items="AllFontAwesomeIcons"
+                        ItemValue="@(name => $"/icons/fontawesome?search={name}")"
+                        ItemSearchText="@(name => name)"
+                        MaxDisplayCount="0"
+                        EnableLazyLoading="true">
+                        <ItemTemplate Context="iconName">
+                            <FontAwesomeIcon Name="@iconName" Size="16" Class="mr-2 text-teal-500" />
+                            @FormatIconName(iconName)
+                            <span class="ml-auto text-xs text-muted-foreground">Font Awesome</span>
+                        </ItemTemplate>
+                    </BbCommandVirtualizedGroup>
                 </BbCommandList>
             </BlazorBlueprint.Components.BbCommand>
         </div>
@@ -218,6 +236,7 @@
     private static readonly string[] AllLucideIcons = LucideIconData.GetAvailableIcons().OrderBy(x => x).ToArray();
     private static readonly string[] AllHeroIcons = HeroIconData.GetAvailableIcons(HeroIconVariant.Outline).OrderBy(x => x).ToArray();
     private static readonly string[] AllFeatherIcons = FeatherIconData.GetAvailableIcons().OrderBy(x => x).ToArray();
+    private static readonly string[] AllFontAwesomeIcons = FontAwesomeIconData.GetAvailableIcons(FontAwesomeIconVariant.Solid).OrderBy(x => x).ToArray();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

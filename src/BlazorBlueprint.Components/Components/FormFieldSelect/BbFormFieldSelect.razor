@@ -6,7 +6,7 @@
 <BbField Orientation="@Orientation" IsInvalid="@IsInvalid" Class="@Class">
     @if (Label is not null)
     {
-        <BbFieldLabel For="@ControlId">@Label</BbFieldLabel>
+        <BbFieldLabel>@Label</BbFieldLabel>
     }
     <BbFieldContent>
         <BbSelect TValue="TValue"
@@ -14,12 +14,13 @@
                 ValueChanged="HandleValueChanged"
                 ValueExpression="@ValueExpression"
                 Disabled="@Disabled"
+                Required="@Required"
                 DisplayTextSelector="@GetEffectiveDisplayTextSelector()"
                 Class="@InputClass">
             <BbSelectTrigger TValue="TValue" id="@ControlId" aria-describedby="@DescribedById">
                 <BbSelectValue Placeholder="@Placeholder" />
             </BbSelectTrigger>
-            <BbSelectContent TValue="TValue">
+            <BbSelectContent TValue="TValue" OnLoadMore="@OnLoadMore" IsLoading="@IsLoading" EndOfListMessage="@EndOfListMessage">
                 @if (Options is not null)
                 {
                     @foreach (var option in Options)

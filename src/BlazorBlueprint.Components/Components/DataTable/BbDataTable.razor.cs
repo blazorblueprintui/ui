@@ -6,7 +6,7 @@ namespace BlazorBlueprint.Components;
 
 /// <summary>
 /// A styled data table component that wraps the Table Primitive with automatic sorting,
-/// filtering, pagination, and row selection capabilities.
+/// pagination, row selection, and global search.
 /// </summary>
 /// <typeparam name="TData">The type of data items in the table.</typeparam>
 /// <remarks>
@@ -18,12 +18,18 @@ namespace BlazorBlueprint.Components;
 /// <para>
 /// Features:
 /// - Declarative column API via DataTableColumn child components
-/// - Automatic sorting, filtering, and pagination (hybrid mode with overrides)
+/// - Automatic sorting and pagination (hybrid mode with overrides)
+/// - Global search across columns via the toolbar
 /// - Row selection (single/multiple) with checkboxes
-/// - Optional toolbar with global search and column visibility toggle
+/// - Optional toolbar with column visibility toggle
 /// - Empty and loading state templates
 /// - Full shadcn styling with hover states and transitions
 /// - Accessibility support (ARIA attributes, keyboard navigation)
+/// </para>
+/// <para>
+/// For per-column filter UIs (operator + value editor per column, like Excel autofilter),
+/// use <see cref="BbDataGrid{TData}"/> instead. DataTable is intentionally a simpler
+/// surface focused on global search.
 /// </para>
 /// </remarks>
 /// <example>

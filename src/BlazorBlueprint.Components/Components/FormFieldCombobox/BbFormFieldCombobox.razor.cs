@@ -62,10 +62,52 @@ public partial class BbFormFieldCombobox<TValue> : FormFieldBase
     public string EmptyMessage { get; set; } = "No results found.";
 
     /// <summary>
+    /// Gets or sets the current search query text.
+    /// Use with <see cref="SearchQueryChanged"/> for two-way binding to react to filter changes,
+    /// e.g. for server-side filtering or loading additional data.
+    /// </summary>
+    [Parameter]
+    public string SearchQuery { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the callback that is invoked when the search query changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> SearchQueryChanged { get; set; }
+
+    /// <summary>
+    /// Gets or sets the callback invoked when the user scrolls near the bottom of the dropdown list.
+    /// Use this to load additional items for infinite scroll scenarios.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnLoadMore { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether additional items are currently being loaded.
+    /// When true, a loading spinner is shown at the bottom of the dropdown list and
+    /// <see cref="OnLoadMore"/> is suppressed until loading completes.
+    /// </summary>
+    [Parameter]
+    public bool IsLoading { get; set; }
+
+    /// <summary>
+    /// Gets or sets a message displayed at the bottom of the dropdown list when all items have been loaded.
+    /// Only shown when <see cref="IsLoading"/> is false. Set to <c>null</c> or empty to hide.
+    /// </summary>
+    [Parameter]
+    public string? EndOfListMessage { get; set; }
+
+    /// <summary>
     /// Gets or sets whether the combobox is disabled.
     /// </summary>
     [Parameter]
     public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the combobox is required.
+    /// </summary>
+    [Parameter]
+    public bool Required { get; set; }
 
     /// <summary>
     /// Gets or sets additional CSS classes applied to the inner Combobox element.
@@ -85,13 +127,45 @@ public partial class BbFormFieldCombobox<TValue> : FormFieldBase
     [Parameter]
     public bool MatchTriggerWidth { get; set; }
 
+    /// <summary>
+    /// Gets or sets CSS classes applied to the trigger when the dropdown is open.
+    /// Default is <c>"bg-accent text-accent-foreground"</c>.
+    /// Set to <c>null</c> or empty to disable the active style.
+    /// </summary>
+    [Parameter]
+    public string? ActiveClass { get; set; } = "bg-accent text-accent-foreground";
+
     /// <inheritdoc />
     protected override LambdaExpression? GetFieldExpression() => ValueExpression;
+
+    /// <summary>
+    /// The search query forwarded to the inner combobox. Only surfaces the local
+    /// <see cref="SearchQuery"/> value when the consumer is actively binding it;
+    /// otherwise returns an empty string so the inner combobox can manage its own
+    /// search state without being clobbered by parent re-renders.
+    /// </summary>
+    private string InnerSearchQuery => SearchQueryChanged.HasDelegate ? SearchQuery : string.Empty;
+
+    /// <summary>
+    /// The search query change callback forwarded to the inner combobox. Only wires
+    /// when the consumer is binding <see cref="SearchQueryChanged"/>; otherwise returns
+    /// the default (no delegate) so the inner combobox keeps its internal text filter
+    /// instead of switching into external-filtering mode.
+    /// </summary>
+    private EventCallback<string> InnerSearchQueryChanged => SearchQueryChanged.HasDelegate
+        ? EventCallback.Factory.Create<string>(this, HandleSearchQueryChanged)
+        : default;
 
     private async Task HandleValueChanged(TValue? value)
     {
         Value = value;
         await ValueChanged.InvokeAsync(value);
         NotifyFieldChanged();
+    }
+
+    private async Task HandleSearchQueryChanged(string query)
+    {
+        SearchQuery = query;
+        await SearchQueryChanged.InvokeAsync(query);
     }
 }

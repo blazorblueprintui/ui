@@ -1,14 +1,10 @@
 @namespace BlazorBlueprint.Components
-@implements IMenubarItem
-@implements IDisposable
 
-<div @ref="_itemRef"
-     role="menuitemcheckbox"
-     class="@CssClass"
-     tabindex="-1"
-     aria-checked="@Checked.ToString().ToLower()"
-     data-state="@(Checked ? "checked" : "unchecked")"
-     @onclick="HandleClick">
+<BlazorBlueprint.Primitives.Menubar.BbMenubarCheckboxItem
+    Checked="@Checked"
+    CheckedChanged="@CheckedChanged"
+    Disabled="@Disabled"
+    class="@CssClass">
     <span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
         @if (Checked)
         {
@@ -27,12 +23,9 @@
         }
     </span>
     @ChildContent
-</div>
+</BlazorBlueprint.Primitives.Menubar.BbMenubarCheckboxItem>
 
 @code {
-    [CascadingParameter]
-    public BbMenubarMenu? Menu { get; set; }
-
     [Parameter]
     public string? Class { get; set; }
 
@@ -47,37 +40,6 @@
 
     [Parameter]
     public EventCallback<bool> CheckedChanged { get; set; }
-
-    private ElementReference _itemRef;
-
-    public bool IsDisabled => Disabled;
-
-    public async Task FocusAsync()
-    {
-        try
-        {
-            await _itemRef.FocusAsync();
-        }
-        catch
-        {
-            // Ignore focus errors
-        }
-    }
-
-    private async Task HandleClick()
-    {
-        if (!Disabled)
-        {
-            var newChecked = !Checked;
-            Checked = newChecked;
-            await CheckedChanged.InvokeAsync(newChecked);
-            // Checkbox items don't close the menu by default
-        }
-    }
-
-    public void Dispose()
-    {
-    }
 
     private string CssClass => ClassNames.cn(
         "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none",

@@ -1,0 +1,54 @@
+<div class="grid grid-cols-2 gap-4">
+    <div class="space-y-2">
+        <p class="text-sm font-medium">Available</p>
+        <BlazorBlueprint.Primitives.Sortable.BbSortable TItem="string"
+                                                         Items="@_available"
+                                                         Group="shared-pool"
+                                                         AriaLabel="Available items"
+                                                         OnUpdate="(args) => MoveWithin(_available, args)"
+                                                         OnRemove="(args) => MoveAcross(_available, _selected, args)"
+                                                         class="min-h-20 space-y-2 rounded-md border border-dashed p-2">
+            <ItemTemplate Context="item">
+                <div class="rounded-md border px-3 py-2 text-sm cursor-grab active:cursor-grabbing">
+                    @item
+                </div>
+            </ItemTemplate>
+        </BlazorBlueprint.Primitives.Sortable.BbSortable>
+    </div>
+
+    <div class="space-y-2">
+        <p class="text-sm font-medium">Selected</p>
+        <BlazorBlueprint.Primitives.Sortable.BbSortable TItem="string"
+                                                         Items="@_selected"
+                                                         Group="shared-pool"
+                                                         AriaLabel="Selected items"
+                                                         OnUpdate="(args) => MoveWithin(_selected, args)"
+                                                         OnRemove="(args) => MoveAcross(_selected, _available, args)"
+                                                         class="min-h-20 space-y-2 rounded-md border border-dashed p-2">
+            <ItemTemplate Context="item">
+                <div class="rounded-md border px-3 py-2 text-sm cursor-grab active:cursor-grabbing">
+                    @item
+                </div>
+            </ItemTemplate>
+        </BlazorBlueprint.Primitives.Sortable.BbSortable>
+    </div>
+</div>
+
+@code {
+    private List<string> _available = ["React", "Vue", "Angular", "Svelte", "Solid"];
+    private List<string> _selected = ["Blazor"];
+
+    private static void MoveWithin(List<string> list, (int OldIndex, int NewIndex) args)
+    {
+        var item = list[args.OldIndex];
+        list.RemoveAt(args.OldIndex);
+        list.Insert(args.NewIndex, item);
+    }
+
+    private static void MoveAcross(List<string> source, List<string> target, (int OldIndex, int NewIndex) args)
+    {
+        var item = source[args.OldIndex];
+        source.RemoveAt(args.OldIndex);
+        target.Insert(args.NewIndex, item);
+    }
+}

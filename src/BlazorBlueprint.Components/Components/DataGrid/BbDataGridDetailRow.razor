@@ -1,0 +1,34 @@
+@namespace BlazorBlueprint.Components
+@typeparam TData where TData : class
+@using BlazorBlueprint.Primitives.DataGrid
+
+<tr role="row" class="@ClassNames.cn("group/row border-b bg-background", Class)">
+    @foreach (var column in ParentGrid!.VisibleColumnsForDetailRow)
+    {
+        var isSelectColumn = column.ColumnId == "__select";
+        var isExpandColumn = column.ColumnId == "__expand";
+
+        <BbDataGridCell
+            @key="@column.ColumnId"
+            Class="@ParentGrid.ComputeDetailCellClass(column)"
+            style="@ParentGrid.ComputeDetailPinnedStyle(column)"
+            data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)">
+            @if (!isSelectColumn && !isExpandColumn)
+            {
+                @if (column.CellTemplate != null)
+                {
+                    @column.CellTemplate(new DataGridCellContext<TData>
+                    {
+                        Item = Item!,
+                        Column = column,
+                        Value = column.GetValue(Item!)
+                    })
+                }
+                else
+                {
+                    @(column.GetValue(Item!)?.ToString() ?? "")
+                }
+            }
+        </BbDataGridCell>
+    }
+</tr>

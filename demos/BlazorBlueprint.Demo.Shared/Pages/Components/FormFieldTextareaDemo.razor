@@ -1,0 +1,212 @@
+@page "/components/form-field-textarea"
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>FormFieldTextarea Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">FormFieldTextarea</h1>
+            <p class="text-xl text-muted-foreground">
+                A form field wrapper for Textarea with built-in label, helper text, and error messages.
+            </p>
+        </div>
+    </div>
+
+    <!-- Which form component? -->
+    <div class="rounded-lg border border-dashed bg-muted/30 p-6 space-y-3">
+        <h2 class="text-lg font-semibold">Which form component?</h2>
+        <div class="space-y-2 text-sm text-muted-foreground">
+            <p><strong>Text input</strong> (string, int, date, etc.)? &rarr; <a href="/components/form-field-input" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldInput&lt;T&gt;</a></p>
+            <p><strong>Textarea</strong>? &rarr; <strong>FormFieldTextarea</strong> (this page)</p>
+            <p><strong>Numeric input</strong>? &rarr; <a href="/components/form-field-numeric-input" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldNumericInput</a></p>
+            <p><strong>Date picker</strong>? &rarr; <a href="/components/form-field-date-picker" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldDatePicker</a></p>
+            <p><strong>Time picker</strong>? &rarr; <a href="/components/form-field-time-picker" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldTimePicker</a></p>
+            <p><strong>Checkbox</strong>? &rarr; <a href="/components/form-field-checkbox" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldCheckbox</a></p>
+            <p><strong>Switch</strong>? &rarr; <a href="/components/form-field-switch" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldSwitch</a></p>
+            <p><strong>Select dropdown</strong>? &rarr; <a href="/components/form-field-select" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldSelect</a></p>
+            <p><strong>Native select</strong>? &rarr; <a href="/components/form-field-native-select" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldNativeSelect</a></p>
+            <p><strong>Radio group</strong>? &rarr; <a href="/components/form-field-radio-group" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldRadioGroup</a></p>
+            <p><strong>Searchable select</strong>? &rarr; <a href="/components/form-field-combobox" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldCombobox</a></p>
+            <p><strong>Multi-select</strong>? &rarr; <a href="/components/form-field-multi-select" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldMultiSelect</a></p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-sm text-muted-foreground">
+                A textarea with an auto-associated label and helper text.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldTextarea @bind-Value="_description"
+                                Label="Description"
+                                Placeholder="Enter a description..."
+                                HelperText="Provide a brief description of the item." />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Value:</p>
+            <p class="text-sm font-mono">@(string.IsNullOrEmpty(_description) ? "(empty)" : _description)</p>
+        </div>
+        <CodeBlock Source="Components/FormFieldTextarea/basic.txt" />
+    </div>
+
+    <!-- Character Count -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Character Count</h2>
+            <p class="text-sm text-muted-foreground">
+                Enable <code class="text-xs bg-muted px-1 py-0.5 rounded">ShowCharacterCount</code> with
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">MaxLength</code> to display a live character counter.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldTextarea @bind-Value="_bio"
+                                Label="Bio"
+                                Placeholder="Tell us about yourself..."
+                                HelperText="A short biography for your profile."
+                                MaxLength="200"
+                                ShowCharacterCount="true" />
+        </div>
+        <CodeBlock Source="Components/FormFieldTextarea/character-count.txt" />
+    </div>
+
+    <!-- Disabled -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">
+                A disabled textarea form field.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldTextarea Value="This content cannot be edited."
+                                Label="System notes"
+                                HelperText="Managed by the system."
+                                Disabled="true" />
+        </div>
+        <CodeBlock Source="Components/FormFieldTextarea/disabled.txt" />
+    </div>
+
+    <!-- EditForm Integration -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">EditForm Integration</h2>
+            <p class="text-sm text-muted-foreground">
+                Validation errors display automatically inside an EditForm.
+                Try submitting without entering a message.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <EditForm Model="_formModel" OnValidSubmit="HandleFormSubmit">
+                <DataAnnotationsValidator />
+                <div class="space-y-4">
+                    <BbFormFieldTextarea @bind-Value="_formModel.Message"
+                                        Label="Message"
+                                        Placeholder="Write your message..."
+                                        HelperText="Minimum 10 characters." />
+                    <BbButton Type="ButtonType.Submit">Submit</BbButton>
+                </div>
+            </EditForm>
+            @if (_formSubmitted)
+            {
+                <div class="mt-4 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 p-4">
+                    <p class="text-sm font-medium text-green-800 dark:text-green-200">Form submitted successfully!</p>
+                </div>
+            }
+        </div>
+        <CodeBlock Source="Components/FormFieldTextarea/editform.txt" />
+    </div>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Automatically associates label with textarea via generated ID</AccessibilityItem>
+            <AccessibilityItem>Description linked via aria-describedby</AccessibilityItem>
+            <AccessibilityItem>Validation errors displayed with aria-invalid</AccessibilityItem>
+        </AriaAttributes>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="FormFieldTextarea">
+                <ApiParameter Name="Label" Type="string?" Default="null">
+                    The label text displayed above the textarea.
+                </ApiParameter>
+                <ApiParameter Name="HelperText" Type="string?" Default="null">
+                    Helper text displayed below the textarea. Hidden during error state.
+                </ApiParameter>
+                <ApiParameter Name="ErrorText" Type="string?" Default="null">
+                    Manual error text override. When the field is invalid and this is set, replaces auto-generated messages.
+                </ApiParameter>
+                <ApiParameter Name="Orientation" Type="FieldOrientation" Default="Vertical">
+                    Layout orientation of the field.
+                </ApiParameter>
+                <ApiParameter Name="Value" Type="string?" Default="null">
+                    The current value. Use @@bind-Value for two-way binding.
+                </ApiParameter>
+                <ApiParameter Name="ValueChanged" Type="EventCallback&lt;string?&gt;">
+                    Callback invoked when the value changes.
+                </ApiParameter>
+                <ApiParameter Name="Placeholder" Type="string?" Default="null">
+                    Placeholder text displayed when the textarea is empty.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether the textarea is disabled.
+                </ApiParameter>
+                <ApiParameter Name="Required" Type="bool" Default="false">
+                    Whether the textarea is required.
+                </ApiParameter>
+                <ApiParameter Name="MaxLength" Type="int?" Default="null">
+                    Maximum number of characters allowed.
+                </ApiParameter>
+                <ApiParameter Name="ShowCharacterCount" Type="bool" Default="false">
+                    Whether to display a character count below the textarea.
+                </ApiParameter>
+                <ApiParameter Name="UpdateTiming" Type="UpdateTiming" Default="OnChange">
+                    When ValueChanged fires (OnChange, Immediate, or Debounced).
+                </ApiParameter>
+                <ApiParameter Name="DebounceInterval" Type="int" Default="500">
+                    Debounce delay in milliseconds when UpdateTiming is Debounced.
+                </ApiParameter>
+                <ApiParameter Name="Name" Type="string?" Default="null">
+                    HTML name attribute for the textarea element.
+                </ApiParameter>
+                <ApiParameter Name="InputClass" Type="string?" Default="null">
+                    Additional CSS classes applied to the inner Textarea element.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?" Default="null">
+                    Additional CSS classes applied to the outer Field container.
+                </ApiParameter>
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">
+                    ARIA label for the control.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    private string? _description;
+    private string? _bio;
+    private bool _formSubmitted;
+    private TextareaFormModel _formModel = new();
+
+    private void HandleFormSubmit()
+    {
+        _formSubmitted = true;
+    }
+
+    private class TextareaFormModel
+    {
+        [Required(ErrorMessage = "Please enter a message.")]
+        [MinLength(10, ErrorMessage = "Message must be at least 10 characters.")]
+        public string? Message { get; set; }
+    }
+}

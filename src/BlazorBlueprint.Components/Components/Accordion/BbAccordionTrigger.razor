@@ -8,19 +8,26 @@
 <BlazorBlueprint.Primitives.Accordion.BbAccordionTrigger As="@As" Class="@CssClass">
     <div class="flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline">
         @ChildContent
-        <svg class="h-4 w-4 shrink-0 transition-transform duration-200 data-[state=open]:rotate-180"
-             data-state="@(Item?.IsOpen == true ? "open" : "closed")"
-             xmlns="http://www.w3.org/2000/svg"
-             width="24"
-             height="24"
-             viewBox="0 0 24 24"
-             fill="none"
-             stroke="currentColor"
-             stroke-width="2"
-             stroke-linecap="round"
-             stroke-linejoin="round">
-            <polyline points="6 9 12 15 18 9"></polyline>
-        </svg>
+        @if (Icon != null)
+        {
+            @Icon(Item?.IsOpen == true)
+        }
+        else
+        {
+            <svg class="h-4 w-4 shrink-0 transition-transform duration-200 data-[state=open]:rotate-180"
+                 data-state="@(Item?.IsOpen == true ? "open" : "closed")"
+                 xmlns="http://www.w3.org/2000/svg"
+                 width="24"
+                 height="24"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+        }
     </div>
 </BlazorBlueprint.Primitives.Accordion.BbAccordionTrigger>
 
@@ -42,6 +49,20 @@
     /// </summary>
     [Parameter]
     public string? Class { get; set; }
+
+    /// <summary>
+    /// Optional custom icon rendered at the end of the trigger in place of the default
+    /// chevron. Accepts any icon component (e.g. <c>&lt;LucideIcon&gt;</c>,
+    /// <c>&lt;FontAwesomeIcon&gt;</c>, <c>&lt;FeatherIcon&gt;</c>, <c>&lt;HeroIcon&gt;</c>)
+    /// or ad-hoc SVG/markup content. When not specified, the default chevron icon
+    /// (which rotates on open) is used.
+    /// </summary>
+    /// <remarks>
+    /// The context parameter is a <see cref="bool"/> indicating whether the parent
+    /// accordion item is open, so the icon can be animated to reflect the open state.
+    /// </remarks>
+    [Parameter]
+    public RenderFragment<bool>? Icon { get; set; }
 
     /// <summary>
     /// The HTML element tag to use for the heading wrapper.

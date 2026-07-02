@@ -6,6 +6,305 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-06-17
+
+### Added
+
+- **BbCalendar: selectable previous/next-month days** — "Outside" days shown for the adjacent months were rendered disabled purely for belonging to another month; they now keep their muted styling but are selectable. Clicking one selects that date and moves the view to its month. Dates disabled via `MinDate`/`MaxDate`/`DisabledDates` stay non-interactive. ([#370](https://github.com/blazorblueprintui/ui/pull/370))
+- **BbCalendar: `AutoFocus` parameter + `FocusActiveDayAsync()`** — New opt-in `AutoFocus` parameter moves focus to the active day on first render so arrow-key navigation works immediately (ideal for inline/revealed calendars), plus a public `FocusActiveDayAsync()` method for overlays that position their content asynchronously. ([#370](https://github.com/blazorblueprintui/ui/pull/370))
+
+### Fixed
+
+- **BbDatePicker: keyboard navigation didn't work when the calendar opened** — The calendar grid's key handler only runs once a day has focus, but opening the date-picker popover left focus on the trigger, so arrow keys scrolled the page instead of moving between days. The date picker now focuses the active day once the popover is positioned (via the calendar's new `FocusActiveDayAsync()`), re-focusing on each open. ([#370](https://github.com/blazorblueprintui/ui/pull/370))
+
+---
+
+## 2026-06-14
+
+### Added
+
+- **BbAccordionTrigger: custom icon** — New `Icon` parameter (`RenderFragment<bool>`) renders a custom icon in place of the default chevron; the `bool` context exposes the open state for animation, and it falls back to the chevron when unset. ([#347](https://github.com/blazorblueprintui/ui/pull/347))
+- **BbThemeSwitcher: Variant parameter** — The trigger button was hard-coded to `Outline`; a new `Variant` parameter (default `Outline`) lets it match the surrounding UI. ([#363](https://github.com/blazorblueprintui/ui/pull/363))
+- **BbCombobox & BbMultiSelect: consistent trigger height + MultiSelect single-line mode** — Combobox and MultiSelect triggers now use the `h-10` (40px) house height to align with `BbSelect`/`BbInput`/`BbButton` (were `h-9`/`min-h-9`). `BbMultiSelect` also gains a `SingleLine` option that keeps the trigger on one fixed-height row — overflowing tags clip while "+N more" and the chevron stay pinned. ([#366](https://github.com/blazorblueprintui/ui/pull/366))
+- **BbDataGridSelectColumn: SelectAllScope** — New `SelectAllScope` parameter; `CurrentPage` removes the cross-page select-all menu so the header checkbox toggles only the current page, leaving other pages' selections intact. ([#367](https://github.com/blazorblueprintui/ui/pull/367))
+
+### Fixed
+
+- **BbInputOTP: OnComplete never fired when typing** — The completion check was gated on `!newValue.Contains("")`, which is always false, so `OnComplete` never fired on manual entry (paste worked). It now fires once every slot is filled. ([#362](https://github.com/blazorblueprintui/ui/pull/362))
+- **BbDialog: ShowClose ignored for programmatic dialogs** — Dialogs opened via `DialogService.OpenAsync<T>` never rendered a close button, so `DialogOpenOptions.ShowClose` had no effect. They now render a close (×) button honoring `ShowClose`. ([#364](https://github.com/blazorblueprintui/ui/pull/364))
+- **BbSidebarMenuButton & BbSidebarMenuSubButton: stuck active with `Href="/"`** — Active state was `IsActive || location-match`, so an explicit `IsActive="false"` could never deactivate an item whose `Href` matched the URL (most visibly `Href="/"`). `IsActive` is now `bool?` — an explicit value wins; `null` keeps automatic location matching. ([#365](https://github.com/blazorblueprintui/ui/pull/365))
+- **BbDataGrid: "select all on this page" was additive** — In the paginated select-all menu, "select all on this page" now replaces the whole selection with just the current page instead of leaving other pages selected. ([#367](https://github.com/blazorblueprintui/ui/pull/367))
+
+---
+
+## 2026-06-08
+
+### Fixed
+
+- **BbCombobox & BbMultiSelect: keyboard focus lost after selecting** — Selecting an item in `BbCombobox`, or closing `BbMultiSelect` via Escape or its Close button, left keyboard focus on the now-unmounted popover content, so focus fell back to the page root and the next Tab resumed from the top of the page. Focus is now returned to the trigger on these intentional closes — extending the behavior added for Select/DropdownMenu/Popover — while click-outside still leaves focus where the user clicked. A new `RestoreFocusOnClose` parameter on `BbPopover` carries the consumer's focus-restore intent. ([#349](https://github.com/blazorblueprintui/ui/pull/349))
+- **BbCollapsible & BbDropdownMenu: Space/Enter double-toggled the trigger** — Pressing Space or Enter on a `BbCollapsibleTrigger` (e.g. the docs "View Code" toggles) or a `BbDropdownMenuTrigger` opened then immediately closed it in a single press. The triggers render native `<button>` elements, which the browser already activates on Space/Enter by firing a click, but they also toggled in a keydown handler — so each press fired twice. The redundant keydown toggle was removed (Collapsible) or scoped to arrow keys only (DropdownMenu), so one press now performs exactly one toggle. ([#350](https://github.com/blazorblueprintui/ui/pull/350))
+
+---
+
+## 2026-06-06
+
+### Added
+
+- **BbCommandVirtualizedGroup: ItemsProvider for server-side lazy loading** — New `ItemsProvider` parameter (`CommandItemsProvider<TItem>`) lets the virtualized command group fetch only the slice currently in view on demand — with the active search delegated to the provider — instead of materializing the entire collection, so `EnableLazyLoading` now supports true server-side data. `Items` is no longer required when a provider is supplied. A demo example was added. ([#338](https://github.com/blazorblueprintui/ui/pull/338))
+- **BbDataGridSelectColumn: CellClass and HeaderClass** — The selection (checkbox) column now accepts `CellClass` and `HeaderClass`, matching property columns, so it can adopt compact padding (e.g. `CellClass="p-1"`) instead of forcing a taller row than the rest of the grid. A "Compact Rows" demo example was added. ([#332](https://github.com/blazorblueprintui/ui/pull/332))
+- **Render Modes guide** — New documentation guide, "Render Modes & Interactive Layouts," explaining why interactive components in a layout require an interactive render mode and how to combine per-page interactivity islands with static `HttpContext`-dependent pages, plus a README setup note. ([#339](https://github.com/blazorblueprintui/ui/pull/339))
+
+### Fixed
+
+- **BbCombobox: trigger showed placeholder for pre-bound values** — In compositional mode, when `Value` was bound before the dropdown was first opened, the combobox trigger displayed the placeholder instead of the selected item's text, because the item's text was only registered once the item mounted. The trigger now resolves its display text from a caller-supplied `SelectedItemText` parameter and from item registration, so pre-selected values render correctly on first paint. ([#337](https://github.com/blazorblueprintui/ui/pull/337))
+- **Select, DropdownMenu, Popover: keyboard focus lost after closing** — Closing one of these overlays by an intentional action (pressing Escape or selecting an item) left keyboard focus on the now-unmounted content, so focus fell back to the page root and a subsequent Tab resumed from the top of the page. Focus is now returned to the trigger on intentional close; external dismissals (click-outside, Tab) deliberately leave focus where the user moved it. ([#336](https://github.com/blazorblueprintui/ui/issues/336))
+- **BbCombobox: pre-bound value blank in compositional mode until opened** — Building on [#337](https://github.com/blazorblueprintui/ui/pull/337), compositional `BbComboboxItem` children now register their display text on initial render (via a hidden registration pass), so a value bound before the dropdown is first opened shows its label immediately on refresh instead of staying blank until the dropdown is opened and closed. ([#340](https://github.com/blazorblueprintui/ui/pull/340))
+- **Nested overlays froze the page** — The body scroll lock shared by Dialog, Sheet, Drawer, and AlertDialog was not reference-counted, so closing a nested overlay could re-apply a stale "locked" state and leave the page unscrollable until a refresh. The lock is now reference-counted — the original scroll state is captured once on the first lock and restored only when the last overlay closes (with a guard against double-release). ([#329](https://github.com/blazorblueprintui/ui/pull/329))
+
+---
+
+## 2026-05-28
+
+### Added
+
+- **Font Awesome icon pack** — New `BlazorBlueprint.Icons.FontAwesome` package, joining the existing Lucide, Heroicons, and Feather icon packs. (PR [#333](https://github.com/blazorblueprintui/ui/pull/333), community contribution by [@djb-fnz](https://github.com/djb-fnz))
+
+---
+
+## 2026-05-27
+
+### Added
+
+- **BbDataView: ItemsProvider for on-demand data loading** — New `ItemsProvider` parameter (`DataViewItemsProvider<TItem>`) lets `BbDataView` fetch items asynchronously on demand — returning a `DataViewResult` for each requested range — instead of binding an entire in-memory collection, enabling server-side paging, filtering, and sorting. A demo example was added. (PR [#306](https://github.com/blazorblueprintui/ui/pull/306), community contribution by [@djb-fnz](https://github.com/djb-fnz))
+
+---
+
+## 2026-05-21
+
+### Fixed
+
+- **BbSidebarMenuButton: active item not highlighted on navigation** — When a sidebar menu button or sub-button used `Href` for routing, its `data-active` attribute stayed bound to the static `IsActive` parameter and never updated on navigation, so the active item received only `aria-current="page"` and not the accent background. `BbSidebarMenuButton` and `BbSidebarMenuSubButton` now detect the active route themselves — using the same matching rules as the `Match` parameter always implied — and drive `data-active`, `aria-current`, and styling from a single resolved state. ([#331](https://github.com/blazorblueprintui/ui/issues/331))
+- **bb-no-animate: spinners frozen** — The global `bb-no-animate` switch disabled *all* CSS animations, including loading spinners — freezing them mid-rotation so they no longer conveyed ongoing work. The kill rule now exempts looping status indicators: `.animate-spin` (spinners) and `.animate-pulse` (skeletons) keep animating, while transitions and decorative entrance/exit animations (dropdowns, sheets, modals) are still disabled. Add the new `.bb-animate-keep` class to exempt any other element. ([#330](https://github.com/blazorblueprintui/ui/issues/330))
+
+---
+
+## 2026-05-14
+
+### Added
+
+- **BbFilterBuilder: full localization** — The `WHERE` label, the AND/OR logical operators, and all filter operator labels now resolve through `IBbLocalizer`, so they can be customized the same way as the rest of the component. New keys: `FilterBuilder.Where`, `FilterBuilder.OperatorAnd`/`OperatorOr`, `FilterBuilder.Operator{Name}` (e.g. `FilterBuilder.OperatorEquals`), and `OperatorGreaterThanDate`/`OperatorLessThanDate` for date-field variants. ([#319](https://github.com/blazorblueprintui/ui/issues/319))
+
+### Fixed
+
+- **BbToastProvider: empty container blocking clicks** — The toast container `<div>` is always rendered, even with zero toasts. As a fixed-position, full-height element pinned to the bottom-right corner, it silently blocked all mouse interaction in that region. Added `pointer-events-none` to the container so clicks pass through; individual toasts retain `pointer-events-auto` and stay fully interactive. ([#316](https://github.com/blazorblueprintui/ui/issues/316))
+
+### Changed
+
+- **Component CSS cascade layer** — Component CSS is now wrapped in a dedicated `@layer bb` cascade layer, declared as the strongest layer so authored component styles win against a consumer's `app.css` regardless of `<link>` order. The layer is scoped to BlazorBlueprint's *authored* styles only — Tailwind's bulk utility output stays in its native layers — so consumer Tailwind utilities (`grid-cols-*`, `col-span-*`, etc.) cascade normally and are not overridden. ([#308](https://github.com/blazorblueprintui/ui/issues/308), [#318](https://github.com/blazorblueprintui/ui/issues/318), [#314](https://github.com/blazorblueprintui/ui/issues/314))
+
+---
+
+## 2026-05-02
+
+### Fixed
+
+- **BbFilterBuilder: condition rows not wrapping on small screens** — Condition rows now wrap on narrow viewports instead of overflowing horizontally. ([#311](https://github.com/blazorblueprintui/ui/issues/311))
+- **BbDataTable: unfinished column-filter placeholder** — Removed the non-functional Phase 2 column-filter placeholder from the DataTable toolbar. ([#309](https://github.com/blazorblueprintui/ui/issues/309))
+
+---
+
+## 2026-04-18
+
+### Fixed
+
+- **BbTabs: AdditionalAttributes not forwarded** — `BbTabs` now forwards `AdditionalAttributes` to the primitive root element, so attributes like `class`, `id`, and `data-*` applied to the component reach the rendered DOM. ([#293](https://github.com/blazorblueprintui/ui/issues/293))
+
+---
+
+## 2026-04-10
+
+### Fixed
+
+- **BbFormFieldCombobox: search filter bypassed with wrapper** — When `BbFormFieldCombobox` wrapped `BbCombobox`, the form-field wrapper always wired a `SearchQueryChanged` handler, flipping the combobox into external-filtering mode and bypassing its internal text filter. The wrapper now only forwards search handling when the consumer opts into external filtering. ([#296](https://github.com/blazorblueprintui/ui/issues/296))
+
+---
+
+## 2026-04-07
+
+### Added
+
+- **BbComboboxGroup: grouped items support** — New `BbComboboxGroup` component for organizing combobox items under labeled sections in compositional mode. Groups automatically hide when search filters out all their items. Label styling is customizable via `LabelClass` parameter.
+
+---
+
+## 2026-04-06
+
+### Fixed
+
+- **README: missing setup code** — Added missing out-of-box setup code to README. (PR [#290](https://github.com/blazorblueprintui/ui/pull/290), community contribution by [@mxmissile](https://github.com/mxmissile))
+
+---
+
+## 2026-04-03
+
+### Added
+
+- **BbCommandDialog: SearchQueryChanged and FilterFunction parameters** — Forwarded `SearchQueryChanged` and `FilterFunction` from the inner `BbCommand` to `BbCommandDialog`, allowing dialog consumers to react to search query changes and provide custom filtering logic.
+
+---
+
+## 2026-04-01
+
+### Fixed
+
+- **BbFormFieldSelect: label click opening dropdown** — The `For` attribute on the field label created a native HTML `<label for>` → `<button id>` association that forwarded clicks to the select trigger, causing the dropdown to open on label click and select-all on a second click. Removed the association to match `BbFormFieldCombobox` and `BbFormFieldMultiSelect` behavior.
+- **BbSelect: dropdown not scrolling to active item** — `scrollIntoContainerView` was setting `scrollTop` on the listbox container (`overflow-hidden`) instead of the actual scrollable inner div (`overflow-auto`). Added scroll parent resolution so scroll operations target the correct element. Affects all components using Select: Calendar month/year pickers, FormFieldSelect, DataGridColumnFilter, FilterBuilder, PaginationPageSizeSelector, and TabsList.
+- **BbResizablePanel, BbAspectRatio: culture-sensitive decimal separator breaking CSS** — Locales using `,` as the decimal separator (e.g., `it-IT`) produced invalid CSS values like `33,3%` instead of `33.3%`. All double-to-CSS formatting now uses `CultureInfo.InvariantCulture`. ([#276](https://github.com/blazorblueprintui/ui/issues/276))
+- **Border-radius: calculation inconsistency with shadcn/ui docs** — Switched `--radius-md` and `--radius-sm` from subtraction-based (`- 2px` / `- 4px`) to factor-based (`* 0.8` / `* 0.6`) calculation, matching the official shadcn/ui Tailwind v4 documentation. ([#275](https://github.com/blazorblueprintui/ui/issues/275))
+
+---
+
+## 2026-03-31
+
+### Fixed
+
+- **BbTagInput: stale UI after tag removal** — `ShouldRender()` did not track tag collection changes, so removing a tag only updated the bound state without re-rendering. The component now tracks tag count to trigger re-renders correctly. ([#279](https://github.com/blazorblueprintui/ui/issues/279))
+
+---
+
+## 2026-03-30
+
+### Changed
+
+- **Lucide Icons: updated icon set** — Updated from 1,665 to 1,753 icons (88 new icons added).
+
+---
+
+## 2026-03-26
+
+### Added
+
+- **Required parameter expansion** — Added `Required` parameter to 10 base components (`BbSelect`, `BbNativeSelect`, `BbCombobox`, `BbDatePicker`, `BbTimePicker`, `BbInputOTP`, `BbColorPicker`, `BbFileUpload`, `BbCheckbox`, `BbRadioGroup`) and 9 FormField wrappers (`BbFormFieldSelect`, `BbFormFieldCombobox`, `BbFormFieldDatePicker`, `BbFormFieldTimePicker`, `BbFormFieldInputOTP`, `BbFormFieldCheckbox`, `BbFormFieldRadioGroup`, `BbFormFieldFileUpload`, `BbFormFieldNativeSelect`). Native elements use the HTML `required` attribute; ARIA-based triggers use `aria-required`; `BbCheckbox` and `BbRadioGroup` pass `Required` through to their Primitives.
+- **Select Primitive: Required parameter** — Added `Required` parameter to the headless `BbSelect` Primitive, flowing through `SelectContext` to render `aria-required` on `BbSelectTrigger`. The Components layer `BbSelect` now passes `Required` to the Primitive instead of setting `aria-required` manually.
+
+### Changed
+
+- **BbCheckbox: explicit Required parameter** — `BbCheckbox` no longer infers `aria-required` from `CheckedExpression` binding. Consumers must set `Required="true"` explicitly.
+
+---
+
+## 2026-03-25
+
+### Added
+
+- **Sidebar: CSS custom property theming** — Replaced hardcoded Tailwind layout classes with ~70 CSS custom properties across 12 sidebar components (`BbSidebarMenuButton`, `BbSidebarGroup`, `BbSidebarGroupLabel`, `BbSidebarMenu`, `BbSidebarHeader`, `BbSidebarFooter`, `BbSidebarContent`, `BbSidebarHeaderContent`, `BbSidebarMenuSubButton`, `BbSidebarMenuBadge`, `BbSidebarMenuItem`, `BbSidebarMenuSub`). Consumers can now theme sidebar padding, gap, font-size, line-height, border-radius, height, icon-size, active state styling, and badge appearance by setting variables on `:root` — no `!important` or specificity battles needed. Added `data-sidebar` attributes to 10 components that were missing them, and `data-size` attributes to `BbSidebarMenuButton` and `BbSidebarMenuSubButton` for size variant CSS targeting. Collapsible icon-mode overrides preserved via CSS rules. Zero breaking changes — all defaults match previous hardcoded values.
+- **BbSidebarMenuButton: `OnClick` EventCallback** — New `OnClick` parameter for custom click handling (e.g. programmatic sidebar toggle). Fires after the existing collapsible toggle logic.
+
+### Fixed
+
+- **Sidebar: `data-active` attribute rendering** — Fixed boolean `IsActive` rendering as `"True"` (capital T from C# `bool.ToString()`) instead of `"true"` (lowercase), which caused CSS `[data-active="true"]` selectors to never match. Affected `BbSidebarMenuButton` and `BbSidebarMenuSubButton`.
+- **Sidebar: size variant classes not applying** — Fixed `BbSidebarMenuButton` size switch checking `"small"`/`"large"` strings while `ToValue()` returns `"sm"`/`"lg"`. Size variants now work correctly via CSS variable rules keyed on `data-size`.
+
+---
+
+## 2026-03-23
+
+### Added
+
+- **Theme system: ThemeService, BbThemeSwitcher, and BbDarkModeToggle** — Added a complete, opt-in theme system to the Components library. `ThemeService` manages dark mode, base color (Zinc, Slate, Stone, Gray, Neutral), primary accent color (17 options), and border radius — with localStorage persistence and OS color scheme detection. `BbThemeSwitcher` is a popover panel with a color grid, radius picker, and light/dark mode toggle matching the shadcn/ui website design. `BbDarkModeToggle` is a standalone button that toggles dark mode with customizable icons (via `LightIcon`/`DarkIcon` RenderFragments), optional label, and configurable button variant/size. Both components auto-initialize on first render — no manual setup needed. Ships `themes.css` with 5 base color palettes and 17 primary color overrides using data-attribute selectors, and a CSP-compliant JS module (no `eval`). Theme options configurable via `AddBlazorBlueprintComponents(configureTheme: ...)`.
+- **ChartTooltip: AppendToBody parameter** — Added `AppendToBody` parameter to `BbChartTooltip` that maps to ECharts' `tooltip.appendToBody`, preventing tooltip clipping by parent elements with `overflow: hidden`.
+- **DataView: GridColumnMinWidth parameter** — Added `GridColumnMinWidth` parameter to `BbDataView` for adaptive auto-fill grid layouts using CSS `repeat(auto-fill, minmax(value, 1fr))` instead of fixed breakpoint columns.
+- **DataGrid enhancements** — Added `OverscanCount` parameter (configurable virtualization buffer, was hardcoded to 5), `Striped` and `StripeClass` parameters for alternating row backgrounds, `TableContainerClass` for styling the inner scrollable container, and mobile-responsive pagination (page size selector and first/last buttons hidden on small screens).
+- **Menubar and NavigationMenu headless primitives** — Extracted headless primitive layers into `BlazorBlueprint.Primitives.Menubar` (8 components: BbMenubar, BbMenubarMenu, BbMenubarTrigger, BbMenubarContent, BbMenubarItem, BbMenubarCheckboxItem, BbMenubarLabel, BbMenubarSeparator) and `BlazorBlueprint.Primitives.NavigationMenu` (6 components: BbNavigationMenu, BbNavigationMenuItem, BbNavigationMenuTrigger, BbNavigationMenuContent, BbNavigationMenuList, BbNavigationMenuLink). Components layer refactored to wrap primitives with Tailwind styling. Added demo pages for both primitives with sidebar and index page entries.
+- **DataGrid: server-side virtual scroll** — When both `Virtualize="true"` and `ItemsProvider` are set, Blazor's native `<Virtualize>` component drives data requests on demand as the user scrolls, fetching only the visible rows plus overscan from the server. Adds `VirtualScrollHeight` parameter (default `"400px"`) for the scroll container. Pagination is automatically hidden in this mode. Sort and filter changes trigger a full refresh via `RefreshDataAsync()`. Grouped/hierarchy mode is not supported with virtual provider.
+- **DataGrid: global search** — Added `ShowSearch` parameter that renders a debounced search input above the grid, filtering across all columns with `Filterable=true` using case-insensitive string matching. Searches both formatted values (e.g., `$113,876`) and raw values (e.g., `113876`). For server-side grids, search text is passed via `DataGridRequest.SearchText`. Additional parameters: `SearchText` (two-way bindable), `SearchTextChanged`, `SearchPlaceholder`, and `SearchDebounceMs` (default 300ms). Search resets pagination to page 1.
+
+### Fixed
+
+- **Menubar: focus behaviour** — Reverted `initialFocus` to `"first"` for correct keyboard navigation.
+
+---
+
+## 2026-03-22
+
+### Added
+
+- **DataGrid: detail rows with column-aligned expansion** — Added `DetailRows` RenderFragment on `BbDataGridExpandColumn` for rendering expanded child items as proper table rows that align with the parent grid's column structure. New `BbDataGridDetailRow` component renders each child item using the grid's column templates, and `BbDataGridDetailHeader` renders an optional section label. Both accept a `Class` parameter for custom styling.
+
+### Fixed
+
+- **FilterBuilder: DateTime field comparisons ignoring time component** — Fixed `FilterFieldType.DateTime` (and `Date`) comparison operators (Equals, NotEquals, GreaterThan, LessThan, Between) treating the selected date as an exact midnight timestamp instead of the entire day. Entries with non-midnight times were incorrectly included or excluded.
+
+---
+
+## 2026-03-21
+
+### Added
+
+- **Infinite scroll for selection components** — Added `OnLoadMore`, `IsLoading`, and `EndOfListMessage` parameters to `BbCombobox`, `BbSelect`, `BbMultiSelect`, and their FormField variants (`BbFormFieldCombobox`, `BbFormFieldSelect`, `BbFormFieldMultiSelect`). Enables loading large datasets in batches as the user scrolls, with a loading spinner and optional end-of-list message. Works with both Options mode and compositional (ChildContent) mode.
+- **`SearchQueryChanged` for MultiSelect** — Added `SearchQueryChanged` callback to `BbMultiSelect` and `BbFormFieldMultiSelect` for external/async search filtering (same pattern as Combobox). When set, bypasses internal text filter so the consumer controls displayed items.
+- **Missing parameter passthrough on FormFieldCombobox** — Added `SearchQuery`, `SearchQueryChanged`, `OnLoadMore`, `IsLoading`, `EndOfListMessage`, and `ActiveClass` parameters that were not being passed through to the inner Combobox.
+- **Infinite scroll demos** — Added Options and Compositional mode demos with country flag listings (loading 20 at a time) to Combobox, Select, MultiSelect, FormFieldCombobox, FormFieldSelect, and FormFieldMultiSelect demo pages, with matching code example files.
+- **DataGrid: virtualization for hierarchy mode** — When `Virtualize="true"`, hierarchy and grouped render items now use the `<Virtualize>` component, so only visible rows are in the DOM regardless of total count.
+- **DataGrid: `HierarchyLargeDatasetThreshold` parameter** — Item count threshold (default 500) above which hierarchy filtering automatically uses `ShowMatchedOnly` instead of `ShowMatchedSubtree` to prevent rendering thousands of subtree context rows. Set to 0 to disable.
+- **`HierarchyManager.Count` and `GetAllItems()`** — New public members for efficient item count and iteration without a full tree flatten.
+- **Virtualized large org chart demo** — 4,200-employee hierarchy demo with DiceBear avatars, FilterBuilder, and virtualization enabled.
+
+### Fixed
+
+- **FormFieldCombobox: search input clearing on type** — Fixed a bug where typing in the search input of `BbFormFieldCombobox` would clear after each keystroke. The `SearchQueryChanged` callback was passed directly to the inner Combobox, so when the consumer's handler triggered a re-render, FormFieldCombobox pushed its stale empty `SearchQuery` back down.
+- **Combobox/MultiSelect: "No results found" not showing with external filtering** — Fixed `CommandContext.HasVisibleItems()` incorrectly returning `true` when external filtering was active and no items matched. Also fixed `CommandContext.UnregisterItem()` not calling `NotifyStateChanged()`, preventing `BbCommandEmpty` from re-evaluating after items were removed.
+- **MultiSelect: space key blocked in search input** — Fixed the JS keyboard handler intercepting the space key even when no list item was focused, preventing users from typing spaces in the search input.
+- **MultiSelect: selected item badges showing ID instead of display text** — Added a display text cache so badge text survives when the selected item is no longer in the current Options page after async filtering reloads.
+- **Select: infinite scroll not triggering** — Fixed the `@onscroll` handler being on the inner padding div while scrolling occurred on the outer Primitives div. Restructured so the inner div owns both the scroll handler and the `overflow-auto` style.
+- **DataGrid: hierarchy filter expanding entire tree with no-op filters** — Fixed auto-expansion logic running when the filter predicate matches every item (e.g., incomplete FilterBuilder condition with no value entered). Now skips expansion when the filter is non-selective.
+- **DataGrid: filtered hierarchy pagination rendering thousands of rows on one page** — When filtering in hierarchy mode, pagination now counts visible rows instead of only root items, preventing a single root with thousands of expanded descendants from all rendering on one page.
+
+### Changed
+
+- **Moved `isNearBottom` JS utility to Primitives** — Moved the scroll-near-bottom detection function from `Components/js/data-view.js` to `Primitives/js/primitives/element-utils.js` so it's available at the Primitives layer for reuse across Select, Combobox, and MultiSelect. Deleted the now-empty `data-view.js`.
+
+---
+
+## 2026-03-20
+
+### Fixed
+
+- **FormFieldSelect: dropdown reopening on second trigger click** — Fixed a bug where clicking the `BbFormFieldSelect` trigger a second time (to close the dropdown) caused it to close and immediately reopen in a degraded state (all items highlighted, dropdown narrower than trigger). The root cause was the custom `id` attribute (used for label association) overriding the context-generated trigger ID, causing the click-outside handler to not recognize the trigger as an excluded element.
+
+---
+
+## 2026-03-19
+
+### Added
+
+- **BbFileUpload: ClearFiles() method** (#249) — Added a public `ClearFiles()` method to `BbFileUpload` and `BbFormFieldFileUpload` that programmatically clears all selected files, validation errors, and resets the native file input. Consumers capture a `@ref` and call `ClearFiles()` from any trigger.
+
+### Changed
+
+- **TailwindMerge: replaced custom implementation with TailwindMerge.NET** — Removed the 1,287-line custom `TailwindMerge` class and adopted the [TailwindMerge.NET](https://github.com/nicoll-douglas/tailwind-merge-net) v1.3.0 NuGet package. This eliminates ongoing maintenance burden, provides better arbitrary value handling (fixing issue #253 where arbitrary font sizes like `text-[.5rem]` incorrectly conflicted with text color utilities), and supports Tailwind CSS v4 through v4.2. CSS injection validation is preserved as defense-in-depth.
+
+### Fixed
+
+- **TailwindMerge: arbitrary non-color values no longer conflict with text color** (#253) — Arbitrary values like `text-[.5rem]`, `text-[calc(1rem+2px)]` are correctly recognized as font-size (not color), so they no longer strip `text-white` or other color classes.
+
+---
+
+## 2026-03-17
+
+### Added
+
+- **BbSortable Primitive** (`BlazorBlueprint.Primitives.Sortable`) — New headless drag-and-drop sortable primitive powered by SortableJS. Handles all JS interop lifecycle (init, destroy, re-init on parameter changes), ARIA live announcements, `@key`-based Blazor diffing, and `IAsyncDisposable` cleanup. Supports within-list reorder, connected multi-list transfers, drag handles, and configurable group/pull/put/sort/filter options.
+- **BbSortable Component** (`BlazorBlueprint.Components`) — Styled wrapper over the Sortable primitive adding `SortableLayout` enum (`List`/`Grid`) with pre-built Tailwind CSS layout classes and `Class` parameter for customization.
+- **Sortable demo pages** — Component demo at `/components/sortable` (basic list, drag handle, connected lists, grid, Kanban board) and Primitive demo at `/primitives/sortable` (basic, handle, connected lists).
+- **FormField wrappers (12 new components)** — High-level form field components that compose underlying controls with `BbField`, `BbFieldLabel`, `BbFieldDescription`, and `BbFieldError` for ready-to-use form fields with label association, helper text, error messages, and EditForm integration:
+  - `BbFormFieldTextarea`, `BbFormFieldDatePicker`, `BbFormFieldTimePicker`, `BbFormFieldNumericInput`, `BbFormFieldNativeSelect` (full ARIA/EditForm wiring)
+  - `BbFormFieldCurrencyInput`, `BbFormFieldMaskedInput`, `BbFormFieldInputOTP`, `BbFormFieldTagInput` (EditForm wiring via ValueExpression/TagsExpression)
+  - `BbFormFieldDateRangePicker`, `BbFormFieldCheckboxGroup`, `BbFormFieldFileUpload` (label/helper/error layout with manual ErrorText validation)
+- **FormField demo pages** — Demo pages with interactive examples, code snippets, and API references for all 12 new FormField components, plus sidebar navigation entries.
+
+---
+
 ## 2026-03-12
 
 ### Added

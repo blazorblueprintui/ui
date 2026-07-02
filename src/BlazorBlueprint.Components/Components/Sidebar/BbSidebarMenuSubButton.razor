@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Components
 @using Microsoft.AspNetCore.Components.Routing
+@implements IDisposable
 
 @*
     SidebarMenuSubButton component for clickable submenu items.
@@ -13,13 +14,13 @@
 
 @if (shouldRenderAsAnchor)
 {
-    <NavLink href="@Href" class="@GetClasses()" data-active="@IsActive" aria-current="@(IsActive ? "page" : null)" Match="@Match" ActiveClass="data-[active=true]:bg-sidebar-accent" @attributes="AdditionalAttributes">
+    <a href="@Href" class="@GetClasses()" data-sidebar="menu-sub-button" data-size="@Size.ToValue()" data-active="@(ResolvedActive ? "true" : "false")" aria-current="@(ResolvedActive ? "page" : null)" @attributes="AdditionalAttributes">
         @ChildContent
-    </NavLink>
+    </a>
 }
 else
 {
-    <button type="button" class="@GetClasses()" data-active="@IsActive" aria-current="@(IsActive ? "page" : null)" @attributes="AdditionalAttributes">
+    <button type="button" class="@GetClasses()" data-sidebar="menu-sub-button" data-size="@Size.ToValue()" data-active="@(ResolvedActive ? "true" : "false")" aria-current="@(ResolvedActive ? "page" : null)" @attributes="AdditionalAttributes">
         @ChildContent
     </button>
 }
@@ -50,10 +51,13 @@ else
     public NavLinkMatch Match { get; set; } = NavLinkMatch.Prefix;
 
     /// <summary>
-    /// Whether this submenu item is active/selected.
+    /// Explicitly controls whether this submenu item is active/selected. When set, this value takes
+    /// precedence over automatic <see cref="Href"/>/<see cref="Match"/> location matching — so
+    /// <c>false</c> forces the item inactive even if its href matches the current URL. Leave
+    /// <c>null</c> (the default) to derive the active state from the current location.
     /// </summary>
     [Parameter]
-    public bool IsActive { get; set; }
+    public bool? IsActive { get; set; }
 
     /// <summary>
     /// Button size variant.
@@ -73,17 +77,46 @@ else
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
+    private bool isActiveByLocation;
+
+    /// <summary>
+    /// Whether the button should render as active. An explicit <see cref="IsActive"/> value wins;
+    /// otherwise the state is derived from whether <see cref="Href"/> matches the current location.
+    /// </summary>
+    private bool ResolvedActive => IsActive ?? isActiveByLocation;
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        isActiveByLocation = NavLinkMatcher.IsMatch(NavigationManager, NavigationManager.Uri, Href, Match);
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        var nowActive = NavLinkMatcher.IsMatch(NavigationManager, e.Location, Href, Match);
+        if (nowActive != isActiveByLocation)
+        {
+            isActiveByLocation = nowActive;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+
     private string GetClasses()
     {
-        var baseClasses = "flex w-full h-7 min-w-0 items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-muted-foreground hover:[&>svg]:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground";
+        var baseClasses = "flex w-full min-w-0 items-center overflow-hidden text-sidebar-foreground outline-none ring-sidebar-ring transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:shrink-0 [&>svg]:text-muted-foreground hover:[&>svg]:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground";
 
-        var sizeClasses = Size.ToValue() switch
-        {
-            "sm" => "text-xs",
-            "md" => "text-sm",
-            _ => ""
-        };
-
-        return ClassNames.cn(baseClasses, sizeClasses, Class);
+        return ClassNames.cn(baseClasses, Class);
     }
 }

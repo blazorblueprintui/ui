@@ -1,0 +1,101 @@
+@* Kanban board — three connected columns sharing the same Group name.             *@
+@* OnRemove fires on the source column; OnAdd fires on the target column.          *@
+@* The parent stages the dragged item in _draggedTask between the two callbacks.   *@
+
+<div class="grid grid-cols-3 gap-4">
+    @foreach (var column in _columns)
+    {
+        <div class="space-y-2">
+            <div class="flex items-center justify-between">
+                <p class="text-sm font-semibold">@column.Title</p>
+                <BbBadge Variant="BadgeVariant.Secondary">@column.Items.Count</BbBadge>
+            </div>
+            <BbSortable TItem="KanbanTask"
+                        Items="@column.Items"
+                        Group="kanban"
+                        AriaLabel="@($"{column.Title} column")"
+                        OnUpdate="(args) => MoveWithin(column.Items, args)"
+                        OnRemove="(args) => OnKanbanRemove(column, args)"
+                        OnAdd="(args) => OnKanbanAdd(column, args)"
+                        Class="min-h-24 rounded-lg border border-dashed p-2">
+                <ItemTemplate Context="task">
+                    <BbCard Class="cursor-grab active:cursor-grabbing">
+                        <BbCardHeader Class="pb-2">
+                            <BbCardTitle Class="text-sm font-medium">@task.Title</BbCardTitle>
+                        </BbCardHeader>
+                        <BbCardContent>
+                            <BbBadge Variant="@GetPriorityVariant(task.Priority)">
+                                @task.Priority
+                            </BbBadge>
+                        </BbCardContent>
+                    </BbCard>
+                </ItemTemplate>
+            </BbSortable>
+        </div>
+    }
+</div>
+
+@code {
+    private record KanbanTask(string Title, string Priority);
+
+    private class KanbanColumn(string title, List<KanbanTask> items)
+    {
+        public string Title { get; } = title;
+        public List<KanbanTask> Items { get; } = items;
+    }
+
+    private List<KanbanColumn> _columns =
+    [
+        new("To Do",
+        [
+            new("Design system audit", "High"),
+            new("Update README", "Low"),
+            new("Fix login bug", "High"),
+        ]),
+        new("In Progress",
+        [
+            new("Build sortable demo", "Medium"),
+            new("Write unit tests", "Medium"),
+        ]),
+        new("Done",
+        [
+            new("Project setup", "Low"),
+            new("CI pipeline", "Medium"),
+        ]),
+    ];
+
+    // Stages the task that is currently being dragged across columns.
+    // OnRemove (source) populates it; OnAdd (target) consumes it.
+    private KanbanTask? _draggedTask;
+
+    private void MoveWithin(List<KanbanTask> list, (int OldIndex, int NewIndex) args)
+    {
+        var task = list[args.OldIndex];
+        list.RemoveAt(args.OldIndex);
+        list.Insert(args.NewIndex, task);
+    }
+
+    private void OnKanbanRemove(KanbanColumn source, (int OldIndex, int NewIndex) args)
+    {
+        _draggedTask = source.Items[args.OldIndex];
+        source.Items.RemoveAt(args.OldIndex);
+    }
+
+    private void OnKanbanAdd(KanbanColumn target, (int OldIndex, int NewIndex) args)
+    {
+        if (_draggedTask is null)
+        {
+            return;
+        }
+
+        target.Items.Insert(Math.Min(args.NewIndex, target.Items.Count), _draggedTask);
+        _draggedTask = null;
+    }
+
+    private static BadgeVariant GetPriorityVariant(string priority) => priority switch
+    {
+        "High" => BadgeVariant.Destructive,
+        "Medium" => BadgeVariant.Default,
+        _ => BadgeVariant.Secondary,
+    };
+}
