@@ -74,6 +74,21 @@ public partial class BbDateRangePicker : ComponentBase
     public Func<DateTime, bool>? DisabledDates { get; set; }
 
     /// <summary>
+    /// Function returning additional CSS classes for a specific day button in the
+    /// calendars, composed with the built-in day classes.
+    /// </summary>
+    [Parameter]
+    public Func<DateTime, string?>? DayClassFunc { get; set; }
+
+    /// <summary>
+    /// Optional template for rendering custom content inside each calendar day button.
+    /// The context includes range state via <see cref="CalendarDayContext.IsInRange"/>.
+    /// When null, the day number is rendered.
+    /// </summary>
+    [Parameter]
+    public RenderFragment<CalendarDayContext>? DayTemplate { get; set; }
+
+    /// <summary>
     /// The minimum number of days that must be selected.
     /// </summary>
     [Parameter]
@@ -623,29 +638,32 @@ public partial class BbDateRangePicker : ComponentBase
         return CellDefault;
     }
 
-    private static string GetDayClass(DateTime date, bool isDisabled, bool isInRange, bool isRangeStart, bool isRangeEnd, bool isToday)
+    private string GetDayClass(DateTime date, bool isDisabled, bool isInRange, bool isRangeStart, bool isRangeEnd, bool isToday)
     {
+        string baseClass;
         if (isDisabled)
         {
-            return DayDisabled;
+            baseClass = DayDisabled;
         }
-
-        if (isRangeStart || isRangeEnd)
+        else if (isRangeStart || isRangeEnd)
         {
-            return DayRangeEndpoint;
+            baseClass = DayRangeEndpoint;
         }
-
-        if (isInRange)
+        else if (isInRange)
         {
-            return DayInRange;
+            baseClass = DayInRange;
         }
-
-        if (isToday)
+        else if (isToday)
         {
-            return DayToday;
+            baseClass = DayToday;
+        }
+        else
+        {
+            baseClass = DayDefault;
         }
 
-        return DayDefault;
+        var customClass = DayClassFunc?.Invoke(date);
+        return string.IsNullOrEmpty(customClass) ? baseClass : ClassNames.cn(baseClass, customClass);
     }
 
     /// <summary>

@@ -228,7 +228,22 @@
                                             data-drp-day-btn
                                             disabled="@isDisabled"
                                             @onclick="@(() => HandleDateClick(dateValue))">
-                                        @dateValue.Day
+                                        @if (DayTemplate != null)
+                                        {
+                                            @DayTemplate(new CalendarDayContext
+                                            {
+                                                Date = dateValue,
+                                                IsSelected = isRangeStart || isRangeEnd,
+                                                IsDisabled = isDisabled,
+                                                IsOutsideMonth = false,
+                                                IsToday = isToday,
+                                                IsInRange = isInRange
+                                            })
+                                        }
+                                        else
+                                        {
+                                            @dateValue.Day
+                                        }
                                     </button>
                                 </td>
                             }
