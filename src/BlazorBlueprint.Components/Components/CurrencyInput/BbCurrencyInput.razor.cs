@@ -445,6 +445,16 @@ public partial class BbCurrencyInput : ComponentBase
         return decimal.TryParse(input, NumberStyles.Number, CultureInfo.InvariantCulture, out result);
     }
 
+    /// <summary>
+    /// Gets the underlying input element reference, e.g. for JS interop.
+    /// </summary>
+    public ElementReference Element => inputRef;
+
+    /// <summary>
+    /// Sets focus to the underlying input element.
+    /// </summary>
+    public ValueTask FocusAsync() => inputRef.FocusAsync();
+
     public async ValueTask DisposeAsync()
     {
         disposed = true;

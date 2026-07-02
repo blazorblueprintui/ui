@@ -415,6 +415,16 @@ public partial class BbMaskedInput : ComponentBase, IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Gets the underlying input element reference, e.g. for JS interop.
+    /// </summary>
+    public ElementReference Element => _inputRef;
+
+    /// <summary>
+    /// Sets focus to the underlying input element.
+    /// </summary>
+    public ValueTask FocusAsync() => _inputRef.FocusAsync();
+
     public async ValueTask DisposeAsync()
     {
         GC.SuppressFinalize(this);
