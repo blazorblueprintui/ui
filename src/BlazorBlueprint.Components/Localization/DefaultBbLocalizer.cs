@@ -141,6 +141,20 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["DateRangePicker.ThisYear"] = "This year",
         ["DateRangePicker.Custom"] = "Custom",
 
+        // DateTimePicker
+        ["DateTimePicker.Placeholder"] = "Pick a date and time",
+        ["DateTimePicker.Hour"] = "Hour",
+        ["DateTimePicker.Minute"] = "Min",
+        ["DateTimePicker.Second"] = "Sec",
+        ["DateTimePicker.IncrementHour"] = "Increment hour",
+        ["DateTimePicker.DecrementHour"] = "Decrement hour",
+        ["DateTimePicker.IncrementMinute"] = "Increment minute",
+        ["DateTimePicker.DecrementMinute"] = "Decrement minute",
+        ["DateTimePicker.IncrementSecond"] = "Increment second",
+        ["DateTimePicker.DecrementSecond"] = "Decrement second",
+        ["DateTimePicker.Now"] = "Now",
+        ["DateTimePicker.Clear"] = "Clear",
+
         // Dialog
         ["Dialog.Close"] = "Close",
 

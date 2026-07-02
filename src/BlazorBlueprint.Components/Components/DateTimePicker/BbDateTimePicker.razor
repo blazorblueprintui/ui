@@ -1,0 +1,160 @@
+@namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
+
+@*
+    Date Time Picker component - combines a button trigger with a popover containing
+    a calendar for date selection and hour/minute (and optional second / AM-PM) selectors.
+*@
+
+<BbPopover Open="_isOpen" OpenChanged="HandleOpenChanged">
+    <BbPopoverTrigger AsChild="true">
+        <BbButton Variant="ButtonVariant.Outline"
+                Class="@ButtonCssClass"
+                Disabled="@Disabled"
+                aria-required="@(Required ? "true" : null)"
+                @attributes="AdditionalAttributes">
+            <LucideIcon Name="calendar-clock" Class="mr-2 h-4 w-4" />
+            @if (Value.HasValue)
+            {
+                <span>@Value.Value.ToString(EffectiveFormat)</span>
+            }
+            else
+            {
+                <span class="text-muted-foreground">@EffectivePlaceholder</span>
+            }
+        </BbButton>
+    </BbPopoverTrigger>
+    <BbPopoverContent Class="w-auto p-0" Align="PopoverAlign.Start" OnContentReady="@HandleContentReady">
+        <BbCalendar @ref="_calendar"
+                  Selected="@Value"
+                  SelectedChanged="@HandleDateSelected"
+                  MinDate="@MinDate"
+                  MaxDate="@MaxDate"
+                  DisabledDates="@DisabledDates"
+                  FirstDayOfWeek="@FirstDayOfWeek"
+                  DayClassFunc="@DayClassFunc"
+                  DayTemplate="@DayTemplate" />
+        <div class="flex flex-col gap-3 border-t p-3">
+            <div class="flex items-center justify-center gap-2">
+                <!-- Hour Column -->
+                <div class="flex flex-col items-center">
+                    <span class="text-xs text-muted-foreground mb-1">@Localizer["DateTimePicker.Hour"]</span>
+                    <div class="flex flex-col items-center border rounded-md">
+                        <button type="button"
+                                class="@ScrollButtonClass"
+                                aria-label="@Localizer["DateTimePicker.IncrementHour"]"
+                                @onclick="IncrementHour"
+                                disabled="@Disabled">
+                            <LucideIcon Name="chevron-up" Class="h-4 w-4" />
+                        </button>
+                        <span class="w-12 h-10 flex items-center justify-center text-lg font-medium tabular-nums">
+                            @DisplayHour.ToString("D2")
+                        </span>
+                        <button type="button"
+                                class="@ScrollButtonClass"
+                                aria-label="@Localizer["DateTimePicker.DecrementHour"]"
+                                @onclick="DecrementHour"
+                                disabled="@Disabled">
+                            <LucideIcon Name="chevron-down" Class="h-4 w-4" />
+                        </button>
+                    </div>
+                </div>
+
+                <span class="text-2xl font-medium mt-5">:</span>
+
+                <!-- Minute Column -->
+                <div class="flex flex-col items-center">
+                    <span class="text-xs text-muted-foreground mb-1">@Localizer["DateTimePicker.Minute"]</span>
+                    <div class="flex flex-col items-center border rounded-md">
+                        <button type="button"
+                                class="@ScrollButtonClass"
+                                aria-label="@Localizer["DateTimePicker.IncrementMinute"]"
+                                @onclick="IncrementMinute"
+                                disabled="@Disabled">
+                            <LucideIcon Name="chevron-up" Class="h-4 w-4" />
+                        </button>
+                        <span class="w-12 h-10 flex items-center justify-center text-lg font-medium tabular-nums">
+                            @CurrentMinute.ToString("D2")
+                        </span>
+                        <button type="button"
+                                class="@ScrollButtonClass"
+                                aria-label="@Localizer["DateTimePicker.DecrementMinute"]"
+                                @onclick="DecrementMinute"
+                                disabled="@Disabled">
+                            <LucideIcon Name="chevron-down" Class="h-4 w-4" />
+                        </button>
+                    </div>
+                </div>
+
+                @if (ShowSeconds)
+                {
+                    <span class="text-2xl font-medium mt-5">:</span>
+
+                    <!-- Second Column -->
+                    <div class="flex flex-col items-center">
+                        <span class="text-xs text-muted-foreground mb-1">@Localizer["DateTimePicker.Second"]</span>
+                        <div class="flex flex-col items-center border rounded-md">
+                            <button type="button"
+                                    class="@ScrollButtonClass"
+                                    aria-label="@Localizer["DateTimePicker.IncrementSecond"]"
+                                    @onclick="IncrementSecond"
+                                    disabled="@Disabled">
+                                <LucideIcon Name="chevron-up" Class="h-4 w-4" />
+                            </button>
+                            <span class="w-12 h-10 flex items-center justify-center text-lg font-medium tabular-nums">
+                                @CurrentSecond.ToString("D2")
+                            </span>
+                            <button type="button"
+                                    class="@ScrollButtonClass"
+                                    aria-label="@Localizer["DateTimePicker.DecrementSecond"]"
+                                    @onclick="DecrementSecond"
+                                    disabled="@Disabled">
+                                <LucideIcon Name="chevron-down" Class="h-4 w-4" />
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                @if (TimeFormat == TimeFormat.Hour12)
+                {
+                    <!-- AM/PM Toggle -->
+                    <div class="flex flex-col items-center ml-2">
+                        <span class="text-xs text-muted-foreground mb-1">&nbsp;</span>
+                        <div class="flex flex-col border rounded-md overflow-hidden">
+                            <button type="button"
+                                    class="@GetAmPmButtonClass(true)"
+                                    @onclick="() => SetAmPm(true)"
+                                    disabled="@Disabled">
+                                AM
+                            </button>
+                            <button type="button"
+                                    class="@GetAmPmButtonClass(false)"
+                                    @onclick="() => SetAmPm(false)"
+                                    disabled="@Disabled">
+                                PM
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-between gap-2">
+                <BbButton Variant="ButtonVariant.Outline"
+                        Size="ButtonSize.Small"
+                        Class="flex-1"
+                        Disabled="@Disabled"
+                        OnClick="SetNow">
+                    @Localizer["DateTimePicker.Now"]
+                </BbButton>
+                <BbButton Variant="ButtonVariant.Outline"
+                        Size="ButtonSize.Small"
+                        Class="flex-1"
+                        Disabled="@(Disabled || !Value.HasValue)"
+                        OnClick="Clear">
+                    @Localizer["DateTimePicker.Clear"]
+                </BbButton>
+            </div>
+        </div>
+    </BbPopoverContent>
+</BbPopover>
