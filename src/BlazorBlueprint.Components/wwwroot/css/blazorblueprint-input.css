@@ -19,6 +19,10 @@
 /* Configure source paths for scanning Razor files */
 @source "../../Components";
 
+/* Safelist the bare chat utilities so consumers of the prebuilt CSS can
+   apply them directly (component sources only use the variant forms). */
+@source inline("shimmer scroll-fade-x");
+
 /* Component structural variables & default theme tokens */
 /* Alert defaults let users drop in a raw tweakcn/shadcn theme without defining
    the BB-specific --alert-* variables. Un-layered :root in the user's theme
@@ -866,4 +870,47 @@
 @keyframes bb-alert-countdown {
   from { width: 100%; }
   to { width: 0%; }
+}
+
+/* Chat utilities (Attachment/Marker/Message). @utility cannot be nested
+   inside a layer; these land in the `utilities` layer like tw-animate's. */
+
+/* Animated gradient text sweep for in-progress labels
+   (e.g. uploading attachment titles, "is typing..." markers). */
+@utility shimmer {
+  color: transparent;
+  background: linear-gradient(
+      90deg,
+      var(--muted-foreground) 0%,
+      var(--foreground) 50%,
+      var(--muted-foreground) 100%
+    )
+    0 0 / 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: bb-shimmer 2s linear infinite;
+}
+
+/* Fades out the horizontal edges of a scroll container
+   (e.g. attachment group rows). */
+@utility scroll-fade-x {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 1.5rem,
+    black calc(100% - 1.5rem),
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 1.5rem,
+    black calc(100% - 1.5rem),
+    transparent
+  );
+}
+
+@keyframes bb-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
 }

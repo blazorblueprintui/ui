@@ -1,0 +1,328 @@
+@page "/components/attachment"
+
+<PageTitle>Attachment Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Attachment Component</h1>
+            <p class="text-xl text-muted-foreground">
+                Displays files or images with metadata, upload states, actions, and optional trigger overlays.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Attachment</h2>
+            <p class="text-sm text-muted-foreground">
+                Compose media, content, and actions for a file row.
+            </p>
+        </div>
+        <div class="rounded-lg border p-4">
+            <div class="mx-auto flex w-full max-w-sm flex-col gap-2 py-12">
+                <BbAttachment>
+                    <BbAttachmentMedia>
+                        <LucideIcon Name="file-text" Size="18"/>
+                    </BbAttachmentMedia>
+                    <BbAttachmentContent>
+                        <BbAttachmentTitle>sales-dashboard.pdf</BbAttachmentTitle>
+                        <BbAttachmentDescription>PDF · 2.4 MB</BbAttachmentDescription>
+                    </BbAttachmentContent>
+                    <BbAttachmentActions>
+                        <BbAttachmentAction aria-label="Remove sales-dashboard.pdf">
+                            <LucideIcon Name="x" Size="14"/>
+                        </BbAttachmentAction>
+                    </BbAttachmentActions>
+                </BbAttachment>
+            </div>
+        </div>
+        <CodeBlock Source="Components/Attachment/basic.txt"/>
+    </div>
+
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">States</h2>
+            <p class="text-sm text-muted-foreground">
+                Visual state support for upload lifecycle.
+            </p>
+        </div>
+        <div class="space-y-2 rounded-lg border p-4">
+            <div class="mx-auto flex w-full max-w-sm flex-col gap-2 py-12">
+                <BbAttachment State="AttachmentState.Idle" Class="w-full">
+                    <BbAttachmentMedia>
+                        <LucideIcon Name="clock"/>
+                    </BbAttachmentMedia>
+                    <BbAttachmentContent>
+                        <BbAttachmentTitle>selected-file.pdf</BbAttachmentTitle>
+                        <BbAttachmentDescription>PDF · 2.4 MB</BbAttachmentDescription>
+                    </BbAttachmentContent>
+                    <BbAttachmentActions>
+                        <BbAttachmentAction aria-label="Remove selected-file.pdf">
+                            <LucideIcon Name="x"/>
+                        </BbAttachmentAction>
+                    </BbAttachmentActions>
+                </BbAttachment>
+                <BbAttachment State="AttachmentState.Uploading" Class="w-full">
+                    <BbAttachmentMedia>
+                        <BbSpinner/>
+                    </BbAttachmentMedia>
+                    <BbAttachmentContent>
+                        <BbAttachmentTitle>design-system.zip</BbAttachmentTitle>
+                        <BbAttachmentDescription>Uploading · 64%</BbAttachmentDescription>
+                    </BbAttachmentContent>
+                    <BbAttachmentActions>
+                        <BbAttachmentAction aria-label="Remove design-system.zip">
+                            <LucideIcon Name="x"/>
+                        </BbAttachmentAction>
+                    </BbAttachmentActions>
+                </BbAttachment>
+                <BbAttachment State="AttachmentState.Processing" Class="w-full">
+                    <BbAttachmentMedia>
+                        <LucideIcon Name="file-text"/>
+                    </BbAttachmentMedia>
+                    <BbAttachmentContent>
+                        <BbAttachmentTitle>market-research.pdf</BbAttachmentTitle>
+                        <BbAttachmentDescription>Processing document</BbAttachmentDescription>
+                    </BbAttachmentContent>
+                    <BbAttachmentActions>
+                        <BbAttachmentAction aria-label="Remove market-research.pdf">
+                            <LucideIcon Name="x"/>
+                        </BbAttachmentAction>
+                    </BbAttachmentActions>
+                </BbAttachment>
+                <BbAttachment State="AttachmentState.Error" Class="w-full">
+                    <BbAttachmentMedia>
+                        <LucideIcon Name="triangle-alert"/>
+                    </BbAttachmentMedia>
+                    <BbAttachmentContent>
+                        <BbAttachmentTitle>financial-model.xlsx</BbAttachmentTitle>
+                        <BbAttachmentDescription>Upload failed. Try again.</BbAttachmentDescription>
+                    </BbAttachmentContent>
+                    <BbAttachmentActions>
+                        <BbAttachmentAction aria-label="Remove financial-model.xlsx">
+                            <LucideIcon Name="x"/>
+                        </BbAttachmentAction>
+                    </BbAttachmentActions>
+                </BbAttachment>
+                <BbAttachment State="AttachmentState.Done" Class="w-full">
+                    <BbAttachmentMedia>
+                        <LucideIcon Name="check"/>
+                    </BbAttachmentMedia>
+                    <BbAttachmentContent>
+                        <BbAttachmentTitle>uploaded-report.pdf</BbAttachmentTitle>
+                        <BbAttachmentDescription>Uploaded · 1.8 MB</BbAttachmentDescription>
+                    </BbAttachmentContent>
+                    <BbAttachmentActions>
+                        <BbAttachmentAction aria-label="Remove uploaded-report.pdf">
+                            <LucideIcon Name="x"/>
+                        </BbAttachmentAction>
+                    </BbAttachmentActions>
+                </BbAttachment>
+            </div>
+        </div>
+        <CodeBlock Source="Components/Attachment/states.txt"/>
+    </div>
+
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Sizes and Orientation</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">Size</code> and <code
+                    class="text-xs bg-muted px-1 py-0.5 rounded">Orientation</code> for different contexts. Vertical
+                cards stack the media above the content and pair well with
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">AttachmentMediaVariant.Image</code> previews.
+            </p>
+        </div>
+        <div class="space-y-2 rounded-lg border p-4">
+            <div class="mx-auto flex w-full max-w-sm flex-col gap-2 py-12">
+                <BbAttachment Size="AttachmentSize.Default" Class="w-full">
+                    <BbAttachmentMedia>
+                        <LucideIcon Name="file"/>
+                    </BbAttachmentMedia>
+                    <BbAttachmentContent>
+                        <BbAttachmentTitle>Default attachment</BbAttachmentTitle>
+                        <BbAttachmentDescription>PDF · 2.4 MB</BbAttachmentDescription>
+                    </BbAttachmentContent>
+                </BbAttachment>
+                <BbAttachment Size="AttachmentSize.Sm" Class="w-full">
+                    <BbAttachmentMedia>
+                        <LucideIcon Name="file"/>
+                    </BbAttachmentMedia>
+                    <BbAttachmentContent>
+                        <BbAttachmentTitle>Small attachment</BbAttachmentTitle>
+                        <BbAttachmentDescription>PDF · 2.4 MB</BbAttachmentDescription>
+                    </BbAttachmentContent>
+                </BbAttachment>
+                <BbAttachment Size="AttachmentSize.Xs" Class="w-full">
+                    <BbAttachmentMedia>
+                        <LucideIcon Name="file"/>
+                    </BbAttachmentMedia>
+                    <BbAttachmentContent>
+                        <BbAttachmentTitle>Extra small attachment</BbAttachmentTitle>
+                        <BbAttachmentDescription>PDF · 2.4 MB</BbAttachmentDescription>
+                    </BbAttachmentContent>
+                </BbAttachment>
+                <div class="flex items-start justify-center gap-3 pt-4">
+                    <BbAttachment Orientation="AttachmentOrientation.Vertical">
+                        <BbAttachmentMedia>
+                            <LucideIcon Name="file-text"/>
+                        </BbAttachmentMedia>
+                        <BbAttachmentContent>
+                            <BbAttachmentTitle>release-notes.md</BbAttachmentTitle>
+                            <BbAttachmentDescription>MD · 8 KB</BbAttachmentDescription>
+                        </BbAttachmentContent>
+                    </BbAttachment>
+                    <BbAttachment Orientation="AttachmentOrientation.Vertical">
+                        <BbAttachmentMedia Variant="AttachmentMediaVariant.Image">
+                            <img src="_content/BlazorBlueprint.Demo.Shared/images/b-icon-blueprint.png"
+                                 alt="Preview of blueprint-logo.png"/>
+                        </BbAttachmentMedia>
+                        <BbAttachmentContent>
+                            <BbAttachmentTitle>blueprint-logo.png</BbAttachmentTitle>
+                            <BbAttachmentDescription>PNG · 24 KB</BbAttachmentDescription>
+                        </BbAttachmentContent>
+                    </BbAttachment>
+                </div>
+            </div>
+        </div>
+        <CodeBlock Source="Components/Attachment/sizes-orientation.txt"/>
+    </div>
+
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Group and Trigger</h2>
+            <p class="text-sm text-muted-foreground">
+                Use a horizontal group and full-card trigger overlays while keeping actions clickable.
+            </p>
+        </div>
+        <div class="space-y-3 rounded-lg border p-4">
+            <BbAttachmentGroup>
+                <BbAttachment Class="min-w-64">
+                    <BbAttachmentMedia>
+                        <LucideIcon Name="file-code" Size="18"/>
+                    </BbAttachmentMedia>
+                    <BbAttachmentContent>
+                        <BbAttachmentTitle>renderer.tsx</BbAttachmentTitle>
+                        <BbAttachmentDescription>TSX · 12 KB</BbAttachmentDescription>
+                    </BbAttachmentContent>
+                </BbAttachment>
+                <BbAttachment Class="min-w-64">
+                    <BbAttachmentMedia>
+                        <LucideIcon Name="file-text" Size="18"/>
+                    </BbAttachmentMedia>
+                    <BbAttachmentContent>
+                        <BbAttachmentTitle>briefing-notes.pdf</BbAttachmentTitle>
+                        <BbAttachmentDescription>PDF · 1.4 MB</BbAttachmentDescription>
+                    </BbAttachmentContent>
+                </BbAttachment>
+            </BbAttachmentGroup>
+
+            <BbAttachment>
+                <BbAttachmentTrigger aria-label="Open research-summary.pdf preview"
+                                     @onclick="() => previewOpen = true"/>
+                <BbAttachmentMedia>
+                    <LucideIcon Name="file-search" Size="18"/>
+                </BbAttachmentMedia>
+                <BbAttachmentContent>
+                    <BbAttachmentTitle>research-summary.pdf</BbAttachmentTitle>
+                    <BbAttachmentDescription>Open preview dialog</BbAttachmentDescription>
+                </BbAttachmentContent>
+                <BbAttachmentActions>
+                    <BbAttachmentAction aria-label="Copy research-summary.pdf link">
+                        <LucideIcon Name="copy" Size="14"/>
+                    </BbAttachmentAction>
+                </BbAttachmentActions>
+            </BbAttachment>
+
+            <BbAttachment>
+                <BbAttachmentTrigger Href="#" aria-label="Open annual-report.pdf"/>
+                <BbAttachmentMedia>
+                    <LucideIcon Name="file-text" Size="18"/>
+                </BbAttachmentMedia>
+                <BbAttachmentContent>
+                    <BbAttachmentTitle>annual-report.pdf</BbAttachmentTitle>
+                    <BbAttachmentDescription>Whole card links to the file</BbAttachmentDescription>
+                </BbAttachmentContent>
+            </BbAttachment>
+
+            <BbDialog @bind-Open="previewOpen">
+                <BbDialogContent>
+                    <BbDialogHeader>
+                        <BbDialogTitle>research-summary.pdf</BbDialogTitle>
+                        <BbDialogDescription>Preview of the attached document.</BbDialogDescription>
+                    </BbDialogHeader>
+                    <BbDialogFooter>
+                        <BbButton Variant="ButtonVariant.Outline" @onclick="() => previewOpen = false">Close</BbButton>
+                    </BbDialogFooter>
+                </BbDialogContent>
+            </BbDialog>
+        </div>
+        <CodeBlock Source="Components/Attachment/group-trigger.txt"/>
+    </div>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                Label icon-only attachment actions with descriptive <code>aria-label</code> values.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code>BbAttachmentTrigger</code> should always include an <code>aria-label</code> because it has no
+                visible text.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Include failure reason text in <code>BbAttachmentDescription</code> for error states.
+            </AccessibilityItem>
+        </AriaAttributes>
+    </AccessibilityList>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+
+        <ApiReference ComponentName="Attachment">
+            <ApiParameter Name="State" Type="AttachmentState" Default="Done">
+                Upload state. Options: Idle, Uploading, Processing, Error, Done.
+            </ApiParameter>
+            <ApiParameter Name="Size" Type="AttachmentSize" Default="Default">
+                Card sizing option. Options: Default, Sm, Xs.
+            </ApiParameter>
+            <ApiParameter Name="Orientation" Type="AttachmentOrientation" Default="Horizontal">
+                Layout direction. Options: Horizontal, Vertical.
+            </ApiParameter>
+        </ApiReference>
+
+        <ApiReference ComponentName="AttachmentMedia">
+            <ApiParameter Name="Variant" Type="AttachmentMediaVariant" Default="Icon">
+                Media rendering mode. Options: Icon, Image.
+            </ApiParameter>
+        </ApiReference>
+
+        <ApiReference ComponentName="AttachmentAction">
+            <ApiParameter Name="Variant" Type="ButtonVariant" Default="Ghost">
+                Button variant for the action control.
+            </ApiParameter>
+            <ApiParameter Name="Size" Type="ButtonSize" Default="IconSmall">
+                Button size for the action control.
+            </ApiParameter>
+        </ApiReference>
+
+        <ApiReference ComponentName="AttachmentTrigger">
+            <ApiParameter Name="AsChild" Type="AttachmentTriggerElement" Default="Button">
+                Element type to render. Options: Button, Anchor. Automatically switches to Anchor when Href is set.
+            </ApiParameter>
+            <ApiParameter Name="Href" Type="string?">
+                Link target when rendering as an anchor.
+            </ApiParameter>
+            <ApiParameter Name="Class" Type="string?">
+                Additional CSS classes for the trigger overlay.
+            </ApiParameter>
+        </ApiReference>
+    </section>
+</div>
+
+@code {
+    private bool previewOpen;
+}
