@@ -121,6 +121,31 @@
         <CodeBlock Source="Components/DataGrid/row-column-styling.txt" />
     </div>
 
+    <!-- ── Conditional Cell Formatting ─────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Conditional Cell Formatting</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">CellClassFunc</code> to compute
+                cell classes from the row's data item — style individual cells without replacing
+                their content via <code class="bg-muted px-1 py-0.5 rounded">CellTemplate</code>.
+                Combines with the static <code class="bg-muted px-1 py-0.5 rounded">CellClass</code>.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable
+                    CellClass="font-mono tabular-nums"
+                    CellClassFunc="@(p => p.Salary >= 100000 ? "text-emerald-600 dark:text-emerald-400 font-semibold" : p.Salary < 60000 ? "text-destructive" : null)" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)"
+                    CellClassFunc="@(p => p.Status == "Inactive" ? "text-muted-foreground line-through" : null)" />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/conditional-cell-formatting.txt" />
+    </div>
+
     <!-- ── Custom Styling Showcase ────────────────────────────────── -->
     <div class="space-y-8">
         <div class="space-y-2">
