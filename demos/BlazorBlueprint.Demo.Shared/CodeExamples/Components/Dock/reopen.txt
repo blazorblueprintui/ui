@@ -1,0 +1,51 @@
+<div class="flex items-center gap-2">
+    @foreach (var id in closedPanels)
+    {
+        <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Outline"
+                  OnClick="() => Reopen(id)">
+            Reopen @titles[id]
+        </BbButton>
+    }
+</div>
+
+<div class="h-[420px] rounded-lg border">
+    <BbDock @ref="dock" OnPanelClosed="OnPanelClosed">
+        <BbDockPanel Id="document" Title="Document" Region="DockZone.Center">
+            <div class="p-4">Document body</div>
+        </BbDockPanel>
+        <BbDockPanel Id="comments" Title="Comments" Region="DockZone.Right">
+            <div class="p-4">Comments</div>
+        </BbDockPanel>
+        <BbDockPanel Id="history" Title="History" Region="DockZone.Bottom">
+            <div class="p-4">Revision history</div>
+        </BbDockPanel>
+    </BbDock>
+</div>
+
+@code {
+    private BbDock? dock;
+    private readonly List<string> closedPanels = new();
+    private readonly Dictionary<string, string> titles = new()
+    {
+        ["document"] = "Document",
+        ["comments"] = "Comments",
+        ["history"] = "History",
+    };
+
+    private void OnPanelClosed(string id)
+    {
+        if (!closedPanels.Contains(id))
+        {
+            closedPanels.Add(id);
+        }
+    }
+
+    private async Task Reopen(string id)
+    {
+        closedPanels.Remove(id);
+        if (dock is not null)
+        {
+            await dock.OpenPanelAsync(id);
+        }
+    }
+}

@@ -1,0 +1,569 @@
+@page "/components/dock"
+<PageTitle>Dock Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-5xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Dock</h1>
+            <p class="text-xl text-muted-foreground">
+                An IDE-style docking workspace. Drag panels by their tabs to re-dock them as tabs or
+                splits, detach them into floating windows, maximize a group, or close and reopen panels —
+                the docking experience you know from Visual Studio, VS Code and dockspawn.
+            </p>
+        </div>
+    </div>
+
+    <!-- Interactions -->
+    <div class="rounded-lg border bg-muted/30 p-4">
+        <h2 class="mb-2 flex items-center gap-2 text-sm font-semibold">
+            <LucideIcon Name="move" Size="16" /> Try these interactions
+        </h2>
+        <ul class="grid gap-1.5 text-sm text-muted-foreground sm:grid-cols-2">
+            <li>• <strong class="text-foreground">Drag a tab</strong> onto another panel's center to combine them as tabs.</li>
+            <li>• <strong class="text-foreground">Drag to an edge</strong> of a panel (or the dock) to create a split.</li>
+            <li>• <strong class="text-foreground">Drag a tab outside</strong> the dock to float it in its own window.</li>
+            <li>• <strong class="text-foreground">Drag a floating window</strong> by its tab strip; resize it from the corner.</li>
+            <li>• <strong class="text-foreground">Maximize</strong> a group with the button in the tab bar.</li>
+            <li>• <strong class="text-foreground">Close</strong> a tab with its ✕, then reopen it (see below).</li>
+            <li>• <strong class="text-foreground">Right-click a tab</strong> to close others, close all, or pin it to the front.</li>
+        </ul>
+    </div>
+    
+    <!-- Basic -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic</h2>
+            <p class="text-sm text-muted-foreground">
+                Panels are placed by <code>Region</code>. Panels sharing a region become tabs in the same group.
+            </p>
+        </div>
+
+        <div class="h-[400px] border">
+            <BbDock>
+                <BbDockPanel Id="b-editor" Title="Editor" Region="DockZone.Center" Closable="false">
+                    <div class="p-4 text-sm text-muted-foreground">Main editor content</div>
+                </BbDockPanel>
+                <BbDockPanel Id="b-explorer" Title="Explorer" Region="DockZone.Left">
+                    <div class="p-4 text-sm text-muted-foreground">File tree</div>
+                </BbDockPanel>
+                <BbDockPanel Id="b-output" Title="Output" Region="DockZone.Bottom">
+                    <div class="p-4 text-sm text-muted-foreground">Build output</div>
+                </BbDockPanel>
+            </BbDock>
+        </div>
+
+        <CodeBlock Source="Components/Dock/basic.txt" />
+    </div>
+
+    <!-- Tab reordering -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Tab Reordering</h2>
+            <p class="text-sm text-muted-foreground">
+                Drag a tab along the strip to reorder it — an insertion line shows where it will land and the
+                surrounding layout stays put. Tabs can also be dropped onto another group's strip at a precise position.
+            </p>
+        </div>
+
+        <div class="h-[360px] border">
+            <BbDock>
+                <BbDockPanel Id="r-home" Title="Home.razor" Region="DockZone.Center" Closable="false">
+                    <Icon><LucideIcon Name="house" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="p-4 text-sm text-muted-foreground">Drag the tabs above to reorder them. The insertion line marks the drop slot.</div>
+                    </ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="r-about" Title="About.razor" Region="DockZone.Center" Order="1">
+                    <Icon><LucideIcon Name="info" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">About page.</div></ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="r-contact" Title="Contact.razor" Region="DockZone.Center" Order="2">
+                    <Icon><LucideIcon Name="mail" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Contact page.</div></ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="r-settings" Title="Settings.razor" Region="DockZone.Center" Order="3">
+                    <Icon><LucideIcon Name="settings" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Settings page.</div></ChildContent>
+                </BbDockPanel>
+
+                <BbDockPanel Id="r-outline" Title="Outline" Region="DockZone.Right">
+                    <Icon><LucideIcon Name="list-tree" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Drop a tab onto this strip to move it here at a precise position.</div></ChildContent>
+                </BbDockPanel>
+            </BbDock>
+        </div>
+
+        <CodeBlock Source="Components/Dock/reorder.txt" />
+    </div>
+
+    <!-- Tab context menu -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Tab Context Menu &amp; Pinning</h2>
+            <p class="text-sm text-muted-foreground">
+                Right-click any tab for a context menu with <strong>Close</strong>,
+                <strong>Close Other Tabs</strong> (enabled only when the group has more than one tab),
+                <strong>Close All But Pinned</strong>, <strong>Close All Tabs</strong> and
+                <strong>Pin Tab</strong>. Pinned tabs show a pin
+                marker and sit at the front of the strip in the order they were pinned. Pinned tabs can
+                only be reordered amongst themselves, and unpinned tabs cannot be dragged ahead of them.
+            </p>
+        </div>
+
+        <div class="h-[360px] border">
+            <BbDock>
+                <BbDockPanel Id="c-index" Title="Index.razor" Region="DockZone.Center">
+                    <Icon><LucideIcon Name="house" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="space-y-2 p-4 text-sm text-muted-foreground">
+                            <p>Right-click any tab above to open its context menu.</p>
+                            <p>Pin a couple of tabs, then drag to reorder — pinned tabs stay grouped at the front.</p>
+                        </div>
+                    </ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="c-layout" Title="Layout.razor" Region="DockZone.Center" Order="1">
+                    <Icon><LucideIcon Name="layout-template" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Shared layout.</div></ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="c-counter" Title="Counter.razor" Region="DockZone.Center" Order="2">
+                    <Icon><LucideIcon Name="plus" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Counter page.</div></ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="c-weather" Title="Weather.razor" Region="DockZone.Center" Order="3">
+                    <Icon><LucideIcon Name="cloud-sun" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Weather page.</div></ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="c-fetch" Title="FetchData.razor" Region="DockZone.Center" Order="4">
+                    <Icon><LucideIcon Name="database" Size="14" /></Icon>
+                    <ChildContent><div class="p-4 text-sm text-muted-foreground">Fetch data page.</div></ChildContent>
+                </BbDockPanel>
+            </BbDock>
+        </div>
+
+        <CodeBlock Source="Components/Dock/contextmenu.txt" />
+    </div>
+
+    <!-- Close & reopen -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Close &amp; Reopen Panels</h2>
+            <p class="text-sm text-muted-foreground">
+                Closing a panel raises <code>OnPanelClosed</code>. Use the dock's
+                <code>OpenPanelAsync</code> method to bring it back.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+            @if (closedPanels.Count == 0)
+            {
+                <span class="text-sm text-muted-foreground">Close a tab below to reopen it here.</span>
+            }
+            @foreach (var id in closedPanels)
+            {
+                <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Outline" OnClick="() => Reopen(id)">
+                    <LucideIcon Name="plus" Size="14" Class="mr-1" /> Reopen @titles[id]
+                </BbButton>
+            }
+        </div>
+
+        <div class="h-[420px] border">
+            <BbDock @ref="reopenDock" OnPanelClosed="OnPanelClosed">
+                <BbDockPanel Id="document" Title="Document" Region="DockZone.Center">
+                    <Icon><LucideIcon Name="file-text" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="p-4 text-sm text-muted-foreground">The main document. This tab can be closed and reopened.</div>
+                    </ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="comments" Title="Comments" Region="DockZone.Right">
+                    <Icon><LucideIcon Name="message-square" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="p-4 text-sm text-muted-foreground">Reviewer comments.</div>
+                    </ChildContent>
+                </BbDockPanel>
+                <BbDockPanel Id="history" Title="History" Region="DockZone.Bottom">
+                    <Icon><LucideIcon Name="history" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="p-4 text-sm text-muted-foreground">Revision history.</div>
+                    </ChildContent>
+                </BbDockPanel>
+            </BbDock>
+        </div>
+
+        <CodeBlock Source="Components/Dock/reopen.txt" />
+    </div>
+    
+    
+    <!-- IDE workspace -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">IDE Workspace</h2>
+            <p class="text-sm text-muted-foreground">
+                A full layout with an explorer, tabbed editors, a bottom panel and an inspector — every
+                panel can be dragged, split, floated, maximized or closed.
+            </p>
+        </div>
+
+        <div class="h-[600px] border">
+            <BbDock OnLayoutChanged="() => layoutChanges++">
+                <BbDockPanel Id="explorer" Title="Explorer" Region="DockZone.Left">
+                    <Icon><LucideIcon Name="files" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="p-2 text-sm">
+                            <div class="px-2 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Workspace</div>
+                            @foreach (var (name, icon) in explorerItems)
+                            {
+                                <div class="flex items-center gap-2 rounded px-2 py-1 hover:bg-accent hover:text-accent-foreground">
+                                    <LucideIcon Name="@icon" Size="14" Class="text-muted-foreground" />
+                                    <span>@name</span>
+                                </div>
+                            }
+                        </div>
+                    </ChildContent>
+                </BbDockPanel>
+
+                <BbDockPanel Id="search" Title="Search" Region="DockZone.Left" Order="1">
+                    <Icon><LucideIcon Name="search" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="space-y-3 p-3 text-sm">
+                            <BbInput Placeholder="Search files..." />
+                            <p class="text-xs text-muted-foreground">3 results in 2 files</p>
+                            <div class="space-y-1">
+                                <div class="rounded bg-muted/50 px-2 py-1 text-xs">Program.cs · line 12</div>
+                                <div class="rounded bg-muted/50 px-2 py-1 text-xs">README.md · line 4</div>
+                            </div>
+                        </div>
+                    </ChildContent>
+                </BbDockPanel>
+
+                <BbDockPanel Id="program" Title="Program.cs" Region="DockZone.Center" Closable="false">
+                    <Icon><LucideIcon Name="file-code" Size="14" /></Icon>
+                    <ChildContent>
+                        <pre class="h-full overflow-auto bg-background p-4 text-xs leading-relaxed"><code>@programSource</code></pre>
+                    </ChildContent>
+                </BbDockPanel>
+
+                <BbDockPanel Id="readme" Title="README.md" Region="DockZone.Center" Order="1">
+                    <Icon><LucideIcon Name="file-text" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="space-y-3 p-4 text-sm">
+                            <h3 class="text-lg font-semibold">Blazor Blueprint</h3>
+                            <p class="text-muted-foreground">A two-layer Blazor component library inspired by shadcn/ui and Radix.</p>
+                            <p class="text-muted-foreground">Drag this tab around to see docking in action.</p>
+                        </div>
+                    </ChildContent>
+                </BbDockPanel>
+
+                <BbDockPanel Id="terminal" Title="Terminal" Region="DockZone.Bottom">
+                    <Icon><LucideIcon Name="square-terminal" Size="14" /></Icon>
+                    <ChildContent>
+                        <pre class="h-full overflow-auto bg-background p-3 font-mono text-xs leading-relaxed text-muted-foreground"><code>$ dotnet build
+  Determining projects to restore...
+  Restored BlazorBlueprint.Components (in 412 ms).
+  BlazorBlueprint.Components -> bin/Debug/net8.0/BlazorBlueprint.Components.dll
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+$ _</code></pre>
+                    </ChildContent>
+                </BbDockPanel>
+
+                <BbDockPanel Id="problems" Title="Problems" Region="DockZone.Bottom" Order="1">
+                    <Icon><LucideIcon Name="circle-alert" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="divide-y text-sm">
+                            <div class="flex items-center gap-2 px-3 py-2">
+                                <LucideIcon Name="circle-x" Size="14" Class="text-destructive" />
+                                <span>Unused variable <code class="text-xs">temp</code></span>
+                                <span class="ml-auto text-xs text-muted-foreground">Program.cs:24</span>
+                            </div>
+                            <div class="flex items-center gap-2 px-3 py-2">
+                                <LucideIcon Name="triangle-alert" Size="14" Class="text-yellow-500" />
+                                <span>Missing XML comment</span>
+                                <span class="ml-auto text-xs text-muted-foreground">Dock.cs:11</span>
+                            </div>
+                        </div>
+                    </ChildContent>
+                </BbDockPanel>
+
+                <BbDockPanel Id="properties" Title="Properties" Region="DockZone.Right">
+                    <Icon><LucideIcon Name="settings-2" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="space-y-3 p-3 text-sm">
+                            @foreach (var (label, value) in properties)
+                            {
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-muted-foreground">@label</span>
+                                    <span class="font-medium">@value</span>
+                                </div>
+                            }
+                        </div>
+                    </ChildContent>
+                </BbDockPanel>
+            </BbDock>
+        </div>
+        <p class="text-xs text-muted-foreground">Layout changes: @layoutChanges</p>
+
+        <CodeBlock Source="Components/Dock/ide.txt" />
+    </div>
+
+
+    <!-- Size & movement constraints -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Size &amp; Movement Constraints</h2>
+            <p class="text-sm text-muted-foreground">
+                Lock a panel in place with <code>Locked</code> so it can't be moved, floated or closed — ideal
+                for a mandatory toolbox region. Constrain panel size with <code>MinWidth</code>,
+                <code>MinHeight</code>, <code>MaxWidth</code> and <code>MaxHeight</code> (pixels). Try to drag,
+                float or close the locked <strong>Toolbox</strong> — it stays put. Drag the <strong>Inspector</strong>
+                out to a floating window and resize it: it won't shrink below 240×200 or grow past 420px wide.
+                The <strong>Output</strong> tab can be re-docked but never floated (<code>CanFloat="false"</code>).
+            </p>
+        </div>
+
+        <div class="h-[600px] border">
+            <BbDock>
+                <BbDockPanel Id="toolbox" Title="Toolbox" Region="DockZone.Left" Locked="true" MinWidth="200">
+                    <Icon><LucideIcon Name="wrench" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="space-y-1 p-2 text-sm">
+                            <div class="flex items-center gap-1 px-2 py-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                <LucideIcon Name="lock" Size="12" /> Locked region
+                            </div>
+                            @foreach (var (name, icon) in toolboxItems)
+                            {
+                                <div class="flex items-center gap-2 rounded px-2 py-1 hover:bg-accent hover:text-accent-foreground">
+                                    <LucideIcon Name="@icon" Size="14" Class="text-muted-foreground" />
+                                    <span>@name</span>
+                                </div>
+                            }
+                        </div>
+                    </ChildContent>
+                </BbDockPanel>
+
+                <BbDockPanel Id="canvas" Title="Canvas" Region="DockZone.Center">
+                    <Icon><LucideIcon Name="layout-dashboard" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="space-y-2 p-4 text-sm text-muted-foreground">
+                            <p>The <strong>Toolbox</strong> on the left is locked: it has no close button and
+                            can't be dragged, reordered, re-docked or floated.</p>
+                            <p>The <strong>Inspector</strong> on the right enforces its min/max size when floated.</p>
+                        </div>
+                    </ChildContent>
+                </BbDockPanel>
+
+                <BbDockPanel Id="inspector" Title="Inspector" Region="DockZone.Right"
+                             MinWidth="240" MaxWidth="420" MinHeight="200">
+                    <Icon><LucideIcon Name="sliders-horizontal" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="space-y-3 p-3 text-sm">
+                            <p class="text-muted-foreground">Drag this tab out to a floating window, then resize it.</p>
+                            <p class="text-xs text-muted-foreground">Min 240×200 · Max width 420px.</p>
+                        </div>
+                    </ChildContent>
+                </BbDockPanel>
+
+                <BbDockPanel Id="output" Title="Output" Region="DockZone.Bottom" CanFloat="false">
+                    <Icon><LucideIcon Name="terminal" Size="14" /></Icon>
+                    <ChildContent>
+                        <div class="p-3 text-xs text-muted-foreground">
+                            This panel can be re-docked anywhere, but dragging it outside the dock won't detach it.
+                        </div>
+                    </ChildContent>
+                </BbDockPanel>
+            </BbDock>
+        </div>
+
+        <CodeBlock Source="Components/Dock/constraints.txt" />
+    </div>
+
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Each tab strip is a <code>role="tablist"</code>; tabs use <code>role="tab"</code> with <code>aria-selected</code> reflecting the active panel and a roving <code>tabindex</code> (the active tab is in the tab order, the rest are reachable with the arrow keys).</AccessibilityItem>
+            <AccessibilityItem>Panel content renders in a <code>role="tabpanel"</code> linked to its tab via <code>aria-controls</code> and <code>aria-labelledby</code>.</AccessibilityItem>
+            <AccessibilityItem>Close and maximize controls expose descriptive <code>aria-label</code>s.</AccessibilityItem>
+            <AccessibilityItem>Resize handles between docked panels reuse the Resizable separator semantics.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move focus between tabs in a strip">
+                <BbKbd>Arrow Left</BbKbd> / <BbKbd>Arrow Right</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move focus to the first / last tab">
+                <BbKbd>Home</BbKbd> / <BbKbd>End</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate the focused tab">
+                <BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Resize a split between panels">
+                <BbKbd>Arrow Keys</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbDock">
+                <ApiParameter Name="ChildContent" Type="RenderFragment?" Default="null">
+                    The <code>BbDockPanel</code> declarations hosted by the dock.
+                </ApiParameter>
+                <ApiParameter Name="EmptyContent" Type="RenderFragment?" Default="null">
+                    Content shown when no panels are open.
+                </ApiParameter>
+                <ApiParameter Name="OnLayoutChanged" Type="EventCallback" Default="—">
+                    Invoked after the layout changes (docking, floating, closing, reopening).
+                </ApiParameter>
+                <ApiParameter Name="OnPanelClosed" Type="EventCallback&lt;string&gt;" Default="—">
+                    Invoked with the panel id when a panel is closed by the user.
+                </ApiParameter>
+                <ApiParameter Name="OpenPanelAsync(string)" Type="Task" Default="—">
+                    Method that reopens a closed panel into a default location.
+                </ApiParameter>
+                <ApiParameter Name="GetClosedPanelIds()" Type="IReadOnlyList&lt;string&gt;" Default="—">
+                    Method returning the ids of panels currently closed.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?" Default="null">
+                    Additional CSS classes for the dock surface.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="BbDockPanel">
+                <ApiParameter Name="Id" Type="string" Default="—">
+                    Required stable identifier used to track the panel across layout changes.
+                </ApiParameter>
+                <ApiParameter Name="Title" Type="string" Default="&quot;&quot;">
+                    The title shown on the panel's tab.
+                </ApiParameter>
+                <ApiParameter Name="Icon" Type="RenderFragment?" Default="null">
+                    Optional icon rendered before the title on the tab.
+                </ApiParameter>
+                <ApiParameter Name="Region" Type="DockZone" Default="Center">
+                    Initial placement region. Options: Center, Left, Right, Top, Bottom.
+                </ApiParameter>
+                <ApiParameter Name="Order" Type="int" Default="0">
+                    Ordering of panels within a region when the initial layout is built.
+                </ApiParameter>
+                <ApiParameter Name="Closable" Type="bool" Default="true">
+                    Whether the panel can be closed by the user.
+                </ApiParameter>
+                <ApiParameter Name="CanFloat" Type="bool" Default="true">
+                    Whether the panel can be detached into a floating window. Ignored when <code>Locked</code> is true.
+                </ApiParameter>
+                <ApiParameter Name="Locked" Type="bool" Default="false">
+                    When true, the panel can't be dragged to move/reorder/re-dock, detached into a floating window,
+                    or closed. Overrides <code>Closable</code> and <code>CanFloat</code>.
+                </ApiParameter>
+                <ApiParameter Name="MinWidth" Type="int?" Default="null">
+                    Minimum panel width in pixels. Enforced while resizing a floating window; applied as a CSS constraint when docked.
+                </ApiParameter>
+                <ApiParameter Name="MinHeight" Type="int?" Default="null">
+                    Minimum panel height in pixels. Enforced while resizing a floating window; applied as a CSS constraint when docked.
+                </ApiParameter>
+                <ApiParameter Name="MaxWidth" Type="int?" Default="null">
+                    Maximum panel width in pixels. Enforced while resizing a floating window; applied as a CSS constraint when docked.
+                </ApiParameter>
+                <ApiParameter Name="MaxHeight" Type="int?" Default="null">
+                    Maximum panel height in pixels. Enforced while resizing a floating window; applied as a CSS constraint when docked.
+                </ApiParameter>
+                <ApiParameter Name="ChildContent" Type="RenderFragment?" Default="null">
+                    The content rendered when the panel is the active tab.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+
+    <LocalizationSection
+        Description="Dock tab context-menu items, button aria-labels/tooltips, and the empty state are configurable via IBbLocalizer."
+        Labels="@(new LocalizationSection.LabelInfo[]
+        {
+            new("Close", "Close", "Context-menu item that closes the active tab"),
+            new("CloseTab", "Close {0}", "Aria-label/tooltip on a tab's close button ({0} = tab title)"),
+            new("CloseOtherTabs", "Close Other Tabs", "Context-menu item that closes the group's other tabs"),
+            new("CloseAllButPinned", "Close All But Pinned", "Context-menu item that closes all unpinned tabs"),
+            new("CloseAllTabs", "Close All Tabs", "Context-menu item that closes every tab in the group"),
+            new("PinTab", "Pin Tab", "Context-menu item shown when the tab is unpinned"),
+            new("UnpinTab", "Unpin Tab", "Context-menu item shown when the tab is pinned"),
+            new("ShowHiddenTabs", "Show {0} hidden tab(s)", "Aria-label/tooltip on the overflow dropdown ({0} = count)"),
+            new("MaximizePanelGroup", "Maximize panel group", "Aria-label/tooltip on the maximize button"),
+            new("RestorePanelGroup", "Restore panel group", "Aria-label/tooltip on the restore button"),
+            new("NoPanelsOpen", "No panels are open.", "Default empty state shown when no panels remain"),
+        })"
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
+{
+    localizer.Set(""Dock.CloseAllTabs"", ""Alle Tabs schließen"");
+    localizer.Set(""Dock.PinTab"", ""Tab anheften"");
+    localizer.Set(""Dock.ShowHiddenTabs"", ""{0} ausgeblendete(s) Tab(s) anzeigen"");
+});")" />
+</div>
+
+@code {
+    private int layoutChanges;
+
+    private BbDock? reopenDock;
+    private readonly List<string> closedPanels = new();
+    private readonly Dictionary<string, string> titles = new()
+    {
+        ["document"] = "Document",
+        ["comments"] = "Comments",
+        ["history"] = "History",
+    };
+
+    private readonly (string Name, string Icon)[] explorerItems =
+    {
+        ("src", "folder"),
+        ("Program.cs", "file-code"),
+        ("README.md", "file-text"),
+        ("appsettings.json", "braces"),
+        (".gitignore", "file"),
+    };
+
+    private readonly (string Name, string Icon)[] toolboxItems =
+    {
+        ("Select", "mouse-pointer-2"),
+        ("Pen", "pencil"),
+        ("Shapes", "shapes"),
+        ("Text", "type"),
+        ("Colors", "palette"),
+    };
+
+    private readonly (string Label, string Value)[] properties =
+    {
+        ("Name", "Program.cs"),
+        ("Encoding", "UTF-8"),
+        ("Line endings", "LF"),
+        ("Language", "C#"),
+        ("Size", "1.4 KB"),
+    };
+
+    private const string programSource = @"using BlazorBlueprint.Components;
+
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddBlazorBlueprintComponents();
+
+var app = builder.Build();
+app.MapRazorComponents<App>();
+app.Run();";
+
+    private void OnPanelClosed(string id)
+    {
+        if (titles.ContainsKey(id) && !closedPanels.Contains(id))
+        {
+            closedPanels.Add(id);
+        }
+    }
+
+    private async Task Reopen(string id)
+    {
+        closedPanels.Remove(id);
+        if (reopenDock is not null)
+        {
+            await reopenDock.OpenPanelAsync(id);
+        }
+    }
+}

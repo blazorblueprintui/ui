@@ -144,6 +144,19 @@ public class DefaultBbLocalizer : IBbLocalizer
         // Dialog
         ["Dialog.Close"] = "Close",
 
+        // Dock
+        ["Dock.Close"] = "Close",
+        ["Dock.CloseTab"] = "Close {0}",
+        ["Dock.CloseOtherTabs"] = "Close Other Tabs",
+        ["Dock.CloseAllButPinned"] = "Close All But Pinned",
+        ["Dock.CloseAllTabs"] = "Close All Tabs",
+        ["Dock.PinTab"] = "Pin Tab",
+        ["Dock.UnpinTab"] = "Unpin Tab",
+        ["Dock.ShowHiddenTabs"] = "Show {0} hidden tab(s)",
+        ["Dock.MaximizePanelGroup"] = "Maximize panel group",
+        ["Dock.RestorePanelGroup"] = "Restore panel group",
+        ["Dock.NoPanelsOpen"] = "No panels are open.",
+
         // FilterBuilder
         ["FilterBuilder.FilterBuilderAriaLabel"] = "Filter builder",
         ["FilterBuilder.SelectField"] = "Select field...",
