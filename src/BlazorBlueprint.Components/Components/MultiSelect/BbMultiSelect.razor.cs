@@ -765,7 +765,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
             {
                 await _multiSelectModule.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }
@@ -778,7 +778,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
             {
                 await _elementUtilsModule.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }

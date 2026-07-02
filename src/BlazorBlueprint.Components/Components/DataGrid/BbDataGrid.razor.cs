@@ -3124,7 +3124,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             {
                 await columnsModule.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }
@@ -3138,7 +3138,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             {
                 await clipboardModule.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }

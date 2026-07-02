@@ -491,7 +491,7 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
                 await jsModule.InvokeVoidAsync("dispose", instanceId);
                 await jsModule.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }

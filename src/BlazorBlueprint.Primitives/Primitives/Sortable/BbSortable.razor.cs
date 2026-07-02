@@ -252,7 +252,7 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
                 await _module.InvokeVoidAsync("destroy", Id);
                 await _module.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }

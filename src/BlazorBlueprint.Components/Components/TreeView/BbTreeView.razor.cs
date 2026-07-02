@@ -913,7 +913,7 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
                 await dragDropModule.InvokeVoidAsync("disposeDragDrop", instanceId);
                 await dragDropModule.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Circuit disconnected, ignore
             }

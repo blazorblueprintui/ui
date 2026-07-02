@@ -149,7 +149,7 @@ public partial class BbSidebarInset : IAsyncDisposable
             {
                 await module.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Circuit disconnected
             }
