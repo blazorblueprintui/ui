@@ -213,24 +213,21 @@
         <CodeBlock Source="Components/DateRangePicker/monday-first.txt" />
     </div>
 
-    <!-- Auto Apply and Hidden Buttons -->
+    <!-- Auto-apply without buttons -->
     <div class="space-y-4">
         <div class="space-y-2">
-            <h2 class="text-2xl font-semibold">Buttons reset and apply hidden and auto apply</h2>
+            <h2 class="text-2xl font-semibold">Auto-apply without buttons</h2>
             <p class="text-sm text-muted-foreground">
-                The user doesn't have to click on Apply to validate the selection.
+                With <code class="text-xs bg-muted px-1 py-0.5 rounded">AutoApply</code> the selection is applied and the popover closes as soon as a complete range is picked — no Apply click required. <code class="text-xs bg-muted px-1 py-0.5 rounded">ShowButtons="false"</code> hides the Clear/Apply footer buttons (and implies auto-apply).
             </p>
         </div>
-        <BbDateRangePicker AutoApply="true" DisplayButtons="false"  @bind-Value="_autoApply"/>
-        <p class="text-sm text-muted-foreground">
-            @if (_autoApply != null)
-            {
-                @($"Selected: {_autoApply.Start} - {_autoApply.End}")
-            }
-        </p>
-        <CodeBlock Source="Components/DateRangePicker/display-buttons-auto-apply.txt" />
+        <BbDateRangePicker @bind-Value="_autoApply" AutoApply="true" ShowButtons="false" />
+        @if (_autoApply != null)
+        {
+            <p class="text-sm text-muted-foreground">Selected: @_autoApply.Start.ToShortDateString() - @_autoApply.End.ToShortDateString()</p>
+        }
+        <CodeBlock Source="Components/DateRangePicker/auto-apply.txt" />
     </div>
-
 
     <!-- Disabled -->
     <div class="space-y-4">
@@ -299,6 +296,12 @@
                 </ApiParameter>
                 <ApiParameter Name="ShowPresets" Type="bool" Default="true">
                     Show quick select presets.
+                </ApiParameter>
+                <ApiParameter Name="ShowButtons" Type="bool" Default="true">
+                    Show the Clear and Apply buttons in the popover footer. When false, completed selections are applied automatically.
+                </ApiParameter>
+                <ApiParameter Name="AutoApply" Type="bool" Default="false">
+                    Apply the selection and close the popover as soon as a complete range is selected, without requiring the Apply button.
                 </ApiParameter>
                 <ApiParameter Name="Presets" Type="IReadOnlyList&lt;DateRangeQuickPick&gt;?" Default="null">
                     Custom list of quick-pick presets. Supports built-in presets via implicit conversion from <code class="text-xs bg-muted px-1 py-0.5 rounded">DateRangePreset</code> and custom entries via <code class="text-xs bg-muted px-1 py-0.5 rounded">DateRangeQuickPick.Custom(label, rangeFactory)</code>. When null, the default built-in presets are shown.
@@ -383,6 +386,7 @@
     private DateRange? _customFormat;
     private DateRange? _placeholder;
     private DateRange? _mondayFirst;
+    private DateRange? _autoApply;
 
     private readonly List<DateRangeQuickPick> _fullyCustomPresets = new()
     {
@@ -458,7 +462,4 @@
             return new DateRange(quarterStart, quarterStart.AddMonths(3).AddDays(-1));
         }),
     };
-
-
- private DateRange? _autoApply;
 }
