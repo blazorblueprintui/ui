@@ -68,13 +68,35 @@
                 <ApiParameter Name="Value" Type="string?" Default="null">
                     The text to copy to clipboard when clicked.
                 </ApiParameter>
+                <ApiParameter Name="ChildContent" Type="RenderFragment?" Default="null">
+                    The content displayed inside the copy text element.
+                </ApiParameter>
                 <ApiParameter Name="Class" Type="string?" Default="null">
                     Additional CSS classes to apply to the container.
+                </ApiParameter>
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">
+                    ARIA label for the copy button. Defaults to the localized "Click to copy" text.
                 </ApiParameter>
                 <ApiParameter Name="OnCopied" Type="EventCallback<string?>">
                     Callback invoked when the user clicks the component to copy text.
                 </ApiParameter>
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary<string, object>?" Default="null">
+                    Additional HTML attributes applied to the container element.
+                </ApiParameter>
             </ApiReference>
         </div>
     </section>
+
+    <LocalizationSection
+        Description="The copy text tooltip and aria label strings are configurable."
+        Labels="@(new LocalizationSection.LabelInfo[]
+        {
+            new("ClickToCopy", "Click to copy", "Tooltip and aria label prompting the user to copy"),
+            new("Copied", "Copied!", "Tooltip shown after the value has been copied"),
+        })"
+        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+{
+    opts.CopyText.ClickToCopy = ""Zum Kopieren klicken"";
+    opts.CopyText.Copied = ""Kopiert!"";
+});")" />
 </div>

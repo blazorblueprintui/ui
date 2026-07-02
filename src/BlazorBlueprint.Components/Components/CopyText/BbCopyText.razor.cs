@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 
 namespace BlazorBlueprint.Components;
@@ -9,7 +10,6 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public partial class BbCopyText : ComponentBase, IAsyncDisposable
 {
-    private readonly string tooltipId = $"bb-copytext-{Guid.NewGuid():N}";
     private IJSObjectReference? clipboardModule;
     private bool isHovered;
     private bool copied;
@@ -27,10 +27,23 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
     public string? Value { get; set; }
 
     /// <summary>
+    /// Gets or sets the content displayed inside the copy text element.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
     /// Additional CSS classes to apply to the text.
     /// </summary>
     [Parameter]
     public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets the ARIA label for the copy button.
+    /// Defaults to the localized "Click to copy" text.
+    /// </summary>
+    [Parameter]
+    public string? AriaLabel { get; set; }
 
     /// <summary>
     /// Callback invoked when the user clicks the component to copy text.
@@ -59,10 +72,31 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
     private string? TooltipCssClass => ClassNames.cn(
         "pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 inline-flex " +
         "-translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-md border " +
-        "bg-popover px-2.5 py-1 text-xs font-medium shadow-md ",
+        "bg-popover px-2.5 py-1 text-xs font-medium shadow-md " +
+        "transition-all duration-150 ease-out",
         isHovered ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0");
 
     private void HandleMouseEnter()
+    {
+        ShowTooltip();
+    }
+
+    private void HandleMouseLeave()
+    {
+        isHovered = false;
+    }
+
+    private void HandleFocus()
+    {
+        ShowTooltip();
+    }
+
+    private void HandleBlur()
+    {
+        isHovered = false;
+    }
+
+    private void ShowTooltip()
     {
         isHovered = true;
 
@@ -72,14 +106,22 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
         }
     }
 
-    private void HandleMouseLeave()
+    private async Task HandleKeyDownAsync(KeyboardEventArgs e)
     {
-        isHovered = false;
+        if (e.Key is "Enter" or " ")
+        {
+            await HandleClickAsync();
+        }
     }
 
     private async Task HandleClickAsync()
     {
-        var success = await CopyToClipboardAsync(Value ?? string.Empty);
+        if (string.IsNullOrEmpty(Value))
+        {
+            return;
+        }
+
+        var success = await CopyToClipboardAsync(Value);
         if (!success)
         {
             return;
@@ -116,7 +158,7 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
             {
                 await clipboardModule.DisposeAsync();
             }
-            catch (JSDisconnectedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
                 // Circuit already gone; nothing to clean up.
             }

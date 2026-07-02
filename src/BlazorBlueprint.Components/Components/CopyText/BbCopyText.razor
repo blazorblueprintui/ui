@@ -4,17 +4,18 @@
 <span class="@TextCssClass"
       role="button"
       tabindex="0"
-      aria-describedby="@tooltipId"
+      aria-label="@(AriaLabel ?? Localizer["CopyText.ClickToCopy"])"
       @onclick="HandleClickAsync"
+      @onkeydown="HandleKeyDownAsync"
       @onmouseenter="HandleMouseEnter"
       @onmouseleave="HandleMouseLeave"
+      @onfocus="HandleFocus"
+      @onblur="HandleBlur"
       @attributes="AdditionalAttributes">
 
     @ChildContent
 
-    <span id="@tooltipId"
-          role="tooltip"
-          aria-hidden="@(isHovered ? "false" : "true")"
+    <span aria-hidden="true"
           class="@TooltipCssClass">
         <LucideIcon Name="@CurrentIconName" Class="@TooltipIconCssClass" />
 
@@ -22,7 +23,3 @@
 
     </span>
 </span>
-
-@code {
-    [Parameter] public RenderFragment? ChildContent { get; set; }
-}
