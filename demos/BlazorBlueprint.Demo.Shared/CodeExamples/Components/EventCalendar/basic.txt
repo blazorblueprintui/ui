@@ -1,0 +1,19 @@
+<BbEventCalendar Items="events"
+                 EventStart="e => e.Start"
+                 EventEnd="e => e.End"
+                 EventTitle="e => e.Title" />
+
+@code {
+    private sealed record DemoEvent(string Title, DateTime Start, DateTime? End, string Category);
+
+    private static readonly DateTime today = DateTime.Today;
+
+    private readonly List<DemoEvent> events = new()
+    {
+        new("Standup", today.AddHours(9), today.AddHours(9.25), "meeting"),
+        new("Sprint planning", today.AddHours(10), today.AddHours(11.5), "meeting"),
+        new("Design review", today.AddDays(1).AddHours(13), today.AddDays(1).AddHours(14), "meeting"),
+        new("Release v3.13", today.AddDays(3), null, "release"),
+        new("DotNet Conf", today.AddDays(7), today.AddDays(9), "travel"),
+    };
+}

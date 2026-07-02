@@ -157,6 +157,18 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Dock.RestorePanelGroup"] = "Restore panel group",
         ["Dock.NoPanelsOpen"] = "No panels are open.",
 
+        // EventCalendar
+        ["EventCalendar.Today"] = "Today",
+        ["EventCalendar.Month"] = "Month",
+        ["EventCalendar.Week"] = "Week",
+        ["EventCalendar.Agenda"] = "Agenda",
+        ["EventCalendar.PreviousPeriod"] = "Go to previous period",
+        ["EventCalendar.NextPeriod"] = "Go to next period",
+        ["EventCalendar.ViewSwitcher"] = "Calendar view",
+        ["EventCalendar.MoreEvents"] = "+{0} more",
+        ["EventCalendar.NoEvents"] = "No events to display.",
+        ["EventCalendar.AllDay"] = "All day",
+
         // FilterBuilder
         ["FilterBuilder.FilterBuilderAriaLabel"] = "Filter builder",
         ["FilterBuilder.SelectField"] = "Select field...",

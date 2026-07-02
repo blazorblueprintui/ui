@@ -1,0 +1,23 @@
+<BbEventCalendar Items="events"
+                 EventStart="e => e.Start"
+                 EventEnd="e => e.End"
+                 EventTitle="e => e.Title"
+                 EventClass="GetCategoryClass">
+    <EventTemplate>
+        <span class="flex items-center gap-1 px-1.5 py-0.5">
+            <LucideIcon Name="@GetCategoryIcon(context)" Size="12" Class="shrink-0" />
+            <span class="truncate text-xs font-medium">@context.Title</span>
+        </span>
+    </EventTemplate>
+</BbEventCalendar>
+
+@code {
+    private string GetCategoryIcon(DemoEvent e) => e.Category switch
+    {
+        "meeting" => "users",
+        "release" => "rocket",
+        "travel" => "plane",
+        "personal" => "heart",
+        _ => "calendar",
+    };
+}
