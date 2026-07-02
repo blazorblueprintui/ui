@@ -11,6 +11,7 @@ internal sealed class InputValidationBehavior
 {
     private FieldIdentifier fieldIdentifier;
     private EditContext? editContext;
+    private string? formattedName;
 
     /// <summary>
     /// Gets whether the field has validation errors in the current EditContext.
@@ -28,10 +29,15 @@ internal sealed class InputValidationBehavior
     }
 
     /// <summary>
-    /// Gets the effective name attribute, falling back to the FieldIdentifier name when inside an EditForm.
+    /// Gets the effective name attribute, falling back to the full member path of the
+    /// value expression when inside an EditForm (e.g. "Input.Username" — matching
+    /// InputBase so [SupplyParameterFromForm] binds on SSR form posts), then to the
+    /// FieldIdentifier's leaf field name.
     /// </summary>
     public string? GetEffectiveName(string? name) =>
-        name ?? (editContext != null && fieldIdentifier.FieldName != null ? fieldIdentifier.FieldName : null);
+        name ?? (editContext != null && fieldIdentifier.FieldName != null
+            ? formattedName ?? fieldIdentifier.FieldName
+            : null);
 
     /// <summary>
     /// Gets the effective aria-invalid value combining manual AriaInvalid, parent field state, and EditContext validation.
@@ -70,6 +76,7 @@ internal sealed class InputValidationBehavior
         {
             editContext = cascadedEditContext;
             fieldIdentifier = FieldIdentifier.Create(valueExpression);
+            formattedName = ExpressionPathFormatter.FormatLambda(valueExpression);
         }
     }
 }

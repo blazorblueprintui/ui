@@ -14,3 +14,17 @@
     aria-describedby="@AriaDescribedBy">
     <BlazorBlueprint.Primitives.Checkbox.BbCheckboxIndicator />
 </BlazorBlueprint.Primitives.Checkbox.BbCheckbox>
+@if (EffectiveName is not null)
+{
+    @* Hidden native checkbox mirroring the checked state so the value is included in
+       form posts (the visible checkbox is a button and posts nothing). Posts "true"
+       when checked; absent when unchecked, which model-binds bool as false. *@
+    <input type="checkbox"
+           name="@EffectiveName"
+           value="true"
+           checked="@Checked"
+           disabled="@Disabled"
+           aria-hidden="true"
+           tabindex="-1"
+           class="sr-only" />
+}
