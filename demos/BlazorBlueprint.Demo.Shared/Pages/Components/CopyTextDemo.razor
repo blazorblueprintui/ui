@@ -1,0 +1,102 @@
+@page "/components/copy-text"
+@inject ToastService ToastService
+
+<PageTitle>Copy Text Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Copy Text Component</h1>
+            <p class="text-xl text-muted-foreground">
+                Displays inline text that copies text to the clipboard when clicked.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Example</h2>
+            <p class="text-sm text-muted-foreground">
+                A simple inline text that copies text to the clipboard when clicked.
+            </p>
+        </div>
+        <div class="border rounded-lg p-4 text-sm">
+            Use code <BbCopyText Value="20OFF">20OFF</BbCopyText> to receive a 20% discount on your next order.
+        </div>
+        <CodeBlock Source="Components/CopyText/basic.txt" />
+    </div>
+
+    <!-- Custom Styling -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Styling</h2>
+            <p class="text-sm text-muted-foreground">
+                A custom-styled text.
+            </p>
+        </div>
+        <div class="border rounded-lg p-4 text-sm">
+            Use code <BbCopyText Class="px-2 rounded-md bg-gradient-to-r from-purple-500 to-pink-500 text-white" Value="20OFF">20OFF</BbCopyText>
+            to receive a 20% discount on your next order.
+        </div>
+        <CodeBlock Source="Components/CopyText/custom-styling.txt" />
+    </div>
+
+    <!-- On Copy Trigger -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Event Callback</h2>
+            <p class="text-sm text-muted-foreground">
+                An example showing a toast when text is copied.
+            </p>
+        </div>
+        <div class="border rounded-lg p-4 text-sm">
+            Use code <BbCopyText Value="20OFF" OnCopied='(promoCode)=> ToastService.Success($"Copied promo code {promoCode} to clipboard!")'>20OFF</BbCopyText>
+            to receive a 20% discount on your next order.
+        </div>
+        <CodeBlock Source="Components/CopyText/event-callback.txt" />
+    </div>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbCopyText">
+                <ApiParameter Name="Value" Type="string?" Default="null">
+                    The text to copy to clipboard when clicked.
+                </ApiParameter>
+                <ApiParameter Name="ChildContent" Type="RenderFragment?" Default="null">
+                    The content displayed inside the copy text element.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?" Default="null">
+                    Additional CSS classes to apply to the container.
+                </ApiParameter>
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">
+                    ARIA label for the copy button. Defaults to the localized "Click to copy" text.
+                </ApiParameter>
+                <ApiParameter Name="OnCopied" Type="EventCallback<string?>">
+                    Callback invoked when the user clicks the component to copy text.
+                </ApiParameter>
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary<string, object>?" Default="null">
+                    Additional HTML attributes applied to the container element.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+
+    <LocalizationSection
+        Description="The copy text tooltip and aria label strings are configurable."
+        Labels="@(new LocalizationSection.LabelInfo[]
+        {
+            new("ClickToCopy", "Click to copy", "Tooltip and aria label prompting the user to copy"),
+            new("Copied", "Copied!", "Tooltip shown after the value has been copied"),
+        })"
+        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+{
+    opts.CopyText.ClickToCopy = ""Zum Kopieren klicken"";
+    opts.CopyText.Copied = ""Kopiert!"";
+});")" />
+</div>

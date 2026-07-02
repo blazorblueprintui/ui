@@ -771,7 +771,7 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
                 await _jsModule.InvokeVoidAsync("disposeEditor", _editorId);
                 await _jsModule.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect in Blazor Server - safe to ignore
             }

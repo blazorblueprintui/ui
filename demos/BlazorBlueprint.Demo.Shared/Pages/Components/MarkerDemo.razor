@@ -1,0 +1,179 @@
+@page "/components/marker"
+
+<PageTitle>Marker Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Marker Component</h1>
+            <p class="text-xl text-muted-foreground">
+                Displays inline status notes, bordered rows, and labeled separators in conversations.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Variants</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">Variant</code> to switch marker layout styles.
+            </p>
+        </div>
+        <div class="space-y-3 rounded-lg border p-4 justify-center items-center flex">
+            <div class="flex w-full max-w-sm flex-col gap-8 py-12">
+                <BbMarker>
+                    <BbMarkerIcon>
+                        <LucideIcon Name="git-branch"/>
+                    </BbMarkerIcon>
+                    <BbMarkerContent>Switched to a new branch</BbMarkerContent>
+                </BbMarker>
+                <BbMarker role="status">
+                    <BbMarkerIcon>
+                        <BbSpinner/>
+                    </BbMarkerIcon>
+                    <BbMarkerContent>Thinking...</BbMarkerContent>
+                </BbMarker>
+                <BbMarker Variant="MarkerVariant.Separator">
+                    <BbMarkerContent>Conversation compacted</BbMarkerContent>
+                </BbMarker>
+                <BbMarker>
+                    <BbMarkerIcon>
+                        <LucideIcon Name="search"/>
+                    </BbMarkerIcon>
+                    <BbMarkerContent>Searching...</BbMarkerContent>
+                </BbMarker>
+            </div>
+        </div>
+        <CodeBlock Source="Components/Marker/variants.txt"/>
+    </div>
+
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Interactive Markers</h2>
+            <p class="text-sm text-muted-foreground">
+                Render markers as links or buttons with <code
+                    class="text-xs bg-muted px-1 py-0.5 rounded">AsChild</code>.
+            </p>
+        </div>
+        <div class="space-y-2 rounded-lg border p-4">
+            <BbMarker AsChild="MarkerElement.Anchor" Href="#">
+                <BbMarkerIcon>
+                    <LucideIcon Name="external-link" Size="14"/>
+                </BbMarkerIcon>
+                <BbMarkerContent>View pull request</BbMarkerContent>
+            </BbMarker>
+            <BbMarker Class="transition-colors hover:text-foreground" AsChild="MarkerElement.Button" @onclick="() => { }">
+                <BbMarkerIcon>
+                    <LucideIcon Name="rotate-ccw" Size="14"/>
+                </BbMarkerIcon>
+                <BbMarkerContent>Retry failed upload</BbMarkerContent>
+            </BbMarker>
+        </div>
+        <CodeBlock Source="Components/Marker/interactive.txt"/>
+    </div>
+
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Borders</h2>
+            <p class="text-sm text-muted-foreground">
+                Use the <code class="text-xs bg-muted px-1 py-0.5 rounded">Border</code> variant for status rows that
+                should keep the default marker alignment while adding a divider before the next row.
+            </p>
+        </div>
+        <div class="space-y-3 rounded-lg border p-4 justify-center items-center flex">
+            <div class="flex w-full max-w-sm flex-col gap-8 py-12">
+                <BbMarker Variant="MarkerVariant.Border">
+                    <BbMarkerIcon>
+                        <LucideIcon Name="git-branch"/>
+                    </BbMarkerIcon>
+                    <BbMarkerContent>Switched to release-candidate</BbMarkerContent>
+                </BbMarker>
+                <BbMarker Variant="MarkerVariant.Border">
+                    <BbMarkerIcon>
+                        <LucideIcon Name="search"/>
+                    </BbMarkerIcon>
+                    <BbMarkerContent>Reviewed 8 related files</BbMarkerContent>
+                </BbMarker>
+                <BbMarker Variant="MarkerVariant.Border">
+                    <BbMarkerIcon>
+                        <LucideIcon Name="file-text"/>
+                    </BbMarkerIcon>
+                    <BbMarkerContent>Opened implementation notes</BbMarkerContent>
+                </BbMarker>
+            </div>
+        </div>
+        <CodeBlock Source="Components/Marker/border.txt"/>
+    </div>
+
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">With Icon</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">MarkerIcon</code> to render an icon alongside the
+                content. Use <code class="text-xs bg-muted px-1 py-0.5 rounded">flex-col</code> to stack the icon above
+                the content.
+            </p>
+        </div>
+        <div class="space-y-3 rounded-lg border p-4 justify-center items-center flex">
+            <div class="flex w-full max-w-sm flex-col gap-8 py-12">
+                <BbMarker>
+                    <BbMarkerIcon>
+                        <LucideIcon Name="git-branch"/>
+                    </BbMarkerIcon>
+                    <BbMarkerContent>Switched to release-candidate</BbMarkerContent>
+                </BbMarker>
+                <BbMarker Variant="MarkerVariant.Separator">
+                    <BbMarkerIcon>
+                        <LucideIcon Name="search"/>
+                    </BbMarkerIcon>
+                    <BbMarkerContent>Explored 4 files</BbMarkerContent>
+                </BbMarker>
+                <BbMarker Class="flex-col">
+                    <BbMarkerIcon>
+                        <LucideIcon Name="book-open"/>
+                    </BbMarkerIcon>
+                    <BbMarkerContent>Syncing completed</BbMarkerContent>
+                </BbMarker>
+            </div>
+        </div>
+        <CodeBlock Source="Components/Marker/with-icon.txt"/>
+    </div>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                Set <code>role="status"</code> on in-progress markers so updates are announced.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code>BbMarkerIcon</code> is decorative; keep meaning in visible marker text.
+            </AccessibilityItem>
+            <AccessibilityItem>
+                For interactive markers, use <code>AsChild="MarkerElement.Anchor"</code> or
+                <code>AsChild="MarkerElement.Button"</code> for native semantics.
+            </AccessibilityItem>
+        </AriaAttributes>
+    </AccessibilityList>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+
+        <ApiReference ComponentName="Marker">
+            <ApiParameter Name="Variant" Type="MarkerVariant" Default="Default">
+                Marker visual style. Options: Default, Border, Separator.
+            </ApiParameter>
+            <ApiParameter Name="AsChild" Type="MarkerElement" Default="Div">
+                Element type to render. Options: Div, Anchor, Button. Automatically switches to Anchor when Href is
+                set.
+            </ApiParameter>
+            <ApiParameter Name="Href" Type="string?">
+                Link target when rendering as an anchor.
+            </ApiParameter>
+            <ApiParameter Name="Class" Type="string?">
+                Additional CSS classes to apply to marker root.
+            </ApiParameter>
+        </ApiReference>
+    </section>
+</div>

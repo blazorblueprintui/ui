@@ -640,6 +640,16 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
     // IAsyncDisposable
     // ══════════════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// Gets the underlying tag entry input element reference, e.g. for JS interop.
+    /// </summary>
+    public ElementReference Element => _inputRef;
+
+    /// <summary>
+    /// Sets focus to the underlying tag entry input element.
+    /// </summary>
+    public ValueTask FocusAsync() => _inputRef.FocusAsync();
+
     public async ValueTask DisposeAsync()
     {
         _disposed = true;
@@ -660,7 +670,7 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
                 await _jsModule.InvokeVoidAsync("dispose", _instanceId);
                 await _jsModule.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }

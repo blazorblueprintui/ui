@@ -23,35 +23,60 @@
 
         <BbSeparator Class="my-2" />
 
-        @* ── Color ── *@
-        <div class="px-4 py-2 space-y-2">
-            <p class="text-xs font-medium text-muted-foreground">@Localizer["Theme.Color"]</p>
-            <div class="grid grid-cols-3 gap-1.5">
-                @foreach (var color in allColors)
-                {
-                    var isSelected = IsColorSelected(color);
-                    <button type="button"
-                            class="@ClassNames.cn(
-                                "inline-flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-xs transition-colors",
-                                isSelected ? "border-foreground bg-accent" : "border-input hover:bg-accent/50")"
-                            @onclick="() => OnColorSelected(color)"
-                            aria-pressed="@isSelected.ToString().ToLowerInvariant()">
-                        @if (isSelected)
-                        {
-                            <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 border-foreground"
-                                  style="background-color: @color.Swatch;">
-                                <LucideIcon Name="check" Class="h-2.5 w-2.5 text-white" />
-                            </span>
-                        }
-                        else
-                        {
-                            <span class="h-4 w-4 shrink-0 rounded-full" style="background-color: @color.Swatch;"></span>
-                        }
-                        @color.Label
-                    </button>
-                }
+        @if (ColorLayout == ThemeSwitcherColorLayout.Combined)
+        {
+            @* ── Color (combined grid, single indicator) ── *@
+            <div class="px-4 py-2 space-y-2">
+                <p class="text-xs font-medium text-muted-foreground">@Localizer["Theme.Color"]</p>
+                <div class="grid grid-cols-3 gap-1.5">
+                    @foreach (var color in baseColors)
+                    {
+                        @ColorChip(color.Label, color.Swatch,
+                            ThemeService.PrimaryColor == PrimaryColor.Default && ThemeService.BaseColor == color.Value,
+                            () => OnCombinedBaseSelectedAsync(color.Value))
+                    }
+                    @foreach (var color in primaryColors)
+                    {
+                        @ColorChip(color.Label, color.Swatch,
+                            ThemeService.PrimaryColor == color.Value,
+                            () => ThemeService.SetPrimaryColorAsync(color.Value))
+                    }
+                </div>
             </div>
-        </div>
+        }
+        else
+        {
+            @* ── Base color ── *@
+            <div class="px-4 py-2 space-y-2">
+                <p class="text-xs font-medium text-muted-foreground">@Localizer["Theme.BaseColor"]</p>
+                <div class="grid grid-cols-3 gap-1.5">
+                    @foreach (var color in baseColors)
+                    {
+                        @ColorChip(color.Label, color.Swatch,
+                            ThemeService.BaseColor == color.Value,
+                            () => ThemeService.SetBaseColorAsync(color.Value))
+                    }
+                </div>
+            </div>
+
+            <BbSeparator Class="my-2" />
+
+            @* ── Primary color ── *@
+            <div class="px-4 py-2 space-y-2">
+                <p class="text-xs font-medium text-muted-foreground">@Localizer["Theme.PrimaryColor"]</p>
+                <div class="grid grid-cols-3 gap-1.5">
+                    @ColorChip(Localizer["Theme.Default"], CurrentBaseSwatch,
+                        ThemeService.PrimaryColor == PrimaryColor.Default,
+                        () => ThemeService.SetPrimaryColorAsync(PrimaryColor.Default))
+                    @foreach (var color in primaryColors)
+                    {
+                        @ColorChip(color.Label, color.Swatch,
+                            ThemeService.PrimaryColor == color.Value,
+                            () => ThemeService.SetPrimaryColorAsync(color.Value))
+                    }
+                </div>
+            </div>
+        }
 
         <BbSeparator Class="my-2" />
 
@@ -138,6 +163,15 @@
     [Parameter]
     public PositioningStrategy Strategy { get; set; } = PositioningStrategy.Absolute;
 
+    /// <summary>
+    /// Layout of the color selection area. Defaults to <see cref="ThemeSwitcherColorLayout.Split"/>,
+    /// which shows separate base color and primary color sections with independent selection
+    /// indicators. Use <see cref="ThemeSwitcherColorLayout.Combined"/> for the legacy single-grid
+    /// layout where selecting a base color resets the primary color to <see cref="PrimaryColor.Default"/>.
+    /// </summary>
+    [Parameter]
+    public ThemeSwitcherColorLayout ColorLayout { get; set; } = ThemeSwitcherColorLayout.Split;
+
     /// <inheritdoc />
     protected override void OnInitialized() =>
         ThemeService.OnThemeChanged += HandleThemeChanged;
@@ -153,40 +187,39 @@
     }
 
     /// <summary>
-    /// Determines if a color chip is the currently active selection.
-    /// Only one chip can be selected at a time:
-    /// - If the user picked a primary color (non-Default), that primary chip is selected.
-    /// - If PrimaryColor is Default, the current BaseColor chip is selected.
+    /// Renders a single color chip button with an optional selected indicator.
     /// </summary>
-    private bool IsColorSelected(ColorInfo color)
+    private RenderFragment ColorChip(string label, string swatch, bool isSelected, Func<Task> onClick) => __builder =>
     {
-        if (color.IsBase)
-        {
-            // A base chip is selected only when PrimaryColor == Default AND it matches the active base
-            return ThemeService.PrimaryColor == PrimaryColor.Default
-                && ThemeService.BaseColor == color.BaseValue;
-        }
-
-        // A primary chip is selected when it matches the active primary
-        return ThemeService.PrimaryColor == color.PrimaryValue;
-    }
+        <button type="button"
+                class="@ClassNames.cn(
+                    "inline-flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-xs transition-colors",
+                    isSelected ? "border-foreground bg-accent" : "border-input hover:bg-accent/50")"
+                @onclick="onClick"
+                aria-pressed="@isSelected.ToString().ToLowerInvariant()">
+            @if (isSelected)
+            {
+                <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 border-foreground"
+                      style="background-color: @swatch;">
+                    <LucideIcon Name="check" Class="h-2.5 w-2.5 text-white" />
+                </span>
+            }
+            else
+            {
+                <span class="h-4 w-4 shrink-0 rounded-full" style="background-color: @swatch;"></span>
+            }
+            @label
+        </button>
+    };
 
     /// <summary>
-    /// When a base color is picked, set the base AND reset primary to Default
-    /// so the base's own accent is used. When a primary is picked, just set primary.
+    /// Combined layout only: when a base color is picked, set the base AND reset primary
+    /// to Default so the base's own accent is used.
     /// </summary>
-    private async Task OnColorSelected(ColorInfo color)
+    private async Task OnCombinedBaseSelectedAsync(BaseColor value)
     {
-        if (color.IsBase)
-        {
-            // Reset primary so the base's built-in accent is used
-            await ThemeService.SetPrimaryColorAsync(PrimaryColor.Default);
-            await ThemeService.SetBaseColorAsync(color.BaseValue);
-        }
-        else
-        {
-            await ThemeService.SetPrimaryColorAsync(color.PrimaryValue);
-        }
+        await ThemeService.SetPrimaryColorAsync(PrimaryColor.Default);
+        await ThemeService.SetBaseColorAsync(value);
     }
 
     private async Task OnRadiusSelected(double value) =>
@@ -209,15 +242,17 @@
 
     private static readonly double[] radiusOptions = [0, 0.3, 0.5, 0.75, 1.0];
 
-    private static readonly ColorInfo[] allColors =
+    private static readonly ColorInfo<BaseColor>[] baseColors =
     [
-        // Base colors — selecting one resets primary to Default
         new("Zinc", "oklch(0.552 0.016 285.94)", BaseColor.Zinc),
         new("Slate", "oklch(0.554 0.046 257.42)", BaseColor.Slate),
         new("Stone", "oklch(0.553 0.013 58.07)", BaseColor.Stone),
         new("Gray", "oklch(0.551 0.027 264.36)", BaseColor.Gray),
         new("Neutral", "oklch(0.556 0 0)", BaseColor.Neutral),
-        // Primary colors — selecting one overrides the accent only
+    ];
+
+    private static readonly ColorInfo<PrimaryColor>[] primaryColors =
+    [
         new("Red", "oklch(0.577 0.245 27.33)", PrimaryColor.Red),
         new("Rose", "oklch(0.585 0.22 3.96)", PrimaryColor.Rose),
         new("Orange", "oklch(0.705 0.213 47.60)", PrimaryColor.Orange),
@@ -237,28 +272,30 @@
         new("Pink", "oklch(0.592 0.249 0.58)", PrimaryColor.Pink),
     ];
 
-    private sealed class ColorInfo
+    /// <summary>
+    /// Swatch of the currently active base color — used for the "Default" primary chip,
+    /// since the Default primary inherits its accent from the base palette.
+    /// </summary>
+    private string CurrentBaseSwatch
     {
-        public string Label { get; }
-        public string Swatch { get; }
-        public bool IsBase { get; }
-        public BaseColor BaseValue { get; }
-        public PrimaryColor PrimaryValue { get; }
-
-        public ColorInfo(string label, string swatch, BaseColor baseValue)
+        get
         {
-            Label = label;
-            Swatch = swatch;
-            IsBase = true;
-            BaseValue = baseValue;
-        }
+            foreach (var color in baseColors)
+            {
+                if (color.Value == ThemeService.BaseColor)
+                {
+                    return color.Swatch;
+                }
+            }
 
-        public ColorInfo(string label, string swatch, PrimaryColor primaryValue)
-        {
-            Label = label;
-            Swatch = swatch;
-            IsBase = false;
-            PrimaryValue = primaryValue;
+            return baseColors[0].Swatch;
         }
+    }
+
+    private sealed class ColorInfo<TColor>(string label, string swatch, TColor value) where TColor : struct, Enum
+    {
+        public string Label { get; } = label;
+        public string Swatch { get; } = swatch;
+        public TColor Value { get; } = value;
     }
 }

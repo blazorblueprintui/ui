@@ -260,6 +260,9 @@ public partial class BbButton : ComponentBase
         },
         // Disabled anchor styles (`:disabled` pseudo-class doesn't work on `<a>` elements)
         HasHref && IsDisabled ? "pointer-events-none cursor-not-allowed opacity-50" : null,
+        // AsChild trigger guard: while the overlay is open, ignore pointer events so a
+        // single click can't close it via click-outside and re-open it via this button
+        TriggerContext is { IsOpen: true, SuppressPointerEventsWhenOpen: true } ? "pointer-events-none" : null,
         // Custom classes (if provided)
         Class
     );

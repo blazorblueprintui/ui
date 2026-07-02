@@ -138,6 +138,70 @@
         <CodeBlock Source="Components/DatePicker/week-start-day.txt" />
     </div>
 
+    <!-- Per-Day Customization -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Per-Day Customization</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code>DayTemplate</code> to render custom content inside each calendar day (e.g. a dot
+                marker on days with data) and <code>DayClassFunc</code> to style individual days
+                (e.g. tint weekends). Both are forwarded to the underlying calendar.
+            </p>
+        </div>
+        <BbDatePicker @bind-Value="_customDayDate" DayClassFunc="@GetWeekendDayClass">
+            <DayTemplate>
+                <div class="relative flex h-full w-full items-center justify-center">
+                    @context.Date.Day
+                    @if (HasEvent(context.Date))
+                    {
+                        <span class="absolute bottom-1 h-1 w-1 rounded-full @(context.IsSelected ? "bg-primary-foreground" : "bg-primary")"></span>
+                    }
+                </div>
+            </DayTemplate>
+        </BbDatePicker>
+        <CodeBlock Source="Components/DatePicker/day-customization.txt" />
+    </div>
+
+    <!-- Manual Entry -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Manual Entry</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="text-xs bg-muted px-1 py-0.5 rounded">Editable</code> to let users type
+                the date directly — the calendar stays available via the toggle button. Typed text is parsed
+                on blur or Enter against <code class="text-xs bg-muted px-1 py-0.5 rounded">InputFormats</code>
+                (falling back to <code class="text-xs bg-muted px-1 py-0.5 rounded">DateFormat</code>), and ISO
+                format (<code class="text-xs bg-muted px-1 py-0.5 rounded">yyyy-MM-dd</code>) is always accepted.
+                Invalid text reverts to the current value.
+            </p>
+        </div>
+        <div class="space-y-4">
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Culture short date or ISO</label>
+                <BbDatePicker @bind-Value="_editableDate" Editable />
+            </div>
+            <div class="space-y-2">
+                <label class="text-sm font-medium">dd/MM/yyyy (also d/M/yyyy) or ISO</label>
+                <BbDatePicker @bind-Value="_editableDateDmy" Editable
+                              InputFormats="@(new[] { "dd/MM/yyyy", "d/M/yyyy" })"
+                              DateFormat="dd/MM/yyyy"
+                              Placeholder="dd/mm/yyyy" />
+            </div>
+            <div class="space-y-2">
+                <label class="text-sm font-medium">MM/dd/yyyy (also M/d/yyyy) or ISO</label>
+                <BbDatePicker @bind-Value="_editableDateMdy" Editable
+                              InputFormats="@(new[] { "MM/dd/yyyy", "M/d/yyyy" })"
+                              DateFormat="MM/dd/yyyy"
+                              Placeholder="mm/dd/yyyy" />
+            </div>
+            <div class="rounded-lg border p-3 bg-muted/50 max-w-md">
+                <p class="text-xs text-muted-foreground mb-1">Selected values:</p>
+                <p class="text-sm font-mono">@(_editableDate?.ToString("yyyy-MM-dd") ?? "(none)") · @(_editableDateDmy?.ToString("yyyy-MM-dd") ?? "(none)") · @(_editableDateMdy?.ToString("yyyy-MM-dd") ?? "(none)")</p>
+            </div>
+        </div>
+        <CodeBlock Source="Components/DatePicker/manual-entry.txt" />
+    </div>
+
     <!-- Form Validation with EditForm -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -239,6 +303,18 @@
                 <ApiParameter Name="DisabledDates" Type="Func&lt;DateTime, bool&gt;?">
                     Function to determine if a date should be disabled.
                 </ApiParameter>
+                <ApiParameter Name="DayTemplate" Type="RenderFragment&lt;CalendarDayContext&gt;?" Default="null">
+                    Template for rendering custom content inside each calendar day button. When null, the day number is rendered.
+                </ApiParameter>
+                <ApiParameter Name="DayClassFunc" Type="Func&lt;DateTime, string?&gt;?" Default="null">
+                    Function returning additional CSS classes for a specific calendar day button.
+                </ApiParameter>
+                <ApiParameter Name="Editable" Type="bool" Default="false">
+                    Renders the trigger as a text input so the date can be typed directly, with a calendar toggle alongside. Typed text is parsed on blur or Enter; invalid or out-of-range text reverts to the current value.
+                </ApiParameter>
+                <ApiParameter Name="InputFormats" Type="string[]?" Default="null">
+                    Date formats accepted when typing in Editable mode, in priority order (e.g. "dd/MM/yyyy"). Falls back to DateFormat when null. ISO format (yyyy-MM-dd) is always accepted in addition.
+                </ApiParameter>
                 <ApiParameter Name="Disabled" Type="bool" Default="false">
                     Whether the date picker is disabled.
                 </ApiParameter>
@@ -254,6 +330,7 @@
         Labels="@(new LocalizationSection.LabelInfo[]
         {
             new("Placeholder", "Pick a date", "Placeholder text when no date is selected"),
+            new("OpenCalendar", "Open calendar", "Aria-label for the calendar toggle button in Editable mode"),
         })"
         CultureAware="true"
         CultureDescription="The internal calendar uses CultureInfo.CurrentCulture for month/day names. The DateFormat parameter accepts standard .NET format strings that respect the current culture."
@@ -276,6 +353,18 @@
     private DateTime? _noWeekendsDate;
     private DateTime? _sundayStart;
     private DateTime? _mondayStart;
+    private DateTime? _customDayDate;
+    private DateTime? _editableDate;
+    private DateTime? _editableDateDmy;
+    private DateTime? _editableDateMdy;
+
+    private static readonly HashSet<int> EventDays = new() { 3, 8, 12, 17, 21, 26 };
+
+    private bool HasEvent(DateTime date) =>
+        date.Month == DateTime.Today.Month && date.Year == DateTime.Today.Year && EventDays.Contains(date.Day);
+
+    private string? GetWeekendDayClass(DateTime date) =>
+        date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday ? "text-destructive" : null;
 
     private bool IsWeekend(DateTime date)
     {

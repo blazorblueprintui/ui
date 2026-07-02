@@ -1,0 +1,218 @@
+@page "/components/form-field-date-time-picker"
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>FormFieldDateTimePicker Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">FormFieldDateTimePicker</h1>
+            <p class="text-xl text-muted-foreground">
+                A form field wrapper for DateTimePicker with built-in label, helper text, and error messages.
+            </p>
+        </div>
+    </div>
+
+    <!-- Which form component? -->
+    <div class="rounded-lg border border-dashed bg-muted/30 p-6 space-y-3">
+        <h2 class="text-lg font-semibold">Which form component?</h2>
+        <div class="space-y-2 text-sm text-muted-foreground">
+            <p><strong>Text input</strong> (string, int, date, etc.)? &rarr; <a href="/components/form-field-input" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldInput&lt;T&gt;</a></p>
+            <p><strong>Date picker</strong>? &rarr; <a href="/components/form-field-date-picker" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldDatePicker</a></p>
+            <p><strong>Time picker</strong>? &rarr; <a href="/components/form-field-time-picker" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldTimePicker</a></p>
+            <p><strong>Date &amp; time picker</strong>? &rarr; <strong>FormFieldDateTimePicker</strong> (this page)</p>
+            <p><strong>Date range picker</strong>? &rarr; <a href="/components/form-field-date-range-picker" class="text-primary underline underline-offset-4 hover:text-primary/80">FormFieldDateRangePicker</a></p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-sm text-muted-foreground">
+                A date time picker with an auto-associated label and helper text.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldDateTimePicker @bind-Value="_appointment"
+                                      Label="Appointment"
+                                      HelperText="When should we meet?" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Selected:</p>
+            <p class="text-sm font-mono">@(_appointment?.ToString("g") ?? "(none)")</p>
+        </div>
+        <CodeBlock Source="Components/FormFieldDateTimePicker/basic.txt" />
+    </div>
+
+    <!-- With Constraints -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Constraints</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">MinDate</code> /
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">MaxDate</code> to restrict the selectable range
+                and <code class="text-xs bg-muted px-1 py-0.5 rounded">MinuteStep</code> for fixed minute intervals.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldDateTimePicker @bind-Value="_deliverySlot"
+                                      Label="Delivery slot"
+                                      HelperText="Select a slot within the next 14 days."
+                                      MinDate="DateTime.Today"
+                                      MaxDate="DateTime.Today.AddDays(14)"
+                                      MinuteStep="15" />
+        </div>
+        <div class="rounded-lg border p-4 bg-muted/50">
+            <p class="text-sm font-medium mb-1">Selected:</p>
+            <p class="text-sm font-mono">@(_deliverySlot?.ToString("g") ?? "(none)")</p>
+        </div>
+        <CodeBlock Source="Components/FormFieldDateTimePicker/constraints.txt" />
+    </div>
+
+    <!-- Disabled -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">
+                A disabled date time picker form field.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <BbFormFieldDateTimePicker Value="DateTime.Now"
+                                      Label="Locked appointment"
+                                      HelperText="This appointment cannot be changed."
+                                      Disabled="true" />
+        </div>
+        <CodeBlock Source="Components/FormFieldDateTimePicker/disabled.txt" />
+    </div>
+
+    <!-- EditForm Integration -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">EditForm Integration</h2>
+            <p class="text-sm text-muted-foreground">
+                Validation errors display automatically inside an EditForm.
+                Try submitting without selecting a date and time.
+            </p>
+        </div>
+        <div class="max-w-md">
+            <EditForm Model="_formModel" OnValidSubmit="HandleFormSubmit">
+                <DataAnnotationsValidator />
+                <div class="space-y-4">
+                    <BbFormFieldDateTimePicker @bind-Value="_formModel.Appointment"
+                                              Label="Appointment"
+                                              Placeholder="Pick a date and time..." />
+                    <BbButton Type="ButtonType.Submit">Submit</BbButton>
+                </div>
+            </EditForm>
+            @if (_formSubmitted)
+            {
+                <div class="mt-4 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 p-4">
+                    <p class="text-sm font-medium text-green-800 dark:text-green-200">
+                        Submitted: @_formModel.Appointment?.ToString("g")
+                    </p>
+                </div>
+            }
+        </div>
+        <CodeBlock Source="Components/FormFieldDateTimePicker/editform.txt" />
+    </div>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Label visually associated with the date time picker trigger</AccessibilityItem>
+            <AccessibilityItem>Description linked via aria-describedby</AccessibilityItem>
+            <AccessibilityItem>Validation errors displayed with aria-invalid</AccessibilityItem>
+        </AriaAttributes>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="FormFieldDateTimePicker">
+                <ApiParameter Name="Label" Type="string?" Default="null">
+                    The label text displayed above the date time picker.
+                </ApiParameter>
+                <ApiParameter Name="HelperText" Type="string?" Default="null">
+                    Helper text displayed below the date time picker. Hidden during error state.
+                </ApiParameter>
+                <ApiParameter Name="ErrorText" Type="string?" Default="null">
+                    Manual error text override. When the field is invalid and this is set, replaces auto-generated messages.
+                </ApiParameter>
+                <ApiParameter Name="Orientation" Type="FieldOrientation" Default="Vertical">
+                    Layout orientation of the field.
+                </ApiParameter>
+                <ApiParameter Name="Value" Type="DateTime?" Default="null">
+                    The selected date and time value. Use @@bind-Value for two-way binding.
+                </ApiParameter>
+                <ApiParameter Name="ValueChanged" Type="EventCallback&lt;DateTime?&gt;">
+                    Callback invoked when the selected date and time changes.
+                </ApiParameter>
+                <ApiParameter Name="DateTimeFormat" Type="string?" Default="null">
+                    The date and time format to display. When null, uses "G" (with seconds) if ShowSeconds is true, otherwise "g".
+                </ApiParameter>
+                <ApiParameter Name="Placeholder" Type="string?" Default="null">
+                    Placeholder text when no date and time is selected.
+                </ApiParameter>
+                <ApiParameter Name="MinDate" Type="DateTime?" Default="null">
+                    The minimum selectable date.
+                </ApiParameter>
+                <ApiParameter Name="MaxDate" Type="DateTime?" Default="null">
+                    The maximum selectable date.
+                </ApiParameter>
+                <ApiParameter Name="DisabledDates" Type="Func&lt;DateTime, bool&gt;?" Default="null">
+                    Function to determine if a specific date is disabled.
+                </ApiParameter>
+                <ApiParameter Name="FirstDayOfWeek" Type="DayOfWeek?" Default="null">
+                    The first day of the week. Defaults to current culture setting.
+                </ApiParameter>
+                <ApiParameter Name="TimeFormat" Type="TimeFormat" Default="Hour12">
+                    The time format for the time selectors (12-hour with AM/PM or 24-hour).
+                </ApiParameter>
+                <ApiParameter Name="ShowSeconds" Type="bool" Default="false">
+                    Whether to show the seconds selector.
+                </ApiParameter>
+                <ApiParameter Name="MinuteStep" Type="int" Default="1">
+                    The minute step interval.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether the date time picker is disabled.
+                </ApiParameter>
+                <ApiParameter Name="Required" Type="bool" Default="false">
+                    Whether the date time picker is required.
+                </ApiParameter>
+                <ApiParameter Name="InputClass" Type="string?" Default="null">
+                    Additional CSS classes applied to the inner DateTimePicker trigger button.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?" Default="null">
+                    Additional CSS classes applied to the outer Field container.
+                </ApiParameter>
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">
+                    ARIA label for the control.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    private DateTime? _appointment;
+    private DateTime? _deliverySlot;
+    private bool _formSubmitted;
+    private DateTimePickerFormModel _formModel = new();
+
+    private void HandleFormSubmit()
+    {
+        _formSubmitted = true;
+    }
+
+    private class DateTimePickerFormModel
+    {
+        [Required(ErrorMessage = "Please select an appointment time.")]
+        public DateTime? Appointment { get; set; }
+    }
+}

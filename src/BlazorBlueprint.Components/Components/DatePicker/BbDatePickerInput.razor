@@ -1,0 +1,133 @@
+@namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
+@using BlazorBlueprint.Primitives.Utilities
+@inject IBbLocalizer Localizer
+
+<div @ref="_rootRef" class="@WrapperCssClass">
+    <input type="text"
+           class="flex-1 min-w-0 bg-transparent px-3 py-2 outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
+           value="@Text"
+           placeholder="@Placeholder"
+           disabled="@Disabled"
+           aria-required="@(Required ? "true" : null)"
+           aria-invalid="@(IsInvalid ? "true" : null)"
+           @onchange="HandleChange"
+           @onkeydown="HandleKeyDown" />
+    <button type="button"
+            class="@ToggleCssClass"
+            aria-label="@Localizer["DatePicker.OpenCalendar"]"
+            aria-haspopup="@TriggerContext?.AriaHasPopup"
+            aria-expanded="@(TriggerContext?.IsOpen == true ? "true" : "false")"
+            aria-controls="@TriggerContext?.AriaControls"
+            disabled="@Disabled"
+            tabindex="@(Disabled ? -1 : 0)"
+            @onclick="HandleToggleClick">
+        <LucideIcon Name="calendar" Class="h-4 w-4" />
+    </button>
+</div>
+
+@code {
+    private ElementReference _rootRef;
+    private TriggerContext? _previousTriggerContext;
+
+    [CascadingParameter(Name = "TriggerContext")]
+    private TriggerContext? TriggerContext { get; set; }
+
+    /// <summary>
+    /// The current text shown in the input.
+    /// </summary>
+    [Parameter]
+    public string? Text { get; set; }
+
+    /// <summary>
+    /// Placeholder text shown when the input is empty.
+    /// </summary>
+    [Parameter]
+    public string? Placeholder { get; set; }
+
+    /// <summary>
+    /// Whether the input and calendar toggle are disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Whether the field is required (sets aria-required).
+    /// </summary>
+    [Parameter]
+    public bool Required { get; set; }
+
+    /// <summary>
+    /// Whether the field is in an invalid state (sets aria-invalid).
+    /// </summary>
+    [Parameter]
+    public bool IsInvalid { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes applied to the wrapper element.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Invoked when the user commits the typed text (blur or Enter).
+    /// </summary>
+    [Parameter]
+    public EventCallback<string?> OnCommit { get; set; }
+
+    private string WrapperCssClass => ClassNames.cn(
+        "flex h-10 w-[280px] items-center rounded-md border border-input bg-background text-base md:text-sm",
+        "ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+        "transition-colors",
+        "aria-[invalid=true]:border-destructive",
+        Disabled ? "cursor-not-allowed opacity-50" : null,
+        Class
+    );
+
+    private string ToggleCssClass => ClassNames.cn(
+        "inline-flex h-full items-center justify-center px-3 text-muted-foreground",
+        "hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "disabled:pointer-events-none",
+        // Mirror the pointer-events guard trigger buttons apply while the popover is
+        // open, so one click can't close it via click-outside and immediately re-open it.
+        // Scoped to the toggle only — the input must stay editable while open.
+        TriggerContext is { IsOpen: true, SuppressPointerEventsWhenOpen: true } ? "pointer-events-none" : null
+    );
+
+    private async Task HandleChange(ChangeEventArgs args)
+    {
+        await OnCommit.InvokeAsync(args.Value?.ToString());
+    }
+
+    private Task HandleKeyDown(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs args)
+    {
+        // Escape closes the calendar without touching the typed text; commit itself
+        // rides on the native change event (fires on both Enter and blur).
+        if (args.Key == "Escape" && TriggerContext?.IsOpen == true)
+        {
+            TriggerContext.Close?.Invoke();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void HandleToggleClick()
+    {
+        TriggerContext?.Toggle?.Invoke();
+    }
+
+    /// <summary>
+    /// Registers the wrapper element with the trigger context so the popover
+    /// positions against the whole input group. Re-registers when the context
+    /// changes (same pattern as BbButton).
+    /// </summary>
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (TriggerContext?.SetTriggerElement != null &&
+            (firstRender || TriggerContext != _previousTriggerContext))
+        {
+            TriggerContext.SetTriggerElement.Invoke(_rootRef);
+            _previousTriggerContext = TriggerContext;
+        }
+    }
+}

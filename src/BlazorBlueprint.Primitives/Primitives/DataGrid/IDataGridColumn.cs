@@ -118,6 +118,13 @@ public interface IDataGridColumn<TData> where TData : class
     public string? CellClass { get; }
 
     /// <summary>
+    /// Gets a callback that computes additional CSS classes for a cell based on the row's
+    /// data item. Applied in addition to <see cref="CellClass"/>, so static and per-row
+    /// classes can be combined. Returns null when no per-row styling is needed.
+    /// </summary>
+    public Func<TData, string?>? CellClassFunc => null;
+
+    /// <summary>
     /// Gets additional CSS classes for the header cell.
     /// </summary>
     public string? HeaderClass { get; }

@@ -28,6 +28,13 @@ public partial class BbFormFieldCheckbox : FormFieldBase
     public Expression<Func<bool>>? CheckedExpression { get; set; }
 
     /// <summary>
+    /// Gets or sets the HTML name attribute. Passed through to the inner Checkbox;
+    /// auto-derived from CheckedExpression inside an EditForm when not set.
+    /// </summary>
+    [Parameter]
+    public string? Name { get; set; }
+
+    /// <summary>
     /// Gets or sets whether the checkbox is in an indeterminate state.
     /// </summary>
     [Parameter]

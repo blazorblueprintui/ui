@@ -406,7 +406,10 @@
 
         // After positioning, include stored position so it survives Blazor re-renders
         // This prevents the content from "closing" when parent components re-render
-        return $"position: {Strategy.ToValue()}; z-index: {ZIndex}; left: {_positionLeft}px; top: {_positionTop}px; opacity: 1; visibility: visible;";
+        // Invariant culture so decimal coordinates always use a dot — locales with a
+        // decimal comma (e.g. de-DE) would otherwise produce invalid CSS (issue #374)
+        return FormattableString.Invariant(
+            $"position: {Strategy.ToValue()}; z-index: {ZIndex}; left: {_positionLeft}px; top: {_positionTop}px; opacity: 1; visibility: visible;");
     }
 
     private string GetMergedStyle()

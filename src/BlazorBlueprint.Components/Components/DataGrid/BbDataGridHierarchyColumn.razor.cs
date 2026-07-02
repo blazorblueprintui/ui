@@ -93,6 +93,14 @@ public partial class BbDataGridHierarchyColumn<TData, TProp> : ComponentBase, ID
     public string? CellClass { get; set; }
 
     /// <summary>
+    /// Computes additional CSS classes for a cell from the row's data item,
+    /// applied in addition to <see cref="CellClass"/>. Use for conditional
+    /// per-cell formatting, e.g. <c>CellClassFunc="@(o => o.Total &lt; 0 ? "text-destructive" : null)"</c>.
+    /// </summary>
+    [Parameter]
+    public Func<TData, string?>? CellClassFunc { get; set; }
+
+    /// <summary>
     /// Additional CSS classes for the header cell.
     /// </summary>
     [Parameter]
@@ -155,6 +163,8 @@ public partial class BbDataGridHierarchyColumn<TData, TProp> : ComponentBase, ID
     ColumnPinning IDataGridColumn<TData>.Pinned => Pinned;
     RenderFragment<DataGridHeaderContext<TData>>? IDataGridColumn<TData>.HeaderTemplate => null;
     string? IDataGridColumn<TData>.CellClass => CellClass;
+
+    Func<TData, string?>? IDataGridColumn<TData>.CellClassFunc => CellClassFunc;
     string? IDataGridColumn<TData>.HeaderClass => HeaderClass;
     bool IDataGridColumn<TData>.NoWrap => NoWrap;
     AggregateFunction IDataGridColumn<TData>.Aggregate => AggregateFunction.None;

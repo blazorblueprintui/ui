@@ -2939,7 +2939,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     }
 
     private string GetCellClass(IDataGridColumn<TData> column, bool isSelectColumn,
-        bool isExpandColumn, bool isLastLeft, bool isFirstRight)
+        bool isExpandColumn, bool isLastLeft, bool isFirstRight, TData? item = null)
     {
         var baseClass = "p-4 align-middle transition-colors";
 
@@ -2967,11 +2967,12 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
 
         var cellClass = column.CellClass;
+        var perItemClass = item != null ? column.CellClassFunc?.Invoke(item) : null;
 
         var overflowClass = HasTableFixed() ? "overflow-hidden" : "";
         var noWrapClass = column.NoWrap ? "whitespace-nowrap overflow-hidden text-ellipsis" : "";
 
-        return ClassNames.cn(baseClass, cellClass, overflowClass, noWrapClass, pinnedClass, separatorClass);
+        return ClassNames.cn(baseClass, cellClass, perItemClass, overflowClass, noWrapClass, pinnedClass, separatorClass);
     }
 
     private string? GetColumnWidthStyle(IDataGridColumn<TData> column)
@@ -3123,7 +3124,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             {
                 await columnsModule.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }
@@ -3137,7 +3138,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             {
                 await clipboardModule.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }

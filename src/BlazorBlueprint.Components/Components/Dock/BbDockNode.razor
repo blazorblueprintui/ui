@@ -1,0 +1,49 @@
+@namespace BlazorBlueprint.Components
+
+@* Recursively renders a dock layout node. Splits reuse the Resizable panel components;
+   tab groups render via BbDockTabGroup. The node is typed as object so the layout model
+   can remain internal while this component (which Razor generates as public) stays usable. *@
+
+@if (Node is DockSplitNode split)
+{
+    @* Keying by the structural signature forces a fresh Resizable group whenever the split's
+       shape changes, so the Resizable panel/handle index bookkeeping stays correct. *@
+    <BbResizablePanelGroup Direction="@Direction(split.Orientation)"
+                           Class="h-full w-full"
+                           @key="@($"split-{split.Id}-{split.Signature}")">
+        @for (var i = 0; i < split.Children.Count; i++)
+        {
+            var child = split.Children[i];
+            var size = i < split.Sizes.Count ? split.Sizes[i] : 100.0 / split.Children.Count;
+
+            if (i > 0)
+            {
+                @* Blend the divider at rest: the group borders provide the visible separation,
+                   so the handle's own line is transparent (hover/active highlight is kept). *@
+                <BbResizableHandle WithHandle="false" Class="bg-transparent hover:bg-primary/50 active:bg-primary" />
+            }
+
+            <BbResizablePanel DefaultSize="size" MinSize="8" Class="h-full" @key="@($"panel-{child.Id}")">
+                <BbDockNode Node="child" />
+            </BbResizablePanel>
+        }
+    </BbResizablePanelGroup>
+}
+else if (Node is DockTabGroupNode group)
+{
+    <BbDockTabGroup Group="group" />
+}
+
+@code {
+    /// <summary>
+    /// The layout node to render. Typed as <see cref="object"/> to keep the internal layout
+    /// model out of the public API; it is always an internal dock node.
+    /// </summary>
+    [Parameter, EditorRequired]
+    public object Node { get; set; } = null!;
+
+    private static ResizableDirection Direction(DockOrientation orientation) =>
+        orientation == DockOrientation.Horizontal
+            ? ResizableDirection.Horizontal
+            : ResizableDirection.Vertical;
+}

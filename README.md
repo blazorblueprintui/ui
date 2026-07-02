@@ -165,7 +165,7 @@ builder.Services.AddBlazorBlueprintComponents();
 
 ## Components
 
-Blazor Blueprint includes **99 styled components** organized into the following categories.
+Blazor Blueprint includes **112 styled components** organized into the following categories.
 
 ### Enterprise Components
 
@@ -179,6 +179,8 @@ Production-ready components for complex data-driven applications:
 | **Filter Builder** | Visual query builder for constructing complex filter expressions with AND/OR logic, nested condition groups, and type-aware operators. Pairs with DataGrid for interactive data exploration. |
 | **Form Wizard** | Multi-step form wizard with progress indicators, per-step validation, optional/skippable steps, and navigation controls. |
 | **Chart** | 11 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Pie, Radar, Radial Bar, Scatter) built on Apache ECharts with a declarative composition API and automatic theme integration. |
+| **Dock** | IDE-style docking layout — drag-and-drop panels between regions, pinning, maximize, close/reopen, pop-out floating panels, and tab-strip overflow. |
+| **Event Calendar** | Agenda/event calendar with Month, Week, and Agenda views, generic over your own event model, with per-event templates and styling. |
 | **Rich Text Editor** | WYSIWYG editor with formatting toolbar and HTML output. |
 | **Markdown Editor** | Toolbar formatting with split-pane live preview. |
 
@@ -188,14 +190,15 @@ Production-ready components for complex data-driven applications:
 |-----------|-------------|
 | **Button** | Multiple variants (default, destructive, outline, secondary, ghost, link) with loading state and icon support |
 | **Button Group** | Visually group related buttons with connected styling |
-| **Calendar** | Interactive calendar with date constraints and range selection |
+| **Calendar** | Interactive calendar with date constraints, range selection, and per-day templates/styling |
 | **Checkbox** | Checkbox with indeterminate state and ARIA attributes |
 | **Checkbox Group** | Group of checkboxes with select-all support |
 | **Color Picker** | Color selection with swatches and custom input |
 | **Combobox** | Searchable autocomplete dropdown |
 | **Currency Input** | Currency-formatted numeric input with locale support |
-| **Date Picker** | Date picker with popover calendar and formatting options |
-| **Date Range Picker** | Dual-calendar range selection |
+| **Date Picker** | Date picker with popover calendar, optional manual text entry with configurable input formats, and formatting options |
+| **Date Range Picker** | Dual-calendar range selection with quick-select presets and optional auto-apply |
+| **Date Time Picker** | Combined date and time selection in one popover — calendar plus 12/24h time panel with optional seconds |
 | **Dynamic Form** | Schema-driven form rendering — generates complete forms from a definition with automatic input selection, validation, conditional visibility, and layout customization |
 | **Field** | Combines label, control, description, and error for structured forms |
 | **Filter Builder** | Visual query builder for data filter expressions with AND/OR logic, condition groups, and two-way binding |
@@ -206,6 +209,7 @@ Production-ready components for complex data-driven applications:
 | **Form Field Currency Input** | Pre-configured currency input field with built-in label, description, and validation |
 | **Form Field Date Picker** | Pre-configured date picker field with built-in label, description, and validation |
 | **Form Field Date Range Picker** | Pre-configured date range picker field with built-in label, description, and manual validation |
+| **Form Field Date Time Picker** | Pre-configured date-time picker field with built-in label, description, and validation |
 | **Form Field File Upload** | Pre-configured file upload field with built-in label, description, and manual validation |
 | **Form Field Input** | Pre-configured input field with built-in label, description, and validation |
 | **Form Field Input OTP** | Pre-configured OTP input field with built-in label, description, and validation |
@@ -253,6 +257,7 @@ Production-ready components for complex data-driven applications:
 | **Card** | Container with header, content, footer, and action areas |
 | **Carousel** | Slideshow for cycling through content |
 | **Collapsible** | Expandable/collapsible panels |
+| **Dock** | IDE-style docking layout with drag-and-drop panels, pinning, maximize, pop-out floating windows, and tab overflow |
 | **Item** | Flexible list items with media, content, and actions |
 | **Navigation Menu** | Horizontal navigation with dropdown menus |
 | **Pagination** | Page navigation with first/previous/next/last controls and page size selection |
@@ -290,6 +295,7 @@ Production-ready components for complex data-driven applications:
 | **DataGrid**         | Enterprise data grid with sorting, per-column filtering, row grouping with aggregates, hierarchical tree data, selection, expandable rows, row virtualization, context menu, pinned columns, column reordering/resizing/visibility, and state persistence |
 | **DataTable**        | Tables with sorting, filtering, pagination, and row selection                                                      |
 | **DataView**         | Displays data using templates in a grid or list layout with sorting, filtering, pagination, and infinite scrolling |
+| **Event Calendar**   | Month, Week, and Agenda views over your own event model with per-event templates, styling, and click callbacks    |
 | **Markdown Editor**  | Toolbar formatting with live preview                                                                               |
 | **Rich Text Editor** | WYSIWYG editor with formatting toolbar and HTML output                                                             |
 | **Tree View**        | Hierarchical data display with selection, checkboxes, lazy loading, drag-and-drop, search filtering, and data-driven or declarative modes |
@@ -301,12 +307,26 @@ Production-ready components for complex data-driven applications:
 | **Alert** | Callout messages with dismissible variants |
 | **Avatar** | User avatars with fallback and group support |
 | **Badge** | Status badges and labels |
+| **Copy Text** | Click-to-copy text with tooltip feedback and copied-state indicator |
+| **Dark Mode Toggle** | Button that toggles light/dark mode with customizable icons and optional label |
 | **Empty** | Empty state placeholder with icon, title, and description |
 | **Kbd** | Keyboard shortcut display |
 | **Progress** | Progress bar indicator |
 | **Skeleton** | Loading placeholders |
 | **Spinner** | Loading spinner with size variants |
+| **Theme Switcher** | Theme customization popover — light/dark mode, independent base and primary colors, and radius, with persistence |
 | **Typography** | Consistent text styling (H1–H4, paragraph, lead, muted, blockquote, inline code, etc.) |
+
+### Chat & AI
+
+Building blocks for chat and AI-agent interfaces:
+
+| Component | Description |
+|-----------|-------------|
+| **Attachment** | File attachment chips with upload states (uploading, processing, error, done), previews, and actions |
+| **Bubble** | Message bubbles with tinted/outlined variants, reactions, and attachment slots |
+| **Marker** | Inline status and tool-call markers (e.g. "searching the web…") with an animated shimmer effect |
+| **Message** | Chat message rows with avatar, content, and footer, aligned per role |
 
 ## Primitives
 
@@ -405,7 +425,7 @@ Apply the `.dark` class to your `<html>` element. All components automatically s
 
 ## Localization
 
-All component chrome strings (button labels, placeholders, ARIA labels, status messages) are localizable via the `IBbLocalizer` interface. The built-in `DefaultBbLocalizer` provides English defaults for all 189 strings.
+All component chrome strings (button labels, placeholders, ARIA labels, status messages) are localizable via the `IBbLocalizer` interface. The built-in `DefaultBbLocalizer` provides English defaults for all 260+ strings.
 
 ### Quick Start
 

@@ -1,0 +1,28 @@
+<BbEventCalendar Items="events"
+                 EventStart="e => e.Start"
+                 EventEnd="e => e.End"
+                 EventTitle="e => e.Title"
+                 OnEventClick="(DemoEvent e) => selectedEvent = e" />
+
+@if (selectedEvent is not null)
+{
+    <BbCard>
+        <BbCardHeader>
+            <BbCardTitle>@selectedEvent.Title</BbCardTitle>
+            <BbCardDescription>
+                @selectedEvent.Start.ToString("f")
+                @if (selectedEvent.End is not null)
+                {
+                    <text> – @selectedEvent.End.Value.ToString("f")</text>
+                }
+            </BbCardDescription>
+        </BbCardHeader>
+        <BbCardContent>
+            <BbBadge Variant="BadgeVariant.Outline">@selectedEvent.Category</BbBadge>
+        </BbCardContent>
+    </BbCard>
+}
+
+@code {
+    private DemoEvent? selectedEvent;
+}

@@ -1,0 +1,301 @@
+@page "/components/event-calendar"
+
+<PageTitle>Event Calendar Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-5xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Event Calendar Component</h1>
+            <p class="text-xl text-muted-foreground">
+                Displays events in a month grid, week columns, or a chronological agenda.
+                Generic over your own event type — map it with accessor delegates instead of adapting your model.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic Month View -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Month View</h2>
+            <p class="text-sm text-muted-foreground">
+                Pass your events via <code class="bg-muted px-1 py-0.5 rounded">Items</code> and map them with
+                <code class="bg-muted px-1 py-0.5 rounded">EventStart</code>, <code class="bg-muted px-1 py-0.5 rounded">EventEnd</code>,
+                and <code class="bg-muted px-1 py-0.5 rounded">EventTitle</code>. Days show up to
+                <code class="bg-muted px-1 py-0.5 rounded">MaxEventsPerDay</code> chips; the localized "+x more" button
+                jumps to that day in the agenda view. Multi-day events render a chip on each spanned day.
+            </p>
+        </div>
+        <div class="border rounded-lg p-6">
+            <BbEventCalendar Items="events"
+                             EventStart="e => e.Start"
+                             EventEnd="e => e.End"
+                             EventTitle="e => e.Title" />
+        </div>
+        <CodeBlock Source="Components/EventCalendar/basic.txt" />
+    </div>
+
+    <!-- Per-Event Colors -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Per-Event Colors</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="bg-muted px-1 py-0.5 rounded">EventClass</code> to return extra CSS classes per event —
+                for example to color chips by category. Classes are merged with the built-in chip styling.
+            </p>
+        </div>
+        <div class="border rounded-lg p-6">
+            <BbEventCalendar Items="events"
+                             EventStart="e => e.Start"
+                             EventEnd="e => e.End"
+                             EventTitle="e => e.Title"
+                             EventClass="GetCategoryClass" />
+        </div>
+        <CodeBlock Source="Components/EventCalendar/colors.txt" />
+    </div>
+
+    <!-- Custom Event Template -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Event Template</h2>
+            <p class="text-sm text-muted-foreground">
+                <code class="bg-muted px-1 py-0.5 rounded">EventTemplate</code> replaces the built-in chip content entirely;
+                only minimal layout and focus classes remain on the chip button. Combine with
+                <code class="bg-muted px-1 py-0.5 rounded">EventClass</code> for chip-level styling.
+            </p>
+        </div>
+        <div class="border rounded-lg p-6">
+            <BbEventCalendar Items="events"
+                             EventStart="e => e.Start"
+                             EventEnd="e => e.End"
+                             EventTitle="e => e.Title"
+                             EventClass="GetCategoryClass">
+                <EventTemplate>
+                    <span class="flex items-center gap-1 px-1.5 py-0.5">
+                        <LucideIcon Name="@GetCategoryIcon(context)" Size="12" Class="shrink-0" />
+                        <span class="truncate text-xs font-medium">@context.Title</span>
+                    </span>
+                </EventTemplate>
+            </BbEventCalendar>
+        </div>
+        <CodeBlock Source="Components/EventCalendar/template.txt" />
+    </div>
+
+    <!-- Views & Navigation -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Views &amp; Navigation</h2>
+            <p class="text-sm text-muted-foreground">
+                Bind the active view with <code class="bg-muted px-1 py-0.5 rounded">@@bind-View</code> and the visible period with
+                <code class="bg-muted px-1 py-0.5 rounded">@@bind-CurrentDate</code>. The week view stacks each day's events in start
+                order (no hour grid in v1), and the agenda view lists the current month chronologically.
+                <code class="bg-muted px-1 py-0.5 rounded">OnViewRangeChanged</code> reports the visible range — useful for loading
+                events on demand.
+            </p>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <BbEventCalendar Items="events"
+                             EventStart="e => e.Start"
+                             EventEnd="e => e.End"
+                             EventTitle="e => e.Title"
+                             EventClass="GetCategoryClass"
+                             @bind-View="currentView"
+                             @bind-CurrentDate="currentDate"
+                             OnDateClick="d => lastClickedDate = d"
+                             OnViewRangeChanged="r => visibleRange = r" />
+            <div class="text-sm text-muted-foreground space-y-1">
+                <p>Active view: <span class="font-medium text-foreground">@currentView</span></p>
+                <p>Visible range: <span class="font-medium text-foreground">@visibleRange.Start.ToShortDateString() – @visibleRange.End.ToShortDateString()</span></p>
+                @if (lastClickedDate is not null)
+                {
+                    <p>Last clicked date: <span class="font-medium text-foreground">@lastClickedDate.Value.ToLongDateString()</span></p>
+                }
+            </div>
+        </div>
+        <CodeBlock Source="Components/EventCalendar/views.txt" />
+    </div>
+
+    <!-- Handling Event Clicks -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Handling Event Clicks</h2>
+            <p class="text-sm text-muted-foreground">
+                <code class="bg-muted px-1 py-0.5 rounded">OnEventClick</code> receives the clicked event — your own model,
+                not a wrapper — so you can open a details panel, dialog, or navigate.
+            </p>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <BbEventCalendar Items="events"
+                             EventStart="e => e.Start"
+                             EventEnd="e => e.End"
+                             EventTitle="e => e.Title"
+                             EventClass="GetCategoryClass"
+                             OnEventClick="(DemoEvent e) => selectedEvent = e" />
+            @if (selectedEvent is not null)
+            {
+                <BbCard>
+                    <BbCardHeader>
+                        <BbCardTitle>@selectedEvent.Title</BbCardTitle>
+                        <BbCardDescription>
+                            @selectedEvent.Start.ToString("f")
+                            @if (selectedEvent.End is not null)
+                            {
+                                <text> – @selectedEvent.End.Value.ToString("f")</text>
+                            }
+                        </BbCardDescription>
+                    </BbCardHeader>
+                    <BbCardContent>
+                        <BbBadge Variant="BadgeVariant.Outline">@selectedEvent.Category</BbBadge>
+                    </BbCardContent>
+                </BbCard>
+            }
+        </div>
+        <CodeBlock Source="Components/EventCalendar/event-click.txt" />
+    </div>
+
+    <!-- v1 Notes -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Notes &amp; Limitations</h2>
+            <ul class="list-disc pl-6 text-sm text-muted-foreground space-y-1">
+                <li>Multi-day events render a chip on each spanned day — true spanning bars across cells are not supported yet.</li>
+                <li>The week view is a stacked per-day list ordered by start time; there is no hour grid or drag-to-create.</li>
+                <li>An event is treated as all-day when its start (and end, if any) fall exactly on midnight.</li>
+                <li>Events are reached in tab order; arrow-key grid navigation is not implemented yet.</li>
+            </ul>
+        </div>
+    </div>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The month and week views use role="grid" with role="row", role="columnheader", and role="gridcell"</AccessibilityItem>
+            <AccessibilityItem>Day cells and day buttons carry aria-label with the full localized date</AccessibilityItem>
+            <AccessibilityItem>Every event is a real button — clickable and keyboard reachable via tab order</AccessibilityItem>
+            <AccessibilityItem>Navigation buttons have localized aria-labels; view switcher buttons expose aria-pressed</AccessibilityItem>
+            <AccessibilityItem>The header title uses aria-live="polite" so period changes are announced</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move through navigation controls, day buttons, and event chips">
+                <BbKbd>Tab</BbKbd> / <BbKbd>Shift+Tab</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate the focused button (navigate, switch view, or raise event/date callbacks)">
+                <BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <LocalizationSection
+        Description="All Event Calendar chrome strings — view names, navigation labels, and the overflow/empty-state text — are configurable."
+        Labels="@(new LocalizationSection.LabelInfo[]
+        {
+            new("Today", "Today", "Label for the today button"),
+            new("Month", "Month", "Month view switcher label"),
+            new("Week", "Week", "Week view switcher label"),
+            new("Agenda", "Agenda", "Agenda view switcher label"),
+            new("PreviousPeriod", "Go to previous period", "Aria label for the previous button"),
+            new("NextPeriod", "Go to next period", "Aria label for the next button"),
+            new("ViewSwitcher", "Calendar view", "Aria label for the view switcher group"),
+            new("MoreEvents", "+{0} more", "Overflow button label; {0} is the hidden event count"),
+            new("NoEvents", "No events to display.", "Agenda view empty state"),
+            new("AllDay", "All day", "Time label for all-day events"),
+        })"
+        CultureAware="true"
+        CultureDescription="Month/day names, date headers, and time labels are derived from CultureInfo.CurrentCulture. The first day of the week follows the culture unless overridden with FirstDayOfWeek."
+        CodeExample="@(@"services.AddBlazorBlueprintComponents(localizer =>
+{
+    localizer.Set(""EventCalendar.Today"", ""Heute"");
+    localizer.Set(""EventCalendar.MoreEvents"", ""+{0} weitere"");
+});")" />
+
+    <!-- API Reference -->
+    <div class="space-y-4">
+        <ApiReference ComponentName="EventCalendar">
+            <ApiParameter Name="Items" Type="IEnumerable&lt;TEvent&gt;?" Default="null">
+                The events to display. TEvent is your own model type.
+            </ApiParameter>
+            <ApiParameter Name="EventStart" Type="Func&lt;TEvent, DateTime&gt;" Default="required">
+                Returns the start date/time of an event.
+            </ApiParameter>
+            <ApiParameter Name="EventEnd" Type="Func&lt;TEvent, DateTime?&gt;?" Default="null">
+                Returns the end date/time of an event, or null for a point-in-time event. When the delegate itself is null, all events are point-in-time. Events ending on a later day render a chip on each spanned day.
+            </ApiParameter>
+            <ApiParameter Name="EventTitle" Type="Func&lt;TEvent, string&gt;" Default="required">
+                Returns the display title of an event.
+            </ApiParameter>
+            <ApiParameter Name="EventClass" Type="Func&lt;TEvent, string?&gt;?" Default="null">
+                Returns additional CSS classes for a specific event's chip, merged with the built-in chip classes. Use for per-event coloring.
+            </ApiParameter>
+            <ApiParameter Name="EventTemplate" Type="RenderFragment&lt;TEvent&gt;?" Default="null">
+                Template that fully replaces the built-in event chip content. Only minimal layout/focus classes remain on the chip button.
+            </ApiParameter>
+            <ApiParameter Name="View" Type="EventCalendarView" Default="EventCalendarView.Month">
+                The active view (Month, Week, or Agenda). Use @@bind-View for two-way binding.
+            </ApiParameter>
+            <ApiParameter Name="CurrentDate" Type="DateTime" Default="DateTime.Today">
+                The date that controls the visible period (the month or week containing it). Use @@bind-CurrentDate for two-way binding.
+            </ApiParameter>
+            <ApiParameter Name="FirstDayOfWeek" Type="DayOfWeek?" Default="null">
+                The first day of the week. Defaults to the current culture's first day of the week.
+            </ApiParameter>
+            <ApiParameter Name="MaxEventsPerDay" Type="int" Default="3">
+                Maximum event chips per day in the month view before the "+x more" overflow button appears. Clicking the overflow navigates to that day in the agenda view.
+            </ApiParameter>
+            <ApiParameter Name="OnEventClick" Type="EventCallback&lt;TEvent&gt;">
+                Callback when an event chip is clicked.
+            </ApiParameter>
+            <ApiParameter Name="OnDateClick" Type="EventCallback&lt;DateTime&gt;">
+                Callback when a day number (month view) or day header (week view) is clicked.
+            </ApiParameter>
+            <ApiParameter Name="OnViewRangeChanged" Type="EventCallback&lt;EventCalendarRange&gt;">
+                Callback when the visible date range changes, including the initial range. EventCalendarRange exposes inclusive Start and End dates.
+            </ApiParameter>
+            <ApiParameter Name="Class" Type="string?" Default="null">
+                Additional CSS classes for the root element.
+            </ApiParameter>
+        </ApiReference>
+    </div>
+</div>
+
+@code {
+    private sealed record DemoEvent(string Title, DateTime Start, DateTime? End, string Category);
+
+    private static readonly DateTime today = DateTime.Today;
+
+    private readonly List<DemoEvent> events = new()
+    {
+        new("Standup", today.AddHours(9), today.AddHours(9.25), "meeting"),
+        new("Sprint planning", today.AddHours(10), today.AddHours(11.5), "meeting"),
+        new("Marketing sync", today.AddHours(13), today.AddHours(13.75), "meeting"),
+        new("Retro", today.AddHours(16), today.AddHours(17), "meeting"),
+        new("Demo prep", today.AddHours(17), null, "release"),
+        new("1:1 with Sam", today.AddDays(-2).AddHours(15), today.AddDays(-2).AddHours(15.5), "meeting"),
+        new("Design review", today.AddDays(1).AddHours(13), today.AddDays(1).AddHours(14), "meeting"),
+        new("Dentist", today.AddDays(1).AddHours(8.5), null, "personal"),
+        new("Release v3.13", today.AddDays(3), null, "release"),
+        new("Code freeze", today.AddDays(5), null, "release"),
+        new("DotNet Conf", today.AddDays(7), today.AddDays(9), "travel"),
+    };
+
+    private EventCalendarView currentView = EventCalendarView.Week;
+    private DateTime currentDate = today;
+    private DateTime? lastClickedDate;
+    private EventCalendarRange visibleRange;
+    private DemoEvent? selectedEvent;
+
+    private string? GetCategoryClass(DemoEvent e) => e.Category switch
+    {
+        "meeting" => "bg-sky-500/15 text-sky-700 hover:bg-sky-500/25 dark:text-sky-400",
+        "release" => "bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 dark:text-emerald-400",
+        "travel" => "bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 dark:text-amber-400",
+        "personal" => "bg-violet-500/15 text-violet-700 hover:bg-violet-500/25 dark:text-violet-400",
+        _ => null,
+    };
+
+    private string GetCategoryIcon(DemoEvent e) => e.Category switch
+    {
+        "meeting" => "users",
+        "release" => "rocket",
+        "travel" => "plane",
+        "personal" => "heart",
+        _ => "calendar",
+    };
+}

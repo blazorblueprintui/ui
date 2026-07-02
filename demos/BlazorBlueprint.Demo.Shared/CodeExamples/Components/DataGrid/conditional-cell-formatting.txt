@@ -1,0 +1,20 @@
+<BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
+    <Columns>
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable
+            CellClass="font-mono tabular-nums"
+            CellClassFunc="@(p => p.Salary >= 100000 ? "text-emerald-600 dark:text-emerald-400 font-semibold" : p.Salary < 60000 ? "text-destructive" : null)" />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)"
+            CellClassFunc="@(p => p.Status == "Inactive" ? "text-muted-foreground line-through" : null)" />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private List<Person> people = new();
+
+    protected override void OnInitialized()
+    {
+        people = MockDataService.GeneratePersons(50);
+    }
+}

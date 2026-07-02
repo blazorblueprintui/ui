@@ -1,0 +1,23 @@
+<BbDateRangePicker @bind-Value="_selectedRange" DayClassFunc="@GetWeekendDayClass">
+    <DayTemplate>
+        <div class="relative flex h-full w-full items-center justify-center">
+            @context.Date.Day
+            @if (HasEvent(context.Date))
+            {
+                <span class="absolute bottom-1 h-1 w-1 rounded-full @(context.IsSelected ? "bg-primary-foreground" : "bg-primary")"></span>
+            }
+        </div>
+    </DayTemplate>
+</BbDateRangePicker>
+
+@code {
+    private DateRange? _selectedRange;
+
+    private static readonly HashSet<int> EventDays = new() { 3, 8, 12, 17, 21, 26 };
+
+    private bool HasEvent(DateTime date) =>
+        date.Month == DateTime.Today.Month && date.Year == DateTime.Today.Year && EventDays.Contains(date.Day);
+
+    private string? GetWeekendDayClass(DateTime date) =>
+        date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday ? "text-destructive" : null;
+}

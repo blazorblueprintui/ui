@@ -38,6 +38,7 @@ public partial class BbCheckbox : ComponentBase
     private FieldIdentifier _fieldIdentifier;
     private EditContext? _editContext;
     private string? generatedId;
+    private string? formattedName;
 
     /// <summary>
     /// Gets or sets the cascaded EditContext from a parent EditForm.
@@ -148,6 +149,28 @@ public partial class BbCheckbox : ComponentBase
     public Expression<Func<bool>>? CheckedExpression { get; set; }
 
     /// <summary>
+    /// Gets or sets the HTML name attribute used for form submission.
+    /// </summary>
+    /// <remarks>
+    /// When inside an EditForm and not explicitly set, the name is automatically
+    /// derived from <see cref="CheckedExpression"/> (e.g. "Input.RememberMe") so the
+    /// checkbox posts a value that <c>[SupplyParameterFromForm]</c> can bind on
+    /// SSR/enhanced form submissions. A hidden native checkbox mirrors the checked
+    /// state for the actual form post.
+    /// </remarks>
+    [Parameter]
+    public string? Name { get; set; }
+
+    /// <summary>
+    /// Gets the effective name attribute, falling back to the CheckedExpression's
+    /// member path when inside an EditForm.
+    /// </summary>
+    private string? EffectiveName =>
+        Name ?? (_editContext != null && _fieldIdentifier.FieldName != null
+            ? formattedName ?? _fieldIdentifier.FieldName
+            : null);
+
+    /// <summary>
     /// Gets whether the checkbox is in an invalid state (for validation).
     /// </summary>
     private bool IsInvalid
@@ -208,6 +231,7 @@ public partial class BbCheckbox : ComponentBase
         {
             _editContext = CascadedEditContext;
             _fieldIdentifier = FieldIdentifier.Create(CheckedExpression);
+            formattedName = ExpressionPathFormatter.FormatLambda(CheckedExpression);
         }
     }
 }

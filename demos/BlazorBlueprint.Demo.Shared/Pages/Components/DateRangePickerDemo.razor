@@ -213,6 +213,44 @@
         <CodeBlock Source="Components/DateRangePicker/monday-first.txt" />
     </div>
 
+    <!-- Auto-apply without buttons -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Auto-apply without buttons</h2>
+            <p class="text-sm text-muted-foreground">
+                With <code class="text-xs bg-muted px-1 py-0.5 rounded">AutoApply</code> the selection is applied and the popover closes as soon as a complete range is picked — no Apply click required. <code class="text-xs bg-muted px-1 py-0.5 rounded">ShowButtons="false"</code> hides the Clear/Apply footer buttons (and implies auto-apply).
+            </p>
+        </div>
+        <BbDateRangePicker @bind-Value="_autoApply" AutoApply="true" ShowButtons="false" />
+        @if (_autoApply != null)
+        {
+            <p class="text-sm text-muted-foreground">Selected: @_autoApply.Start.ToShortDateString() - @_autoApply.End.ToShortDateString()</p>
+        }
+        <CodeBlock Source="Components/DateRangePicker/auto-apply.txt" />
+    </div>
+
+    <!-- Per-Day Customization -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Per-Day Customization</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">DayTemplate</code> to render custom content inside each calendar day — the context includes range state via <code class="text-xs bg-muted px-1 py-0.5 rounded">IsInRange</code> — and <code class="text-xs bg-muted px-1 py-0.5 rounded">DayClassFunc</code> to style individual days.
+            </p>
+        </div>
+        <BbDateRangePicker @bind-Value="_customDayRange" DayClassFunc="@GetWeekendDayClass">
+            <DayTemplate>
+                <div class="relative flex h-full w-full items-center justify-center">
+                    @context.Date.Day
+                    @if (HasEvent(context.Date))
+                    {
+                        <span class="absolute bottom-1 h-1 w-1 rounded-full @(context.IsSelected ? "bg-primary-foreground" : "bg-primary")"></span>
+                    }
+                </div>
+            </DayTemplate>
+        </BbDateRangePicker>
+        <CodeBlock Source="Components/DateRangePicker/day-customization.txt" />
+    </div>
+
     <!-- Disabled -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -275,11 +313,23 @@
                 <ApiParameter Name="DisabledDates" Type="Func&lt;DateTime, bool&gt;?">
                     Function to disable specific dates.
                 </ApiParameter>
+                <ApiParameter Name="DayTemplate" Type="RenderFragment&lt;CalendarDayContext&gt;?" Default="null">
+                    Template for rendering custom content inside each calendar day button. The context includes range state via <code class="text-xs bg-muted px-1 py-0.5 rounded">IsInRange</code>. When null, the day number is rendered.
+                </ApiParameter>
+                <ApiParameter Name="DayClassFunc" Type="Func&lt;DateTime, string?&gt;?" Default="null">
+                    Function returning additional CSS classes for a specific calendar day button.
+                </ApiParameter>
                 <ApiParameter Name="ShowTwoMonths" Type="bool" Default="true">
                     Show two calendars side by side.
                 </ApiParameter>
                 <ApiParameter Name="ShowPresets" Type="bool" Default="true">
                     Show quick select presets.
+                </ApiParameter>
+                <ApiParameter Name="ShowButtons" Type="bool" Default="true">
+                    Show the Clear and Apply buttons in the popover footer. When false, completed selections are applied automatically.
+                </ApiParameter>
+                <ApiParameter Name="AutoApply" Type="bool" Default="false">
+                    Apply the selection and close the popover as soon as a complete range is selected, without requiring the Apply button.
                 </ApiParameter>
                 <ApiParameter Name="Presets" Type="IReadOnlyList&lt;DateRangeQuickPick&gt;?" Default="null">
                     Custom list of quick-pick presets. Supports built-in presets via implicit conversion from <code class="text-xs bg-muted px-1 py-0.5 rounded">DateRangePreset</code> and custom entries via <code class="text-xs bg-muted px-1 py-0.5 rounded">DateRangeQuickPick.Custom(label, rangeFactory)</code>. When null, the default built-in presets are shown.
@@ -364,6 +414,16 @@
     private DateRange? _customFormat;
     private DateRange? _placeholder;
     private DateRange? _mondayFirst;
+    private DateRange? _autoApply;
+    private DateRange? _customDayRange;
+
+    private static readonly HashSet<int> EventDays = new() { 3, 8, 12, 17, 21, 26 };
+
+    private bool HasEvent(DateTime date) =>
+        date.Month == DateTime.Today.Month && date.Year == DateTime.Today.Year && EventDays.Contains(date.Day);
+
+    private string? GetWeekendDayClass(DateTime date) =>
+        date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday ? "text-destructive" : null;
 
     private readonly List<DateRangeQuickPick> _fullyCustomPresets = new()
     {

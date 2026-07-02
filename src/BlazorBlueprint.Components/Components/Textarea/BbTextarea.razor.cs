@@ -363,6 +363,16 @@ public partial class BbTextarea : ComponentBase
         StateHasChanged();
     }
 
+    /// <summary>
+    /// Gets the underlying textarea element reference, e.g. for JS interop.
+    /// </summary>
+    public ElementReference Element => inputRef;
+
+    /// <summary>
+    /// Sets focus to the underlying textarea element.
+    /// </summary>
+    public ValueTask FocusAsync() => inputRef.FocusAsync();
+
     public async ValueTask DisposeAsync()
     {
         disposed = true;
@@ -374,7 +384,7 @@ public partial class BbTextarea : ComponentBase
                 await jsModule.InvokeVoidAsync("dispose", instanceId);
                 await jsModule.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }
