@@ -165,7 +165,7 @@ builder.Services.AddBlazorBlueprintComponents();
 
 ## Components
 
-Blazor Blueprint includes **110 styled components** organized into the following categories.
+Blazor Blueprint includes **112 styled components** organized into the following categories.
 
 ### Enterprise Components
 
@@ -308,6 +308,7 @@ Production-ready components for complex data-driven applications:
 | **Avatar** | User avatars with fallback and group support |
 | **Badge** | Status badges and labels |
 | **Copy Text** | Click-to-copy text with tooltip feedback and copied-state indicator |
+| **Dark Mode Toggle** | Button that toggles light/dark mode with customizable icons and optional label |
 | **Empty** | Empty state placeholder with icon, title, and description |
 | **Kbd** | Keyboard shortcut display |
 | **Progress** | Progress bar indicator |
