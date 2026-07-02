@@ -102,7 +102,21 @@
                                                 @onclick="@(() => SelectDate(day.Value))"
                                                 @onclick:stopPropagation="true"
                                                 @onfocus="@(() => HandleDayFocus(day.Value))">
-                                            @day.Value.Day
+                                            @if (DayTemplate != null)
+                                            {
+                                                @DayTemplate(new CalendarDayContext
+                                                {
+                                                    Date = day.Value,
+                                                    IsSelected = isSelected,
+                                                    IsDisabled = isDisabled,
+                                                    IsOutsideMonth = isOutside,
+                                                    IsToday = day.Value.Date == DateTime.Today
+                                                })
+                                            }
+                                            else
+                                            {
+                                                @day.Value.Day
+                                            }
                                         </button>
                                     }
                                 </td>
@@ -247,6 +261,20 @@
     /// </summary>
     [Parameter]
     public string? DayClass { get; set; }
+
+    /// <summary>
+    /// Function returning additional CSS classes for a specific day button,
+    /// composed with the built-in day classes and <see cref="DayClass"/>.
+    /// </summary>
+    [Parameter]
+    public Func<DateTime, string?>? DayClassFunc { get; set; }
+
+    /// <summary>
+    /// Optional template for rendering custom content inside each day button.
+    /// When null, the day number is rendered.
+    /// </summary>
+    [Parameter]
+    public RenderFragment<CalendarDayContext>? DayTemplate { get; set; }
 
     /// <summary>
     /// Additional CSS classes to apply to day cells (td elements).
@@ -753,7 +781,13 @@
             baseClass = ClassNames.cn(baseClass, "ring-2 ring-ring ring-offset-2");
         }
 
-        return string.IsNullOrEmpty(DayClass) ? baseClass : ClassNames.cn(baseClass, DayClass);
+        var customClass = DayClassFunc?.Invoke(date);
+        if (string.IsNullOrEmpty(DayClass) && string.IsNullOrEmpty(customClass))
+        {
+            return baseClass;
+        }
+
+        return ClassNames.cn(baseClass, DayClass, customClass);
     }
 
     #endregion

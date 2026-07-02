@@ -229,6 +229,28 @@
         <CodeBlock Source="Components/DateRangePicker/auto-apply.txt" />
     </div>
 
+    <!-- Per-Day Customization -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Per-Day Customization</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">DayTemplate</code> to render custom content inside each calendar day — the context includes range state via <code class="text-xs bg-muted px-1 py-0.5 rounded">IsInRange</code> — and <code class="text-xs bg-muted px-1 py-0.5 rounded">DayClassFunc</code> to style individual days.
+            </p>
+        </div>
+        <BbDateRangePicker @bind-Value="_customDayRange" DayClassFunc="@GetWeekendDayClass">
+            <DayTemplate>
+                <div class="relative flex h-full w-full items-center justify-center">
+                    @context.Date.Day
+                    @if (HasEvent(context.Date))
+                    {
+                        <span class="absolute bottom-1 h-1 w-1 rounded-full @(context.IsSelected ? "bg-primary-foreground" : "bg-primary")"></span>
+                    }
+                </div>
+            </DayTemplate>
+        </BbDateRangePicker>
+        <CodeBlock Source="Components/DateRangePicker/day-customization.txt" />
+    </div>
+
     <!-- Disabled -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -290,6 +312,12 @@
                 </ApiParameter>
                 <ApiParameter Name="DisabledDates" Type="Func&lt;DateTime, bool&gt;?">
                     Function to disable specific dates.
+                </ApiParameter>
+                <ApiParameter Name="DayTemplate" Type="RenderFragment&lt;CalendarDayContext&gt;?" Default="null">
+                    Template for rendering custom content inside each calendar day button. The context includes range state via <code class="text-xs bg-muted px-1 py-0.5 rounded">IsInRange</code>. When null, the day number is rendered.
+                </ApiParameter>
+                <ApiParameter Name="DayClassFunc" Type="Func&lt;DateTime, string?&gt;?" Default="null">
+                    Function returning additional CSS classes for a specific calendar day button.
                 </ApiParameter>
                 <ApiParameter Name="ShowTwoMonths" Type="bool" Default="true">
                     Show two calendars side by side.
@@ -387,6 +415,15 @@
     private DateRange? _placeholder;
     private DateRange? _mondayFirst;
     private DateRange? _autoApply;
+    private DateRange? _customDayRange;
+
+    private static readonly HashSet<int> EventDays = new() { 3, 8, 12, 17, 21, 26 };
+
+    private bool HasEvent(DateTime date) =>
+        date.Month == DateTime.Today.Month && date.Year == DateTime.Today.Year && EventDays.Contains(date.Day);
+
+    private string? GetWeekendDayClass(DateTime date) =>
+        date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday ? "text-destructive" : null;
 
     private readonly List<DateRangeQuickPick> _fullyCustomPresets = new()
     {

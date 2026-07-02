@@ -138,6 +138,30 @@
         <CodeBlock Source="Components/DatePicker/week-start-day.txt" />
     </div>
 
+    <!-- Per-Day Customization -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Per-Day Customization</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code>DayTemplate</code> to render custom content inside each calendar day (e.g. a dot
+                marker on days with data) and <code>DayClassFunc</code> to style individual days
+                (e.g. tint weekends). Both are forwarded to the underlying calendar.
+            </p>
+        </div>
+        <BbDatePicker @bind-Value="_customDayDate" DayClassFunc="@GetWeekendDayClass">
+            <DayTemplate>
+                <div class="relative flex h-full w-full items-center justify-center">
+                    @context.Date.Day
+                    @if (HasEvent(context.Date))
+                    {
+                        <span class="absolute bottom-1 h-1 w-1 rounded-full @(context.IsSelected ? "bg-primary-foreground" : "bg-primary")"></span>
+                    }
+                </div>
+            </DayTemplate>
+        </BbDatePicker>
+        <CodeBlock Source="Components/DatePicker/day-customization.txt" />
+    </div>
+
     <!-- Form Validation with EditForm -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -239,6 +263,12 @@
                 <ApiParameter Name="DisabledDates" Type="Func&lt;DateTime, bool&gt;?">
                     Function to determine if a date should be disabled.
                 </ApiParameter>
+                <ApiParameter Name="DayTemplate" Type="RenderFragment&lt;CalendarDayContext&gt;?" Default="null">
+                    Template for rendering custom content inside each calendar day button. When null, the day number is rendered.
+                </ApiParameter>
+                <ApiParameter Name="DayClassFunc" Type="Func&lt;DateTime, string?&gt;?" Default="null">
+                    Function returning additional CSS classes for a specific calendar day button.
+                </ApiParameter>
                 <ApiParameter Name="Disabled" Type="bool" Default="false">
                     Whether the date picker is disabled.
                 </ApiParameter>
@@ -276,6 +306,15 @@
     private DateTime? _noWeekendsDate;
     private DateTime? _sundayStart;
     private DateTime? _mondayStart;
+    private DateTime? _customDayDate;
+
+    private static readonly HashSet<int> EventDays = new() { 3, 8, 12, 17, 21, 26 };
+
+    private bool HasEvent(DateTime date) =>
+        date.Month == DateTime.Today.Month && date.Year == DateTime.Today.Year && EventDays.Contains(date.Day);
+
+    private string? GetWeekendDayClass(DateTime date) =>
+        date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday ? "text-destructive" : null;
 
     private bool IsWeekend(DateTime date)
     {
