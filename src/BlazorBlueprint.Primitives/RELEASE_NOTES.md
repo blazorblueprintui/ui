@@ -1,9 +1,5 @@
-## What's New in v3.13.0
+## What's New in v3.14.0
 
 ### New Features
-- **DataGrid** — added `CellClassFunc` on `IDataGridColumn` to compute conditional per-cell CSS classes from the row's data item, combined with the static `CellClass`.
-
-### Bug Fixes
-- **Floating/Popover positioning** — portal coordinates now render with invariant culture, fixing invalid CSS in locales that use a decimal comma (e.g. de-DE).
-- **Popover** — `AsChild` triggers now apply a pointer-events guard while open (via new `TriggerContext.SuppressPointerEventsWhenOpen`), so a single click can no longer close and immediately re-open the overlay.
-- **JS interop disposal** — swallow `JSException` on dispose paths in **Sortable**, **TreeView**, **FocusManager**, and **PositioningService** to prevent errors during WebView2 reloads.
+- **DataGrid** — added `Groupable` on `IDataGridColumn` so columns can opt into runtime grouping from the column header menu (defaults to `false`; the group key comes from the column's raw value).
+- **DataGrid** — added `DataGridGroupState.Version`, a counter that increments whenever the active group definition changes, letting the grid detect grouping changes made directly against the state.
