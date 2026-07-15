@@ -214,6 +214,24 @@
   --tracking-widest: calc(var(--tracking-normal) + 0.1em);
 }
 
+/* Global theme defaults. These are resets rather than overrides, so they belong in
+   `base` where border/background utilities beat them normally on specificity. They
+   must stay OUT of `@layer bb`: as `bb.utilities` the universal `*` selector
+   outranked every border-* utility (layer priority ignores specificity), flattening
+   all border colours to --border — see #398. */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    letter-spacing: var(--tracking-normal, 0);
+  }
+}
+
 /* All component utility/component layer blocks live inside `@layer bb` so they win
    the cascade-layer parity against consumer Tailwind output. The inner @layer
    declarations (base/components/utilities) become sublayers of bb. */
@@ -473,19 +491,7 @@
 
 
 
-/* Global theme overrides - utilities layer ensures these override Tailwind's reset */
 @layer utilities {
-  * {
-    border-color: var(--border);
-  }
-
-  body {
-    background-color: var(--background);
-    color: var(--foreground);
-    font-family: var(--font-sans);
-    letter-spacing: var(--tracking-normal, 0);
-  }
-
   /* Grid animation utilities for Accordion/Collapsible */
   .grid-rows-\[0fr\] {
     grid-template-rows: 0fr;

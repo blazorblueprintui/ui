@@ -4,12 +4,19 @@
 /* Import new OKLCH single-theme file */
 @import '../styles/theme.css';
 
-/* Configure source paths for scanning Razor files */
+/* Configure source paths for scanning Razor files.
+   Paths are relative to this file (demos/<Demo.Shared>/wwwroot/css), so reaching the
+   repo-root `src` takes four levels, not three. The three-level form silently
+   resolved to a non-existent `demos/src` — Tailwind does not error on a missing
+   @source, it just scans nothing — so the library sources were never scanned here.
+   The icon packages are deliberately absent: they are split per-icon-set
+   (Icons.Lucide/.Feather/.Heroicons/.FontAwesome), so the old bare `Icons` path
+   never existed either, and their only literal utility (text-destructive) is
+   already emitted from Components. */
 @source "../../Pages";
 @source "../../Shared";
-@source "../../../src/BlazorBlueprint.Components";
-@source "../../../src/BlazorBlueprint.Primitives";
-@source "../../../src/BlazorBlueprint.Icons";
+@source "../../../../src/BlazorBlueprint.Components";
+@source "../../../../src/BlazorBlueprint.Primitives";
 
 /* Component structural variables (not part of replaceable theme) */
 @layer base {
