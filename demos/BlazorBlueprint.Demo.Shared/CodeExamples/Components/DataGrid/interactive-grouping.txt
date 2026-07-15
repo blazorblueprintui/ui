@@ -1,0 +1,44 @@
+@* Mark columns Groupable to let users group by them from the column header menu. *@
+<BbDataGrid @ref="grid" TData="Person" Items="@people" InitialPageSize="50">
+    <Toolbar>
+        <div class="flex items-center gap-2">
+            @* SortDirection orders the group headers — ascending is the default. *@
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                      OnClick="@(() => grid!.GroupByColumnAsync("department"))">
+                Group by Department (A–Z)
+            </BbButton>
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                      OnClick="@(() => grid!.GroupByColumnAsync("department", SortDirection.Descending))">
+                Group by Department (Z–A)
+            </BbButton>
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                      OnClick="@(() => grid!.ClearGroupingAsync())">
+                Clear grouping
+            </BbButton>
+        </div>
+    </Toolbar>
+    <Columns>
+        @* No Groupable flag — this column shows no menu. *@
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Groupable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Sortable Groupable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" Groupable />
+
+        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable
+            Aggregate="AggregateFunction.Sum" />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private BbDataGrid<Person>? grid;
+    private List<Person> people = new();
+
+    // The header menu always groups ascending. Pass a SortDirection to order the group
+    // headers the other way — this affects the order of the groups themselves, not the
+    // rows within them, which follow the column's own sort.
+    //
+    // One column is grouped at a time — grouping by another replaces the current grouping.
+    // The active group is held on DataGridState.Grouping, so it is captured by Save()
+    // and reapplied by Restore().
+}

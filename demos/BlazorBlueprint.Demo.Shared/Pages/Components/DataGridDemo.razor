@@ -667,9 +667,10 @@
             <h2 class="text-2xl font-semibold">State Persistence</h2>
             <p class="text-sm text-muted-foreground">
                 Use <code class="bg-muted px-1 py-0.5 rounded">Save()</code> to capture a serializable
-                snapshot of sort order, column widths, column visibility, and page size.
+                snapshot of sort order, column widths, column visibility, page size, and the active grouping.
                 Use <code class="bg-muted px-1 py-0.5 rounded">Restore(snapshot)</code> to reapply it.
                 Snapshots are plain JSON-serializable objects — store them in localStorage, a database, or user preferences.
+                Try grouping by Department from its header menu, saving, ungrouping, then restoring.
             </p>
         </div>
         <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
@@ -691,7 +692,7 @@
             </Toolbar>
             <Columns>
                 <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Width="180px" />
-                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Width="150px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Groupable Width="150px" />
                 <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Width="120px" />
                 <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable Width="80px" />
                 <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Width="120px" />
@@ -817,6 +818,85 @@
         <CodeBlock Source="Components/DataGrid/row-grouping-filtering.txt" />
     </div>
 
+    <!-- ── Interactive Grouping ─────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Interactive Grouping</h2>
+            <p class="text-sm text-muted-foreground">
+                Mark a column <code class="bg-muted px-1 py-0.5 rounded">Groupable</code> to let users group by it
+                at runtime. An ellipsis menu appears in the column header with a "Group by" action, and the grid
+                regroups without a page refresh. Only one column is grouped at a time — choosing another replaces
+                the current grouping. Columns left without the flag (like Name) offer no menu.
+                Grouping can also be driven from code with
+                <code class="bg-muted px-1 py-0.5 rounded">GroupByColumnAsync</code>, which takes a
+                <code class="bg-muted px-1 py-0.5 rounded">SortDirection</code> controlling the order of the group
+                headers themselves — the buttons below group by the same column in each direction. Sorting
+                <em>within</em> each group stays under the column's own sort.
+            </p>
+        </div>
+        <BbDataGrid @ref="interactiveGroupingGrid" TData="Person" Items="@people" InitialPageSize="50">
+            <Toolbar>
+                <div class="flex items-center gap-2">
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                              OnClick="@(() => interactiveGroupingGrid!.GroupByColumnAsync("department"))">
+                        Group by Department (A–Z)
+                    </BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                              OnClick="@(() => interactiveGroupingGrid!.GroupByColumnAsync("department", SortDirection.Descending))">
+                        Group by Department (Z–A)
+                    </BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                              OnClick="@(() => interactiveGroupingGrid!.ClearGroupingAsync())">
+                        Clear grouping
+                    </BbButton>
+                </div>
+            </Toolbar>
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Groupable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Sortable Groupable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" Groupable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable
+                    Aggregate="BlazorBlueprint.Primitives.DataGrid.AggregateFunction.Sum" />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/interactive-grouping.txt" />
+    </div>
+
+    <!-- ── Live Collection Updates ──────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Live Collection Updates</h2>
+            <p class="text-sm text-muted-foreground">
+                The grid detects a new data set by reference, so mutating a collection in place does not re-render
+                on its own. Bind an <code class="bg-muted px-1 py-0.5 rounded">ObservableCollection</code> and the grid
+                subscribes to it, re-rendering as rows are added or removed. For a plain
+                <code class="bg-muted px-1 py-0.5 rounded">List</code>, call
+                <code class="bg-muted px-1 py-0.5 rounded">RefreshDataAsync()</code> on the grid after mutating it instead.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@livePeople" InitialPageSize="10" ShowPagination>
+            <Toolbar>
+                <div class="flex items-center gap-2">
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@AddLivePerson">
+                        <LucideIcon Name="plus" Class="w-4 h-4 mr-1" /> Add row
+                    </BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@RemoveLivePerson"
+                              Disabled="@(livePeople.Count == 0)">
+                        <LucideIcon Name="minus" Class="w-4 h-4 mr-1" /> Remove last
+                    </BbButton>
+                    <span class="text-sm text-muted-foreground">@livePeople.Count rows</span>
+                </div>
+            </Toolbar>
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/live-collection-updates.txt" />
+    </div>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>Uses role="grid" with aria-rowcount for screen readers</AccessibilityItem>
@@ -856,7 +936,7 @@
         <div class="space-y-4">
             <ApiReference ComponentName="DataGrid">
                 <ApiParameter Name="Items" Type="IEnumerable&lt;TData&gt;">
-                    The data source for the grid. Supports IQueryable for LINQ-composed sorting and pagination, or IEnumerable for in-memory processing. Mutually exclusive with ItemsProvider.
+                    The data source for the grid. Supports IQueryable for LINQ-composed sorting and pagination, or IEnumerable for in-memory processing. Mutually exclusive with ItemsProvider. A new data set is detected by reference, so assigning a different collection re-renders automatically; mutating the same collection in place needs either a RefreshDataAsync() call or an INotifyCollectionChanged source such as ObservableCollection, which the grid subscribes to.
                 </ApiParameter>
                 <ApiParameter Name="ItemsProvider" Type="DataGridItemsProvider&lt;TData&gt;">
                     Async delegate for server-side data fetching. Receives sort definitions, pagination parameters, and a cancellation token. Mutually exclusive with Items.
@@ -981,6 +1061,15 @@
                 <ApiParameter Name="CollapseAllGroups()" Type="Task">
                     Public method. Collapses all groups, hiding their data rows. Call via a component reference (<code>@@ref</code>).
                 </ApiParameter>
+                <ApiParameter Name="GroupByColumnAsync(string, SortDirection)" Type="Task">
+                    Public method. Groups rows by the given column id, replacing any active grouping. The direction orders the group keys and defaults to ascending. Call via a component reference (<code>@@ref</code>).
+                </ApiParameter>
+                <ApiParameter Name="ClearGroupingAsync()" Type="Task">
+                    Public method. Clears any active grouping, returning the grid to flat rows. Call via a component reference (<code>@@ref</code>).
+                </ApiParameter>
+                <ApiParameter Name="RefreshDataAsync()" Type="Task">
+                    Public method. Re-reads the data source and re-renders. Call after mutating the Items collection in place, which the grid cannot detect by reference, or to force an ItemsProvider re-fetch. Collections implementing INotifyCollectionChanged (such as ObservableCollection) are subscribed to and refreshed automatically, so they do not need this. Call via a component reference (<code>@@ref</code>).
+                </ApiParameter>
             </ApiReference>
 
             <ApiReference ComponentName="DataGridPropertyColumn">
@@ -1031,6 +1120,9 @@
                 </ApiParameter>
                 <ApiParameter Name="Filterable" Type="bool" Default="false">
                     Whether this column supports per-column filtering. When true, a filter icon appears in the column header that opens a filter popover. The filter field type is auto-inferred from the property type.
+                </ApiParameter>
+                <ApiParameter Name="Groupable" Type="bool" Default="false">
+                    Whether users can group rows by this column at runtime. When true, an ellipsis menu appears in the column header offering a "Group by" action. One column is grouped at a time, so grouping by another column replaces the current grouping.
                 </ApiParameter>
                 <ApiParameter Name="FilterType" Type="FilterFieldType?" Default="null">
                     Override the auto-inferred filter field type. Use when the default inference is not correct (e.g., use FilterFieldType.Enum for string properties with known values).
@@ -1097,6 +1189,9 @@
                 </ApiParameter>
                 <ApiParameter Name="Filterable" Type="bool" Default="false">
                     Whether this column supports per-column filtering. Requires FilterBy to be set.
+                </ApiParameter>
+                <ApiParameter Name="Groupable" Type="bool" Default="false">
+                    Whether users can group rows by this column at runtime, via an ellipsis menu in the column header. Requires SortBy to be set, since the group key is read from it.
                 </ApiParameter>
                 <ApiParameter Name="FilterBy" Type="Expression&lt;Func&lt;TData, object&gt;&gt;?" Default="null">
                     Expression used to build filter Where clauses. Required when Filterable is true.
@@ -1206,6 +1301,9 @@
 
 @code {
     private BbDataGrid<Person>? groupingGrid;
+    private BbDataGrid<Person>? interactiveGroupingGrid;
+    private readonly System.Collections.ObjectModel.ObservableCollection<Person> livePeople = new();
+    private int nextLivePersonId = 1;
     private List<Person> people = new();
     private List<Person> manyPeople = new();
     private List<Person> stressTestPeople = new();
@@ -1299,6 +1397,30 @@
         people = MockDataService.GeneratePersons(50);
         manyPeople = MockDataService.GeneratePersons(1000);
         asyncPeople = MockDataService.GeneratePersons(100);
+
+        foreach (var person in MockDataService.GeneratePersons(12))
+        {
+            livePeople.Add(person);
+        }
+
+        nextLivePersonId = livePeople.Count + 1;
+    }
+
+    // The grid subscribes to ObservableCollection, so adding and removing here re-renders
+    // it without reassigning Items or calling RefreshDataAsync.
+    private void AddLivePerson()
+    {
+        var person = MockDataService.GeneratePersons(1)[0];
+        person.Name = $"New Person {nextLivePersonId++}";
+        livePeople.Add(person);
+    }
+
+    private void RemoveLivePerson()
+    {
+        if (livePeople.Count > 0)
+        {
+            livePeople.RemoveAt(livePeople.Count - 1);
+        }
     }
 
     private async ValueTask<BlazorBlueprint.Primitives.DataGrid.DataGridResult<Person>> VirtualServerProviderAsync(

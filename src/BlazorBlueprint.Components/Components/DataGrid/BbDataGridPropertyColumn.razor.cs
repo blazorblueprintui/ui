@@ -54,6 +54,13 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
     public bool Sortable { get; set; }
 
     /// <summary>
+    /// Whether rows can be grouped by this column from the column header menu. Default is false.
+    /// When true, an ellipsis menu appears in the column header offering a "Group by" action.
+    /// </summary>
+    [Parameter]
+    public bool Groupable { get; set; }
+
+    /// <summary>
     /// Whether this column is visible. Default is true.
     /// </summary>
     [Parameter]
@@ -172,6 +179,8 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
     bool IDataGridColumn<TData>.Sortable => Sortable;
 
     bool IDataGridColumn<TData>.Filterable => Filterable;
+
+    bool IDataGridColumn<TData>.Groupable => Groupable;
 
     bool IDataGridColumn<TData>.Visible => Visible;
 

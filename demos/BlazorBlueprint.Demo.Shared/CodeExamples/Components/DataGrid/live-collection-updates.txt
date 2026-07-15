@@ -1,0 +1,44 @@
+@* The grid detects a new data set by reference. Mutating a collection in place is not a
+   reference change, so it does not re-render on its own. There are two ways to handle it. *@
+
+@* Option 1 — ObservableCollection. The grid subscribes and refreshes automatically. *@
+<BbDataGrid TData="Person" Items="@livePeople" InitialPageSize="10" ShowPagination>
+    <Toolbar>
+        <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@AddPerson">
+            Add row
+        </BbButton>
+    </Toolbar>
+    <Columns>
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private readonly ObservableCollection<Person> livePeople = new();
+
+    private void AddPerson() => livePeople.Add(new Person { Name = "New Person" });
+}
+
+@* Option 2 — a plain List, refreshed explicitly after mutating it. *@
+<BbDataGrid @ref="grid" TData="Person" Items="@people">
+    <Columns>
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private BbDataGrid<Person>? grid;
+    private List<Person> people = new();
+
+    private async Task AddPersonAsync()
+    {
+        people.Add(new Person { Name = "New Person" });
+
+        // Without this the grid keeps rendering the rows it processed earlier.
+        await grid!.RefreshDataAsync();
+    }
+
+    // RefreshDataAsync also forces an ItemsProvider grid to re-fetch, which is useful
+    // after saving a change upstream.
+}

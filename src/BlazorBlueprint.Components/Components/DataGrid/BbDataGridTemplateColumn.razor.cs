@@ -55,6 +55,13 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
     public Expression<Func<TData, object>>? SortBy { get; set; }
 
     /// <summary>
+    /// Whether rows can be grouped by this column from the column header menu. Default is false.
+    /// Requires <see cref="SortBy"/> to be set when true, since the group key is taken from it.
+    /// </summary>
+    [Parameter]
+    public bool Groupable { get; set; }
+
+    /// <summary>
     /// Whether this column is visible. Default is true.
     /// </summary>
     [Parameter]
@@ -173,6 +180,8 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
     bool IDataGridColumn<TData>.Sortable => Sortable && SortBy != null;
 
     bool IDataGridColumn<TData>.Filterable => Filterable && FilterBy != null;
+
+    bool IDataGridColumn<TData>.Groupable => Groupable && SortBy != null;
 
     bool IDataGridColumn<TData>.Visible => Visible;
 

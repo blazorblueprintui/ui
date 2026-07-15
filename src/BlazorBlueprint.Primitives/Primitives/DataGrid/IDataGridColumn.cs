@@ -30,6 +30,13 @@ public interface IDataGridColumn<TData> where TData : class
     public bool Filterable { get; }
 
     /// <summary>
+    /// Gets whether the user can group rows by this column from the column header menu.
+    /// Default is false. The group key is taken from <see cref="GetRawValue"/>, so a column
+    /// must expose a meaningful raw value to be groupable.
+    /// </summary>
+    public bool Groupable => false;
+
+    /// <summary>
     /// Gets whether this column is currently visible.
     /// </summary>
     public bool Visible { get; }

@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using System.Linq.Expressions;
 using BlazorBlueprint.Primitives;
 using BlazorBlueprint.Primitives.DataGrid;
@@ -29,6 +30,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private readonly Dictionary<string, bool> _filterPopoverOpen = new();
     private bool _needsDataRefresh = true;
     private bool columnStateInitialized;
+    private readonly Dictionary<string, bool> _headerMenuOpen = new();
 
     // Grouping/hierarchy state
     private List<DataGridRenderItem<TData>>? _groupedRenderItems;
@@ -41,6 +43,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private RenderFragment<DataGridGroupContext<TData>>? _groupColumnHeaderTemplate;
     private Expression<Func<TData, object>>? _lastGroupBy;
     private List<object>? _allGroupKeys;
+    private int _lastGroupingVersion;
+    private bool _virtualGroupingWarned;
+
+    // Live collection tracking for Items sources implementing INotifyCollectionChanged
+    private INotifyCollectionChanged? _observedItems;
 
     // Hierarchy state
     private HierarchyManager<TData>? _hierarchyManager;
@@ -112,6 +119,14 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// The data source for the grid. Can be IQueryable&lt;TData&gt; or IEnumerable&lt;TData&gt;.
     /// Mutually exclusive with <see cref="ItemsProvider"/>.
     /// </summary>
+    /// <remarks>
+    /// The grid detects a new data set by reference, so assigning a different collection
+    /// instance re-renders automatically. Mutating the same collection in place (for example
+    /// <c>List&lt;T&gt;.Add</c>) is not detectable by reference, so it does not re-render on its own —
+    /// either call <see cref="RefreshDataAsync"/> afterwards, or pass a collection implementing
+    /// <see cref="INotifyCollectionChanged"/> (such as <c>ObservableCollection&lt;T&gt;</c>), which
+    /// the grid subscribes to and refreshes from automatically.
+    /// </remarks>
     [Parameter]
     public IEnumerable<TData>? Items { get; set; }
 
@@ -665,8 +680,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             _groupByAccessor = null;
             _groupByColumnId = null;
             _groupByColumnTitle = null;
-            _gridState.Grouping.ClearGroup();
-            _groupedRenderItems = null;
+            ApplyGroupDefinition(null);
         }
 
         // Initialize hierarchy when hierarchy params are set
@@ -696,12 +710,72 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             _lastHierarchyFilterMode = HierarchyFilterMode;
         }
 
+        // Detect grouping changes applied directly to the state object, e.g. by Restore()
+        // or by a consumer calling State.Grouping.SetGroup(...).
+        var groupingChanged = _gridState.Grouping.Version != _lastGroupingVersion;
+        if (groupingChanged)
+        {
+            _lastGroupingVersion = _gridState.Grouping.Version;
+        }
+
+        UpdateItemsSubscription();
+
         // Only reprocess data when something meaningful changed
         var itemsChanged = !ReferenceEquals(_lastItems, Items);
-        if (itemsChanged || itemFilterChanged || filterModeChanged || _needsDataRefresh || externalStateChanged)
+        if (itemsChanged || itemFilterChanged || filterModeChanged || groupingChanged
+            || _needsDataRefresh || externalStateChanged)
         {
             _needsDataRefresh = false;
             await ProcessDataAsync();
+        }
+    }
+
+    /// <summary>
+    /// Subscribes to the current <see cref="Items"/> collection when it supports change
+    /// notification, so in-place mutations refresh the grid without a reference swap.
+    /// Unsubscribes from any previously observed collection.
+    /// </summary>
+    private void UpdateItemsSubscription()
+    {
+        var incoming = Items as INotifyCollectionChanged;
+        if (ReferenceEquals(_observedItems, incoming))
+        {
+            return;
+        }
+
+        if (_observedItems != null)
+        {
+            _observedItems.CollectionChanged -= HandleItemsCollectionChanged;
+        }
+
+        _observedItems = incoming;
+
+        if (_observedItems != null)
+        {
+            _observedItems.CollectionChanged += HandleItemsCollectionChanged;
+        }
+    }
+
+    private void HandleItemsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) =>
+        _ = RefreshFromCollectionChangedAsync();
+
+    /// <summary>
+    /// Refreshes in response to a collection-changed notification. The notification may be
+    /// raised off the renderer's synchronization context, so the refresh is marshalled onto it.
+    /// </summary>
+    private async Task RefreshFromCollectionChangedAsync()
+    {
+        try
+        {
+            await InvokeAsync(RefreshDataAsync);
+        }
+        catch (ObjectDisposedException)
+        {
+            // The grid was disposed while a collection change was in flight.
+        }
+        catch (Exception ex)
+        {
+            await DispatchExceptionAsync(ex);
         }
     }
 
@@ -826,9 +900,12 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     {
         _columnsVersion++;
 
-        // When grouping is active, aggregates computed before all columns registered
-        // will be empty — mark for reprocessing so aggregates are recomputed.
-        if (_groupedRenderItems != null && _columns.Any(c => c.Aggregate != AggregateFunction.None))
+        // Columns register during render, after data was processed. When grouping is active
+        // that leaves two things stale: a group definition targeting a column that had not
+        // registered yet resolves to nothing, and aggregates computed without every column
+        // come out empty. Reprocess so the newly registered column is accounted for.
+        if (_gridState.Grouping.ActiveGroup != null
+            && (_groupedRenderItems == null || _columns.Any(c => c.Aggregate != AggregateFunction.None)))
         {
             _needsDataRefresh = true;
         }
@@ -847,13 +924,103 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         _groupsCollapsedByDefault = groupColumn.CollapsedByDefault;
         _groupColumnHeaderTemplate = groupColumn.HeaderTemplate;
 
-        _gridState.Grouping.SetGroup(new GroupDefinition
+        ApplyGroupDefinition(new GroupDefinition
         {
             ColumnId = _groupByColumnId,
             GroupSortDirection = groupColumn.GroupSortDirection
         });
+    }
 
+    /// <summary>
+    /// Describes the resolved grouping for a data pass: how to compute each row's group key,
+    /// and how to label the resulting group header rows.
+    /// </summary>
+    private readonly record struct GroupResolution(
+        Func<TData, object?> Accessor,
+        string ColumnId,
+        string? Title);
+
+    /// <summary>
+    /// Resolves the active group definition into an accessor for computing group keys.
+    /// <see cref="DataGridGroupState.ActiveGroup"/> is the source of truth, so grouping chosen
+    /// at runtime or restored from a snapshot resolves against the registered columns rather
+    /// than only against a markup-configured expression.
+    /// Returns null when no grouping is active or the target column is not registered.
+    /// </summary>
+    private GroupResolution? ResolveGrouping()
+    {
+        var activeGroup = _gridState.Grouping.ActiveGroup;
+        if (activeGroup == null)
+        {
+            return null;
+        }
+
+        // GroupBy / BbDataGridGroupColumn supply their own accessor, which may group by an
+        // arbitrary expression that has no corresponding column.
+        if (_groupByAccessor != null && activeGroup.ColumnId == _groupByColumnId)
+        {
+            return new GroupResolution(_groupByAccessor, activeGroup.ColumnId, _groupByColumnTitle);
+        }
+
+        foreach (var column in _columns)
+        {
+            if (column.ColumnId == activeGroup.ColumnId)
+            {
+                return new GroupResolution(column.GetRawValue, column.ColumnId, column.Title);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Applies a group definition to the grid state, keeping the observed grouping version in
+    /// sync so the grid's own changes are not re-detected as external ones on the next pass.
+    /// </summary>
+    /// <param name="definition">The definition to apply, or null to clear grouping.</param>
+    private void ApplyGroupDefinition(GroupDefinition? definition)
+    {
+        if (definition == null)
+        {
+            _gridState.Grouping.ClearGroup();
+        }
+        else
+        {
+            _gridState.Grouping.SetGroup(definition);
+        }
+
+        _lastGroupingVersion = _gridState.Grouping.Version;
+        _groupedRenderItems = null;
         _needsDataRefresh = true;
+    }
+
+    /// <summary>
+    /// Whether grouping can be applied in the grid's current data mode. Virtualized provider
+    /// mode cannot group client-side, so the header menu's group action is suppressed there
+    /// unless a <see cref="GroupedItemsProvider"/> supplies groups from the server.
+    /// </summary>
+    private bool SupportsGrouping => !IsVirtualizedProvider || GroupedItemsProvider != null;
+
+    private bool CanGroupColumn(IDataGridColumn<TData> column) => column.Groupable && SupportsGrouping;
+
+    private bool IsGroupedBy(string columnId) => _gridState.Grouping.ActiveGroup?.ColumnId == columnId;
+
+    private bool GetHeaderMenuOpen(string columnId) =>
+        _headerMenuOpen.TryGetValue(columnId, out var open) && open;
+
+    private void SetHeaderMenuOpen(string columnId, bool open) =>
+        _headerMenuOpen[columnId] = open;
+
+    private async Task HandleGroupByColumnAsync(string columnId)
+    {
+        _headerMenuOpen[columnId] = false;
+        await GroupByColumnAsync(columnId);
+    }
+
+    private async Task HandleUngroupColumnAsync(string columnId)
+    {
+        _headerMenuOpen[columnId] = false;
+        await ClearGroupingAsync();
     }
 
     /// <summary>
@@ -970,13 +1137,56 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         _groupsCollapsedByDefault = GroupsCollapsedByDefault;
         _lastGroupBy = GroupBy;
 
-        _gridState.Grouping.SetGroup(new GroupDefinition
+        ApplyGroupDefinition(new GroupDefinition
         {
             ColumnId = _groupByColumnId,
             GroupSortDirection = SortDirection.Ascending
         });
+    }
 
-        _needsDataRefresh = true;
+    /// <summary>
+    /// Instructs the grid to re-read its data source and re-render.
+    /// </summary>
+    /// <remarks>
+    /// Call this after mutating the <see cref="Items"/> collection in place — for example
+    /// <c>List&lt;T&gt;.Add</c> or <c>Remove</c> — which the grid cannot detect by reference,
+    /// or to force an <see cref="ItemsProvider"/> re-fetch. Collections implementing
+    /// <see cref="INotifyCollectionChanged"/> are refreshed automatically and do not need this.
+    /// </remarks>
+    public async Task RefreshDataAsync()
+    {
+        _needsDataRefresh = false;
+        await ProcessDataAsync();
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Groups rows by the specified column, replacing any currently active grouping.
+    /// </summary>
+    /// <param name="columnId">The <see cref="IDataGridColumn{TData}.ColumnId"/> to group by.</param>
+    /// <param name="direction">The direction group keys are ordered in. Default is ascending.</param>
+    public async Task GroupByColumnAsync(string columnId, SortDirection direction = SortDirection.Ascending)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(columnId);
+
+        ApplyGroupDefinition(new GroupDefinition
+        {
+            ColumnId = columnId,
+            GroupSortDirection = direction
+        });
+
+        await RefreshDataAsync();
+        await NotifyStateChangedAsync();
+    }
+
+    /// <summary>
+    /// Clears any active grouping, returning the grid to flat rows.
+    /// </summary>
+    public async Task ClearGroupingAsync()
+    {
+        ApplyGroupDefinition(null);
+        await RefreshDataAsync();
+        await NotifyStateChangedAsync();
     }
 
     private void InitializeColumnState()
@@ -1031,9 +1241,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
             var sortedList = ApplyGlobalSearch(sorted.ToList()).ToList();
 
-            if (_groupByAccessor != null)
+            if (ResolveGrouping() is { } queryableGrouping)
             {
-                ProcessGroupedData(sortedList);
+                ProcessGroupedData(sortedList, queryableGrouping);
                 return;
             }
 
@@ -1063,9 +1273,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             var searched = ApplyGlobalSearch(sorted);
             var list = searched as IList<TData> ?? searched.ToList();
 
-            if (_groupByAccessor != null)
+            if (ResolveGrouping() is { } grouping)
             {
-                ProcessGroupedData(list);
+                ProcessGroupedData(list, grouping);
                 return;
             }
 
@@ -1106,10 +1316,10 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         UpdateVirtualizationList();
     }
 
-    private void ProcessGroupedData(IList<TData> sortedData)
+    private void ProcessGroupedData(IList<TData> sortedData, GroupResolution grouping)
     {
         var groupDef = _gridState.Grouping.ActiveGroup;
-        var accessor = _groupByAccessor!;
+        var accessor = grouping.Accessor;
 
         // Group the sorted data
         var groups = sortedData
@@ -1147,8 +1357,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             var groupRow = new DataGridGroupRow<TData>
             {
                 Key = groupKey,
-                ColumnId = _groupByColumnId ?? "group",
-                ColumnTitle = _groupByColumnTitle,
+                ColumnId = grouping.ColumnId,
+                ColumnTitle = grouping.Title,
                 ItemCount = items.Count,
                 Items = items,
                 Aggregates = aggregates
@@ -1334,9 +1544,16 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private async ValueTask<Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<TData>> VirtualItemsProviderAsync(
         Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderRequest request)
     {
-        // Grouping is not supported with virtualized provider mode
-        if (_groupByAccessor != null)
+        // Grouping is not supported in virtualized provider mode without a GroupedItemsProvider.
+        if (_gridState.Grouping.ActiveGroup != null)
         {
+            if (!_virtualGroupingWarned)
+            {
+                _virtualGroupingWarned = true;
+                DataGridLog.GroupingUnsupportedInVirtualizedProvider(
+                    Logger, _gridState.Grouping.ActiveGroup.ColumnId);
+            }
+
             return new Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<TData>(
                 Array.Empty<TData>(), 0);
         }
@@ -2087,9 +2304,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
                 .Select(c => c.ColumnId)
                 .ToList();
 
+            var grouping = ResolveGrouping();
+
             // When grouping client-side from a flat provider, fetch all items so
             // ProcessGroupedData can correctly paginate across groups.
-            var isClientSideGrouping = _groupByAccessor != null && GroupedItemsProvider == null;
+            var isClientSideGrouping = grouping != null && GroupedItemsProvider == null;
 
             var request = new DataGridRequest
             {
@@ -2104,13 +2323,13 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             };
 
             // Use grouped provider when grouping is active and provider is available
-            if (_groupByAccessor != null && GroupedItemsProvider != null)
+            if (grouping != null && GroupedItemsProvider != null)
             {
                 var groupedResult = await GroupedItemsProvider(request);
 
                 if (!token.IsCancellationRequested)
                 {
-                    BuildRenderItemsFromGroupedResult(groupedResult);
+                    BuildRenderItemsFromGroupedResult(groupedResult, grouping.Value);
                 }
             }
             else
@@ -2119,11 +2338,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
                 if (!token.IsCancellationRequested)
                 {
-                    if (_groupByAccessor != null)
+                    if (grouping is { } providerGrouping)
                     {
                         // Group client-side from flat provider results
                         var items = result.Items as IList<TData> ?? result.Items.ToList();
-                        ProcessGroupedData(items);
+                        ProcessGroupedData(items, providerGrouping);
                     }
                     else
                     {
@@ -2141,7 +2360,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
     }
 
-    private void BuildRenderItemsFromGroupedResult(DataGridGroupedResult<TData> groupedResult)
+    private void BuildRenderItemsFromGroupedResult(
+        DataGridGroupedResult<TData> groupedResult, GroupResolution grouping)
     {
         var allRenderItems = new List<DataGridRenderItem<TData>>();
         var allDataItems = new List<TData>();
@@ -2154,8 +2374,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             var groupRow = new DataGridGroupRow<TData>
             {
                 Key = groupKey,
-                ColumnId = _groupByColumnId ?? "group",
-                ColumnTitle = _groupByColumnTitle,
+                ColumnId = grouping.ColumnId,
+                ColumnTitle = grouping.Title,
                 ItemCount = group.ItemCount > 0 ? group.ItemCount : items.Count,
                 Items = items,
                 Aggregates = group.Aggregates ?? new Dictionary<string, AggregateResult>()
@@ -3106,6 +3326,13 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     public async ValueTask DisposeAsync()
     {
         GC.SuppressFinalize(this);
+
+        if (_observedItems != null)
+        {
+            _observedItems.CollectionChanged -= HandleItemsCollectionChanged;
+            _observedItems = null;
+        }
+
         _loadCts?.Cancel();
         _loadCts?.Dispose();
 
