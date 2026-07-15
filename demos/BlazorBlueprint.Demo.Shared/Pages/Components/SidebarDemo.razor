@@ -25,7 +25,7 @@
             <li>Collapsible with icon-only mode</li>
             <li>Three variants: Sidebar (default), Floating, and Inset</li>
             <li>State persistence via cookies</li>
-            <li>Keyboard shortcuts (Ctrl/Cmd + B to toggle)</li>
+            <li>Keyboard shortcuts (Ctrl/Cmd + B to toggle, opt-out via EnableToggleShortcut)</li>
             <li>Automatic tooltips in collapsed state</li>
             <li>Flexible composition with menu groups, submenus, and actions</li>
             <li>Full shadcn/ui compatibility</li>
@@ -1216,6 +1216,103 @@
         <CodeBlock Source="Components/Sidebar/three-level-nested.txt" />
     </div>
 
+    <!-- Toggle Shortcut Example -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">Disabling the Keyboard Shortcut</h2>
+        <p class="text-muted-foreground">
+            <BbKbd>Ctrl+B</BbKbd> / <BbKbd>Cmd+B</BbKbd> toggles the sidebar by default. Set
+            <code class="text-sm">EnableToggleShortcut="false"</code> when those keys conflict with the page,
+            such as a rich-text editor where they mean bold. The parameter is reactive, so it can be bound to state.
+        </p>
+
+        <div class="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+            <span class="text-sm font-medium">EnableToggleShortcut:</span>
+            <div class="flex items-center gap-2">
+                <button
+                    @onclick="() => shortcutEnabled = true"
+                    class="@(shortcutEnabled ? "bg-primary text-primary-foreground" : "bg-background text-foreground") px-3 py-1.5 rounded-md text-sm font-medium transition-colors hover:opacity-90">
+                    true
+                </button>
+                <button
+                    @onclick="() => shortcutEnabled = false"
+                    class="@(!shortcutEnabled ? "bg-primary text-primary-foreground" : "bg-background text-foreground") px-3 py-1.5 rounded-md text-sm font-medium transition-colors hover:opacity-90">
+                    false
+                </button>
+            </div>
+            <span class="text-xs text-muted-foreground ml-auto">Toggle, then press Ctrl/Cmd + B</span>
+        </div>
+
+        <div class="border rounded-lg p-6 bg-background">
+            <div class="h-[600px] w-full border rounded-lg overflow-hidden bg-background">
+                <BbSidebarProvider EnableToggleShortcut="@shortcutEnabled" HeightClass="h-full">
+                    <div class="flex h-full w-full">
+                        <BbSidebar Collapsible="@isBasicCollapsible">
+                            <BbSidebarHeader>
+                                <BbSidebarHeaderContent>
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                                        <LucideIcon Name="keyboard" Size="16" />
+                                    </div>
+                                    <BbSidebarHeaderInfo>
+                                        <span class="truncate font-semibold">Editor</span>
+                                        <span class="truncate text-xs text-muted-foreground">
+                                            Shortcut @(shortcutEnabled ? "enabled" : "disabled")
+                                        </span>
+                                    </BbSidebarHeaderInfo>
+                                </BbSidebarHeaderContent>
+                            </BbSidebarHeader>
+
+                            <BbSidebarContent>
+                                <BbSidebarMenu>
+                                    <BbSidebarMenuItem>
+                                        <BbSidebarMenuButton Tooltip="Documents" IsActive="true">
+                                            <LucideIcon Name="file" Size="16" />
+                                            <span>Documents</span>
+                                        </BbSidebarMenuButton>
+                                    </BbSidebarMenuItem>
+                                    <BbSidebarMenuItem>
+                                        <BbSidebarMenuButton Tooltip="Drafts">
+                                            <LucideIcon Name="pencil" Size="16" />
+                                            <span>Drafts</span>
+                                        </BbSidebarMenuButton>
+                                    </BbSidebarMenuItem>
+                                    <BbSidebarMenuItem>
+                                        <BbSidebarMenuButton Tooltip="Archive">
+                                            <LucideIcon Name="archive" Size="16" />
+                                            <span>Archive</span>
+                                        </BbSidebarMenuButton>
+                                    </BbSidebarMenuItem>
+                                </BbSidebarMenu>
+                            </BbSidebarContent>
+                        </BbSidebar>
+
+                        <BbSidebarInset>
+                            <header class="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                                <BbSidebarTrigger />
+                                <h1 class="text-lg font-semibold">Shortcut Opt-Out</h1>
+                            </header>
+                            <div class="flex flex-1 flex-col gap-4 p-4">
+                                <div class="rounded-xl bg-muted/50 p-4">
+                                    <p class="text-sm text-muted-foreground mb-2">
+                                        With the shortcut <strong>enabled</strong>, Ctrl/Cmd + B toggles this sidebar.
+                                        With it <strong>disabled</strong>, this sidebar ignores the key entirely.
+                                    </p>
+                                    <p class="text-sm text-muted-foreground">
+                                        Each provider only claims the shortcut for itself. In an app with a single
+                                        provider, disabling it also lets Ctrl/Cmd + B through to the page, so a
+                                        rich-text editor receives it as bold. This page hosts many sidebar examples
+                                        that each still claim the key, so that fall-through is not visible here.
+                                    </p>
+                                </div>
+                            </div>
+                        </BbSidebarInset>
+                    </div>
+                </BbSidebarProvider>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/Sidebar/toggle-shortcut.txt" />
+    </div>
+
     <AccessibilityList>
             <AriaAttributes>
                 <AccessibilityItem>
@@ -1229,7 +1326,7 @@
                 </AccessibilityItem>
             </AriaAttributes>
             <KeyboardNavigation>
-                <KeyboardShortcutItem Description="Toggle sidebar open/closed">
+                <KeyboardShortcutItem Description="Toggle sidebar open/closed (disable with EnableToggleShortcut=&quot;false&quot;)">
                     <BbKbd>Ctrl+B</BbKbd> / <BbKbd>Cmd+B</BbKbd>
                 </KeyboardShortcutItem>
             </KeyboardNavigation>
@@ -1272,11 +1369,23 @@
                                 <td class="p-3 text-sm">Left</td>
                                 <td class="p-3 text-sm">Side to render (Left, Right)</td>
                             </tr>
-                            <tr>
+                            <tr class="border-b">
                                 <td class="p-3"><code class="text-sm">CookieKey</code></td>
                                 <td class="p-3 text-sm">string</td>
                                 <td class="p-3 text-sm">"sidebar:state"</td>
                                 <td class="p-3 text-sm">Cookie key for persistence</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">EnableToggleShortcut</code></td>
+                                <td class="p-3 text-sm">bool</td>
+                                <td class="p-3 text-sm">true</td>
+                                <td class="p-3 text-sm">Whether Ctrl/Cmd + B toggles the sidebar</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3"><code class="text-sm">HeightClass</code></td>
+                                <td class="p-3 text-sm">string</td>
+                                <td class="p-3 text-sm">"min-h-screen"</td>
+                                <td class="p-3 text-sm">CSS class controlling container height</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1379,6 +1488,7 @@
 
 @code {
     private bool isBasicCollapsible = true;
+    private bool shortcutEnabled = true;
     private string selectedVersion = "v1.0.1";
 
     private string GetRandomIcon(int index)

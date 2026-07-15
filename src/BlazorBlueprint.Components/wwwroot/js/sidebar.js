@@ -1,29 +1,52 @@
 /**
  * Sidebar JavaScript module
  * Handles mobile detection, keyboard shortcuts, and state persistence
+ *
+ * ES modules are singletons, so every SidebarProvider on the page shares this
+ * module. State is therefore held per instance rather than at module level, and
+ * the keydown listener and ResizeObserver are shared and fan out to instances.
  */
 
 const MOBILE_BREAKPOINT = 768;
 
-let dotNetRef = null;
-let cookieKey = null;
+let nextInstanceId = 1;
+const instances = new Map();
+
 let resizeObserver = null;
 let keyboardHandler = null;
 
 /**
  * Initialize sidebar with mobile detection and keyboard shortcuts
  * @param {DotNetObject} componentRef - Reference to the SidebarProvider component
- * @param {string} key - Cookie key for state persistence
+ * @param {boolean} enableToggleShortcut - Whether Ctrl/Cmd + B toggles the sidebar
+ * @returns {number} Instance id, passed back to setToggleShortcutEnabled and cleanup
  */
-export function initializeSidebar(componentRef, key) {
-    dotNetRef = componentRef;
-    cookieKey = key;
+export function initializeSidebar(componentRef, enableToggleShortcut) {
+    const instanceId = nextInstanceId++;
 
-    // Set up mobile detection
-    setupMobileDetection();
+    instances.set(instanceId, {
+        dotNetRef: componentRef,
+        shortcutEnabled: enableToggleShortcut !== false
+    });
 
-    // Set up keyboard shortcuts
-    setupKeyboardShortcuts();
+    attachSharedListeners();
+
+    // Push the current mobile state to the new instance
+    notifyMobile(componentRef);
+
+    return instanceId;
+}
+
+/**
+ * Enable or disable the toggle shortcut after initialization
+ * @param {number} instanceId - Instance id returned by initializeSidebar
+ * @param {boolean} enabled - Whether Ctrl/Cmd + B toggles the sidebar
+ */
+export function setToggleShortcutEnabled(instanceId, enabled) {
+    const instance = instances.get(instanceId);
+    if (instance) {
+        instance.shortcutEnabled = enabled !== false;
+    }
 }
 
 /**
@@ -48,42 +71,72 @@ export function saveSidebarState(key, value) {
 }
 
 /**
- * Set up mobile detection using ResizeObserver
+ * Attach the shared keydown listener and ResizeObserver on first use
  */
-function setupMobileDetection() {
-    if (!dotNetRef) return;
+function attachSharedListeners() {
+    if (!keyboardHandler) {
+        keyboardHandler = (e) => {
+            // Check for Ctrl+B or Cmd+B
+            if (!((e.ctrlKey || e.metaKey) && e.key === 'b')) {
+                return;
+            }
 
-    const checkMobile = () => {
-        const isMobile = window.innerWidth < MOBILE_BREAKPOINT;
-        dotNetRef.invokeMethodAsync('OnMobileChange', isMobile);
-    };
+            let handled = false;
 
-    // Initial check
-    checkMobile();
+            for (const instance of instances.values()) {
+                if (!instance.shortcutEnabled) {
+                    continue;
+                }
 
-    // Listen for resize events
-    resizeObserver = new ResizeObserver(() => {
-        checkMobile();
-    });
+                handled = true;
+                invoke(instance.dotNetRef, 'OnToggleShortcut');
+            }
 
-    resizeObserver.observe(document.body);
+            // Only swallow the key when something acted on it, so that a page
+            // with the shortcut disabled still gets its native Ctrl/Cmd + B
+            if (handled) {
+                e.preventDefault();
+            }
+        };
+
+        document.addEventListener('keydown', keyboardHandler);
+    }
+
+    if (!resizeObserver) {
+        resizeObserver = new ResizeObserver(() => {
+            for (const instance of instances.values()) {
+                notifyMobile(instance.dotNetRef);
+            }
+        });
+
+        resizeObserver.observe(document.body);
+    }
 }
 
 /**
- * Set up keyboard shortcuts for toggling sidebar
+ * Send the current mobile state to a single instance
+ * @param {DotNetObject} dotNetRef - Reference to the SidebarProvider component
  */
-function setupKeyboardShortcuts() {
-    if (!dotNetRef) return;
+function notifyMobile(dotNetRef) {
+    invoke(dotNetRef, 'OnMobileChange', window.innerWidth < MOBILE_BREAKPOINT);
+}
 
-    keyboardHandler = (e) => {
-        // Check for Ctrl+B or Cmd+B
-        if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
-            e.preventDefault();
-            dotNetRef.invokeMethodAsync('OnToggleShortcut');
+/**
+ * Invoke a .NET method, ignoring failures from a disposed component or circuit.
+ * Without this a single torn-down instance would break the shared fan-out loop.
+ * @param {DotNetObject} dotNetRef - Reference to the SidebarProvider component
+ * @param {string} method - JSInvokable method name
+ * @param {...any} args - Arguments to forward
+ */
+function invoke(dotNetRef, method, ...args) {
+    try {
+        const result = dotNetRef.invokeMethodAsync(method, ...args);
+        if (result && typeof result.catch === 'function') {
+            result.catch(() => { });
         }
-    };
-
-    document.addEventListener('keydown', keyboardHandler);
+    } catch {
+        // Instance is gone; cleanup will remove it
+    }
 }
 
 /**
@@ -119,9 +172,16 @@ function setCookie(name, value, days) {
 }
 
 /**
- * Cleanup event listeners and observers
+ * Remove an instance, tearing down the shared listeners once the last one goes
+ * @param {number} instanceId - Instance id returned by initializeSidebar
  */
-export function cleanup() {
+export function cleanup(instanceId) {
+    instances.delete(instanceId);
+
+    if (instances.size > 0) {
+        return;
+    }
+
     if (resizeObserver) {
         resizeObserver.disconnect();
         resizeObserver = null;
@@ -131,7 +191,4 @@ export function cleanup() {
         document.removeEventListener('keydown', keyboardHandler);
         keyboardHandler = null;
     }
-
-    dotNetRef = null;
-    cookieKey = null;
 }
