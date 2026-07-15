@@ -2,9 +2,14 @@
 <BbDataGrid @ref="grid" TData="Person" Items="@people" InitialPageSize="50">
     <Toolbar>
         <div class="flex items-center gap-2">
+            @* SortDirection orders the group headers — ascending is the default. *@
             <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
                       OnClick="@(() => grid!.GroupByColumnAsync("department"))">
-                Group by Department
+                Group by Department (A–Z)
+            </BbButton>
+            <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                      OnClick="@(() => grid!.GroupByColumnAsync("department", SortDirection.Descending))">
+                Group by Department (Z–A)
             </BbButton>
             <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
                       OnClick="@(() => grid!.ClearGroupingAsync())">
@@ -29,10 +34,9 @@
     private BbDataGrid<Person>? grid;
     private List<Person> people = new();
 
-    // Grouping can also be driven from code, without the header menu:
-    //   await grid.GroupByColumnAsync("department");
-    //   await grid.GroupByColumnAsync("status", SortDirection.Descending);
-    //   await grid.ClearGroupingAsync();
+    // The header menu always groups ascending. Pass a SortDirection to order the group
+    // headers the other way — this affects the order of the groups themselves, not the
+    // rows within them, which follow the column's own sort.
     //
     // One column is grouped at a time — grouping by another replaces the current grouping.
     // The active group is held on DataGridState.Grouping, so it is captured by Save()

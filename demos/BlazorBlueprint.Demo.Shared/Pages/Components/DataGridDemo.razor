@@ -827,6 +827,11 @@
                 at runtime. An ellipsis menu appears in the column header with a "Group by" action, and the grid
                 regroups without a page refresh. Only one column is grouped at a time — choosing another replaces
                 the current grouping. Columns left without the flag (like Name) offer no menu.
+                Grouping can also be driven from code with
+                <code class="bg-muted px-1 py-0.5 rounded">GroupByColumnAsync</code>, which takes a
+                <code class="bg-muted px-1 py-0.5 rounded">SortDirection</code> controlling the order of the group
+                headers themselves — the buttons below group by the same column in each direction. Sorting
+                <em>within</em> each group stays under the column's own sort.
             </p>
         </div>
         <BbDataGrid @ref="interactiveGroupingGrid" TData="Person" Items="@people" InitialPageSize="50">
@@ -834,7 +839,11 @@
                 <div class="flex items-center gap-2">
                     <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
                               OnClick="@(() => interactiveGroupingGrid!.GroupByColumnAsync("department"))">
-                        Group by Department
+                        Group by Department (A–Z)
+                    </BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                              OnClick="@(() => interactiveGroupingGrid!.GroupByColumnAsync("department", SortDirection.Descending))">
+                        Group by Department (Z–A)
                     </BbButton>
                     <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
                               OnClick="@(() => interactiveGroupingGrid!.ClearGroupingAsync())">
