@@ -1,7 +1,6 @@
 @namespace BlazorBlueprint.Components
 @using BlazorBlueprint.Icons.Lucide.Components
 @using Microsoft.AspNetCore.Components.Forms
-@using Microsoft.JSInterop
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
 
@@ -21,7 +20,8 @@
                    multiple="@Multiple"
                    disabled="@Disabled"
                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                   id="@_inputId" />
+                   @attributes="AdditionalAttributes"
+                   id="@InputId" />
 
         @if (DropzoneContent != null)
         {
@@ -126,13 +126,18 @@
 @code {
     private InputFile? _inputFile;
     private ElementReference _dropzoneRef;
-    private string _inputId = $"file-upload-{Guid.NewGuid():N}";
     private bool _isDragging;
     private bool _jsInitialized;
     private List<FileUploadItem> _files = new();
     private List<FileValidationError> _errors = new();
     private IJSObjectReference? _jsModule;
     private IJSObjectReference? _jsCleanup;
+
+    /// <summary>
+    /// Gets or sets the ID of the file input element. If not provided, a unique ID will be generated.
+    /// </summary>
+    [Parameter]
+    public string InputId { get; set; } = $"file-upload-{Guid.NewGuid():N}";
 
     /// <summary>
     /// Gets or sets the selected files.
@@ -199,6 +204,12 @@
     /// </summary>
     [Parameter]
     public RenderFragment? DropzoneContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the file input element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     /// <summary>
     /// Additional CSS classes.
