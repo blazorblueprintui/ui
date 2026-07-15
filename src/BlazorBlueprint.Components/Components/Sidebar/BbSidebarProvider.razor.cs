@@ -9,6 +9,8 @@ public partial class BbSidebarProvider
     private SidebarContext Context { get; set; } = new();
     private IJSObjectReference? _module;
     private DotNetObjectReference<BbSidebarProvider>? _dotNetRef;
+    private bool lastToggleShortcutEnabled = true;
+    private int instanceId;
 
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
@@ -55,7 +57,8 @@ public partial class BbSidebarProvider
                 );
 
                 // Set up mobile detection and keyboard shortcuts
-                await _module.InvokeVoidAsync("initializeSidebar", _dotNetRef, CookieKey);
+                lastToggleShortcutEnabled = EnableToggleShortcut;
+                instanceId = await _module.InvokeAsync<int>("initializeSidebar", _dotNetRef, EnableToggleShortcut);
 
                 // Subscribe to state changes for persistence
                 Context.StateChanged += OnStateChanged;
@@ -73,6 +76,24 @@ public partial class BbSidebarProvider
                 // JS interop not available during prerendering
                 Context.Initialize(open: DefaultOpen, variant: Variant, side: Side);
                 StateHasChanged();
+            }
+        }
+        else if (_module != null && lastToggleShortcutEnabled != EnableToggleShortcut)
+        {
+            // Keep the shortcut in sync when the parameter changes after the first render
+            lastToggleShortcutEnabled = EnableToggleShortcut;
+
+            try
+            {
+                await _module.InvokeVoidAsync("setToggleShortcutEnabled", instanceId, EnableToggleShortcut);
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect in Blazor Server
+            }
+            catch (InvalidOperationException)
+            {
+                // JS interop not available
             }
         }
     }
@@ -135,7 +156,11 @@ public partial class BbSidebarProvider
         {
             try
             {
-                await _module.InvokeVoidAsync("cleanup");
+                if (instanceId != 0)
+                {
+                    await _module.InvokeVoidAsync("cleanup", instanceId);
+                }
+
                 await _module.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
