@@ -1,59 +1,99 @@
 # Release Guide
 
-This document describes the automated NuGet publishing system for Blazor Blueprint.
+This document describes how Blazor Blueprint packages are published to NuGet.
 
 ## Overview
 
-Blazor Blueprint uses a **monorepo with independent package versioning**. Each of the five packages can be released independently with its own version number:
+Blazor Blueprint uses a **monorepo with independent package versioning**. Each of the six packages can be released independently with its own version number:
 
 - **BlazorBlueprint.Primitives** - Headless UI primitives
 - **BlazorBlueprint.Components** - Styled components
 - **BlazorBlueprint.Icons.Lucide** - Lucide icon library
 - **BlazorBlueprint.Icons.Heroicons** - Heroicons library
 - **BlazorBlueprint.Icons.Feather** - Feather icon library
+- **BlazorBlueprint.Icons.FontAwesome** - Font Awesome Free icon library
+
+## Prerequisites
+
+Releases are **run locally by a maintainer** — there is no CI publishing pipeline. Pushing a tag does not publish anything on its own; the release scripts do the packing, the NuGet push, and the tagging together.
+
+You need:
+
+1. **The `devkit` checkout** — the release scripts live in the private `devkit` repo, checked out at `devkit/` in the repo root (it is gitignored). Maintainers only; external contributors cannot run releases.
+2. **A NuGet API key** exported as `NUGET_API_KEY`:
+
+   ```bash
+   # ~/.bashrc.local
+   export NUGET_API_KEY="your-key"
+   ```
+
+   Create the key at https://www.nuget.org/account/apikeys with "Push" permission, scoped to `BlazorBlueprint.*`.
+3. **To be on the `develop` branch**, up to date with origin. The scripts enforce this and open the `develop` → `main` PR for you at the end.
 
 ## Quick Start
 
-To release a package, simply run the appropriate script:
+Both scripts are interactive — they show you what changed, prompt for versions, and summarise before doing anything.
 
 ```bash
-./scripts/release-primitives.sh 1.0.0-beta.4
-./scripts/release-components.sh 1.1.0-beta.2
-./scripts/release-icons-lucide.sh 1.0.3
-./scripts/release-icons-heroicons.sh 1.0.0-beta.1
-./scripts/release-icons-feather.sh 1.0.0-beta.1
+# Primitives and/or Components
+./devkit/scripts/release.sh
+
+# Icon packages (Lucide, Heroicons, Feather, Font Awesome)
+./devkit/scripts/release-icons.sh
 ```
 
-That's it! The rest is automated.
+Use `--dry-run` on either to walk through every step without executing any git, build, NuGet, or PR operation. It is the safest way to check what a release would do:
+
+```bash
+./devkit/scripts/release-icons.sh --dry-run
+```
 
 ## How It Works
 
-### 1. Release Scripts (`scripts/`)
+### `release.sh` — Primitives and Components
 
-Each package has a dedicated release script that:
+Releases either package, or both in a single run. It builds, packs, and publishes locally, and polls NuGet for availability when Components depends on a freshly released Primitives. Creates the `develop` → `main` PR when done.
 
-1. **Validates** the version format (semantic versioning)
-2. **Checks** for uncommitted changes (prevents dirty releases)
-3. **Confirms** with you before proceeding
-4. **Creates** a git tag (e.g., `primitives/v1.0.0-beta.4`)
-5. **Pushes** the tag to GitHub
+Flags:
 
-### 2. Git Tag Naming Convention
+| Flag | Effect |
+|------|--------|
+| `--dry-run` | Walk through all steps without executing any |
+| `--skip-notes` | Use existing `RELEASE_NOTES.md` as-is instead of regenerating |
+| `--skip-tests` | Skip API surface tests (for re-releases where code hasn't changed) |
+| `--clear-cache` | Clear the NuGet HTTP cache before building, when a freshly published package isn't resolving |
 
-Tags follow the pattern: `<package>/v<version>`
+### `release-icons.sh` — Icon packages
 
-Examples:
-- `primitives/v1.0.0-beta.4`
-- `components/v1.1.0-beta.2`
-- `icons-lucide/v1.0.3`
-- `icons-heroicons/v1.0.0-beta.1`
-- `icons-feather/v1.0.0-beta.1`
+Detects which icon packages have changed since their last tagged release, prompts for version bumps, then builds, packs, pushes to NuGet, tags, and creates the `develop` → `main` PR.
 
-### 3. MinVer Versioning
+Flags:
 
-Each project uses [MinVer](https://github.com/adamralph/minver) to automatically calculate the package version from git tags.
+| Flag | Effect |
+|------|--------|
+| `--dry-run` | Walk through all steps without executing any |
+| `--clear-cache` | Clear the NuGet HTTP cache before building |
 
-**Configuration** (in each `.csproj` file):
+### Git Tag Naming Convention
+
+Tags follow the pattern `<package>/v<version>` and are created by the release scripts — you do not normally tag by hand.
+
+| Package | Tag prefix |
+|---------|-----------|
+| Primitives | `primitives/v` |
+| Components | `components/v` |
+| Icons.Lucide | `icons-lucide/v` |
+| Icons.Heroicons | `icons-heroicons/v` |
+| Icons.Feather | `icons-feather/v` |
+| Icons.FontAwesome | `icons-fontawesome/v` |
+
+Examples: `primitives/v3.13.0`, `components/v3.13.0`, `icons-lucide/v2.0.1`, `icons-fontawesome/v2.0.0`
+
+### MinVer Versioning
+
+Each project uses [MinVer](https://github.com/adamralph/minver) to calculate the package version from git tags.
+
+**Configuration** (in each `.csproj`):
 ```xml
 <MinVerTagPrefix>primitives/v</MinVerTagPrefix>  <!-- or icons-lucide/v, etc. -->
 <MinVerDefaultPreReleaseIdentifiers>beta.0</MinVerDefaultPreReleaseIdentifiers>
@@ -65,20 +105,7 @@ Each project uses [MinVer](https://github.com/adamralph/minver) to automatically
 - Tag `components/v2.0.0` → Version `2.0.0`
 - No matching tag → Version `0.0.0-beta.0.<commit-count>`
 
-### 4. GitHub Actions Automation
-
-When a tag is pushed, GitHub Actions automatically:
-
-1. **Detects** which package to build (from tag prefix)
-2. **Restores** dependencies
-3. **Builds** the project (Release configuration)
-4. **Packs** the NuGet package (MinVer sets version automatically)
-5. **Verifies** the package version matches the tag
-6. **Publishes** to NuGet.org
-
-**Workflows:**
-- `.github/workflows/nuget-publish.yml` - Triggered by tag pushes
-- `.github/workflows/ci.yml` - Runs on all PRs and pushes to main
+That last case matters: a package with no tag of its own can only ever produce a `0.0.0-beta.0.x` version, whatever the rest of the repo is versioned at. If a package has never been released, check for its tag first.
 
 ## Versioning Strategy
 
@@ -87,11 +114,12 @@ When a tag is pushed, GitHub Actions automatically:
 Each package can have a different version number:
 
 ```
-BlazorBlueprint.Primitives       1.2.0
-BlazorBlueprint.Components       1.1.5
-BlazorBlueprint.Icons.Lucide     1.0.3
-BlazorBlueprint.Icons.Heroicons  1.0.0-beta.1
-BlazorBlueprint.Icons.Feather    1.0.0-beta.1
+BlazorBlueprint.Primitives        3.13.0
+BlazorBlueprint.Components        3.13.0
+BlazorBlueprint.Icons.Lucide      2.0.1
+BlazorBlueprint.Icons.Heroicons   2.0.0
+BlazorBlueprint.Icons.Feather     2.0.0
+BlazorBlueprint.Icons.FontAwesome 2.0.0
 ```
 
 This allows you to:
@@ -108,58 +136,23 @@ Follow [Semantic Versioning](https://semver.org/):
 - **Patch** (1.0.0 → 1.0.1): Bug fixes (backward compatible)
 - **Pre-release** (1.0.0-beta.1): Beta versions
 
-### Beta Releases
-
-For beta versions, use the format: `X.Y.Z-beta.N`
-
-Examples:
-- `1.0.0-beta.1` - First beta
-- `1.0.0-beta.2` - Second beta
-- `1.0.0` - Stable release
-
 ## Release Checklist
 
 Before releasing a package:
 
-1. ✅ **All changes committed** - No uncommitted files
-2. ✅ **Tests passing** - Run `dotnet build` and verify
-3. ✅ **README updated** - Document new features/changes
-4. ✅ **Version decided** - Choose appropriate semantic version
-5. ✅ **NUGET_API_KEY configured** - Required for first release
-
-## Setting Up NuGet API Key
-
-### First-Time Setup (Repository Owner)
-
-1. **Get NuGet API key:**
-   - Go to https://www.nuget.org/account/apikeys
-   - Create a new API key with "Push" permissions
-   - Scope it to the BlazorBlueprint.* packages
-
-2. **Add to GitHub Secrets:**
-   - Go to repository Settings → Secrets and variables → Actions
-   - Click "New repository secret"
-   - Name: `NUGET_API_KEY`
-   - Value: (paste your NuGet API key)
-
-3. **Test the workflow:**
-   ```bash
-   ./scripts/release-primitives.sh 1.0.0-beta.1
-   ```
+1. ✅ **On `develop`, up to date** - the scripts refuse to run otherwise
+2. ✅ **All changes committed** - no uncommitted files
+3. ✅ **Tests passing** - `./scripts/run-tests.sh`
+4. ✅ **README updated** - document new features/changes
+5. ✅ **`NUGET_API_KEY` exported** - required for every release, not just the first
 
 ## Monitoring Releases
 
-### GitHub Actions Dashboard
+Check what is currently live:
 
-Monitor releases at: https://github.com/blazorblueprintui/ui/actions
-
-Each release creates a workflow run showing:
-- Build logs
-- Pack output
-- Publish status
-- Direct link to NuGet package
-
-### NuGet.org
+```bash
+./devkit/scripts/nuget-versions.sh
+```
 
 Packages appear at:
 - https://www.nuget.org/packages/BlazorBlueprint.Primitives
@@ -167,6 +160,7 @@ Packages appear at:
 - https://www.nuget.org/packages/BlazorBlueprint.Icons.Lucide
 - https://www.nuget.org/packages/BlazorBlueprint.Icons.Heroicons
 - https://www.nuget.org/packages/BlazorBlueprint.Icons.Feather
+- https://www.nuget.org/packages/BlazorBlueprint.Icons.FontAwesome
 
 **Note:** It may take 5-10 minutes for packages to appear on NuGet.org after publishing.
 
@@ -180,14 +174,26 @@ git add .
 git commit -m "Your commit message"
 ```
 
-### Version format error
+### Script says "Must be on the develop branch"
 
-Ensure version follows semantic versioning:
-- ✅ `1.0.0`
-- ✅ `1.0.0-beta.1`
-- ✅ `2.1.3-alpha.2`
-- ❌ `v1.0.0` (no 'v' prefix)
-- ❌ `1.0` (must have three parts)
+Releases run from `develop`; the script opens the `develop` → `main` PR itself.
+
+```bash
+git checkout develop
+git pull origin develop
+```
+
+### `NUGET_API_KEY environment variable is not set`
+
+Export it as described in [Prerequisites](#prerequisites). It is read from the environment on every run, so a new shell needs it too.
+
+### Package version is `0.0.0-beta.0.x`
+
+There is no git tag for that package's prefix, so MinVer has nothing to derive from. Check with:
+
+```bash
+git tag --list 'icons-fontawesome/v*'
+```
 
 ### Tag already exists
 
@@ -205,97 +211,4 @@ git push origin :refs/tags/icons-lucide/v1.0.3
 
 ### Package version mismatch
 
-This usually means the git tag doesn't match the MinVer configuration.
-
-Check:
-1. Tag format: `icons-lucide/v1.0.3` (note the prefix)
-2. MinVerTagPrefix in `.csproj`: `<MinVerTagPrefix>icons-lucide/v</MinVerTagPrefix>`
-
-### GitHub Actions failing
-
-Check:
-1. NUGET_API_KEY secret is configured
-2. Build succeeds locally: `dotnet build -c Release`
-3. Workflow logs for specific errors
-
-## Manual Release (Fallback)
-
-If automation fails, you can release manually:
-
-```bash
-# Build and pack
-dotnet pack src/BlazorBlueprint.Primitives/BlazorBlueprint.Primitives.csproj -c Release -o ./packages
-
-# Publish to NuGet
-dotnet nuget push ./packages/BlazorBlueprint.Primitives.*.nupkg --api-key YOUR_API_KEY --source https://api.nuget.org/v3/index.json
-```
-
-**Note:** Manual releases won't have the git tag versioning benefits.
-
-## Best Practices
-
-1. **Release often** - Small, frequent releases are better than large infrequent ones
-2. **Test before releasing** - Always run `dotnet build` locally first
-3. **Document changes** - Update README or CHANGELOG for significant changes
-4. **Use pre-release versions** - Use `-beta.X` suffix until stable
-5. **Coordinate dependencies** - If Components depends on new Primitives features, release Primitives first
-
-## Development Workflow
-
-### Working on a feature
-
-```bash
-git checkout -b feature/my-new-feature
-# Make changes
-dotnet build
-git commit -m "Add new feature"
-git push origin feature/my-new-feature
-```
-
-### Releasing the feature
-
-```bash
-git checkout main
-git merge feature/my-new-feature
-git push origin main
-
-# Release with new version
-./scripts/release-primitives.sh 1.1.0
-```
-
-## CI/CD Pipeline
-
-### Continuous Integration (`.github/workflows/ci.yml`)
-
-Runs on every PR and push to main:
-- Builds all projects
-- Runs tests (if any)
-- Creates NuGet packages (as artifacts)
-- Verifies package creation
-
-**Purpose:** Ensure code quality and catch issues early
-
-### Continuous Deployment (`.github/workflows/nuget-publish.yml`)
-
-Triggered by tag pushes:
-- Builds specific package
-- Publishes to NuGet.org
-- Only runs for tagged releases
-
-**Purpose:** Automate releases and reduce human error
-
-## Additional Resources
-
-- [MinVer Documentation](https://github.com/adamralph/minver)
-- [Semantic Versioning](https://semver.org/)
-- [NuGet Package Publishing](https://learn.microsoft.com/en-us/nuget/nuget-org/publish-a-package)
-- [GitHub Actions Documentation](https://docs.github.com/en/actions)
-
----
-
-**Questions or Issues?**
-
-If you encounter problems with the release system, check:
-1. This guide's Troubleshooting section
-2. GitHub Actions workflow logs
-3. Open an issue on the repository
+This usually means the git tag doesn't match the MinVer configuration in the `.csproj`.
