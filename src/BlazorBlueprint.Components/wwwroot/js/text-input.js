@@ -7,7 +7,12 @@
  *                For inputs this fires on blur and Enter; for textareas it fires on blur only.
  *   - immediate: JS batches calls via requestAnimationFrame.
  *   - debounced: JS debounces calls via setTimeout.
+ *
+ * All modes hold interop back while an IME is composing, then flush once on
+ * compositionend. See composition-guard.js for why.
  */
+
+import { createCompositionGuard } from './composition-guard.js';
 
 const instances = new Map();
 
@@ -78,9 +83,16 @@ export function initialize(element, dotNetRef, instanceId, config) {
   const handleInput = () => {
     const value = element.value;
 
+    // The counter tracks the element, not the bound value, so it stays live while composing.
     updateCharacterCount();
 
     if (config.mode === 'onchange') {
+      return;
+    }
+
+    // Interop here would write the bound value back mid-composition; guard.onFlush
+    // re-runs this once the IME commits.
+    if (guard.isComposing) {
       return;
     }
 
@@ -112,6 +124,8 @@ export function initialize(element, dotNetRef, instanceId, config) {
     callOnChange(element.value);
   };
 
+  const guard = createCompositionGuard(element, { onFlush: handleInput });
+
   element.addEventListener('input', handleInput);
   element.addEventListener('change', handleChange);
 
@@ -119,6 +133,7 @@ export function initialize(element, dotNetRef, instanceId, config) {
     state,
     handleInput,
     handleChange,
+    guard,
     element
   };
 
@@ -178,6 +193,7 @@ export function dispose(instanceId) {
 
   stored.element.removeEventListener('input', stored.handleInput);
   stored.element.removeEventListener('change', stored.handleChange);
+  stored.guard.dispose();
 
   if (stored.handleBlur) {
     stored.element.removeEventListener('blur', stored.handleBlur);

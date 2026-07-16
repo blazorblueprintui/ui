@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Components
 @implements IDisposable
+@inject IJSRuntime JSRuntime
 
 <div class="@CssClass">
     <svg xmlns="http://www.w3.org/2000/svg"
@@ -30,6 +31,8 @@
 </div>
 
 @code {
+    private static readonly string[] GuardSuppressedEvents = ["input", "keydown"];
+
     private CancellationTokenSource? _debounceCts;
     private string _displayValue = string.Empty;
     private bool _isDebouncing;
@@ -76,6 +79,8 @@
     private ElementReference _inputRef;
     private bool _previousAutoFocus;
     private bool _shouldFocus;
+    private IJSObjectReference? _guardModule;
+    private readonly string _guardId = Guid.NewGuid().ToString("N");
 
     /// <summary>
     /// Focuses the input element.
@@ -118,6 +123,29 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender)
+        {
+            // HandleInput/HandleKeyDown are Blazor-delegated, so the guard suppresses the
+            // events at the element rather than the component checking a flag: input would
+            // otherwise write _displayValue back mid-composition, and Enter/Arrow would
+            // select a list item while the IME still owns the keystroke.
+            try
+            {
+                _guardModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import", "./_content/BlazorBlueprint.Components/js/composition-guard.js");
+                await _guardModule.InvokeVoidAsync(
+                    "attach", _inputRef, _guardId, new { suppress = GuardSuppressedEvents });
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+            catch (InvalidOperationException)
+            {
+                // JS interop not available during prerendering
+            }
+        }
+
         // Focus when AutoFocus becomes true (either on first render or when popover opens)
         if (_shouldFocus)
         {
@@ -198,6 +226,25 @@
     {
         _debounceCts?.Cancel();
         _debounceCts?.Dispose();
+        _ = DisposeGuardAsync();
         GC.SuppressFinalize(this);
+    }
+
+    private async Task DisposeGuardAsync()
+    {
+        if (_guardModule == null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _guardModule.InvokeVoidAsync("detach", _guardId);
+            await _guardModule.DisposeAsync();
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Expected during circuit disconnect
+        }
     }
 }

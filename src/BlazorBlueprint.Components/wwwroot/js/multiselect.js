@@ -4,6 +4,11 @@
 // - Space toggles checkbox without closing
 // - Enter toggles checkbox and closes
 // - Preserves selection state on items
+//
+// Navigation keys and the search input's @bind are both held back while an IME is
+// composing. See composition-guard.js for why.
+
+import { createCompositionGuard } from './composition-guard.js';
 
 let multiSelectStates = new Map();
 
@@ -66,6 +71,14 @@ export function setupMultiSelectInput(inputElement, dotNetRef, inputId, contentI
 
     // Handle keyboard navigation
     const keyHandler = (e) => {
+        // While the IME is composing, every key below belongs to it: Space is the Japanese
+        // conversion key, Enter commits, Arrows walk the candidate list, and Escape cancels.
+        // This handler is capture-phase and preventDefaults unconditionally, so without this
+        // guard it would block the IME outright rather than merely fire alongside it.
+        if (guard.isComposing || e.isComposing === true || e.keyCode === 229) {
+            return;
+        }
+
         const options = getVisibleOptions();
 
         // Only handle keys if there are visible options
@@ -165,11 +178,14 @@ export function setupMultiSelectInput(inputElement, dotNetRef, inputId, contentI
     };
     inputElement.addEventListener('input', inputHandler);
 
+    const guard = createCompositionGuard(inputElement, { suppress: ['input'] });
+
     // Store state and handlers for cleanup
     multiSelectStates.set(inputId, {
         state,
         keyHandler,
         inputHandler,
+        guard,
         inputElement
     });
 
@@ -185,6 +201,7 @@ export function removeMultiSelectInput(inputId) {
     if (stored) {
         stored.inputElement.removeEventListener('keydown', stored.keyHandler, true);
         stored.inputElement.removeEventListener('input', stored.inputHandler);
+        stored.guard.dispose();
         multiSelectStates.delete(inputId);
     }
 }
@@ -196,6 +213,7 @@ export function disposeAll() {
     multiSelectStates.forEach((stored, inputId) => {
         stored.inputElement.removeEventListener('keydown', stored.keyHandler, true);
         stored.inputElement.removeEventListener('input', stored.inputHandler);
+        stored.guard.dispose();
     });
     multiSelectStates.clear();
 }

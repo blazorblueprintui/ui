@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-07-16
+
+### Fixed
+
+- **IME composition was corrupted across every input that updates per keystroke** — Nothing in the library tracked composition, so typing `안녕` with a Korean IME produced `ㅇ안안ㄴ녕`. Assigning `element.value` mid-composition resets the IME's composition buffer *even when the assigned string matches what the element already holds*, and Blazor's renderer assigns `element.value` whenever a bound field changes — diffing against the previous render tree, never reading the DOM. So any per-keystroke C# round-trip corrupted composition. `UpdateTiming.OnChange`/`Debounced` escaped it only by making no interop call during typing. Affects `BbInput`, `BbTextarea`, `BbInputField`, `BbInputGroupInput`/`Textarea`, `BbNumericInput`, `BbCurrencyInput`, `BbTagInput`, `BbMarkdownEditor`, `BbMaskedInput`, `BbCombobox`/`BbFormFieldCombobox`, and `BbMultiSelect`/`BbFormFieldMultiSelect`. A new shared `composition-guard.js` holds interop back while composing and flushes once on `compositionend`; an interrupted composition resets on blur rather than wedging the field. `BbDatePickerInput` (binds `@onchange`) and `BbRichTextEditor` (Quill owns its DOM) were never affected. ([#415](https://github.com/blazorblueprintui/ui/pull/415))
+- **Enter, Space and Arrow keys were hijacked from the IME** — Separate from the value corruption above, and unfixed by it: Enter commits a composition and Space/Arrows drive the candidate list, but handlers bound to those keys fired while the IME still owned the keystroke. `BbCombobox` selected the focused item and closed the popover on the Enter that merely confirmed a syllable; `BbTagInput` committed a half-composed tag; `BbMarkdownEditor` continued a list; and `BbMultiSelect` was worst — a capture-phase handler with an unconditional `preventDefault` that **blocked the IME commit outright**, with Space (the Japanese conversion key) toggling a checkbox instead. All key handling now stands down while composing. ([#415](https://github.com/blazorblueprintui/ui/pull/415))
+- **BbNumericInput / BbCurrencyInput: full-width digits were silently deleted** — Input sanitizing tested digits with an ASCII range check (`ch >= '0' && ch <= '9'`), and full-width digits (`１` = U+FF11) sort above `'9'`, so a Japanese IME in 全角 mode had legitimate numeric input erased keystroke by keystroke. Reproduces without any IME composition involved. Full-width digits, decimal point and minus now fold to their ASCII equivalents (`１２３` → `123`, `－１２．５` → `-12.5`); genuine garbage is still stripped. ([#415](https://github.com/blazorblueprintui/ui/pull/415))
+
+### Changed
+
+- **BbMaskedInput: the mask is applied when the IME commits, not per keystroke** — Masking rewrites the field, which is precisely what resets a composition buffer, so a guard that skips the write is not enough — the mask itself has to wait. Raw text now sits unmasked while the IME composes and is masked once on commit. `'A'` and `'*'` mask positions accept CJK (both map to `char.IsLetter`/`char.IsLetterOrDigit`, and CJK characters are Unicode category `Lo`), so this is reachable with masks like `AAA-9999`. ASCII typing is unchanged and still masks on every keystroke. ([#415](https://github.com/blazorblueprintui/ui/pull/415))
+
+---
+
 ## 2026-07-15
 
 ### Added

@@ -1,7 +1,12 @@
 /**
  * Tag Input JavaScript interop module.
  * Handles trigger key preventDefault, paste event reading, and container click-to-focus.
+ *
+ * Trigger keys and the component's @oninput are both held back while an IME is composing.
+ * See composition-guard.js for why.
  */
+
+import { createCompositionGuard } from './composition-guard.js';
 
 const instances = new Map();
 
@@ -20,6 +25,13 @@ export function initialize(containerEl, inputEl, dotNetRef, instanceId, config) 
   }
 
   const handleKeyDown = (e) => {
+    // Every key below belongs to the IME while it is composing: Enter and the delimiters
+    // commit the composition, Arrows drive the candidate list, and Escape cancels it.
+    // Acting on any of them would commit a half-composed tag or fight the candidate window.
+    if (guard.isComposing || e.isComposing === true || e.keyCode === 229) {
+      return;
+    }
+
     const key = e.key;
 
     // Check if the key is a configured trigger
@@ -87,6 +99,8 @@ export function initialize(containerEl, inputEl, dotNetRef, instanceId, config) 
     inputEl.focus();
   };
 
+  const guard = createCompositionGuard(inputEl, { suppress: ['input'] });
+
   // Use capture phase for keydown to preventDefault before browser defaults
   inputEl.addEventListener('keydown', handleKeyDown, true);
   inputEl.addEventListener('paste', handlePaste);
@@ -96,6 +110,7 @@ export function initialize(containerEl, inputEl, dotNetRef, instanceId, config) 
     handleKeyDown,
     handlePaste,
     handleContainerClick,
+    guard,
     inputEl,
     containerEl
   });
@@ -125,5 +140,6 @@ export function dispose(instanceId) {
   stored.inputEl.removeEventListener('keydown', stored.handleKeyDown, true);
   stored.inputEl.removeEventListener('paste', stored.handlePaste);
   stored.containerEl.removeEventListener('click', stored.handleContainerClick);
+  stored.guard.dispose();
   instances.delete(instanceId);
 }

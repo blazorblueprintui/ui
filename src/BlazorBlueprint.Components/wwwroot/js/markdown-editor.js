@@ -1,7 +1,12 @@
 /**
  * Markdown Editor JavaScript module
  * Handles textarea text selection, cursor positioning, text insertion, and undo/redo
+ *
+ * List continuation, undo snapshots, and the component's @oninput/@onkeydown are all held
+ * back while an IME is composing. See composition-guard.js for why.
  */
+
+import { createCompositionGuard } from './composition-guard.js';
 
 // Store references for editor data (history, dotNetRef, etc.)
 const editorMap = new WeakMap();
@@ -353,6 +358,7 @@ export function focusTextarea(textarea) {
 // Store references for cleanup
 const listenerMap = new WeakMap();
 const inputListenerMap = new WeakMap();
+const guardMap = new WeakMap();
 
 /**
  * Initialize list continuation behavior and undo/redo on textarea
@@ -375,6 +381,13 @@ export function initializeListContinuation(textarea, dotNetRef) {
     saveState(textarea);
 
     const handler = (e) => {
+        // The Enter that commits a composition must not continue a list. Chrome happens to
+        // report key "Process" mid-composition and would fall through anyway, but Firefox
+        // and Safari report "Enter" with isComposing set.
+        if (guard.isComposing || e.isComposing === true || e.keyCode === 229) {
+            return;
+        }
+
         // Intercept Ctrl+Z/Y for undo/redo (prevent browser's native undo)
         if (e.ctrlKey || e.metaKey) {
             if (e.key === 'z' || e.key === 'Z') {
@@ -470,6 +483,13 @@ export function initializeListContinuation(textarea, dotNetRef) {
 
     // Add input listener for auto-scroll and state saving on typing
     const inputHandler = () => {
+        // Snapshotting each composition step would make Ctrl+Z walk back through jamo
+        // rather than words. Scrolling to the cursor stays live.
+        if (guard.isComposing) {
+            requestAnimationFrame(() => scrollToCursor(textarea));
+            return;
+        }
+
         // Use requestAnimationFrame to ensure scroll happens after DOM update
         requestAnimationFrame(() => {
             scrollToCursor(textarea);
@@ -479,6 +499,9 @@ export function initializeListContinuation(textarea, dotNetRef) {
     };
     textarea.addEventListener('input', inputHandler);
     inputListenerMap.set(textarea, inputHandler);
+
+    const guard = createCompositionGuard(textarea, { suppress: ['input', 'keydown'] });
+    guardMap.set(textarea, guard);
 }
 
 /**
@@ -496,6 +519,11 @@ export function disposeListContinuation(textarea) {
     if (inputHandler) {
         textarea.removeEventListener('input', inputHandler);
         inputListenerMap.delete(textarea);
+    }
+    const guard = guardMap.get(textarea);
+    if (guard) {
+        guard.dispose();
+        guardMap.delete(textarea);
     }
     // Clean up editor data (history, dotNetRef)
     editorMap.delete(textarea);
