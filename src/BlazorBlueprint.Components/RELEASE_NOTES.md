@@ -1,18 +1,15 @@
-## What's New in v3.14.0
-
-### New Features
-- **BbDataGrid** — runtime grouping via the new `Groupable` parameter on property and template columns; a header ellipsis menu offers "Group by" / "Remove grouping", also available imperatively through `GroupByColumnAsync(columnId, direction)` and `ClearGroupingAsync()`.
-- **BbDataGrid** — public `RefreshDataAsync()` to re-process the current data after in-place collection mutations, mirroring QuickGrid.
-- **BbDataGrid** — `INotifyCollectionChanged` support: an `ObservableCollection` passed to `Items` refreshes the grid automatically, with subscriptions cleaned up on dispose and source swap.
-- **BbSidebarProvider** — new `EnableToggleShortcut` parameter (default `true`) to opt out of the Ctrl/Cmd+B sidebar shortcut so the keys can reach the page (e.g. a rich-text editor's bold command); reactive after first render.
+## What's New in v3.14.1
 
 ### Bug Fixes
-- **BbDataGrid** — grouping set programmatically through the state object now actually applies and round-trips through `Save()`/`Restore()`; previously only markup-configured grouping took effect while the state reported a grouping the grid ignored.
-- **BbDataGrid** — group definitions targeting a column that registers later no longer silently resolve to nothing, and `Reset()` now genuinely clears grouping applied via the `GroupBy` parameter.
-- **Theming** — the applied theme (dark mode class, base/primary color attributes, radius) is now restored when Blazor's enhanced page refresh re-merges the document and strips it from `<html>` (e.g. on every `dotnet watch` hot reload); the dark-mode toggle no longer needs two clicks afterwards.
-- **CSS** — border color utilities (`border-primary`, `border-alert-*/30`, and consumer `.border-*` classes) are no longer flattened to the default border color; the global border reset moved from the `bb` cascade layer to `base` so utilities win again.
-- **BbSidebar** — multiple `BbSidebarProvider` instances on one page now each receive the toggle shortcut and mobile-change notifications; previously module-level JS state meant only the last-initialized provider responded and disposal leaked listeners.
+- **BbInput**, **BbTextarea**, **BbInputField**, **BbInputGroupInput**, **BbInputGroupTextarea** — IME composition (Korean, Japanese, Chinese) is no longer corrupted by per-keystroke value round-trips; interop is held back while composing and flushed once the IME commits, so typing 안녕 no longer yields ㅇ안안ㄴ녕.
+- **BbNumericInput**, **BbCurrencyInput** — input sanitization no longer resets the composition buffer mid-composition, and Arrow/Home/End keys reach the IME candidate list instead of stepping the value.
+- **BbNumericInput**, **BbCurrencyInput** — full-width digits and separators (`０`-`９`, `．`, `，`, `－`) emitted by a Japanese IME in 全角 mode are folded to their ASCII equivalents instead of being stripped as invalid input.
+- **BbTagInput** — Enter, delimiter, Arrow, and Escape keys no longer commit a half-composed tag or fight the IME candidate window while composing.
+- **BbMultiSelect** — Space, Enter, Arrow, and Escape now reach the IME during composition rather than being swallowed by the option-navigation handler.
+- **BbCommandInput** — Enter and Arrow keys no longer select a list item while the IME still owns the keystroke, and the display value is no longer written back mid-composition.
+- **BbMaskedInput** — mask application is deferred until the IME commits, so masking no longer resets an in-progress composition.
+- **BbMarkdownEditor** — the Enter that commits a composition no longer continues a list, and undo snapshots are no longer taken per composition step, so Ctrl+Z walks back through words rather than individual jamo.
 
 ### Improvements
-- **BbDataGrid** — grouping combined with `Virtualize` + `ItemsProvider` (unsupported) now hides the header group action and logs a warning naming the column instead of silently rendering an empty grid.
-- Bumped the `BlazorBlueprint.Primitives` dependency to 3.14.0.
+- Composition handling is interrupt-safe: a composition abandoned by focus loss (e.g. tab-switch) no longer latches and wedges the field.
+- Bumped the `BlazorBlueprint.Primitives` dependency to 3.14.1.
