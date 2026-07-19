@@ -7,6 +7,7 @@
  *   - JsOnBlur(value)    — called on blur (always)
  *   - JsOnFocus()        — called on focus (always)
  *   - JsOnKeyDown(key)   — called for step keys (ArrowUp/Down, PageUp/Down, Home/End)
+ *   - Mouse wheel on focused input is mapped to ArrowUp/Down in the same key callback.
  *
  * Sanitization and interop are held back while an IME is composing, then flushed once on
  * compositionend. See composition-guard.js for why.
@@ -154,12 +155,24 @@ export function initialize(element, dotNetRef, instanceId, config) {
     }
   };
 
+  const handleWheel = (e) => {
+    if (document.activeElement !== element || e.deltaY === 0) {
+      return;
+    }
+
+    e.preventDefault();
+
+    const key = e.deltaY < 0 ? 'ArrowUp' : 'ArrowDown';
+    dotNetRef.invokeMethodAsync('JsOnKeyDown', key).catch(() => {});
+  };
+
   const guard = createCompositionGuard(element, { onFlush: handleInput });
 
   element.addEventListener('input', handleInput);
   element.addEventListener('blur', handleBlur);
   element.addEventListener('focus', handleFocus);
   element.addEventListener('keydown', handleKeyDown);
+  element.addEventListener('wheel', handleWheel, { passive: false });
 
   instances.set(instanceId, {
     state,
@@ -167,6 +180,7 @@ export function initialize(element, dotNetRef, instanceId, config) {
     handleBlur,
     handleFocus,
     handleKeyDown,
+    handleWheel,
     guard,
     element
   });
@@ -198,6 +212,7 @@ export function dispose(instanceId) {
   stored.element.removeEventListener('blur', stored.handleBlur);
   stored.element.removeEventListener('focus', stored.handleFocus);
   stored.element.removeEventListener('keydown', stored.handleKeyDown);
+  stored.element.removeEventListener('wheel', stored.handleWheel);
   stored.guard.dispose();
 
   if (stored.state.debounceTimer) {
