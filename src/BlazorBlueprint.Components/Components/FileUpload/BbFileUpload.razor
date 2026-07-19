@@ -1,7 +1,6 @@
 @namespace BlazorBlueprint.Components
 @using BlazorBlueprint.Icons.Lucide.Components
 @using Microsoft.AspNetCore.Components.Forms
-@using Microsoft.JSInterop
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
 
@@ -21,7 +20,8 @@
                    multiple="@Multiple"
                    disabled="@Disabled"
                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                   id="@_inputId" />
+                   @attributes="AdditionalAttributes"
+                   id="@EffectiveId" />
 
         @if (DropzoneContent != null)
         {
@@ -126,13 +126,24 @@
 @code {
     private InputFile? _inputFile;
     private ElementReference _dropzoneRef;
-    private string _inputId = $"file-upload-{Guid.NewGuid():N}";
+    private string? _generatedId;
     private bool _isDragging;
     private bool _jsInitialized;
     private List<FileUploadItem> _files = new();
     private List<FileValidationError> _errors = new();
     private IJSObjectReference? _jsModule;
     private IJSObjectReference? _jsCleanup;
+
+    /// <summary>
+    /// Gets or sets the HTML id attribute for the file input element.
+    /// </summary>
+    /// <remarks>
+    /// Used to associate the input with a label element via the label's 'for' attribute, so an
+    /// external control can open the file dialog — useful when the dropzone itself is hidden.
+    /// When not set, a unique id is generated.
+    /// </remarks>
+    [Parameter]
+    public string? Id { get; set; }
 
     /// <summary>
     /// Gets or sets the selected files.
@@ -199,6 +210,18 @@
     /// </summary>
     [Parameter]
     public RenderFragment? DropzoneContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the file input element.
+    /// </summary>
+    /// <remarks>
+    /// Attributes are applied to the underlying &lt;input type="file"&gt; rather than the
+    /// container, so form and accessibility attributes such as <c>name</c> or <c>aria-label</c>
+    /// reach the element that actually holds the files. Use <see cref="Class"/> to style the
+    /// container, and <see cref="Id"/> to set the input's id.
+    /// </remarks>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     /// <summary>
     /// Additional CSS classes.
@@ -455,6 +478,8 @@
         if (bytes < 1024 * 1024 * 1024) return $"{bytes / (1024.0 * 1024):F0} MB";
         return $"{bytes / (1024.0 * 1024 * 1024):F1} GB";
     }
+
+    private string EffectiveId => Id ?? (_generatedId ??= $"file-upload-{Guid.NewGuid():N}");
 
     private string ContainerClass => ClassNames.cn(
         "w-full",

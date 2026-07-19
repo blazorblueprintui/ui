@@ -152,6 +152,31 @@
         <CodeBlock Source="Components/FileUpload/disabled.txt" />
     </div>
 
+    <!-- Trigger From Your Own Control -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Trigger From Your Own Control</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">Id</code> and point a
+                <code class="bg-muted px-1 py-0.5 rounded">&lt;label for="..."&gt;</code> at it to open the file
+                dialog from anywhere on the page — useful when the dropzone is hidden, for example a chat
+                composer with an attach button. Clicking the label below opens the dialog for the dropzone
+                underneath it. When <code class="bg-muted px-1 py-0.5 rounded">Id</code> is not set, a unique
+                one is generated.
+            </p>
+        </div>
+
+        <label for="chat-attachment-upload"
+               class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-muted cursor-pointer">
+            <LucideIcon Name="paperclip" Class="h-4 w-4" />
+            Attach files
+        </label>
+
+        <BbFileUpload Id="chat-attachment-upload" Multiple="true" />
+
+        <CodeBlock Source="Components/FileUpload/label-trigger.txt" />
+    </div>
+
     <!-- Accessibility Notes -->
     <AccessibilityList>
         <AriaAttributes>
@@ -187,6 +212,9 @@
                 <ApiParameter Name="Files" Type="IReadOnlyList&lt;FileUploadItem&gt;?">
                     Selected files.
                 </ApiParameter>
+                <ApiParameter Name="Id" Type="string?">
+                    The HTML id of the underlying file input. Point a &lt;label for="..."&gt; at it to open the file dialog from your own control, which works even when the dropzone is hidden. When not set, a unique id is generated.
+                </ApiParameter>
                 <ApiParameter Name="Multiple" Type="bool" Default="false">
                     Allow multiple files.
                 </ApiParameter>
@@ -213,6 +241,9 @@
                 </ApiParameter>
                 <ApiParameter Name="DropzoneContent" Type="RenderFragment?">
                     Custom dropzone content.
+                </ApiParameter>
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                    Unmatched attributes, applied to the underlying &lt;input type="file"&gt; rather than the container — so form and accessibility attributes such as name or aria-label reach the element that holds the files. Use Class to style the container.
                 </ApiParameter>
                 <ApiParameter Name="ClearFiles()" Type="Task">
                     Clears all files and validation errors, resetting the component.
