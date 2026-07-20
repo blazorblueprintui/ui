@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-07-20
+
+### Fixed
+
+- **AngleSharp vulnerability inherited through HtmlSanitizer (GHSA-pgww-w46g-26qg)** — Assemblies referencing `BlazorBlueprint.Components` with NuGet audit enabled had begun to fail their builds. `HtmlSanitizer` 9.0.892 hard-pins `AngleSharp` to exactly `[0.17.1]` (and `AngleSharp.Css` to `[0.17.0]`), which the advisory flags as Moderate. Because the pin is exact, the transitive `AngleSharp` cannot be lifted out with a direct `PackageReference` — attempting it raises `NU1608` against both `HtmlSanitizer` and `AngleSharp.Css`, and leaves 9.0.892 running against an `AngleSharp` major version it was never compiled for. 9.0.892 is also the newest release on the stable line, so no stable version resolves the advisory. `HtmlSanitizer` is therefore bumped to **9.1.949-beta**, whose dependency chain resolves `AngleSharp` 1.5.1 — past the 1.0.0 fix — clearing the advisory. The library's only use of the package is `new HtmlSanitizer()` and `Sanitize(string)` in `BbRichTextEditor` and `BbMarkdownEditor`; sanitizer output was compared across 41 inputs (XSS vectors, Quill rich-text markup, Markdig output, malformed and non-ASCII HTML) and is byte-identical between the two versions, so no behavioural change is expected. Note that this makes `HtmlSanitizer` — and `AngleSharp.Css` 1.0.0-beta.216 — a **prerelease** transitive dependency of Components; it will be moved back to the 9.1.x stable line as soon as one is published. ([#422](https://github.com/blazorblueprintui/ui/pull/422))
+
+---
+
 ## 2026-07-18
 
 ### Fixed
