@@ -418,6 +418,47 @@
         <CodeBlock Source="Components/DataGrid/reorderable-columns.txt" />
     </div>
 
+    <!-- ── Reordering With Pinned And Selection Columns ─────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Reordering With Pinned And Selection Columns</h2>
+            <p class="text-sm text-muted-foreground">
+                Reordering coexists with pinning and the selection column. Pinned columns are never draggable and
+                never accept a drop, so they stay anchored to the edges of the grid — only the unpinned columns
+                in the middle can be rearranged. The selection checkbox column is likewise fixed in place.
+                Drag <strong>Email</strong>, <strong>Department</strong>, <strong>Role</strong> or
+                <strong>Age</strong> to reorder them between the pinned Name and Actions columns.
+            </p>
+        </div>
+        <div style="max-width: 800px; overflow-x: auto;">
+            <BbDataGrid TData="Person" Items="@people" InitialPageSize="5" Reorderable="true"
+                        SelectionMode="DataTableSelectionMode.Multiple">
+                <Columns>
+                    <BbDataGridSelectColumn TData="Person" Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)"
+                        Sortable Width="160px" Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Width="220px" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Width="180px" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" Width="160px" />
+                    <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Width="100px" />
+                    <BbDataGridTemplateColumn TData="Person" Title="Actions" Width="140px"
+                        Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Right"
+                        CellClass="text-right">
+                        <HeaderTemplate>
+                            <span class="w-full text-right">Actions</span>
+                        </HeaderTemplate>
+                        <ChildContent Context="person">
+                            <div @onclick:stopPropagation="true" class="inline-flex justify-end w-full">
+                                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small">Edit</BbButton>
+                            </div>
+                        </ChildContent>
+                    </BbDataGridTemplateColumn>
+                </Columns>
+            </BbDataGrid>
+        </div>
+        <CodeBlock Source="Components/DataGrid/reorderable-pinned-columns.txt" />
+    </div>
+
     <!-- ── Explicit Column Order ────────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">

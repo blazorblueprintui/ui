@@ -140,7 +140,16 @@ public class DataGridColumnState
     /// Moves a column to a new position in the order.
     /// </summary>
     /// <param name="columnId">The column ID to move.</param>
-    /// <param name="newIndex">The new zero-based position.</param>
+    /// <param name="newIndex">
+    /// The new zero-based position, interpreted with remove-then-insert semantics: the column is
+    /// lifted out of the order first, and <paramref name="newIndex"/> is the insertion point in the
+    /// remaining entries. Callers that derive the index from a list which still contains the moved
+    /// column must subtract one when moving rightwards, or the column overshoots by a position.
+    /// </param>
+    /// <remarks>
+    /// Positions cover every tracked column, including hidden ones. An index taken from the rendered
+    /// header row is therefore not interchangeable with an index here.
+    /// </remarks>
     public void ReorderColumn(string columnId, int newIndex)
     {
         var entry = entries.FirstOrDefault(e => e.ColumnId == columnId);

@@ -2901,11 +2901,55 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     }
 
     /// <summary>
-    /// Called from JS when a column is reordered via drag-and-drop.
+    /// Called from JS when a column is dropped onto another header cell during a reorder drag.
     /// </summary>
+    /// <param name="columnId">The column being dragged.</param>
+    /// <param name="targetColumnId">The column whose header cell received the drop.</param>
+    /// <param name="placeAfter">
+    /// True when the pointer was released on the right half of the target (drop after it),
+    /// false for the left half (drop before it).
+    /// </param>
+    /// <remarks>
+    /// <para>
+    /// This method is the single owner of the conversion from a drop gesture into a
+    /// <see cref="DataGridColumnState"/> position. Keep it that way: the JS layer deliberately
+    /// reports only <em>which</em> column was dropped on and on <em>which side</em> of it, never a
+    /// positional index. A header-cell index cannot be translated safely, because the header row is
+    /// not a one-to-one view of the column order — hidden columns have no header cell at all, and
+    /// pinned columns are re-partitioned to the edges of the row by
+    /// <c>PartitionByPinning</c> regardless of their stored order.
+    /// </para>
+    /// <para>
+    /// <see cref="DataGridColumnState.ReorderColumn"/> has remove-then-insert semantics: the dragged
+    /// column is lifted out of the order first, and its <c>newIndex</c> argument is the insertion
+    /// point in what remains. The index is therefore resolved here against the entry list with the
+    /// dragged column already excluded. Resolving it against a list that still contained the dragged
+    /// column is what made rightward drags land one position too far to the right (issue #434).
+    /// </para>
+    /// </remarks>
     [JSInvokable]
-    public async Task OnColumnReordered(string columnId, int newIndex)
+    public async Task OnColumnReordered(string columnId, string targetColumnId, bool placeAfter)
     {
+        if (string.IsNullOrEmpty(columnId) || columnId == targetColumnId)
+        {
+            return;
+        }
+
+        // The order the columns will be in once the dragged one is lifted out.
+        var remaining = _gridState.Columns.Entries
+            .Where(e => e.ColumnId != columnId)
+            .OrderBy(e => e.Order)
+            .Select(e => e.ColumnId)
+            .ToList();
+
+        var targetIndex = remaining.IndexOf(targetColumnId);
+        if (targetIndex < 0)
+        {
+            return;
+        }
+
+        var newIndex = placeAfter ? targetIndex + 1 : targetIndex;
+
         _gridState.Columns.ReorderColumn(columnId, newIndex);
         _stateVersion++;
 
