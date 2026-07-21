@@ -68,6 +68,34 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
     public bool Visible { get; set; } = true;
 
     /// <summary>
+    /// Explicit position for this column, as a zero-based index among the grid's data columns.
+    /// When not set (the default), the column keeps its registration order — the order in which
+    /// its component initializes, which for a column written directly in the grid's markup is
+    /// the order it was declared in.
+    /// </summary>
+    /// <remarks>
+    /// Set this on a column produced indirectly — by a wrapper component, or by a fragment that
+    /// only renders after an await — where initialization order does not match declaration order.
+    /// <para>
+    /// Columns that leave <c>Order</c> unset are laid out first, in registration order. Each
+    /// column that sets it is then inserted at that index, lowest value first; an index past the
+    /// end appends. Two columns sharing an <c>Order</c> keep their registration order relative to
+    /// each other. Because unset columns retain their relative positions, a grid where no column
+    /// sets <c>Order</c> is laid out exactly as it would be without this parameter.
+    /// </para>
+    /// <para>
+    /// <see cref="BbDataGridSelectColumn{TData}"/> and <see cref="BbDataGridExpandColumn{TData}"/>
+    /// keep their fixed leading positions and are not counted by this index.
+    /// </para>
+    /// <para>
+    /// The value is read when the column registers with the grid; changing it afterwards has no
+    /// effect on an already rendered grid.
+    /// </para>
+    /// </remarks>
+    [Parameter]
+    public int? Order { get; set; }
+
+    /// <summary>
     /// Column width (e.g., "200px", "20%", "auto").
     /// </summary>
     [Parameter]
@@ -184,6 +212,8 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
     bool IDataGridColumn<TData>.Groupable => Groupable && SortBy != null;
 
     bool IDataGridColumn<TData>.Visible => Visible;
+
+    int? IDataGridColumn<TData>.Order => Order;
 
     string? IDataGridColumn<TData>.Width => Width;
 

@@ -418,6 +418,33 @@
         <CodeBlock Source="Components/DataGrid/reorderable-columns.txt" />
     </div>
 
+    <!-- ── Explicit Column Order ────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Explicit Column Order</h2>
+            <p class="text-sm text-muted-foreground">
+                Columns take their position from the order their components initialize in, which for a column
+                written directly in the grid's markup is the order it was declared. A column produced indirectly
+                initializes later than the columns around it and would otherwise drift to the end — the
+                <code class="bg-muted px-1 py-0.5 rounded">&lt;SalaryColumn /&gt;</code> below is a reusable
+                component that renders a <code class="bg-muted px-1 py-0.5 rounded">BbDataGridPropertyColumn</code>
+                of its own. Set <code class="bg-muted px-1 py-0.5 rounded">Order</code> on such a column to pin it
+                to a zero-based index among the data columns. Columns that leave
+                <code class="bg-muted px-1 py-0.5 rounded">Order</code> unset keep their declared order around it,
+                so nothing else needs to change.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable />
+                <SalaryColumn Order="2" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/column-order.txt" />
+    </div>
+
     <!-- ── Column Visibility ──────────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -1091,6 +1118,9 @@
                 <ApiParameter Name="Visible" Type="bool" Default="true">
                     Whether this column is visible in the grid.
                 </ApiParameter>
+                <ApiParameter Name="Order" Type="int?" Default="null">
+                    Explicit position for this column, as a zero-based index among the grid's data columns. When not set, the column keeps its registration order — the order its component initializes in, which for a column written directly in the grid's markup is the order it was declared. Set this on a column produced indirectly, by a wrapper component or by a fragment that only renders after an await, where initialization order does not match declaration order. Columns without Order are laid out first in registration order, then each column that sets it is inserted at that index, lowest value first; an index past the end appends, and columns sharing an Order keep their registration order. Select and expand columns hold their fixed leading positions and are not counted by this index. Read when the column registers with the grid.
+                </ApiParameter>
                 <ApiParameter Name="Width" Type="string?">
                     Column width (e.g., "200px", "20%", "auto").
                 </ApiParameter>
@@ -1165,6 +1195,9 @@
                 </ApiParameter>
                 <ApiParameter Name="Visible" Type="bool" Default="true">
                     Whether this column is visible in the grid.
+                </ApiParameter>
+                <ApiParameter Name="Order" Type="int?" Default="null">
+                    Explicit position for this column, as a zero-based index among the grid's data columns. When not set, the column keeps its registration order — the order its component initializes in, which for a column written directly in the grid's markup is the order it was declared. Set this on a column produced indirectly, by a wrapper component or by a fragment that only renders after an await, where initialization order does not match declaration order. Columns without Order are laid out first in registration order, then each column that sets it is inserted at that index, lowest value first; an index past the end appends, and columns sharing an Order keep their registration order. Select and expand columns hold their fixed leading positions and are not counted by this index. Read when the column registers with the grid.
                 </ApiParameter>
                 <ApiParameter Name="Width" Type="string?">
                     Column width (e.g., "200px", "20%", "auto").
