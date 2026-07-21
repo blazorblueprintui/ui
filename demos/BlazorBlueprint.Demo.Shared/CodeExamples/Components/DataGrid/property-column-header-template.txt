@@ -1,0 +1,37 @@
+<BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
+    <Columns>
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable>
+            <HeaderTemplate>
+                <div class="flex items-center gap-1.5">
+                    <LucideIcon Name="user" Class="h-4 w-4 text-muted-foreground" />
+                    <span>Name</span>
+                </div>
+            </HeaderTemplate>
+        </BbDataGridPropertyColumn>
+        @* Sorting and the Groupable ellipsis menu are still rendered by the grid *@
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Groupable>
+            <HeaderTemplate>
+                <div class="flex items-center gap-1.5">
+                    <LucideIcon Name="building-2" Class="h-4 w-4 text-muted-foreground" />
+                    <span>Department</span>
+                </div>
+            </HeaderTemplate>
+        </BbDataGridPropertyColumn>
+        @* Icon-only header — keep Title set for the column chooser, sr-only text for screen readers *@
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Title="Email" Width="220px">
+            <HeaderTemplate>
+                <LucideIcon Name="mail" Class="h-4 w-4 text-muted-foreground" />
+                <span class="sr-only">Email</span>
+            </HeaderTemplate>
+        </BbDataGridPropertyColumn>
+        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable
+            CellClass="font-mono tabular-nums">
+            <HeaderTemplate>
+                <div class="flex items-center gap-1.5">
+                    <LucideIcon Name="banknote" Class="h-4 w-4 text-muted-foreground" />
+                    <span>Salary</span>
+                </div>
+            </HeaderTemplate>
+        </BbDataGridPropertyColumn>
+    </Columns>
+</BbDataGrid>

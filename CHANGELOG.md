@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-07-21
+
+### Added
+
+- **BbDataGridPropertyColumn: `HeaderTemplate`** — The property column explicitly returned `null` for the column interface's header-template slot, so its header was locked to plain text from `Title` (or the name inferred from `Property`). Wanting an icon in the header — or any markup at all — meant abandoning the property column for a `BbDataGridTemplateColumn` and hand-rolling `SortBy`, `FilterBy` and the cell rendering that the property expression had been providing for free. `HeaderTemplate` now fills that slot. It replaces the **title text only**, not the whole header cell: the grid keeps rendering the sort indicator, filter icon, pin icon, `Groupable` ellipsis menu and resize handle around the supplied content, so a `Sortable`/`Groupable` column with an icon header still sorts on click, still shows its arrow and priority badge, and still offers "Group by" with nothing extra from the consumer. The parameter matches `BbDataGridTemplateColumn.HeaderTemplate` in both shape (`RenderFragment`) and behaviour, so the two column types stay consistent. For icon-only headers, keep `Title` set — the column chooser and the column menu's labels read from it — and include screen-reader text in the template, since the `<th>` carries no `aria-label` and is announced from its own content. ([#423](https://github.com/blazorblueprintui/ui/issues/423))
+
+---
+
 ## 2026-07-20
 
 ### Fixed

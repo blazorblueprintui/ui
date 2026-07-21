@@ -96,6 +96,60 @@
         <CodeBlock Source="Components/DataGrid/header-template.txt" />
     </div>
 
+    <!-- ── Property Column Header Template ─────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Property Column Header Template</h2>
+            <p class="text-sm text-muted-foreground">
+                <code class="bg-muted px-1 py-0.5 rounded">BbDataGridPropertyColumn</code> also accepts a
+                <code class="bg-muted px-1 py-0.5 rounded">HeaderTemplate</code>, so you can put an icon or richer
+                markup in the header without giving up type-safe binding. The template replaces the title
+                <em>text only</em> — the grid keeps rendering its own sort indicator, filter icon and column menu
+                around it, so the Department column below still sorts and still offers "Group by". Keep
+                <code class="bg-muted px-1 py-0.5 rounded">Title</code> meaningful for icon-only headers — it is what
+                the column chooser and the column menu display — and add
+                <code class="bg-muted px-1 py-0.5 rounded">sr-only</code> text inside the template, since the header
+                cell is announced from its own content.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable>
+                    <HeaderTemplate>
+                        <div class="flex items-center gap-1.5">
+                            <LucideIcon Name="user" Class="h-4 w-4 text-muted-foreground" />
+                            <span>Name</span>
+                        </div>
+                    </HeaderTemplate>
+                </BbDataGridPropertyColumn>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Groupable>
+                    <HeaderTemplate>
+                        <div class="flex items-center gap-1.5">
+                            <LucideIcon Name="building-2" Class="h-4 w-4 text-muted-foreground" />
+                            <span>Department</span>
+                        </div>
+                    </HeaderTemplate>
+                </BbDataGridPropertyColumn>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Title="Email" Width="220px">
+                    <HeaderTemplate>
+                        <LucideIcon Name="mail" Class="h-4 w-4 text-muted-foreground" />
+                        <span class="sr-only">Email</span>
+                    </HeaderTemplate>
+                </BbDataGridPropertyColumn>
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable
+                    CellClass="font-mono tabular-nums">
+                    <HeaderTemplate>
+                        <div class="flex items-center gap-1.5">
+                            <LucideIcon Name="banknote" Class="h-4 w-4 text-muted-foreground" />
+                            <span>Salary</span>
+                        </div>
+                    </HeaderTemplate>
+                </BbDataGridPropertyColumn>
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/property-column-header-template.txt" />
+    </div>
+
     <!-- ── Row & Column Styling ──────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
