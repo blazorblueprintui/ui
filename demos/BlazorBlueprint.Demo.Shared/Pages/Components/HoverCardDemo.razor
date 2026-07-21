@@ -66,6 +66,64 @@
         <CodeBlock Source="Components/HoverCard/as-child.txt" />
     </div>
 
+    <!-- Plain Content Needs AsChild="false" -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Plain Content and Icons</h2>
+            <p class="text-sm text-muted-foreground">
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">AsChild</code> defaults to
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">true</code>, which renders no element of its own —
+                the child is handed a <code class="text-xs bg-muted px-1 py-0.5 rounded">TriggerContext</code> and is
+                expected to attach the hover and focus behaviour itself. Anything that does not consume that context —
+                text, plain markup, or a bare <code class="text-xs bg-muted px-1 py-0.5 rounded">LucideIcon</code> — needs
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">AsChild="false"</code> so the trigger renders its own
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">div</code> with the handlers attached.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2">
+                <span class="text-sm">Ada Lovelace</span>
+                <BbHoverCard OpenDelay="200">
+                    <BbHoverCardTrigger AsChild="false" Class="inline-flex cursor-help text-blue-600 dark:text-blue-500">
+                        <LucideIcon Name="badge-check" Size="18" />
+                    </BbHoverCardTrigger>
+                    <BbHoverCardContent>
+                        <div class="space-y-1">
+                            <h4 class="text-sm font-semibold">Verified account</h4>
+                            <p class="text-sm text-muted-foreground">
+                                Identity confirmed on 4 March 2026.
+                            </p>
+                        </div>
+                    </BbHoverCardContent>
+                </BbHoverCard>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span class="text-sm">Repository</span>
+                <BbHoverCard OpenDelay="200">
+                    <BbHoverCardTrigger AsChild="false" Class="text-sm underline decoration-dotted cursor-help">
+                        3 open issues
+                    </BbHoverCardTrigger>
+                    <BbHoverCardContent>
+                        <p class="text-sm">Two bugs and one feature request.</p>
+                    </BbHoverCardContent>
+                </BbHoverCard>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/HoverCard/plain-content.txt" />
+
+        <div class="rounded-md border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+            <strong>Which mode do I want?</strong> Reach for the default
+            <code>AsChild="true"</code> when the child is a component built to act as a trigger —
+            <code>BbButton</code> is the common one — because it keeps the DOM flat and lets the child own its own
+            focus ring, aria attributes and styling. Use <code>AsChild="false"</code> for everything else. Getting it
+            wrong used to do nothing at all; a trigger whose child never consumes the context now logs a warning while
+            the app runs in the Development environment.
+        </div>
+    </div>
+
     <div class="space-y-4">
         <h2 class="text-2xl font-semibold">Default</h2>
         <p class="text-sm text-muted-foreground">
@@ -289,7 +347,10 @@
             </ApiReference>
             <ApiReference ComponentName="HoverCardTrigger">
                 <ApiParameter Name="AsChild" Type="bool" Default="true">
-                    When true, the trigger does not render its own element. Instead, it passes trigger behavior via TriggerContext to child components.
+                    When true, the trigger renders no element of its own and the child must consume the cascaded
+                    <code>TriggerContext</code> to wire up hover and focus — <code>BbButton</code> does. Set false for
+                    plain markup, text or a bare icon, so the trigger renders its own <code>div</code> with the
+                    handlers attached.
                 </ApiParameter>
                 <ApiParameter Name="Class" Type="string?" Default="null">
                     Additional CSS classes to apply to the trigger.
