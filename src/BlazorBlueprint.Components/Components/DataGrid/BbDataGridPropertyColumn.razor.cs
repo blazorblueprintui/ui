@@ -165,6 +165,19 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
     public RenderFragment<TData>? CellTemplate { get; set; }
 
     /// <summary>
+    /// Custom header content. If provided, replaces the header title text only — the grid
+    /// still renders its own sort indicator, filter icon, pin icon, column menu and resize
+    /// handle around it, so a <see cref="Sortable"/> or <see cref="Groupable"/> column keeps
+    /// every affordance. Use it to show an icon or richer markup instead of
+    /// <see cref="Title"/>. Set <see cref="Title"/> as well when the content is icon-only, so
+    /// the column chooser and the column menu still have readable text, and include screen-reader
+    /// text (e.g. a <c>sr-only</c> span) in the template — the header cell is announced from its
+    /// own content.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? HeaderTemplate { get; set; }
+
+    /// <summary>
     /// The parent DataGrid component. Set via cascading parameter.
     /// </summary>
     [CascadingParameter]
@@ -199,7 +212,10 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
             ? context => CellTemplate(context.Item)
             : null;
 
-    RenderFragment<DataGridHeaderContext<TData>>? IDataGridColumn<TData>.HeaderTemplate => null;
+    RenderFragment<DataGridHeaderContext<TData>>? IDataGridColumn<TData>.HeaderTemplate =>
+        HeaderTemplate != null
+            ? _ => HeaderTemplate
+            : null;
 
     string? IDataGridColumn<TData>.CellClass => CellClass;
 
