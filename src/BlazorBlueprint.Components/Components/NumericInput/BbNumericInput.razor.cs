@@ -19,6 +19,7 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
     private string instanceId = Guid.NewGuid().ToString("N");
     private string? generatedId;
     private bool jsInitialized;
+    private bool lastWheelStepEnabled;
     private bool disposed;
     private string editingValue = string.Empty;
     private bool isEditing;
@@ -175,6 +176,16 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
     [Parameter]
     public int DebounceInterval { get; set; } = 500;
 
+    /// <summary>
+    /// Gets or sets whether scrolling the mouse wheel over the focused input steps the value.
+    /// Defaults to <c>false</c>: stepping has to call <c>preventDefault</c> on the wheel event,
+    /// which takes the scroll away from the page, so a long form would stop scrolling — and
+    /// silently change a number instead — whenever the pointer passed over a focused input.
+    /// Enable it where that trade is worth making, such as a compact numeric-only editor.
+    /// </summary>
+    [Parameter]
+    public bool EnableWheelStep { get; set; }
+
     /// <inheritdoc />
     protected override void OnParametersSet()
     {
@@ -193,6 +204,7 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
                 jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
                     "import", "./_content/BlazorBlueprint.Components/js/numeric-input.js");
                 dotNetRef = DotNetObjectReference.Create(this);
+                lastWheelStepEnabled = EnableWheelStep;
                 await jsModule.InvokeVoidAsync("initialize", inputRef, dotNetRef, instanceId, GetJsConfig());
                 jsInitialized = true;
             }
@@ -203,6 +215,24 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
             catch (InvalidOperationException)
             {
                 // JS interop not available during prerendering
+            }
+        }
+        else if (jsInitialized && jsModule != null && lastWheelStepEnabled != EnableWheelStep)
+        {
+            // Keep wheel stepping in sync when the parameter changes after the first render
+            lastWheelStepEnabled = EnableWheelStep;
+
+            try
+            {
+                await jsModule.InvokeVoidAsync("setWheelStepEnabled", instanceId, EnableWheelStep);
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+            catch (InvalidOperationException)
+            {
+                // JS interop not available
             }
         }
     }
@@ -217,7 +247,8 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         stepKeys = new[] { "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End" },
         allowDecimal = IsFloatingPoint,
         allowNegative = AllowNegative,
-        decimalSeparator = CultureInfo.InvariantCulture.NumberFormat.NumberDecimalSeparator
+        decimalSeparator = CultureInfo.InvariantCulture.NumberFormat.NumberDecimalSeparator,
+        enableWheelStep = EnableWheelStep
     };
 
     private void NotifyFieldChanged() => validation.NotifyFieldChanged();
