@@ -50,6 +50,71 @@ public class DataGridColumnState
     }
 
     /// <summary>
+    /// Adds entries for columns that are not tracked yet, leaving every existing entry's
+    /// visibility, width, and relative order untouched.
+    /// </summary>
+    /// <remarks>
+    /// Use this instead of <see cref="Initialize"/> once the state has been initialized, so a
+    /// column that registers late — from a wrapper component or an asynchronously rendered
+    /// fragment — still gets an entry and stays visible. Each new entry is placed immediately
+    /// after the nearest preceding tracked column in <paramref name="columns"/>, so the new
+    /// column lands in its intended position rather than being appended to the end.
+    /// Unlike <see cref="Initialize"/>, this does not renumber existing entries and does not
+    /// remove entries for columns missing from <paramref name="columns"/>, so a user's column
+    /// reordering and visibility choices survive.
+    /// </remarks>
+    /// <param name="columns">The column IDs in display order, and their initial visibility.</param>
+    /// <returns>True if any entry was added.</returns>
+    public bool SyncColumns(IEnumerable<(string ColumnId, bool Visible)> columns)
+    {
+        var tracked = new Dictionary<string, ColumnStateEntry>(entries.Count, StringComparer.Ordinal);
+        foreach (var entry in entries)
+        {
+            tracked[entry.ColumnId] = entry;
+        }
+
+        var added = false;
+        ColumnStateEntry? previous = null;
+
+        foreach (var (id, visible) in columns)
+        {
+            if (tracked.TryGetValue(id, out var existing))
+            {
+                previous = existing;
+                continue;
+            }
+
+            var insertOrder = previous != null ? previous.Order + 1 : 0;
+            foreach (var entry in entries)
+            {
+                if (entry.Order >= insertOrder)
+                {
+                    entry.Order++;
+                }
+            }
+
+            var created = new ColumnStateEntry
+            {
+                ColumnId = id,
+                Visible = visible,
+                Order = insertOrder
+            };
+
+            entries.Add(created);
+            tracked[id] = created;
+            previous = created;
+            added = true;
+        }
+
+        if (added)
+        {
+            NormalizeOrders();
+        }
+
+        return added;
+    }
+
+    /// <summary>
     /// Sets the visibility of a column.
     /// </summary>
     /// <param name="columnId">The column ID.</param>

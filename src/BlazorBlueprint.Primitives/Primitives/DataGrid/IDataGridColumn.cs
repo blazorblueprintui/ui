@@ -42,6 +42,13 @@ public interface IDataGridColumn<TData> where TData : class
     public bool Visible { get; }
 
     /// <summary>
+    /// Gets the explicit position of this column as a zero-based index among the grid's
+    /// data columns, or null to keep the column in registration order.
+    /// Default is null.
+    /// </summary>
+    public int? Order => null;
+
+    /// <summary>
     /// Gets the column width (e.g., "200px", "20%", "auto").
     /// </summary>
     public string? Width { get; }

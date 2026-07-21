@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-07-21
+
+### Fixed
+
+- **BbDataGrid: a column produced indirectly moved to the end, or vanished from the grid entirely** — Columns register themselves with the grid from their own `OnInitialized`, and the grid appended each one to a list, so column order was really *component-initialisation* order. On an interactive circuit that stops matching declaration order the moment a column is produced indirectly: a column rendered by a wrapper component initialises a render pass later than the columns declared beside it, and so drifted to the end of the grid. (Deriving the column from `BbDataGridPropertyColumn` with `@inherits` was never affected — only wrapping.) Worse, the grid initialises its column state — the ordered, per-column visibility record that the header and body are rendered from — from whichever columns had registered by the first render pass to see any, and then latched. Every column arriving after that point was missing from that record and was therefore dropped from the grid: no header, no cells, no console error, no exception. A column behind an `await` — a wrapper that loads lookup data before rendering its inner column, say — reliably disappeared, and prerender and the interactive circuit disagreed about the columns, so the grid visibly reshuffled as the page came alive. Late registrations are now merged into the existing column state instead of ignored, each one placed next to its neighbours rather than appended, so it appears where it belongs; a user's own reordering and visibility choices are left untouched. Alongside that, `BbDataGridPropertyColumn`, `BbDataGridTemplateColumn` and `BbDataGridHierarchyColumn` gain an **`Order`** parameter that positions a column explicitly, as a zero-based index among the data columns, for cases where initialisation order cannot match declaration order. Columns that leave `Order` unset keep their existing registration order and each column that sets it is inserted at that index — so a grid that sets `Order` nowhere is laid out exactly as before — and the select and expand columns keep their fixed leading positions regardless. ([#424](https://github.com/blazorblueprintui/ui/issues/424))
+
+---
+
 ## 2026-07-20
 
 ### Fixed
