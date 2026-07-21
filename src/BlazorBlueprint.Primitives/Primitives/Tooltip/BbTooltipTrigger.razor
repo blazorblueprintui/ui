@@ -1,5 +1,8 @@
 @namespace BlazorBlueprint.Primitives.Tooltip
 @using BlazorBlueprint.Primitives.Utilities
+@using Microsoft.Extensions.Logging
+@inject ILogger<BbTooltipTrigger> Logger
+@inject IServiceProvider Services
 
 @* Tooltip trigger - shows tooltip on hover/focus *@
 @if (AsChild)
@@ -44,10 +47,22 @@ else
     public RenderFragment? ChildContent { get; set; }
 
     /// <summary>
-    /// When true, the trigger does not render its own span element.
-    /// Instead, it passes trigger behavior via TriggerContext to child components.
-    /// The child component must consume TriggerContext and apply hover/focus behavior.
+    /// When true, the trigger renders no element of its own. It renders only the cascading
+    /// <see cref="Utilities.TriggerContext"/>, and the child component is responsible for
+    /// consuming that context and wiring the tooltip up — applying the trigger id and aria
+    /// attributes to its own element, and calling <c>OnMouseEnter</c>/<c>OnMouseLeave</c>,
+    /// <c>OnFocus</c>/<c>OnBlur</c> and <c>SetTriggerElement</c>.
     /// </summary>
+    /// <remarks>
+    /// Because no element and no handlers are rendered in this mode, a child that ignores the
+    /// context leaves nothing listening for hover or focus and the tooltip can never open.
+    /// Plain markup, text, or a bare icon (for example <c>LucideIcon</c>) needs
+    /// <c>AsChild="false"</c> so the trigger renders its own <c>span</c> with the handlers
+    /// attached. Use <c>AsChild="true"</c> only with a child that consumes
+    /// <see cref="Utilities.TriggerContext"/>, such as a component built for the trigger role.
+    /// An unconsumed context is reported as a warning through <c>ILogger</c> when the app runs
+    /// in the Development environment.
+    /// </remarks>
     [Parameter]
     public bool AsChild { get; set; } = false;
 
@@ -173,5 +188,46 @@ else
             // propagate this to the context so Content can position relative to it.
             Context.SetTriggerElement(_asChildTriggerRef.Value);
         }
+
+        if (firstRender)
+        {
+            WarnIfTriggerContextUnconsumed();
+        }
     }
+
+    /// <summary>
+    /// Development-time diagnostic for the silent failure mode of AsChild: the trigger renders
+    /// no element and no handlers, so a child that never consumes the cascaded TriggerContext
+    /// leaves the tooltip with nothing to open it — and nothing to indicate why.
+    /// </summary>
+    /// <remarks>
+    /// Consumption is recorded by the context itself, which any read of its members marks (see
+    /// TriggerContext.NotifyConsumed). Children consume it while they render, which happens
+    /// within the same render batch, so the answer is settled by the time this runs. Emitted at
+    /// most once per trigger, and only when the host application reports the Development
+    /// environment.
+    /// </remarks>
+    private void WarnIfTriggerContextUnconsumed()
+    {
+        if (!AsChild || _cachedTriggerContext is null || _cachedTriggerContext.WasConsumed)
+        {
+            return;
+        }
+
+        if (!DevelopmentEnvironment.IsDevelopment(Services))
+        {
+            return;
+        }
+
+        LogUnconsumedTriggerContext(Logger, null);
+    }
+
+    private static readonly Action<ILogger, Exception?> LogUnconsumedTriggerContext =
+        LoggerMessage.Define(LogLevel.Warning, new EventId(1, "TooltipTriggerContextUnconsumed"),
+            "TooltipTrigger rendered with AsChild=true, but no child consumed the cascaded TriggerContext. " +
+            "In this mode the trigger renders no element and no hover/focus handlers, so nothing can open this tooltip. " +
+            "Set AsChild=\"false\" to have the trigger render its own wrapper element - which is what plain markup, text " +
+            "or a bare icon such as LucideIcon needs - or use a child that consumes TriggerContext, such as a Button. " +
+            "A custom child that only touches the context inside event handlers can call TriggerContext.NotifyConsumed() " +
+            "to acknowledge it. This warning is only emitted in the Development environment.");
 }
