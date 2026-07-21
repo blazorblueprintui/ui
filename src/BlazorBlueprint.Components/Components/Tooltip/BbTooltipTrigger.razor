@@ -37,10 +37,20 @@ else
     public string? Class { get; set; }
 
     /// <summary>
-    /// When true, the trigger does not render its own span element.
-    /// Instead, it passes trigger behavior via TriggerContext to child components.
-    /// Use this when you want a custom component to act as the trigger.
+    /// When true (the default), the trigger renders no element of its own. It renders only the
+    /// cascading <c>TriggerContext</c>, and the child is responsible for consuming that context
+    /// and wiring the tooltip up — applying the trigger id and aria attributes to its own element,
+    /// and calling the context's hover, focus and <c>SetTriggerElement</c> callbacks.
+    /// <c>BbButton</c> does this, which is why it can be dropped straight into a trigger.
     /// </summary>
+    /// <remarks>
+    /// Because no element and no handlers are rendered in this mode, a child that ignores the
+    /// context leaves nothing listening for hover or focus and the tooltip can never open. Plain
+    /// markup, text, or a bare icon such as <c>LucideIcon</c> therefore needs
+    /// <c>AsChild="false"</c>, which wraps the content in a <c>span</c> carrying the handlers.
+    /// An unconsumed context is reported as a warning through <c>ILogger</c> when the app runs in
+    /// the Development environment, so this no longer fails silently.
+    /// </remarks>
     [Parameter]
     public bool AsChild { get; set; } = true;
 
