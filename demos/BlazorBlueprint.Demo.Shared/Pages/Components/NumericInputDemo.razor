@@ -73,6 +73,61 @@
         <CodeBlock Source="Components/NumericInput/step.txt" />
     </div>
 
+    <!-- Mouse Wheel Stepping -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Mouse Wheel Stepping</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="text-xs bg-muted px-1 py-0.5 rounded">EnableWheelStep="true"</code> and scrolling the
+                wheel over the input steps its value while the input is focused — up increments, down decrements —
+                through the same path as the arrow keys, so <code class="text-xs bg-muted px-1 py-0.5 rounded">Min</code>,
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">Max</code> and
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">Step</code> all apply unchanged.
+            </p>
+            <p class="text-sm text-muted-foreground">
+                It is <strong>opt-in and off by default</strong>, because stepping means calling
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">preventDefault</code> on the wheel event — taking the
+                scroll away from the page. On a long form that would mean the page silently stops scrolling, and a number
+                quietly changes instead, every time the pointer crosses a focused input. With the parameter unset no wheel
+                listener is attached at all, so scrolling is untouched. Turn it on where the trade is worth making, such as
+                a compact numeric-only editor.
+            </p>
+            <p class="text-sm text-muted-foreground">
+                Wheel distance is accumulated rather than counted per event, so one mouse detent steps once immediately
+                while a trackpad flick — which emits dozens of small deltas — steps once or twice rather than dozens of times.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+            <span class="text-sm font-medium">EnableWheelStep:</span>
+            <div class="flex items-center gap-2">
+                <button type="button"
+                        @onclick="() => _wheelStepEnabled = true"
+                        class="@(_wheelStepEnabled ? "bg-primary text-primary-foreground" : "bg-background text-foreground") px-3 py-1.5 rounded-md text-sm font-medium transition-colors hover:opacity-90">
+                    true
+                </button>
+                <button type="button"
+                        @onclick="() => _wheelStepEnabled = false"
+                        class="@(!_wheelStepEnabled ? "bg-primary text-primary-foreground" : "bg-background text-foreground") px-3 py-1.5 rounded-md text-sm font-medium transition-colors hover:opacity-90">
+                    false
+                </button>
+            </div>
+            <span class="text-xs text-muted-foreground ml-auto">The parameter is reactive — toggle it, then scroll over the focused input</span>
+        </div>
+
+        <div class="w-64">
+            <BbNumericInput TValue="int"
+                            @bind-Value="_wheelValue"
+                            EnableWheelStep="@_wheelStepEnabled"
+                            Min="0"
+                            Max="100"
+                            Step="5"
+                            Placeholder="Focus, then scroll" />
+        </div>
+        <p class="text-sm text-muted-foreground">Value: @_wheelValue (min: 0, max: 100, step: 5)</p>
+        <CodeBlock Source="Components/NumericInput/wheel-step.txt" />
+    </div>
+
     <!-- With Buttons -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -281,6 +336,10 @@
                 <ApiParameter Name="DebounceInterval" Type="int" Default="500">
                     Debounce delay in milliseconds.
                 </ApiParameter>
+                <ApiParameter Name="EnableWheelStep" Type="bool" Default="false">
+                    Whether scrolling the mouse wheel over the focused input steps the value. Opt-in, because stepping
+                    calls preventDefault on the wheel event and so takes the scroll away from the page. Reactive.
+                </ApiParameter>
                 <ApiParameter Name="Disabled" Type="bool">
                     Disables the input.
                 </ApiParameter>
@@ -332,6 +391,8 @@
     private double _doubleValue = 0.0;
     private int _constrainedValue = 50;
     private int _steppedValue = 0;
+    private int _wheelValue = 25;
+    private bool _wheelStepEnabled = true;
     private int _buttonValue = 1;
     private decimal _decimalValue = 99.99m;
     private int _positiveValue = 0;

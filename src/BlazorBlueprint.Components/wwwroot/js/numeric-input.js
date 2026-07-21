@@ -7,7 +7,10 @@
  *   - JsOnBlur(value)    — called on blur (always)
  *   - JsOnFocus()        — called on focus (always)
  *   - JsOnKeyDown(key)   — called for step keys (ArrowUp/Down, PageUp/Down, Home/End)
- *   - Mouse wheel on focused input is mapped to ArrowUp/Down in the same key callback.
+ *
+ * When config.enableWheelStep is true, wheel movement over the focused input is accumulated
+ * and mapped to ArrowUp/Down through the same key callback. It is opt-in because stepping
+ * requires preventDefault, which takes the scroll away from the page.
  *
  * Sanitization and interop are held back while an IME is composing, then flushed once on
  * compositionend. See composition-guard.js for why.
@@ -16,6 +19,39 @@
 import { createCompositionGuard } from './composition-guard.js';
 
 const instances = new Map();
+
+/**
+ * Accumulated wheel distance, in pixels, that equals one step. Chrome, Edge and Safari
+ * report one mouse-wheel detent as deltaY ±100, so a discrete notch still steps once
+ * immediately; a trackpad, which emits dozens of small deltas per flick, no longer does.
+ */
+const WheelStepThreshold = 100;
+
+/**
+ * Idle gap after which the accumulator resets, so two deliberate flicks are not summed
+ * into one step. Comfortably longer than the ~16ms spacing inside a momentum burst.
+ */
+const WheelIdleResetMs = 200;
+
+/**
+ * Ceiling on the steps a single wheel event may produce. Guards against an outsized delta
+ * (a page-mode wheel, or a synthetic event) firing an unbounded burst of interop calls.
+ */
+const WheelMaxStepsPerEvent = 10;
+
+/**
+ * Converts a wheel event's delta to pixels so the threshold above means the same thing
+ * everywhere. Firefox reports line mode (3 lines per detent) and, rarely, page mode.
+ * @param {WheelEvent} e - The wheel event.
+ * @returns {number} deltaY in pixels.
+ */
+const normalizeWheelDelta = (e) => {
+  switch (e.deltaMode) {
+    case 1: return e.deltaY * (WheelStepThreshold / 3);
+    case 2: return e.deltaY * WheelStepThreshold;
+    default: return e.deltaY;
+  }
+};
 
 /**
  * Folds full-width forms to their ASCII equivalents, one character in one character out so
@@ -49,6 +85,7 @@ const foldFullWidth = (ch) => {
  * @param {boolean} config.allowDecimal - Whether decimal points are allowed.
  * @param {boolean} config.allowNegative - Whether negative sign is allowed.
  * @param {string} config.decimalSeparator - The decimal separator character used for input sanitization (e.g. '.').
+ * @param {boolean} config.enableWheelStep - Whether the wheel steps the value while focused. Off by default.
  */
 export function initialize(element, dotNetRef, instanceId, config) {
   if (!element || !dotNetRef) {
@@ -59,7 +96,9 @@ export function initialize(element, dotNetRef, instanceId, config) {
     element,
     dotNetRef,
     config,
-    debounceTimer: null
+    debounceTimer: null,
+    wheelAccumulator: 0,
+    wheelLastEventAt: 0
   };
 
   const stepKeySet = new Set(config.stepKeys || []);
@@ -155,15 +194,45 @@ export function initialize(element, dotNetRef, instanceId, config) {
     }
   };
 
+  /**
+   * Steps the value when the accumulated wheel distance crosses one detent, reusing the
+   * keyboard step path so clamping, min/max and step all stay in one place in C#.
+   */
   const handleWheel = (e) => {
     if (document.activeElement !== element || e.deltaY === 0) {
       return;
     }
 
+    // The gesture is ours for as long as the input holds focus — let go of the accumulator
+    // rather than the scroll, so a gesture never scrolls the page halfway through a step.
     e.preventDefault();
 
-    const key = e.deltaY < 0 ? 'ArrowUp' : 'ArrowDown';
-    dotNetRef.invokeMethodAsync('JsOnKeyDown', key).catch(() => {});
+    const delta = normalizeWheelDelta(e);
+    const now = Date.now();
+
+    // A new gesture starts clean: an idle gap, or a reversal of direction.
+    if (now - state.wheelLastEventAt > WheelIdleResetMs ||
+        (state.wheelAccumulator !== 0 && Math.sign(delta) !== Math.sign(state.wheelAccumulator))) {
+      state.wheelAccumulator = 0;
+    }
+
+    state.wheelLastEventAt = now;
+    state.wheelAccumulator += delta;
+
+    let steps = Math.trunc(state.wheelAccumulator / WheelStepThreshold);
+    if (steps === 0) {
+      return;
+    }
+
+    // Carry the remainder so a burst of sub-threshold events still adds up over time.
+    state.wheelAccumulator -= steps * WheelStepThreshold;
+
+    steps = Math.max(-WheelMaxStepsPerEvent, Math.min(WheelMaxStepsPerEvent, steps));
+
+    const key = steps < 0 ? 'ArrowUp' : 'ArrowDown';
+    for (let i = 0; i < Math.abs(steps); i++) {
+      dotNetRef.invokeMethodAsync('JsOnKeyDown', key).catch(() => {});
+    }
   };
 
   const guard = createCompositionGuard(element, { onFlush: handleInput });
@@ -172,18 +241,52 @@ export function initialize(element, dotNetRef, instanceId, config) {
   element.addEventListener('blur', handleBlur);
   element.addEventListener('focus', handleFocus);
   element.addEventListener('keydown', handleKeyDown);
-  element.addEventListener('wheel', handleWheel, { passive: false });
 
-  instances.set(instanceId, {
+  const stored = {
     state,
     handleInput,
     handleBlur,
     handleFocus,
     handleKeyDown,
     handleWheel,
+    wheelAttached: false,
     guard,
     element
-  });
+  };
+
+  instances.set(instanceId, stored);
+
+  // Opt-in only: with wheel stepping off no listener exists at all, so nothing calls
+  // preventDefault and page scrolling over the input is exactly as it was.
+  setWheelStepEnabled(instanceId, config.enableWheelStep === true);
+}
+
+/**
+ * Enables or disables wheel stepping after initialization, attaching or removing the
+ * listener so the disabled state costs nothing and never intercepts a scroll.
+ * @param {string} instanceId - The instance to update.
+ * @param {boolean} enabled - Whether the wheel steps the value while the input is focused.
+ */
+export function setWheelStepEnabled(instanceId, enabled) {
+  const stored = instances.get(instanceId);
+  if (!stored) {
+    return;
+  }
+
+  const shouldAttach = enabled === true;
+  if (shouldAttach === stored.wheelAttached) {
+    return;
+  }
+
+  if (shouldAttach) {
+    stored.element.addEventListener('wheel', stored.handleWheel, { passive: false });
+  } else {
+    stored.element.removeEventListener('wheel', stored.handleWheel);
+  }
+
+  stored.wheelAttached = shouldAttach;
+  stored.state.wheelAccumulator = 0;
+  stored.state.wheelLastEventAt = 0;
 }
 
 /**
@@ -212,7 +315,9 @@ export function dispose(instanceId) {
   stored.element.removeEventListener('blur', stored.handleBlur);
   stored.element.removeEventListener('focus', stored.handleFocus);
   stored.element.removeEventListener('keydown', stored.handleKeyDown);
-  stored.element.removeEventListener('wheel', stored.handleWheel);
+  if (stored.wheelAttached) {
+    stored.element.removeEventListener('wheel', stored.handleWheel);
+  }
   stored.guard.dispose();
 
   if (stored.state.debounceTimer) {
