@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-07-21
+
+### Fixed
+
+- **BbTooltipTrigger: an `AsChild` child that ignores the trigger context now says so** — `BbTooltipTrigger.AsChild` defaults to `true` in the Components layer, and in that mode the trigger renders *no element and no handlers at all* — only a cascading `TriggerContext` that the child is expected to consume and wire the hover/focus behaviour up from. `BbButton` does exactly that, which is why the documented `<BbTooltipTrigger><BbButton>…</BbButton></BbTooltipTrigger>` composition works. Anything that does not — plain markup, text, or a bare `<LucideIcon />`, which is the natural thing to reach for in a table cell or beside a field label — produced a trigger with nothing listening for hover, so the tooltip could never open. No exception, no console error, no visual clue: the markup looked right and simply did nothing, and every example on the demo page either set `AsChild="false"` or wrapped a `BbButton`, so nothing on the page contradicted it. The trigger now reports the case: on first render, an `AsChild` trigger whose context was never touched by any child logs a warning through `ILogger` naming both ways out (`AsChild="false"`, or a child that consumes the context). Consumption is recorded by the context itself — reading any of its members marks it, which covers every child that applies the id or aria attributes as it renders, and a custom child that only touches the context inside event handlers can call the new `TriggerContext.NotifyConsumed()` to acknowledge it — so legitimate compositions, including a tooltip trigger nested inside a dialog or popover trigger, stay silent. The warning is gated on the host application reporting the `Development` environment (resolved once, by name, from whichever environment abstraction the render mode registers), so it costs a cached boolean read in production and never reaches anyone's telemetry. The default is deliberately left at `true` for now: flipping it would add a wrapping `span` to every existing correct usage, which is a breaking change held for the next major. ([#425](https://github.com/blazorblueprintui/ui/issues/425))
+
+---
+
 ## 2026-07-20
 
 ### Fixed
