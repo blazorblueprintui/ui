@@ -3197,6 +3197,31 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private bool HasTableFixed() =>
         Resizable || _columns.Any(c => c.Pinned != ColumnPinning.None);
 
+    /// <summary>
+    /// Computes the accessible name for a column's header cell, returning null when the cell
+    /// should keep being named from its own rendered content.
+    /// </summary>
+    /// <remarks>
+    /// A header cell has no <c>aria-label</c> by default, so assistive technology names it from
+    /// its content — which is exactly right for the default header, where the content is the
+    /// column's title text. A <c>HeaderTemplate</c> replaces that text with arbitrary markup, and
+    /// the case the template exists to serve — an icon on its own — contributes no text at all,
+    /// leaving the column silently unnamed. So the title is supplied as an explicit label only
+    /// when a template is in play and a title is actually available to fall back to.
+    /// <para>
+    /// Because <c>aria-label</c> overrides content rather than adding to it, a template that does
+    /// render its own text is announced as <c>Title</c> rather than as that text. That is
+    /// deliberate: <c>Title</c> is already the canonical name for the column everywhere else in
+    /// the grid — the column chooser, the column menu, the filter and group-by labels — so the
+    /// header now agrees with them instead of drifting. It also means a template that already
+    /// carries hand-written screen-reader-only text is announced once, not twice.
+    /// </para>
+    /// </remarks>
+    private static string? GetHeaderAriaLabel(IDataGridColumn<TData> column) =>
+        column.HeaderTemplate != null && !string.IsNullOrWhiteSpace(column.Title)
+            ? column.Title
+            : null;
+
     private string GetHeaderCellClass(IDataGridColumn<TData> column, bool isSelectColumn,
         bool isExpandColumn, bool isLastLeft, bool isFirstRight)
     {

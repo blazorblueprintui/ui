@@ -197,11 +197,18 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
     /// still renders its own sort indicator, filter icon, pin icon, column menu and resize
     /// handle around it, so a <see cref="Sortable"/> or <see cref="Groupable"/> column keeps
     /// every affordance. Use it to show an icon or richer markup instead of
-    /// <see cref="Title"/>. Set <see cref="Title"/> as well when the content is icon-only, so
-    /// the column chooser and the column menu still have readable text, and include screen-reader
-    /// text (e.g. a <c>sr-only</c> span) in the template — the header cell is announced from its
-    /// own content.
+    /// <see cref="Title"/>.
     /// </summary>
+    /// <remarks>
+    /// While a template is supplied, the grid names the header cell with the column's title
+    /// (<c>aria-label</c>), so an icon-only header is still announced — no <c>sr-only</c> span of
+    /// your own is needed, and one that is already there is not announced twice. That label
+    /// replaces the template's own text rather than adding to it, which keeps the header agreeing
+    /// with the column chooser, the column menu and the filter labels, all of which already use
+    /// the title. Leave <see cref="Title"/> set to something meaningful for this reason; if it is
+    /// blank, no label is applied and the cell falls back to being announced from the template's
+    /// content.
+    /// </remarks>
     [Parameter]
     public RenderFragment? HeaderTemplate { get; set; }
 

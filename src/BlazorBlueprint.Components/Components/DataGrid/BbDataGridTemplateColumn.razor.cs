@@ -36,8 +36,20 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
     public RenderFragment<TData>? ChildContent { get; set; }
 
     /// <summary>
-    /// Custom header template.
+    /// Custom header content. If provided, replaces the header title text only — the grid still
+    /// renders its own sort indicator, filter icon, pin icon, column menu and resize handle
+    /// around it. Use it to show an icon or richer markup instead of <see cref="Title"/>.
     /// </summary>
+    /// <remarks>
+    /// While a template is supplied, the grid names the header cell with the column's title
+    /// (<c>aria-label</c>), so an icon-only header is still announced — no <c>sr-only</c> span of
+    /// your own is needed, and one that is already there is not announced twice. That label
+    /// replaces the template's own text rather than adding to it, which keeps the header agreeing
+    /// with the column chooser, the column menu and the filter labels, all of which already use
+    /// the title. Leave <see cref="Title"/> set to something meaningful for this reason; if it is
+    /// blank, no label is applied and the cell falls back to being announced from the template's
+    /// content.
+    /// </remarks>
     [Parameter]
     public RenderFragment? HeaderTemplate { get; set; }
 

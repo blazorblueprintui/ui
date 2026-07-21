@@ -59,6 +59,9 @@
                 Use <code class="bg-muted px-1 py-0.5 rounded">HeaderTemplate</code> on a
                 <code class="bg-muted px-1 py-0.5 rounded">BbDataGridTemplateColumn</code> to replace
                 the default header text with custom content. Sort icons and resize handles are preserved.
+                While a template is supplied the grid labels the header cell with the column's
+                <code class="bg-muted px-1 py-0.5 rounded">Title</code>, so the icon-only Actions header below
+                is still announced as "Actions" to a screen reader.
             </p>
         </div>
         <BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
@@ -91,6 +94,14 @@
                     </ChildContent>
                 </BbDataGridTemplateColumn>
                 <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+                <BbDataGridTemplateColumn TData="Person" Title="Actions" Width="90px">
+                    <HeaderTemplate>
+                        <LucideIcon Name="settings-2" Class="h-4 w-4" />
+                    </HeaderTemplate>
+                    <ChildContent Context="person">
+                        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small">Edit</BbButton>
+                    </ChildContent>
+                </BbDataGridTemplateColumn>
             </Columns>
         </BbDataGrid>
         <CodeBlock Source="Components/DataGrid/header-template.txt" />
@@ -106,10 +117,12 @@
                 markup in the header without giving up type-safe binding. The template replaces the title
                 <em>text only</em> — the grid keeps rendering its own sort indicator, filter icon and column menu
                 around it, so the Department column below still sorts and still offers "Group by". Keep
-                <code class="bg-muted px-1 py-0.5 rounded">Title</code> meaningful for icon-only headers — it is what
-                the column chooser and the column menu display — and add
-                <code class="bg-muted px-1 py-0.5 rounded">sr-only</code> text inside the template, since the header
-                cell is announced from its own content.
+                <code class="bg-muted px-1 py-0.5 rounded">Title</code> meaningful for icon-only headers — as well as
+                feeding the column chooser and the column menu, it is what the grid uses to label the header cell
+                itself. While a <code class="bg-muted px-1 py-0.5 rounded">HeaderTemplate</code> is supplied the grid
+                sets <code class="bg-muted px-1 py-0.5 rounded">aria-label</code> on the header from the title, so the
+                icon-only Email column below is announced as "Email" without any
+                <code class="bg-muted px-1 py-0.5 rounded">sr-only</code> markup of your own.
             </p>
         </div>
         <BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
@@ -133,7 +146,6 @@
                 <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Title="Email" Width="220px">
                     <HeaderTemplate>
                         <LucideIcon Name="mail" Class="h-4 w-4 text-muted-foreground" />
-                        <span class="sr-only">Email</span>
                     </HeaderTemplate>
                 </BbDataGridPropertyColumn>
                 <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable
