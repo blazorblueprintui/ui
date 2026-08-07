@@ -1,7 +1,7 @@
 @namespace BlazorBlueprint.Components
 @using System.Globalization
 
-<div class="@CssClass" style="@Style">
+<div class="@CssClass" style="@Style" data-bb-resizable-panel="@PanelIndexAttribute" data-bb-resizable-group="@Group?.GroupId">
     @ChildContent
 </div>
 
@@ -48,6 +48,12 @@
     private int _panelIndex = -1;
 
     private bool IsHorizontal => Group?.GetDirection() == ResizableDirection.Horizontal;
+
+    // Rendered as data attributes so the drag loop can address this element without a round trip.
+    // Null until the panel has registered, which omits the attribute rather than emitting "-1".
+    private string? PanelIndexAttribute => _panelIndex >= 0
+        ? _panelIndex.ToString(CultureInfo.InvariantCulture)
+        : null;
 
     private double CurrentSize
     {
