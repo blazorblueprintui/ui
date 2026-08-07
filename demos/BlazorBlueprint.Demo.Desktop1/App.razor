@@ -1,0 +1,22 @@
+@using BlazorBlueprint.Primitives.Services
+@using BlazorBlueprint.Demo.Desktop1.Forms
+@inject ThemeService ThemeService
+
+<TopForm></TopForm>
+
+<!-- Required if you use ToastService to show toasts -->
+<BbToastProvider Position="ToastPosition.BottomRight" />
+<!-- Required if you use DialogService for programmatic confirm dialogs -->
+<BbDialogProvider />
+<!-- Required for portal-based components (Popover, Dialog, Select, etc.) -->
+<BbPortalHost />
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        if (firstRender) {
+            await ThemeService.InitializeAsync();
+            // Default to dark theme for desktop app
+            await ThemeService.SetDarkModeAsync(true);
+        }
+    }
+}
