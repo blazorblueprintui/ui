@@ -1,0 +1,16 @@
+<BbResizablePanelGroup Direction="ResizableDirection.Horizontal" OnResizeEnd="HandleResizeEnd">
+    <BbResizablePanel DefaultSize="40">Left</BbResizablePanel>
+    <BbResizableHandle />
+    <BbResizablePanel DefaultSize="60">Right</BbResizablePanel>
+</BbResizablePanelGroup>
+
+@code {
+    private IReadOnlyList<double>? lastSizes;
+
+    private void HandleResizeEnd(PanelResizeEventArgs args)
+    {
+        // Sizes are percentages in declared order, already clamped to each
+        // panel's MinSize/MaxSize. Fires once when the drag is released.
+        lastSizes = args.Sizes;
+    }
+}
