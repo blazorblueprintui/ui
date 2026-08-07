@@ -190,7 +190,7 @@ function applyDrag(state) {
         state.panelElements[index].style.flexBasis = `${size1}%`;
         state.panelElements[index + 1].style.flexBasis = `${size2}%`;
     } else {
-        notifyBlazor(state);
+        notifyBlazor(state, 'UpdatePanelSizes');
     }
 }
 
@@ -202,8 +202,8 @@ function round2(value) {
     return Math.round(value * 100) / 100;
 }
 
-function notifyBlazor(state) {
-    state.dotNetRef.invokeMethodAsync('UpdatePanelSizes', [...state.currentSizes]).catch(err => {
+function notifyBlazor(state, method) {
+    state.dotNetRef.invokeMethodAsync(method, [...state.currentSizes]).catch(err => {
         console.error('Error updating panel sizes:', err);
     });
 }
@@ -230,8 +230,8 @@ function cleanupResize(state, pointerId) {
         applyDrag(state);
     }
 
-    // The fallback path has been reporting every frame, so it has nothing left to commit.
-    const shouldCommit = state.dirty && state.useDomWrites;
+    // Only a drag that moved something is a resize; a press and release is not.
+    const shouldCommit = state.dirty;
 
     state.isDragging = false;
     state.activeHandleIndex = -1;
@@ -249,9 +249,10 @@ function cleanupResize(state, pointerId) {
         // Pointer capture may already be released
     }
 
-    // The single interop call of the whole drag.
+    // The single interop call of the whole drag. On the fallback path this is one more call after
+    // the per-frame ones, so that OnResizeEnd fires exactly once there too.
     if (shouldCommit) {
-        notifyBlazor(state);
+        notifyBlazor(state, 'CommitPanelSizes');
     }
 }
 
