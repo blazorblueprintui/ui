@@ -44,6 +44,12 @@
 
     internal ResizableDirection GetDirection() => Direction;
 
+    /// <summary>
+    /// Identifies this group to the JS drag handler. Panels render it so the handler can resolve
+    /// its own panel elements without picking up those of a nested group.
+    /// </summary>
+    internal string GroupId => _groupId;
+
     internal int RegisterPanel(double defaultSize, double minSize, double maxSize)
     {
         var index = _panelCount++;
@@ -77,10 +83,16 @@
     {
         if (_jsModule != null && _jsInitialized)
         {
-            await _jsModule.InvokeVoidAsync("startResize", _groupId, handleIndex, clientX, clientY, _panelSizes.ToArray(), pointerId, _panelMinSizes.ToArray(), _panelMaxSizes.ToArray());
+            var isHorizontal = Direction == ResizableDirection.Horizontal;
+            await _jsModule.InvokeVoidAsync("startResize", _groupId, handleIndex, clientX, clientY, _panelSizes.ToArray(), pointerId, _panelMinSizes.ToArray(), _panelMaxSizes.ToArray(), isHorizontal);
         }
     }
 
+    /// <summary>
+    /// Commits the sizes produced by a drag. Called once when the drag ends — the drag itself
+    /// writes flex-basis directly in JS, because a round trip per pointermove is unusable on
+    /// Blazor Server. Component state is intentionally stale until this runs.
+    /// </summary>
     [JSInvokable]
     public void UpdatePanelSizes(double[] newSizes)
     {
