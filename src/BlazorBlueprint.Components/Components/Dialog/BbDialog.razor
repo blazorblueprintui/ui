@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Primitives.Services
 
 @*
     Styled Dialog component wrapper.
@@ -10,7 +11,8 @@
                                          DefaultOpen="@DefaultOpen"
                                          OnOpenChange="@OnOpenChange"
                                          Modal="@Modal"
-                                         @attributes="AdditionalAttributes">
+                                         @attributes="AdditionalAttributes"
+                                         RenderingStrategy="@RenderingStrategy">
     @ChildContent
 </BlazorBlueprint.Primitives.Dialog.BbDialog>
 
@@ -59,4 +61,15 @@
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Overrides how this dialog renders. When null, the global default configured via
+    /// <c>AddBlazorBlueprintPrimitives(configureOverlays)</c> applies.
+    /// <see cref="OverlayRenderingStrategy.Native"/> renders through the browser's built-in
+    /// <c>&lt;dialog&gt;</c> element, which works across Blazor render-mode boundaries
+    /// (e.g. InteractiveWebAssembly) without a portal host.
+    /// Defaults to null (use global default, which is <see cref="OverlayRenderingStrategy.JavaScript"/>).
+    /// </summary>
+    [Parameter]
+    public OverlayRenderingStrategy? RenderingStrategy { get; set; }
 }

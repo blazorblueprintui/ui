@@ -160,6 +160,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-08-13
+
+### Added
+
+- **Native `<dialog>` rendering strategy for `BbDialog`** — A new opt-in rendering path that drives the browser's built-in `<dialog>` element instead of the portal + Floating UI handshake. It is the first step of the phased plan in [#376](https://github.com/blazorblueprintui/ui/discussions/376), and it directly fixes [#479](https://github.com/blazorblueprintui/ui/issues/479): portaled overlays stop working when `BbPortalHost` and the interactive content that opens them live in different render-mode scopes (e.g. a static layout hosting an `InteractiveWebAssembly` island), because each scope gets its own scoped `PortalService`. A native `<dialog>` lives in the browser's top layer regardless of DOM position and supplies its own focus trap, Escape handling and `::backdrop`, so `BbDialogPortal` renders inline and no shared scoped service or portal host is needed at all — the dialog simply works across render-mode boundaries. It is additive and non-breaking: the default remains the existing JS path.
+    - Choose per-component with `BbDialog RenderingStrategy="OverlayRenderingStrategy.Native"`, or opt the whole app in by passing a configure action to `AddBlazorBlueprintPrimitives(o => o.DefaultStrategy = OverlayRenderingStrategy.Native)`.
+    - A new scoped `INativeOverlayService` resolves the effective strategy and drives the `<dialog>`; `native-dialog.js` detects `showModal()` support (cached) so an unsupported browser degrades safely rather than breaking.
+    - When native is active, `BbDialogContent` skips the JS focus-trap / scroll-lock / escape-key modules and `BbDialogOverlay` renders nothing (the `::backdrop` is the scrim). `CloseOnEscape`, `CloseOnOverlayClick` and `OnEscapeKeyDown` are honoured through native `cancel`/`close`/backdrop events.
+    - The styled components-layer `BbDialogContent` keeps the same fixed, centred presentation as the JS path (so the design is identical) while the native `<dialog>` additionally enters the top layer via `showModal()`; `dialog`/`::backdrop` CSS provides the scrim and sizing resets. A `dialog[data-state]` reset lives in the low-priority `components` layer so the component's own Tailwind utilities (padding, max-width, border, background, shadow) win over it. The reset pins `border-color` to `var(--border)` — without it the UA/`currentColor` fallback renders a far-too-bright border on dark backgrounds.
+    - AlertDialog, Sheet and the positioned overlays (Popover, Tooltip, Select, etc.) still use the portal path and are the follow-on phases of #376.
+    - `native-dialog.js` avoids top-level `let`/`const`/`class` bindings: Blazor WebAssembly's dynamic `import()` can re-evaluate an ES module in a shared scope, and top-level lexical bindings then collide with "Identifier has already been declared" (which surfaced in WASM as the dialog rendering but never entering the top layer). It uses `function` declarations and `globalThis`-cached state instead, which survive that re-evaluation.
+    - The Dialog demo page gains two examples: the inline `RenderingStrategy="Native"` dialog, and a programmatic `DialogService.OpenAsync<T>()` example whose content component closes via the cascaded `IDialogReference.CloseAsync(...)` (noting that `BbDialogClose` does not close a programmatic dialog — there is no `DialogContext` in the `OpenAsync` path).
+
+---
+
 ## 2026-08-07
 
 ### Added

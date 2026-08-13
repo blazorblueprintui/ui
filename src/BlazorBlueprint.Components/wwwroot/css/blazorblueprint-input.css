@@ -871,6 +871,36 @@
 
 } /* end @layer bb */
 
+/* Native <dialog> rendering (OverlayRenderingStrategy.Native).
+   Deliberately OUTSIDE @layer bb (and in @layer components, below utilities) so the
+   component's own Tailwind classes (p-6, max-w-lg, border, bg-background, shadow-lg)
+   override these reset defaults. showModal() puts the dialog in the top layer (native
+   focus trap, inert background and ::backdrop scrim); positioning is the same fixed,
+   centred set the JS path uses, so no margin/inset rules are needed here. */
+@layer components {
+  dialog[data-state] {
+    max-height: calc(100dvh - 2rem);
+    overflow: auto;
+    padding: 0;
+    color: var(--foreground);
+    background: var(--background);
+    /* Reset the UA's opaque default border but keep the theme border colour so the
+       Tailwind `border` utility yields the same subtle border as the JS path (which
+       reads var(--border)); without this the border falls back to currentColor and is
+       far too bright on dark backgrounds. */
+    border: 0 solid var(--border);
+  }
+
+  dialog[data-state="open"]::backdrop {
+    background: rgb(0 0 0 / 0.8);
+    backdrop-filter: blur(2px);
+  }
+
+  dialog[data-state="open"] {
+    outline: none;
+  }
+}
+
 /* Alert countdown bar animation. Keyframes are not subject to cascade
    layers, so left at top level. */
 @keyframes bb-alert-countdown {

@@ -1,8 +1,11 @@
 @namespace BlazorBlueprint.Primitives.Dialog
+@using BlazorBlueprint.Primitives.Services
 
 @* Dialog primitive root component - headless, unstyled behavior only *@
 <CascadingValue Value="@_context" IsFixed="false">
-    @ChildContent
+    <CascadingValue TValue="OverlayRenderingStrategy?" Name="DialogRenderingStrategy" Value="@RenderingStrategy" IsFixed="false">
+        @ChildContent
+    </CascadingValue>
 </CascadingValue>
 
 @code {
@@ -28,6 +31,17 @@
     /// </summary>
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Overrides how this dialog renders. When null, the global default configured via
+    /// <c>AddBlazorBlueprintPrimitives(configureOverlays)</c> applies.
+    /// <see cref="OverlayRenderingStrategy.Native"/> renders through the browser's built-in
+    /// <c>&lt;dialog&gt;</c> element (top layer, native focus trap, Escape and backdrop),
+    /// which works across Blazor render-mode boundaries and needs no portal host.
+    /// Defaults to null (use global default, which is <see cref="OverlayRenderingStrategy.JavaScript"/>).
+    /// </summary>
+    [Parameter]
+    public OverlayRenderingStrategy? RenderingStrategy { get; set; }
 
     /// <summary>
     /// Controls whether the dialog is open (controlled mode).

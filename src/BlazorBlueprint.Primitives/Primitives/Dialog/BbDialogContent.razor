@@ -1,15 +1,37 @@
 @namespace BlazorBlueprint.Primitives.Dialog
 @using System.ComponentModel
+@using Microsoft.Extensions.Logging
+@using BlazorBlueprint.Primitives.Services
 @inject IFocusManager FocusManager
 @inject IJSRuntime JSRuntime
+@inject INativeOverlayService NativeOverlayService
+@inject ILogger<BbDialogContent> Logger
 @implements IAsyncDisposable
 
 @*
     DialogContent is the main content container for the dialog.
-    Handles focus trap, escape key, scroll lock, and ARIA attributes.
+    - JS strategy (default): renders a div, uses JS focus trap, escape key and scroll lock.
+    - Native strategy: renders a <dialog> element driven with showModal()/close(). The
+      browser provides the top layer, focus trap, Escape handling and ::backdrop, so the JS
+      focus-trap / scroll-lock / escape modules are skipped. Native rendering needs no portal
+      host and works across Blazor render-mode boundaries (e.g. InteractiveWebAssembly).
 *@
 
-@if (Context.IsOpen)
+@if (_useNative)
+{
+    @if (Context.IsOpen)
+    {
+        <dialog @ref="_contentRef"
+                id="@Context.ContentId"
+                aria-labelledby="@Context.TitleId"
+                aria-describedby="@Context.DescriptionId"
+                @attributes="AdditionalAttributes"
+                data-state="open">
+            @ChildContent
+        </dialog>
+    }
+}
+else if (Context.IsOpen)
 {
     <div @ref="_contentRef"
          id="@Context.ContentId"
@@ -27,6 +49,9 @@
 @code {
     [CascadingParameter]
     private DialogContext Context { get; set; } = null!;
+
+    [CascadingParameter(Name = "DialogRenderingStrategy")]
+    private OverlayRenderingStrategy? RenderingStrategy { get; set; }
 
     /// <summary>
     /// The content to render inside the dialog.
@@ -46,6 +71,15 @@
     /// </summary>
     [Parameter]
     public bool CloseOnEscape { get; set; } = true;
+
+    /// <summary>
+    /// Whether clicking the overlay (backdrop) should close the dialog.
+    /// Native strategy only: the browser's ::backdrop is not dismissible by default,
+    /// so this is honoured through a backdrop click listener.
+    /// Default is true.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnOverlayClick { get; set; } = true;
 
     /// <summary>
     /// Whether to trap focus within the dialog.
@@ -96,6 +130,9 @@
     private string _instanceId = Guid.NewGuid().ToString("N");
     private bool _isInitialized = false;
     private bool _disposed;
+    private bool _useNative;
+    private bool _nativeInitialized = false;
+    private IAsyncDisposable? _nativeDialogSetup;
 
     protected override void OnInitialized()
     {
@@ -106,11 +143,58 @@
                 "Ensure DialogContent is a child of a Dialog component.");
         }
 
+        _useNative = NativeOverlayService.ResolveStrategy(RenderingStrategy) == OverlayRenderingStrategy.Native;
+
         // Subscribe to context changes
         Context.OnStateChanged += HandleContextStateChanged;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_useNative)
+        {
+            await HandleNativeLifecycleAsync();
+            return;
+        }
+
+        await HandleJsLifecycleAsync();
+    }
+
+    private async Task HandleNativeLifecycleAsync()
+    {
+        if (Context.IsOpen && !_nativeInitialized)
+        {
+            _nativeInitialized = true;
+
+            try
+            {
+                // Diagnostic only — if native was requested but the browser lacks showModal(),
+                // the element still renders but cannot enter the top layer.
+                if (!await NativeOverlayService.IsDialogSupportedAsync())
+                {
+                    Logger.LogWarning(
+                        "Dialog '{DialogId}' uses OverlayRenderingStrategy.Native but the browser does not support " +
+                        "<dialog>.showModal(); the dialog will not render as a modal.", Context.ContentId);
+                }
+
+                _dotNetRef ??= DotNetObjectReference.Create(this);
+                _nativeDialogSetup = await NativeOverlayService.SetupDialogAsync(_contentRef, _dotNetRef);
+
+                await NativeOverlayService.ShowDialogAsync(_contentRef);
+                await NativeOverlayService.FocusDialogAsync(_contentRef);
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
+            {
+                // Expected during circuit disconnect or prerendering.
+            }
+        }
+        else if (!Context.IsOpen && _nativeInitialized)
+        {
+            await CleanupNativeAsync();
+        }
+    }
+
+    private async Task HandleJsLifecycleAsync()
     {
         if (Context.IsOpen && !_isInitialized)
         {
@@ -171,18 +255,25 @@
         }
         else if (!Context.IsOpen && _isInitialized)
         {
-            await CleanupAsync();
+            await CleanupJsAsync();
         }
     }
 
     private void HandleContextStateChanged()
     {
-        if (!Context.IsOpen && _isInitialized)
+        if (!Context.IsOpen && (_isInitialized || _nativeInitialized))
         {
             // Dialog closed, clean up on the Blazor sync context
             _ = InvokeAsync(async () =>
             {
-                await CleanupAsync();
+                if (_useNative)
+                {
+                    await CleanupNativeAsync();
+                }
+                else
+                {
+                    await CleanupJsAsync();
+                }
                 StateHasChanged();
             });
             return;
@@ -190,6 +281,56 @@
 
         StateHasChanged();
     }
+
+    // ---- Native dialog events (invoked from native-dialog.js) ----
+
+    [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public async Task JsOnNativeCancel()
+    {
+        if (_disposed) { return; }
+
+        if (OnEscapeKeyDown.HasDelegate)
+        {
+            await OnEscapeKeyDown.InvokeAsync(new KeyboardEventArgs { Key = "Escape" });
+        }
+
+        if (CloseOnEscape)
+        {
+            Context.Close();
+        }
+    }
+
+    [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public Task JsOnNativeClose()
+    {
+        if (_disposed) { return Task.CompletedTask; }
+
+        // Safety net: sync state if the dialog was closed natively.
+        if (Context.IsOpen)
+        {
+            Context.Close();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public Task JsOnNativeBackdropClick()
+    {
+        if (_disposed) { return Task.CompletedTask; }
+
+        if (CloseOnOverlayClick)
+        {
+            Context.Close();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    // ---- JS strategy (legacy) ----
 
     [JSInvokable]
     [EditorBrowsable(EditorBrowsableState.Never)]
@@ -210,7 +351,38 @@
         }
     }
 
-    private async Task CleanupAsync()
+    private async Task CleanupNativeAsync()
+    {
+        if (_nativeDialogSetup != null)
+        {
+            try
+            {
+                await _nativeDialogSetup.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Cleanup may already be disposed or circuit disconnected.
+            }
+            _nativeDialogSetup = null;
+        }
+
+        // Ensure the dialog is closed if it was left open (e.g. ForceMount kept it mounted).
+        if (Context.IsOpen == false)
+        {
+            try
+            {
+                await NativeOverlayService.CloseDialogAsync(_contentRef);
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect.
+            }
+        }
+
+        _nativeInitialized = false;
+    }
+
+    private async Task CleanupJsAsync()
     {
         // Dispose focus trap
         if (_focusTrap != null)
@@ -256,7 +428,14 @@
     {
         _disposed = true;
 
-        await CleanupAsync();
+        if (_useNative)
+        {
+            await CleanupNativeAsync();
+        }
+        else
+        {
+            await CleanupJsAsync();
+        }
 
         if (_portalModule != null)
         {
