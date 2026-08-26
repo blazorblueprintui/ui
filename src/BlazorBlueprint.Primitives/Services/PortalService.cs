@@ -23,8 +23,7 @@ public class PortalService(ILogger<PortalService> logger) : IPortalService
             "@rendermode on <Routes /> in App.razor, or render <BbPortalHost />, <BbToastProvider /> and " +
             "<BbDialogProvider /> as interactive islands with their own @rendermode. Under " +
             "InteractiveWebAssembly the host must additionally live in an assembly the client project loads — " +
-            "a layout in the server project cannot run in the browser. See " +
-            "https://blazorblueprintui.com/guides/render-modes.");
+            "a layout in the server project cannot run in the browser, however it is marked.");
 
     private readonly ConcurrentDictionary<string, PortalEntry> portals = new();
     private long nextOrder;
