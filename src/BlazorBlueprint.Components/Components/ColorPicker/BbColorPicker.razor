@@ -1,6 +1,7 @@
 @namespace BlazorBlueprint.Components
 @using Microsoft.AspNetCore.Components.Forms
 @using System.Linq.Expressions
+@using System.Globalization
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 
@@ -21,9 +22,9 @@
             @* Color Area (Saturation/Brightness) *@
             <div @ref="_areaRef"
                  class="relative h-[150px] w-full rounded-md cursor-crosshair overflow-hidden touch-none"
-                 style="background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(@_hue, 100%, 50%));">
+                 style="background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(@_hue.ToString("0.##", CultureInfo.InvariantCulture), 100%, 50%));">
                 <div class="absolute h-4 w-4 border-2 border-white rounded-full shadow-md -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-                     style="left: @(_saturation * 100)%; top: @((1 - _brightness) * 100)%;">
+                     style="left: @((_saturation * 100).ToString("0.##", CultureInfo.InvariantCulture))%; top: @(((1 - _brightness) * 100).ToString("0.##", CultureInfo.InvariantCulture))%;">
                 </div>
             </div>
 
@@ -33,7 +34,7 @@
                      class="relative h-3 w-full rounded-md cursor-pointer touch-none"
                      style="background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);">
                     <div class="absolute top-1/2 h-5 w-2 bg-white border border-input rounded shadow-sm -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-                         style="left: @(_hue / 360 * 100)%;">
+                         style="left: @((_hue / 360 * 100).ToString("0.##", CultureInfo.InvariantCulture))%;">
                     </div>
                 </div>
             </div>
@@ -46,7 +47,7 @@
                          class="relative h-3 w-full rounded-md cursor-pointer touch-none"
                          style="background: linear-gradient(to right, transparent, @CurrentColorWithoutAlpha), url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 fill-opacity=%22.1%22><rect x=%220%22 y=%220%22 width=%228%22 height=%228%22 fill=%22%23000%22/><rect x=%228%22 y=%228%22 width=%228%22 height=%228%22 fill=%22%23000%22/></svg>');">
                         <div class="absolute top-1/2 h-5 w-2 bg-white border border-input rounded shadow-sm -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-                             style="left: @(_alpha * 100)%;">
+                             style="left: @((_alpha * 100).ToString("0.##", CultureInfo.InvariantCulture))%;">
                         </div>
                     </div>
                 </div>

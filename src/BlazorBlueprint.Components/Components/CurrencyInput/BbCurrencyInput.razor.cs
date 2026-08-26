@@ -17,6 +17,7 @@ public partial class BbCurrencyInput : ComponentBase
     private string instanceId = Guid.NewGuid().ToString("N");
     private string? generatedId;
     private bool jsInitialized;
+    private bool lastWheelStepEnabled;
     private bool disposed;
     private string editingValue = string.Empty;
     private bool isEditing;
@@ -172,6 +173,16 @@ public partial class BbCurrencyInput : ComponentBase
     [Parameter]
     public int DebounceInterval { get; set; } = 500;
 
+    /// <summary>
+    /// Gets or sets whether scrolling the mouse wheel over the focused input steps the value.
+    /// Defaults to <c>false</c>: stepping has to call <c>preventDefault</c> on the wheel event,
+    /// which takes the scroll away from the page, so a long form would stop scrolling — and
+    /// silently change an amount instead — whenever the pointer passed over a focused input.
+    /// Enable it where that trade is worth making, such as a compact numeric-only editor.
+    /// </summary>
+    [Parameter]
+    public bool EnableWheelStep { get; set; }
+
     private CurrencyDefinition Currency => currency ??= CurrencyCatalog.GetCurrency(CurrencyCode);
 
     private CultureInfo CultureInfo
@@ -215,6 +226,7 @@ public partial class BbCurrencyInput : ComponentBase
                 jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
                     "import", "./_content/BlazorBlueprint.Components/js/numeric-input.js");
                 dotNetRef = DotNetObjectReference.Create(this);
+                lastWheelStepEnabled = EnableWheelStep;
                 await jsModule.InvokeVoidAsync("initialize", inputRef, dotNetRef, instanceId, GetJsConfig());
                 jsInitialized = true;
             }
@@ -227,11 +239,35 @@ public partial class BbCurrencyInput : ComponentBase
                 // JS interop not available during prerendering
             }
         }
+        else if (jsInitialized && jsModule != null && lastWheelStepEnabled != EnableWheelStep)
+        {
+            // Keep wheel stepping in sync when the parameter changes after the first render
+            lastWheelStepEnabled = EnableWheelStep;
+
+            try
+            {
+                await jsModule.InvokeVoidAsync("setWheelStepEnabled", instanceId, EnableWheelStep);
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+            catch (InvalidOperationException)
+            {
+                // JS interop not available
+            }
+        }
     }
 
     /// <summary>
     /// Builds the JS configuration object from current parameters.
     /// </summary>
+    /// <remarks>
+    /// The separator handed to the JS sanitiser must be the one <see cref="TryParseValue"/> will read
+    /// back, which is the <em>currency's</em> — see <see cref="CultureInfo"/>. Using the ambient culture
+    /// here made the two disagree whenever they differed, and on Blazor Server the ambient culture is
+    /// the server's rather than the user's, so they differed for everyone.
+    /// </remarks>
     private object GetJsConfig() => new
     {
         disableDebounce = DisableDebounce,
@@ -239,7 +275,8 @@ public partial class BbCurrencyInput : ComponentBase
         stepKeys = new[] { "ArrowUp", "ArrowDown" },
         allowDecimal = true,
         allowNegative = AllowNegative,
-        decimalSeparator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator
+        decimalSeparator = CultureInfo.NumberFormat.NumberDecimalSeparator,
+        enableWheelStep = EnableWheelStep
     };
 
     private void NotifyFieldChanged() => validation.NotifyFieldChanged();
@@ -271,7 +308,7 @@ public partial class BbCurrencyInput : ComponentBase
     private string CssClass => ClassNames.cn(
         "flex h-10 w-full border border-input bg-background px-3 py-2 text-base",
         "placeholder:text-muted-foreground",
-        "focus-visible:outline-none",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "aria-[invalid=true]:border-destructive",
         "transition-colors",
@@ -348,8 +385,11 @@ public partial class BbCurrencyInput : ComponentBase
     {
         if (disposed) { return; }
 
-        // Show raw number without formatting for easier editing
-        editingValue = Value.ToString($"F{Currency.DecimalPlaces}", CultureInfo.InvariantCulture);
+        // Show the raw number without group separators for easier editing. Formatted through the
+        // currency's culture, not the invariant one: TryParseValue reads this string back through
+        // that same culture on blur, so an invariant "999.99" against a de-DE parse would have its
+        // dot stripped as a group separator and come back as 99999.
+        editingValue = Value.ToString($"F{Currency.DecimalPlaces}", CultureInfo);
         isEditing = true;
         StateHasChanged();
     }
@@ -385,7 +425,7 @@ public partial class BbCurrencyInput : ComponentBase
         if (clampedValue != Value)
         {
             Value = clampedValue;
-            editingValue = clampedValue.ToString($"F{Currency.DecimalPlaces}", CultureInfo.InvariantCulture);
+            editingValue = clampedValue.ToString($"F{Currency.DecimalPlaces}", CultureInfo);
             await ValueChanged.InvokeAsync(clampedValue);
             NotifyFieldChanged();
         }
@@ -451,6 +491,16 @@ public partial class BbCurrencyInput : ComponentBase
         return decimal.TryParse(input, NumberStyles.Number, CultureInfo.InvariantCulture, out result);
     }
 
+    /// <summary>
+    /// Gets the underlying input element reference, e.g. for JS interop.
+    /// </summary>
+    public ElementReference Element => inputRef;
+
+    /// <summary>
+    /// Sets focus to the underlying input element.
+    /// </summary>
+    public ValueTask FocusAsync() => inputRef.FocusAsync();
+
     public async ValueTask DisposeAsync()
     {
         disposed = true;
@@ -462,7 +512,7 @@ public partial class BbCurrencyInput : ComponentBase
                 await jsModule.InvokeVoidAsync("dispose", instanceId);
                 await jsModule.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }

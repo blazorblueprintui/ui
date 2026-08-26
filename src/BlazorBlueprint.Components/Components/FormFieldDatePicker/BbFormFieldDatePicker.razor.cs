@@ -56,6 +56,20 @@ public partial class BbFormFieldDatePicker : FormFieldBase
     public string DateFormat { get; set; } = "d";
 
     /// <summary>
+    /// When true, the date can be typed directly into a text input, with a calendar
+    /// toggle alongside. See <see cref="BbDatePicker.Editable"/>.
+    /// </summary>
+    [Parameter]
+    public bool Editable { get; set; }
+
+    /// <summary>
+    /// The date formats accepted when typing in Editable mode; ISO (yyyy-MM-dd) is
+    /// always accepted. See <see cref="BbDatePicker.InputFormats"/>.
+    /// </summary>
+    [Parameter]
+    public string[]? InputFormats { get; set; }
+
+    /// <summary>
     /// Gets or sets the placeholder text when no date is selected.
     /// </summary>
     [Parameter]

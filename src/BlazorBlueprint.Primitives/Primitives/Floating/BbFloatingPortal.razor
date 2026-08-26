@@ -406,7 +406,10 @@
 
         // After positioning, include stored position so it survives Blazor re-renders
         // This prevents the content from "closing" when parent components re-render
-        return $"position: {Strategy.ToValue()}; z-index: {ZIndex}; left: {_positionLeft}px; top: {_positionTop}px; opacity: 1; visibility: visible;";
+        // Invariant culture so decimal coordinates always use a dot — locales with a
+        // decimal comma (e.g. de-DE) would otherwise produce invalid CSS (issue #374)
+        return FormattableString.Invariant(
+            $"position: {Strategy.ToValue()}; z-index: {ZIndex}; left: {_positionLeft}px; top: {_positionTop}px; opacity: 1; visibility: visible;");
     }
 
     private string GetMergedStyle()
@@ -432,6 +435,25 @@
         {
             await _positioningCleanup.DisposeAsync();
             _positioningCleanup = null;
+        }
+
+        // Hand the style attribute back, explicitly. SetupPositioningAsync showed this element
+        // through JS — writing visibility, opacity and pointer-events with !important — and Blazor
+        // diffs against what it last rendered rather than against the DOM. Where a component's
+        // closed markup is byte-identical to its pre-open markup (nothing else about it changed
+        // while open), the close produces no style update at all and the element stays visible with
+        // the values JS left behind. Rendering the hidden style is not enough on its own; it has to
+        // be written back the same way it was overwritten.
+        if (_isPositioned)
+        {
+            try
+            {
+                await PositioningService.HidePositionAsync(_portalContentRef);
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Circuit gone or element already torn down — nothing left to hide.
+            }
         }
 
         _isPositioned = false;

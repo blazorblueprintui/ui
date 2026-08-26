@@ -43,6 +43,8 @@
                 <p class="text-muted-foreground">
                     A popover panel with color selection (base grays + primary accents), border radius
                     presets, and a light/dark mode toggle. Click the paintbrush icon to open.
+                    By default, base and primary colors are shown as separate sections, each with its
+                    own selection indicator — selecting one never resets the other.
                 </p>
             </div>
 
@@ -50,6 +52,27 @@
                 <div class="flex items-center gap-4">
                     <BbThemeSwitcher />
                     <span class="text-sm text-muted-foreground">Click the icon to open the theme panel</span>
+                </div>
+
+                <div class="space-y-2">
+                    <p class="text-sm font-medium">Color layout</p>
+                    <p class="text-xs text-muted-foreground">
+                        <code class="text-xs bg-muted px-1 py-0.5 rounded">ColorLayout</code> controls how
+                        colors are presented. The default,
+                        <code class="text-xs bg-muted px-1 py-0.5 rounded">ThemeSwitcherColorLayout.Split</code>,
+                        shows independent Base color and Primary color sections.
+                        <code class="text-xs bg-muted px-1 py-0.5 rounded">Combined</code> restores the legacy
+                        single grid, where picking a base color resets the primary color to its default.
+                    </p>
+                    <div class="flex items-center gap-4">
+                        <BbThemeSwitcher ColorLayout="ThemeSwitcherColorLayout.Combined" />
+                        <span class="text-sm text-muted-foreground">Combined (legacy) layout</span>
+                    </div>
+                    <pre class="rounded-md bg-muted p-3 text-xs font-mono overflow-x-auto"><code>&lt;!-- Split layout (default) --&gt;
+&lt;BbThemeSwitcher /&gt;
+
+&lt;!-- Combined (legacy) layout --&gt;
+&lt;BbThemeSwitcher ColorLayout="ThemeSwitcherColorLayout.Combined" /&gt;</code></pre>
                 </div>
 
                 <div class="space-y-2">
@@ -183,6 +206,14 @@ await ThemeService.ToggleDarkModeAsync();</code></pre>
                     <ApiParameter Name="Align" Type="PopoverAlign" Default="PopoverAlign.End">
                         Horizontal alignment of the popover relative to the trigger.
                     </ApiParameter>
+                    <ApiParameter Name="Strategy" Type="PositioningStrategy" Default="PositioningStrategy.Absolute">
+                        Positioning strategy for the popover.
+                    </ApiParameter>
+                    <ApiParameter Name="ColorLayout" Type="ThemeSwitcherColorLayout" Default="ThemeSwitcherColorLayout.Split">
+                        Layout of the color selection area. <code>Split</code> shows separate base and primary
+                        color sections with independent selection indicators; <code>Combined</code> shows the
+                        legacy single grid where selecting a base color resets the primary color.
+                    </ApiParameter>
                 </ApiReference>
 
                 <ApiReference ComponentName="BbDarkModeToggle">
@@ -213,5 +244,30 @@ await ThemeService.ToggleDarkModeAsync();</code></pre>
                 </ApiReference>
             </div>
         </section>
+
+        <LocalizationSection
+            Description="Theme switcher and dark mode toggle strings are configurable via IBbLocalizer."
+            Labels="@(new LocalizationSection.LabelInfo[]
+            {
+                new("Switcher.Label", "Customize theme", "Aria-label on the theme switcher trigger button"),
+                new("Switcher.Title", "Customize", "Heading of the theme switcher popover"),
+                new("Switcher.Description", "Pick a color and radius for your components.", "Description text under the popover heading"),
+                new("Color", "Color", "Section label for the combined color grid (Combined layout)"),
+                new("BaseColor", "Base color", "Section label for the base color grid (Split layout)"),
+                new("PrimaryColor", "Primary color", "Section label for the primary color grid (Split layout)"),
+                new("Default", "Default", "Label of the primary color chip that inherits the base palette's accent"),
+                new("Radius", "Radius", "Section label for the border radius presets"),
+                new("Mode", "Mode", "Section label for the light/dark mode toggle"),
+                new("Light", "Light", "Light mode button label"),
+                new("Dark", "Dark", "Dark mode button label"),
+                new("SwitchToLight", "Switch to light mode", "Aria-label on the dark mode toggle when dark mode is active"),
+                new("SwitchToDark", "Switch to dark mode", "Aria-label on the dark mode toggle when light mode is active"),
+            })"
+            CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
+{
+    localizer.Set(""Theme.BaseColor"", ""Grundfarbe"");
+    localizer.Set(""Theme.PrimaryColor"", ""Primärfarbe"");
+    localizer.Set(""Theme.Default"", ""Standard"");
+});")" />
     </div>
 </div>

@@ -496,7 +496,7 @@ public partial class BbCombobox<TValue> : ComponentBase
     /// </summary>
     private string ButtonCssClass => ClassNames.cn(
         "inline-flex items-center justify-between rounded-md text-sm font-medium",
-        "transition-colors focus-visible:outline-none",
+        "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         "disabled:opacity-50 disabled:pointer-events-none",
         "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         _isOpen ? ActiveClass : null,

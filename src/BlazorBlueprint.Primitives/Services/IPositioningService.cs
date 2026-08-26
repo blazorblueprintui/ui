@@ -28,6 +28,19 @@ public interface IPositioningService
     public Task ApplyPositionAsync(ElementReference floating, PositionResult position, bool makeVisible = false);
 
     /// <summary>
+    /// Returns a floating element to its hidden, off-screen state.
+    /// </summary>
+    /// <remarks>
+    /// The counterpart to <see cref="ApplyPositionAsync"/> with <c>makeVisible: true</c>, which writes
+    /// visibility, opacity and pointer-events onto the element with <c>!important</c> and so takes the
+    /// style attribute out of Blazor's hands. Blazor diffs against what it last rendered rather than
+    /// what the DOM holds, so a component whose closed markup matches its pre-open markup emits no
+    /// style update on close and those visible values would otherwise persist.
+    /// </remarks>
+    /// <param name="floating">The element to hide.</param>
+    public Task HidePositionAsync(ElementReference floating);
+
+    /// <summary>
     /// Sets up auto-update for dynamic positioning (e.g., on scroll/resize).
     /// </summary>
     /// <param name="reference">The reference element.</param>

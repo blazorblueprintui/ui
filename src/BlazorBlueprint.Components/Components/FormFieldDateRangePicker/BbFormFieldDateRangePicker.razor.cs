@@ -82,6 +82,22 @@ public partial class BbFormFieldDateRangePicker : FormFieldBase
     public IReadOnlyList<DateRangeQuickPick>? Presets { get; set; }
 
     /// <summary>
+    /// Gets or sets whether to show the Clear and Apply buttons in the popover footer.
+    /// When <c>false</c>, a completed selection is applied automatically (as if <see cref="AutoApply"/>
+    /// were <c>true</c>), since no Apply button is available. Defaults to <c>true</c>.
+    /// </summary>
+    [Parameter]
+    public bool ShowButtons { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether to apply the selection automatically once a complete valid range is selected,
+    /// without requiring the Apply button. When a range is auto-applied the popover closes.
+    /// Auto-apply is always active when <see cref="ShowButtons"/> is <c>false</c>. Defaults to <c>false</c>.
+    /// </summary>
+    [Parameter]
+    public bool AutoApply { get; set; }
+
+    /// <summary>
     /// Gets or sets the first day of the week.
     /// </summary>
     [Parameter]

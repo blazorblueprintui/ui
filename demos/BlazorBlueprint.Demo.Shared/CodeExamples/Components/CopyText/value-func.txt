@@ -1,0 +1,19 @@
+Environment: @_environment
+<BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="CycleEnvironment">
+    Change
+</BbButton>
+
+Connection token:
+<BbCopyText ValueFunc="@(() => $"{_environment}-{DateTime.Now:HHmmss}")"
+            OnCopied='(token) => ToastService.Success($"Copied {token}")'>
+    @_environment-&lt;generated at copy time&gt;
+</BbCopyText>
+
+@code {
+    private static readonly string[] Environments = ["dev", "staging", "prod"];
+
+    private string _environment = Environments[0];
+
+    private void CycleEnvironment() =>
+        _environment = Environments[(Array.IndexOf(Environments, _environment) + 1) % Environments.Length];
+}

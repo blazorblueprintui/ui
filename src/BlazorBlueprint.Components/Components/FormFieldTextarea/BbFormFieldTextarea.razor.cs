@@ -28,6 +28,8 @@ namespace BlazorBlueprint.Components;
 /// </example>
 public partial class BbFormFieldTextarea : FormFieldBase
 {
+    private BbTextarea? _textareaRef;
+
     // --- Textarea Pass-Through Parameters ---
 
     /// <summary>
@@ -102,6 +104,16 @@ public partial class BbFormFieldTextarea : FormFieldBase
     /// </summary>
     [Parameter]
     public string? InputClass { get; set; }
+
+    /// <summary>
+    /// Gets the underlying Textarea component reference.
+    /// </summary>
+    public BbTextarea? TextareaRef => _textareaRef;
+
+    /// <summary>
+    /// Sets focus to the underlying textarea element.
+    /// </summary>
+    public ValueTask FocusAsync() => _textareaRef?.FocusAsync() ?? ValueTask.CompletedTask;
 
     /// <inheritdoc />
     protected override LambdaExpression? GetFieldExpression() => ValueExpression;

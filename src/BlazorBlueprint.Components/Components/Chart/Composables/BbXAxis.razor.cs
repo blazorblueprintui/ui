@@ -160,6 +160,19 @@ public partial class BbXAxis : ComponentBase, IChartComponent, IDisposable
     [Parameter]
     public object? Max { get; set; }
 
+    /// <summary>
+    /// Gets or sets whether the axis scale should auto-fit to the data range.
+    /// </summary>
+    /// <remarks>
+    /// Applies to value axes only; category axes ignore it. A value axis includes zero by default,
+    /// which is the honest choice for magnitudes but wastes the plot area when the data sits far from
+    /// it — heights of 160-190 against an axis starting at 0 occupy the last sixth of the chart. Set
+    /// this for those, and leave it off wherever the distance from zero is part of what the reader
+    /// should see. Ignored when both <see cref="Min"/> and <see cref="Max"/> are set.
+    /// </remarks>
+    [Parameter]
+    public bool? Scale { get; set; }
+
     protected override void OnInitialized() =>
         ParentChart?.RegisterComponent(this);
 
@@ -180,6 +193,7 @@ public partial class BbXAxis : ComponentBase, IChartComponent, IDisposable
             Name = Name,
             Min = Min,
             Max = Max,
+            Scale = Scale,
             Z = LabelInside ? 10 : null,
             AxisLine = new EChartsAxisLineOption
             {

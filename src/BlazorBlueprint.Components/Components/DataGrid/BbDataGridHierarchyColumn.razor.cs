@@ -57,6 +57,34 @@ public partial class BbDataGridHierarchyColumn<TData, TProp> : ComponentBase, ID
     public bool Visible { get; set; } = true;
 
     /// <summary>
+    /// Explicit position for this column, as a zero-based index among the grid's data columns.
+    /// When not set (the default), the column keeps its registration order — the order in which
+    /// its component initializes, which for a column written directly in the grid's markup is
+    /// the order it was declared in.
+    /// </summary>
+    /// <remarks>
+    /// Set this on a column produced indirectly — by a wrapper component, or by a fragment that
+    /// only renders after an await — where initialization order does not match declaration order.
+    /// <para>
+    /// Columns that leave <c>Order</c> unset are laid out first, in registration order. Each
+    /// column that sets it is then inserted at that index, lowest value first; an index past the
+    /// end appends. Two columns sharing an <c>Order</c> keep their registration order relative to
+    /// each other. Because unset columns retain their relative positions, a grid where no column
+    /// sets <c>Order</c> is laid out exactly as it would be without this parameter.
+    /// </para>
+    /// <para>
+    /// <see cref="BbDataGridSelectColumn{TData}"/> and <see cref="BbDataGridExpandColumn{TData}"/>
+    /// keep their fixed leading positions and are not counted by this index.
+    /// </para>
+    /// <para>
+    /// The value is read when the column registers with the grid; changing it afterwards has no
+    /// effect on an already rendered grid.
+    /// </para>
+    /// </remarks>
+    [Parameter]
+    public int? Order { get; set; }
+
+    /// <summary>
     /// Column width.
     /// </summary>
     [Parameter]
@@ -91,6 +119,14 @@ public partial class BbDataGridHierarchyColumn<TData, TProp> : ComponentBase, ID
     /// </summary>
     [Parameter]
     public string? CellClass { get; set; }
+
+    /// <summary>
+    /// Computes additional CSS classes for a cell from the row's data item,
+    /// applied in addition to <see cref="CellClass"/>. Use for conditional
+    /// per-cell formatting, e.g. <c>CellClassFunc="@(o => o.Total &lt; 0 ? "text-destructive" : null)"</c>.
+    /// </summary>
+    [Parameter]
+    public Func<TData, string?>? CellClassFunc { get; set; }
 
     /// <summary>
     /// Additional CSS classes for the header cell.
@@ -148,6 +184,7 @@ public partial class BbDataGridHierarchyColumn<TData, TProp> : ComponentBase, ID
     bool IDataGridColumn<TData>.Sortable => Sortable;
     bool IDataGridColumn<TData>.Filterable => Filterable;
     bool IDataGridColumn<TData>.Visible => Visible;
+    int? IDataGridColumn<TData>.Order => Order;
     string? IDataGridColumn<TData>.Width => Width;
     bool IDataGridColumn<TData>.Hideable => Hideable;
     bool IDataGridColumn<TData>.Resizable => Resizable;
@@ -155,6 +192,8 @@ public partial class BbDataGridHierarchyColumn<TData, TProp> : ComponentBase, ID
     ColumnPinning IDataGridColumn<TData>.Pinned => Pinned;
     RenderFragment<DataGridHeaderContext<TData>>? IDataGridColumn<TData>.HeaderTemplate => null;
     string? IDataGridColumn<TData>.CellClass => CellClass;
+
+    Func<TData, string?>? IDataGridColumn<TData>.CellClassFunc => CellClassFunc;
     string? IDataGridColumn<TData>.HeaderClass => HeaderClass;
     bool IDataGridColumn<TData>.NoWrap => NoWrap;
     AggregateFunction IDataGridColumn<TData>.Aggregate => AggregateFunction.None;

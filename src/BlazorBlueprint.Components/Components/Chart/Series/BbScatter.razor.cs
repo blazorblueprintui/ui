@@ -17,14 +17,32 @@ namespace BlazorBlueprint.Components;
 /// <example>
 /// <code>
 /// &lt;BbScatterChart Data="@data"&gt;
-///     &lt;BbXAxis DataKey="x" Type="AxisType.Value" /&gt;
+///     &lt;BbXAxis Type="AxisType.Value" /&gt;
 ///     &lt;BbYAxis /&gt;
-///     &lt;BbScatter DataKey="y" Name="Series A" SymbolSize="12" /&gt;
+///     &lt;BbScatter XDataKey="x" DataKey="y" Name="Series A" SymbolSize="12" /&gt;
 /// &lt;/BbScatterChart&gt;
 /// </code>
 /// </example>
 public partial class BbScatter : SeriesBase
 {
+    /// <summary>
+    /// Gets or sets the property holding each point's X value.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Set this for a true X:Y scatter — each point is plotted at its own X coordinate on a
+    /// <see cref="AxisType.Value"/>, <see cref="AxisType.Time"/> or <see cref="AxisType.Log"/> axis.
+    /// </para>
+    /// <para>
+    /// Leave it unset for a categorical scatter, where points are plotted against the position of
+    /// their row and the X axis supplies its own labels through <see cref="BbXAxis.DataKey"/>.
+    /// Note that a value axis ignores those labels, so numeric X values are only honoured when they
+    /// are supplied here — on the series, not on the axis.
+    /// </para>
+    /// </remarks>
+    [Parameter]
+    public string? XDataKey { get; set; }
+
     /// <summary>
     /// Gets or sets the size of scatter symbols in pixels.
     /// </summary>
@@ -67,7 +85,7 @@ public partial class BbScatter : SeriesBase
     {
         var resolvedColor = GetResolvedColor();
         var effectiveColor = GetResolvedFillColor() ?? resolvedColor;
-        var rawData = GetSeriesData();
+        var rawData = GetPointData(XDataKey);
 
         var series = new EChartsSeriesOption
         {

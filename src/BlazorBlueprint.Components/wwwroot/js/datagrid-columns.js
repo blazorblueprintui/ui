@@ -328,19 +328,23 @@ export function setupDraggableHeaders(gridId, reorderableColumnIds) {
     // Do not allow dropping onto a pinned column
     if (th.getAttribute('data-pinned') === 'true') return;
 
-    // Determine target index from visible header cells
-    const headerCells = Array.from(
-      table.querySelectorAll('thead th[data-column-id]')
-    );
-    const targetIndex = headerCells.indexOf(th);
+    const targetColumnId = th.getAttribute('data-column-id');
+    if (!targetColumnId || targetColumnId === state.dragColumnId) return;
 
-    // Adjust based on drop position (before or after the target)
+    // Report the drop as a *gesture* — "put the dragged column before / after
+    // this column" — and let Blazor resolve it to a position in the column
+    // state. Deliberately do NOT send a header-cell index: the header row is
+    // not a 1:1 view of the column order (hidden columns are absent from the
+    // DOM, pinned columns are re-partitioned to the edges of the row), and the
+    // dragged column is still in the DOM here while the .NET side removes it
+    // before re-inserting. Sending a raw index is what made rightward drags
+    // overshoot by one. See BbDataGrid.OnColumnReordered for the resolution.
     const rect = th.getBoundingClientRect();
     const midX = rect.left + rect.width / 2;
-    const adjustedIndex = e.clientX < midX ? targetIndex : targetIndex + 1;
+    const placeAfter = e.clientX >= midX;
 
     state.dotNetRef.invokeMethodAsync('OnColumnReordered',
-      state.dragColumnId, adjustedIndex).catch(() => { });
+      state.dragColumnId, targetColumnId, placeAfter).catch(() => { });
 
     // Don't null dragColumnId/dragTh here — dragend always fires after drop
     // and handles cleanup + opacity reset.

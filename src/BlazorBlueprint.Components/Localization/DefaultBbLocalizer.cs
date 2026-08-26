@@ -43,6 +43,10 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Command.CommandMenu"] = "Command menu",
         ["Command.CommandList"] = "Command list",
 
+        // CopyText
+        ["CopyText.Copied"] = "Copied!",
+        ["CopyText.ClickToCopy"] = "Click to copy",
+
         // DashboardGrid
         ["DashboardGrid.Loading"] = "Loading dashboard",
         ["DashboardGrid.NoWidgets"] = "No widgets to display",
@@ -72,6 +76,9 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["DataGrid.ExpandGroup"] = "Expand group",
         ["DataGrid.CollapseGroup"] = "Collapse group",
         ["DataGrid.FilterPlaceholder"] = "Filter {0}",
+        ["DataGrid.ColumnMenu"] = "{0} column options",
+        ["DataGrid.GroupByColumn"] = "Group by {0}",
+        ["DataGrid.UngroupColumn"] = "Remove grouping",
         ["DataGrid.PinnedColumnTooltip"] = "This column is pinned and cannot be moved",
         ["DataGrid.ActiveFilters"] = "{0} active filter(s)",
         ["DataGrid.ClearAll"] = "Clear all",
@@ -120,6 +127,7 @@ public class DefaultBbLocalizer : IBbLocalizer
 
         // DatePicker
         ["DatePicker.Placeholder"] = "Pick a date",
+        ["DatePicker.OpenCalendar"] = "Open calendar",
 
         // DateRangePicker
         ["DateRangePicker.Placeholder"] = "Select date range",
@@ -137,8 +145,47 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["DateRangePicker.ThisYear"] = "This year",
         ["DateRangePicker.Custom"] = "Custom",
 
+        // DateTimePicker
+        ["DateTimePicker.Placeholder"] = "Pick a date and time",
+        ["DateTimePicker.Hour"] = "Hour",
+        ["DateTimePicker.Minute"] = "Min",
+        ["DateTimePicker.Second"] = "Sec",
+        ["DateTimePicker.IncrementHour"] = "Increment hour",
+        ["DateTimePicker.DecrementHour"] = "Decrement hour",
+        ["DateTimePicker.IncrementMinute"] = "Increment minute",
+        ["DateTimePicker.DecrementMinute"] = "Decrement minute",
+        ["DateTimePicker.IncrementSecond"] = "Increment second",
+        ["DateTimePicker.DecrementSecond"] = "Decrement second",
+        ["DateTimePicker.Now"] = "Now",
+        ["DateTimePicker.Clear"] = "Clear",
+
         // Dialog
         ["Dialog.Close"] = "Close",
+
+        // Dock
+        ["Dock.Close"] = "Close",
+        ["Dock.CloseTab"] = "Close {0}",
+        ["Dock.CloseOtherTabs"] = "Close Other Tabs",
+        ["Dock.CloseAllButPinned"] = "Close All But Pinned",
+        ["Dock.CloseAllTabs"] = "Close All Tabs",
+        ["Dock.PinTab"] = "Pin Tab",
+        ["Dock.UnpinTab"] = "Unpin Tab",
+        ["Dock.ShowHiddenTabs"] = "Show {0} hidden tab(s)",
+        ["Dock.MaximizePanelGroup"] = "Maximize panel group",
+        ["Dock.RestorePanelGroup"] = "Restore panel group",
+        ["Dock.NoPanelsOpen"] = "No panels are open.",
+
+        // EventCalendar
+        ["EventCalendar.Today"] = "Today",
+        ["EventCalendar.Month"] = "Month",
+        ["EventCalendar.Week"] = "Week",
+        ["EventCalendar.Agenda"] = "Agenda",
+        ["EventCalendar.PreviousPeriod"] = "Go to previous period",
+        ["EventCalendar.NextPeriod"] = "Go to next period",
+        ["EventCalendar.ViewSwitcher"] = "Calendar view",
+        ["EventCalendar.MoreEvents"] = "+{0} more",
+        ["EventCalendar.NoEvents"] = "No events to display.",
+        ["EventCalendar.AllDay"] = "All day",
 
         // FilterBuilder
         ["FilterBuilder.FilterBuilderAriaLabel"] = "Filter builder",
@@ -289,6 +336,9 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Theme.Switcher.Title"] = "Customize",
         ["Theme.Switcher.Description"] = "Pick a color and radius for your components.",
         ["Theme.Color"] = "Color",
+        ["Theme.BaseColor"] = "Base color",
+        ["Theme.PrimaryColor"] = "Primary color",
+        ["Theme.Default"] = "Default",
         ["Theme.Radius"] = "Radius",
         ["Theme.Mode"] = "Mode",
         ["Theme.Light"] = "Light",

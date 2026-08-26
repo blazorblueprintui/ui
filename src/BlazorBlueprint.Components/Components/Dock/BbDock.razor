@@ -1,0 +1,47 @@
+@namespace BlazorBlueprint.Components
+@inject IBbLocalizer Localizer
+
+@* Registration host: instantiating the BbDockPanel children causes them to register with
+   this dock. They render no markup, so this produces no DOM. The CascadingValue also
+   covers the layout so that BbDockTabGroup receives the dock reference. *@
+<CascadingValue Value="this" IsFixed="true">
+    @ChildContent
+
+    <div @ref="rootRef" class="@CssClass" data-dock-root="@dockId">
+        @if (MaximizedGroup is not null)
+        {
+            <BbDockNode Node="MaximizedGroup" />
+        }
+        else if (layout is not null)
+        {
+            <BbDockNode Node="layout" />
+        }
+        else
+        {
+            <div class="flex h-full w-full items-center justify-center p-8 text-center text-sm text-muted-foreground">
+                @if (EmptyContent is not null)
+                {
+                    @EmptyContent
+                }
+                else
+                {
+                    <span>@Localizer["Dock.NoPanelsOpen"]</span>
+                }
+            </div>
+        }
+
+        @foreach (var win in floatingWindows)
+        {
+            <div class="absolute z-30 flex flex-col overflow-hidden border bg-background shadow-2xl ring-1 ring-black/5"
+                 style="@FloatingStyle(win)"
+                 data-dock-window="@win.Id"
+                 @key="win.Id">
+                <BbDockTabGroup Group="win.Group" FloatingWindowId="@win.Id" />
+                <div class="absolute bottom-0 right-0 z-10 h-3.5 w-3.5 cursor-nwse-resize"
+                     data-dock-window-resize="@win.Id"
+                     @onpointerdown="e => StartWindowResize(win.Id, e)">
+                </div>
+            </div>
+        }
+    </div>
+</CascadingValue>

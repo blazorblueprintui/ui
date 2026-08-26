@@ -136,6 +136,56 @@ public abstract class SeriesBase : ComponentBase, IChartSeries, IDisposable
     }
 
     /// <summary>
+    /// Extracts data for this series as explicit <c>[x, y]</c> pairs when <paramref name="xDataKey"/>
+    /// is supplied, falling back to the flat <see cref="GetSeriesData"/> list when it is not.
+    /// </summary>
+    /// <param name="xDataKey">
+    /// The property holding each point's X value, or <see langword="null"/> for positional X.
+    /// </param>
+    /// <remarks>
+    /// <para>
+    /// A flat list of Y values leaves ECharts to derive X from the point's *index*, which is correct
+    /// on a category axis but silently discards real X values on a <see cref="AxisType.Value"/>,
+    /// <see cref="AxisType.Time"/> or <see cref="AxisType.Log"/> axis — the axis ignores its own
+    /// <c>data</c>, so the points end up plotted against ordinal position. Emitting pairs is what
+    /// makes a genuine X:Y plot expressible.
+    /// </para>
+    /// <para>
+    /// A row missing either side yields a null entry rather than a partial pair, which ECharts would
+    /// render against a coerced zero. Null entries are skipped when drawn, and — because callers such
+    /// as per-point symbol sizing zip this list against the source data by index — the returned list
+    /// stays parallel to the chart's data rather than being compacted.
+    /// </para>
+    /// </remarks>
+    /// <returns>A list of two-element <c>[x, y]</c> arrays, or the flat Y list.</returns>
+    protected List<object?> GetPointData(string? xDataKey)
+    {
+        if (string.IsNullOrEmpty(xDataKey))
+        {
+            return GetSeriesData();
+        }
+
+        if (string.IsNullOrEmpty(DataKey))
+        {
+            return [];
+        }
+
+        var xValues = DataExtractor.ExtractValues(ParentChart?.Data, xDataKey);
+        var yValues = DataExtractor.ExtractValues(ParentChart?.Data, DataKey);
+        var count = Math.Min(xValues.Count, yValues.Count);
+        var points = new List<object?>(count);
+
+        for (var i = 0; i < count; i++)
+        {
+            points.Add(xValues[i] == null || yValues[i] == null
+                ? null
+                : new[] { xValues[i], yValues[i] });
+        }
+
+        return points;
+    }
+
+    /// <summary>
     /// Resolves the color for this series by checking the explicit Color parameter first,
     /// then the ChartConfig, returning null if neither is set.
     /// </summary>

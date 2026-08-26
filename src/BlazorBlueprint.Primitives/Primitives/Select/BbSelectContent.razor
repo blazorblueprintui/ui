@@ -251,35 +251,47 @@
         return null;
     }
 
+    // Cleanup has two callers — the context state-change handler when the listbox closes, and
+    // DisposeAsync when the component is torn down — and a close racing a teardown puts both in
+    // flight at once. Each block therefore takes ownership of what it is about to release,
+    // clearing the field before the first await, so the second caller sees nothing to do rather
+    // than dereferencing a field the first one nulled while suspended. Reading the field after
+    // an await instead threw a NullReferenceException, which no filter here catches, so it
+    // escaped DisposeAsync into the renderer's disposal queue and took the circuit down (#441).
     private async Task CleanupAsync()
     {
         // Clean up keyboard navigation
-        if (_jsModule != null && _context != null && _isKeyboardSetup)
+        var keyboardModule = _isKeyboardSetup ? _jsModule : null;
+        var contentId = _context?.ContentId;
+        if (keyboardModule != null && contentId != null)
         {
+            _isKeyboardSetup = false;
+
             try
             {
-                await _jsModule.InvokeVoidAsync("cleanupKeyboardNavigation", _context.ContentId);
+                await keyboardModule.InvokeVoidAsync("cleanupKeyboardNavigation", contentId);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // JS module may be disposed or circuit disconnected
             }
-            _isKeyboardSetup = false;
         }
 
         // Clean up click-outside listener
-        if (_clickOutsideCleanup != null)
+        var clickOutsideCleanup = _clickOutsideCleanup;
+        if (clickOutsideCleanup != null)
         {
+            _clickOutsideCleanup = null;
+
             try
             {
-                await _clickOutsideCleanup.InvokeVoidAsync("dispose");
-                await _clickOutsideCleanup.DisposeAsync();
+                await clickOutsideCleanup.InvokeVoidAsync("dispose");
+                await clickOutsideCleanup.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Cleanup may already be disposed or circuit disconnected
             }
-            _clickOutsideCleanup = null;
         }
     }
 
@@ -319,6 +331,7 @@
 
     public async ValueTask DisposeAsync()
     {
+        if (_disposed) { return; }
         _disposed = true;
 
         if (_context != null)
@@ -326,7 +339,16 @@
             _context.OnStateChanged -= HandleContextStateChanged;
         }
 
-        await CleanupAsync();
+        try
+        {
+            await CleanupAsync();
+        }
+        catch (Exception)
+        {
+            // Disposal runs inside the renderer's disposal queue, where anything that escapes
+            // is unhandled and tears down the whole circuit. A teardown-time cleanup failure is
+            // not worth that, so it stops here — the races it can hit are handled above.
+        }
 
         if (_clickOutsideModule != null)
         {

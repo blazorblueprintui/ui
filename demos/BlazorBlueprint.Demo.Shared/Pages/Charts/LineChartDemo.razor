@@ -210,6 +210,33 @@
             </div>
             <CodeBlock Source="Charts/LineChart/custom-dots.txt" />
         </div>
+
+        <!-- Numeric X Axis -->
+        <div>
+            <div class="rounded-xl border bg-card text-card-foreground shadow-sm">
+                <div class="flex flex-col space-y-1.5 p-6">
+                    <h3 class="font-semibold leading-none tracking-tight">Line Chart - Numeric X Axis</h3>
+                    <p class="text-sm text-muted-foreground">Readings at irregular intervals</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <BbLineChart Data="@_readingData" Height="200px">
+                        <BbXAxis Type="AxisType.Value" />
+                        <BbYAxis />
+                        <BbChartTooltip />
+                        <BbLine XDataKey="elapsed" DataKey="value" Name="Reading" Color="var(--chart-1)" ShowDots="true" />
+                    </BbLineChart>
+                </div>
+                <div class="flex flex-col gap-2 p-6 pt-0">
+                    <div class="flex gap-2 items-center font-medium leading-none">
+                        Spacing reflects the gaps between readings
+                    </div>
+                    <div class="text-sm text-muted-foreground leading-none">
+                        XDataKey plots each point at its own X coordinate
+                    </div>
+                </div>
+            </div>
+            <CodeBlock Source="Charts/LineChart/numeric-x.txt" />
+        </div>
     </div>
 
     <!-- API Reference -->
@@ -218,6 +245,20 @@
             <h2 class="text-2xl font-semibold">API Reference</h2>
         </div>
         <div class="border rounded-lg p-6 space-y-4">
+            <div>
+                <h3 class="font-mono text-sm font-semibold mb-2">Line.XDataKey</h3>
+                <p class="text-sm text-muted-foreground mb-2">
+                    Type: <code class="text-xs bg-muted px-1 py-0.5 rounded">string?</code> (default: null)
+                </p>
+                <p class="text-sm text-muted-foreground">
+                    Property name holding each point's X value, plotting it at its own coordinate on a
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Value</code>,
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Time</code> or
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">Log</code> axis. Leave it unset for the
+                    usual categorical line, where points are spaced evenly and the X axis supplies its own labels.
+                </p>
+            </div>
+            <BbSeparator />
             <div>
                 <h3 class="font-mono text-sm font-semibold mb-2">Line.Curve</h3>
                 <p class="text-sm text-muted-foreground mb-2">
@@ -295,6 +336,23 @@
         public int Desktop { get; set; }
         public int Mobile { get; set; }
     }
+
+    public class ReadingData
+    {
+        public int Elapsed { get; set; }
+        public int Value { get; set; }
+    }
+
+    private readonly List<ReadingData> _readingData =
+    [
+        new() { Elapsed = 0, Value = 12 },
+        new() { Elapsed = 5, Value = 34 },
+        new() { Elapsed = 8, Value = 28 },
+        new() { Elapsed = 20, Value = 61 },
+        new() { Elapsed = 24, Value = 55 },
+        new() { Elapsed = 45, Value = 78 },
+        new() { Elapsed = 60, Value = 72 }
+    ];
 
     private readonly List<MonthlyData> _monthlyData =
     [

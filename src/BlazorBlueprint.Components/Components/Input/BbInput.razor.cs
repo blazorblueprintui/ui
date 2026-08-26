@@ -236,7 +236,7 @@ public partial class BbInput : ComponentBase
         "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base",
         "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
         "placeholder:text-muted-foreground",
-        "focus-visible:outline-none",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         "disabled:cursor-not-allowed disabled:opacity-50",
         // aria-invalid state styling (destructive error colors)
         "aria-[invalid=true]:border-destructive",
@@ -363,6 +363,16 @@ public partial class BbInput : ComponentBase
         StateHasChanged();
     }
 
+    /// <summary>
+    /// Gets the underlying input element reference, e.g. for JS interop.
+    /// </summary>
+    public ElementReference Element => inputRef;
+
+    /// <summary>
+    /// Sets focus to the underlying input element.
+    /// </summary>
+    public ValueTask FocusAsync() => inputRef.FocusAsync();
+
     public async ValueTask DisposeAsync()
     {
         disposed = true;
@@ -374,7 +384,7 @@ public partial class BbInput : ComponentBase
                 await jsModule.InvokeVoidAsync("dispose", instanceId);
                 await jsModule.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }

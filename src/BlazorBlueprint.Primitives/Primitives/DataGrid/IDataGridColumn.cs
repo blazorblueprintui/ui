@@ -30,9 +30,23 @@ public interface IDataGridColumn<TData> where TData : class
     public bool Filterable { get; }
 
     /// <summary>
+    /// Gets whether the user can group rows by this column from the column header menu.
+    /// Default is false. The group key is taken from <see cref="GetRawValue"/>, so a column
+    /// must expose a meaningful raw value to be groupable.
+    /// </summary>
+    public bool Groupable => false;
+
+    /// <summary>
     /// Gets whether this column is currently visible.
     /// </summary>
     public bool Visible { get; }
+
+    /// <summary>
+    /// Gets the explicit position of this column as a zero-based index among the grid's
+    /// data columns, or null to keep the column in registration order.
+    /// Default is null.
+    /// </summary>
+    public int? Order => null;
 
     /// <summary>
     /// Gets the column width (e.g., "200px", "20%", "auto").
@@ -116,6 +130,13 @@ public interface IDataGridColumn<TData> where TData : class
     /// Gets additional CSS classes for cells in this column.
     /// </summary>
     public string? CellClass { get; }
+
+    /// <summary>
+    /// Gets a callback that computes additional CSS classes for a cell based on the row's
+    /// data item. Applied in addition to <see cref="CellClass"/>, so static and per-row
+    /// classes can be combined. Returns null when no per-row styling is needed.
+    /// </summary>
+    public Func<TData, string?>? CellClassFunc => null;
 
     /// <summary>
     /// Gets additional CSS classes for the header cell.

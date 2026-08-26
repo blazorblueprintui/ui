@@ -35,6 +35,18 @@ namespace BlazorBlueprint.Components;
 public partial class BbArea : SeriesBase
 {
     /// <summary>
+    /// Gets or sets the property holding each point's X value.
+    /// </summary>
+    /// <remarks>
+    /// Set this to plot against a numeric or time X axis, where points sit at their own X coordinate
+    /// rather than at evenly spaced positions — irregular sampling intervals, for instance. Leave it
+    /// unset for the usual categorical area, where the X axis supplies labels through
+    /// <see cref="BbXAxis.DataKey"/>.
+    /// </remarks>
+    [Parameter]
+    public string? XDataKey { get; set; }
+
+    /// <summary>
     /// Gets or sets the curve interpolation type.
     /// </summary>
     /// <remarks>
@@ -74,7 +86,7 @@ public partial class BbArea : SeriesBase
         {
             Type = "line",
             Name = GetResolvedName(),
-            Data = GetSeriesData(),
+            Data = GetPointData(XDataKey),
             ShowSymbol = ShowDots,
             AreaStyle = new EChartsAreaStyleOption
             {

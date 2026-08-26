@@ -1,0 +1,21 @@
+<!-- Off by default: the wheel scrolls the page, exactly as it would over any other input. -->
+<BbNumericInput TValue="int" @bind-Value="quantity" />
+
+<!-- Opt in, and the wheel steps the value while the input is focused.
+     Stepping requires preventDefault on the wheel event, so the page stops
+     scrolling whenever the pointer is over a focused input — only turn it on
+     where that is the behaviour you want. -->
+<BbNumericInput TValue="int" @bind-Value="quantity" EnableWheelStep="true" Min="0" Max="100" Step="5" />
+
+<!-- The parameter is reactive, so it can be bound to state and flipped at runtime -->
+<BbNumericInput TValue="int" @bind-Value="quantity" EnableWheelStep="@wheelEnabled" />
+
+<!-- BbCurrencyInput and the FormField wrappers take the same parameter -->
+<BbCurrencyInput @bind-Value="price" CurrencyCode="USD" EnableWheelStep="true" />
+<BbFormFieldNumericInput TValue="int" Label="Quantity" @bind-Value="quantity" EnableWheelStep="true" />
+
+@code {
+    private int quantity = 10;
+    private decimal price = 19.99m;
+    private bool wheelEnabled = true;
+}

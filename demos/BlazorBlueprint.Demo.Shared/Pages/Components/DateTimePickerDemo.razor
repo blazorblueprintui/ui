@@ -1,0 +1,307 @@
+@page "/components/date-time-picker"
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>Date Time Picker Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div>
+        <div class="space-y-3">
+            <h1 class="text-4xl font-bold tracking-tight">Date Time Picker Component</h1>
+            <p class="text-xl text-muted-foreground">
+                A combined date and time picker with a popover calendar and time selectors.
+            </p>
+        </div>
+    </div>
+
+    <!-- Basic Example -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Example</h2>
+            <p class="text-sm text-muted-foreground">
+                Click the button to open the popover. Selecting a date keeps the time portion,
+                and adjusting the time keeps the date. The popover stays open so both can be set
+                in one go — click outside or press Escape to close.
+            </p>
+        </div>
+        <BbDateTimePicker @bind-Value="_basicValue" />
+        <p class="text-sm text-muted-foreground">
+            Selected: @(_basicValue?.ToString("g") ?? "None")
+        </p>
+        <CodeBlock Source="Components/DateTimePicker/basic.txt" />
+    </div>
+
+    <!-- 24-Hour Format -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">24-Hour Format</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">TimeFormat="TimeFormat.Hour24"</code>
+                to hide the AM/PM toggle and cycle hours from 00 to 23.
+            </p>
+        </div>
+        <BbDateTimePicker @bind-Value="_hour24Value" TimeFormat="TimeFormat.Hour24" />
+        <CodeBlock Source="Components/DateTimePicker/24-hour.txt" />
+    </div>
+
+    <!-- With Seconds -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">With Seconds</h2>
+            <p class="text-sm text-muted-foreground">
+                Enable the seconds selector with <code class="text-xs bg-muted px-1 py-0.5 rounded">ShowSeconds</code>.
+                The trigger display switches to the culture-aware "G" format automatically.
+            </p>
+        </div>
+        <BbDateTimePicker @bind-Value="_secondsValue" ShowSeconds="true" />
+        <CodeBlock Source="Components/DateTimePicker/with-seconds.txt" />
+    </div>
+
+    <!-- Minute Step -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Minute Intervals</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">MinuteStep</code> to increment
+                minutes in fixed intervals.
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-4">
+            <div>
+                <p class="text-sm mb-2">5-minute intervals:</p>
+                <BbDateTimePicker @bind-Value="_step5Value" MinuteStep="5" />
+            </div>
+            <div>
+                <p class="text-sm mb-2">15-minute intervals:</p>
+                <BbDateTimePicker @bind-Value="_step15Value" MinuteStep="15" />
+            </div>
+        </div>
+        <CodeBlock Source="Components/DateTimePicker/minute-step.txt" />
+    </div>
+
+    <!-- Custom Format & Placeholder -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Format &amp; Placeholder</h2>
+            <p class="text-sm text-muted-foreground">
+                Customize the trigger display with <code class="text-xs bg-muted px-1 py-0.5 rounded">DateTimeFormat</code>
+                and the empty-state text with <code class="text-xs bg-muted px-1 py-0.5 rounded">Placeholder</code>.
+            </p>
+        </div>
+        <BbDateTimePicker @bind-Value="_formatValue"
+                          DateTimeFormat="MMMM d, yyyy 'at' h:mm tt"
+                          Placeholder="Schedule meeting" />
+        <CodeBlock Source="Components/DateTimePicker/custom-format.txt" />
+    </div>
+
+    <!-- Date Constraints -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Date Constraints</h2>
+            <p class="text-sm text-muted-foreground">
+                Limit the selectable date range with <code class="text-xs bg-muted px-1 py-0.5 rounded">MinDate</code> /
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">MaxDate</code>, or disable specific dates
+                (e.g. weekends) with <code class="text-xs bg-muted px-1 py-0.5 rounded">DisabledDates</code>.
+            </p>
+        </div>
+        <div class="space-y-4">
+            <div>
+                <p class="text-sm mb-2">Next 30 days only:</p>
+                <BbDateTimePicker @bind-Value="_rangeValue" MinDate="@DateTime.Today" MaxDate="@DateTime.Today.AddDays(30)" />
+            </div>
+            <div>
+                <p class="text-sm mb-2">No weekends:</p>
+                <BbDateTimePicker @bind-Value="_noWeekendsValue" DisabledDates="@IsWeekend" />
+            </div>
+        </div>
+        <CodeBlock Source="Components/DateTimePicker/constraints.txt" />
+    </div>
+
+    <!-- Form Validation with EditForm -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Form Validation</h2>
+            <p class="text-sm text-muted-foreground">
+                DateTimePicker integrates with Blazor's EditForm and EditContext for model validation.
+                Use <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Value</code> within an EditForm and
+                validation errors will automatically apply error styling via <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-invalid</code>.
+            </p>
+        </div>
+        <EditForm Model="_formModel" OnValidSubmit="HandleFormSubmit" class="max-w-md space-y-4">
+            <DataAnnotationsValidator />
+
+            <div class="space-y-2">
+                <label class="text-sm font-medium">Appointment</label>
+                <BbDateTimePicker @bind-Value="_formModel.Appointment" Placeholder="Select appointment time" />
+                <ValidationMessage For="@(() => _formModel.Appointment)" class="text-sm text-destructive" />
+            </div>
+
+            <div class="flex gap-4">
+                <BbButton Type="ButtonType.Submit" Variant="ButtonVariant.Default">Submit</BbButton>
+                <BbButton Type="ButtonType.Button" Variant="ButtonVariant.Outline" OnClick="ResetForm">Reset</BbButton>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_formMessage))
+            {
+                <div class="p-4 bg-card rounded-lg border">
+                    <p class="text-sm">@_formMessage</p>
+                </div>
+            }
+        </EditForm>
+    </div>
+
+    <!-- Accessibility Notes -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                Trigger button includes <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-haspopup</code> and <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-expanded</code> via the Popover primitive
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Calendar uses <code class="text-xs bg-muted px-1 py-0.5 rounded">role="grid"</code> with <code class="text-xs bg-muted px-1 py-0.5 rounded">role="gridcell"</code> on each day
+            </AccessibilityItem>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-selected</code> indicates the currently selected date
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Time stepper buttons include descriptive <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-label</code> ("Increment hour", "Decrement minute", etc.)
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Disabled dates have the <code class="text-xs bg-muted px-1 py-0.5 rounded">disabled</code> attribute on day buttons
+            </AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move to the previous/next day">
+                <BbKbd>ArrowLeft</BbKbd> / <BbKbd>ArrowRight</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move to the same day in the previous/next week">
+                <BbKbd>ArrowUp</BbKbd> / <BbKbd>ArrowDown</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Jump to the first/last day of the month">
+                <BbKbd>Home</BbKbd> / <BbKbd>End</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Go to the previous/next month (or year with Shift)">
+                <BbKbd>PageUp</BbKbd> / <BbKbd>PageDown</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Select the focused date">
+                <BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move between the time stepper buttons">
+                <BbKbd>Tab</BbKbd>
+            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Close the popover">
+                <BbKbd>Escape</BbKbd>
+            </KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+
+        <div class="space-y-4">
+            <ApiReference ComponentName="DateTimePicker">
+                <ApiParameter Name="Value" Type="DateTime?">
+                    The selected date and time. Use @@bind-Value for two-way binding.
+                </ApiParameter>
+                <ApiParameter Name="DateTimeFormat" Type="string?" Default="null">
+                    Format string for displaying the value. When null, uses "G" (with seconds) if ShowSeconds is true, otherwise "g".
+                </ApiParameter>
+                <ApiParameter Name="Placeholder" Type="string?" Default="&quot;Pick a date and time&quot;">
+                    Placeholder text when no value is selected.
+                </ApiParameter>
+                <ApiParameter Name="MinDate" Type="DateTime?">
+                    Minimum selectable date.
+                </ApiParameter>
+                <ApiParameter Name="MaxDate" Type="DateTime?">
+                    Maximum selectable date.
+                </ApiParameter>
+                <ApiParameter Name="DisabledDates" Type="Func&lt;DateTime, bool&gt;?">
+                    Function to determine if a date should be disabled.
+                </ApiParameter>
+                <ApiParameter Name="FirstDayOfWeek" Type="DayOfWeek?" Default="null">
+                    The first day of the week. Defaults to the current culture setting.
+                </ApiParameter>
+                <ApiParameter Name="DayTemplate" Type="RenderFragment&lt;CalendarDayContext&gt;?" Default="null">
+                    Template for rendering custom content inside each calendar day button. When null, the day number is rendered.
+                </ApiParameter>
+                <ApiParameter Name="DayClassFunc" Type="Func&lt;DateTime, string?&gt;?" Default="null">
+                    Function returning additional CSS classes for a specific calendar day button.
+                </ApiParameter>
+                <ApiParameter Name="TimeFormat" Type="TimeFormat" Default="Hour12">
+                    The time format for the time selectors (12-hour with AM/PM or 24-hour).
+                </ApiParameter>
+                <ApiParameter Name="ShowSeconds" Type="bool" Default="false">
+                    Whether to show the seconds selector.
+                </ApiParameter>
+                <ApiParameter Name="MinuteStep" Type="int" Default="1">
+                    The minute step interval.
+                </ApiParameter>
+                <ApiParameter Name="Disabled" Type="bool" Default="false">
+                    Whether the date time picker is disabled.
+                </ApiParameter>
+                <ApiParameter Name="Required" Type="bool" Default="false">
+                    Whether the date time picker is required.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?" Default="null">
+                    Additional CSS classes for the trigger button.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+
+    <LocalizationSection
+        Description="The date time picker placeholder, time selector labels, and action buttons are configurable."
+        Labels="@(new LocalizationSection.LabelInfo[]
+        {
+            new("Placeholder", "Pick a date and time", "Placeholder text when no value is selected"),
+            new("Hour", "Hour", "Label above the hour selector"),
+            new("Minute", "Min", "Label above the minute selector"),
+            new("Second", "Sec", "Label above the second selector"),
+            new("Now", "Now", "Button that sets the value to the current date and time"),
+            new("Clear", "Clear", "Button that clears the selected value"),
+        })"
+        CultureAware="true"
+        CultureDescription="The internal calendar uses CultureInfo.CurrentCulture for month/day names. The DateTimeFormat parameter accepts standard .NET format strings that respect the current culture."
+        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+{
+    opts.Set(""DateTimePicker.Placeholder"", ""Datum und Uhrzeit auswählen"");
+});")" />
+</div>
+
+@code {
+    private DateTime? _basicValue;
+    private DateTime? _hour24Value;
+    private DateTime? _secondsValue;
+    private DateTime? _step5Value;
+    private DateTime? _step15Value;
+    private DateTime? _formatValue;
+    private DateTime? _rangeValue;
+    private DateTime? _noWeekendsValue;
+
+    private bool IsWeekend(DateTime date)
+    {
+        return date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday;
+    }
+
+    private DateTimeFormModel _formModel = new();
+    private string? _formMessage;
+
+    private void HandleFormSubmit()
+    {
+        _formMessage = $"Form submitted! Appointment: {_formModel.Appointment?.ToString("g")}";
+    }
+
+    private void ResetForm()
+    {
+        _formModel = new();
+        _formMessage = null;
+    }
+
+    private class DateTimeFormModel
+    {
+        [Required(ErrorMessage = "Please select an appointment time.")]
+        public DateTime? Appointment { get; set; }
+    }
+}

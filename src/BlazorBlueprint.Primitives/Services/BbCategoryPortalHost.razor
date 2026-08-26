@@ -7,10 +7,12 @@
 @* Renders portals for a specific category at the document body level.
    Only re-renders when its own category's portals change. *@
 @{
-    // Guard: ignore RefreshPortal calls from nested FloatingPortals during our render.
-    // Without this, a FloatingPortal inside another portal (e.g., Combobox in Dialog)
-    // would trigger OnPortalsCategoryChanged during our render, scheduling another render,
-    // creating an infinite async loop.
+    // Open the render cycle. While _isRendering is set, RefreshPortal notifications are not
+    // acted on immediately (see HandleCategoryChanged) — a nested FloatingPortal inside our
+    // content (e.g. a Select in a Dialog or Popover) raises RefreshPortal from its
+    // OnParametersSet during this render, and re-rendering in response would loop. The guard
+    // stays set until OnAfterRenderAsync, which recovers any notification deferred in the
+    // meantime (including content-only updates that land in the Blazor Server ACK-wait window).
     _isRendering = true;
     // Track which portals are being rendered in this cycle
     _renderedThisCycle.Clear();
@@ -33,7 +35,11 @@
     private HashSet<string> _renderedThisCycle = new();
     private IJSObjectReference? _portalModule;
     private bool _isRendering;
+    private bool _pendingRerender;
+    private bool _isFlushing;
+    private bool _flushScheduled;
     private bool _isFirstCategoryHost;
+    private bool _disposed;
 
     protected override void OnInitialized()
     {
@@ -62,12 +68,27 @@
 
         if (_isRendering)
         {
-            // During rendering, a nested FloatingPortal's OnParametersSet calls
-            // RefreshPortal, which fires this callback. Scheduling a re-render here
-            // would create an infinite loop. RefreshPortal is always redundant during
-            // rendering because the host is already rendering all portal content.
-            // Structural changes (register/unregister from OnAfterRenderAsync of nested
-            // components) are detected after the render cycle completes.
+            // A notification arrived while our render cycle is still open. The cycle stays
+            // open from BuildRenderTree until OnAfterRenderAsync, and on Blazor Server that
+            // span includes the wait for the client to acknowledge the render batch — a full
+            // network round-trip. Two very different notifications land in this window:
+            //
+            //   1. Reentrant RefreshPortal calls from nested portals' OnParametersSet, raised
+            //      synchronously while we render their content (e.g. a Select inside a Dialog
+            //      or Popover). These are redundant — we are already drawing current content.
+            //   2. Genuine content-only updates from an owner component whose fast async
+            //      handler completed inside the ACK-wait window (issue #418). These must be
+            //      re-rendered or the portaled DOM freezes on stale content.
+            //
+            // We cannot render immediately (that would re-enter the current render), so we mark
+            // a deferred re-render and reconcile it in OnAfterRenderAsync, which recovers case 2.
+            // To keep case 1 from looping, we do NOT arm the flag while a flush re-render is in
+            // progress: a nested same-category portal re-raises RefreshPortal on every render, so
+            // a flush-provoked notification must not schedule yet another flush.
+            if (!_isFlushing)
+            {
+                _pendingRerender = true;
+            }
             return;
         }
 
@@ -115,14 +136,67 @@
             .Select(kvp => kvp.Key)
             .ToHashSet();
 
+        // Structural changes (register/unregister) are flushed synchronously here, exactly as
+        // before — this path is bounded because the portal set converges quickly.
         if (!_renderedThisCycle.SetEquals(currentPortalKeys))
         {
             await InvokeAsync(StateHasChanged);
         }
+
+        // Content-only recovery for the Server ACK-wait drop (issue #418) is flushed via a
+        // deferred, single-flight re-render — never a synchronous one. On WebAssembly
+        // OnAfterRender runs inline at the end of the render, so re-rendering synchronously here
+        // would recurse until the stack overflows whenever a nested portal (e.g. a Select in a
+        // Popover) re-raises RefreshPortal on every render. Yielding first breaks that chain.
+        if (_pendingRerender)
+        {
+            _pendingRerender = false;
+            ScheduleContentFlush();
+        }
+    }
+
+    /// <summary>
+    /// Schedules a single deferred re-render to pick up a content-only portal update that was
+    /// dropped during the render cycle (see <see cref="HandleCategoryChanged"/>). Coalesced via
+    /// <see cref="_flushScheduled"/> so concurrent notifications collapse into one re-render, and
+    /// gated by <see cref="_isFlushing"/> so the re-render's own reentrant RefreshPortal calls do
+    /// not schedule another flush.
+    /// </summary>
+    private void ScheduleContentFlush()
+    {
+        if (_flushScheduled)
+        {
+            return;
+        }
+
+        _flushScheduled = true;
+        _ = InvokeAsync(async () =>
+        {
+            // Run as a fresh dispatcher work item rather than nested in the render that
+            // scheduled us.
+            await Task.Yield();
+            if (_disposed)
+            {
+                return;
+            }
+
+            _isFlushing = true;
+            try
+            {
+                StateHasChanged();
+            }
+            finally
+            {
+                _isFlushing = false;
+                _flushScheduled = false;
+            }
+        });
     }
 
     public async ValueTask DisposeAsync()
     {
+        _disposed = true;
+
         if (_isFirstCategoryHost)
         {
             PortalService.UnregisterHost();

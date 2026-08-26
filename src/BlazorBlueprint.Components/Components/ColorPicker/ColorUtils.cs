@@ -235,7 +235,7 @@ public static partial class ColorUtils
     {
         if (a.HasValue && a.Value < 255)
         {
-            return $"rgba({r}, {g}, {b}, {a.Value / 255.0:F2})";
+            return $"rgba({r}, {g}, {b}, {(a.Value / 255.0).ToString("F2", CultureInfo.InvariantCulture)})";
         }
         return $"rgb({r}, {g}, {b})";
     }
@@ -245,10 +245,14 @@ public static partial class ColorUtils
     /// </summary>
     public static string ToHslString(double h, double s, double l, int? a = null)
     {
+        var hue = h.ToString("F0", CultureInfo.InvariantCulture);
+        var sat = (s * 100).ToString("F0", CultureInfo.InvariantCulture);
+        var lum = (l * 100).ToString("F0", CultureInfo.InvariantCulture);
+
         if (a.HasValue && a.Value < 255)
         {
-            return $"hsla({h:F0}, {s * 100:F0}%, {l * 100:F0}%, {a.Value / 255.0:F2})";
+            return $"hsla({hue}, {sat}%, {lum}%, {(a.Value / 255.0).ToString("F2", CultureInfo.InvariantCulture)})";
         }
-        return $"hsl({h:F0}, {s * 100:F0}%, {l * 100:F0}%)";
+        return $"hsl({hue}, {sat}%, {lum}%)";
     }
 }

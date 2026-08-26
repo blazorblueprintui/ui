@@ -4,14 +4,49 @@
 const instances = new Map();
 const DRAG_THRESHOLD = 5;
 
+// True when a JS->.NET callback failed because the .NET side is gone — the
+// grid's DotNetObjectReference was disposed or the circuit died. That is a
+// stale callback racing disposal, not a failure worth reporting.
+function isDisposedReferenceError(err) {
+  const msg = (err && (err.message || err.toString())) || '';
+  return msg.includes('no tracked object')
+    || msg.includes('DotNetObjectReference')
+    || msg.includes('JSDisconnectedException');
+}
+
+// Invoke a .NET grid callback. Stale-callback rejections (disposed reference
+// or dead circuit) are dropped silently; every other rejection is logged,
+// keeping genuine JS->.NET failures visible.
+function invokeSafely(state, method, ...args) {
+  return state.dotNetRef.invokeMethodAsync(method, ...args)
+    .catch(err => {
+      if (isDisposedReferenceError(err)) return;
+      console.error(`${method} failed:`, err);
+    });
+}
+
+// The observers can outlive the grid — the resize observer watches
+// document.body, not the grid element, and keeps firing after navigation.
+// Once the grid element leaves the DOM the instance is orphaned: dispose it
+// so its observers stop and no stale .NET callbacks fire.
+function disposeIfOrphaned(state) {
+  if (state.gridEl && state.gridEl.isConnected) return false;
+  disposeDashboardGrid(state.instanceId);
+  return true;
+}
+
 export function initializeDashboardGrid(dotNetRef, instanceId, options) {
   if (!dotNetRef) return;
+
+  // Dispose the existing instance if re-initializing
+  if (instances.has(instanceId)) disposeDashboardGrid(instanceId);
 
   const gridEl = document.querySelector(`[data-dashboard-id="${instanceId}"]`);
   if (!gridEl) return;
 
   const state = {
     dotNetRef,
+    instanceId,
     options,
     gridEl,
     isDragging: false,
@@ -106,6 +141,7 @@ export function disposeDashboardGrid(instanceId) {
 
 function setupMutationObserver(state) {
   state.mutationObserver = new MutationObserver((mutations) => {
+    if (disposeIfOrphaned(state)) return;
     if (state.isDragging || state.isResizing) return;
 
     // Only react if widget elements were added or removed
@@ -175,8 +211,7 @@ function runCompactAndReveal(state) {
     colSpan: p.colSpan,
     rowSpan: p.rowSpan
   }));
-  state.dotNetRef.invokeMethodAsync('JsOnCompactComplete', dtos)
-    .catch(err => console.error('JsOnCompactComplete failed:', err));
+  invokeSafely(state, 'JsOnCompactComplete', dtos);
 }
 
 // --- Resize Observer for responsive breakpoints ---
@@ -235,8 +270,7 @@ function setupResizeObserver(instanceId, state) {
       const isInitial = state.currentBreakpoint === undefined;
       const prevBp = state.currentBreakpoint;
       state.currentBreakpoint = bp;
-      state.dotNetRef.invokeMethodAsync('JsOnBreakpointChanged', bp)
-        .catch(err => console.error('JsOnBreakpointChanged failed:', err));
+      invokeSafely(state, 'JsOnBreakpointChanged', bp);
 
       // Re-compact widgets for the new column count (skip initial detection)
       if (!isInitial) {
@@ -247,6 +281,7 @@ function setupResizeObserver(instanceId, state) {
 
   checkBreakpoint();
   state.resizeObserver = new ResizeObserver(() => {
+    if (disposeIfOrphaned(state)) return;
     checkBreakpoint();
     syncGridGuide(state);
   });
@@ -308,8 +343,7 @@ function syncPositionsToNet(state, positions) {
     colSpan: p.colSpan,
     rowSpan: p.rowSpan
   }));
-  state.dotNetRef.invokeMethodAsync('JsOnCompactComplete', dtos)
-    .catch(err => console.error('JsOnCompactComplete (breakpoint) failed:', err));
+  invokeSafely(state, 'JsOnCompactComplete', dtos);
 }
 
 // --- Event Listeners ---
@@ -565,9 +599,7 @@ function finishDrag(state) {
     }
 
     if (changes.length > 0) {
-      state.dotNetRef.invokeMethodAsync('JsOnLayoutResolved',
-        state.activeWidgetId, changes)
-        .catch(err => console.error('JsOnLayoutResolved failed:', err));
+      invokeSafely(state, 'JsOnLayoutResolved', state.activeWidgetId, changes);
       announceChange(state, `Dashboard layout updated`);
     }
   }
@@ -724,9 +756,8 @@ function finishResize(state) {
 
   if (resizeChanged) {
     // Send resize event for the resized widget
-    state.dotNetRef.invokeMethodAsync('JsOnWidgetResizeEnd',
-      state.activeWidgetId, resized.col, resized.row, resized.colSpan, resized.rowSpan)
-      .catch(err => console.error('JsOnWidgetResizeEnd failed:', err));
+    invokeSafely(state, 'JsOnWidgetResizeEnd',
+      state.activeWidgetId, resized.col, resized.row, resized.colSpan, resized.rowSpan);
 
     // Send layout changes for all displaced widgets
     const changes = [];
@@ -739,9 +770,7 @@ function finishResize(state) {
       }
     }
     if (changes.length > 0) {
-      state.dotNetRef.invokeMethodAsync('JsOnLayoutResolved',
-        state.activeWidgetId, changes)
-        .catch(err => console.error('JsOnLayoutResolved (resize) failed:', err));
+      invokeSafely(state, 'JsOnLayoutResolved', state.activeWidgetId, changes);
     }
 
     announceChange(state, `Widget resized to ${resized.colSpan} columns, ${resized.rowSpan} rows`);
@@ -812,8 +841,7 @@ function onKeyDown(instanceId, state, e) {
         applyLayout(grid, resolved);
 
         // Send resize for the resized widget
-        state.dotNetRef.invokeMethodAsync('JsOnWidgetResizeEnd', widgetId, col, row, newColSpan, newRowSpan)
-          .catch(err => console.error('JsOnWidgetResizeEnd (keyboard) failed:', err));
+        invokeSafely(state, 'JsOnWidgetResizeEnd', widgetId, col, row, newColSpan, newRowSpan);
 
         // Send position changes for displaced widgets
         const changes = [];
@@ -826,8 +854,7 @@ function onKeyDown(instanceId, state, e) {
           }
         }
         if (changes.length > 0) {
-          state.dotNetRef.invokeMethodAsync('JsOnLayoutResolved', widgetId, changes)
-            .catch(err => console.error('JsOnLayoutResolved (keyboard resize) failed:', err));
+          invokeSafely(state, 'JsOnLayoutResolved', widgetId, changes);
         }
         announceChange(state, `Widget resized to ${newColSpan} columns, ${newRowSpan} rows`);
       }
@@ -882,8 +909,7 @@ function onKeyDown(instanceId, state, e) {
           }
         }
         if (changes.length > 0) {
-          state.dotNetRef.invokeMethodAsync('JsOnLayoutResolved', widgetId, changes)
-            .catch(err => console.error('JsOnLayoutResolved (keyboard) failed:', err));
+          invokeSafely(state, 'JsOnLayoutResolved', widgetId, changes);
         }
         announceChange(state, `Widget moved to column ${newCol}, row ${newRow}`);
       }
@@ -933,8 +959,7 @@ function onWidgetFocusOut(instanceId, state, e) {
 
   if (changes.length > 0) {
     applyLayout(grid, positions);
-    state.dotNetRef.invokeMethodAsync('JsOnLayoutResolved', '', changes)
-      .catch(err => console.error('JsOnLayoutResolved (compact on blur) failed:', err));
+    invokeSafely(state, 'JsOnLayoutResolved', '', changes);
   }
 }
 

@@ -1,0 +1,41 @@
+@namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
+@using BlazorBlueprint.Primitives.Floating
+
+<span @ref="anchorRef"
+      class="@TextCssClass"
+      role="button"
+      tabindex="0"
+      aria-label="@(AriaLabel ?? Localizer["CopyText.ClickToCopy"])"
+      @onclick="HandleClickAsync"
+      @onkeydown="HandleKeyDownAsync"
+      @onmouseenter="HandleMouseEnter"
+      @onmouseleave="HandleMouseLeave"
+      @onfocus="HandleFocus"
+      @onblur="HandleBlur"
+      @attributes="AdditionalAttributes">
+
+    @ChildContent
+</span>
+
+@* Rendered through the portal rather than as a nested absolutely-positioned span, so an
+   ancestor with overflow: hidden|auto cannot clip it. Absolute positioning is still subject
+   to the overflow of its containing block — z-index does not exempt it — which is why the
+   tooltip disappeared inside scrollable containers. *@
+<BbFloatingPortal IsOpen="@isHovered"
+                  AnchorElement="@anchorRef"
+                  PortalId="@portalId"
+                  Side="PopoverSide.Top"
+                  Align="PopoverAlign.Center"
+                  Offset="8"
+                  Strategy="PositioningStrategy.Fixed"
+                  ZIndex="50">
+    <span aria-hidden="true"
+          data-state="open"
+          class="@TooltipCssClass">
+        <LucideIcon Name="@CurrentIconName" Class="@TooltipIconCssClass" />
+
+        <span class="@TooltipTextCssClass">@CurrentTooltipText</span>
+
+    </span>
+</BbFloatingPortal>

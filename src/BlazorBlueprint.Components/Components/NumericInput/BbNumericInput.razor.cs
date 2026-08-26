@@ -19,6 +19,7 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
     private string instanceId = Guid.NewGuid().ToString("N");
     private string? generatedId;
     private bool jsInitialized;
+    private bool lastWheelStepEnabled;
     private bool disposed;
     private string editingValue = string.Empty;
     private bool isEditing;
@@ -181,6 +182,16 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
     [Parameter]
     public int DebounceInterval { get; set; } = 500;
 
+    /// <summary>
+    /// Gets or sets whether scrolling the mouse wheel over the focused input steps the value.
+    /// Defaults to <c>false</c>: stepping has to call <c>preventDefault</c> on the wheel event,
+    /// which takes the scroll away from the page, so a long form would stop scrolling — and
+    /// silently change a number instead — whenever the pointer passed over a focused input.
+    /// Enable it where that trade is worth making, such as a compact numeric-only editor.
+    /// </summary>
+    [Parameter]
+    public bool EnableWheelStep { get; set; }
+
     /// <inheritdoc />
     protected override void OnParametersSet()
     {
@@ -199,6 +210,7 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
                 jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
                     "import", "./_content/BlazorBlueprint.Components/js/numeric-input.js");
                 dotNetRef = DotNetObjectReference.Create(this);
+                lastWheelStepEnabled = EnableWheelStep;
                 await jsModule.InvokeVoidAsync("initialize", inputRef, dotNetRef, instanceId, GetJsConfig());
                 jsInitialized = true;
             }
@@ -209,6 +221,24 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
             catch (InvalidOperationException)
             {
                 // JS interop not available during prerendering
+            }
+        }
+        else if (jsInitialized && jsModule != null && lastWheelStepEnabled != EnableWheelStep)
+        {
+            // Keep wheel stepping in sync when the parameter changes after the first render
+            lastWheelStepEnabled = EnableWheelStep;
+
+            try
+            {
+                await jsModule.InvokeVoidAsync("setWheelStepEnabled", instanceId, EnableWheelStep);
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+            catch (InvalidOperationException)
+            {
+                // JS interop not available
             }
         }
     }
@@ -223,7 +253,8 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         stepKeys = new[] { "ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End" },
         allowDecimal = IsFloatingPoint,
         allowNegative = AllowNegative,
-        decimalSeparator = CultureInfo.InvariantCulture.NumberFormat.NumberDecimalSeparator
+        decimalSeparator = CultureInfo.InvariantCulture.NumberFormat.NumberDecimalSeparator,
+        enableWheelStep = EnableWheelStep
     };
 
     private void NotifyFieldChanged() => validation.NotifyFieldChanged();
@@ -264,14 +295,17 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
     private static string InputMode => IsFloatingPoint ? "decimal" : "numeric";
 
     private string ContainerClass => ClassNames.cn(
-        "flex items-center",
+        // items-stretch, not items-center: the stepper column sizes itself from the row rather than
+        // from a height of its own, so it tracks whatever the input resolves to.
+        "flex items-stretch",
         ShowButtons ? "rounded-md" : null
     );
 
     private string CssClass => ClassNames.cn(
         "flex h-10 w-full border border-input bg-background px-3 py-2 text-base",
         "placeholder:text-muted-foreground",
-        ShowButtons ? "rounded-l-md focus-visible:outline-none" : "rounded-md focus-visible:outline-none",
+        ShowButtons ? "rounded-l-md" : "rounded-md",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "aria-[invalid=true]:border-destructive",
         "transition-colors",
@@ -280,10 +314,21 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         Class
     );
 
+    /// <summary>
+    /// Classes for the increment/decrement buttons.
+    /// </summary>
+    /// <remarks>
+    /// Each button takes half the stepper column via <c>flex-1</c> rather than a fixed height. It was
+    /// <c>h-5</c>, which summed across the two buttons to exactly the input's default <c>h-10</c> — so
+    /// they lined up until something changed the input's height, and sizing is done entirely through
+    /// <see cref="Class"/> since there is no size parameter. A consumer passing <c>h-8</c> got a 40px
+    /// stepper beside a 32px field, overhanging it at both ends with the rounded corners no longer
+    /// meeting the input's border. <c>min-h-0</c> lets them shrink past the icon's intrinsic height.
+    /// </remarks>
     private static string ButtonClass => ClassNames.cn(
-        "flex items-center justify-center w-8 h-5 border border-input bg-background",
+        "flex flex-1 min-h-0 items-center justify-center w-8 border border-input bg-background",
         "hover:bg-accent hover:text-accent-foreground",
-        "focus-visible:outline-none",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "first:border-b-0",
         "first:rounded-tr-md last:rounded-br-md",
@@ -486,6 +531,16 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         return TValue.TryParse(input, CultureInfo.InvariantCulture, out result);
     }
 
+    /// <summary>
+    /// Gets the underlying input element reference, e.g. for JS interop.
+    /// </summary>
+    public ElementReference Element => inputRef;
+
+    /// <summary>
+    /// Sets focus to the underlying input element.
+    /// </summary>
+    public ValueTask FocusAsync() => inputRef.FocusAsync();
+
     public async ValueTask DisposeAsync()
     {
         disposed = true;
@@ -497,7 +552,7 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
                 await jsModule.InvokeVoidAsync("dispose", instanceId);
                 await jsModule.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }

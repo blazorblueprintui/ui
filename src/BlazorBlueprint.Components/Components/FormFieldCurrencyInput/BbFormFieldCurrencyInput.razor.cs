@@ -100,6 +100,13 @@ public partial class BbFormFieldCurrencyInput : FormFieldBase
     public int DebounceInterval { get; set; } = 500;
 
     /// <summary>
+    /// Gets or sets whether scrolling the mouse wheel over the focused input steps the value.
+    /// Defaults to <c>false</c>; see <see cref="BbCurrencyInput.EnableWheelStep"/>.
+    /// </summary>
+    [Parameter]
+    public bool EnableWheelStep { get; set; }
+
+    /// <summary>
     /// Gets or sets additional CSS classes applied to the inner CurrencyInput element.
     /// </summary>
     [Parameter]

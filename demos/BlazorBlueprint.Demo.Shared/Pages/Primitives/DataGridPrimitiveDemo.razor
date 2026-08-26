@@ -275,7 +275,8 @@
                             OnSelectionChange="@HandleSelectionChange" AriaLabel="Selectable people grid" Class="w-full caption-bottom text-sm">
                     <BbDataGridHeader Class="[&_tr]:border-b">
                         <tr class="border-b transition-colors hover:bg-muted/50">
-                            <BbDataGridHeaderCell TData="Person" Class="h-12 w-12 px-4">
+                            @* AriaLabel names a header cell whose content carries no text of its own *@
+                            <BbDataGridHeaderCell TData="Person" AriaLabel="Select" Class="h-12 w-12 px-4">
                                 <input type="checkbox"
                                        checked="@selectAllChecked"
                                        @onchange="@HandleSelectAllChanged"
@@ -961,6 +962,9 @@
                 </ApiParameter>
                 <ApiParameter Name="Reorderable" Type="bool" Default="false">
                     Whether this column can be reordered. When true, renders <code>draggable="true"</code> and <code>data-column-id</code> on the header cell.
+                </ApiParameter>
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">
+                    Explicit accessible name for the header cell, rendered as <code>aria-label</code> on the <code>&lt;th&gt;</code>. Leave null whenever the cell's own content already reads as text — with no label the cell is named from that content, which is what an ordinary text header wants. Set it for a header that carries no text of its own, such as an icon-only header, which would otherwise leave the column unnamed. Because <code>aria-label</code> replaces content rather than adding to it, a value set here silences any text the cell does render.
                 </ApiParameter>
                 <ApiParameter Name="Class" Type="string?">
                     Additional CSS classes for the header cell.

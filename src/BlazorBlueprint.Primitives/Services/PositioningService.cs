@@ -88,6 +88,13 @@ public class PositioningService : IPositioningService, IAsyncDisposable
     }
 
     /// <inheritdoc />
+    public async Task HidePositionAsync(ElementReference floating)
+    {
+        var module = await GetModuleAsync();
+        await module.InvokeVoidAsync("hidePosition", floating);
+    }
+
+    /// <inheritdoc />
     public async Task<IAsyncDisposable> AutoUpdateAsync(
         ElementReference reference,
         ElementReference floating,
@@ -132,7 +139,7 @@ public class PositioningService : IPositioningService, IAsyncDisposable
             {
                 await _module.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }

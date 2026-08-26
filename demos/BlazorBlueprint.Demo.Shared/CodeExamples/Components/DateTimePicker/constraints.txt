@@ -1,0 +1,14 @@
+<!-- Next 30 days only -->
+<BbDateTimePicker @bind-Value="_rangeValue"
+                  MinDate="@DateTime.Today"
+                  MaxDate="@DateTime.Today.AddDays(30)" />
+
+<!-- No weekends -->
+<BbDateTimePicker @bind-Value="_noWeekendsValue" DisabledDates="@IsWeekend" />
+
+@code {
+    private bool IsWeekend(DateTime date)
+    {
+        return date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday;
+    }
+}

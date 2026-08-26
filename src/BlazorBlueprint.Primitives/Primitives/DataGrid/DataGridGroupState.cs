@@ -24,6 +24,12 @@ public class DataGridGroupState
     public IReadOnlyCollection<object> CollapsedKeys => collapsedKeys;
 
     /// <summary>
+    /// Gets a version counter that increments whenever the active group definition changes.
+    /// Used by the grid component to detect grouping changes made directly against this state.
+    /// </summary>
+    public int Version { get; private set; }
+
+    /// <summary>
     /// Sets the active group definition.
     /// </summary>
     /// <param name="group">The group definition, or null to clear grouping.</param>
@@ -31,6 +37,7 @@ public class DataGridGroupState
     {
         ActiveGroup = group;
         collapsedKeys.Clear();
+        Version++;
     }
 
     /// <summary>
@@ -40,6 +47,7 @@ public class DataGridGroupState
     {
         ActiveGroup = null;
         collapsedKeys.Clear();
+        Version++;
     }
 
     /// <summary>
@@ -85,5 +93,6 @@ public class DataGridGroupState
     {
         collapsedKeys.Clear();
         ActiveGroup = null;
+        Version++;
     }
 }

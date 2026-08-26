@@ -30,9 +30,52 @@
 
     /// <summary>
     /// Default open state for the sidebar on desktop.
+    /// Used when <see cref="Open"/> is not bound; ignored in controlled mode.
     /// </summary>
     [Parameter]
     public bool DefaultOpen { get; set; } = true;
+
+    /// <summary>
+    /// The desktop open state, for controlled usage.
+    /// Leave <c>null</c> (the default) and the provider owns the state itself, seeded from
+    /// <see cref="DefaultOpen"/> and persisted through <see cref="CookieKey"/>. Bind it —
+    /// typically with <c>@bind-Open</c> — and your value becomes the source of truth instead.
+    /// <para>
+    /// Controlled mode turns cookie persistence off, both the read on startup and the write on
+    /// change: with the state owned outside the component, a cookie would compete with the bound
+    /// value on reload rather than restore it. Persist it yourself if you need it to survive.
+    /// </para>
+    /// <para>
+    /// This is the desktop state specifically, matching <see cref="DefaultOpen"/>. The mobile
+    /// drawer is separate — see <see cref="OpenMobile"/>.
+    /// </para>
+    /// </summary>
+    [Parameter]
+    public bool? Open { get; set; }
+
+    /// <summary>
+    /// Invoked when the desktop open state changes, whether from the trigger, the rail, the
+    /// Ctrl/Cmd + B shortcut or <see cref="SidebarContext.SetOpen"/>.
+    /// Use with <c>@bind-Open</c> for two-way binding.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OpenChanged { get; set; }
+
+    /// <summary>
+    /// The mobile drawer open state, for controlled usage.
+    /// Independent of <see cref="Open"/>: below the mobile breakpoint the sidebar renders as a
+    /// drawer with its own open state, so binding one does not bind the other. Leave <c>null</c>
+    /// to let the provider own it.
+    /// </summary>
+    [Parameter]
+    public bool? OpenMobile { get; set; }
+
+    /// <summary>
+    /// Invoked when the mobile drawer open state changes.
+    /// Use with <c>@bind-OpenMobile</c> for two-way binding.
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OpenMobileChanged { get; set; }
 
     /// <summary>
     /// The sidebar variant/style.
@@ -52,6 +95,14 @@
     /// </summary>
     [Parameter]
     public string? CookieKey { get; set; } = "sidebar:state";
+
+    /// <summary>
+    /// Whether the Ctrl/Cmd + B keyboard shortcut toggles the sidebar.
+    /// Set to false when the shortcut conflicts with page content, such as a
+    /// rich-text editor where Ctrl/Cmd + B means bold.
+    /// </summary>
+    [Parameter]
+    public bool EnableToggleShortcut { get; set; } = true;
 
     /// <summary>
     /// CSS class for controlling the container height.

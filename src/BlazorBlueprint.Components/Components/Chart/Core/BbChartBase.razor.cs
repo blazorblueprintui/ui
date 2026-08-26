@@ -265,7 +265,7 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
                 await jsModule.InvokeVoidAsync("dispose", chartId);
                 await jsModule.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Circuit disconnected, ignore
             }

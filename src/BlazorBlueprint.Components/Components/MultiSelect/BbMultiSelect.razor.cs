@@ -771,7 +771,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
             {
                 await _multiSelectModule.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }
@@ -784,7 +784,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
             {
                 await _elementUtilsModule.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }
@@ -842,7 +842,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// </summary>
     private string TriggerCssClass => ClassNames.cn(
         "inline-flex items-center justify-between rounded-md text-sm font-medium",
-        "transition-colors focus-visible:outline-none",
+        "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         "disabled:opacity-50 disabled:pointer-events-none",
         "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         _isOpen ? ActiveClass : null,
@@ -871,7 +871,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// Gets the CSS class for the tag remove button.
     /// </summary>
     private static string TagRemoveButtonCssClass =>
-        "ml-0.5 rounded-full outline-none hover:bg-secondary-foreground/20";
+        "ml-0.5 rounded-full outline-none hover:bg-secondary-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
     /// <summary>
     /// Gets the CSS class for the dropdown item.

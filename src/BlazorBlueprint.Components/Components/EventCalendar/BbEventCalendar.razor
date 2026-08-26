@@ -1,0 +1,203 @@
+@namespace BlazorBlueprint.Components
+@typeparam TEvent
+@using BlazorBlueprint.Icons.Lucide.Components
+@inject IBbLocalizer Localizer
+
+@*
+    Event calendar - displays events in a month grid, week columns, or an agenda list.
+*@
+
+<div class="@CssClass" @attributes="AdditionalAttributes">
+    @* Header: navigation, title, view switcher *@
+    <div class="flex flex-wrap items-center justify-between gap-2 pb-4">
+        <div class="flex items-center gap-1">
+            <BbButton Variant="ButtonVariant.Outline"
+                      Size="ButtonSize.Icon"
+                      Class="h-8 w-8"
+                      OnClick="@NavigatePreviousAsync"
+                      AriaLabel="@Localizer["EventCalendar.PreviousPeriod"]">
+                <LucideIcon Name="chevron-left" Class="h-4 w-4" />
+            </BbButton>
+            <BbButton Variant="ButtonVariant.Outline"
+                      Size="ButtonSize.Small"
+                      Class="h-8"
+                      OnClick="@NavigateTodayAsync">
+                @Localizer["EventCalendar.Today"]
+            </BbButton>
+            <BbButton Variant="ButtonVariant.Outline"
+                      Size="ButtonSize.Icon"
+                      Class="h-8 w-8"
+                      OnClick="@NavigateNextAsync"
+                      AriaLabel="@Localizer["EventCalendar.NextPeriod"]">
+                <LucideIcon Name="chevron-right" Class="h-4 w-4" />
+            </BbButton>
+        </div>
+        <div class="text-base font-semibold" aria-live="polite">@HeaderTitle</div>
+        <div class="inline-flex items-center gap-0.5 rounded-md border border-border bg-card p-0.5"
+             role="group"
+             aria-label="@Localizer["EventCalendar.ViewSwitcher"]">
+            <button type="button"
+                    class="@GetViewSwitchClasses(EventCalendarView.Month)"
+                    aria-pressed="@(View == EventCalendarView.Month ? "true" : "false")"
+                    @onclick="@(() => SetViewAsync(EventCalendarView.Month))">
+                @Localizer["EventCalendar.Month"]
+            </button>
+            <button type="button"
+                    class="@GetViewSwitchClasses(EventCalendarView.Week)"
+                    aria-pressed="@(View == EventCalendarView.Week ? "true" : "false")"
+                    @onclick="@(() => SetViewAsync(EventCalendarView.Week))">
+                @Localizer["EventCalendar.Week"]
+            </button>
+            <button type="button"
+                    class="@GetViewSwitchClasses(EventCalendarView.Agenda)"
+                    aria-pressed="@(View == EventCalendarView.Agenda ? "true" : "false")"
+                    @onclick="@(() => SetViewAsync(EventCalendarView.Agenda))">
+                @Localizer["EventCalendar.Agenda"]
+            </button>
+        </div>
+    </div>
+
+    @if (View == EventCalendarView.Month)
+    {
+        @* Month view: six-week grid with event chips per day *@
+        <div role="grid" aria-label="@HeaderTitle" class="grid gap-px overflow-hidden rounded-lg border border-border bg-border">
+            <div role="row" class="grid grid-cols-7 gap-px">
+                @foreach (var dayName in DayNames)
+                {
+                    <div role="columnheader" class="bg-card px-2 py-1.5 text-center text-xs font-medium text-muted-foreground">
+                        @dayName
+                    </div>
+                }
+            </div>
+            @foreach (var week in MonthWeeks)
+            {
+                <div role="row" class="grid grid-cols-7 gap-px">
+                    @foreach (var day in week)
+                    {
+                        var dayEvents = GetEventsForDay(day);
+                        var hiddenCount = dayEvents.Count - MaxEventsPerDay;
+                        <div role="gridcell" aria-label="@day.ToString("D", culture)" class="@GetMonthCellClasses(day)">
+                            <button type="button"
+                                    class="@GetDayNumberClasses(day)"
+                                    aria-label="@day.ToString("D", culture)"
+                                    @onclick="@(() => HandleDateClick(day))">
+                                @day.Day
+                            </button>
+                            @if (dayEvents.Count > 0)
+                            {
+                                <div class="mt-1 space-y-0.5">
+                                    @foreach (var item in dayEvents.Take(MaxEventsPerDay))
+                                    {
+                                        <button type="button"
+                                                class="@GetEventChipClasses(item)"
+                                                title="@EventTitle(item)"
+                                                @onclick="@(() => HandleEventClick(item))">
+                                            @if (EventTemplate is not null)
+                                            {
+                                                @EventTemplate(item)
+                                            }
+                                            else
+                                            {
+                                                <span class="block truncate">@EventTitle(item)</span>
+                                            }
+                                        </button>
+                                    }
+                                    @if (hiddenCount > 0)
+                                    {
+                                        <button type="button"
+                                                class="block w-full truncate rounded px-1.5 py-0.5 text-left text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                @onclick="@(() => ShowMoreAsync(day))">
+                                            @Localizer["EventCalendar.MoreEvents", hiddenCount]
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+    else if (View == EventCalendarView.Week)
+    {
+        @* Week view: seven day columns with stacked events in start order *@
+        <div role="grid" aria-label="@HeaderTitle" class="grid gap-px overflow-hidden rounded-lg border border-border bg-border">
+            <div role="row" class="grid grid-cols-7 gap-px">
+                @foreach (var day in WeekDays)
+                {
+                    <div role="columnheader" class="bg-card p-2 text-center">
+                        <button type="button"
+                                class="mx-auto flex flex-col items-center gap-0.5 rounded-md px-2 py-0.5 hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                aria-label="@day.ToString("D", culture)"
+                                @onclick="@(() => HandleDateClick(day))">
+                            <span class="text-xs font-medium text-muted-foreground">@culture.DateTimeFormat.GetAbbreviatedDayName(day.DayOfWeek)</span>
+                            <span class="@GetDayNumberClasses(day)">@day.Day</span>
+                        </button>
+                    </div>
+                }
+            </div>
+            <div role="row" class="grid grid-cols-7 gap-px">
+                @foreach (var day in WeekDays)
+                {
+                    <div role="gridcell" aria-label="@day.ToString("D", culture)" class="min-h-48 space-y-1 bg-card p-1.5">
+                        @foreach (var item in GetEventsForDay(day))
+                        {
+                            <button type="button"
+                                    class="@GetEventChipClasses(item)"
+                                    title="@EventTitle(item)"
+                                    @onclick="@(() => HandleEventClick(item))">
+                                @if (EventTemplate is not null)
+                                {
+                                    @EventTemplate(item)
+                                }
+                                else
+                                {
+                                    <span class="block text-[10px] leading-tight opacity-75">@GetEventTimeLabel(item)</span>
+                                    <span class="block truncate">@EventTitle(item)</span>
+                                }
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        @* Agenda view: the current month's events grouped chronologically by day *@
+        <div class="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card text-card-foreground">
+            @if (!AgendaDays.Any())
+            {
+                <p class="p-6 text-center text-sm text-muted-foreground">@Localizer["EventCalendar.NoEvents"]</p>
+            }
+            @foreach (var day in AgendaDays)
+            {
+                <div class="p-4">
+                    <h3 class="@(day == DateTime.Today ? "text-sm font-semibold text-primary" : "text-sm font-semibold")">
+                        @day.ToString("D", culture)
+                    </h3>
+                    <ul class="mt-2 space-y-1" role="list">
+                        @foreach (var item in GetEventsForDay(day))
+                        {
+                            <li>
+                                <button type="button"
+                                        class="@ClassNames.cn("flex w-full items-center gap-3 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", EventClass?.Invoke(item))"
+                                        @onclick="@(() => HandleEventClick(item))">
+                                    <span class="w-28 shrink-0 text-xs text-muted-foreground">@GetEventTimeLabel(item)</span>
+                                    @if (EventTemplate is not null)
+                                    {
+                                        @EventTemplate(item)
+                                    }
+                                    else
+                                    {
+                                        <span class="truncate font-medium">@EventTitle(item)</span>
+                                    }
+                                </button>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+    }
+</div>

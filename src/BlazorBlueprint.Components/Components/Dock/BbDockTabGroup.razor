@@ -1,0 +1,179 @@
+@namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
+@inject IBbLocalizer Localizer
+
+<div class="@RootClass" style="@ConstraintStyle" data-dock-group="@GroupNode.Id">
+    <div class="@StripClass"
+         @onpointerdown="HandleStripPointerDown">
+        <div @ref="stripRef"
+             role="tablist"
+             aria-orientation="horizontal"
+             class="flex min-w-0 flex-1 items-stretch overflow-hidden bb-dock-tabstrip"
+             data-dock-tabstrip="@GroupNode.Id">
+            @foreach (var panelId in GroupNode.PanelIds)
+            {
+                var panel = Dock.GetPanel(panelId);
+                if (panel is null)
+                {
+                    continue;
+                }
+
+                var isActive = GroupNode.ActivePanelId == panelId;
+                var isHidden = overflowPanelIds.Contains(panelId);
+                <div role="tab"
+                     id="@TabDomId(panel.Id)"
+                     aria-selected="@(isActive ? "true" : "false")"
+                     aria-controls="@PanelDomId(panel.Id)"
+                     tabindex="@(isActive ? 0 : -1)"
+                     class="@TabClass(isActive, isHidden)"
+                     title="@panel.Title"
+                     data-dock-tab="@panel.Id"
+                     @ref="tabRefs[panel.Id]"
+                     @onkeydown="e => HandleTabKeyDown(panel, e)"
+                     @onpointerdown="e => HandleTabPointerDown(panel, e)"
+                     @onpointerdown:stopPropagation="true"
+                     @onclick="() => Dock.ActivatePanel(GroupNode, panel.Id)"
+                     @oncontextmenu="e => HandleTabContextMenu(panel, e)"
+                     @oncontextmenu:preventDefault="true"
+                     @oncontextmenu:stopPropagation="true">
+                    @if (panel.Icon is not null)
+                    {
+                        <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center">@panel.Icon</span>
+                    }
+                    <span class="truncate">@panel.Title</span>
+                    @if (Dock.IsPinned(panel.Id))
+                    {
+                        <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center" aria-hidden="true">
+                            <LucideIcon Name="pin" Size="11" />
+                        </span>
+                    }
+                    @if (panel.CanClose)
+                    {
+                        <button type="button"
+                                class="@CloseClass()"
+                                aria-label="@Localizer["Dock.CloseTab", panel.Title]"
+                                title="@Localizer["Dock.CloseTab", panel.Title]"
+                                @onclick="() => Dock.ClosePanelAsync(panel.Id)"
+                                @onclick:stopPropagation="true"
+                                @onpointerdown:stopPropagation="true">
+                            <LucideIcon Name="x" Size="11" />
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+
+        @if (overflowPanelIds.Count > 0 || !IsFloating)
+        {
+            <div class="flex shrink-0 items-center gap-0.5 px-1" @onpointerdown:stopPropagation="true">
+                @if (overflowPanelIds.Count > 0)
+                {
+                    <BbDropdownMenu>
+                        <BbDropdownMenuTrigger AsChild="false"
+                                               Class="inline-flex h-6 items-center justify-center gap-0.5 rounded-sm px-1 text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                                               aria-label="@Localizer["Dock.ShowHiddenTabs", overflowPanelIds.Count]"
+                                               title="@Localizer["Dock.ShowHiddenTabs", overflowPanelIds.Count]">
+                            <LucideIcon Name="ellipsis" Size="14" />
+                            <span class="text-[10px] font-medium leading-none">@overflowPanelIds.Count</span>
+                        </BbDropdownMenuTrigger>
+                        <BbDropdownMenuContent Align="PopoverAlign.End" Class="min-w-[10rem] max-w-[16rem]">
+                            @foreach (var hiddenId in overflowPanelIds)
+                            {
+                                var hiddenPanel = Dock.GetPanel(hiddenId);
+                                if (hiddenPanel is null)
+                                {
+                                    continue;
+                                }
+
+                                <BbDropdownMenuItem Class="pr-1" OnClick="() => Dock.ActivatePanel(GroupNode, hiddenPanel.Id)">
+                                    <div class="flex w-full items-center gap-2">
+                                        @if (hiddenPanel.Icon is not null)
+                                        {
+                                            <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center">@hiddenPanel.Icon</span>
+                                        }
+                                        <span class="truncate">@hiddenPanel.Title</span>
+                                        @if (hiddenPanel.CanClose)
+                                        {
+                                            <button type="button"
+                                                    class="ml-auto inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                                                    aria-label="@Localizer["Dock.CloseTab", hiddenPanel.Title]"
+                                                    title="@Localizer["Dock.CloseTab", hiddenPanel.Title]"
+                                                    @onclick="() => Dock.ClosePanelAsync(hiddenPanel.Id)"
+                                                    @onclick:stopPropagation="true">
+                                                <LucideIcon Name="x" Size="11" />
+                                            </button>
+                                        }
+                                    </div>
+                                </BbDropdownMenuItem>
+                            }
+                        </BbDropdownMenuContent>
+                    </BbDropdownMenu>
+                }
+
+                @if (!IsFloating)
+                {
+                    <button type="button"
+                            class="inline-flex h-6 w-6 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                            aria-label="@(IsMaximized ? Localizer["Dock.RestorePanelGroup"] : Localizer["Dock.MaximizePanelGroup"])"
+                            title="@(IsMaximized ? Localizer["Dock.RestorePanelGroup"] : Localizer["Dock.MaximizePanelGroup"])"
+                            @onclick="() => Dock.ToggleMaximize(GroupNode)"
+                            @onpointerdown:stopPropagation="true">
+                        <LucideIcon Name="@(IsMaximized ? "minimize-2" : "maximize-2")" Size="14" />
+                    </button>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="relative min-h-0 flex-1 overflow-auto bg-background">
+        @foreach (var panelId in GroupNode.PanelIds)
+        {
+            var panel = Dock.GetPanel(panelId);
+            if (panel is null)
+            {
+                continue;
+            }
+
+            var isActive = GroupNode.ActivePanelId == panelId;
+            <div role="tabpanel"
+                 id="@PanelDomId(panelId)"
+                 aria-labelledby="@TabDomId(panelId)"
+                 tabindex="0"
+                 class="@(isActive ? "h-full" : "hidden")"
+                 @key="panelId">
+                @panel.ChildContent
+            </div>
+        }
+    </div>
+
+    <BbContextMenu @ref="tabMenu">
+        <BbContextMenuContent>
+            @if (contextPanel is not null)
+            {
+                var panel = contextPanel;
+                var pinned = Dock.IsPinned(panel.Id);
+                <BbContextMenuItem Disabled="@(!panel.CanClose)" OnClick="() => Dock.ClosePanelAsync(panel.Id)">
+                    <Icon><LucideIcon Name="x" Size="16" /></Icon>
+                    <ChildContent>@Localizer["Dock.Close"]</ChildContent>
+                </BbContextMenuItem>
+                <BbContextMenuItem Disabled="@(!GroupNode.PanelIds.Any(id => id != panel.Id && Dock.GetPanel(id)?.CanClose == true))" OnClick="() => Dock.CloseOtherPanelsInGroupAsync(panel.Id)">
+                    <Icon><LucideIcon Name="list-x" Size="16" /></Icon>
+                    <ChildContent>@Localizer["Dock.CloseOtherTabs"]</ChildContent>
+                </BbContextMenuItem>
+                <BbContextMenuItem Disabled="@(!GroupNode.PanelIds.Any(id => !Dock.IsPinned(id) && Dock.GetPanel(id)?.CanClose == true))" OnClick="() => Dock.CloseAllButPinnedPanelsInGroupAsync(panel.Id)">
+                    <Icon><LucideIcon Name="pin" Size="16" /></Icon>
+                    <ChildContent>@Localizer["Dock.CloseAllButPinned"]</ChildContent>
+                </BbContextMenuItem>
+                <BbContextMenuItem Disabled="@(GroupNode.PanelIds.All(id => Dock.GetPanel(id)?.CanClose != true))" OnClick="() => Dock.CloseAllPanelsInGroupAsync(panel.Id)">
+                    <Icon><LucideIcon Name="circle-x" Size="16" /></Icon>
+                    <ChildContent>@Localizer["Dock.CloseAllTabs"]</ChildContent>
+                </BbContextMenuItem>
+                <BbContextMenuSeparator />
+                <BbContextMenuItem OnClick="() => Dock.TogglePinAsync(panel.Id)">
+                    <Icon><LucideIcon Name="@(pinned ? "pin-off" : "pin")" Size="16" /></Icon>
+                    <ChildContent>@(pinned ? Localizer["Dock.UnpinTab"] : Localizer["Dock.PinTab"])</ChildContent>
+                </BbContextMenuItem>
+            }
+        </BbContextMenuContent>
+    </BbContextMenu>
+</div>

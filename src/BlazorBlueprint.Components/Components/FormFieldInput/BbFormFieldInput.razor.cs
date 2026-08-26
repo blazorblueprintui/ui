@@ -159,6 +159,11 @@ public partial class BbFormFieldInput<TValue> : FormFieldBase
     /// </summary>
     public BbInputField<TValue>? InputFieldRef => _inputRef;
 
+    /// <summary>
+    /// Sets focus to the underlying input element.
+    /// </summary>
+    public ValueTask FocusAsync() => _inputRef?.FocusAsync() ?? ValueTask.CompletedTask;
+
     /// <inheritdoc />
     protected override bool IsInvalid => _hasError || base.IsInvalid;
 

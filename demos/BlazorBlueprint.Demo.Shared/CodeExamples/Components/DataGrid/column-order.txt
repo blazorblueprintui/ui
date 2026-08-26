@@ -1,0 +1,18 @@
+@* SalaryColumn.razor — a column wrapped in a reusable component *@
+<BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)"
+                          Format="C0" Sortable Order="@Order" />
+
+@code {
+    [Parameter]
+    public int? Order { get; set; }
+}
+
+@* The grid: SalaryColumn is declared third, and Order="2" keeps it there *@
+<BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
+    <Columns>
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Sortable />
+        <SalaryColumn Order="2" />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+    </Columns>
+</BbDataGrid>

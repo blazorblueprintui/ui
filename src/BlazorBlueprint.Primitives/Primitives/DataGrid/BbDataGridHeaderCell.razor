@@ -4,6 +4,7 @@
 <th role="columnheader"
     tabindex="@(IsSortable ? 0 : -1)"
     aria-sort="@GetAriaSort()"
+    aria-label="@EffectiveAriaLabel"
     class="@Class"
     data-column-id="@ColumnId"
     draggable="@(IsReorderable ? "true" : null)"
@@ -43,6 +44,22 @@
     public RenderFragment? ChildContent { get; set; }
 
     /// <summary>
+    /// Explicit accessible name for the header cell, rendered as <c>aria-label</c> on the
+    /// <c>&lt;th&gt;</c>. Leave this null (the default) whenever <see cref="ChildContent"/> already
+    /// renders readable text: with no <c>aria-label</c> the cell is named from its own content,
+    /// which is the desired behaviour for an ordinary text header.
+    /// </summary>
+    /// <remarks>
+    /// Set this only for a header whose content carries no text of its own — an icon-only header,
+    /// for instance — which would otherwise leave the column unnamed for assistive technology.
+    /// Because <c>aria-label</c> <em>replaces</em> the element's content as the accessible name,
+    /// setting it on a header that does render text will silence that text, so a value supplied
+    /// here should match what a sighted user understands the column to be.
+    /// </remarks>
+    [Parameter]
+    public string? AriaLabel { get; set; }
+
+    /// <summary>
     /// Additional CSS classes.
     /// </summary>
     [Parameter]
@@ -53,6 +70,8 @@
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string? EffectiveAriaLabel => string.IsNullOrWhiteSpace(AriaLabel) ? null : AriaLabel;
 
     private bool IsSortable => Sortable && !string.IsNullOrEmpty(ColumnId);
 

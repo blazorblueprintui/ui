@@ -1,0 +1,18 @@
+<BbEventCalendar Items="events"
+                 EventStart="e => e.Start"
+                 EventEnd="e => e.End"
+                 EventTitle="e => e.Title"
+                 @bind-View="currentView"
+                 @bind-CurrentDate="currentDate"
+                 OnDateClick="d => lastClickedDate = d"
+                 OnViewRangeChanged="r => visibleRange = r" />
+
+<p>Active view: @currentView</p>
+<p>Visible range: @visibleRange.Start.ToShortDateString() – @visibleRange.End.ToShortDateString()</p>
+
+@code {
+    private EventCalendarView currentView = EventCalendarView.Week;
+    private DateTime currentDate = DateTime.Today;
+    private DateTime? lastClickedDate;
+    private EventCalendarRange visibleRange;
+}

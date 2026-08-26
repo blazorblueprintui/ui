@@ -153,6 +153,50 @@
         <CodeBlock Source="Components/Calendar/auto-focus.txt" />
     </div>
 
+    <!-- Custom Day Content -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Day Content</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code>DayTemplate</code> to render custom content inside each day cell. The template
+                context exposes <code>Date</code>, <code>IsSelected</code>, <code>IsDisabled</code>,
+                <code>IsOutsideMonth</code> and <code>IsToday</code>. Here, days with events get a dot marker.
+            </p>
+        </div>
+        <div class="border rounded-lg w-fit">
+            <BbCalendar @bind-Selected="_dayTemplateDate">
+                <DayTemplate>
+                    <div class="relative flex h-full w-full items-center justify-center">
+                        @context.Date.Day
+                        @if (HasEvent(context.Date))
+                        {
+                            <span class="absolute bottom-1 h-1 w-1 rounded-full @(context.IsSelected ? "bg-primary-foreground" : "bg-primary")"></span>
+                        }
+                    </div>
+                </DayTemplate>
+            </BbCalendar>
+        </div>
+        <p class="text-sm text-muted-foreground">
+            Selected: @(_dayTemplateDate?.ToString("MMMM d, yyyy") ?? "None")
+        </p>
+        <CodeBlock Source="Components/Calendar/day-template.txt" />
+    </div>
+
+    <!-- Per-Day Styling -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Per-Day Styling</h2>
+            <p class="text-sm text-muted-foreground">
+                Use <code>DayClassFunc</code> to apply additional CSS classes to individual day buttons.
+                Here, weekends are tinted with the destructive color.
+            </p>
+        </div>
+        <div class="border rounded-lg w-fit">
+            <BbCalendar @bind-Selected="_dayClassDate" DayClassFunc="@GetWeekendDayClass" />
+        </div>
+        <CodeBlock Source="Components/Calendar/day-class-func.txt" />
+    </div>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>Uses role="grid" for the calendar table</AccessibilityItem>
@@ -211,6 +255,12 @@
                 <ApiParameter Name="AutoFocus" Type="bool" Default="false">
                     Whether to move keyboard focus to the active day when the calendar first renders, so arrow-key navigation works immediately. Useful for calendars shown in a popover or dialog.
                 </ApiParameter>
+                <ApiParameter Name="DayTemplate" Type="RenderFragment&lt;CalendarDayContext&gt;?" Default="null">
+                    Template for rendering custom content inside each day button. The context exposes Date, IsSelected, IsDisabled, IsOutsideMonth, IsToday and IsInRange. When null, the day number is rendered.
+                </ApiParameter>
+                <ApiParameter Name="DayClassFunc" Type="Func&lt;DateTime, string?&gt;?" Default="null">
+                    Function returning additional CSS classes for a specific day button, composed with the built-in day classes and DayClass.
+                </ApiParameter>
                 <ApiParameter Name="OnSelect" Type="EventCallback&lt;DateTime&gt;">
                     Callback when a date is selected.
                 </ApiParameter>
@@ -244,6 +294,16 @@
     private DateTime? _mondayStart;
     private DateTime? _autoFocusDate;
     private bool _showAutoFocusCalendar;
+    private DateTime? _dayTemplateDate;
+    private DateTime? _dayClassDate;
+
+    private static readonly HashSet<int> EventDays = new() { 3, 8, 12, 17, 21, 26 };
+
+    private bool HasEvent(DateTime date) =>
+        date.Month == DateTime.Today.Month && date.Year == DateTime.Today.Year && EventDays.Contains(date.Day);
+
+    private string? GetWeekendDayClass(DateTime date) =>
+        date.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday ? "text-destructive" : null;
 
     private DateTime _minDate = DateTime.Today;
     private DateTime _maxDate = DateTime.Today.AddDays(30);

@@ -1,0 +1,21 @@
+name: Remove "working on it" label on close
+
+on:
+  issues:
+    types: [closed]
+
+permissions:
+  issues: write
+
+jobs:
+  remove-label:
+    if: contains(github.event.issue.labels.*.name, 'working on it')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove the label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue edit "${{ github.event.issue.number }}" \
+            --repo "${{ github.repository }}" \
+            --remove-label "working on it"

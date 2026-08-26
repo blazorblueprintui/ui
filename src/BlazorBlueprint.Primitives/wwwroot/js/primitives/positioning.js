@@ -180,6 +180,30 @@ export function applyPosition(floating, position, makeVisible = false) {
  * @param {Object} options - Positioning options
  * @returns {Object} Disposable object with id and apply() method for cleanup
  */
+/**
+ * Returns a floating element to its hidden, off-screen state.
+ *
+ * The counterpart to applyPosition(..., makeVisible = true). That call writes position,
+ * visibility, opacity and pointer-events straight onto the element — several with
+ * `!important` — which takes ownership of the style attribute away from Blazor. Blazor
+ * diffs against what it last *rendered*, not what the DOM holds, so a component whose
+ * closed markup is byte-identical to its pre-open markup emits no style update on close
+ * and the visible values written here would survive indefinitely.
+ *
+ * Mirrors the hidden style in BbFloatingPortal.GetInitialStyle().
+ *
+ * @param {HTMLElement} floating - The floating element to hide.
+ */
+export function hidePosition(floating) {
+    if (!floating) return;
+
+    floating.style.setProperty('visibility', 'hidden', 'important');
+    floating.style.setProperty('opacity', '0', 'important');
+    floating.style.setProperty('pointer-events', 'none', 'important');
+    floating.style.top = '-9999px';
+    floating.style.left = '-9999px';
+}
+
 export async function autoUpdate(reference, floating, options = {}) {
     try {
         const lib = await loadFloatingUI();

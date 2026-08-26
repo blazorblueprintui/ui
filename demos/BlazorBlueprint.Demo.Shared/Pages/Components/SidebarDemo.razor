@@ -25,7 +25,7 @@
             <li>Collapsible with icon-only mode</li>
             <li>Three variants: Sidebar (default), Floating, and Inset</li>
             <li>State persistence via cookies</li>
-            <li>Keyboard shortcuts (Ctrl/Cmd + B to toggle)</li>
+            <li>Keyboard shortcuts (Ctrl/Cmd + B to toggle, opt-out via EnableToggleShortcut)</li>
             <li>Automatic tooltips in collapsed state</li>
             <li>Flexible composition with menu groups, submenus, and actions</li>
             <li>Full shadcn/ui compatibility</li>
@@ -1216,6 +1216,103 @@
         <CodeBlock Source="Components/Sidebar/three-level-nested.txt" />
     </div>
 
+    <!-- Toggle Shortcut Example -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">Disabling the Keyboard Shortcut</h2>
+        <p class="text-muted-foreground">
+            <BbKbd>Ctrl+B</BbKbd> / <BbKbd>Cmd+B</BbKbd> toggles the sidebar by default. Set
+            <code class="text-sm">EnableToggleShortcut="false"</code> when those keys conflict with the page,
+            such as a rich-text editor where they mean bold. The parameter is reactive, so it can be bound to state.
+        </p>
+
+        <div class="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+            <span class="text-sm font-medium">EnableToggleShortcut:</span>
+            <div class="flex items-center gap-2">
+                <button
+                    @onclick="() => shortcutEnabled = true"
+                    class="@(shortcutEnabled ? "bg-primary text-primary-foreground" : "bg-background text-foreground") px-3 py-1.5 rounded-md text-sm font-medium transition-colors hover:opacity-90">
+                    true
+                </button>
+                <button
+                    @onclick="() => shortcutEnabled = false"
+                    class="@(!shortcutEnabled ? "bg-primary text-primary-foreground" : "bg-background text-foreground") px-3 py-1.5 rounded-md text-sm font-medium transition-colors hover:opacity-90">
+                    false
+                </button>
+            </div>
+            <span class="text-xs text-muted-foreground ml-auto">Toggle, then press Ctrl/Cmd + B</span>
+        </div>
+
+        <div class="border rounded-lg p-6 bg-background">
+            <div class="h-[600px] w-full border rounded-lg overflow-hidden bg-background">
+                <BbSidebarProvider EnableToggleShortcut="@shortcutEnabled" HeightClass="h-full">
+                    <div class="flex h-full w-full">
+                        <BbSidebar Collapsible="@isBasicCollapsible">
+                            <BbSidebarHeader>
+                                <BbSidebarHeaderContent>
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                                        <LucideIcon Name="keyboard" Size="16" />
+                                    </div>
+                                    <BbSidebarHeaderInfo>
+                                        <span class="truncate font-semibold">Editor</span>
+                                        <span class="truncate text-xs text-muted-foreground">
+                                            Shortcut @(shortcutEnabled ? "enabled" : "disabled")
+                                        </span>
+                                    </BbSidebarHeaderInfo>
+                                </BbSidebarHeaderContent>
+                            </BbSidebarHeader>
+
+                            <BbSidebarContent>
+                                <BbSidebarMenu>
+                                    <BbSidebarMenuItem>
+                                        <BbSidebarMenuButton Tooltip="Documents" IsActive="true">
+                                            <LucideIcon Name="file" Size="16" />
+                                            <span>Documents</span>
+                                        </BbSidebarMenuButton>
+                                    </BbSidebarMenuItem>
+                                    <BbSidebarMenuItem>
+                                        <BbSidebarMenuButton Tooltip="Drafts">
+                                            <LucideIcon Name="pencil" Size="16" />
+                                            <span>Drafts</span>
+                                        </BbSidebarMenuButton>
+                                    </BbSidebarMenuItem>
+                                    <BbSidebarMenuItem>
+                                        <BbSidebarMenuButton Tooltip="Archive">
+                                            <LucideIcon Name="archive" Size="16" />
+                                            <span>Archive</span>
+                                        </BbSidebarMenuButton>
+                                    </BbSidebarMenuItem>
+                                </BbSidebarMenu>
+                            </BbSidebarContent>
+                        </BbSidebar>
+
+                        <BbSidebarInset>
+                            <header class="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                                <BbSidebarTrigger />
+                                <h1 class="text-lg font-semibold">Shortcut Opt-Out</h1>
+                            </header>
+                            <div class="flex flex-1 flex-col gap-4 p-4">
+                                <div class="rounded-xl bg-muted/50 p-4">
+                                    <p class="text-sm text-muted-foreground mb-2">
+                                        With the shortcut <strong>enabled</strong>, Ctrl/Cmd + B toggles this sidebar.
+                                        With it <strong>disabled</strong>, this sidebar ignores the key entirely.
+                                    </p>
+                                    <p class="text-sm text-muted-foreground">
+                                        Each provider only claims the shortcut for itself. In an app with a single
+                                        provider, disabling it also lets Ctrl/Cmd + B through to the page, so a
+                                        rich-text editor receives it as bold. This page hosts many sidebar examples
+                                        that each still claim the key, so that fall-through is not visible here.
+                                    </p>
+                                </div>
+                            </div>
+                        </BbSidebarInset>
+                    </div>
+                </BbSidebarProvider>
+            </div>
+        </div>
+
+        <CodeBlock Source="Components/Sidebar/toggle-shortcut.txt" />
+    </div>
+
     <AccessibilityList>
             <AriaAttributes>
                 <AccessibilityItem>
@@ -1229,13 +1326,91 @@
                 </AccessibilityItem>
             </AriaAttributes>
             <KeyboardNavigation>
-                <KeyboardShortcutItem Description="Toggle sidebar open/closed">
+                <KeyboardShortcutItem Description="Toggle sidebar open/closed (disable with EnableToggleShortcut=&quot;false&quot;)">
                     <BbKbd>Ctrl+B</BbKbd> / <BbKbd>Cmd+B</BbKbd>
                 </KeyboardShortcutItem>
             </KeyboardNavigation>
         </AccessibilityList>
 
     <!-- API Reference -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold border-b pb-2">Controlling the Sidebar</h2>
+        <p class="text-sm text-muted-foreground">
+            Open state lives on <code class="text-xs bg-muted px-1 py-0.5 rounded">BbSidebarProvider</code>, not on
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">BbSidebar</code>. Leave it alone and the provider owns it —
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">DefaultOpen</code> seeds it,
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">CookieKey</code> persists it, and
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">BbSidebarTrigger</code> toggles it. Bind
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-Open</code> and your value becomes the source of truth
+            instead, the same controlled/uncontrolled pattern as Dialog, Sheet, Popover and the rest of the library.
+        </p>
+        <p class="text-sm text-muted-foreground">
+            <strong>Binding <code class="text-xs bg-muted px-1 py-0.5 rounded">Open</code> turns cookie persistence off</strong>
+            — both the read on startup and the write on change. With the state owned outside the component, a cookie would
+            compete with your bound value on reload rather than restore it, so persist it yourself if you need it to survive.
+        </p>
+        <p class="text-sm text-muted-foreground">
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">Open</code> is the <em>desktop</em> state, matching
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">DefaultOpen</code>. Below the mobile breakpoint the sidebar is a
+            drawer with its own state — bind <code class="text-xs bg-muted px-1 py-0.5 rounded">@@bind-OpenMobile</code> as well
+            if you need both, and when merely <em>reading</em> from the cascaded
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">SidebarContext</code>, prefer
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">IsOpen</code> over
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">Open</code>: it resolves to whichever applies to the current
+            viewport, so it stays correct on both.
+        </p>
+
+        <div class="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+            <span class="text-sm font-medium">@@bind-Open:</span>
+            <div class="flex items-center gap-2">
+                <button type="button"
+                        @onclick="() => _controlledOpen = true"
+                        class="@(_controlledOpen ? "bg-primary text-primary-foreground" : "bg-background text-foreground") px-3 py-1.5 rounded-md text-sm font-medium transition-colors hover:opacity-90">
+                    Open
+                </button>
+                <button type="button"
+                        @onclick="() => _controlledOpen = false"
+                        class="@(!_controlledOpen ? "bg-primary text-primary-foreground" : "bg-background text-foreground") px-3 py-1.5 rounded-md text-sm font-medium transition-colors hover:opacity-90">
+                    Closed
+                </button>
+            </div>
+            <span class="text-xs text-muted-foreground ml-auto">Bound value: <code class="text-xs">@_controlledOpen</code> — the sidebar's own trigger updates it too</span>
+        </div>
+
+        <div class="border rounded-lg overflow-hidden h-[300px]">
+            <BbSidebarProvider @bind-Open="_controlledOpen" HeightClass="h-full" CookieKey="@null">
+                <BbSidebar>
+                    <BbSidebarContent>
+                        <BbSidebarGroup>
+                            <BbSidebarGroupLabel>Controlled</BbSidebarGroupLabel>
+                            <BbSidebarGroupContent>
+                                <BbSidebarMenu>
+                                    <BbSidebarMenuItem>
+                                        <BbSidebarMenuButton Tooltip="Home">Home</BbSidebarMenuButton>
+                                    </BbSidebarMenuItem>
+                                    <BbSidebarMenuItem>
+                                        <BbSidebarMenuButton Tooltip="Settings">Settings</BbSidebarMenuButton>
+                                    </BbSidebarMenuItem>
+                                </BbSidebarMenu>
+                            </BbSidebarGroupContent>
+                        </BbSidebarGroup>
+                    </BbSidebarContent>
+                </BbSidebar>
+                <BbSidebarInset>
+                    <div class="p-4 space-y-2">
+                        <BbSidebarTrigger />
+                        <p class="text-sm text-muted-foreground">
+                            Toggle from either side — the buttons above set the bound value, the trigger raises
+                            <code class="text-xs">OpenChanged</code>, and both stay in sync.
+                        </p>
+                    </div>
+                </BbSidebarInset>
+            </BbSidebarProvider>
+        </div>
+
+        <CodeBlock Source="Components/Sidebar/programmatic-control.txt" />
+    </div>
+
     <div class="space-y-4">
         <h2 class="text-2xl font-semibold border-b pb-2">API Reference</h2>
 
@@ -1258,7 +1433,31 @@
                                 <td class="p-3"><code class="text-sm">DefaultOpen</code></td>
                                 <td class="p-3 text-sm">bool</td>
                                 <td class="p-3 text-sm">true</td>
-                                <td class="p-3 text-sm">Initial open state</td>
+                                <td class="p-3 text-sm">Initial desktop open state, for uncontrolled usage. Ignored when <code class="text-sm">Open</code> is bound.</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">Open</code></td>
+                                <td class="p-3 text-sm">bool?</td>
+                                <td class="p-3 text-sm">null</td>
+                                <td class="p-3 text-sm">Desktop open state, for controlled usage with <code class="text-sm">@@bind-Open</code>. Leave null and the provider owns the state. Binding it turns cookie persistence off — see below.</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">OpenChanged</code></td>
+                                <td class="p-3 text-sm">EventCallback&lt;bool&gt;</td>
+                                <td class="p-3 text-sm">—</td>
+                                <td class="p-3 text-sm">Raised when the desktop state changes, from the trigger, the rail, the keyboard shortcut or <code class="text-sm">SetOpen</code></td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">OpenMobile</code></td>
+                                <td class="p-3 text-sm">bool?</td>
+                                <td class="p-3 text-sm">null</td>
+                                <td class="p-3 text-sm">Mobile drawer state, for controlled usage with <code class="text-sm">@@bind-OpenMobile</code>. Independent of <code class="text-sm">Open</code>.</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">OpenMobileChanged</code></td>
+                                <td class="p-3 text-sm">EventCallback&lt;bool&gt;</td>
+                                <td class="p-3 text-sm">—</td>
+                                <td class="p-3 text-sm">Raised when the mobile drawer state changes</td>
                             </tr>
                             <tr class="border-b">
                                 <td class="p-3"><code class="text-sm">Variant</code></td>
@@ -1272,11 +1471,159 @@
                                 <td class="p-3 text-sm">Left</td>
                                 <td class="p-3 text-sm">Side to render (Left, Right)</td>
                             </tr>
-                            <tr>
+                            <tr class="border-b">
                                 <td class="p-3"><code class="text-sm">CookieKey</code></td>
                                 <td class="p-3 text-sm">string</td>
                                 <td class="p-3 text-sm">"sidebar:state"</td>
-                                <td class="p-3 text-sm">Cookie key for persistence</td>
+                                <td class="p-3 text-sm">Cookie key for persistence. Set null to disable. Ignored while <code class="text-sm">Open</code> is bound.</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">EnableToggleShortcut</code></td>
+                                <td class="p-3 text-sm">bool</td>
+                                <td class="p-3 text-sm">true</td>
+                                <td class="p-3 text-sm">Whether Ctrl/Cmd + B toggles the sidebar</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3"><code class="text-sm">HeightClass</code></td>
+                                <td class="p-3 text-sm">string</td>
+                                <td class="p-3 text-sm">"min-h-screen"</td>
+                                <td class="p-3 text-sm">CSS class controlling container height</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-semibold mb-2">Sidebar</h3>
+                <p class="text-sm text-muted-foreground mb-3">The sidebar panel itself. Open state lives on the provider, not here — see SidebarContext below.</p>
+                <div class="rounded-lg border overflow-hidden">
+                    <table class="w-full">
+                        <thead class="border-b bg-muted/50">
+                            <tr>
+                                <th class="p-3 text-left font-medium">Prop</th>
+                                <th class="p-3 text-left font-medium">Type</th>
+                                <th class="p-3 text-left font-medium">Default</th>
+                                <th class="p-3 text-left font-medium">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">Collapsible</code></td>
+                                <td class="p-3 text-sm">bool</td>
+                                <td class="p-3 text-sm">true</td>
+                                <td class="p-3 text-sm">Whether the sidebar can collapse. Set false to pin it open.</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3"><code class="text-sm">Class</code></td>
+                                <td class="p-3 text-sm">string?</td>
+                                <td class="p-3 text-sm">null</td>
+                                <td class="p-3 text-sm">Additional CSS classes</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-semibold mb-2">SidebarTrigger</h3>
+                <p class="text-sm text-muted-foreground mb-3">Toggles the sidebar. This is the supported way to open and close it from markup.</p>
+                <div class="rounded-lg border overflow-hidden">
+                    <table class="w-full">
+                        <thead class="border-b bg-muted/50">
+                            <tr>
+                                <th class="p-3 text-left font-medium">Prop</th>
+                                <th class="p-3 text-left font-medium">Type</th>
+                                <th class="p-3 text-left font-medium">Default</th>
+                                <th class="p-3 text-left font-medium">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">OnClick</code></td>
+                                <td class="p-3 text-sm">EventCallback&lt;MouseEventArgs&gt;</td>
+                                <td class="p-3 text-sm">—</td>
+                                <td class="p-3 text-sm">Invoked in addition to toggling, for observing the toggle</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">ChildContent</code></td>
+                                <td class="p-3 text-sm">RenderFragment?</td>
+                                <td class="p-3 text-sm">null</td>
+                                <td class="p-3 text-sm">Replaces the default toggle icon</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3"><code class="text-sm">Class</code></td>
+                                <td class="p-3 text-sm">string?</td>
+                                <td class="p-3 text-sm">null</td>
+                                <td class="p-3 text-sm">Additional CSS classes</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-semibold mb-2">SidebarContext</h3>
+                <p class="text-sm text-muted-foreground mb-3">
+                    Cascaded by <code class="text-sm">SidebarProvider</code>. Take it with a
+                    <code class="text-sm">[CascadingParameter]</code> to read or change the open state from your own code.
+                    There is no <code class="text-sm">Open</code>/<code class="text-sm">OpenChanged</code> parameter pair on
+                    <code class="text-sm">Sidebar</code> — state is owned by the provider and reached through this context.
+                </p>
+                <div class="rounded-lg border overflow-hidden">
+                    <table class="w-full">
+                        <thead class="border-b bg-muted/50">
+                            <tr>
+                                <th class="p-3 text-left font-medium">Member</th>
+                                <th class="p-3 text-left font-medium">Type</th>
+                                <th class="p-3 text-left font-medium">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">IsOpen</code></td>
+                                <td class="p-3 text-sm">bool</td>
+                                <td class="p-3 text-sm">Effective open state — resolves to the mobile or desktop value for the current viewport. Read this one unless you specifically need the other two.</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">Open</code></td>
+                                <td class="p-3 text-sm">bool</td>
+                                <td class="p-3 text-sm">Desktop open state (read-only)</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">OpenMobile</code></td>
+                                <td class="p-3 text-sm">bool</td>
+                                <td class="p-3 text-sm">Mobile drawer open state (read-only)</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">IsMobile</code></td>
+                                <td class="p-3 text-sm">bool</td>
+                                <td class="p-3 text-sm">Whether the viewport is currently below the mobile breakpoint</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">Side</code></td>
+                                <td class="p-3 text-sm">SidebarSide</td>
+                                <td class="p-3 text-sm">Side the sidebar renders on</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">ToggleSidebar()</code></td>
+                                <td class="p-3 text-sm">void</td>
+                                <td class="p-3 text-sm">Toggles whichever state applies to the current viewport</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">SetOpen(bool)</code></td>
+                                <td class="p-3 text-sm">void</td>
+                                <td class="p-3 text-sm">Sets the desktop open state</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">SetOpenMobile(bool)</code></td>
+                                <td class="p-3 text-sm">void</td>
+                                <td class="p-3 text-sm">Sets the mobile drawer open state</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3"><code class="text-sm">StateChanged</code></td>
+                                <td class="p-3 text-sm">event EventHandler?</td>
+                                <td class="p-3 text-sm">Raised whenever any of the above changes — subscribe to re-render on toggle, and unsubscribe on dispose</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1305,27 +1652,45 @@
                             </tr>
                             <tr class="border-b">
                                 <td class="p-3"><code class="text-sm">Size</code></td>
-                                <td class="p-3 text-sm">string</td>
-                                <td class="p-3 text-sm">"default"</td>
-                                <td class="p-3 text-sm">Size variant (sm, default, lg)</td>
+                                <td class="p-3 text-sm">SidebarMenuButtonSize</td>
+                                <td class="p-3 text-sm">Default</td>
+                                <td class="p-3 text-sm">Size variant (Small, Default, Large)</td>
                             </tr>
                             <tr class="border-b">
                                 <td class="p-3"><code class="text-sm">Variant</code></td>
-                                <td class="p-3 text-sm">string</td>
-                                <td class="p-3 text-sm">"default"</td>
-                                <td class="p-3 text-sm">Style variant (default, outline)</td>
+                                <td class="p-3 text-sm">SidebarMenuButtonVariant</td>
+                                <td class="p-3 text-sm">Default</td>
+                                <td class="p-3 text-sm">Style variant (Default, Outline)</td>
                             </tr>
                             <tr class="border-b">
                                 <td class="p-3"><code class="text-sm">IsActive</code></td>
-                                <td class="p-3 text-sm">bool</td>
-                                <td class="p-3 text-sm">false</td>
-                                <td class="p-3 text-sm">Active/selected state</td>
+                                <td class="p-3 text-sm">bool?</td>
+                                <td class="p-3 text-sm">null</td>
+                                <td class="p-3 text-sm">Active/selected state. Leave unset to derive it from <code class="text-sm">Href</code> and <code class="text-sm">Match</code>.</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">AsChild</code></td>
+                                <td class="p-3 text-sm">SidebarMenuButtonElement</td>
+                                <td class="p-3 text-sm">Button</td>
+                                <td class="p-3 text-sm">Element to render (Button, Anchor)</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">Href</code></td>
+                                <td class="p-3 text-sm">string?</td>
+                                <td class="p-3 text-sm">null</td>
+                                <td class="p-3 text-sm">Navigation target. Setting it renders an anchor and drives <code class="text-sm">IsActive</code> from the current route.</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-3"><code class="text-sm">Match</code></td>
+                                <td class="p-3 text-sm">NavLinkMatch</td>
+                                <td class="p-3 text-sm">Prefix</td>
+                                <td class="p-3 text-sm">How <code class="text-sm">Href</code> is matched against the route for active state</td>
                             </tr>
                             <tr>
-                                <td class="p-3"><code class="text-sm">AsChild</code></td>
-                                <td class="p-3 text-sm">string</td>
-                                <td class="p-3 text-sm">"button"</td>
-                                <td class="p-3 text-sm">Element type (button, a)</td>
+                                <td class="p-3"><code class="text-sm">OnClick</code></td>
+                                <td class="p-3 text-sm">EventCallback&lt;MouseEventArgs&gt;</td>
+                                <td class="p-3 text-sm">—</td>
+                                <td class="p-3 text-sm">Invoked when the button is clicked</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1379,6 +1744,8 @@
 
 @code {
     private bool isBasicCollapsible = true;
+    private bool _controlledOpen = true;
+    private bool shortcutEnabled = true;
     private string selectedVersion = "v1.0.1";
 
     private string GetRandomIcon(int index)

@@ -19,6 +19,10 @@
 /* Configure source paths for scanning Razor files */
 @source "../../Components";
 
+/* Safelist the bare chat utilities so consumers of the prebuilt CSS can
+   apply them directly (component sources only use the variant forms). */
+@source inline("shimmer scroll-fade-x");
+
 /* Component structural variables & default theme tokens */
 /* Alert defaults let users drop in a raw tweakcn/shadcn theme without defining
    the BB-specific --alert-* variables. Un-layered :root in the user's theme
@@ -208,6 +212,24 @@
   --tracking-wide: calc(var(--tracking-normal) + 0.025em);
   --tracking-wider: calc(var(--tracking-normal) + 0.05em);
   --tracking-widest: calc(var(--tracking-normal) + 0.1em);
+}
+
+/* Global theme defaults. These are resets rather than overrides, so they belong in
+   `base` where border/background utilities beat them normally on specificity. They
+   must stay OUT of `@layer bb`: as `bb.utilities` the universal `*` selector
+   outranked every border-* utility (layer priority ignores specificity), flattening
+   all border colours to --border — see #398. */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    letter-spacing: var(--tracking-normal, 0);
+  }
 }
 
 /* All component utility/component layer blocks live inside `@layer bb` so they win
@@ -469,19 +491,7 @@
 
 
 
-/* Global theme overrides - utilities layer ensures these override Tailwind's reset */
 @layer utilities {
-  * {
-    border-color: var(--border);
-  }
-
-  body {
-    background-color: var(--background);
-    color: var(--foreground);
-    font-family: var(--font-sans);
-    letter-spacing: var(--tracking-normal, 0);
-  }
-
   /* Grid animation utilities for Accordion/Collapsible */
   .grid-rows-\[0fr\] {
     grid-template-rows: 0fr;
@@ -866,4 +876,47 @@
 @keyframes bb-alert-countdown {
   from { width: 100%; }
   to { width: 0%; }
+}
+
+/* Chat utilities (Attachment/Marker/Message). @utility cannot be nested
+   inside a layer; these land in the `utilities` layer like tw-animate's. */
+
+/* Animated gradient text sweep for in-progress labels
+   (e.g. uploading attachment titles, "is typing..." markers). */
+@utility shimmer {
+  color: transparent;
+  background: linear-gradient(
+      90deg,
+      var(--muted-foreground) 0%,
+      var(--foreground) 50%,
+      var(--muted-foreground) 100%
+    )
+    0 0 / 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: bb-shimmer 2s linear infinite;
+}
+
+/* Fades out the horizontal edges of a scroll container
+   (e.g. attachment group rows). */
+@utility scroll-fade-x {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 1.5rem,
+    black calc(100% - 1.5rem),
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 1.5rem,
+    black calc(100% - 1.5rem),
+    transparent
+  );
+}
+
+@keyframes bb-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
 }

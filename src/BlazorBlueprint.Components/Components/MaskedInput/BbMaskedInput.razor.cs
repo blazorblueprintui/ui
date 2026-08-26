@@ -11,11 +11,15 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public partial class BbMaskedInput : ComponentBase, IAsyncDisposable
 {
+    private static readonly string[] GuardSuppressedEvents = ["input"];
+
     private ElementReference _inputRef;
     private MaskProcessor? _processor;
     private string _displayValue = string.Empty;
     private IJSObjectReference? _jsModule;
     private bool _jsModuleLoaded;
+    private IJSObjectReference? _guardModule;
+    private readonly string _guardId = Guid.NewGuid().ToString("N");
     private string? _generatedId;
     private readonly InputValidationBehavior validation = new();
 
@@ -218,6 +222,14 @@ public partial class BbMaskedInput : ComponentBase, IAsyncDisposable
                 _jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
                     "import", "./_content/BlazorBlueprint.Components/js/masked-input.js");
                 _jsModuleLoaded = true;
+
+                // Applying the mask means rewriting the element's value, which resets an
+                // in-progress IME composition. Suppressing input while composing defers the
+                // whole HandleInput pass — masking included — until the IME commits.
+                _guardModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import", "./_content/BlazorBlueprint.Components/js/composition-guard.js");
+                await _guardModule.InvokeVoidAsync(
+                    "attach", _inputRef, _guardId, new { suppress = GuardSuppressedEvents });
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
@@ -421,16 +433,38 @@ public partial class BbMaskedInput : ComponentBase, IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Gets the underlying input element reference, e.g. for JS interop.
+    /// </summary>
+    public ElementReference Element => _inputRef;
+
+    /// <summary>
+    /// Sets focus to the underlying input element.
+    /// </summary>
+    public ValueTask FocusAsync() => _inputRef.FocusAsync();
+
     public async ValueTask DisposeAsync()
     {
         GC.SuppressFinalize(this);
+        if (_guardModule != null)
+        {
+            try
+            {
+                await _guardModule.InvokeVoidAsync("detach", _guardId);
+                await _guardModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+        }
         if (_jsModule != null)
         {
             try
             {
                 await _jsModule.DisposeAsync();
             }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
                 // Expected during circuit disconnect
             }
@@ -440,7 +474,7 @@ public partial class BbMaskedInput : ComponentBase, IAsyncDisposable
     private string CssClass => ClassNames.cn(
         "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base",
         "placeholder:text-muted-foreground",
-        "focus-visible:outline-none",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         "disabled:cursor-not-allowed disabled:opacity-50",
         "aria-[invalid=true]:border-destructive",
         "transition-colors",

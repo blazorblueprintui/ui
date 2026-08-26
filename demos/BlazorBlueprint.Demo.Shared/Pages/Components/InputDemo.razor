@@ -320,6 +320,26 @@
         <CodeBlock Source="Components/Input/update-timing.txt" />
     </div>
 
+    <!-- Programmatic Focus -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Programmatic Focus</h2>
+            <p class="text-sm text-muted-foreground">
+                Capture the component with <code class="text-xs bg-muted px-1 py-0.5 rounded">@@ref</code> and call
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">FocusAsync()</code> to focus the input without JS interop.
+                The underlying <code class="text-xs bg-muted px-1 py-0.5 rounded">ElementReference</code> is also exposed
+                via the <code class="text-xs bg-muted px-1 py-0.5 rounded">Element</code> property.
+                Available on Input, Textarea, InputField, InputGroup inputs, NumericInput, CurrencyInput, MaskedInput,
+                TagInput, and the FormFieldInput / FormFieldTextarea wrappers.
+            </p>
+        </div>
+        <div class="flex gap-4 items-start max-w-md">
+            <BbInput @ref="_focusTarget" Type="InputType.Text" Placeholder="Click the button to focus me" />
+            <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => _focusTarget!.FocusAsync())">Focus</BbButton>
+        </div>
+        <CodeBlock Source="Components/Input/programmatic-focus.txt" />
+    </div>
+
     <!-- Form Validation with EditForm -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -424,12 +444,19 @@
                 <ApiParameter Name="AriaInvalid" Type="bool?" Default="null">
                     Manually sets aria-invalid. When null, automatically determined from EditContext validation state.
                 </ApiParameter>
+                <ApiParameter Name="FocusAsync()" Type="ValueTask">
+                    Sets focus to the underlying input element. Capture the component with @@ref to call it.
+                </ApiParameter>
+                <ApiParameter Name="Element" Type="ElementReference">
+                    The underlying input element reference, e.g. for advanced JS interop.
+                </ApiParameter>
             </ApiReference>
         </div>
     </section>
 </div>
 
 @code {
+    private BbInput? _focusTarget;
     private string? boundValue;
     private string? _immediateValue;
     private string? _onChangeValue;

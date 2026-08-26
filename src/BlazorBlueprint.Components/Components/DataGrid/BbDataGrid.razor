@@ -89,6 +89,7 @@
                                     ColumnId="@column.ColumnId"
                                     Sortable="@column.Sortable"
                                     Reorderable="@(Reorderable && column.Reorderable)"
+                                    AriaLabel="@GetHeaderAriaLabel(column)"
                                     Class="@GetHeaderCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight)"
                                     style="@GetColumnStyle(column, _cachedVisibleColumns)"
                                     data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)">
@@ -228,6 +229,41 @@
                                                             }
                                                         </BbPopoverContent>
                                                     </BbPopover>
+                                                </div>
+                                            }
+                                            @if (CanGroupColumn(column))
+                                            {
+                                                var menuColumn = column;
+                                                var isGroupedByColumn = IsGroupedBy(menuColumn.ColumnId);
+                                                <div @onclick:stopPropagation="true" class="inline-flex">
+                                                    <BbDropdownMenu Open="@(GetHeaderMenuOpen(menuColumn.ColumnId))"
+                                                                    OpenChanged="@(open => SetHeaderMenuOpen(menuColumn.ColumnId, open))">
+                                                        <BbDropdownMenuTrigger AsChild="true">
+                                                            <BbButton Variant="ButtonVariant.Ghost"
+                                                                      Size="ButtonSize.Icon"
+                                                                      Class="@ClassNames.cn("w-7 h-7 transition-colors",
+                                                                          isGroupedByColumn ? "text-primary" : "text-muted-foreground opacity-0 group-hover/header:opacity-100")"
+                                                                      AriaLabel="@Localizer["DataGrid.ColumnMenu", menuColumn.Title ?? string.Empty]">
+                                                                <LucideIcon Name="ellipsis" Class="w-3.5 h-3.5" />
+                                                            </BbButton>
+                                                        </BbDropdownMenuTrigger>
+                                                        <BbDropdownMenuContent Side="PopoverSide.Bottom" Align="PopoverAlign.End">
+                                                            @if (isGroupedByColumn)
+                                                            {
+                                                                <BbDropdownMenuItem OnClick="@(() => HandleUngroupColumnAsync(menuColumn.ColumnId))">
+                                                                    <LucideIcon Name="ungroup" Class="w-4 h-4 mr-2" />
+                                                                    @Localizer["DataGrid.UngroupColumn"]
+                                                                </BbDropdownMenuItem>
+                                                            }
+                                                            else
+                                                            {
+                                                                <BbDropdownMenuItem OnClick="@(() => HandleGroupByColumnAsync(menuColumn.ColumnId))">
+                                                                    <LucideIcon Name="group" Class="w-4 h-4 mr-2" />
+                                                                    @Localizer["DataGrid.GroupByColumn", menuColumn.Title ?? string.Empty]
+                                                                </BbDropdownMenuItem>
+                                                            }
+                                                        </BbDropdownMenuContent>
+                                                    </BbDropdownMenu>
                                                 </div>
                                             }
                                         </div>
@@ -423,7 +459,7 @@
 
                 <BlazorBlueprint.Primitives.DataGrid.BbDataGridCell
                     @key="@column.ColumnId"
-                    Class="@GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight)"
+                    Class="@GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight, item)"
                     style="@pinnedStyle"
                     data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)">
                     @if (isExpandColumn)
@@ -608,7 +644,7 @@
 
                 <BlazorBlueprint.Primitives.DataGrid.BbDataGridCell
                     @key="@column.ColumnId"
-                    Class="@GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight)"
+                    Class="@GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight, item)"
                     style="@pinnedStyle"
                     data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)">
                     @if (isSelectColumn)
