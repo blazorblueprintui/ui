@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-08-26
+
+### Fixed
+
+- **BbScrollArea: the vertical scrollbar never appeared, even with `ScrollAreaType.Always`** — Reported in [#483](https://github.com/blazorblueprintui/ui/issues/483) by [@DCarlson12](https://github.com/DCarlson12). Neither scrollbar was taken out of flow. The root is `position: relative; overflow: hidden` and the viewport is sized `width: 100%; height: 100%`, so a scrollbar rendered as the viewport's sibling was laid out *after* it — past the bottom edge for the vertical bar, past the right edge for the horizontal one — and then clipped away by the root's `overflow: hidden`. Nothing was wrong with the JS: it sized and positioned the thumb correctly the whole time, against an element the browser was never going to paint. `Type` made no difference because the failure is in layout rather than visibility, which is why `Always` looked as broken as `Hover`. Both scrollbars are now pinned to their edge with `absolute` and given a `z-10` so content cannot paint over them. The horizontal case was reported as working, and was: its demo lets the root grow rather than constraining it, so there was nothing below the viewport to clip against — the same defect, hidden by the example. A demo for `ScrollAreaType.Always` has been added, since its absence is why this went unnoticed, and the API reference's `Type` default is corrected from `Auto` to `Hover`, which is what the component has always used.
+
+- **Theme: `PersistToLocalStorage = false` still read the theme from `localStorage`** — Reported in [#481](https://github.com/blazorblueprintui/ui/issues/481) by [@garrenf](https://github.com/garrenf). `ThemeService.InitializeAsync` consulted the option before *writing* but not before *reading*, so it called `loadTheme` unconditionally and a stored theme overrode every `Default*` value configured in `Program.cs`. The trap is that persistence has to have been enabled at some point for the entry to exist — so the sequence that produces it is running once with the default `true`, then turning it off, at which point the configuration appears to be ignored entirely and the only escape is clearing site data by hand. The option now gates the read as well as the write, and initializing with persistence off removes any entry an earlier run left behind, so a consumer who already has one is fixed by upgrading rather than by asking their users to clear storage. With persistence enabled nothing changes. Regression tests cover both directions.
+
+- **Calendar: the selected year was truncated in the year dropdown** — Reported in [#484](https://github.com/blazorblueprintui/ui/issues/484) by [@garrenf](https://github.com/garrenf), affecting `BbDatePicker` and `BbDateTimePicker`, which both compose `BbCalendar`. The dropdown takes its width from its trigger, and the trigger was `w-[80px]`. Inside that, each item spends 16px on horizontal padding and the list itself takes a scrollbar; the *selected* item additionally renders a 16px check icon, which pushed four digits past the remaining space and clipped `2026` to `20…`. Only the selected row was affected, which is what made it read as a rendering glitch rather than a sizing one — every other year in the list has no check icon and fit. The year select is now `w-[100px]`.
+
+---
+
 ## 2026-08-07
 
 ### Added
