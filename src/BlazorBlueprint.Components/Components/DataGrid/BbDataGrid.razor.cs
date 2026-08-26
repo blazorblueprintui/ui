@@ -1091,8 +1091,13 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private bool GetHeaderMenuOpen(string columnId) =>
         _headerMenuOpen.TryGetValue(columnId, out var open) && open;
 
-    private void SetHeaderMenuOpen(string columnId, bool open) =>
+    private void SetHeaderMenuOpen(string columnId, bool open)
+    {
         _headerMenuOpen[columnId] = open;
+
+        // Same reasoning as SetFilterPopoverOpen — BbDropdownMenu is controlled the same way.
+        _stateVersion++;
+    }
 
     private async Task HandleGroupByColumnAsync(string columnId)
     {
@@ -2535,8 +2540,16 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private bool GetFilterPopoverOpen(string columnId) =>
         _filterPopoverOpen.TryGetValue(columnId, out var open) && open;
 
-    private void SetFilterPopoverOpen(string columnId, bool open) =>
+    private void SetFilterPopoverOpen(string columnId, bool open)
+    {
         _filterPopoverOpen[columnId] = open;
+
+        // ShouldRender gates on these version counters, so a change it cannot see is a change
+        // that never reaches the DOM. Without the bump the grid skipped the re-render, BbPopover
+        // never received fresh parameters, and its controlled value stayed stale — after which
+        // dismissing a filter stopped reporting back and left the button dead (#437).
+        _stateVersion++;
+    }
 
     internal async Task HandleColumnFilterChanged(string columnId, FilterCondition? condition)
     {
