@@ -116,8 +116,8 @@
 
     private static readonly Action<ILogger, string, Exception?> LogPortalRenderTimeout =
         LoggerMessage.Define<string>(LogLevel.Warning, new EventId(2, "PortalRenderTimeout"),
-            "Portal '{PortalId}' timed out waiting for PortalHost to render. " +
-            "Ensure <BbPortalHost /> is in your layout.");
+            "Portal '{PortalId}' timed out waiting for PortalHost to render. A host is registered, " +
+            "so this is a slow or blocked render rather than a missing <BbPortalHost />.");
 
     private static readonly Action<ILogger, string, string, Exception?> LogSetupFailed =
         LoggerMessage.Define<string, string>(LogLevel.Warning, new EventId(3, "FloatingPortalSetupFailed"),
@@ -306,7 +306,11 @@
         var timeoutTask = Task.Delay(500);
         var completedTask = await Task.WhenAny(_portalReadyTcs.Task, timeoutTask);
 
-        if (completedTask == timeoutTask)
+        // Only a timeout with a host registered is news. Without one the wait was never going to
+        // succeed, PortalService has already said so once, and repeating it here produced a warning
+        // per portal — 24 lines on a page of tooltips, all of them restating the same fact and
+        // burying the one message that explains it (#479).
+        if (completedTask == timeoutTask && PortalService.HasHost)
         {
             LogPortalRenderTimeout(Logger, PortalId, null);
         }
