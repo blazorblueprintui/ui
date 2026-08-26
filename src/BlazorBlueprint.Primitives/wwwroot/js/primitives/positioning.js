@@ -192,16 +192,60 @@ export function applyPosition(floating, position, makeVisible = false) {
  *
  * Mirrors the hidden style in BbFloatingPortal.GetInitialStyle().
  *
+ * Waits for any exit animation to finish first. Overlay content carries
+ * `data-[state=closed]:animate-out` classes, and writing `visibility: hidden` the instant the
+ * state flips left those animations no window to run in — they were declared throughout the
+ * styled layer and had never once been seen.
+ *
+ * Pointer events are killed immediately regardless, so an element on its way out cannot swallow
+ * a click during the animation.
+ *
  * @param {HTMLElement} floating - The floating element to hide.
  */
-export function hidePosition(floating) {
+export async function hidePosition(floating) {
     if (!floating) return;
+
+    // Immediate, and not deferred: a closing overlay must stop intercepting input at once.
+    floating.style.setProperty('pointer-events', 'none', 'important');
+
+    await waitForExitAnimation(floating);
+
+    // The animation is long enough to reopen inside, and a reopen re-applies the visible style
+    // before this resumes. Hiding anyway would blank an overlay the user just asked for.
+    if (floating.dataset.state === 'open') return;
 
     floating.style.setProperty('visibility', 'hidden', 'important');
     floating.style.setProperty('opacity', '0', 'important');
-    floating.style.setProperty('pointer-events', 'none', 'important');
     floating.style.top = '-9999px';
     floating.style.left = '-9999px';
+}
+
+/** Longest an exit animation may hold the element visible before we hide it regardless. */
+const EXIT_ANIMATION_TIMEOUT_MS = 1000;
+
+/**
+ * Resolves once the element's exit animation has finished, or immediately if there is none.
+ *
+ * @param {HTMLElement} el - The element whose animations to wait on.
+ */
+async function waitForExitAnimation(el) {
+    // getAnimations reports nothing until the browser has processed the class and attribute
+    // change that starts the animation, so give it one frame to do that first.
+    await new Promise(resolve => requestAnimationFrame(() => resolve()));
+
+    if (typeof el.getAnimations !== 'function') return;
+
+    // subtree: the animated element is the component's own content div, a child of this wrapper.
+    const running = el.getAnimations({ subtree: true }).filter(a => a.playState === 'running');
+    if (running.length === 0) return;
+
+    // allSettled, not all: a cancelled animation rejects, and a cancelled exit animation still
+    // means we are done waiting. The timeout is a backstop for an animation that never ends
+    // (infinite iteration, a paused element) — without it the overlay would stay on screen.
+    await Promise.race([
+        Promise.allSettled(running.map(a => a.finished)),
+        new Promise(resolve => setTimeout(resolve, EXIT_ANIMATION_TIMEOUT_MS)),
+    ]);
 }
 
 export async function autoUpdate(reference, floating, options = {}) {
