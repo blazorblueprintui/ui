@@ -8,7 +8,7 @@
 
 <BbTooltipProvider>
     <CascadingValue Value="@Context" IsFixed="true">
-        <div class="@($"flex w-full {HeightClass}{(Variant == SidebarVariant.Inset ? " bg-sidebar" : "")}")">
+        <div class="@($"flex w-full {HeightClass}{(Variant == SidebarVariant.Inset ? " bg-sidebar" : "")}")" @attributes="AdditionalAttributes">
             @ChildContent
         </div>
     </CascadingValue>
@@ -21,6 +21,12 @@
     /// </summary>
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     /// <summary>
     /// Default open state for the sidebar on desktop.

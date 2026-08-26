@@ -38,6 +38,12 @@ public partial class BbCardHeader : ComponentBase
     public string? Class { get; set; }
 
     /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
     /// Gets the computed CSS classes for the card header element.
     /// </summary>
     private string CssClass => ClassNames.cn(

@@ -2,9 +2,10 @@
 @implements IDisposable
 
 <div class="@CssClass"
-     style="@(_isVisible ? null : "display: none")"
+     style="@MergedSeparatorStyle"
      role="separator"
-     aria-orientation="horizontal">
+     aria-orientation="horizontal"
+     @attributes="AdditionalAttributes">
 </div>
 
 @code {
@@ -16,6 +17,27 @@
     /// </summary>
     [Parameter]
     public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string? MergedSeparatorStyle
+    {
+        get
+        {
+            var computed = _isVisible ? null : "display: none";
+            var consumerStyle = AdditionalAttributes?.TryGetValue("style", out var s) == true ? s?.ToString() : null;
+            if (string.IsNullOrEmpty(consumerStyle))
+            {
+                return computed;
+            }
+
+            return string.IsNullOrEmpty(computed) ? consumerStyle : $"{computed}; {consumerStyle}";
+        }
+    }
 
     private bool _isVisible = true;
 

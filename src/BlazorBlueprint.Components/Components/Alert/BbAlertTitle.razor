@@ -23,6 +23,12 @@
     public string As { get; set; } = "h5";
 
     /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
     /// Gets the computed CSS classes for the alert title element.
     /// </summary>
     private string CssClass => ClassNames.cn(
@@ -34,7 +40,8 @@
     {
         builder.OpenElement(0, As);
         builder.AddAttribute(1, "class", CssClass);
-        builder.AddContent(2, ChildContent);
+        builder.AddMultipleAttributes(2, AdditionalAttributes);
+        builder.AddContent(3, ChildContent);
         builder.CloseElement();
     };
 }

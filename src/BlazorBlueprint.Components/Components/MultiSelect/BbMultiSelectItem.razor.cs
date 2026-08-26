@@ -38,6 +38,12 @@ public partial class BbMultiSelectItem<TValue> : ComponentBase, IDisposable
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
     private bool IsSelected => Parent?.IsValueSelected(Value) ?? false;
 
     // CSS class accessors — avoid namespace/class collision in .razor template

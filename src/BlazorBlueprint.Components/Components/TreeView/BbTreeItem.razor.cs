@@ -74,6 +74,12 @@ public partial class BbTreeItem : ComponentBase
     public string? Class { get; set; }
 
     /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
     /// Whether this node is draggable (when tree has Draggable enabled).
     /// </summary>
     [Parameter]

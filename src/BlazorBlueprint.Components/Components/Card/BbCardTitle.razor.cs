@@ -39,6 +39,12 @@ public partial class BbCardTitle : ComponentBase
     public string As { get; set; } = "h3";
 
     /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
     /// Gets the computed CSS classes for the card title element.
     /// </summary>
     private string CssClass => ClassNames.cn(
@@ -52,7 +58,8 @@ public partial class BbCardTitle : ComponentBase
     {
         builder.OpenElement(0, As);
         builder.AddAttribute(1, "class", CssClass);
-        builder.AddContent(2, ChildContent);
+        builder.AddMultipleAttributes(2, AdditionalAttributes);
+        builder.AddContent(3, ChildContent);
         builder.CloseElement();
     };
 }
