@@ -68,6 +68,104 @@ public static class FilterDefinitionExtensions
     }
 
     /// <summary>
+    /// Evaluates a single condition against a value that has already been read from the item,
+    /// instead of looking a property up by name.
+    /// </summary>
+    /// <remarks>
+    /// Use this when the value being filtered is not a plain property of the item — for example a
+    /// DataGrid column that displays a looked-up label and filters on that label rather than on the
+    /// key it was resolved from. An incomplete condition (one whose value the user has not entered
+    /// yet) matches everything, which is the same behaviour as <see cref="ToFunc{T}"/>.
+    /// </remarks>
+    /// <param name="condition">The condition to evaluate.</param>
+    /// <param name="value">The already-projected value to test.</param>
+    /// <param name="fieldType">
+    /// The field type, used to pick whole-day semantics for date comparisons. Pass null to compare
+    /// the value as-is.
+    /// </param>
+    /// <returns>True if the value satisfies the condition.</returns>
+    public static bool MatchesValue(this FilterCondition condition, object? value, FilterFieldType? fieldType = null) =>
+        EvaluateConditionValue(value, condition, fieldType);
+
+    /// <summary>
+    /// Builds a LINQ predicate that applies a condition to the value produced by
+    /// <paramref name="selector"/>, instead of to a property looked up by name.
+    /// </summary>
+    /// <remarks>
+    /// This is the <see cref="IQueryable{T}"/> counterpart of
+    /// <see cref="MatchesValue"/>. The selector is inlined into the returned expression, so a
+    /// provider such as EF Core translates it to SQL as long as the selector itself is translatable.
+    /// A selector declared as <c>Expression&lt;Func&lt;T, object&gt;&gt;</c> boxes a value type
+    /// through a <c>Convert</c> node; that node is removed so the comparison is built against the
+    /// real type.
+    /// </remarks>
+    /// <typeparam name="T">The type of objects to filter.</typeparam>
+    /// <param name="condition">The condition to apply.</param>
+    /// <param name="selector">A one-parameter lambda taking a <typeparamref name="T"/> and returning the value to test.</param>
+    /// <param name="fieldType">
+    /// The field type, used to pick whole-day semantics for date comparisons. Pass null to compare
+    /// the value as-is.
+    /// </param>
+    /// <returns>An expression tree representing the condition.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="selector"/> does not take exactly one parameter of type <typeparamref name="T"/>.
+    /// </exception>
+    public static Expression<Func<T, bool>> ToExpressionForSelector<T>(
+        this FilterCondition condition, LambdaExpression selector, FilterFieldType? fieldType = null)
+    {
+        ArgumentNullException.ThrowIfNull(selector);
+
+        if (selector.Parameters.Count != 1 || !selector.Parameters[0].Type.IsAssignableFrom(typeof(T)))
+        {
+            throw new ArgumentException(
+                $"The selector must take exactly one parameter of type {typeof(T).Name}.", nameof(selector));
+        }
+
+        var parameter = Expression.Parameter(typeof(T), "x");
+        var body = new ParameterRebinder(selector.Parameters[0], parameter).Visit(selector.Body)!;
+        body = UnwrapConvert(body);
+
+        var conditionExpression = BuildConditionExpressionCore(body, body.Type, condition, fieldType)
+            ?? Expression.Constant(true);
+
+        return Expression.Lambda<Func<T, bool>>(conditionExpression, parameter);
+    }
+
+    /// <summary>
+    /// Removes the boxing <c>Convert</c> node a lambda declared to return <see cref="object"/>
+    /// wraps a value type in, so comparisons are built against the underlying type.
+    /// </summary>
+    private static Expression UnwrapConvert(Expression body)
+    {
+        while (body is UnaryExpression { NodeType: ExpressionType.Convert or ExpressionType.ConvertChecked } unary
+               && unary.Type == typeof(object))
+        {
+            body = unary.Operand;
+        }
+
+        return body;
+    }
+
+    /// <summary>
+    /// Replaces one parameter with another throughout an expression tree, so a caller-supplied
+    /// lambda body can be inlined under a different parameter.
+    /// </summary>
+    private sealed class ParameterRebinder : ExpressionVisitor
+    {
+        private readonly ParameterExpression source;
+        private readonly ParameterExpression target;
+
+        public ParameterRebinder(ParameterExpression source, ParameterExpression target)
+        {
+            this.source = source;
+            this.target = target;
+        }
+
+        protected override Expression VisitParameter(ParameterExpression node) =>
+            node == source ? target : base.VisitParameter(node);
+    }
+
+    /// <summary>
     /// Serializes the filter definition to a JSON string.
     /// </summary>
     public static string ToJson(this FilterDefinition filter) =>
@@ -125,8 +223,11 @@ public static class FilterDefinitionExtensions
             return false;
         }
 
-        var rawValue = prop.GetValue(item);
+        return EvaluateConditionValue(prop.GetValue(item), condition, fieldType);
+    }
 
+    private static bool EvaluateConditionValue(object? rawValue, FilterCondition condition, FilterFieldType? fieldType)
+    {
         // Incomplete condition: user hasn't entered a value yet — ignore (match all)
         // to align with ToExpression behavior and avoid filtering out all rows mid-edit.
         if (IsIncompleteCondition(condition))
@@ -564,8 +665,16 @@ public static class FilterDefinitionExtensions
             return Expression.Constant(false);
         }
 
-        var propAccess = Expression.Property(parameter, property);
-        var propType = property.PropertyType;
+        return BuildConditionExpressionCore(
+            Expression.Property(parameter, property), property.PropertyType, condition, fieldType);
+    }
+
+    private static Expression? BuildConditionExpressionCore(
+        Expression propAccess,
+        Type propType,
+        FilterCondition condition,
+        FilterFieldType? fieldType)
+    {
         var isNullable = Nullable.GetUnderlyingType(propType) != null || !propType.IsValueType;
 
         // For Date/DateTime field types, use "whole day" semantics for comparison operators
@@ -631,7 +740,7 @@ public static class FilterDefinitionExtensions
         };
     }
 
-    private static Expression BuildIsEmptyExpression(MemberExpression propAccess, Type propType, bool isNullable)
+    private static Expression BuildIsEmptyExpression(Expression propAccess, Type propType, bool isNullable)
     {
         if (propType == typeof(string))
         {
@@ -647,7 +756,7 @@ public static class FilterDefinitionExtensions
         return Expression.Constant(false);
     }
 
-    private static Expression BuildBoolExpression(MemberExpression propAccess, Type propType, bool expected)
+    private static Expression BuildBoolExpression(Expression propAccess, Type propType, bool expected)
     {
         if (propType == typeof(bool))
         {
@@ -672,7 +781,7 @@ public static class FilterDefinitionExtensions
     }
 
     private static Expression BuildComparisonExpression(
-        MemberExpression propAccess, Type propType, object? value, ExpressionType comparison)
+        Expression propAccess, Type propType, object? value, ExpressionType comparison)
     {
         var underlyingType = Nullable.GetUnderlyingType(propType) ?? propType;
         var convertedValue = ConvertValue(value, underlyingType);
@@ -707,7 +816,7 @@ public static class FilterDefinitionExtensions
     }
 
     private static Expression BuildStringMethodExpression(
-        MemberExpression propAccess, Type propType, object? value, string methodName)
+        Expression propAccess, Type propType, object? value, string methodName)
     {
         // Use ToLower(CultureInfo.InvariantCulture) + single-param overloads for EF Core/IQueryable
         // translation compatibility. The StringComparison overloads are not translatable to SQL.
@@ -765,7 +874,7 @@ public static class FilterDefinitionExtensions
     }
 
     private static BinaryExpression BuildBetweenExpression(
-        MemberExpression propAccess, Type propType, object? valueStart, object? valueEnd)
+        Expression propAccess, Type propType, object? valueStart, object? valueEnd)
     {
         var gte = BuildComparisonExpression(propAccess, propType, valueStart, ExpressionType.GreaterThanOrEqual);
         var lte = BuildComparisonExpression(propAccess, propType, valueEnd, ExpressionType.LessThanOrEqual);
@@ -773,7 +882,7 @@ public static class FilterDefinitionExtensions
     }
 
     private static Expression BuildInLastExpression(
-        MemberExpression propAccess, Type propType, FilterCondition condition)
+        Expression propAccess, Type propType, FilterCondition condition)
     {
         var dateTarget = ResolveDateTimeTarget(propAccess, propType, out var isNullable);
         if (dateTarget == null)
@@ -819,7 +928,7 @@ public static class FilterDefinitionExtensions
     }
 
     private static Expression BuildInNextExpression(
-        MemberExpression propAccess, Type propType, FilterCondition condition)
+        Expression propAccess, Type propType, FilterCondition condition)
     {
         var dateTarget = ResolveDateTimeTarget(propAccess, propType, out var isNullable);
         if (dateTarget == null)
@@ -869,7 +978,7 @@ public static class FilterDefinitionExtensions
     }
 
     private static Expression BuildDatePresetExpression(
-        MemberExpression propAccess, Type propType, FilterCondition condition, bool negate)
+        Expression propAccess, Type propType, FilterCondition condition, bool negate)
     {
         var dateTarget = ResolveDateTimeTarget(propAccess, propType, out var isNullable);
         if (dateTarget == null)
@@ -912,8 +1021,8 @@ public static class FilterDefinitionExtensions
     /// Handles DateTime, DateTime?, DateTimeOffset, and DateTimeOffset? by accessing .LocalDateTime
     /// on DateTimeOffset types.
     /// </summary>
-    private static MemberExpression? ResolveDateTimeTarget(
-        MemberExpression propAccess, Type propType, out bool isNullable)
+    private static Expression? ResolveDateTimeTarget(
+        Expression propAccess, Type propType, out bool isNullable)
     {
         isNullable = false;
 
@@ -945,7 +1054,7 @@ public static class FilterDefinitionExtensions
     }
 
     private static Expression BuildInExpression(
-        MemberExpression propAccess, Type propType, object? filterValue, bool negate)
+        Expression propAccess, Type propType, object? filterValue, bool negate)
     {
         if (filterValue is not IEnumerable<string> values)
         {

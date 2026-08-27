@@ -8,6 +8,7 @@
     aria-selected="@(IsSelected ? "true" : "false")"
     tabindex="@(IsKeyboardNavigable ? 0 : -1)"
     class="@ComputedClass"
+    data-editing="@(IsRowEditing ? "true" : null)"
     @onclick="HandleClick"
     @oncontextmenu="HandleContextMenu"
     @oncontextmenu:preventDefault="@HasContextMenuHandler"
@@ -55,11 +56,15 @@
 
     private bool IsSelectable => Context != null && Context.SelectionMode != Table.SelectionMode.None;
 
+    private bool IsRowEditing => Item != null && Context?.IsRowEditing?.Invoke(Item) == true;
+
     private bool IsExpandable => Context?.OnToggleExpand != null;
 
     private bool IsDataRow => Item != null;
 
     private bool NeedsClickIntercept => IsDataRow && (IsSelectable || Context?.OnRowClick != null);
+
+    private bool IsEditable => IsDataRow && Context?.IsRowEditing != null;
 
     private bool IsKeyboardNavigable => IsDataRow && Context != null && Context.EnableKeyboardNavigation;
 
@@ -73,7 +78,7 @@
         {
             try
             {
-                if (IsKeyboardNavigable && !spaceKeyHandlerAttached)
+                if ((IsKeyboardNavigable || IsEditable) && !spaceKeyHandlerAttached)
                 {
                     navModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
                         "import", "./_content/BlazorBlueprint.Primitives/js/primitives/table-row-nav.js");
@@ -102,7 +107,7 @@
 
     private bool HasContextMenuHandler => Context?.OnRowContextMenu != null;
 
-    private async Task HandleClick()
+    private async Task HandleClick(MouseEventArgs e)
     {
         if (Item != null && Context != null)
         {
@@ -123,7 +128,9 @@
 
             if (IsSelectable)
             {
-                Context.ToggleRowSelection(Item);
+                // MetaKey covers Cmd on macOS, where Ctrl+Click opens the context menu instead.
+                Context.ApplyRowSelectionInput(
+                    Item, new RowSelectionModifiers(e.ShiftKey, e.CtrlKey || e.MetaKey));
             }
         }
     }
@@ -158,6 +165,26 @@
 
         if (Item != null)
         {
+            // A row being edited owns Enter and Escape: they commit and discard. The row's
+            // selection and expansion shortcuts would otherwise fire while the user is typing.
+            if (IsRowEditing)
+            {
+                if (e.Key == "Escape" && Context?.OnCancelEdit != null)
+                {
+                    await Context.OnCancelEdit();
+                }
+                else if (e.Key == "Enter" && !e.ShiftKey && Context?.OnCommitEdit != null)
+                {
+                    // An input that only writes its value back on change has not done so yet:
+                    // this handler runs before the browser fires that change. Blurring it forces
+                    // the value through, so Enter does not drop the field the user was in.
+                    await BlurFocusedInput();
+                    await Context.OnCommitEdit();
+                }
+
+                return;
+            }
+
             if (e.Key == " ")
             {
                 if (IsSelectable)
@@ -180,6 +207,26 @@
                     Context!.ToggleRowSelection(Item);
                 }
             }
+        }
+    }
+
+    private async Task BlurFocusedInput()
+    {
+        try
+        {
+            navModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/table-row-nav.js");
+
+            if (await navModule.InvokeAsync<bool>("blurFocusedInput", elementRef))
+            {
+                // Let the change event the blur just fired reach Blazor and update the model
+                // before the commit reads it.
+                await Task.Yield();
+            }
+        }
+        catch
+        {
+            // No browser to blur in — prerendering, or a circuit that has gone away.
         }
     }
 

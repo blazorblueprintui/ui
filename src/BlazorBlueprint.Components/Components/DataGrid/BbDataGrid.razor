@@ -3,11 +3,12 @@
 @attribute [CascadingTypeParameter(nameof(TData))]
 @using BlazorBlueprint.Icons.Lucide.Components
 @using BlazorBlueprint.Primitives.DataGrid
+@using Microsoft.AspNetCore.Components.Forms
 @inject IBbLocalizer Localizer
 
 <CascadingValue Value="this" IsFixed="true">
     <div class="@ClassNames.cn("w-full", Class)">
-        @if (ShowSearch || Toolbar != null)
+        @if (ShowSearch || ShowExport || Toolbar != null)
         {
             <div class="flex items-center justify-between gap-2 py-4">
                 @if (ShowSearch)
@@ -17,7 +18,74 @@
                              Placeholder="@(SearchPlaceholder ?? Localizer["DataGrid.SearchPlaceholder"])"
                              Class="max-w-sm" />
                 }
-                @Toolbar
+                @if (ShowExport)
+                {
+                    @if (!ShowSearch)
+                    {
+                        @* Keeps the export button on the right when there is no search input on
+                           the left for justify-between to push against. *@
+                        <div></div>
+                    }
+                    <div class="flex items-center gap-2">
+                        @Toolbar
+                        <BbButton Variant="ButtonVariant.Outline"
+                                  Size="ButtonSize.Small"
+                                  OnClick="@(async () => await ExportToCsvAsync())"
+                                  AriaLabel="@Localizer["DataGrid.ExportAriaLabel"]">
+                            <LucideIcon Name="download" Class="w-4 h-4 mr-2" />
+                            @Localizer["DataGrid.Export"]
+                        </BbButton>
+                    </div>
+                }
+                else
+                {
+                    @* Left exactly as it was, so a grid that only supplies a Toolbar keeps its
+                       existing layout. *@
+                    @Toolbar
+                }
+            </div>
+        }
+        @if (ShowGroupingBreadcrumb && _gridState.Grouping.HasGroups)
+        {
+            @* Past two levels a per-column menu stops being a usable way to see or change the
+               grouping, so the active levels are shown in order with their own controls. *@
+            <div class="flex flex-wrap items-center gap-1 pb-3 text-sm" role="group"
+                 aria-label="@Localizer["DataGrid.GroupingBreadcrumbLabel"]">
+                <span class="text-muted-foreground mr-1">@Localizer["DataGrid.GroupingBreadcrumbLabel"]</span>
+                @for (var levelIndex = 0; levelIndex < _gridState.Grouping.ActiveGroups.Count; levelIndex++)
+                {
+                    var level = _gridState.Grouping.ActiveGroups[levelIndex];
+                    var levelTitle = GetGroupLevelTitle(level.ColumnId);
+                    var index = levelIndex;
+
+                    <span class="inline-flex items-center gap-1 rounded-md border bg-muted/50 px-2 py-1">
+                        @if (index > 0)
+                        {
+                            <button type="button"
+                                    class="inline-flex items-center justify-center rounded w-5 h-5 hover:bg-muted transition-colors"
+                                    aria-label="@Localizer["DataGrid.MoveGroupLevelOut", levelTitle]"
+                                    @onclick="@(() => MoveGroupByColumnAsync(level.ColumnId, index - 1))">
+                                <LucideIcon Name="chevron-left" Class="w-3.5 h-3.5" />
+                            </button>
+                        }
+                        <span>@levelTitle</span>
+                        <button type="button"
+                                class="inline-flex items-center justify-center rounded w-5 h-5 hover:bg-muted transition-colors"
+                                aria-label="@Localizer["DataGrid.RemoveGroupLevel", levelTitle]"
+                                @onclick="@(() => RemoveGroupByColumnAsync(level.ColumnId))">
+                            <LucideIcon Name="x" Class="w-3.5 h-3.5" />
+                        </button>
+                    </span>
+                    @if (index < _gridState.Grouping.ActiveGroups.Count - 1)
+                    {
+                        <span class="text-muted-foreground" aria-hidden="true">&#8250;</span>
+                    }
+                }
+                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small"
+                          Class="ml-1 h-7"
+                          OnClick="ClearGroupingAsync">
+                    @Localizer["DataGrid.ClearGrouping"]
+                </BbButton>
             </div>
         }
         <div @ref="containerRef"
@@ -54,6 +122,10 @@
                     Items="@_processedData"
                     @bind-State="@_gridState"
                     SelectionMode="@GetPrimitiveSelectionMode()"
+                    SelectionBehavior="@SelectionBehavior"
+                    IsRowEditing="@(EditMode != DataGridEditMode.None ? _isRowEditing : null)"
+                    OnCommitEdit="@(EditMode != DataGridEditMode.None ? _commitEditFromRow : null)"
+                    OnCancelEdit="@(EditMode != DataGridEditMode.None ? _cancelEditFromRow : null)"
                     ManualPagination="true"
                     EnableKeyboardNavigation="@EnableKeyboardNavigation"
                     OnSortChange="HandleSortChange"
@@ -261,6 +333,16 @@
                                                                     <LucideIcon Name="group" Class="w-4 h-4 mr-2" />
                                                                     @Localizer["DataGrid.GroupByColumn", menuColumn.Title ?? string.Empty]
                                                                 </BbDropdownMenuItem>
+                                                                @if (_gridState.Grouping.HasGroups)
+                                                                {
+                                                                    @* Only offered once something is already grouped, so a first-time
+                                                                       user is not asked to choose between two actions that do the same
+                                                                       thing. *@
+                                                                    <BbDropdownMenuItem OnClick="@(() => HandleAddGroupColumnAsync(menuColumn.ColumnId))">
+                                                                        <LucideIcon Name="list-tree" Class="w-4 h-4 mr-2" />
+                                                                        @Localizer["DataGrid.AddGroupByColumn", menuColumn.Title ?? string.Empty]
+                                                                    </BbDropdownMenuItem>
+                                                                }
                                                             }
                                                         </BbDropdownMenuContent>
                                                     </BbDropdownMenu>
@@ -448,11 +530,23 @@
 
     private RenderFragment<TData> RenderDataRow => item =>
         @<BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Item="@item"
-            Class="@ClassNames.cn("group/row bg-background", Striped ? StripeClass : null, RowClass?.Invoke(item))">
+            Class="@ClassNames.cn("group/row bg-background", Striped ? StripeClass : null, RowClass?.Invoke(item), IsEditing(item) ? "bg-muted/40" : null)">
+            @{
+                var rowIsEditing = IsEditing(item);
+            }
+            @if (rowIsEditing && _editContext != null)
+            {
+                @* Cascaded rather than wrapped in an EditForm: a form element is not valid inside
+                   a table row, but the validator only needs the context. *@
+                <CascadingValue Value="_editContext" IsFixed="false">
+                    <DataAnnotationsValidator />
+                </CascadingValue>
+            }
             @foreach (var column in _cachedVisibleColumns)
             {
                 var isSelectColumn = column.ColumnId == "__select";
                 var isExpandColumn = column.ColumnId == "__expand";
+                var isEditColumn = column.ColumnId == "__edit";
                 var isLastLeft = column.ColumnId == _cachedLastLeftId;
                 var isFirstRight = column.ColumnId == _cachedFirstRightId;
                 var pinnedStyle = GetPinnedStyle(column, _cachedVisibleColumns);
@@ -462,7 +556,48 @@
                     Class="@GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight, item)"
                     style="@pinnedStyle"
                     data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)">
-                    @if (isExpandColumn)
+                    @if (isEditColumn)
+                    {
+                        <div @onclick:stopPropagation="true" class="flex items-center gap-1">
+                            @if (rowIsEditing)
+                            {
+                                <BbButton Variant="ButtonVariant.Default" Size="ButtonSize.Small"
+                                          OnClick="@(async () => await CommitEditAsync())"
+                                          AriaLabel="@Localizer["DataGrid.SaveRow"]">
+                                    @Localizer["DataGrid.SaveRow"]
+                                </BbButton>
+                                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small"
+                                          OnClick="CancelEditAsync"
+                                          AriaLabel="@Localizer["DataGrid.CancelRowEdit"]">
+                                    @Localizer["DataGrid.CancelRowEdit"]
+                                </BbButton>
+                            }
+                            else
+                            {
+                                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small"
+                                          OnClick="@(async () => await StartEditAsync(item))"
+                                          AriaLabel="@Localizer["DataGrid.EditRow"]">
+                                    <LucideIcon Name="pencil" Class="w-4 h-4" />
+                                </BbButton>
+                            }
+                        </div>
+                    }
+                    else if (ShouldRenderEditor(column, item))
+                    {
+                        @* Enter commits and Escape cancels from anywhere in the row; the row
+                           itself owns those keys, because a handler here would never see them —
+                           the row's keyboard interceptor stops an input's events reaching
+                           Blazor's document-level delegation. *@
+                        <div @onclick:stopPropagation="true">
+                            @column.EditTemplate!(new BlazorBlueprint.Primitives.DataGrid.DataGridCellContext<TData>
+                            {
+                                Item = item,
+                                Column = column,
+                                Value = column.GetValue(item)
+                            })
+                        </div>
+                    }
+                    else if (isExpandColumn)
                     {
                         @if (DetailTemplate != null || HasDetailRows)
                         {
@@ -508,7 +643,8 @@
         {
             var group = renderItem.GroupRow!;
             var groupKey = group.Key ?? "(empty)";
-            var isCollapsed = _gridState.Grouping.IsCollapsed(groupKey);
+            var isCollapsed = _gridState.Grouping.IsCollapsed(group.Path);
+            var groupIndent = group.Depth * GetGroupIndentSize();
             var effectiveTemplate = _groupColumnHeaderTemplate ?? GroupHeaderTemplate;
             var groupContext = new DataGridGroupContext<TData>
             {
@@ -521,7 +657,8 @@
             if (effectiveTemplate != null)
             {
                 return @<tr role="row" class="bg-muted/50 border-b font-medium">
-                    <td role="gridcell" colspan="@_cachedVisibleColumns.Count" class="px-4 py-2">
+                    <td role="gridcell" colspan="@_cachedVisibleColumns.Count" class="px-4 py-2"
+                        style="@(groupIndent > 0 ? $"padding-left: {groupIndent + 16}px;" : null)">
                         @effectiveTemplate(groupContext)
                     </td>
                 </tr>;
@@ -531,7 +668,7 @@
                 var groupLabelColSpan = GetGroupLabelColSpan(group);
                 return @<tr role="row" class="bg-muted/50 border-b font-medium">
                     <td role="gridcell" colspan="@groupLabelColSpan" class="px-4 py-2">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2" style="@(groupIndent > 0 ? $"padding-left: {groupIndent}px;" : null)">
                             <button type="button"
                                     class="inline-flex items-center justify-center rounded-md w-6 h-6 hover:bg-muted transition-colors"
                                     aria-expanded="@(!isCollapsed)"
@@ -715,4 +852,10 @@
         // Default to 24px
         return 24;
     }
+
+    /// <summary>
+    /// How far each nested grouping level is indented, in pixels. Matches the hierarchy indent so
+    /// a grid that uses both reads as one structure.
+    /// </summary>
+    private int GetGroupIndentSize() => GetHierarchyIndentSize();
 }

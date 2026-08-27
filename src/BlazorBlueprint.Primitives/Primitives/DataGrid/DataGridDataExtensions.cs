@@ -38,6 +38,8 @@ public static class DataGridDataExtensions
                 continue;
             }
 
+            sortExpression = NormalizeKeySelector(sortExpression);
+
             if (orderedQuery == null)
             {
                 orderedQuery = sortDef.Direction == SortDirection.Ascending
@@ -108,6 +110,27 @@ public static class DataGridDataExtensions
         });
 
         return list;
+    }
+
+    /// <summary>
+    /// Strips the boxing <c>Convert</c> node from a key selector declared to return
+    /// <see cref="object"/>, rebuilding the lambda with the underlying type.
+    /// </summary>
+    /// <remarks>
+    /// A column's <c>SortAndFilterBy</c> is typed <c>Expression&lt;Func&lt;TData, object&gt;&gt;</c>
+    /// so any value type can be returned from it. Ordering by <c>object</c> is not translatable —
+    /// EF Core cannot emit <c>ORDER BY</c> for it, and in-memory <c>OrderBy</c> would compare
+    /// boxed references. Restoring the real type makes both work.
+    /// </remarks>
+    private static LambdaExpression NormalizeKeySelector(LambdaExpression selector)
+    {
+        if (selector.Body is UnaryExpression { NodeType: ExpressionType.Convert or ExpressionType.ConvertChecked } unary
+            && unary.Type == typeof(object))
+        {
+            return Expression.Lambda(unary.Operand, selector.Parameters);
+        }
+
+        return selector;
     }
 
     // Helper methods to call OrderBy/ThenBy with a runtime LambdaExpression

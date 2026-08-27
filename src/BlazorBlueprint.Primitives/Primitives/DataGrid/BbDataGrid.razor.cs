@@ -58,6 +58,32 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
     public SelectionMode SelectionMode { get; set; } = SelectionMode.None;
 
     /// <summary>
+    /// Tests whether a row is currently being edited, so the row can give Enter and Escape to the
+    /// editor instead of to its own selection shortcuts. Leave unset when rows are not editable.
+    /// </summary>
+    [Parameter]
+    public Func<TData, bool>? IsRowEditing { get; set; }
+
+    /// <summary>
+    /// Commits the row being edited, invoked when the user presses Enter inside it.
+    /// </summary>
+    [Parameter]
+    public Func<Task>? OnCommitEdit { get; set; }
+
+    /// <summary>
+    /// Discards the edits on the row being edited, invoked when the user presses Escape inside it.
+    /// </summary>
+    [Parameter]
+    public Func<Task>? OnCancelEdit { get; set; }
+
+    /// <summary>
+    /// How clicking a row changes the selection.
+    /// Default is <see cref="DataGridSelectionBehavior.Toggle"/>.
+    /// </summary>
+    [Parameter]
+    public DataGridSelectionBehavior SelectionBehavior { get; set; } = DataGridSelectionBehavior.Toggle;
+
+    /// <summary>
     /// Event callback invoked when sorting changes.
     /// </summary>
     [Parameter]
@@ -186,6 +212,10 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
         parametersChanged = true;
 
         context.SelectionMode = SelectionMode;
+        context.SelectionBehavior = SelectionBehavior;
+        context.IsRowEditing = IsRowEditing;
+        context.OnCommitEdit = OnCommitEdit;
+        context.OnCancelEdit = OnCancelEdit;
         context.EnableKeyboardNavigation = EnableKeyboardNavigation;
         EffectiveState.Selection.Mode = SelectionMode;
 
@@ -224,6 +254,10 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
         context = new DataGridContext<TData>(EffectiveState)
         {
             SelectionMode = SelectionMode,
+            SelectionBehavior = SelectionBehavior,
+            IsRowEditing = IsRowEditing,
+            OnCommitEdit = OnCommitEdit,
+            OnCancelEdit = OnCancelEdit,
             EnableKeyboardNavigation = EnableKeyboardNavigation
         };
 

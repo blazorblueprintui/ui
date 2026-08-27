@@ -19,6 +19,7 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
 {
     private string? resolvedTitle;
     private Func<TData, TProp>? compiledProperty;
+    private Func<TData, object?>? compiledSortAndFilterBy;
 
     /// <summary>
     /// Explicit unique identifier for this column. When not set, falls back to the
@@ -46,6 +47,38 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
     /// </summary>
     [Parameter]
     public string? Format { get; set; }
+
+    /// <summary>
+    /// Projects the value this column sorts and filters on, when that differs from
+    /// <see cref="Property"/>. Leave unset to sort and filter on the property itself.
+    /// </summary>
+    /// <remarks>
+    /// Set this when the cell displays something other than the raw property — the common case
+    /// being a <see cref="CellTemplate"/> that resolves a key to a label. Without it the header
+    /// click orders by the key the user cannot see, which reads as a broken grid:
+    /// <code>
+    /// &lt;BbDataGridPropertyColumn Property="x =&gt; x.StatusId" Title="Status" Sortable
+    ///                           SortAndFilterBy="x =&gt; statuses[x.StatusId].StatusName"&gt;
+    /// </code>
+    /// <para>
+    /// One parameter covers both sorting and filtering deliberately. Two separate selectors can
+    /// disagree, and a grid that orders by one value while filtering on another is hard to explain
+    /// and harder to debug. Grouping and CSV export use this value too, so all four agree.
+    /// </para>
+    /// <para>
+    /// This is an expression, not a delegate, so a grid backed by a server-side
+    /// <c>ItemsProvider</c> over <see cref="IQueryable{T}"/> can translate it to SQL. Keep the body
+    /// translatable — a dictionary lookup or a method call your provider cannot translate throws at
+    /// query time rather than falling back silently. For a lookup the server cannot perform, join
+    /// the label into the query and point <see cref="Property"/> at it instead.
+    /// </para>
+    /// <para>
+    /// <see cref="Format"/> is not applied to this value; the selector returns exactly what is
+    /// sorted and filtered on.
+    /// </para>
+    /// </remarks>
+    [Parameter]
+    public Expression<Func<TData, object?>>? SortAndFilterBy { get; set; }
 
     /// <summary>
     /// Whether this column can be sorted. Default is false.
@@ -193,6 +226,22 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
     public RenderFragment<TData>? CellTemplate { get; set; }
 
     /// <summary>
+    /// Renders this column's cell while its row is being edited. Leave unset for a column the
+    /// user should not change.
+    /// </summary>
+    /// <remarks>
+    /// The template receives the row's item, so it binds to it directly:
+    /// <code>
+    /// &lt;EditTemplate&gt;&lt;BbInput @bind-Value="context.Name" /&gt;&lt;/EditTemplate&gt;
+    /// </code>
+    /// The binding writes to the item as the user types. A cancel puts the old values back, so
+    /// nothing needs copying by hand. Needs <c>EditMode</c> set on the grid; without it the
+    /// template is never rendered.
+    /// </remarks>
+    [Parameter]
+    public RenderFragment<TData>? EditTemplate { get; set; }
+
+    /// <summary>
     /// Custom header content. If provided, replaces the header title text only — the grid
     /// still renders its own sort indicator, filter icon, pin icon, column menu and resize
     /// handle around it, so a <see cref="Sortable"/> or <see cref="Groupable"/> column keeps
@@ -249,6 +298,11 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
             ? context => CellTemplate(context.Item)
             : null;
 
+    RenderFragment<DataGridCellContext<TData>>? IDataGridColumn<TData>.EditTemplate =>
+        EditTemplate != null
+            ? context => EditTemplate(context.Item)
+            : null;
+
     RenderFragment<DataGridHeaderContext<TData>>? IDataGridColumn<TData>.HeaderTemplate =>
         HeaderTemplate != null
             ? _ => HeaderTemplate
@@ -290,17 +344,68 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
         return compiledProperty(item);
     }
 
+    public object? GetSortAndFilterValue(TData item)
+    {
+        if (SortAndFilterBy == null)
+        {
+            return GetRawValue(item);
+        }
+
+        compiledSortAndFilterBy ??= SortAndFilterBy.Compile();
+        return compiledSortAndFilterBy(item);
+    }
+
+    public LambdaExpression? GetSortAndFilterExpression() => SortAndFilterBy;
+
     public int Compare(TData x, TData y)
     {
+        if (SortAndFilterBy != null)
+        {
+            return CompareValues(GetSortAndFilterValue(x), GetSortAndFilterValue(y));
+        }
+
         compiledProperty ??= Property.Compile();
         var xVal = compiledProperty(x);
         var yVal = compiledProperty(y);
         return Comparer<TProp>.Default.Compare(xVal, yVal);
     }
 
-    public LambdaExpression? GetSortExpression() => Property;
+    /// <summary>
+    /// Orders two boxed values from <see cref="SortAndFilterBy"/>, whose static type is object.
+    /// Nulls order first. Two values of the same type order by <see cref="IComparable"/>, which for
+    /// strings is the culture-aware order the user expects. Only values of differing types fall back
+    /// to an ordinal string comparison, so a mixed selector still produces a stable order rather
+    /// than throwing.
+    /// </summary>
+    private static int CompareValues(object? x, object? y)
+    {
+        if (ReferenceEquals(x, y))
+        {
+            return 0;
+        }
 
-    public LambdaExpression? GetFilterExpression() => Filterable ? Property : null;
+        if (x == null)
+        {
+            return -1;
+        }
+
+        if (y == null)
+        {
+            return 1;
+        }
+
+        if (x is IComparable comparable && x.GetType() == y.GetType())
+        {
+            return comparable.CompareTo(y);
+        }
+
+        return string.Compare(x.ToString(), y.ToString(), StringComparison.Ordinal);
+    }
+
+    public LambdaExpression? GetSortExpression() => SortAndFilterBy ?? (LambdaExpression)Property;
+
+    public LambdaExpression? GetFilterExpression() =>
+        Filterable ? SortAndFilterBy ?? (LambdaExpression)Property : null;
 
     // IFilterableColumn implementation
 
