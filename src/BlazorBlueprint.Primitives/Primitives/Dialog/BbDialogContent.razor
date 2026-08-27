@@ -84,6 +84,10 @@ else if (Context.IsOpen)
     /// <summary>
     /// Whether to trap focus within the dialog.
     /// Default is true for modal dialogs.
+    /// <para>
+    /// Under <see cref="OverlayRenderingStrategy.Native"/> the browser's <c>&lt;dialog&gt;</c>
+    /// always traps focus for a modal, so setting this to <c>false</c> has no effect in that mode.
+    /// </para>
     /// </summary>
     [Parameter]
     public bool TrapFocus { get; set; } = true;
@@ -111,6 +115,11 @@ else if (Context.IsOpen)
     /// <summary>
     /// Whether to lock body scroll when dialog is open.
     /// Default is true for modal dialogs.
+    /// <para>
+    /// Under <see cref="OverlayRenderingStrategy.Native"/> this is not applied: <c>showModal()</c>
+    /// makes the background inert to interaction but does not stop it scrolling, and there is no
+    /// scroll-lock on the native path.
+    /// </para>
     /// </summary>
     [Parameter]
     public bool LockScroll { get; set; } = true;
@@ -181,7 +190,6 @@ else if (Context.IsOpen)
                 _nativeDialogSetup = await NativeOverlayService.SetupDialogAsync(_contentRef, _dotNetRef);
 
                 await NativeOverlayService.ShowDialogAsync(_contentRef);
-                await NativeOverlayService.FocusDialogAsync(_contentRef);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
             {
@@ -297,6 +305,7 @@ else if (Context.IsOpen)
 
         if (CloseOnEscape)
         {
+            await CloseNativeDialogAsync();
             Context.Close();
         }
     }
@@ -318,16 +327,33 @@ else if (Context.IsOpen)
 
     [JSInvokable]
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public Task JsOnNativeBackdropClick()
+    public async Task JsOnNativeBackdropClick()
     {
-        if (_disposed) { return Task.CompletedTask; }
+        if (_disposed) { return; }
 
         if (CloseOnOverlayClick)
         {
+            await CloseNativeDialogAsync();
             Context.Close();
         }
+    }
 
-        return Task.CompletedTask;
+    /// <summary>
+    /// Closes the native <c>&lt;dialog&gt;</c> element itself, restoring focus to the trigger,
+    /// before the open state flips to <c>false</c> and the element is unmounted. Closing via the
+    /// element (rather than relying on Blazor removing it from the DOM) is what lets the browser
+    /// return focus to the element that had it before <c>showModal()</c>.
+    /// </summary>
+    private async Task CloseNativeDialogAsync()
+    {
+        try
+        {
+            await NativeOverlayService.CloseDialogAsync(_contentRef);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Expected during circuit disconnect.
+        }
     }
 
     // ---- JS strategy (legacy) ----

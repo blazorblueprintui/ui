@@ -111,7 +111,20 @@ export function setupDialog(dialog, dotNetRef) {
         dotNetRef.invokeMethodAsync('JsOnNativeClose');
     };
     const onClick = (e) => {
-        if (e.target === dialog) {
+        // A native modal dialog fills the top layer, so both a click on the ::backdrop
+        // (outside the dialog) and a click on the dialog's own box (including its padding)
+        // resolve to e.target === dialog. Only the former is a backdrop dismissal; a click
+        // inside the dialog — padding included — must not close it. Compare the click point
+        // against the dialog's border box to tell them apart (the JS path renders content and
+        // overlay as separate elements, so it never conflates these).
+        if (e.target !== dialog) {
+            return;
+        }
+        const rect = dialog.getBoundingClientRect();
+        const x = e.clientX;
+        const y = e.clientY;
+        const insideBox = x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+        if (!insideBox) {
             dotNetRef.invokeMethodAsync('JsOnNativeBackdropClick');
         }
     };

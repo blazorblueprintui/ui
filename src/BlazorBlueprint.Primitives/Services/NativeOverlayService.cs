@@ -45,23 +45,29 @@ public class NativeOverlayService : INativeOverlayService, IAsyncDisposable
     /// <inheritdoc />
     public async Task<bool> IsDialogSupportedAsync()
     {
-        if (dialogSupported.HasValue)
+        // Cache only a positive result. A false result may be a transient failure while JS
+        // interop is unavailable (prerendering / disconnect); caching it would make the
+        // "browser does not support" warning fire forever in a browser that supports it.
+        if (dialogSupported == true)
         {
-            return dialogSupported.Value;
+            return true;
         }
 
         try
         {
             var objectReference = await GetModuleAsync();
-            dialogSupported = await objectReference.InvokeAsync<bool>("supportsNativeDialog");
+            var supported = await objectReference.InvokeAsync<bool>("supportsNativeDialog");
+            if (supported)
+            {
+                dialogSupported = true;
+            }
+            return supported;
         }
         catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
         {
             // JS interop unavailable (prerendering / disconnect). Assume unsupported for now.
-            dialogSupported = false;
+            return false;
         }
-
-        return dialogSupported.Value;
     }
 
     /// <inheritdoc />
