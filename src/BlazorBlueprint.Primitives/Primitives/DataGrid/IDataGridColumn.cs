@@ -96,6 +96,32 @@ public interface IDataGridColumn<TData> where TData : class
     public object? GetRawValue(TData item) => GetValue(item);
 
     /// <summary>
+    /// Gets the value this column sorts, filters, groups and exports on.
+    /// Defaults to <see cref="GetRawValue"/>.
+    /// </summary>
+    /// <remarks>
+    /// A column that displays something other than its raw property — the common case being a cell
+    /// template that resolves a key to a label — overrides this so the grid orders and filters by
+    /// what the user reads rather than by the key behind it.
+    /// </remarks>
+    /// <param name="item">The data item.</param>
+    /// <returns>The value to sort and filter by, boxed as object.</returns>
+    public object? GetSortAndFilterValue(TData item) => GetRawValue(item);
+
+    /// <summary>
+    /// Gets the lambda that projects the value this column sorts and filters on, or null when the
+    /// column sorts and filters on its own property.
+    /// </summary>
+    /// <remarks>
+    /// Returned as an expression rather than a compiled delegate so a server-side
+    /// <see cref="DataGridItemsProvider{TData}"/> backed by <see cref="IQueryable{T}"/> can still
+    /// translate it. The grid uses this in preference to reflecting the column's property when it
+    /// is set.
+    /// </remarks>
+    /// <returns>The projection lambda, or null.</returns>
+    public LambdaExpression? GetSortAndFilterExpression() => null;
+
+    /// <summary>
     /// Compares two data items based on this column's values.
     /// Used for in-memory sorting.
     /// </summary>
@@ -120,6 +146,17 @@ public interface IDataGridColumn<TData> where TData : class
     /// Gets the custom cell template for this column.
     /// </summary>
     public RenderFragment<DataGridCellContext<TData>>? CellTemplate { get; }
+
+    /// <summary>
+    /// Gets the template that renders this column's cell while its row is being edited, or null
+    /// when the column is not editable.
+    /// </summary>
+    /// <remarks>
+    /// The template binds straight to the item, so an ordinary <c>@bind-Value</c> works. A column
+    /// without one keeps showing its normal cell while the rest of the row is in edit, which is
+    /// what a read-only column such as an id or a computed total should do.
+    /// </remarks>
+    public RenderFragment<DataGridCellContext<TData>>? EditTemplate => null;
 
     /// <summary>
     /// Gets the custom header template for this column.

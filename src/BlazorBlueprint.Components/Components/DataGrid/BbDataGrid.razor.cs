@@ -6,6 +6,7 @@ using BlazorBlueprint.Primitives.Filtering;
 using BlazorBlueprint.Primitives.Table;
 using BlazorBlueprint.Primitives.Utilities;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 
@@ -28,6 +29,41 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private readonly List<IDataGridColumn<TData>> _columns = new();
     private IEnumerable<TData> _processedData = Array.Empty<TData>();
     private IEnumerable<TData> _allSortedData = Array.Empty<TData>();
+
+    /// <summary>
+    /// Every row that survives the current filters, search and sort, across all pages. Null when
+    /// the grid never saw the full set — with an <see cref="ItemsProvider"/> it only holds the
+    /// page it fetched.
+    /// </summary>
+    private IReadOnlyList<TData>? _exportRows;
+
+    private IJSObjectReference? downloadModule;
+
+    private TData? _editingItem;
+
+    private DataGridRowSnapshot<TData>? _editSnapshot;
+
+    private EditContext? _editContext;
+
+    // Held rather than built per render: a fresh lambda each time would make the primitive grid
+    // see a changed parameter on every render of a grid that is not even editable.
+    private readonly Func<Task> _commitEditFromRow;
+
+    private readonly Func<Task> _cancelEditFromRow;
+
+    private readonly Func<TData, bool> _isRowEditing;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BbDataGrid{TData}"/> class.
+    /// </summary>
+    public BbDataGrid()
+    {
+        _commitEditFromRow = async () => await CommitEditAsync();
+        _cancelEditFromRow = CancelEditAsync;
+        _isRowEditing = IsEditing;
+    }
+
+    private bool warnedAboutProviderExportScope;
     private IEnumerable<TData>? _lastProcessedData;
     private List<TData>? _processedDataList;
     private CancellationTokenSource? _loadCts;
@@ -48,7 +84,10 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private bool _groupsCollapsedByDefault;
     private RenderFragment<DataGridGroupContext<TData>>? _groupColumnHeaderTemplate;
     private Expression<Func<TData, object>>? _lastGroupBy;
-    private List<object>? _allGroupKeys;
+    /// <summary>
+    /// Every group path in the tree the last pass built, at every level. Used by collapse-all.
+    /// </summary>
+    private List<GroupPath>? _allGroupPaths;
     private int _lastGroupingVersion;
     private bool _virtualGroupingWarned;
 
@@ -166,6 +205,30 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     [Parameter]
     public DataTableSelectionMode SelectionMode { get; set; } = DataTableSelectionMode.None;
+
+    /// <summary>
+    /// How clicking a row changes the selection.
+    /// Default is <see cref="DataGridSelectionBehavior.Toggle"/>, which is the long-standing
+    /// behaviour: each click flips one row and modifier keys are ignored.
+    /// </summary>
+    /// <remarks>
+    /// Set <see cref="DataGridSelectionBehavior.Replace"/> for the conventions a user brings from
+    /// a file explorer or a spreadsheet: a plain click selects only the clicked row, Shift+Click
+    /// selects the range from the anchor row, and Ctrl+Click (Cmd+Click on macOS) adds or removes
+    /// one row. Clicking the only selected row clears the selection.
+    /// <para>
+    /// Range and additive selection need <see cref="DataTableSelectionMode.Multiple"/>; under
+    /// <see cref="DataTableSelectionMode.Single"/> every click is a plain click. A Shift+Click
+    /// range covers the rows on the current page, because those are the rows the user can see.
+    /// </para>
+    /// <para>
+    /// Two things deliberately keep toggle semantics under either behaviour: the checkboxes in a
+    /// <see cref="BbDataGridSelectColumn{TData}"/>, which would be unusable if ticking one cleared
+    /// the rest, and the Space and Enter keys on a focused row, which act as that row's checkbox.
+    /// </para>
+    /// </remarks>
+    [Parameter]
+    public DataGridSelectionBehavior SelectionBehavior { get; set; } = DataGridSelectionBehavior.Toggle;
 
     /// <summary>
     /// Event callback for selection changes.
@@ -319,6 +382,106 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     [Parameter]
     public bool ShowSearch { get; set; }
+
+    /// <summary>
+    /// How the grid lets a user edit rows in place.
+    /// Default is <see cref="DataGridEditMode.None"/>.
+    /// </summary>
+    /// <remarks>
+    /// Set <see cref="DataGridEditMode.Row"/> and give the columns the user may change an
+    /// <c>EditTemplate</c>. A row goes into edit through
+    /// <see cref="BbDataGridEditColumn{TData}"/>, through <see cref="EditOnRowClick"/>, or
+    /// through <see cref="StartEditAsync"/>. Enter commits and Escape cancels.
+    /// </remarks>
+    [Parameter]
+    public DataGridEditMode EditMode { get; set; } = DataGridEditMode.None;
+
+    /// <summary>
+    /// When <c>true</c>, clicking a row puts it into edit. Default is false.
+    /// </summary>
+    /// <remarks>
+    /// Leave this off when the grid also selects on row click, or a click would do both.
+    /// </remarks>
+    [Parameter]
+    public bool EditOnRowClick { get; set; }
+
+    /// <summary>
+    /// Called when a row's edits are committed, before the row closes.
+    /// </summary>
+    /// <remarks>
+    /// The item already carries the user's changes. Set
+    /// <see cref="DataGridRowCommitContext{TData}.Cancel"/> to keep the row in edit — for
+    /// instance when a save is rejected by the server — so the user keeps their typing.
+    /// </remarks>
+    [Parameter]
+    public EventCallback<DataGridRowCommitContext<TData>> OnRowCommit { get; set; }
+
+    /// <summary>
+    /// Called when a row's edits are discarded, after the old values are put back.
+    /// </summary>
+    [Parameter]
+    public EventCallback<TData> OnRowCancel { get; set; }
+
+    /// <summary>
+    /// When <c>true</c>, renders an Export button above the grid that downloads the rows as CSV.
+    /// Default is false.
+    /// </summary>
+    /// <remarks>
+    /// The button appears in the same toolbar row as <see cref="ShowSearch"/> and
+    /// <see cref="Toolbar"/>. Call <see cref="ExportToCsvAsync"/> on a grid reference instead to
+    /// export from a button of your own.
+    /// </remarks>
+    [Parameter]
+    public bool ShowExport { get; set; }
+
+    /// <summary>
+    /// When <c>true</c>, shows a breadcrumb of the active grouping levels above the grid, with a
+    /// control on each to remove it or move it outward. Default is true.
+    /// </summary>
+    /// <remarks>
+    /// The breadcrumb only appears while something is grouped. It is the practical way to see and
+    /// change a nested grouping: past two levels, reading the order out of the per-column menus
+    /// stops working. Set it false when the grouping is fixed by the page and the user should not
+    /// change it.
+    /// </remarks>
+    [Parameter]
+    public bool ShowGroupingBreadcrumb { get; set; } = true;
+
+    /// <summary>
+    /// The file name offered for the CSV download. Default is <c>export.csv</c>.
+    /// </summary>
+    /// <remarks>
+    /// A <c>.csv</c> extension is appended when the name has none.
+    /// </remarks>
+    [Parameter]
+    public string ExportFileName { get; set; } = "export.csv";
+
+    /// <summary>
+    /// The field delimiter written between CSV values. Default is a comma.
+    /// </summary>
+    /// <remarks>
+    /// Set this to <c>";"</c> for locales where a spreadsheet expects a semicolon, which is the
+    /// usual reason a CSV opens with every row crammed into one column.
+    /// </remarks>
+    [Parameter]
+    public string ExportDelimiter { get; set; } = ",";
+
+    /// <summary>
+    /// Which rows the export writes. Default is
+    /// <see cref="DataGridExportScope.FilteredRows"/>.
+    /// </summary>
+    [Parameter]
+    public DataGridExportScope ExportScope { get; set; } = DataGridExportScope.FilteredRows;
+
+    /// <summary>
+    /// Called after an export completes, with the CSV text that was downloaded.
+    /// </summary>
+    /// <remarks>
+    /// Use it to log the export or to send the same text somewhere else. The download happens
+    /// either way.
+    /// </remarks>
+    [Parameter]
+    public EventCallback<string> OnExport { get; set; }
 
     /// <summary>
     /// The current global search text. Use with <c>@bind-SearchText</c> for two-way binding.
@@ -864,6 +1027,14 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     }
 
     /// <summary>
+    /// Registers an edit column.
+    /// </summary>
+    internal void RegisterColumn(BbDataGridEditColumn<TData> column)
+    {
+        AddColumn(column);
+    }
+
+    /// <summary>
     /// Registers a select column. Always laid out first, ahead of every data column.
     /// </summary>
     internal void RegisterColumn(BbDataGridSelectColumn<TData> column)
@@ -1030,14 +1201,41 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// than only against a markup-configured expression.
     /// Returns null when no grouping is active or the target column is not registered.
     /// </summary>
-    private GroupResolution? ResolveGrouping()
+    /// <summary>
+    /// Resolves every active group level into an accessor, outermost first.
+    /// Returns an empty list when no grouping is active.
+    /// </summary>
+    /// <remarks>
+    /// A level whose column is not registered is dropped rather than failing the pass, and every
+    /// level after it is dropped too: grouping by A then C when B is missing would silently mean
+    /// something different from what the state says.
+    /// </remarks>
+    private IReadOnlyList<GroupResolution> ResolveGroupings()
     {
-        var activeGroup = _gridState.Grouping.ActiveGroup;
-        if (activeGroup == null)
+        var activeGroups = _gridState.Grouping.ActiveGroups;
+        if (activeGroups.Count == 0)
         {
-            return null;
+            return Array.Empty<GroupResolution>();
         }
 
+        var resolved = new List<GroupResolution>(activeGroups.Count);
+
+        foreach (var activeGroup in activeGroups)
+        {
+            var level = ResolveGroupLevel(activeGroup);
+            if (level == null)
+            {
+                break;
+            }
+
+            resolved.Add(level.Value);
+        }
+
+        return resolved;
+    }
+
+    private GroupResolution? ResolveGroupLevel(GroupDefinition activeGroup)
+    {
         // GroupBy / BbDataGridGroupColumn supply their own accessor, which may group by an
         // arbitrary expression that has no corresponding column.
         if (_groupByAccessor != null && activeGroup.ColumnId == _groupByColumnId)
@@ -1049,7 +1247,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         {
             if (column.ColumnId == activeGroup.ColumnId)
             {
-                return new GroupResolution(column.GetRawValue, column.ColumnId, column.Title);
+                return new GroupResolution(column.GetSortAndFilterValue, column.ColumnId, column.Title);
             }
         }
 
@@ -1072,6 +1270,15 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             _gridState.Grouping.SetGroup(definition);
         }
 
+        MarkGroupingApplied();
+    }
+
+    /// <summary>
+    /// Records that the grid itself changed the grouping, so the next pass does not re-detect it
+    /// as a change made from outside, and drops the render list built for the old shape.
+    /// </summary>
+    private void MarkGroupingApplied()
+    {
         _lastGroupingVersion = _gridState.Grouping.Version;
         _groupedRenderItems = null;
         _needsDataRefresh = true;
@@ -1086,7 +1293,30 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     private bool CanGroupColumn(IDataGridColumn<TData> column) => column.Groupable && SupportsGrouping;
 
-    private bool IsGroupedBy(string columnId) => _gridState.Grouping.ActiveGroup?.ColumnId == columnId;
+    private bool IsGroupedBy(string columnId) => _gridState.Grouping.IsGroupedBy(columnId);
+
+    /// <summary>
+    /// Gets the label for a grouping level: the column's title, or the column id when the column
+    /// is not registered — which happens when grouping was restored from a snapshot taken against
+    /// a different set of columns.
+    /// </summary>
+    private string GetGroupLevelTitle(string columnId)
+    {
+        if (_groupByColumnId == columnId && !string.IsNullOrEmpty(_groupByColumnTitle))
+        {
+            return _groupByColumnTitle;
+        }
+
+        foreach (var column in _columns)
+        {
+            if (column.ColumnId == columnId)
+            {
+                return column.Title ?? columnId;
+            }
+        }
+
+        return columnId;
+    }
 
     private bool GetHeaderMenuOpen(string columnId) =>
         _headerMenuOpen.TryGetValue(columnId, out var open) && open;
@@ -1108,7 +1338,13 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private async Task HandleUngroupColumnAsync(string columnId)
     {
         _headerMenuOpen[columnId] = false;
-        await ClearGroupingAsync();
+        await RemoveGroupByColumnAsync(columnId);
+    }
+
+    private async Task HandleAddGroupColumnAsync(string columnId)
+    {
+        _headerMenuOpen[columnId] = false;
+        await AddGroupByColumnAsync(columnId);
     }
 
     /// <summary>
@@ -1268,6 +1504,92 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     }
 
     /// <summary>
+    /// Adds a grouping level inside the levels already active, so rows group by the existing
+    /// columns first and then by this one.
+    /// </summary>
+    /// <remarks>
+    /// Does nothing when the column already groups at some level. Collapsed state is cleared,
+    /// because every path is now one level short of identifying a group.
+    /// </remarks>
+    /// <param name="columnId">The column to group by.</param>
+    /// <param name="direction">The order the new level's groups appear in.</param>
+    public async Task AddGroupByColumnAsync(string columnId, SortDirection direction = SortDirection.Ascending)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(columnId);
+
+        if (!_gridState.Grouping.AddGroup(new GroupDefinition
+        {
+            ColumnId = columnId,
+            GroupSortDirection = direction
+        }))
+        {
+            return;
+        }
+
+        MarkGroupingApplied();
+        await RefreshDataAsync();
+        await NotifyStateChangedAsync();
+    }
+
+    /// <summary>
+    /// Removes one grouping level, leaving the others in order.
+    /// </summary>
+    /// <param name="columnId">The column to stop grouping by.</param>
+    public async Task RemoveGroupByColumnAsync(string columnId)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(columnId);
+
+        if (!_gridState.Grouping.RemoveGroup(columnId))
+        {
+            return;
+        }
+
+        MarkGroupingApplied();
+        await RefreshDataAsync();
+        await NotifyStateChangedAsync();
+    }
+
+    /// <summary>
+    /// Moves a grouping level to a different position, changing which column groups outermost.
+    /// </summary>
+    /// <param name="columnId">The column whose level should move.</param>
+    /// <param name="newIndex">The zero-based position among the remaining levels.</param>
+    public async Task MoveGroupByColumnAsync(string columnId, int newIndex)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(columnId);
+
+        if (!_gridState.Grouping.MoveGroup(columnId, newIndex))
+        {
+            return;
+        }
+
+        MarkGroupingApplied();
+        await RefreshDataAsync();
+        await NotifyStateChangedAsync();
+    }
+
+    /// <summary>
+    /// Replaces every grouping level at once, outermost first.
+    /// </summary>
+    /// <param name="columnIds">The columns to group by, outermost first. Empty clears grouping.</param>
+    /// <param name="direction">The order every level's groups appear in.</param>
+    public async Task SetGroupingAsync(
+        IEnumerable<string> columnIds, SortDirection direction = SortDirection.Ascending)
+    {
+        ArgumentNullException.ThrowIfNull(columnIds);
+
+        _gridState.Grouping.SetGroups(columnIds.Select(id => new GroupDefinition
+        {
+            ColumnId = id,
+            GroupSortDirection = direction
+        }));
+
+        MarkGroupingApplied();
+        await RefreshDataAsync();
+        await NotifyStateChangedAsync();
+    }
+
+    /// <summary>
     /// Clears any active grouping, returning the grid to flat rows.
     /// </summary>
     public async Task ClearGroupingAsync()
@@ -1319,6 +1641,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         if (ItemsProvider != null)
         {
+            // The provider only returns the requested page, so there is no full set to export.
+            _exportRows = null;
             await LoadFromProviderAsync();
         }
         else if (Items != null)
@@ -1329,6 +1653,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         {
             _processedData = Array.Empty<TData>();
             _processedDataList = null;
+            _exportRows = Array.Empty<TData>();
         }
 
         _stateVersion++;
@@ -1354,9 +1679,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
             var sortedList = ApplyGlobalSearch(sorted.ToList()).ToList();
 
-            if (ResolveGrouping() is { } queryableGrouping)
+            if (ResolveGroupings() is { Count: > 0 } queryableGroupings)
             {
-                ProcessGroupedData(sortedList, queryableGrouping);
+                ProcessGroupedData(sortedList, queryableGroupings);
                 return;
             }
 
@@ -1376,6 +1701,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             }
 
             _allSortedData = Array.Empty<TData>();
+            _exportRows = sortedList;
         }
         else
         {
@@ -1386,14 +1712,15 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             var searched = ApplyGlobalSearch(sorted);
             var list = searched as IList<TData> ?? searched.ToList();
 
-            if (ResolveGrouping() is { } grouping)
+            if (ResolveGroupings() is { Count: > 0 } groupings)
             {
-                ProcessGroupedData(list, grouping);
+                ProcessGroupedData(list, groupings);
                 return;
             }
 
             _groupedRenderItems = null;
             _allSortedData = list;
+            _exportRows = list as IReadOnlyList<TData> ?? list.ToList();
             _gridState.Pagination.TotalItems = list.Count;
 
             if (Virtualize)
@@ -1429,147 +1756,259 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         UpdateVirtualizationList();
     }
 
-    private void ProcessGroupedData(IList<TData> sortedData, GroupResolution grouping)
+    /// <summary>
+    /// Groups the rows into a tree, one level per active group definition, and flattens the part
+    /// of that tree the current page shows.
+    /// </summary>
+    /// <remarks>
+    /// A page boundary can land part-way through a subtree. Every open ancestor of the first row
+    /// on a page is re-emitted at the top of that page, so a row never appears without the headers
+    /// that say what it belongs to.
+    /// </remarks>
+    private void ProcessGroupedData(IList<TData> sortedData, IReadOnlyList<GroupResolution> groupings)
     {
-        var groupDef = _gridState.Grouping.ActiveGroup;
-        var accessor = grouping.Accessor;
+        var levels = _gridState.Grouping.ActiveGroups;
 
-        // Group the sorted data
-        var groups = sortedData
-            .GroupBy(item => accessor(item))
-            .ToList();
-
-        // Sort groups by key
-        if (groupDef?.GroupSortDirection == SortDirection.Descending)
-        {
-            groups = groups.OrderByDescending(g => g.Key).ToList();
-        }
-        else
-        {
-            groups = groups.OrderBy(g => g.Key).ToList();
-        }
-
-        // Handle collapsed-by-default on first process
-        var isFirstProcess = _gridState.Grouping.CollapsedKeys.Count == 0
+        // Collapse-by-default only applies the first time, and only to the outermost level:
+        // collapsing every level would hide the nesting the user just asked for.
+        var isFirstProcess = _gridState.Grouping.CollapsedPaths.Count == 0
             && _groupsCollapsedByDefault
             && _groupedRenderItems == null;
 
-        // Build ordered list of groups with their metadata
-        var groupInfos = new List<(object Key, List<TData> Items, DataGridGroupRow<TData> Row)>();
-        foreach (var group in groups)
-        {
-            var items = group.ToList();
-            var groupKey = group.Key ?? "(empty)";
-
-            if (isFirstProcess && _groupsCollapsedByDefault)
-            {
-                _gridState.Grouping.CollapseAll(new[] { groupKey });
-            }
-
-            var aggregates = ComputeAggregates(items, _columns);
-            var groupRow = new DataGridGroupRow<TData>
-            {
-                Key = groupKey,
-                ColumnId = grouping.ColumnId,
-                ColumnTitle = grouping.Title,
-                ItemCount = items.Count,
-                Items = items,
-                Aggregates = aggregates
-            };
-
-            groupInfos.Add((groupKey, items, groupRow));
-        }
+        var roots = BuildGroupTree(sortedData, groupings, levels, GroupPath.Root, 0, isFirstProcess);
 
         _allSortedData = sortedData;
-        _allGroupKeys = groupInfos.Select(g => g.Key).ToList();
+        _exportRows = sortedData as IReadOnlyList<TData> ?? sortedData.ToList();
+        _allGroupPaths = CollectGroupPaths(roots);
 
-        // Count total visible data rows (collapsed groups contribute 0 data rows)
-        var totalDataRows = 0;
-        foreach (var (key, items, _) in groupInfos)
-        {
-            if (!_gridState.Grouping.IsCollapsed(key))
-            {
-                totalDataRows += items.Count;
-            }
-        }
+        _gridState.Pagination.TotalItems = CountVisibleDataRows(roots);
 
-        _gridState.Pagination.TotalItems = totalDataRows;
+        var window = Virtualize
+            ? new GroupPageWindow(0, int.MaxValue)
+            : new GroupPageWindow(
+                _gridState.Pagination.StartIndex,
+                // Saturating add: a page size large enough to mean "everything" would otherwise
+                // overflow to a negative end and render no rows at all.
+                (int)Math.Min(
+                    int.MaxValue,
+                    (long)_gridState.Pagination.StartIndex + _gridState.Pagination.PageSize));
 
-        if (Virtualize)
-        {
-            // For virtualization, build the full flattened list
-            var allRenderItems = new List<DataGridRenderItem<TData>>();
-            var allDataItems = new List<TData>();
-            foreach (var (key, items, row) in groupInfos)
-            {
-                allRenderItems.Add(DataGridRenderItem<TData>.ForGroup(row));
-                if (!_gridState.Grouping.IsCollapsed(key))
-                {
-                    foreach (var item in items)
-                    {
-                        allRenderItems.Add(DataGridRenderItem<TData>.ForData(item));
-                        allDataItems.Add(item);
-                    }
-                }
-            }
+        EmitGroups(roots, new List<DataGridGroupRow<TData>>(), window);
 
-            _groupedRenderItems = allRenderItems;
-            _processedData = allDataItems;
-        }
-        else
-        {
-            // Paginate by data rows only — group headers are "free" and don't count.
-            // Groups that span a page boundary get their header repeated on each page.
-            // Collapsed groups appear at their natural position between expanded groups.
-            var pageStart = _gridState.Pagination.StartIndex;
-            var pageSize = _gridState.Pagination.PageSize;
-            var pageEnd = pageStart + pageSize;
-            var pageRenderItems = new List<DataGridRenderItem<TData>>();
-            var pageDataItems = new List<TData>();
-            var dataRowIndex = 0;
-
-            foreach (var (key, items, row) in groupInfos)
-            {
-                var isCollapsed = _gridState.Grouping.IsCollapsed(key);
-
-                if (isCollapsed)
-                {
-                    // Collapsed groups appear at the current data row position.
-                    // Show them if that position falls within (or at the boundary of) the current page.
-                    if (dataRowIndex >= pageStart && dataRowIndex < pageEnd)
-                    {
-                        pageRenderItems.Add(DataGridRenderItem<TData>.ForGroup(row));
-                    }
-                }
-                else
-                {
-                    var groupDataEnd = dataRowIndex + items.Count;
-
-                    if (groupDataEnd > pageStart && dataRowIndex < pageEnd)
-                    {
-                        // This group has data rows on the current page — emit header
-                        pageRenderItems.Add(DataGridRenderItem<TData>.ForGroup(row));
-
-                        // Emit only the data rows that fall within the page window
-                        var skipInGroup = Math.Max(0, pageStart - dataRowIndex);
-                        var takeFromGroup = Math.Min(items.Count - skipInGroup, pageEnd - (dataRowIndex + skipInGroup));
-
-                        for (var i = skipInGroup; i < skipInGroup + takeFromGroup; i++)
-                        {
-                            pageRenderItems.Add(DataGridRenderItem<TData>.ForData(items[i]));
-                            pageDataItems.Add(items[i]);
-                        }
-                    }
-
-                    dataRowIndex += items.Count;
-                }
-            }
-
-            _groupedRenderItems = pageRenderItems;
-            _processedData = pageDataItems;
-        }
+        _groupedRenderItems = window.RenderItems;
+        _processedData = window.DataItems;
 
         UpdateVirtualizationList();
+    }
+
+    /// <summary>
+    /// Builds one level of the group tree and recurses into the next, so each group carries every
+    /// item beneath it and its aggregates roll up rather than counting only the leaf level.
+    /// </summary>
+    private List<DataGridGroupRow<TData>> BuildGroupTree(
+        IList<TData> items,
+        IReadOnlyList<GroupResolution> groupings,
+        IReadOnlyList<GroupDefinition> levels,
+        GroupPath parentPath,
+        int depth,
+        bool collapseOutermostByDefault)
+    {
+        var grouping = groupings[depth];
+        var accessor = grouping.Accessor;
+
+        var grouped = items.GroupBy(item => accessor(item)).ToList();
+
+        grouped = depth < levels.Count && levels[depth].GroupSortDirection == SortDirection.Descending
+            ? grouped.OrderByDescending(g => g.Key).ToList()
+            : grouped.OrderBy(g => g.Key).ToList();
+
+        var rows = new List<DataGridGroupRow<TData>>(grouped.Count);
+
+        foreach (var group in grouped)
+        {
+            var groupItems = group.ToList();
+            var groupKey = group.Key ?? "(empty)";
+            var path = parentPath.Append(groupKey);
+
+            if (collapseOutermostByDefault && depth == 0)
+            {
+                _gridState.Grouping.CollapseAll(new[] { path });
+            }
+
+            var children = depth + 1 < groupings.Count
+                ? BuildGroupTree(groupItems, groupings, levels, path, depth + 1, false)
+                : new List<DataGridGroupRow<TData>>();
+
+            rows.Add(new DataGridGroupRow<TData>
+            {
+                Key = groupKey,
+                Path = path,
+                Depth = depth,
+                ColumnId = grouping.ColumnId,
+                ColumnTitle = grouping.Title,
+                ItemCount = groupItems.Count,
+                Items = groupItems,
+                Children = children,
+                Aggregates = ComputeAggregates(groupItems, _columns)
+            });
+        }
+
+        return rows;
+    }
+
+    /// <summary>
+    /// Counts the data rows a fully rendered grid would show. A collapsed group contributes none,
+    /// including every group nested inside it.
+    /// </summary>
+    private int CountVisibleDataRows(IReadOnlyList<DataGridGroupRow<TData>> groups)
+    {
+        var total = 0;
+
+        foreach (var group in groups)
+        {
+            if (_gridState.Grouping.IsCollapsed(group.Path))
+            {
+                continue;
+            }
+
+            total += group.Children.Count > 0
+                ? CountVisibleDataRows(group.Children)
+                : group.ItemCount;
+        }
+
+        return total;
+    }
+
+    /// <summary>
+    /// Collects every group path in the tree, used by expand-all and collapse-all.
+    /// </summary>
+    private static List<GroupPath> CollectGroupPaths(IReadOnlyList<DataGridGroupRow<TData>> groups)
+    {
+        var paths = new List<GroupPath>();
+        Collect(groups);
+        return paths;
+
+        void Collect(IReadOnlyList<DataGridGroupRow<TData>> level)
+        {
+            foreach (var group in level)
+            {
+                paths.Add(group.Path);
+                Collect(group.Children);
+            }
+        }
+    }
+
+    /// <summary>
+    /// The slice of data rows a page shows, and the render list being built for it.
+    /// </summary>
+    private sealed class GroupPageWindow
+    {
+        public GroupPageWindow(int pageStart, int pageEnd)
+        {
+            PageStart = pageStart;
+            PageEnd = pageEnd;
+        }
+
+        public int PageStart { get; }
+
+        public int PageEnd { get; }
+
+        /// <summary>
+        /// How many data rows the walk has passed, counting rows on earlier pages.
+        /// </summary>
+        public int DataIndex { get; set; }
+
+        public List<DataGridRenderItem<TData>> RenderItems { get; } = new();
+
+        public List<TData> DataItems { get; } = new();
+
+        /// <summary>
+        /// The group headers already written to this page, so an ancestor re-emitted for one row
+        /// is not written again for the next.
+        /// </summary>
+        public HashSet<GroupPath> EmittedHeaders { get; } = new();
+    }
+
+    /// <summary>
+    /// Walks the group tree in render order and writes the part of it that falls on the page.
+    /// </summary>
+    private void EmitGroups(
+        IReadOnlyList<DataGridGroupRow<TData>> groups,
+        List<DataGridGroupRow<TData>> chain,
+        GroupPageWindow window)
+    {
+        foreach (var group in groups)
+        {
+            if (window.DataIndex >= window.PageEnd)
+            {
+                // Everything from here on is on a later page. Headers for it are re-emitted there.
+                return;
+            }
+
+            chain.Add(group);
+
+            if (_gridState.Grouping.IsCollapsed(group.Path))
+            {
+                // A collapsed group shows no rows, so it sits at the position of the row that
+                // would have come next and does not advance the count.
+                if (window.DataIndex >= window.PageStart && window.DataIndex < window.PageEnd)
+                {
+                    EmitChain(chain, window);
+                }
+            }
+            else if (group.Children.Count > 0)
+            {
+                // The header is written by whichever descendant first lands on the page, which is
+                // what re-emits it after a page break.
+                EmitGroups(group.Children, chain, window);
+            }
+            else
+            {
+                EmitLeafGroup(group, chain, window);
+            }
+
+            chain.RemoveAt(chain.Count - 1);
+        }
+    }
+
+    /// <summary>
+    /// Writes the rows of an innermost group that fall on the page, preceded by its headers.
+    /// </summary>
+    private static void EmitLeafGroup(
+        DataGridGroupRow<TData> group,
+        List<DataGridGroupRow<TData>> chain,
+        GroupPageWindow window)
+    {
+        var skip = Math.Max(0, window.PageStart - window.DataIndex);
+        var take = Math.Min(group.ItemCount - skip, window.PageEnd - (window.DataIndex + skip));
+
+        if (take > 0)
+        {
+            EmitChain(chain, window);
+
+            for (var i = skip; i < skip + take; i++)
+            {
+                window.RenderItems.Add(
+                    DataGridRenderItem<TData>.ForGroupedData(group.Items[i], group.Depth + 1));
+                window.DataItems.Add(group.Items[i]);
+            }
+        }
+
+        window.DataIndex += group.ItemCount;
+    }
+
+    /// <summary>
+    /// Writes any header in the ancestor chain that this page has not shown yet.
+    /// </summary>
+    private static void EmitChain(List<DataGridGroupRow<TData>> chain, GroupPageWindow window)
+    {
+        foreach (var ancestor in chain)
+        {
+            if (window.EmittedHeaders.Add(ancestor.Path))
+            {
+                window.RenderItems.Add(DataGridRenderItem<TData>.ForGroup(ancestor));
+            }
+        }
     }
 
     private static Dictionary<string, AggregateResult> ComputeAggregates(
@@ -1887,6 +2326,13 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             HasChildrenPredicate,
             effectiveFilterMode);
 
+        // Every visible data row across all pages, in the order the tree renders them. Child pager
+        // rows are not data, so they are left out of the export.
+        _exportRows = flatResult
+            .Where(r => !r.IsChildPagerRow)
+            .Select(r => r.Item)
+            .ToList();
+
         // Build render items with hierarchy metadata, applying pagination.
         // When a filter is active, paginate by total visible rows to prevent
         // a single root with thousands of expanded descendants from rendering
@@ -2065,7 +2511,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         {
             foreach (var (column, condition) in columnFilters)
             {
-                var value = column.GetRawValue(item);
+                var value = column.GetSortAndFilterValue(item);
                 if (!EvaluateFilter(value, condition))
                 {
                     return false;
@@ -2417,11 +2863,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
                 .Select(c => c.ColumnId)
                 .ToList();
 
-            var grouping = ResolveGrouping();
+            var providerGroupings = ResolveGroupings();
 
             // When grouping client-side from a flat provider, fetch all items so
             // ProcessGroupedData can correctly paginate across groups.
-            var isClientSideGrouping = grouping != null && GroupedItemsProvider == null;
+            var isClientSideGrouping = providerGroupings.Count > 0 && GroupedItemsProvider == null;
 
             var request = new DataGridRequest
             {
@@ -2431,18 +2877,19 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
                 CancellationToken = token,
                 Filters = _gridState.Filtering.Filters,
                 GroupDefinition = _gridState.Grouping.ActiveGroup,
+                GroupDefinitions = _gridState.Grouping.ActiveGroups,
                 AggregateColumns = aggregateColumns.Count > 0 ? aggregateColumns : null,
                 SearchText = SearchText
             };
 
             // Use grouped provider when grouping is active and provider is available
-            if (grouping != null && GroupedItemsProvider != null)
+            if (providerGroupings.Count > 0 && GroupedItemsProvider != null)
             {
                 var groupedResult = await GroupedItemsProvider(request);
 
                 if (!token.IsCancellationRequested)
                 {
-                    BuildRenderItemsFromGroupedResult(groupedResult, grouping.Value);
+                    BuildRenderItemsFromGroupedResult(groupedResult, providerGroupings);
                 }
             }
             else
@@ -2451,11 +2898,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
                 if (!token.IsCancellationRequested)
                 {
-                    if (grouping is { } providerGrouping)
+                    if (providerGroupings.Count > 0)
                     {
                         // Group client-side from flat provider results
                         var items = result.Items as IList<TData> ?? result.Items.ToList();
-                        ProcessGroupedData(items, providerGrouping);
+                        ProcessGroupedData(items, providerGroupings);
                     }
                     else
                     {
@@ -2473,43 +2920,104 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
     }
 
+    /// <summary>
+    /// Turns a server-grouped result into the render list.
+    /// </summary>
+    /// <remarks>
+    /// The wire shape stays flat: one entry per innermost group, each carrying its full key path.
+    /// That is what <c>GROUP BY a, b</c> already returns, so a provider projects straight from a
+    /// query instead of reshaping the result into a tree. The ancestor headers are rebuilt here
+    /// from the paths, and a header is written once however many innermost groups sit under it.
+    /// <para>
+    /// The server has already paged, so the result is rendered whole rather than sliced again.
+    /// </para>
+    /// </remarks>
     private void BuildRenderItemsFromGroupedResult(
-        DataGridGroupedResult<TData> groupedResult, GroupResolution grouping)
+        DataGridGroupedResult<TData> groupedResult, IReadOnlyList<GroupResolution> groupings)
     {
         var allRenderItems = new List<DataGridRenderItem<TData>>();
         var allDataItems = new List<TData>();
+        var emittedHeaders = new HashSet<GroupPath>();
+        var allPaths = new List<GroupPath>();
 
         foreach (var group in groupedResult.Groups)
         {
-            var groupKey = group.Key ?? "(empty)";
             var items = group.Items.ToList();
+            var keys = ResolveGroupKeyPath(group);
 
-            var groupRow = new DataGridGroupRow<TData>
+            // Write any ancestor header this result has not shown yet, outermost first.
+            var path = GroupPath.Root;
+            var hiddenByCollapse = false;
+
+            for (var depth = 0; depth < keys.Count; depth++)
             {
-                Key = groupKey,
-                ColumnId = grouping.ColumnId,
-                ColumnTitle = grouping.Title,
-                ItemCount = group.ItemCount > 0 ? group.ItemCount : items.Count,
-                Items = items,
-                Aggregates = group.Aggregates ?? new Dictionary<string, AggregateResult>()
-            };
+                path = path.Append(keys[depth]);
 
-            allRenderItems.Add(DataGridRenderItem<TData>.ForGroup(groupRow));
-
-            if (!_gridState.Grouping.IsCollapsed(groupKey))
-            {
-                foreach (var item in items)
+                if (hiddenByCollapse)
                 {
-                    allRenderItems.Add(DataGridRenderItem<TData>.ForData(item));
-                    allDataItems.Add(item);
+                    continue;
                 }
+
+                if (emittedHeaders.Add(path))
+                {
+                    allPaths.Add(path);
+
+                    var level = depth < groupings.Count ? groupings[depth] : groupings[^1];
+                    allRenderItems.Add(DataGridRenderItem<TData>.ForGroup(new DataGridGroupRow<TData>
+                    {
+                        Key = keys[depth],
+                        Path = path,
+                        Depth = depth,
+                        ColumnId = level.ColumnId,
+                        ColumnTitle = level.Title,
+                        ItemCount = depth == keys.Count - 1
+                            ? (group.ItemCount > 0 ? group.ItemCount : items.Count)
+                            : items.Count,
+                        Items = items,
+                        Aggregates = depth == keys.Count - 1
+                            ? group.Aggregates ?? new Dictionary<string, AggregateResult>()
+                            : new Dictionary<string, AggregateResult>()
+                    }));
+                }
+
+                if (_gridState.Grouping.IsCollapsed(path))
+                {
+                    hiddenByCollapse = true;
+                }
+            }
+
+            if (hiddenByCollapse)
+            {
+                continue;
+            }
+
+            foreach (var item in items)
+            {
+                allRenderItems.Add(DataGridRenderItem<TData>.ForGroupedData(item, keys.Count));
+                allDataItems.Add(item);
             }
         }
 
+        _allGroupPaths = allPaths;
         _gridState.Pagination.TotalItems = groupedResult.TotalItemCount;
         _groupedRenderItems = allRenderItems;
         _processedData = allDataItems;
+        _exportRows = null;
         UpdateVirtualizationList();
+    }
+
+    /// <summary>
+    /// Gets the ordered keys for a server-supplied group, falling back to its single
+    /// <see cref="DataGridGroupResult{TData}.Key"/> when no path was given.
+    /// </summary>
+    private static IReadOnlyList<object?> ResolveGroupKeyPath(DataGridGroupResult<TData> group)
+    {
+        if (group.KeyPath is { Count: > 0 } path)
+        {
+            return path.Select(k => k ?? "(empty)").ToList();
+        }
+
+        return new object?[] { group.Key ?? "(empty)" };
     }
 
     private async Task NotifyStateChangedAsync()
@@ -2607,6 +3115,16 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
                 continue;
             }
 
+            // A column with its own sort/filter selector filters on the value it displays, so the
+            // predicate is built from that projection rather than from the column's property.
+            var selector = column.GetSortAndFilterExpression();
+            if (selector != null)
+            {
+                queryable = queryable.Where(
+                    condition.ToExpressionForSelector<TData>(selector, GetFilterFieldTypeForColumn(column)));
+                continue;
+            }
+
             var field = GetFilterFieldForColumn(column);
             if (field == null)
             {
@@ -2690,6 +3208,18 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
                         return true;
                     }
                 }
+
+                // And the sort/filter value, which for a template column is the label the user
+                // actually reads — searching for it should find the row.
+                if (column.GetSortAndFilterExpression() != null)
+                {
+                    var displayValue = column.GetSortAndFilterValue(item);
+                    var displayStr = displayValue?.ToString();
+                    if (displayStr != null && displayStr.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
             }
 
             return false;
@@ -2716,6 +3246,18 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
                 continue;
             }
 
+            // A column with its own sort/filter selector filters on the value it displays, so the
+            // condition is tested against that projection rather than against a reflected property.
+            if (column.GetSortAndFilterExpression() != null)
+            {
+                var selectorColumn = column;
+                var selectorCondition = condition;
+                var selectorFieldType = GetFilterFieldTypeForColumn(column);
+                data = data.Where(item =>
+                    selectorCondition.MatchesValue(selectorColumn.GetSortAndFilterValue(item), selectorFieldType));
+                continue;
+            }
+
             var field = GetFilterFieldForColumn(column);
             if (field == null)
             {
@@ -2733,6 +3275,13 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         return data;
     }
+
+    /// <summary>
+    /// Gets the filter field type for a column, or null when the column does not declare one.
+    /// Used to pick whole-day semantics for date comparisons.
+    /// </summary>
+    private static FilterFieldType? GetFilterFieldTypeForColumn(IDataGridColumn<TData> column) =>
+        column is IFilterableColumn filterable ? filterable.GetFilterFieldType() : null;
 
     private static FilterField? GetFilterFieldForColumn(IDataGridColumn<TData> column)
     {
@@ -2995,6 +3544,10 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             _gridState.Selection.Deselect(item);
         }
 
+        // A checkbox click moves the anchor, so a following Shift+Click extends from the row the
+        // user last acted on rather than from wherever the anchor happened to be.
+        _gridState.Selection.Anchor = item;
+
         if (HierarchySelectionMode == HierarchySelectionMode.Cascade
             && IsHierarchyMode && _hierarchyManager != null && ItemValueSelector != null)
         {
@@ -3102,9 +3655,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     internal async Task HandleGroupToggle(DataGridGroupRow<TData> groupRow)
     {
-        var key = groupRow.Key ?? "(empty)";
-        var wasCollapsed = _gridState.Grouping.IsCollapsed(key);
-        _gridState.Grouping.Toggle(key);
+        // Keyed by the full path, so collapsing "Active" under Sales leaves "Active" under
+        // Support alone.
+        var path = groupRow.Path;
+        var wasCollapsed = _gridState.Grouping.IsCollapsed(path);
+        _gridState.Grouping.Toggle(path);
 
         // Reprocess to rebuild the flattened render items
         await ProcessDataAsync();
@@ -3144,12 +3699,12 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     public async Task CollapseAllGroups()
     {
-        if (_allGroupKeys == null || _allGroupKeys.Count == 0)
+        if (_allGroupPaths == null || _allGroupPaths.Count == 0)
         {
             return;
         }
 
-        _gridState.Grouping.CollapseAll(_allGroupKeys);
+        _gridState.Grouping.CollapseAll(_allGroupPaths);
         await ProcessDataAsync();
         StateHasChanged();
     }
@@ -3179,9 +3734,13 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         StateHasChanged();
     }
 
+    /// <summary>
+    /// Gets the visible columns that hold data, dropping the select, expand and edit columns.
+    /// Those three are controls, so they have nothing to export and nothing to group by.
+    /// </summary>
     private List<IDataGridColumn<TData>> GetVisibleDataColumns() =>
         GetVisibleColumns()
-            .Where(c => c.ColumnId != "__select" && c.ColumnId != "__expand")
+            .Where(c => c.ColumnId is not ("__select" or "__expand" or BbDataGridEditColumn<TData>.EditColumnId))
             .ToList();
 
     private async Task HandleRowClick(TData item)
@@ -3189,6 +3748,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         if (OnRowClick.HasDelegate)
         {
             await OnRowClick.InvokeAsync(item);
+        }
+
+        if (EditOnRowClick && EditMode != DataGridEditMode.None && !IsEditing(item))
+        {
+            await StartEditAsync(item);
         }
     }
 
@@ -3199,6 +3763,253 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         if (rowContextMenu != null)
         {
             await rowContextMenu.OpenAt(args.ClientX, args.ClientY);
+        }
+    }
+
+    /// <summary>
+    /// Gets the item currently being edited, or null when no row is in edit.
+    /// </summary>
+    public TData? EditingItem => _editingItem;
+
+    /// <summary>
+    /// Gets whether a given row is the one currently being edited.
+    /// </summary>
+    /// <param name="item">The row to check.</param>
+    /// <returns>True when that row is in edit.</returns>
+    public bool IsEditing(TData item) => _editingItem != null && SameRow(_editingItem, item);
+
+    /// <summary>
+    /// Compares two rows the way the rest of the grid does: by <see cref="ItemKey"/> when one is
+    /// supplied, so a row re-materialized by a data refresh is still recognised, and by reference
+    /// otherwise.
+    /// </summary>
+    private bool SameRow(TData left, TData right)
+    {
+        if (ReferenceEquals(left, right))
+        {
+            return true;
+        }
+
+        return ItemKey != null && Equals(ItemKey(left), ItemKey(right));
+    }
+
+    /// <summary>
+    /// Puts a row into edit, committing any row already being edited.
+    /// </summary>
+    /// <remarks>
+    /// Does nothing when <see cref="EditMode"/> is <see cref="DataGridEditMode.None"/>. The item's
+    /// current values are recorded first, so <see cref="CancelEditAsync"/> can put them back.
+    /// </remarks>
+    /// <param name="item">The row to edit.</param>
+    public async Task StartEditAsync(TData item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        if (EditMode == DataGridEditMode.None)
+        {
+            return;
+        }
+
+        if (_editingItem != null)
+        {
+            // Moving to another row commits the one being left, which is what a user who clicks
+            // straight onto the next row means. A failed commit keeps them where they were.
+            if (!await CommitEditAsync())
+            {
+                return;
+            }
+        }
+
+        _editingItem = item;
+        _editSnapshot = DataGridRowSnapshot<TData>.Capture(item);
+        _editContext = new EditContext(item);
+        _stateVersion++;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Commits the row being edited and closes it.
+    /// </summary>
+    /// <remarks>
+    /// Validates the item first through its own <see cref="EditContext"/>, so
+    /// <c>DataAnnotations</c> on the model apply unchanged. A row that fails validation stays open.
+    /// <see cref="OnRowCommit"/> can also keep it open by setting
+    /// <see cref="DataGridRowCommitContext{TData}.Cancel"/>.
+    /// </remarks>
+    /// <returns>True when the row closed.</returns>
+    public async Task<bool> CommitEditAsync()
+    {
+        if (_editingItem == null)
+        {
+            return true;
+        }
+
+        if (_editContext != null && !_editContext.Validate())
+        {
+            StateHasChanged();
+            return false;
+        }
+
+        var item = _editingItem;
+
+        if (OnRowCommit.HasDelegate)
+        {
+            var context = new DataGridRowCommitContext<TData> { Item = item };
+            await OnRowCommit.InvokeAsync(context);
+
+            if (context.Cancel)
+            {
+                StateHasChanged();
+                return false;
+            }
+        }
+
+        ClearEditState();
+
+        // The edited values may change where the row sorts, which group it belongs to, or whether
+        // it still passes the filters, so the pass is redone rather than only re-rendered.
+        await RefreshDataAsync();
+        StateHasChanged();
+        return true;
+    }
+
+    /// <summary>
+    /// Discards the row's edits, putting the values it held when editing started back on it, and
+    /// closes the row.
+    /// </summary>
+    public async Task CancelEditAsync()
+    {
+        if (_editingItem == null)
+        {
+            return;
+        }
+
+        var item = _editingItem;
+        _editSnapshot?.Restore();
+        ClearEditState();
+
+        if (OnRowCancel.HasDelegate)
+        {
+            await OnRowCancel.InvokeAsync(item);
+        }
+
+        await RefreshDataAsync();
+        StateHasChanged();
+    }
+
+    private void ClearEditState()
+    {
+        _editingItem = null;
+        _editSnapshot = null;
+        _editContext = null;
+        _stateVersion++;
+    }
+
+    /// <summary>
+    /// Gets whether a cell should render its edit template rather than its value.
+    /// </summary>
+    private bool ShouldRenderEditor(IDataGridColumn<TData> column, TData item) =>
+        EditMode != DataGridEditMode.None && column.EditTemplate != null && IsEditing(item);
+
+    /// <summary>
+    /// Builds the CSV for the current rows and downloads it in the browser.
+    /// </summary>
+    /// <remarks>
+    /// Exports what the user sees: the rows that survive the current filters, search and sort,
+    /// in the visible columns, in their current order, using each column's display value. A
+    /// column with a sort-and-filter selector exports that value, so a cell showing <c>Active</c>
+    /// exports <c>Active</c> and not the key behind it.
+    /// <para>
+    /// <see cref="ExportScope"/> chooses between every filtered row and just the page on screen.
+    /// A grid backed by an <see cref="ItemsProvider"/> only holds the page it fetched, so it
+    /// exports that page and logs a warning the first time.
+    /// </para>
+    /// </remarks>
+    /// <returns>The CSV text that was downloaded.</returns>
+    public async Task<string> ExportToCsvAsync()
+    {
+        var csv = BuildCsv();
+        await DownloadCsvAsync(csv);
+
+        if (OnExport.HasDelegate)
+        {
+            await OnExport.InvokeAsync(csv);
+        }
+
+        return csv;
+    }
+
+    /// <summary>
+    /// Builds the CSV for the current rows without downloading it.
+    /// </summary>
+    /// <remarks>
+    /// Use this to write the file somewhere other than the browser — a server-side store, an
+    /// email attachment — or to assert on the output in a test.
+    /// </remarks>
+    /// <returns>The CSV text.</returns>
+    public string BuildCsv() =>
+        DataGridCsvWriter.Write(GetExportRows(), GetExportColumns(), ExportDelimiter);
+
+    /// <summary>
+    /// Gets the columns the export writes: the visible data columns in their current order,
+    /// without the select and expand columns, which hold no data.
+    /// </summary>
+    private List<IDataGridColumn<TData>> GetExportColumns() => GetVisibleDataColumns();
+
+    /// <summary>
+    /// Gets the rows the export writes.
+    /// </summary>
+    private IReadOnlyList<TData> GetExportRows()
+    {
+        if (ExportScope == DataGridExportScope.CurrentPage)
+        {
+            return CurrentPageRows();
+        }
+
+        if (_exportRows != null)
+        {
+            return _exportRows;
+        }
+
+        // An ItemsProvider only returned the page that was asked for, so that is all there is to
+        // export. Say so once rather than silently handing back a short file.
+        if (ItemsProvider != null && !warnedAboutProviderExportScope)
+        {
+            warnedAboutProviderExportScope = true;
+            DataGridLog.ExportLimitedToLoadedPage(Logger);
+        }
+
+        return CurrentPageRows();
+    }
+
+    private IReadOnlyList<TData> CurrentPageRows() =>
+        _processedData as IReadOnlyList<TData> ?? _processedData.ToList();
+
+    private async Task DownloadCsvAsync(string csv)
+    {
+        var fileName = ExportFileName;
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            fileName = "export.csv";
+        }
+        else if (!fileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            fileName += ".csv";
+        }
+
+        try
+        {
+            downloadModule ??= await Js.InvokeAsync<IJSObjectReference>("import",
+                "./_content/BlazorBlueprint.Components/js/file-download.js");
+
+            // The byte-order mark is what makes Excel read the file as UTF-8 rather than as the
+            // local codepage, which is why accented names arrive mangled without it.
+            await downloadModule.InvokeVoidAsync(
+                "downloadText", fileName, "\uFEFF" + csv, "text/csv;charset=utf-8");
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+        {
+            // No browser to download into — prerendering, or a circuit that has gone away.
         }
     }
 
@@ -3554,6 +4365,18 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             try
             {
                 await clipboardModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Expected during circuit disconnect
+            }
+        }
+
+        if (downloadModule != null)
+        {
+            try
+            {
+                await downloadModule.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

@@ -52,6 +52,20 @@ public class DataGridRequest
     public GroupDefinition? GroupDefinition { get; init; }
 
     /// <summary>
+    /// Gets every active group definition, outermost first. Empty when no grouping is active.
+    /// </summary>
+    /// <remarks>
+    /// Translate these into one <c>GROUP BY a, b</c> and return a flat row per innermost group,
+    /// each carrying its full <see cref="DataGridGroupResult{TData}.KeyPath"/>. The grid rebuilds
+    /// the header tree from those paths.
+    /// <para>
+    /// <see cref="GroupDefinition"/> holds the outermost level only, and is still set so a
+    /// provider written against single-level grouping keeps working.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyList<GroupDefinition> GroupDefinitions { get; init; } = Array.Empty<GroupDefinition>();
+
+    /// <summary>
     /// Gets the column IDs that need aggregate computation when grouping.
     /// Server-side providers should compute these aggregates per group.
     /// </summary>

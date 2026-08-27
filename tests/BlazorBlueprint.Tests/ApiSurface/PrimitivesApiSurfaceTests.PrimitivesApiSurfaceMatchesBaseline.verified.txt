@@ -202,12 +202,15 @@
   - ChildContent : RenderFragment
   - Class : String
   - EnableKeyboardNavigation : Boolean
+  - IsRowEditing : Func<TData, Boolean>
   - Items : IEnumerable<TData>
   - ItemsProvider : DataGridItemsProvider<TData>
   - ManualPagination : Boolean
+  - OnCancelEdit : Func<Task>
   - OnColumnReorder : EventCallback<ValueTuple<String, Int32>>
   - OnColumnResize : EventCallback<ValueTuple<String, String>>
   - OnColumnVisibilityChange : EventCallback<ValueTuple<String, Boolean>>
+  - OnCommitEdit : Func<Task>
   - OnPageChange : EventCallback<Int32>
   - OnPageSizeChange : EventCallback<Int32>
   - OnRowClick : EventCallback<TData>
@@ -216,6 +219,7 @@
   - OnSelectionChange : EventCallback<IReadOnlyCollection<TData>>
   - OnSortChange : EventCallback<IReadOnlyList<SortDefinition>>
   - OnToggleExpand : EventCallback<TData>
+  - SelectionBehavior : DataGridSelectionBehavior
   - SelectionMode : SelectionMode
   - State : DataGridState<TData>
   - StateChanged : EventCallback<DataGridState<TData>>
@@ -925,6 +929,14 @@
   - Left = 1
   - Right = 2
 
+### DataGridEditMode (BlazorBlueprint.Primitives)
+  - None = 0
+  - Row = 1
+
+### DataGridSelectionBehavior (BlazorBlueprint.Primitives)
+  - Toggle = 0
+  - Replace = 1
+
 ### DatePreset (BlazorBlueprint.Primitives.Filtering)
   - Today = 0
   - Yesterday = 1
@@ -1112,6 +1124,7 @@
   - CellClassFunc : Func<TData, String> { get; }
   - CellTemplate : RenderFragment<DataGridCellContext<TData>> { get; }
   - ColumnId : String { get; }
+  - EditTemplate : RenderFragment<DataGridCellContext<TData>> { get; }
   - Filterable : Boolean { get; }
   - Groupable : Boolean { get; }
   - HeaderClass : String { get; }
@@ -1129,6 +1142,8 @@
   - Compare(TData x, TData y) : Int32
   - GetFilterExpression() : LambdaExpression
   - GetRawValue(TData item) : Object
+  - GetSortAndFilterExpression() : LambdaExpression
+  - GetSortAndFilterValue(TData item) : Object
   - GetSortExpression() : LambdaExpression
   - GetValue(TData item) : Object
 

@@ -78,6 +78,11 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["DataGrid.FilterPlaceholder"] = "Filter {0}",
         ["DataGrid.ColumnMenu"] = "{0} column options",
         ["DataGrid.GroupByColumn"] = "Group by {0}",
+        ["DataGrid.AddGroupByColumn"] = "Then group by {0}",
+        ["DataGrid.GroupingBreadcrumbLabel"] = "Grouped by",
+        ["DataGrid.RemoveGroupLevel"] = "Stop grouping by {0}",
+        ["DataGrid.MoveGroupLevelOut"] = "Move {0} out one level",
+        ["DataGrid.ClearGrouping"] = "Clear grouping",
         ["DataGrid.UngroupColumn"] = "Remove grouping",
         ["DataGrid.PinnedColumnTooltip"] = "This column is pinned and cannot be moved",
         ["DataGrid.ActiveFilters"] = "{0} active filter(s)",
@@ -101,6 +106,11 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["DataGrid.FilterColumnClear"] = "Clear",
         ["DataGrid.FilterColumnApply"] = "Apply",
         ["DataGrid.SearchPlaceholder"] = "Search...",
+        ["DataGrid.Export"] = "Export",
+        ["DataGrid.EditRow"] = "Edit row",
+        ["DataGrid.SaveRow"] = "Save",
+        ["DataGrid.CancelRowEdit"] = "Cancel",
+        ["DataGrid.ExportAriaLabel"] = "Export rows to CSV",
 
         // DataTable
         ["DataTable.Loading"] = "Loading...",

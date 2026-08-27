@@ -37,7 +37,23 @@ public class DataGridGroupResult<TData> where TData : class
     /// <summary>
     /// Gets the group key value.
     /// </summary>
+    /// <remarks>
+    /// For a nested grouping this is the innermost key. Set <see cref="KeyPath"/> as well so the
+    /// grid knows which ancestors the group sits under.
+    /// </remarks>
     public object? Key { get; init; }
+
+    /// <summary>
+    /// Gets the ordered keys identifying this group, outermost first, for a nested grouping.
+    /// Null or empty for a single level, where <see cref="Key"/> is enough.
+    /// </summary>
+    /// <remarks>
+    /// The wire shape stays flat: one row per innermost group, each carrying its full path. That
+    /// is what <c>GROUP BY a, b</c> already returns, so a provider can project straight from a
+    /// query rather than reshaping the result into a tree. The grid rebuilds the tree from the
+    /// paths and re-emits the ancestor headers itself.
+    /// </remarks>
+    public IReadOnlyList<object?>? KeyPath { get; init; }
 
     /// <summary>
     /// Gets the items in this group.

@@ -167,14 +167,20 @@ public class DataGridState<TData> where TData : class
             });
         }
 
-        if (Grouping.ActiveGroup != null)
+        foreach (var group in Grouping.ActiveGroups)
         {
-            snapshot.GroupDefinition = new GroupDefinitionSnapshot
+            snapshot.GroupDefinitions.Add(new GroupDefinitionSnapshot
             {
-                ColumnId = Grouping.ActiveGroup.ColumnId,
-                GroupSortDirection = Grouping.ActiveGroup.GroupSortDirection
-            };
+                ColumnId = group.ColumnId,
+                GroupSortDirection = group.GroupSortDirection
+            });
         }
+
+        // Also written to the single-level field, so a snapshot taken here still restores in an
+        // app running a version that only knows about one grouping level.
+        snapshot.GroupDefinition = snapshot.GroupDefinitions.Count > 0
+            ? snapshot.GroupDefinitions[0]
+            : null;
 
         return snapshot;
     }
@@ -209,13 +215,21 @@ public class DataGridState<TData> where TData : class
             });
         }
 
-        if (snapshot.GroupDefinition != null)
+        // A snapshot written before nested grouping existed only carries the single field, so
+        // fall back to it rather than restoring a grid with no grouping at all.
+        var groupSnapshots = snapshot.GroupDefinitions.Count > 0
+            ? snapshot.GroupDefinitions
+            : snapshot.GroupDefinition != null
+                ? new List<GroupDefinitionSnapshot> { snapshot.GroupDefinition }
+                : new List<GroupDefinitionSnapshot>();
+
+        if (groupSnapshots.Count > 0)
         {
-            Grouping.SetGroup(new GroupDefinition
+            Grouping.SetGroups(groupSnapshots.Select(g => new GroupDefinition
             {
-                ColumnId = snapshot.GroupDefinition.ColumnId,
-                GroupSortDirection = snapshot.GroupDefinition.GroupSortDirection
-            });
+                ColumnId = g.ColumnId,
+                GroupSortDirection = g.GroupSortDirection
+            }));
         }
         else
         {
