@@ -103,12 +103,25 @@ public class DataGridRenderItem<TData> where TData : class
     };
 
     /// <summary>
-    /// Creates a render item for a group header.
+    /// Creates a render item for a data row nested under group headers, carrying the depth it
+    /// should be indented to.
+    /// </summary>
+    public static DataGridRenderItem<TData> ForGroupedData(TData item, int depth) => new()
+    {
+        IsDataRow = true,
+        Item = item,
+        Depth = depth
+    };
+
+    /// <summary>
+    /// Creates a render item for a group header. The depth comes from the group itself, so a
+    /// nested header knows how far to indent.
     /// </summary>
     public static DataGridRenderItem<TData> ForGroup(DataGridGroupRow<TData> group) => new()
     {
         IsGroupHeader = true,
-        GroupRow = group
+        GroupRow = group,
+        Depth = group?.Depth ?? 0
     };
 
     /// <summary>

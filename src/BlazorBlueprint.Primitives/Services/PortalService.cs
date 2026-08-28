@@ -14,8 +14,16 @@ public class PortalService(ILogger<PortalService> logger) : IPortalService
 {
     private static readonly Action<ILogger, Exception?> logMissingPortalHost =
         LoggerMessage.Define(LogLevel.Warning, new EventId(1, "MissingPortalHost"),
-            "BlazorBlueprint: No <PortalHost /> detected. Portal-based components (Dialog, Select, Popover, etc.) " +
-            "require a <BbPortalHost /> in your layout to render. Add <BbPortalHost /> to your MainLayout.razor.");
+            "BlazorBlueprint: no <BbPortalHost /> is registered in this render context, so Dialog, Select, " +
+            "Popover and other portal-based components cannot render. " +
+            "If your layout has no <BbPortalHost />, add one to MainLayout.razor. " +
+            "If it already has one, then it is rendering somewhere this code cannot reach it. In a Blazor Web " +
+            "App that is usually because the layout is static while the page is interactive: a routed page's " +
+            "layout inherits the page's render mode only when interactivity is applied globally. Either set " +
+            "@rendermode on <Routes /> in App.razor, or render <BbPortalHost />, <BbToastProvider /> and " +
+            "<BbDialogProvider /> as interactive islands with their own @rendermode. Under " +
+            "InteractiveWebAssembly the host must additionally live in an assembly the client project loads — " +
+            "a layout in the server project cannot run in the browser, however it is marked.");
 
     private readonly ConcurrentDictionary<string, PortalEntry> portals = new();
     private long nextOrder;

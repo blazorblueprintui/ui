@@ -814,6 +814,11 @@
   - Item : TData [EditorRequired]
   - ParentGrid : BbDataGrid<TData> [CascadingParameter]
 
+### BbDataGridEditColumn`1 (BlazorBlueprint.Components)
+  - Pinned : ColumnPinning
+  - Width : String
+  - ParentGrid : BbDataGrid<TData> [CascadingParameter]
+
 ### BbDataGridExpandColumn`1 (BlazorBlueprint.Components)
   - DetailRows : RenderFragment<TData>
   - Pinned : ColumnPinning
@@ -858,6 +863,7 @@
   - CellClass : String
   - CellClassFunc : Func<TData, String>
   - CellTemplate : RenderFragment<TData>
+  - EditTemplate : RenderFragment<TData>
   - FilterOptions : IEnumerable<SelectOption<String>>
   - FilterType : FilterFieldType?
   - Filterable : Boolean
@@ -873,6 +879,7 @@
   - Property : Expression<Func<TData, TProp>> [EditorRequired]
   - Reorderable : Boolean
   - Resizable : Boolean
+  - SortAndFilterBy : Expression<Func<TData, Object>>
   - Sortable : Boolean
   - Title : String
   - Visible : Boolean
@@ -924,10 +931,15 @@
   - DefaultExpandAll : Boolean
   - DefaultExpandDepth : Int32?
   - DetailTemplate : RenderFragment<TData>
+  - EditMode : DataGridEditMode
+  - EditOnRowClick : Boolean
   - EmptyTemplate : RenderFragment
   - EnableKeyboardNavigation : Boolean
   - ExpandedNodes : HashSet<String>
   - ExpandedNodesChanged : EventCallback<HashSet<String>>
+  - ExportDelimiter : String
+  - ExportFileName : String
+  - ExportScope : DataGridExportScope
   - FilterBarClass : String
   - GroupBy : Expression<Func<TData, Object>>
   - GroupHeaderTemplate : RenderFragment<DataGridGroupContext<TData>>
@@ -953,13 +965,16 @@
   - OnColumnReorder : EventCallback<ValueTuple<String, Int32>>
   - OnColumnResize : EventCallback<ValueTuple<String, String>>
   - OnExpandAll : EventCallback
+  - OnExport : EventCallback<String>
   - OnFilter : EventCallback<IReadOnlyDictionary<String, FilterCondition>>
   - OnGroupCollapse : EventCallback<DataGridGroupRow<TData>>
   - OnGroupExpand : EventCallback<DataGridGroupRow<TData>>
   - OnNodeCollapse : EventCallback<TData>
   - OnNodeExpand : EventCallback<TData>
+  - OnRowCancel : EventCallback<TData>
   - OnRowClick : EventCallback<TData>
   - OnRowCollapse : EventCallback<TData>
+  - OnRowCommit : EventCallback<DataGridRowCommitContext<TData>>
   - OnRowExpand : EventCallback<TData>
   - OnSort : EventCallback<IReadOnlyList<SortDefinition>>
   - OverscanCount : Int32
@@ -974,9 +989,12 @@
   - SearchText : String
   - SearchTextChanged : EventCallback<String>
   - SelectedItemsChanged : EventCallback<IReadOnlyCollection<TData>>
+  - SelectionBehavior : DataGridSelectionBehavior
   - SelectionMode : DataTableSelectionMode
   - ShowExpandAll : Boolean
+  - ShowExport : Boolean
   - ShowFilterBar : Boolean
+  - ShowGroupingBreadcrumb : Boolean
   - ShowPagination : Boolean
   - ShowSearch : Boolean
   - State : DataGridState<TData>
@@ -3922,6 +3940,10 @@
 ### DashboardBackground (BlazorBlueprint.Components)
   - None = 0
   - Grid = 1
+
+### DataGridExportScope (BlazorBlueprint.Components)
+  - FilteredRows = 0
+  - CurrentPage = 1
 
 ### DataGridSelectAllScope (BlazorBlueprint.Components)
   - Prompt = 0

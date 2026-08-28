@@ -217,3 +217,16 @@ export function saveTheme(isDarkMode, baseColor, primaryColor, radius) {
     // localStorage unavailable — silently ignore
   }
 }
+
+/**
+ * Remove any saved theme preferences from localStorage.
+ * Used when persistence is disabled, so a stale entry written by an earlier
+ * run cannot keep overriding the configured defaults.
+ */
+export function clearTheme() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // localStorage unavailable — silently ignore
+  }
+}

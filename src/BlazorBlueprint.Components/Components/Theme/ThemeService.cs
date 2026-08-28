@@ -103,7 +103,20 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            var saved = await module.InvokeAsync<ThemeState?>("loadTheme");
+            // Only read localStorage when persistence is enabled. Reading it regardless meant a
+            // theme saved by an earlier run kept overriding the configured defaults after
+            // PersistToLocalStorage was turned off, with no way to opt out short of the user
+            // clearing site data by hand (#481). Clearing the stale entry closes the same hole
+            // for anyone who already has one.
+            var saved = options.PersistToLocalStorage
+                ? await module.InvokeAsync<ThemeState?>("loadTheme")
+                : null;
+
+            if (!options.PersistToLocalStorage)
+            {
+                await module.InvokeVoidAsync("clearTheme");
+            }
+
             if (saved is not null)
             {
                 isDarkMode = saved.IsDarkMode;

@@ -184,10 +184,24 @@
                     <span class="text-primary mt-0.5">3.</span>
                     <span>Overlays (Dialog, Sheet, Popover, Tooltip, Toast) don't appear &rarr; ensure
                     <code class="text-xs bg-muted px-1 py-0.5 rounded">BbPortalHost</code> is present and in an
-                    interactive context, not a static layout.</span>
+                    interactive context, not a static layout. The library logs a warning naming this
+                    when it happens.</span>
                 </div>
                 <div class="flex items-start gap-2">
                     <span class="text-primary mt-0.5">4.</span>
+                    <span>Overlays worked under
+                    <code class="text-xs bg-muted px-1 py-0.5 rounded">InteractiveServer</code> and stopped
+                    under <code class="text-xs bg-muted px-1 py-0.5 rounded">InteractiveWebAssembly</code>
+                    &rarr; the host has to run in the browser now, so it must live in an assembly the
+                    <strong>client</strong> project loads. A <code class="text-xs bg-muted px-1 py-0.5 rounded">MainLayout</code>
+                    in the server project can render interactively on the server but cannot run in
+                    WebAssembly, so its <code class="text-xs bg-muted px-1 py-0.5 rounded">BbPortalHost</code>
+                    never reaches the runtime your components are in. Move the layout &mdash; or just the
+                    portal chrome, as an island &mdash; into the client project or a shared razor class
+                    library both projects reference.</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <span class="text-primary mt-0.5">5.</span>
                     <span>Auth pages break under global interactivity &rarr; they likely depend on
                     <code class="text-xs bg-muted px-1 py-0.5 rounded">HttpContext</code>, which isn't
                     available in interactive renders. Keep those pages static and use Option 2 for the rest.</span>

@@ -1,0 +1,46 @@
+<BbDataGrid @ref="grid" TData="Person" Items="@people" InitialPageSize="8">
+    <Columns>
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Groupable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Sortable Groupable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" Groupable />
+        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable
+                                  Aggregate="AggregateFunction.Sum" />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private BbDataGrid<Person>? grid;
+
+    // Set every level at once, outermost first.
+    private Task GroupByDepartmentThenStatus() =>
+        grid!.SetGroupingAsync(new[] { "department", "status" });
+
+    // Or build it up one level at a time.
+    private async Task AddALevel()
+    {
+        await grid!.GroupByColumnAsync("department");   // replaces all grouping with one level
+        await grid.AddGroupByColumnAsync("status");     // nests inside it
+        await grid.MoveGroupByColumnAsync("status", 0); // status now groups outermost
+        await grid.RemoveGroupByColumnAsync("status");  // back to department alone
+    }
+}
+
+@* Mark a column Groupable and its ellipsis menu offers "Group by". Once something is grouped it
+   also offers "Then group by", which nests a level inside the current ones.
+
+   The breadcrumb above the grid lists the active levels in order, with a control on each to drop
+   it or move it outward. Set ShowGroupingBreadcrumb="false" to hide it when the page fixes the
+   grouping and the user should not change it.
+
+   Each header collapses on its own. Collapsed state is keyed by the full path, so collapsing
+   Active under Engineering leaves Active under Sales open. A group carries every row beneath it,
+   so aggregates roll up: a department header sums all its rows, not just its own level.
+
+   Pagination counts data rows, not headers. When a page boundary lands inside a subtree, every
+   open ancestor header is repeated at the top of the next page, so a row is never shown without
+   the headers that say what it belongs to.
+
+   Server-side: a GroupedItemsProvider receives every level in DataGridRequest.GroupDefinitions.
+   Translate them to one GROUP BY a, b and return a flat row per innermost group, each setting
+   KeyPath to its full path. The grid rebuilds the header tree from those paths. *@

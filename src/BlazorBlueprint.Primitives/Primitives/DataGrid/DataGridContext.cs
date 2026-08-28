@@ -28,6 +28,12 @@ public class DataGridContext<TData> : PrimitiveContextWithEvents<DataGridState<T
     public SelectionMode SelectionMode { get; set; } = SelectionMode.None;
 
     /// <summary>
+    /// Gets or sets how clicking a row changes the selection.
+    /// Default is <see cref="DataGridSelectionBehavior.Toggle"/>.
+    /// </summary>
+    public DataGridSelectionBehavior SelectionBehavior { get; set; } = DataGridSelectionBehavior.Toggle;
+
+    /// <summary>
     /// Gets or sets whether the grid is currently loading data.
     /// </summary>
     public bool IsLoading { get; set; }
@@ -51,6 +57,21 @@ public class DataGridContext<TData> : PrimitiveContextWithEvents<DataGridState<T
     /// Callback invoked when a row is selected.
     /// </summary>
     public Action<TData>? OnRowSelect { get; set; }
+
+    /// <summary>
+    /// Tests whether a row is currently being edited. Null when the grid has no edit mode.
+    /// </summary>
+    public Func<TData, bool>? IsRowEditing { get; set; }
+
+    /// <summary>
+    /// Commits the row being edited. Null when the grid has no edit mode.
+    /// </summary>
+    public Func<Task>? OnCommitEdit { get; set; }
+
+    /// <summary>
+    /// Discards the edits on the row being edited. Null when the grid has no edit mode.
+    /// </summary>
+    public Func<Task>? OnCancelEdit { get; set; }
 
     /// <summary>
     /// Callback invoked when the current page changes.
@@ -156,9 +177,88 @@ public class DataGridContext<TData> : PrimitiveContextWithEvents<DataGridState<T
     /// <summary>
     /// Toggles the selection state of a row.
     /// </summary>
+    /// <remarks>
+    /// This ignores <see cref="SelectionBehavior"/> and always toggles, so a select-column
+    /// checkbox keeps working the way a checkbox should. Row clicks go through
+    /// <see cref="ApplyRowSelectionInput"/> instead.
+    /// </remarks>
     public void ToggleRowSelection(TData item)
     {
-        UpdateState(state => state.Selection.Toggle(item));
+        UpdateState(state =>
+        {
+            state.Selection.Toggle(item);
+            state.Selection.Anchor = item;
+        });
+
+        OnRowSelect?.Invoke(item);
+        OnSelectionChange?.Invoke(State.Selection.SelectedItems);
+    }
+
+    /// <summary>
+    /// Applies a row click to the selection, honouring <see cref="SelectionBehavior"/> and the
+    /// modifier keys that were held.
+    /// </summary>
+    /// <remarks>
+    /// Under <see cref="DataGridSelectionBehavior.Toggle"/> the modifiers are ignored and the row
+    /// simply flips, which is the long-standing behaviour. Under
+    /// <see cref="DataGridSelectionBehavior.Replace"/>:
+    /// <list type="bullet">
+    /// <item><description>a plain click selects only that row, or clears the selection when that
+    /// row was already the only one selected;</description></item>
+    /// <item><description>Shift+Click selects the range from the anchor to that row;</description></item>
+    /// <item><description>Ctrl+Click adds or removes that row and leaves the rest alone.</description></item>
+    /// </list>
+    /// Range and additive selection need <see cref="SelectionMode.Multiple"/>; under
+    /// <see cref="SelectionMode.Single"/> every click is treated as a plain click.
+    /// </remarks>
+    /// <param name="item">The clicked row.</param>
+    /// <param name="modifiers">The modifier keys held during the click.</param>
+    public void ApplyRowSelectionInput(TData item, RowSelectionModifiers modifiers)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        if (SelectionMode == SelectionMode.None)
+        {
+            return;
+        }
+
+        if (SelectionBehavior == DataGridSelectionBehavior.Toggle)
+        {
+            ToggleRowSelection(item);
+            return;
+        }
+
+        var multiple = SelectionMode == SelectionMode.Multiple;
+
+        UpdateState(state =>
+        {
+            var selection = state.Selection;
+
+            if (multiple && modifiers.Extend)
+            {
+                // The anchor stays put, so holding Shift and clicking again re-extends from the
+                // same origin rather than walking the range along.
+                selection.SelectRange(ProcessedData, selection.Anchor, item);
+                return;
+            }
+
+            if (multiple && modifiers.Additive)
+            {
+                selection.Toggle(item);
+                selection.Anchor = item;
+                return;
+            }
+
+            // Plain click: collapse to this row, or clear when it was already the only one.
+            if (selection.SelectedCount == 1 && selection.IsSelected(item))
+            {
+                selection.Clear();
+                return;
+            }
+
+            selection.ReplaceWith(item);
+            selection.Anchor = item;
+        });
 
         OnRowSelect?.Invoke(item);
         OnSelectionChange?.Invoke(State.Selection.SelectedItems);
@@ -169,7 +269,11 @@ public class DataGridContext<TData> : PrimitiveContextWithEvents<DataGridState<T
     /// </summary>
     public void SelectRow(TData item)
     {
-        UpdateState(state => state.Selection.Select(item));
+        UpdateState(state =>
+        {
+            state.Selection.Select(item);
+            state.Selection.Anchor = item;
+        });
 
         OnRowSelect?.Invoke(item);
         OnSelectionChange?.Invoke(State.Selection.SelectedItems);

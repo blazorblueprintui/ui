@@ -31,9 +31,19 @@ public class DataGridStateSnapshot
     public List<ColumnFilterSnapshot> ColumnFilters { get; set; } = new();
 
     /// <summary>
-    /// Gets or sets the group definition snapshot.
+    /// Gets or sets the outermost group definition snapshot.
     /// </summary>
+    /// <remarks>
+    /// Written and read alongside <see cref="GroupDefinitions"/> so a snapshot saved by this
+    /// version still restores in one written against single-level grouping, and one saved by that
+    /// older version still restores here.
+    /// </remarks>
     public GroupDefinitionSnapshot? GroupDefinition { get; set; }
+
+    /// <summary>
+    /// Gets or sets every group definition snapshot, outermost first.
+    /// </summary>
+    public List<GroupDefinitionSnapshot> GroupDefinitions { get; set; } = new();
 }
 
 /// <summary>

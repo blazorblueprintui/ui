@@ -11,6 +11,19 @@
     private UseControllableState<bool> _state = null!;
 
     /// <summary>
+    /// The open state we last reported to the consumer.
+    /// <para>
+    /// This deliberately does not read <c>_state.Value</c>, which in controlled mode returns
+    /// <c>ControlledValue</c> — a value only refreshed by <see cref="OnParametersSet"/>, and
+    /// therefore only when the consumer re-renders. A consumer that suppresses the re-render
+    /// (any <c>ShouldRender</c> override) left it stale, so the next genuine change compared
+    /// equal, <c>OpenChanged</c> never fired, and the consumer's own open flag stayed <c>true</c>
+    /// forever — permanently desynced from the context (#437).
+    /// </para>
+    /// </summary>
+    private bool lastNotifiedOpen;
+
+    /// <summary>
     /// The child content to render within the dropdown menu context.
     /// Typically includes DropdownMenuTrigger and DropdownMenuContent.
     /// </summary>
@@ -78,6 +91,7 @@
 
         // Sync initial state to context
         _context.State.IsOpen = _state.Value;
+        lastNotifiedOpen = _state.Value;
 
         // Subscribe to context state changes
         _context.OnStateChanged += HandleContextStateChanged;
@@ -90,6 +104,10 @@
         {
             _state.ControlledValue = Open.Value;
             _context.State.IsOpen = Open.Value;
+
+            // The consumer is authoritative here, so treat its value as reported — otherwise the
+            // next change would be measured against a state we never actually sent.
+            lastNotifiedOpen = Open.Value;
         }
 
         // Sync ItemClass to context
@@ -102,8 +120,10 @@
         // update the controllable state
         var newOpenState = _context.State.IsOpen;
 
-        if (_state.Value != newOpenState)
+        if (lastNotifiedOpen != newOpenState)
         {
+            lastNotifiedOpen = newOpenState;
+
             _ = _state.SetValueAsync(newOpenState);
 
             // Invoke additional callback if provided
@@ -111,9 +131,12 @@
             {
                 _ = OnOpenChange.InvokeAsync(newOpenState);
             }
-
-            StateHasChanged();
         }
+
+        // Unconditional — the trigger's aria-expanded and pointer-events guard, and whether the
+        // content is mounted, all derive from context state, so this subtree must repaint
+        // whenever that state moves even if the consumer's controlled value did not (#437).
+        StateHasChanged();
     }
 
     public void Dispose()

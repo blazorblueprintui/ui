@@ -1,0 +1,37 @@
+<BbDataGrid TData="Person" Items="@people" InitialPageSize="8"
+            SelectionMode="DataTableSelectionMode.Multiple"
+            SelectionBehavior="DataGridSelectionBehavior.Replace"
+            SelectedItemsChanged="HandleSelectionChanged">
+    <Columns>
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private IReadOnlyCollection<Person> selected = Array.Empty<Person>();
+
+    private void HandleSelectionChanged(IReadOnlyCollection<Person> people) => selected = people;
+}
+
+@* Replace gives the conventions a user brings from a file explorer:
+
+     Click             select only this row; clear the selection if it was already the only one
+     Shift+Click       select the range from the anchor row to this row
+     Ctrl / Cmd+Click  add or remove this row, leave the rest alone
+
+   The range extends from the anchor — the row of the last plain click or Ctrl+Click — not from
+   the last selected row. Repeated Shift+Clicks re-extend from the same anchor, so the range can
+   be grown and shrunk rather than walking along.
+
+   Range and additive selection need SelectionMode.Multiple; under Single every click is a plain
+   click. A range covers the rows on the current page, because those are the rows the user sees.
+
+   Two things keep toggle semantics under either behaviour: the checkboxes in a
+   BbDataGridSelectColumn, which would be unusable if ticking one cleared the rest, and the Space
+   and Enter keys on a focused row, which act as that row's checkbox.
+
+   The default, DataGridSelectionBehavior.Toggle, is unchanged: each click flips one row and
+   modifier keys are ignored. *@
