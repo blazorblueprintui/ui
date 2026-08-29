@@ -35,6 +35,12 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
     public string? Class { get; set; }
 
     /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the dock's root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
     /// Invoked after the layout changes (docking, floating, closing, reopening or reordering).
     /// </summary>
     [Parameter]

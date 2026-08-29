@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-08-29
+
+### Added
+
+- **Every component accepts arbitrary HTML attributes** — [#486](https://github.com/blazorblueprintui/ui/issues/486), contributed by [@HugoVG](https://github.com/HugoVG) in [#490](https://github.com/blazorblueprintui/ui/pull/490). Passing an attribute a component did not declare used to throw at runtime — *"does not have a property matching the name 'data-testid'"* — which meant a test hook, an `aria-*` correction or a newer HTML attribute was simply unavailable unless the library had thought of it first. 216 components gained `AdditionalAttributes`; 291 already had it. Coverage is now essentially complete, and anything valid in HTML reaches the rendered element.
+
+  The issue asked specifically for `data-testid`, and it would have been easy to add that one parameter. Capturing unmatched attributes instead costs the same and answers every future variation of the same request, which is why it is worth 299 files rather than one.
+
+  Consumer `Class` values are unaffected — they still merge through `ClassNames.cn` as before. A `class` supplied through the attribute splat is a different route and **replaces** the component's own classes rather than merging with them; prefer `Class` unless you specifically want to take the styling over.
+
+  **Not a breaking change**, despite the size. The API surface diff is 231 lines added and none removed or changed: nothing is renamed, retyped or dropped, and a component that previously threw on an unknown attribute now accepts it, which is strictly more permissive. It ships in a minor rather than waiting for a major.
+
+  Two related requests are **not** closed by this. [#480](https://github.com/blazorblueprintui/ui/issues/480) (chart click events) needs real event plumbing, not attribute passthrough, and [#485](https://github.com/blazorblueprintui/ui/issues/485) (`OnPaste` on `BbFileUpload`) is now buildable by a consumer but is not shipped. API Reference entries for the new parameters are still outstanding and are tracked as a separate documentation sweep.
+
+---
+
 ## 2026-08-27
 
 ### Added
