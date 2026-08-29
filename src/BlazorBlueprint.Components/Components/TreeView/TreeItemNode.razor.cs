@@ -56,6 +56,12 @@ public partial class TreeItemNode<TItem> : ComponentBase
     [Parameter]
     public EventCallback<string> OnRetryLoad { get; set; }
 
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
     [CascadingParameter]
     public TreeViewContext? TreeContext { get; set; }
 

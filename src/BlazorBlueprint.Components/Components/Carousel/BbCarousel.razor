@@ -1,6 +1,6 @@
 @namespace BlazorBlueprint.Components
 
-<div class="@CssClass" role="region" aria-roledescription="carousel">
+<div class="@CssClass" role="region" aria-roledescription="carousel" @attributes="AdditionalAttributes">
     <CascadingValue Value="this" IsFixed="false">
         @ChildContent
     </CascadingValue>
@@ -9,6 +9,12 @@
 @code {
     [Parameter]
     public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     [Parameter]
     public RenderFragment? ChildContent { get; set; }

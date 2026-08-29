@@ -1,7 +1,7 @@
 @namespace BlazorBlueprint.Components
 @inject IBbLocalizer Localizer
 
-<div class="@CssClass">
+<div class="@CssClass" @attributes="AdditionalAttributes">
     @if (Context?.State != null)
     {
         var state = Context.State;
@@ -26,6 +26,12 @@
 
     [Parameter]
     public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     /// <summary>
     /// Format string for displaying item range. Use {0} for start, {1} for end, {2} for total.

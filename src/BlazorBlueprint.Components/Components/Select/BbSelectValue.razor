@@ -14,7 +14,7 @@
 }
 else
 {
-    <span class="text-muted-foreground">@Placeholder</span>
+    <span class="text-muted-foreground" @attributes="AdditionalAttributes">@Placeholder</span>
 }
 
 @code {
@@ -35,6 +35,12 @@ else
     /// </summary>
     [Parameter]
     public RenderFragment<string>? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private BlazorBlueprint.Primitives.Select.ISelectDisplayContext? _subscribedContext;
     private readonly Action _handleStateChanged;

@@ -52,6 +52,12 @@ public partial class BbFormSection : ComponentBase
     [Parameter]
     public string? Class { get; set; }
 
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
     /// <inheritdoc />
     protected override void OnInitialized() => isExpanded = DefaultExpanded;
 

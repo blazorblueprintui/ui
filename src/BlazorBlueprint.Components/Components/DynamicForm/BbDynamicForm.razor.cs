@@ -109,6 +109,12 @@ public partial class BbDynamicForm : ComponentBase
     public string? Class { get; set; }
 
     /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
     /// Gets or sets custom field renderers keyed by field name.
     /// Used to provide custom rendering for <see cref="FieldType.Custom"/> fields.
     /// </summary>

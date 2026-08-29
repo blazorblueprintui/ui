@@ -64,6 +64,12 @@ public partial class BbCollapsibleTrigger : ComponentBase
     public string? Class { get; set; }
 
     /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
     /// When true, the trigger does not render its own button element.
     /// Instead, it passes trigger behavior via TriggerContext to child components.
     /// Use this when you want a custom component (like Button) to act as the trigger.

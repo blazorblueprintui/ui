@@ -47,6 +47,12 @@ public partial class BbComboboxItem<TValue> : ComponentBase, IDisposable
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
     private bool IsSelected => Parent?.IsValueSelected(Value) ?? false;
 
     protected override void OnInitialized()

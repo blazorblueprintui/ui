@@ -6,7 +6,8 @@
 *@
 
 <BlazorBlueprint.Primitives.Accordion.BbAccordionContent ForceMount="@ForceMount"
-                                                      class="@CssClass">
+                                                      class="@CssClass"
+                                                      @attributes="AdditionalAttributes">
     <div class="overflow-hidden min-h-0">
         <div class="pb-4 pt-0 text-sm">
             @ChildContent
@@ -34,6 +35,12 @@
     /// </summary>
     [Parameter]
     public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string CssClass => ClassNames.cn(
         "grid grid-rows-[0fr] transition-[grid-template-rows] duration-200 ease-out",

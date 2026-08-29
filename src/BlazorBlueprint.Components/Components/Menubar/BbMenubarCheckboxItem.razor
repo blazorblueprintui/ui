@@ -4,7 +4,8 @@
     Checked="@Checked"
     CheckedChanged="@CheckedChanged"
     Disabled="@Disabled"
-    class="@CssClass">
+    class="@CssClass"
+    @attributes="AdditionalAttributes">
     <span class="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
         @if (Checked)
         {
@@ -28,6 +29,12 @@
 @code {
     [Parameter]
     public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     [Parameter]
     public RenderFragment? ChildContent { get; set; }

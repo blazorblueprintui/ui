@@ -32,6 +32,12 @@ public partial class BbTabsList : IAsyncDisposable
     public string? Class { get; set; }
 
     /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
     /// When true, collapses tabs into a Select dropdown when they overflow their container.
     /// </summary>
     [Parameter]

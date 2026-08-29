@@ -1,7 +1,7 @@
 @namespace BlazorBlueprint.Components
 @inject IBbLocalizer Localizer
 
-<nav aria-label="@Localizer["Breadcrumb.Breadcrumb"]" class="@CssClass">
+<nav aria-label="@Localizer["Breadcrumb.Breadcrumb"]" class="@CssClass" @attributes="AdditionalAttributes">
     <ol class="flex flex-wrap items-center gap-1.5 break-words text-sm text-muted-foreground sm:gap-2.5">
         @ChildContent
     </ol>
@@ -10,6 +10,12 @@
 @code {
     [Parameter]
     public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     [Parameter]
     public RenderFragment? ChildContent { get; set; }

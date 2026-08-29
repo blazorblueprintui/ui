@@ -5,7 +5,7 @@
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
 
-<div @ref="_containerRef" id="@EffectiveId" class="@ContainerClass">
+<div @ref="_containerRef" id="@EffectiveId" class="@ContainerClass" @attributes="AdditionalAttributes">
     @if (EffectiveName != null)
     {
         <input type="hidden" name="@EffectiveName" value="@Value" />
@@ -123,6 +123,12 @@
     /// </summary>
     [Parameter]
     public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     /// <summary>
     /// Additional CSS classes to apply to each individual OTP input box.

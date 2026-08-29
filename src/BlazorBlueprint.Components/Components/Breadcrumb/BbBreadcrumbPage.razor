@@ -1,12 +1,18 @@
 @namespace BlazorBlueprint.Components
 
-<span role="link" aria-disabled="true" aria-current="page" class="@CssClass">
+<span role="link" aria-disabled="true" aria-current="page" class="@CssClass" @attributes="AdditionalAttributes">
     @ChildContent
 </span>
 
 @code {
     [Parameter]
     public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     [Parameter]
     public RenderFragment? ChildContent { get; set; }

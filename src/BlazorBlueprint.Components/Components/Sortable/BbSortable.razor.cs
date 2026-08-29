@@ -135,6 +135,12 @@ public partial class BbSortable<TItem> : ComponentBase
     public string? Class { get; set; }
 
     /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
     /// Gets or sets an accessible label for the sortable container,
     /// exposed as <c>aria-label</c> on the container element.
     /// </summary>

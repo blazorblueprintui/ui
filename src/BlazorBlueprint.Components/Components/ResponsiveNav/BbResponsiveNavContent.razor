@@ -11,7 +11,7 @@
 
 @if (Context != null)
 {
-    <BbSheet Open="@Context.OpenMobile" OpenChanged="@(EventCallback.Factory.Create<bool>(this, OnOpenChanged))" Side="@Side">
+    <BbSheet Open="@Context.OpenMobile" OpenChanged="@(EventCallback.Factory.Create<bool>(this, OnOpenChanged))" Side="@Side" @attributes="AdditionalAttributes">
         <BbSheetContent Class="@ContentClass" ShowClose="@ShowClose">
             @if (Header != null)
             {
@@ -71,6 +71,12 @@
     /// </summary>
     [Parameter]
     public string? ContentClass { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     /// <summary>
     /// Whether to close the menu when navigation occurs.
