@@ -20,6 +20,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Five overlay and disclosure triggers showed the browser's own focus outline instead of the theme's ring** — first tranche of [#459](https://github.com/blazorblueprintui/ui/issues/459). `BbCollapsibleTrigger`, `BbAccordionTrigger`, `BbDialogTrigger`, `BbSheetTrigger` and `BbPopoverTrigger` set no focus style at all, so Chrome painted its blue rectangle while the input above showed `ring-ring`. Focus stayed visible, so this passed WCAG 2.4.7 — it simply looked as though focus changed style as you tabbed down the page. The collapsible trigger is what the docs site's own "View Code" toggle uses, so the site showed it too.
+
+  All five now carry `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`, the standalone-control treatment [#458](https://github.com/blazorblueprintui/ui/issues/458) settled on.
+
+  The ring goes in the **Components** layer, not Primitives — the primitives are headless and set no classes, which is the whole point of the split. For Dialog, Sheet and Popover the styled wrapper passes it as `class` into the primitive, which splats it onto the `<button>` it owns. That branch only renders when `AsChild` is false, so an `AsChild` trigger keeps its child's own focus styling rather than gaining a second ring.
+
+  Verified in the running demo rather than only by reading classes: on a real Tab the computed `box-shadow` is the themed ring and `outline-style` is `none`. A class in the markup proves nothing on its own if Tailwind never emitted the rule.
+
+  **[#459](https://github.com/blazorblueprintui/ui/issues/459) stays open** — 27 components were affected and 5 are done. Twelve of the rest are the same mechanical treatment; eight need a visual judgement the issue already flags, such as `BbSidebarRail` being a thin drag strip where a 2px ring is most of the control. The last two, `BbDrawerTrigger` and `BbDrawerClose`, are blocked on [#507](https://github.com/blazorblueprintui/ui/issues/507): they render a bare `<div>` with `@onclick` and no `tabindex`, so there is nothing to draw a focus ring on until they become focusable.
+
 - **`BbHoverCardTrigger` opened on any focus, including focus moved programmatically** — the other half of [#504](https://github.com/blazorblueprintui/ui/issues/504). Opening on focus is correct and required — WCAG 1.4.13 means a hover card must be keyboard reachable — but the handler could not tell a deliberate Tab from a focus trap or an explicit `.focus()`, so an unrelated dialog opening nearby popped the card open with no user intent behind it. Both the `AsChild` and `AsChild="false"` paths behaved this way.
 
   **The obvious fix does not work, and the measurement is the useful part of this entry.** Gating on `:focus-visible` was implemented and tested in the running demo: Chrome reports it as **true** for a programmatic `.focus()` on the trigger's `div[tabindex="0"]`, including directly after a real mouse click. The card still opened. `BbTableRow.razor:58` had already recorded the same limitation from the other direction.
