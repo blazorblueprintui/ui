@@ -233,6 +233,7 @@
   - OnOpenChange : EventCallback<Boolean>
   - Open : Boolean?
   - OpenChanged : EventCallback<Boolean>
+  - RenderingStrategy : OverlayRenderingStrategy?
 
 ### BbDialogClose (BlazorBlueprint.Primitives.Dialog)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -246,12 +247,14 @@
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - CloseOnEscape : Boolean
+  - CloseOnOverlayClick : Boolean
   - InitialFocus : FocusTrapInitialFocus
   - InitialFocusElement : ElementReference?
   - LockScroll : Boolean
   - OnEscapeKeyDown : EventCallback<KeyboardEventArgs>
   - TrapFocus : Boolean
   - Context : DialogContext [CascadingParameter]
+  - RenderingStrategy : OverlayRenderingStrategy? [CascadingParameter]
 
 ### BbDialogDescription (BlazorBlueprint.Primitives.Dialog)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -264,12 +267,14 @@
   - CloseOnClick : Boolean
   - OnClick : EventCallback<MouseEventArgs>
   - Context : DialogContext [CascadingParameter]
+  - RenderingStrategy : OverlayRenderingStrategy? [CascadingParameter]
 
 ### BbDialogPortal (BlazorBlueprint.Primitives.Dialog)
   - ChildContent : RenderFragment
   - Container : String
   - ForceMount : Boolean
   - Context : DialogContext [CascadingParameter]
+  - RenderingStrategy : OverlayRenderingStrategy? [CascadingParameter]
 
 ### BbDialogTitle (BlazorBlueprint.Primitives.Dialog)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -1049,6 +1054,10 @@
   - Horizontal = 0
   - Vertical = 1
 
+### OverlayRenderingStrategy (BlazorBlueprint.Primitives.Services)
+  - JavaScript = 0
+  - Native = 1
+
 ### SheetSide (BlazorBlueprint.Primitives)
   - Top = 0
   - Right = 1
@@ -1186,6 +1195,15 @@
   - Resume() : Void
   - Suspend() : Void
   - Unregister(String id) : Void
+
+### INativeOverlayService (BlazorBlueprint.Primitives.Services)
+  - CloseDialogAsync(ElementReference element, String returnValue) : Task
+  - FocusDialogAsync(ElementReference element) : Task
+  - FocusTriggerAsync(ElementReference element) : Task
+  - IsDialogSupportedAsync() : Task<Boolean>
+  - ResolveStrategy(OverlayRenderingStrategy? requested) : OverlayRenderingStrategy
+  - SetupDialogAsync(ElementReference element, Object dotNetRef) : Task<IAsyncDisposable>
+  - ShowDialogAsync(ElementReference element) : Task
 
 ### IPortalService (BlazorBlueprint.Primitives.Services)
   - HasHost : Boolean { get; }

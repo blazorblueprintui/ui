@@ -1,4 +1,5 @@
 @page "/components/dialog"
+@using BlazorBlueprint.Primitives.Services
 @inject DialogService DialogService
 <PageTitle>Dialog Component - Blazor Blueprint</PageTitle>
 
@@ -38,6 +39,67 @@
         </BbDialog>
 
         <CodeBlock Source="Components/Dialog/simple.txt" />
+    </div>
+
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold">Native Dialog</h2>
+        <p class="text-sm text-muted-foreground">
+            The same dialog rendered through the browser's built-in <code class="text-xs bg-muted px-1 py-0.5 rounded">&lt;dialog&gt;</code>
+            element via <code class="text-xs bg-muted px-1 py-0.5 rounded">RenderingStrategy="Native"</code>. It lives in the
+            top layer and uses the browser's native focus trap, Escape handling and backdrop, so it needs no
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">BbPortalHost</code> and works across Blazor render-mode
+            boundaries (e.g. <code class="text-xs bg-muted px-1 py-0.5 rounded">InteractiveWebAssembly</code>).
+        </p>
+
+        <BbDialog RenderingStrategy="OverlayRenderingStrategy.Native">
+            <BbDialogTrigger AsChild="false" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                Open Native Dialog
+            </BbDialogTrigger>
+
+            <BbDialogContent>
+                <BbDialogHeader>
+                    <BbDialogTitle>Native dialog</BbDialogTitle>
+                    <BbDialogDescription>
+                        This dialog is a native <code class="text-xs bg-muted px-1 py-0.5 rounded">&lt;dialog&gt;</code> element
+                        shown with <code class="text-xs bg-muted px-1 py-0.5 rounded">showModal()</code>. Press Escape or click the
+                        backdrop to dismiss.
+                    </BbDialogDescription>
+                </BbDialogHeader>
+                <BbDialogFooter>
+                    <BbDialogClose AsChild="false" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+                        Close
+                    </BbDialogClose>
+                </BbDialogFooter>
+            </BbDialogContent>
+        </BbDialog>
+
+        <CodeBlock Source="Components/Dialog/native.txt" />
+    </div>
+
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold">Native Dialog via DialogService</h2>
+        <p class="text-sm text-muted-foreground">
+            Open the same dialog programmatically with
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">DialogService.OpenAsync&lt;T&gt;()</code>. The content is a
+            self-contained component rendered by the dialog provider.
+        </p>
+        <div class="p-4 border-l-4 border-amber-500 bg-amber-500/5 rounded-r-lg">
+            <p class="text-sm text-muted-foreground">
+                <strong>Note:</strong> <code class="text-xs bg-muted px-1 py-0.5 rounded">BbDialogClose</code> does not close a
+                programmatic dialog — it drives a <code class="text-xs bg-muted px-1 py-0.5 rounded">DialogContext</code>, which the
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">OpenAsync</code> path does not provide. Close a programmatic dialog
+                from its content by calling the cascaded
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">IDialogReference.CloseAsync(...)</code> instead, exactly as the
+                custom component below does.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <BbButton OnClick="HandleOpenNativeService">Open via DialogService</BbButton>
+            <span class="text-sm text-muted-foreground">@nativeServiceResult</span>
+        </div>
+
+        <CodeBlock Source="Components/Dialog/native-service.txt" />
     </div>
 
     <div class="space-y-4">
@@ -724,6 +786,12 @@
                 <ApiParameter Name="Modal" Type="bool" Default="true">
                     Whether the dialog is modal. Modal dialogs trap focus and lock scroll.
                 </ApiParameter>
+                <ApiParameter Name="RenderingStrategy" Type="OverlayRenderingStrategy?" Default="null">
+                    Overrides how the dialog renders. <code>Native</code> uses the browser's built-in
+                    <code>&lt;dialog&gt;</code> element (top layer, native focus trap/Escape/backdrop), which needs no
+                    portal host and works across render-mode boundaries (e.g. InteractiveWebAssembly). When null, the
+                    global default from <code>AddBlazorBlueprintPrimitives(configureOverlays)</code> applies.
+                </ApiParameter>
                 <ApiParameter Name="OnOpenChange" Type="EventCallback&lt;bool&gt;">
                     Event callback invoked when the dialog open state changes.
                 </ApiParameter>
@@ -946,6 +1014,7 @@
     private string alertStatus = "Idle";
     private string promptResult = "-";
     private string customResult = "-";
+    private string nativeServiceResult = "-";
 
     // Form in Dialog
     private string? formFirstName;
@@ -1070,6 +1139,42 @@
         {
             customResult = "Cancelled";
         }
+    }
+
+    private async Task HandleOpenNativeService()
+    {
+        var result = await DialogService.OpenAsync<NativeDialogBodyComponent>(
+            new Dictionary<string, object?>
+            {
+                ["Message"] = "This dialog was opened with DialogService.OpenAsync<T>(). Its Close button calls IDialogReference.CloseAsync() — BbDialogClose is not usable in the programmatic path."
+            },
+            new DialogOpenOptions
+            {
+                Title = "Native-Style Dialog",
+                Size = DialogSize.Default
+            });
+
+        nativeServiceResult = result.Cancelled ? "Cancelled" : "Closed";
+    }
+
+    public sealed class NativeDialogBodyComponent : ComponentBase
+    {
+        [Parameter] public string Message { get; set; } = "";
+
+        [CascadingParameter]
+        public IDialogReference DialogRef { get; set; } = default!;
+
+        protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder __builder)
+        {
+            <div class="space-y-4">
+                <p class="text-sm text-muted-foreground">@Message</p>
+                <div class="flex justify-end gap-2">
+                    <BbButton Variant="ButtonVariant.Outline" OnClick="Close">Close</BbButton>
+                </div>
+            </div>
+        }
+
+        private Task Close() => DialogRef.CloseAsync(DialogResult.Ok());
     }
 
     public sealed class EditUserDemoComponent : ComponentBase
