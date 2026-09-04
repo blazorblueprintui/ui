@@ -252,6 +252,12 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     public string? Class { get; set; }
 
     /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
     /// Gets or sets additional Tailwind CSS classes applied to the grid layout container.
     /// Merged on top of the default <c>grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4</c>
     /// via TailwindMerge, so any class you provide that conflicts with a default (e.g.

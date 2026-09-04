@@ -3,9 +3,10 @@
 
 <CascadingValue Value="Id" Name="CommandGroupId">
     <div class="@CssClass"
-         style="@(_isVisible ? null : "display: none")"
+         style="@MergedGroupStyle"
          role="group"
-         aria-labelledby="@(string.IsNullOrWhiteSpace(Heading) ? null : $"command-group-{Id}")">
+         aria-labelledby="@(string.IsNullOrWhiteSpace(Heading) ? null : $"command-group-{Id}")"
+         @attributes="AdditionalAttributes">
         @if (!string.IsNullOrWhiteSpace(Heading))
         {
             <div id="@($"command-group-{Id}")"
@@ -26,6 +27,27 @@
     /// </summary>
     [Parameter]
     public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string? MergedGroupStyle
+    {
+        get
+        {
+            var computed = _isVisible ? null : "display: none";
+            var consumerStyle = AdditionalAttributes?.TryGetValue("style", out var s) == true ? s?.ToString() : null;
+            if (string.IsNullOrEmpty(consumerStyle))
+            {
+                return computed;
+            }
+
+            return string.IsNullOrEmpty(computed) ? consumerStyle : $"{computed}; {consumerStyle}";
+        }
+    }
 
     /// <summary>
     /// Gets or sets the heading text for this group (optional).

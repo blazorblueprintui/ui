@@ -1,6 +1,6 @@
 @namespace BlazorBlueprint.Components
 
-<BbCommandGroup>
+<BbCommandGroup @attributes="AdditionalAttributes">
     @if (!string.IsNullOrWhiteSpace(Label))
     {
         <div class="@LabelCssClass">
@@ -30,6 +30,12 @@
     /// </summary>
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string LabelCssClass => ClassNames.cn(
         "px-2 py-1.5 text-xs font-semibold text-muted-foreground",

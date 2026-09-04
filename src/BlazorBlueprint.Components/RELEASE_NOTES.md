@@ -1,31 +1,28 @@
-## What's New in v3.15.0
-
-### Breaking Changes
-- **BbDataGrid** — the JS-invokable `OnColumnReordered` now takes `(columnId, targetColumnId, placeAfter)` instead of `(columnId, newIndex)`; the drop gesture is resolved to a position on the .NET side.
+## What's New in v3.16.0
 
 ### New Features
-- **BbSidebarProvider** — new `Open`/`OpenChanged` and `OpenMobile`/`OpenMobileChanged` for controlled (`@bind-Open`) sidebar state; cookie persistence is suppressed while the desktop state is bound.
-- **BbCopyText** — new `ValueFunc` resolves the copied text at click time, for values that are derived or expensive to compute. `Value` is no longer `EditorRequired` and wins when non-empty.
-- **BbNumericInput**, **BbCurrencyInput**, **BbFormFieldNumericInput**, **BbFormFieldCurrencyInput** — new opt-in `EnableWheelStep` steps the value from the mouse wheel while the input is focused, accumulating delta so a trackpad flick doesn't step wildly.
-- **BbDataGridPropertyColumn**, **BbDataGridTemplateColumn**, **BbDataGridHierarchyColumn** — new `Order` sets an explicit column position, for columns produced by wrappers or async fragments where registration order doesn't match declaration order.
-- **BbDataGridPropertyColumn** — new `HeaderTemplate` replaces the header title text while keeping the sort indicator, filter icon, pin icon, column menu and resize handle.
-- **BbLine**, **BbArea**, **BbScatter** — new `XDataKey` plots each point at its own X coordinate on a value, time or log axis instead of at its ordinal position.
-- **BbXAxis** — new `Scale` lets a value axis auto-fit to the data range rather than always including zero.
-- **BbFileUpload** — new `Id` for associating an external `<label for>` with the file input, and unmatched attributes now splat onto the `<input type="file">`.
+- **BbDataGrid** — new `SelectionBehavior` with `DataGridSelectionBehavior.Replace` for file-explorer selection: plain click selects one row, Shift+Click selects a range from the anchor, Ctrl/Cmd+Click adds or removes one. `Toggle` remains the default.
+- **BbDataGrid** — new `ShowExport`, `ExportFileName`, `ExportDelimiter`, `ExportScope`, `OnExport`, plus `ExportToCsvAsync()` and `BuildCsv()`, export the searched, filtered and sorted rows across every page to CSV. Cells that a spreadsheet would run as a formula are escaped.
+- **BbDataGrid** — grouping now nests to any depth, with collapsed state keyed by group path, aggregates rolling up through every level, and open ancestor headers re-emitted when a page boundary splits a subtree. New `ShowGroupingBreadcrumb` lists the levels with controls to drop one or move it outward.
+- **BbDataGrid** — new `EditMode` with `DataGridEditMode.Row` puts a whole row into edit through each column's `EditTemplate`, committing or discarding together. New `BbDataGridEditColumn` renders Edit, Save and Cancel; `EditOnRowClick` and `OnRowCommit` control entry and commit, and a refused commit keeps the row open with the user's input intact.
+- **BbDataGridPropertyColumn** — new `SortAndFilterBy` projects the value the column sorts, filters, searches, groups and exports on, so a column can act on a value it does not display. It is an `Expression`, so a server-side `ItemsProvider` over `IQueryable` can still translate it.
+- **BbResizablePanelGroup** — new `OnResizeEnd` reports the final panel sizes as percentages in declared order, already clamped to each panel's `MinSize`/`MaxSize`. It fires once per drag, and only when something moved.
+- **AdditionalAttributes** — most components now capture unmatched attributes and splat them onto their rendered element, including **BbDock**. This is additive; no existing parameter changed.
 
 ### Bug Fixes
-- **BbDataGrid** — rightward column drags no longer land one position too far right.
-- **BbDataGrid** — columns registering in a later render pass are merged into the column state instead of being silently dropped from the grid.
-- **BbDataGrid** — a header cell with a `HeaderTemplate` is named from the column's `Title`, so an icon-only header is no longer unannounced.
-- **BbCurrencyInput** — focus, sanitisation and parsing now run through the currency's culture; previously an invariant-formatted edit value parsed against a comma-decimal culture (or a Blazor Server host culture) could inflate the amount.
-- **BbColorPicker** — hue, saturation, brightness and alpha are formatted with invariant culture and fixed-point precision, so comma-decimal locales produce valid CSS.
-- **BbRangeSlider** — tick marks and thumb positions use invariant, fixed-point formatting.
-- **BbCopyText** — the tooltip renders through the floating portal, so an ancestor with `overflow: hidden|auto` can no longer clip it.
-- **BbDashboardGrid** — stale JS→.NET callbacks to a disposed grid are dropped rather than logged as errors, and observers that outlive the grid element dispose themselves.
-- **BbNumericInput** — the stepper buttons size from the field rather than a fixed height, so a custom height such as `h-8` no longer leaves them overhanging the input.
-- **BbTooltipTrigger**, **BbHoverCardTrigger** — an `AsChild` trigger whose child ignores `TriggerContext` now logs a warning in the Development environment instead of silently never opening.
+- **BbResizablePanel** — a fast drag now pins to `MinSize`/`MaxSize` instead of freezing short of the limit.
+- **BbScrollArea** — both scrollbars are positioned out of flow, so the root's `overflow: hidden` no longer clips them away. `ScrollAreaType.Always` is affected as much as `Hover`.
+- **ThemeService** — `ThemeOptions.PersistToLocalStorage` now gates reading as well as writing, so a stored theme no longer overrides the configured `Default*` values. Initializing with persistence off also clears any entry an earlier run left behind.
+- **BbCalendar** — the year select is wide enough for a four-digit year, so the selected year is no longer truncated. Affects **BbDatePicker** and **BbDateTimePicker**.
+- **BbDataGrid** — opening a filter or header menu bumps the state version, so the grid re-renders and the overlay's controlled open value stays correct.
+- **BbDataGrid** — Enter and Escape reach the editor inside a row being edited instead of being blocked by the row's keydown interceptor, and committing on Enter no longer drops the value just typed into the focused field.
+- **BbSidebar** — unmatched attributes are forwarded to `BbSheetContent`, so they reach a real element in mobile mode instead of vanishing.
+- **BbFileUpload** — unmatched attributes continue to land on the inner `<input type="file">`, so `name` and `aria-*` reach the element that holds the files.
+- **BbFormFieldDateTimePicker** — the inherited `AdditionalAttributes` are now applied.
+
+### Performance
+- **BbResizablePanelGroup** — the drag is driven from JavaScript, which writes `flex-basis` directly and calls into .NET once on pointer release instead of on every `pointermove`. A 40-move drag makes 1 interop call where it made 40. This matters most on Blazor Server, where queued moves compounded the lag across a drag.
 
 ### Improvements
-- **Focus visibility** — **BbInput**, **BbTextarea**, **BbInputField**, **BbInputGroupInput**, **BbInputGroupTextarea**, **BbMaskedInput**, **BbNumericInput**, **BbCurrencyInput**, **BbInputOTP**, **BbNativeSelect**, **BbSelectTrigger**, **BbCombobox** and **BbMultiSelect** now render a visible focus ring, hugging the field border on inputs and offset on button-style triggers (**BbDatePickerInput** toggle, **BbDrawerItem**, **BbResponsiveNavTrigger**).
-- **Dependencies** — `HtmlSanitizer` moved from the 9.0.x line to stable 9.1.982, which resolves AngleSharp 1.x and clears GHSA-pgww-w46g-26qg.
-- Bumped the `BlazorBlueprint.Primitives` dependency to 3.15.0.
+- **Localization** — new `DataGrid.*` keys for CSV export, row editing and nested grouping.
+- Bumped the `BlazorBlueprint.Primitives` dependency to 3.16.0.

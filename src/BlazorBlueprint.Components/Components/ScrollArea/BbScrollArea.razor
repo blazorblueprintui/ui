@@ -3,7 +3,8 @@
 
 <BlazorBlueprint.Primitives.ScrollArea.BbScrollArea Orientation="@MappedOrientation"
                                                     class="@CssClass"
-                                                    style="@RootStyle">
+                                                    style="@MergedRootStyle"
+                                                    @attributes="AdditionalAttributes">
     <BlazorBlueprint.Primitives.ScrollArea.BbScrollAreaViewport class="@ComputedViewportClass"
                                                                 style="@ViewportStyle">
         @ChildContent
@@ -60,6 +61,12 @@
     [Parameter]
     public bool FillContainer { get; set; }
 
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
     private PrimitiveOrientation MappedOrientation => Orientation switch
     {
         ScrollAreaOrientation.Vertical => PrimitiveOrientation.Vertical,
@@ -87,6 +94,20 @@
                 styles.Add($"max-height: {MaxHeight}");
             }
             return styles.Count > 0 ? string.Join("; ", styles) : null;
+        }
+    }
+
+    private string? MergedRootStyle
+    {
+        get
+        {
+            var consumerStyle = AdditionalAttributes?.TryGetValue("style", out var s) == true ? s?.ToString() : null;
+            if (string.IsNullOrEmpty(consumerStyle))
+            {
+                return RootStyle;
+            }
+
+            return string.IsNullOrEmpty(RootStyle) ? consumerStyle : $"{RootStyle}; {consumerStyle}";
         }
     }
 
@@ -130,13 +151,16 @@
         _ => ""
     };
 
+    // The scrollbars must be positioned out of flow. The viewport is height/width 100% of the
+    // root, so an in-flow scrollbar is laid out after it and clipped by the root's
+    // overflow: hidden — which is why the vertical bar never appeared, even with Type.Always (#483).
     private string VerticalScrollbarClass => ClassNames.cn(
-        "flex touch-none select-none h-full w-2.5 border-l border-l-transparent p-[1px]",
+        "absolute right-0 top-0 bottom-0 z-10 flex touch-none select-none w-2.5 border-l border-l-transparent p-[1px]",
         ScrollbarVisibilityClass
     );
 
     private string HorizontalScrollbarClass => ClassNames.cn(
-        "flex touch-none select-none flex-col h-2.5 border-t border-t-transparent p-[1px]",
+        "absolute bottom-0 left-0 right-0 z-10 flex touch-none select-none flex-col h-2.5 border-t border-t-transparent p-[1px]",
         ScrollbarVisibilityClass
     );
 

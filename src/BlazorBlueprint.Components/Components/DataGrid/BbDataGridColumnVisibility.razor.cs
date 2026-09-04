@@ -36,6 +36,12 @@ public partial class BbDataGridColumnVisibility<TData> : ComponentBase
     [Parameter]
     public string? TriggerClass { get; set; }
 
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
     protected override void OnInitialized()
     {
         if (ParentGrid == null)

@@ -8,7 +8,7 @@
 *@
 
 @* Main toast stack (toasts without per-toast position overrides) *@
-<div class="@GetContainerCssClass(EffectivePosition)">
+<div class="@GetContainerCssClass(EffectivePosition)" @attributes="AdditionalAttributes">
     @foreach (var toast in GetToastsForPosition(null))
     {
         <BbToast @key="toast.Id"
@@ -73,6 +73,15 @@
     /// </summary>
     [Parameter]
     public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes.
+    /// </summary>
+    /// <remarks>
+    /// Captured for API consistency; this component renders multiple root elements, so these attributes have no effect.
+    /// </remarks>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     protected override void OnInitialized()
     {

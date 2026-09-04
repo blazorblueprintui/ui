@@ -1,6 +1,6 @@
 @namespace BlazorBlueprint.Components
 
-<h3 class="@CssClass">@ChildContent</h3>
+<h3 class="@CssClass" @attributes="AdditionalAttributes">@ChildContent</h3>
 
 @code {
     [Parameter]
@@ -8,6 +8,12 @@
 
     [Parameter]
     public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string CssClass => ClassNames.cn(
         "scroll-m-20 text-2xl font-semibold tracking-tight",

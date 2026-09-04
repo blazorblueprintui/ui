@@ -101,8 +101,18 @@ export function preventSpaceKeyScroll(element) {
     // C# HandleKeyDown is never invoked for interactive-child events.
     const bubbleHandler = (e) => {
         if (element._bbInteractiveKeyDown) {
-            e.stopPropagation();
             element._bbInteractiveKeyDown = false;
+
+            // A row being edited needs Enter and Escape to reach Blazor, because that is how the
+            // edit is committed or discarded from inside an input. Stopping propagation here
+            // would block every Blazor handler in the row, not just the row's own, because Blazor
+            // listens at the document. The row's C# handler knows it is editing and does not run
+            // its selection shortcuts for these keys.
+            if (element.dataset.editing === 'true' && (e.key === 'Enter' || e.key === 'Escape')) {
+                return;
+            }
+
+            e.stopPropagation();
         }
     };
 
@@ -164,4 +174,25 @@ export function moveFocusToNextRow(element) {
         nextRow = nextRow.nextElementSibling;
     }
     nextRow?.focus();
+}
+
+/**
+ * Blurs whatever is focused inside the row, so an input that only writes its value back on
+ * change has done so before the row is committed.
+ *
+ * Pressing Enter runs the row's keydown handler before the browser fires the input's change
+ * event, so committing straight away would drop whatever the user typed into the field they were
+ * still in. Blurring first forces that change through.
+ *
+ * @param {HTMLElement} rowElement - The <tr> row element
+ * @returns {boolean} True when something inside the row was focused and has been blurred.
+ */
+export function blurFocusedInput(rowElement) {
+    const active = document.activeElement;
+    if (!rowElement || !active || active === document.body || !rowElement.contains(active)) {
+        return false;
+    }
+
+    active.blur();
+    return true;
 }

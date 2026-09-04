@@ -2,13 +2,13 @@
 
 @if (string.IsNullOrEmpty(Href))
 {
-    <span class="@CssClass">
+    <span class="@CssClass" @attributes="AdditionalAttributes">
         @ChildContent
     </span>
 }
 else
 {
-    <a href="@Href" class="@CssClass">
+    <a href="@Href" class="@CssClass" @attributes="AdditionalAttributes">
         @ChildContent
     </a>
 }
@@ -19,6 +19,12 @@ else
 
     [Parameter]
     public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     [Parameter]
     public RenderFragment? ChildContent { get; set; }

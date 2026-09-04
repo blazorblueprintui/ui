@@ -18,7 +18,8 @@
     Draggable="@Draggable"
     Resizable="@Resizable"
     Static="@Static"
-    class="@CssClass">
+    class="@CssClass"
+    @attributes="AdditionalAttributes">
 
     @if (Header != null)
     {
@@ -134,6 +135,12 @@
     [Parameter] public RenderFragment? LoadingContent { get; set; }
     [Parameter] public EventCallback<string> OnRemove { get; set; }
     [Parameter] public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private bool _removed;
     private DashboardGridContext? _subscribedContext;

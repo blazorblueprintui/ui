@@ -3,7 +3,7 @@
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 
-<div @ref="_groupRef" class="@CssClass" style="@Style">
+<div @ref="_groupRef" class="@CssClass" style="@Style" @attributes="AdditionalAttributes">
     <CascadingValue Value="this" IsFixed="false">
         @ChildContent
     </CascadingValue>
@@ -28,6 +28,24 @@
     [Parameter]
     public string? Class { get; set; }
 
+    /// <summary>
+    /// Invoked when a resize drag completes, carrying the resulting panel sizes.
+    /// </summary>
+    /// <remarks>
+    /// Fires once per drag, on release, and only when the sizes actually changed — pressing a
+    /// handle and releasing it without moving is not a resize. It deliberately does not fire per
+    /// frame: the drag is applied in the browser precisely so that it costs no round trips, and a
+    /// per-frame callback would reintroduce that cost.
+    /// </remarks>
+    [Parameter]
+    public EventCallback<PanelResizeEventArgs> OnResizeEnd { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
     private ElementReference _groupRef;
     private IJSObjectReference? _jsModule;
     private DotNetObjectReference<BbResizablePanelGroup>? _dotNetRef;
@@ -43,6 +61,12 @@
     private int _handleCount = 0;
 
     internal ResizableDirection GetDirection() => Direction;
+
+    /// <summary>
+    /// Identifies this group to the JS drag handler. Panels render it so the handler can resolve
+    /// its own panel elements without picking up those of a nested group.
+    /// </summary>
+    internal string GroupId => _groupId;
 
     internal int RegisterPanel(double defaultSize, double minSize, double maxSize)
     {
@@ -77,10 +101,16 @@
     {
         if (_jsModule != null && _jsInitialized)
         {
-            await _jsModule.InvokeVoidAsync("startResize", _groupId, handleIndex, clientX, clientY, _panelSizes.ToArray(), pointerId, _panelMinSizes.ToArray(), _panelMaxSizes.ToArray());
+            var isHorizontal = Direction == ResizableDirection.Horizontal;
+            await _jsModule.InvokeVoidAsync("startResize", _groupId, handleIndex, clientX, clientY, _panelSizes.ToArray(), pointerId, _panelMinSizes.ToArray(), _panelMaxSizes.ToArray(), isHorizontal);
         }
     }
 
+    /// <summary>
+    /// Applies sizes reported mid-drag. Only the fallback path uses this: the drag normally writes
+    /// flex-basis directly in JS, because a round trip per pointermove is unusable on Blazor
+    /// Server, and component state is intentionally stale until <see cref="CommitPanelSizes"/>.
+    /// </summary>
     [JSInvokable]
     public void UpdatePanelSizes(double[] newSizes)
     {
@@ -105,6 +135,24 @@
             _panelSizes[i] = size;
         }
         StateHasChanged();
+    }
+
+    /// <summary>
+    /// Commits the sizes a completed drag produced and raises <see cref="OnResizeEnd"/>. This is
+    /// the single interop call of an ordinary drag; JS only invokes it when the sizes changed.
+    /// </summary>
+    [JSInvokable]
+    public async Task CommitPanelSizes(double[] newSizes)
+    {
+        if (_disposed) return;
+
+        UpdatePanelSizes(newSizes);
+
+        if (OnResizeEnd.HasDelegate)
+        {
+            // Report the clamped sizes the component actually rendered, not what JS proposed.
+            await OnResizeEnd.InvokeAsync(new PanelResizeEventArgs { Sizes = _panelSizes.ToArray() });
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

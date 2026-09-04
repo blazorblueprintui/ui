@@ -1,7 +1,7 @@
 @namespace BlazorBlueprint.Components
 @using System.Globalization
 
-<div class="@CssClass" style="@ContainerStyle">
+<div class="@CssClass" style="@MergedContainerStyle" @attributes="AdditionalAttributes">
     <div class="aspect-ratio-content">
         @ChildContent
     </div>
@@ -28,7 +28,22 @@
     [Parameter]
     public string? Class { get; set; }
 
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
     private string ContainerStyle => $"position: relative; width: 100%; aspect-ratio: {Ratio.ToString("F4", CultureInfo.InvariantCulture)};";
+
+    private string MergedContainerStyle
+    {
+        get
+        {
+            var consumerStyle = AdditionalAttributes?.TryGetValue("style", out var s) == true ? s?.ToString() : null;
+            return string.IsNullOrEmpty(consumerStyle) ? ContainerStyle : $"{ContainerStyle}; {consumerStyle}";
+        }
+    }
 
     private string CssClass => ClassNames.cn(
         "overflow-hidden",

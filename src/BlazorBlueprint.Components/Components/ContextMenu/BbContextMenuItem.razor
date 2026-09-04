@@ -3,7 +3,8 @@
 <BlazorBlueprint.Primitives.ContextMenu.BbContextMenuItem
     OnClick="@OnClick"
     Disabled="@Disabled"
-    class="@CssClass">
+    class="@CssClass"
+    @attributes="AdditionalAttributes">
     @if (Icon != null)
     {
         <span class="mr-2 h-4 w-4 shrink-0 [&>svg]:h-4 [&>svg]:w-4">@Icon</span>
@@ -14,6 +15,12 @@
 @code {
     [Parameter]
     public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     [Parameter]
     public RenderFragment? ChildContent { get; set; }

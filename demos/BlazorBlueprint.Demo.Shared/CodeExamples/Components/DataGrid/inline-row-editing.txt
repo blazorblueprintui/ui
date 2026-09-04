@@ -1,0 +1,69 @@
+<BbDataGrid TData="Person" Items="@people" InitialPageSize="6"
+            EditMode="DataGridEditMode.Row"
+            OnRowCommit="HandleRowCommit"
+            OnRowCancel="HandleRowCancel">
+    <Columns>
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Width="220px">
+            <EditTemplate>
+                <BbInput @bind-Value="context.Name" Class="h-8" />
+            </EditTemplate>
+        </BbDataGridPropertyColumn>
+
+        @* No EditTemplate, so this column stays read-only while the rest of the row is in edit. *@
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Width="150px" />
+
+        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Width="150px">
+            <EditTemplate>
+                <BbNumericInput TValue="int" @bind-Value="context.Salary" Class="h-8" />
+            </EditTemplate>
+        </BbDataGridPropertyColumn>
+
+        @* Renders Edit on a row at rest, and Save and Cancel on the row being edited. *@
+        <BbDataGridEditColumn TData="Person" />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private void HandleRowCommit(DataGridRowCommitContext<Person> context)
+    {
+        if (string.IsNullOrWhiteSpace(context.Item.Name))
+        {
+            // Refuse the save and keep the row open, so the user keeps their typing.
+            context.Cancel = true;
+            return;
+        }
+
+        // context.Item already carries the changes — persist it here.
+    }
+
+    private void HandleRowCancel(Person person)
+    {
+        // The original values are already back on the item by the time this runs.
+    }
+}
+
+@* The edit template binds straight to the row, so @bind-Value is all it takes. The grid records
+   the row's values when editing starts and puts them back on Cancel, so nothing needs copying by
+   hand — and because it restores onto the same instance, anything else holding that row sees the
+   values revert too.
+
+   Enter saves and Escape cancels from anywhere in the row. Shift+Enter is left alone, so a
+   multi-line editor still works. Before committing on Enter the grid blurs the field the user is
+   in, so an input that only writes its value back on change — which is BbInput's default — still
+   hands over what was just typed rather than dropping it.
+
+   Validation runs through the row's own EditContext, so DataAnnotations on your model apply
+   unchanged and a row that fails validation stays open.
+
+   Other ways to start and end an edit:
+
+     EditOnRowClick="true"    a row click starts the edit (leave off if row click also selects)
+     StartEditAsync(item)     from a button of your own
+     CommitEditAsync()        returns false when validation or OnRowCommit refused the save
+     CancelEditAsync()
+     EditingItem              the row currently in edit, or null
+
+   Starting an edit on another row commits the one being left. Committing re-runs the sort,
+   filter and grouping pass, so a row edited out of its current position moves where it belongs.
+
+   Row editing applies to flat and grouped rows. Hierarchy mode does not support it yet. *@

@@ -1,4 +1,5 @@
 @page "/components/resizable"
+@using System.Globalization
 <PageTitle>Resizable Component - Blazor Blueprint</PageTitle>
 
 <div class="space-y-8 max-w-4xl">
@@ -157,6 +158,47 @@
         <CodeBlock Source="Components/Resizable/nested.txt" />
     </div>
 
+    <!-- Reacting to a resize -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Reacting to a Resize</h2>
+            <p class="text-sm text-muted-foreground">
+                <code>OnResizeEnd</code> reports the resulting sizes when a drag finishes — useful for
+                persisting a layout. It fires once on release rather than per frame, because the drag
+                itself runs entirely in the browser and never round-trips.
+            </p>
+        </div>
+        <div class="h-[200px] border rounded-lg overflow-hidden">
+            <BbResizablePanelGroup Direction="ResizableDirection.Horizontal" OnResizeEnd="HandleResizeEnd">
+                <BbResizablePanel DefaultSize="40">
+                    <div class="flex h-full items-center justify-center p-6 bg-muted/30">
+                        <span class="font-semibold">Left</span>
+                    </div>
+                </BbResizablePanel>
+                <BbResizableHandle />
+                <BbResizablePanel DefaultSize="60">
+                    <div class="flex h-full items-center justify-center p-6">
+                        <span class="font-semibold">Right</span>
+                    </div>
+                </BbResizablePanel>
+            </BbResizablePanelGroup>
+        </div>
+        <p class="text-sm text-muted-foreground">
+            @if (lastSizes is null)
+            {
+                <span>Drag the handle to see the committed sizes.</span>
+            }
+            else
+            {
+                <span>
+                    Last resize: <code>@string.Join("% / ", lastSizes.Select(s => s.ToString("F2", CultureInfo.InvariantCulture)))%</code>
+                    (@resizeCount @(resizeCount == 1 ? "event" : "events"))
+                </span>
+            }
+        </p>
+        <CodeBlock Source="Components/Resizable/on-resize-end.txt" />
+    </div>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>Resize handles use <code>role="separator"</code> with <code>aria-orientation</code></AccessibilityItem>
@@ -191,8 +233,15 @@
                 <ApiParameter Name="Direction" Type="ResizableDirection" Default="Horizontal">
                     The direction of the panels. Options: Horizontal, Vertical.
                 </ApiParameter>
+                <ApiParameter Name="OnResizeEnd" Type="EventCallback&lt;PanelResizeEventArgs&gt;" Default="null">
+                    Invoked when a resize drag completes, carrying the resulting panel sizes as
+                    percentages in declared order. Fires once on release, and only when the sizes changed.
+                </ApiParameter>
                 <ApiParameter Name="Class" Type="string?" Default="null">
                     Additional CSS classes for the panel group container.
+                </ApiParameter>
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                    Additional HTML attributes applied to the root <code>&lt;div&gt;</code> element (e.g. <code>data-testid</code>, <code>aria-label</code>).
                 </ApiParameter>
             </ApiReference>
 
@@ -212,6 +261,9 @@
                 <ApiParameter Name="Class" Type="string?" Default="null">
                     Additional CSS classes for the panel.
                 </ApiParameter>
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                    Additional HTML attributes applied to the root <code>&lt;div&gt;</code> element (e.g. <code>data-testid</code>, <code>aria-label</code>).
+                </ApiParameter>
             </ApiReference>
 
             <ApiReference ComponentName="ResizableHandle">
@@ -221,7 +273,21 @@
                 <ApiParameter Name="Class" Type="string?" Default="null">
                     Additional CSS classes for the handle.
                 </ApiParameter>
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                    Additional HTML attributes applied to the root <code>&lt;div&gt;</code> element (e.g. <code>data-testid</code>, <code>aria-label</code>).
+                </ApiParameter>
             </ApiReference>
         </div>
     </section>
 </div>
+
+@code {
+    private IReadOnlyList<double>? lastSizes;
+    private int resizeCount;
+
+    private void HandleResizeEnd(PanelResizeEventArgs args)
+    {
+        lastSizes = args.Sizes;
+        resizeCount++;
+    }
+}

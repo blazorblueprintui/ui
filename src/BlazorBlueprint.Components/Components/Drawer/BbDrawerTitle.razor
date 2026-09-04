@@ -16,6 +16,12 @@
     [Parameter]
     public string As { get; set; } = "h2";
 
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
     private string CssClass => ClassNames.cn(
         "text-lg font-semibold leading-none tracking-tight",
         Class
@@ -25,7 +31,8 @@
     {
         builder.OpenElement(0, As);
         builder.AddAttribute(1, "class", CssClass);
-        builder.AddContent(2, ChildContent);
+        builder.AddMultipleAttributes(2, AdditionalAttributes);
+        builder.AddContent(3, ChildContent);
         builder.CloseElement();
     };
 }

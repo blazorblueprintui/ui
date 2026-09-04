@@ -18,6 +18,12 @@ public partial class BbItemDescription : ComponentBase
     public string? Class { get; set; }
 
     /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
     /// Gets or sets the content to be rendered as the description.
     /// </summary>
     [Parameter]

@@ -5,7 +5,9 @@
     Wraps the AccordionTrigger primitive with shadcn/ui styling.
 *@
 
-<BlazorBlueprint.Primitives.Accordion.BbAccordionTrigger As="@As" Class="@CssClass">
+<BlazorBlueprint.Primitives.Accordion.BbAccordionTrigger As="@As"
+                                                      Class="@CssClass"
+                                                      @attributes="AdditionalAttributes">
     <div class="flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline">
         @ChildContent
         @if (Icon != null)
@@ -70,6 +72,12 @@
     /// </summary>
     [Parameter]
     public string As { get; set; } = "h3";
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     /// <summary>
     /// Gets the computed CSS classes for the accordion trigger.

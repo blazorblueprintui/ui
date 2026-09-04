@@ -119,6 +119,147 @@
         <CodeBlock Source="Components/DataGrid/column-filtering.txt" />
     </div>
 
+    <!-- ── Inline Row Editing ─────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Inline Row Editing</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">EditMode="DataGridEditMode.Row"</code>, give each
+                column the user may change an <code class="bg-muted px-1 py-0.5 rounded">EditTemplate</code>, and
+                add a <code class="bg-muted px-1 py-0.5 rounded">BbDataGridEditColumn</code> for the Edit, Save and
+                Cancel buttons. The template binds straight to the row, so an ordinary
+                <code class="bg-muted px-1 py-0.5 rounded">@@bind-Value</code> is all it takes.
+            </p>
+            <p class="text-sm text-muted-foreground">
+                Press <strong>Enter</strong> to save or <strong>Escape</strong> to cancel without reaching for the
+                buttons. Cancel puts the original values back, so nothing needs copying by hand. A column with no
+                edit template keeps showing its normal cell — Department below is read-only.
+                <code class="bg-muted px-1 py-0.5 rounded">OnRowCommit</code> can refuse the save and keep the row
+                open with the user's typing intact; try clearing a name and saving.
+                Validation runs through the row's own <code class="bg-muted px-1 py-0.5 rounded">EditContext</code>,
+                so <code class="bg-muted px-1 py-0.5 rounded">DataAnnotations</code> on your model apply unchanged.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@editablePeople" InitialPageSize="6"
+                   EditMode="DataGridEditMode.Row"
+                   OnRowCommit="HandleRowCommit"
+                   OnRowCancel="HandleRowCancel">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Width="220px">
+                    <EditTemplate>
+                        <BbInput @bind-Value="context.Name" Class="h-8" />
+                    </EditTemplate>
+                </BbDataGridPropertyColumn>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Width="150px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Age)" Sortable Width="120px">
+                    <EditTemplate>
+                        <BbNumericInput TValue="int" @bind-Value="context.Age" Class="h-8" />
+                    </EditTemplate>
+                </BbDataGridPropertyColumn>
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Width="150px">
+                    <EditTemplate>
+                        <BbNumericInput TValue="int" @bind-Value="context.Salary" Class="h-8" />
+                    </EditTemplate>
+                </BbDataGridPropertyColumn>
+                <BbDataGridEditColumn TData="Person" />
+            </Columns>
+        </BbDataGrid>
+        @if (_editMessage != null)
+        {
+            <p class="text-sm text-muted-foreground">@_editMessage</p>
+        }
+        <CodeBlock Source="Components/DataGrid/inline-row-editing.txt" />
+    </div>
+
+    <!-- ── CSV Export ─────────────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">CSV Export</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">ShowExport="true"</code> to put an Export button
+                in the toolbar. It downloads what the user sees: the rows that survive the current search,
+                filters and sort, in the visible columns, in their current order — across every page, not just
+                the one on screen.
+            </p>
+            <p class="text-sm text-muted-foreground">
+                Search or reorder the columns first, then export, and the file follows. The Status column
+                exports its label rather than the number behind it, because it sets
+                <code class="bg-muted px-1 py-0.5 rounded">SortAndFilterBy</code>. Call
+                <code class="bg-muted px-1 py-0.5 rounded">ExportToCsvAsync()</code> on a grid reference to
+                export from a button of your own, or
+                <code class="bg-muted px-1 py-0.5 rounded">BuildCsv()</code> to get the text without
+                downloading it.
+            </p>
+        </div>
+        <BbDataGrid @ref="exportGrid" TData="Person" Items="@people" InitialPageSize="5"
+                   ShowSearch="true" ShowExport="true" ExportFileName="employees.csv"
+                   Resizable="true" Reorderable="true">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Filterable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Filterable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Filterable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Id)" Id="export-office"
+                    Title="Office" Sortable Filterable
+                    SortAndFilterBy="@(p => OfficeFor(p))">
+                    <CellTemplate>@OfficeFor(context)</CellTemplate>
+                </BbDataGridPropertyColumn>
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Filterable />
+            </Columns>
+        </BbDataGrid>
+        <div class="space-y-2">
+            <BbButton Variant="ButtonVariant.Secondary" Size="ButtonSize.Small" OnClick="ShowCsvPreview">
+                Preview the CSV instead of downloading
+            </BbButton>
+            @if (_csvPreview != null)
+            {
+                <pre class="max-h-48 overflow-auto rounded-md border bg-muted p-3 text-xs">@_csvPreview</pre>
+            }
+        </div>
+        <CodeBlock Source="Components/DataGrid/csv-export.txt" />
+    </div>
+
+    <!-- ── Sort and Filter by a Different Value ────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Sort and Filter by a Different Value</h2>
+            <p class="text-sm text-muted-foreground">
+                A column that displays something other than its raw property — the common case being a
+                <code class="bg-muted px-1 py-0.5 rounded">CellTemplate</code> that resolves a key to a label —
+                still sorts and filters on the key by default. The user sees office names, clicks the header,
+                and the rows reorder by a number they cannot see.
+                <code class="bg-muted px-1 py-0.5 rounded">SortAndFilterBy</code> points sorting, filtering,
+                grouping and search at the value the column displays instead. One parameter covers all four,
+                so they cannot disagree.
+            </p>
+            <p class="text-sm text-muted-foreground">
+                Sort the two columns below and compare them. Both resolve the same office, but only the second
+                orders alphabetically by office name.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Width="200px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Id)" Title="Office (sorts by id)"
+                    Sortable Width="180px">
+                    <CellTemplate>
+                        <BbBadge Variant="BadgeVariant.Secondary">@OfficeFor(context)</BbBadge>
+                    </CellTemplate>
+                </BbDataGridPropertyColumn>
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Id)" Id="office-by-name"
+                    Title="Office (sorts by name)" Sortable Filterable Groupable Width="200px"
+                    SortAndFilterBy="@(p => OfficeFor(p))"
+                    FilterType="FilterFieldType.Enum"
+                    FilterOptions="@(OfficeNames.Select(o => new SelectOption<string>(o, o)))">
+                    <CellTemplate>
+                        <BbBadge Variant="BadgeVariant.Secondary">@OfficeFor(context)</BbBadge>
+                    </CellTemplate>
+                </BbDataGridPropertyColumn>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Width="150px" />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/sort-filter-by.txt" />
+    </div>
+
     <!-- ── Row Selection ───────────────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -147,6 +288,50 @@
             </p>
         }
         <CodeBlock Source="Components/DataGrid/row-selection.txt" />
+    </div>
+
+    <!-- ── Selection Behaviour (Replace) ──────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Selection Behaviour</h2>
+            <p class="text-sm text-muted-foreground">
+                By default a row click toggles that one row and leaves the rest alone. Set
+                <code class="bg-muted px-1 py-0.5 rounded">SelectionBehavior="DataGridSelectionBehavior.Replace"</code>
+                for the conventions a user brings from a file explorer: a plain click selects only the clicked
+                row, <strong>Shift+Click</strong> selects the range from the anchor row, and
+                <strong>Ctrl+Click</strong> (Cmd+Click on macOS) adds or removes one row. Clicking the only
+                selected row clears the selection.
+            </p>
+            <p class="text-sm text-muted-foreground">
+                The range extends from the <em>anchor</em> — the row of the last plain click or Ctrl+Click —
+                not from the last selected row. Click a row, Ctrl+Click a second, then Shift+Click a third:
+                the range starts at the Ctrl+Clicked row. There is no select column here, because a row click
+                is the whole point; where a select column is present its checkboxes keep toggle semantics, and
+                so do the Space and Enter keys on a focused row.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="8"
+                   SelectionMode="DataTableSelectionMode.Multiple"
+                   SelectionBehavior="DataGridSelectionBehavior.Replace"
+                   SelectedItemsChanged="HandleReplaceSelectionChanged">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable />
+            </Columns>
+        </BbDataGrid>
+        <p class="text-sm text-muted-foreground">
+            @if (_replaceSelectedPeople.Count > 0)
+            {
+                <text>Selected @_replaceSelectedPeople.Count: @string.Join(", ", _replaceSelectedPeople.Select(p => p.Name))</text>
+            }
+            else
+            {
+                <text>Nothing selected.</text>
+            }
+        </p>
+        <CodeBlock Source="Components/DataGrid/selection-behavior.txt" />
     </div>
 
     <!-- ── Per-Page Select-All (SelectAllScope) ──────────────────── -->
@@ -893,8 +1078,9 @@
             <p class="text-sm text-muted-foreground">
                 Mark a column <code class="bg-muted px-1 py-0.5 rounded">Groupable</code> to let users group by it
                 at runtime. An ellipsis menu appears in the column header with a "Group by" action, and the grid
-                regroups without a page refresh. Only one column is grouped at a time — choosing another replaces
-                the current grouping. Columns left without the flag (like Name) offer no menu.
+                regroups without a page refresh. Once something is grouped the menu also offers "Then group by",
+                which nests a second level inside the first — see Nested Grouping below.
+                Columns left without the flag (like Name) offer no menu.
                 Grouping can also be driven from code with
                 <code class="bg-muted px-1 py-0.5 rounded">GroupByColumnAsync</code>, which takes a
                 <code class="bg-muted px-1 py-0.5 rounded">SortDirection</code> controlling the order of the group
@@ -929,6 +1115,53 @@
             </Columns>
         </BbDataGrid>
         <CodeBlock Source="Components/DataGrid/interactive-grouping.txt" />
+    </div>
+
+    <!-- ── Nested Grouping ──────────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Nested Grouping</h2>
+            <p class="text-sm text-muted-foreground">
+                Grouping nests to any depth. Use "Then group by" in a column's ellipsis menu, or call
+                <code class="bg-muted px-1 py-0.5 rounded">AddGroupByColumnAsync</code> and
+                <code class="bg-muted px-1 py-0.5 rounded">SetGroupingAsync</code> from code. The breadcrumb above
+                the grid shows the levels in order; use it to drop a level or move one outward.
+            </p>
+            <p class="text-sm text-muted-foreground">
+                Each header collapses on its own, and the same key under different parents stays separate —
+                collapsing Active under Engineering leaves Active under Sales open. Aggregates roll up, so a
+                department header sums every row beneath it, not just its own level. The page size here is
+                deliberately small: page through and every header above the first row is repeated at the top of
+                the page, so a row is never shown without the headers that say what it belongs to.
+            </p>
+        </div>
+        <BbDataGrid @ref="nestedGroupingGrid" TData="Person" Items="@people" InitialPageSize="8">
+            <Toolbar>
+                <div class="flex items-center gap-2">
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                              OnClick="@(() => nestedGroupingGrid!.SetGroupingAsync(new[] { "department", "status" }))">
+                        Department › Status
+                    </BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                              OnClick="@(() => nestedGroupingGrid!.SetGroupingAsync(new[] { "status", "department", "role" }))">
+                        Status › Department › Role
+                    </BbButton>
+                    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small"
+                              OnClick="@(() => nestedGroupingGrid!.ClearGroupingAsync())">
+                        Clear grouping
+                    </BbButton>
+                </div>
+            </Toolbar>
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Groupable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)" Sortable Groupable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" Groupable />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable
+                    Aggregate="BlazorBlueprint.Primitives.DataGrid.AggregateFunction.Sum" />
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/nested-grouping.txt" />
     </div>
 
     <!-- ── Live Collection Updates ──────────────────────────────── -->
@@ -1009,8 +1242,41 @@
                 <ApiParameter Name="ItemsProvider" Type="DataGridItemsProvider&lt;TData&gt;">
                     Async delegate for server-side data fetching. Receives sort definitions, pagination parameters, and a cancellation token. Mutually exclusive with Items.
                 </ApiParameter>
+                <ApiParameter Name="EditMode" Type="DataGridEditMode" Default="None">
+                    How the grid lets a user edit rows in place. Row puts a whole row into edit at once: every column with an EditTemplate becomes an input, and the changes commit or discard together. A row goes into edit through BbDataGridEditColumn, through EditOnRowClick, or through StartEditAsync. Enter commits, Escape cancels. Cancel restores the values the row held when editing started, onto the same instance. Applies to flat and grouped rows; hierarchy mode does not support it yet.
+                </ApiParameter>
+                <ApiParameter Name="EditOnRowClick" Type="bool" Default="false">
+                    Clicking a row puts it into edit. Leave this off when the grid also selects on row click, or a click would do both.
+                </ApiParameter>
+                <ApiParameter Name="OnRowCommit" Type="EventCallback&lt;DataGridRowCommitContext&lt;TData&gt;&gt;">
+                    Called when a row's edits are committed, before the row closes. The item already carries the changes. Set context.Cancel to keep the row in edit — for instance when a save is rejected by the server — so the user keeps their typing. Validation through the row's EditContext runs first, so DataAnnotations on the model apply unchanged.
+                </ApiParameter>
+                <ApiParameter Name="OnRowCancel" Type="EventCallback&lt;TData&gt;">
+                    Called when a row's edits are discarded, after the original values are put back.
+                </ApiParameter>
+                <ApiParameter Name="ShowGroupingBreadcrumb" Type="bool" Default="true">
+                    Shows a breadcrumb of the active grouping levels above the grid, with a control on each to remove it or move it outward. Only appears while something is grouped. It is the practical way to see and change a nested grouping — past two levels, reading the order out of the per-column menus stops working. Set it false when the page fixes the grouping and the user should not change it.
+                </ApiParameter>
+                <ApiParameter Name="ShowExport" Type="bool" Default="false">
+                    Renders an Export button in the toolbar that downloads the rows as CSV. It exports what the user sees: the rows that survive the current search, filters and sort, across every page, in the visible columns, in their current order, using each column's display value. Select and expand columns are skipped.
+                </ApiParameter>
+                <ApiParameter Name="ExportFileName" Type="string" Default="export.csv">
+                    The file name offered for the CSV download. A .csv extension is appended when the name has none.
+                </ApiParameter>
+                <ApiParameter Name="ExportDelimiter" Type="string" Default=",">
+                    The field delimiter written between CSV values. Set it to ";" for locales whose spreadsheet expects a semicolon, which is the usual reason a CSV opens with every row crammed into one column.
+                </ApiParameter>
+                <ApiParameter Name="ExportScope" Type="DataGridExportScope" Default="FilteredRows">
+                    Which rows the export writes. FilteredRows covers every row that survives the current filters, search and sort, across all pages. CurrentPage narrows it to the page on screen. A grid backed by an ItemsProvider only holds the page it fetched, so it exports that page and logs a warning.
+                </ApiParameter>
+                <ApiParameter Name="OnExport" Type="EventCallback&lt;string&gt;">
+                    Called after an export completes, with the CSV text that was downloaded. The download happens either way.
+                </ApiParameter>
                 <ApiParameter Name="SelectionMode" Type="DataTableSelectionMode" Default="None">
                     The selection mode: None, Single, or Multiple.
+                </ApiParameter>
+                <ApiParameter Name="SelectionBehavior" Type="DataGridSelectionBehavior" Default="Toggle">
+                    How clicking a row changes the selection. Toggle, the default and the long-standing behaviour, flips one row per click and ignores modifier keys. Replace gives the conventions a user brings from a file explorer: a plain click selects only the clicked row, Shift+Click selects the range from the anchor row, and Ctrl+Click (Cmd+Click on macOS) adds or removes one row; clicking the only selected row clears the selection. The range extends from the anchor — the row of the last plain click or Ctrl+Click — not from the last selected row, and repeated Shift+Clicks re-extend from that same anchor. Range and additive selection need SelectionMode.Multiple, and a range covers the current page's rows. Select-column checkboxes and the Space and Enter keys keep toggle semantics under either behaviour.
                 </ApiParameter>
                 <ApiParameter Name="SelectedItemsChanged" Type="EventCallback&lt;IReadOnlyCollection&lt;TData&gt;&gt;">
                     Event callback invoked when the selected items change.
@@ -1138,6 +1404,9 @@
                 <ApiParameter Name="RefreshDataAsync()" Type="Task">
                     Public method. Re-reads the data source and re-renders. Call after mutating the Items collection in place, which the grid cannot detect by reference, or to force an ItemsProvider re-fetch. Collections implementing INotifyCollectionChanged (such as ObservableCollection) are subscribed to and refreshed automatically, so they do not need this. Call via a component reference (<code>@@ref</code>).
                 </ApiParameter>
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                    Additional HTML attributes applied to the root <code>&lt;div&gt;</code> element (e.g. <code>data-testid</code>, <code>aria-label</code>).
+                </ApiParameter>
             </ApiReference>
 
             <ApiReference ComponentName="DataGridPropertyColumn">
@@ -1152,6 +1421,9 @@
                 </ApiParameter>
                 <ApiParameter Name="Format" Type="string?">
                     Format string for displaying the property value (e.g., "C0" for currency, "N2" for numbers, "d" for dates).
+                </ApiParameter>
+                <ApiParameter Name="SortAndFilterBy" Type="Expression&lt;Func&lt;TData, object?&gt;&gt;?" Default="null">
+                    Projects the value this column sorts and filters on, when that differs from Property. Set it when the cell displays something other than the raw property — the common case being a CellTemplate that resolves a key to a label — so the header click orders by what the user reads rather than by the key behind it. One parameter covers sorting, per-column filtering, global search, grouping and CSV export, so all of them agree; two separate selectors could disagree. It is an expression rather than a delegate so a server-side ItemsProvider over IQueryable can still translate it, which means the body must stay translatable by your provider. Format is not applied to the projected value.
                 </ApiParameter>
                 <ApiParameter Name="Sortable" Type="bool" Default="false">
                     Whether this column can be sorted by clicking its header.
@@ -1308,6 +1580,15 @@
                 </ApiParameter>
             </ApiReference>
 
+            <ApiReference ComponentName="DataGridEditColumn">
+                <ApiParameter Name="Width" Type="string?" Default="120px">
+                    Column width. Defaults to a width that fits the Save and Cancel buttons.
+                </ApiParameter>
+                <ApiParameter Name="Pinned" Type="ColumnPinning" Default="None">
+                    Pins the column to an edge of the scrollable viewport. Pin it right on a wide grid so the Save button stays reachable without scrolling back.
+                </ApiParameter>
+            </ApiReference>
+
             <ApiReference ComponentName="DataGridExpandColumn">
                 <ApiParameter Name="Width" Type="string?" Default="48px">
                     Column width for the expand chevron column. Defaults to a compact button width.
@@ -1344,6 +1625,9 @@
                 </ApiParameter>
                 <ApiParameter Name="TriggerClass" Type="string?">
                     Additional CSS classes applied to the trigger element.
+                </ApiParameter>
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                    Additional HTML attributes applied to the component's root element (e.g. <code>data-testid</code>, <code>aria-label</code>).
                 </ApiParameter>
             </ApiReference>
         </div>
@@ -1392,6 +1676,46 @@
 
     // Column Filtering demo state
     private BlazorBlueprint.Primitives.DataGrid.DataGridState<Person> _gridState = new();
+
+    // Inline row editing demo state
+    private List<Person> editablePeople = new();
+    private string? _editMessage;
+
+    private void HandleRowCommit(DataGridRowCommitContext<Person> context)
+    {
+        if (string.IsNullOrWhiteSpace(context.Item.Name))
+        {
+            // Refuse the save and keep the row open, so the user keeps their typing.
+            context.Cancel = true;
+            _editMessage = "A name is required — the row stays open until you give it one.";
+            return;
+        }
+
+        _editMessage = $"Saved {context.Item.Name}.";
+    }
+
+    private void HandleRowCancel(Person person) =>
+        _editMessage = $"Discarded the changes to {person.Name}.";
+
+    // Nested grouping demo state
+    private BbDataGrid<Person>? nestedGroupingGrid;
+
+    // CSV export demo state
+    private BbDataGrid<Person>? exportGrid;
+    private string? _csvPreview;
+
+    private void ShowCsvPreview() => _csvPreview = exportGrid?.BuildCsv();
+
+    // Selection behaviour demo state
+    private IReadOnlyCollection<Person> _replaceSelectedPeople = Array.Empty<Person>();
+
+    private void HandleReplaceSelectionChanged(IReadOnlyCollection<Person> selected) =>
+        _replaceSelectedPeople = selected;
+
+    // SortAndFilterBy demo: an office name resolved from a key the column does not display.
+    private static readonly string[] OfficeNames = { "Singapore", "Berlin", "Austin", "London" };
+
+    private static string OfficeFor(Person person) => OfficeNames[person.Id % OfficeNames.Length];
 
     // Expandable detail rows demo data
     private record TeamMember(string Name, string Title, string Department, List<TeamMember> DirectReports);
@@ -1472,6 +1796,9 @@
     protected override void OnInitialized()
     {
         people = MockDataService.GeneratePersons(50);
+
+        // A set of its own, so editing here does not change the rows every other example shows.
+        editablePeople = MockDataService.GeneratePersons(12);
         manyPeople = MockDataService.GeneratePersons(1000);
         asyncPeople = MockDataService.GeneratePersons(100);
 

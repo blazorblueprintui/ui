@@ -194,6 +194,12 @@ public partial class BbDateRangePicker : ComponentBase
     [Parameter]
     public bool AutoApply { get; set; }
 
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
     private string[] DayNames => _cachedDayNames ??= BuildDayNames();
 
     private string[] BuildDayNames()

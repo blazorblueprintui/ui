@@ -1,0 +1,43 @@
+<BbDataGrid @ref="exportGrid" TData="Person" Items="@people" InitialPageSize="5"
+            ShowSearch="true" ShowExport="true" ExportFileName="employees.csv">
+    <Columns>
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Filterable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Filterable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Filterable />
+
+        @* Exports "Berlin", not the Id it was resolved from. *@
+        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Id)" Id="export-office"
+                                  Title="Office" Sortable Filterable
+                                  SortAndFilterBy="@(p => OfficeFor(p))">
+            <CellTemplate>@OfficeFor(context)</CellTemplate>
+        </BbDataGridPropertyColumn>
+
+        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Sortable Filterable />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private BbDataGrid<Person>? exportGrid;
+
+    // Export from a button of your own.
+    private async Task Export() => await exportGrid!.ExportToCsvAsync();
+
+    // Or get the text without downloading it — to store it, mail it, or assert on it in a test.
+    private string? BuildOnly() => exportGrid?.BuildCsv();
+}
+
+@* What gets exported
+
+     Rows      every row that survives the current search, filters and sort, across all pages
+     Columns   the visible data columns, in their current order; select and expand columns are skipped
+     Values    each column's display value, so a Format is applied and a SortAndFilterBy label wins
+
+   ExportScope="DataGridExportScope.CurrentPage" narrows it to the page on screen. A grid backed by
+   an ItemsProvider only holds the page it fetched, so it exports that page and logs a warning.
+
+   ExportDelimiter=";" for locales whose spreadsheet expects a semicolon — the usual reason a CSV
+   opens with every row crammed into one column.
+
+   A cell starting with =, +, -, @ or a tab is prefixed with an apostrophe on the way out. Those
+   characters make a spreadsheet execute the cell as a formula, so this is a security measure, not
+   formatting. A value that parses as a number is left alone, so -1500 still exports as a number. *@

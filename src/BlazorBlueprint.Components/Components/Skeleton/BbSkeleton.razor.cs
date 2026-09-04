@@ -80,6 +80,12 @@ public partial class BbSkeleton : ComponentBase
     public string? Class { get; set; }
 
     /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the root element.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
     /// Gets or sets an explicit width for the skeleton (e.g., "200px", "50%").
     /// Applied as an inline style. Use this instead of Tailwind arbitrary values for dynamic sizing.
     /// </summary>
@@ -115,6 +121,20 @@ public partial class BbSkeleton : ComponentBase
                 parts.Add($"height:{Height}");
             }
             return string.Join(";", parts);
+        }
+    }
+
+    private string? MergedInlineStyle
+    {
+        get
+        {
+            var consumerStyle = AdditionalAttributes?.TryGetValue("style", out var s) == true ? s?.ToString() : null;
+            if (string.IsNullOrEmpty(consumerStyle))
+            {
+                return InlineStyle;
+            }
+
+            return string.IsNullOrEmpty(InlineStyle) ? consumerStyle : $"{InlineStyle};{consumerStyle}";
         }
     }
 

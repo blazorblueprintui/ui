@@ -79,6 +79,28 @@
         <CodeBlock Source="Components/ScrollArea/long-content.txt" />
     </div>
 
+    <!-- Always Visible -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Always Visible</h2>
+            <p class="text-sm text-muted-foreground">
+                <code class="text-xs">ScrollAreaType.Always</code> keeps the scrollbar on screen
+                instead of revealing it on hover.
+            </p>
+        </div>
+        <BbScrollArea Type="ScrollAreaType.Always" Height="200px" Class="w-[350px] rounded-md border p-4">
+            <div class="space-y-4">
+                <h4 class="text-sm font-medium leading-none">Tags</h4>
+                @foreach (var tag in _tags)
+                {
+                    <div class="text-sm">@tag</div>
+                    <BbSeparator />
+                }
+            </div>
+        </BbScrollArea>
+        <CodeBlock Source="Components/ScrollArea/always-visible.txt" />
+    </div>
+
     <!-- Fill Container -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -121,8 +143,10 @@
                 <ApiParameter Name="Orientation" Type="ScrollAreaOrientation" Default="Vertical">
                     The orientation of the scroll area. Options: Vertical (default), Horizontal, or Both.
                 </ApiParameter>
-                <ApiParameter Name="Type" Type="ScrollAreaType" Default="Auto">
-                    Controls scrollbar visibility behavior. Options: Auto, Always, Hover, or Hidden.
+                <ApiParameter Name="Type" Type="ScrollAreaType" Default="Hover">
+                    Controls scrollbar visibility behavior. Hover (default) fades the scrollbar in
+                    while the pointer is over the area, Always keeps it on screen, Auto shows it only
+                    when the content overflows, and Hidden renders no scrollbar at all.
                 </ApiParameter>
                 <ApiParameter Name="Height" Type="string?">
                     Fixed height applied as an inline style (e.g., "200px").
@@ -133,6 +157,9 @@
                 <ApiParameter Name="FillContainer" Type="bool" Default="false">
                     When true, automatically fills remaining vertical space in a flex column parent container,
                     excluding sibling elements. Takes precedence over Height and MaxHeight.
+                </ApiParameter>
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                    Additional HTML attributes applied to the component's root element (e.g. <code>data-testid</code>, <code>aria-label</code>).
                 </ApiParameter>
             </ApiReference>
         </div>

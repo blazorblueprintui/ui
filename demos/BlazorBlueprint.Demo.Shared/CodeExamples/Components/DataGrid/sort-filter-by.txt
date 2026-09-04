@@ -1,0 +1,41 @@
+<BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
+    <Columns>
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable Width="200px" />
+
+        @* Without SortAndFilterBy the header click orders by Id, not by the office name shown. *@
+        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Id)"
+                                  Title="Office (sorts by id)" Sortable Width="180px">
+            <CellTemplate>
+                <BbBadge Variant="BadgeVariant.Secondary">@OfficeFor(context)</BbBadge>
+            </CellTemplate>
+        </BbDataGridPropertyColumn>
+
+        @* SortAndFilterBy points sorting, filtering, grouping and search at the displayed value. *@
+        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Id)" Id="office-by-name"
+                                  Title="Office (sorts by name)" Sortable Filterable Groupable Width="200px"
+                                  SortAndFilterBy="@(p => OfficeFor(p))"
+                                  FilterType="FilterFieldType.Enum"
+                                  FilterOptions="@(OfficeNames.Select(o => new SelectOption<string>(o, o)))">
+            <CellTemplate>
+                <BbBadge Variant="BadgeVariant.Secondary">@OfficeFor(context)</BbBadge>
+            </CellTemplate>
+        </BbDataGridPropertyColumn>
+
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable Width="150px" />
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private static readonly string[] OfficeNames = { "Singapore", "Berlin", "Austin", "London" };
+
+    private static string OfficeFor(Person person) => OfficeNames[person.Id % OfficeNames.Length];
+}
+
+@* Two columns declared from the same Property need distinct Ids, so give the second one an
+   explicit Id. Sorting, per-column filtering, global search, grouping and CSV export all read
+   SortAndFilterBy, so every one of them agrees with what the cell shows.
+
+   SortAndFilterBy is an expression, not a delegate, so a grid backed by a server-side
+   ItemsProvider over IQueryable can translate it to SQL. Keep the body translatable: a lookup
+   your provider cannot translate throws at query time. For a lookup the server cannot perform,
+   join the label into the query and point Property at it instead. *@

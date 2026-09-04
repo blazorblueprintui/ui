@@ -116,8 +116,8 @@
 
     private static readonly Action<ILogger, string, Exception?> LogPortalRenderTimeout =
         LoggerMessage.Define<string>(LogLevel.Warning, new EventId(2, "PortalRenderTimeout"),
-            "Portal '{PortalId}' timed out waiting for PortalHost to render. " +
-            "Ensure <BbPortalHost /> is in your layout.");
+            "Portal '{PortalId}' timed out waiting for PortalHost to render. A host is registered, " +
+            "so this is a slow or blocked render rather than a missing <BbPortalHost />.");
 
     private static readonly Action<ILogger, string, string, Exception?> LogSetupFailed =
         LoggerMessage.Define<string, string>(LogLevel.Warning, new EventId(3, "FloatingPortalSetupFailed"),
@@ -132,6 +132,26 @@
     private bool _isPositioned = false;
     private ElementReference _portalContentRef;
     private TaskCompletionSource<bool>? _portalReadyTcs;
+
+    /// <summary>
+    /// Whether this portal is between <c>IsOpen</c> going false and its exit animation finishing.
+    /// <para>
+    /// The window exists because the two halves of a close run in the wrong order for animation:
+    /// Blazor renders the closed state first, and <c>OnAfterRenderAsync</c> — where the hide
+    /// actually happens — runs after. With the rendered style hiding the element on that first
+    /// render, an exit animation had nothing left to animate, which is why every
+    /// <c>data-[state=closed]:animate-out</c> in the styled layer had never once been seen.
+    /// </para>
+    /// <para>
+    /// While this is set the rendered style keeps the element where it was and visible. The JS
+    /// hide then waits for the animation before writing the hidden style, so the element goes out
+    /// the way it was declared to.
+    /// </para>
+    /// </summary>
+    private bool _isClosing;
+
+    /// <summary>Previous <c>IsOpen</c>, so the close transition is caught before it is rendered.</summary>
+    private bool _wasOpen;
 
     // Store computed position so it survives Blazor re-renders
     private double _positionLeft = 0;
@@ -162,6 +182,24 @@
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
+
+        // Catch the close here rather than in OnAfterRenderAsync, because the render that puts
+        // data-state="closed" into the DOM — the one that starts the exit animation — happens
+        // between the two. Deciding after it has already gone out is too late to keep the element
+        // visible for the animation to run against.
+        if (!IsOpen && _wasOpen && _isPositioned)
+        {
+            _isClosing = true;
+        }
+        else if (IsOpen)
+        {
+            // Reopened, possibly mid-animation. The element is visible and stays visible; the
+            // pending hide sees the open state and declines to run.
+            _isClosing = false;
+        }
+
+        _wasOpen = IsOpen;
+
         // When the portal is mounted, notify PortalHost to re-render so that content
         // updates (e.g., data-state changes, child content updates) are reflected.
         // Uses RefreshPortal (not RegisterPortal) to avoid replacing the RenderFragment
@@ -268,7 +306,11 @@
         var timeoutTask = Task.Delay(500);
         var completedTask = await Task.WhenAny(_portalReadyTcs.Task, timeoutTask);
 
-        if (completedTask == timeoutTask)
+        // Only a timeout with a host registered is news. Without one the wait was never going to
+        // succeed, PortalService has already said so once, and repeating it here produced a warning
+        // per portal — 24 lines on a page of tooltips, all of them restating the same fact and
+        // burying the one message that explains it (#479).
+        if (completedTask == timeoutTask && PortalService.HasHost)
         {
             LogPortalRenderTimeout(Logger, PortalId, null);
         }
@@ -393,7 +435,9 @@
     /// </summary>
     private string GetInitialStyle()
     {
-        if (!_isPositioned || !IsOpen)
+        // _isClosing keeps the element on screen for its exit animation; the JS hide writes the
+        // hidden style once that finishes.
+        if (!_isPositioned || (!IsOpen && !_isClosing))
         {
             // Use position: fixed with off-screen coordinates to prevent:
             // 1. Flash at wrong position (fixed doesn't depend on parent context)
@@ -448,6 +492,8 @@
         {
             try
             {
+                // Returns once the exit animation has finished, so this await is as long as the
+                // animation is. It declines to hide if the overlay was reopened in the meantime.
                 await PositioningService.HidePositionAsync(_portalContentRef);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
@@ -456,7 +502,15 @@
             }
         }
 
-        _isPositioned = false;
+        _isClosing = false;
+
+        // A reopen during the animation already put IsOpen back to true and left the element
+        // visible. Clearing _isPositioned would be read as "open but not yet positioned" and
+        // trigger a redundant reposition of something already on screen.
+        if (!IsOpen)
+        {
+            _isPositioned = false;
+        }
     }
 
     /// <summary>

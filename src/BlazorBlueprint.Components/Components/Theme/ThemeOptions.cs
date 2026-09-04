@@ -34,7 +34,13 @@ public class ThemeOptions
     public double DefaultRadius { get; set; } = 0.5;
 
     /// <summary>
-    /// When <c>true</c>, persists theme preferences to <c>localStorage</c>. Defaults to <c>true</c>.
+    /// When <c>true</c>, persists theme preferences to <c>localStorage</c> and restores them on load.
+    /// Defaults to <c>true</c>.
     /// </summary>
+    /// <remarks>
+    /// When <c>false</c>, the saved preferences are neither read nor written, and any entry left
+    /// behind by an earlier run is removed on initialization — so the <c>Default*</c> values here
+    /// (or the system preference, see <see cref="DetectSystemPreference"/>) always win.
+    /// </remarks>
     public bool PersistToLocalStorage { get; set; } = true;
 }
