@@ -621,6 +621,69 @@
         <CodeBlock Source="Components/Dialog/non-dismissible.txt" />
     </div>
 
+    <!-- Initial Focus -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold">Initial Focus <span class="text-xs font-normal text-primary bg-primary/10 px-1.5 py-0.5 rounded">New</span></h2>
+        <p class="text-sm text-muted-foreground">
+            By default the focus trap focuses the first tabbable element inside the dialog. When that
+            element does something on focus &mdash; opening a dropdown, running a search &mdash; the side
+            effect fires as soon as the dialog opens. Set
+            <code class="bg-muted px-1 py-0.5 rounded">InitialFocus="FocusTrapInitialFocus.Container"</code>
+            to focus the dialog itself instead, or put
+            <code class="bg-muted px-1 py-0.5 rounded">data-autofocus</code> on the element you want.
+            An element carrying <code class="bg-muted px-1 py-0.5 rounded">data-autofocus</code> wins over
+            <code class="bg-muted px-1 py-0.5 rounded">InitialFocus</code>.
+        </p>
+
+        <div class="flex flex-wrap gap-2">
+            <BbDialog>
+                <BbDialogTrigger>
+                    <BbButton Variant="ButtonVariant.Outline">Default (first field)</BbButton>
+                </BbDialogTrigger>
+                <BbDialogContent>
+                    <BbDialogHeader>
+                        <BbDialogTitle>Default</BbDialogTitle>
+                        <BbDialogDescription>The search field below has focus already.</BbDialogDescription>
+                    </BbDialogHeader>
+                    <BbInput @bind-Value="initialFocusQuery" Placeholder="Type to search..." />
+                </BbDialogContent>
+            </BbDialog>
+
+            <BbDialog>
+                <BbDialogTrigger>
+                    <BbButton Variant="ButtonVariant.Outline">Focus the container</BbButton>
+                </BbDialogTrigger>
+                <BbDialogContent InitialFocus="FocusTrapInitialFocus.Container">
+                    <BbDialogHeader>
+                        <BbDialogTitle>Container</BbDialogTitle>
+                        <BbDialogDescription>Nothing inside has focus. Tab moves to the field.</BbDialogDescription>
+                    </BbDialogHeader>
+                    <BbInput @bind-Value="initialFocusQuery" Placeholder="Type to search..." />
+                </BbDialogContent>
+            </BbDialog>
+
+            <BbDialog>
+                <BbDialogTrigger>
+                    <BbButton Variant="ButtonVariant.Outline">data-autofocus</BbButton>
+                </BbDialogTrigger>
+                <BbDialogContent>
+                    <BbDialogHeader>
+                        <BbDialogTitle>Named target</BbDialogTitle>
+                        <BbDialogDescription>The Confirm button has focus, not the field above it.</BbDialogDescription>
+                    </BbDialogHeader>
+                    <BbInput @bind-Value="initialFocusNote" Placeholder="Optional note" />
+                    <BbDialogFooter Class="mt-4">
+                        <BbDialogClose>
+                            <BbButton data-autofocus>Confirm</BbButton>
+                        </BbDialogClose>
+                    </BbDialogFooter>
+                </BbDialogContent>
+            </BbDialog>
+        </div>
+
+        <CodeBlock Source="Components/Dialog/initial-focus.txt" />
+    </div>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>Focus is automatically trapped within the dialog</AccessibilityItem>
@@ -696,6 +759,12 @@
                 </ApiParameter>
                 <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
                     Additional HTML attributes applied to the component's root element (e.g. <code>data-testid</code>, <code>aria-label</code>).
+                </ApiParameter>
+                <ApiParameter Name="InitialFocus" Type="FocusTrapInitialFocus" Default="FocusTrapInitialFocus.FirstFocusable">
+                    What the focus trap focuses on open. <code>FirstFocusable</code> focuses the first tabbable descendant, <code>Container</code> focuses the dialog itself, <code>None</code> moves nothing. An element carrying <code>data-autofocus</code> wins over this.
+                </ApiParameter>
+                <ApiParameter Name="InitialFocusElement" Type="ElementReference?">
+                    An explicit element to focus on open, beating both <code>InitialFocus</code> and <code>data-autofocus</code>. Ignored when it is not inside the dialog.
                 </ApiParameter>
             </ApiReference>
 
@@ -864,6 +933,9 @@
 </div>
 
 @code {
+    private string initialFocusQuery = string.Empty;
+    private string initialFocusNote = string.Empty;
+
     private bool isDialogOpen = false;
     private DateTime? dialogDatePickerValue;
     private string? selectedComboboxFramework;
