@@ -56,6 +56,26 @@
     public bool TrapFocus { get; set; } = true;
 
     /// <summary>
+    /// What to focus when the focus trap is established. Defaults to the first tabbable
+    /// descendant.
+    /// </summary>
+    /// <remarks>
+    /// Set this to <see cref="FocusTrapInitialFocus.Container"/> when the first tabbable child
+    /// has a side effect on focus, or use <see cref="InitialFocusElement"/> to name a target.
+    /// An element carrying <c>data-autofocus</c> wins over this setting.
+    /// </remarks>
+    [Parameter]
+    public FocusTrapInitialFocus InitialFocus { get; set; } = FocusTrapInitialFocus.FirstFocusable;
+
+    /// <summary>
+    /// An explicit element to focus when the focus trap is established, beating both
+    /// <see cref="InitialFocus"/> and any <c>data-autofocus</c> element. Ignored when it is not
+    /// inside the sheet.
+    /// </summary>
+    [Parameter]
+    public ElementReference? InitialFocusElement { get; set; }
+
+    /// <summary>
     /// Whether to lock body scroll when sheet is open.
     /// Default is true for modal sheets.
     /// </summary>
@@ -102,7 +122,7 @@
             {
                 try
                 {
-                    _focusTrap = await FocusManager.TrapFocus(_contentRef);
+                    _focusTrap = await FocusManager.TrapFocus(_contentRef, InitialFocus, InitialFocusElement);
                 }
                 catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
                 {

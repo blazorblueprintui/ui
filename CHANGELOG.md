@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-09-04
+
+### Added
+
+- **Dialogs, sheets and drawers can choose what gets focus when they open** — [#504](https://github.com/blazorblueprintui/ui/issues/504), reported externally against 3.15.0 and confirmed by decompiling the shipped package. The focus trap ended with an unconditional `focusableElements[0].focus()` and took no argument, so any dialog whose first tabbable descendant does something *on focus* — opening a dropdown, running a search — fired that side effect the moment the dialog opened. The only workaround available to a consumer was injecting a dummy `tabindex="0"` element, which adds a phantom tab stop.
+
+  `InitialFocus` on `BbDialogContent`, `BbSheetContent` and `BbDrawerContent` takes `FocusTrapInitialFocus.FirstFocusable` (the default, unchanged), `Container` to focus the panel itself as Radix does, or `None` to move nothing. `InitialFocusElement` names an element outright. The resolution order is explicit element, then `[data-autofocus]`, then the mode, then the first tabbable descendant.
+
+  `[data-autofocus]` was chosen rather than a new convention because the library **already** honours it — `portal.js` focuses it on a `blazorblueprint:visible` event, and `BbDropdownMenuContent` relies on that. The two mechanisms could previously both fire inside a dialog and race, with the winner decided by event ordering; they now agree on the same target.
+
+  `IFocusManager.TrapFocus` gained an overload rather than extra parameters, with a default interface implementation delegating to the original. Widening the existing signature would have broken anyone implementing the interface, which is not something a bug fix should cost. A custom `IFocusManager` keeps working unchanged, and opts into the new behaviour by overriding the overload.
+
+### Fixed
+
+- **`BbHoverCardTrigger` opened on any focus, including focus moved programmatically** — the other half of [#504](https://github.com/blazorblueprintui/ui/issues/504). Opening on focus is correct and required — WCAG 1.4.13 means a hover card must be keyboard reachable — but the handler could not tell a deliberate Tab from a focus trap or an explicit `.focus()`, so an unrelated dialog opening nearby popped the card open with no user intent behind it. Both the `AsChild` and `AsChild="false"` paths behaved this way.
+
+  **The obvious fix does not work, and the measurement is the useful part of this entry.** Gating on `:focus-visible` was implemented and tested in the running demo: Chrome reports it as **true** for a programmatic `.focus()` on the trigger's `div[tabindex="0"]`, including directly after a real mouse click. The card still opened. `BbTableRow.razor:58` had already recorded the same limitation from the other direction.
+
+  What ships instead keys off `Tab`: `element-utils.js` records the last `Tab` keydown at the document in the capture phase, and the trigger opens on focus only when a Tab landed within 500 ms — or when the focused element is a text field, where the intent is unambiguous. Tab is how a keyboard user reaches a trigger, and nothing moves focus programmatically *in response to* Tab, so it separates the two cases the selector cannot. Verified both ways in a real browser: a programmatic `.focus()` no longer opens the card, and a genuine Tab still does.
+
+  The check returns true whenever it cannot run — during prerendering, or with the JS module unavailable — because a keyboard user silently losing the card is a worse outcome than the bug being fixed.
+
+  `OpenDelay` still does **not** apply to the focus path, deliberately, and the report asking for it is the one place this diverges. The delay exists because a pointer sweeps across elements incidentally; Tab does not, so landing on a trigger is already deliberate. `OpenDelay` defaults to 700 ms, and making a keyboard user wait that long for what a mouse user gets by holding still is a straight accessibility regression.
+
+---
+
 ## 2026-08-29
 
 ### Added
