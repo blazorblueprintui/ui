@@ -92,5 +92,10 @@ public partial class BbCollapsibleTrigger : ComponentBase
     /// <value>
     /// A string containing all CSS classes to be applied to the button element.
     /// </value>
-    private string CssClass => ClassNames.cn("group", Class);
+    private string CssClass => ClassNames.cn(
+        "group",
+        // #459: without this the browser paints its own outline, which reads as a different
+        // focus style from the themed ring used everywhere else on the same page.
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        Class);
 }
