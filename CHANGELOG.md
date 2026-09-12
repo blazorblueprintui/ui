@@ -22,6 +22,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-09-09
+
+### Fixed
+
+- **`BbAlertDialogTrigger` showed the browser's own focus outline instead of the theme's ring** — the last of [#459](https://github.com/blazorblueprintui/ui/issues/459)'s "Overlay triggers" group; [#508](https://github.com/blazorblueprintui/ui/pull/508) fixed `BbCollapsibleTrigger`, `BbAccordionTrigger`, `BbDialogTrigger`, `BbSheetTrigger` and `BbPopoverTrigger` in the same group but missed this one. Same defect as the rest: no focus style at all, neither `outline-none` nor a replacement, so the ring on the input above a confirm dialog's trigger button changed style as you tabbed past it.
+
+  Now carries `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`, the same standalone-control treatment and the same placement #508 used: the **Components** layer passes it as `class` into the primitive it wraps, which applies it to the `<button>` the primitive renders when `AsChild` is false. An `AsChild` trigger is unaffected, since the child supplies its own focus styling in that mode.
+
+  Added a source-text regression test (`AlertDialogTriggerFocusRingTests`) alongside the existing `FocusIndicatorTests` convention guard — that guard only fires once a component removes the outline, so it does not catch a component that never sets any focus style, which was the actual defect here and throughout #459.
+
+  **#459 stays open.** This closes the "Overlay triggers" group entirely; the mechanical remainder, the components needing a visual judgement call, and the two blocked on [#507](https://github.com/blazorblueprintui/ui/issues/507) are unchanged.
+
+---
+
 ## 2026-09-04
 
 ### Added
