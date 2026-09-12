@@ -178,6 +178,25 @@
     </div>
 
     <!-- Accessibility Notes -->
+    <!-- Paste -->
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold">Paste files <span class="text-xs font-normal text-primary bg-primary/10 px-1.5 py-0.5 rounded">New</span></h2>
+        <p class="text-sm text-muted-foreground">
+            Copy a file in your file manager, click or Tab into the upload below, then press
+            <BbKbd>Ctrl</BbKbd> + <BbKbd>V</BbKbd> (<BbKbd>Cmd</BbKbd> + <BbKbd>V</BbKbd> on macOS). A screenshot
+            copied to the clipboard works too. Pasted text is ignored.
+        </p>
+        <p class="text-sm text-muted-foreground">
+            A paste is only acted on while focus is inside the upload, so it cannot take a paste meant for
+            something else on the page. Set
+            <code class="bg-muted px-1 py-0.5 rounded">AllowPaste="false"</code> to turn it off.
+        </p>
+
+        <BbFileUpload Multiple="true" @bind-Files="pasteFiles" />
+
+        <CodeBlock Source="Components/FileUpload/paste.txt" />
+    </div>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>
@@ -248,6 +267,9 @@
                 <ApiParameter Name="ClearFiles()" Type="Task">
                     Clears all files and validation errors, resetting the component.
                 </ApiParameter>
+                <ApiParameter Name="AllowPaste" Type="bool" Default="true">
+                    Whether files can be pasted into the upload. Only acted on while focus is inside this upload, so a paste meant for something else on the page is left alone. Pasted text is ignored — only files are read.
+                </ApiParameter>
             </ApiReference>
 
             <ApiReference ComponentName="FileUploadItem">
@@ -287,6 +309,8 @@
 </div>
 
 @code {
+    private IReadOnlyList<FileUploadItem>? pasteFiles;
+
     private IReadOnlyList<FileUploadItem>? _basicFiles;
     private IReadOnlyList<FileUploadItem>? _multipleFiles;
     private IReadOnlyList<FileUploadItem>? _imageFiles;

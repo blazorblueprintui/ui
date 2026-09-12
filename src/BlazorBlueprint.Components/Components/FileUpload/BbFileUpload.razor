@@ -125,6 +125,7 @@
 
 @code {
     private InputFile? _inputFile;
+    private IJSObjectReference? _pasteCleanup;
     private ElementReference _dropzoneRef;
     private string? _generatedId;
     private bool _isDragging;
@@ -162,6 +163,19 @@
     /// </summary>
     [Parameter]
     public bool Multiple { get; set; }
+
+    /// <summary>
+    /// Whether files can be pasted into the upload, as an alternative to drag-and-drop.
+    /// Default is <c>true</c>.
+    /// </summary>
+    /// <remarks>
+    /// A paste is only acted on while focus is inside this upload, so it cannot take a paste
+    /// meant for something else on the page, and two uploads cannot both claim the same one.
+    /// Pasted text is ignored — only files are read. Set this to <c>false</c> if the page handles
+    /// paste itself and the two would compete.
+    /// </remarks>
+    [Parameter]
+    public bool AllowPaste { get; set; } = true;
 
     /// <summary>
     /// Accepted file types (MIME types or extensions).
@@ -250,6 +264,12 @@
                 _jsCleanup = await _jsModule.InvokeAsync<IJSObjectReference>(
                     "initializeDropZone", _dropzoneRef, _inputFile.Element);
 
+                if (AllowPaste)
+                {
+                    _pasteCleanup = await _jsModule.InvokeAsync<IJSObjectReference>(
+                        "initializePaste", _dropzoneRef, _inputFile.Element);
+                }
+
                 _jsInitialized = true;
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
@@ -265,6 +285,16 @@
 
     public async ValueTask DisposeAsync()
     {
+        if (_pasteCleanup != null)
+        {
+            try
+            {
+                await _pasteCleanup.InvokeVoidAsync("dispose");
+                await _pasteCleanup.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException) { }
+        }
+
         if (_jsCleanup != null)
         {
             try
