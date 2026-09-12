@@ -46,13 +46,18 @@ else
     /// <remarks>
     /// Because no element and no handlers are rendered in this mode, a child that ignores the
     /// context leaves nothing listening for hover or focus and the tooltip can never open. Plain
-    /// markup, text, or a bare icon such as <c>LucideIcon</c> therefore needs
-    /// <c>AsChild="false"</c>, which wraps the content in a <c>span</c> carrying the handlers.
-    /// An unconsumed context is reported as a warning through <c>ILogger</c> when the app runs in
-    /// the Development environment, so this no longer fails silently.
+    /// markup, text, or a bare icon such as <c>LucideIcon</c> needs the default, which wraps the
+    /// content in a <c>span</c> carrying the handlers. An unconsumed context is reported as a
+    /// warning through <c>ILogger</c> in the Development environment.
+    /// <para>
+    /// <b>Changed in v4:</b> this defaulted to <c>true</c> in v3, which meant the most natural
+    /// usage — a bare icon or plain markup — silently did nothing, and the working usage required
+    /// knowing about an opt-out. Set <c>AsChild="true"</c> explicitly when the child consumes the
+    /// context, such as a <c>BbButton</c>.
+    /// </para>
     /// </remarks>
     [Parameter]
-    public bool AsChild { get; set; } = true;
+    public bool AsChild { get; set; }
 
     /// <summary>
     /// Whether the trigger should be keyboard focusable.

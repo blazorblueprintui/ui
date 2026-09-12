@@ -49,7 +49,7 @@
                         Button receives hover/focus behavior via TriggerContext.
                     </p>
                     <BbTooltip>
-                        <BbTooltipTrigger>
+                        <BbTooltipTrigger AsChild="true">
                             <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Icon">
                                 <LucideIcon Name="info" Size="16" />
                             </BbButton>
@@ -387,6 +387,47 @@
         </div>
 
         <!-- Accessibility -->
+        <!-- AsChild default -->
+        <div class="space-y-4">
+            <h2 class="text-2xl font-semibold"><code class="text-lg">AsChild</code> default <span class="text-xs font-normal text-primary bg-primary/10 px-1.5 py-0.5 rounded">Changed in v4</span></h2>
+            <p class="text-sm text-muted-foreground">
+                <code class="bg-muted px-1 py-0.5 rounded">AsChild</code> now defaults to
+                <code class="bg-muted px-1 py-0.5 rounded">false</code>. The trigger wraps its content in a
+                <code class="bg-muted px-1 py-0.5 rounded">span</code> carrying the hover and focus handlers, so a bare
+                icon or plain text works without any opt-in. In v3 the default was
+                <code class="bg-muted px-1 py-0.5 rounded">true</code>, which rendered no element and no handlers — so
+                that same markup silently did nothing unless the child consumed the trigger context itself.
+            </p>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">AsChild="true"</code> when the child <em>is</em> such a
+                component, such as a <code class="bg-muted px-1 py-0.5 rounded">BbButton</code>. The wrapper span uses
+                <code class="bg-muted px-1 py-0.5 rounded">display: contents</code>, so it generates no layout box either way.
+            </p>
+
+            <div class="flex flex-wrap gap-6 items-center">
+                <BbTooltip>
+                    <BbTooltipTrigger>
+                        <LucideIcon Name="house" Size="18" />
+                    </BbTooltipTrigger>
+                    <BbTooltipContent>Bare icon, default AsChild</BbTooltipContent>
+                </BbTooltip>
+
+                <BbTooltip>
+                    <BbTooltipTrigger>Plain text trigger</BbTooltipTrigger>
+                    <BbTooltipContent>Plain text, default AsChild</BbTooltipContent>
+                </BbTooltip>
+
+                <BbTooltip>
+                    <BbTooltipTrigger AsChild="true">
+                        <BbButton Variant="ButtonVariant.Outline">Hover me</BbButton>
+                    </BbTooltipTrigger>
+                    <BbTooltipContent>BbButton, AsChild="true"</BbTooltipContent>
+                </BbTooltip>
+            </div>
+
+            <CodeBlock Source="Components/Tooltip/as-child-default.txt" />
+        </div>
+
         <AccessibilityList>
             <AriaAttributes>
                 <AccessibilityItem>
