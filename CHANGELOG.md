@@ -8,6 +8,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## 2026-09-12
 
+### Changed
+
+- **BREAKING — `BbDrawerTrigger` and `BbDrawerClose` now render a real `<button>`** — [#507](https://github.com/blazorblueprintui/ui/issues/507), found while working [#459](https://github.com/blazorblueprintui/ui/issues/459). Both were a bare `<div @onclick>` with no `tabindex`, no `role` and no keyboard handler. They worked when the child happened to be focusable — which is what the demos did, wrapping a `BbButton`, so the common path was fine and this went unreported. Pass anything that is not itself focusable, which the API placed no constraint on, and the trigger was unreachable by keyboard and not exposed as a control at all: a WCAG 2.1.1 failure in a shape the component invited, failing silently and passing any mouse test.
+
+  Drawer was the only one like this. `BbDialogTrigger`, `BbSheetTrigger`, `BbPopoverTrigger` and `BbDialogClose` all render a `<button>` in their default branch and cascade a `TriggerContext` under `AsChild`; `BbDialogClose` even carries its own `@onkeydown`. Drawer simply never followed the pattern it was surrounded by.
+
+  **What breaks.** If you wrap a control — `<BbDrawerTrigger><BbButton>…</BbButton></BbDrawerTrigger>` — you now get a `<button>` inside a `<button>`, which is invalid HTML and which no browser renders reliably. Add `AsChild="true"` to those, exactly as you already would for a dialog or sheet trigger:
+
+  ```razor
+  <BbDrawerTrigger AsChild="true">
+      <BbButton Variant="ButtonVariant.Outline">Open</BbButton>
+  </BbDrawerTrigger>
+  ```
+
+  Plain content needs no change and now works by keyboard for the first time. The demos are updated, and there is a new section on the Drawer page showing both forms side by side.
+
+  The alternative — keeping the `<div>` and adding `tabindex`, `role="button"` and a key handler — was considered and rejected. It breaks nobody, but around an already-focusable child it produces two tab stops and a button nested inside a `role="button"`, which trades one accessibility fault for a quieter one rather than fixing it.
+
+  Both also gain the themed focus ring, which unblocks the last two components on [#459](https://github.com/blazorblueprintui/ui/issues/459) — there was previously nothing focusable to draw a ring on.
+
 ### Fixed
 
 - **`BbCopyText`'s tooltip reappeared and stuck when you came back to the browser tab** — [#506](https://github.com/blazorblueprintui/ui/issues/506), reported by [@garrenf](https://github.com/garrenf) with a video. The last `BbCopyText` you clicked would show its tooltip again on returning to the tab, and nothing dismissed it: hovering the text and leaving again was the only way out.
