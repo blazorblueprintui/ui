@@ -57,8 +57,6 @@ public class FocusIndicatorTests
         ["BbSidebarInset"] = "Layout container for page content, not a control.",
         ["BbDashboardWidget"] = "Widget shell; the focusable controls inside it carry their own.",
         ["BbDataGrid"] = "Grid container; header cells and rows manage their own focus.",
-        ["BbAttachmentTrigger"] = "Known gap, tracked in #459.",
-        ["BbCommandInput"] = "Known gap, tracked in #459.",
     };
 
     [Fact]
