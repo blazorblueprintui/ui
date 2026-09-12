@@ -1,29 +1,8 @@
 @namespace BlazorBlueprint.Components
-@using BlazorBlueprint.Primitives.Utilities
 
-@*
-    Drawer trigger - opens the drawer when activated.
-
-    Renders a real <button> by default so that it is reachable by keyboard and exposed as a
-    control to assistive technology. Before #507 this was a bare <div @onclick>: it worked when
-    the child happened to be focusable, and silently did not when it was not.
-
-    Set AsChild="true" when the child is already a control — a BbButton, say — so that the child
-    becomes the trigger instead of being nested inside a second button, which is invalid HTML.
-    This is the same shape BbDialogTrigger, BbSheetTrigger and BbPopoverTrigger use.
-*@
-@if (AsChild)
-{
-    <CascadingValue Value="TriggerContext" Name="TriggerContext">
-        @ChildContent
-    </CascadingValue>
-}
-else
-{
-    <button type="button" class="@CssClass" @onclick="HandleClick" @attributes="AdditionalAttributes">
-        @ChildContent
-    </button>
-}
+<div @onclick="HandleClick" class="@CssClass" @attributes="AdditionalAttributes">
+    @ChildContent
+</div>
 
 @code {
     [CascadingParameter]
@@ -31,18 +10,6 @@ else
 
     [Parameter]
     public string? Class { get; set; }
-
-    /// <summary>
-    /// When true, does not render its own button. The child becomes the trigger and receives a
-    /// cascading <see cref="TriggerContext"/>, which is what a nested control such as
-    /// <c>BbButton</c> consumes.
-    /// </summary>
-    /// <remarks>
-    /// Use this whenever the child is already a control. Leaving it false around a control nests
-    /// a button inside a button, which no browser renders reliably.
-    /// </remarks>
-    [Parameter]
-    public bool AsChild { get; set; }
 
     /// <summary>
     /// Gets or sets additional HTML attributes to apply to the root element.
@@ -53,18 +20,7 @@ else
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
-    // #459: the browser's own outline otherwise, once this became focusable at all.
-    private string? CssClass => ClassNames.cn(
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        Class);
-
-    private TriggerContext TriggerContext => new()
-    {
-        IsOpen = Context?.IsOpen ?? false,
-        Toggle = () => _ = Context?.SetOpen(true),
-        Open = () => _ = Context?.SetOpen(true),
-        AriaHasPopup = "dialog",
-    };
+    private string? CssClass => ClassNames.cn(Class);
 
     private async Task HandleClick()
     {
