@@ -34,6 +34,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## 2026-09-13
 
+### Added
+
+- **`BbFileUpload` accepts pasted files** — [#485](https://github.com/blazorblueprintui/ui/issues/485), requested by [@HugoVG](https://github.com/HugoVG), whose point was that not everyone wants to drag onto a dropzone. Copy a file in your file manager, or take a screenshot to the clipboard, focus the upload and press Ctrl+V.
+
+  `AllowPaste` is on by default and can be turned off where the page handles paste itself.
+
+  **The listener is on `document`, not on the dropzone**, and that is not laziness. A `paste` event fires at the focused element only when that element is editable; a file input is not, so a listener on the zone would never see one. Scoping is done instead by checking that focus is inside the zone — which means a paste aimed at something else on the page is left alone, and two uploads on one page cannot both claim the same paste. Pasted text is ignored, because `clipboardData.files` is empty for it.
+
+  Files are handed over exactly the way a drop already hands them over: assigned to the hidden `<input type="file">` and followed by a `change` event. So validation, the size and count limits, `OnValidationError` and the rest all run through the single existing path rather than a second copy that could drift from it. A paste into a single-file upload takes the first file only, matching what the input would accept.
+
+  Verified in the running demo both ways: with focus inside the upload a pasted file reaches the input **and** appears in the rendered file list, which is what proves the whole pipeline ran; with focus elsewhere on the page the same paste is ignored.
+
 ### Fixed
 
 - **The last components showing the browser's own focus outline** — final tranche of [#459](https://github.com/blazorblueprintui/ui/issues/459) on `develop`. `BbCarouselNext`, `BbCarouselPrevious`, `BbRating`, `BbMarker`, `BbSidebarRail` and `BbFileUpload`.
