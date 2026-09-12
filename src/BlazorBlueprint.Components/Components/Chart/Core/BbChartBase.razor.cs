@@ -13,6 +13,7 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
     };
 
     private IJSObjectReference? jsModule;
+    private DotNetObjectReference<BbChartBase>? dotNetRef;
     private bool jsInitialized;
     private bool disposed;
     private readonly string chartId = Guid.NewGuid().ToString("N");
@@ -28,6 +29,28 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
 
     [Parameter]
     public ChartConfig? Config { get; set; }
+
+    /// <summary>
+    /// Invoked when a data point is clicked, with the series, index and value of the point.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="ChartClickEventArgs.DataIndex"/> maps straight back to the position in the
+    /// collection you bound, which is what makes a drill-down straightforward.
+    /// No interop is set up at all unless this or <see cref="OnChartClick"/> has a handler.
+    /// </remarks>
+    [Parameter]
+    public EventCallback<ChartClickEventArgs> OnDataPointClick { get; set; }
+
+    /// <summary>
+    /// Invoked when the chart is clicked away from any data point — useful for clearing a
+    /// selection made through <see cref="OnDataPointClick"/>.
+    /// </summary>
+    /// <remarks>
+    /// A click on a data point raises <see cref="OnDataPointClick"/> only; the two never both fire
+    /// for one click.
+    /// </remarks>
+    [Parameter]
+    public EventCallback OnChartClick { get; set; }
 
     [Parameter]
     public string Height { get; set; } = "350px";
@@ -203,7 +226,14 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
             using var document = JsonDocument.Parse(json);
             var serialized = document.RootElement.Clone();
 
-            await jsModule.InvokeVoidAsync("initialize", chartId, serialized);
+            // Only hand JS a reference when something is listening, so a chart with no handlers
+            // costs nothing extra and needs no disposal.
+            if (OnDataPointClick.HasDelegate || OnChartClick.HasDelegate)
+            {
+                dotNetRef ??= DotNetObjectReference.Create(this);
+            }
+
+            await jsModule.InvokeVoidAsync("initialize", chartId, serialized, dotNetRef);
             jsInitialized = true;
         }
         catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
@@ -254,6 +284,30 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
 
     private string ContainerStyle => $"height: {Height}; width: {Width};";
 
+    /// <summary>Called from JS when a data point is clicked. Not part of the public API.</summary>
+    [JSInvokable]
+    public async Task HandleDataPointClick(ChartClickEventArgs args)
+    {
+        if (disposed || !OnDataPointClick.HasDelegate)
+        {
+            return;
+        }
+
+        await OnDataPointClick.InvokeAsync(args);
+    }
+
+    /// <summary>Called from JS when the chart is clicked away from a data point. Not part of the public API.</summary>
+    [JSInvokable]
+    public async Task HandleChartClick()
+    {
+        if (disposed || !OnChartClick.HasDelegate)
+        {
+            return;
+        }
+
+        await OnChartClick.InvokeAsync();
+    }
+
     public async ValueTask DisposeAsync()
     {
         disposed = true;
@@ -274,6 +328,9 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
                 // JS interop not available
             }
         }
+
+        dotNetRef?.Dispose();
+        dotNetRef = null;
 
         GC.SuppressFinalize(this);
     }
