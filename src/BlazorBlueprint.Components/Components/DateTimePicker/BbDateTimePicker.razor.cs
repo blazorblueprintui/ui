@@ -355,6 +355,8 @@ public partial class BbDateTimePicker : ComponentBase
     /// </summary>
     private string ButtonCssClass => ClassNames.cn(
         "w-[280px] justify-start text-left font-normal",
+        // #459: the browser's own outline otherwise, next to the themed ring on the field above.
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         !Value.HasValue ? "text-muted-foreground" : null,
         Disabled ? "opacity-50 pointer-events-none" : null,
         Class
@@ -362,6 +364,8 @@ public partial class BbDateTimePicker : ComponentBase
 
     private static string ScrollButtonClass => ClassNames.cn(
         "w-12 h-8 flex items-center justify-center",
+        // #459: no offset — these stack directly on each other in the time column.
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         "hover:bg-accent hover:text-accent-foreground",
         "transition-colors",
         "disabled:opacity-50 disabled:cursor-not-allowed"

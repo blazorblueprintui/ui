@@ -13,6 +13,39 @@ Blazor Blueprint uses CSS custom properties (variables) for theming, following t
 <link href="_content/BlazorBlueprint.Components/blazorblueprint.css" rel="stylesheet" />
 ```
 
+## Avoiding the theme flash on first load
+
+The saved theme lives in `localStorage`, so a prerendered or statically rendered page has no way
+to know it — the server renders the default, and the saved theme is applied once Blazor has
+started. A user who chose dark mode sees a flash of light first, on every load.
+
+Add this to `<head>`, after your stylesheets:
+
+```html
+<script src="_content/BlazorBlueprint.Components/js/theme-init.js"></script>
+```
+
+It reads the saved theme and applies it to `<html>` before the first paint.
+
+**It must stay a classic, blocking script.** `type="module"` is deferred until after the document
+is parsed, which is after the paint it exists to prevent. It is a separate file rather than inline
+so a strict Content-Security-Policy needs no `'unsafe-inline'`.
+
+### Options
+
+Configure it with data attributes on the same tag:
+
+| Attribute | Effect |
+|---|---|
+| `data-default-dark="true"` | Use dark when nothing is saved, instead of the OS preference |
+| `data-default-dark="false"` | Use light when nothing is saved |
+| `data-storage="false"` | Ignore `localStorage` entirely |
+
+With nothing set it falls back to `prefers-color-scheme`, which matches what the theme service does.
+
+Pair `data-storage="false"` with `PersistToLocalStorage = false`. Without it, a theme saved before
+you turned persistence off would still be applied on load.
+
 ## Color Format
 
 Blazor Blueprint uses the [OKLCH color space](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value/oklch) for perceptually uniform colors:

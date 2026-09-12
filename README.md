@@ -114,6 +114,10 @@ builder.Services.AddBlazorBlueprintComponents();
 <link rel="stylesheet" href="styles/theme.css" />
 <!-- Blazor Blueprint styles -->
 <link rel="stylesheet" href="_content/BlazorBlueprint.Components/blazorblueprint.css" />
+
+<!-- Applies the saved theme before the first paint, so a dark-mode user never sees
+     a flash of light. Must be a classic blocking script in <head>. See THEMING.md. -->
+<script src="_content/BlazorBlueprint.Components/js/theme-init.js"></script>
 ```
 
 **4. Add BbPortalHost** to your root layout (required for overlays like Dialog, Sheet, Popover):
