@@ -97,6 +97,9 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
 
     private string? TextCssClass => ClassNames.cn(
         "relative inline-flex gap-1 items-center cursor-pointer text-primary font-semibold",
+        // #459: rounded-sm keeps the ring on the text rather than boxing the whole line, since
+        // this is inline and usually sits mid-sentence.
+        "rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         Class);
 
     // Positioning, offset and z-index now come from the floating portal, so only the visual
