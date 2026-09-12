@@ -10,6 +10,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **`BbCopyText`'s tooltip reappeared and stuck when you came back to the browser tab** — [#506](https://github.com/blazorblueprintui/ui/issues/506), reported by [@garrenf](https://github.com/garrenf) with a video. The last `BbCopyText` you clicked would show its tooltip again on returning to the tab, and nothing dismissed it: hovering the text and leaving again was the only way out.
+
+  Returning to a background tab makes the browser restore focus to whatever held it. That fires `focus` on the `<span role="button" tabindex="0">`, which called `ShowTooltip()`. No `mouseleave` ever followed, because the pointer had never been there — so it stayed up.
+
+  This is the same defect as [#504](https://github.com/blazorblueprintui/ui/issues/504) in a second place, and it is fixed with the same helper: the tooltip opens on focus only when a `Tab` keydown landed just before it. Deliberately not `:focus-visible` — Chrome reports that as true for a programmatic focus move, which is measured in the #504 entry.
+
+  Reported as appearing "with the new update", and that reads correctly. The focus path was always wrong, but until 3.16.0 the tooltip was a transparent copy sitting in the layout; moving it through `BbFloatingPortal` means it is now mounted only when open, so the same mistaken open became a visible tooltip rather than an invisible one.
+
+  Verified three ways in the running demo: hover still opens it, a real Tab still opens it, and a programmatic `.focus()` no longer does.
+
 - **Five more components showed the browser's own focus outline, and the focus-indicator allowlist is now empty** — second tranche of [#459](https://github.com/blazorblueprintui/ui/issues/459), after [#508](https://github.com/blazorblueprintui/ui/pull/508). `BbBreadcrumbLink`, `BbAttachmentTrigger`, `BbCommandInput`, `BbCopyText` and `BbResponsiveNavItems`.
 
   Two of these were the more serious variety. `BbAttachmentTrigger` and `BbCommandInput` set `outline-none` and drew nothing in its place, so focus was **invisible** rather than merely off-theme — a WCAG 2.4.7 failure. Both were carried as named exemptions in `FocusIndicatorTests`; those entries are now deleted, and the allowlist holds nothing but genuine container exemptions.
