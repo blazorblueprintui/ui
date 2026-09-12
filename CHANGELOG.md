@@ -34,6 +34,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## 2026-09-13
 
+### Fixed
+
+- **Four more components showed the browser's own focus outline** — third tranche of [#459](https://github.com/blazorblueprintui/ui/issues/459). `BbDateTimePicker`, `BbFormWizard`, `BbThemeSwitcher` and `BbColorPicker`.
+
+  The ring is split by how much room the control has, not applied uniformly. `BbDateTimePicker`'s field trigger is a standalone control and takes the offset ring; its hour and minute scroll buttons stack directly on each other, so they take the ring without an offset — otherwise each ring overlaps its neighbour. The same reasoning covers `BbThemeSwitcher`'s three option buttons inside a tight panel grid, and `BbColorPicker`'s 24px preset swatches in a wrapped `gap-1` flex, where an offset ring would sit on top of the next swatch. `BbFormWizard`'s step buttons have real gaps between them and take the offset ring with `rounded-md`, so it follows the marker rather than boxing the label.
+
+  Verified in the running demo: on a real Tab onto the date-time trigger the computed `box-shadow` is the themed ring and `outline-style` is `none`.
+
+  **[#459](https://github.com/blazorblueprintui/ui/issues/459) stays open**, at 15 of 27. Two findings from this pass are worth recording rather than quietly skipping:
+
+  - `BbTablePagination` exists **only** in `BlazorBlueprint.Primitives` and describes itself as a headless structure. Primitives set no classes by design, so a ring there would contradict the layer split rather than fix anything. It needs either a styled Components wrapper or a decision that consumers style it themselves.
+  - `BbInputGroupAddon` is a `<div @onclick>` with no `tabindex`, so there is nothing to draw a ring on — the same shape as [#507](https://github.com/blazorblueprintui/ui/issues/507). Whether it should be focusable at all is a separate question from this issue; the controls placed inside it carry their own indicators today.
+
 ### Added
 
 - **A way to apply the saved theme before the first paint** — [#477](https://github.com/blazorblueprintui/ui/issues/477), reported by [@andrewbabbittdev](https://github.com/andrewbabbittdev). The theme lives in `localStorage`, so a prerendered or statically rendered page cannot know it: the server renders the default and the saved theme is applied once Blazor has started. A user who chose dark mode got a flash of light first, on every load. There was no built-in answer, and there is no C#-only one — the preference is not available to the server at render time.

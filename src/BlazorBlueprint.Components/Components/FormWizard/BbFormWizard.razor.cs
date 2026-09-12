@@ -642,6 +642,8 @@ public partial class BbFormWizard : ComponentBase
 
     private string GetStepButtonClass(int index) => ClassNames.cn(
         "flex group cursor-default",
+        // #459: rounded so the ring follows the step marker rather than boxing the label too.
+        "rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         Layout == WizardLayout.Vertical
             ? "flex-row items-center gap-2"
             : "flex-col items-center shrink-0 gap-2",
