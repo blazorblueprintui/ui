@@ -32,6 +32,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-09-13
+
+### Added
+
+- **A way to apply the saved theme before the first paint** — [#477](https://github.com/blazorblueprintui/ui/issues/477), reported by [@andrewbabbittdev](https://github.com/andrewbabbittdev). The theme lives in `localStorage`, so a prerendered or statically rendered page cannot know it: the server renders the default and the saved theme is applied once Blazor has started. A user who chose dark mode got a flash of light first, on every load. There was no built-in answer, and there is no C#-only one — the preference is not available to the server at render time.
+
+  `js/theme-init.js` reads the saved theme and writes it to `<html>` before anything paints. Add it to `<head>`, after your stylesheets:
+
+  ```html
+  <script src="_content/BlazorBlueprint.Components/js/theme-init.js"></script>
+  ```
+
+  **It has to be a classic, blocking script.** `type="module"` is deferred until after the document is parsed — which is after the paint it exists to prevent — so shipping this as part of the existing theme module was never an option. It is a separate file rather than inline so that a strict Content-Security-Policy needs no `'unsafe-inline'`.
+
+  `data-default-dark="true"` or `"false"` sets what to use when nothing is saved; the fallback otherwise is `prefers-color-scheme`, matching the theme service. `data-storage="false"` skips `localStorage` entirely, and should be paired with `PersistToLocalStorage = false` — without it a theme saved before persistence was turned off would still be applied on load, which is the same trap [#481](https://github.com/blazorblueprintui/ui/issues/481) fixed on the C# side.
+
+  It deliberately duplicates the handful of DOM writes in `theme.js` rather than importing them, because importing reintroduces the defer. The cost is that the attribute names now live in two files; a comment in each says so.
+
+  Added to all three demo hosts, `README.md` and `THEMING.md`. Verified in the running app: with a dark theme saved, `<html>` carries `dark`, `data-base-color`, `data-primary-color` and `--radius` on arrival, and the script sits in `<head>` ahead of both `<body>` and `blazor.web.js` in the served document.
+
+---
+
 ## 2026-09-09
 
 ### Fixed
