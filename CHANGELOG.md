@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-09-12
+
+### Fixed
+
+- **Five more components showed the browser's own focus outline, and the focus-indicator allowlist is now empty** — second tranche of [#459](https://github.com/blazorblueprintui/ui/issues/459), after [#508](https://github.com/blazorblueprintui/ui/pull/508). `BbBreadcrumbLink`, `BbAttachmentTrigger`, `BbCommandInput`, `BbCopyText` and `BbResponsiveNavItems`.
+
+  Two of these were the more serious variety. `BbAttachmentTrigger` and `BbCommandInput` set `outline-none` and drew nothing in its place, so focus was **invisible** rather than merely off-theme — a WCAG 2.4.7 failure. Both were carried as named exemptions in `FocusIndicatorTests`; those entries are now deleted, and the allowlist holds nothing but genuine container exemptions.
+
+  The ring is not uniform, because the shape of the control decides it. `BbAttachmentTrigger` is an `absolute inset-0` overlay across a whole attachment card, so an offset ring would have sat outside the card it belongs to — it takes `rounded-[inherit]` and no offset. `BbCommandInput` sits flush inside the command panel, where an offset ring clips against the panel border, so it takes no offset either. `BbBreadcrumbLink` and `BbCopyText` are inline and usually mid-sentence, so both take `rounded-sm` to keep the ring on the text rather than boxing the whole line.
+
+  Verified in the running demo rather than by reading classes — a class in the markup proves nothing if Tailwind never emitted the rule. On a real Tab the computed `box-shadow` is the themed ring and `outline-style` is `none`.
+
+  **[#459](https://github.com/blazorblueprintui/ui/issues/459) stays open**, at 10 of 27. Of the rest, eight need a visual judgement the issue already flags — `BbSidebarRail` is a thin drag strip where a 2px ring is most of the control, `BbCarouselNext`/`Previous` sit over slide images so contrast depends on the photo, and `BbMarker`/`BbRating` are small repeated elements where an offset ring collides with neighbours. Two, `BbDrawerTrigger` and `BbDrawerClose`, are blocked on [#507](https://github.com/blazorblueprintui/ui/issues/507): they render a bare `<div>` with `@onclick` and no `tabindex`, so there is nothing focusable to draw a ring on.
+
+---
+
 ## 2026-09-04
 
 ### Added

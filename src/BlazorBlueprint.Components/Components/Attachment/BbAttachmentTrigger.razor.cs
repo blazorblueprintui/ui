@@ -36,6 +36,9 @@ public partial class BbAttachmentTrigger : ComponentBase
 
     private string CssClass => ClassNames.cn(
         "absolute inset-0 z-10 outline-none",
+        // #459: this covers the whole attachment card, so no ring-offset — an offset ring would
+        // sit outside the card it belongs to. rounded-[inherit] follows the card's own radius.
+        "rounded-[inherit] focus-visible:ring-2 focus-visible:ring-ring",
         Class
     );
 }
