@@ -47,6 +47,8 @@ public partial class BbMarker : ComponentBase
         AsChild == MarkerElement.Div && !string.IsNullOrEmpty(Href) ? MarkerElement.Anchor : AsChild;
 
     private string CssClass => ClassNames.cn(
+        // #459: no offset — markers repeat down a list and an offset ring hits the rows either side.
+        "rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         "group/marker relative flex min-h-4 w-full items-center gap-2 text-left text-sm text-muted-foreground [&_svg:not([class*='size-'])]:size-4 [a]:underline [a]:underline-offset-3 [a]:hover:text-foreground",
         Variant switch
         {

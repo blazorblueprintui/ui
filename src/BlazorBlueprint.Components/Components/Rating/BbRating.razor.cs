@@ -104,6 +104,8 @@ public partial class BbRating : ComponentBase
 
     private string CssClass => ClassNames.cn(
         "inline-flex items-center gap-1",
+        // #459: the radiogroup is the tab stop, not each star. No offset at gap-1.
+        "rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         (Disabled || ReadOnly) ? "cursor-default" : "cursor-pointer",
         Disabled ? "opacity-50" : null,
         Class

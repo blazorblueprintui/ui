@@ -36,6 +36,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **The last components showing the browser's own focus outline** — final tranche of [#459](https://github.com/blazorblueprintui/ui/issues/459) on `develop`. `BbCarouselNext`, `BbCarouselPrevious`, `BbRating`, `BbMarker`, `BbSidebarRail` and `BbFileUpload`.
+
+  All six take the ring **without an offset**, each for its own reason. The carousel arrows are 32px circles sitting over slide images, so whatever is 4px outside them is the photograph rather than the page background. `BbRating`'s radiogroup is the tab stop and its stars sit at `gap-1`, so an offset ring reaches past the outer stars. `BbMarker` repeats down a list where an offset ring lands on the rows either side. `BbSidebarRail` is the clearest case: it is 16px wide and its visible part is a 2px `::after` line, so an offset ring would be wider than the control it marks.
+
+  `BbFileUpload` was a different defect. Its focus target is the `<input type="file">` laid over the dropzone at `opacity-0`, so focusing it changed nothing a user could see. The ring now goes on the dropzone via `focus-within`, which is the box they are actually looking at.
+
+- **`BbInputGroupAddon` no longer has a click handler that does nothing** — found while finishing [#459](https://github.com/blazorblueprintui/ui/issues/459). The addon rendered `@onclick="HandleClick"`, and the handler was a stub: a comment reading *"In a real implementation, we'd use ElementReference and JSInterop"* followed by `await Task.CompletedTask`. Its documentation claimed it focused the sibling input like a native label. It never did.
+
+  Removed. The addon is a presentational wrapper for an icon or a suffix such as `@company.com`, which is exactly how the demos use it, and a `<div>` that captures clicks and discards them is worse than one that does not. This is also why it needs no focus ring: it is not, and should not be, a tab stop. If click-to-focus is wanted later, `<label for>` is the right tool and a label is still not a tab stop.
+
+  **[#459](https://github.com/blazorblueprintui/ui/issues/459) is now complete on `develop`.** Of the 27 components it listed, 21 carry a themed ring. The remaining six are deliberate: `BbInputGroupAddon`, `BbDataTableToolbar` and `BbDashboardGrid` are containers whose focusable children carry their own indicators; `BbTablePagination` exists only in `BlazorBlueprint.Primitives`, which is headless by design and must not be themed; and `BbDrawerTrigger` and `BbDrawerClose` gained theirs on the `v4` branch, where [#507](https://github.com/blazorblueprintui/ui/issues/507) made them focusable in the first place.
+
 - **Four more components showed the browser's own focus outline** — third tranche of [#459](https://github.com/blazorblueprintui/ui/issues/459). `BbDateTimePicker`, `BbFormWizard`, `BbThemeSwitcher` and `BbColorPicker`.
 
   The ring is split by how much room the control has, not applied uniformly. `BbDateTimePicker`'s field trigger is a standalone control and takes the offset ring; its hour and minute scroll buttons stack directly on each other, so they take the ring without an offset — otherwise each ring overlaps its neighbour. The same reasoning covers `BbThemeSwitcher`'s three option buttons inside a tight panel grid, and `BbColorPicker`'s 24px preset swatches in a wrapped `gap-1` flex, where an offset ring would sit on top of the next swatch. `BbFormWizard`'s step buttons have real gaps between them and take the offset ring with `rounded-md`, so it follows the marker rather than boxing the label.
