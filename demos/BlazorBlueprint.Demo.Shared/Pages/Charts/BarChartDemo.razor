@@ -296,6 +296,40 @@
         </div>
     </div>
 
+    <!-- Click events -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Click events <span class="text-xs font-normal text-primary bg-primary/10 px-1.5 py-0.5 rounded">New</span></h2>
+            <p class="text-sm text-muted-foreground">
+                <code class="bg-muted px-1 py-0.5 rounded">OnDataPointClick</code> reports the series, index and value
+                of the bar you clicked. <code class="bg-muted px-1 py-0.5 rounded">DataIndex</code> maps straight back
+                to the position in the collection you bound, which is what makes a drill-down straightforward.
+                <code class="bg-muted px-1 py-0.5 rounded">OnChartClick</code> fires when you click away from any bar —
+                useful for clearing a selection. The two never both fire for one click.
+            </p>
+        </div>
+        <div class="border rounded-lg p-6 space-y-4">
+            <BbBarChart Data="@_chartData" Height="260px"
+                        OnDataPointClick="HandlePointClick"
+                        OnChartClick="ClearSelection">
+                <BbXAxis DataKey="date" />
+                <BbYAxis />
+                <BbBar DataKey="desktop" Name="Desktop" Color="var(--chart-2)" />
+            </BbBarChart>
+            <div class="text-sm" data-testid="chart-click-readout">
+                @if (_clickReadout is null)
+                {
+                    <span class="text-muted-foreground">Click a bar…</span>
+                }
+                else
+                {
+                    <span class="font-medium">@_clickReadout</span>
+                }
+            </div>
+        </div>
+        <CodeBlock Source="Charts/BarChart/click-events.txt" />
+    </div>
+
     <!-- API Reference -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -389,6 +423,13 @@
 </div>
 
 @code {
+    private string? _clickReadout;
+
+    private void HandlePointClick(ChartClickEventArgs e) =>
+        _clickReadout = $"{e.SeriesName} · {e.Name} · {e.Value} (index {e.DataIndex})";
+
+    private void ClearSelection() => _clickReadout = null;
+
     public class ChartData
     {
         public string Date { get; set; } = "";

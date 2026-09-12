@@ -6,35 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## 2026-09-12
-
-### Fixed
-
-- **`BbCopyText`'s tooltip reappeared and stuck when you came back to the browser tab** — [#506](https://github.com/blazorblueprintui/ui/issues/506), reported by [@garrenf](https://github.com/garrenf) with a video. The last `BbCopyText` you clicked would show its tooltip again on returning to the tab, and nothing dismissed it: hovering the text and leaving again was the only way out.
-
-  Returning to a background tab makes the browser restore focus to whatever held it. That fires `focus` on the `<span role="button" tabindex="0">`, which called `ShowTooltip()`. No `mouseleave` ever followed, because the pointer had never been there — so it stayed up.
-
-  This is the same defect as [#504](https://github.com/blazorblueprintui/ui/issues/504) in a second place, and it is fixed with the same helper: the tooltip opens on focus only when a `Tab` keydown landed just before it. Deliberately not `:focus-visible` — Chrome reports that as true for a programmatic focus move, which is measured in the #504 entry.
-
-  Reported as appearing "with the new update", and that reads correctly. The focus path was always wrong, but until 3.16.0 the tooltip was a transparent copy sitting in the layout; moving it through `BbFloatingPortal` means it is now mounted only when open, so the same mistaken open became a visible tooltip rather than an invisible one.
-
-  Verified three ways in the running demo: hover still opens it, a real Tab still opens it, and a programmatic `.focus()` no longer does.
-
-- **Five more components showed the browser's own focus outline, and the focus-indicator allowlist is now empty** — second tranche of [#459](https://github.com/blazorblueprintui/ui/issues/459), after [#508](https://github.com/blazorblueprintui/ui/pull/508). `BbBreadcrumbLink`, `BbAttachmentTrigger`, `BbCommandInput`, `BbCopyText` and `BbResponsiveNavItems`.
-
-  Two of these were the more serious variety. `BbAttachmentTrigger` and `BbCommandInput` set `outline-none` and drew nothing in its place, so focus was **invisible** rather than merely off-theme — a WCAG 2.4.7 failure. Both were carried as named exemptions in `FocusIndicatorTests`; those entries are now deleted, and the allowlist holds nothing but genuine container exemptions.
-
-  The ring is not uniform, because the shape of the control decides it. `BbAttachmentTrigger` is an `absolute inset-0` overlay across a whole attachment card, so an offset ring would have sat outside the card it belongs to — it takes `rounded-[inherit]` and no offset. `BbCommandInput` sits flush inside the command panel, where an offset ring clips against the panel border, so it takes no offset either. `BbBreadcrumbLink` and `BbCopyText` are inline and usually mid-sentence, so both take `rounded-sm` to keep the ring on the text rather than boxing the whole line.
-
-  Verified in the running demo rather than by reading classes — a class in the markup proves nothing if Tailwind never emitted the rule. On a real Tab the computed `box-shadow` is the themed ring and `outline-style` is `none`.
-
-  **[#459](https://github.com/blazorblueprintui/ui/issues/459) stays open**, at 10 of 27. Of the rest, eight need a visual judgement the issue already flags — `BbSidebarRail` is a thin drag strip where a 2px ring is most of the control, `BbCarouselNext`/`Previous` sit over slide images so contrast depends on the photo, and `BbMarker`/`BbRating` are small repeated elements where an offset ring collides with neighbours. Two, `BbDrawerTrigger` and `BbDrawerClose`, are blocked on [#507](https://github.com/blazorblueprintui/ui/issues/507): they render a bare `<div>` with `@onclick` and no `tabindex`, so there is nothing focusable to draw a ring on.
-
----
-
 ## 2026-09-13
 
 ### Added
+
+- **Charts report clicks** — [#480](https://github.com/blazorblueprintui/ui/issues/480), requested by [@netclectic](https://github.com/netclectic) for drilling down into the underlying data. Every chart type gains `OnDataPointClick` and `OnChartClick` through `BbChartBase`, so bar, line, area, pie, scatter, candlestick and the rest all get them at once.
+
+  `OnDataPointClick` carries a `ChartClickEventArgs` with `SeriesName`, `SeriesIndex`, `DataIndex`, `Name`, `ComponentType` and the value. **`DataIndex` is the field a drill-down keys on** — it maps straight back to the position in the collection you bound.
+
+  The value is split rather than surfaced raw. ECharts reports it as whatever the series put there: a number for a bar or line, an array for scatter or candlestick, sometimes an object. `Value` carries the scalar case and `Values` the array case, so the two common shapes arrive typed instead of as a `JsonElement` the consumer has to unpick; when neither applies both are null and `Name` with `DataIndex` still identify the point.
+
+  `OnChartClick` fires when the click landed away from any data point, which is what a "clear the selection" handler wants. The two never both fire for one click.
+
+  **Detecting a blank click is the part worth recording.** The obvious approach — asking `chart.containPixel('grid', point)` whether the click was inside the plot — is wrong, and was written and then measured in the browser before being replaced: `containPixel` is true anywhere inside the grid, *including the gaps between bars*, so it suppressed nearly every blank click. What ships checks zrender's `event.target`, which is set only when a click lands on a rendered shape.
+
+  No interop is set up unless one of the two callbacks has a handler, so a chart with neither costs nothing extra and has no `DotNetObjectReference` to dispose.
+
+  Verified in the running demo: clicking a bar reports `Desktop · 2024-04-05 · 373 (index 4)`, and a click on empty space above the bars clears it.
+
+### Fixed
 
 - **`BbFileUpload` accepts pasted files** — [#485](https://github.com/blazorblueprintui/ui/issues/485), requested by [@HugoVG](https://github.com/HugoVG), whose point was that not everyone wants to drag onto a dropzone. Copy a file in your file manager, or take a screenshot to the clipboard, focus the upload and press Ctrl+V.
 
@@ -88,6 +78,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   It deliberately duplicates the handful of DOM writes in `theme.js` rather than importing them, because importing reintroduces the defer. The cost is that the attribute names now live in two files; a comment in each says so.
 
   Added to all three demo hosts, `README.md` and `THEMING.md`. Verified in the running app: with a dark theme saved, `<html>` carries `dark`, `data-base-color`, `data-primary-color` and `--radius` on arrival, and the script sits in `<head>` ahead of both `<body>` and `blazor.web.js` in the served document.
+
+---
+
+## 2026-09-12
+
+### Fixed
+
+- **`BbCopyText`'s tooltip reappeared and stuck when you came back to the browser tab** — [#506](https://github.com/blazorblueprintui/ui/issues/506), reported by [@garrenf](https://github.com/garrenf) with a video. The last `BbCopyText` you clicked would show its tooltip again on returning to the tab, and nothing dismissed it: hovering the text and leaving again was the only way out.
+
+  Returning to a background tab makes the browser restore focus to whatever held it. That fires `focus` on the `<span role="button" tabindex="0">`, which called `ShowTooltip()`. No `mouseleave` ever followed, because the pointer had never been there — so it stayed up.
+
+  This is the same defect as [#504](https://github.com/blazorblueprintui/ui/issues/504) in a second place, and it is fixed with the same helper: the tooltip opens on focus only when a `Tab` keydown landed just before it. Deliberately not `:focus-visible` — Chrome reports that as true for a programmatic focus move, which is measured in the #504 entry.
+
+  Reported as appearing "with the new update", and that reads correctly. The focus path was always wrong, but until 3.16.0 the tooltip was a transparent copy sitting in the layout; moving it through `BbFloatingPortal` means it is now mounted only when open, so the same mistaken open became a visible tooltip rather than an invisible one.
+
+  Verified three ways in the running demo: hover still opens it, a real Tab still opens it, and a programmatic `.focus()` no longer does.
+
+- **Five more components showed the browser's own focus outline, and the focus-indicator allowlist is now empty** — second tranche of [#459](https://github.com/blazorblueprintui/ui/issues/459), after [#508](https://github.com/blazorblueprintui/ui/pull/508). `BbBreadcrumbLink`, `BbAttachmentTrigger`, `BbCommandInput`, `BbCopyText` and `BbResponsiveNavItems`.
+
+  Two of these were the more serious variety. `BbAttachmentTrigger` and `BbCommandInput` set `outline-none` and drew nothing in its place, so focus was **invisible** rather than merely off-theme — a WCAG 2.4.7 failure. Both were carried as named exemptions in `FocusIndicatorTests`; those entries are now deleted, and the allowlist holds nothing but genuine container exemptions.
+
+  The ring is not uniform, because the shape of the control decides it. `BbAttachmentTrigger` is an `absolute inset-0` overlay across a whole attachment card, so an offset ring would have sat outside the card it belongs to — it takes `rounded-[inherit]` and no offset. `BbCommandInput` sits flush inside the command panel, where an offset ring clips against the panel border, so it takes no offset either. `BbBreadcrumbLink` and `BbCopyText` are inline and usually mid-sentence, so both take `rounded-sm` to keep the ring on the text rather than boxing the whole line.
+
+  Verified in the running demo rather than by reading classes — a class in the markup proves nothing if Tailwind never emitted the rule. On a real Tab the computed `box-shadow` is the themed ring and `outline-style` is `none`.
+
+  **[#459](https://github.com/blazorblueprintui/ui/issues/459) stays open**, at 10 of 27. Of the rest, eight need a visual judgement the issue already flags — `BbSidebarRail` is a thin drag strip where a 2px ring is most of the control, `BbCarouselNext`/`Previous` sit over slide images so contrast depends on the photo, and `BbMarker`/`BbRating` are small repeated elements where an offset ring collides with neighbours. Two, `BbDrawerTrigger` and `BbDrawerClose`, are blocked on [#507](https://github.com/blazorblueprintui/ui/issues/507): they render a bare `<div>` with `@onclick` and no `tabindex`, so there is nothing focusable to draw a ring on.
 
 ---
 
