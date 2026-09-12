@@ -1,28 +1,18 @@
-## What's New in v3.16.0
+## What's New in v3.16.1
 
 ### New Features
-- **BbDataGrid** — new `SelectionBehavior` with `DataGridSelectionBehavior.Replace` for file-explorer selection: plain click selects one row, Shift+Click selects a range from the anchor, Ctrl/Cmd+Click adds or removes one. `Toggle` remains the default.
-- **BbDataGrid** — new `ShowExport`, `ExportFileName`, `ExportDelimiter`, `ExportScope`, `OnExport`, plus `ExportToCsvAsync()` and `BuildCsv()`, export the searched, filtered and sorted rows across every page to CSV. Cells that a spreadsheet would run as a formula are escaped.
-- **BbDataGrid** — grouping now nests to any depth, with collapsed state keyed by group path, aggregates rolling up through every level, and open ancestor headers re-emitted when a page boundary splits a subtree. New `ShowGroupingBreadcrumb` lists the levels with controls to drop one or move it outward.
-- **BbDataGrid** — new `EditMode` with `DataGridEditMode.Row` puts a whole row into edit through each column's `EditTemplate`, committing or discarding together. New `BbDataGridEditColumn` renders Edit, Save and Cancel; `EditOnRowClick` and `OnRowCommit` control entry and commit, and a refused commit keeps the row open with the user's input intact.
-- **BbDataGridPropertyColumn** — new `SortAndFilterBy` projects the value the column sorts, filters, searches, groups and exports on, so a column can act on a value it does not display. It is an `Expression`, so a server-side `ItemsProvider` over `IQueryable` can still translate it.
-- **BbResizablePanelGroup** — new `OnResizeEnd` reports the final panel sizes as percentages in declared order, already clamped to each panel's `MinSize`/`MaxSize`. It fires once per drag, and only when something moved.
-- **AdditionalAttributes** — most components now capture unmatched attributes and splat them onto their rendered element, including **BbDock**. This is additive; no existing parameter changed.
+- **Charts** — new `OnDataPointClick` and `OnChartClick` on `BbChartBase`, so bar, line, area, pie, scatter, candlestick and the rest all report clicks. `OnDataPointClick` carries a `ChartClickEventArgs` with `SeriesName`, `SeriesIndex`, `DataIndex`, `Name`, `ComponentType`, `Value` and `Values`; `DataIndex` maps straight back to the bound collection. `OnChartClick` fires only when the click landed away from a data point. No interop is set up unless one of the two has a handler.
+- **BbFileUpload** — new `AllowPaste` (default `true`) accepts files pasted with Ctrl+V while focus is inside the upload, including screenshots. Pasted text is ignored, and the files run through the same validation, limits and `OnValidationError` path as a drop.
+- **Theme** — new `js/theme-init.js` applies the saved theme to `<html>` before the first paint, removing the flash of the default theme on prerendered and statically rendered pages. Load it as a classic, blocking script in `<head>`; `data-default-dark` and `data-storage` configure it.
+- **BbDialogContent**, **BbSheetContent**, **BbDrawerContent** — new `InitialFocus` and `InitialFocusElement` choose what the focus trap focuses on open. Resolution order is the explicit element, `[data-autofocus]`, the mode, then the first tabbable descendant. The default is unchanged.
 
 ### Bug Fixes
-- **BbResizablePanel** — a fast drag now pins to `MinSize`/`MaxSize` instead of freezing short of the limit.
-- **BbScrollArea** — both scrollbars are positioned out of flow, so the root's `overflow: hidden` no longer clips them away. `ScrollAreaType.Always` is affected as much as `Hover`.
-- **ThemeService** — `ThemeOptions.PersistToLocalStorage` now gates reading as well as writing, so a stored theme no longer overrides the configured `Default*` values. Initializing with persistence off also clears any entry an earlier run left behind.
-- **BbCalendar** — the year select is wide enough for a four-digit year, so the selected year is no longer truncated. Affects **BbDatePicker** and **BbDateTimePicker**.
-- **BbDataGrid** — opening a filter or header menu bumps the state version, so the grid re-renders and the overlay's controlled open value stays correct.
-- **BbDataGrid** — Enter and Escape reach the editor inside a row being edited instead of being blocked by the row's keydown interceptor, and committing on Enter no longer drops the value just typed into the focused field.
-- **BbSidebar** — unmatched attributes are forwarded to `BbSheetContent`, so they reach a real element in mobile mode instead of vanishing.
-- **BbFileUpload** — unmatched attributes continue to land on the inner `<input type="file">`, so `name` and `aria-*` reach the element that holds the files.
-- **BbFormFieldDateTimePicker** — the inherited `AdditionalAttributes` are now applied.
-
-### Performance
-- **BbResizablePanelGroup** — the drag is driven from JavaScript, which writes `flex-basis` directly and calls into .NET once on pointer release instead of on every `pointermove`. A 40-move drag makes 1 interop call where it made 40. This matters most on Blazor Server, where queued moves compounded the lag across a drag.
+- **Focus trap** — an overlay no longer forces focus onto its first tabbable descendant unconditionally, so a first child that acts on focus no longer fires that side effect on open.
+- **BbHoverCardTrigger** — the card no longer opens on a programmatic focus, such as one moved by a focus trap. A real Tab still opens it, on both `AsChild` branches.
+- **BbCopyText** — the tooltip no longer opens when the browser restores focus on returning to a background tab, where nothing then closed it.
+- **BbInputGroupAddon** — removed a click handler that did nothing but swallow the click. The addon is a presentational wrapper.
 
 ### Improvements
-- **Localization** — new `DataGrid.*` keys for CSV export, row editing and nested grouping.
-- Bumped the `BlazorBlueprint.Primitives` dependency to 3.16.0.
+- **Accessibility** — the themed focus ring now replaces the browser's own outline on 21 components: `BbAccordionTrigger`, `BbAlertDialogTrigger`, `BbAttachmentTrigger`, `BbBreadcrumbLink`, `BbCarouselNext`, `BbCarouselPrevious`, `BbCollapsibleTrigger`, `BbColorPicker`, `BbCommandInput`, `BbCopyText`, `BbDateTimePicker`, `BbDialogTrigger`, `BbFileUpload`, `BbFormWizard`, `BbMarker`, `BbPopoverTrigger`, `BbRating`, `BbResponsiveNavItems`, `BbSheetTrigger`, `BbSidebarRail` and `BbThemeSwitcher`. `BbAttachmentTrigger` and `BbCommandInput` previously drew no focus indicator at all.
+- **BbFileUpload** — the focus ring goes on the visible dropzone through `focus-within`, rather than on the transparent file input laid over it where it showed nothing.
+- Bumped the `BlazorBlueprint.Primitives` dependency to 3.16.1.
