@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## 2026-09-12
+## 2026-09-13
 
 ### Changed
 
@@ -23,6 +23,83 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   Worth knowing: **the API surface snapshot cannot catch this.** It records `AsChild : Boolean`, not its default, so the test suite stays green across a change that alters every consumer's rendering. Verified in the running demo instead — a bare icon and plain text both open a tooltip with no opt-in, and a `BbButton` under `AsChild="true"` still does.
 
   Migration guide: `V4-MIGRATION-GUIDE.md`.
+
+- **BREAKING — `BbDrawerTrigger` and `BbDrawerClose` now render a real `<button>`** — [#507](https://github.com/blazorblueprintui/ui/issues/507), found while working [#459](https://github.com/blazorblueprintui/ui/issues/459). Both were a bare `<div @onclick>` with no `tabindex`, no `role` and no keyboard handler. They worked when the child happened to be focusable — which is what the demos did, wrapping a `BbButton`, so the common path was fine and this went unreported. Pass anything that is not itself focusable, which the API placed no constraint on, and the trigger was unreachable by keyboard and not exposed as a control at all: a WCAG 2.1.1 failure in a shape the component invited, failing silently and passing any mouse test.
+
+### Added
+
+- **Charts report clicks** — [#480](https://github.com/blazorblueprintui/ui/issues/480), requested by [@netclectic](https://github.com/netclectic) for drilling down into the underlying data. Every chart type gains `OnDataPointClick` and `OnChartClick` through `BbChartBase`, so bar, line, area, pie, scatter, candlestick and the rest all get them at once.
+
+  `OnDataPointClick` carries a `ChartClickEventArgs` with `SeriesName`, `SeriesIndex`, `DataIndex`, `Name`, `ComponentType` and the value. **`DataIndex` is the field a drill-down keys on** — it maps straight back to the position in the collection you bound.
+
+  The value is split rather than surfaced raw. ECharts reports it as whatever the series put there: a number for a bar or line, an array for scatter or candlestick, sometimes an object. `Value` carries the scalar case and `Values` the array case, so the two common shapes arrive typed instead of as a `JsonElement` the consumer has to unpick; when neither applies both are null and `Name` with `DataIndex` still identify the point.
+
+  `OnChartClick` fires when the click landed away from any data point, which is what a "clear the selection" handler wants. The two never both fire for one click.
+
+  **Detecting a blank click is the part worth recording.** The obvious approach — asking `chart.containPixel('grid', point)` whether the click was inside the plot — is wrong, and was written and then measured in the browser before being replaced: `containPixel` is true anywhere inside the grid, *including the gaps between bars*, so it suppressed nearly every blank click. What ships checks zrender's `event.target`, which is set only when a click lands on a rendered shape.
+
+  No interop is set up unless one of the two callbacks has a handler, so a chart with neither costs nothing extra and has no `DotNetObjectReference` to dispose.
+
+  Verified in the running demo: clicking a bar reports `Desktop · 2024-04-05 · 373 (index 4)`, and a click on empty space above the bars clears it.
+
+- **`BbFileUpload` accepts pasted files** — [#485](https://github.com/blazorblueprintui/ui/issues/485), requested by [@HugoVG](https://github.com/HugoVG), whose point was that not everyone wants to drag onto a dropzone. Copy a file in your file manager, or take a screenshot to the clipboard, focus the upload and press Ctrl+V.
+
+  `AllowPaste` is on by default and can be turned off where the page handles paste itself.
+
+  **The listener is on `document`, not on the dropzone**, and that is not laziness. A `paste` event fires at the focused element only when that element is editable; a file input is not, so a listener on the zone would never see one. Scoping is done instead by checking that focus is inside the zone — which means a paste aimed at something else on the page is left alone, and two uploads on one page cannot both claim the same paste. Pasted text is ignored, because `clipboardData.files` is empty for it.
+
+  Files are handed over exactly the way a drop already hands them over: assigned to the hidden `<input type="file">` and followed by a `change` event. So validation, the size and count limits, `OnValidationError` and the rest all run through the single existing path rather than a second copy that could drift from it. A paste into a single-file upload takes the first file only, matching what the input would accept.
+
+  Verified in the running demo both ways: with focus inside the upload a pasted file reaches the input **and** appears in the rendered file list, which is what proves the whole pipeline ran; with focus elsewhere on the page the same paste is ignored.
+
+- **A way to apply the saved theme before the first paint** — [#477](https://github.com/blazorblueprintui/ui/issues/477), reported by [@andrewbabbittdev](https://github.com/andrewbabbittdev). The theme lives in `localStorage`, so a prerendered or statically rendered page cannot know it: the server renders the default and the saved theme is applied once Blazor has started. A user who chose dark mode got a flash of light first, on every load. There was no built-in answer, and there is no C#-only one — the preference is not available to the server at render time.
+
+  `js/theme-init.js` reads the saved theme and writes it to `<html>` before anything paints. Add it to `<head>`, after your stylesheets:
+
+  ```html
+  <script src="_content/BlazorBlueprint.Components/js/theme-init.js"></script>
+  ```
+
+  **It has to be a classic, blocking script.** `type="module"` is deferred until after the document is parsed — which is after the paint it exists to prevent — so shipping this as part of the existing theme module was never an option. It is a separate file rather than inline so that a strict Content-Security-Policy needs no `'unsafe-inline'`.
+
+  `data-default-dark="true"` or `"false"` sets what to use when nothing is saved; the fallback otherwise is `prefers-color-scheme`, matching the theme service. `data-storage="false"` skips `localStorage` entirely, and should be paired with `PersistToLocalStorage = false` — without it a theme saved before persistence was turned off would still be applied on load, which is the same trap [#481](https://github.com/blazorblueprintui/ui/issues/481) fixed on the C# side.
+
+  It deliberately duplicates the handful of DOM writes in `theme.js` rather than importing them, because importing reintroduces the defer. The cost is that the attribute names now live in two files; a comment in each says so.
+
+  Added to all three demo hosts, `README.md` and `THEMING.md`. Verified in the running app: with a dark theme saved, `<html>` carries `dark`, `data-base-color`, `data-primary-color` and `--radius` on arrival, and the script sits in `<head>` ahead of both `<body>` and `blazor.web.js` in the served document.
+
+---
+
+### Fixed
+
+- **The last components showing the browser's own focus outline** — final tranche of [#459](https://github.com/blazorblueprintui/ui/issues/459) on `develop`. `BbCarouselNext`, `BbCarouselPrevious`, `BbRating`, `BbMarker`, `BbSidebarRail` and `BbFileUpload`.
+
+  All six take the ring **without an offset**, each for its own reason. The carousel arrows are 32px circles sitting over slide images, so whatever is 4px outside them is the photograph rather than the page background. `BbRating`'s radiogroup is the tab stop and its stars sit at `gap-1`, so an offset ring reaches past the outer stars. `BbMarker` repeats down a list where an offset ring lands on the rows either side. `BbSidebarRail` is the clearest case: it is 16px wide and its visible part is a 2px `::after` line, so an offset ring would be wider than the control it marks.
+
+  `BbFileUpload` was a different defect. Its focus target is the `<input type="file">` laid over the dropzone at `opacity-0`, so focusing it changed nothing a user could see. The ring now goes on the dropzone via `focus-within`, which is the box they are actually looking at.
+
+- **`BbInputGroupAddon` no longer has a click handler that does nothing** — found while finishing [#459](https://github.com/blazorblueprintui/ui/issues/459). The addon rendered `@onclick="HandleClick"`, and the handler was a stub: a comment reading *"In a real implementation, we'd use ElementReference and JSInterop"* followed by `await Task.CompletedTask`. Its documentation claimed it focused the sibling input like a native label. It never did.
+
+  Removed. The addon is a presentational wrapper for an icon or a suffix such as `@company.com`, which is exactly how the demos use it, and a `<div>` that captures clicks and discards them is worse than one that does not. This is also why it needs no focus ring: it is not, and should not be, a tab stop. If click-to-focus is wanted later, `<label for>` is the right tool and a label is still not a tab stop.
+
+  **[#459](https://github.com/blazorblueprintui/ui/issues/459) is now complete on `develop`.** Of the 27 components it listed, 21 carry a themed ring. The remaining six are deliberate: `BbInputGroupAddon`, `BbDataTableToolbar` and `BbDashboardGrid` are containers whose focusable children carry their own indicators; `BbTablePagination` exists only in `BlazorBlueprint.Primitives`, which is headless by design and must not be themed; and `BbDrawerTrigger` and `BbDrawerClose` gained theirs on the `v4` branch, where [#507](https://github.com/blazorblueprintui/ui/issues/507) made them focusable in the first place.
+
+- **Four more components showed the browser's own focus outline** — third tranche of [#459](https://github.com/blazorblueprintui/ui/issues/459). `BbDateTimePicker`, `BbFormWizard`, `BbThemeSwitcher` and `BbColorPicker`.
+
+  The ring is split by how much room the control has, not applied uniformly. `BbDateTimePicker`'s field trigger is a standalone control and takes the offset ring; its hour and minute scroll buttons stack directly on each other, so they take the ring without an offset — otherwise each ring overlaps its neighbour. The same reasoning covers `BbThemeSwitcher`'s three option buttons inside a tight panel grid, and `BbColorPicker`'s 24px preset swatches in a wrapped `gap-1` flex, where an offset ring would sit on top of the next swatch. `BbFormWizard`'s step buttons have real gaps between them and take the offset ring with `rounded-md`, so it follows the marker rather than boxing the label.
+
+  Verified in the running demo: on a real Tab onto the date-time trigger the computed `box-shadow` is the themed ring and `outline-style` is `none`.
+
+  **[#459](https://github.com/blazorblueprintui/ui/issues/459) stays open**, at 15 of 27. Two findings from this pass are worth recording rather than quietly skipping:
+
+  - `BbTablePagination` exists **only** in `BlazorBlueprint.Primitives` and describes itself as a headless structure. Primitives set no classes by design, so a ring there would contradict the layer split rather than fix anything. It needs either a styled Components wrapper or a decision that consumers style it themselves.
+  - `BbInputGroupAddon` is a `<div @onclick>` with no `tabindex`, so there is nothing to draw a ring on — the same shape as [#507](https://github.com/blazorblueprintui/ui/issues/507). Whether it should be focusable at all is a separate question from this issue; the controls placed inside it carry their own indicators today.
+
+---
+
+## 2026-09-12
+
+### Changed
 
 - **BREAKING — `BbDrawerTrigger` and `BbDrawerClose` now render a real `<button>`** — [#507](https://github.com/blazorblueprintui/ui/issues/507), found while working [#459](https://github.com/blazorblueprintui/ui/issues/459). Both were a bare `<div @onclick>` with no `tabindex`, no `role` and no keyboard handler. They worked when the child happened to be focusable — which is what the demos did, wrapping a `BbButton`, so the common path was fine and this went unreported. Pass anything that is not itself focusable, which the API placed no constraint on, and the trigger was unreachable by keyboard and not exposed as a control at all: a WCAG 2.1.1 failure in a shape the component invited, failing silently and passing any mouse test.
 

@@ -156,18 +156,4 @@ public partial class BbInputGroupAddon : ComponentBase
             );
         }
     }
-
-    /// <summary>
-    /// Handles click events on the addon to focus the associated input control.
-    /// </summary>
-    /// <remarks>
-    /// When the addon is clicked (but not a button or interactive element within it),
-    /// this method focuses the sibling input or textarea control for better UX.
-    /// This mimics native label behavior.
-    /// </remarks>
-    private static async Task HandleClick(MouseEventArgs e) =>
-        // Delegate focus to the input control
-        // In a real implementation, we'd use ElementReference and JSInterop
-        // For now, we'll rely on natural DOM behavior
-        await Task.CompletedTask;
 }
