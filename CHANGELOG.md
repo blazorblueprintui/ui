@@ -10,6 +10,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **BREAKING — `BbTooltipTrigger.AsChild` now defaults to `false`** — [#428](https://github.com/blazorblueprintui/ui/issues/428), the deferred half of [#425](https://github.com/blazorblueprintui/ui/issues/425). It defaulted to `true`, where the trigger renders no element and no handlers and only cascades a `TriggerContext` for the child to consume. `BbButton` consumes it; `LucideIcon` and plain markup do not. So the most natural thing a consumer writes — a bare icon in a trigger — silently did nothing, and the usage that worked required knowing about an opt-out. That is the wrong way round for a component library, and it was reported from the field.
+
+  v3 moved trigger `AsChild` defaults to `true` across the family. For tooltip specifically that was the wrong call and this reverses it. The other triggers are deliberately **unchanged**: popover, dialog, sheet, dropdown menu, hover card and collapsible all render a `<button>` in their non-`AsChild` branch and open on **click**, which any focusable child already delivers by bubbling. Tooltip opens on **hover and focus**, which do not bubble usefully, so a trigger rendering nothing genuinely has nothing listening. The asymmetry is in the interaction, not the API.
+
+  **What to change.** Add `AsChild="true"` wherever the child consumes the context itself, such as a `BbButton`. A bare icon, plain text or arbitrary markup needs no change and now works.
+
+  **What changes in the DOM.** With `AsChild="false"` the trigger wraps its content in a `<span>` carrying the handlers. That span uses `display: contents`, so it **generates no layout box** — spacing, flex and inline-block behaviour are unaffected, which is milder than [#428](https://github.com/blazorblueprintui/ui/issues/428) assumed when it was filed. The real impact is on anything walking the DOM: `:first-child` selectors, `querySelector` paths and test hooks that assume the child is a direct descendant.
+
+  Only the styled wrapper changed; `Primitives.Tooltip.BbTooltipTrigger` already defaulted to `false`, so this removes a divergence between the layers rather than introducing one.
+
+  Worth knowing: **the API surface snapshot cannot catch this.** It records `AsChild : Boolean`, not its default, so the test suite stays green across a change that alters every consumer's rendering. Verified in the running demo instead — a bare icon and plain text both open a tooltip with no opt-in, and a `BbButton` under `AsChild="true"` still does.
+
+  Migration guide: `V4-MIGRATION-GUIDE.md`.
+
 - **BREAKING — `BbDrawerTrigger` and `BbDrawerClose` now render a real `<button>`** — [#507](https://github.com/blazorblueprintui/ui/issues/507), found while working [#459](https://github.com/blazorblueprintui/ui/issues/459). Both were a bare `<div @onclick>` with no `tabindex`, no `role` and no keyboard handler. They worked when the child happened to be focusable — which is what the demos did, wrapping a `BbButton`, so the common path was fine and this went unreported. Pass anything that is not itself focusable, which the API placed no constraint on, and the trigger was unreachable by keyboard and not exposed as a control at all: a WCAG 2.1.1 failure in a shape the component invited, failing silently and passing any mouse test.
 
   Drawer was the only one like this. `BbDialogTrigger`, `BbSheetTrigger`, `BbPopoverTrigger` and `BbDialogClose` all render a `<button>` in their default branch and cascade a `TriggerContext` under `AsChild`; `BbDialogClose` even carries its own `@onkeydown`. Drawer simply never followed the pattern it was surrounded by.
