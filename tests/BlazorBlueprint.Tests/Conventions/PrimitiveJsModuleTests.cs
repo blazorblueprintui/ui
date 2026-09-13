@@ -45,9 +45,9 @@ public class PrimitiveJsModuleTests
         @"document\s*\.\s*addEventListener\s*\(\s*['""]keydown['""]",
         RegexOptions.Compiled);
 
-    /// <summary>A C# import of a primitive module by path.</summary>
+    /// <summary>A C# <c>import</c> of a library module, rather than a cached one.</summary>
     private static readonly Regex DirectImport = new(
-        @"""\./_content/BlazorBlueprint\.Primitives/js/primitives/(?<file>[\w-]+)\.js""",
+        @"""import"",\s*\n?\s*""(?<path>\./_content/BlazorBlueprint\.[\w.]+/js/[\w/-]+\.js)""",
         RegexOptions.Compiled);
 
     [Fact]
@@ -135,20 +135,23 @@ public class PrimitiveJsModuleTests
     }
 
     [Fact]
-    public void NothingImportsAPrimitiveModuleDirectly()
+    public void NothingImportsAModuleDirectly()
     {
+        // A component that imports its own module pays a circuit round trip per component
+        // *instance*, because the reference is cached in an instance field: a form with thirteen
+        // text inputs imported the same file thirteen times. JsModules caches per circuit.
         var offenders = InteropSources()
-            .Where(f => f.Name != "PrimitiveModules.cs")
+            .Where(f => f.Name is not ("PrimitiveModules.cs" or "JsModules.cs"))
             .SelectMany(f => DirectImport
                 .Matches(File.ReadAllText(f.FullName))
-                .Select(m => $"{SourceTree.RelativePath(f)} imports {m.Groups["file"].Value}.js"))
+                .Select(m => $"{SourceTree.RelativePath(f)} imports {m.Groups["path"].Value}"))
             .ToList();
 
         Assert.True(
             offenders.Count == 0,
-            "Each of these costs its own circuit round trip on every page load. Use " +
-            "PrimitiveModules.GetAsync(JSRuntime) and a namespaced identifier instead:\n  " +
-            string.Join("\n  ", offenders));
+            "Each of these costs a circuit round trip per component instance. Use " +
+            "JsModules.GetAsync(JSRuntime, path) — or PrimitiveModules.GetAsync(JSRuntime) for " +
+            "the primitive bundle — instead:\n  " + string.Join("\n  ", offenders));
     }
 
     [Fact]
@@ -160,6 +163,7 @@ public class PrimitiveJsModuleTests
         // popover inside a dialog then closes both at once. Overlays whose content holds focus
         // (Select, menus) handle Escape on their own container and stop it propagating, which is
         // why a container-level listener is fine and a document-level one is not.
+        //
         // A document-level keydown listener is only a problem when it acts on Escape.
         // element-utils.js watches for Tab to tell a keyboard arrival from a mouse one, and
         // keyboard-shortcuts.js serves application shortcuts; neither looks at Escape.

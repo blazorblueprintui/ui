@@ -2,6 +2,7 @@ using System.Text.Json;
 using Ganss.Xss;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -233,8 +234,7 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
 
         try
         {
-            _jsModule = await JS.InvokeAsync<IJSObjectReference>("import",
-                "./_content/BlazorBlueprint.Components/js/quill-interop.js");
+            _jsModule = await JsModules.GetAsync(JS, "./_content/BlazorBlueprint.Components/js/quill-interop.js");
             _dotNetRef = DotNetObjectReference.Create(this);
 
             var options = BuildEditorOptions();
@@ -775,7 +775,6 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
             try
             {
                 await _jsModule.InvokeVoidAsync("disposeEditor", _editorId);
-                await _jsModule.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

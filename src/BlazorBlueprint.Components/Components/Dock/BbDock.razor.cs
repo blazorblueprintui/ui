@@ -2,6 +2,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -133,8 +134,7 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
     {
         try
         {
-            jsModule = await JS.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Components/js/dock.js");
+            jsModule = await JsModules.GetAsync(JS, "./_content/BlazorBlueprint.Components/js/dock.js");
             dotNetRef = DotNetObjectReference.Create(this);
             await jsModule.InvokeVoidAsync("initializeDock", dockId, rootRef, dotNetRef);
             jsInitialized = true;
@@ -1036,7 +1036,6 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
 
             try
             {
-                await jsModule.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {

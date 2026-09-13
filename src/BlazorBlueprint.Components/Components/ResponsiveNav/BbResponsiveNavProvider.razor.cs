@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -19,8 +20,7 @@ public partial class BbResponsiveNavProvider
             try
             {
                 // Load the responsive nav JavaScript module
-                _module = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/responsive-nav.js");
+                _module = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/responsive-nav.js");
 
                 // Create a reference to this component for JS callbacks
                 _dotNetRef = DotNetObjectReference.Create(this);
@@ -77,7 +77,6 @@ public partial class BbResponsiveNavProvider
             try
             {
                 await _module.InvokeVoidAsync("cleanup");
-                await _module.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

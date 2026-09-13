@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -71,8 +72,7 @@ public partial class BbSidebarProvider
             try
             {
                 // Load the sidebar JavaScript module
-                _module = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/sidebar.js");
+                _module = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/sidebar.js");
 
                 // Create a reference to this component for JS callbacks
                 _dotNetRef = DotNetObjectReference.Create(this);
@@ -252,7 +252,6 @@ public partial class BbSidebarProvider
                     await _module.InvokeVoidAsync("cleanup", instanceId);
                 }
 
-                await _module.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

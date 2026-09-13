@@ -397,8 +397,7 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
     }
 
     private async Task<IJSObjectReference> GetClipboardModuleAsync() =>
-        clipboardModule ??= await JS.InvokeAsync<IJSObjectReference>(
-            "import", "./_content/BlazorBlueprint.Components/js/clipboard.js");
+        clipboardModule ??= await JsModules.GetAsync(JS, "./_content/BlazorBlueprint.Components/js/clipboard.js");
 
     private async Task ReportFailureAsync(string outcome)
     {
@@ -414,17 +413,6 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
-        if (clipboardModule is not null)
-        {
-            try
-            {
-                await clipboardModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Circuit already gone; nothing to clean up.
-            }
-        }
 
 
         if (copyHandle is not null)

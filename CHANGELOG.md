@@ -24,6 +24,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **A component's JavaScript module is imported once per circuit, not once per component.** Every component cached its module reference in an *instance* field, so thirteen `BbInput`s on a page issued thirteen `import` calls for the same already-loaded file — and on Blazor Server each one is a network round trip. The cost scaled with how many controls a page had, which is why it showed up on dense admin forms and not in a demo.
+
+  `JsModules.GetAsync(jsRuntime, path)` caches per `IJSRuntime` — per circuit on Server, per application on WebAssembly — and hands the same reference to every caller. All 38 import sites across the two libraries now go through it. The reference is non-owning, so a component tearing itself down cannot take the module away from the ones still using it.
+
+  Measured in Chromium against the demo Server host at a 20ms round trip, client-to-server messages during page load:
+
+  | page | text inputs | before | after |
+  |---|---|---|---|
+  | `/components/input` | 13 | 92 | **65** |
+  | `/components/form-field-input` | 9 | 65 | **51** |
+  | `/components/button` | 0 | 40 | 39 |
+  | `/components/separator` | 0 | 39 | 39 |
+
+  Roughly four extra messages per input becomes two. What is left is each control's own `initialize` call, which is genuinely per-instance — it registers listeners on that element.
+
 - **Opening an overlay costs one interop call, not five.** Every `InvokeAsync` from C# on Blazor Server is a message the server posts to the browser and then awaits, so it costs a network round trip — paid on every open, forever, not just the first.
 
   Opening a `BbSelect` spent them like this: import `positioning.js`, import Floating UI from inside the first `computePosition`, compute the position, re-render for the resolved placement, apply the position and reveal the element, start the scroll/resize watcher, then import `click-outside.js`. Two of those landed *before* the element was visible, and the placement re-render sat between computing the position and showing it.

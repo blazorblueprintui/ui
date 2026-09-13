@@ -2,6 +2,7 @@ using BlazorBlueprint.Primitives;
 using BlazorBlueprint.Primitives.Tabs;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -114,8 +115,7 @@ public partial class BbTabsList : IAsyncDisposable
             try
             {
                 _dotNetRef = DotNetObjectReference.Create(this);
-                _jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/responsive-tabs.js");
+                _jsModule = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/responsive-tabs.js");
                 await _jsModule.InvokeVoidAsync("initialize", _dotNetRef, _componentId, _containerRef);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
@@ -140,7 +140,6 @@ public partial class BbTabsList : IAsyncDisposable
             try
             {
                 await _jsModule.InvokeVoidAsync("dispose", _componentId);
-                await _jsModule.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

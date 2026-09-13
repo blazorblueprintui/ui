@@ -2,6 +2,7 @@ using System.Timers;
 using BlazorBlueprint.Primitives;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -885,8 +886,7 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
             try
             {
                 dotNetRef = DotNetObjectReference.Create(this);
-                dragDropModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/tree-view.js");
+                dragDropModule = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/tree-view.js");
 
                 await dragDropModule.InvokeVoidAsync("initializeDragDropById",
                     primitiveTreeRef.Context.Id,
@@ -917,7 +917,6 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
             try
             {
                 await dragDropModule.InvokeVoidAsync("disposeDragDrop", instanceId);
-                await dragDropModule.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

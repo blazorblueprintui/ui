@@ -137,8 +137,7 @@
             // select a list item while the IME still owns the keystroke.
             try
             {
-                _guardModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/composition-guard.js");
+                _guardModule = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/composition-guard.js");
                 await _guardModule.InvokeVoidAsync(
                     "attach", _inputRef, _guardId, new { suppress = GuardSuppressedEvents });
             }
@@ -246,7 +245,6 @@
         try
         {
             await _guardModule.InvokeVoidAsync("detach", _guardId);
-            await _guardModule.DisposeAsync();
         }
         catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
         {

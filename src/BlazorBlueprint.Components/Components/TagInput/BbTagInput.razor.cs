@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -223,8 +224,7 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
         {
             try
             {
-                _jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/tag-input.js");
+                _jsModule = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/tag-input.js");
                 _dotNetRef = DotNetObjectReference.Create(this);
                 await _jsModule.InvokeVoidAsync("initialize",
                     _containerRef,
@@ -674,7 +674,6 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
             try
             {
                 await _jsModule.InvokeVoidAsync("dispose", _instanceId);
-                await _jsModule.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

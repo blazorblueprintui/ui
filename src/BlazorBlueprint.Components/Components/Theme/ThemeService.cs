@@ -1,4 +1,5 @@
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -86,8 +87,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            module = await jsRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Components/js/theme.js");
+            module = await JsModules.GetAsync(jsRuntime, "./_content/BlazorBlueprint.Components/js/theme.js");
         }
         catch (JSDisconnectedException)
         {
@@ -334,23 +334,11 @@ public class ThemeService : IAsyncDisposable
     }
 
     /// <inheritdoc />
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        if (module is not null)
-        {
-            try
-            {
-                await module.DisposeAsync();
-            }
-            catch
-            {
-                // Ignore disposal errors during circuit disconnect
-            }
-
-            module = null;
-        }
-
+        // Nothing to release: the theme module is shared and owned by JsModules.
         GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>

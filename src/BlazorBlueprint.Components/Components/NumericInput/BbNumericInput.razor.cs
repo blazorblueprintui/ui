@@ -4,6 +4,7 @@ using Microsoft.JSInterop;
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Numerics;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -207,8 +208,7 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         {
             try
             {
-                jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/numeric-input.js");
+                jsModule = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/numeric-input.js");
                 dotNetRef = DotNetObjectReference.Create(this);
                 lastWheelStepEnabled = EnableWheelStep;
                 await jsModule.InvokeVoidAsync("initialize", inputRef, dotNetRef, instanceId, GetJsConfig());
@@ -550,7 +550,6 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
             try
             {
                 await jsModule.InvokeVoidAsync("dispose", instanceId);
-                await jsModule.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

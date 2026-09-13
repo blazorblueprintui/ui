@@ -389,8 +389,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
 
             try
             {
-                _multiSelectModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/multiselect.js");
+                _multiSelectModule = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/multiselect.js");
 
                 _dotNetRef = DotNetObjectReference.Create(this);
 
@@ -765,18 +764,6 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
         GC.SuppressFinalize(this);
         await CleanupJsAsync();
 
-        if (_multiSelectModule != null)
-        {
-            try
-            {
-                await _multiSelectModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-            _multiSelectModule = null;
-        }
 
 
         _dotNetRef?.Dispose();

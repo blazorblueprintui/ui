@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -966,8 +967,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         {
             if (!jsInitialized)
             {
-                columnsModule = await Js.InvokeAsync<IJSObjectReference>("import",
-                    "./_content/BlazorBlueprint.Components/js/datagrid-columns.js");
+                columnsModule = await JsModules.GetAsync(Js, "./_content/BlazorBlueprint.Components/js/datagrid-columns.js");
                 selfRef = DotNetObjectReference.Create(this);
                 jsInitialized = true;
 
@@ -3999,8 +3999,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         try
         {
-            downloadModule ??= await Js.InvokeAsync<IJSObjectReference>("import",
-                "./_content/BlazorBlueprint.Components/js/file-download.js");
+            downloadModule ??= await JsModules.GetAsync(Js, "./_content/BlazorBlueprint.Components/js/file-download.js");
 
             // The byte-order mark is what makes Excel read the file as UTF-8 rather than as the
             // local codepage, which is why accented names arrive mangled without it.
@@ -4017,8 +4016,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     {
         try
         {
-            clipboardModule ??= await Js.InvokeAsync<IJSObjectReference>("import",
-                "./_content/BlazorBlueprint.Components/js/clipboard.js");
+            clipboardModule ??= await JsModules.GetAsync(Js, "./_content/BlazorBlueprint.Components/js/clipboard.js");
             return await clipboardModule.InvokeAsync<bool>("copyToClipboard", text);
         }
         catch
@@ -4350,7 +4348,6 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
             try
             {
-                await columnsModule.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
@@ -4360,28 +4357,6 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         selfRef?.Dispose();
 
-        if (clipboardModule != null)
-        {
-            try
-            {
-                await clipboardModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-        }
 
-        if (downloadModule != null)
-        {
-            try
-            {
-                await downloadModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-        }
     }
 }
