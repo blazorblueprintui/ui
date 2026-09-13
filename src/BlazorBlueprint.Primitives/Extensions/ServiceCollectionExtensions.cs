@@ -12,9 +12,22 @@ public static class ServiceCollectionExtensions
     /// Adds all BlazorBlueprint.Primitives primitive services to the service collection.
     /// </summary>
     /// <param name="services">The service collection.</param>
+    /// <param name="configureOverlays">Optional action to configure overlay rendering options
+    /// (e.g. opt the whole app into native <c>&lt;dialog&gt;</c> rendering).</param>
     /// <returns>The service collection for chaining.</returns>
-    public static IServiceCollection AddBlazorBlueprintPrimitives(this IServiceCollection services)
+    public static IServiceCollection AddBlazorBlueprintPrimitives(
+        this IServiceCollection services,
+        Action<OverlayRenderingOptions>? configureOverlays = null)
     {
+        // Overlay rendering options (global default strategy). Registered as singleton so the
+        // resolved default is consistent across all render-mode scopes.
+        var overlayOptions = new OverlayRenderingOptions();
+        configureOverlays?.Invoke(overlayOptions);
+        services.AddSingleton(overlayOptions);
+
+        // Native overlay service (capability detection + native <dialog> driving).
+        services.AddScoped<INativeOverlayService, NativeOverlayService>();
+
         // Register PortalService as scoped for user isolation in Blazor Server
         // Each user session gets its own portal registry
         services.AddScoped<IPortalService, PortalService>();

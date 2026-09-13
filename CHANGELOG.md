@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-09-14
+
+### Added
+
+- **`BbCopyText` can take an asynchronous value** — [#466](https://github.com/blazorblueprintui/ui/issues/466), the deferred half of [#453](https://github.com/blazorblueprintui/ui/issues/453). `ValueFuncAsync` is for text that has to be fetched or computed. `Value` still wins when non-empty, then `ValueFunc`, then this.
+
+  **Getting this to work in Safari took three attempts, and the first two are worth recording because they look correct.**
+
+  A clipboard write needs transient user activation. The obvious fix — resolve the text, then write — spends that activation on the await and the write is refused, while the component cheerfully showed its copied state and the clipboard stayed empty. The documented answer is to hand the *promise* to `ClipboardItem` so the browser holds the activation across it. That fixed Chrome. **Safari still refused it.** Adding a resolve-then-write fallback for Safari also refused.
+
+  What both attempts missed is that Safari objects to *when* the write is made, not what is in it. A Blazor click travels C# → SignalR → JS, so by the time the write happens the gesture window has closed. A literal `Value` copies fine there only because that hop is fast enough to slip through; anything slower does not.
+
+  So JavaScript now owns the copy gesture. A listener on the element calls `clipboard.write()` immediately, inside the real gesture, and calls back into .NET for the text from *inside* the `ClipboardItem` — so the callback can take as long as it likes. The Blazor click and keydown handlers stand down while JS is in charge, and take over again if the module fails to load or during prerendering, so the component still copies either way.
+
+- **`BbCopyText` reports a failed copy** — `OnCopyFailed` carries a `CopyTextFailure` of `Refused` (the browser rejected the write) or `NoValue` (nothing to copy). Failure used to be entirely invisible, which is exactly what let the bug above go unnoticed for so long.
+
+### Changed
+
+- **The `execCommand` clipboard fallback no longer runs for every failure** — it ran whenever `navigator.clipboard.writeText` threw, which meant an expired user activation quietly fell through to a path that cannot rescue one either, and success was reported regardless. It now runs only for the insecure-context case it was written for, where the Clipboard API is absent altogether.
+
+  Verified in **Chrome** and **Safari**: a `ValueFuncAsync` taking a deliberate 1.5 seconds copies successfully and `OnCopied` reports the value. The demo is slow on purpose — an immediately-resolved task passes everywhere and proves nothing. The plain literal-value copy was re-checked in both as well, since the click path changed for every usage, not just the async one.
+
 ## 2026-09-13
 
 ### Changed
@@ -308,6 +330,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Theme: `PersistToLocalStorage = false` still read the theme from `localStorage`** — Reported in [#481](https://github.com/blazorblueprintui/ui/issues/481) by [@garrenf](https://github.com/garrenf). `ThemeService.InitializeAsync` consulted the option before *writing* but not before *reading*, so it called `loadTheme` unconditionally and a stored theme overrode every `Default*` value configured in `Program.cs`. The trap is that persistence has to have been enabled at some point for the entry to exist — so the sequence that produces it is running once with the default `true`, then turning it off, at which point the configuration appears to be ignored entirely and the only escape is clearing site data by hand. The option now gates the read as well as the write, and initializing with persistence off removes any entry an earlier run left behind, so a consumer who already has one is fixed by upgrading rather than by asking their users to clear storage. With persistence enabled nothing changes. Regression tests cover both directions.
 
 - **Calendar: the selected year was truncated in the year dropdown** — Reported in [#484](https://github.com/blazorblueprintui/ui/issues/484) by [@garrenf](https://github.com/garrenf), affecting `BbDatePicker` and `BbDateTimePicker`, which both compose `BbCalendar`. The dropdown takes its width from its trigger, and the trigger was `w-[80px]`. Inside that, each item spends 16px on horizontal padding and the list itself takes a scrollbar; the *selected* item additionally renders a 16px check icon, which pushed four digits past the remaining space and clipped `2026` to `20…`. Only the selected row was affected, which is what made it read as a rendering glitch rather than a sizing one — every other year in the list has no check icon and fit. The year select is now `w-[100px]`.
+
+---
+
+## 2026-08-13
+
+### Added
+
+- **Native `<dialog>` rendering strategy for `BbDialog`** — A new opt-in rendering path that drives the browser's built-in `<dialog>` element instead of the portal + Floating UI handshake. It is the first step of the phased plan in [#376](https://github.com/blazorblueprintui/ui/discussions/376), and it directly fixes [#479](https://github.com/blazorblueprintui/ui/issues/479): portaled overlays stop working when `BbPortalHost` and the interactive content that opens them live in different render-mode scopes (e.g. a static layout hosting an `InteractiveWebAssembly` island), because each scope gets its own scoped `PortalService`. A native `<dialog>` lives in the browser's top layer regardless of DOM position and supplies its own focus trap, Escape handling and `::backdrop`, so `BbDialogPortal` renders inline and no shared scoped service or portal host is needed at all — the dialog simply works across render-mode boundaries. It is additive and non-breaking: the default remains the existing JS path.
+    - Choose per-component with `BbDialog RenderingStrategy="OverlayRenderingStrategy.Native"`, or opt the whole app in by passing a configure action to `AddBlazorBlueprintPrimitives(o => o.DefaultStrategy = OverlayRenderingStrategy.Native)`.
+    - A new scoped `INativeOverlayService` resolves the effective strategy and drives the `<dialog>`; `native-dialog.js` detects `showModal()` support (cached) so an unsupported browser degrades safely rather than breaking.
+    - When native is active, `BbDialogContent` skips the JS focus-trap / scroll-lock / escape-key modules and `BbDialogOverlay` renders nothing (the `::backdrop` is the scrim). `CloseOnEscape`, `CloseOnOverlayClick` and `OnEscapeKeyDown` are honoured through native `cancel`/`close`/backdrop events.
+    - The styled components-layer `BbDialogContent` keeps the same fixed, centred presentation as the JS path (so the design is identical) while the native `<dialog>` additionally enters the top layer via `showModal()`; `dialog`/`::backdrop` CSS provides the scrim and sizing resets. A `dialog[data-state]` reset lives in the low-priority `components` layer so the component's own Tailwind utilities (padding, max-width, border, background, shadow) win over it. The reset pins `border-color` to `var(--border)` — without it the UA/`currentColor` fallback renders a far-too-bright border on dark backgrounds.
+    - AlertDialog, Sheet and the positioned overlays (Popover, Tooltip, Select, etc.) still use the portal path and are the follow-on phases of #376.
+    - `native-dialog.js` avoids top-level `let`/`const`/`class` bindings: Blazor WebAssembly's dynamic `import()` can re-evaluate an ES module in a shared scope, and top-level lexical bindings then collide with "Identifier has already been declared" (which surfaced in WASM as the dialog rendering but never entering the top layer). It uses `function` declarations and `globalThis`-cached state instead, which survive that re-evaluation.
+    - The Dialog demo page gains two examples: the inline `RenderingStrategy="Native"` dialog, and a programmatic `DialogService.OpenAsync<T>()` example whose content component closes via the cascaded `IDialogReference.CloseAsync(...)` (noting that `BbDialogClose` does not close a programmatic dialog — there is no `DialogContext` in the `OpenAsync` path).
 
 ---
 
