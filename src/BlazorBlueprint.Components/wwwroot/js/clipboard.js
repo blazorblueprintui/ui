@@ -77,12 +77,14 @@ export async function copyFromAsyncSource(dotNetRef, methodName) {
     return copyToClipboard(text);
   }
 
-  // Not awaited: the promise itself is the value, which is the entire point.
-  let resolvedEmpty = false;
-  const blobPromise = dotNetRef.invokeMethodAsync(methodName).then((text) => {
+  // Not awaited: the promise itself is the value, which is the entire point on browsers that
+  // accept it. The invocation is kept so the fallback below can reuse its result rather than
+  // asking .NET twice — which for a consumer doing a round trip would mean two round trips.
+  const valuePromise = dotNetRef.invokeMethodAsync(methodName);
+
+  const blobPromise = valuePromise.then((text) => {
     if (typeof text !== 'string' || text.length === 0) {
-      resolvedEmpty = true;
-      // Rejecting here aborts the write rather than putting an empty string on the clipboard.
+      // Rejecting aborts the write rather than putting an empty string on the clipboard.
       throw new Error('BbCopyText: no value to copy');
     }
     return new Blob([text], { type: 'text/plain' });
@@ -92,7 +94,27 @@ export async function copyFromAsyncSource(dotNetRef, methodName) {
     await navigator.clipboard.write([new ClipboardItem({ 'text/plain': blobPromise })]);
     return OK;
   } catch {
-    return resolvedEmpty ? NO_VALUE : REFUSED;
+    // Safari exposes ClipboardItem and clipboard.write but refuses a promise value here —
+    // measured, not assumed. Falling back to resolve-then-write is what it does accept, and a
+    // fast callback succeeds. A genuinely slow one may still be refused once the activation has
+    // gone, which is reported rather than hidden.
+    let text;
+    try {
+      text = await valuePromise;
+    } catch {
+      return NO_VALUE;
+    }
+
+    if (typeof text !== 'string' || text.length === 0) {
+      return NO_VALUE;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      return OK;
+    } catch {
+      return REFUSED;
+    }
   }
 }
 
@@ -118,4 +140,78 @@ function copyViaExecCommand(text) {
   }
 }
 
-export { UNSUPPORTED };
+/**
+ * Owns the copy gesture for a BbCopyText element.
+ *
+ * This exists because Safari refuses a clipboard write that is not made inside the user gesture,
+ * and a Blazor click is not: it travels C# -> SignalR -> JS, and by the time JS runs the gesture
+ * window has closed. A short write still slips through, which is why a literal Value copies fine
+ * there, but a value that takes any real time does not — measured, twice, before this approach.
+ *
+ * Listening on the element puts the write back inside the gesture. The value is produced by
+ * calling .NET from inside the ClipboardItem, so the callback can take as long as it likes.
+ *
+ * @param {HTMLElement} element - The BbCopyText root.
+ * @param {object} dotNetRef - Reference to the component.
+ * @returns {Object} Cleanup object with a dispose method.
+ */
+export function initializeCopy(element, dotNetRef) {
+  if (!element || !dotNetRef) {
+    return { dispose: () => {} };
+  }
+
+  const report = (outcome) => {
+    dotNetRef.invokeMethodAsync('HandleCopyOutcome', outcome).catch(() => {});
+  };
+
+  const copy = () => {
+    // Deliberately not async, and clipboard.write is called before anything is awaited. Awaiting
+    // first is the whole bug.
+    if (!supportsPromiseWrite()) {
+      dotNetRef.invokeMethodAsync('ResolveCopyValue')
+        .then((text) => copyToClipboard(text))
+        .then(report)
+        .catch(() => report(REFUSED));
+      return;
+    }
+
+    const valuePromise = dotNetRef.invokeMethodAsync('ResolveCopyValue');
+
+    const blobPromise = valuePromise.then((text) => {
+      if (typeof text !== 'string' || text.length === 0) {
+        throw new Error('BbCopyText: no value to copy');
+      }
+      return new Blob([text], { type: 'text/plain' });
+    });
+
+    navigator.clipboard
+      .write([new ClipboardItem({ 'text/plain': blobPromise })])
+      .then(() => report(OK))
+      .catch(() => {
+        // Distinguish "nothing to copy" from a genuine refusal, without asking .NET twice.
+        valuePromise
+          .then((text) => report(typeof text === 'string' && text.length > 0 ? REFUSED : NO_VALUE))
+          .catch(() => report(NO_VALUE));
+      });
+  };
+
+  const handleClick = () => copy();
+
+  const handleKeyDown = (e) => {
+    // A span with role="button" gets no native click from these, so they are wired explicitly.
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      copy();
+    }
+  };
+
+  element.addEventListener('click', handleClick);
+  element.addEventListener('keydown', handleKeyDown);
+
+  return {
+    dispose: () => {
+      element.removeEventListener('click', handleClick);
+      element.removeEventListener('keydown', handleKeyDown);
+    }
+  };
+}

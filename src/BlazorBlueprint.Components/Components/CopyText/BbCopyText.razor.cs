@@ -17,7 +17,14 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
 
     private IJSObjectReference? clipboardModule;
     private DotNetObjectReference<BbCopyText>? copyTextRef;
+    private IJSObjectReference? copyHandle;
     private string? lastAsyncValue;
+
+    /// <summary>
+    /// Whether JS owns the copy gesture. While false — prerendering, or a failed module load —
+    /// the Blazor handlers do the copy instead, so the component still works.
+    /// </summary>
+    private bool jsOwnsCopy;
     private IJSObjectReference? elementUtilsModule;
     private ElementReference anchorRef;
     private readonly string portalId = $"copytext-portal-{Guid.NewGuid():N}";
@@ -218,6 +225,11 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
 
     private async Task HandleKeyDownAsync(KeyboardEventArgs e)
     {
+        if (jsOwnsCopy)
+        {
+            return;
+        }
+
         if (e.Key is "Enter" or " ")
         {
             await HandleClickAsync();
@@ -230,8 +242,38 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
     private string? ResolveValue() =>
         !string.IsNullOrEmpty(Value) ? Value : ValueFunc?.Invoke();
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || jsOwnsCopy)
+        {
+            return;
+        }
+
+        try
+        {
+            copyTextRef ??= DotNetObjectReference.Create(this);
+            var module = await GetClipboardModuleAsync();
+            copyHandle = await module.InvokeAsync<IJSObjectReference>(
+                "initializeCopy", anchorRef, copyTextRef);
+            jsOwnsCopy = true;
+        }
+        catch (Exception ex) when (ex is JSException or JSDisconnectedException or InvalidOperationException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Prerendering, or the module could not load. The Blazor handlers stay in charge, so
+            // copying still works — just without the gesture-preserving path Safari needs.
+            jsOwnsCopy = false;
+        }
+    }
+
     private async Task HandleClickAsync()
     {
+        if (jsOwnsCopy)
+        {
+            // The JS listener already made the write inside the gesture. Doing it again here
+            // would copy twice and fire OnCopied twice.
+            return;
+        }
+
         // Resolved once per click, not per render — ValueFunc may be expensive, and copying then
         // reporting two different strings through OnCopied would be worse than either.
         var value = ResolveValue();
@@ -256,6 +298,50 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
             // The async path resolves in JS, so the text is only known here once it comes back.
             await OnCopied.InvokeAsync(value ?? lastAsyncValue);
         }
+    }
+
+    /// <summary>
+    /// Called from JS while the clipboard write is already in flight, to produce the text.
+    /// Not part of the public API.
+    /// </summary>
+    /// <remarks>
+    /// Runs <i>inside</i> the <c>ClipboardItem</c> promise, which is what lets the callback take
+    /// as long as it needs without the browser refusing the write.
+    /// </remarks>
+    [JSInvokable]
+    public async Task<string?> ResolveCopyValue()
+    {
+        var value = ResolveValue();
+        if (!string.IsNullOrEmpty(value))
+        {
+            lastAsyncValue = value;
+            return value;
+        }
+
+        return await ResolveAsyncValue();
+    }
+
+    /// <summary>
+    /// Called from JS once the clipboard write has settled. Not part of the public API.
+    /// </summary>
+    [JSInvokable]
+    public async Task HandleCopyOutcome(string outcome)
+    {
+        if (outcome != CopyOutcomeOk)
+        {
+            await ReportFailureAsync(outcome);
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        copied = true;
+
+        if (OnCopied.HasDelegate)
+        {
+            await OnCopied.InvokeAsync(lastAsyncValue);
+        }
+
+        await InvokeAsync(StateHasChanged);
     }
 
     /// <summary>
@@ -350,6 +436,21 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
             {
                 // Circuit already gone; nothing to clean up.
             }
+        }
+
+        if (copyHandle is not null)
+        {
+            try
+            {
+                await copyHandle.InvokeVoidAsync("dispose");
+                await copyHandle.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Circuit already gone; nothing to clean up.
+            }
+
+            copyHandle = null;
         }
 
         copyTextRef?.Dispose();
