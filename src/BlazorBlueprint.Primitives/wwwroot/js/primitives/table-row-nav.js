@@ -128,6 +128,90 @@ export function preventSpaceKeyScroll(element) {
 }
 
 /**
+ * Attaches the row key and click behaviour once for a whole grid, instead of once per row.
+ *
+ * Every row used to register its own listeners, which meant one interop call — and so one circuit
+ * round trip on Blazor Server — per row. Measured on the demo, a 465-row grid sent 240
+ * client-to-server messages on load against 23 for a page with no grid, and the count tracked the
+ * row count.
+ *
+ * The listeners now live on the grid container and find the row at event time. Rows opt in by
+ * rendering `data-bb-row-keys` and `data-bb-row-click`, so a row that wants neither is still
+ * skipped — without anyone calling into JavaScript.
+ *
+ * Phases are unchanged relative to the event target: capture on an ancestor still runs before the
+ * target, and bubble on an ancestor still runs after the target and before Blazor's document-level
+ * dispatch, which is the ordering both handlers depend on.
+ *
+ * @param {HTMLElement} container - An ancestor of every row in the grid.
+ * @returns {{ dispose(): void }} Cleanup handle.
+ */
+export function delegateRowBehaviour(container) {
+    if (!container) return { dispose: () => {} };
+
+    const rowFor = (target, attribute) => {
+        if (!target || typeof target.closest !== 'function') return null;
+        const row = target.closest(`[${attribute}]`);
+        return row && container.contains(row) ? row : null;
+    };
+
+    const keyCapture = (e) => {
+        const row = rowFor(e.target, 'data-bb-row-keys');
+        if (!row) return;
+
+        row._bbInteractiveKeyDown = isInteractiveTarget(e.target, row);
+
+        if (row._bbInteractiveKeyDown) {
+            return;
+        }
+
+        if (e.key === ' ' || e.keyCode === 32 ||
+            e.key === 'ArrowUp' || e.keyCode === 38 ||
+            e.key === 'ArrowDown' || e.keyCode === 40) {
+            e.preventDefault();
+        }
+    };
+
+    const keyBubble = (e) => {
+        const row = rowFor(e.target, 'data-bb-row-keys');
+        if (!row || !row._bbInteractiveKeyDown) return;
+
+        row._bbInteractiveKeyDown = false;
+
+        // A row being edited needs Enter and Escape to reach Blazor, because that is how the edit
+        // is committed or discarded from inside an input. Stopping propagation here would block
+        // every Blazor handler in the row, not just the row's own, because Blazor listens at the
+        // document. The row's C# handler knows it is editing and does not run its selection
+        // shortcuts for these keys.
+        if (row.dataset.editing === 'true' && (e.key === 'Enter' || e.key === 'Escape')) {
+            return;
+        }
+
+        e.stopPropagation();
+    };
+
+    const clickCapture = (e) => {
+        const row = rowFor(e.target, 'data-bb-row-click');
+        if (!row) return;
+
+        const interactive = e.target.closest(INTERACTIVE_SELECTOR);
+        row._bbInteractiveClick = !!(interactive && row.contains(interactive) && interactive !== row);
+    };
+
+    container.addEventListener('keydown', keyCapture, { capture: true });
+    container.addEventListener('keydown', keyBubble, { capture: false });
+    container.addEventListener('click', clickCapture, { capture: true });
+
+    return {
+        dispose: () => {
+            container.removeEventListener('keydown', keyCapture, { capture: true });
+            container.removeEventListener('keydown', keyBubble, { capture: false });
+            container.removeEventListener('click', clickCapture, { capture: true });
+        }
+    };
+}
+
+/**
  * Checks whether the event target is an interactive child of the row,
  * or is inside a portal-based overlay (popover, combobox dropdown, etc.)
  * that was triggered from within the row.

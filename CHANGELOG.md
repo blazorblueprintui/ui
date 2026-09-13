@@ -30,6 +30,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
   Distinct Components-layer imports per page load drop from three-to-six to one-to-three. Combined with the per-circuit cache, client-to-server messages during load on `/components/input` go **92 → 54**.
 
+- **A data grid attaches its row key and click handlers once, not once per row.** Every `BbDataGridRow` registered its own listeners in its `OnAfterRenderAsync`, and disposed them one by one on teardown — one interop call, and so one circuit round trip, per row in each direction. The cost scaled with row count, which is why a large grid felt slow and a demo page never did.
+
+  The listeners now live on the grid container and find the row from the event target. Rows opt in by rendering `data-bb-row-keys` and `data-bb-row-click`, which reproduces the previous per-row gating exactly — a grouping row, which wanted neither, still gets neither — without anyone calling into JavaScript. `BbDataGridRow` no longer implements `IAsyncDisposable`; it has nothing left to release.
+
+  Client-to-server messages during page load at a 20ms round trip:
+
+  | page | rows | before | after |
+  |---|---|---|---|
+  | `/components/datagrid` | 465 | 240 | **111** |
+  | `/recipes/filterable-datagrid` | 21 | 54 | **42** |
+  | `/components/button` | 0 | 36 | 36 |
+
+  `BbTableRow` still registers per row. It is used by `BbDataTable` and has no container reference to delegate to yet.
+
 - **A component's JavaScript module is imported once per circuit, not once per component.** Every component cached its module reference in an *instance* field, so thirteen `BbInput`s on a page issued thirteen `import` calls for the same already-loaded file — and on Blazor Server each one is a network round trip. The cost scaled with how many controls a page had, which is why it showed up on dense admin forms and not in a demo.
 
   `JsModules.GetAsync(jsRuntime, path)` caches per `IJSRuntime` — per circuit on Server, per application on WebAssembly — and hands the same reference to every caller. All 38 import sites across the two libraries now go through it. The reference is non-owning, so a component tearing itself down cannot take the module away from the ones still using it.
