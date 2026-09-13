@@ -24,6 +24,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Theme and sidebar start up in one call each.** `ThemeService.InitializeAsync` made two to four separate calls — read localStorage, maybe clear a stale entry, maybe ask the OS for its dark-mode preference, apply the result — and `BbSidebarProvider` made two. Every one was a circuit round trip, on every page load, before the page could settle into the right state. None of the decisions between them need the server: they are reads of a cookie, localStorage and a media query.
+
+  `theme.initialize` and `sidebar.initialize` do the lot and return what they applied. The valid colour names travel with the theme config, so a corrupted or outdated entry in localStorage falls back to the configured default in the browser exactly as `ParseEnum` would in C#, rather than being applied and corrected a round trip later.
+
+  The `PersistToLocalStorage` guard from [#481](https://github.com/blazorblueprintui/ui/issues/481) moved with it. Its unit tests now assert the configuration C# hands over — which is what C# still owns — and the storage behaviour itself is verified by driving the demo.
+
 - **The five modules that load on nearly every page ship as one file.** `bb-components-core.js` re-exports `theme`, `sidebar`, `sidebar-inset`, `text-input` and `composition-guard`, addressed as `textInput.initialize` in the same style as the primitives bundle.
 
   Only those five. Measured cold across eight demo pages, `theme.js`, `sidebar.js` and `sidebar-inset.js` load on **every** one, and `text-input.js` with `composition-guard.js` on every page carrying a form control — three to five round trips before anyone clicks. The other twenty-five stay lazy on purpose: bundling all of them would be 56 KB gzipped, so an app showing one `BbInput` would download the dashboard grid, the dock, the markdown editor and the ECharts adapter to get it. These five are 8 KB and a page has already paid for them.
@@ -50,12 +56,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
   Measured in Chromium against the demo Server host at a 20ms round trip, client-to-server messages during page load:
 
-  | page | text inputs | before | after |
+  | page | text inputs | before | after all of this |
   |---|---|---|---|
-  | `/components/input` | 13 | 92 | **65** |
-  | `/components/form-field-input` | 9 | 65 | **51** |
-  | `/components/button` | 0 | 40 | 39 |
-  | `/components/separator` | 0 | 39 | 39 |
+  | `/components/input` | 13 | 92 | **48** |
+  | `/components/form-field-input` | 9 | 65 | **37** |
+  | `/components/button` | 0 | 40 | **31** |
+  | `/components/separator` | 0 | 39 | **32** |
 
   Roughly four extra messages per input becomes two. What is left is each control's own `initialize` call, which is genuinely per-instance — it registers listeners on that element.
 
