@@ -2,9 +2,10 @@
 @using System.Timers
 @using BlazorBlueprint.Primitives.Utilities
 @using Microsoft.Extensions.Logging
-@implements IDisposable
+@implements IAsyncDisposable
 @inject ILogger<BbHoverCardTrigger> Logger
 @inject IServiceProvider Services
+@inject IJSRuntime JSRuntime
 
 @* HoverCardTrigger primitive - trigger element that opens on hover *@
 @if (AsChild)
@@ -30,6 +31,7 @@ else
 
 @code {
     private ElementReference _triggerRef;
+    private IJSObjectReference? _elementUtils;
     private System.Timers.Timer? _openTimer;
     private System.Timers.Timer? _closeTimer;
     private bool _disposed;
@@ -146,11 +148,14 @@ else
     private void HandleFocusForContext()
     {
         CancelCloseTimer();
-        if (!Context.IsOpen)
-        {
-            Context.Open(_asChildTriggerRef);
-            InvokeAsync(StateHasChanged);
-        }
+
+        // TriggerContext.OnFocus is an Action, and widening it to Func<Task> would break every
+        // consumer implementing the AsChild pattern. Start the work and observe its faults here
+        // instead, so nothing is left unhandled.
+        _ = OpenOnVisibleFocusAsync(_asChildTriggerRef)
+            .ContinueWith(
+                t => Logger.LogDebug(t.Exception, "HoverCardTrigger failed to open on focus."),
+                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
     }
 
     private void HandleBlurForContext()
@@ -174,8 +179,23 @@ else
         }
     }
 
-    protected override void OnAfterRender(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender)
+        {
+            try
+            {
+                _elementUtils = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/element-utils.js");
+            }
+            catch (Exception ex) when (ex is JSException or InvalidOperationException or TaskCanceledException)
+            {
+                // Prerendering, or a circuit torn down mid-import. Without the module the focus
+                // path opens as it always did rather than becoming unreachable.
+                Logger.LogDebug(ex, "HoverCardTrigger could not load element-utils; focus opens without a keyboard-arrival check.");
+            }
+        }
+
         // Proactively set the trigger element reference so it's available
         // even when the hover card is opened programmatically (via @bind-Open)
         if (!AsChild)
@@ -260,16 +280,55 @@ else
         }
     }
 
-    private void HandleFocus()
+    /// <summary>
+    /// Whether the trigger was reached by a deliberate keyboard focus, rather than by focus moved
+    /// programmatically by a focus trap or an explicit <c>.focus()</c> call.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately not <c>:focus-visible</c>. Chrome reports that selector as true for a
+    /// programmatic <c>.focus()</c> on a <c>div[tabindex="0"]</c> even directly after a real mouse
+    /// click, so it does not separate the two cases; the JS side keys off a recent Tab instead.
+    ///
+    /// Returns true when the check cannot run — during prerendering, or with the module
+    /// unavailable. WCAG 1.4.13 requires the card to be keyboard reachable, so an unavailable
+    /// check must never withhold it.
+    /// </remarks>
+    private async Task<bool> IsKeyboardFocusAsync(ElementReference element)
+    {
+        if (_elementUtils == null) return true;
+
+        try
+        {
+            return await _elementUtils.InvokeAsync<bool>("isKeyboardFocus", element);
+        }
+        catch (Exception ex) when (ex is JSException or JSDisconnectedException or ObjectDisposedException or TaskCanceledException)
+        {
+            Logger.LogDebug(ex, "HoverCardTrigger could not evaluate keyboard focus; treating focus as deliberate.");
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// Opens on focus, but only when the focus is visible. Opening on any focus meant a focus
+    /// trap, or any explicit <c>.focus()</c>, popped the card open with no user intent behind it.
+    /// </summary>
+    private async Task OpenOnVisibleFocusAsync(ElementReference? element)
+    {
+        if (_disposed || Context.IsOpen || !element.HasValue) return;
+
+        if (!await IsKeyboardFocusAsync(element.Value)) return;
+
+        // Re-check: the await gives a blur or a mouse path time to land.
+        if (_disposed || Context.IsOpen) return;
+
+        Context.Open(element.Value);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleFocus()
     {
         CancelCloseTimer();
-
-        if (!Context.IsOpen)
-        {
-            // Open immediately on focus (keyboard navigation)
-            Context.Open(_triggerRef);
-            InvokeAsync(StateHasChanged);
-        }
+        await OpenOnVisibleFocusAsync(_triggerRef);
     }
 
     private void HandleBlur()
@@ -337,10 +396,25 @@ else
         }
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         _disposed = true;
         CancelOpenTimer();
         CancelCloseTimer();
+
+        if (_elementUtils != null)
+        {
+            try
+            {
+                await _elementUtils.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or ObjectDisposedException or TaskCanceledException)
+            {
+                // Circuit already gone; nothing to release.
+                Logger.LogDebug(ex, "HoverCardTrigger could not dispose element-utils.");
+            }
+
+            _elementUtils = null;
+        }
     }
 }

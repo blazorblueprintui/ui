@@ -114,6 +114,10 @@ builder.Services.AddBlazorBlueprintComponents();
 <link rel="stylesheet" href="styles/theme.css" />
 <!-- Blazor Blueprint styles -->
 <link rel="stylesheet" href="_content/BlazorBlueprint.Components/blazorblueprint.css" />
+
+<!-- Applies the saved theme before the first paint, so a dark-mode user never sees
+     a flash of light. Must be a classic blocking script in <head>. See THEMING.md. -->
+<script src="_content/BlazorBlueprint.Components/js/theme-init.js"></script>
 ```
 
 **4. Add BbPortalHost** to your root layout (required for overlays like Dialog, Sheet, Popover):
@@ -161,7 +165,7 @@ builder.Services.AddBlazorBlueprintComponents();
 <Routes @rendermode="InteractiveServer" />
 ```
 
-> **Important:** A routed page's layout inherits the page's render mode. If you use *per-page* interactivity (e.g. because some auth pages must stay static for `HttpContext`), `MainLayout` renders statically — so buttons, theme toggles, and providers placed in it won't respond. In that case, render the interactive layout chrome (and `BbPortalHost` / `BbToastProvider` / `BbDialogProvider`) as interactive *islands* with `@rendermode`. See the [Render Modes guide](https://blazorblueprintui.com/guides/render-modes) for the full pattern.
+> **Important:** A routed page's layout inherits the page's render mode. If you use *per-page* interactivity (e.g. because some auth pages must stay static for `HttpContext`), `MainLayout` renders statically — so buttons, theme toggles, and providers placed in it won't respond. In that case, render the interactive layout chrome (and `BbPortalHost` / `BbToastProvider` / `BbDialogProvider`) as interactive *islands* with `@rendermode`. See the [Render Modes guide](demos/BlazorBlueprint.Demo.Shared/Pages/Guides/RenderModesGuide.razor) for the full pattern.
 
 ## Components
 
@@ -330,7 +334,7 @@ Building blocks for chat and AI-agent interfaces:
 
 ## Primitives
 
-Blazor Blueprint's **26 headless primitives** provide behavior, ARIA attributes, and keyboard support without any styling. They handle all the complex interaction logic — focus trapping, ARIA attributes, keyboard shortcuts, portal rendering — while giving you complete control over appearance.
+Blazor Blueprint's **28 headless primitives** provide behavior, ARIA attributes, and keyboard support without any styling. They handle all the complex interaction logic — focus trapping, ARIA attributes, keyboard shortcuts, portal rendering — while giving you complete control over appearance.
 
 Use primitives when you need full design freedom or are building a custom design system.
 
@@ -347,6 +351,8 @@ Use primitives when you need full design freedom or are building a custom design
 | **Dropdown Menu** | Open/close, keyboard navigation, click-outside dismissal |
 | **Hover Card** | Hover intent, delay timing, portal positioning |
 | **Label** | Label-control association |
+| **Menubar** | Application-style menu bar with roving focus, submenus and typeahead |
+| **Navigation Menu** | Site navigation with hoverable panels, pointer intent and keyboard access |
 | **Popover** | Floating positioning, portal rendering, click-outside |
 | **Progress** | Accessible progress bar with determinate and indeterminate states |
 | **Radio Group** | Single selection, arrow key navigation, ARIA roles |

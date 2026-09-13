@@ -40,11 +40,46 @@ async function loadECharts() {
 }
 
 /**
+ * Flattens an ECharts click param into the shape ChartClickEventArgs expects.
+ *
+ * `value` is whatever the series put there: a number for a bar or line, an array for scatter or
+ * candlestick, sometimes an object. Splitting it into a scalar and an array means the common two
+ * cases arrive typed on the C# side rather than as a JsonElement the consumer has to unpick, and
+ * anything else arrives as nulls with name and dataIndex still identifying the point.
+ *
+ * @param {object} params - ECharts event params
+ * @returns {object} Payload matching ChartClickEventArgs
+ */
+function toClickArgs(params) {
+  const raw = params.value;
+  let value = null;
+  let values = null;
+
+  if (typeof raw === 'number') {
+    value = raw;
+  } else if (Array.isArray(raw)) {
+    values = raw.map((v) => (typeof v === 'number' ? v : Number(v))).map((v) => (Number.isFinite(v) ? v : 0));
+  }
+
+  return {
+    seriesName: params.seriesName ?? null,
+    seriesIndex: typeof params.seriesIndex === 'number' ? params.seriesIndex : -1,
+    dataIndex: typeof params.dataIndex === 'number' ? params.dataIndex : -1,
+    name: params.name ?? null,
+    componentType: params.componentType ?? null,
+    value,
+    values
+  };
+}
+
+/**
  * Initialize an ECharts instance on a DOM element.
  * @param {string} chartId - Unique chart identifier (matches element id)
  * @param {object} option - ECharts option object (JSON from C#)
+ * @param {object} [dotNetRef] - Optional .NET reference for click callbacks (#480). Only passed
+ *   when the component actually has a handler, so a chart with none does no interop at all.
  */
-export async function initialize(chartId, option) {
+export async function initialize(chartId, option, dotNetRef) {
   const element = document.getElementById(chartId);
   if (!element) return;
 
@@ -80,11 +115,31 @@ export async function initialize(chartId, option) {
     }
   });
 
+  if (dotNetRef) {
+    // 'click' on the instance fires for data points only. Blank areas of the canvas never reach
+    // it, which is why the zrender-level handler below exists for OnChartClick.
+    chart.on('click', (params) => {
+      dotNetRef.invokeMethodAsync('HandleDataPointClick', toClickArgs(params));
+    });
+
+    // zrender sees every click on the canvas, and sets `target` only when the click landed on a
+    // rendered shape. No target means blank space, which is the one case 'click' above misses.
+    //
+    // Deliberately not chart.containPixel('grid', ...): that is true anywhere inside the plot
+    // area, including the gaps between bars, so it suppressed nearly every blank click.
+    chart.getZr().on('click', (event) => {
+      if (!event.target) {
+        dotNetRef.invokeMethodAsync('HandleChartClick');
+      }
+    });
+  }
+
   instances.set(chartId, {
     chart,
     element,
     resizeObserver,
     themeUnwatch,
+    dotNetRef,
     lastOption: option
   });
 }

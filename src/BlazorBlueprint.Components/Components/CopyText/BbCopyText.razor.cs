@@ -11,6 +11,7 @@ namespace BlazorBlueprint.Components;
 public partial class BbCopyText : ComponentBase, IAsyncDisposable
 {
     private IJSObjectReference? clipboardModule;
+    private IJSObjectReference? elementUtilsModule;
     private ElementReference anchorRef;
     private readonly string portalId = $"copytext-portal-{Guid.NewGuid():N}";
     private bool isHovered;
@@ -97,6 +98,9 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
 
     private string? TextCssClass => ClassNames.cn(
         "relative inline-flex gap-1 items-center cursor-pointer text-primary font-semibold",
+        // #459: rounded-sm keeps the ring on the text rather than boxing the whole line, since
+        // this is inline and usually sits mid-sentence.
+        "rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         Class);
 
     // Positioning, offset and z-index now come from the floating portal, so only the visual
@@ -117,9 +121,42 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
         isHovered = false;
     }
 
-    private void HandleFocus()
+    /// <summary>
+    /// Shows the tooltip on focus, but only when the focus came from the keyboard.
+    /// </summary>
+    /// <remarks>
+    /// Returning to a background browser tab restores focus to whatever held it, which fires
+    /// <c>focus</c> again and used to reopen the tooltip on the last-clicked instance. Nothing
+    /// then closed it, because the pointer was never over it to leave — reported in #506.
+    ///
+    /// Same discrimination as <c>BbHoverCardTrigger</c> (#504), through the same helper: a recent
+    /// Tab keydown, rather than <c>:focus-visible</c>, which Chrome reports as true for a
+    /// programmatic focus move. When the check cannot run the tooltip shows, because a keyboard
+    /// user losing it is worse than it lingering after a tab switch.
+    /// </remarks>
+    private async Task HandleFocusAsync()
     {
+        if (!await IsKeyboardFocusAsync())
+        {
+            return;
+        }
+
         ShowTooltip();
+        StateHasChanged();
+    }
+
+    private async Task<bool> IsKeyboardFocusAsync()
+    {
+        try
+        {
+            elementUtilsModule ??= await JS.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/element-utils.js");
+            return await elementUtilsModule.InvokeAsync<bool>("isKeyboardFocus", anchorRef);
+        }
+        catch (Exception ex) when (ex is JSException or JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        {
+            return true;
+        }
     }
 
     private void HandleBlur()
@@ -198,6 +235,18 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
             try
             {
                 await clipboardModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Circuit already gone; nothing to clean up.
+            }
+        }
+
+        if (elementUtilsModule is not null)
+        {
+            try
+            {
+                await elementUtilsModule.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {

@@ -43,12 +43,27 @@ public class FocusManager : IFocusManager, IAsyncDisposable
     }
 
     /// <inheritdoc />
-    public async Task<IAsyncDisposable> TrapFocus(ElementReference container)
+    public Task<IAsyncDisposable> TrapFocus(ElementReference container)
+        => TrapFocus(container, FocusTrapInitialFocus.FirstFocusable);
+
+    /// <inheritdoc />
+    public async Task<IAsyncDisposable> TrapFocus(
+        ElementReference container,
+        FocusTrapInitialFocus initialFocus,
+        ElementReference? initialFocusElement = null)
     {
         var module = await GetModuleAsync();
-        var cleanupFunction = await module.InvokeAsync<IJSObjectReference>("createFocusTrap", container);
+        var cleanupFunction = await module.InvokeAsync<IJSObjectReference>(
+            "createFocusTrap", container, ToJsMode(initialFocus), initialFocusElement);
         return new FocusTrapHandle(cleanupFunction);
     }
+
+    private static string ToJsMode(FocusTrapInitialFocus initialFocus) => initialFocus switch
+    {
+        FocusTrapInitialFocus.Container => "container",
+        FocusTrapInitialFocus.None => "none",
+        _ => "first",
+    };
 
     /// <inheritdoc />
     public async Task RestoreFocus(ElementReference? previousElement)
