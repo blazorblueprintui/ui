@@ -87,7 +87,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            module = await JsModules.GetAsync(jsRuntime, "./_content/BlazorBlueprint.Components/js/theme.js");
+            module = await JsModules.GetAsync(jsRuntime, "./_content/BlazorBlueprint.Components/js/bb-components-core.js");
         }
         catch (JSDisconnectedException)
         {
@@ -109,12 +109,12 @@ public class ThemeService : IAsyncDisposable
             // clearing site data by hand (#481). Clearing the stale entry closes the same hole
             // for anyone who already has one.
             var saved = options.PersistToLocalStorage
-                ? await module.InvokeAsync<ThemeState?>("loadTheme")
+                ? await module.InvokeAsync<ThemeState?>("theme.loadTheme")
                 : null;
 
             if (!options.PersistToLocalStorage)
             {
-                await module.InvokeVoidAsync("clearTheme");
+                await module.InvokeVoidAsync("theme.clearTheme");
             }
 
             if (saved is not null)
@@ -126,7 +126,7 @@ public class ThemeService : IAsyncDisposable
             }
             else if (options.DetectSystemPreference)
             {
-                isDarkMode = await module.InvokeAsync<bool>("getPrefersDark");
+                isDarkMode = await module.InvokeAsync<bool>("theme.getPrefersDark");
             }
 
             await ApplyAllAsync();
@@ -222,7 +222,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            await module.InvokeVoidAsync("applyTheme",
+            await module.InvokeVoidAsync("theme.applyTheme",
                 isDarkMode,
                 baseColor.ToString().ToLowerInvariant(),
                 primaryColor.ToString().ToLowerInvariant(),
@@ -243,7 +243,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            await module.InvokeVoidAsync("applyDarkMode", isDarkMode);
+            await module.InvokeVoidAsync("theme.applyDarkMode", isDarkMode);
         }
         catch
         {
@@ -260,7 +260,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            await module.InvokeVoidAsync("applyBaseColor", baseColor.ToString().ToLowerInvariant());
+            await module.InvokeVoidAsync("theme.applyBaseColor", baseColor.ToString().ToLowerInvariant());
         }
         catch
         {
@@ -277,7 +277,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            await module.InvokeVoidAsync("applyPrimaryColor", primaryColor.ToString().ToLowerInvariant());
+            await module.InvokeVoidAsync("theme.applyPrimaryColor", primaryColor.ToString().ToLowerInvariant());
         }
         catch
         {
@@ -294,7 +294,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            await module.InvokeVoidAsync("applyRadius", radius);
+            await module.InvokeVoidAsync("theme.applyRadius", radius);
         }
         catch
         {
@@ -311,7 +311,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            await module.InvokeVoidAsync("saveTheme",
+            await module.InvokeVoidAsync("theme.saveTheme",
                 isDarkMode,
                 baseColor.ToString().ToLowerInvariant(),
                 primaryColor.ToString().ToLowerInvariant(),

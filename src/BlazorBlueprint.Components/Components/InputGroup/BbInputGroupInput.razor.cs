@@ -217,9 +217,9 @@ public partial class BbInputGroupInput : ComponentBase
 
             try
             {
-                jsModule = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/text-input.js");
+                jsModule = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/bb-components-core.js");
                 dotNetRef = DotNetObjectReference.Create(this);
-                await jsModule.InvokeVoidAsync("initialize", inputRef, dotNetRef, instanceId, GetJsConfig());
+                await jsModule.InvokeVoidAsync("textInput.initialize", inputRef, dotNetRef, instanceId, GetJsConfig());
                 jsInitialized = true;
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
@@ -316,7 +316,7 @@ public partial class BbInputGroupInput : ComponentBase
         {
             try
             {
-                await jsModule.InvokeVoidAsync("dispose", instanceId);
+                await jsModule.InvokeVoidAsync("textInput.dispose", instanceId);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

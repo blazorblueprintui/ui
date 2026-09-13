@@ -32,7 +32,7 @@ public class ThemePersistenceTests
 
         await service.InitializeAsync();
 
-        Assert.DoesNotContain("loadTheme", module.Calls);
+        Assert.DoesNotContain("theme.loadTheme", module.Calls);
     }
 
     [Fact]
@@ -45,7 +45,7 @@ public class ThemePersistenceTests
 
         await service.InitializeAsync();
 
-        Assert.Contains("clearTheme", module.Calls);
+        Assert.Contains("theme.clearTheme", module.Calls);
     }
 
     [Fact]
@@ -82,8 +82,8 @@ public class ThemePersistenceTests
 
         await service.InitializeAsync();
 
-        Assert.Contains("loadTheme", module.Calls);
-        Assert.DoesNotContain("clearTheme", module.Calls);
+        Assert.Contains("theme.loadTheme", module.Calls);
+        Assert.DoesNotContain("theme.clearTheme", module.Calls);
         Assert.True(service.IsDarkMode);
         Assert.Equal(BaseColor.Slate, service.BaseColor);
         Assert.Equal(PrimaryColor.Blue, service.PrimaryColor);
@@ -132,13 +132,13 @@ public class ThemePersistenceTests
         {
             Calls.Add(identifier);
 
-            if (identifier == "loadTheme" && StoredThemeJson is not null)
+            if (identifier == "theme.loadTheme" && StoredThemeJson is not null)
             {
                 return ValueTask.FromResult(
                     JsonSerializer.Deserialize<TValue>(StoredThemeJson, JsonOptions)!);
             }
 
-            if (identifier == "getPrefersDark")
+            if (identifier == "theme.getPrefersDark")
             {
                 return ValueTask.FromResult((TValue)(object)false);
             }

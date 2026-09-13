@@ -72,7 +72,7 @@ public partial class BbSidebarProvider
             try
             {
                 // Load the sidebar JavaScript module
-                _module = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/sidebar.js");
+                _module = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/bb-components-core.js");
 
                 // Create a reference to this component for JS callbacks
                 _dotNetRef = DotNetObjectReference.Create(this);
@@ -84,7 +84,7 @@ public partial class BbSidebarProvider
                 if (ShouldPersist)
                 {
                     // Use JsonElement because JS returns bool|null and InvokeAsync<bool?> can't handle null
-                    var result = await _module.InvokeAsync<JsonElement>("getSidebarState", CookieKey!);
+                    var result = await _module.InvokeAsync<JsonElement>("sidebar.getSidebarState", CookieKey!);
                     savedOpen = result.ValueKind switch
                     {
                         JsonValueKind.True => true,
@@ -98,7 +98,7 @@ public partial class BbSidebarProvider
 
                 // Set up mobile detection and keyboard shortcuts
                 lastToggleShortcutEnabled = EnableToggleShortcut;
-                instanceId = await _module.InvokeAsync<int>("initializeSidebar", _dotNetRef, EnableToggleShortcut);
+                instanceId = await _module.InvokeAsync<int>("sidebar.initializeSidebar", _dotNetRef, EnableToggleShortcut);
 
                 StateHasChanged();
             }
@@ -122,7 +122,7 @@ public partial class BbSidebarProvider
 
             try
             {
-                await _module.InvokeVoidAsync("setToggleShortcutEnabled", instanceId, EnableToggleShortcut);
+                await _module.InvokeVoidAsync("sidebar.setToggleShortcutEnabled", instanceId, EnableToggleShortcut);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
@@ -198,7 +198,7 @@ public partial class BbSidebarProvider
             {
                 try
                 {
-                    await _module.InvokeVoidAsync("saveSidebarState", CookieKey!, Context.Open);
+                    await _module.InvokeVoidAsync("sidebar.saveSidebarState", CookieKey!, Context.Open);
                 }
                 catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
                 {
@@ -249,7 +249,7 @@ public partial class BbSidebarProvider
             {
                 if (instanceId != 0)
                 {
-                    await _module.InvokeVoidAsync("cleanup", instanceId);
+                    await _module.InvokeVoidAsync("sidebar.cleanup", instanceId);
                 }
 
             }

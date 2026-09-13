@@ -25,6 +25,37 @@ public class PrimitiveJsModuleTests
 
     private const string BundleFileName = "bb-primitives.js";
 
+    /// <summary>
+    /// The Components layer bundles only the modules that load on nearly every page — measured as
+    /// theme, sidebar, sidebar-inset, text-input and composition-guard. The rest stay lazy on
+    /// purpose: bundling all thirty would be 56 KB gzipped for an app that renders one input.
+    /// </summary>
+    private static readonly string ComponentsJsRoot = Path.Combine(
+        SourceTree.RepoRoot.FullName,
+        "src", "BlazorBlueprint.Components", "wwwroot", "js");
+
+    private const string ComponentsBundleFileName = "bb-components-core.js";
+
+    /// <summary>Namespace to module file, across every bundle in the libraries.</summary>
+    private static Dictionary<string, string> AllBundledModules()
+    {
+        var all = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        foreach (var (root, bundle) in new[]
+                 {
+                     (PrimitiveJsRoot, BundleFileName),
+                     (ComponentsJsRoot, ComponentsBundleFileName),
+                 })
+        {
+            foreach (Match m in ReExport.Matches(File.ReadAllText(Path.Combine(root, bundle))))
+            {
+                all[m.Groups["ns"].Value] = Path.Combine(root, m.Groups["file"].Value + ".js");
+            }
+        }
+
+        return all;
+    }
+
     /// <summary><c>export * as clickOutside from './click-outside.js';</c></summary>
     private static readonly Regex ReExport = new(
         @"^export \* as (?<ns>\w+) from '\./(?<file>[\w-]+)\.js';",
@@ -76,10 +107,9 @@ public class PrimitiveJsModuleTests
     [Fact]
     public void TheBundleNamespaceIsTheFileNameInCamelCase()
     {
-        var wrong = ReExport
-            .Matches(File.ReadAllText(Path.Combine(PrimitiveJsRoot, BundleFileName)))
-            .Where(m => m.Groups["ns"].Value != ToCamelCase(m.Groups["file"].Value))
-            .Select(m => $"{m.Groups["ns"].Value} should be {ToCamelCase(m.Groups["file"].Value)}")
+        var wrong = AllBundledModules()
+            .Where(pair => pair.Key != ToCamelCase(Path.GetFileNameWithoutExtension(pair.Value)))
+            .Select(pair => $"{pair.Key} should be {ToCamelCase(Path.GetFileNameWithoutExtension(pair.Value))}")
             .ToList();
 
         Assert.True(
@@ -91,14 +121,12 @@ public class PrimitiveJsModuleTests
     [Fact]
     public void EveryInteropIdentifierResolvesToAnExportedFunction()
     {
-        var namespaces = ReExport
-            .Matches(File.ReadAllText(Path.Combine(PrimitiveJsRoot, BundleFileName)))
-            .ToDictionary(m => m.Groups["ns"].Value, m => m.Groups["file"].Value, StringComparer.Ordinal);
+        var namespaces = AllBundledModules();
 
         var exportsByNamespace = namespaces.ToDictionary(
             pair => pair.Key,
             pair => ModuleExport
-                .Matches(File.ReadAllText(Path.Combine(PrimitiveJsRoot, pair.Value + ".js")))
+                .Matches(File.ReadAllText(pair.Value))
                 .Select(m => m.Groups["name"].Value)
                 .ToHashSet(StringComparer.Ordinal),
             StringComparer.Ordinal);
@@ -123,7 +151,7 @@ public class PrimitiveJsModuleTests
                 if (!exports.Contains(fn))
                 {
                     unresolved.Add($"{SourceTree.RelativePath(file)}: \"{ns}.{fn}\" — " +
-                                   $"{namespaces[ns]}.js exports no {fn}");
+                                   $"{Path.GetFileName(namespaces[ns])} exports no {fn}");
                 }
             }
         }

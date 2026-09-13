@@ -24,6 +24,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **The five modules that load on nearly every page ship as one file.** `bb-components-core.js` re-exports `theme`, `sidebar`, `sidebar-inset`, `text-input` and `composition-guard`, addressed as `textInput.initialize` in the same style as the primitives bundle.
+
+  Only those five. Measured cold across eight demo pages, `theme.js`, `sidebar.js` and `sidebar-inset.js` load on **every** one, and `text-input.js` with `composition-guard.js` on every page carrying a form control — three to five round trips before anyone clicks. The other twenty-five stay lazy on purpose: bundling all of them would be 56 KB gzipped, so an app showing one `BbInput` would download the dashboard grid, the dock, the markdown editor and the ECharts adapter to get it. These five are 8 KB and a page has already paid for them.
+
+  Distinct Components-layer imports per page load drop from three-to-six to one-to-three. Combined with the per-circuit cache, client-to-server messages during load on `/components/input` go **92 → 54**.
+
 - **A component's JavaScript module is imported once per circuit, not once per component.** Every component cached its module reference in an *instance* field, so thirteen `BbInput`s on a page issued thirteen `import` calls for the same already-loaded file — and on Blazor Server each one is a network round trip. The cost scaled with how many controls a page had, which is why it showed up on dense admin forms and not in a demo.
 
   `JsModules.GetAsync(jsRuntime, path)` caches per `IJSRuntime` — per circuit on Server, per application on WebAssembly — and hands the same reference to every caller. All 38 import sites across the two libraries now go through it. The reference is non-owning, so a component tearing itself down cannot take the module away from the ones still using it.

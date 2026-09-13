@@ -60,7 +60,7 @@ public partial class BbSidebarInset : IAsyncDisposable
         {
             try
             {
-                module = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/sidebar-inset.js");
+                module = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/bb-components-core.js");
                 jsReady = true;
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
