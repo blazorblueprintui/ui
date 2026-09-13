@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-09-14
+
+### Added
+
+- **`BbCopyText` can take an asynchronous value** — [#466](https://github.com/blazorblueprintui/ui/issues/466), the deferred half of [#453](https://github.com/blazorblueprintui/ui/issues/453). `ValueFuncAsync` is for text that has to be fetched or computed. `Value` still wins when non-empty, then `ValueFunc`, then this.
+
+  **It could not be built as an awaited `ValueFunc`, and that is the whole issue.** A clipboard write requires transient user activation, and awaiting spends it — so resolving the text first and writing second gets the write refused, Safari most strictly, while the component cheerfully showed its copied state and the clipboard stayed empty. The function is instead invoked from JavaScript *inside* a `ClipboardItem`, handing the browser the promise rather than the result, so the activation survives however long the callback takes.
+
+  On a browser that cannot take a promise there, the value is resolved before writing and a refusal is reported rather than passing silently.
+
+- **`BbCopyText` reports a failed copy** — `OnCopyFailed` carries a `CopyTextFailure` of `Refused` (the browser rejected the write, most often an expired activation) or `NoValue` (nothing to copy). Failure used to be entirely invisible, which is what let the bug above go unnoticed.
+
+### Changed
+
+- **The `execCommand` clipboard fallback no longer runs for every failure** — it ran whenever `navigator.clipboard.writeText` threw, which meant an expired user activation quietly fell through to a path that cannot rescue one either, and the component reported success regardless. It now runs only for the insecure-context case it was written for, where the Clipboard API is absent altogether.
+
+  **Verified in Chrome**: a `ValueFuncAsync` taking a deliberate 1.5 seconds copies successfully and `OnCopied` reports the value, where resolving first would have been refused. The outcome contract was checked directly too — an empty string, a non-string and a missing reference all return `noValue`.
+
+  **Not verified in Safari or Firefox.** Activation semantics differ per engine and Safari is the strictest, which is precisely the browser this exists for. It needs a manual pass there with a genuinely slow function before anyone should treat it as proven.
+
+---
+
 ## 2026-09-13
 
 ### Added
