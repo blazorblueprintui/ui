@@ -1,4 +1,4 @@
-## What's New in v3.16.1
+## What's New in v3.17.0
 
 ### New Features
 - **Charts** — new `OnDataPointClick` and `OnChartClick` on `BbChartBase`, so bar, line, area, pie, scatter, candlestick and the rest all report clicks. `OnDataPointClick` carries a `ChartClickEventArgs` with `SeriesName`, `SeriesIndex`, `DataIndex`, `Name`, `ComponentType`, `Value` and `Values`; `DataIndex` maps straight back to the bound collection. `OnChartClick` fires only when the click landed away from a data point. No interop is set up unless one of the two has a handler.
@@ -15,4 +15,4 @@
 ### Improvements
 - **Accessibility** — the themed focus ring now replaces the browser's own outline on 21 components: `BbAccordionTrigger`, `BbAlertDialogTrigger`, `BbAttachmentTrigger`, `BbBreadcrumbLink`, `BbCarouselNext`, `BbCarouselPrevious`, `BbCollapsibleTrigger`, `BbColorPicker`, `BbCommandInput`, `BbCopyText`, `BbDateTimePicker`, `BbDialogTrigger`, `BbFileUpload`, `BbFormWizard`, `BbMarker`, `BbPopoverTrigger`, `BbRating`, `BbResponsiveNavItems`, `BbSheetTrigger`, `BbSidebarRail` and `BbThemeSwitcher`. `BbAttachmentTrigger` and `BbCommandInput` previously drew no focus indicator at all.
 - **BbFileUpload** — the focus ring goes on the visible dropzone through `focus-within`, rather than on the transparent file input laid over it where it showed nothing.
-- Bumped the `BlazorBlueprint.Primitives` dependency to 3.16.1.
+- Bumped the `BlazorBlueprint.Primitives` dependency to 3.17.0.
