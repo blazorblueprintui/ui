@@ -1,5 +1,8 @@
 ## What's New in v3.17.0
 
+### Breaking Changes
+- **HoverCardTrigger** — now implements `IAsyncDisposable` instead of `IDisposable`, so it can release its JS module. Only code that calls `Dispose()` on the trigger directly is affected.
+
 ### New Features
 - **FocusTrapInitialFocus** — new enum controlling what a focus trap focuses on open: `FirstFocusable` (the default and previous behaviour), `Container` or `None`.
 - **DialogContent**, **SheetContent** — new `InitialFocus` and `InitialFocusElement` parameters, so a dialog whose first tabbable child acts on focus no longer needs a dummy `tabindex="0"` element to opt out.
