@@ -51,6 +51,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **Breaking — `JsOnClickOutside` and `JsOnEscapeKey` are gone from `BbPopoverContent`, `BbSelectContent` and `BbDropdownMenuContent`.** Both were `[JSInvokable]` and `[EditorBrowsable(Never)]` — callable only from the library's own JavaScript. Dismissal now arrives through `BbFloatingPortal.OnDismiss`.
 
+- **Escape dismisses the topmost overlay, not every open one.** A popover opened inside a dialog used to close the dialog on the first press — sometimes both at once — because each overlay registered its own document-level `keydown` listener and none of them knew about the others.
+
+  `escape-keydown.js` already kept a stack behind a single listener so that dialogs, sheets and drawers took turns. Everything that watches Escape at the document now joins that stack: a floating overlay registers through `overlay.open`, and the topmost entry is the only one that hears the key. Overlays whose content holds focus — Select, Dropdown Menu, Context Menu, Menubar — keep handling Escape on their own container and now stop it propagating, so they take precedence over whatever is underneath without needing a place on the stack.
+
+  Escape now peels one layer per press: popover, then dialog. A convention test fails the build if another module starts watching Escape at the document.
+
+- **Removed — `onClickOutside` and `onEscapeKey` in `click-outside.js`.** Both are superseded and both caused a bug fixed in this release: the first went stale when Blazor replaced the element and had no exemption for nested portals, the second was the second document listener that broke Escape ordering. Neither has a caller left. Use `onClickOutsideByIds` and `escapeKeydown.initialize`.
+
 - **`BbFloatingPortal` no longer gives up on the portal host after 500ms.** `MountPortalAsync` raced the host's render signal against a `Task.Delay(500)`. The signal is never lost — it arrives exactly one network round trip after the portal registers, because the host only reaches `OnAfterRenderAsync` once the browser has acknowledged the render batch. Measured, the wait tracks round-trip time 1:1: 104ms at a 100ms round trip, 305ms at 300ms, 488ms at 480ms, and at 600ms every single open times out. That is what produced the stray `PortalRenderTimeout` warnings — not a lost signal, a fixed budget for a variable cost.
 
   The one case the deadline genuinely guarded is a missing host, and `PortalService.HasHost` answers that synchronously, before the wait. The wait is now unbounded and cancelled when the portal closes or the component is disposed, and `PortalRenderTimeout` is gone.

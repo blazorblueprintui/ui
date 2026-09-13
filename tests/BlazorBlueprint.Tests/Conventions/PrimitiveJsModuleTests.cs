@@ -40,6 +40,11 @@ public class PrimitiveJsModuleTests
         @"Invoke(?:Void)?Async(?:<[^>]*>)?\(\s*\n?\s*""(?<ns>[a-z][\w]*)\.(?<fn>[A-Za-z]\w*)""",
         RegexOptions.Compiled);
 
+    /// <summary><c>document.addEventListener('keydown', …)</c>, however it is spelled.</summary>
+    private static readonly Regex DocumentKeydownListener = new(
+        @"document\s*\.\s*addEventListener\s*\(\s*['""]keydown['""]",
+        RegexOptions.Compiled);
+
     /// <summary>A C# import of a primitive module by path.</summary>
     private static readonly Regex DirectImport = new(
         @"""\./_content/BlazorBlueprint\.Primitives/js/primitives/(?<file>[\w-]+)\.js""",
@@ -144,6 +149,34 @@ public class PrimitiveJsModuleTests
             "Each of these costs its own circuit round trip on every page load. Use " +
             "PrimitiveModules.GetAsync(JSRuntime) and a namespaced identifier instead:\n  " +
             string.Join("\n  ", offenders));
+    }
+
+    [Fact]
+    public void OnlyTheEscapeStackWatchesEscapeAtTheDocument()
+    {
+        // Escape must dismiss the topmost overlay, not every open one. escape-keydown.js keeps a
+        // stack behind a single document listener and is the only thing that can order them; a
+        // second module adding its own document listener is invisible to that ordering, and a
+        // popover inside a dialog then closes both at once. Overlays whose content holds focus
+        // (Select, menus) handle Escape on their own container and stop it propagating, which is
+        // why a container-level listener is fine and a document-level one is not.
+        // A document-level keydown listener is only a problem when it acts on Escape.
+        // element-utils.js watches for Tab to tell a keyboard arrival from a mouse one, and
+        // keyboard-shortcuts.js serves application shortcuts; neither looks at Escape.
+        var offenders = Directory
+            .EnumerateFiles(PrimitiveJsRoot, "*.js")
+            .Where(file => Path.GetFileName(file) != "escape-keydown.js")
+            .Select(file => (Name: Path.GetFileName(file), Text: File.ReadAllText(file)))
+            .Where(m => DocumentKeydownListener.IsMatch(m.Text) && m.Text.Contains("Escape", StringComparison.Ordinal))
+            .Select(m => m.Name)
+            .ToList();
+
+        Assert.True(
+            offenders.Count == 0,
+            "These modules add their own document-level keydown listener, so Escape would bypass " +
+            $"the ordering in escape-keydown.js: {string.Join(", ", offenders)}. Register with " +
+            "escapeKeydown.initialize(ref, id, method) instead, or handle the key on your own " +
+            "container and call stopPropagation().");
     }
 
     /// <summary>

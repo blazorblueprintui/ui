@@ -18,6 +18,7 @@
  */
 
 import * as clickOutside from './click-outside.js';
+import * as escapeKeydown from './escape-keydown.js';
 import * as positioning from './positioning.js';
 
 /** portalId -> cleanup functions to run when the overlay closes. */
@@ -64,8 +65,11 @@ export async function open(portalId, reference, floating, options = {}, dismissR
         }
 
         if (dismiss.onEscapeKey) {
-            const handle = clickOutside.onEscapeKey(dismissRef, 'JsOnDismissEscape');
-            cleanups.push(() => handle.dispose());
+            // The shared stack, not a listener of our own: Escape must dismiss the topmost overlay
+            // only. A popover opened inside a dialog is above it and goes first; the dialog is
+            // still there for the next press.
+            escapeKeydown.initialize(dismissRef, portalId, 'JsOnDismissEscape');
+            cleanups.push(() => escapeKeydown.dispose(portalId));
         }
     }
 

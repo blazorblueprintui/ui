@@ -235,6 +235,9 @@ export function setupKeyboardNavigation(contentId, dotNetRef) {
 
             case 'Escape':
                 e.preventDefault();
+                // Ours to handle, so it must not also reach the document-level escape stack —
+                // otherwise a select inside a dialog closes both at once.
+                e.stopPropagation();
                 if (dotNetRef) {
                     await dotNetRef.invokeMethodAsync('JsOnEscapeKey');
                 }

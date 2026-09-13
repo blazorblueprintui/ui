@@ -10,9 +10,8 @@ Read this when a problem has a recognisable shape from the list. Don't read it f
 
 ## Verification traps
 
-These are about **believing a check that never happened**. Each produced a confident "verified"
-that was false; two shipped or nearly shipped a broken build, and one invented a regression that
-was not there.
+These three are about **believing a check that never happened**. All three produced a confident
+"verified" that was false, and two of them shipped or nearly shipped a broken build.
 
 ### 1. Never `tail` a `dotnet build`
 
@@ -67,28 +66,6 @@ await fetch('/_content/BlazorBlueprint.Components/js/foo.js', { cache: 'reload' 
 
 ---
 
-### 4. Playwright's `addInitScript` stacks, and every later measurement is wrong
-
-`page.addInitScript(...)` registers the script on the **context**, not on the navigation. Calling it
-once per measurement run against the same context installs N copies. A harness that wrapped
-`WebSocket.send` to emulate latency therefore emulated `N × 10ms`, and logged every frame N times.
-
-Five consecutive "after" measurements got monotonically worse — 214ms, 250ms, 298ms, 363ms, 414ms —
-which read exactly like a performance regression in the change under test. It was the harness.
-
-**Do this instead:** build a fresh context inside the run and close it at the end.
-
-```js
-const context = await page.context().browser().newContext();
-try { await context.addInitScript(fn, arg); /* … */ } finally { await context.close(); }
-```
-
-**The tell:** repeated runs drift in one direction while staying stable *within* a batch. A real
-regression is stable across batches; an accumulating harness is not. Restarting the server does not
-help, which is the second tell — it points at the browser, not the app.
-
----
-
 ## Rendering and interop
 
 ### Blazor diffs against what it last rendered, not against the DOM
@@ -110,33 +87,6 @@ The DOM is never consulted.
 
 **Rule of thumb:** whichever layer writes an attribute must own it for the whole interaction, and
 must hand it back at a defined sync point. Do not interleave.
-
-### An `import(...)` issued from C# is a circuit round trip, not a fetch
-
-On Blazor Server, `IJSRuntime.InvokeAsync<IJSObjectReference>("import", path)` posts an instruction
-to the browser and awaits the reply. The cost is the circuit, not the file — it is paid once per
-module per page load whether or not the file is already in the browser's HTTP cache, and it scales
-with the user's latency. Three chained module loads read as "1ms, 3ms, 2ms to fetch" in DevTools
-with 30–90ms gaps between them, and the gaps are the whole story.
-
-A nested `await import(...)` *inside* a module is worse, because nothing on the C# side can see it.
-Floating UI was loaded that way from `positioning.js` for exactly this reason.
-
-**Do this instead:** reach everything through `PrimitiveModules.GetAsync`, which imports one bundle
-and caches it per circuit, and make intra-module dependencies static imports so the browser resolves
-the graph itself. `PrimitiveJsModuleTests` fails the build if a new module escapes the bundle.
-
-**The tell:** a slow interaction whose network panel shows small files and large gaps.
-
-### Blazor resolves a dotted interop identifier by walking the object
-
-`module.InvokeVoidAsync("clickOutside.onEscapeKey", …)` works: Blazor splits the identifier on `.`
-and walks from the module object, so `export * as clickOutside from './click-outside.js'` is directly
-addressable. This is what makes one bundle possible despite six modules all exporting `initialize`
-and `dispose`.
-
-A wrong identifier fails only at runtime, in the browser, as `Could not find 'x.y'` — and only on the
-path that uses it. Neither the compiler nor the API surface snapshot can see it.
 
 ### Overlay content lives in a different subtree from its trigger
 

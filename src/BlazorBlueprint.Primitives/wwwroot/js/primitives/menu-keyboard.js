@@ -200,6 +200,9 @@ export function initialize(container, dotNetRef, instanceId, config) {
 
       case 'Escape':
         e.preventDefault();
+        // Ours to handle, so it must not also reach the document-level escape stack — otherwise
+        // a menu inside a dialog closes both at once.
+        e.stopPropagation();
         dotNetRef.invokeMethodAsync('JsOnEscapeKey').catch(() => {});
         break;
 
