@@ -1,4 +1,4 @@
-## What's New in v3.16.1
+## What's New in v3.17.0
 
 ### New Features
 - **FocusTrapInitialFocus** — new enum controlling what a focus trap focuses on open: `FirstFocusable` (the default and previous behaviour), `Container` or `None`.
