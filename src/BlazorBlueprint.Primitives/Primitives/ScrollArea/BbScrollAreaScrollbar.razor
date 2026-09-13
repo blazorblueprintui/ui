@@ -84,14 +84,13 @@
 
         try
         {
-            jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import",
-                "./_content/BlazorBlueprint.Primitives/js/primitives/scroll-area.js");
+            jsModule = await PrimitiveModules.GetAsync(JSRuntime);
             dotNetRef = DotNetObjectReference.Create(this);
 
             var viewportEl = await jsModule.InvokeAsync<IJSObjectReference>(
-                "getViewportElement", Context!.ViewportId);
+"scrollArea.getViewportElement", Context!.ViewportId);
 
-            await jsModule.InvokeVoidAsync("initialize", instanceId, viewportEl,
+            await jsModule.InvokeVoidAsync("scrollArea.initialize", instanceId, viewportEl,
                 scrollbarRef, dotNetRef,
                 new { orientation = Orientation.ToString().ToLower() });
             jsInitialized = true;
@@ -131,8 +130,7 @@
         {
             try
             {
-                await jsModule.InvokeVoidAsync("dispose", instanceId);
-                await jsModule.DisposeAsync();
+                await jsModule.InvokeVoidAsync("scrollArea.dispose", instanceId);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {

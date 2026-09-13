@@ -320,6 +320,47 @@ Each category has its own host (`BbContainerPortalHost`, `BbOverlayPortalHost`),
 
 `BbFloatingPortal` keeps content mounted in the DOM when closed (`ForceMount` defaults to `true`), hidden via CSS. A `data-state` attribute (`"open"` / `"closed"`) on the portal content enables CSS animations.
 
+## JavaScript Modules
+
+Every primitive that needs JavaScript gets it from one bundle,
+`js/primitives/bb-primitives.js`, loaded through `PrimitiveModules`:
+
+```csharp
+var module = await PrimitiveModules.GetAsync(JSRuntime);
+await module.InvokeVoidAsync("elementUtils.scrollIntoView", elementId, "nearest");
+```
+
+The identifier is `namespace.function`, where the namespace is the module's file name in
+camelCase — `clickOutside`, `elementUtils`, `positioning`, `focusTrap`, and so on. The individual
+files are still importable on their own if you need just one.
+
+`overlay.open` is the one to reach for when adding a floating component: it positions, reveals,
+keeps the element positioned and wires the dismissal listeners in a single call. Splitting that back
+into separate awaits puts a network round trip between each step, on every open.
+
+From a component, declare what you want rather than wiring it — `BbFloatingPortal` forwards it:
+
+```razor
+<BbFloatingPortal Dismiss="@(new FloatingDismissOptions {
+                      ContentId = Context.ContentId,
+                      TriggerId = Context.TriggerId,
+                      OnOutsideInteraction = true,
+                      OnEscapeKey = true })"
+                  OnDismiss="@HandleDismiss">
+```
+
+The portal reports the gesture and does nothing else with it; what a dismissal means stays with the
+owner.
+
+Two rules matter if you add a primitive that needs JavaScript:
+
+- **Re-export the new module from `bb-primitives.js`.** A module reached by its own
+  `import(...)` from C# costs an extra circuit round trip on Blazor Server, every page load,
+  cached or not.
+- **Do not dispose what `GetAsync` returns.** It is shared by every component on the circuit. The
+  returned reference ignores disposal so that a mistake here cannot break anything, but the call
+  is still dead code.
+
 ## Controlled vs Uncontrolled
 
 All stateful primitives support both controlled and uncontrolled modes:

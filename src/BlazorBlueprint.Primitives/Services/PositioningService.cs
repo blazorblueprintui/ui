@@ -10,8 +10,6 @@ namespace BlazorBlueprint.Primitives.Services;
 public class PositioningService : IPositioningService, IAsyncDisposable
 {
     private readonly IJSRuntime _jsRuntime;
-    private readonly SemaphoreSlim _moduleLock = new(1, 1);
-    private IJSObjectReference? _module;
     private bool _disposed;
 
     /// <summary>
@@ -23,24 +21,12 @@ public class PositioningService : IPositioningService, IAsyncDisposable
         _jsRuntime = jsRuntime;
     }
 
-    private async Task<IJSObjectReference> GetModuleAsync()
+    // The bundle is shared across the whole circuit, so the cache and the lock that used to live
+    // here now live in PrimitiveModules. This service must not dispose what it gets back.
+    private Task<IJSObjectReference> GetModuleAsync()
     {
         ObjectDisposedException.ThrowIf(_disposed, nameof(PositioningService));
-
-        await _moduleLock.WaitAsync();
-        try
-        {
-            if (_module == null)
-            {
-                _module = await _jsRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/positioning.js");
-            }
-            return _module;
-        }
-        finally
-        {
-            _moduleLock.Release();
-        }
+        return PrimitiveModules.GetAsync(_jsRuntime);
     }
 
     /// <inheritdoc />
@@ -64,7 +50,7 @@ public class PositioningService : IPositioningService, IAsyncDisposable
         };
 
         var result = await module.InvokeAsync<JsonElement>(
-            "computePosition", reference, floating, jsOptions);
+            "positioning.computePosition", reference, floating, jsOptions);
 
         return new PositionResult
         {
@@ -84,14 +70,14 @@ public class PositioningService : IPositioningService, IAsyncDisposable
     public async Task ApplyPositionAsync(ElementReference floating, PositionResult position, bool makeVisible = false)
     {
         var module = await GetModuleAsync();
-        await module.InvokeVoidAsync("applyPosition", floating, position, makeVisible);
+        await module.InvokeVoidAsync("positioning.applyPosition", floating, position, makeVisible);
     }
 
     /// <inheritdoc />
     public async Task HidePositionAsync(ElementReference floating)
     {
         var module = await GetModuleAsync();
-        await module.InvokeVoidAsync("hidePosition", floating);
+        await module.InvokeVoidAsync("positioning.hidePosition", floating);
     }
 
     /// <inheritdoc />
@@ -115,7 +101,7 @@ public class PositioningService : IPositioningService, IAsyncDisposable
         };
 
         var cleanup = await module.InvokeAsync<IJSObjectReference>(
-            "autoUpdate", reference, floating, jsOptions);
+            "positioning.autoUpdate", reference, floating, jsOptions);
 
         return new AutoUpdateHandle(cleanup);
     }
@@ -133,19 +119,9 @@ public class PositioningService : IPositioningService, IAsyncDisposable
         GC.SuppressFinalize(this);
         _disposed = true;
 
-        if (_module != null)
-        {
-            try
-            {
-                await _module.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-        }
-
-        _moduleLock.Dispose();
+        // Nothing to release. The module reference belongs to PrimitiveModules and is shared with
+        // every other component on the circuit; Blazor frees it when the circuit ends.
+        await Task.CompletedTask;
     }
 
     private sealed class AutoUpdateHandle : IAsyncDisposable

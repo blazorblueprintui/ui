@@ -99,12 +99,11 @@
             return;
         }
 
-        _jsModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-            "import", "./_content/BlazorBlueprint.Primitives/js/primitives/element-utils.js");
+        _jsModule ??= await PrimitiveModules.GetAsync(JSRuntime);
 
         try
         {
-            var nearBottom = await _jsModule.InvokeAsync<bool>("isNearBottom", _scrollRef, 80.0);
+            var nearBottom = await _jsModule.InvokeAsync<bool>("elementUtils.isNearBottom", _scrollRef, 80.0);
             if (nearBottom)
             {
                 await OnLoadMore.InvokeAsync();
@@ -116,20 +115,9 @@
         }
     }
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        if (_jsModule != null)
-        {
-            try
-            {
-                await _jsModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Circuit disconnected — safe to ignore
-            }
-
-            _jsModule = null;
-        }
+        // Nothing to release: the primitive JS module is shared and owned by PrimitiveModules.
+        return ValueTask.CompletedTask;
     }
 }

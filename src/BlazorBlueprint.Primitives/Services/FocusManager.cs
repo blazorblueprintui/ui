@@ -9,8 +9,6 @@ namespace BlazorBlueprint.Primitives.Services;
 public class FocusManager : IFocusManager, IAsyncDisposable
 {
     private readonly IJSRuntime _jsRuntime;
-    private readonly SemaphoreSlim _moduleLock = new(1, 1);
-    private IJSObjectReference? _module;
     private bool _disposed;
 
     /// <summary>
@@ -22,24 +20,12 @@ public class FocusManager : IFocusManager, IAsyncDisposable
         _jsRuntime = jsRuntime;
     }
 
-    private async Task<IJSObjectReference> GetModuleAsync()
+    // The bundle is shared across the whole circuit, so the cache and the lock that used to live
+    // here now live in PrimitiveModules. This service must not dispose what it gets back.
+    private Task<IJSObjectReference> GetModuleAsync()
     {
         ObjectDisposedException.ThrowIf(_disposed, nameof(FocusManager));
-
-        await _moduleLock.WaitAsync();
-        try
-        {
-            if (_module == null)
-            {
-                _module = await _jsRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/focus-trap.js");
-            }
-            return _module;
-        }
-        finally
-        {
-            _moduleLock.Release();
-        }
+        return PrimitiveModules.GetAsync(_jsRuntime);
     }
 
     /// <inheritdoc />
@@ -54,7 +40,7 @@ public class FocusManager : IFocusManager, IAsyncDisposable
     {
         var module = await GetModuleAsync();
         var cleanupFunction = await module.InvokeAsync<IJSObjectReference>(
-            "createFocusTrap", container, ToJsMode(initialFocus), initialFocusElement);
+            "focusTrap.createFocusTrap", container, ToJsMode(initialFocus), initialFocusElement);
         return new FocusTrapHandle(cleanupFunction);
     }
 
@@ -86,14 +72,14 @@ public class FocusManager : IFocusManager, IAsyncDisposable
     public async Task FocusFirst(ElementReference container)
     {
         var module = await GetModuleAsync();
-        await module.InvokeVoidAsync("focusFirst", container);
+        await module.InvokeVoidAsync("focusTrap.focusFirst", container);
     }
 
     /// <inheritdoc />
     public async Task FocusLast(ElementReference container)
     {
         var module = await GetModuleAsync();
-        await module.InvokeVoidAsync("focusLast", container);
+        await module.InvokeVoidAsync("focusTrap.focusLast", container);
     }
 
     /// <summary>
@@ -109,19 +95,9 @@ public class FocusManager : IFocusManager, IAsyncDisposable
         GC.SuppressFinalize(this);
         _disposed = true;
 
-        if (_module != null)
-        {
-            try
-            {
-                await _module.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-        }
-
-        _moduleLock.Dispose();
+        // Nothing to release. The module reference belongs to PrimitiveModules and is shared with
+        // every other component on the circuit; Blazor frees it when the circuit ends.
+        await Task.CompletedTask;
     }
 
     private sealed class FocusTrapHandle : IAsyncDisposable

@@ -139,9 +139,8 @@
             {
                 try
                 {
-                    _portalModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                        "import", "./_content/BlazorBlueprint.Primitives/js/primitives/portal.js");
-                    _scrollLockCleanup = await _portalModule.InvokeAsync<IJSObjectReference>("lockBodyScroll");
+                    _portalModule = await PrimitiveModules.GetAsync(JSRuntime);
+                    _scrollLockCleanup = await _portalModule.InvokeAsync<IJSObjectReference>("portal.lockBodyScroll");
                 }
                 catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
                 {
@@ -156,10 +155,9 @@
             // Set up escape key detection in JS (avoids C# round-trip on every keystroke)
             try
             {
-                _escapeModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/escape-keydown.js");
+                _escapeModule = await PrimitiveModules.GetAsync(JSRuntime);
                 _dotNetRef = DotNetObjectReference.Create(this);
-                await _escapeModule.InvokeVoidAsync("initialize", _dotNetRef, _instanceId);
+                await _escapeModule.InvokeVoidAsync("escapeKeydown.initialize", _dotNetRef, _instanceId);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
@@ -239,7 +237,7 @@
         {
             try
             {
-                await _escapeModule.InvokeVoidAsync("dispose", _instanceId);
+                await _escapeModule.InvokeVoidAsync("escapeKeydown.dispose", _instanceId);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
@@ -259,29 +257,7 @@
 
         await CleanupAsync();
 
-        if (_portalModule != null)
-        {
-            try
-            {
-                await _portalModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-        }
 
-        if (_escapeModule != null)
-        {
-            try
-            {
-                await _escapeModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-        }
 
         _dotNetRef?.Dispose();
 

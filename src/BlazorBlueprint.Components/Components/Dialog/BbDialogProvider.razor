@@ -81,9 +81,8 @@
             // Scroll lock
             try
             {
-                portalModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/portal.js");
-                scrollLockCleanup = await portalModule.InvokeAsync<IJSObjectReference>("lockBodyScroll");
+                portalModule = await PrimitiveModules.GetAsync(JSRuntime);
+                scrollLockCleanup = await portalModule.InvokeAsync<IJSObjectReference>("portal.lockBodyScroll");
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
             {
@@ -92,10 +91,9 @@
             // Escape key
             try
             {
-                escapeModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/escape-keydown.js");
+                escapeModule = await PrimitiveModules.GetAsync(JSRuntime);
                 dotNetRef = DotNetObjectReference.Create(this);
-                await escapeModule.InvokeVoidAsync("initialize", dotNetRef, instanceId);
+                await escapeModule.InvokeVoidAsync("escapeKeydown.initialize", dotNetRef, instanceId);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
             {
@@ -224,8 +222,7 @@
         {
             try
             {
-                await escapeModule.InvokeVoidAsync("dispose", instanceId);
-                await escapeModule.DisposeAsync();
+                await escapeModule.InvokeVoidAsync("escapeKeydown.dispose", instanceId);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
@@ -233,17 +230,6 @@
             escapeModule = null;
         }
 
-        if (portalModule != null)
-        {
-            try
-            {
-                await portalModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-            }
-            portalModule = null;
-        }
 
         dotNetRef?.Dispose();
         dotNetRef = null;

@@ -73,13 +73,12 @@
             try
             {
                 // Lazy-load the table row navigation module
-                _tableRowNavModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/table-row-nav.js");
+                _tableRowNavModule ??= await PrimitiveModules.GetAsync(JSRuntime);
 
                 // Attach event listener in capture phase to prevent Space from scrolling
                 // This runs before Blazor's event handler, allowing us to preventDefault
                 _spaceKeyCleanup = await _tableRowNavModule.InvokeAsync<IJSObjectReference>(
-                    "preventSpaceKeyScroll", _elementRef);
+"tableRowNav.preventSpaceKeyScroll", _elementRef);
                 _spaceKeyHandlerAttached = true;
             }
             catch
@@ -131,9 +130,8 @@
     {
         try
         {
-            _tableRowNavModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/table-row-nav.js");
-            await _tableRowNavModule.InvokeVoidAsync("moveFocusToPreviousRow", _elementRef);
+            _tableRowNavModule ??= await PrimitiveModules.GetAsync(JSRuntime);
+            await _tableRowNavModule.InvokeVoidAsync("tableRowNav.moveFocusToPreviousRow", _elementRef);
         }
         catch
         {
@@ -145,9 +143,8 @@
     {
         try
         {
-            _tableRowNavModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/table-row-nav.js");
-            await _tableRowNavModule.InvokeVoidAsync("moveFocusToNextRow", _elementRef);
+            _tableRowNavModule ??= await PrimitiveModules.GetAsync(JSRuntime);
+            await _tableRowNavModule.InvokeVoidAsync("tableRowNav.moveFocusToNextRow", _elementRef);
         }
         catch
         {
@@ -170,16 +167,5 @@
             }
         }
 
-        if (_tableRowNavModule != null)
-        {
-            try
-            {
-                await _tableRowNavModule.DisposeAsync();
-            }
-            catch
-            {
-                // Ignore disposal errors
-            }
-        }
     }
 }

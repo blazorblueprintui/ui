@@ -1,30 +1,23 @@
 // Positioning service using Floating UI (bundled locally)
 
-let floatingUI = null;
+// Floating UI is a static import on purpose. It used to be an `await import(...)` inside
+// loadFloatingUI(), which meant the first computePosition call paid a second module load that
+// nothing on the C# side could see: in Blazor Server the C# `import` of this file is already a
+// circuit round trip, and the nested import added another wait on top of it. A static import
+// makes the browser resolve the whole graph while it fetches this file, so the pair costs one
+// round trip instead of two.
+import * as floatingUIBundled from '../vendor/floating-ui-dom.esm.min.js';
+
 // Store cleanup functions with unique IDs to avoid passing functions through JS interop
 const cleanupRegistry = new Map();
 
 /**
- * Loads Floating UI from preloaded global or bundled local file.
+ * Returns Floating UI, preferring a preloaded global if the host page supplies one.
  * No external CDN dependency — the library ships with the package.
  */
-async function loadFloatingUI() {
-    if (floatingUI) return floatingUI;
-
-    // Check for preloaded global first (from App.razor script)
-    if (window.FloatingUIDOM) {
-        floatingUI = window.FloatingUIDOM;
-        return floatingUI;
-    }
-
-    try {
-        // Import bundled local copy (ships with the package)
-        floatingUI = await import('../vendor/floating-ui-dom.esm.min.js');
-        return floatingUI;
-    } catch (error) {
-        console.error('Failed to load bundled Floating UI:', error);
-        throw new Error('Floating UI library could not be loaded. Ensure the BlazorBlueprint.Primitives static assets are included.');
-    }
+function loadFloatingUI() {
+    // Check for a preloaded global first (from an App.razor script)
+    return window.FloatingUIDOM || floatingUIBundled;
 }
 
 /**
@@ -76,7 +69,7 @@ export async function computePosition(reference, floating, options = {}) {
     }
 
     try {
-        const lib = await loadFloatingUI();
+        const lib = loadFloatingUI();
 
     const {
         placement = 'bottom',
@@ -250,7 +243,7 @@ async function waitForExitAnimation(el) {
 
 export async function autoUpdate(reference, floating, options = {}) {
     try {
-        const lib = await loadFloatingUI();
+        const lib = loadFloatingUI();
 
     const update = async () => {
         // Guard against stale elements — autoUpdate listeners (scroll, resize,

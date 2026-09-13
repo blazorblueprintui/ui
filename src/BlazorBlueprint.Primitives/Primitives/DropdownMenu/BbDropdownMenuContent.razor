@@ -22,6 +22,8 @@
                 Strategy="@Strategy"
                 ZIndex="@ZIndex"
                 ForceMount="@ForceMount"
+                Dismiss="@BuildDismissOptions()"
+                OnDismiss="@HandleDismissAsync"
                 OnReady="@HandleFloatingReady"
                 OnPlacementChanged="@HandlePlacementChanged">
     @RenderDropdownContent()
@@ -131,8 +133,6 @@
     public PositioningStrategy Strategy { get; set; } = PositioningStrategy.Absolute;
 
     private ElementReference _contentRef;
-    private IJSObjectReference? _clickOutsideModule;
-    private IJSObjectReference? _clickOutsideCleanup;
     private IJSObjectReference? _menuKeyboardModule;
     private IJSObjectReference? _matchWidthModule;
     private IJSObjectReference? _matchWidthCleanup;
@@ -182,12 +182,6 @@
 
     private async Task HandleFloatingReady()
     {
-        // Set up click-outside detection
-        if (CloseOnClickOutside)
-        {
-            await SetupClickOutsideAsync();
-        }
-
         // Set up keyboard navigation
         await SetupKeyboardNavAsync();
 
@@ -198,26 +192,47 @@
         }
     }
 
-    private async Task SetupClickOutsideAsync()
+    // Declared rather than wired, so BbFloatingPortal registers the listener in the same interop
+    // call that positions and reveals the menu.
+    //
+    // This also moves the menu from the element-based onClickOutside to the id-based one, which
+    // matters for more than the round trip. The element variant captured the content node once at
+    // registration, so a Blazor re-render that replaced it left `contains` testing a detached
+    // node — every click then read as outside. And it had no exemption for nested portals, so any
+    // portal-based component placed inside a menu (a Select, a Popover) rendered at body level,
+    // outside the menu's DOM subtree, and clicking it closed the menu underneath. The id-based
+    // variant re-resolves both elements per event and tracks which portal an interaction started
+    // in.
+    //
+    // Escape is not listed: the menu watches it through menuKeyboard.initialize, alongside the
+    // arrow keys and typeahead.
+    private FloatingDismissOptions? BuildDismissOptions()
     {
-        try
+        if (!CloseOnClickOutside && !OnClickOutside.HasDelegate)
         {
-            _clickOutsideModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/click-outside.js");
-
-            _dotNetRef = DotNetObjectReference.Create(this);
-
-            // Pass trigger element to exclude it from click-outside detection
-            _clickOutsideCleanup = await _clickOutsideModule.InvokeAsync<IJSObjectReference>(
-                "onClickOutside", _contentRef, _dotNetRef, "JsOnClickOutside", Context.State.TriggerElement);
+            return null;
         }
-        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+
+        return new FloatingDismissOptions
         {
-            // Expected during circuit disconnect or module loading failure
+            ContentId = Context.ContentId,
+            TriggerId = Context.TriggerId,
+            OnOutsideInteraction = true
+        };
+    }
+
+    private async Task HandleDismissAsync(FloatingDismissReason reason)
+    {
+        if (_disposed || reason != FloatingDismissReason.OutsideInteraction || !Context.IsOpen) return;
+
+        if (OnClickOutside.HasDelegate)
+        {
+            await OnClickOutside.InvokeAsync();
         }
-        catch (InvalidOperationException)
+
+        if (CloseOnClickOutside)
         {
-            // JS interop not available during prerendering
+            Context.Close();
         }
     }
 
@@ -225,12 +240,11 @@
     {
         try
         {
-            _menuKeyboardModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/menu-keyboard.js");
+            _menuKeyboardModule ??= await PrimitiveModules.GetAsync(JSRuntime);
 
             _dotNetRef ??= DotNetObjectReference.Create(this);
 
-            await _menuKeyboardModule.InvokeVoidAsync("initialize", _contentRef, _dotNetRef, Context.ContentId,
+            await _menuKeyboardModule.InvokeVoidAsync("menuKeyboard.initialize", _contentRef, _dotNetRef, Context.ContentId,
                 new { mode = "vertical", loop = Loop });
         }
         catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
@@ -247,11 +261,10 @@
     {
         try
         {
-            _matchWidthModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/match-trigger-width.js");
+            _matchWidthModule = await PrimitiveModules.GetAsync(JSRuntime);
 
             _matchWidthCleanup = await _matchWidthModule.InvokeAsync<IJSObjectReference>(
-                "matchTriggerWidth", Context.State.TriggerElement, _contentRef);
+"matchTriggerWidth.matchTriggerWidth", Context.State.TriggerElement, _contentRef);
         }
         catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
         {
@@ -260,26 +273,6 @@
         catch (InvalidOperationException)
         {
             // JS interop not available during prerendering
-        }
-    }
-
-    [JSInvokable]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    public async Task JsOnClickOutside()
-    {
-        // Guard against callbacks after disposal
-        if (_disposed || !Context.IsOpen) return;
-
-        // Invoke custom handler if provided
-        if (OnClickOutside.HasDelegate)
-        {
-            await OnClickOutside.InvokeAsync();
-        }
-
-        // Close dropdown menu if configured
-        if (CloseOnClickOutside)
-        {
-            Context.Close();
         }
     }
 
@@ -358,22 +351,6 @@
     // escaped DisposeAsync into the renderer's disposal queue and took the circuit down (#441).
     private async Task CleanupAsync()
     {
-        var clickOutsideCleanup = _clickOutsideCleanup;
-        if (clickOutsideCleanup != null)
-        {
-            _clickOutsideCleanup = null;
-
-            try
-            {
-                await clickOutsideCleanup.InvokeVoidAsync("dispose");
-                await clickOutsideCleanup.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Cleanup may already be disposed or circuit disconnected
-            }
-        }
-
         // Context is a cascading parameter declared non-null, but it is genuinely absent when the
         // content is torn down after its provider, so read the id defensively rather than trusting
         // the annotation on a path that must not throw.
@@ -382,7 +359,7 @@
         {
             try
             {
-                await _menuKeyboardModule.InvokeVoidAsync("dispose", contentId);
+                await _menuKeyboardModule.InvokeVoidAsync("menuKeyboard.dispose", contentId);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
@@ -431,41 +408,8 @@
             // not worth that, so it stops here — the races it can hit are handled above.
         }
 
-        if (_clickOutsideModule != null)
-        {
-            try
-            {
-                await _clickOutsideModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-        }
 
-        if (_menuKeyboardModule != null)
-        {
-            try
-            {
-                await _menuKeyboardModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-        }
 
-        if (_matchWidthModule != null)
-        {
-            try
-            {
-                await _matchWidthModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-        }
 
         _dotNetRef?.Dispose();
 

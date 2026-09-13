@@ -80,21 +80,19 @@
             {
                 if ((IsKeyboardNavigable || IsEditable) && !spaceKeyHandlerAttached)
                 {
-                    navModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-                        "import", "./_content/BlazorBlueprint.Primitives/js/primitives/table-row-nav.js");
+                    navModule ??= await PrimitiveModules.GetAsync(JSRuntime);
 
                     spaceKeyCleanup = await navModule.InvokeAsync<IJSObjectReference>(
-                        "preventSpaceKeyScroll", elementRef);
+"tableRowNav.preventSpaceKeyScroll", elementRef);
                     spaceKeyHandlerAttached = true;
                 }
 
                 if (NeedsClickIntercept && !clickInterceptAttached)
                 {
-                    navModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-                        "import", "./_content/BlazorBlueprint.Primitives/js/primitives/table-row-nav.js");
+                    navModule ??= await PrimitiveModules.GetAsync(JSRuntime);
 
                     clickInterceptCleanup = await navModule.InvokeAsync<IJSObjectReference>(
-                        "interceptInteractiveClicks", elementRef);
+"tableRowNav.interceptInteractiveClicks", elementRef);
                     clickInterceptAttached = true;
                 }
             }
@@ -117,7 +115,7 @@
             if (clickInterceptAttached && navModule != null)
             {
                 var wasInteractive = await navModule.InvokeAsync<bool>(
-                    "consumeInteractiveClickFlag", elementRef);
+"tableRowNav.consumeInteractiveClickFlag", elementRef);
                 if (wasInteractive)
                 {
                     return;
@@ -214,10 +212,9 @@
     {
         try
         {
-            navModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/table-row-nav.js");
+            navModule ??= await PrimitiveModules.GetAsync(JSRuntime);
 
-            if (await navModule.InvokeAsync<bool>("blurFocusedInput", elementRef))
+            if (await navModule.InvokeAsync<bool>("tableRowNav.blurFocusedInput", elementRef))
             {
                 // Let the change event the blur just fired reach Blazor and update the model
                 // before the commit reads it.
@@ -234,8 +231,7 @@
     {
         try
         {
-            navModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/table-row-nav.js");
+            navModule ??= await PrimitiveModules.GetAsync(JSRuntime);
             await navModule.InvokeVoidAsync(method, elementRef);
         }
         catch
@@ -272,16 +268,5 @@
             }
         }
 
-        if (navModule != null)
-        {
-            try
-            {
-                await navModule.DisposeAsync();
-            }
-            catch
-            {
-                // Ignore disposal errors
-            }
-        }
     }
 }

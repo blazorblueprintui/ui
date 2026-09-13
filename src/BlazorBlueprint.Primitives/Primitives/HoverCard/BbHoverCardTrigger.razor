@@ -185,8 +185,7 @@ else
         {
             try
             {
-                _elementUtils = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/element-utils.js");
+                _elementUtils = await PrimitiveModules.GetAsync(JSRuntime);
             }
             catch (Exception ex) when (ex is JSException or InvalidOperationException or TaskCanceledException)
             {
@@ -299,7 +298,7 @@ else
 
         try
         {
-            return await _elementUtils.InvokeAsync<bool>("isKeyboardFocus", element);
+            return await _elementUtils.InvokeAsync<bool>("elementUtils.isKeyboardFocus", element);
         }
         catch (Exception ex) when (ex is JSException or JSDisconnectedException or ObjectDisposedException or TaskCanceledException)
         {
@@ -396,25 +395,11 @@ else
         }
     }
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         _disposed = true;
         CancelOpenTimer();
         CancelCloseTimer();
-
-        if (_elementUtils != null)
-        {
-            try
-            {
-                await _elementUtils.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or ObjectDisposedException or TaskCanceledException)
-            {
-                // Circuit already gone; nothing to release.
-                Logger.LogDebug(ex, "HoverCardTrigger could not dispose element-utils.");
-            }
-
-            _elementUtils = null;
-        }
+        return ValueTask.CompletedTask;
     }
 }

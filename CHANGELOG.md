@@ -24,6 +24,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Opening an overlay costs one interop call, not five.** Every `InvokeAsync` from C# on Blazor Server is a message the server posts to the browser and then awaits, so it costs a network round trip — paid on every open, forever, not just the first.
+
+  Opening a `BbSelect` spent them like this: import `positioning.js`, import Floating UI from inside the first `computePosition`, compute the position, re-render for the resolved placement, apply the position and reveal the element, start the scroll/resize watcher, then import `click-outside.js`. Two of those landed *before* the element was visible, and the placement re-render sat between computing the position and showing it.
+
+  Four changes. The 17 primitive modules now ship as one bundle, `js/primitives/bb-primitives.js`, re-exported under a namespace each, so C# addresses them as `clickOutside.onClickOutsideByIds`. Floating UI became a **static** top-level import in `positioning.js` — it was an `await import(...)` buried inside the first `computePosition`, a second wait nothing on the C# side could see. `PrimitiveModules` caches one module reference per circuit and the portal host acquires it while the page renders, so the first open costs the same as a reopen. And `BbFloatingPortal` now positions, reveals and starts auto-update in a single `overlay.open` call, with the placement re-render moved to *after* the element is on screen; closing is a single `overlay.close` in place of disposing the watcher and then hiding.
+
+  Measured in Chromium against the demo Server host, warm cache, fresh document per sample, 20ms emulated round trip, opening the first `BbSelect` on `/components/select`. Median of 6, in ms from pointerdown:
+
+  | | before | after |
+  |---|---|---|
+  | **first open** — portal inserted | 53 | 53 |
+  | **first open** — visible | **147** | **82** |
+  | **reopen** — portal inserted | 55 | 53 |
+  | **reopen** — visible | **115** | **82** |
+  | inserted → visible, reopen | 61 | **33** |
+  | module fetches, first open | 3 | **0** |
+
+  First open and reopen are now the same cost, and inserted → visible is one round trip plus the frame the reveal is deferred to. At the 150–300ms round trip a user on mobile or behind a corporate proxy sees, the removed hops were the difference between an overlay that opens and one that hangs.
+
+  The dismissal listeners moved into that same call. `BbFloatingPortal` gains a `Dismiss` parameter and an `OnDismiss` callback; Popover and Select declare which gestures they want instead of registering their own listeners after the overlay appears. That was not only two more round trips — it was a window, two round trips wide, in which the overlay was on screen and ignored a click outside it. On a 300ms link that window was over half a second.
+
+  `BbDropdownMenuContent` moved over too, and that fixes two latent bugs rather than only saving a round trip. It used the element-based `onClickOutside`, which captured the content node once at registration — a Blazor re-render that replaced the node left `contains` testing a detached element, so every click read as outside. It also had no exemption for nested portals: a portal-based component placed inside a menu renders at body level, outside the menu's DOM subtree, so clicking a `BbSelect` inside a dropdown closed the dropdown underneath it. The id-based listener re-resolves both elements per event and tracks which portal an interaction started in. `onClickOutside` now has no callers in the library.
+
+  Verified in a browser for all three: a click outside closes, a click *inside* does not, choosing an item closes, the trigger toggles without instantly reopening, Escape closes, and arrow-key navigation still works.
+
+- **Breaking — `JsOnClickOutside` and `JsOnEscapeKey` are gone from `BbPopoverContent`, `BbSelectContent` and `BbDropdownMenuContent`.** Both were `[JSInvokable]` and `[EditorBrowsable(Never)]` — callable only from the library's own JavaScript. Dismissal now arrives through `BbFloatingPortal.OnDismiss`.
+
+- **`BbFloatingPortal` no longer gives up on the portal host after 500ms.** `MountPortalAsync` raced the host's render signal against a `Task.Delay(500)`. The signal is never lost — it arrives exactly one network round trip after the portal registers, because the host only reaches `OnAfterRenderAsync` once the browser has acknowledged the render batch. Measured, the wait tracks round-trip time 1:1: 104ms at a 100ms round trip, 305ms at 300ms, 488ms at 480ms, and at 600ms every single open times out. That is what produced the stray `PortalRenderTimeout` warnings — not a lost signal, a fixed budget for a variable cost.
+
+  The one case the deadline genuinely guarded is a missing host, and `PortalService.HasHost` answers that synchronously, before the wait. The wait is now unbounded and cancelled when the portal closes or the component is disposed, and `PortalRenderTimeout` is gone.
+
 - **The `execCommand` clipboard fallback no longer runs for every failure** — it ran whenever `navigator.clipboard.writeText` threw, which meant an expired user activation quietly fell through to a path that cannot rescue one either, and success was reported regardless. It now runs only for the insecure-context case it was written for, where the Clipboard API is absent altogether.
 
   Verified in **Chrome** and **Safari**: a `ValueFuncAsync` taking a deliberate 1.5 seconds copies successfully and `OnCopied` reports the value. The demo is slow on purpose — an immediately-resolved task passes everywhere and proves nothing. The plain literal-value copy was re-checked in both as well, since the click path changed for every usage, not just the async one.

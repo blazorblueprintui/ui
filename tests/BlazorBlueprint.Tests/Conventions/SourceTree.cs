@@ -18,6 +18,9 @@ internal static class SourceTree
     /// <summary>Every <c>.razor</c> and <c>.cs</c> file in the two component libraries.</summary>
     internal static IReadOnlyList<FileInfo> ComponentSources { get; } = EnumerateSources();
 
+    /// <summary>The repository root, for tests that need to read outside the component folders.</summary>
+    internal static DirectoryInfo RepoRoot => RepoRootLazy.Value;
+
     private static DirectoryInfo FindRepoRoot()
     {
         var dir = new DirectoryInfo(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!);

@@ -81,13 +81,12 @@
 
             try
             {
-                menuKeyboardModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/menu-keyboard.js");
+                menuKeyboardModule ??= await PrimitiveModules.GetAsync(JSRuntime);
                 dotNetRef ??= DotNetObjectReference.Create(this);
 
                 // initialize() disposes any existing instance before re-initializing,
                 // so this is safe to call when re-opening at a new position.
-                await menuKeyboardModule.InvokeVoidAsync("initialize", contentRef, dotNetRef, instanceId,
+                await menuKeyboardModule.InvokeVoidAsync("menuKeyboard.initialize", contentRef, dotNetRef, instanceId,
                     new { mode = "vertical", loop = Loop, initialFocus = "first" });
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
@@ -127,7 +126,7 @@
         {
             try
             {
-                await menuKeyboardModule.InvokeVoidAsync("dispose", instanceId);
+                await menuKeyboardModule.InvokeVoidAsync("menuKeyboard.dispose", instanceId);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
@@ -159,17 +158,6 @@
 
         await CleanupKeyboardAsync();
 
-        if (menuKeyboardModule != null)
-        {
-            try
-            {
-                await menuKeyboardModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-        }
 
         dotNetRef?.Dispose();
     }
