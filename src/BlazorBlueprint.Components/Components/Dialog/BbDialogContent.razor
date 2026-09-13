@@ -1,19 +1,27 @@
 @namespace BlazorBlueprint.Components
 @using BlazorBlueprint.Icons.Lucide.Components
+@using BlazorBlueprint.Primitives.Services
 @inject IBbLocalizer Localizer
+@inject INativeOverlayService NativeOverlayService
 
 @*
     Styled DialogContent component with shadcn/ui classes.
     Includes overlay, dialog box, and close button.
+    When the effective rendering strategy is Native, the overlay is omitted (the browser's
+    <dialog>::backdrop provides the scrim) and the dialog box is styled for the top layer.
 *@
 
 <BlazorBlueprint.Primitives.Dialog.BbDialogPortal Container="@Container">
-    <BlazorBlueprint.Primitives.Dialog.BbDialogOverlay class="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
-                                                       CloseOnClick="@CloseOnOverlayClick" />
+    @if (!_useNative)
+    {
+        <BlazorBlueprint.Primitives.Dialog.BbDialogOverlay class="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+                                                           CloseOnClick="@CloseOnOverlayClick" />
+    }
 
     <BlazorBlueprint.Primitives.Dialog.BbDialogContent
         class="@GetClassNames()"
         CloseOnEscape="@CloseOnEscape"
+        CloseOnOverlayClick="@CloseOnOverlayClick"
         TrapFocus="@TrapFocus"
         InitialFocus="@InitialFocus"
         InitialFocusElement="@InitialFocusElement"
@@ -33,6 +41,9 @@
 </BlazorBlueprint.Primitives.Dialog.BbDialogPortal>
 
 @code {
+    [CascadingParameter(Name = "DialogRenderingStrategy")]
+    private OverlayRenderingStrategy? RenderingStrategy { get; set; }
+
     /// <summary>
     /// The content to render inside the dialog.
     /// </summary>
@@ -121,17 +132,28 @@
     [Parameter]
     public EventCallback<KeyboardEventArgs> OnEscapeKeyDown { get; set; }
 
+    private bool _useNative;
+
+    protected override void OnInitialized()
+    {
+        _useNative = NativeOverlayService.ResolveStrategy(RenderingStrategy) == OverlayRenderingStrategy.Native;
+    }
+
     /// <summary>
     /// Gets the computed CSS classes for the dialog content.
     /// Uses the cn() utility for intelligent class merging and Tailwind conflict resolution.
+    /// Both rendering strategies use the same fixed, centred presentation — the native path
+    /// additionally enters the top layer via showModal() for its backdrop/focus-trap/inertness,
+    /// so no separate positioning branch is needed.
     /// </summary>
-    private string GetClassNames() => ClassNames.cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%]",
-        "gap-4 border bg-background p-6 shadow-lg duration-200",
-        "data-[state=open]:animate-in data-[state=closed]:animate-out",
-        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-        "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-        "sm:rounded-lg",
-        Class
-    );
+    private string GetClassNames() =>
+        ClassNames.cn(
+            "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%]",
+            "gap-4 border bg-background p-6 shadow-lg duration-200",
+            "data-[state=open]:animate-in data-[state=closed]:animate-out",
+            "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+            "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+            "sm:rounded-lg",
+            Class
+        );
 }

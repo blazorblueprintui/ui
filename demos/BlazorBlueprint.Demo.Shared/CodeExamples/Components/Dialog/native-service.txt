@@ -1,0 +1,38 @@
+@* Open a dialog programmatically with DialogService.OpenAsync<T>() *@
+@inject DialogService DialogService
+
+<BbButton OnClick="OpenNativeService">Open via DialogService</BbButton>
+
+<span>@nativeServiceResult</span>
+
+@code {
+    private string nativeServiceResult = "-";
+
+    private async Task OpenNativeService()
+    {
+        var result = await DialogService.OpenAsync<NativeDialogBodyComponent>(
+            new Dictionary<string, object?>
+            {
+                ["Message"] = "Opened with OpenAsync<T>()"
+            },
+            new DialogOpenOptions
+            {
+                Title = "Native-Style Dialog",
+                Size = DialogSize.Default
+            });
+
+        nativeServiceResult = result.Cancelled ? "Cancelled" : "Closed";
+    }
+
+    // Content component. Note: BbDialogClose does NOT close a programmatic
+    // dialog (there is no DialogContext here) — close via IDialogReference.
+    public sealed class NativeDialogBodyComponent : ComponentBase
+    {
+        [Parameter] public string Message { get; set; } = "";
+
+        [CascadingParameter]
+        public IDialogReference DialogRef { get; set; } = default!;
+
+        private Task Close() => DialogRef.CloseAsync(DialogResult.Ok());
+    }
+}

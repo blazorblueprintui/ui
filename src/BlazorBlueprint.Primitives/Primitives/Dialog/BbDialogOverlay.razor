@@ -1,11 +1,15 @@
 @namespace BlazorBlueprint.Primitives.Dialog
+@using BlazorBlueprint.Primitives.Services
+@inject INativeOverlayService NativeOverlayService
 
 @*
     DialogOverlay provides a background overlay for modal dialogs.
     Can handle click-outside-to-close if configured.
+    In native strategy mode this renders nothing — the browser's <dialog>::backdrop
+    provides the scrim, and backdrop dismissal is handled by BbDialogContent.
 *@
 
-@if (Context.IsOpen)
+@if (!_useNative && Context.IsOpen)
 {
     <div id="@(Context.Id)-overlay"
          @onclick="HandleClick"
@@ -18,6 +22,9 @@
 @code {
     [CascadingParameter]
     private DialogContext Context { get; set; } = null!;
+
+    [CascadingParameter(Name = "DialogRenderingStrategy")]
+    private OverlayRenderingStrategy? RenderingStrategy { get; set; }
 
     /// <summary>
     /// The content to render within the overlay (typically empty for a simple backdrop).
@@ -44,6 +51,8 @@
     [Parameter]
     public EventCallback<MouseEventArgs> OnClick { get; set; }
 
+    private bool _useNative;
+
     protected override void OnInitialized()
     {
         if (Context == null)
@@ -52,6 +61,8 @@
                 "DialogOverlay must be used within a Dialog component. " +
                 "Ensure DialogOverlay is a child of a Dialog component.");
         }
+
+        _useNative = NativeOverlayService.ResolveStrategy(RenderingStrategy) == OverlayRenderingStrategy.Native;
     }
 
     private async Task HandleClick(MouseEventArgs args)
