@@ -10,7 +10,21 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public partial class BbCopyText : ComponentBase, IAsyncDisposable
 {
+    // Outcome codes, mirroring the constants in clipboard.js.
+    private const string CopyOutcomeOk = "ok";
+    private const string CopyOutcomeRefused = "refused";
+    private const string CopyOutcomeNoValue = "noValue";
+
     private IJSObjectReference? clipboardModule;
+    private DotNetObjectReference<BbCopyText>? copyTextRef;
+    private IJSObjectReference? copyHandle;
+    private string? lastAsyncValue;
+
+    /// <summary>
+    /// Whether JS owns the copy gesture. While false — prerendering, or a failed module load —
+    /// the Blazor handlers do the copy instead, so the component still works.
+    /// </summary>
+    private bool jsOwnsCopy;
     private IJSObjectReference? elementUtilsModule;
     private ElementReference anchorRef;
     private readonly string portalId = $"copytext-portal-{Guid.NewGuid():N}";
@@ -48,14 +62,49 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
     /// reaches naturally — falls through to the function instead of silently copying nothing.
     /// </para>
     /// <para>
-    /// This is the synchronous form deliberately. An asynchronous counterpart cannot simply await a
-    /// consumer's task before writing: clipboard writes require transient user activation, and several
-    /// browsers treat awaiting as spending it. Tracked separately in
-    /// <see href="https://github.com/blazorblueprintui/ui/issues/466">#466</see>.
+    /// Use <see cref="ValueFuncAsync"/> when the value needs awaiting. It is a separate parameter
+    /// rather than an overload because the write itself has to be arranged differently — see its
+    /// remarks.
     /// </para>
     /// </remarks>
     [Parameter]
     public Func<string?>? ValueFunc { get; set; }
+
+    /// <summary>
+    /// Gets or sets an asynchronous function producing the value to copy, evaluated at click time.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Use this where the text has to be fetched or computed asynchronously — a server round trip,
+    /// say. <see cref="Value"/> wins when non-empty, then <see cref="ValueFunc"/>, then this.
+    /// </para>
+    /// <para>
+    /// <b>Why this is not simply an awaited <c>ValueFunc</c>.</b> A clipboard write requires
+    /// transient user activation, and awaiting spends it — so resolving the text first and writing
+    /// second gets the write refused, Safari most strictly, while the component still showed its
+    /// copied state. The function is instead invoked from JavaScript <i>inside</i> a
+    /// <c>ClipboardItem</c>, handing the browser the promise rather than the result, which keeps
+    /// the activation alive for as long as the callback takes.
+    /// </para>
+    /// <para>
+    /// On a browser without promise-aware <c>ClipboardItem</c> support the value has to be resolved
+    /// before writing, so a slow function can still be refused there. That is reported through
+    /// <see cref="OnCopyFailed"/> rather than passing silently.
+    /// </para>
+    /// </remarks>
+    [Parameter]
+    public Func<Task<string?>>? ValueFuncAsync { get; set; }
+
+    /// <summary>
+    /// Invoked when a copy did not happen, with the reason.
+    /// </summary>
+    /// <remarks>
+    /// A failed copy used to be invisible — the component showed its copied state and the clipboard
+    /// stayed empty. Worth handling whenever <see cref="ValueFuncAsync"/> is in use, where a
+    /// refusal is much more likely.
+    /// </remarks>
+    [Parameter]
+    public EventCallback<CopyTextFailure> OnCopyFailed { get; set; }
 
     /// <summary>
     /// Gets or sets the content displayed inside the copy text element.
@@ -176,6 +225,11 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
 
     private async Task HandleKeyDownAsync(KeyboardEventArgs e)
     {
+        if (jsOwnsCopy)
+        {
+            return;
+        }
+
         if (e.Key is "Enter" or " ")
         {
             await HandleClickAsync();
@@ -188,20 +242,52 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
     private string? ResolveValue() =>
         !string.IsNullOrEmpty(Value) ? Value : ValueFunc?.Invoke();
 
-    private async Task HandleClickAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Resolved once per click, not per render — ValueFunc may be expensive, and copying then
-        // reporting two different strings through OnCopied would be worse than either.
-        var value = ResolveValue();
-
-        if (string.IsNullOrEmpty(value))
+        if (!firstRender || jsOwnsCopy)
         {
             return;
         }
 
-        var success = await CopyToClipboardAsync(value);
-        if (!success)
+        try
         {
+            copyTextRef ??= DotNetObjectReference.Create(this);
+            var module = await GetClipboardModuleAsync();
+            copyHandle = await module.InvokeAsync<IJSObjectReference>(
+                "initializeCopy", anchorRef, copyTextRef);
+            jsOwnsCopy = true;
+        }
+        catch (Exception ex) when (ex is JSException or JSDisconnectedException or InvalidOperationException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Prerendering, or the module could not load. The Blazor handlers stay in charge, so
+            // copying still works — just without the gesture-preserving path Safari needs.
+            jsOwnsCopy = false;
+        }
+    }
+
+    private async Task HandleClickAsync()
+    {
+        if (jsOwnsCopy)
+        {
+            // The JS listener already made the write inside the gesture. Doing it again here
+            // would copy twice and fire OnCopied twice.
+            return;
+        }
+
+        // Resolved once per click, not per render — ValueFunc may be expensive, and copying then
+        // reporting two different strings through OnCopied would be worse than either.
+        var value = ResolveValue();
+
+        // The async path deliberately does NOT resolve here. Awaiting the consumer's task before
+        // writing spends the transient user activation and gets the write refused, which is the
+        // whole of #466. JS calls back into ResolveAsyncValue from inside the ClipboardItem.
+        var outcome = string.IsNullOrEmpty(value) && ValueFuncAsync is not null
+            ? await CopyFromAsyncSourceAsync()
+            : await CopyToClipboardAsync(value);
+
+        if (outcome != CopyOutcomeOk)
+        {
+            await ReportFailureAsync(outcome);
             return;
         }
 
@@ -209,22 +295,120 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
 
         if (OnCopied.HasDelegate)
         {
-            await OnCopied.InvokeAsync(value);
+            // The async path resolves in JS, so the text is only known here once it comes back.
+            await OnCopied.InvokeAsync(value ?? lastAsyncValue);
         }
     }
 
-    private async Task<bool> CopyToClipboardAsync(string text)
+    /// <summary>
+    /// Called from JS while the clipboard write is already in flight, to produce the text.
+    /// Not part of the public API.
+    /// </summary>
+    /// <remarks>
+    /// Runs <i>inside</i> the <c>ClipboardItem</c> promise, which is what lets the callback take
+    /// as long as it needs without the browser refusing the write.
+    /// </remarks>
+    [JSInvokable]
+    public async Task<string?> ResolveCopyValue()
+    {
+        var value = ResolveValue();
+        if (!string.IsNullOrEmpty(value))
+        {
+            lastAsyncValue = value;
+            return value;
+        }
+
+        return await ResolveAsyncValue();
+    }
+
+    /// <summary>
+    /// Called from JS once the clipboard write has settled. Not part of the public API.
+    /// </summary>
+    [JSInvokable]
+    public async Task HandleCopyOutcome(string outcome)
+    {
+        if (outcome != CopyOutcomeOk)
+        {
+            await ReportFailureAsync(outcome);
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        copied = true;
+
+        if (OnCopied.HasDelegate)
+        {
+            await OnCopied.InvokeAsync(lastAsyncValue);
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    /// Called from JS while the clipboard write is already in flight. Not part of the public API.
+    /// </summary>
+    /// <remarks>
+    /// This runs <i>inside</i> the <c>ClipboardItem</c> promise, which is what keeps the user
+    /// activation alive across a slow consumer callback.
+    /// </remarks>
+    [JSInvokable]
+    public async Task<string?> ResolveAsyncValue()
+    {
+        if (ValueFuncAsync is null)
+        {
+            return null;
+        }
+
+        lastAsyncValue = await ValueFuncAsync();
+        return lastAsyncValue;
+    }
+
+    private async Task<string> CopyToClipboardAsync(string? text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return CopyOutcomeNoValue;
+        }
+
+        try
+        {
+            var module = await GetClipboardModuleAsync();
+            return await module.InvokeAsync<string>("copyToClipboard", text);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+        {
+            return CopyOutcomeRefused;
+        }
+    }
+
+    private async Task<string> CopyFromAsyncSourceAsync()
     {
         try
         {
-            clipboardModule ??= await JS.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Components/js/clipboard.js");
-            return await clipboardModule.InvokeAsync<bool>("copyToClipboard", text);
+            copyTextRef ??= DotNetObjectReference.Create(this);
+            var module = await GetClipboardModuleAsync();
+            return await module.InvokeAsync<string>(
+                "copyFromAsyncSource", copyTextRef, nameof(ResolveAsyncValue));
         }
-        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
         {
-            return false;
+            return CopyOutcomeRefused;
         }
+    }
+
+    private async Task<IJSObjectReference> GetClipboardModuleAsync() =>
+        clipboardModule ??= await JS.InvokeAsync<IJSObjectReference>(
+            "import", "./_content/BlazorBlueprint.Components/js/clipboard.js");
+
+    private async Task ReportFailureAsync(string outcome)
+    {
+        if (!OnCopyFailed.HasDelegate)
+        {
+            return;
+        }
+
+        await OnCopyFailed.InvokeAsync(
+            outcome == CopyOutcomeNoValue ? CopyTextFailure.NoValue : CopyTextFailure.Refused);
     }
 
     /// <inheritdoc />
@@ -253,6 +437,24 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
                 // Circuit already gone; nothing to clean up.
             }
         }
+
+        if (copyHandle is not null)
+        {
+            try
+            {
+                await copyHandle.InvokeVoidAsync("dispose");
+                await copyHandle.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Circuit already gone; nothing to clean up.
+            }
+
+            copyHandle = null;
+        }
+
+        copyTextRef?.Dispose();
+        copyTextRef = null;
 
         GC.SuppressFinalize(this);
     }
