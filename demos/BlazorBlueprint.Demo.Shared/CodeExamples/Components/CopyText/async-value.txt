@@ -1,0 +1,24 @@
+@* ValueFuncAsync is called from inside the clipboard write, not before it,
+   so a slow fetch does not spend the user activation. *@
+<BbCopyText ValueFuncAsync="FetchTokenAsync"
+            OnCopied="OnCopied"
+            OnCopyFailed="OnCopyFailed">
+    Copy access token
+</BbCopyText>
+
+@code {
+    private async Task<string?> FetchTokenAsync()
+    {
+        // A real round trip. Awaiting this before the write would get it refused.
+        var response = await Http.GetAsync("api/token");
+        return await response.Content.ReadAsStringAsync();
+    }
+
+    private void OnCopied(string? value) { /* copied */ }
+
+    private void OnCopyFailed(CopyTextFailure reason)
+    {
+        // Refused  — the browser rejected the write, most often an expired activation.
+        // NoValue  — nothing to copy.
+    }
+}

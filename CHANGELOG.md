@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-09-14
+
+### Added
+
+- **`BbCopyText` can take an asynchronous value** — [#466](https://github.com/blazorblueprintui/ui/issues/466), the deferred half of [#453](https://github.com/blazorblueprintui/ui/issues/453). `ValueFuncAsync` is for text that has to be fetched or computed. `Value` still wins when non-empty, then `ValueFunc`, then this.
+
+  **Getting this to work in Safari took three attempts, and the first two are worth recording because they look correct.**
+
+  A clipboard write needs transient user activation. The obvious fix — resolve the text, then write — spends that activation on the await and the write is refused, while the component cheerfully showed its copied state and the clipboard stayed empty. The documented answer is to hand the *promise* to `ClipboardItem` so the browser holds the activation across it. That fixed Chrome. **Safari still refused it.** Adding a resolve-then-write fallback for Safari also refused.
+
+  What both attempts missed is that Safari objects to *when* the write is made, not what is in it. A Blazor click travels C# → SignalR → JS, so by the time the write happens the gesture window has closed. A literal `Value` copies fine there only because that hop is fast enough to slip through; anything slower does not.
+
+  So JavaScript now owns the copy gesture. A listener on the element calls `clipboard.write()` immediately, inside the real gesture, and calls back into .NET for the text from *inside* the `ClipboardItem` — so the callback can take as long as it likes. The Blazor click and keydown handlers stand down while JS is in charge, and take over again if the module fails to load or during prerendering, so the component still copies either way.
+
+- **`BbCopyText` reports a failed copy** — `OnCopyFailed` carries a `CopyTextFailure` of `Refused` (the browser rejected the write) or `NoValue` (nothing to copy). Failure used to be entirely invisible, which is exactly what let the bug above go unnoticed for so long.
+
+### Changed
+
+- **The `execCommand` clipboard fallback no longer runs for every failure** — it ran whenever `navigator.clipboard.writeText` threw, which meant an expired user activation quietly fell through to a path that cannot rescue one either, and success was reported regardless. It now runs only for the insecure-context case it was written for, where the Clipboard API is absent altogether.
+
+  Verified in **Chrome** and **Safari**: a `ValueFuncAsync` taking a deliberate 1.5 seconds copies successfully and `OnCopied` reports the value. The demo is slow on purpose — an immediately-resolved task passes everywhere and proves nothing. The plain literal-value copy was re-checked in both as well, since the click path changed for every usage, not just the async one.
+
 ## 2026-09-13
 
 ### Added
