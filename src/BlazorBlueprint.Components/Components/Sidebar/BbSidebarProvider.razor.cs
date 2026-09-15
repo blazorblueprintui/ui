@@ -217,7 +217,7 @@ public partial class BbSidebarProvider
             // Notify UI of state change
             await InvokeAsync(StateHasChanged);
         }
-        catch (ObjectDisposedException)
+        catch (Exception)
         {
             // Component may be disposed during async operation
         }

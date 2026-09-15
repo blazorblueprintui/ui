@@ -604,40 +604,49 @@
 
     private async void HandleSearchChanged()
     {
-        _cachedSearchQuery = null; // Force rebuild
-
-        if (UseProvider)
+        try
         {
-            // Drop the cached slices and optimistically re-show so the (kept-mounted) Virtualize
-            // re-queries the provider with the new search; the response resets the real count.
-            _loadedItems.Clear();
-            _lazyLoadedCount = 0;
-            _hasVisibleItems = true;
+            _cachedSearchQuery = null; // Force rebuild
+
+            if (UseProvider)
+            {
+                // Drop the cached slices and optimistically re-show so the (kept-mounted) Virtualize
+                // re-queries the provider with the new search; the response resets the real count.
+                _loadedItems.Clear();
+                _lazyLoadedCount = 0;
+                _hasVisibleItems = true;
+                _focusedIndex = -1;
+                StateHasChanged();
+                if (_virtualizeRef != null)
+                {
+                    await _virtualizeRef.RefreshDataAsync();
+                }
+                return;
+            }
+
+            if (EnableLazyLoading)
+            {
+                UpdateLazyFilteredSource();
+                _lazyLoadedCount = 0;
+                if (_virtualizeRef != null)
+                {
+                    await _virtualizeRef.RefreshDataAsync();
+                }
+            }
+            else
+            {
+                UpdateFilteredItems();
+            }
+
             _focusedIndex = -1;
             StateHasChanged();
-            if (_virtualizeRef != null)
-            {
-                await _virtualizeRef.RefreshDataAsync();
-            }
-            return;
         }
-
-        if (EnableLazyLoading)
+        catch (Exception)
         {
-            UpdateLazyFilteredSource();
-            _lazyLoadedCount = 0;
-            if (_virtualizeRef != null)
-            {
-                await _virtualizeRef.RefreshDataAsync();
-            }
+            // async void: nothing awaits this, so an exception that escapes has no caller to reach and
+            // Blazor Server treats it as fatal — the circuit closes and the user sees the reconnect
+            // overlay. Everything this method does is best-effort, and none of it is worth that.
         }
-        else
-        {
-            UpdateFilteredItems();
-        }
-
-        _focusedIndex = -1;
-        StateHasChanged();
     }
 
     private void HandleKeyboardNavigationChanged(bool isKeyboardNavigating)

@@ -118,16 +118,25 @@
 
     private async void HandleContextStateChanged()
     {
-        // Sync search query back to parameter
-        if (_searchQuery != _context.SearchQuery)
+        try
         {
-            _searchQuery = _context.SearchQuery;
-            if (SearchQueryChanged.HasDelegate)
+            // Sync search query back to parameter
+            if (_searchQuery != _context.SearchQuery)
             {
-                await InvokeAsync(async () => await SearchQueryChanged.InvokeAsync(_searchQuery));
+                _searchQuery = _context.SearchQuery;
+                if (SearchQueryChanged.HasDelegate)
+                {
+                    await InvokeAsync(async () => await SearchQueryChanged.InvokeAsync(_searchQuery));
+                }
             }
+            await InvokeAsync(StateHasChanged);
         }
-        await InvokeAsync(StateHasChanged);
+        catch (Exception)
+        {
+            // async void: nothing awaits this, so an exception that escapes has no caller to reach and
+            // Blazor Server treats it as fatal — the circuit closes and the user sees the reconnect
+            // overlay. Everything this method does is best-effort, and none of it is worth that.
+        }
     }
 
     public void Dispose()

@@ -105,9 +105,11 @@ public partial class BbSidebarInset : IAsyncDisposable
                 }
             });
         }
-        catch (ObjectDisposedException)
+        catch (Exception)
         {
-            // Component disposed during async operation
+            // async void: nothing awaits this, so an exception that escapes has no caller to reach and
+            // Blazor Server treats it as fatal — the circuit closes and the user sees the reconnect
+            // overlay. Everything this method does is best-effort, and none of it is worth that.
         }
     }
 
