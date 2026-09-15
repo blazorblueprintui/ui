@@ -334,6 +334,30 @@ export function focusElementWithPreventScroll(element) {
 }
 
 /**
+ * Prepares an open listbox for interaction, in one call.
+ *
+ * Scrolling the selected option into view and attaching the keyboard handler were two separately
+ * awaited calls from C#, and on Blazor Server each one is a circuit round trip — paid on every
+ * open, while the user is waiting for the list to be usable.
+ *
+ * The scroll still happens first, and now strictly first: it runs before anything else in this
+ * task, so it lands ahead of the requestAnimationFrame that reveals the portal. Revealing a
+ * listbox already scrolled to the selected option is the whole point of the ordering.
+ *
+ * @param {string} contentId - The listbox element id.
+ * @param {string|null} selectedValue - The currently selected value, if any.
+ * @param {boolean} attachKeyboard - Whether the keyboard handler still needs attaching.
+ * @param {Object|null} dotNetRef - Callback target for the keyboard handler.
+ */
+export function openListbox(contentId, selectedValue, attachKeyboard, dotNetRef) {
+    focusInitialOption(contentId, selectedValue);
+
+    if (attachKeyboard && dotNetRef) {
+        setupKeyboardNavigation(contentId, dotNetRef);
+    }
+}
+
+/**
  * Focuses the initially selected or first option.
  * @param {string} contentId - The ID of the select content element
  * @param {string} selectedValue - The currently selected value (optional)

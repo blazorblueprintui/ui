@@ -65,6 +65,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
   Roughly four extra messages per input becomes two. What is left is each control's own `initialize` call, which is genuinely per-instance — it registers listeners on that element.
 
+- **A select prepares its listbox in one call.** Scrolling the selected option into view and attaching the keyboard handler were two separately awaited calls, so two more circuit round trips on every open, while the user waited for the list to become usable. `select.openListbox` does both.
+
+  The scroll still happens first, and now strictly first — it is the first thing in that JavaScript task, so it lands ahead of the `requestAnimationFrame` that reveals the portal. A listbox has to appear already scrolled to the selection rather than scroll afterwards, which is what the ordering was always protecting.
+
+  Client-to-server messages for a select open, at a 20ms round trip: **21 before any of this work, 11 now** on a reopen.
+
 - **Opening an overlay costs one interop call, not five.** Every `InvokeAsync` from C# on Blazor Server is a message the server posts to the browser and then awaits, so it costs a network round trip — paid on every open, forever, not just the first.
 
   Opening a `BbSelect` spent them like this: import `positioning.js`, import Floating UI from inside the first `computePosition`, compute the position, re-render for the resolved placement, apply the position and reveal the element, start the scroll/resize watcher, then import `click-outside.js`. Two of those landed *before* the element was visible, and the placement re-render sat between computing the position and showing it.
