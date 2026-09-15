@@ -179,6 +179,32 @@
     [Parameter]
     public string ScrollToCurrentSelector { get; set; } = "[role=\"option\"][aria-selected=\"true\"]";
 
+    /// <summary>
+    /// The <c>id</c> of an element to focus one frame after the overlay is revealed — a search
+    /// box, for instance.
+    /// </summary>
+    /// <remarks>
+    /// Inside the open call, and so free. Focusing from a ready callback instead costs a round
+    /// trip on Blazor Server before the callback runs, and another for <c>FocusAsync</c>.
+    /// </remarks>
+    [Parameter]
+    public string? AutoFocusId { get; set; }
+
+    /// <summary>
+    /// The <c>id</c> of the element to return focus to when the overlay closes — normally the
+    /// trigger. Only used when <see cref="RestoreFocusOnClose"/> is true at the time of the close.
+    /// </summary>
+    [Parameter]
+    public string? RestoreFocusToId { get; set; }
+
+    /// <summary>
+    /// Whether the close now in progress should return focus to <see cref="RestoreFocusToId"/>.
+    /// True for a close the user asked for — Escape, a selection — and false for a click outside,
+    /// which leaves focus where the user clicked.
+    /// </summary>
+    [Parameter]
+    public bool RestoreFocusOnClose { get; set; }
+
     private static readonly Action<ILogger, string, string, Exception?> LogOpenFailed =
         LoggerMessage.Define<string, string>(LogLevel.Warning, new EventId(3, "FloatingPortalOpenFailed"),
             "FloatingPortal '{PortalId}' failed to open: {ErrorMessage}");
@@ -430,6 +456,8 @@
                 ? new { containerId = ScrollToCurrentIn, selector = ScrollToCurrentSelector }
                 : null,
 
+            autoFocusId = AutoFocusId,
+
             keyboard = Keyboard is not null
                 ? new
                 {
@@ -460,7 +488,12 @@
             // listener from an overlay the user has already dismissed.
             keyboard = Keyboard is not null
                 ? new { kind = Keyboard.Kind.ToString(), contentId = Keyboard.ContentId }
-                : null
+                : null,
+
+            // Read now, during the close render, when the owner's state says which kind of close
+            // this is. The owner used to await FocusAsync itself after its close render — a round
+            // trip, on every Escape and every selection.
+            restoreFocusToId = RestoreFocusOnClose ? RestoreFocusToId : null
         };
 
         Dispatch(module, "overlay.close", PortalId, options, SelfRef());

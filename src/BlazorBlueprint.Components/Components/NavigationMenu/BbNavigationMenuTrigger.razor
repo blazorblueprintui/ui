@@ -116,9 +116,11 @@
                 if (MenuItem != null)
                 {
                     MenuItem.CancelCloseTimer();
+                    // Ask the content to focus its first item once it has rendered, rather than
+                    // sleeping 50ms and hoping the render has landed. The content knows exactly
+                    // when it is on screen; a timer only guesses.
+                    MenuItem.FocusFirstContentItemOnOpen();
                     MenuItem.IsOpen = true;
-                    await Task.Delay(50);
-                    await MenuItem.FocusFirstContentItemAsync();
                 }
                 break;
             case "ArrowUp":

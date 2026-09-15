@@ -72,7 +72,8 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
 
     // Infinite scroll
     private ElementReference _scrollContainerRef;
-    private IJSObjectReference? _jsModule;
+    private DotNetObjectReference<BbDataView<TItem>>? _nearBottomRef;
+    private int _nearBottomObserver;
     private bool _isLoadingMore;
     private int _infiniteScrollVersion;
     private int _sortingVersion;
@@ -406,13 +407,44 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
         await ProcessDataAsync();
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override void OnAfterRender(bool firstRender)
     {
-        // Load the JS module once, only when scroll-based infinite scroll is active.
-        if (firstRender && EnableInfiniteScroll && !ShowLoadMoreButton && _jsModule == null)
+        // No @onscroll. It bound every scroll event to the server and awaited a round trip to
+        // answer each one. The browser watches the container itself and calls back exactly
+        // once when the scroll position enters the near-bottom zone. Attached without awaiting.
+        if (firstRender && EnableInfiniteScroll && !ShowLoadMoreButton)
         {
-            _jsModule = await PrimitiveModules.GetAsync(JSRuntime);
+            _ = ObserveNearBottomAsync();
         }
+    }
+
+    private async Task ObserveNearBottomAsync()
+    {
+        try
+        {
+            var module = await PrimitiveModules.GetAsync(JSRuntime);
+            _nearBottomRef ??= DotNetObjectReference.Create(this);
+            _nearBottomObserver = await module.InvokeAsync<int>(
+                "elementUtils.observeNearBottom", _scrollContainerRef, _nearBottomRef, nameof(JsOnNearBottom), 80.0);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
+        {
+            // Circuit gone, prerendering, or the view already torn down. Load-more is a courtesy.
+        }
+    }
+
+    /// <summary>
+    /// Called from JavaScript when the scroll container nears its bottom.
+    /// </summary>
+    [JSInvokable]
+    public async Task JsOnNearBottom()
+    {
+        if (_isLoadingMore || !CanLoadMore)
+        {
+            return;
+        }
+
+        await LoadMore();
     }
 
     // ── Slot registration ────────────────────────────────────────────────────
@@ -714,31 +746,6 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
     /// bottom edge — this works correctly regardless of whether the inner content
     /// uses a flex list or a multi-column CSS grid.
     /// </summary>
-    private async Task HandleScroll(EventArgs e)
-    {
-        if (_isLoadingMore || !CanLoadMore || _jsModule == null)
-        {
-            return;
-        }
-
-        try
-        {
-            var nearBottom = await _jsModule.InvokeAsync<bool>("elementUtils.isNearBottom", _scrollContainerRef, 80.0);
-            if (nearBottom)
-            {
-                await LoadMore();
-            }
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-        {
-            // JS interop unavailable (prerendering, circuit disconnected).
-            _isLoadingMore = false;
-        }
-    }
-
-    /// <summary>
-    /// Loads the next batch of items in infinite scroll mode.
-    /// </summary>
     private async Task LoadMore()
     {
         if (!CanLoadMore)
@@ -839,13 +846,30 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
 
     // ── Disposal ─────────────────────────────────────────────────────────────
 
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         _loadCts?.Cancel();
         _loadCts?.Dispose();
         _loadCts = null;
 
+        if (_nearBottomObserver != 0 && PrimitiveModules.TryGetLoaded(JSRuntime, out var module))
+        {
+            var id = _nearBottomObserver;
+            _nearBottomObserver = 0;
+
+            try
+            {
+                await module.InvokeVoidAsync("elementUtils.unobserveNearBottom", id);
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Circuit gone — the listener went with the document.
+            }
+        }
+
+        _nearBottomRef?.Dispose();
+        _nearBottomRef = null;
+
         GC.SuppressFinalize(this);
-        return ValueTask.CompletedTask;
     }
 }

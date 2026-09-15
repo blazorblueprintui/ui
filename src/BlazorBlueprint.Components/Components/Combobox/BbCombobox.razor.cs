@@ -290,12 +290,15 @@ public partial class BbCombobox<TValue> : ComponentBase
     /// <summary>
     /// Reference to the CommandInput for focus management.
     /// </summary>
-    private BbCommandInput? _commandInputRef;
+    // The search input's id, handed to both BbCommandInput and the popover's AutoFocusId so the
+    // input is focused inside the call that reveals the popover. It used to be focused from the
+    // popover's ready callback — a round trip after the content rendered, then a 50ms sleep, then
+    // another round trip for FocusAsync — on every open.
+    private readonly string _searchInputId = $"combobox-search-{Guid.NewGuid():N}";
 
     /// <summary>
     /// Tracks whether focus has been done for the current open.
     /// </summary>
-    private bool _focusDone;
 
     /// <summary>
     /// Whether the next controlled close should return focus to the trigger. Set true on
@@ -386,37 +389,6 @@ public partial class BbCombobox<TValue> : ComponentBase
     }
 
     /// <summary>
-    /// Handles the popover content ready event to focus the search input.
-    /// This is called when the popover is fully positioned and visible.
-    /// </summary>
-    private async Task HandleContentReady()
-    {
-        // Guard against multiple calls per open
-        if (_focusDone)
-        {
-            return;
-        }
-
-        _focusDone = true;
-
-        if (_commandInputRef == null)
-        {
-            return;
-        }
-
-        try
-        {
-            // Small delay to let browser finish processing DOM changes
-            await Task.Delay(50);
-            await _commandInputRef.FocusAsync();
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-        {
-            // Expected during circuit disconnect or disposal
-        }
-    }
-
-    /// <summary>
     /// Handles the open state change of the popover.
     /// Resets focus tracking and search query when the popover closes.
     /// </summary>
@@ -432,8 +404,6 @@ public partial class BbCombobox<TValue> : ComponentBase
         }
         if (!isOpen)
         {
-            _focusDone = false; // Reset for next open
-
             // Reset the search query and notify the consumer so it can reload the default dataset
             // (e.g. initial top-N results) for the next open — but only when there is a search to
             // clear.
@@ -488,7 +458,6 @@ public partial class BbCombobox<TValue> : ComponentBase
         // next Tab restarts from the top of the document).
         _restoreFocusOnClose = true;
         _isOpen = false;
-        // Note: _focusDone is reset by HandleOpenChanged
     }
 
     /// <summary>

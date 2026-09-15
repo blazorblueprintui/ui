@@ -65,6 +65,12 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (_focusFirstOnNextRender)
+        {
+            _focusFirstOnNextRender = false;
+            await FocusFirstItemAsync();
+        }
+
         var isOpen = MenuItem?.IsOpen == true;
 
         // Only set up keyboard navigation if enabled
@@ -126,6 +132,18 @@
     /// <summary>
     /// Focuses the first focusable item in the content.
     /// </summary>
+    private bool _focusFirstOnNextRender;
+
+    /// <summary>
+    /// Focuses the first item after the next render — the one that puts the content on screen.
+    /// </summary>
+    /// <remarks>
+    /// OnAfterRenderAsync on Blazor Server runs once the browser has acknowledged the render, so
+    /// by then the element exists. The trigger used to sleep 50ms and then call
+    /// <see cref="FocusFirstItemAsync"/> directly, which guessed at that timing.
+    /// </remarks>
+    internal void FocusFirstItemOnNextRender() => _focusFirstOnNextRender = true;
+
     internal async Task FocusFirstItemAsync()
     {
         // Ensure module is loaded

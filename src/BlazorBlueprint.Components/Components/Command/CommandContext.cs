@@ -49,6 +49,13 @@ public interface IVirtualizedGroupHandler
     public int FocusedIndex { get; set; }
 
     /// <summary>
+    /// Focuses the item with this element id if it belongs to this group.
+    /// </summary>
+    /// <param name="elementId">The <c>id</c> of the hovered element.</param>
+    /// <returns><c>true</c> if the id was one of this group's items.</returns>
+    public bool TryHoverItem(string elementId);
+
+    /// <summary>
     /// Selects the currently focused item.
     /// </summary>
     public Task SelectFocusedItemAsync();
@@ -372,6 +379,63 @@ public class CommandContext
     {
         var filteredItems = GetFilteredItems();
         return filteredItems.Any(i => i.GroupId == groupId);
+    }
+
+    /// <summary>
+    /// Moves the highlight to the item under the pointer, given the hovered element's id.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Called from JavaScript, once per item the pointer genuinely moves onto. Items used to bind
+    /// <c>@onmouseenter</c> and <c>@onmousemove</c> themselves, which on Blazor Server made every
+    /// pixel of pointer travel a circuit message. The mousemove existed only to tell a real hover
+    /// from the list scrolling under a stationary pointer during keyboard navigation — a question
+    /// the browser now answers on its own (<c>elementUtils.observeHover</c>), so what arrives here
+    /// is always a real hover, and it ends keyboard mode as a real mouse move always did.
+    /// </para>
+    /// </remarks>
+    /// <param name="elementId">The <c>id</c> of the hovered <c>role="option"</c> element.</param>
+    public void HoverItemById(string elementId)
+    {
+        if (string.IsNullOrEmpty(elementId))
+        {
+            return;
+        }
+
+        var prefix = $"{Id}-item-";
+        if (elementId.StartsWith(prefix, StringComparison.Ordinal)
+            && int.TryParse(elementId.AsSpan(prefix.Length), out var rawIndex))
+        {
+            if (rawIndex < 0 || rawIndex >= _items.Count)
+            {
+                return;
+            }
+
+            var item = _items[rawIndex];
+            if (item == null || item.Disabled)
+            {
+                return;
+            }
+
+            var filteredIndex = GetFilteredItems().IndexOf(item);
+            if (filteredIndex < 0)
+            {
+                return;
+            }
+
+            OnMouseMove();
+            SetFocusedIndex(filteredIndex);
+            return;
+        }
+
+        foreach (var group in _virtualizedGroups)
+        {
+            if (group.TryHoverItem(elementId))
+            {
+                OnMouseMove();
+                return;
+            }
+        }
     }
 
     /// <summary>

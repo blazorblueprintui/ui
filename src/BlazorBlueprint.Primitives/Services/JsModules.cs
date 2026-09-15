@@ -44,6 +44,34 @@ public static class JsModules
     }
 
     /// <summary>
+    /// Appends the assembly's version to a module path as a <c>v</c> query, so a new release is a
+    /// new URL and a cached copy of the old one is never a valid answer for it.
+    /// </summary>
+    /// <param name="modulePath">The module path, as passed to <c>import</c>.</param>
+    /// <param name="assembly">The assembly whose version stamps the URL.</param>
+    /// <returns>The path with <c>?v=&lt;version&gt;</c> appended, URL-encoded.</returns>
+    public static string Versioned(string modulePath, System.Reflection.Assembly assembly)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(modulePath);
+        ArgumentNullException.ThrowIfNull(assembly);
+
+        // The informational version carries the prerelease tag and, from MinVer, the commit — so
+        // every build is a different URL. Falls back to the four-part version, which is always set.
+        var version = assembly
+            .GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+            .OfType<System.Reflection.AssemblyInformationalVersionAttribute>()
+            .FirstOrDefault()?.InformationalVersion;
+
+        if (string.IsNullOrWhiteSpace(version))
+        {
+            version = assembly.GetName().Version?.ToString() ?? "0";
+        }
+
+        var separator = modulePath.Contains('?') ? '&' : '?';
+        return $"{modulePath}{separator}v={Uri.EscapeDataString(version)}";
+    }
+
+    /// <summary>
     /// Gets an already-imported module without awaiting, or returns false if it is not loaded yet.
     /// </summary>
     /// <remarks>

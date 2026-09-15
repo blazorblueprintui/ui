@@ -27,6 +27,8 @@
                     ZIndex="9999"
                     ForceMount="false"
                     SideElementId="@_context.ContentId"
+                    RestoreFocusToId="@_context.TriggerId"
+                    RestoreFocusOnClose="@_context.State.RestoreFocusOnClose"
                     Dismiss="@BuildDismissOptions()"
                     Keyboard="@BuildKeyboardOptions()"
                     OnDismiss="@HandleDismiss">
@@ -202,7 +204,7 @@
         _ = InvokeAsync(HandleContextStateChangedAsync);
     }
 
-    private async Task HandleContextStateChangedAsync()
+    private Task HandleContextStateChangedAsync()
     {
         try
         {
@@ -212,25 +214,19 @@
                 // Capture both the trigger ref and the restore flag before teardown.
                 // State.TriggerElement is still populated at this point (Close() doesn't
                 // clear it), but we read it eagerly in case anything else mutates state.
-                var trigger = _context.State.TriggerElement;
-                var shouldRestoreFocus = _context.State.RestoreFocusOnClose;
-
+                // Focus goes back to the trigger inside overlay.close, through the portal's
+                // RestoreFocusToId and RestoreFocusOnClose above — for an intentional close
+                // only. Awaiting FocusAsync from here was a round trip on every Escape and
+                // every selection.
                 StateHasChanged();
-
-                // Restore focus to the trigger AFTER cleanup so the now-unmounted listbox
-                // isn't the active element when the user next presses Tab. Only restore
-                // for intentional closes (Escape, selection) — click-outside and Tab
-                // leave focus where the user intentionally moved it.
-                if (shouldRestoreFocus && trigger.HasValue)
-                {
-                    await FocusManager.RestoreFocus(trigger);
-                }
             }
         }
         catch (Exception ex) when (ex is ObjectDisposedException or TaskCanceledException)
         {
             // Component may be disposed during async operation
         }
+
+        return Task.CompletedTask;
     }
 
     // Cleanup has two callers — the context state-change handler when the listbox closes, and

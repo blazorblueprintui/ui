@@ -20,8 +20,34 @@
  * `textInput.initialize` without anyone having to open this file.
  */
 
-export * as compositionGuard from './composition-guard.js';
-export * as sidebar from './sidebar.js';
-export * as sidebarInset from './sidebar-inset.js';
-export * as textInput from './text-input.js';
-export * as theme from './theme.js';
+import * as compositionGuard from './composition-guard.js';
+import * as sidebar from './sidebar.js';
+import * as sidebarInset from './sidebar-inset.js';
+import * as textInput from './text-input.js';
+import * as theme from './theme.js';
+
+// Fails loudly when a module here is older than this bundle. See bb-primitives.js for the
+// incident that made this necessary: a stale sidebar.js behind a CDN, and every circuit dead.
+function assertFresh(fileName, module, exportName) {
+    if (typeof module[exportName] !== 'function') {
+        throw new Error(
+            `BlazorBlueprint: ${fileName} is out of date — it has no '${exportName}', which this ` +
+            `version of bb-components-core.js requires. The browser or a cache in front of it ` +
+            `served an older copy. Hard-refresh to check, and make sure _content/BlazorBlueprint.*/js/ ` +
+            `is not cached for longer than a deployment.`);
+    }
+}
+
+assertFresh('composition-guard.js', compositionGuard, 'attach');
+assertFresh('sidebar.js', sidebar, 'initialize');
+assertFresh('sidebar-inset.js', sidebarInset, 'scrollToTop');
+assertFresh('text-input.js', textInput, 'initialize');
+assertFresh('theme.js', theme, 'initialize');
+
+export {
+    compositionGuard,
+    sidebar,
+    sidebarInset,
+    textInput,
+    theme
+};

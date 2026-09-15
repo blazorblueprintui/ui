@@ -1,13 +1,14 @@
 @typeparam TValue
 @namespace BlazorBlueprint.Components
 @inject IJSRuntime JSRuntime
+@using Microsoft.JSInterop
 @implements IAsyncDisposable
 
 @* Styled SelectContent wrapper around SelectContent primitive *@
 <BlazorBlueprint.Primitives.Select.BbSelectContent TValue="TValue"
                                                class="@OuterCssClass"
                                                @attributes="AdditionalAttributes">
-    <div @ref="_scrollRef" @onscroll="HandleScroll" class="@InnerCssClass">
+    <div @ref="_scrollRef" class="@InnerCssClass">
         @ChildContent
         @if (IsLoading)
         {
@@ -26,7 +27,8 @@
 
 @code {
     private ElementReference _scrollRef;
-    private IJSObjectReference? _jsModule;
+    private DotNetObjectReference<BbSelectContent<TValue>>? _selfRef;
+    private int _nearBottomObserver;
 
     /// <summary>
     /// Cascading parameter to infer TValue from parent Select context.
@@ -92,32 +94,64 @@
     /// </summary>
     private static string InnerCssClass => "max-h-60 overflow-auto p-1 [&::-webkit-scrollbar]:hidden";
 
-    private async Task HandleScroll()
+    // No @onscroll — see BbCommandList for why. The browser watches the element and calls back
+    // once per arrival at the bottom, instead of the server hearing about every scroll event and
+    // awaiting a round trip to answer each one.
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && OnLoadMore.HasDelegate)
+        {
+            _ = ObserveNearBottomAsync();
+        }
+    }
+
+    private async Task ObserveNearBottomAsync()
+    {
+        try
+        {
+            var module = await PrimitiveModules.GetAsync(JSRuntime);
+            _selfRef ??= DotNetObjectReference.Create(this);
+            _nearBottomObserver = await module.InvokeAsync<int>(
+                "elementUtils.observeNearBottom", _scrollRef, _selfRef, nameof(JsOnNearBottom), 80.0);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
+        {
+            // Circuit gone, prerendering, or the list already torn down. Load-more is a courtesy.
+        }
+    }
+
+    /// <summary>
+    /// Called from JavaScript when the list scrolls near its bottom.
+    /// </summary>
+    [JSInvokable]
+    public async Task JsOnNearBottom()
     {
         if (!OnLoadMore.HasDelegate || IsLoading)
         {
             return;
         }
 
-        _jsModule ??= await PrimitiveModules.GetAsync(JSRuntime);
-
-        try
-        {
-            var nearBottom = await _jsModule.InvokeAsync<bool>("elementUtils.isNearBottom", _scrollRef, 80.0);
-            if (nearBottom)
-            {
-                await OnLoadMore.InvokeAsync();
-            }
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-        {
-            // Expected during circuit disconnect or disposal
-        }
+        await OnLoadMore.InvokeAsync();
     }
 
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
-        // Nothing to release: the primitive JS module is shared and owned by PrimitiveModules.
-        return ValueTask.CompletedTask;
+        if (_nearBottomObserver != 0 && PrimitiveModules.TryGetLoaded(JSRuntime, out var module))
+        {
+            var id = _nearBottomObserver;
+            _nearBottomObserver = 0;
+
+            try
+            {
+                await module.InvokeVoidAsync("elementUtils.unobserveNearBottom", id);
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Circuit gone — the listener went with the document.
+            }
+        }
+
+        _selfRef?.Dispose();
+        _selfRef = null;
     }
 }

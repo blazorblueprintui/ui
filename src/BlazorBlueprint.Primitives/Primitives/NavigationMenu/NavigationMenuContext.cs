@@ -96,6 +96,12 @@ public class NavigationMenuContext : IDisposable
         {
             // Timer was cancelled
         }
+        catch (Exception)
+        {
+            // async void: nothing awaits this, so an exception that escapes has no caller to reach and
+            // Blazor Server treats it as fatal — the circuit closes and the user sees the reconnect
+            // overlay. Everything this method does is best-effort, and none of it is worth that.
+        }
     }
 
     /// <summary>

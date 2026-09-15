@@ -23,6 +23,8 @@
                 ZIndex="@ZIndex"
                 ForceMount="@ForceMount"
                 SideElementId="@Context.ContentId"
+                RestoreFocusToId="@Context.TriggerId"
+                RestoreFocusOnClose="@Context.State.RestoreFocusOnClose"
                 Dismiss="@BuildDismissOptions()"
                 Keyboard="@BuildKeyboardOptions()"
                 OnDismiss="@HandleDismissAsync">
@@ -264,25 +266,19 @@
             if (!Context.IsOpen)
             {
                 // Capture both the trigger ref and the restore flag before teardown.
-                var trigger = Context.State.TriggerElement;
-                var shouldRestoreFocus = Context.State.RestoreFocusOnClose;
-
+                // Focus goes back to the trigger inside overlay.close, through the portal's
+                // RestoreFocusToId and RestoreFocusOnClose above — for an intentional close
+                // only. Awaiting FocusAsync from here was a round trip on every Escape.
                 await CleanupAsync();
                 StateHasChanged();
-
-                // Restore focus to the trigger AFTER cleanup so the now-unmounted menu
-                // isn't the active element when the user next presses Tab. Only restore
-                // for intentional closes (Escape, item activation) — click-outside
-                // leaves focus where the user clicked.
-                if (shouldRestoreFocus && trigger.HasValue)
-                {
-                    await FocusManager.RestoreFocus(trigger);
-                }
             }
-            else
-            {
-                StateHasChanged();
-            }
+            // No StateHasChanged for the open. BbDropdownMenu re-renders unconditionally on every context
+            // change (#437), and this content is in its subtree, so it is already re-rendered
+            // in that same batch. Rendering it a second time here made BbFloatingPortal raise
+            // RefreshPortal while the host's render cycle was still open — the host had drawn
+            // this exact content moments earlier in the same batch — and the host, unable to
+            // tell that from a genuine mid-cycle update (#418), deferred a flush that landed one
+            // round trip after the overlay was already on screen. Every open paid for it.
         }
         catch (Exception ex) when (ex is ObjectDisposedException or TaskCanceledException)
         {

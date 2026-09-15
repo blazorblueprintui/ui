@@ -56,9 +56,13 @@ public class PrimitiveJsModuleTests
         return all;
     }
 
-    /// <summary><c>export * as clickOutside from './click-outside.js';</c></summary>
+    /// <summary>
+    /// <c>import * as clickOutside from './click-outside.js';</c> — the bundle imports each module
+    /// into a namespace, checks it is not a stale cached copy, and then exports the namespace.
+    /// The older <c>export * as …</c> form is accepted too.
+    /// </summary>
     private static readonly Regex ReExport = new(
-        @"^export \* as (?<ns>\w+) from '\./(?<file>[\w-]+)\.js';",
+        @"^(?:export|import) \* as (?<ns>\w+) from '\./(?<file>[\w-]+)\.js';",
         RegexOptions.Multiline | RegexOptions.Compiled);
 
     /// <summary><c>export function foo</c>, <c>export async function foo</c>, <c>export const foo</c>.</summary>
@@ -101,7 +105,8 @@ public class PrimitiveJsModuleTests
             unbundled.Count == 0,
             $"These primitive modules are not re-exported from {BundleFileName}, so reaching them " +
             $"costs an extra circuit round trip on every page load: {string.Join(", ", unbundled)}. " +
-            "Add an `export * as <camelCase> from './<file>.js';` line for each.");
+            "Add an `import * as <camelCase> from './<file>.js';` line, a freshness check, and the " +
+            "namespace to the export list for each.");
     }
 
     [Fact]

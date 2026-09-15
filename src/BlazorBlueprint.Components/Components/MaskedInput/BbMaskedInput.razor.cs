@@ -226,7 +226,7 @@ public partial class BbMaskedInput : ComponentBase, IAsyncDisposable
                 // Applying the mask means rewriting the element's value, which resets an
                 // in-progress IME composition. Suppressing input while composing defers the
                 // whole HandleInput pass — masking included — until the IME commits.
-                _guardModule = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/bb-components-core.js");
+                _guardModule = await ComponentModules.GetCoreAsync(JSRuntime);
                 await _guardModule.InvokeVoidAsync(
 "compositionGuard.attach", _inputRef, _guardId, new { suppress = GuardSuppressedEvents });
             }
