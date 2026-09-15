@@ -22,16 +22,14 @@
                 Strategy="@Strategy"
                 ZIndex="@ZIndex"
                 ForceMount="@ForceMount"
+                SideElementId="@Context.ContentId"
                 Dismiss="@BuildDismissOptions()"
-                OnDismiss="@HandleDismissAsync"
-                OnReady="@HandleFloatingReady"
-                OnPlacementChanged="@HandlePlacementChanged">
+                Keyboard="@BuildKeyboardOptions()"
+                OnDismiss="@HandleDismissAsync">
     @RenderDropdownContent()
 </BbFloatingPortal>
 
 @code {
-    private string _actualPlacement = "bottom";
-
     [CascadingParameter]
     private DropdownMenuContext Context { get; set; } = null!;
 
@@ -133,9 +131,6 @@
     public PositioningStrategy Strategy { get; set; } = PositioningStrategy.Absolute;
 
     private ElementReference _contentRef;
-    private IJSObjectReference? _menuKeyboardModule;
-    private IJSObjectReference? _matchWidthModule;
-    private IJSObjectReference? _matchWidthCleanup;
     private DotNetObjectReference<BbDropdownMenuContent>? _dotNetRef;
     private bool _disposed = false;
     private string _portalId = "";
@@ -165,7 +160,7 @@
              data-autofocus
              @attributes="GetAttributesWithoutStyle()"
              data-state="@(Context.IsOpen ? "open" : "closed")"
-             data-side="@_actualPlacement">
+             data-side="@Side.ToValue()">
             <CascadingValue Value="Context" IsFixed="true">
                 <CascadingValue Value="this" Name="DropdownMenuContentContext" IsFixed="true">
                     @ChildContent
@@ -174,22 +169,32 @@
         </div>
     };
 
-    private void HandlePlacementChanged(string placement)
+    // Declared rather than wired. BbFloatingPortal attaches the menu's key handling inside the
+    // same interop call that positions and reveals it, and releases it inside the one that closes
+    // it. Both used to be separately awaited calls from a ready callback that itself only ran
+    // after the browser acknowledged the content's render batch — so the menu was on screen and
+    // deaf to the arrow keys for a further round trip.
+    //
+    // matchTriggerWidth is gone from here entirely rather than folded in. MatchAnchorWidth above
+    // already asks Floating UI's size middleware for the same width on every position pass, and
+    // autoUpdate re-runs that on resize, so the separate ResizeObserver was a second writer of one
+    // style — bought with an awaited interop call that also allocated a JS object reference to
+    // dispose later.
+    private FloatingKeyboardOptions? BuildKeyboardOptions()
     {
-        _actualPlacement = string.IsNullOrEmpty(placement) ? "bottom" : placement.Split('-')[0];
-        StateHasChanged();
-    }
-
-    private async Task HandleFloatingReady()
-    {
-        // Set up keyboard navigation
-        await SetupKeyboardNavAsync();
-
-        // Set up width matching if needed
-        if (MatchTriggerWidth)
+        if (Context == null)
         {
-            await SetupMatchTriggerWidthAsync();
+            return null;
         }
+
+        return new FloatingKeyboardOptions
+        {
+            Kind = FloatingKeyboardKind.Menu,
+            ContentId = Context.ContentId,
+            CallbackRef = _dotNetRef ??= DotNetObjectReference.Create(this),
+            Loop = Loop,
+            Mode = "vertical"
+        };
     }
 
     // Declared rather than wired, so BbFloatingPortal registers the listener in the same interop
@@ -233,46 +238,6 @@
         if (CloseOnClickOutside)
         {
             Context.Close();
-        }
-    }
-
-    private async Task SetupKeyboardNavAsync()
-    {
-        try
-        {
-            _menuKeyboardModule ??= await PrimitiveModules.GetAsync(JSRuntime);
-
-            _dotNetRef ??= DotNetObjectReference.Create(this);
-
-            await _menuKeyboardModule.InvokeVoidAsync("menuKeyboard.initialize", _contentRef, _dotNetRef, Context.ContentId,
-                new { mode = "vertical", loop = Loop });
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-        {
-            // Expected during circuit disconnect or module loading failure
-        }
-        catch (InvalidOperationException)
-        {
-            // JS interop not available during prerendering
-        }
-    }
-
-    private async Task SetupMatchTriggerWidthAsync()
-    {
-        try
-        {
-            _matchWidthModule = await PrimitiveModules.GetAsync(JSRuntime);
-
-            _matchWidthCleanup = await _matchWidthModule.InvokeAsync<IJSObjectReference>(
-"matchTriggerWidth.matchTriggerWidth", Context.State.TriggerElement, _contentRef);
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-        {
-            // Expected during circuit disconnect or module loading failure
-        }
-        catch (InvalidOperationException)
-        {
-            // JS interop not available during prerendering
         }
     }
 
@@ -349,39 +314,12 @@
     // rather than dereferencing a field the first one nulled while suspended. Reading the field
     // after an await instead threw a NullReferenceException, which no filter here catches, so it
     // escaped DisposeAsync into the renderer's disposal queue and took the circuit down (#441).
-    private async Task CleanupAsync()
+    private Task CleanupAsync()
     {
-        // Context is a cascading parameter declared non-null, but it is genuinely absent when the
-        // content is torn down after its provider, so read the id defensively rather than trusting
-        // the annotation on a path that must not throw.
-        var contentId = Context?.ContentId;
-        if (_menuKeyboardModule != null && contentId != null)
-        {
-            try
-            {
-                await _menuKeyboardModule.InvokeVoidAsync("menuKeyboard.dispose", contentId);
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Cleanup may already be disposed or circuit disconnected
-            }
-        }
-
-        var matchWidthCleanup = _matchWidthCleanup;
-        if (matchWidthCleanup != null)
-        {
-            _matchWidthCleanup = null;
-
-            try
-            {
-                await matchWidthCleanup.InvokeVoidAsync("dispose");
-                await matchWidthCleanup.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Cleanup may already be disposed or circuit disconnected
-            }
-        }
+        // The menu's key handlers are released by overlay.close, in the same call that hides the
+        // element, so a close no longer reaches here at all — only a teardown does, and by then
+        // the close has already run. Releasing them again from here would be a round trip spent
+        // removing a listener that is already gone.
 
         // Dispose DotNetObjectReference to prevent stale callbacks
         var dotNetRef = _dotNetRef;
@@ -390,6 +328,8 @@
             _dotNetRef = null;
             dotNetRef.Dispose();
         }
+
+        return Task.CompletedTask;
     }
 
     public async ValueTask DisposeAsync()

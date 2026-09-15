@@ -44,6 +44,49 @@ public static class JsModules
     }
 
     /// <summary>
+    /// Gets an already-imported module without awaiting, or returns false if it is not loaded yet.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// For callers that must issue their interop from a synchronous pass, where awaiting is not
+    /// available at all. An overlay dispatches its open from <c>OnParametersSet</c> so the call
+    /// rides out in the same flush as the render batch carrying its content; awaiting the import
+    /// there would put the call a round trip behind the render and defeat the point.
+    /// </para>
+    /// <para>
+    /// Returning false is not an error, only "not yet". The caller falls back to the awaited path,
+    /// which pays one round trip for the import and warms this cache for every open after it.
+    /// </para>
+    /// </remarks>
+    /// <param name="jsRuntime">The JavaScript runtime of the current circuit or application.</param>
+    /// <param name="modulePath">The module path, as passed to <c>import</c>.</param>
+    /// <param name="module">The shared, non-owning module reference, when one is loaded.</param>
+    /// <returns><c>true</c> when the module is loaded and <paramref name="module"/> is set.</returns>
+    public static bool TryGetLoaded(IJSRuntime jsRuntime, string modulePath, out IJSObjectReference module)
+    {
+        module = null!;
+
+        if (jsRuntime is null || string.IsNullOrWhiteSpace(modulePath))
+        {
+            return false;
+        }
+
+        if (!Cache.TryGetValue(jsRuntime, out var modules) || !modules.TryGetValue(modulePath, out var handle))
+        {
+            return false;
+        }
+
+        var inFlight = handle.Loaded;
+        if (inFlight is null || !inFlight.IsCompletedSuccessfully)
+        {
+            return false;
+        }
+
+        module = inFlight.Result;
+        return true;
+    }
+
+    /// <summary>
     /// Forwards every call to the real module but ignores disposal, so that a component tearing
     /// itself down cannot take a shared module away from the components that are still running.
     /// </summary>
@@ -66,6 +109,18 @@ public static class JsModules
     {
         private readonly object sync = new();
         private Task<IJSObjectReference>? inFlight;
+
+        /// <summary>The import task, for a caller that can only look and not wait.</summary>
+        public Task<IJSObjectReference>? Loaded
+        {
+            get
+            {
+                lock (sync)
+                {
+                    return inFlight;
+                }
+            }
+        }
 
         public Task<IJSObjectReference> GetAsync(IJSRuntime jsRuntime, string modulePath)
         {
