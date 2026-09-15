@@ -48,7 +48,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   | `/recipes/filterable-datagrid` | 21 | 54 | **42** |
   | `/components/button` | 0 | 36 | 36 |
 
-  `BbTableRow` still registers per row. It is used by `BbDataTable` and has no container reference to delegate to yet.
+  `BbTableRow` gets the same treatment: `BbTable` now holds a reference to its `<table>` and delegates for every row in it, and `BbTableRow` no longer implements `IAsyncDisposable`.
 
 - **A component's JavaScript module is imported once per circuit, not once per component.** Every component cached its module reference in an *instance* field, so thirteen `BbInput`s on a page issued thirteen `import` calls for the same already-loaded file — and on Blazor Server each one is a network round trip. The cost scaled with how many controls a page had, which is why it showed up on dense admin forms and not in a demo.
 

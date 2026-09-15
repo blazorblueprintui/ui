@@ -1,12 +1,12 @@
 @namespace BlazorBlueprint.Primitives.Table
 @typeparam TData where TData : class
 @inject IJSRuntime JSRuntime
-@implements IAsyncDisposable
 
 <tr @ref="_elementRef"
     role="row"
     aria-selected="@(IsSelected ? "true" : "false")"
     tabindex="@(IsKeyboardNavigable ? 0 : -1)"
+    data-bb-row-keys="@(IsKeyboardNavigable ? "true" : null)"
     class="@ComputedClass"
     @onclick="HandleClick"
     @onkeydown="HandleKeyDown"
@@ -16,9 +16,6 @@
 
 @code {
     private ElementReference _elementRef;
-    private bool _spaceKeyHandlerAttached = false;
-    private IJSObjectReference? _tableRowNavModule;
-    private IJSObjectReference? _spaceKeyCleanup;
 
     [CascadingParameter]
     private TableContext<TData> Context { get; set; } = default!;
@@ -66,27 +63,10 @@
     /// </summary>
     private string ComputedClass => IsKeyboardNavigable ? $"{FocusRingClasses} {Class}" : Class ?? "";
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender && IsKeyboardNavigable && !_spaceKeyHandlerAttached)
-        {
-            try
-            {
-                // Lazy-load the table row navigation module
-                _tableRowNavModule ??= await PrimitiveModules.GetAsync(JSRuntime);
-
-                // Attach event listener in capture phase to prevent Space from scrolling
-                // This runs before Blazor's event handler, allowing us to preventDefault
-                _spaceKeyCleanup = await _tableRowNavModule.InvokeAsync<IJSObjectReference>(
-"tableRowNav.preventSpaceKeyScroll", _elementRef);
-                _spaceKeyHandlerAttached = true;
-            }
-            catch
-            {
-                // Silently fail during prerendering
-            }
-        }
-    }
+    // No OnAfterRenderAsync here on purpose. Each row used to attach its own Space-key handler,
+    // which cost one interop call — one circuit round trip on Blazor Server — per row, and another
+    // per row to dispose it. BbTable attaches one handler for the whole table, and the
+    // data-bb-row-keys attribute above is how a row opts in.
 
     private void HandleClick()
     {
@@ -130,8 +110,8 @@
     {
         try
         {
-            _tableRowNavModule ??= await PrimitiveModules.GetAsync(JSRuntime);
-            await _tableRowNavModule.InvokeVoidAsync("tableRowNav.moveFocusToPreviousRow", _elementRef);
+            var navModule = await PrimitiveModules.GetAsync(JSRuntime);
+            await navModule.InvokeVoidAsync("tableRowNav.moveFocusToPreviousRow", _elementRef);
         }
         catch
         {
@@ -143,29 +123,12 @@
     {
         try
         {
-            _tableRowNavModule ??= await PrimitiveModules.GetAsync(JSRuntime);
-            await _tableRowNavModule.InvokeVoidAsync("tableRowNav.moveFocusToNextRow", _elementRef);
+            var navModule = await PrimitiveModules.GetAsync(JSRuntime);
+            await navModule.InvokeVoidAsync("tableRowNav.moveFocusToNextRow", _elementRef);
         }
         catch
         {
             // Ignore JS interop errors (e.g., during prerendering)
         }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_spaceKeyCleanup != null)
-        {
-            try
-            {
-                await _spaceKeyCleanup.InvokeVoidAsync("dispose");
-                await _spaceKeyCleanup.DisposeAsync();
-            }
-            catch
-            {
-                // Ignore disposal errors
-            }
-        }
-
     }
 }
