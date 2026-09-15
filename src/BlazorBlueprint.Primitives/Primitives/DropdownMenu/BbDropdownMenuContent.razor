@@ -23,6 +23,8 @@
                 ZIndex="@ZIndex"
                 ForceMount="@ForceMount"
                 SideElementId="@Context.ContentId"
+                RestoreFocusToId="@Context.TriggerId"
+                RestoreFocusOnClose="@Context.State.RestoreFocusOnClose"
                 Dismiss="@BuildDismissOptions()"
                 Keyboard="@BuildKeyboardOptions()"
                 OnDismiss="@HandleDismissAsync">
@@ -264,20 +266,11 @@
             if (!Context.IsOpen)
             {
                 // Capture both the trigger ref and the restore flag before teardown.
-                var trigger = Context.State.TriggerElement;
-                var shouldRestoreFocus = Context.State.RestoreFocusOnClose;
-
+                // Focus goes back to the trigger inside overlay.close, through the portal's
+                // RestoreFocusToId and RestoreFocusOnClose above — for an intentional close
+                // only. Awaiting FocusAsync from here was a round trip on every Escape.
                 await CleanupAsync();
                 StateHasChanged();
-
-                // Restore focus to the trigger AFTER cleanup so the now-unmounted menu
-                // isn't the active element when the user next presses Tab. Only restore
-                // for intentional closes (Escape, item activation) — click-outside
-                // leaves focus where the user clicked.
-                if (shouldRestoreFocus && trigger.HasValue)
-                {
-                    await FocusManager.RestoreFocus(trigger);
-                }
             }
             else
             {

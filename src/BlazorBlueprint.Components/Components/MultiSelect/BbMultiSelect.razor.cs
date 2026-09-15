@@ -25,7 +25,6 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     private DotNetObjectReference<BbMultiSelect<TValue>>? _dotNetRef;
     private ElementReference _searchInputRef;
     private bool _jsSetupDone;
-    private bool _focusDone;
 
     // ShouldRender tracking fields
     private bool _parametersChanged;
@@ -446,7 +445,6 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
             }
         }
         _jsSetupDone = false;
-        _focusDone = false;
     }
 
     /// <summary>
@@ -459,7 +457,6 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
         _isOpen = isOpen;
         if (!isOpen)
         {
-            _focusDone = false; // Reset for next open
         }
     }
 
@@ -515,32 +512,6 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// Handles click-outside events when AutoClose is enabled.
     /// </summary>
     private async Task HandleClickOutside() => await CloseCore(restoreFocus: false);
-
-    /// <summary>
-    /// Handles the popover content ready event to focus the search input.
-    /// This is called when the popover is fully positioned and visible.
-    /// </summary>
-    private async Task HandleContentReady()
-    {
-        // Guard against multiple calls per open
-        if (_focusDone)
-        {
-            return;
-        }
-
-        _focusDone = true;
-
-        try
-        {
-            // Small delay to let browser finish processing DOM changes
-            await Task.Delay(50);
-            await _searchInputRef.FocusAsync();
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-        {
-            // Expected during circuit disconnect or disposal
-        }
-    }
 
     /// <summary>
     /// Handles option toggle (selection/deselection).

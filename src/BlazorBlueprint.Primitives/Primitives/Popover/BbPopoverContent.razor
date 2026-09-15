@@ -25,9 +25,12 @@
                 SideElementId="@Context.ContentId"
                 ScrollToCurrentIn="@(ScrollToSelected ? Context.ContentId : null)"
                 ScrollToCurrentSelector="@ScrollToSelectedSelector"
+                AutoFocusId="@AutoFocusId"
+                RestoreFocusToId="@Context.TriggerId"
+                RestoreFocusOnClose="@Context.State.RestoreFocusOnClose"
                 Dismiss="@BuildDismissOptions()"
                 OnDismiss="@HandleDismissAsync"
-                OnReady="@HandleFloatingReady">
+                OnReady="@_readyCallback">
     @RenderPopoverContent()
 </BbFloatingPortal>
 
@@ -65,6 +68,17 @@
     /// </summary>
     [Parameter]
     public string ScrollToSelectedSelector { get; set; } = "[role=\"option\"][aria-selected=\"true\"]";
+
+    /// <summary>
+    /// The <c>id</c> of an element inside the popover to focus one frame after it is revealed.
+    /// </summary>
+    /// <remarks>
+    /// For a search box or similar. It happens inside the interop call that positions the
+    /// popover, so it costs no round trip — where focusing from <see cref="OnContentReady"/>
+    /// costs one before the callback runs and another for <c>FocusAsync</c>.
+    /// </remarks>
+    [Parameter]
+    public string? AutoFocusId { get; set; }
 
     /// <summary>
     /// Whether pressing Escape should close the popover.
@@ -162,8 +176,21 @@
     private bool _disposed = false;
     private string _portalId = "";
 
+    // Handed to the portal only when a consumer has asked for OnContentReady. The portal raises
+    // OnReady from OnAfterRenderAsync — a round trip behind the render on Blazor Server — and an
+    // EventCallback re-renders its receiver, which is a second round trip on every open. Nothing
+    // in the library listens to Context.OnContentReady, so with no consumer callback the whole
+    // thing is a round trip spent notifying no one. Created once: a fresh EventCallback on each
+    // render would read as a changed parameter and re-render the portal every time.
+    private EventCallback _readyCallback;
+
     protected override void OnInitialized()
     {
+        if (OnContentReady.HasDelegate)
+        {
+            _readyCallback = EventCallback.Factory.Create(this, HandleFloatingReady);
+        }
+
         if (Context == null)
         {
             throw new InvalidOperationException(
@@ -273,26 +300,17 @@
         _ = InvokeAsync(HandleContextStateChangedAsync);
     }
 
-    private async Task HandleContextStateChangedAsync()
+    private Task HandleContextStateChangedAsync()
     {
         try
         {
             if (!Context.IsOpen)
             {
                 // Capture both the trigger ref and the restore flag before teardown.
-                var trigger = Context.State.TriggerElement;
-                var shouldRestoreFocus = Context.State.RestoreFocusOnClose;
-
+                // Focus goes back to the trigger inside overlay.close, through the portal's
+                // RestoreFocusToId and RestoreFocusOnClose above — for an intentional close
+                // only. Awaiting FocusAsync from here was a round trip on every Escape.
                 StateHasChanged();
-
-                // Restore focus to the trigger AFTER cleanup so the now-unmounted popover
-                // isn't the active element when the user next presses Tab. Only restore
-                // for intentional closes (Escape) — click-outside leaves focus where the
-                // user clicked.
-                if (shouldRestoreFocus && trigger.HasValue)
-                {
-                    await FocusManager.RestoreFocus(trigger);
-                }
             }
             else
             {
@@ -303,6 +321,8 @@
         {
             // Component may be disposed during async operation
         }
+
+        return Task.CompletedTask;
     }
 
     private async Task HandleKeyDown(KeyboardEventArgs args)

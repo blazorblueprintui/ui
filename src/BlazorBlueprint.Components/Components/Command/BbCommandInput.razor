@@ -17,6 +17,7 @@
         <path d="m21 21-4.35-4.35"></path>
     </svg>
     <input @ref="_inputRef"
+           id="@_inputId"
            type="text"
            placeholder="@Placeholder"
            disabled="@Disabled"
@@ -51,6 +52,19 @@
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Gets or sets the <c>id</c> of the input element. Generated when not set.
+    /// </summary>
+    /// <remarks>
+    /// An owner that wants the input focused as its popover opens passes this same id as the
+    /// popover's <c>AutoFocusId</c>, so the focus happens inside the call that reveals the popover
+    /// rather than a round trip after it.
+    /// </remarks>
+    [Parameter]
+    public string? Id { get; set; }
+
+    private string _inputId = string.Empty;
 
     /// <summary>
     /// Gets or sets the placeholder text for the input.
@@ -132,6 +146,10 @@
 
     protected override void OnParametersSet()
     {
+        _inputId = Id ?? (_inputId.Length > 0 && _inputId.StartsWith("command-input-", StringComparison.Ordinal)
+            ? _inputId
+            : $"command-input-{Guid.NewGuid():N}");
+
         // Check if AutoFocus changed from false to true
         if (AutoFocus && !_previousAutoFocus)
         {
@@ -176,8 +194,10 @@
             _shouldFocus = false;
             try
             {
-                // Small delay to ensure the element is ready in the DOM (especially after portal rendering)
-                await Task.Delay(50);
+                // No delay. This runs after the render that put the input on screen has been
+                // acknowledged, so the element is there. The 50ms sleep it used to carry was a
+                // guess at portal timing, and the portal case now focuses through AutoFocusId
+                // inside the open call instead.
                 await _inputRef.FocusAsync();
             }
             catch

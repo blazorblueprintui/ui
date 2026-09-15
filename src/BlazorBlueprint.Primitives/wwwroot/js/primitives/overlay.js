@@ -127,7 +127,8 @@ function waitForContent(portalId, timeoutMs = CONTENT_WAIT_MS) {
  *   `data-side`. `reportPlacement` asks for a `JsOnPlacementChanged` callback — a round trip,
  *   so only set it when C# genuinely reads the placement. `listbox` prepares select content:
  *   { kind, contentId, callbackRef, selectedValue, loop, mode }. `scrollToCurrent` scrolls a
- *   marked element into view before the reveal: { containerId, selector }.
+ *   marked element into view before the reveal: { containerId, selector }. `autoFocusId` names
+ *   an element to focus one frame after the reveal.
  * @param {Object} dotNetRef - .NET reference the listeners and callbacks call back into.
  * @returns {Promise<Object|null>} The resolved position, for the rare caller that awaits.
  */
@@ -179,10 +180,21 @@ export async function open(portalId, reference, options = {}, dotNetRef = null) 
         //
         // Listbox only. A menu moves real focus between its items and decides for itself whether
         // to take focus on open, from its own initialFocus setting.
-        if (options.keyboard && options.keyboard.kind === 'Listbox') {
+        //
+        // autoFocusId is the same idea for any other content — a combobox's search box, say. Its
+        // owner used to focus it from the portal's ready callback, which on Blazor Server runs a
+        // round trip after the content renders, and then slept 50ms and paid another round trip
+        // for FocusAsync. Here it is one frame after the reveal, for free.
+        const focusTarget = options.keyboard && options.keyboard.kind === 'Listbox'
+            ? () => select.focusListbox(options.keyboard.contentId)
+            : options.autoFocusId
+                ? () => document.getElementById(options.autoFocusId)?.focus({ preventScroll: true })
+                : null;
+
+        if (focusTarget) {
             requestAnimationFrame(() => requestAnimationFrame(() => {
                 if (isCurrent(portalId, token)) {
-                    select.focusListbox(options.keyboard.contentId);
+                    focusTarget();
                 }
             }));
         }
@@ -256,7 +268,7 @@ export async function open(portalId, reference, options = {}, dotNetRef = null) 
  * @param {string} portalId - The overlay to close.
  * @param {Object} options - `notifyClosed` asks for a `JsOnClosed` callback once the element is
  *   hidden, for owners that unmount their content afterwards. `keyboard` names content whose key
- *   handlers should be released.
+ *   handlers should be released. `restoreFocusToId` names the element to focus once hidden.
  * @param {Object} dotNetRef - .NET reference for the `notifyClosed` callback.
  */
 export async function close(portalId, options = {}, dotNetRef = null) {
@@ -292,6 +304,21 @@ export async function close(portalId, options = {}, dotNetRef = null) {
             // Reopened while the exit animation ran. The overlay is on screen again and its
             // content must stay mounted.
             return;
+        }
+
+        // Focus goes back to the trigger here, for a close the user asked for with Escape or a
+        // selection. The owner used to do this from C# after its close render, as an awaited
+        // FocusAsync — a round trip spent putting focus somewhere the browser could put it
+        // itself. A click outside does not restore: focus stays where the user clicked.
+        if (options.restoreFocusToId) {
+            const target = document.getElementById(options.restoreFocusToId);
+            if (target) {
+                try {
+                    target.focus({ preventScroll: true });
+                } catch (error) {
+                    // A trigger that is no longer focusable is not worth a console error.
+                }
+            }
         }
 
         if (options.notifyClosed && dotNetRef) {
