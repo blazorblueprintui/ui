@@ -272,10 +272,13 @@
                 await CleanupAsync();
                 StateHasChanged();
             }
-            else
-            {
-                StateHasChanged();
-            }
+            // No StateHasChanged for the open. BbDropdownMenu re-renders unconditionally on every context
+            // change (#437), and this content is in its subtree, so it is already re-rendered
+            // in that same batch. Rendering it a second time here made BbFloatingPortal raise
+            // RefreshPortal while the host's render cycle was still open — the host had drawn
+            // this exact content moments earlier in the same batch — and the host, unable to
+            // tell that from a genuine mid-cycle update (#418), deferred a flush that landed one
+            // round trip after the overlay was already on screen. Every open paid for it.
         }
         catch (Exception ex) when (ex is ObjectDisposedException or TaskCanceledException)
         {

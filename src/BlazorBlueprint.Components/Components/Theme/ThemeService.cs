@@ -87,7 +87,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            module = await JsModules.GetAsync(jsRuntime, "./_content/BlazorBlueprint.Components/js/bb-components-core.js");
+            module = await ComponentModules.GetCoreAsync(jsRuntime);
         }
         catch (JSDisconnectedException)
         {

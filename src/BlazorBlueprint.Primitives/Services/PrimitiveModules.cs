@@ -41,12 +41,31 @@ public static class PrimitiveModules
     public const string ModulePath = "./_content/BlazorBlueprint.Primitives/js/primitives/bb-primitives.js";
 
     /// <summary>
+    /// The URL actually imported: <see cref="ModulePath"/> with the library version as a query.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The query is what stops a browser, or a CDN in front of it, from serving last week's bundle
+    /// against this week's C#. Static web assets carry no fingerprint on .NET 8, so without it a
+    /// cached <c>bb-primitives.js</c> is a valid response for as long as the cache says — and a
+    /// bundle that predates a renamed export fails with <c>Could not find 'x.y'</c> at the first
+    /// call, which on Blazor Server has taken whole circuits down.
+    /// </para>
+    /// <para>
+    /// It busts the entry file only. The modules it imports are fetched by the browser relative to
+    /// it, without the query, so a stale one of those can still be served from cache; the bundle
+    /// checks for that itself as it loads and fails with a message that names the file.
+    /// </para>
+    /// </remarks>
+    public static string ModuleUrl { get; } = JsModules.Versioned(ModulePath, typeof(PrimitiveModules).Assembly);
+
+    /// <summary>
     /// Gets the shared primitive bundle for the given runtime, importing it on first use.
     /// </summary>
     /// <param name="jsRuntime">The JavaScript runtime of the current circuit or application.</param>
     /// <returns>The shared, non-owning module reference.</returns>
     public static Task<IJSObjectReference> GetAsync(IJSRuntime jsRuntime)
-        => JsModules.GetAsync(jsRuntime, ModulePath);
+        => JsModules.GetAsync(jsRuntime, ModuleUrl);
 
     /// <summary>
     /// Gets the shared primitive bundle without awaiting, or returns false if it is not imported
@@ -56,5 +75,5 @@ public static class PrimitiveModules
     /// <param name="module">The shared, non-owning module reference, when one is loaded.</param>
     /// <returns><c>true</c> when the bundle is loaded and <paramref name="module"/> is set.</returns>
     public static bool TryGetLoaded(IJSRuntime jsRuntime, out IJSObjectReference module)
-        => JsModules.TryGetLoaded(jsRuntime, ModulePath, out module);
+        => JsModules.TryGetLoaded(jsRuntime, ModuleUrl, out module);
 }

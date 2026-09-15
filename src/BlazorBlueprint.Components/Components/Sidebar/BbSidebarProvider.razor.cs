@@ -72,7 +72,7 @@ public partial class BbSidebarProvider
             try
             {
                 // Load the sidebar JavaScript module
-                _module = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/bb-components-core.js");
+                _module = await ComponentModules.GetCoreAsync(JSRuntime);
 
                 // Create a reference to this component for JS callbacks
                 _dotNetRef = DotNetObjectReference.Create(this);
