@@ -1,18 +1,30 @@
-## What's New in v3.17.0
+## What's New in v4.0.0-beta.1
+
+**This is a prerelease.** The API may still change before the stable v4.0.0 release.
+
+### Breaking Changes
+- **BbTooltipTrigger** — `AsChild` now defaults to `false`. A bare icon, plain text or arbitrary markup now opens the tooltip with no opt-in. Add `AsChild="true"` where the child consumes the trigger context itself, such as a `BbButton`. The wrapper `<span>` uses `display: contents`, so layout is unaffected, but DOM-walking selectors and test hooks may need updating.
+- **BbDrawerTrigger**, **BbDrawerClose** — now render a real `<button type="button">` instead of a bare `<div @onclick>`, so they are reachable by keyboard and announced as controls. Both gain `AsChild`; set it to `true` when the child is already a control, otherwise you get a button nested inside a button.
+- **JavaScript modules** — every component now imports its JS module once per circuit through `JsModules.GetAsync` / `PrimitiveModules.GetAsync` and no longer disposes it. Primitive modules are addressed through the `bb-primitives.js` bundle under a namespace (`elementUtils.isNearBottom`, `portal.lockBodyScroll`, `escapeKeydown.initialize`). Custom code that imported the individual primitive files or called the unnamespaced exports must be updated.
+- Updated the `BlazorBlueprint.Primitives` dependency to 4.0.0-beta.1, which carries its own breaking changes. See the Primitives release notes and `V4-MIGRATION-GUIDE.md`.
 
 ### New Features
-- **Charts** — new `OnDataPointClick` and `OnChartClick` on every chart. `OnDataPointClick` passes a `ChartClickEventArgs` with the series, `DataIndex`, `Name` and value; `OnChartClick` fires only for clicks away from a data point. No interop is set up unless a handler is attached.
-- **BbFileUpload** — new `AllowPaste` (default `true`) accepts files pasted while focus is inside the upload, including screenshots. Pasted files go through the same validation as dropped files.
-- **Theme** — new `js/theme-init.js` applies the saved theme before the first paint, removing the flash of the default theme on prerendered pages. Load it as a classic, blocking script in `<head>`.
-- **BbDialogContent**, **BbSheetContent**, **BbDrawerContent** — new `InitialFocus` and `InitialFocusElement` control what receives focus on open. The default is unchanged.
+- **BbDialog** — new `RenderingStrategy` parameter. Set it to `OverlayRenderingStrategy.Native` to render through the browser's built-in `<dialog>` element via `showModal()`, which works across Blazor render-mode boundaries and needs no portal host. When null, the global default configured through `AddBlazorBlueprintPrimitives` applies.
+- **BbDialogContent** — in native mode the JavaScript overlay is omitted and the `::backdrop` provides the scrim. `CloseOnOverlayClick` now also controls whether a backdrop click closes a native dialog. New stylesheet rules style `dialog[data-state]` and its backdrop to match the JavaScript path.
+- **BbCopyText** — new `ValueFuncAsync` for text that has to be fetched or computed. The copy happens inside the real click or keydown gesture in JavaScript, and the browser is handed a promise, so the clipboard write survives however long the callback takes. `Value` still wins when non-empty, then `ValueFunc`, then `ValueFuncAsync`.
+- **BbCopyText** — new `OnCopyFailed` callback with a `CopyTextFailure` of `Refused` or `NoValue`. A failed copy was previously invisible.
 
 ### Bug Fixes
-- **Focus trap** — overlays no longer force focus onto their first tabbable child, so a child that acts on focus no longer fires on open.
-- **BbHoverCardTrigger** — no longer opens on programmatic focus, such as focus moved by a focus trap. Tabbing to it still opens it.
-- **BbCopyText** — the tooltip no longer opens, and stays open, when returning to a background browser tab.
-- **BbInputGroupAddon** — removed a click handler that did nothing.
+- **BbCopyText** — the clipboard write is now made inside the user gesture, so Safari no longer refuses it. Enter and Space are handled in JavaScript, since a `span` with `role="button"` gets no native click from them. The Blazor handlers take over if the module fails to load or during prerendering.
+- **BbCopyText** — the `execCommand` fallback now runs only for the insecure-context case it was written for, instead of on every failure, where it could report success while the clipboard stayed empty.
+- **BbDrawerTrigger**, **BbDrawerClose** — now show the themed focus ring, since they are focusable for the first time.
 
 ### Improvements
-- **Accessibility** — the themed focus ring replaces the browser outline on 21 components, including `BbAccordionTrigger`, `BbCollapsibleTrigger`, `BbDialogTrigger`, `BbSheetTrigger`, `BbAlertDialogTrigger`, `BbPopoverTrigger`, `BbBreadcrumbLink`, `BbCarouselNext`/`BbCarouselPrevious`, `BbRating` and `BbThemeSwitcher`. `BbAttachmentTrigger` and `BbCommandInput` previously showed no focus indicator at all.
-- **BbFileUpload** — the focus ring now shows on the visible dropzone instead of the hidden file input.
-- Updated the `BlazorBlueprint.Primitives` dependency to 3.17.0.
+- **ThemeService** — invalid colour names in `localStorage` now fall back to the configured default in the browser instead of being applied and corrected a round trip later.
+
+### Performance
+- **JavaScript modules** — each module is imported once per circuit and shared across every component instance, instead of once per component. Thirteen inputs on a page previously issued thirteen import calls for the same file, each a round trip on Blazor Server.
+- **Core bundle** — `theme.js`, `sidebar.js`, `sidebar-inset.js`, `text-input.js` and `composition-guard.js` are bundled into `bb-components-core.js`, since they load on every page or on every page with a form control. Distinct module imports per page drop from 3–6 to 1–3. The remaining modules stay lazy.
+- **ThemeService**, **BbSidebarProvider** — initialise in one interop call each instead of two to four. Reading storage, the OS dark-mode preference and applying the result now happen in the browser and return what was applied.
+- **BbDataGrid** — key and click handlers are attached once to the grid container and delegated, instead of once per row. Rows opt in via `data-bb-row-keys` and `data-bb-row-click`. A 465-row grid went from 240 client-to-server messages on load to 111.
+- **BbSelect**, **BbPopover**, **BbDropdownMenu**, and other floating overlays — open in one interop call instead of five through the Primitives update. Median time from click to visible for a select dropped from 147ms to 81ms on a 20ms round trip, and the first open now costs the same as a reopen.
