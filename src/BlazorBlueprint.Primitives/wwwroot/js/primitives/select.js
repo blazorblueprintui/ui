@@ -97,7 +97,7 @@ function scrollIntoContainerView(element, container, center = false) {
  * @param {number} index - Index of the option to focus
  * @param {boolean} center - Whether to center the item in the container (for initial selection)
  */
-function setFocusedOption(container, index, center = false) {
+function setFocusedOption(container, index, center = false, scroll = true) {
     const items = getEnabledOptions(container);
 
     // Remove focus from all items
@@ -106,8 +106,32 @@ function setFocusedOption(container, index, center = false) {
     // Set focus on target item
     if (index >= 0 && index < items.length) {
         items[index].setAttribute('data-focused', 'true');
-        // Use container-aware scrolling to avoid scrolling the page
-        scrollIntoContainerView(items[index], container, center);
+        if (scroll) {
+            // Use container-aware scrolling to avoid scrolling the page
+            scrollIntoContainerView(items[index], container, center);
+        }
+        setActiveDescendant(container, items[index].id);
+    } else {
+        setActiveDescendant(container, null);
+    }
+}
+
+/**
+ * Points the listbox at its focused option for assistive technology.
+ *
+ * C# used to render this attribute, which meant every arrow key cost a render batch — a circuit
+ * round trip on Blazor Server — to move a highlight the browser had already moved. `data-focused`
+ * was written here and `aria-activedescendant` was written there, so the two could disagree for a
+ * round trip. One writer owns both now.
+ *
+ * @param {HTMLElement} container - The listbox element.
+ * @param {string|null} id - The focused option's element id, or null for none.
+ */
+function setActiveDescendant(container, id) {
+    if (id) {
+        container.setAttribute('aria-activedescendant', id);
+    } else {
+        container.removeAttribute('aria-activedescendant');
     }
 }
 
@@ -194,7 +218,7 @@ function selectFocusedOption(container) {
  * @param {object} dotNetRef - Reference to the Blazor component for callbacks
  * @returns {object} Cleanup object with dispose method
  */
-export function setupKeyboardNavigation(contentId, dotNetRef) {
+export function setupKeyboardNavigation(contentId, dotNetRef, autoFocus = true) {
     const container = document.getElementById(contentId);
     if (!container) {
         return { dispose: () => {} };
@@ -251,36 +275,98 @@ export function setupKeyboardNavigation(contentId, dotNetRef) {
         }
     };
 
-    // Attach the handler to the container
-    container.addEventListener('keydown', handleKeyDown);
+    // Hover moves the highlight, and it does so here rather than through an @onmouseenter on each
+    // option. That handler called back into C# to set the focused index, which re-rendered every
+    // item — a circuit round trip per option the pointer crossed, to move a highlight the browser
+    // could move itself. Delegated to the container, so the cost does not scale with option count.
+    const handleMouseOver = (e) => {
+        const option = e.target.closest?.('[role="option"]');
+        if (!option || !container.contains(option)) {
+            return;
+        }
 
-    // Focus the container so it receives keyboard events
-    // Use requestAnimationFrame to ensure focus happens after Blazor's event handling completes
-    const focusContainer = () => {
-        container.focus({ preventScroll: true });
+        if (option.getAttribute('data-disabled') === 'true' ||
+            option.getAttribute('aria-disabled') === 'true') {
+            return;
+        }
 
-        // If focus didn't take, try again with a small delay
-        if (document.activeElement !== container) {
-            setTimeout(() => {
-                container.focus({ preventScroll: true });
-            }, 10);
+        const index = getEnabledOptions(container).indexOf(option);
+        if (index >= 0 && index !== getFocusedIndex(container)) {
+            // No scroll: the pointer is already on the option, and scrolling under it would move
+            // the list out from beneath the cursor.
+            setFocusedOption(container, index, false, false);
         }
     };
 
-    // Use double rAF to ensure we're past any pending Blazor updates
-    requestAnimationFrame(() => {
-        requestAnimationFrame(focusContainer);
-    });
+    // Attach the handler to the container
+    container.addEventListener('keydown', handleKeyDown);
+    container.addEventListener('mouseover', handleMouseOver);
+
+    // Focus is the caller's business when it opts out. overlay.open does, because it attaches
+    // the handlers before it reveals the listbox — and a `visibility: hidden` element cannot take
+    // focus, so focusing here would silently do nothing and leave every key going to the trigger.
+    if (autoFocus) {
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => focusListbox(contentId));
+        });
+    }
 
     const cleanup = {
         dispose: () => {
             container.removeEventListener('keydown', handleKeyDown);
+            container.removeEventListener('mouseover', handleMouseOver);
             activeHandlers.delete(contentId);
         }
     };
 
     activeHandlers.set(contentId, cleanup);
     return cleanup;
+}
+
+/**
+ * Scrolls the element marked as current into view inside its own scroll container.
+ *
+ * For content that shows its chosen value with an icon rather than with `aria-selected` — a
+ * combobox reads `aria-selected` as "keyboard-focused", which is a different thing — so the owner
+ * marks the chosen element and names the marker here.
+ *
+ * Runs before the overlay is revealed, which is why it can only be a browser-side call: a list
+ * must appear already scrolled to its selection, and scrolling it once it is on screen is a jump.
+ * A parked element still lays out, because it is hidden with `visibility` rather than `display`,
+ * so every measurement this needs is already valid.
+ *
+ * @param {string} containerId - The element to search within.
+ * @param {string} selector - CSS selector for the current item. Defaults to the select's own.
+ */
+export function scrollMarkedIntoView(containerId, selector = '[role="option"][aria-selected="true"]') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const target = container.querySelector(selector);
+    if (!target) return;
+
+    scrollIntoContainerView(target, container, true);
+}
+
+/**
+ * Puts keyboard focus on the listbox so it receives the arrow keys.
+ *
+ * Must run after the listbox is revealed. A hidden element cannot be focused, and the failure is
+ * silent: focus stays on the trigger, every keystroke goes to the server as a DOM event, and the
+ * highlight never moves.
+ *
+ * @param {string} contentId - The ID of the select content element
+ */
+export function focusListbox(contentId) {
+    const container = document.getElementById(contentId);
+    if (!container) return;
+
+    container.focus({ preventScroll: true });
+
+    // If focus didn't take, try again with a small delay
+    if (document.activeElement !== container) {
+        setTimeout(() => container.focus({ preventScroll: true }), 10);
+    }
 }
 
 /**
@@ -353,7 +439,9 @@ export function openListbox(contentId, selectedValue, attachKeyboard, dotNetRef)
     focusInitialOption(contentId, selectedValue);
 
     if (attachKeyboard && dotNetRef) {
-        setupKeyboardNavigation(contentId, dotNetRef);
+        // autoFocus off: the listbox is still parked and invisible at this point. overlay.open
+        // focuses it once it has revealed it.
+        setupKeyboardNavigation(contentId, dotNetRef, false);
     }
 }
 

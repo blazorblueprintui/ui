@@ -47,4 +47,14 @@ public static class PrimitiveModules
     /// <returns>The shared, non-owning module reference.</returns>
     public static Task<IJSObjectReference> GetAsync(IJSRuntime jsRuntime)
         => JsModules.GetAsync(jsRuntime, ModulePath);
+
+    /// <summary>
+    /// Gets the shared primitive bundle without awaiting, or returns false if it is not imported
+    /// yet. For callers that must issue interop from a synchronous pass.
+    /// </summary>
+    /// <param name="jsRuntime">The JavaScript runtime of the current circuit or application.</param>
+    /// <param name="module">The shared, non-owning module reference, when one is loaded.</param>
+    /// <returns><c>true</c> when the bundle is loaded and <paramref name="module"/> is set.</returns>
+    public static bool TryGetLoaded(IJSRuntime jsRuntime, out IJSObjectReference module)
+        => JsModules.TryGetLoaded(jsRuntime, ModulePath, out module);
 }

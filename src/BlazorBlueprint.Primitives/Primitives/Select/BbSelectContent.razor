@@ -26,23 +26,20 @@
                     Strategy="PositioningStrategy.Fixed"
                     ZIndex="9999"
                     ForceMount="false"
+                    SideElementId="@_context.ContentId"
                     Dismiss="@BuildDismissOptions()"
-                    OnDismiss="@HandleDismiss"
-                    OnReady="@HandleFloatingReady"
-                    OnPlacementChanged="@HandlePlacementChanged">
+                    Keyboard="@BuildKeyboardOptions()"
+                    OnDismiss="@HandleDismiss">
         @RenderSelectListbox()
     </BbFloatingPortal>
 }
 
 @code {
-    private string _actualPlacement = "bottom";
-
     [CascadingParameter]
     private SelectContext<TValue>? _context { get; set; }
 
     private IJSObjectReference? _jsModule;
     private DotNetObjectReference<BbSelectContent<TValue>>? _dotNetRef;
-    private bool _isKeyboardSetup = false;
     private bool _disposed = false;
     private string _portalId = "";
 
@@ -97,6 +94,7 @@
         }
 
         _portalId = $"select-portal-{_context.ContentId}";
+        _dotNetRef = DotNetObjectReference.Create(this);
 
         // Subscribe to context state changes for cleanup
         _context.OnStateChanged += HandleContextStateChanged;
@@ -125,11 +123,14 @@
             contentBuilder.AddAttribute(1, "id", _context!.ContentId);
             contentBuilder.AddAttribute(2, "role", "listbox");
             contentBuilder.AddAttribute(3, "aria-labelledby", _context.TriggerId);
-            contentBuilder.AddAttribute(4, "aria-activedescendant", GetActiveDescendantId());
             contentBuilder.AddAttribute(5, "data-select-content", "true");
             contentBuilder.AddAttribute(6, "tabindex", "-1");
             contentBuilder.AddAttribute(7, "data-state", _context.IsOpen ? "open" : "closed");
-            contentBuilder.AddAttribute(8, "data-side", _actualPlacement);
+            // The side it is declared with, not the side it lands on. JS overwrites this the
+            // moment it has measured, and keeps it current when a scroll flips the listbox. C#
+            // renders a value that never changes so that Blazor emits no diff for it and never
+            // takes the attribute back off JS.
+            contentBuilder.AddAttribute(8, "data-side", Side.ToValue());
             contentBuilder.AddMultipleAttributes(9, AdditionalAttributes);
             contentBuilder.AddContent(10, ChildContent);
             contentBuilder.CloseElement();
@@ -137,42 +138,35 @@
         builder.CloseComponent();
     };
 
-    private void HandlePlacementChanged(string placement)
+    // Declared rather than wired, and no longer raised at all from C#.
+    //
+    // Scrolling the listbox to its selected option and attaching the keyboard handler used to run
+    // from the portal's ready callback, which on Blazor Server only fires once the browser has
+    // acknowledged the render batch carrying the content. That put both a full round trip behind
+    // the list appearing: it showed up unscrolled and deaf to the arrow keys, then caught up.
+    //
+    // BbFloatingPortal now does them inside the one call that positions and reveals the listbox,
+    // before the reveal — so the list is already scrolled and already keyboard-ready the first
+    // frame it is on screen.
+    private FloatingKeyboardOptions? BuildKeyboardOptions()
     {
-        _actualPlacement = string.IsNullOrEmpty(placement) ? "bottom" : placement.Split('-')[0];
-        StateHasChanged();
-    }
-
-    private async Task HandleFloatingReady()
-    {
-        if (_context == null || _jsModule == null) return;
-
-        // One call, not two. Scrolling the selected option into view and attaching the keyboard
-        // handler were separately awaited, and on Blazor Server each one is a circuit round trip —
-        // paid on every open, while the user waits for the list to be usable.
-        //
-        // The scroll still happens first, and now strictly first: it is the first thing in that
-        // JS task, so it lands ahead of the requestAnimationFrame that reveals the portal. A
-        // listbox must appear already scrolled to the selected option, not scroll afterwards.
-        var selectedValue = _context.State.Value?.ToString();
-        var attachKeyboard = !_isKeyboardSetup;
-
-        if (attachKeyboard)
+        if (_context == null)
         {
-            _dotNetRef ??= DotNetObjectReference.Create(this);
+            return null;
         }
 
-        await _jsModule.InvokeVoidAsync(
-            "select.openListbox", _context.ContentId, selectedValue, attachKeyboard, _dotNetRef);
-
-        if (attachKeyboard)
+        // No "have I already attached?" flag, and no side effect here. This runs on every render,
+        // not only on the way open, so a flag set on the first render would read as "already
+        // attached" by the time the user actually opened the listbox — and the handlers would
+        // never be attached at all. select.setupKeyboardNavigation disposes any handler it finds
+        // for this content id before attaching, so asking for it on every open is idempotent.
+        return new FloatingKeyboardOptions
         {
-            _isKeyboardSetup = true;
-        }
-
-        // Focus the selected item or first item (updates Blazor state). C# only — it moved below
-        // the interop call because it no longer has to sit between two of them.
-        _context.FocusSelectedOrFirst();
+            Kind = FloatingKeyboardKind.Listbox,
+            ContentId = _context.ContentId,
+            SelectedValue = _context.State.Value?.ToString(),
+            CallbackRef = _dotNetRef
+        };
     }
 
     // Declared rather than wired. BbFloatingPortal registers the listener inside the same interop
@@ -213,7 +207,7 @@
         try
         {
             // When context closes, clean up
-            if (_context?.IsOpen == false && _isKeyboardSetup)
+            if (_context?.IsOpen == false)
             {
                 // Capture both the trigger ref and the restore flag before teardown.
                 // State.TriggerElement is still populated at this point (Close() doesn't
@@ -221,7 +215,6 @@
                 var trigger = _context.State.TriggerElement;
                 var shouldRestoreFocus = _context.State.RestoreFocusOnClose;
 
-                await CleanupAsync();
                 StateHasChanged();
 
                 // Restore focus to the trigger AFTER cleanup so the now-unmounted listbox
@@ -240,19 +233,6 @@
         }
     }
 
-    private string? GetActiveDescendantId()
-    {
-        if (_context != null)
-        {
-            var focusedId = _context.GetFocusedItemId();
-            if (focusedId != null)
-            {
-                return $"{_context.ContentId}-item-{focusedId}";
-            }
-        }
-        return null;
-    }
-
     // Cleanup has two callers — the context state-change handler when the listbox closes, and
     // DisposeAsync when the component is torn down — and a close racing a teardown puts both in
     // flight at once. Each block therefore takes ownership of what it is about to release,
@@ -262,16 +242,17 @@
     // escaped DisposeAsync into the renderer's disposal queue and took the circuit down (#441).
     private async Task CleanupAsync()
     {
-        // Clean up keyboard navigation
-        var keyboardModule = _isKeyboardSetup ? _jsModule : null;
+        // Only disposal reaches here now. A close releases the listbox handlers inside
+        // overlay.close, in the same call that hides the element — it used to be a separately
+        // awaited interop call, and so a circuit round trip, spent removing two event listeners
+        // from an overlay the user had already dismissed.
+        var module = _jsModule;
         var contentId = _context?.ContentId;
-        if (keyboardModule != null && contentId != null)
+        if (module != null && contentId != null)
         {
-            _isKeyboardSetup = false;
-
             try
             {
-                await keyboardModule.InvokeVoidAsync("select.cleanupKeyboardNavigation", contentId);
+                await module.InvokeVoidAsync("select.cleanupKeyboardNavigation", contentId);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

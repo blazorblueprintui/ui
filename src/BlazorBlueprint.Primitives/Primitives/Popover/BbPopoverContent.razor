@@ -22,16 +22,16 @@
                 Strategy="@Strategy"
                 ZIndex="@ZIndex"
                 ForceMount="@ForceMount"
+                SideElementId="@Context.ContentId"
+                ScrollToCurrentIn="@(ScrollToSelected ? Context.ContentId : null)"
+                ScrollToCurrentSelector="@ScrollToSelectedSelector"
                 Dismiss="@BuildDismissOptions()"
                 OnDismiss="@HandleDismissAsync"
-                OnReady="@HandleFloatingReady"
-                OnPlacementChanged="@HandlePlacementChanged">
+                OnReady="@HandleFloatingReady">
     @RenderPopoverContent()
 </BbFloatingPortal>
 
 @code {
-    private string _actualPlacement = "bottom";
-
     [CascadingParameter]
     private PopoverContext Context { get; set; } = null!;
 
@@ -46,6 +46,25 @@
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Whether to scroll the currently chosen item into view each time the popover opens, before
+    /// it is revealed.
+    /// </summary>
+    /// <remarks>
+    /// For list content in a popover — a combobox, for instance — which otherwise reopens at the
+    /// top of the list however far down the chosen value sits. The scroll happens in the same
+    /// interop call that positions the popover, so it costs no round trip and the list is already
+    /// in the right place the first frame it is on screen.
+    /// </remarks>
+    [Parameter]
+    public bool ScrollToSelected { get; set; }
+
+    /// <summary>
+    /// CSS selector identifying the chosen item for <see cref="ScrollToSelected"/>.
+    /// </summary>
+    [Parameter]
+    public string ScrollToSelectedSelector { get; set; } = "[role=\"option\"][aria-selected=\"true\"]";
 
     /// <summary>
     /// Whether pressing Escape should close the popover.
@@ -166,16 +185,15 @@
              @onkeydown="HandleKeyDown"
              @attributes="AdditionalAttributes"
              data-state="@(Context.IsOpen ? "open" : "closed")"
-             data-side="@_actualPlacement">
+             data-side="@Side.ToValue()">
             @ChildContent
         </div>
     };
 
-    private void HandlePlacementChanged(string placement)
-    {
-        _actualPlacement = string.IsNullOrEmpty(placement) ? "bottom" : placement.Split('-')[0];
-        StateHasChanged();
-    }
+    // data-side is JS's to write now, through SideElementId above. Routing it through C# meant a
+    // render batch — a round trip on Blazor Server — to record a measurement the browser had
+    // already made, and it landed between computing the position and revealing the element, so a
+    // popover that flipped paid for the re-render before anything appeared.
 
     private async Task HandleFloatingReady()
     {

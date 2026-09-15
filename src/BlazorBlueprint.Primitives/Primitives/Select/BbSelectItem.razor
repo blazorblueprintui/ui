@@ -9,11 +9,9 @@
          role="option"
          aria-selected="@IsSelected.ToString().ToLower()"
          data-state="@(IsSelected ? "checked" : "unchecked")"
-         data-focused="@(IsFocused ? "true" : null)"
          data-disabled="@(Disabled ? "true" : null)"
          @onclick="HandleClick"
          @onclick:stopPropagation="true"
-         @onmouseenter="HandleMouseEnter"
          @attributes="MergedAttributes">
         @if (ChildContent is not null)
         {
@@ -33,7 +31,6 @@
     private string _itemId = "";
 
     // ShouldRender tracking fields
-    private bool lastIsFocused;
     private bool lastIsSelected;
     private bool lastDisabled;
 
@@ -132,18 +129,24 @@
         }
     }
 
-    private bool IsFocused => _context != null && _context.FocusedIndex == CurrentIndex;
-
+    // data-focused is deliberately absent from this component, in both directions: it is not
+    // rendered above and it is not tracked here.
+    //
+    // select.js owns the highlight — it sets data-focused for the arrow keys and for hover, and
+    // writes the listbox's aria-activedescendant to match. Having C# render it too was not merely
+    // redundant, it was wrong: Blazor diffs an attribute against what it last rendered rather than
+    // against the DOM, so C# rendering "no data-focused" over an item JS had highlighted produced
+    // no diff and left the highlight in place. Moving the highlight with the keyboard and then the
+    // mouse lit up two items at once.
+    //
+    // It was also a circuit round trip per keystroke and per hover, to move a highlight the
+    // browser had already moved.
     protected override bool ShouldRender()
     {
-        var currentIsFocused = IsFocused;
         var currentIsSelected = IsSelected;
 
-        if (currentIsFocused != lastIsFocused ||
-            currentIsSelected != lastIsSelected ||
-            Disabled != lastDisabled)
+        if (currentIsSelected != lastIsSelected || Disabled != lastDisabled)
         {
-            lastIsFocused = currentIsFocused;
             lastIsSelected = currentIsSelected;
             lastDisabled = Disabled;
             return true;
@@ -163,7 +166,6 @@
         _itemId = _context.RegisterItem(Value, Disabled, displayText);
 
         // Initialize ShouldRender tracking to match initial state
-        lastIsFocused = IsFocused;
         lastIsSelected = IsSelected;
         lastDisabled = Disabled;
 
@@ -184,17 +186,6 @@
         var displayText = Text ?? Value?.ToString();
 
         _context.SelectValue(Value, displayText);
-    }
-
-    private void HandleMouseEnter()
-    {
-        if (_context == null) return;
-
-        // Update focused index on mouse hover for better UX
-        if (!Disabled && !_context.Disabled)
-        {
-            _context.SetFocusedIndex(CurrentIndex);
-        }
     }
 
     public void Dispose()

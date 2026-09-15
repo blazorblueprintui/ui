@@ -87,11 +87,17 @@ public partial class BbSidebarInset : IAsyncDisposable
             {
                 try
                 {
-                    await module!.InvokeVoidAsync("scrollToTop", mainRef);
+                    // Namespaced, because this module is the bb-components-core bundle rather
+                    // than sidebar-inset.js on its own. The bundle re-exports each module under
+                    // its file name in camelCase, so the bare identifier resolves to nothing.
+                    await module!.InvokeVoidAsync("sidebarInset.scrollToTop", mainRef);
                 }
-                catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+                catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
                 {
-                    // Circuit disconnected
+                    // Circuit disconnected, or the function is not there. Scrolling to the top of
+                    // a new page is a courtesy; JSException is caught alongside the rest because
+                    // letting it escape an async void handler takes the whole circuit down, and
+                    // no failure of this call is worth that.
                 }
                 catch (InvalidOperationException)
                 {

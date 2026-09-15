@@ -229,7 +229,20 @@ async function waitForExitAnimation(el) {
     if (typeof el.getAnimations !== 'function') return;
 
     // subtree: the animated element is the component's own content div, a child of this wrapper.
-    const running = el.getAnimations({ subtree: true }).filter(a => a.playState === 'running');
+    //
+    // Infinite animations are excluded, and that exclusion is load-bearing. A spinner inside the
+    // overlay — Tailwind's animate-spin, animate-pulse, animate-bounce are all infinite — never
+    // finishes, so waiting on it means waiting out the backstop below instead of the exit
+    // animation. That is not merely slow: a CSS animation reverts to its un-animated style the
+    // moment it ends, so the exit fade hands the element back at full opacity and it sits there,
+    // fully visible, until the hidden style is finally written. The overlay fades out, snaps back
+    // into view, and disappears a beat later. An infinite-scroll combobox showing its loading
+    // spinner reproduced it every time.
+    const running = el.getAnimations({ subtree: true }).filter(a => {
+        if (a.playState !== 'running') return false;
+        const iterations = a.effect?.getTiming?.().iterations;
+        return iterations !== Infinity;
+    });
     if (running.length === 0) return;
 
     // allSettled, not all: a cancelled animation rejects, and a cancelled exit animation still
@@ -245,6 +258,8 @@ export async function autoUpdate(reference, floating, options = {}) {
     try {
         const lib = loadFloatingUI();
 
+    let lastPlacement = null;
+
     const update = async () => {
         // Guard against stale elements — autoUpdate listeners (scroll, resize,
         // intersection) can fire after Blazor removes elements from the DOM
@@ -254,6 +269,15 @@ export async function autoUpdate(reference, floating, options = {}) {
         }
         const position = await computePosition(reference, floating, options);
         applyPosition(floating, position);
+
+        // A scroll can flip the overlay to the other side, and the side drives its styling. The
+        // caller keeps whatever it writes in sync without another interop call.
+        if (position.placement !== lastPlacement) {
+            lastPlacement = position.placement;
+            if (typeof options.onPlacement === 'function') {
+                options.onPlacement(position.placement);
+            }
+        }
     };
 
     // Initial position

@@ -6,6 +6,81 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-09-15
+
+### Changed
+
+- **An overlay opens in one circuit round trip, and closes in one.** Measured on a real deployment at a ~90ms round trip, opening a `BbSelect` on 3.14.1 cost **11** sequential round trips — 1.6 seconds, and 5.5 seconds on a 500ms circuit. 4.0.0-beta.1 cut that to **5**. It is now **1**, and the arrow keys and hover cost **none at all**.
+
+  Server time per event was 4–48ms throughout. None of this was ever the server being slow; it was round-trip count multiplied by latency, and the count was the only variable worth attacking.
+
+  **What was actually costing the round trips.** On Blazor Server, `OnAfterRenderAsync` runs only once the browser has acknowledged the render batch — so anything done there starts a round trip behind the render, and anything awaited there starts another behind that. Opening an overlay was five of those, chained: render the trigger's open state, wait for the ack, register the portal content and wait for *its* ack, await `overlay.open`, re-render for the resolved placement, await `select.openListbox`.
+
+  **What replaced it.** `BbFloatingPortal` now does both halves of an open from `OnParametersSet` — synchronously, inside the render cycle the click started. Registering the portal marks the host dirty in time to join the same render batch, and the interop call is dispatched with `InvokeVoidAsync` and never awaited, so it rides out in the same flush as that batch. The server sends both and waits for neither.
+
+  The price is that the interop message reaches the browser *before* the render batch carrying the content, because the server sent it first — so C# can no longer hand over an `ElementReference` for an element that does not exist yet. The content is named instead, by a `data-bb-portal` attribute, and `overlay.js` waits for it with a `MutationObserver`. That wait is client-side, costs nothing, and is over within a frame.
+
+  Client-to-server round trips at a 20ms emulated round trip, `/components/select`:
+
+  | interaction | 3.14.1 | 4.0.0-beta.1 | now |
+  |---|---|---|---|
+  | open | 11 | 5 | **1** |
+  | arrow key | 1 | 1 | **0** |
+  | hover an option | 1 | 1 | **0** |
+  | close | 16 | 3 | **1** |
+
+- **JavaScript owns the overlay's position, its side, and a listbox's highlight.** These were all C#-rendered, and each one was a render batch — a round trip — to record a measurement the browser had already made.
+
+  `BbFloatingPortal` renders a single parked style that never changes, so Blazor emits no diff for it and never fights the values JS writes. `data-side` is written by JS through the new `SideElementId` parameter. `data-focused` and `aria-activedescendant` are written by `select.js`, which now also owns hover: a `@onmouseenter` on each option used to call back into C# to set the focused index, re-rendering every item, so the pointer crossing a ten-item list cost ten round trips.
+
+  Having two writers was not merely redundant, it was wrong. Blazor diffs an attribute against what it last *rendered*, not against the DOM, so C# rendering "no `data-focused`" over an item JS had highlighted produced no diff and left the highlight in place — moving the highlight with the keyboard and then the mouse lit up two items at once.
+
+- **Keyboard wiring happens inside the call that opens the overlay.** The new `FloatingKeyboardOptions` covers both a listbox and a menu; `BbFloatingPortal` attaches the handlers on the way open and releases them on the way closed, in the same calls that position and hide the element. `BbSelectContent` and `BbDropdownMenuContent` declare what they need rather than wiring it from a ready callback, which used to leave the overlay on screen and deaf to the arrow keys for a further round trip.
+
+  A listbox is focused strictly *after* the reveal. `focus()` on a `visibility: hidden` element is a no-op that throws nothing, so focusing any earlier leaves the listbox unfocused, every arrow key going to the server as a trigger keydown, and the highlight never moving.
+
+- **The command search box shows focus as a band, not a box inside a box.** `BbCommandInput` drew a focus ring around the `<input>`, which sat inside a bordered row, which sat inside a bordered popover — three nested outlines with gaps between them. It was not an occasional look either: a combobox focuses its search field every time it opens, so the ring was on screen the whole time the dropdown was, marking the only element that could possibly have focus.
+
+  The ring moves to the row, on `focus-within`, and inset so it stays inside the popover's border rather than bleeding over it. The row is rounded at the top to match: an inset ring is an inset box-shadow, and an inset shadow follows its own element's radius rather than an ancestor's, so a square-cornered row drew square corners straight across the popover's rounded ones. The bottom border goes transparent while it shows, so the divider between the search box and the list is the ring itself rather than a 2px ring stacked on a 1px line. The focus indicator is no weaker — it is larger — so the accessibility fix it came from still holds. `BbCommand` used on its own gets the same treatment.
+
+- **`BbDropdownMenuContent` no longer calls `matchTriggerWidth`.** `MatchAnchorWidth` already asks Floating UI's size middleware for the same width on every position pass, and `autoUpdate` re-runs that on resize. The separate call was a second writer of one style, bought with an awaited interop call that also allocated a JS object reference to dispose later.
+
+- **`BbTooltipContent` and `BbHoverCardContent` no longer ask for the portal's ready callback.** Both handlers were empty, and on Server the callback is ack-gated, so asking for it cost a round trip to do nothing.
+
+### Added
+
+- **`JsModules.TryGetLoaded`** and **`PrimitiveModules.TryGetLoaded`** — get an already-imported module without awaiting. For callers that must issue interop from a synchronous pass, where awaiting the import would put the call a round trip behind the render it needs to travel with. Returning `false` is "not yet", not an error: the caller falls back to the awaited path, which pays one round trip and warms the cache for every call after it.
+
+- **`BbFloatingPortal.SideElementId`** — names the element that carries the resolved `data-side`, written by JS as soon as the overlay is positioned and kept current when a scroll flips it.
+
+- **`BbFloatingPortal.Keyboard`** (`FloatingKeyboardOptions`, `FloatingKeyboardKind`) — declares listbox or menu key handling to be wired inside the open call and released inside the close.
+
+- **`BbFloatingPortal.ScrollToCurrentIn`** and **`ScrollToCurrentSelector`**, surfaced on both layers of `BbPopoverContent` as **`ScrollToSelected`** and **`ScrollToSelectedSelector`** — scroll the chosen item into view each time the overlay opens, before it is revealed.
+
+### Fixed
+
+- **Navigating between pages no longer kills the circuit.** `BbSidebarInset` scrolls the main area to the top on every navigation, and it called `scrollToTop` — the name the function had before the five common modules were bundled into `bb-components-core.js`. The bundle re-exports each module under its file name in camelCase, so the bare identifier resolved to nothing and every client-side navigation threw `Could not find 'scrollToTop'`. The handler is `async void`, so the exception had nowhere to go and took the connection down with it; a reload fixed it until the next link click.
+
+  The call is now `sidebarInset.scrollToTop`. `JSException` joins the exceptions the handler swallows, because scrolling a new page to the top is a courtesy and no failure of it is worth a dead circuit. Present in 4.0.0-beta.1.
+
+- **A closing overlay no longer blinks back into view before it disappears.** The dropdown faded out, snapped back to full opacity for a fifth of a second, and only then vanished.
+
+  The close waits for the exit animation before writing the hidden style, and it was waiting on the wrong animation. `getAnimations({ subtree: true })` returns everything running inside the overlay, including a loading spinner — `animate-spin`, `animate-pulse` and `animate-bounce` are all infinite, and an infinite animation never finishes. So the wait fell through to its one-second backstop while the exit animation completed in 150ms, and a CSS animation reverts to its un-animated style the moment it ends: the fade handed the element back at full opacity and left it there. An infinite-scroll combobox showing its spinner reproduced it every time.
+
+  Infinite animations are now excluded from the wait. The hidden style lands on the same frame the fade ends.
+
+- **`BbCombobox` reopens scrolled to the chosen item.** Pick a country a long way down the list, close the combobox, open it again, and it came back at the top of the list with the selection out of sight. `BbSelect` has always scrolled to its selection; the combobox never had the behaviour at all.
+
+  It could not simply copy the select, because the two read `aria-selected` differently: on a command item it means "keyboard-focused", not "this is the chosen value". The chosen item is therefore marked with `data-bb-current` — in both modes, by `BbCombobox` for `Options` and by `BbComboboxItem` for compositional children — and that marker is named through the new `BbPopoverContent.ScrollToSelected` and `ScrollToSelectedSelector`.
+
+  The scroll runs inside the interop call that positions the popover, before it is revealed — so it costs no round trip, and the list is already in the right place the first frame it is on screen rather than jumping once the user can see it.
+
+- **`BbCombobox` no longer discards a paged list when it closes.** Closing it told the consumer the search had been cleared even when nothing had been typed, which a paged list correctly reads as "reload your first page". Scroll in seven pages, pick an item from the last of them, and closing threw all seven away: reopening showed page one, and the chosen item was no longer in the list at all. The notification now fires only when there is a search to clear.
+
+- **A closing overlay's exit animation is no longer cut short by its own unmount.** Content that is unmounted on close (`ForceMount="false"`) has to survive long enough to animate, so the unmount can no longer share the close's render. JS reports back once the animation has finished and the element is hidden, and the unmount happens then — one round trip later, behind an overlay the user already cannot see. Content that stays mounted needs no callback at all.
+
+---
+
 ## 2026-09-14
 
 ### Added

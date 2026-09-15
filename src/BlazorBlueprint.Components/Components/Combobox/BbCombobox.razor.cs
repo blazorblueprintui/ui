@@ -434,10 +434,22 @@ public partial class BbCombobox<TValue> : ComponentBase
         {
             _focusDone = false; // Reset for next open
 
-            // Reset search query and notify the consumer so it can reload
-            // the default dataset (e.g. initial top-N results) for the next open.
-            SearchQuery = string.Empty;
-            await SearchQueryChanged.InvokeAsync(string.Empty);
+            // Reset the search query and notify the consumer so it can reload the default dataset
+            // (e.g. initial top-N results) for the next open — but only when there is a search to
+            // clear.
+            //
+            // It used to fire on every close, including the overwhelmingly common one where the
+            // user never typed anything. For a paged list that reads the notification as "reload
+            // your first page", which is exactly what it means, the cost was severe: scroll in
+            // seven pages, pick an item from the last of them, and closing threw all seven away.
+            // Reopening showed page one, the chosen item was no longer in the list, and so the
+            // reopen could not scroll to it either. The extra renders the reload provoked landed
+            // in the middle of the close animation, which is what made the dropdown flicker.
+            if (!string.IsNullOrEmpty(SearchQuery))
+            {
+                SearchQuery = string.Empty;
+                await SearchQueryChanged.InvokeAsync(string.Empty);
+            }
         }
     }
 

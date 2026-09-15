@@ -2,14 +2,19 @@
 @typeparam TValue
 
 @* In the parent's hidden registration pass we register text (via lifecycle) but emit no
-   DOM — BbCommandItem needs a CommandContext that only exists inside the popover's BbCommand. *@
+   DOM — BbCommandItem needs a CommandContext that only exists inside the popover's BbCommand.
+
+   data-bb-current is written after the attribute splat so it always wins. aria-selected means
+   "keyboard-focused" on a command item, so the chosen value needs a marker of its own for the
+   reopen scroll to find — the same one the Options branch of BbCombobox renders. *@
 @if (!RegistrationOnly)
 {
     <BbCommandItem Value="@Value?.ToString()"
                    OnSelect="@HandleSelect"
                    SearchText="@Text"
                    Disabled="@Disabled"
-                   @attributes="AdditionalAttributes">
+                   @attributes="AdditionalAttributes"
+                   data-bb-current="@(IsSelected ? "true" : null)">
         @if (ChildContent is not null)
         {
             @ChildContent
