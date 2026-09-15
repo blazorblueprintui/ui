@@ -12,46 +12,53 @@ namespace BlazorBlueprint.Tests.Theme;
 /// persistence on and then turned it off kept getting the stored theme instead of their configured
 /// defaults, with no way out short of clearing site data by hand (#481).
 /// </para>
+/// <para>
+/// The decision itself now happens in <c>theme.initialize</c>, because reading localStorage,
+/// clearing a stale entry and asking the OS for its dark-mode preference were four separate
+/// awaited calls and so four circuit round trips on every page load. What C# still owns — and what
+/// these tests cover — is the configuration it hands over, and its handling of the answer. That
+/// localStorage really is left alone is browser behaviour, verified by driving the demo.
+/// </para>
 /// </summary>
 public class ThemePersistenceTests
 {
     /// <summary>
-    /// Deliberately the opposite of the defaults asserted below on every axis, so a value leaking
-    /// out of localStorage fails the test rather than coinciding with the expected answer.
+    /// Deliberately the opposite of the configured defaults on every axis, so a value leaking out
+    /// of storage fails the test rather than coinciding with the expected answer.
     /// </summary>
-    private const string StoredTheme =
+    private const string RestoredTheme =
         """{"isDarkMode":true,"baseColor":"Slate","primaryColor":"Blue","radius":1.0}""";
 
     [Fact]
-    public async Task PersistenceDisabledDoesNotReadTheStoredTheme()
+    public async Task PersistenceDisabledTellsTheBrowserNotToRead()
     {
-        var module = new RecordingModule { StoredThemeJson = StoredTheme };
+        var module = new RecordingModule();
         var service = new ThemeService(
             new StubJsRuntime(module),
             new ThemeOptions { PersistToLocalStorage = false });
 
         await service.InitializeAsync();
 
-        Assert.DoesNotContain("loadTheme", module.Calls);
+        Assert.False(module.Config.GetProperty("persist").GetBoolean());
     }
 
     [Fact]
-    public async Task PersistenceDisabledClearsAnyThemeLeftByAnEarlierRun()
+    public async Task PersistenceEnabledTellsTheBrowserToRead()
     {
-        var module = new RecordingModule { StoredThemeJson = StoredTheme };
+        var module = new RecordingModule();
         var service = new ThemeService(
             new StubJsRuntime(module),
-            new ThemeOptions { PersistToLocalStorage = false });
+            new ThemeOptions { PersistToLocalStorage = true });
 
         await service.InitializeAsync();
 
-        Assert.Contains("clearTheme", module.Calls);
+        Assert.True(module.Config.GetProperty("persist").GetBoolean());
     }
 
     [Fact]
-    public async Task PersistenceDisabledKeepsTheConfiguredDefaults()
+    public async Task ConfiguredDefaultsAreSentAsTheFallback()
     {
-        var module = new RecordingModule { StoredThemeJson = StoredTheme };
+        var module = new RecordingModule();
         var service = new ThemeService(
             new StubJsRuntime(module),
             new ThemeOptions
@@ -66,28 +73,67 @@ public class ThemePersistenceTests
 
         await service.InitializeAsync();
 
-        Assert.False(service.IsDarkMode);
-        Assert.Equal(BaseColor.Zinc, service.BaseColor);
-        Assert.Equal(PrimaryColor.Default, service.PrimaryColor);
-        Assert.Equal(0.5, service.Radius);
+        var defaults = module.Config.GetProperty("defaults");
+        Assert.False(module.Config.GetProperty("detectSystemPreference").GetBoolean());
+        Assert.False(defaults.GetProperty("isDarkMode").GetBoolean());
+        Assert.Equal("zinc", defaults.GetProperty("baseColor").GetString());
+        Assert.Equal("default", defaults.GetProperty("primaryColor").GetString());
+        Assert.Equal(0.5, defaults.GetProperty("radius").GetDouble());
+    }
+
+    /// <summary>
+    /// The browser validates a stored colour name before applying it, so the list of names it may
+    /// accept has to travel with the request — otherwise a value this build no longer knows would
+    /// be applied and then corrected a round trip later.
+    /// </summary>
+    [Fact]
+    public async Task ValidColourNamesAreSentForTheBrowserToCheckAgainst()
+    {
+        var module = new RecordingModule();
+        var service = new ThemeService(new StubJsRuntime(module), new ThemeOptions());
+
+        await service.InitializeAsync();
+
+        var baseColors = module.Config.GetProperty("validBaseColors")
+            .EnumerateArray().Select(v => v.GetString()).ToList();
+
+        Assert.Equal(Enum.GetNames<BaseColor>().Length, baseColors.Count);
+        Assert.Contains("zinc", baseColors);
+        Assert.All(baseColors, name => Assert.Equal(name, name!.ToLowerInvariant()));
     }
 
     [Fact]
-    public async Task PersistenceEnabledStillRestoresTheStoredTheme()
+    public async Task TheStateTheBrowserAppliedBecomesTheServiceState()
     {
-        var module = new RecordingModule { StoredThemeJson = StoredTheme };
+        var module = new RecordingModule { AppliedThemeJson = RestoredTheme };
         var service = new ThemeService(
             new StubJsRuntime(module),
             new ThemeOptions { PersistToLocalStorage = true });
 
         await service.InitializeAsync();
 
-        Assert.Contains("loadTheme", module.Calls);
-        Assert.DoesNotContain("clearTheme", module.Calls);
         Assert.True(service.IsDarkMode);
         Assert.Equal(BaseColor.Slate, service.BaseColor);
         Assert.Equal(PrimaryColor.Blue, service.PrimaryColor);
         Assert.Equal(1.0, service.Radius);
+    }
+
+    /// <summary>
+    /// Prerendering and a stubbed runtime both answer nothing. The configured defaults are already
+    /// in place by then, so the service must keep them rather than fall over.
+    /// </summary>
+    [Fact]
+    public async Task NoAnswerFromTheBrowserLeavesTheConfiguredDefaults()
+    {
+        var module = new RecordingModule { AppliedThemeJson = null };
+        var service = new ThemeService(
+            new StubJsRuntime(module),
+            new ThemeOptions { DefaultBaseColor = BaseColor.Zinc, DefaultRadius = 0.5 });
+
+        await service.InitializeAsync();
+
+        Assert.Equal(BaseColor.Zinc, service.BaseColor);
+        Assert.Equal(0.5, service.Radius);
     }
 
     /// <summary>Hands out the one module. Anything else is a call the service should not be making.</summary>
@@ -110,10 +156,9 @@ public class ThemePersistenceTests
     }
 
     /// <summary>
-    /// Records every call so a test can assert on what the service did and did not ask for.
-    /// <c>loadTheme</c> answers by deserializing JSON, matching how the real interop materializes
-    /// the payload — so the test exercises the same contract rather than a hand-built instance
-    /// (which the service's private state type would not allow anyway).
+    /// Captures the configuration handed to <c>theme.initialize</c> and answers with a state, the
+    /// way the browser would. The config is round-tripped through JSON so the test sees the same
+    /// shape the real interop serializes, rather than the anonymous type.
     /// </summary>
     private sealed class RecordingModule : IJSObjectReference
     {
@@ -121,8 +166,11 @@ public class ThemePersistenceTests
 
         public List<string> Calls { get; } = [];
 
-        /// <summary>What <c>loadTheme</c> returns; <c>null</c> means localStorage holds nothing.</summary>
-        public string? StoredThemeJson { get; set; }
+        /// <summary>The configuration passed to <c>theme.initialize</c>.</summary>
+        public JsonElement Config { get; private set; }
+
+        /// <summary>What the browser reports it applied; <c>null</c> means it could not answer.</summary>
+        public string? AppliedThemeJson { get; set; }
 
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
             InvokeAsync<TValue>(identifier, CancellationToken.None, args);
@@ -132,15 +180,15 @@ public class ThemePersistenceTests
         {
             Calls.Add(identifier);
 
-            if (identifier == "loadTheme" && StoredThemeJson is not null)
+            if (identifier == "theme.initialize")
             {
-                return ValueTask.FromResult(
-                    JsonSerializer.Deserialize<TValue>(StoredThemeJson, JsonOptions)!);
-            }
+                Config = JsonSerializer.SerializeToElement(args?[0], JsonOptions);
 
-            if (identifier == "getPrefersDark")
-            {
-                return ValueTask.FromResult((TValue)(object)false);
+                if (AppliedThemeJson is not null)
+                {
+                    return ValueTask.FromResult(
+                        JsonSerializer.Deserialize<TValue>(AppliedThemeJson, JsonOptions)!);
+                }
             }
 
             return ValueTask.FromResult(default(TValue)!);

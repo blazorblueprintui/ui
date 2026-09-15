@@ -1,7 +1,13 @@
-// Stack-based escape key detection for dialog, sheet, and drawer components.
-// Uses a single document-level listener with a stack so only the topmost
-// overlay handles Escape. When it closes and disposes, the next one becomes
-// active — no focus-restoration dependency.
+// Stack-based escape key detection for every overlay that has to watch Escape at the document.
+//
+// One document-level listener, one stack, and only the topmost overlay handles the key. Anything
+// that registers its own document listener instead is invisible to this ordering, and Escape then
+// dismisses every open overlay at once rather than peeling them one at a time — which is what a
+// popover inside a dialog used to do.
+//
+// Overlays whose content holds focus (Select, menus) do not belong here. They handle Escape on
+// their own container and stop it propagating, which keeps them off the stack while still taking
+// precedence over whatever is underneath.
 
 const stack = [];
 let listening = false;
@@ -9,16 +15,20 @@ let listening = false;
 function handleKeyDown(e) {
   if (e.key === 'Escape' && stack.length > 0) {
     const top = stack[stack.length - 1];
-    top.dotNetRef.invokeMethodAsync('JsOnEscapeKey').catch(() => {});
+    top.dotNetRef.invokeMethodAsync(top.methodName).catch(() => {});
   }
 }
 
-export function initialize(dotNetRef, instanceId) {
+export function initialize(dotNetRef, instanceId, methodName = 'JsOnEscapeKey') {
   if (!dotNetRef) {
     return;
   }
 
-  stack.push({ dotNetRef, instanceId });
+  // Reopening must not leave the old entry behind, or the stack grows and the top stops being
+  // the overlay actually on screen.
+  dispose(instanceId);
+
+  stack.push({ dotNetRef, instanceId, methodName });
 
   if (!listening) {
     document.addEventListener('keydown', handleKeyDown);

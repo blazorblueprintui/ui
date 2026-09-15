@@ -378,8 +378,7 @@ else
         {
             if (_jsModule == null)
             {
-                _jsModule = await JS.InvokeAsync<IJSObjectReference>("import",
-                    "./_content/BlazorBlueprint.Components/js/dashboard-grid.js");
+                _jsModule = await JsModules.GetAsync(JS, "./_content/BlazorBlueprint.Components/js/dashboard-grid.js");
             }
             else
             {
@@ -670,7 +669,6 @@ else
 
             try
             {
-                await _jsModule.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {

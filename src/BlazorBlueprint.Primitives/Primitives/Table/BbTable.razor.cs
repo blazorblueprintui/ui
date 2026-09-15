@@ -1,4 +1,6 @@
+using BlazorBlueprint.Primitives.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 
 namespace BlazorBlueprint.Primitives.Table;
 
@@ -9,6 +11,7 @@ namespace BlazorBlueprint.Primitives.Table;
 /// <typeparam name="TData">The type of data items in the table.</typeparam>
 public partial class BbTable<TData> : ComponentBase, IDisposable where TData : class
 {
+    private ElementReference _tableRef;
     private TableContext<TData> _context = null!;
     private TableState<TData> _internalState = new();
     private IEnumerable<TData> _processedData = Array.Empty<TData>();
@@ -433,6 +436,36 @@ public partial class BbTable<TData> : ComponentBase, IDisposable where TData : c
             {
                 _pendingTasks.Clear();
             }
+        }
+    }
+
+    /// <summary>
+    /// Attaches the row key handlers once, for every row in this table.
+    /// </summary>
+    /// <remarks>
+    /// Each row used to register its own in its <c>OnAfterRenderAsync</c>, and dispose it on
+    /// teardown — one interop call, and so one circuit round trip on Blazor Server, per row in
+    /// each direction. Rows now opt in by rendering <c>data-bb-row-keys</c>, which costs nothing,
+    /// and the listener finds the row from the event target.
+    /// </remarks>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        try
+        {
+            var navModule = await PrimitiveModules.GetAsync(JSRuntime);
+            await navModule.InvokeVoidAsync("tableRowNav.delegateRowBehaviour", _tableRef);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException
+                                      or TaskCanceledException or ObjectDisposedException
+                                      or InvalidOperationException)
+        {
+            // Circuit gone, or prerendering. Rows stay reachable through Blazor's own handlers;
+            // only the scroll suppression is lost, and the next render re-attaches.
         }
     }
 }

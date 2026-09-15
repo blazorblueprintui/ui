@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using BlazorBlueprint.Primitives.Utilities;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Primitives.Sortable;
 
@@ -180,10 +181,9 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
         if (firstRender)
         {
             _ref = DotNetObjectReference.Create(this);
-            _module = await JsRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/sortable.js");
+            _module = await PrimitiveModules.GetAsync(JsRuntime);
             await _module.InvokeVoidAsync(
-                "init", Id, Group, Pull, Put, Sort, Handle, Filter, _ref, ForceFallback);
+"sortable.init", Id, Group, Pull, Put, Sort, Handle, Filter, _ref, ForceFallback);
             _jsInitialized = true;
             SnapshotParameters();
         }
@@ -191,7 +191,7 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
         {
             _needsReinit = false;
             await _module.InvokeVoidAsync(
-                "init", Id, Group, Pull, Put, Sort, Handle, Filter, _ref, ForceFallback);
+"sortable.init", Id, Group, Pull, Put, Sort, Handle, Filter, _ref, ForceFallback);
             SnapshotParameters();
         }
     }
@@ -249,8 +249,7 @@ public partial class BbSortable<TItem> : ComponentBase, IAsyncDisposable
         {
             try
             {
-                await _module.InvokeVoidAsync("destroy", Id);
-                await _module.DisposeAsync();
+                await _module.InvokeVoidAsync("sortable.destroy", Id);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

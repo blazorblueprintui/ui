@@ -54,7 +54,7 @@ public class KeyboardShortcutService : IKeyboardShortcutService
         // Register with JavaScript
         if (_module != null)
         {
-            await _module.InvokeVoidAsync("registerShortcut", normalizedKey);
+            await _module.InvokeVoidAsync("keyboardShortcuts.registerShortcut", normalizedKey);
         }
 
         return new ShortcutHandle(this, normalizedKey, id);
@@ -125,8 +125,7 @@ public class KeyboardShortcutService : IKeyboardShortcutService
         {
             try
             {
-                await _module.InvokeVoidAsync("dispose");
-                await _module.DisposeAsync();
+                await _module.InvokeVoidAsync("keyboardShortcuts.dispose");
             }
             catch
             {
@@ -151,9 +150,8 @@ public class KeyboardShortcutService : IKeyboardShortcutService
             if (_module == null)
             {
                 _dotNetRef = DotNetObjectReference.Create(this);
-                _module = await _jsRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/keyboard-shortcuts.js");
-                await _module.InvokeVoidAsync("initialize", _dotNetRef);
+                _module = await PrimitiveModules.GetAsync(_jsRuntime);
+                await _module.InvokeVoidAsync("keyboardShortcuts.initialize", _dotNetRef);
             }
         }
         finally
@@ -167,7 +165,7 @@ public class KeyboardShortcutService : IKeyboardShortcutService
         if (_shortcuts.Remove(normalizedKey) && _module != null)
         {
             // Fire-and-forget unregister from JS
-            _ = _module.InvokeVoidAsync("unregisterShortcut", normalizedKey).AsTask();
+            _ = _module.InvokeVoidAsync("keyboardShortcuts.unregisterShortcut", normalizedKey).AsTask();
         }
     }
 

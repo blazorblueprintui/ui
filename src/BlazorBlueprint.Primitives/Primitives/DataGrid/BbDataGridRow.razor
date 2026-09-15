@@ -1,7 +1,6 @@
 @namespace BlazorBlueprint.Primitives.DataGrid
 @typeparam TData where TData : class
 @inject IJSRuntime JSRuntime
-@implements IAsyncDisposable
 
 <tr @ref="elementRef"
     role="row"
@@ -9,6 +8,8 @@
     tabindex="@(IsKeyboardNavigable ? 0 : -1)"
     class="@ComputedClass"
     data-editing="@(IsRowEditing ? "true" : null)"
+    data-bb-row-keys="@((IsKeyboardNavigable || IsEditable) ? "true" : null)"
+    data-bb-row-click="@(NeedsClickIntercept ? "true" : null)"
     @onclick="HandleClick"
     @oncontextmenu="HandleContextMenu"
     @oncontextmenu:preventDefault="@HasContextMenuHandler"
@@ -19,11 +20,6 @@
 
 @code {
     private ElementReference elementRef;
-    private bool spaceKeyHandlerAttached;
-    private bool clickInterceptAttached;
-    private IJSObjectReference? navModule;
-    private IJSObjectReference? spaceKeyCleanup;
-    private IJSObjectReference? clickInterceptCleanup;
 
     [CascadingParameter]
     private DataGridContext<TData> Context { get; set; } = default!;
@@ -72,38 +68,11 @@
 
     private string ComputedClass => IsKeyboardNavigable ? $"{FocusRingClasses} {Class}" : Class ?? "";
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            try
-            {
-                if ((IsKeyboardNavigable || IsEditable) && !spaceKeyHandlerAttached)
-                {
-                    navModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-                        "import", "./_content/BlazorBlueprint.Primitives/js/primitives/table-row-nav.js");
-
-                    spaceKeyCleanup = await navModule.InvokeAsync<IJSObjectReference>(
-                        "preventSpaceKeyScroll", elementRef);
-                    spaceKeyHandlerAttached = true;
-                }
-
-                if (NeedsClickIntercept && !clickInterceptAttached)
-                {
-                    navModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-                        "import", "./_content/BlazorBlueprint.Primitives/js/primitives/table-row-nav.js");
-
-                    clickInterceptCleanup = await navModule.InvokeAsync<IJSObjectReference>(
-                        "interceptInteractiveClicks", elementRef);
-                    clickInterceptAttached = true;
-                }
-            }
-            catch
-            {
-                // Silently fail during prerendering
-            }
-        }
-    }
+    // No OnAfterRenderAsync here on purpose. Each row used to register its own key and click
+    // listeners, which cost one interop call — one circuit round trip on Blazor Server — per row:
+    // a 465-row grid sent 240 client-to-server messages on load against 23 for a page with no
+    // grid. The listeners now live on the grid container, and a row opts in with the
+    // data-bb-row-keys and data-bb-row-click attributes above, which costs nothing.
 
     private bool HasContextMenuHandler => Context?.OnRowContextMenu != null;
 
@@ -114,10 +83,11 @@
             // When the click interceptor is active, check whether the click
             // targeted an interactive child (user-provided button/link/input
             // inside a cell template).  If so, skip row-level handling.
-            if (clickInterceptAttached && navModule != null)
+            if (NeedsClickIntercept)
             {
+                var navModule = await PrimitiveModules.GetAsync(JSRuntime);
                 var wasInteractive = await navModule.InvokeAsync<bool>(
-                    "consumeInteractiveClickFlag", elementRef);
+                    "tableRowNav.consumeInteractiveClickFlag", elementRef);
                 if (wasInteractive)
                 {
                     return;
@@ -214,10 +184,9 @@
     {
         try
         {
-            navModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/table-row-nav.js");
+            var navModule = await PrimitiveModules.GetAsync(JSRuntime);
 
-            if (await navModule.InvokeAsync<bool>("blurFocusedInput", elementRef))
+            if (await navModule.InvokeAsync<bool>("tableRowNav.blurFocusedInput", elementRef))
             {
                 // Let the change event the blur just fired reach Blazor and update the model
                 // before the commit reads it.
@@ -234,54 +203,12 @@
     {
         try
         {
-            navModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/table-row-nav.js");
+            var navModule = await PrimitiveModules.GetAsync(JSRuntime);
             await navModule.InvokeVoidAsync(method, elementRef);
         }
         catch
         {
             // Ignore JS interop errors
-        }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (clickInterceptCleanup != null)
-        {
-            try
-            {
-                await clickInterceptCleanup.InvokeVoidAsync("dispose");
-                await clickInterceptCleanup.DisposeAsync();
-            }
-            catch
-            {
-                // Ignore disposal errors
-            }
-        }
-
-        if (spaceKeyCleanup != null)
-        {
-            try
-            {
-                await spaceKeyCleanup.InvokeVoidAsync("dispose");
-                await spaceKeyCleanup.DisposeAsync();
-            }
-            catch
-            {
-                // Ignore disposal errors
-            }
-        }
-
-        if (navModule != null)
-        {
-            try
-            {
-                await navModule.DisposeAsync();
-            }
-            catch
-            {
-                // Ignore disposal errors
-            }
         }
     }
 }

@@ -1,0 +1,207 @@
+@page "/guides/nested-overlays"
+
+<PageTitle>Nested Overlays - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Nested Overlays</h1>
+        <p class="text-xl text-muted-foreground">
+            An overlay opened from inside another overlay. The inner one must not dismiss the outer one.
+        </p>
+    </div>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Why this needs a page of its own</h2>
+        <p class="text-muted-foreground leading-relaxed">
+            Overlay content does not render where you wrote it. It renders through
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">BbPortalHost</code>, at the end of the document.
+            So a <code class="text-xs bg-muted px-1 py-0.5 rounded">BbSelect</code> written inside a
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">BbPopover</code> is, in the DOM, a sibling of that
+            popover &mdash; not a descendant of it.
+        </p>
+        <p class="text-muted-foreground leading-relaxed">
+            Dismiss-on-outside-interaction asks "was that click inside me?". Answered with
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">element.contains(target)</code>, the answer for the
+            inner overlay is <em>no</em> &mdash; and the outer one closes the moment you touch the inner one. The
+            listener therefore tracks which portal an interaction started in, rather than testing containment, and
+            treats a click that began in a nested portal as inside.
+        </p>
+        <p class="text-muted-foreground leading-relaxed">
+            Every combination below is the same check from a different direction. If one of them closes the outer
+            overlay when you use the inner one, that is the bug.
+        </p>
+    </section>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">What happened</h2>
+        <div class="rounded-lg border p-4 space-y-2">
+            <div class="flex items-center justify-between">
+                <p class="text-sm font-medium">Event log</p>
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => log.Clear())">
+                    Clear
+                </BbButton>
+            </div>
+            @if (log.Count == 0)
+            {
+                <p class="text-sm text-muted-foreground">Open something below.</p>
+            }
+            else
+            {
+                <ol class="text-sm font-mono space-y-1">
+                    @foreach (var entry in log)
+                    {
+                        <li>@entry</li>
+                    }
+                </ol>
+            }
+        </div>
+    </section>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Select inside a Popover</h2>
+        <p class="text-muted-foreground leading-relaxed">
+            Open the popover, then open the select inside it and pick a fruit. The popover must stay open the
+            whole time, and must still close when you click the page behind it.
+        </p>
+        <div class="p-4 border rounded-lg">
+            <BbPopover Open="@popoverOpen" OpenChanged="@(v => OnOpenChanged("Popover", v, x => popoverOpen = x))">
+                <BbPopoverTrigger>
+                    <BbButton Variant="ButtonVariant.Outline">Open popover</BbButton>
+                </BbPopoverTrigger>
+                <BbPopoverContent Class="w-[320px]">
+                    <div class="space-y-3">
+                        <p class="text-sm font-medium">Popover with a select in it</p>
+                        <BbSelect TValue="string"
+                                  Value="@fruitInPopover"
+                                  ValueChanged="@(v => Record("Select in popover", ref fruitInPopover, v))"
+                                  Options="@fruitOptions"
+                                  Placeholder="Select a fruit"
+                                  Class="w-full" />
+                        <p class="text-sm text-muted-foreground">Chosen: <strong>@(fruitInPopover ?? "nothing")</strong></p>
+                    </div>
+                </BbPopoverContent>
+            </BbPopover>
+        </div>
+        <CodeBlock Source="Guides/nested-select-in-popover.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Select inside a Dropdown Menu</h2>
+        <p class="text-muted-foreground leading-relaxed">
+            The same check for a menu. A menu closes on almost any interaction, so it is the least forgiving of
+            the three.
+        </p>
+        <div class="p-4 border rounded-lg">
+            <BbDropdownMenu Open="@menuOpen" OpenChanged="@(v => OnOpenChanged("Menu", v, x => menuOpen = x))">
+                <BbDropdownMenuTrigger>
+                    <BbButton Variant="ButtonVariant.Outline">Open menu</BbButton>
+                </BbDropdownMenuTrigger>
+                <BbDropdownMenuContent Class="w-[280px]">
+                    <div class="p-2 space-y-2">
+                        <p class="text-sm font-medium">Filter</p>
+                        <BbSelect TValue="string"
+                                  Value="@fruitInMenu"
+                                  ValueChanged="@(v => Record("Select in menu", ref fruitInMenu, v))"
+                                  Options="@fruitOptions"
+                                  Placeholder="Select a fruit"
+                                  Class="w-full" />
+                    </div>
+                </BbDropdownMenuContent>
+            </BbDropdownMenu>
+        </div>
+        <CodeBlock Source="Guides/nested-select-in-menu.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Popover inside a Dialog</h2>
+        <p class="text-muted-foreground leading-relaxed">
+            Two layers of overlay, and Escape should peel them one at a time &mdash; the popover first, then the
+            dialog.
+        </p>
+        <div class="p-4 border rounded-lg">
+            <BbDialog Open="@dialogOpen" OpenChanged="@(v => OnOpenChanged("Dialog", v, x => dialogOpen = x))">
+                <BbDialogTrigger>
+                    <BbButton Variant="ButtonVariant.Outline">Open dialog</BbButton>
+                </BbDialogTrigger>
+                <BbDialogContent>
+                    <BbDialogHeader>
+                        <BbDialogTitle>Dialog with a popover in it</BbDialogTitle>
+                        <BbDialogDescription>
+                            The popover below renders through the same portal host as this dialog.
+                        </BbDialogDescription>
+                    </BbDialogHeader>
+                    <div class="py-2">
+                        <BbPopover Open="@innerPopoverOpen" OpenChanged="@(v => OnOpenChanged("Popover in dialog", v, x => innerPopoverOpen = x))">
+                            <BbPopoverTrigger>
+                                <BbButton Variant="ButtonVariant.Outline">Open popover</BbButton>
+                            </BbPopoverTrigger>
+                            <BbPopoverContent Class="w-[280px]">
+                                <div class="space-y-3">
+                                    <p class="text-sm">Closing this must leave the dialog open.</p>
+                                    <BbSelect TValue="string"
+                                              Value="@fruitInDialog"
+                                              ValueChanged="@(v => Record("Select in dialog popover", ref fruitInDialog, v))"
+                                              Options="@fruitOptions"
+                                              Placeholder="Select a fruit"
+                                              Class="w-full" />
+                                </div>
+                            </BbPopoverContent>
+                        </BbPopover>
+                    </div>
+                </BbDialogContent>
+            </BbDialog>
+        </div>
+        <CodeBlock Source="Guides/nested-popover-in-dialog.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">What to check</h2>
+        <ul class="space-y-2 text-muted-foreground leading-relaxed list-disc pl-5">
+            <li>Opening the inner overlay leaves the outer one open.</li>
+            <li>Choosing a value in the inner overlay leaves the outer one open.</li>
+            <li>Escape closes the inner overlay only. A second Escape closes the outer one.</li>
+            <li>Clicking the page behind everything still closes the outer overlay.</li>
+        </ul>
+    </section>
+</div>
+
+@code {
+    private readonly List<string> log = new();
+
+    private bool popoverOpen;
+    private bool menuOpen;
+    private bool dialogOpen;
+    private bool innerPopoverOpen;
+
+    private string? fruitInPopover;
+    private string? fruitInMenu;
+    private string? fruitInDialog;
+
+    private static readonly string[] Fruits = ["Apple", "Banana", "Blueberry", "Grapes", "Pineapple"];
+    private readonly SelectOption<string>[] fruitOptions = Fruits.Select(SelectOption.FromValue).ToArray();
+
+    // The log is the point of the page: a wrong dismissal shows up as an outer overlay closing
+    // on the same tick you touched the inner one.
+    private void OnOpenChanged(string name, bool open, Action<bool> assign)
+    {
+        assign(open);
+        Add($"{name} {(open ? "opened" : "closed")}");
+    }
+
+    private void Record(string source, ref string? field, string? value)
+    {
+        field = value;
+        Add($"{source} → {value}");
+    }
+
+    private void Add(string message)
+    {
+        log.Insert(0, $"{DateTime.Now:HH:mm:ss.fff}  {message}");
+
+        // Newest first, and short enough to read at a glance while clicking around.
+        if (log.Count > 12)
+        {
+            log.RemoveAt(log.Count - 1);
+        }
+    }
+}

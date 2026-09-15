@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -71,8 +72,7 @@ public partial class BbDockTabGroup : ComponentBase, IAsyncDisposable
 
         try
         {
-            jsModule ??= await JS.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Components/js/dock.js");
+            jsModule ??= await JsModules.GetAsync(JS, "./_content/BlazorBlueprint.Components/js/dock.js");
 
             // (Re)attach the overflow observer whenever this instance starts rendering a
             // different tab group (Blazor reuses component instances across layout changes).
@@ -281,7 +281,6 @@ public partial class BbDockTabGroup : ComponentBase, IAsyncDisposable
                     await jsModule.InvokeVoidAsync("disposeTabOverflow", observedGroupId);
                 }
 
-                await jsModule.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {

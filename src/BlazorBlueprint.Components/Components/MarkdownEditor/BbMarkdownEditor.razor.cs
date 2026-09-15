@@ -3,6 +3,7 @@ using Markdig;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -157,8 +158,7 @@ public partial class BbMarkdownEditor : ComponentBase, IAsyncDisposable
             try
             {
                 _dotNetRef = DotNetObjectReference.Create(this);
-                _module = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/markdown-editor.js");
+                _module = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/markdown-editor.js");
 
                 // Initialize list continuation behavior and undo/redo
                 await _module.InvokeVoidAsync("initializeListContinuation", _textareaRef, _dotNetRef);
@@ -430,7 +430,6 @@ public partial class BbMarkdownEditor : ComponentBase, IAsyncDisposable
             {
                 // Clean up the list continuation listener and editor data
                 await _module.InvokeVoidAsync("disposeListContinuation", _textareaRef);
-                await _module.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

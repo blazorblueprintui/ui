@@ -276,11 +276,9 @@
                 var containerId = $"vgroup-container-{_id}";
 
                 // Scroll using the virtualization-scroll module
-                var virtualizationScrollModule = await JS.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/virtualization-scroll.js");
+                var virtualizationScrollModule = await JsModules.GetAsync(JS, "./_content/BlazorBlueprint.Components/js/virtualization-scroll.js");
                 await virtualizationScrollModule.InvokeVoidAsync(
                     "scrollToVirtualizedIndex", listId, containerId, index, 32, 32);
-                await virtualizationScrollModule.DisposeAsync();
 
                 // Give Virtualize a moment to render items at the new scroll position
                 await Task.Delay(50);
@@ -388,10 +386,8 @@
                 // Use 'start' for first item in first group to show group heading
                 var isFirstGroupFirstItem = _focusedIndex == 0 && Context != null && IsFirstVisibleGroup();
                 var scrollBlock = isFirstGroupFirstItem ? "start" : "nearest";
-                var virtualizationScrollModule = await JS.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/virtualization-scroll.js");
+                var virtualizationScrollModule = await JsModules.GetAsync(JS, "./_content/BlazorBlueprint.Components/js/virtualization-scroll.js");
                 await virtualizationScrollModule.InvokeVoidAsync("scrollElementIntoView", elementId, scrollBlock);
-                await virtualizationScrollModule.DisposeAsync();
             }
             catch
             {

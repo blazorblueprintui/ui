@@ -182,11 +182,10 @@
         {
             try
             {
-                _keyboardNavModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/keyboard-nav.js");
+                _keyboardNavModule = await PrimitiveModules.GetAsync(JSRuntime);
 
                 _keyboardNavCleanup = await _keyboardNavModule.InvokeAsync<IJSObjectReference>(
-                    "setupKeyboardNav", _elementRef);
+"keyboardNav.setupKeyboardNav", _elementRef);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
@@ -217,16 +216,5 @@
             }
         }
 
-        if (_keyboardNavModule is not null)
-        {
-            try
-            {
-                await _keyboardNavModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Circuit disconnected, ignore
-            }
-        }
     }
 }

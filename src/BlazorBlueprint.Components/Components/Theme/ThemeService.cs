@@ -1,4 +1,5 @@
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -86,8 +87,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            module = await jsRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Components/js/theme.js");
+            module = await JsModules.GetAsync(jsRuntime, "./_content/BlazorBlueprint.Components/js/bb-components-core.js");
         }
         catch (JSDisconnectedException)
         {
@@ -103,33 +103,39 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            // Only read localStorage when persistence is enabled. Reading it regardless meant a
-            // theme saved by an earlier run kept overriding the configured defaults after
-            // PersistToLocalStorage was turned off, with no way to opt out short of the user
-            // clearing site data by hand (#481). Clearing the stale entry closes the same hole
-            // for anyone who already has one.
-            var saved = options.PersistToLocalStorage
-                ? await module.InvokeAsync<ThemeState?>("loadTheme")
-                : null;
-
-            if (!options.PersistToLocalStorage)
+            // One call, not four. Reading localStorage, clearing a stale entry, asking the OS for
+            // its dark-mode preference and applying the result are all browser-side decisions, and
+            // on Blazor Server each separately awaited call was a circuit round trip on every page
+            // load. The valid colour names go with it so that a corrupted entry falls back to the
+            // configured default in the browser, exactly as ParseEnum would here, rather than being
+            // applied and corrected a round trip later.
+            var applied = await module.InvokeAsync<ThemeState?>("theme.initialize", new
             {
-                await module.InvokeVoidAsync("clearTheme");
+                persist = options.PersistToLocalStorage,
+                detectSystemPreference = options.DetectSystemPreference,
+                defaults = new
+                {
+                    isDarkMode,
+                    baseColor = baseColor.ToString().ToLowerInvariant(),
+                    primaryColor = primaryColor.ToString().ToLowerInvariant(),
+                    radius
+                },
+                validBaseColors = Enum.GetNames<BaseColor>().Select(n => n.ToLowerInvariant()).ToArray(),
+                validPrimaryColors = Enum.GetNames<PrimaryColor>().Select(n => n.ToLowerInvariant()).ToArray()
+            });
+
+            // Null when interop is stubbed or the browser could not answer. The configured
+            // defaults are already in the fields, so leaving them alone is the right outcome.
+            if (applied is null)
+            {
+                isInitialized = true;
+                return;
             }
 
-            if (saved is not null)
-            {
-                isDarkMode = saved.IsDarkMode;
-                baseColor = ParseEnum(saved.BaseColor, options.DefaultBaseColor);
-                primaryColor = ParseEnum(saved.PrimaryColor, options.DefaultPrimaryColor);
-                radius = saved.Radius ?? options.DefaultRadius;
-            }
-            else if (options.DetectSystemPreference)
-            {
-                isDarkMode = await module.InvokeAsync<bool>("getPrefersDark");
-            }
-
-            await ApplyAllAsync();
+            isDarkMode = applied.IsDarkMode;
+            baseColor = ParseEnum(applied.BaseColor, options.DefaultBaseColor);
+            primaryColor = ParseEnum(applied.PrimaryColor, options.DefaultPrimaryColor);
+            radius = applied.Radius ?? options.DefaultRadius;
         }
         catch (JSDisconnectedException)
         {
@@ -222,7 +228,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            await module.InvokeVoidAsync("applyTheme",
+            await module.InvokeVoidAsync("theme.applyTheme",
                 isDarkMode,
                 baseColor.ToString().ToLowerInvariant(),
                 primaryColor.ToString().ToLowerInvariant(),
@@ -243,7 +249,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            await module.InvokeVoidAsync("applyDarkMode", isDarkMode);
+            await module.InvokeVoidAsync("theme.applyDarkMode", isDarkMode);
         }
         catch
         {
@@ -260,7 +266,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            await module.InvokeVoidAsync("applyBaseColor", baseColor.ToString().ToLowerInvariant());
+            await module.InvokeVoidAsync("theme.applyBaseColor", baseColor.ToString().ToLowerInvariant());
         }
         catch
         {
@@ -277,7 +283,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            await module.InvokeVoidAsync("applyPrimaryColor", primaryColor.ToString().ToLowerInvariant());
+            await module.InvokeVoidAsync("theme.applyPrimaryColor", primaryColor.ToString().ToLowerInvariant());
         }
         catch
         {
@@ -294,7 +300,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            await module.InvokeVoidAsync("applyRadius", radius);
+            await module.InvokeVoidAsync("theme.applyRadius", radius);
         }
         catch
         {
@@ -311,7 +317,7 @@ public class ThemeService : IAsyncDisposable
 
         try
         {
-            await module.InvokeVoidAsync("saveTheme",
+            await module.InvokeVoidAsync("theme.saveTheme",
                 isDarkMode,
                 baseColor.ToString().ToLowerInvariant(),
                 primaryColor.ToString().ToLowerInvariant(),
@@ -334,23 +340,11 @@ public class ThemeService : IAsyncDisposable
     }
 
     /// <inheritdoc />
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        if (module is not null)
-        {
-            try
-            {
-                await module.DisposeAsync();
-            }
-            catch
-            {
-                // Ignore disposal errors during circuit disconnect
-            }
-
-            module = null;
-        }
-
+        // Nothing to release: the theme module is shared and owned by JsModules.
         GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
     }
 
     /// <summary>

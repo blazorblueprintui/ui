@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -388,8 +389,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
 
             try
             {
-                _multiSelectModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/multiselect.js");
+                _multiSelectModule = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/multiselect.js");
 
                 _dotNetRef = DotNetObjectReference.Create(this);
 
@@ -743,12 +743,11 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
             return;
         }
 
-        _elementUtilsModule ??= await JSRuntime.InvokeAsync<IJSObjectReference>(
-            "import", "./_content/BlazorBlueprint.Primitives/js/primitives/element-utils.js");
+        _elementUtilsModule ??= await PrimitiveModules.GetAsync(JSRuntime);
 
         try
         {
-            var nearBottom = await _elementUtilsModule.InvokeAsync<bool>("isNearBottom", _listboxScrollRef, 80.0);
+            var nearBottom = await _elementUtilsModule.InvokeAsync<bool>("elementUtils.isNearBottom", _listboxScrollRef, 80.0);
             if (nearBottom)
             {
                 await OnLoadMore.InvokeAsync();
@@ -765,31 +764,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
         GC.SuppressFinalize(this);
         await CleanupJsAsync();
 
-        if (_multiSelectModule != null)
-        {
-            try
-            {
-                await _multiSelectModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-            _multiSelectModule = null;
-        }
 
-        if (_elementUtilsModule != null)
-        {
-            try
-            {
-                await _elementUtilsModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-            _elementUtilsModule = null;
-        }
 
         _dotNetRef?.Dispose();
         _dotNetRef = null;

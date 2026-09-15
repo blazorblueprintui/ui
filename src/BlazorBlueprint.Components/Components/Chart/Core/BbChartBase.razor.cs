@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -216,8 +217,7 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
     {
         try
         {
-            jsModule = await JS.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Components/js/echarts-renderer.js");
+            jsModule = await JsModules.GetAsync(JS, "./_content/BlazorBlueprint.Components/js/echarts-renderer.js");
 
             var option = BuildOption();
             var json = JsonSerializer.Serialize(option, SerializerOptions);
@@ -317,7 +317,6 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
             try
             {
                 await jsModule.InvokeVoidAsync("dispose", chartId);
-                await jsModule.DisposeAsync();
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

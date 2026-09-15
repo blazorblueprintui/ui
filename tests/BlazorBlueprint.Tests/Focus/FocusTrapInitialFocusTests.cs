@@ -24,7 +24,7 @@ public class FocusTrapInitialFocusTests
 
         await manager.TrapFocus(default);
 
-        Assert.Equal("createFocusTrap", module.LastIdentifier);
+        Assert.Equal("focusTrap.createFocusTrap", module.LastIdentifier);
         Assert.Equal("first", module.LastArgs![1]);
         Assert.Null(module.LastArgs[2]);
     }

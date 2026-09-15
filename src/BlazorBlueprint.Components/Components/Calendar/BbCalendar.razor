@@ -596,9 +596,8 @@
         try
         {
             var elementId = GetDayId(_focusedDate.Value);
-            _elementUtilsModule ??= await JS.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/element-utils.js");
-            await _elementUtilsModule.InvokeVoidAsync("focusElement", elementId);
+            _elementUtilsModule ??= await PrimitiveModules.GetAsync(JS);
+            await _elementUtilsModule.InvokeVoidAsync("elementUtils.focusElement", elementId);
         }
         catch
         {
@@ -606,19 +605,10 @@
         }
     }
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        if (_elementUtilsModule != null)
-        {
-            try
-            {
-                await _elementUtilsModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect
-            }
-        }
+        // Nothing to release: the primitive JS module is shared and owned by PrimitiveModules.
+        return ValueTask.CompletedTask;
     }
 
     private void HandleDayFocus(DateTime date)

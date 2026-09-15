@@ -24,6 +24,92 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Theme and sidebar start up in one call each.** `ThemeService.InitializeAsync` made two to four separate calls — read localStorage, maybe clear a stale entry, maybe ask the OS for its dark-mode preference, apply the result — and `BbSidebarProvider` made two. Every one was a circuit round trip, on every page load, before the page could settle into the right state. None of the decisions between them need the server: they are reads of a cookie, localStorage and a media query.
+
+  `theme.initialize` and `sidebar.initialize` do the lot and return what they applied. The valid colour names travel with the theme config, so a corrupted or outdated entry in localStorage falls back to the configured default in the browser exactly as `ParseEnum` would in C#, rather than being applied and corrected a round trip later.
+
+  The `PersistToLocalStorage` guard from [#481](https://github.com/blazorblueprintui/ui/issues/481) moved with it. Its unit tests now assert the configuration C# hands over — which is what C# still owns — and the storage behaviour itself is verified by driving the demo.
+
+- **The five modules that load on nearly every page ship as one file.** `bb-components-core.js` re-exports `theme`, `sidebar`, `sidebar-inset`, `text-input` and `composition-guard`, addressed as `textInput.initialize` in the same style as the primitives bundle.
+
+  Only those five. Measured cold across eight demo pages, `theme.js`, `sidebar.js` and `sidebar-inset.js` load on **every** one, and `text-input.js` with `composition-guard.js` on every page carrying a form control — three to five round trips before anyone clicks. The other twenty-five stay lazy on purpose: bundling all of them would be 56 KB gzipped, so an app showing one `BbInput` would download the dashboard grid, the dock, the markdown editor and the ECharts adapter to get it. These five are 8 KB and a page has already paid for them.
+
+  Distinct Components-layer imports per page load drop from three-to-six to one-to-three. Combined with the per-circuit cache, client-to-server messages during load on `/components/input` go **92 → 54**.
+
+- **A data grid attaches its row key and click handlers once, not once per row.** Every `BbDataGridRow` registered its own listeners in its `OnAfterRenderAsync`, and disposed them one by one on teardown — one interop call, and so one circuit round trip, per row in each direction. The cost scaled with row count, which is why a large grid felt slow and a demo page never did.
+
+  The listeners now live on the grid container and find the row from the event target. Rows opt in by rendering `data-bb-row-keys` and `data-bb-row-click`, which reproduces the previous per-row gating exactly — a grouping row, which wanted neither, still gets neither — without anyone calling into JavaScript. `BbDataGridRow` no longer implements `IAsyncDisposable`; it has nothing left to release.
+
+  Client-to-server messages during page load at a 20ms round trip:
+
+  | page | rows | before | after |
+  |---|---|---|---|
+  | `/components/datagrid` | 465 | 240 | **111** |
+  | `/recipes/filterable-datagrid` | 21 | 54 | **42** |
+  | `/components/button` | 0 | 36 | 36 |
+
+  `BbTableRow` gets the same treatment: `BbTable` now holds a reference to its `<table>` and delegates for every row in it, and `BbTableRow` no longer implements `IAsyncDisposable`.
+
+- **A component's JavaScript module is imported once per circuit, not once per component.** Every component cached its module reference in an *instance* field, so thirteen `BbInput`s on a page issued thirteen `import` calls for the same already-loaded file — and on Blazor Server each one is a network round trip. The cost scaled with how many controls a page had, which is why it showed up on dense admin forms and not in a demo.
+
+  `JsModules.GetAsync(jsRuntime, path)` caches per `IJSRuntime` — per circuit on Server, per application on WebAssembly — and hands the same reference to every caller. All 38 import sites across the two libraries now go through it. The reference is non-owning, so a component tearing itself down cannot take the module away from the ones still using it.
+
+  Measured in Chromium against the demo Server host at a 20ms round trip, client-to-server messages during page load:
+
+  | page | text inputs | before | after all of this |
+  |---|---|---|---|
+  | `/components/input` | 13 | 92 | **48** |
+  | `/components/form-field-input` | 9 | 65 | **37** |
+  | `/components/button` | 0 | 40 | **31** |
+  | `/components/separator` | 0 | 39 | **32** |
+
+  Roughly four extra messages per input becomes two. What is left is each control's own `initialize` call, which is genuinely per-instance — it registers listeners on that element.
+
+- **A select prepares its listbox in one call.** Scrolling the selected option into view and attaching the keyboard handler were two separately awaited calls, so two more circuit round trips on every open, while the user waited for the list to become usable. `select.openListbox` does both.
+
+  The scroll still happens first, and now strictly first — it is the first thing in that JavaScript task, so it lands ahead of the `requestAnimationFrame` that reveals the portal. A listbox has to appear already scrolled to the selection rather than scroll afterwards, which is what the ordering was always protecting.
+
+  Client-to-server messages for a select open, at a 20ms round trip: **21 before any of this work, 11 now** on a reopen.
+
+- **Opening an overlay costs one interop call, not five.** Every `InvokeAsync` from C# on Blazor Server is a message the server posts to the browser and then awaits, so it costs a network round trip — paid on every open, forever, not just the first.
+
+  Opening a `BbSelect` spent them like this: import `positioning.js`, import Floating UI from inside the first `computePosition`, compute the position, re-render for the resolved placement, apply the position and reveal the element, start the scroll/resize watcher, then import `click-outside.js`. Two of those landed *before* the element was visible, and the placement re-render sat between computing the position and showing it.
+
+  Four changes. The 17 primitive modules now ship as one bundle, `js/primitives/bb-primitives.js`, re-exported under a namespace each, so C# addresses them as `clickOutside.onClickOutsideByIds`. Floating UI became a **static** top-level import in `positioning.js` — it was an `await import(...)` buried inside the first `computePosition`, a second wait nothing on the C# side could see. `PrimitiveModules` caches one module reference per circuit and the portal host acquires it while the page renders, so the first open costs the same as a reopen. And `BbFloatingPortal` now positions, reveals and starts auto-update in a single `overlay.open` call, with the placement re-render moved to *after* the element is on screen; closing is a single `overlay.close` in place of disposing the watcher and then hiding.
+
+  Measured in Chromium against the demo Server host, warm cache, fresh document per sample, 20ms emulated round trip, opening the first `BbSelect` on `/components/select`. Median of 6, in ms from pointerdown:
+
+  | | before | after |
+  |---|---|---|
+  | **first open** — portal inserted | 53 | 53 |
+  | **first open** — visible | **147** | **82** |
+  | **reopen** — portal inserted | 55 | 53 |
+  | **reopen** — visible | **115** | **82** |
+  | inserted → visible, reopen | 61 | **33** |
+  | module fetches, first open | 3 | **0** |
+
+  First open and reopen are now the same cost, and inserted → visible is one round trip plus the frame the reveal is deferred to. At the 150–300ms round trip a user on mobile or behind a corporate proxy sees, the removed hops were the difference between an overlay that opens and one that hangs.
+
+  The dismissal listeners moved into that same call. `BbFloatingPortal` gains a `Dismiss` parameter and an `OnDismiss` callback; Popover and Select declare which gestures they want instead of registering their own listeners after the overlay appears. That was not only two more round trips — it was a window, two round trips wide, in which the overlay was on screen and ignored a click outside it. On a 300ms link that window was over half a second.
+
+  `BbDropdownMenuContent` moved over too, and that fixes two latent bugs rather than only saving a round trip. It used the element-based `onClickOutside`, which captured the content node once at registration — a Blazor re-render that replaced the node left `contains` testing a detached element, so every click read as outside. It also had no exemption for nested portals: a portal-based component placed inside a menu renders at body level, outside the menu's DOM subtree, so clicking a `BbSelect` inside a dropdown closed the dropdown underneath it. The id-based listener re-resolves both elements per event and tracks which portal an interaction started in. `onClickOutside` now has no callers in the library.
+
+  Verified in a browser for all three: a click outside closes, a click *inside* does not, choosing an item closes, the trigger toggles without instantly reopening, Escape closes, and arrow-key navigation still works.
+
+- **Breaking — `JsOnClickOutside` and `JsOnEscapeKey` are gone from `BbPopoverContent`, `BbSelectContent` and `BbDropdownMenuContent`.** Both were `[JSInvokable]` and `[EditorBrowsable(Never)]` — callable only from the library's own JavaScript. Dismissal now arrives through `BbFloatingPortal.OnDismiss`.
+
+- **Escape dismisses the topmost overlay, not every open one.** A popover opened inside a dialog used to close the dialog on the first press — sometimes both at once — because each overlay registered its own document-level `keydown` listener and none of them knew about the others.
+
+  `escape-keydown.js` already kept a stack behind a single listener so that dialogs, sheets and drawers took turns. Everything that watches Escape at the document now joins that stack: a floating overlay registers through `overlay.open`, and the topmost entry is the only one that hears the key. Overlays whose content holds focus — Select, Dropdown Menu, Context Menu, Menubar — keep handling Escape on their own container and now stop it propagating, so they take precedence over whatever is underneath without needing a place on the stack.
+
+  Escape now peels one layer per press: popover, then dialog. A convention test fails the build if another module starts watching Escape at the document.
+
+- **Removed — `onClickOutside` and `onEscapeKey` in `click-outside.js`.** Both are superseded and both caused a bug fixed in this release: the first went stale when Blazor replaced the element and had no exemption for nested portals, the second was the second document listener that broke Escape ordering. Neither has a caller left. Use `onClickOutsideByIds` and `escapeKeydown.initialize`.
+
+- **`BbFloatingPortal` no longer gives up on the portal host after 500ms.** `MountPortalAsync` raced the host's render signal against a `Task.Delay(500)`. The signal is never lost — it arrives exactly one network round trip after the portal registers, because the host only reaches `OnAfterRenderAsync` once the browser has acknowledged the render batch. Measured, the wait tracks round-trip time 1:1: 104ms at a 100ms round trip, 305ms at 300ms, 488ms at 480ms, and at 600ms every single open times out. That is what produced the stray `PortalRenderTimeout` warnings — not a lost signal, a fixed budget for a variable cost.
+
+  The one case the deadline genuinely guarded is a missing host, and `PortalService.HasHost` answers that synchronously, before the wait. The wait is now unbounded and cancelled when the portal closes or the component is disposed, and `PortalRenderTimeout` is gone.
+
 - **The `execCommand` clipboard fallback no longer runs for every failure** — it ran whenever `navigator.clipboard.writeText` threw, which meant an expired user activation quietly fell through to a path that cannot rescue one either, and success was reported regardless. It now runs only for the insecure-context case it was written for, where the Clipboard API is absent altogether.
 
   Verified in **Chrome** and **Safari**: a `ValueFuncAsync` taking a deliberate 1.5 seconds copies successfully and `OnCopied` reports the value. The demo is slow on purpose — an immediately-resolved task passes everywhere and proves nothing. The plain literal-value copy was re-checked in both as well, since the click path changed for every usage, not just the async one.

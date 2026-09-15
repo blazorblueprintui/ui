@@ -2,6 +2,8 @@
 @inherits BlazorBlueprint.Primitives.BbPrimitiveBase
 @using BlazorBlueprint.Primitives.Services
 @using Microsoft.Extensions.Logging
+@using System.Text.Json
+@using System.ComponentModel
 @inject IPositioningService PositioningService
 @inject IPortalService PortalService
 @inject IJSRuntime JSRuntime
@@ -48,6 +50,23 @@
     /// </summary>
     [Parameter]
     public ElementReference? AnchorElement { get; set; }
+
+    /// <summary>
+    /// Dismissal gestures to listen for, wired in the same interop call that opens the overlay.
+    /// Leave null and the owner is responsible for its own listeners.
+    /// </summary>
+    /// <remarks>
+    /// The portal reports the gesture through <see cref="OnDismiss"/> and does nothing else with
+    /// it — what a dismissal means is the owner's decision.
+    /// </remarks>
+    [Parameter]
+    public FloatingDismissOptions? Dismiss { get; set; }
+
+    /// <summary>
+    /// Raised when one of the gestures named by <see cref="Dismiss"/> happens.
+    /// </summary>
+    [Parameter]
+    public EventCallback<FloatingDismissReason> OnDismiss { get; set; }
 
     /// <summary>
     /// Unique identifier for this portal instance.
@@ -114,11 +133,6 @@
     [Parameter]
     public EventCallback<string> OnPlacementChanged { get; set; }
 
-    private static readonly Action<ILogger, string, Exception?> LogPortalRenderTimeout =
-        LoggerMessage.Define<string>(LogLevel.Warning, new EventId(2, "PortalRenderTimeout"),
-            "Portal '{PortalId}' timed out waiting for PortalHost to render. A host is registered, " +
-            "so this is a slow or blocked render rather than a missing <BbPortalHost />.");
-
     private static readonly Action<ILogger, string, string, Exception?> LogSetupFailed =
         LoggerMessage.Define<string, string>(LogLevel.Warning, new EventId(3, "FloatingPortalSetupFailed"),
             "FloatingPortal '{PortalId}' setup failed: {ErrorMessage}");
@@ -127,11 +141,18 @@
         LoggerMessage.Define<string>(LogLevel.Warning, new EventId(4, "PositioningFailed"),
             "Failed to set up positioning for portal '{PortalId}'.");
 
-    private IAsyncDisposable? _positioningCleanup;
+    /// <summary>Whether overlay.open has run for this portal and overlay.close has not.</summary>
+    private bool _isOverlayOpen;
+
+    /// <summary>Handed to the dismissal listeners in JS so they can call back. Created on demand.</summary>
+    private DotNetObjectReference<BbFloatingPortal>? _dismissRef;
     private bool _isMounted = false;
     private bool _isPositioned = false;
     private ElementReference _portalContentRef;
     private TaskCompletionSource<bool>? _portalReadyTcs;
+
+    /// <summary>Cancels the wait for the host's render signal when the portal closes or disposes.</summary>
+    private CancellationTokenSource? _portalReadyCts;
 
     /// <summary>
     /// Whether this portal is between <c>IsOpen</c> going false and its exit animation finishing.
@@ -297,22 +318,36 @@
 
         // Create completion source BEFORE registering portal
         _portalReadyTcs = new TaskCompletionSource<bool>();
+        _portalReadyCts?.Dispose();
+        _portalReadyCts = new CancellationTokenSource();
 
         // Register content through portal - this triggers PortalHost to re-render
         PortalService.RegisterPortal(PortalId, RenderPortalContent(), PortalCategory.Overlay);
 
-        // Wait for PortalHost to signal it's done rendering our portal
-        // Use timeout to prevent hanging if something goes wrong
-        var timeoutTask = Task.Delay(500);
-        var completedTask = await Task.WhenAny(_portalReadyTcs.Task, timeoutTask);
-
-        // Only a timeout with a host registered is news. Without one the wait was never going to
-        // succeed, PortalService has already said so once, and repeating it here produced a warning
-        // per portal — 24 lines on a page of tooltips, all of them restating the same fact and
-        // burying the one message that explains it (#479).
-        if (completedTask == timeoutTask && PortalService.HasHost)
+        // Wait for PortalHost to signal it has rendered our portal — with no deadline.
+        //
+        // There used to be a 500ms one, and it was a bet that the user's connection is fast. The
+        // host's signal is never lost; it arrives exactly one network round trip after the portal
+        // registers, because the host only reaches OnAfterRenderAsync once the browser has
+        // acknowledged the render batch. Measured, the wait tracks round-trip time 1:1 — 104ms at
+        // a 100ms round trip, 305ms at 300ms, 488ms at 480ms, and at 600ms every single open times
+        // out. That is what produced the stray PortalRenderTimeout warnings: not a lost signal, a
+        // fixed budget for a variable cost.
+        //
+        // The one case the deadline genuinely guarded is a missing host, and PortalService answers
+        // that synchronously, before the wait. Everything else is cancellation: the portal closing
+        // or the component being disposed while we wait.
+        if (PortalService.HasHost)
         {
-            LogPortalRenderTimeout(Logger, PortalId, null);
+            try
+            {
+                await _portalReadyTcs.Task.WaitAsync(_portalReadyCts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                // Closed or disposed mid-wait. There is nothing left to position.
+                return;
+            }
         }
 
         // Yield to ensure any pending re-renders complete and _portalContentRef is up-to-date
@@ -351,10 +386,8 @@
             _isPositioned = true;
             try
             {
-                var elementUtilsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/element-utils.js");
-                await elementUtilsModule.InvokeVoidAsync("showElement", PortalId);
-                await elementUtilsModule.DisposeAsync();
+                var elementUtilsModule = await PrimitiveModules.GetAsync(JSRuntime);
+                await elementUtilsModule.InvokeVoidAsync("elementUtils.showElement", PortalId);
             }
             catch { /* ignore */ }
         }
@@ -384,41 +417,52 @@
             // Construct placement string from Side and Align
             var placement = Align == PopoverAlign.Center ? Side.ToValue() : $"{Side.ToValue()}-{Align.ToValue()}";
 
-            var options = new PositioningOptions
+            var options = new
             {
-                Placement = placement,
-                Offset = Offset,
-                MatchReferenceWidth = MatchAnchorWidth,
-                Strategy = Strategy,
-                Flip = true,  // Enable flip to opposite side when not enough space
-                Shift = true  // Enable shift to keep in viewport
+                placement,
+                offset = Offset,
+                matchReferenceWidth = MatchAnchorWidth,
+                strategy = Strategy.ToValue(),
+                flip = true,   // Flip to the opposite side when there is not enough space
+                shift = true,  // Shift to keep the content inside the viewport
+                dismiss = WantsDismissListeners()
+                    ? new
+                    {
+                        contentId = Dismiss!.ContentId,
+                        triggerId = Dismiss.TriggerId,
+                        onOutsideInteraction = Dismiss.OnOutsideInteraction,
+                        onEscapeKey = Dismiss.OnEscapeKey
+                    }
+                    : null
             };
 
-            // Compute position using the portal content ref
-            var position = await PositioningService.ComputePositionAsync(
-                AnchorElement.Value,
-                _portalContentRef,
-                options);
+            // One interop call, not three. Computing the position, revealing the element and
+            // starting the scroll/resize watcher are all decisions the browser makes on its own;
+            // issuing them as three awaits spent a network round trip on each, and two of those
+            // landed before the element was visible. This is paid on every open.
+            var module = await PrimitiveModules.GetAsync(JSRuntime);
+            var position = await module.InvokeAsync<JsonElement>(
+                "overlay.open", PortalId, AnchorElement.Value, _portalContentRef, options, DismissRef());
+
+            _isOverlayOpen = true;
 
             // Store position in Blazor state so it survives re-renders
-            _positionLeft = position.X;
-            _positionTop = position.Y;
+            _positionLeft = position.GetProperty("x").GetDouble();
+            _positionTop = position.GetProperty("y").GetDouble();
 
-            // Notify if placement changed (e.g., flipped from bottom to top)
-            if (_currentPlacement != position.Placement && OnPlacementChanged.HasDelegate)
+            var resolvedPlacement = position.TryGetProperty("placement", out var placementValue)
+                ? placementValue.GetString() ?? placement
+                : placement;
+
+            // Deliberately after the element is on screen. This raises a re-render in the owner
+            // to write data-side, and on Blazor Server a re-render is its own round trip — it
+            // used to sit between computing the position and revealing the element, so every
+            // overlay that flipped paid for the re-render before anything appeared.
+            if (_currentPlacement != resolvedPlacement && OnPlacementChanged.HasDelegate)
             {
-                _currentPlacement = position.Placement;
-                await OnPlacementChanged.InvokeAsync(position.Placement);
+                _currentPlacement = resolvedPlacement;
+                await OnPlacementChanged.InvokeAsync(resolvedPlacement);
             }
-
-            // Apply position via JS for initial display
-            await PositioningService.ApplyPositionAsync(_portalContentRef, position, makeVisible: true);
-
-            // Set up auto-update for dynamic positioning (scroll, resize)
-            _positioningCleanup = await PositioningService.AutoUpdateAsync(
-                AnchorElement.Value,
-                _portalContentRef,
-                options);
         }
         catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
         {
@@ -428,6 +472,45 @@
         {
             LogPositioningFailed(Logger, PortalId, ex);
         }
+    }
+
+    private bool WantsDismissListeners()
+        => Dismiss is not null && (Dismiss.OnOutsideInteraction || Dismiss.OnEscapeKey);
+
+    private DotNetObjectReference<BbFloatingPortal>? DismissRef()
+    {
+        if (!WantsDismissListeners())
+        {
+            return null;
+        }
+
+        return _dismissRef ??= DotNetObjectReference.Create(this);
+    }
+
+    /// <summary>
+    /// Called from JavaScript when the user interacts outside the content and its trigger.
+    /// </summary>
+    [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public Task JsOnDismissOutside() => RaiseDismissAsync(FloatingDismissReason.OutsideInteraction);
+
+    /// <summary>
+    /// Called from JavaScript when Escape is pressed anywhere in the document.
+    /// </summary>
+    [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public Task JsOnDismissEscape() => RaiseDismissAsync(FloatingDismissReason.EscapeKey);
+
+    private Task RaiseDismissAsync(FloatingDismissReason reason)
+    {
+        // The listeners outlive a close by as long as it takes overlay.close to run, so a gesture
+        // can arrive for an overlay that is already on its way out.
+        if (!IsOpen || !OnDismiss.HasDelegate)
+        {
+            return Task.CompletedTask;
+        }
+
+        return OnDismiss.InvokeAsync(reason);
     }
 
     /// <summary>
@@ -474,27 +557,26 @@
     /// </summary>
     private async Task HideAsync()
     {
-        // Dispose positioning auto-update
-        if (_positioningCleanup != null)
-        {
-            await _positioningCleanup.DisposeAsync();
-            _positioningCleanup = null;
-        }
-
-        // Hand the style attribute back, explicitly. SetupPositioningAsync showed this element
+        // Stop the scroll/resize watcher and hide the element in one interop call, not two.
+        //
+        // Hiding also hands the style attribute back, explicitly. overlay.open showed this element
         // through JS — writing visibility, opacity and pointer-events with !important — and Blazor
         // diffs against what it last rendered rather than against the DOM. Where a component's
         // closed markup is byte-identical to its pre-open markup (nothing else about it changed
         // while open), the close produces no style update at all and the element stays visible with
         // the values JS left behind. Rendering the hidden style is not enough on its own; it has to
         // be written back the same way it was overwritten.
-        if (_isPositioned)
+        if (_isOverlayOpen)
         {
+            _isOverlayOpen = false;
+
             try
             {
+                var module = await PrimitiveModules.GetAsync(JSRuntime);
+
                 // Returns once the exit animation has finished, so this await is as long as the
                 // animation is. It declines to hide if the overlay was reopened in the meantime.
-                await PositioningService.HidePositionAsync(_portalContentRef);
+                await module.InvokeVoidAsync("overlay.close", PortalId, _portalContentRef);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
@@ -519,6 +601,10 @@
     /// </summary>
     private async Task CleanupAsync()
     {
+        // Release any mount still waiting on the host's signal — it is not coming for a portal
+        // that is being unregistered, and without this the wait would sit there until disposal.
+        _portalReadyCts?.Cancel();
+
         await HideAsync();
 
         // Unregister portal when content closes or component disposes
@@ -536,5 +622,11 @@
         PortalService.OnPortalRendered -= HandlePortalRendered;
 
         await CleanupAsync();
+
+        _portalReadyCts?.Dispose();
+        _portalReadyCts = null;
+
+        _dismissRef?.Dispose();
+        _dismissRef = null;
     }
 }

@@ -3,6 +3,7 @@ using BlazorBlueprint.Primitives.DataView;
 using BlazorBlueprint.Primitives.Table;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -410,8 +411,7 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
         // Load the JS module once, only when scroll-based infinite scroll is active.
         if (firstRender && EnableInfiniteScroll && !ShowLoadMoreButton && _jsModule == null)
         {
-            _jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/element-utils.js");
+            _jsModule = await PrimitiveModules.GetAsync(JSRuntime);
         }
     }
 
@@ -723,7 +723,7 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
 
         try
         {
-            var nearBottom = await _jsModule.InvokeAsync<bool>("isNearBottom", _scrollContainerRef, 80.0);
+            var nearBottom = await _jsModule.InvokeAsync<bool>("elementUtils.isNearBottom", _scrollContainerRef, 80.0);
             if (nearBottom)
             {
                 await LoadMore();
@@ -839,26 +839,13 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
 
     // ── Disposal ─────────────────────────────────────────────────────────────
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         _loadCts?.Cancel();
         _loadCts?.Dispose();
         _loadCts = null;
 
-        if (_jsModule != null)
-        {
-            try
-            {
-                await _jsModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Circuit disconnected during navigation — safe to ignore
-            }
-
-            _jsModule = null;
-        }
-
         GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
     }
 }

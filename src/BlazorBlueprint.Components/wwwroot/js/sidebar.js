@@ -38,6 +38,26 @@ export function initializeSidebar(componentRef, enableToggleShortcut) {
 }
 
 /**
+ * Reads the saved state and registers the instance in one call.
+ *
+ * These were two separate awaited calls from C#, and on Blazor Server each one is a circuit round
+ * trip — paid on every page load, before the sidebar can render in the right state. Reading a
+ * cookie needs nothing from the server.
+ *
+ * @param {DotNetObject} componentRef - Reference to the SidebarProvider component.
+ * @param {boolean} enableToggleShortcut - Whether Ctrl/Cmd + B toggles the sidebar.
+ * @param {string|null} cookieKey - Cookie to restore from, or null when persistence is off.
+ * @returns {{ instanceId: number, savedOpen: boolean|null }} The instance id, and the saved state
+ *   or null when there is none to restore.
+ */
+export function initialize(componentRef, enableToggleShortcut, cookieKey) {
+    const savedOpen = cookieKey ? getSidebarState(cookieKey) : null;
+    const instanceId = initializeSidebar(componentRef, enableToggleShortcut);
+
+    return { instanceId, savedOpen };
+}
+
+/**
  * Enable or disable the toggle shortcut after initialization
  * @param {number} instanceId - Instance id returned by initializeSidebar
  * @param {boolean} enabled - Whether Ctrl/Cmd + B toggles the sidebar

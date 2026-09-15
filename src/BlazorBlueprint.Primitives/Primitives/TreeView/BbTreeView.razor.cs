@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Primitives.TreeView;
 
@@ -276,10 +277,9 @@ public partial class BbTreeView : IAsyncDisposable
             try
             {
                 dotNetRef = DotNetObjectReference.Create(this);
-                keyboardModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Primitives/js/primitives/tree-keyboard.js");
+                keyboardModule = await PrimitiveModules.GetAsync(JSRuntime);
 
-                await keyboardModule.InvokeVoidAsync("initialize", elementRef, dotNetRef, context.Id);
+                await keyboardModule.InvokeVoidAsync("treeKeyboard.initialize", elementRef, dotNetRef, context.Id);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
@@ -472,8 +472,7 @@ public partial class BbTreeView : IAsyncDisposable
         {
             try
             {
-                await keyboardModule.InvokeVoidAsync("dispose", context.Id);
-                await keyboardModule.DisposeAsync();
+                await keyboardModule.InvokeVoidAsync("treeKeyboard.dispose", context.Id);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {

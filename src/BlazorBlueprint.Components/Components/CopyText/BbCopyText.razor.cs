@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -198,9 +199,8 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
     {
         try
         {
-            elementUtilsModule ??= await JS.InvokeAsync<IJSObjectReference>(
-                "import", "./_content/BlazorBlueprint.Primitives/js/primitives/element-utils.js");
-            return await elementUtilsModule.InvokeAsync<bool>("isKeyboardFocus", anchorRef);
+            elementUtilsModule ??= await PrimitiveModules.GetAsync(JS);
+            return await elementUtilsModule.InvokeAsync<bool>("elementUtils.isKeyboardFocus", anchorRef);
         }
         catch (Exception ex) when (ex is JSException or JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
         {
@@ -397,8 +397,7 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
     }
 
     private async Task<IJSObjectReference> GetClipboardModuleAsync() =>
-        clipboardModule ??= await JS.InvokeAsync<IJSObjectReference>(
-            "import", "./_content/BlazorBlueprint.Components/js/clipboard.js");
+        clipboardModule ??= await JsModules.GetAsync(JS, "./_content/BlazorBlueprint.Components/js/clipboard.js");
 
     private async Task ReportFailureAsync(string outcome)
     {
@@ -414,29 +413,7 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
-        if (clipboardModule is not null)
-        {
-            try
-            {
-                await clipboardModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Circuit already gone; nothing to clean up.
-            }
-        }
 
-        if (elementUtilsModule is not null)
-        {
-            try
-            {
-                await elementUtilsModule.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Circuit already gone; nothing to clean up.
-            }
-        }
 
         if (copyHandle is not null)
         {

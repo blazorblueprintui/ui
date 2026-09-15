@@ -123,10 +123,9 @@
 
         try
         {
-            jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import",
-                "./_content/BlazorBlueprint.Primitives/js/primitives/slider.js");
+            jsModule = await PrimitiveModules.GetAsync(JSRuntime);
             dotNetRef = DotNetObjectReference.Create(this);
-            await jsModule.InvokeVoidAsync("initialize", trackRef, dotNetRef, sliderId,
+            await jsModule.InvokeVoidAsync("slider.initialize", trackRef, dotNetRef, sliderId,
                 new { orientation = Orientation.ToString().ToLower() });
             jsInitialized = true;
         }
@@ -227,8 +226,7 @@
         {
             try
             {
-                await jsModule.InvokeVoidAsync("dispose", sliderId);
-                await jsModule.DisposeAsync();
+                await jsModule.InvokeVoidAsync("slider.dispose", sliderId);
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {

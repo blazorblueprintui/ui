@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -59,8 +60,7 @@ public partial class BbSidebarInset : IAsyncDisposable
         {
             try
             {
-                module = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "import", "./_content/BlazorBlueprint.Components/js/sidebar-inset.js");
+                module = await JsModules.GetAsync(JSRuntime, "./_content/BlazorBlueprint.Components/js/bb-components-core.js");
                 jsReady = true;
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
@@ -130,11 +130,11 @@ public partial class BbSidebarInset : IAsyncDisposable
         );
     }
 
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         if (disposed)
         {
-            return;
+            return ValueTask.CompletedTask;
         }
         disposed = true;
 
@@ -143,22 +143,7 @@ public partial class BbSidebarInset : IAsyncDisposable
             NavigationManager.LocationChanged -= OnLocationChanged;
         }
 
-        if (module != null)
-        {
-            try
-            {
-                await module.DisposeAsync();
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Circuit disconnected
-            }
-            catch (InvalidOperationException)
-            {
-                // JS interop not available
-            }
-        }
-
         GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
     }
 }

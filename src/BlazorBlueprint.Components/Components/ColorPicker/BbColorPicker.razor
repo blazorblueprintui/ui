@@ -295,8 +295,7 @@
                 _jsInitialized = false;
             }
 
-            _jsModule ??= await JS.InvokeAsync<IJSObjectReference>("import",
-                "./_content/BlazorBlueprint.Components/js/color-picker.js");
+            _jsModule ??= await JsModules.GetAsync(JS, "./_content/BlazorBlueprint.Components/js/color-picker.js");
             _dotNetRef ??= DotNetObjectReference.Create(this);
 
             await _jsModule.InvokeVoidAsync("initializeArea", _areaRef, _dotNetRef, _pickerId);
@@ -456,7 +455,6 @@
             try
             {
                 await _jsModule.InvokeVoidAsync("dispose", _pickerId);
-                await _jsModule.DisposeAsync();
             }
             catch { }
         }
