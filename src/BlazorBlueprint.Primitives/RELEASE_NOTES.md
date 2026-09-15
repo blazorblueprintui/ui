@@ -1,4 +1,4 @@
-## What's New in v4.0.0-beta.2
+## What's New in v4.0.0-beta.3
 
 **This is a prerelease.** The API may still change before the stable v4.0.0 release.
 
@@ -12,6 +12,8 @@
 - **JavaScript modules**: the `onClickOutside` and `onEscapeKey` exports are removed from `click-outside.js`. Use `overlay.open` with `FloatingDismissOptions` instead.
 - **JavaScript modules**: all primitive modules are now bundled into `bb-primitives.js` and exposed under a namespace (`focusTrap.createFocusTrap`, `positioning.computePosition`, etc.). Custom code that imported the individual module files must load the bundle via `PrimitiveModules.GetAsync` and use the namespaced identifier.
 - **escape-keydown.js**: `initialize` now takes an optional `methodName` argument; the default callback name changed from `HandleEscape` to `JsOnEscapeKey`.
+- **PrimitiveModules** imports the bundle through the new versioned `ModuleUrl`, not `ModulePath`. Code that passed `ModulePath` to `JsModules.TryGetLoaded` must pass `ModuleUrl` instead.
+- **bb-primitives.js** now throws at load when any module it imports is older than the bundle. A stale cached file that previously failed later with a missing-function error now fails immediately with the file named.
 
 ### New Features
 
@@ -26,6 +28,11 @@
 - **BbPopoverContent** gains `ScrollToSelected` and `ScrollToSelectedSelector`, so a popover-based list opens already scrolled to its current item.
 - **FloatingDismissReason** enum reports whether an overlay was dismissed by an outside interaction or the Escape key.
 - **JsModules.GetAsync** and **PrimitiveModules.GetAsync**: shared, per-circuit module references that any component can use without owning or disposing them. **JsModules.TryGetLoaded** and **PrimitiveModules.TryGetLoaded** return an already-loaded module synchronously.
+- **BbFloatingPortal** gains `AutoFocusId`, which focuses a named element one frame after the reveal, inside the call that opens the overlay.
+- **BbFloatingPortal** gains `RestoreFocusToId` and `RestoreFocusOnClose`, so the browser returns focus to the trigger inside the close call for an intentional close only.
+- **BbPopoverContent** gains `AutoFocusId`, so a search box inside a popover takes focus without a round trip.
+- **JsModules.Versioned** appends an assembly's informational version to a module path as a `v` query, so a new release is a new URL. **PrimitiveModules.ModuleUrl** exposes the versioned bundle URL.
+- **elementUtils.observeNearBottom** and **observeHover**: new JavaScript observers that call .NET once when a list scrolls near its bottom or when the pointer moves onto a different item.
 
 ### Bug Fixes
 
@@ -35,6 +42,9 @@
 - **BbDropdownMenuContent**: clicking a nested portal inside an open menu no longer closes the menu. Outside-click detection now resolves elements by id per event, so it does not go stale after a re-render.
 - **BbFloatingPortal**: removed the fixed 500ms deadline on the portal host render signal, which timed out on slow connections. The wait is now unbounded and cancelled on close or disposal.
 - **BbFloatingPortal**: a listbox is focused only after the reveal, so arrow keys no longer reach the trigger while the overlay is still hidden.
+- **JavaScript modules**: a browser or CDN that serves a stale copy of a bundled module no longer kills the circuit at the first call. The bundle fails at load with an error that names the file and says what to do.
+- **NavigationMenuContext**: the close timer catches every exception, so an unexpected error in the fire-and-forget handler can no longer close the Blazor Server circuit.
+- **BbPopoverContent** and **BbDropdownMenuContent** no longer render a second time on open. The duplicate render raised a portal refresh mid-cycle that the host had to defer by a round trip.
 
 ### Performance
 
@@ -46,6 +56,11 @@
 - **BbSelectContent** scrolls the selected option into view and attaches the keyboard handler in the same call that opens the overlay, so the list appears already scrolled to the selection.
 - **BbDropdownMenuContent** drops a redundant width-matching interop call; `MatchAnchorWidth` already covers it.
 - **BbTooltipContent** and **BbHoverCardContent** no longer request the portal's ready callback, which was empty and cost a round trip on Blazor Server.
+- **BbSelectContent**, **BbPopoverContent** and **BbDropdownMenuContent** restore focus to the trigger inside `overlay.close` instead of awaiting `FocusAsync` after the close render, saving a round trip on every Escape and every selection.
+- **BbPopoverContent** requests the portal's ready callback only when a consumer has set `OnContentReady`. Without one, the callback was a round trip spent notifying no one.
+- **Overlays**: an element named by `AutoFocusId` is focused inside the open call, replacing a ready callback, a 50ms sleep, and a second round trip.
+- **Scroll containers**: `observeNearBottom` checks the scroll position in the browser, coalesced to one check per frame, and calls .NET once on entering the near-bottom zone instead of once per scroll event.
+- **Lists**: `observeHover` uses one delegated hover listener per list and reports only a genuine change of item, so pointer travel no longer sends a message per pixel.
 
 ### Improvements
 
