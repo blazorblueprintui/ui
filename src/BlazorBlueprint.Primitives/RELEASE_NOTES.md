@@ -1,4 +1,4 @@
-## What's New in v4.0.0-beta.1
+## What's New in v4.0.0-beta.2
 
 **This is a prerelease.** The API may still change before the stable v4.0.0 release.
 
@@ -6,6 +6,9 @@
 
 - **BbPopoverContent**, **BbSelectContent**, **BbDropdownMenuContent**: the `JsOnClickOutside` and `JsOnEscapeKey` JSInvokable methods are removed. Dismissal now arrives through the new `BbFloatingPortal.OnDismiss` callback.
 - **BbTableRow**, **BbDataGridRow**, **BbPopoverContent**, **BbHoverCardTrigger**, **BbCategoryPortalHost** no longer implement `IAsyncDisposable`. Code that awaited `DisposeAsync()` on these components must be updated.
+- **BbFloatingPortal** opens and closes from `OnParametersSet` without awaiting interop. It no longer passes an `ElementReference` to JavaScript; the content is located by a `data-bb-portal` attribute instead.
+- **BbFloatingPortal**: JavaScript now owns the resolved `data-side` attribute and a listbox's `data-focused` and `aria-activedescendant` state. Owners that rendered these from C# must stop, or the two writers will conflict.
+- **JavaScript modules**: `overlay.open` and `overlay.close` have new signatures. `open(portalId, reference, options, dotNetRef)` no longer takes a floating element, and `close(portalId, options, dotNetRef)` replaces `close(portalId, floating)`.
 - **JavaScript modules**: the `onClickOutside` and `onEscapeKey` exports are removed from `click-outside.js`. Use `overlay.open` with `FloatingDismissOptions` instead.
 - **JavaScript modules**: all primitive modules are now bundled into `bb-primitives.js` and exposed under a namespace (`focusTrap.createFocusTrap`, `positioning.computePosition`, etc.). Custom code that imported the individual module files must load the bundle via `PrimitiveModules.GetAsync` and use the namespaced identifier.
 - **escape-keydown.js**: `initialize` now takes an optional `methodName` argument; the default callback name changed from `HandleEscape` to `JsOnEscapeKey`.
@@ -17,22 +20,32 @@
 - **INativeOverlayService**: new scoped service that resolves the effective rendering strategy and drives the native `<dialog>` element (show, close, focus, and lifecycle events).
 - **BbDialogContent** gains `CloseOnOverlayClick` to control whether a backdrop click closes a native dialog.
 - **BbFloatingPortal** gains `Dismiss` (`FloatingDismissOptions`) and `OnDismiss` (`EventCallback<FloatingDismissReason>`). Owners declare which dismissal gestures to listen for and the portal wires them in the same call that opens the overlay.
+- **BbFloatingPortal** gains `Keyboard` (`FloatingKeyboardOptions`). Listbox or menu keyboard handling is wired inside the open call, with `FloatingKeyboardKind` selecting the behaviour.
+- **BbFloatingPortal** gains `SideElementId`, so JavaScript writes the resolved `data-side` attribute on a named element without a C# re-render.
+- **BbFloatingPortal** gains `ScrollToCurrentIn` and `ScrollToCurrentSelector`, which scroll a chosen item into view before the overlay is revealed.
+- **BbPopoverContent** gains `ScrollToSelected` and `ScrollToSelectedSelector`, so a popover-based list opens already scrolled to its current item.
 - **FloatingDismissReason** enum reports whether an overlay was dismissed by an outside interaction or the Escape key.
-- **JsModules.GetAsync** and **PrimitiveModules.GetAsync**: shared, per-circuit module references that any component can use without owning or disposing them.
+- **JsModules.GetAsync** and **PrimitiveModules.GetAsync**: shared, per-circuit module references that any component can use without owning or disposing them. **JsModules.TryGetLoaded** and **PrimitiveModules.TryGetLoaded** return an already-loaded module synchronously.
 
 ### Bug Fixes
 
 - **Overlays**: Escape now closes only the topmost open overlay. A popover inside a dialog no longer closes the dialog on the first press.
+- **Overlays**: the exit-animation wait ignores infinite animations, so an overlay with a spinner inside closes on time instead of reappearing at full opacity.
+- **BbSelectContent**: hover and keyboard highlight are written by JavaScript only, so two options can no longer appear focused at once.
 - **BbDropdownMenuContent**: clicking a nested portal inside an open menu no longer closes the menu. Outside-click detection now resolves elements by id per event, so it does not go stale after a re-render.
 - **BbFloatingPortal**: removed the fixed 500ms deadline on the portal host render signal, which timed out on slow connections. The wait is now unbounded and cancelled on close or disposal.
+- **BbFloatingPortal**: a listbox is focused only after the reveal, so arrow keys no longer reach the trigger while the overlay is still hidden.
 
 ### Performance
 
-- **Overlays** open in one interop call instead of five. Positioning, reveal, auto-update, and dismissal listeners are wired together; closing is a single call. Median time from click to visible for a select dropped from 147ms to 81ms on a 20ms round trip.
+- **Overlays** open and close in one circuit round trip each. The portal registers content, positions, reveals, starts auto-update, and wires dismissal and keyboard listeners in a single interop call that is not awaited. On a 20ms round trip, a select open went from 11 messages to 1 and a close from 16 to 1 compared with v3.
+- **Overlays**: arrow keys and option hover in a listbox no longer send a message to the server.
 - **JavaScript modules** are imported once per circuit and shared, instead of once per component instance. Pages with many inputs issue far fewer round trips on Blazor Server.
 - **Floating UI** is statically imported by `positioning.js`, removing a hidden dynamic import on the first position computation.
 - **BbDataGridRow** and **BbTableRow** no longer attach keyboard and click handlers per row. **BbDataGrid** and **BbTable** delegate a single handler from the container, and rows opt in via `data-bb-row-keys` and `data-bb-row-click`.
-- **BbSelectContent** scrolls the selected option into view and attaches the keyboard handler in one interop call, and the list appears already scrolled to the selection.
+- **BbSelectContent** scrolls the selected option into view and attaches the keyboard handler in the same call that opens the overlay, so the list appears already scrolled to the selection.
+- **BbDropdownMenuContent** drops a redundant width-matching interop call; `MatchAnchorWidth` already covers it.
+- **BbTooltipContent** and **BbHoverCardContent** no longer request the portal's ready callback, which was empty and cost a round trip on Blazor Server.
 
 ### Improvements
 
