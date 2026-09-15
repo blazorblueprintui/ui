@@ -130,16 +130,17 @@
                 @*
                     Scroll-based infinite scroll.
                     The items grid/list lives inside a fixed-height scrollable container.
-                    The @onscroll handler calls data-view.js isNearBottom(), which measures
-                    the scroll container as a whole — so it works correctly for both flex
-                    lists and multi-column CSS grids (regardless of items-per-row count).
+                    The browser watches the scroll container (elementUtils.observeNearBottom)
+                    and calls back once when it nears the bottom. It measures the container as
+                    a whole, so it works for both flex lists and multi-column CSS grids
+                    (regardless of items-per-row count) — and it never sends a scroll event to
+                    the server.
                     The sentinel <div> is placed OUTSIDE the grid container so it is always
                     a full-width block element below all rows, never occupying an empty grid cell.
                 *@
                 <div class="overflow-y-auto"
                      style="@(ScrollHeight != null ? $"height: {ScrollHeight}" : "")"
                      @ref="_scrollContainerRef"
-                     @onscroll="HandleScroll"
                      role="region"
                      aria-live="polite">
                     <div class="@ItemContainerCssClass" style="@ItemContainerStyle">

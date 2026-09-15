@@ -1,11 +1,11 @@
 @namespace BlazorBlueprint.Components
 @inject IBbLocalizer Localizer
 @inject IJSRuntime JSRuntime
+@using Microsoft.JSInterop
 @implements IAsyncDisposable
 
 <div id="@Context?.ListId"
      @ref="_scrollRef"
-     @onscroll="HandleScroll"
      class="@CssClass"
      role="listbox"
      aria-label="@Localizer["Command.CommandList"]"
@@ -27,7 +27,8 @@
 
 @code {
     private ElementReference _scrollRef;
-    private IJSObjectReference? _jsModule;
+    private DotNetObjectReference<BbCommandList>? _selfRef;
+    private int _nearBottomObserver;
 
     [CascadingParameter]
     public CommandContext? Context { get; set; }
@@ -80,32 +81,67 @@
         Class
     );
 
-    private async Task HandleScroll()
+    // No @onscroll. It bound every scroll event to the server — around sixty circuit messages a
+    // second while the wheel turned — and each one then awaited isNearBottom before deciding
+    // anything, so every scroll event was also a round trip. The browser now watches the element
+    // itself and calls back exactly once when the scroll position enters the near-bottom zone.
+    // Attached without awaiting: it lands one round trip later either way, and nothing here
+    // waits on it.
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && OnLoadMore.HasDelegate)
+        {
+            _ = ObserveNearBottomAsync();
+        }
+    }
+
+    private async Task ObserveNearBottomAsync()
+    {
+        try
+        {
+            var module = await PrimitiveModules.GetAsync(JSRuntime);
+            _selfRef ??= DotNetObjectReference.Create(this);
+            _nearBottomObserver = await module.InvokeAsync<int>(
+                "elementUtils.observeNearBottom", _scrollRef, _selfRef, nameof(JsOnNearBottom), 80.0);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
+        {
+            // Circuit gone, prerendering, or the list already torn down. Load-more is a courtesy.
+        }
+    }
+
+    /// <summary>
+    /// Called from JavaScript when the list scrolls near its bottom.
+    /// </summary>
+    [JSInvokable]
+    public async Task JsOnNearBottom()
     {
         if (!OnLoadMore.HasDelegate || IsLoading)
         {
             return;
         }
 
-        _jsModule ??= await PrimitiveModules.GetAsync(JSRuntime);
-
-        try
-        {
-            var nearBottom = await _jsModule.InvokeAsync<bool>("elementUtils.isNearBottom", _scrollRef, 80.0);
-            if (nearBottom)
-            {
-                await OnLoadMore.InvokeAsync();
-            }
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-        {
-            // Expected during circuit disconnect or disposal
-        }
+        await OnLoadMore.InvokeAsync();
     }
 
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
-        // Nothing to release: the primitive JS module is shared and owned by PrimitiveModules.
-        return ValueTask.CompletedTask;
+        if (_nearBottomObserver != 0 && PrimitiveModules.TryGetLoaded(JSRuntime, out var module))
+        {
+            var id = _nearBottomObserver;
+            _nearBottomObserver = 0;
+
+            try
+            {
+                await module.InvokeVoidAsync("elementUtils.unobserveNearBottom", id);
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Circuit gone — the listener went with the document.
+            }
+        }
+
+        _selfRef?.Dispose();
+        _selfRef = null;
     }
 }

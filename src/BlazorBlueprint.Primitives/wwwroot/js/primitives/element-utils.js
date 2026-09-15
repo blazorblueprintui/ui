@@ -58,6 +58,88 @@ export function isNearBottom(element, threshold = 80) {
 }
 
 // ============================================================================
+// Near-bottom observation
+//
+// Infinite-scroll lists used to bind @onscroll and then await isNearBottom from C#. On Blazor
+// Server that is a circuit message per scroll event — around sixty a second while the wheel
+// turns — and each one then waited a further round trip for the answer before deciding whether
+// to load. The pipe was saturated for the whole duration of every scroll, on every list.
+//
+// The browser can answer "near the bottom?" on its own. This watches the element with a passive
+// scroll listener, coalesced to one check per animation frame, and calls .NET exactly once when
+// the scroll position enters the zone. It re-arms when the position leaves the zone, and when the
+// content grows — which is what a completed load looks like — so a user who keeps pulling at the
+// bottom keeps loading, and a user who is merely sitting there does not hammer the server.
+// ============================================================================
+
+/** observer id -> detach function */
+const nearBottomObservers = new Map();
+let nextNearBottomId = 1;
+
+/**
+ * Calls back into .NET once each time the element scrolls into its near-bottom zone.
+ *
+ * @param {HTMLElement} element - The scroll container.
+ * @param {Object} dotNetRef - The component to notify.
+ * @param {string} methodName - The [JSInvokable] method to call. Takes no arguments.
+ * @param {number} threshold - How many pixels from the bottom count as "near".
+ * @returns {number} A handle for unobserveNearBottom, or 0 if nothing was attached.
+ */
+export function observeNearBottom(element, dotNetRef, methodName = 'JsOnNearBottom', threshold = 80) {
+    if (!element || !dotNetRef) return 0;
+
+    const id = nextNearBottomId++;
+    let armed = true;
+    let lastHeight = element.scrollHeight;
+    let scheduled = false;
+
+    const check = () => {
+        scheduled = false;
+
+        // Content grew: a load landed, so the next arrival at the bottom is a new request.
+        if (element.scrollHeight !== lastHeight) {
+            lastHeight = element.scrollHeight;
+            armed = true;
+        }
+
+        if (isNearBottom(element, threshold)) {
+            if (armed) {
+                armed = false;
+                dotNetRef.invokeMethodAsync(methodName).catch(() => {
+                    // The circuit is gone, or the component with it. Nothing to report to.
+                });
+            }
+        } else {
+            armed = true;
+        }
+    };
+
+    const onScroll = () => {
+        if (!scheduled) {
+            scheduled = true;
+            requestAnimationFrame(check);
+        }
+    };
+
+    element.addEventListener('scroll', onScroll, { passive: true });
+    nearBottomObservers.set(id, () => element.removeEventListener('scroll', onScroll));
+    return id;
+}
+
+/**
+ * Stops a near-bottom observer.
+ *
+ * @param {number} id - The handle returned by observeNearBottom.
+ */
+export function unobserveNearBottom(id) {
+    const detach = nearBottomObservers.get(id);
+    if (detach) {
+        nearBottomObservers.delete(id);
+        detach();
+    }
+}
+
+// ============================================================================
 // Keyboard arrival tracking
 //
 // `:focus-visible` cannot answer "did the user tab here?". Chrome reports it as true for a

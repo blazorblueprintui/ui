@@ -247,7 +247,8 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     public Expression<Func<IEnumerable<TValue>?>>? ValuesExpression { get; set; }
 
     private ElementReference _listboxScrollRef;
-    private IJSObjectReference? _elementUtilsModule;
+    private DotNetObjectReference<BbMultiSelect<TValue>>? _nearBottomRef;
+    private int _nearBottomObserver;
 
     /// <summary>
     /// Tracks whether the popover is currently open.
@@ -399,6 +400,13 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
                     _dotNetRef,
                     $"{Id}-search",
                     $"{Id}-listbox");
+
+                // No @onscroll on the listbox — see BbCommandList. The browser watches it and
+                // calls back once per arrival at the bottom.
+                if (OnLoadMore.HasDelegate)
+                {
+                    _ = ObserveNearBottomAsync();
+                }
             }
             catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
             {
@@ -424,6 +432,8 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
 
     private async Task CleanupJsAsync()
     {
+        await UnobserveNearBottomAsync();
+
         if (_multiSelectModule != null)
         {
             try
@@ -736,27 +746,53 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
         StateHasChanged();
     }
 
-    private async Task HandleListboxScroll()
+    private async Task ObserveNearBottomAsync()
+    {
+        try
+        {
+            var module = await PrimitiveModules.GetAsync(JSRuntime);
+            _nearBottomRef ??= DotNetObjectReference.Create(this);
+            _nearBottomObserver = await module.InvokeAsync<int>(
+                "elementUtils.observeNearBottom", _listboxScrollRef, _nearBottomRef, nameof(JsOnNearBottom), 80.0);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
+        {
+            // Circuit gone, prerendering, or the listbox already torn down. Load-more is a courtesy.
+        }
+    }
+
+    private async Task UnobserveNearBottomAsync()
+    {
+        if (_nearBottomObserver == 0 || !PrimitiveModules.TryGetLoaded(JSRuntime, out var module))
+        {
+            return;
+        }
+
+        var id = _nearBottomObserver;
+        _nearBottomObserver = 0;
+
+        try
+        {
+            await module.InvokeVoidAsync("elementUtils.unobserveNearBottom", id);
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Circuit gone — the listener went with the document.
+        }
+    }
+
+    /// <summary>
+    /// Called from JavaScript when the listbox scrolls near its bottom.
+    /// </summary>
+    [JSInvokable]
+    public async Task JsOnNearBottom()
     {
         if (!OnLoadMore.HasDelegate || IsLoading)
         {
             return;
         }
 
-        _elementUtilsModule ??= await PrimitiveModules.GetAsync(JSRuntime);
-
-        try
-        {
-            var nearBottom = await _elementUtilsModule.InvokeAsync<bool>("elementUtils.isNearBottom", _listboxScrollRef, 80.0);
-            if (nearBottom)
-            {
-                await OnLoadMore.InvokeAsync();
-            }
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
-        {
-            // Expected during circuit disconnect or disposal
-        }
+        await OnLoadMore.InvokeAsync();
     }
 
     public async ValueTask DisposeAsync()
@@ -764,10 +800,10 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
         GC.SuppressFinalize(this);
         await CleanupJsAsync();
 
-
-
         _dotNetRef?.Dispose();
         _dotNetRef = null;
+        _nearBottomRef?.Dispose();
+        _nearBottomRef = null;
     }
 
     /// <summary>
