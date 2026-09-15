@@ -23,7 +23,7 @@
            value="@_displayValue"
            @oninput="HandleInput"
            @onkeydown="HandleKeyDown"
-           class="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 ml-2"
+           class="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 ml-2"
            role="combobox"
            aria-autocomplete="list"
            aria-expanded="true"
@@ -106,8 +106,27 @@
     /// <summary>
     /// Gets the computed CSS classes for the input container.
     /// </summary>
+    // The focus ring belongs to the row, not to the input inside it.
+    //
+    // On the input it drew a third box: a ring inside this bordered row inside the bordered
+    // popover, floating clear of both. And it was not an occasional look — a combobox focuses its
+    // search field every time it opens, so the ring was showing the whole time the dropdown was
+    // on screen, marking the one element that could possibly have focus.
+    //
+    // focus-within moves it out to the full width of the row, where it reads as "the search area
+    // is active" rather than as a box drawn around a box. ring-inset keeps it inside the row's
+    // own edges rather than bleeding over the popover's border.
+    //
+    // rounded-t-md is what stops the ring squaring off the popover's top corners. An inset ring is
+    // an inset box-shadow, and an inset shadow follows its own element's radius — not an
+    // ancestor's — so a square-cornered row drew square corners straight across the popover's
+    // rounded ones. The radius matches because rounded-md is the popover's own.
+    //
+    // The bottom border goes transparent while the ring shows, so the divider between the search
+    // box and the list is the ring rather than a 2px ring stacked on a 1px line.
     private string CssClass => ClassNames.cn(
-        "flex items-center border-b border-border px-3",
+        "flex items-center rounded-t-md border-b border-border px-3",
+        "focus-within:ring-2 focus-within:ring-ring focus-within:ring-inset focus-within:border-b-transparent",
         Class
     );
 
