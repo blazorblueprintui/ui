@@ -28,7 +28,8 @@
                     <path d="m6 9 6 6 6-6" />
                 </svg>
             </BbPopoverTrigger>
-            <BbPopoverContent Side="@PopoverSide.Bottom" Align="@PopoverAlign.Start" MatchTriggerWidth="@MatchTriggerWidth" OnContentReady="@HandleContentReady" Class="@(MatchTriggerWidth ? "!p-0" : $"{PopoverWidth} !p-0")">
+            <BbPopoverContent Side="@PopoverSide.Bottom" Align="@PopoverAlign.Start" MatchTriggerWidth="@MatchTriggerWidth" OnContentReady="@HandleContentReady"
+                              ScrollToSelected="true" ScrollToSelectedSelector="[data-bb-current=&quot;true&quot;]" Class="@(MatchTriggerWidth ? "!p-0" : $"{PopoverWidth} !p-0")">
                 @* Re-cascade through the portal so ComboboxItem can resolve the CascadingParameter *@
                 <CascadingValue Value="this" IsFixed="true">
                 <BbCommand SearchQuery="@SearchQuery" SearchQueryChanged="@HandleSearchQueryChanged" FilterFunction="@_filterFunction">
@@ -44,7 +45,11 @@
                                     var displayText = option.Text;
                                     var selected = IsSelected(option);
 
-                                    <BbCommandItem Value="@itemValue?.ToString()" OnSelect="@(() => HandleSelect(option))" SearchText="@displayText">
+                                    @* aria-selected means "keyboard-focused" on a command item, so
+                                       the chosen value needs a marker of its own for the reopen
+                                       scroll to find. *@
+                                    <BbCommandItem Value="@itemValue?.ToString()" OnSelect="@(() => HandleSelect(option))" SearchText="@displayText"
+                                                   data-bb-current="@(selected ? "true" : null)">
                                         @displayText
                                         <svg xmlns="http://www.w3.org/2000/svg"
                                              width="16"

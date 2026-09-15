@@ -9,6 +9,8 @@
                                                    Align="@Align"
                                                    Offset="@Offset"
                                                    MatchTriggerWidth="@MatchTriggerWidth"
+                                                   ScrollToSelected="@ScrollToSelected"
+                                                   ScrollToSelectedSelector="@ScrollToSelectedSelector"
                                                    Strategy="@Strategy"
                                                    ZIndex="@ZIndex"
                                                    OnEscapeKeyDown="@OnEscapeKeyDown"
@@ -30,6 +32,19 @@
 
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Whether to scroll the currently chosen item into view each time the popover opens, before
+    /// it is revealed. For list content such as a combobox.
+    /// </summary>
+    [Parameter]
+    public bool ScrollToSelected { get; set; }
+
+    /// <summary>
+    /// CSS selector identifying the chosen item for <see cref="ScrollToSelected"/>.
+    /// </summary>
+    [Parameter]
+    public string ScrollToSelectedSelector { get; set; } = "[role=\"option\"][aria-selected=\"true\"]";
 
     [Parameter]
     public bool CloseOnEscape { get; set; } = true;
