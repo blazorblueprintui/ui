@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-09-15 (later)
+
+### Changed
+
+- **Moving the pointer over a command or combobox list no longer talks to the server per pixel.** Every `BbCommandItem` bound `@onmouseenter` and `@onmousemove`, so on Blazor Server every pixel of pointer travel was a circuit message and every item crossed re-rendered the whole list. The `mousemove` existed only to tell a real hover from the list scrolling under a stationary pointer during keyboard navigation. The browser now answers that itself: one delegated listener per list (`elementUtils.observeHover`) and one call to .NET per item the pointer genuinely moves onto. Measured across five combobox items at one pixel a step: **157 pointer steps → 11 messages**, where it was one per step. `BbCommandItem` also gains a `ShouldRender`, so a focus move re-renders the two items it touches rather than all of them.
+
+- **Scrolling an infinite-scroll list no longer costs a round trip per scroll event.** `BbCommandList`, `BbSelectContent`, `BbMultiSelect` and `BbDataView` bound `@onscroll` and then awaited `isNearBottom` in JS — around sixty circuit messages a second while the wheel turned, each waiting a further round trip for the answer. `elementUtils.observeNearBottom` watches the element in the browser and calls .NET exactly once when the scroll position enters the near-bottom zone, re-arming when it leaves or when the content grows.
+
+- **Focus happens inside the open and close calls, not a round trip after.** `BbCombobox` and `BbMultiSelect` focused their search box from the popover's ready callback — a round trip after the content rendered, then a 50ms sleep, then another round trip for `FocusAsync`. The new `BbPopoverContent.AutoFocusId` (and `BbFloatingPortal.AutoFocusId`) focuses the element one frame after the reveal, inside the call that positions the overlay. `BbCommandInput` gains an `Id` so an owner can name it. On the way out, Select, Popover and DropdownMenu awaited `FocusManager.RestoreFocus` after their close render on every Escape and every selection; `RestoreFocusToId` and `RestoreFocusOnClose` ride along with `overlay.close` and the browser puts focus back on the trigger itself. `BbNavigationMenuTrigger`'s ArrowDown no longer sleeps 50ms before focusing the first item.
+
+- **`BbPopoverContent` only asks for the portal's ready callback when a consumer set `OnContentReady`.** Nothing in the library listens to `Context.OnContentReady`, so the callback — ack-gated, and a re-render of its receiver — was a round trip spent notifying no one.
+
+### Fixed
+
+- **No `async void` handler can take the circuit down.** Eight fire-and-forget handlers — close timers, debounce, state-change and location-change subscribers — caught one or two exceptions and let the rest escape. Nothing awaits an `async void` method, so an escaping exception has no caller to reach and Blazor Server treats it as fatal. The sidebar's scroll-to-top was one of these. Every one now catches everything; each does best-effort work and none of it is worth a dead circuit.
+
+- **A stale cached JavaScript module fails loudly, and a new release is a new URL.** A consumer behind a CDN with a long browser-cache TTL deployed a new build and got a four-hour-old `sidebar.js` under the new bundle; `sidebar.initialize` was not a function and every circuit died with nothing to say why. The C# import of each bundle now carries the library version as a query (`PrimitiveModules.ModuleUrl`, the new `ComponentModules.CoreUrl`, built by `JsModules.Versioned`), so a cached entry file is never a valid answer for a new release. And each bundle asserts one export it depends on from every module it imports, at load, throwing an error that names the stale file and says what to do — the import rejects, consumers catch it and degrade, and the console says which file is old.
+
+### Known
+
+- **Popover and dropdown menu still open in two round trips**, not one. The second is a portal-host flush: the content's registration and its root's unconditional re-render both reach the host in the same render batch, and the host — unable to tell a same-batch refresh from a genuine mid-cycle update (#418) — defers a flush that lands one round trip after the overlay is already on screen. Removing the content's own open-side `StateHasChanged` did not clear it. The fix needs the host to know where a render batch ends, which Blazor does not expose; parked with that analysis.
+
+---
+
 ## 2026-09-15
 
 ### Changed

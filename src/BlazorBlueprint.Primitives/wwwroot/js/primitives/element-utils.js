@@ -140,6 +140,91 @@ export function unobserveNearBottom(id) {
 }
 
 // ============================================================================
+// Hover observation
+//
+// A command or combobox item used to bind @onmouseenter and @onmousemove to the server. On
+// Blazor Server every pixel of pointer travel was a circuit message, and every item crossed
+// re-rendered the whole list. The mousemove existed only to answer one question: did the pointer
+// really move, or did the list scroll underneath a stationary pointer during keyboard
+// navigation? A scroll fires mouseover on whatever lands under the pointer, and honouring that
+// stole the highlight from the arrow keys.
+//
+// The browser can answer that question on its own. One delegated listener per list: mousemove
+// sets a flag, mouseover consumes it. A mouseover with no mousemove since the last one is the
+// list moving, not the pointer, and is ignored. Only a genuine change of item reaches .NET —
+// once per item, with the element's id.
+// ============================================================================
+
+/** observer id -> detach function */
+const hoverObservers = new Map();
+let nextHoverId = 1;
+
+/**
+ * Calls back into .NET when the pointer moves onto a different item, and only when the pointer
+ * itself moved there.
+ *
+ * @param {HTMLElement} container - The list element that contains the items.
+ * @param {Object} dotNetRef - The component to notify.
+ * @param {string} methodName - The [JSInvokable] method to call. Receives the item's id.
+ * @param {string} itemSelector - CSS selector matching an item.
+ * @returns {number} A handle for unobserveHover, or 0 if nothing was attached.
+ */
+export function observeHover(container, dotNetRef, methodName = 'JsOnHover', itemSelector = '[role="option"]') {
+    if (!container || !dotNetRef) return 0;
+
+    const id = nextHoverId++;
+    let moved = false;
+    let lastItem = null;
+
+    const onMove = () => { moved = true; };
+
+    const onOver = (e) => {
+        const item = e.target instanceof Element ? e.target.closest(itemSelector) : null;
+        if (!item || !container.contains(item)) return;
+
+        // The list moved under a stationary pointer. Not a hover.
+        if (!moved) return;
+        moved = false;
+
+        if (item === lastItem) return;
+        lastItem = item;
+
+        if (item.getAttribute('data-disabled') === 'true' || item.getAttribute('aria-disabled') === 'true') return;
+        if (!item.id) return;
+
+        dotNetRef.invokeMethodAsync(methodName, item.id).catch(() => {
+            // The circuit is gone, or the component with it. Nothing to report to.
+        });
+    };
+
+    const onLeave = () => { lastItem = null; };
+
+    container.addEventListener('mousemove', onMove, { passive: true });
+    container.addEventListener('mouseover', onOver, { passive: true });
+    container.addEventListener('mouseleave', onLeave, { passive: true });
+
+    hoverObservers.set(id, () => {
+        container.removeEventListener('mousemove', onMove);
+        container.removeEventListener('mouseover', onOver);
+        container.removeEventListener('mouseleave', onLeave);
+    });
+    return id;
+}
+
+/**
+ * Stops a hover observer.
+ *
+ * @param {number} id - The handle returned by observeHover.
+ */
+export function unobserveHover(id) {
+    const detach = hoverObservers.get(id);
+    if (detach) {
+        hoverObservers.delete(id);
+        detach();
+    }
+}
+
+// ============================================================================
 // Keyboard arrival tracking
 //
 // `:focus-visible` cannot answer "did the user tab here?". Chrome reports it as true for a

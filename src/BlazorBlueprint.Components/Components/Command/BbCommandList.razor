@@ -29,6 +29,7 @@
     private ElementReference _scrollRef;
     private DotNetObjectReference<BbCommandList>? _selfRef;
     private int _nearBottomObserver;
+    private int _hoverObserver;
 
     [CascadingParameter]
     public CommandContext? Context { get; set; }
@@ -87,28 +88,46 @@
     // itself and calls back exactly once when the scroll position enters the near-bottom zone.
     // Attached without awaiting: it lands one round trip later either way, and nothing here
     // waits on it.
+    //
+    // The same listener does hover. Every item used to bind @onmouseenter and @onmousemove to the
+    // server — a circuit message per pixel of pointer travel, and a re-render of every item per
+    // item crossed. One delegated listener on the list tells a real hover from the list scrolling
+    // under a stationary pointer, and calls back once per item the pointer actually moves onto.
     protected override void OnAfterRender(bool firstRender)
     {
-        if (firstRender && OnLoadMore.HasDelegate)
+        if (firstRender)
         {
-            _ = ObserveNearBottomAsync();
+            _ = AttachObserversAsync();
         }
     }
 
-    private async Task ObserveNearBottomAsync()
+    private async Task AttachObserversAsync()
     {
         try
         {
             var module = await PrimitiveModules.GetAsync(JSRuntime);
             _selfRef ??= DotNetObjectReference.Create(this);
-            _nearBottomObserver = await module.InvokeAsync<int>(
-                "elementUtils.observeNearBottom", _scrollRef, _selfRef, nameof(JsOnNearBottom), 80.0);
+
+            _hoverObserver = await module.InvokeAsync<int>(
+                "elementUtils.observeHover", _scrollRef, _selfRef, nameof(JsOnHover), "[role=\"option\"]");
+
+            if (OnLoadMore.HasDelegate)
+            {
+                _nearBottomObserver = await module.InvokeAsync<int>(
+                    "elementUtils.observeNearBottom", _scrollRef, _selfRef, nameof(JsOnNearBottom), 80.0);
+            }
         }
         catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
         {
-            // Circuit gone, prerendering, or the list already torn down. Load-more is a courtesy.
+            // Circuit gone, prerendering, or the list already torn down. Both are courtesies.
         }
     }
+
+    /// <summary>
+    /// Called from JavaScript when the pointer moves onto a different item.
+    /// </summary>
+    [JSInvokable]
+    public void JsOnHover(string itemId) => Context?.HoverItemById(itemId);
 
     /// <summary>
     /// Called from JavaScript when the list scrolls near its bottom.
@@ -126,18 +145,28 @@
 
     public async ValueTask DisposeAsync()
     {
-        if (_nearBottomObserver != 0 && PrimitiveModules.TryGetLoaded(JSRuntime, out var module))
+        if ((_nearBottomObserver != 0 || _hoverObserver != 0) && PrimitiveModules.TryGetLoaded(JSRuntime, out var module))
         {
-            var id = _nearBottomObserver;
+            var nearBottom = _nearBottomObserver;
+            var hover = _hoverObserver;
             _nearBottomObserver = 0;
+            _hoverObserver = 0;
 
             try
             {
-                await module.InvokeVoidAsync("elementUtils.unobserveNearBottom", id);
+                if (hover != 0)
+                {
+                    await module.InvokeVoidAsync("elementUtils.unobserveHover", hover);
+                }
+
+                if (nearBottom != 0)
+                {
+                    await module.InvokeVoidAsync("elementUtils.unobserveNearBottom", nearBottom);
+                }
             }
             catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
             {
-                // Circuit gone — the listener went with the document.
+                // Circuit gone — the listeners went with the document.
             }
         }
 

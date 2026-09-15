@@ -12,8 +12,6 @@
          data-focused="@(_isFocused ? "true" : "false")"
          data-disabled="@(Disabled ? "true" : "false")"
          @onclick="HandleClick"
-         @onmouseenter="HandleMouseEnter"
-         @onmousemove="HandleMouseMove"
          class="@CssClass"
          @attributes="AdditionalAttributes">
         @if (Icon != null)
@@ -86,6 +84,39 @@
     private bool _isVisible = true;
     private bool _shouldScrollIntoView;
 
+    // ShouldRender tracking
+    private bool _parametersChanged;
+    private bool _lastFocused;
+    private bool _lastVisible = true;
+    private bool _lastDisabled;
+    private bool _lastKeyboardNavigating;
+
+    // Every item subscribes to the context, and the context raises StateHasChanged on all of
+    // them for a focus move, a search, or a switch between keyboard and mouse. Without a gate a
+    // 200-item list is 200 renders per keystroke. Only what this item actually renders from is
+    // compared: its focus, its visibility, its disabled state, and the keyboard-mode flag that
+    // decides its hover classes. A parent re-render always gets through.
+    protected override bool ShouldRender()
+    {
+        var keyboardNavigating = Context?.IsKeyboardNavigating == true;
+
+        if (_parametersChanged
+            || _isFocused != _lastFocused
+            || _isVisible != _lastVisible
+            || Disabled != _lastDisabled
+            || keyboardNavigating != _lastKeyboardNavigating)
+        {
+            _parametersChanged = false;
+            _lastFocused = _isFocused;
+            _lastVisible = _isVisible;
+            _lastDisabled = Disabled;
+            _lastKeyboardNavigating = keyboardNavigating;
+            return true;
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Gets the computed CSS classes for the item.
     /// </summary>
@@ -127,6 +158,7 @@
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
+        _parametersChanged = true;
 
         // Update registration when parameters change
         if (_index >= 0 && Context != null)
@@ -149,25 +181,9 @@
         await Context.SelectItemByValueAsync(Value ?? string.Empty);
     }
 
-    private void HandleMouseMove()
-    {
-        // Re-enable hover focus when mouse actually moves
-        Context?.OnMouseMove();
-    }
-
-    private void HandleMouseEnter()
-    {
-        // Ignore hover during keyboard navigation
-        if (Context?.IsKeyboardNavigating == true) return;
-
-        if (Disabled || Context == null || !_isVisible) return;
-
-        // Use cached filtered index if available, otherwise calculate it
-        if (_filteredIndex >= 0)
-        {
-            Context.SetFocusedIndex(_filteredIndex);
-        }
-    }
+    // No @onmouseenter or @onmousemove here. BbCommandList watches hover for every item with one
+    // delegated listener and calls CommandContext.HoverItemById once per item the pointer moves
+    // onto. Bound per item they were a circuit message per pixel of pointer travel.
 
     private void HandleFocusChanged(int previousIndex, int newIndex)
     {

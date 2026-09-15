@@ -44,8 +44,6 @@
                          aria-selected="@(IsItemFocusedByIndex(indexed.Index) ? "true" : "false")"
                          data-focused="@(IsItemFocusedByIndex(indexed.Index) ? "true" : "false")"
                          @onclick="@(() => SelectItem(indexed.Item))"
-                         @onmouseenter="@(() => FocusItemByIndex(indexed.Index))"
-                         @onmousemove="HandleMouseMove"
                          class="@GetItemCssClassByIndex(indexed.Index)">
                         @ItemTemplate(indexed.Item)
                     </div>
@@ -67,8 +65,6 @@
                          aria-selected="@(IsItemFocusedByIndex(indexed.Index) ? "true" : "false")"
                          data-focused="@(IsItemFocusedByIndex(indexed.Index) ? "true" : "false")"
                          @onclick="@(() => SelectItem(indexed.Item))"
-                         @onmouseenter="@(() => FocusItemByIndex(indexed.Index))"
-                         @onmousemove="HandleMouseMove"
                          class="@GetItemCssClassByIndex(indexed.Index)">
                         @ItemTemplate(indexed.Item)
                     </div>
@@ -660,17 +656,24 @@
         return _focusedIndex >= 0 && _focusedIndex == index;
     }
 
-    private void HandleMouseMove()
+    // Hover arrives through BbCommandList's delegated listener and CommandContext.HoverItemById,
+    // which has already ruled out a scroll under a stationary pointer — so there is no keyboard
+    // gate here any more, and no @onmousemove per item to clear one.
+    bool IVirtualizedGroupHandler.TryHoverItem(string elementId)
     {
-        // Re-enable hover focus when mouse actually moves
-        Context?.OnMouseMove();
+        var prefix = $"vgroup-{_id}-item-";
+        if (!elementId.StartsWith(prefix, StringComparison.Ordinal)
+            || !int.TryParse(elementId.AsSpan(prefix.Length), out var index))
+        {
+            return false;
+        }
+
+        FocusItemByIndex(index);
+        return true;
     }
 
     private void FocusItemByIndex(int index)
     {
-        // Ignore hover during keyboard navigation
-        if (Context?.IsKeyboardNavigating == true) return;
-
         if (index >= 0 && index != _focusedIndex)
         {
             _focusedIndex = index;
