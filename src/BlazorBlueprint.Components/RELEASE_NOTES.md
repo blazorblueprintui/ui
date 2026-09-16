@@ -1,15 +1,23 @@
-## What's New in v4.0.0-beta.3
+## What's New in v4.0.0-beta.4
 
 **This is a prerelease.** The API may still change before the stable v4.0.0 release.
 
 ### Breaking Changes
+- **Stylesheet** — every Tailwind utility in `blazorblueprint.css` is now prefixed `bb:` (`.bb\:flex`, `.bb\:sm\:hidden`, `.bb\:data-\[state\=open\]\:bg-accent`) and lives in a `bb-utilities` cascade layer of its own. In v3 the utilities were unprefixed and written into the shared `utilities` layer, so a consumer's own Tailwind build and the library's fought over the same class names and whichever `<link>` came second won; no load order fixed both sides. The two builds can no longer emit the same class, and load order no longer matters. The layer order is now `properties, theme, base, components, bb-utilities, utilities, bb`.
+- **Class parameter** — nothing changes in your markup. `ClassNames.cn` strips the `bb:` prefix for the merge and restores it on the survivors, so a consumer `Class="p-6"` still replaces the library's `bb:p-4` and `cn("bb:p-4", "bb:p-8")` yields `bb:p-8`.
+- **Tailwind `@source`** — remove any `@source` in your Tailwind input that points at the Blazor Blueprint package or sources. It was never needed, and under a prefixed build it finds only `bb:` tokens, does not recognise the `bb` variant, and emits nothing.
+- **Projects without a Tailwind build** — bare utilities in your own markup (`class="flex gap-4"`) that relied on `blazorblueprint.css` happening to contain them now match nothing. Add a Tailwind build, or use the prefixed classes directly (`class="bb:flex bb:gap-4"`) as a stopgap; that set is whatever the components use and is not a stable API.
+- **shimmer**, **scroll-fade-x** — the two safelisted chat utilities are now `bb:shimmer` and `bb:scroll-fade-x`. Update any `Class="shimmer"` or `Class="scroll-fade-x"`.
+- **Theme variables** — Tailwind's generated theme variables in `blazorblueprint.css` carry the prefix too (`--bb-spacing`, `--bb-default-transition-duration`). The library's own semantic tokens (`--background`, `--border`, `--muted` and friends) are unchanged, so a shadcn or tweakcn theme still drops in as before.
+- **CursorExtensions.ToClass** — returns the prefixed class (`bb:cursor-pointer` instead of `cursor-pointer`). Code that compared or concatenated the result must be updated.
+- **Internal class names** — CSS, JavaScript or tests that select the library's internal elements by utility class (`.flex-col`, `.group\/row`, `.hidden`) now need the prefix. Prefer the `data-slot` and other data attributes the components render; those are stable.
 - **BbTooltipTrigger** — `AsChild` now defaults to `false`. A bare icon, plain text or arbitrary markup opens the tooltip with no opt-in. Add `AsChild="true"` where the child consumes the trigger context itself, such as a `BbButton`. The wrapper `<span>` uses `display: contents`, so layout is unaffected, but DOM-walking selectors and test hooks may need updating.
 - **BbDrawerTrigger**, **BbDrawerClose** — now render a real `<button type="button">` instead of a bare `<div @onclick>`, so they are reachable by keyboard and announced as controls. Both gain `AsChild`; set it to `true` when the child is already a control, otherwise you get a button nested inside a button.
 - **JavaScript modules** — every component now imports its JS module once per circuit through `JsModules.GetAsync` / `PrimitiveModules.GetAsync` and no longer disposes it. Primitive modules are addressed through the `bb-primitives.js` bundle under a namespace (`elementUtils.isNearBottom`, `portal.lockBodyScroll`, `escapeKeydown.initialize`). Custom code that imported the individual primitive files or called the unnamespaced exports must be updated.
 - **Core bundle** — `theme.js`, `sidebar.js`, `sidebar-inset.js`, `text-input.js` and `composition-guard.js` ship as `bb-components-core.js` and are addressed under a namespace (`theme.initialize`, `sidebarInset.scrollToTop`). Custom code that imported the individual files must be updated. Import it through `ComponentModules.GetCoreAsync`; the URL now carries the library version as a query string, so a stale browser or CDN cache can never serve an old entry file for a new release.
 - **BbPopoverContent**, **BbSelectContent**, **BbDropdownMenuContent** — dismissal and listbox keyboard handling are wired by `BbFloatingPortal` inside the call that opens the overlay. JavaScript now owns `data-side`, `data-focused` and `aria-activedescendant`; code that rendered these from C# must stop, or the two writers will conflict.
 - **IVirtualizedGroupHandler** — gains `TryHoverItem(string elementId)`. Custom implementations must add it so a real hover inside a virtualized group can move keyboard focus.
-- Updated the `BlazorBlueprint.Primitives` dependency to 4.0.0-beta.3, which carries its own breaking changes. See the Primitives release notes and `V4-MIGRATION-GUIDE.md`.
+- Updated the `BlazorBlueprint.Primitives` dependency to 4.0.0-beta.4, which carries its own breaking changes, including the same `bb:` prefix on the few utilities primitives render themselves. See the Primitives release notes and `V4-MIGRATION-GUIDE.md`.
 
 ### New Features
 - **BbDialog** — new `RenderingStrategy` parameter. Set it to `OverlayRenderingStrategy.Native` to render through the browser's built-in `<dialog>` element via `showModal()`, which works across Blazor render-mode boundaries and needs no portal host. When null, the global default configured through `AddBlazorBlueprintPrimitives` applies.
@@ -33,6 +41,8 @@
 - **BbPopoverContent**, **BbDropdownMenuContent** — no longer call `StateHasChanged` on open. Their roots already re-render the subtree, and the duplicate render raised a portal refresh mid-cycle that the host had to defer.
 
 ### Improvements
+- **BbDarkModeToggle** — the sun and moon icons are now `h-4 w-4` (1rem) instead of 1.2rem, matching the icon size in `BbThemeSwitcher`.
+- **Reduced motion** — the `.bb-no-animate` exemption for looping status indicators now matches both the library's `bb:animate-spin` / `bb:animate-pulse` and a consumer's bare `animate-spin` / `animate-pulse`.
 - **BbCommandInput** — the focus ring moves from the `<input>` to its row on `focus-within`, inset and rounded at the top to match the popover. It was a third box drawn inside the bordered row inside the bordered popover, on screen the whole time a combobox was open. The indicator is larger, not smaller, so the accessibility fix it came from still holds. `BbCommand` used on its own gets the same treatment.
 - **ThemeService** — invalid colour names in `localStorage` now fall back to the configured default in the browser instead of being applied and corrected a round trip later.
 - **BbNavigationMenuTrigger** — ArrowDown no longer sleeps 50ms before focusing the first item; the content focuses it itself after the render that puts it on screen.
