@@ -160,15 +160,15 @@
         </div>
         <ApiReference ComponentName="DataGrid editing">
             <ApiParameter Name="State" Type="DataGridState&lt;TData&gt;?">Set initial sort definitions before rendering. Accepted cell or batch saves reapply the active sort; uncommitted drafts retain the source row order.</ApiParameter>
-            <ApiParameter Name="EditMode" Type="DataGridEditMode" Default="None">None, Row, Cell or Batch. Cell and Batch require an independent clone factory.</ApiParameter>
-            <ApiParameter Name="EditItemFactory" Type="Func&lt;TData,TData&gt;">Clone every writable field, including nested editable objects. Stable ItemKey values cannot change. Accepted drafts copy public writable properties back to the original records.</ApiParameter>
+            <ApiParameter Name="EditMode" Type="DataGridEditMode" Default="None">None, Row, Cell or Batch. <code>Cell</code> and <code>Batch</code> <ApiVersionBadge /> are new modes in v4 and require an independent clone factory.</ApiParameter>
+            <ApiParameter Since="v4" Name="EditItemFactory" Type="Func&lt;TData,TData&gt;">Clone every writable field, including nested editable objects. Stable ItemKey values cannot change. Accepted drafts copy public writable properties back to the original records.</ApiParameter>
             <ApiParameter Name="OnRowCommit" Type="EventCallback&lt;DataGridRowCommitContext&lt;TData&gt;&gt;">In Cell mode Item is the draft and OriginalItem is the source. Set Cancel to reject; thrown errors retain the draft. Row mode retains its original in-place behavior.</ApiParameter>
-            <ApiParameter Name="OnBatchCommit" Type="EventCallback&lt;DataGridBatchCommitContext&lt;TData&gt;&gt;">Persist Changes atomically in your backend; each change contains OriginalItem and Item. Set Cancel to reject the entire batch. Successful callbacks apply all drafts locally.</ApiParameter>
-            <ApiParameter Name="OnBatchCancel" Type="EventCallback">Runs after all pending drafts are discarded.</ApiParameter>
-            <ApiParameter Name="PendingChanges / IsSavingEdits / EditingColumnId" Type="read-only properties">Inspect pending row drafts, save activity and the active column.</ApiParameter>
-            <ApiParameter Name="StartCellEditAsync(item, columnId)" Type="Task">Opens one editable visible column. Invalid current edits block navigation.</ApiParameter>
+            <ApiParameter Since="v4" Name="OnBatchCommit" Type="EventCallback&lt;DataGridBatchCommitContext&lt;TData&gt;&gt;">Persist Changes atomically in your backend; each change contains OriginalItem and Item. Set Cancel to reject the entire batch. Successful callbacks apply all drafts locally.</ApiParameter>
+            <ApiParameter Since="v4" Name="OnBatchCancel" Type="EventCallback">Runs after all pending drafts are discarded.</ApiParameter>
+            <ApiParameter Since="v4" Name="PendingChanges / IsSavingEdits / EditingColumnId" Type="read-only properties">Inspect pending row drafts, save activity and the active column.</ApiParameter>
+            <ApiParameter Since="v4" Name="StartCellEditAsync(item, columnId)" Type="Task">Opens one editable visible column. Invalid current edits block navigation.</ApiParameter>
             <ApiParameter Name="CommitEditAsync() / CancelEditAsync()" Type="Task">Accept or discard the active cell. In Batch mode, earlier staged cells are retained when the current cell is canceled.</ApiParameter>
-            <ApiParameter Name="CommitBatchAsync() / CancelBatchAsync()" Type="Task">Accept or discard every staged row. Commit returns false when validation or persistence fails.</ApiParameter>
+            <ApiParameter Since="v4" Name="CommitBatchAsync() / CancelBatchAsync()" Type="Task">Accept or discard every staged row. Commit returns false when validation or persistence fails.</ApiParameter>
         </ApiReference>
         <ApiReference ComponentName="DataGridPropertyColumn editing">
             <ApiParameter Name="EditTemplate" Type="RenderFragment&lt;TData&gt;">Bind an editor to the draft supplied as context. Text, number, date, select and checkbox controls are supported. Save and Cancel actions are supplied by the grid; BbInputGroupInput provides a borderless text editor.</ApiParameter>

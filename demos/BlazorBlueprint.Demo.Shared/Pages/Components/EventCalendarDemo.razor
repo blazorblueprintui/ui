@@ -165,6 +165,7 @@
         </div>
     </div>
 
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>The month and week views use role="grid" with role="row", role="columnheader", and role="gridcell"</AccessibilityItem>
@@ -183,32 +184,13 @@
         </KeyboardNavigation>
     </AccessibilityList>
 
-    <LocalizationSection
-        Description="All Event Calendar chrome strings — view names, navigation labels, and the overflow/empty-state text — are configurable."
-        Labels="@(new LocalizationSection.LabelInfo[]
-        {
-            new("Today", "Today", "Label for the today button"),
-            new("Month", "Month", "Month view switcher label"),
-            new("Week", "Week", "Week view switcher label"),
-            new("Agenda", "Agenda", "Agenda view switcher label"),
-            new("PreviousPeriod", "Go to previous period", "Aria label for the previous button"),
-            new("NextPeriod", "Go to next period", "Aria label for the next button"),
-            new("ViewSwitcher", "Calendar view", "Aria label for the view switcher group"),
-            new("MoreEvents", "+{0} more", "Overflow button label; {0} is the hidden event count"),
-            new("NoEvents", "No events to display.", "Agenda view empty state"),
-            new("AllDay", "All day", "Time label for all-day events"),
-        })"
-        CultureAware="true"
-        CultureDescription="Month/day names, date headers, and time labels are derived from CultureInfo.CurrentCulture. The first day of the week follows the culture unless overridden with FirstDayOfWeek."
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(localizer =>
-{
-    localizer.Set(""EventCalendar.Today"", ""Heute"");
-    localizer.Set(""EventCalendar.MoreEvents"", ""+{0} weitere"");
-});")" />
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
 
-    <!-- API Reference -->
-    <div class="space-y-4">
-        <ApiReference ComponentName="EventCalendar">
+<ApiReference ComponentName="EventCalendar">
             <ApiParameter Name="Items" Type="IEnumerable&lt;TEvent&gt;?" Default="null">
                 The events to display. TEvent is your own model type.
             </ApiParameter>
@@ -255,6 +237,54 @@
                 Additional HTML attributes applied to the root <code>&lt;div&gt;</code> element (e.g. <code>data-testid</code>, <code>aria-label</code>).
             </ApiParameter>
         </ApiReference>
+
+        <ApiReference ComponentName="BbEventCalendar">
+            <ApiParameter Name="EventStart" Type="Func&lt;TEvent, DateTime&gt;">Required function returning each event's start date and time.</ApiParameter>
+            <ApiParameter Name="EventTitle" Type="Func&lt;TEvent, string&gt;">Required function returning each event's display title.</ApiParameter>
+            <ApiParameter Name="Items" Type="IEnumerable&lt;TEvent&gt;?">The events to display.</ApiParameter>
+            <ApiParameter Name="EventEnd" Type="Func&lt;TEvent, DateTime?&gt;?">Returns the end date/time of an event, or null for a point-in-time event. When the delegate itself is null, all events are treated as point-in-time. Events whose end date falls on a later day than their start render a chip on each spanned day.</ApiParameter>
+            <ApiParameter Name="EventClass" Type="Func&lt;TEvent, string?&gt;?">Returns additional CSS classes for a specific event&#x27;s chip, merged with the built-in chip classes. Use this for per-event coloring (e.g. by category).</ApiParameter>
+            <ApiParameter Name="EventTemplate" Type="RenderFragment&lt;TEvent&gt;?">Optional template that fully replaces the built-in event chip content. When set, only minimal layout/focus classes are applied to the chip button; combine with EventClass for chip-level styling.</ApiParameter>
+            <ApiParameter Name="View" Type="EventCalendarView" Default="EventCalendarView.Month">The active view. Use @@bind-View for two-way binding.</ApiParameter>
+            <ApiParameter Name="ViewChanged" Type="EventCallback&lt;EventCalendarView&gt;">Callback when the active view changes.</ApiParameter>
+            <ApiParameter Name="CurrentDate" Type="DateTime" Default="DateTime.Today">The date that controls the visible period (the month or week containing it). Use @@bind-CurrentDate for two-way binding. Defaults to today.</ApiParameter>
+            <ApiParameter Name="CurrentDateChanged" Type="EventCallback&lt;DateTime&gt;">Callback when the current date changes through navigation.</ApiParameter>
+            <ApiParameter Name="FirstDayOfWeek" Type="DayOfWeek?">The first day of the week. Defaults to the current culture&#x27;s first day of the week.</ApiParameter>
+            <ApiParameter Name="MaxEventsPerDay" Type="int" Default="3">The maximum number of event chips shown per day in the month view before the overflow &quot;+x more&quot; button appears. Defaults to 3.</ApiParameter>
+            <ApiParameter Name="OnEventClick" Type="EventCallback&lt;TEvent&gt;">Callback when an event chip is clicked.</ApiParameter>
+            <ApiParameter Name="OnDateClick" Type="EventCallback&lt;DateTime&gt;">Callback when a day number (month view) or day header (week view) is clicked.</ApiParameter>
+            <ApiParameter Name="OnViewRangeChanged" Type="EventCallback&lt;EventCalendarRange&gt;">Callback when the visible date range changes (including the initial range). Useful for loading events on demand.</ApiParameter>
+            <ApiParameter Name="Class" Type="string?">Additional CSS classes to apply to the root element.</ApiParameter>
+            <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">Additional attributes to apply to the root element.</ApiParameter>
+        </ApiReference>
+    </section>
+
+<LocalizationSection
+        Description="All Event Calendar chrome strings — view names, navigation labels, and the overflow/empty-state text — are configurable."
+        Labels="@(new LocalizationSection.LabelInfo[]
+        {
+            new("Today", "Today", "Label for the today button"),
+            new("Month", "Month", "Month view switcher label"),
+            new("Week", "Week", "Week view switcher label"),
+            new("Agenda", "Agenda", "Agenda view switcher label"),
+            new("PreviousPeriod", "Go to previous period", "Aria label for the previous button"),
+            new("NextPeriod", "Go to next period", "Aria label for the next button"),
+            new("ViewSwitcher", "Calendar view", "Aria label for the view switcher group"),
+            new("MoreEvents", "+{0} more", "Overflow button label; {0} is the hidden event count"),
+            new("NoEvents", "No events to display.", "Agenda view empty state"),
+            new("AllDay", "All day", "Time label for all-day events"),
+        })"
+        CultureAware="true"
+        CultureDescription="Month/day names, date headers, and time labels are derived from CultureInfo.CurrentCulture. The first day of the week follows the culture unless overridden with FirstDayOfWeek."
+        CodeExample="@(@"services.AddBlazorBlueprintComponents(localizer =>
+{
+    localizer.Set(""EventCalendar.Today"", ""Heute"");
+    localizer.Set(""EventCalendar.MoreEvents"", ""+{0} weitere"");
+});")" />
+
+    <!-- API Reference -->
+    <div class="space-y-4">
+
     </div>
 </div>
 

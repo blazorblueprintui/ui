@@ -10,6 +10,7 @@
     Values="@Values"
     ValuesChanged="@ValuesChanged"
     Disabled="@Disabled"
+    Required="@Required"
     class="@CssClass"
     @attributes="AdditionalAttributes">
     <CascadingValue Value="this" IsFixed="true">
@@ -57,13 +58,20 @@
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
+    /// <summary>Prevents removing the last selected value; supply an initial selection.</summary>
+    [Parameter] public bool Required { get; set; }
+
+    /// <summary>Allows horizontal scrolling when the items exceed the available width.</summary>
+    [Parameter] public bool Scrollable { get; set; }
+
     private BlazorBlueprint.Primitives.Toggle.ToggleGroupType MappedType =>
         Type == ToggleGroupType.Multiple
             ? BlazorBlueprint.Primitives.Toggle.ToggleGroupType.Multiple
             : BlazorBlueprint.Primitives.Toggle.ToggleGroupType.Single;
 
     private string CssClass => ClassNames.cn(
-        "bb:flex bb:items-center bb:justify-center bb:gap-1",
+        "bb:flex bb:items-center bb:gap-1",
+        Scrollable ? "bb:justify-start bb:overflow-x-auto bb:[&>*]:shrink-0 bb:py-1" : "bb:justify-center",
         Class
     );
 }

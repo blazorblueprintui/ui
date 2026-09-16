@@ -2,6 +2,26 @@
 
 <CascadingValue Value="@context" IsFixed="false">
     <div class="@ContainerCssClass" role="region" aria-label="@Localizer["FilterBuilder.FilterBuilderAriaLabel"]" @attributes="AdditionalAttributes">
+        @if (Presets.Count > 0)
+        {
+            <div class="bb:flex bb:flex-wrap bb:gap-1" role="group" aria-label="@Localizer["FilterBuilder.Presets"]">
+                @if (PresetDisplay == FilterPresetDisplay.Dropdown)
+                {
+                    <BbSelect TValue="string" Value="selectedPresetId" ValueChanged="SelectPresetAsync"
+                              Options="@(Presets.Select(preset => new SelectOption<string>(preset.Id, preset.Label)))"
+                              Placeholder="@Localizer["FilterBuilder.Presets"]" Class="bb:w-52" />
+                }
+                else
+                {
+                    @foreach (var preset in Presets)
+                    {
+                        <BbButton Variant="@(selectedPresetId == preset.Id ? ButtonVariant.Secondary : ButtonVariant.Ghost)"
+                                  Size="ButtonSize.Small" OnClick="@(() => ApplyPresetAsync(preset.Id))"
+                                  aria-pressed="@((selectedPresetId == preset.Id).ToString().ToLowerInvariant())">@preset.Label</BbButton>
+                    }
+                }
+            </div>
+        }
         <BbFilterGroup Group="@(draftFilter ?? Filter)"
                        Depth="0"
                        IsRoot="true" />

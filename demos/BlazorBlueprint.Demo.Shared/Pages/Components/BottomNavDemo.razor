@@ -1,0 +1,61 @@
+@page "/components/bottom-nav"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Bottom Navigation - Blazor Blueprint</PageTitle>
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Bottom Navigation</h1>
+        <p class="text-xl text-muted-foreground">Bottom navigation with labelled destinations, active state and optional links.</p>
+    </div>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Selection and disabled items</h2>
+        <div class="rounded-lg border p-6 space-y-4">
+<BbBottomNav @bind-Value="selected" Fixed="false" AriaLabel="Preview navigation">
+    <BbBottomNavItem Value="home" Label="Home"><Icon><LucideIcon Name="house" Size="20" /></Icon></BbBottomNavItem>
+    <BbBottomNavItem Value="saved" Label="Saved"><Icon><LucideIcon Name="bookmark" Size="20" /></Icon></BbBottomNavItem>
+    <BbBottomNavItem Value="account" Label="Account"><Icon><LucideIcon Name="user" Size="20" /></Icon></BbBottomNavItem>
+    <BbBottomNavItem Value="locked" Label="Unavailable" Disabled="true"><Icon><LucideIcon Name="lock" Size="20" /></Icon></BbBottomNavItem>
+</BbBottomNav>
+<p role="status" class="text-sm text-muted-foreground">Selected: @selected</p>
+        </div>
+        <CodeBlock Source="Components/BottomNav/basic.txt" />
+    </section>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Link navigation</h2>
+        <div class="rounded-lg border p-6 space-y-4">
+<p class="text-sm text-muted-foreground">Set Href for normal link navigation. Fixed defaults to true; reserve space below page content. These previews use Fixed=false to stay inside their containers.</p>
+<BbBottomNav Fixed="false" AriaLabel="Documentation navigation">
+    <BbBottomNavItem Value="components" Label="Components" Href="/components"><Icon><LucideIcon Name="layout-grid" Size="20" /></Icon></BbBottomNavItem>
+    <BbBottomNavItem Value="recipes" Label="Recipes" Href="/recipes"><Icon><LucideIcon Name="chef-hat" Size="20" /></Icon></BbBottomNavItem>
+</BbBottomNav>
+        </div>
+        <CodeBlock Source="Components/BottomNav/links.txt" />
+    </section>
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The navigation landmark uses AriaLabel; the active destination exposes aria-current="page".</AccessibilityItem>
+            <AccessibilityItem>Each destination has a visible label. Disabled items cannot be activated and are removed from keyboard navigation.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between enabled destinations"><BbKbd>Tab / Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate a destination button"><BbKbd>Enter / Space</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Follow a navigation link"><BbKbd>Enter</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+<span id="bottom-nav-item" class="block scroll-mt-20" aria-hidden="true"></span>
+<ApiReference Since="v4" ComponentName="BottomNav / BottomNavItem">
+        <ApiParameter Name="Value / ValueChanged" Type="string? / EventCallback&lt;string&gt;">Root active value and selection callback; supports @@bind-Value.</ApiParameter>
+        <ApiParameter Name="Fixed / SafeArea / AriaLabel" Type="bool / bool / string?" Default="true / true / Primary navigation">Viewport positioning, bottom safe-area padding and navigation landmark label.</ApiParameter>
+        <ApiParameter Name="ChildContent" Type="RenderFragment">BottomNavItem children.</ApiParameter>
+        <ApiParameter Name="Item Value / Label / Icon" Type="string / string / RenderFragment?">Required unique value and visible label; optional icon content.</ApiParameter>
+        <ApiParameter Name="Item Href / Disabled / OnClick" Type="string? / bool / EventCallback">Optional link destination, disabled state and activation callback. Links keep native navigation behavior.</ApiParameter>
+    <ApiParameter Name="Class / AdditionalAttributes" Type="string? / Dictionary&lt;string, object&gt;?">Additional root CSS classes and HTML attributes.</ApiParameter>
+    </ApiReference>
+    </section>
+</div>
+
+@code {
+    private string selected = "home";
+}

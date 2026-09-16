@@ -137,6 +137,18 @@
     </div>
 
     <!-- API Reference -->
+
+        <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The copy target is focusable and exposes role="button" with a configurable AriaLabel.</AccessibilityItem>
+            <AccessibilityItem>The visible copy status and tooltip provide feedback; choose a label that describes what will be copied. Decorative icons are hidden from assistive technology.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Focus the copy target"><BbKbd>Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Copy the value"><BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
     <section class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">API Reference</h2>
@@ -170,17 +182,17 @@
                 <ApiParameter Name="AdditionalAttributes" Type="Dictionary<string, object>?" Default="null">
                     Additional HTML attributes applied to the container element.
                 </ApiParameter>
-                <ApiParameter Name="ValueFuncAsync" Type="Func&lt;Task&lt;string?&gt;&gt;?">
+                <ApiParameter Since="v4" Name="ValueFuncAsync" Type="Func&lt;Task&lt;string?&gt;&gt;?">
                     An asynchronous function producing the value, evaluated at click time. Called from inside the clipboard write so a slow result does not spend the user activation. <code>Value</code> wins when non-empty, then <code>ValueFunc</code>, then this.
                 </ApiParameter>
-                <ApiParameter Name="OnCopyFailed" Type="EventCallback&lt;CopyTextFailure&gt;">
+                <ApiParameter Since="v4" Name="OnCopyFailed" Type="EventCallback&lt;CopyTextFailure&gt;">
                     Invoked when a copy did not happen. <code>Refused</code> means the browser rejected the write, most often an expired user activation; <code>NoValue</code> means there was nothing to copy.
                 </ApiParameter>
             </ApiReference>
         </div>
     </section>
 
-    <LocalizationSection
+<LocalizationSection
         Description="The copy text tooltip and aria label strings are configurable."
         Labels="@(new LocalizationSection.LabelInfo[]
         {

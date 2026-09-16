@@ -65,6 +65,7 @@
                         Align="@PopoverAlign.Start"
                         CloseOnClickOutside="@AutoClose"
                         CloseOnEscape="false"
+                        OnEscapeKeyDown="@(_ => CloseAsync())"
                         OnClickOutside="@GetClickOutsideHandler()"
                         AutoFocusId="@($"{Id}-search")"
                         MatchTriggerWidth="@MatchTriggerWidth"
@@ -208,6 +209,12 @@
                 }
             </div>
 
+            @if (FooterContent is not null)
+            {
+                <div class="bb:border-t bb:p-2">@FooterContent</div>
+            }
+            else
+            {
             @* Footer section *@
             <div class="bb:flex bb:items-center bb:justify-between bb:border-t bb:p-2">
                 <button type="button"
@@ -223,6 +230,7 @@
                     @EffectiveCloseLabel
                 </button>
             </div>
+            }
             </CascadingValue>
         </BbPopoverContent>
     </BbPopover>

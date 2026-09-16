@@ -70,7 +70,7 @@ public partial class BbSidebar : IDisposable
             : "";
 
         // Width and transition classes
-        var widthClasses = Collapsible
+        var widthClasses = Collapsible && Context?.CollapsedMode != SidebarCollapsedMode.Pill
             ? "bb:w-[var(--sidebar-width)] bb:transition-[width] bb:duration-200 bb:ease-linear bb:data-[state=collapsed]:w-[var(--sidebar-width-icon)]"
             : "bb:w-[var(--sidebar-width)] bb:transition-[width,opacity] bb:duration-200 bb:ease-linear bb:data-[state=closed]:w-0 bb:data-[state=closed]:opacity-0 bb:overflow-hidden";
 
@@ -101,6 +101,7 @@ public partial class BbSidebar : IDisposable
             sideClasses,
             widthClasses,
             layoutClasses,
+            "bb:motion-reduce:transition-none",
             Class
         );
     }
@@ -127,7 +128,7 @@ public partial class BbSidebar : IDisposable
         }
 
         // When not open: return "collapsed" if Collapsible (shows icons), "closed" if not Collapsible (fully hidden)
-        return Collapsible ? "collapsed" : "closed";
+        return Collapsible && Context.CollapsedMode != SidebarCollapsedMode.Pill ? "collapsed" : "closed";
     }
 
     protected override void OnParametersSet()

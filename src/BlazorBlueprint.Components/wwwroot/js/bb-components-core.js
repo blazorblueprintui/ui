@@ -20,11 +20,13 @@
  * `textInput.initialize` without anyone having to open this file.
  */
 
-import * as compositionGuard from './composition-guard.js';
-import * as sidebar from './sidebar.js';
-import * as sidebarInset from './sidebar-inset.js';
-import * as textInput from './text-input.js';
-import * as theme from './theme.js';
+// Keep these dependency URLs in step with ComponentModules.CoreUrl. The query
+// on the entry module is not inherited by relative imports in browser caches.
+import * as compositionGuard from './composition-guard.js?assets=2';
+import * as sidebar from './sidebar.js?assets=2';
+import * as sidebarInset from './sidebar-inset.js?assets=2';
+import * as textInput from './text-input.js?assets=2';
+import * as theme from './theme.js?assets=2';
 
 // Fails loudly when a module here is older than this bundle. See bb-primitives.js for the
 // incident that made this necessary: a stale sidebar.js behind a CDN, and every circuit dead.

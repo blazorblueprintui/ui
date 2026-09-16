@@ -1,0 +1,48 @@
+@page "/components/section-header"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Section Header - Blazor Blueprint</PageTitle>
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Section Header</h1>
+        <p class="text-xl text-muted-foreground">A section title with supporting text, optional actions and a separator.</p>
+    </div>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Title and description</h2>
+        <div class="rounded-lg border p-6 space-y-4">
+<BbSectionHeader Title="Recent documents" Description="Files edited by your team this week." />
+        </div>
+        <CodeBlock Source="Components/SectionHeader/basic.txt" />
+    </section>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Actions and separator</h2>
+        <div class="rounded-lg border p-6 space-y-4">
+<BbSectionHeader Title="Saved collections" Description="Organize references for your next project." Separator="true">
+    <Actions><BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => collections++)">New collection</BbButton></Actions>
+</BbSectionHeader>
+<p role="status" class="text-sm text-muted-foreground">@collections collections</p>
+        </div>
+        <CodeBlock Source="Components/SectionHeader/actions.txt" />
+    </section>
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Title renders as a level-two heading. Place the component within an appropriate page heading hierarchy.</AccessibilityItem>
+            <AccessibilityItem>The separator is visual. Custom actions retain their native semantics and must have accessible names.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between interactive controls"><BbKbd>Tab / Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate a focused button"><BbKbd>Enter / Space</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+<ApiReference Since="v4" ComponentName="SectionHeader">
+        <ApiParameter Name="Title / Description / Actions / Separator" Type="string? / string? / RenderFragment? / bool">Heading text, secondary copy, trailing actions and bottom separator.</ApiParameter>
+    <ApiParameter Name="Class / AdditionalAttributes" Type="string? / Dictionary&lt;string, object&gt;?">Additional root CSS classes and HTML attributes.</ApiParameter>
+    </ApiReference>
+    </section>
+</div>
+
+@code {
+    private int collections = 3;
+}

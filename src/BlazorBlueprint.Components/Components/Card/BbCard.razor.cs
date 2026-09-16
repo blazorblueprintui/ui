@@ -73,7 +73,7 @@ public partial class BbCard : ComponentBase
     /// </remarks>
     private string CssClass => ClassNames.cn(
         // Base card styles (from shadcn/ui)
-        "bb:rounded-lg bb:border bb:bg-card bb:text-card-foreground bb:shadow-sm",
+        "bb:rounded-lg bb:border bb:bg-card bb:text-card-foreground bb:shadow-(--bb-card-shadow)",
         // Custom classes (if provided)
         Class
     );

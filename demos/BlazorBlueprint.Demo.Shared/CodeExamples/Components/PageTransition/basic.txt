@@ -1,0 +1,15 @@
+<div class="flex gap-3">
+    <a href="/components/page-transition?preview=overview" class="text-primary underline">Overview preview</a>
+    <a href="/components/page-transition?preview=activity" class="text-primary underline">Activity preview</a>
+</div>
+<BbPageTransition Preset="MotionPreset.SlideUp" Duration="350">
+    <div class="rounded-lg bg-muted p-6 space-y-2">
+        <h3 class="font-semibold">@(Preview == "activity" ? "Activity" : "Overview")</h3>
+        <p>@(Preview == "activity" ? "A design review was completed and a new milestone was published." : "Your workspace has three active projects and two upcoming milestones.")</p>
+    </div>
+</BbPageTransition>
+<p class="text-sm text-muted-foreground">These links change the URL while keeping the wrapper mounted. In an application, place PageTransition around the layout body or RouteView.</p>
+
+@code {
+    [SupplyParameterFromQuery(Name = "preview")] public string? Preview { get; set; }
+}

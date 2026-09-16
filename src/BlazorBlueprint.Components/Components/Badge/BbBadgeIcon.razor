@@ -1,0 +1,16 @@
+@namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<span aria-hidden="true" class="@ClassNames.cn("bb:inline-flex bb:shrink-0 bb:[&>svg]:size-3", Class)">
+    @if (ChildContent is not null) { @ChildContent }
+    else if (!string.IsNullOrEmpty(Name)) { <LucideIcon Name="@Name" Size="12" /> }
+</span>
+
+@code {
+    /// <summary>Optional Lucide icon name.</summary>
+    [Parameter] public string? Name { get; set; }
+    /// <summary>Custom decorative icon content; overrides Name.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Additional icon classes.</summary>
+    [Parameter] public string? Class { get; set; }
+}

@@ -330,6 +330,17 @@
         <CodeBlock Source="Components/Select/infinite-scroll-compositional.txt" />
     </section>
 
+    <!-- API Reference -->
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Bottom-sheet presentation</h2>
+        <p class="text-sm text-muted-foreground">Use a modal bottom sheet for touch-oriented selection. It preserves the same value binding, option semantics, arrow navigation and loading callbacks. Tab stays within the modal, and selection or Escape returns focus to the trigger.</p>
+<BbSelect TValue="string" @bind-Value="sheetChoice" Presentation="SelectPresentation.BottomSheet"
+          SheetTitle="Delivery method" Placeholder="Choose delivery" Options="deliveryOptions" Class="w-64" />
+        <CodeBlock Source="Components/Select/bottom-sheet.txt" />
+
+    </section>
+
     <AccessibilityList>
             <AriaAttributes>
                 <AccessibilityItem>
@@ -361,7 +372,6 @@
             </KeyboardNavigation>
         </AccessibilityList>
 
-    <!-- API Reference -->
     <section class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">API Reference</h2>
@@ -445,10 +455,19 @@
                 </ApiParameter>
             </ApiReference>
         </div>
+
+<ApiReference ComponentName="Select / SelectContent">
+            <ApiParameter Since="v4" Name="Presentation" Type="SelectPresentation" Default="Popover">Popover or BottomSheet. Set it on Select for both options and compositional modes; SelectContent accepts a nullable override. Applications choose when to switch presentation.</ApiParameter>
+            <ApiParameter Since="v4" Name="SheetTitle" Type="string?">Accessible visible sheet title; SelectContent can override the parent's title.</ApiParameter>
+        </ApiReference>
     </section>
+
 </div>
 
 @code {
+    private string? sheetChoice;
+    private readonly SelectOption<string>[] deliveryOptions = [new("standard", "Standard delivery"), new("express", "Express delivery"), new("pickup", "Collect in store")];
+
     protected override void OnInitialized()
     {
         InitSelectScroll();

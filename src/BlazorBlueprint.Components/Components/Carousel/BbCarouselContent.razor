@@ -1,48 +1,18 @@
 @namespace BlazorBlueprint.Components
 
-<div class="bb:overflow-hidden" @attributes="AdditionalAttributes">
-    <div class="@CssClass" style="@TransformStyle">
+<div data-carousel-viewport class="bb:overflow-hidden" @attributes="AdditionalAttributes">
+    <div data-carousel-track class="@CssClass">
         @ChildContent
     </div>
 </div>
 
 @code {
-    [CascadingParameter]
-    public BbCarousel? Context { get; set; }
-
-    [Parameter]
-    public string? Class { get; set; }
-
-    /// <summary>
-    /// Gets or sets additional HTML attributes to apply to the root element.
-    /// </summary>
-    [Parameter(CaptureUnmatchedValues = true)]
-    public Dictionary<string, object>? AdditionalAttributes { get; set; }
-
-    [Parameter]
-    public RenderFragment? ChildContent { get; set; }
-
-    private string TransformStyle
-    {
-        get
-        {
-            var index = Context?.CurrentIndex ?? 0;
-            var isHorizontal = Context?.Orientation == CarouselOrientation.Horizontal;
-
-            if (isHorizontal)
-            {
-                return $"transform: translateX(-{index * 100}%); transition: transform 300ms ease-in-out;";
-            }
-            else
-            {
-                return $"transform: translateY(-{index * 100}%); transition: transform 300ms ease-in-out;";
-            }
-        }
-    }
-
+    [CascadingParameter] public BbCarousel? Context { get; set; }
+    [Parameter] public string? Class { get; set; }
+    /// <summary>Additional viewport HTML attributes, including height for vertical orientation.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
     private string CssClass => ClassNames.cn(
-        "bb:flex",
-        Context?.Orientation == CarouselOrientation.Vertical ? "bb:flex-col" : "bb:-ml-4",
-        Class
-    );
+        "bb:relative bb:flex bb:transition-transform bb:duration-300 bb:ease-in-out bb:motion-reduce:transition-none",
+        Context?.Orientation == CarouselOrientation.Vertical ? "bb:h-full bb:flex-col bb:-mt-(--bb-carousel-gap)" : "bb:-ms-(--bb-carousel-gap)", Class);
 }

@@ -1,0 +1,66 @@
+@namespace BlazorBlueprint.Primitives.Menu
+@implements IDisposable
+
+<CascadingValue Value="this" IsFixed="false">
+    @ChildContent
+</CascadingValue>
+
+@code {
+    [CascadingParameter] private MenuScope? Scope { get; set; }
+    /// <summary>The submenu trigger and content.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Disables opening the submenu.</summary>
+    [Parameter] public bool Disabled { get; set; }
+
+    private bool open;
+    private bool disposed;
+    private readonly string id = $"bb-menu-sub-{Guid.NewGuid():N}";
+    internal string TriggerId => $"{id}-trigger";
+    internal string ContentId => $"{id}-content";
+    internal ElementReference? TriggerElement { get; set; }
+    internal bool IsOpen => open && !Disabled && Scope?.IsOpen == true;
+    internal bool FocusOnOpen { get; private set; }
+    internal bool RestoreFocus { get; private set; }
+    internal MenuScope ChildScope { get; private set; } = null!;
+
+    protected override void OnInitialized()
+    {
+        ChildScope = new MenuScope(() => IsOpen, () => Scope!.CloseRootAsync());
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Scope is null) { throw new InvalidOperationException("Submenus require a menu content component."); }
+        if (Disabled || !Scope.IsOpen)
+        {
+            open = false;
+            RestoreFocus = false;
+            Scope.Release(this);
+        }
+    }
+
+    internal void Open(bool focus)
+    {
+        if (disposed || Disabled || Scope?.IsOpen != true) { return; }
+        Scope.Activate(this);
+        FocusOnOpen = focus;
+        RestoreFocus = false;
+        open = true;
+        StateHasChanged();
+    }
+
+    internal void Close(bool restoreFocus)
+    {
+        if (disposed || !open) { return; }
+        open = false;
+        RestoreFocus = restoreFocus;
+        Scope?.Release(this);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        disposed = true;
+        Scope?.Release(this);
+    }
+}

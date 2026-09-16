@@ -27,6 +27,10 @@ public class ThemeService : IAsyncDisposable
     private PrimaryColor primaryColor;
     private double radius;
     private bool isInitialized;
+    private ThemeDesign design;
+
+    /// <summary>The full current configuration.</summary>
+    public ThemePreset Preset => new() { DarkMode = isDarkMode, BaseColor = baseColor, PrimaryColor = primaryColor, Radius = radius, Design = design };
 
     /// <summary>
     /// Raised after any theme property changes. Subscribe to trigger <c>StateHasChanged</c> in consuming components.
@@ -67,10 +71,17 @@ public class ThemeService : IAsyncDisposable
     {
         this.jsRuntime = jsRuntime;
         this.options = options;
-        isDarkMode = options.DefaultDarkMode;
-        baseColor = options.DefaultBaseColor;
-        primaryColor = options.DefaultPrimaryColor;
-        radius = options.DefaultRadius;
+        var preset = options.DefaultPreset ?? new ThemePreset
+        {
+            DarkMode = options.DefaultDarkMode, BaseColor = options.DefaultBaseColor,
+            PrimaryColor = options.DefaultPrimaryColor, Radius = options.DefaultRadius
+        };
+        preset.Validate();
+        isDarkMode = preset.DarkMode;
+        baseColor = preset.BaseColor;
+        primaryColor = preset.PrimaryColor;
+        radius = preset.Radius;
+        design = preset.Design;
     }
 
     /// <summary>
@@ -118,7 +129,8 @@ public class ThemeService : IAsyncDisposable
                     isDarkMode,
                     baseColor = baseColor.ToString().ToLowerInvariant(),
                     primaryColor = primaryColor.ToString().ToLowerInvariant(),
-                    radius
+                    radius,
+                    design = design.ToJs()
                 },
                 validBaseColors = Enum.GetNames<BaseColor>().Select(n => n.ToLowerInvariant()).ToArray(),
                 validPrimaryColors = Enum.GetNames<PrimaryColor>().Select(n => n.ToLowerInvariant()).ToArray()
@@ -133,9 +145,20 @@ public class ThemeService : IAsyncDisposable
             }
 
             isDarkMode = applied.IsDarkMode;
-            baseColor = ParseEnum(applied.BaseColor, options.DefaultBaseColor);
-            primaryColor = ParseEnum(applied.PrimaryColor, options.DefaultPrimaryColor);
-            radius = applied.Radius ?? options.DefaultRadius;
+            baseColor = ParseEnum(applied.BaseColor, baseColor);
+            primaryColor = ParseEnum(applied.PrimaryColor, primaryColor);
+            radius = applied.Radius is >= 0 and <= 4 ? applied.Radius.Value : radius;
+            if (applied.Design is { } restored)
+            {
+                design = new ThemeDesign
+                {
+                    Density = ParseEnum(restored.Density, design.Density),
+                    Font = ParseEnum(restored.Font, design.Font),
+                    Surface = ParseEnum(restored.Surface, design.Surface),
+                    MenuColor = ParseEnum(restored.MenuColor, design.MenuColor),
+                    MenuAccent = ParseEnum(restored.MenuAccent, design.MenuAccent)
+                };
+            }
         }
         catch (JSDisconnectedException)
         {
@@ -208,6 +231,10 @@ public class ThemeService : IAsyncDisposable
     /// <param name="value">The radius in rem (e.g., 0, 0.3, 0.5, 0.75, 1.0).</param>
     public async Task SetRadiusAsync(double value)
     {
+        if (!double.IsFinite(value) || value < 0 || value > 4)
+        {
+            throw new ArgumentOutOfRangeException(nameof(value), "Radius must be between 0 and 4 rem.");
+        }
         if (Math.Abs(radius - value) < 0.001)
         {
             return;
@@ -217,6 +244,31 @@ public class ThemeService : IAsyncDisposable
         await ApplyRadiusAsync();
         await SaveAsync();
         OnThemeChanged?.Invoke();
+    }
+
+    /// <summary>Applies and persists a complete preset in one update.</summary>
+    public async Task SetPresetAsync(ThemePreset preset)
+    {
+        ArgumentNullException.ThrowIfNull(preset);
+        preset.Validate();
+        await InitializeAsync();
+        isDarkMode = preset.DarkMode;
+        baseColor = preset.BaseColor;
+        primaryColor = preset.PrimaryColor;
+        radius = preset.Radius;
+        design = preset.Design;
+        await ApplyAllAsync();
+        await SaveAsync();
+        OnThemeChanged?.Invoke();
+    }
+
+    /// <summary>Changes appearance while preserving the current colors, radius and dark mode.</summary>
+    public async Task SetDesignAsync(ThemeDesign value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        value.Validate();
+        await InitializeAsync();
+        await SetPresetAsync(Preset with { Design = value });
     }
 
     private async Task ApplyAllAsync()
@@ -232,7 +284,7 @@ public class ThemeService : IAsyncDisposable
                 isDarkMode,
                 baseColor.ToString().ToLowerInvariant(),
                 primaryColor.ToString().ToLowerInvariant(),
-                radius);
+                radius, design.ToJs());
         }
         catch
         {
@@ -321,7 +373,7 @@ public class ThemeService : IAsyncDisposable
                 isDarkMode,
                 baseColor.ToString().ToLowerInvariant(),
                 primaryColor.ToString().ToLowerInvariant(),
-                radius);
+                radius, design.ToJs());
         }
         catch
         {
@@ -336,7 +388,7 @@ public class ThemeService : IAsyncDisposable
             return fallback;
         }
 
-        return Enum.TryParse<TEnum>(value, ignoreCase: true, out var result) ? result : fallback;
+        return Enum.TryParse<TEnum>(value, ignoreCase: true, out var result) && Enum.IsDefined(result) ? result : fallback;
     }
 
     /// <inheritdoc />
@@ -363,5 +415,15 @@ public class ThemeService : IAsyncDisposable
 
         /// <summary>Gets or sets the border radius in rem.</summary>
         public double? Radius { get; set; }
+        public ThemeDesignState? Design { get; set; }
+    }
+
+    private sealed class ThemeDesignState
+    {
+        public string? Density { get; set; }
+        public string? Font { get; set; }
+        public string? Surface { get; set; }
+        public string? MenuColor { get; set; }
+        public string? MenuAccent { get; set; }
     }
 }

@@ -1,0 +1,55 @@
+@page "/components/notification-badge"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Notification Badge - Blazor Blueprint</PageTitle>
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Notification Badge</h1>
+        <p class="text-xl text-muted-foreground">Overlay a count or activity dot on an icon or control. Unlike an inline Badge, this decorates existing content.</p>
+    </div>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Live notification count</h2>
+        <div class="rounded-lg border p-6 space-y-4">
+<div class="flex flex-wrap items-center gap-10 py-4">
+    <BbNotificationBadge Count="unread"><BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Icon" aria-label="Mark messages read" OnClick="@(() => unread = 0)"><LucideIcon Name="mail" Size="22" /></BbButton></BbNotificationBadge>
+    <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => unread++)">Add notification</BbButton>
+</div>
+<p class="text-sm text-muted-foreground">Click the mail button to clear the count. Zero is hidden by default.</p>
+        </div>
+        <CodeBlock Source="Components/NotificationBadge/basic.txt" />
+    </section>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Overflow, zero and dot</h2>
+        <div class="rounded-lg border p-6 space-y-4">
+<div class="flex flex-wrap gap-10 py-4">
+    <div class="space-y-3"><BbNotificationBadge Count="128" Maximum="99"><LucideIcon Name="mail" Size="24" /></BbNotificationBadge><p class="text-sm text-muted-foreground">Overflow count</p></div>
+    <div class="space-y-3"><BbNotificationBadge Count="0" ShowZero="true" Variant="BadgeVariant.Secondary"><LucideIcon Name="bell" Size="24" /></BbNotificationBadge><p class="text-sm text-muted-foreground">Visible zero</p></div>
+    <div class="space-y-3"><BbNotificationBadge Dot="true" AriaLabel="New account activity"><LucideIcon Name="user" Size="24" /></BbNotificationBadge><p class="text-sm text-muted-foreground">Activity dot</p></div>
+</div>
+        </div>
+        <CodeBlock Source="Components/NotificationBadge/states.txt" />
+    </section>
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The badge exposes a status with the full count even when the visible count is capped. Supply AriaLabel for a custom description.</AccessibilityItem>
+            <AccessibilityItem>The badge adds no tab stop. Give an accessible name to the decorated button or link.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between interactive controls"><BbKbd>Tab / Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate a focused button"><BbKbd>Enter / Space</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+<ApiReference Since="v4" ComponentName="NotificationBadge">
+        <ApiParameter Name="Count / Maximum / ShowZero / Dot" Type="int? / int / bool / bool" Default="null / 99 / false / false">Count display, overflow cap, zero visibility and dot mode. Dot is independent of Count.</ApiParameter>
+        <ApiParameter Name="Position / Variant" Type="BadgeDotPosition / BadgeVariant" Default="TopRight / Destructive">Corner and badge palette.</ApiParameter>
+        <ApiParameter Name="AriaLabel / ChildContent / BadgeClass" Type="string? / RenderFragment / string?">Accessible description, decorated content and badge CSS overrides. The accessible count remains complete when the visual label is capped.</ApiParameter>
+    <ApiParameter Name="Class / AdditionalAttributes" Type="string? / Dictionary&lt;string, object&gt;?">Additional root CSS classes and HTML attributes.</ApiParameter>
+    </ApiReference>
+    </section>
+</div>
+
+@code {
+    private int unread = 4;
+}

@@ -1,0 +1,26 @@
+<div class="relative">
+<BbSidebarProvider CollapsedMode="SidebarCollapsedMode.Pill" Open="pillOpen" OpenChanged="@(value => pillOpen = value)" CookieKey="@((string?)null)" HeightClass="min-h-72" EnableToggleShortcut="false">
+    <BbSidebar Class="min-h-72">
+        <BbSidebarHeader><strong class="p-2">Workspace</strong><BbSidebarTrigger /></BbSidebarHeader>
+        <BbSidebarContent>
+            <BbSidebarMenu>
+                <BbSidebarMenuItem><BbSidebarMenuButton IsActive="@(pillPage == "Overview")" OnClick="@(() => pillPage = "Overview")"><LucideIcon Name="house" /><span>Overview</span></BbSidebarMenuButton></BbSidebarMenuItem>
+                <BbSidebarMenuItem><BbSidebarMenuButton IsActive="@(pillPage == "Projects")" OnClick="@(() => pillPage = "Projects")"><LucideIcon Name="folder" /><span>Projects</span></BbSidebarMenuButton></BbSidebarMenuItem>
+            </BbSidebarMenu>
+        </BbSidebarContent>
+    </BbSidebar>
+    <BbSidebarPillNav Fixed="false">
+        <BbSidebarPillNavItem Label="Overview" IsActive="@(pillPage == "Overview")" OnClick="@(() => pillPage = "Overview")"><LucideIcon Name="house" /></BbSidebarPillNavItem>
+        <BbSidebarPillNavItem Label="Projects" IsActive="@(pillPage == "Projects")" OnClick="@(() => pillPage = "Projects")"><LucideIcon Name="folder" /></BbSidebarPillNavItem>
+        <BbSidebarPillNavItem Label="Unavailable" Disabled="true"><LucideIcon Name="lock" /></BbSidebarPillNavItem>
+    </BbSidebarPillNav>
+    <div class="min-w-0 flex-1 p-4">
+        <BbSidebarPillInset>
+            <h3 class="font-semibold">@pillPage</h3>
+            <p class="text-sm text-muted-foreground">Collapse the desktop sidebar to show compact navigation. On mobile, the pill opens the sidebar sheet.</p>
+            <BbSidebarTrigger />
+        </BbSidebarPillInset>
+    </div>
+</BbSidebarProvider>
+</div>
+@code { private bool pillOpen = true; private string pillPage = "Overview"; }

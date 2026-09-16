@@ -17,6 +17,41 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
     private bool disposed;
     private FilterDefinition? draftFilter;
     private FilterDefinition? lastFilter;
+    private string? selectedPresetId;
+
+    /// <summary>Reusable filter definitions, cloned before use.</summary>
+    [Parameter] public IReadOnlyList<FilterPreset> Presets { get; set; } = [];
+    /// <summary>Whether presets use buttons or a dropdown.</summary>
+    [Parameter] public FilterPresetDisplay PresetDisplay { get; set; }
+    /// <summary>Uses a searchable combobox for field selection.</summary>
+    [Parameter] public bool SearchableFields { get; set; }
+    /// <summary>Optional custom value editors, keyed by field name.</summary>
+    [Parameter] public IReadOnlyDictionary<string, RenderFragment<FilterValueEditorContext>>? ValueEditors { get; set; }
+
+    /// <summary>Loads a cloned preset into the active draft. Explicit-apply builders still require Apply.</summary>
+    public Task ApplyPresetAsync(string id) => InvokeAsync(async () =>
+    {
+        var preset = Presets.FirstOrDefault(p => p.Id == id)
+            ?? throw new ArgumentException("No filter preset has the requested ID.", nameof(id));
+        if (MaxConditions.HasValue && preset.Filter.TotalConditionCount > MaxConditions.Value)
+        {
+            throw new InvalidOperationException("The preset exceeds MaxConditions.");
+        }
+        if (FilterDepth(preset.Filter) > MaxDepth) { throw new InvalidOperationException("The preset exceeds MaxDepth."); }
+        debounceTimer?.Dispose();
+        debounceVersion++;
+        var copy = preset.Filter.Clone();
+        var target = draftFilter ?? Filter;
+        target.Conditions = copy.Conditions;
+        target.Groups = copy.Groups;
+        target.Operator = copy.Operator;
+        selectedPresetId = id;
+        if (!ShowApplyButton) { await NotifyFilterChanged(); }
+        StateHasChanged();
+    });
+
+    private Task SelectPresetAsync(string? id) => id is null ? Task.CompletedTask : ApplyPresetAsync(id);
+    private static int FilterDepth(FilterDefinition filter) => filter.Groups.Count == 0 ? 0 : 1 + filter.Groups.Max(FilterDepth);
 
     /// <summary>
     /// Gets or sets the current filter state. Supports two-way binding via <c>@bind-Filter</c>.
@@ -125,6 +160,8 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
             MaxConditions = MaxConditions,
             DefaultOperator = DefaultOperator,
             Compact = Compact,
+            SearchableFields = SearchableFields,
+            ValueEditors = ValueEditors,
             RootFilter = activeFilter,
             NotifyChanged = OnFilterTreeChanged
         };
@@ -132,6 +169,7 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
 
     private void OnFilterTreeChanged()
     {
+        selectedPresetId = null;
         if (ShowApplyButton)
         {
             StateHasChanged();
@@ -187,6 +225,7 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
 
     private async Task HandleClear()
     {
+        selectedPresetId = null;
         var activeFilter = draftFilter ?? Filter;
         activeFilter.Conditions.Clear();
         activeFilter.Groups.Clear();

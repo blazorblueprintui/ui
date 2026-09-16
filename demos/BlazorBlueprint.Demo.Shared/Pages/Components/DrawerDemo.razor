@@ -233,6 +233,29 @@
         <CodeBlock Source="Components/Drawer/as-child.txt" />
     </div>
 
+    <!-- API Reference -->
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Snap points</h2>
+        <p class="text-sm text-muted-foreground">Snap points are ascending fractions of viewport height, or width for side drawers. The handle supports pointer dragging, arrows, Home and End. Escape during a drag cancels it; normal Escape closes the drawer.</p>
+<BbDrawer SnapPoints="@(new double[] { 0.3, 0.55, 0.9 })" @bind-SnapIndex="snapIndex" DismissOnDrag="true">
+    <BbDrawerTrigger AsChild="true"><BbButton Variant="ButtonVariant.Outline">Open snapping drawer</BbButton></BbDrawerTrigger>
+    <BbDrawerContent aria-label="Delivery details">
+        <BbDrawerHeader><BbDrawerTitle>Delivery details</BbDrawerTitle><BbDrawerDescription>Drag the handle or use its arrow keys to resize.</BbDrawerDescription></BbDrawerHeader>
+        <div class="space-y-4 p-4">
+            <p>Current size: @(snapIndex + 1) of 3</p>
+            @foreach (var step in Enumerable.Range(1, 12))
+            {
+                <p class="rounded-md border p-3">Delivery information @step</p>
+            }
+        </div>
+        <BbDrawerFooter><BbDrawerClose AsChild="true"><BbButton Variant="ButtonVariant.Outline">Close</BbButton></BbDrawerClose></BbDrawerFooter>
+    </BbDrawerContent>
+</BbDrawer>
+        <CodeBlock Source="Components/Drawer/snap-points.txt" />
+
+    </section>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>
@@ -258,7 +281,6 @@
         </KeyboardNavigation>
     </AccessibilityList>
 
-    <!-- API Reference -->
     <section class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">API Reference</h2>
@@ -276,7 +298,12 @@
                 <ApiParameter Name="DefaultOpen" Type="bool" Default="false">
                     Initial open state.
                 </ApiParameter>
-            </ApiReference>
+
+            <ApiParameter Since="v4" Name="SnapPoints" Type="IReadOnlyList&lt;double&gt;" Default="[]">Ascending fractions greater than 0 and at most 1. Empty preserves natural content size.</ApiParameter>
+            <ApiParameter Since="v4" Name="SnapIndex / SnapIndexChanged" Type="int / EventCallback&lt;int&gt;" Default="0">Active zero-based point; supports @@bind-SnapIndex.</ApiParameter>
+            <ApiParameter Since="v4" Name="DismissOnDrag" Type="bool" Default="true">Dragging below half the smallest point dismisses. False always snaps to a configured size.</ApiParameter>
+
+        </ApiReference>
 
             <ApiReference ComponentName="DrawerContent">
                 <ApiParameter Name="ShowHandle" Type="bool" Default="true">
@@ -294,7 +321,7 @@
             </ApiReference>
 
             <ApiReference ComponentName="DrawerTrigger">
-                <ApiParameter Name="AsChild" Type="bool" Default="false">
+                <ApiParameter Since="v4" Name="AsChild" Type="bool" Default="false">
                     When true, renders no button of its own and cascades a <code>TriggerContext</code> to the child instead. Use it whenever the child is already a control, such as a <code>BbButton</code> — leaving it false around a control nests a button inside a button.
                 </ApiParameter>
                 <ApiParameter Name="ChildContent" Type="RenderFragment?">
@@ -309,7 +336,7 @@
             </ApiReference>
 
             <ApiReference ComponentName="DrawerClose">
-                <ApiParameter Name="AsChild" Type="bool" Default="false">
+                <ApiParameter Since="v4" Name="AsChild" Type="bool" Default="false">
                     When true, renders no button of its own and cascades a <code>TriggerContext</code> to the child instead.
                 </ApiParameter>
                 <ApiParameter Name="ChildContent" Type="RenderFragment?">
@@ -323,10 +350,14 @@
                 </ApiParameter>
             </ApiReference>
         </div>
+
+
     </section>
+
 </div>
 
 @code {
+    private int snapIndex = 1;
     private void HandleShare() { }
     private void HandleEdit() { }
     private void HandleDuplicate() { }

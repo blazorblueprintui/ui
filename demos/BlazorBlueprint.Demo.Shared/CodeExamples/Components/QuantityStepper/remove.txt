@@ -1,0 +1,15 @@
+@if (removed)
+{
+    <p role="status">Item removed.</p>
+    <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => { removed = false; removableQuantity = 1; })">Restore item</BbButton>
+}
+else
+{
+    <BbQuantityStepper @bind-Value="removableQuantity" Min="1" Max="5" OnRemove="@(() => removed = true)" AriaLabel="Cart quantity" />
+}
+<p class="text-sm text-muted-foreground">At the minimum, the decrease button becomes a remove action. The application handles removal.</p>
+
+@code {
+    private int removableQuantity = 1;
+    private bool removed;
+}

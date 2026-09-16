@@ -30,6 +30,7 @@
  */
 
 import * as clickOutside from './click-outside.js';
+import * as themeScope from '../theme-scope.js';
 import * as escapeKeydown from './escape-keydown.js';
 import * as positioning from './positioning.js';
 import * as menuKeyboard from './menu-keyboard.js';
@@ -149,6 +150,9 @@ export async function open(portalId, reference, options = {}, dotNetRef = null) 
             return null;
         }
 
+        const cleanups = [themeScope.inheritTheme(reference, floating)];
+        openOverlays.set(portalId, cleanups);
+
         // Before the reveal, not after. A list must appear already scrolled to the selected
         // option; scrolling it once it is on screen is a visible jump.
         if (options.keyboard) {
@@ -187,7 +191,9 @@ export async function open(portalId, reference, options = {}, dotNetRef = null) 
         // for FocusAsync. Here it is one frame after the reveal, for free.
         const focusTarget = options.keyboard && options.keyboard.kind === 'Listbox'
             ? () => select.focusListbox(options.keyboard.contentId)
-            : options.autoFocusId
+            : options.keyboard?.kind === 'Menu' && options.keyboard.initialFocus
+                ? () => menuKeyboard.focusInitial(document.getElementById(options.keyboard.contentId), options.keyboard.initialFocus)
+                : options.autoFocusId
                 ? () => document.getElementById(options.autoFocusId)?.focus({ preventScroll: true })
                 : null;
 
@@ -198,8 +204,6 @@ export async function open(portalId, reference, options = {}, dotNetRef = null) 
                 }
             }));
         }
-
-        const cleanups = [];
 
         if (options.autoUpdate !== false) {
             // autoUpdate repositions on scroll and resize. Its own first update runs here and is
@@ -253,6 +257,7 @@ export async function open(portalId, reference, options = {}, dotNetRef = null) 
     } catch (error) {
         // Nothing awaits this call, so an error that escapes here is silent — the overlay simply
         // never appears. Logging is the only report there is.
+        if (isCurrent(portalId, token)) runCleanups(portalId);
         console.error(`overlay: failed to open '${portalId}'`, error);
         return null;
     }

@@ -1,0 +1,59 @@
+@namespace BlazorBlueprint.Components
+@inject IBbLocalizer Localizer
+
+<div @attributes="AdditionalAttributes" class="@ClassNames.cn("bb:relative bb:inline-flex", Class)">
+    @ChildContent
+    @if (Visible)
+    {
+        <span role="status" aria-label="@EffectiveLabel" class="@BadgeCssClass">
+            <span aria-hidden="true">@(Dot ? null : DisplayCount)</span>
+        </span>
+    }
+</div>
+
+@code {
+    /// <summary>The content to decorate.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>The notification count. Null hides a count badge.</summary>
+    [Parameter] public int? Count { get; set; }
+    /// <summary>Counts above this value display as Maximum+.</summary>
+    [Parameter] public int Maximum { get; set; } = 99;
+    /// <summary>Displays zero counts.</summary>
+    [Parameter] public bool ShowZero { get; set; }
+    /// <summary>Shows a dot instead of a count, independently of Count.</summary>
+    [Parameter] public bool Dot { get; set; }
+    /// <summary>The badge's accessible description.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+    /// <summary>The corner to decorate.</summary>
+    [Parameter] public BadgeDotPosition Position { get; set; } = BadgeDotPosition.TopRight;
+    /// <summary>The badge color.</summary>
+    [Parameter] public BadgeVariant Variant { get; set; } = BadgeVariant.Destructive;
+    /// <summary>Additional wrapper CSS classes.</summary>
+    [Parameter] public string? Class { get; set; }
+    /// <summary>Additional badge CSS classes.</summary>
+    [Parameter] public string? BadgeClass { get; set; }
+    /// <summary>Additional wrapper HTML attributes.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+    private bool Visible => Dot || (Count.HasValue && (Count > 0 || ShowZero));
+    private string DisplayCount => Count > Maximum ? $"{Maximum}+" : Count?.ToString(System.Globalization.CultureInfo.CurrentCulture) ?? "";
+    private string EffectiveLabel => AriaLabel ?? (Dot ? Localizer["NotificationBadge.Unread"] : Localizer["NotificationBadge.Count", Count ?? 0]);
+    private string BadgeCssClass => ClassNames.cn("bb:pointer-events-none bb:absolute bb:flex bb:items-center bb:justify-center bb:rounded-full bb:ring-2 bb:ring-background bb:text-[10px] bb:font-semibold", Dot ? "bb:size-2" : "bb:h-4 bb:min-w-4 bb:px-1", Position switch
+    {
+        BadgeDotPosition.TopLeft => "bb:-top-1 bb:-left-1",
+        BadgeDotPosition.BottomLeft => "bb:-bottom-1 bb:-left-1",
+        BadgeDotPosition.BottomRight => "bb:-bottom-1 bb:-right-1",
+        _ => "bb:-top-1 bb:-right-1"
+    }, Variant switch
+    {
+        BadgeVariant.Destructive => "bb:bg-destructive bb:text-destructive-foreground",
+        BadgeVariant.Secondary => "bb:bg-secondary bb:text-secondary-foreground",
+        BadgeVariant.Outline => "bb:border bb:bg-background bb:text-foreground",
+        _ => "bb:bg-primary bb:text-primary-foreground"
+    }, BadgeClass);
+
+    protected override void OnParametersSet()
+    {
+        if (Count < 0) { throw new ArgumentOutOfRangeException(nameof(Count)); }
+        if (Maximum < 1) { throw new ArgumentOutOfRangeException(nameof(Maximum)); }
+    }
+}

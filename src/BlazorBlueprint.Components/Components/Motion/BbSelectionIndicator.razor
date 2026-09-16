@@ -1,0 +1,23 @@
+@namespace BlazorBlueprint.Components
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<span @ref="element" aria-hidden="true" class="@ClassNames.cn("bb:pointer-events-none bb:absolute bb:left-0 bb:top-0 bb:rounded-md bb:bg-accent", Class)" hidden></span>
+
+@code {
+    /// <summary>Selector for the active element within the indicator's positioned parent.</summary>
+    [Parameter] public string Selector { get; set; } = "[data-state=active], [aria-selected=true], [aria-current=page]";
+    /// <summary>Optional selector for temporary pointer-hover and keyboard-focus targets.</summary>
+    [Parameter] public string? HoverSelector { get; set; }
+    /// <summary>Duration in milliseconds.</summary>
+    [Parameter] public int Duration { get; set; } = 200;
+    /// <summary>Additional indicator classes. Give foreground items relative positioning.</summary>
+    [Parameter] public string? Class { get; set; }
+    private ElementReference element;
+    private MotionInterop? interop;
+    protected override void OnParametersSet() => ArgumentOutOfRangeException.ThrowIfNegative(Duration);
+    protected override Task OnAfterRenderAsync(bool firstRender) => (interop ??= new(JS)).InvokeAsync("indicator", element,
+        new { selector = Selector, hoverSelector = HoverSelector, duration = Duration });
+    public async ValueTask DisposeAsync() { if (interop is not null) { await interop.DisposeAsync(); } }
+}

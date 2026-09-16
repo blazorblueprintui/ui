@@ -22,7 +22,7 @@ const TYPE_AHEAD_DELAY = 350;
 function getEnabledMenuItems(container) {
   if (!container) return [];
   return Array.from(container.querySelectorAll(menuItemSelector))
-    .filter(item => item.getAttribute('aria-disabled') !== 'true');
+    .filter(item => item.getAttribute('aria-disabled') !== 'true' && item.closest('[role="menu"]') === container);
 }
 
 /**
@@ -169,6 +169,30 @@ export function initialize(container, dotNetRef, instanceId, config) {
   const instance = { container, handler: null, typeAheadBuffer: '', typeAheadTimer: null };
 
   const handleKeyDown = (e) => {
+    if (e.defaultPrevented || e.isComposing || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.target?.closest('[role="menu"]') !== container) return;
+    const active = document.activeElement;
+    const rtl = getComputedStyle(container).direction === 'rtl';
+    const forward = rtl ? 'ArrowLeft' : 'ArrowRight';
+    const back = rtl ? 'ArrowRight' : 'ArrowLeft';
+    const submenuTrigger = active?.hasAttribute('data-bb-submenu-trigger') && active.getAttribute('aria-disabled') !== 'true';
+    if (submenuTrigger && (e.key === forward || e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      e.stopPropagation();
+      const submenu = document.getElementById(active.getAttribute('aria-controls'));
+      if (active.getAttribute('aria-expanded') === 'true' && submenu) {
+        navigateFirst(submenu);
+      } else {
+        active.click();
+      }
+      return;
+    }
+    if (mode === 'submenu' && e.key === back) {
+      e.preventDefault();
+      e.stopPropagation();
+      dotNetRef.invokeMethodAsync('JsOnEscapeKey').catch(() => {});
+      return;
+    }
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
@@ -209,14 +233,14 @@ export function initialize(container, dotNetRef, instanceId, config) {
       case 'ArrowRight':
         if (mode === 'menubar') {
           e.preventDefault();
-          dotNetRef.invokeMethodAsync('JsOnNextMenu').catch(() => {});
+          dotNetRef.invokeMethodAsync(rtl ? 'JsOnPreviousMenu' : 'JsOnNextMenu').catch(() => {});
         }
         break;
 
       case 'ArrowLeft':
         if (mode === 'menubar') {
           e.preventDefault();
-          dotNetRef.invokeMethodAsync('JsOnPreviousMenu').catch(() => {});
+          dotNetRef.invokeMethodAsync(rtl ? 'JsOnNextMenu' : 'JsOnPreviousMenu').catch(() => {});
         }
         break;
 
@@ -230,6 +254,17 @@ export function initialize(container, dotNetRef, instanceId, config) {
     }
   };
 
+  // A hover-open submenu already exists when its trigger is clicked. Move focus without
+  // waiting for another render or reopening the floating overlay.
+  const handleClick = e => {
+    const trigger = e.target?.closest('[data-bb-submenu-trigger]');
+    if (trigger?.closest('[role="menu"]') !== container || trigger.getAttribute('aria-disabled') === 'true') return;
+    if (trigger.getAttribute('aria-expanded') === 'true') {
+      navigateFirst(document.getElementById(trigger.getAttribute('aria-controls')));
+    }
+  };
+  instance.clickHandler = handleClick;
+  container.addEventListener('click', handleClick);
   instance.handler = handleKeyDown;
   container.addEventListener('keydown', handleKeyDown);
   instances.set(instanceId, instance);
@@ -265,6 +300,7 @@ export function dispose(instanceId) {
   if (!stored) return;
 
   stored.container.removeEventListener('keydown', stored.handler);
+  stored.container.removeEventListener('click', stored.clickHandler);
   clearTimeout(stored.typeAheadTimer);
   instances.delete(instanceId);
 }
@@ -293,4 +329,12 @@ export function focusLastItem(container) {
       navigateLast(container);
     });
   });
+}
+
+/** Applies menu focus after a floating overlay becomes visible. */
+export function focusInitial(container, initialFocus) {
+  if (!container) return;
+  if (initialFocus === 'first') navigateFirst(container);
+  else if (initialFocus === 'last') navigateLast(container);
+  else if (initialFocus === 'container') container.focus({ preventScroll: true });
 }

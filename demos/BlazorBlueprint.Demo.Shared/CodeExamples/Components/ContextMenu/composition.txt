@@ -1,0 +1,31 @@
+<BbContextMenu>
+    <BbContextMenuTrigger><div class="rounded-md border border-dashed p-8">Right-click for display and sharing options</div></BbContextMenuTrigger>
+    <BbContextMenuContent>
+<BbContextMenuCheckboxItem @bind-Checked="menuShowDetails">Show details</BbContextMenuCheckboxItem>
+<BbContextMenuRadioGroup TValue="string" @bind-Value="menuDensity" aria-label="Density">
+    <BbContextMenuRadioItem Value='@("Comfortable")' CloseOnSelect="false">Comfortable</BbContextMenuRadioItem>
+    <BbContextMenuRadioItem Value='@("Compact")' CloseOnSelect="false">Compact</BbContextMenuRadioItem>
+    <BbContextMenuRadioItem Value='@("Unavailable")' Disabled="true">Unavailable</BbContextMenuRadioItem>
+</BbContextMenuRadioGroup>
+<BbContextMenuSeparator />
+<BbContextMenuSub>
+    <BbContextMenuSubTrigger>Share</BbContextMenuSubTrigger>
+    <BbContextMenuSubContent>
+        <BbContextMenuItem OnClick='@(() => menuResult = "Link copied")'>Copy link</BbContextMenuItem>
+        <BbContextMenuSub>
+            <BbContextMenuSubTrigger>Export</BbContextMenuSubTrigger>
+            <BbContextMenuSubContent>
+                <BbContextMenuItem OnClick='@(() => menuResult = "Exported CSV")'>CSV</BbContextMenuItem>
+                <BbContextMenuItem OnClick='@(() => menuResult = "Exported JSON")'>JSON</BbContextMenuItem>
+            </BbContextMenuSubContent>
+        </BbContextMenuSub>
+    </BbContextMenuSubContent>
+</BbContextMenuSub>
+    </BbContextMenuContent>
+</BbContextMenu>
+
+@code {
+    private string menuDensity = "Comfortable";
+    private string menuResult = "";
+    private bool menuShowDetails = true;
+}

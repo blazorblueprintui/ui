@@ -1,0 +1,36 @@
+@namespace BlazorBlueprint.Components
+@inject IBbLocalizer Localizer
+
+<nav @attributes="AdditionalAttributes" class="@CssClass" aria-label="@(AriaLabel ?? Localizer["BottomNav.Label"])">
+    <CascadingValue Value="this" IsFixed="false">
+        <div class="bb:flex bb:items-stretch">@ChildContent</div>
+    </CascadingValue>
+</nav>
+
+@code {
+    /// <summary>The active item's value.</summary>
+    [Parameter] public string? Value { get; set; }
+    /// <summary>Called when an item is activated.</summary>
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    /// <summary>The navigation items.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Fixes the navigation to the viewport bottom. Reserve space in the page content.</summary>
+    [Parameter] public bool Fixed { get; set; } = true;
+    /// <summary>Includes the device's bottom safe-area inset.</summary>
+    [Parameter] public bool SafeArea { get; set; } = true;
+    /// <summary>The navigation landmark label.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+    /// <summary>Additional CSS classes.</summary>
+    [Parameter] public string? Class { get; set; }
+    /// <summary>Additional HTML attributes.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+    private string CssClass => ClassNames.cn("bb:z-30 bb:w-full bb:border-t bb:bg-background bb:text-foreground", Fixed ? "bb:fixed bb:inset-x-0 bb:bottom-0" : null, SafeArea ? "bb:pb-[env(safe-area-inset-bottom)]" : null, Class);
+
+    internal async Task SelectAsync(string value)
+    {
+        if (Value == value) { return; }
+        Value = value;
+        await ValueChanged.InvokeAsync(value);
+        StateHasChanged();
+    }
+}

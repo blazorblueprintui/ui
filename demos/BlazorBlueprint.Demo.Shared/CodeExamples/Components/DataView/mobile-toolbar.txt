@@ -1,0 +1,16 @@
+<BbDataView TItem="Person" Data="@(activeOnly ? people.Where(p => p.IsActive) : people)" MobileToolbar="true">
+    <Fields>
+        <BbDataViewColumn TItem="Person" TValue="string" Id="name" Property="@(p => p.Name)" Header="Name" Sortable="true" Filterable="true" />
+        <BbDataViewColumn TItem="Person" TValue="string" Id="department" Property="@(p => p.Department)" Header="Department" Sortable="true" />
+    </Fields>
+    <FilterContent>
+        <BbCheckbox @bind-Checked="activeOnly" Label="Active employees only" />
+    </FilterContent>
+    <ListTemplate Context="person">
+        <div class="flex min-h-12 items-center justify-between rounded-md border p-3"><span>@person.Name</span><span>@person.Department</span></div>
+    </ListTemplate>
+</BbDataView>
+
+@code {
+    private bool activeOnly;
+}

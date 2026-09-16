@@ -61,6 +61,38 @@
             </div>
         </div>
     </section>
+
+        <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The command input controls a listbox of searchable choices. Each result has a readable label and a stable value.</AccessibilityItem>
+            <AccessibilityItem>Virtualized groups render a subset of results; the command control manages the active option as you navigate. Empty results show a visible message.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move through command results"><BbKbd>ArrowUp</BbKbd> / <BbKbd>ArrowDown</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate the selected result"><BbKbd>Enter</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+
+        <ApiReference ComponentName="BbCommandVirtualizedGroup">
+            <ApiParameter Name="ItemTemplate" Type="RenderFragment&lt;TItem&gt;">Required template for rendering each result.</ApiParameter>
+            <ApiParameter Name="ItemValue" Type="Func&lt;TItem, string&gt;">Required function returning a stable command value for each result.</ApiParameter>
+            <ApiParameter Name="Class" Type="string?">Gets or sets additional CSS classes to apply to the group container.</ApiParameter>
+            <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">Gets or sets additional HTML attributes to apply to the root element.</ApiParameter>
+            <ApiParameter Name="Heading" Type="string?">Gets or sets the heading text for this group (optional).</ApiParameter>
+            <ApiParameter Name="Items" Type="IReadOnlyList&lt;TItem&gt;" Default="Array.Empty&lt;TItem&gt;()">Gets or sets the collection of items to display. Required unless ItemsProvider is supplied (provider mode), in which case it is ignored.</ApiParameter>
+            <ApiParameter Name="ItemsProvider" Type="CommandItemsProvider&lt;TItem&gt;?">Gets or sets an async callback that fetches items on demand for true lazy loading, instead of materializing the whole collection into Items.</ApiParameter>
+            <ApiParameter Name="ItemSearchText" Type="Func&lt;TItem, string&gt;?">Gets or sets the function to extract search text from an item. If not provided, ItemValue is used.</ApiParameter>
+            <ApiParameter Name="MaxDisplayCount" Type="int" Default="100">Gets or sets the maximum number of items to display after filtering. Default is 100. Set to 0 for unlimited. Only applies when EnableLazyLoading is false.</ApiParameter>
+            <ApiParameter Name="EnableLazyLoading" Type="bool">Gets or sets whether to enable lazy loading (infinite scroll). When true, items are loaded progressively as the user scrolls. Default is false.</ApiParameter>
+            <ApiParameter Name="LazyLoadBatchSize" Type="int" Default="50">Gets or sets the number of items to load per batch when lazy loading. Default is 50.</ApiParameter>
+        </ApiReference>
+    </section>
 </div>
 
 @if (_isOpen)
@@ -154,7 +186,9 @@
                 </BbCommandList>
             </BlazorBlueprint.Components.BbCommand>
         </div>
-    </div>
+
+
+</div>
 }
 
 @code {

@@ -1,0 +1,65 @@
+@namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
+@inject IBbLocalizer Localizer
+
+<header @attributes="AdditionalAttributes" class="@CssClass">
+    <div class="bb:flex bb:min-h-14 bb:items-center bb:gap-2 bb:px-3">
+        @if (LeadingContent is not null)
+        {
+            @LeadingContent
+        }
+        else if (ShowBack)
+        {
+            <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" OnClick="OnBack"
+                      Class="bb:min-h-[44px] bb:min-w-[44px]" aria-label="@(BackLabel ?? Localizer["AppBar.Back"])">
+                <LucideIcon Name="arrow-left" Size="20" Class="bb:rtl:rotate-180" />
+            </BbButton>
+        }
+        <div class="bb:min-w-0 bb:flex-1">
+            @if (TitleContent is not null)
+            {
+                @TitleContent
+            }
+            else
+            {
+                <div class="bb:truncate bb:font-semibold">@Title</div>
+                @if (!string.IsNullOrEmpty(Description))
+                {
+                    <div class="bb:truncate bb:text-xs bb:text-muted-foreground">@Description</div>
+                }
+            }
+        </div>
+        @if (Actions is not null)
+        {
+            <div class="bb:flex bb:shrink-0 bb:items-center bb:gap-1">@Actions</div>
+        }
+    </div>
+</header>
+
+@code {
+    /// <summary>The title text.</summary>
+    [Parameter] public string? Title { get; set; }
+    /// <summary>Optional secondary text.</summary>
+    [Parameter] public string? Description { get; set; }
+    /// <summary>Replaces the title and description.</summary>
+    [Parameter] public RenderFragment? TitleContent { get; set; }
+    /// <summary>Replaces the back button.</summary>
+    [Parameter] public RenderFragment? LeadingContent { get; set; }
+    /// <summary>Trailing actions.</summary>
+    [Parameter] public RenderFragment? Actions { get; set; }
+    /// <summary>Displays a back button when LeadingContent is absent.</summary>
+    [Parameter] public bool ShowBack { get; set; }
+    /// <summary>The accessible back button label.</summary>
+    [Parameter] public string? BackLabel { get; set; }
+    /// <summary>Handles back navigation.</summary>
+    [Parameter] public EventCallback<MouseEventArgs> OnBack { get; set; }
+    /// <summary>Sticks to the top of the scrolling container.</summary>
+    [Parameter] public bool Sticky { get; set; } = true;
+    /// <summary>Includes the device's top safe-area inset.</summary>
+    [Parameter] public bool SafeArea { get; set; } = true;
+    /// <summary>Additional CSS classes.</summary>
+    [Parameter] public string? Class { get; set; }
+    /// <summary>Additional HTML attributes.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+    private string CssClass => ClassNames.cn("bb:z-30 bb:w-full bb:border-b bb:bg-background bb:text-foreground", Sticky ? "bb:sticky bb:top-0" : null, SafeArea ? "bb:pt-[env(safe-area-inset-top)]" : null, Class);
+}

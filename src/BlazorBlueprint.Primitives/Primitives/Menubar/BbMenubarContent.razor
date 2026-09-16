@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Primitives.Menubar
+@using BlazorBlueprint.Primitives.Menu
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
 
@@ -17,10 +18,13 @@
      tabindex="-1"
      @onclick:stopPropagation="true"
      @attributes="AdditionalAttributes">
-    @ChildContent
+    <CascadingValue Value="menuScope" IsFixed="true">
+        @ChildContent
+    </CascadingValue>
 </div>
 
 @code {
+    private MenuScope menuScope = null!;
     [CascadingParameter]
     private MenubarMenuContext? Menu { get; set; }
 
@@ -51,6 +55,17 @@
     private DotNetObjectReference<BbMenubarContent>? dotNetRef;
     private readonly string instanceId = Guid.NewGuid().ToString("N")[..8];
     private bool disposed;
+
+    protected override void OnInitialized()
+    {
+        menuScope = new MenuScope(() => Menu?.IsOpen == true, CloseRootAsync);
+    }
+
+    private Task CloseRootAsync()
+    {
+        Menu?.Close();
+        return Task.CompletedTask;
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

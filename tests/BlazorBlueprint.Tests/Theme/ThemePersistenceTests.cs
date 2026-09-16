@@ -136,6 +136,36 @@ public class ThemePersistenceTests
         Assert.Equal(0.5, service.Radius);
     }
 
+    [Fact]
+    public async Task PresetDefaultsAndRestoredDesignAreAppliedTogether()
+    {
+        var module = new RecordingModule
+        {
+            AppliedThemeJson = """{"isDarkMode":true,"baseColor":"Slate","primaryColor":"Blue","radius":0.75,"design":{"density":"dense","font":"mono","menuColor":"inverse"}}"""
+        };
+        var service = new ThemeService(new StubJsRuntime(module), new ThemeOptions { DefaultPreset = ThemePresets.Glass });
+        await service.InitializeAsync();
+        Assert.Equal("glass", module.Config.GetProperty("defaults").GetProperty("design").GetProperty("surface").GetString());
+        Assert.Equal(ThemeDensity.Dense, service.Preset.Design.Density);
+        Assert.Equal(ThemeFont.Mono, service.Preset.Design.Font);
+        Assert.Equal(ThemeSurface.Glass, service.Preset.Design.Surface);
+        await service.SetDesignAsync(service.Preset.Design with { MenuAccent = ThemeMenuAccent.Primary });
+        Assert.True(service.IsDarkMode);
+        Assert.Equal(PrimaryColor.Blue, service.PrimaryColor);
+        Assert.Contains("theme.saveTheme", module.Calls);
+    }
+
+    [Fact]
+    public async Task InvalidPresetDoesNotPartiallyMutateTheActiveTheme()
+    {
+        var module = new RecordingModule();
+        var service = new ThemeService(new StubJsRuntime(module), new ThemeOptions());
+        var original = service.Preset;
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => service.SetPresetAsync(ThemePresets.Glass with { Radius = double.NaN }));
+        Assert.Equal(original, service.Preset);
+        Assert.Empty(module.Calls);
+    }
+
     /// <summary>Hands out the one module. Anything else is a call the service should not be making.</summary>
     private sealed class StubJsRuntime(RecordingModule module) : IJSRuntime
     {

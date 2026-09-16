@@ -1,0 +1,45 @@
+@page "/components/selection-indicator"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Selection Indicator - Blazor Blueprint</PageTitle>
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Selection Indicator</h1>
+        <p class="text-xl text-muted-foreground">A decorative highlight that follows the active item and optionally pointer hover or keyboard focus.</p>
+    </div>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Active, hover and focus feedback</h2>
+        <div class="rounded-lg border p-6 space-y-4">
+<div class="relative flex w-fit flex-wrap gap-1 rounded-lg border p-1" role="group" aria-label="Project view">
+    <BbSelectionIndicator Selector="[aria-pressed=true]" HoverSelector="button" />
+    @foreach (var name in new[] { "Overview", "Activity", "Settings" })
+    {
+        <BbButton Variant="ButtonVariant.Ghost" Class="relative" aria-pressed="@((selected == name).ToString().ToLowerInvariant())" OnClick="@(() => selected = name)">@name</BbButton>
+    }
+</div>
+<p role="status" class="text-sm text-muted-foreground">Selected: @selected</p>
+        </div>
+        <CodeBlock Source="Components/SelectionIndicator/basic.txt" />
+    </section>
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The indicator is decorative and aria-hidden; the underlying controls must expose selected or current state.</AccessibilityItem>
+            <AccessibilityItem>The example buttons use aria-pressed. Motion respects prefers-reduced-motion and adds no keyboard stops.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between interactive controls"><BbKbd>Tab / Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate a focused button"><BbKbd>Enter / Space</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+<ApiReference Since="v4" ComponentName="SelectionIndicator">
+        <ApiParameter Name="Selector / HoverSelector" Type="string / string?" Default="active/selected/current selector / null">Match an active descendant of the positioned parent. Optional hover selector also follows keyboard focus. Foreground items should be positioned relative.</ApiParameter>
+        <ApiParameter Name="Duration / Class" Type="int / string?" Default="200 / null">Motion duration in milliseconds and indicator appearance.</ApiParameter>
+    </ApiReference>
+    </section>
+</div>
+
+@code {
+    private string selected = "Overview";
+}

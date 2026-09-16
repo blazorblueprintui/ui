@@ -1,0 +1,13 @@
+@namespace BlazorBlueprint.Components
+
+<CascadingValue Value="state" IsFixed="false">@ChildContent</CascadingValue>
+
+@code {
+    /// <summary>Content receiving a cascading RenderState.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    private RenderState state = new(false);
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender) { state = new(true); StateHasChanged(); }
+    }
+}

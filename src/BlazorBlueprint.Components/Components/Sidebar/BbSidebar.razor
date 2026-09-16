@@ -19,7 +19,7 @@
     else
     {
         @* Desktop: Render as sidebar *@
-        <aside class="@GetDesktopClasses()" @attributes="AdditionalAttributes" data-state="@GetDataState()" data-collapsible="@(Collapsible ? (!Context.Open ? "icon" : "none") : "none")" data-variant="@Context.Variant.ToString().ToLowerInvariant()" data-side="@Context.Side.ToString().ToLowerInvariant()">
+        <aside class="@GetDesktopClasses()" @attributes="AdditionalAttributes" data-state="@GetDataState()" data-collapsible="@(!Context.Open && Context.CollapsedMode == SidebarCollapsedMode.Pill ? "pill" : Collapsible && !Context.Open ? "icon" : "none")" inert="@(GetDataState() == "closed")" aria-hidden="@(GetDataState() == "closed" ? "true" : null)" data-variant="@Context.Variant.ToString().ToLowerInvariant()" data-side="@Context.Side.ToString().ToLowerInvariant()">
             @ChildContent
         </aside>
     }

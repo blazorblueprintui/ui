@@ -1,0 +1,15 @@
+<EditForm Model="model">
+    <DataAnnotationsValidator />
+    <BbDateInput @bind-Value="model.Value" MinDate="@(new DateTime(2026, 1, 1))" MaxDate="@(new DateTime(2026, 12, 31))" Required="true" />
+    <ValidationMessage For="@(() => model.Value)" />
+    <BbButton Type="ButtonType.Submit">Save</BbButton>
+</EditForm>
+
+@code {
+    private readonly FormModel model = new();
+    private sealed class FormModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        public DateTime? Value { get; set; }
+    }
+}

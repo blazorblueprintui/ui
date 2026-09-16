@@ -1,0 +1,31 @@
+@namespace BlazorBlueprint.Components
+
+<button @attributes="AdditionalAttributes" type="button" data-bb-sortable-handle disabled="@Disabled"
+        aria-label="@AriaLabel" class="@CssClass" @onclick:stopPropagation="true">
+    @if (ChildContent is not null)
+    {
+        @ChildContent
+    }
+    else
+    {
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="9" cy="5" r="1.5" /><circle cx="15" cy="5" r="1.5" />
+            <circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" />
+            <circle cx="9" cy="19" r="1.5" /><circle cx="15" cy="19" r="1.5" />
+        </svg>
+    }
+</button>
+
+@code {
+    /// <summary>Optional handle content. Defaults to a grip icon.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>The accessible handle label.</summary>
+    [Parameter] public string AriaLabel { get; set; } = "Reorder item";
+    /// <summary>Disables the handle.</summary>
+    [Parameter] public bool Disabled { get; set; }
+    /// <summary>Additional CSS classes.</summary>
+    [Parameter] public string? Class { get; set; }
+    /// <summary>Additional HTML attributes.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+    private string CssClass => ClassNames.cn("bb:inline-flex bb:shrink-0 bb:cursor-grab bb:touch-none bb:items-center bb:justify-center bb:rounded-sm bb:p-1 bb:text-muted-foreground bb:active:cursor-grabbing bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:disabled:pointer-events-none bb:disabled:opacity-50", Class);
+}

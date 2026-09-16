@@ -5,6 +5,7 @@
 @attribute [CascadingTypeParameter(nameof(TValue))]
 
 @* Styled Select wrapper around Select *@
+<CascadingValue Value="this" IsFixed="false">
 <BlazorBlueprint.Primitives.Select.BbSelect TValue="TValue"
                  Value="@Value"
                  ValueChanged="@HandleValueChanged"
@@ -31,8 +32,14 @@
         @ChildContent
     }
 </BlazorBlueprint.Primitives.Select.BbSelect>
+</CascadingValue>
 
 @code {
+    /// <summary>Displays options in a floating list or a modal bottom sheet.</summary>
+    [Parameter] public SelectPresentation Presentation { get; set; }
+    /// <summary>The title of the bottom sheet.</summary>
+    [Parameter] public string? SheetTitle { get; set; }
+
     private FieldIdentifier _fieldIdentifier;
     private EditContext? _editContext;
 

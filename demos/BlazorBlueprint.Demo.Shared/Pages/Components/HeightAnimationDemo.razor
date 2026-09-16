@@ -1,0 +1,46 @@
+@page "/components/height-animation"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Height Animation - Blazor Blueprint</PageTitle>
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Height Animation</h1>
+        <p class="text-xl text-muted-foreground">Animate expansion, collapse and content resizing while retaining child state.</p>
+    </div>
+<section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Height and visibility</h2>
+        <div class="flex gap-2">
+            <BbButton OnClick="@(() => expanded = !expanded)" aria-expanded="@expanded.ToString().ToLowerInvariant()">Toggle details</BbButton>
+            <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => lines = lines == 3 ? 1 : 3)">Change content size</BbButton>
+        </div>
+        <BbHeightAnimation Expanded="expanded">
+            <div class="space-y-3 rounded-lg border p-4">
+                @for (var i = 0; i < lines; i++) { <p>Content height is measured in the browser, including changes after images or text load.</p> }
+                <BbInput Placeholder="This draft survives collapse" />
+            </div>
+        </BbHeightAnimation>
+        <CodeBlock Source="Components/Motion/height.txt" />
+    </section>
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Collapsed content is inert and hidden from assistive technology; its child state remains mounted.</AccessibilityItem>
+            <AccessibilityItem>The example trigger exposes aria-expanded. Animation honors prefers-reduced-motion.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between interactive controls"><BbKbd>Tab / Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate a focused button"><BbKbd>Enter / Space</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+<ApiReference Since="v4" ComponentName="HeightAnimation">
+        <ApiParameter Name="Expanded / Enabled / Duration / Easing" Type="bool / bool / int / string" Default="true / true / 250 / ease-out">Animate expansion/collapse and measured content resizing. Child content remains mounted. Height returns to auto after expansion.</ApiParameter>
+        <ApiParameter Name="ChildContent / Class / AdditionalAttributes" Type="RenderFragment / string? / Dictionary">Content and wrapper customization.</ApiParameter>
+    </ApiReference>
+    </section>
+</div>
+
+@code {
+    private int lines = 1;
+    private bool expanded = true;
+}

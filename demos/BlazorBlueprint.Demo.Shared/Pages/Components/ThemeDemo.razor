@@ -1,4 +1,5 @@
 @page "/components/theme"
+@inject ThemeService Themes
 
 <PageTitle>Theme System - Blazor Blueprint</PageTitle>
 
@@ -187,7 +188,76 @@ await ThemeService.ToggleDarkModeAsync();</code></pre>
         </section>
 
         <!-- ── API Reference ── -->
+
+
+        <LocalizationSection
+            Description="Theme switcher and dark mode toggle strings are configurable via IBbLocalizer."
+            Labels="@(new LocalizationSection.LabelInfo[]
+            {
+                new("Switcher.Label", "Customize theme", "Aria-label on the theme switcher trigger button"),
+                new("Switcher.Title", "Customize", "Heading of the theme switcher popover"),
+                new("Switcher.Description", "Pick a color and radius for your components.", "Description text under the popover heading"),
+                new("Color", "Color", "Section label for the combined color grid (Combined layout)"),
+                new("BaseColor", "Base color", "Section label for the base color grid (Split layout)"),
+                new("PrimaryColor", "Primary color", "Section label for the primary color grid (Split layout)"),
+                new("Default", "Default", "Label of the primary color chip that inherits the base palette's accent"),
+                new("Radius", "Radius", "Section label for the border radius presets"),
+                new("Mode", "Mode", "Section label for the light/dark mode toggle"),
+                new("Light", "Light", "Light mode button label"),
+                new("Dark", "Dark", "Dark mode button label"),
+                new("SwitchToLight", "Switch to light mode", "Aria-label on the dark mode toggle when dark mode is active"),
+                new("SwitchToDark", "Switch to dark mode", "Aria-label on the dark mode toggle when light mode is active"),
+            })"
+            CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
+{
+    localizer.Set(""Theme.BaseColor"", ""Grundfarbe"");
+    localizer.Set(""Theme.PrimaryColor"", ""Primärfarbe"");
+    localizer.Set(""Theme.Default"", ""Standard"");
+});")" />
         <section class="space-y-4">
+            <h2 class="text-2xl font-semibold">Design presets and local scopes</h2>
+            <p class="text-sm text-muted-foreground">These seven starting points combine radius, density, font and surface settings. Applying a profile here preserves your current colors and dark mode. Named fonts use system fallbacks until your application supplies the font files.</p>
+            <div class="flex flex-wrap items-center gap-2">
+                @foreach (var profile in profiles)
+                {
+                    <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => ApplyProfile(profile.Value))">@profile.Key</BbButton>
+                }
+                <BbThemeSwitcher ShowDesignOptions="true" />
+            </div>
+            <p class="text-sm text-muted-foreground">The scope below keeps its own design and radius while inheriting document colors and dark mode. Its portaled menu follows the scope, and explicit utility classes still override control defaults.</p>
+<BbThemeScope Design="scopeDesign" Radius="0.25">
+    <BbCard Class="p-4 space-y-3">
+        <BbInput Placeholder="Compact scoped input" />
+        <BbDropdownMenu>
+            <BbDropdownMenuTrigger><BbButton Variant="ButtonVariant.Outline">Scoped menu</BbButton></BbDropdownMenuTrigger>
+            <BbDropdownMenuContent>
+                <BbDropdownMenuItem>Open</BbDropdownMenuItem>
+                <BbDropdownMenuItem>Save</BbDropdownMenuItem>
+            </BbDropdownMenuContent>
+        </BbDropdownMenu>
+        <BbButton Class="h-14 px-8">Consumer size override</BbButton>
+    </BbCard>
+</BbThemeScope>
+            <CodeBlock Source="Components/Theme/presets.txt" />
+            <CodeBlock Source="Components/Theme/scope.txt" />
+
+        </section>
+    </div>
+
+        <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The theme switcher and dark-mode toggle have localized accessible names. Color, radius and mode buttons announce their selected state.</AccessibilityItem>
+            <AccessibilityItem>ThemeScope changes appearance without adding interactive semantics. Keep sufficient contrast when supplying custom theme values and fonts.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between theme controls"><BbKbd>Tab</BbKbd> / <BbKbd>Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate a focused button or open a select"><BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Navigate options in a theme select"><BbKbd>ArrowUp</BbKbd> / <BbKbd>ArrowDown</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Close the active popup"><BbKbd>Escape</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <section class="space-y-4">
             <div class="space-y-2">
                 <h2 class="text-2xl font-semibold">API Reference</h2>
                 <p class="text-muted-foreground">Component parameters.</p>
@@ -249,31 +319,42 @@ await ThemeService.ToggleDarkModeAsync();</code></pre>
                     </ApiParameter>
                 </ApiReference>
             </div>
-        </section>
 
-        <LocalizationSection
-            Description="Theme switcher and dark mode toggle strings are configurable via IBbLocalizer."
-            Labels="@(new LocalizationSection.LabelInfo[]
-            {
-                new("Switcher.Label", "Customize theme", "Aria-label on the theme switcher trigger button"),
-                new("Switcher.Title", "Customize", "Heading of the theme switcher popover"),
-                new("Switcher.Description", "Pick a color and radius for your components.", "Description text under the popover heading"),
-                new("Color", "Color", "Section label for the combined color grid (Combined layout)"),
-                new("BaseColor", "Base color", "Section label for the base color grid (Split layout)"),
-                new("PrimaryColor", "Primary color", "Section label for the primary color grid (Split layout)"),
-                new("Default", "Default", "Label of the primary color chip that inherits the base palette's accent"),
-                new("Radius", "Radius", "Section label for the border radius presets"),
-                new("Mode", "Mode", "Section label for the light/dark mode toggle"),
-                new("Light", "Light", "Light mode button label"),
-                new("Dark", "Dark", "Dark mode button label"),
-                new("SwitchToLight", "Switch to light mode", "Aria-label on the dark mode toggle when dark mode is active"),
-                new("SwitchToDark", "Switch to dark mode", "Aria-label on the dark mode toggle when light mode is active"),
-            })"
-            CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
-{
-    localizer.Set(""Theme.BaseColor"", ""Grundfarbe"");
-    localizer.Set(""Theme.PrimaryColor"", ""Primärfarbe"");
-    localizer.Set(""Theme.Default"", ""Standard"");
-});")" />
-    </div>
+<ApiReference Since="v4" ComponentName="ThemePreset / ThemeDesign">
+                <ApiParameter Name="DarkMode / BaseColor / PrimaryColor / Radius" Type="bool / BaseColor / PrimaryColor / double">Complete document theme; radius accepts 0–4 rem.</ApiParameter>
+                <ApiParameter Name="Design" Type="ThemeDesign">Immutable Density, Font, Surface, MenuColor and MenuAccent settings. Density scales Bb spacing utilities; it does not scale consumer utilities.</ApiParameter>
+            </ApiReference>
+
+<ApiReference ComponentName="ThemeOptions / ThemeService">
+                <ApiParameter Since="v4" Name="DefaultPreset" Type="ThemePreset?" Default="null">Overrides the individual Default options when supplied. Persistence and system preference options still apply.</ApiParameter>
+                <ApiParameter Since="v4" Name="Preset" Type="ThemePreset">The current complete configuration.</ApiParameter>
+                <ApiParameter Since="v4" Name="SetPresetAsync / SetDesignAsync" Type="Task">Apply and persist a full preset or only its design settings. Existing saved themes use configured defaults for new fields.</ApiParameter>
+            </ApiReference>
+
+            <span id="theme-scope" class="block scroll-mt-20" aria-hidden="true"></span>
+            <ApiReference Since="v4" ComponentName="ThemeScope">
+                <ApiParameter Name="Design" Type="ThemeDesign">Local appearance settings; does not change document palettes, dark mode or storage.</ApiParameter>
+                <ApiParameter Name="Radius" Type="double?" Default="null">Optional local radius; null inherits.</ApiParameter>
+                <ApiParameter Name="ChildContent / Class / AdditionalAttributes" Type="RenderFragment / string / Dictionary&lt;string, object&gt;">The themed subtree, wrapper classes and HTML attributes.</ApiParameter>
+            </ApiReference>
+
+<ApiReference ComponentName="ThemeSwitcher">
+                <ApiParameter Since="v4" Name="ShowDesignOptions" Type="bool" Default="false">Shows selectors for density, font, surfaces, menu color and menu accent.</ApiParameter>
+            </ApiReference>
+    </section>
+
 </div>
+
+@code {
+    private readonly ThemeDesign scopeDesign = new() { Density = ThemeDensity.Compact, Font = ThemeFont.Mono, MenuColor = ThemeMenuColor.Inverse };
+    private static readonly Dictionary<string, ThemePreset> profiles = new()
+    {
+        ["Standard"] = ThemePresets.Standard, ["Balanced"] = ThemePresets.Balanced,
+        ["Compact"] = ThemePresets.Compact, ["Spacious"] = ThemePresets.Spacious,
+        ["Sharp"] = ThemePresets.Sharp, ["Dense"] = ThemePresets.Dense, ["Glass"] = ThemePresets.Glass
+    };
+    private Task ApplyProfile(ThemePreset profile) => Themes.SetPresetAsync(profile with
+    {
+        DarkMode = Themes.IsDarkMode, BaseColor = Themes.BaseColor, PrimaryColor = Themes.PrimaryColor
+    });
+}

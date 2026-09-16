@@ -1,0 +1,21 @@
+<BbSortable TItem="string" Items="available" Group="transferGroup"
+            CanDrop="@(drop => selected.Count < 3)"
+            OnRemove="@(args => MoveAcross(available, selected, args))">
+    <ItemTemplate Context="item">@item</ItemTemplate>
+</BbSortable>
+<BbSortable TItem="string" Items="selected" Group="transferGroup"
+            OnRemove="@(args => MoveAcross(selected, available, args))">
+    <ItemTemplate Context="item">@item</ItemTemplate>
+</BbSortable>
+
+@code {
+    private readonly string transferGroup = Guid.NewGuid().ToString();
+    private List<string> available = ["React", "Vue", "Angular"];
+    private List<string> selected = ["Blazor"];
+    private static void MoveAcross(List<string> source, List<string> target, (int OldIndex, int NewIndex) move)
+    {
+        var item = source[move.OldIndex];
+        source.RemoveAt(move.OldIndex);
+        target.Insert(move.NewIndex, item);
+    }
+}

@@ -76,6 +76,18 @@ public class SidebarContext
 {
     private SidebarState _state = new();
 
+    /// <summary>The desktop collapsed presentation.</summary>
+    public SidebarCollapsedMode CollapsedMode { get; private set; }
+
+    /// <summary>Changes the collapsed presentation and notifies subscribers.</summary>
+    public void SetCollapsedMode(SidebarCollapsedMode mode)
+    {
+        if (CollapsedMode == mode) { return; }
+        CollapsedMode = mode;
+        OnStateChanged();
+    }
+
+
     /// <summary>
     /// Gets the current sidebar state.
     /// </summary>

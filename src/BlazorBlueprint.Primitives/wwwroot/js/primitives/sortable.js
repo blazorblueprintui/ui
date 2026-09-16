@@ -1,3 +1,7 @@
+import { attachKeyboardSorting } from '../sortable-keyboard.js';
+import { performDrop } from '../sortable-transfer.js';
+import { createDragOverlay } from '../sortable-overlay.js';
+
 /** @type {Promise|null} */
 let sortableLoadPromise = null;
 
@@ -90,17 +94,25 @@ export async function init(id, group, pull, put, sort, handle, filter, component
   // item and trigger an immediate reverse swap, causing a visual "dance".
   let lastMoveTime = 0;
 
+  const resolvedHandle = handle || (el.querySelector('[data-bb-sortable-handle]') ? '[data-bb-sortable-handle]' : undefined);
+  let cleanupOverlay = null;
   const sortable = new Sortable(el, {
     animation: 150,
     group: {
       name: group,
-      pull: pull ?? true,
+      pull: pull === 'false' ? false : pull === 'true' ? true : pull ?? true,
       put: put
     },
-    filter: filter || undefined,
+    filter: [filter, '[data-bb-sortable-handle]:disabled'].filter(Boolean).join(','),
     sort: sort,
     forceFallback: forceFallback,
-    handle: handle || undefined,
+    onStart: event => {
+      cleanupOverlay?.();
+      cleanupOverlay = createDragOverlay(event.item, event.originalEvent);
+      if (cleanupOverlay && Sortable.ghost) Sortable.ghost.style.setProperty('opacity', '0', 'important');
+    },
+    onEnd: () => { cleanupOverlay?.(); cleanupOverlay = null; },
+    handle: resolvedHandle,
     onMove: () => {
       const now = Date.now();
       if (now - lastMoveTime < 200) {
@@ -121,32 +133,59 @@ export async function init(id, group, pull, put, sort, handle, filter, component
       event.to.insertBefore(event.item, event.to.children[event.oldIndex]);
 
       component.invokeMethodAsync('OnUpdateJS', event.oldDraggableIndex, event.newDraggableIndex)
-        .then(() => { snapshot.remove(); });
+        .finally(() => { snapshot.remove(); }).catch(() => {});
     },
     onRemove: (event) => {
       if (event.pullMode === 'clone') {
         event.clone.remove();
       }
 
-      const snapshot = freezeSnapshot(event.from);
-
       event.item.remove();
-      event.from.insertBefore(event.item, event.from.childNodes[event.oldIndex]);
-
-      component.invokeMethodAsync('OnRemoveJS', event.oldDraggableIndex, event.newDraggableIndex)
-        .then(() => { snapshot.remove(); });
+      event.from.insertBefore(event.item, event.from.children[event.oldIndex]);
+      // A Bb target coordinates validation and callbacks after both DOM trees are restored.
+      if (!instances.has(event.to.id)) {
+        component.invokeMethodAsync('OnRemoveJS', event.oldDraggableIndex, event.newDraggableIndex).catch(() => {});
+      }
     },
     onAdd: (event) => {
-      const snapshot = freezeSnapshot(event.to);
-
+      const snapshots = [freezeSnapshot(event.to), freezeSnapshot(event.from)];
       event.item.remove();
-
-      component.invokeMethodAsync('OnAddJS', event.oldDraggableIndex, event.newDraggableIndex)
-        .then(() => { snapshot.remove(); });
+      const source = instances.get(event.from.id)?.component;
+      // Sortable dispatches onRemove synchronously after onAdd. The first await keeps model
+      // callbacks behind that DOM restoration, including on WebAssembly.
+      performDrop(source, component, event.oldDraggableIndex, event.newDraggableIndex, id, event.pullMode === 'clone')
+        .finally(() => { snapshots.forEach(snapshot => snapshot.remove()); })
+        .catch(error => console.error('sortable: cross-list drop failed', error));
     }
   });
 
-  instances.set(id, sortable);
+  const transferByKeyboard = async (oldIndex, direction) => {
+    if (pull === 'false') return false;
+    const connected = [...instances.values()].filter(instance => instance.group === group && instance.el.isConnected && instance.el.getClientRects().length)
+      .sort((a, b) => a.el.compareDocumentPosition(b.el) & 4 ? -1 : 1);
+    const current = connected.findIndex(instance => instance.el === el);
+    let target;
+    for (let i = current + direction; i >= 0 && i < connected.length; i += direction) {
+      if (connected[i].put && connected[i].el.dataset.keyboardSorting === 'true') { target = connected[i]; break; }
+    }
+    if (!target) return false;
+    const newIndex = [...target.el.children].filter(child => child.hasAttribute('data-bb-sortable-item')).length;
+    const allowed = await performDrop(component, target.component, oldIndex, newIndex, target.el.id, pull === 'clone');
+    if (allowed) {
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      const added = [...target.el.children].filter(child => child.hasAttribute('data-bb-sortable-item'))[newIndex];
+      const focus = added?.querySelector(target.handle || '[data-bb-sortable-handle]') || added;
+      focus?.focus();
+    }
+    return allowed;
+  };
+  const cleanupKeyboard = attachKeyboardSorting(el, handle, filter,
+    (oldIndex, newIndex) => component.invokeMethodAsync('OnUpdateJS', oldIndex, newIndex), transferByKeyboard);
+  const handleObserver = new MutationObserver(() => {
+    if (!handle) sortable.option('handle', el.querySelector('[data-bb-sortable-handle]') ? '[data-bb-sortable-handle]' : null);
+  });
+  handleObserver.observe(el, { childList: true });
+  instances.set(id, { sortable, cleanupKeyboard, component, el, group, put, handle, cleanup: () => { cleanupOverlay?.(); handleObserver.disconnect(); } });
 }
 
 /**
@@ -154,9 +193,11 @@ export async function init(id, group, pull, put, sort, handle, filter, component
  * @param {string} id - Element ID
  */
 export function destroy(id) {
-  const sortable = instances.get(id);
-  if (sortable) {
-    sortable.destroy();
+  const instance = instances.get(id);
+  if (instance) {
+    instance.cleanupKeyboard();
+    instance.cleanup();
+    instance.sortable.destroy();
     instances.delete(id);
   }
 }

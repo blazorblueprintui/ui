@@ -38,13 +38,14 @@ test('resizing a clipped multi-day appointment preserves the offscreen edge', ()
 
 // Exercise the pointer lifecycle as well as the time calculations.
 const { initialize, dispose } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
-function pointerFixture() {
+function pointerFixture(initialScrollTop) {
   const handlers = () => ({ listeners: new Map(),
     addEventListener(name, callback) { this.listeners.set(name, callback); },
     removeEventListener(name) { this.listeners.delete(name); }
   });
   const calls = [];
   const root = { ...handlers(), dataset: { allowDrag: 'true', allowResize: 'true', slotMinutes: '30', timeZone: 'UTC', revision: '1' } };
+  if (initialScrollTop != null) root.dataset.initialScrollTop = String(initialScrollTop);
   const viewport = { scrollTop: 0, scrollLeft: 0, getBoundingClientRect: () => ({ left: 0, right: 500, top: 0, bottom: 800 }) };
   const sourceLane = { dataset: { start: lane.start, end: lane.end, schedulerLane: '0' }, getBoundingClientRect: () => ({ left: 0, top: 0, width: 500 }), closest: () => sourceLane };
   const card = { dataset: { start: event.start, end: event.end, schedulerEvent: 'test' }, isConnected: true,
@@ -61,7 +62,7 @@ function pointerFixture() {
   globalThis.getComputedStyle = () => ({ fontSize: '16px', backgroundColor: '#fff' });
   initialize(root, { invokeMethodAsync: async (...args) => calls.push(args) });
   const fire = (name, y, target = card) => root.listeners.get(name)?.({ target, button: 0, pointerId: 1, clientX: 100, clientY: y, preventDefault() {}, stopImmediatePropagation() {} });
-  return { root, card, calls, fire };
+  return { root, card, calls, fire, viewport };
 }
 
 test('a gesture commits once on release, uses the final coordinate and preserves normal clicks', async () => {
@@ -103,4 +104,18 @@ test('disabled, canceled and disposed gestures never save', async () => {
   dispose(f.root);
   assert.equal(f.calls.length, 0);
   assert.equal(f.card.captured, false);
+});
+
+test('initial hour scroll is applied once and normal clicks preserve manual scrolling', async () => {
+  const f = pointerFixture(640);
+  assert.equal(f.viewport.scrollTop, 640);
+  f.viewport.scrollTop = 1200;
+  f.fire('pointerdown', 100);
+  await f.fire('pointerup', 100);
+  assert.equal(f.viewport.scrollTop, 1200);
+  assert.equal(f.calls.length, 0);
+  dispose(f.root);
+  const defaultPosition = pointerFixture();
+  assert.equal(defaultPosition.viewport.scrollTop, 0);
+  dispose(defaultPosition.root);
 });

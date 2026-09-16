@@ -1,0 +1,85 @@
+@namespace BlazorBlueprint.Primitives.Menu
+@using System.ComponentModel
+@using BlazorBlueprint.Primitives.Floating
+@implements IDisposable
+
+<BbFloatingPortal IsOpen="@(Sub.IsOpen && Sub.TriggerElement.HasValue)" AnchorElement="@Sub.TriggerElement"
+                  PortalId="@Sub.ContentId" Side="@Side" Align="PopoverAlign.Start" Offset="@Offset"
+                  Strategy="PositioningStrategy.Fixed" ForceMount="false" ZIndex="@ZIndex"
+                  SideElementId="@Sub.ContentId" RestoreFocusToId="@Sub.TriggerId"
+                  RestoreFocusOnClose="@Sub.RestoreFocus" Keyboard="@Keyboard" Dismiss="@Dismiss"
+                  OnDismiss="@HandleDismiss">
+    <div @attributes="AdditionalAttributes" id="@Sub.ContentId" role="menu" tabindex="-1"
+         aria-labelledby="@Sub.TriggerId" data-state="@(Sub.IsOpen ? "open" : "closed")">
+        <CascadingValue Value="Dropdown" IsFixed="true">
+            <CascadingValue Value="ContextMenu" IsFixed="true">
+                <CascadingValue Value="Menubar" IsFixed="true">
+                    <CascadingValue Value="Sub.ChildScope" IsFixed="true">
+                        @ChildContent
+                    </CascadingValue>
+                </CascadingValue>
+            </CascadingValue>
+        </CascadingValue>
+    </div>
+</BbFloatingPortal>
+
+@code {
+    [CascadingParameter] private BbMenuSub Sub { get; set; } = null!;
+    [CascadingParameter] private DropdownMenu.DropdownMenuContext? Dropdown { get; set; }
+    [CascadingParameter] private ContextMenu.BbContextMenu? ContextMenu { get; set; }
+    [CascadingParameter] private Menubar.MenubarMenuContext? Menubar { get; set; }
+    /// <summary>The nested menu items.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Preferred placement side. Set Left for right-to-left layouts.</summary>
+    [Parameter] public PopoverSide Side { get; set; } = PopoverSide.Right;
+    /// <summary>Distance from the trigger in pixels.</summary>
+    [Parameter] public int Offset { get; set; } = 2;
+    /// <summary>Stacking order. Default is 60.</summary>
+    [Parameter] public int ZIndex { get; set; } = 60;
+    /// <summary>Whether arrow navigation wraps. Default is true.</summary>
+    [Parameter] public bool Loop { get; set; } = true;
+    /// <summary>Additional HTML attributes.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+    private DotNetObjectReference<BbMenuSubContent>? reference;
+    private bool disposed;
+
+    protected override void OnParametersSet()
+    {
+        if (Sub is null) { throw new InvalidOperationException("Submenu content requires a submenu."); }
+    }
+
+    private FloatingKeyboardOptions Keyboard => new()
+    {
+        Kind = FloatingKeyboardKind.Menu,
+        ContentId = Sub.ContentId,
+        CallbackRef = reference ??= DotNetObjectReference.Create(this),
+        Mode = "submenu",
+        Loop = Loop,
+        InitialFocus = Sub.FocusOnOpen ? "first" : null
+    };
+
+    private FloatingDismissOptions Dismiss => new()
+    {
+        ContentId = Sub.ContentId,
+        TriggerId = Sub.TriggerId,
+        OnOutsideInteraction = true
+    };
+
+    private void HandleDismiss(FloatingDismissReason reason)
+    {
+        if (!disposed && reason == FloatingDismissReason.OutsideInteraction) { Sub.Close(false); }
+    }
+
+    /// <summary>Handles Escape and the arrow back to the parent menu.</summary>
+    [JSInvokable, EditorBrowsable(EditorBrowsableState.Never)]
+    public void JsOnEscapeKey()
+    {
+        if (!disposed) { Sub.Close(true); }
+    }
+
+    public void Dispose()
+    {
+        disposed = true;
+        reference?.Dispose();
+    }
+}

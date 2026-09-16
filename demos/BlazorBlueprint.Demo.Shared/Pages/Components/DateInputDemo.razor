@@ -1,0 +1,95 @@
+@page "/components/date-input"
+@using System.Globalization
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>Date Input - Blazor Blueprint</PageTitle>
+<div class="space-y-8 max-w-4xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Date Input</h1>
+        <p class="text-xl text-muted-foreground">Edit day, month and four-digit year separately, in your culture’s date order.</p>
+    </div>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Segmented editing</h2>
+        <div class="rounded-lg border p-6 space-y-4">
+            <BbLabel For="basic-date">Appointment date</BbLabel>
+            <BbDateInput Id="basic-date" @bind-Value="value" AriaLabel="Appointment date" />
+            <p role="status" class="text-sm text-muted-foreground">Selected: @(value?.ToString() ?? "None")</p>
+        </div>
+        <CodeBlock Source="Components/DateInput/basic.txt" />
+    </section>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Display options</h2>
+        <div class="rounded-lg border p-6 space-y-4">
+            <BbDateInput @bind-Value="alternate" Culture="@CultureInfo.GetCultureInfo("en-GB")" ShowCalendar="false" AriaLabel="Alternate date format" />
+            <BbDateInput Value="value" Disabled="true" AriaLabel="Disabled date" />
+            <BbDateInput Value="value" ReadOnly="true" AriaLabel="Read-only date" />
+        </div>
+        <CodeBlock Source="Components/DateInput/options.txt" />
+    </section>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Validation and bounds</h2>
+        <EditForm Model="model" FormName="segmented-date" OnValidSubmit="@(() => saved = true)" class="rounded-lg border p-6 space-y-4">
+            <DataAnnotationsValidator />
+            <BbLabel For="required-date">Required date</BbLabel>
+            <BbDateInput @ref="requiredInput" Id="required-date" @bind-Value="model.Value" MinDate="@(new DateTime(2026, 1, 1))" MaxDate="@(new DateTime(2026, 12, 31))" Required="true" AriaDescribedBy="date-help" />
+            <p id="date-help" class="text-sm text-muted-foreground">Choose a date in 2026. Partial or invalid entries remain visible and prevent form submission.</p>
+            <ValidationMessage For="@(() => model.Value)" />
+            <div class="flex gap-2">
+                <BbButton Type="ButtonType.Submit">Save</BbButton>
+                <BbButton Variant="ButtonVariant.Outline" OnClick="Clear">Clear</BbButton>
+            </div>
+            @if (saved) { <p role="status">Saved successfully.</p> }
+        </EditForm>
+        <CodeBlock Source="Components/DateInput/validation.txt" />
+    </section>
+
+
+        <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The control is a labelled group. Numeric segments expose spinbutton roles, individual names, current values and ranges.</AccessibilityItem>
+            <AccessibilityItem>Use Id with BbLabel for the first segment, AriaLabel for the group, and AriaDescribedBy to associate help or validation text.</AccessibilityItem>
+            <AccessibilityItem>Partial or invalid entries retain their text, mark the group and segments invalid, and add an EditContext validation message. Disabled segments cannot be edited; read-only numeric segments remain focusable.</AccessibilityItem>
+            <AccessibilityItem>The calendar button opens a date grid. Dates outside MinDate and MaxDate cannot be selected.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between numeric segments and picker controls"><BbKbd>Tab</BbKbd> / <BbKbd>Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move between numeric segments (direction follows RTL)"><BbKbd>ArrowLeft</BbKbd> / <BbKbd>ArrowRight</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Increase or decrease the focused numeric segment"><BbKbd>ArrowUp</BbKbd> / <BbKbd>ArrowDown</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Set the focused numeric segment to its minimum or maximum"><BbKbd>Home</BbKbd> / <BbKbd>End</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Clear selected segment text"><BbKbd>Backspace</BbKbd> / <BbKbd>Delete</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Open the focused calendar button or choose a focused date"><BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Close the calendar popup"><BbKbd>Escape</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+        <ApiReference Since="v4" ComponentName="DateInput">
+            <ApiParameter Name="Value / ValueChanged / ValueExpression" Type="DateTime? / callback / expression">Two-way value binding and form validation. Partial or invalid text sets the bound value to null while retaining the draft.</ApiParameter>
+            <ApiParameter Name="Culture" Type="CultureInfo?" Default="null">Defaults to CultureInfo.CurrentCulture.</ApiParameter>
+            <ApiParameter Name="MinDate / MaxDate" Type="DateTime?">Inclusive date bounds. Dates use the Gregorian calendar; Culture controls segment order and separators.</ApiParameter>
+            <ApiParameter Name="ShowCalendar" Type="bool" Default="true">Show the calendar button.</ApiParameter>
+            <ApiParameter Name="Disabled / ReadOnly / Required" Type="bool" Default="false">Disable editing, keep a read-only display, or mark segments required. Use model validation for required-value enforcement.</ApiParameter>
+            <ApiParameter Name="Id / Name / AriaLabel / AriaDescribedBy" Type="string?">First-segment ID, hidden form-field name, group label and descriptive text ID.</ApiParameter>
+            <ApiParameter Name="Class / AdditionalAttributes" Type="presentation parameters">Container styling and attributes.</ApiParameter>
+            <ApiParameter Name="ClearAsync()" Type="Task">Clear the value and every segment; ignored when disabled or read-only.</ApiParameter>
+        </ApiReference>
+    </section>
+
+</div>
+@code {
+    private DateTime? value = new DateTime(2026, 9, 16);
+    private DateTime? alternate = new DateTime(2026, 9, 16);
+    private readonly FormModel model = new();
+    private BbDateInput? requiredInput;
+    private bool saved;
+    private async Task Clear()
+    {
+        saved = false;
+        if (requiredInput != null) { await requiredInput.ClearAsync(); }
+    }
+    private sealed class FormModel
+    {
+        [Required] public DateTime? Value { get; set; }
+    }
+}

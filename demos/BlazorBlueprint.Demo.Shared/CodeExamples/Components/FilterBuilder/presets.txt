@@ -1,0 +1,39 @@
+<BbFilterBuilder @bind-Filter="presetFilter" Fields="basicFields" Presets="savedFilters"
+                 PresetDisplay="FilterPresetDisplay.Buttons" SearchableFields="true"
+                 ValueEditors="customEditors" ShowApplyButton="true" />
+
+@code {
+    private FilterDefinition presetFilter = new();
+    private readonly FilterPreset[] savedFilters =
+    [
+        new("all", "All people", new()),
+        new("active", "Active people", new() { Conditions = [new() { Field = "Status", Operator = FilterOperator.Equals, Value = "Active" }] }),
+        new("pending", "Pending people", new() { Conditions = [new() { Field = "Status", Operator = FilterOperator.Equals, Value = "Pending" }] })
+    ];
+    private IReadOnlyDictionary<string, RenderFragment<FilterValueEditorContext>> customEditors =>
+        new Dictionary<string, RenderFragment<FilterValueEditorContext>> { ["Status"] = StatusEditor };
+    private RenderFragment<FilterValueEditorContext> StatusEditor => context => __builder =>
+    {
+        <div class="flex flex-wrap gap-1" role="group" aria-label="Status">
+            @foreach (var status in new[] { "Active", "Inactive", "Pending", "Suspended" })
+            {
+                <BbButton Size="ButtonSize.Small" Variant="@(StatusSelected(context, status) ? ButtonVariant.Secondary : ButtonVariant.Outline)"
+                          OnClick="@(() => SetStatusAsync(context, status))" aria-pressed="@StatusSelected(context, status).ToString().ToLowerInvariant()">@status</BbButton>
+            }
+        </div>
+    };
+
+    private static bool StatusSelected(FilterValueEditorContext context, string status) =>
+        context.Operator is FilterOperator.In or FilterOperator.NotIn
+            ? context.Value is IEnumerable<string> values && values.Contains(status)
+            : Equals(context.Value, status);
+
+    private static Task SetStatusAsync(FilterValueEditorContext context, string status)
+    {
+        if (context.Operator is not (FilterOperator.In or FilterOperator.NotIn)) { return context.SetValueAsync(status); }
+        var values = context.Value is IEnumerable<string> selected ? selected.ToList() : new List<string>();
+        if (!values.Remove(status)) { values.Add(status); }
+        return context.SetValueAsync(values.ToArray());
+    }
+
+}

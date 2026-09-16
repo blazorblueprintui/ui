@@ -31,6 +31,8 @@ public partial class BbScheduler
     [Parameter] public int SlotMinutes { get; set; } = 30;
     [Parameter] public int StartHour { get; set; } = 8;
     [Parameter] public int EndHour { get; set; } = 18;
+    /// <summary>Display-zone hour (0–23) to scroll to on the first interactive render. Null starts at StartHour. Later renders preserve the user's scroll position.</summary>
+    [Parameter] public int? InitialScrollHour { get; set; }
     [Parameter] public bool ReadOnly { get; set; }
     [Parameter] public string? Class { get; set; }
     [Parameter] public string? AriaLabel { get; set; }
@@ -51,10 +53,11 @@ public partial class BbScheduler
     private DateTime? localEnd;
     private static readonly string[] TimeZoneIds = [.. NodaTime.DateTimeZoneProviders.Tzdb.Ids
         .Where(id => TimeZoneInfo.TryFindSystemTimeZoneById(id, out _)).Order(StringComparer.Ordinal)];
-    private static readonly string[] RecurrenceFrequencies = ["NONE", "DAILY", "WEEKLY", "MONTHLY", "YEARLY", "CUSTOM"];
+    private static readonly string[] RecurrenceFrequencies = ["NONE", "DAILY", "WEEKLY", "MONTHLY", "YEARLY"];
+    private static readonly string[] RecurrenceDayCodes = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+    private readonly HashSet<DayOfWeek> recurrenceDays = [];
     private bool limitRecurrence;
     private string recurrenceFrequency = "NONE";
-    private int recurrenceInterval = 1;
     private int? recurrenceCount;
     private bool editorOpen;
     private bool deleteConfirmationOpen;
@@ -86,7 +89,7 @@ public partial class BbScheduler
         }
         if (firstRender)
         {
-            interactionModule = await JsModules.GetAsync(JSRuntime, JsModules.Versioned("./_content/BlazorBlueprint.Components/js/scheduler.js", typeof(BbScheduler).Assembly));
+            interactionModule = await JsModules.GetAsync(JSRuntime, JsModules.Versioned("./_content/BlazorBlueprint.Components/js/scheduler.js?assets=2", typeof(BbScheduler).Assembly));
             if (disposed)
             {
                 return;
@@ -123,11 +126,26 @@ public partial class BbScheduler
         {
             throw new ArgumentOutOfRangeException(nameof(StartHour), "Use 0 <= StartHour < EndHour <= 24.");
         }
+        if (InitialScrollHour is < 0 or > 23)
+        {
+            throw new ArgumentOutOfRangeException(nameof(InitialScrollHour), "Use an hour between 0 and 23, or null.");
+        }
         if (Resources.Any(r => string.IsNullOrWhiteSpace(r.Id)) || Resources.Select(r => r.Id).Distinct(StringComparer.Ordinal).Count() != Resources.Count)
         {
             throw new ArgumentException("Resource IDs must be unique.", nameof(Resources));
         }
         RefreshSchedule();
+    }
+
+    private double? GetInitialScrollTop()
+    {
+        if (InitialScrollHour is not { } hour || lanes.Count == 0)
+        {
+            return null;
+        }
+        var lane = lanes[0];
+        var minutes = (DayBoundary(lane.Date, hour) - lane.Start).TotalMinutes;
+        return Math.Clamp(minutes, 0, (lane.End - lane.Start).TotalMinutes) / SlotMinutes * 40;
     }
 
     private void RefreshSchedule()
@@ -248,6 +266,18 @@ public partial class BbScheduler
         await DateChanged.InvokeAsync(Date);
     }
 
+    private async Task NavigateToTodayAsync()
+    {
+        // The schedule's day can differ from the server's local day.
+        if (!TimeZoneInfo.TryFindSystemTimeZoneById(TimeZoneId, out var zone))
+        {
+            return;
+        }
+        Date = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, zone).DateTime);
+        RefreshSchedule();
+        await DateChanged.InvokeAsync(Date);
+    }
+
     private async Task SetViewAsync(SchedulerView view)
     {
         View = view;
@@ -344,15 +374,89 @@ public partial class BbScheduler
 
     private void ReadRecurrence()
     {
-        recurrenceFrequency = string.IsNullOrWhiteSpace(draft!.RecurrenceRule) ? "NONE" : "CUSTOM";
-        recurrenceInterval = 1;
+        recurrenceFrequency = string.IsNullOrWhiteSpace(draft!.RecurrenceRule) ? "NONE" : "EXISTING";
         recurrenceCount = 10;
         limitRecurrence = false;
+        recurrenceDays.Clear();
+        if (recurrenceFrequency == "NONE")
+        {
+            return;
+        }
+
+        // Only expose rules that this editor can round-trip. Keep more complex
+        // application-supplied schedules intact until the user replaces them.
+        var fields = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var part in draft.RecurrenceRule!.Split(';'))
+        {
+            var pair = part.Split('=', 2, StringSplitOptions.TrimEntries);
+            if (pair.Length != 2 || !fields.TryAdd(pair[0].ToUpperInvariant(), pair[1].ToUpperInvariant()))
+            {
+                return;
+            }
+        }
+        if (fields.Keys.Any(key => key is not ("FREQ" or "INTERVAL" or "COUNT" or "BYDAY"))
+            || !fields.TryGetValue("FREQ", out var frequency)
+            || !RecurrenceFrequencies.Contains(frequency, StringComparer.Ordinal) || frequency == "NONE"
+            || (fields.TryGetValue("INTERVAL", out var interval) && interval != "1"))
+        {
+            return;
+        }
+        if (fields.TryGetValue("COUNT", out var count))
+        {
+            if (!int.TryParse(count, NumberStyles.None, CultureInfo.InvariantCulture, out var parsed) || parsed < 1)
+            {
+                return;
+            }
+            recurrenceCount = parsed;
+            limitRecurrence = true;
+        }
+        if (fields.TryGetValue("BYDAY", out var days))
+        {
+            if (frequency != "WEEKLY")
+            {
+                return;
+            }
+            foreach (var code in days.Split(','))
+            {
+                var day = Array.IndexOf(RecurrenceDayCodes, code);
+                if (day < 0)
+                {
+                    recurrenceDays.Clear();
+                    return;
+                }
+                recurrenceDays.Add((DayOfWeek)day);
+            }
+        }
+        if (frequency == "WEEKLY" && recurrenceDays.Count == 0)
+        {
+            recurrenceDays.Add(TimeZoneInfo.ConvertTime(draft.Start, TimeZoneInfo.FindSystemTimeZoneById(draft.TimeZoneId)).DayOfWeek);
+        }
+        recurrenceFrequency = frequency;
     }
 
     private void FrequencyChanged(string? value)
     {
         recurrenceFrequency = value ?? "NONE";
+        if (recurrenceFrequency == "WEEKLY" && recurrenceDays.Count == 0)
+        {
+            recurrenceDays.Add((localStart ?? DateTime.Today).DayOfWeek);
+        }
+        UpdateRecurrence();
+    }
+
+    private IEnumerable<DayOfWeek> RecurrenceWeekDays => Enumerable.Range(0, 7)
+        .Select(offset => (DayOfWeek)(((int)FirstDayOfWeek + offset) % 7));
+
+    private void ToggleRecurrenceDay(DayOfWeek day, bool selected)
+    {
+        if (selected)
+        {
+            recurrenceDays.Add(day);
+        }
+        else
+        {
+            recurrenceDays.Remove(day);
+        }
         UpdateRecurrence();
     }
 
@@ -362,9 +466,10 @@ public partial class BbScheduler
         {
             draft!.RecurrenceRule = null;
         }
-        else if (recurrenceFrequency != "CUSTOM")
+        else if (recurrenceFrequency != "EXISTING" && (recurrenceFrequency != "WEEKLY" || recurrenceDays.Count > 0))
         {
-            draft!.RecurrenceRule = FormattableString.Invariant($"FREQ={recurrenceFrequency};INTERVAL={recurrenceInterval}")
+            draft!.RecurrenceRule = $"FREQ={recurrenceFrequency}"
+                + (recurrenceFrequency == "WEEKLY" ? ";BYDAY=" + string.Join(',', recurrenceDays.Order().Select(day => RecurrenceDayCodes[(int)day])) : "")
                 + (limitRecurrence ? FormattableString.Invariant($";COUNT={recurrenceCount ?? 10}") : "");
         }
     }
@@ -404,6 +509,13 @@ public partial class BbScheduler
         {
             if (!delete)
             {
+                if (recurrenceFrequency == "WEEKLY" && recurrenceDays.Count == 0
+                    && (editingOccurrence == null || editScope == SchedulerEditScope.Series
+                        || string.IsNullOrWhiteSpace(editingOccurrence.Event.RecurrenceRule)))
+                {
+                    editorError = Localizer["Scheduler.ChooseRepeatDay"];
+                    return;
+                }
                 if (!localStart.HasValue || !localEnd.HasValue)
                 {
                     throw new ArgumentException("Start and end are required.");

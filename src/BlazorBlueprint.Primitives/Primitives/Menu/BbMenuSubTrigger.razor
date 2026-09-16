@@ -1,0 +1,40 @@
+@namespace BlazorBlueprint.Primitives.Menu
+
+<div @ref="trigger" @attributes="AdditionalAttributes" id="@Sub.TriggerId"
+     role="menuitem" tabindex="-1" aria-haspopup="menu" aria-controls="@Sub.ContentId"
+     aria-expanded="@Sub.IsOpen.ToString().ToLowerInvariant()"
+     aria-disabled="@Sub.Disabled.ToString().ToLowerInvariant()"
+     data-disabled="@(Sub.Disabled ? "true" : null)" data-bb-submenu-trigger
+     data-state="@(Sub.IsOpen ? "open" : "closed")"
+     @onclick="HandleClick" @onclick:stopPropagation="true" @onmouseenter="HandleHover">
+    @ChildContent
+</div>
+
+@code {
+    [CascadingParameter] private BbMenuSub Sub { get; set; } = null!;
+    /// <summary>The trigger label.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Whether hovering the trigger opens the submenu. Default is true.</summary>
+    [Parameter] public bool OpenOnHover { get; set; } = true;
+    /// <summary>Additional HTML attributes.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+    private ElementReference trigger;
+
+    protected override void OnParametersSet()
+    {
+        if (Sub is null) { throw new InvalidOperationException("A submenu trigger requires a submenu."); }
+    }
+
+    private void HandleClick()
+    {
+        Sub.TriggerElement = trigger;
+        Sub.Open(true);
+    }
+
+    private void HandleHover()
+    {
+        if (!OpenOnHover || Sub.IsOpen) { return; }
+        Sub.TriggerElement = trigger;
+        Sub.Open(false);
+    }
+}

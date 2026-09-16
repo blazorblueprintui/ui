@@ -438,6 +438,42 @@
     </section>
 
     <!-- Accessibility -->
+
+    <!-- API Reference -->
+
+
+    <LocalizationSection
+        Description="Multi select placeholder, search, and action labels are configurable."
+        Labels="@(new LocalizationSection.LabelInfo[]
+        {
+            new("EmptyMessage", "No results found.", "Shown when no options match the search query"),
+            new("Placeholder", "Select items...", "Placeholder text when nothing is selected"),
+            new("SearchPlaceholder", "Search...", "Placeholder in the search input"),
+            new("SelectAll", "Select All", "Label for the select all option"),
+            new("Clear", "Clear", "Label for the clear button"),
+            new("Close", "Close", "Aria label for the close button"),
+        })"
+        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+{
+    opts.MultiSelect.Placeholder = ""Elemente auswählen..."";
+    opts.MultiSelect.SearchPlaceholder = ""Suchen..."";
+    opts.MultiSelect.EmptyMessage = ""Keine Ergebnisse."";
+});")" />
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Custom footer</h2>
+        <p class="text-sm text-muted-foreground">Replace the default footer with selection totals or actions. CloseAsync clears the search and returns focus to the trigger.</p>
+<BbMultiSelect TValue="string" @ref="footerSelect" @bind-Values="footerValues" Options="footerOptions">
+    <FooterContent>
+        <div class="flex items-center justify-between gap-3">
+            <span class="text-sm">@footerValues.Count() selected</span>
+            <BbButton Size="ButtonSize.Small" OnClick="ApplyFooterSelection">Apply</BbButton>
+        </div>
+    </FooterContent>
+</BbMultiSelect>
+        <CodeBlock Source="Components/MultiSelect/footer.txt" />
+
+    </section>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>
@@ -469,7 +505,6 @@
         </KeyboardNavigation>
     </AccessibilityList>
 
-    <!-- API Reference -->
     <section class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">API Reference</h2>
@@ -548,28 +583,21 @@
                 </ApiParameter>
             </ApiReference>
         </div>
+
+<ApiReference ComponentName="MultiSelect">
+            <ApiParameter Since="v4" Name="FooterContent" Type="RenderFragment?" Default="null">Replaces the clear/close footer outside the option list.</ApiParameter>
+            <ApiParameter Since="v4" Name="CloseAsync()" Type="Task">Closes the popup on the renderer dispatcher, clears search, and restores focus. Safe to call when already closed.</ApiParameter>
+        </ApiReference>
     </section>
 
-    <LocalizationSection
-        Description="Multi select placeholder, search, and action labels are configurable."
-        Labels="@(new LocalizationSection.LabelInfo[]
-        {
-            new("EmptyMessage", "No results found.", "Shown when no options match the search query"),
-            new("Placeholder", "Select items...", "Placeholder text when nothing is selected"),
-            new("SearchPlaceholder", "Search...", "Placeholder in the search input"),
-            new("SelectAll", "Select All", "Label for the select all option"),
-            new("Clear", "Clear", "Label for the clear button"),
-            new("Close", "Close", "Aria label for the close button"),
-        })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
-{
-    opts.MultiSelect.Placeholder = ""Elemente auswählen..."";
-    opts.MultiSelect.SearchPlaceholder = ""Suchen..."";
-    opts.MultiSelect.EmptyMessage = ""Keine Ergebnisse."";
-});")" />
 </div>
 
 @code {
+    private BbMultiSelect<string>? footerSelect;
+    private IEnumerable<string> footerValues = [];
+    private readonly SelectOption<string>[] footerOptions = [new("Design", "Design"), new("Engineering", "Engineering"), new("Support", "Support")];
+    private Task ApplyFooterSelection() => footerSelect?.CloseAsync() ?? Task.CompletedTask;
+
     protected override void OnInitialized()
     {
         InitMsScroll();

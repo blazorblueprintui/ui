@@ -1,0 +1,26 @@
+@namespace BlazorBlueprint.Components
+
+<BlazorBlueprint.Primitives.Menu.BbMenuSubTrigger OpenOnHover="@OpenOnHover" class="@CssClass" @attributes="AdditionalAttributes">
+    @ChildContent
+    <svg aria-hidden="true" class="bb:ms-auto bb:size-4 bb:rtl:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="m9 18 6-6-6-6" />
+    </svg>
+</BlazorBlueprint.Primitives.Menu.BbMenuSubTrigger>
+
+@code {
+    /// <summary>The trigger label.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Opens the submenu on hover. Default is true.</summary>
+    [Parameter] public bool OpenOnHover { get; set; } = true;
+    /// <summary>Aligns the label with items that contain icons.</summary>
+    [Parameter] public bool Inset { get; set; }
+    /// <summary>Additional CSS classes.</summary>
+    [Parameter] public string? Class { get; set; }
+    /// <summary>Additional HTML attributes.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string CssClass => ClassNames.cn(
+        "bb:flex bb:cursor-default bb:select-none bb:items-center bb:gap-2 bb:rounded-sm bb:px-2 bb:py-1.5 bb:text-sm bb:outline-none",
+        "bb:focus:bg-(--bb-menu-accent) bb:focus:text-(--bb-menu-accent-foreground) bb:hover:bg-(--bb-menu-accent) bb:hover:text-(--bb-menu-accent-foreground) bb:data-[state=open]:bg-(--bb-menu-accent)",
+        "bb:data-[disabled=true]:pointer-events-none bb:data-[disabled=true]:opacity-50", Inset ? "bb:ps-8" : null, Class);
+}

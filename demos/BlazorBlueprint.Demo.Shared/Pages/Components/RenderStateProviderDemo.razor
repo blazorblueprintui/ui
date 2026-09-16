@@ -1,0 +1,33 @@
+@page "/components/render-state-provider"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Render State Provider - Blazor Blueprint</PageTitle>
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Render State Provider</h1>
+        <p class="text-xl text-muted-foreground">Share whether a component subtree is prerendered or interactive.</p>
+    </div>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Observe render state</h2>
+        <div class="rounded-lg border p-6 space-y-4">
+<BbRenderStateProvider>
+    <MotionRenderStateExample />
+</BbRenderStateProvider>
+<p class="text-sm text-muted-foreground">The child initially receives IsInteractive=false during prerender, then true after the first interactive render.</p>
+        </div>
+        <CodeBlock Source="Components/RenderStateProvider/basic.txt" />
+    </section>
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The provider adds no visual wrapper, role or tab stop. Its children own their accessibility semantics.</AccessibilityItem>
+            <AccessibilityItem>Keep essential content available during prerender; do not rely on interaction state alone to label controls.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Navigate interactive descendants, when provided"><BbKbd>Tab / Shift + Tab</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+<ApiReference Since="v4" ComponentName="RenderStateProvider"><ApiParameter Name="ChildContent" Type="RenderFragment?">Content receiving the cascading RenderState.</ApiParameter><ApiParameter Name="RenderState.IsInteractive" Type="bool">False during prerender and true after the provider’s first interactive render.</ApiParameter></ApiReference>
+    </section>
+</div>

@@ -86,4 +86,7 @@ public sealed class FloatingKeyboardOptions
     /// menu, <c>"menubar"</c> to also answer the left and right arrows.
     /// </summary>
     public string Mode { get; init; } = "vertical";
+
+    /// <summary>Menu focus after reveal: "first", "last", "container", or null to preserve focus.</summary>
+    public string? InitialFocus { get; init; }
 }

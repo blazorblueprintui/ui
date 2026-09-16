@@ -1,0 +1,39 @@
+@namespace BlazorBlueprint.Components
+@using System.Globalization
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<div @ref="root" class="@CssClass" role="group" aria-label="@(AriaLabel ?? Localizer["DateInput.Label"])"
+     aria-describedby="@AriaDescribedBy" aria-invalid="@(validation.IsInvalid ? "true" : null)" @attributes="AdditionalAttributes">
+    @foreach (var segment in DateTimeSegments.DateOrder(EffectiveCulture))
+    {
+        var digits = segment == "Year" ? 4 : 2;
+        <input @key="segment" id="@(Id == null ? null : segment == FirstSegment ? Id : $"{Id}-{segment.ToLowerInvariant()}")"
+               type="text" inputmode="numeric" autocomplete="off" role="spinbutton" data-bb-segment="@segment"
+               data-min="1" data-max="@(segment == "Year" ? 9999 : segment == "Month" ? 12 : MaxDay)" data-digits="@digits"
+               maxlength="@digits" size="@digits" placeholder="@(segment == "Year" ? "yyyy" : segment == "Month" ? "mm" : "dd")"
+               aria-label="@Localizer[$"DateInput.{segment}"]" aria-valuemin="1"
+               aria-valuemax="@(segment == "Year" ? 9999 : segment == "Month" ? 12 : MaxDay)" aria-valuenow="@DateTimeSegments.Number(parts[segment])"
+               aria-describedby="@AriaDescribedBy" aria-invalid="@(validation.IsInvalid ? "true" : null)"
+               disabled="@Disabled" readonly="@ReadOnly" required="@Required"
+               class="bb:min-w-0 bb:rounded-sm bb:bg-transparent bb:text-center bb:tabular-nums bb:placeholder:text-muted-foreground bb:focus:outline-none bb:focus:bg-accent bb:focus:text-accent-foreground"
+               @bind:get="parts[segment]" @bind:set="@(text => EditAsync(segment, text))" @bind:event="oninput" />
+        @if (segment != LastSegment)
+        {
+            <span aria-hidden="true" class="bb:text-muted-foreground">@EffectiveCulture.DateTimeFormat.DateSeparator</span>
+        }
+    }
+    @if (ShowCalendar)
+    {
+        <BbPopover @bind-Open="open">
+            <BbPopoverTrigger AsChild="true">
+                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Class="bb:ml-auto bb:h-7 bb:w-7" Disabled="@(Disabled || ReadOnly)" aria-label="@Localizer["DatePicker.OpenCalendar"]">
+                    <LucideIcon Name="calendar" Size="16" />
+                </BbButton>
+            </BbPopoverTrigger>
+            <BbPopoverContent Class="bb:w-auto bb:p-0">
+                <BbCalendar Selected="@Value" SelectedChanged="SelectAsync" MinDate="@MinDate" MaxDate="@MaxDate" />
+            </BbPopoverContent>
+        </BbPopover>
+    }
+    <input type="hidden" name="@validation.GetName(Name)" value="@Value?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)" disabled="@Disabled" />
+</div>

@@ -1,0 +1,82 @@
+@namespace BlazorBlueprint.Components
+@using System.Linq.Expressions
+@using Microsoft.AspNetCore.Components.Forms
+@using BlazorBlueprint.Icons.Lucide.Components
+@inject IBbLocalizer Localizer
+
+<div @attributes="AdditionalAttributes" class="@ClassNames.cn("bb:inline-flex bb:items-center bb:gap-1", Class)" role="group" aria-label="@EffectiveLabel">
+    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Icon" Class="bb:min-h-[44px] bb:min-w-[44px]"
+              Disabled="@(Disabled || ReadOnly || (Value <= Min && !OnRemove.HasDelegate))" OnClick="DecreaseAsync"
+              aria-label="@(CanRemove ? Localizer["QuantityStepper.Remove"] : Localizer["QuantityStepper.Decrease"])">
+        <LucideIcon Name="@(CanRemove ? "trash-2" : "minus")" Size="16" />
+    </BbButton>
+    @if (ReadOnly)
+    {
+        <input id="@Id" name="@Name" value="@Value" readonly disabled="@Disabled" aria-label="@EffectiveLabel"
+               class="bb:h-10 bb:min-h-[44px] bb:w-16 bb:rounded-md bb:border bb:border-input bb:bg-background bb:px-3 bb:text-center bb:text-sm bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring" />
+    }
+    else
+    {
+        <BbNumericInput TValue="int" Value="Value" ValueChanged="@(value => SetValueAsync(value, false))" ValueExpression="ValueExpression"
+                        Min="Min" Max="Max" Step="Step" ShowButtons="false" Disabled="Disabled"
+                        Id="@Id" Name="@Name" AriaLabel="@EffectiveLabel" Class="bb:w-16 bb:min-h-[44px] bb:text-center" />
+    }
+    <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Icon" Class="bb:min-h-[44px] bb:min-w-[44px]"
+              Disabled="@(Disabled || ReadOnly || Value >= (Max ?? int.MaxValue))" OnClick="IncreaseAsync"
+              aria-label="@Localizer["QuantityStepper.Increase"]">
+        <LucideIcon Name="plus" Size="16" />
+    </BbButton>
+</div>
+
+@code {
+    [CascadingParameter] private EditContext? EditContext { get; set; }
+    /// <summary>The current quantity.</summary>
+    [Parameter] public int Value { get; set; } = 1;
+    /// <summary>Called when the quantity changes.</summary>
+    [Parameter] public EventCallback<int> ValueChanged { get; set; }
+    /// <summary>The expression used by EditForm field validation.</summary>
+    [Parameter] public Expression<Func<int>>? ValueExpression { get; set; }
+    /// <summary>The minimum quantity.</summary>
+    [Parameter] public int Min { get; set; } = 1;
+    /// <summary>The optional maximum quantity.</summary>
+    [Parameter] public int? Max { get; set; }
+    /// <summary>The positive increment/decrement step.</summary>
+    [Parameter] public int Step { get; set; } = 1;
+    /// <summary>Called by the minus button at the minimum. The application removes the item.</summary>
+    [Parameter] public EventCallback OnRemove { get; set; }
+    /// <summary>Disables editing.</summary>
+    [Parameter] public bool Disabled { get; set; }
+    /// <summary>Prevents editing while keeping the input focusable.</summary>
+    [Parameter] public bool ReadOnly { get; set; }
+    /// <summary>The input ID.</summary>
+    [Parameter] public string? Id { get; set; }
+    /// <summary>The input name.</summary>
+    [Parameter] public string? Name { get; set; }
+    /// <summary>The accessible quantity label.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+    /// <summary>Additional CSS classes.</summary>
+    [Parameter] public string? Class { get; set; }
+    /// <summary>Additional wrapper HTML attributes.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+    private string EffectiveLabel => AriaLabel ?? Localizer["QuantityStepper.Label"];
+    private bool CanRemove => Value <= Min && OnRemove.HasDelegate;
+    protected override void OnParametersSet()
+    {
+        if (Step <= 0) { throw new ArgumentOutOfRangeException(nameof(Step)); }
+        if (Max < Min) { throw new ArgumentException("Max must be greater than or equal to Min."); }
+    }
+    private Task IncreaseAsync() => SetValueAsync((int)Math.Min((long)Value + Step, Max ?? int.MaxValue), true);
+    private Task DecreaseAsync() => Disabled || ReadOnly ? Task.CompletedTask : CanRemove ? OnRemove.InvokeAsync() : SetValueAsync((int)Math.Max((long)Value - Step, Min), true);
+    private async Task SetValueAsync(int value, bool notifyField)
+    {
+        if (Disabled || ReadOnly) { return; }
+        value = Math.Clamp(value, Min, Max ?? int.MaxValue);
+        if (Value == value) { return; }
+        Value = value;
+        await ValueChanged.InvokeAsync(value);
+        if (notifyField && EditContext is not null && ValueExpression is not null)
+        {
+            EditContext.NotifyFieldChanged(FieldIdentifier.Create(ValueExpression));
+        }
+    }
+}

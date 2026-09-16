@@ -5,6 +5,9 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public class ThemeOptions
 {
+    /// <summary>Optional aggregate defaults. When supplied, takes precedence over the individual Default properties.</summary>
+    public ThemePreset? DefaultPreset { get; set; }
+
     /// <summary>
     /// The default base (gray scale) color palette. Defaults to <see cref="BaseColor.Zinc"/>.
     /// </summary>

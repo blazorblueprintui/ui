@@ -1,7 +1,7 @@
 @namespace BlazorBlueprint.Components
 
 @* Drawer - A mobile-friendly slide panel built on Sheet primitive *@
-<CascadingValue Value="this" IsFixed="true">
+<CascadingValue Value="this" IsFixed="false">
     @ChildContent
 </CascadingValue>
 
@@ -20,6 +20,35 @@
 
     [Parameter]
     public DrawerDirection Direction { get; set; } = DrawerDirection.Bottom;
+
+    /// <summary>Ascending fractions of the viewport (greater than 0, at most 1). Empty uses natural content size.</summary>
+    [Parameter] public IReadOnlyList<double> SnapPoints { get; set; } = [];
+    /// <summary>The active zero-based snap point.</summary>
+    [Parameter] public int SnapIndex { get; set; }
+    /// <summary>Called when the active snap point changes.</summary>
+    [Parameter] public EventCallback<int> SnapIndexChanged { get; set; }
+    /// <summary>Allows dragging below half the smallest snap point to dismiss.</summary>
+    [Parameter] public bool DismissOnDrag { get; set; } = true;
+
+    protected override void OnParametersSet()
+    {
+        for (var i = 0; i < SnapPoints.Count; i++)
+        {
+            if (!double.IsFinite(SnapPoints[i]) || SnapPoints[i] <= 0 || SnapPoints[i] > 1 || (i > 0 && SnapPoints[i] <= SnapPoints[i - 1]))
+            {
+                throw new ArgumentException("SnapPoints must be ascending viewport fractions greater than 0 and at most 1.", nameof(SnapPoints));
+            }
+        }
+        if (SnapPoints.Count > 0 && (SnapIndex < 0 || SnapIndex >= SnapPoints.Count)) { throw new ArgumentOutOfRangeException(nameof(SnapIndex)); }
+    }
+
+    internal async Task SetSnapIndexAsync(int index)
+    {
+        if (index < 0 || index >= SnapPoints.Count || index == SnapIndex) { return; }
+        SnapIndex = index;
+        await SnapIndexChanged.InvokeAsync(index);
+        StateHasChanged();
+    }
 
     internal bool IsControlled => Open.HasValue;
     internal bool IsOpen => Open ?? _internalOpen;

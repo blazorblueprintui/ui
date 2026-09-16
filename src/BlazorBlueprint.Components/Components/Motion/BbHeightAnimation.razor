@@ -1,0 +1,31 @@
+@namespace BlazorBlueprint.Components
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div @ref="element" @attributes="AdditionalAttributes" class="@ClassNames.cn("bb:overflow-hidden", Class)" hidden="@(!Expanded)" inert="@(!Expanded)" aria-hidden="@(!Expanded ? "true" : null)">
+    <div class="bb:flow-root">@ChildContent</div>
+</div>
+
+@code {
+    /// <summary>Content measured for automatic height changes.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Expands or collapses the content, which remains mounted.</summary>
+    [Parameter] public bool Expanded { get; set; } = true;
+    /// <summary>Animate expansion and dynamic content resizing.</summary>
+    [Parameter] public bool Enabled { get; set; } = true;
+    /// <summary>Duration in milliseconds.</summary>
+    [Parameter] public int Duration { get; set; } = 250;
+    /// <summary>CSS easing function.</summary>
+    [Parameter] public string Easing { get; set; } = "ease-out";
+    /// <summary>Additional wrapper classes.</summary>
+    [Parameter] public string? Class { get; set; }
+    /// <summary>Additional HTML attributes.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+    private ElementReference element;
+    private MotionInterop? interop;
+    protected override void OnParametersSet() => ArgumentOutOfRangeException.ThrowIfNegative(Duration);
+    protected override Task OnAfterRenderAsync(bool firstRender) => (interop ??= new(JS)).InvokeAsync("height", element,
+        new { expanded = Expanded, enabled = Enabled, duration = Duration, easing = Easing });
+    public async ValueTask DisposeAsync() { if (interop is not null) { await interop.DisposeAsync(); } }
+}

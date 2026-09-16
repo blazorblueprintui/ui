@@ -1,0 +1,131 @@
+@page "/recipes/mobile-shop"
+@page "/components/mobile-controls"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Mobile Shop - Recipes - Blazor Blueprint</PageTitle>
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <a href="/recipes" class="text-sm text-muted-foreground hover:text-foreground">Recipes</a>
+        <h1 class="text-4xl font-bold tracking-tight">Mobile Shop</h1>
+        <p class="text-xl text-muted-foreground">Combine navigation, notification counts and quantity editing into a small shopping experience.</p>
+    </div>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Shop preview</h2>
+        <p class="text-sm text-muted-foreground">Browse products on Home, manage quantities in Cart, and view preferences and demo orders in Account. State is shared between all three screens.</p>
+<div class="mx-auto max-w-md overflow-hidden rounded-2xl border bg-background shadow-sm">
+    <BbAppBar Title="Blueprint shop" Description="Everyday tools for bright ideas" Sticky="false" ShowBack="@(mobileTab != "home")" OnBack="@(() => mobileTab = "home")">
+        <Actions><BbNotificationBadge Count="cartCount"><BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" aria-label="Open shopping cart" OnClick="@(() => mobileTab = "cart")"><LucideIcon Name="shopping-bag" Size="20" /></BbButton></BbNotificationBadge></Actions>
+    </BbAppBar>
+    <div class="min-h-96 space-y-5 p-5">
+        @if (mobileTab == "home")
+        {
+            <div class="rounded-xl bg-primary/10 p-5 space-y-2">
+                <span class="text-xs font-semibold uppercase tracking-wider text-primary">The desk edit</span>
+                <h3 class="text-2xl font-semibold">Make room for your next idea.</h3>
+                <p class="text-sm text-muted-foreground">Thoughtful essentials for notes, sketches and fresh starts.</p>
+            </div>
+            <BbSectionHeader Title="Featured essentials" Description="Small tools. Big possibilities." />
+            <div class="grid grid-cols-2 gap-3">
+                @foreach (var product in products)
+                {
+                    <div class="rounded-xl border overflow-hidden">
+                        <div class="flex h-24 items-center justify-center bg-muted"><LucideIcon Name="@product.Icon" Size="40" Class="text-primary" /></div>
+                        <div class="space-y-3 p-3">
+                            <div><h3 class="font-medium text-sm">@product.Name</h3><p class="text-sm text-muted-foreground">$@product.Price</p></div>
+                            <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Outline" Class="w-full" Disabled="@(Quantity(product.Id) >= 10)" OnClick="@(() => AddProduct(product.Id))">Add to cart</BbButton>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else if (mobileTab == "cart")
+        {
+            <BbSectionHeader Title="Your cart" Description="Review your items before placing a demo order." Separator="true" />
+            @if (cartCount == 0)
+            {
+                <div class="py-8 text-center space-y-3">
+                    <LucideIcon Name="shopping-bag" Size="40" Class="mx-auto text-muted-foreground" />
+                    <h3 class="font-semibold">Your cart is empty</h3>
+                    <p class="text-sm text-muted-foreground">Find something for your next project.</p>
+                    <BbButton OnClick="@(() => mobileTab = "home")">Browse essentials</BbButton>
+                </div>
+            }
+            else
+            {
+                @foreach (var product in products.Where(product => Quantity(product.Id) > 0))
+                {
+                    <div @key="product.Id" class="space-y-3 border-b pb-4">
+                        <div class="flex items-center gap-3"><div class="rounded-lg bg-muted p-3"><LucideIcon Name="@product.Icon" Size="24" /></div><div class="flex-1"><h3 class="font-medium">@product.Name</h3><p class="text-sm text-muted-foreground">$@product.Price each</p></div><span class="font-medium">$@(Quantity(product.Id) * product.Price)</span></div>
+                        <BbQuantityStepper Value="@Quantity(product.Id)" ValueChanged="@(value => quantities[product.Id] = value)" Min="1" Max="10" OnRemove="@(() => quantities.Remove(product.Id))" AriaLabel="@(product.Name + " quantity")" />
+                    </div>
+                }
+                <div class="flex justify-between font-semibold"><span>Total</span><span>$@cartTotal</span></div>
+                <BbButton Class="w-full" OnClick="PlaceDemoOrder">Place demo order</BbButton>
+                <p class="text-xs text-muted-foreground">Preview only. No payment or personal details are collected.</p>
+            }
+        }
+        else
+        {
+            <div class="flex items-center gap-3 rounded-xl bg-muted p-4"><div class="rounded-full bg-background p-3"><LucideIcon Name="user" Size="28" /></div><div><h3 class="font-semibold">Alex Morgan</h3><p class="text-sm text-muted-foreground">Sample member account</p></div></div>
+            <BbSectionHeader Title="Preferences" Description="Settings stay in this preview." Separator="true" />
+            <div class="flex items-center justify-between gap-4"><BbLabel For="shop-updates">Product updates</BbLabel><BbSwitch Id="shop-updates" @bind-Checked="productUpdates" /></div>
+            <div class="rounded-xl border p-4 space-y-2"><h3 class="font-medium">Demo orders</h3><p class="text-sm text-muted-foreground">@(orders == 0 ? "No orders yet. Add an item from Home to try the shopping flow." : $"You placed {orders} demo order(s) in this session.")</p></div>
+        }
+        <p role="status" class="text-sm text-primary">@message</p>
+    </div>
+    <BbBottomNav @bind-Value="mobileTab" Fixed="false" AriaLabel="Shop navigation">
+        <BbBottomNavItem Value="home" Label="Home"><Icon><LucideIcon Name="house" Size="20" /></Icon></BbBottomNavItem>
+        <BbBottomNavItem Value="cart" Label="Cart"><Icon><BbNotificationBadge Count="cartCount"><LucideIcon Name="shopping-bag" Size="20" /></BbNotificationBadge></Icon></BbBottomNavItem>
+        <BbBottomNavItem Value="account" Label="Account"><Icon><LucideIcon Name="user" Size="20" /></Icon></BbBottomNavItem>
+    </BbBottomNav>
+</div>
+        <CodeBlock Source="Recipes/MobileShop/shop.txt" />
+    </section>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">How it fits together</h2>
+        <p>The recipe owns the active screen, products and cart. Bottom Navigation changes screens; Quantity Stepper updates or removes cart entries; Notification Badge shows the total quantity.</p>
+        <p class="text-sm text-muted-foreground">BottomNav uses Fixed=false in this preview. For viewport-fixed navigation, reserve space below page content. Safe-area padding requires viewport-fit=cover in full-screen mobile layouts.</p>
+        <div class="flex flex-wrap gap-3">
+            <a href="/components/app-bar" class="text-primary underline">App Bar</a>
+            <a href="/components/bottom-nav" class="text-primary underline">Bottom Navigation</a>
+            <a href="/components/notification-badge" class="text-primary underline">Notification Badge</a>
+            <a href="/components/quantity-stepper" class="text-primary underline">Quantity Stepper</a>
+            <a href="/components/section-header" class="text-primary underline">Section Header</a>
+        </div>
+    </section>
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The shop navigation has its own label and identifies the current screen. Icon buttons have accessible names.</AccessibilityItem>
+            <AccessibilityItem>Each quantity input identifies its product. A status region announces additions and completed demo orders.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between shop controls"><BbKbd>Tab / Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate a button or checkbox-style control"><BbKbd>Enter / Space</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+</div>
+
+@code {
+    private string mobileTab = "home";
+    private bool productUpdates = true;
+    private int orders;
+    private string message = "";
+    private readonly Dictionary<string, int> quantities = [];
+    private readonly Product[] products = [new("notebook", "Everyday notebook", "notebook-pen", 12), new("pencils", "Sketch pencils", "pencil", 8)];
+    private int cartCount => quantities.Values.Sum();
+    private int cartTotal => products.Sum(product => Quantity(product.Id) * product.Price);
+    private int Quantity(string id) => quantities.GetValueOrDefault(id);
+    private void AddProduct(string id)
+    {
+        quantities[id] = Math.Min(10, Quantity(id) + 1);
+        message = "Added to your cart.";
+    }
+    private void PlaceDemoOrder()
+    {
+        orders++;
+        quantities.Clear();
+        message = "Demo order placed. Thank you!";
+        mobileTab = "account";
+    }
+    private sealed record Product(string Id, string Name, string Icon, int Price);
+}
