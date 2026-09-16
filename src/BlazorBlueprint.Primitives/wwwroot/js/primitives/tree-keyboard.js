@@ -16,8 +16,9 @@ function getVisibleTreeItems(container) {
   const items = Array.from(container.querySelectorAll('[role="treeitem"]'));
   return items.filter(item => {
     // Check that all ancestor groups are visible (parent treeitem is expanded)
-    let el = item.parentElement;
+    let el = item;
     while (el && el !== container) {
+      if (el.hidden) return false;
       if (el.getAttribute('role') === 'group') {
         const parentItem = el.parentElement;
         if (parentItem && parentItem.getAttribute('role') === 'treeitem') {
@@ -289,6 +290,17 @@ export function initialize(containerElement, dotNetRef, instanceId) {
 
   state.handleKeyDown = handleKeyDown;
   state.handleClick = handleClick;
+  // Cascade-check trees retain filtered nodes for their selection relationships.
+  // Keep a visible entry point when filtering hides the previous tabbable root.
+  const syncTabStop = () => {
+    const visible = getVisibleTreeItems(containerElement).filter(item => !isDisabled(item));
+    if (visible.length && !visible.some(item => item.getAttribute('tabindex') === '0')) {
+      updateRovingTabindex(containerElement, visible[0]);
+    }
+  };
+  state.observer = new MutationObserver(syncTabStop);
+  state.observer.observe(containerElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden', 'aria-expanded'] });
+  syncTabStop();
   instances.set(instanceId, state);
 }
 
@@ -299,6 +311,8 @@ export function initialize(containerElement, dotNetRef, instanceId) {
 export function dispose(instanceId) {
   const state = instances.get(instanceId);
   if (!state) return;
+
+  state.observer?.disconnect();
 
   if (state.containerElement) {
     state.containerElement.removeEventListener('keydown', state.handleKeyDown);

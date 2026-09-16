@@ -93,6 +93,24 @@ public sealed class DataGridRowSnapshot<TData> where TData : class
     }
 
     /// <summary>
+    /// Copies captured writable property values onto another instance. Unlike Restore, setter
+    /// failures propagate so a caller never mistakes a partially applied edit for success.
+    /// Reference values are assigned, not cloned; use an independent edit model for nested data.
+    /// </summary>
+    /// <param name="target">The record receiving the values.</param>
+    public void ApplyTo(TData target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        foreach (var property in Properties)
+        {
+            if (values.TryGetValue(property.Name, out var value))
+            {
+                property.SetValue(target, value);
+            }
+        }
+    }
+
+    /// <summary>
     /// Gets whether any recorded value differs from the item's current value.
     /// </summary>
     /// <returns>True when the item has been changed since the snapshot.</returns>

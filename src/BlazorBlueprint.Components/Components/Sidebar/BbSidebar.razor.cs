@@ -138,16 +138,10 @@ public partial class BbSidebar : IDisposable
         if (Context != _subscribedContext)
         {
             // Unsubscribe from old context
-            if (_subscribedContext != null)
-            {
-                _subscribedContext.StateChanged -= OnContextStateChanged;
-            }
+            _subscribedContext?.StateChanged -= OnContextStateChanged;
 
             // Subscribe to new context
-            if (Context != null)
-            {
-                Context.StateChanged += OnContextStateChanged;
-            }
+            Context?.StateChanged += OnContextStateChanged;
 
             _subscribedContext = Context;
         }
@@ -160,10 +154,7 @@ public partial class BbSidebar : IDisposable
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        if (_subscribedContext != null)
-        {
-            _subscribedContext.StateChanged -= OnContextStateChanged;
-            _subscribedContext = null;
-        }
+        _subscribedContext?.StateChanged -= OnContextStateChanged;
+        _subscribedContext = null;
     }
 }

@@ -501,7 +501,9 @@
             // Read now, during the close render, when the owner's state says which kind of close
             // this is. The owner used to await FocusAsync itself after its close render — a round
             // trip, on every Escape and every selection.
-            restoreFocusToId = RestoreFocusOnClose ? RestoreFocusToId : null
+            restoreFocusToId = RestoreFocusOnClose ? RestoreFocusToId : null,
+            // A composed trigger can supply its own ID. Keep its actual element as a fallback.
+            restoreFocusToElement = RestoreFocusOnClose ? AnchorElement : null
         };
 
         closeCallbackPending = !ForceMount;

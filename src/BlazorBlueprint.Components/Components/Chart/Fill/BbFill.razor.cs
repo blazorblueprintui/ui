@@ -47,9 +47,6 @@ public partial class BbFill : ComponentBase
 
         // Set the provider for lazy evaluation — BuildFill is called during
         // BuildSeriesCore (in OnAfterRenderAsync) when all child GradientStops exist.
-        if (ParentSeries != null)
-        {
-            ParentSeries.FillProvider = component;
-        }
+        ParentSeries?.FillProvider = component;
     }
 }

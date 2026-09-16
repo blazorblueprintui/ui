@@ -271,7 +271,7 @@ public partial class BbDateTimePicker : ComponentBase
         {
             // Cycle within the current AM/PM period, preserving the period.
             var isAm = _internalHour < 12;
-            var hour12 = (_internalHour % 12 + 1) % 12;
+            var hour12 = ((_internalHour % 12) + 1) % 12;
             _internalHour = isAm ? hour12 : hour12 + 12;
         }
 
@@ -288,7 +288,7 @@ public partial class BbDateTimePicker : ComponentBase
         {
             // Cycle within the current AM/PM period, preserving the period.
             var isAm = _internalHour < 12;
-            var hour12 = (_internalHour % 12 - 1 + 12) % 12;
+            var hour12 = ((_internalHour % 12) - 1 + 12) % 12;
             _internalHour = isAm ? hour12 : hour12 + 12;
         }
 

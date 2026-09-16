@@ -11,7 +11,7 @@ Headless, unstyled Blazor primitive components with ARIA attributes and keyboard
 - **State Management**: Built-in controlled and uncontrolled state patterns
 - **Keyboard Support**: Keyboard interaction support for interactive components
 - **Two-Layer Portal Architecture**: Category-scoped portals (Container and Overlay) for efficient rendering
-- **.NET 8**: Built for the latest .NET platform
+- **.NET 10**: Built for the latest .NET platform
 
 ## Installation
 

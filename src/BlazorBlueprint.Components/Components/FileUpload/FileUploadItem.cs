@@ -7,6 +7,13 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public class FileUploadItem
 {
+    /// <summary>Current transport state. Selection alone does not start transport without UploadHandler.</summary>
+    public FileUploadStatus Status { get; internal set; }
+    public long BytesTransferred { get; internal set; }
+    public double Progress => Size == 0 ? Status == FileUploadStatus.Succeeded ? 100 : 0 : 100.0 * BytesTransferred / Size;
+    /// <summary>The last transport exception, for application diagnostics. The default UI shows a generic failure message.</summary>
+    public Exception? UploadError { get; internal set; }
+
     /// <summary>
     /// Gets or sets the unique identifier.
     /// </summary>

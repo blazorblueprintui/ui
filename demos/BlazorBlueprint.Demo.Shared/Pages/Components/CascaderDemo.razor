@@ -1,0 +1,36 @@
+@page "/components/cascader"
+<PageTitle>Cascader - Blazor Blueprint</PageTitle>
+<div class="space-y-8 max-w-4xl">
+    <h1 class="text-4xl font-bold">Cascader</h1>
+    <p>Navigate a hierarchy one level at a time, or search its full paths. Use Up/Down to move between items, Right to enter a branch, Left to return to its parent, and Enter to choose an item.</p>
+    <section class="space-y-4 max-w-lg">
+        <h2 class="text-2xl font-semibold">Choose a team</h2>
+        <BbCascader TItem="Category" Items="categories" ValueField="@(c => c.Id)" TextField="@(c => c.Name)" ChildrenProperty="@(c => c.Children)" @bind-Value="selected" AriaLabel="Team" />
+        <p>Selected key: @selected</p>
+        <h2 class="text-2xl font-semibold">Select branches</h2>
+        <BbCascader TItem="Category" Items="categories" ValueField="@(c => c.Id)" TextField="@(c => c.Name)" ChildrenProperty="@(c => c.Children)" ChangeOnSelect="true" @bind-Value="branch" AriaLabel="Team or department" />
+        <p>Selected: @branch</p>
+    </section>
+    <CodeBlock Source="Components/Cascader/basic.txt" />
+    <ApiReference ComponentName="Cascader">
+        <ApiParameter Name="Items" Type="IEnumerable&lt;TItem&gt;">Root nodes in a nested hierarchy. Duplicate keys and cycles are rejected.</ApiParameter>
+        <ApiParameter Name="ValueField / TextField / ChildrenProperty" Type="accessor delegates">Required key, display label and children selectors. Keys must be unique across the entire hierarchy.</ApiParameter>
+        <ApiParameter Name="Value / ValueChanged / ValueExpression" Type="string? / callback / expression">Two-way binding and EditContext validation for a single selected key. The caption resolves immediately for preselected values.</ApiParameter>
+        <ApiParameter Name="ChangeOnSelect" Type="bool" Default="false">Allow selection of a branch while its next level opens. The default selects only leaves.</ApiParameter>
+        <ApiParameter Name="ShowSearch / Clearable" Type="bool" Default="true">Search the hierarchy and show a separate clear button. Search receives focus on opening; Up/Down moves into the results. Without search, the selected item or first root receives focus.</ApiParameter>
+        <ApiParameter Name="Disabled" Type="bool" Default="false">Disables opening, clearing and selection.</ApiParameter>
+        <ApiParameter Name="Placeholder / AriaLabel / Id / Name" Type="string?">Empty caption, accessible label, trigger ID and form field name. Hidden inputs include selected keys in form submissions.</ApiParameter>
+        <ApiParameter Name="Class / AdditionalAttributes" Type="presentation parameters">Container styling and attributes forwarded to the trigger.</ApiParameter>
+    </ApiReference>
+    <p>Bind inside an EditForm to participate in model validation. Keys remain stable when labels change. Up/Down on the closed trigger opens the first/last root. Home/End moves to the first/last item in the current level. Enter or Space opens a branch or selects a leaf. Left/Right follows the reading direction in right-to-left layouts. Escape closes the popup and returns focus to the trigger.</p>
+</div>
+@code {
+    private string? selected = "runtime";
+    private string? branch = "engineering";
+    private readonly List<Category> categories =
+    [
+        new("engineering", "Engineering", [new("platform", "Platform", [new("runtime", "Runtime", []), new("tools", "Tools", [])]), new("web", "Web", [])]),
+        new("design", "Design", [new("product", "Product", []), new("brand", "Brand", [])])
+    ];
+    private sealed record Category(string Id, string Name, List<Category> Children);
+}

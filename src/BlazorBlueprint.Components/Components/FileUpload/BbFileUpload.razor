@@ -3,6 +3,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
+@inject IBbLocalizer Localizer
 
 <div class="@ContainerClass">
     @* Dropzone *@
@@ -14,14 +15,16 @@
          @ondragover="HandleDragOver"
          @ondragover:preventDefault="true">
 
-        <InputFile @ref="_inputFile"
-                   OnChange="HandleFileSelected"
-                   accept="@Accept"
-                   multiple="@Multiple"
-                   disabled="@Disabled"
-                   class="bb:absolute bb:inset-0 bb:w-full bb:h-full bb:opacity-0 bb:cursor-pointer"
-                   @attributes="AdditionalAttributes"
-                   id="@EffectiveId" />
+        @foreach (var selection in inputSelections)
+        {
+            var active = selection == inputSelections[^1];
+            <InputFile @key="selection.Id" @ref="selection.Input"
+                       OnChange="@(e => HandleFileSelected(e, selection))" accept="@Accept" multiple="@Multiple"
+                       disabled="@(!active || Disabled)" hidden="@(!active)" tabindex="@(active ? 0 : -1)"
+                       class="bb:absolute bb:inset-0 bb:w-full bb:h-full bb:opacity-0 bb:cursor-pointer"
+                       @attributes="AdditionalAttributes" id="@(active ? EffectiveId : selection.Id)" />
+        }
+
 
         @if (DropzoneContent != null)
         {
@@ -92,6 +95,21 @@
                     <div class="bb:flex-1 bb:min-w-0">
                         <p class="bb:text-sm bb:font-medium bb:truncate">@file.Name</p>
                         <p class="bb:text-xs bb:text-muted-foreground">@file.FormattedSize</p>
+                        @if (UploadHandler != null)
+                        {
+                            <div class="bb:space-y-1 bb:mt-1">
+                                <progress class="bb:w-full" max="100" value="@file.Progress" aria-label="@Localizer["FileUpload.Progress", file.Name]"></progress>
+                                <span class="bb:text-xs" role="status">@Localizer[$"FileUpload.{file.Status}"]</span>
+                                @if (file.Status is FileUploadStatus.Uploading or FileUploadStatus.Queued)
+                                {
+                                    <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Ghost" Disabled="@Disabled" OnClick="@(() => CancelUpload(file))">@Localizer["FileUpload.Cancel"]</BbButton>
+                                }
+                                else if (file.Status != FileUploadStatus.Succeeded)
+                                {
+                                    <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Outline" Disabled="@Disabled" OnClick="@(() => UploadFileAsync(file))">@Localizer[file.Status == FileUploadStatus.Selected ? "FileUpload.Upload" : "FileUpload.Retry"]</BbButton>
+                                }
+                            </div>
+                        }
                     </div>
 
                     @* Remove Button *@
@@ -124,7 +142,7 @@
 </div>
 
 @code {
-    private InputFile? _inputFile;
+    private InputFile? _inputFile => inputSelections[^1].Input;
     private IJSObjectReference? _pasteCleanup;
     private ElementReference _dropzoneRef;
     private string? _generatedId;
@@ -245,15 +263,21 @@
 
     protected override void OnParametersSet()
     {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxFileSize);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxFileCount);
         if (Files != null && !ReferenceEquals(Files, _files))
         {
+            foreach (var removed in _files.Where(f => !Files.Contains(f)))
+            {
+                ReleaseFile(removed);
+            }
             _files = Files.ToList();
         }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && !_jsInitialized && _inputFile != null)
+        if (!_jsInitialized && _inputFile != null)
         {
             try
             {
@@ -284,6 +308,13 @@
 
     public async ValueTask DisposeAsync()
     {
+        GC.SuppressFinalize(this);
+        disposed = true;
+        foreach (var operation in operations.Values)
+        {
+            operation.Dispose();
+        }
+
         if (_pasteCleanup != null)
         {
             try
@@ -306,12 +337,32 @@
 
     }
 
-    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    private async Task HandleFileSelected(InputFileChangeEventArgs e, InputSelection selection)
     {
+        if (Disabled || selection != inputSelections[^1])
+        {
+            return;
+        }
+        // Rotate before awaiting previews or callbacks so another selection cannot invalidate these files.
+        inputSelections.Add(new InputSelection());
+        _jsInitialized = false;
+        if (_jsCleanup != null)
+        {
+            await _jsCleanup.InvokeVoidAsync("dispose");
+            await _jsCleanup.DisposeAsync();
+            _jsCleanup = null;
+        }
+        if (_pasteCleanup != null)
+        {
+            await _pasteCleanup.InvokeVoidAsync("dispose");
+            await _pasteCleanup.DisposeAsync();
+            _pasteCleanup = null;
+        }
+        StateHasChanged();
         _errors.Clear();
         var filesToAdd = new List<FileUploadItem>();
 
-        foreach (var file in e.GetMultipleFiles(MaxFileCount + _files.Count))
+        foreach (var file in e.GetMultipleFiles(e.FileCount).Take(Multiple ? e.FileCount : 1))
         {
             var validationError = ValidateFile(file);
             if (validationError != null)
@@ -321,7 +372,7 @@
                 continue;
             }
 
-            if (_files.Count + filesToAdd.Count >= MaxFileCount)
+            if (Multiple && _files.Count + filesToAdd.Count >= MaxFileCount)
             {
                 var error = new FileValidationError
                 {
@@ -335,6 +386,7 @@
             }
 
             var item = new FileUploadItem { File = file };
+            selection.FileIds.Add(item.Id);
 
             // Generate preview for images
             if (ShowPreview && item.IsImage && file.Size < 5 * 1024 * 1024) // Only preview images < 5MB
@@ -362,11 +414,20 @@
         {
             if (!Multiple)
             {
+                foreach (var existing in _files)
+                {
+                    ReleaseFile(existing);
+                }
                 _files.Clear();
             }
             _files.AddRange(filesToAdd);
             await FilesChanged.InvokeAsync(_files);
+            if (AutoUpload && UploadHandler != null)
+            {
+                await Task.WhenAll(filesToAdd.Select(UploadFileAsync));
+            }
         }
+        inputSelections.RemoveAll(s => s != inputSelections[^1] && s.FileIds.Count == 0);
     }
 
     private FileValidationError? ValidateFile(IBrowserFile file)
@@ -414,6 +475,10 @@
     /// </summary>
     public async Task ClearFiles()
     {
+        foreach (var file in _files)
+        {
+            ReleaseFile(file);
+        }
         _files.Clear();
         _errors.Clear();
         await FilesChanged.InvokeAsync(_files);
@@ -435,6 +500,7 @@
 
     private async Task RemoveFile(FileUploadItem file)
     {
+        ReleaseFile(file);
         _files.Remove(file);
         await FilesChanged.InvokeAsync(_files);
     }

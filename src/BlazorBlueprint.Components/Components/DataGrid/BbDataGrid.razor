@@ -45,6 +45,20 @@
                 }
             </div>
         }
+        @if (EditMode == DataGridEditMode.Batch)
+        {
+            <div class="bb:flex bb:items-center bb:gap-2 bb:py-2" role="group" aria-label="@Localizer["DataGrid.BatchEditing"]">
+                <BbButton Size="ButtonSize.Small" Disabled="@(savingEdits || PendingChanges.Count == 0)"
+                          OnClick="@(async () => await CommitBatchAsync())">@Localizer["DataGrid.SaveChanges"]</BbButton>
+                <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Outline" Disabled="@(savingEdits || PendingChanges.Count == 0)"
+                          OnClick="CancelBatchAsync">@Localizer["DataGrid.DiscardChanges"]</BbButton>
+                <span role="status">@Localizer["DataGrid.PendingRows", PendingChanges.Count]</span>
+            </div>
+        }
+        @if (editError != null)
+        {
+            <p role="alert" class="bb:text-destructive bb:text-sm bb:py-2">@editError</p>
+        }
         @if (ShowGroupingBreadcrumb && _gridState.Grouping.HasGroups)
         {
             @* Past two levels a per-column menu stops being a usable way to see or change the
@@ -534,7 +548,7 @@
             @{
                 var rowIsEditing = IsEditing(item);
             }
-            @if (rowIsEditing && _editContext != null)
+            @if (rowIsEditing && !UsesEditBuffer && _editContext != null)
             {
                 @* Cascaded rather than wrapped in an EditForm: a form element is not valid inside
                    a table row, but the validator only needs the context. *@
@@ -584,18 +598,7 @@
                     }
                     else if (ShouldRenderEditor(column, item))
                     {
-                        @* Enter commits and Escape cancels from anywhere in the row; the row
-                           itself owns those keys, because a handler here would never see them —
-                           the row's keyboard interceptor stops an input's events reaching
-                           Blazor's document-level delegation. *@
-                        <div @onclick:stopPropagation="true">
-                            @column.EditTemplate!(new BlazorBlueprint.Primitives.DataGrid.DataGridCellContext<TData>
-                            {
-                                Item = item,
-                                Column = column,
-                                Value = column.GetValue(item)
-                            })
-                        </div>
+                        @RenderEditableCell(column, item)
                     }
                     else if (isExpandColumn)
                     {
@@ -620,18 +623,9 @@
                                       AriaLabel="@Localizer["DataGrid.SelectThisRow"]" />
                         </div>
                     }
-                    else if (column.CellTemplate != null)
-                    {
-                        @column.CellTemplate(new BlazorBlueprint.Primitives.DataGrid.DataGridCellContext<TData>
-                        {
-                            Item = item,
-                            Column = column,
-                            Value = column.GetValue(item)
-                        })
-                    }
                     else
                     {
-                        @(column.GetValue(item)?.ToString() ?? "")
+                        @RenderCellValue(column, item)
                     }
                 </BlazorBlueprint.Primitives.DataGrid.BbDataGridCell>
             }
@@ -813,38 +807,68 @@
                             {
                                 <span class="bb:inline-block bb:w-6 bb:mr-1 bb:shrink-0"></span>
                             }
-                            @if (column.CellTemplate != null)
+                            @if (ShouldRenderEditor(column, item))
                             {
-                                @column.CellTemplate(new BlazorBlueprint.Primitives.DataGrid.DataGridCellContext<TData>
-                                {
-                                    Item = item,
-                                    Column = column,
-                                    Value = column.GetValue(item)
-                                })
+                                @RenderEditableCell(column, item)
                             }
                             else
                             {
-                                <span class="bb:truncate">@(column.GetValue(item)?.ToString() ?? "")</span>
+                                @RenderCellValue(column, item)
                             }
                         </div>
                     }
-                    else if (column.CellTemplate != null)
+                    else if (ShouldRenderEditor(column, item))
                     {
-                        @column.CellTemplate(new BlazorBlueprint.Primitives.DataGrid.DataGridCellContext<TData>
-                        {
-                            Item = item,
-                            Column = column,
-                            Value = column.GetValue(item)
-                        })
+                        @RenderEditableCell(column, item)
                     }
                     else
                     {
-                        @(column.GetValue(item)?.ToString() ?? "")
+                        @RenderCellValue(column, item)
                     }
                 </BlazorBlueprint.Primitives.DataGrid.BbDataGridCell>
             }
         </BlazorBlueprint.Primitives.DataGrid.BbDataGridRow>;
     };
+
+    private RenderFragment RenderEditableCell(IDataGridColumn<TData> column, TData item) => @<text>
+        <CascadingValue Value="_editContext">
+            <fieldset disabled="@savingEdits" data-bb-cell-editor @onclick:stopPropagation="true" class="bb:min-w-0 bb:space-y-1">
+                @column.EditTemplate!(new DataGridCellContext<TData>
+                {
+                    Item = editModel ?? item,
+                    Column = column,
+                    Value = column.GetValue(editModel ?? item)
+                })
+                <ValidationSummary class="bb:text-destructive bb:text-xs" />
+                @if (UsesEditBuffer)
+                {
+                    <div class="bb:flex bb:gap-1">
+                        <BbButton Size="ButtonSize.Small" OnClick="@(async () => await CommitEditAsync())">@Localizer["DataGrid.SaveRow"]</BbButton>
+                        <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Ghost" OnClick="CancelEditAsync">@Localizer["DataGrid.CancelRowEdit"]</BbButton>
+                    </div>
+                }
+            </fieldset>
+        </CascadingValue>
+    </text>;
+
+    private RenderFragment RenderCellValue(IDataGridColumn<TData> column, TData item) => @<text>
+        @if (column.CellTemplate != null)
+        {
+            @column.CellTemplate(new DataGridCellContext<TData> { Item = DisplayItem(item), Column = column, Value = column.GetValue(DisplayItem(item)) })
+        }
+        else
+        {
+            @(column.GetValue(DisplayItem(item))?.ToString() ?? "")
+        }
+        @if (IsCellEditable(column))
+        {
+            <button type="button" id="@CellTriggerId(item, column.ColumnId)" disabled="@savingEdits" class="bb:ml-2 bb:inline-flex bb:rounded bb:p-1 bb:hover:bg-muted"
+                    aria-label="@Localizer["DataGrid.EditCell", column.Title ?? column.ColumnId]" @onclick:stopPropagation="true"
+                    @onclick="@(() => StartCellEditAsync(item, column.ColumnId))">
+                <LucideIcon Name="pencil" Class="bb:w-3 bb:h-3" />
+            </button>
+        }
+    </text>;
 
     private int GetHierarchyIndentSize()
     {

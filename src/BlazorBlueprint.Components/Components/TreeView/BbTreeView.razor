@@ -12,6 +12,7 @@
     <div class="bb:mb-2">
         <BbInput Value="@searchText"
                  ValueChanged="HandleSearchTextChanged"
+                 UpdateTiming="UpdateTiming.Immediate"
                  Placeholder="@SearchPlaceholder"
                  Class="bb:h-8 bb:text-sm" />
     </div>
@@ -45,7 +46,7 @@
         @* Data-driven mode *@
         @foreach (var item in GetRootItems())
         {
-            if (!IsFilteredOut(item))
+            if (!IsFilteredOut(item) || (Checkable && !CheckStrictly))
             {
                 <TreeItemNode TItem="TItem"
                               Item="item"

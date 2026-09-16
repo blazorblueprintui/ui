@@ -34,7 +34,7 @@ export function initializeDropZone(dropZoneElement, inputFileElement) {
         e.preventDefault();
         e.stopPropagation();
 
-        if (e.dataTransfer?.files?.length > 0) {
+        if (!inputFileElement.disabled && e.dataTransfer?.files?.length > 0) {
             // Transfer files to the InputFile element
             inputFileElement.files = e.dataTransfer.files;
 
@@ -43,6 +43,11 @@ export function initializeDropZone(dropZoneElement, inputFileElement) {
             inputFileElement.dispatchEvent(event);
         }
     };
+
+    // Lock the input synchronously: a second selection on this same InputFile would replace
+    // Blazor's browser-file map before the server has rendered the next input.
+    const lockSelection = () => { inputFileElement.disabled = true; };
+    inputFileElement.addEventListener('change', lockSelection, { capture: true });
 
     // Add event listeners
     dropZoneElement.addEventListener('dragover', handleDragOver);
@@ -53,6 +58,7 @@ export function initializeDropZone(dropZoneElement, inputFileElement) {
         dispose: () => {
             dropZoneElement.removeEventListener('dragover', handleDragOver);
             dropZoneElement.removeEventListener('drop', handleDrop);
+            inputFileElement.removeEventListener('change', lockSelection, { capture: true });
         }
     };
 }

@@ -1,0 +1,39 @@
+@page "/components/tree-select"
+<PageTitle>TreeSelect - Blazor Blueprint</PageTitle>
+<div class="space-y-8 max-w-4xl">
+    <h1 class="text-4xl font-bold">TreeSelect</h1>
+    <p>A searchable tree picker with single or multiple selection.</p>
+    <section class="space-y-4 max-w-lg">
+        <h2 class="text-2xl font-semibold">Choose a team</h2>
+        <BbTreeSelect TItem="Category" Items="categories" ValueField="@(c => c.Id)" TextField="@(c => c.Name)" ChildrenProperty="@(c => c.Children)" @bind-Value="selected" AriaLabel="Team" />
+        <p>Selected key: @selected</p>
+        <h2 class="text-2xl font-semibold">Multiple selection</h2>
+        <BbTreeSelect TItem="Category" Items="categories" ValueField="@(c => c.Id)" TextField="@(c => c.Name)" ChildrenProperty="@(c => c.Children)" Multiple="true" LeafOnly="true" @bind-Values="selectedMany" AriaLabel="Teams" />
+        <p>Selected: @string.Join(", ", selectedMany)</p>
+        <p class="text-sm text-muted-foreground">Select a parent to select all its descendants, including collapsed or filtered children. A partially selected parent shows a dash. LeafOnly stores leaf keys while parent checkboxes still select or clear the whole branch.</p>
+    </section>
+    <CodeBlock Source="Components/TreeSelect/basic.txt" />
+    <CodeBlock Source="Components/TreeSelect/multiple.txt" />
+    <ApiReference ComponentName="TreeSelect">
+        <ApiParameter Name="Items" Type="IEnumerable&lt;TItem&gt;">Root nodes in a nested hierarchy. Duplicate keys and cycles are rejected.</ApiParameter>
+        <ApiParameter Name="ValueField / TextField / ChildrenProperty" Type="accessor delegates">Required key, display label and children selectors. Keys must be unique across the entire hierarchy.</ApiParameter>
+        <ApiParameter Name="Value / ValueChanged / ValueExpression" Type="string? / callback / expression">Two-way binding and EditContext validation for a single selected key. The caption resolves immediately for preselected values.</ApiParameter>
+        <ApiParameter Name="Multiple / Values / ValuesChanged / ValuesExpression" Type="multiple selection">Set Multiple and bind a HashSet&lt;string&gt; to Values. Parent checkboxes select or clear all descendants, including collapsed and search-filtered nodes. Parents show an indeterminate state for partial selection. LeafOnly stores only leaf keys without disabling parent checkbox actions. Single selection uses Value.</ApiParameter>
+        <ApiParameter Name="LeafOnly / Required" Type="bool" Default="false">LeafOnly limits single selection to leaves and stores only leaf keys for multiple selection; parent checkboxes still select whole branches. Required marks the field as required. Use model validation for required-value enforcement.</ApiParameter>
+        <ApiParameter Name="ShowSearch / Clearable" Type="bool" Default="true">Search the hierarchy and show a separate clear button.</ApiParameter>
+        <ApiParameter Name="Disabled" Type="bool" Default="false">Disables opening, clearing and selection.</ApiParameter>
+        <ApiParameter Name="Placeholder / AriaLabel / Id / Name" Type="string?">Empty caption, accessible label, trigger ID and form field name. Hidden inputs include selected keys in form submissions.</ApiParameter>
+        <ApiParameter Name="Class / AdditionalAttributes" Type="presentation parameters">Container styling and attributes forwarded to the trigger.</ApiParameter>
+    </ApiReference>
+    <p>Bind inside an EditForm to participate in model validation. Keys remain stable when labels change. TreeSelect supports the tree's arrow-key navigation; Cascader uses native buttons reachable with Tab, and Enter opens the next level. Escape closes the popup and returns focus to the trigger.</p>
+</div>
+@code {
+    private string? selected = "runtime";
+    private HashSet<string> selectedMany = ["runtime", "brand"];
+    private readonly List<Category> categories =
+    [
+        new("engineering", "Engineering", [new("platform", "Platform", [new("runtime", "Runtime", []), new("tools", "Tools", [])]), new("web", "Web", [])]),
+        new("design", "Design", [new("product", "Product", []), new("brand", "Brand", [])])
+    ];
+    private sealed record Category(string Id, string Name, List<Category> Children);
+}

@@ -115,7 +115,7 @@ public class FocusIndicatorTests
             + $"{nameof(Allowed)}:{Environment.NewLine}  " + string.Join($"{Environment.NewLine}  ", stale));
     }
 
-    private static string BuildMessage(IReadOnlyCollection<string> violations)
+    private static string BuildMessage(List<string> violations)
     {
         var message = new StringBuilder()
             .AppendLine(CultureInfo.InvariantCulture,

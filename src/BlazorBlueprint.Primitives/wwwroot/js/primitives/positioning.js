@@ -228,18 +228,14 @@ async function waitForExitAnimation(el) {
 
     if (typeof el.getAnimations !== 'function') return;
 
-    // subtree: the animated element is the component's own content div, a child of this wrapper.
-    //
-    // Infinite animations are excluded, and that exclusion is load-bearing. A spinner inside the
-    // overlay — Tailwind's animate-spin, animate-pulse, animate-bounce are all infinite — never
-    // finishes, so waiting on it means waiting out the backstop below instead of the exit
-    // animation. That is not merely slow: a CSS animation reverts to its un-animated style the
-    // moment it ends, so the exit fade hands the element back at full opacity and it sits there,
-    // fully visible, until the hidden style is finally written. The overlay fades out, snaps back
-    // into view, and disappears a beat later. An infinite-scroll combobox showing its loading
-    // spinner reproduced it every time.
+    // The exit animation belongs to the wrapper or its direct content element. Descendant
+    // transitions (tree chevrons, hovered rows, checkboxes) can outlast the exit fade just as a
+    // loading spinner can. Waiting for them lets the completed fade revert to full opacity,
+    // briefly revealing the popup again before we hide it.
     const running = el.getAnimations({ subtree: true }).filter(a => {
         if (a.playState !== 'running') return false;
+        const target = a.effect?.target;
+        if (target !== el && !(target?.parentElement === el && target.dataset.state === 'closed')) return false;
         const iterations = a.effect?.getTiming?.().iterations;
         return iterations !== Infinity;
     });

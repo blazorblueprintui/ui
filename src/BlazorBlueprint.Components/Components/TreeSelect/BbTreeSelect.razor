@@ -1,0 +1,203 @@
+@namespace BlazorBlueprint.Components
+@typeparam TItem
+@using System.Linq.Expressions
+@using Microsoft.AspNetCore.Components.Forms
+@using BlazorBlueprint.Icons.Lucide.Components
+@inject IBbLocalizer Localizer
+
+<div class="@ClassNames.cn("bb:flex bb:items-center bb:gap-1", Class)">
+    <BbPopover Open="@open" OpenChanged="SetOpen" RestoreFocusOnClose="true">
+        <BbPopoverTrigger AsChild="false" id="@Id" role="combobox" aria-haspopup="tree"
+                          aria-expanded="@open.ToString().ToLowerInvariant()" aria-controls="@treeId"
+                          aria-label="@(AriaLabel ?? Localizer["TreeSelect.Label"])" aria-required="@(Required ? "true" : null)"
+                          aria-invalid="@(validation.IsInvalid ? "true" : null)" disabled="@Disabled"
+                          class="@TriggerClass"
+                          @attributes="AdditionalAttributes">
+            <span class="@ClassNames.cn("bb:truncate", (Multiple ? Values.Count == 0 : Value == null) ? "bb:text-muted-foreground" : null)">@Caption</span>
+            <LucideIcon Name="chevron-down" Size="16" Class="bb:ms-2 bb:h-4 bb:w-4 bb:shrink-0 bb:opacity-50" aria-hidden="true" />
+        </BbPopoverTrigger>
+        <BbPopoverContent MatchTriggerWidth="true" Align="PopoverAlign.Start" AutoFocusId="@(ShowSearch ? searchId : null)" Class="bb:p-0">
+            @if (ShowSearch)
+            {
+                <div class="bb:flex bb:items-center bb:rounded-t-md bb:border-b bb:border-border bb:px-3 bb:focus-within:ring-2 bb:focus-within:ring-ring bb:focus-within:ring-inset bb:focus-within:border-b-transparent">
+                    <LucideIcon Name="search" Size="16" Class="bb:mr-2 bb:h-4 bb:w-4 bb:shrink-0 bb:opacity-50" aria-hidden="true" />
+                    <BbInput Id="@searchId" @bind-Value="search" UpdateTiming="UpdateTiming.Immediate"
+                             Placeholder="@Localizer["TreeSelect.Search"]" AriaLabel="@Localizer["TreeSelect.Search"]" aria-controls="@treeId"
+                             Class="bb:ml-2 bb:h-11 bb:rounded-none bb:border-0 bb:bg-transparent bb:px-0 bb:py-3 bb:text-sm bb:focus-visible:ring-0" />
+                </div>
+            }
+            <div class="bb:max-h-64 bb:overflow-auto bb:p-1">
+            <BbTreeView TItem="TItem" Items="@Items" ChildrenProperty="@ChildrenProperty" ValueField="@ValueField" TextField="@TextField"
+                        SelectedValue="@Value" SelectedValueChanged="SelectAsync"
+                        OnNodeClick="NodeClicked"
+                        Checkable="@Multiple" CheckStrictly="false" CheckedValues="@treeCheckedValues" CheckedValuesChanged="SelectManyAsync"
+                        SelectionMode="@(Multiple ? TreeSelectionMode.None : TreeSelectionMode.Single)"
+                        SearchText="@search" ShowIcons="false" AriaLabel="@(AriaLabel ?? Localizer["TreeSelect.Label"])" id="@treeId" />
+            </div>
+        </BbPopoverContent>
+    </BbPopover>
+    @if (Clearable && (Multiple ? Values.Count > 0 : Value != null))
+    {
+        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Disabled="@Disabled" AriaLabel="@Localizer["TreeSelect.Clear"]" OnClick="ClearAsync"><LucideIcon Name="x" Size="16" aria-hidden="true" /></BbButton>
+    }
+    @if (Multiple)
+    {
+        @foreach (var value in Values)
+        {
+            <input type="hidden" name="@validation.GetEffectiveName(Name)" value="@value" disabled="@Disabled" />
+        }
+    }
+    else
+    {
+        <input type="hidden" name="@validation.GetEffectiveName(Name)" value="@Value" disabled="@Disabled" />
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<TItem> Items { get; set; } = [];
+    [Parameter, EditorRequired] public Func<TItem, string> ValueField { get; set; } = default!;
+    [Parameter, EditorRequired] public Func<TItem, string> TextField { get; set; } = default!;
+    [Parameter, EditorRequired] public Func<TItem, IEnumerable<TItem>?> ChildrenProperty { get; set; } = default!;
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public Expression<Func<string?>>? ValueExpression { get; set; }
+    [Parameter] public HashSet<string> Values { get; set; } = new(StringComparer.Ordinal);
+    [Parameter] public EventCallback<HashSet<string>> ValuesChanged { get; set; }
+    [Parameter] public Expression<Func<HashSet<string>>>? ValuesExpression { get; set; }
+    [Parameter] public bool Multiple { get; set; }
+    [Parameter] public bool LeafOnly { get; set; }
+    [Parameter] public bool ShowSearch { get; set; } = true;
+    [Parameter] public bool Clearable { get; set; } = true;
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool Required { get; set; }
+    [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public string? AriaLabel { get; set; }
+    [Parameter] public string? Id { get; set; }
+    [Parameter] public string? Name { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+    [CascadingParameter] private EditContext? EditContext { get; set; }
+    private readonly InputValidationBehavior validation = new();
+    private readonly string treeId = $"bb-tree-select-{Guid.NewGuid():N}";
+    private readonly string searchId = $"bb-tree-select-search-{Guid.NewGuid():N}";
+    private string? search = string.Empty;
+    private HashSet<string> treeCheckedValues = new(StringComparer.Ordinal);
+    private bool open;
+    private HierarchyIndex<TItem>? index;
+    private string Caption => Multiple
+        ? Values.Count == 0 ? Placeholder ?? Localizer["TreeSelect.Placeholder"] : string.Join(", ", Values.Select(Label))
+        : Value == null ? Placeholder ?? Localizer["TreeSelect.Placeholder"] : Label(Value);
+    private string Label(string value) => index!.Nodes.TryGetValue(value, out var node) ? node.Text : value;
+    private string TriggerClass => ClassNames.cn(
+        "bb:flex bb:h-10 bb:w-full bb:items-center bb:justify-between bb:rounded-md bb:border bb:border-input bb:bg-background bb:px-3 bb:py-2 bb:text-sm",
+        "bb:hover:bg-accent bb:hover:text-accent-foreground bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:disabled:cursor-not-allowed bb:disabled:opacity-50",
+        open ? "bb:bg-accent bb:text-accent-foreground" : null);
+
+    protected override void OnParametersSet()
+    {
+        index = new(Items, ValueField, TextField, ChildrenProperty);
+        UpdateTreeCheckedValues();
+        if (Multiple)
+        {
+            validation.Update(EditContext, ValuesExpression);
+        }
+        else
+        {
+            validation.Update(EditContext, ValueExpression);
+        }
+        if (Disabled)
+        {
+            open = false;
+        }
+    }
+
+    private void SetOpen(bool value)
+    {
+        var nextOpen = !Disabled && value;
+        // Keep the departing content stable until its exit animation has finished.
+        if (nextOpen && !open)
+        {
+            search = string.Empty;
+        }
+        open = nextOpen;
+    }
+
+    // Keep branch rollups in the tree even when the bound value only contains leaves.
+    private void UpdateTreeCheckedValues()
+    {
+        treeCheckedValues = new(StringComparer.Ordinal);
+        foreach (var root in index!.Roots)
+        {
+            Visit(root, false);
+        }
+
+        bool Visit(string key, bool inherited)
+        {
+            var node = index.Nodes[key];
+            var selected = inherited || (Values.Contains(key) && (!LeafOnly || node.Children.Count == 0));
+            var allChildrenSelected = node.Children.Count > 0;
+            foreach (var child in node.Children)
+            {
+                allChildrenSelected &= Visit(child, selected);
+            }
+            if (selected || allChildrenSelected)
+            {
+                treeCheckedValues.Add(key);
+                return true;
+            }
+            return false;
+        }
+    }
+    private bool CanSelect(string value) => index!.Nodes.TryGetValue(value, out var node) && (!LeafOnly || node.Children.Count == 0);
+
+    private async Task SelectAsync(string? value)
+    {
+        // Tree expansion/search can repeat the current selection notification.
+        // Only a changed selection should close the popup or notify the form.
+        if (Disabled || value == Value || (value != null && !CanSelect(value)))
+        {
+            return;
+        }
+        Value = value;
+        await ValueChanged.InvokeAsync(value);
+        validation.NotifyFieldChanged();
+        open = false;
+    }
+
+    private void NodeClicked(TItem item)
+    {
+        if (!Disabled && !Multiple && CanSelect(ValueField(item)))
+        {
+            open = false;
+        }
+    }
+
+    private async Task SelectManyAsync(HashSet<string> values)
+    {
+        if (Disabled)
+        {
+            return;
+        }
+        var selected = values.Where(CanSelect).ToHashSet(StringComparer.Ordinal);
+        if (Values.SetEquals(selected))
+        {
+            return;
+        }
+        Values = selected;
+        UpdateTreeCheckedValues();
+        await ValuesChanged.InvokeAsync(new HashSet<string>(Values, StringComparer.Ordinal));
+        validation.NotifyFieldChanged();
+    }
+
+    private async Task ClearAsync()
+    {
+        if (Multiple)
+        {
+            await SelectManyAsync([]);
+        }
+        else
+        {
+            await SelectAsync(null);
+        }
+    }
+}

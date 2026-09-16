@@ -131,10 +131,7 @@ public class TriggerContext
     /// inside event handlers, so it is not mistaken for a child that ignores the context
     /// altogether. Calling it more than once is harmless.
     /// </remarks>
-    public void NotifyConsumed()
-    {
-        consumed = true;
-    }
+    public void NotifyConsumed() => consumed = true;
 
     /// <summary>
     /// Whether any child has read from — or explicitly acknowledged — this context.

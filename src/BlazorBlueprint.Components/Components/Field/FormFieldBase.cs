@@ -160,17 +160,11 @@ public abstract class FormFieldBase : ComponentBase, IDisposable
 
         if (CascadedEditContext != _subscribedEditContext)
         {
-            if (_subscribedEditContext is not null)
-            {
-                _subscribedEditContext.OnValidationStateChanged -= OnValidationStateChanged;
-            }
+            _subscribedEditContext?.OnValidationStateChanged -= OnValidationStateChanged;
 
             _subscribedEditContext = CascadedEditContext;
 
-            if (_subscribedEditContext is not null)
-            {
-                _subscribedEditContext.OnValidationStateChanged += OnValidationStateChanged;
-            }
+            _subscribedEditContext?.OnValidationStateChanged += OnValidationStateChanged;
         }
 
         var expression = GetFieldExpression();
@@ -220,10 +214,7 @@ public abstract class FormFieldBase : ComponentBase, IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-        if (_subscribedEditContext is not null)
-        {
-            _subscribedEditContext.OnValidationStateChanged -= OnValidationStateChanged;
-        }
+        _subscribedEditContext?.OnValidationStateChanged -= OnValidationStateChanged;
 
         GC.SuppressFinalize(this);
     }

@@ -1,0 +1,138 @@
+using Microsoft.AspNetCore.Components;
+
+namespace BlazorBlueprint.Components;
+
+public partial class BbCommand
+{
+    private CommandContext _context = new();
+    private string _searchQuery = string.Empty;
+
+    /// <summary>
+    /// Gets or sets additional CSS classes to apply to the command container.
+    /// </summary>
+    [Parameter]
+    public string? Class { get; set; }
+
+    /// <summary>
+    /// Gets or sets the content to be rendered inside the command.
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Gets or sets the current search query.
+    /// </summary>
+#pragma warning disable BL0007 // Custom setter needed to sync with context
+    [Parameter]
+    public string SearchQuery
+    {
+        get => _searchQuery;
+        set
+        {
+            if (_searchQuery != value)
+            {
+                _searchQuery = value;
+                _context.SetSearchQuery(value);
+            }
+        }
+    }
+#pragma warning restore BL0007
+
+    /// <summary>
+    /// Event callback invoked when the search query changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> SearchQueryChanged { get; set; }
+
+    /// <summary>
+    /// Event callback invoked when an item is selected.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> OnValueChange { get; set; }
+
+    /// <summary>
+    /// Custom filter function for items.
+    /// </summary>
+    [Parameter]
+    public Func<CommandItemMetadata, string, bool>? FilterFunction { get; set; }
+
+    /// <summary>
+    /// Whether the command is disabled.
+    /// </summary>
+    [Parameter]
+    public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Whether to close the dropdown after an item is selected.
+    /// Default is true (standard command behavior).
+    /// Set to false for multi-select scenarios.
+    /// </summary>
+    [Parameter]
+    public bool CloseOnSelect { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets additional attributes to apply to the component.
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Gets the computed CSS classes for the command container.
+    /// </summary>
+    private string CssClass => ClassNames.cn(
+        "bb:flex bb:h-full bb:w-full bb:flex-col bb:overflow-hidden bb:rounded-md bb:bg-popover bb:text-popover-foreground",
+        Class
+    );
+
+    protected override void OnInitialized()
+    {
+        _context.OnValueChange = OnValueChange;
+        _context.FilterFunction = FilterFunction;
+        _context.CloseOnSelect = CloseOnSelect;
+        _context.Disabled = Disabled;
+        _context.OnStateChanged += HandleContextStateChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        _context.OnValueChange = OnValueChange;
+        _context.FilterFunction = FilterFunction;
+        _context.CloseOnSelect = CloseOnSelect;
+        _context.Disabled = Disabled;
+
+        // Sync search query from parameter
+        if (_context.SearchQuery != _searchQuery)
+        {
+            _context.SetSearchQuery(_searchQuery);
+        }
+    }
+
+    private async void HandleContextStateChanged()
+    {
+        try
+        {
+            // Sync search query back to parameter
+            if (_searchQuery != _context.SearchQuery)
+            {
+                _searchQuery = _context.SearchQuery;
+                if (SearchQueryChanged.HasDelegate)
+                {
+                    await InvokeAsync(async () => await SearchQueryChanged.InvokeAsync(_searchQuery));
+                }
+            }
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception)
+        {
+            // async void: nothing awaits this, so an exception that escapes has no caller to reach and
+            // Blazor Server treats it as fatal — the circuit closes and the user sees the reconnect
+            // overlay. Everything this method does is best-effort, and none of it is worth that.
+        }
+    }
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        _context.OnStateChanged -= HandleContextStateChanged;
+    }
+}

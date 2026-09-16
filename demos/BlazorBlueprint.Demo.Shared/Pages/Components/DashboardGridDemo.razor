@@ -1064,9 +1064,10 @@
         dataDrivenWidgets.RemoveAll(w => w.Id == widgetId);
     }
 
-    private RenderFragment RenderDataDrivenWidgetContent(DataDrivenWidgetConfig widget) => widget.Type switch
+    private RenderFragment RenderDataDrivenWidgetContent(DataDrivenWidgetConfig widget) => @<text>
+    @switch (widget.Type)
     {
-        "bar-chart" => __builder =>
+        case "bar-chart":
         {
             <BbBarChart Data="@GetDataDrivenTimeSeries(widget)" Height="100%">
                 <BbXAxis DataKey="month" />
@@ -1074,8 +1075,9 @@
                 <BbChartTooltip />
                 <BbBar DataKey="value" Name="@widget.Title" Color="var(--chart-1)" />
             </BbBarChart>
-        },
-        "area-chart" => __builder =>
+            break;
+        }
+        case "area-chart":
         {
             <BbAreaChart Data="@GetDataDrivenTimeSeries(widget)" Height="100%">
                 <BbXAxis DataKey="month" />
@@ -1090,8 +1092,9 @@
                     </BbFill>
                 </BbArea>
             </BbAreaChart>
-        },
-        "line-chart" => __builder =>
+            break;
+        }
+        case "line-chart":
         {
             <BbLineChart Data="@GetDataDrivenTimeSeries(widget)" Height="100%">
                 <BbXAxis DataKey="month" />
@@ -1099,16 +1102,18 @@
                 <BbChartTooltip />
                 <BbLine DataKey="value" Name="@widget.Title" Color="var(--chart-3)" Curve="CurveType.Smooth" />
             </BbLineChart>
-        },
-        "pie-chart" => __builder =>
+            break;
+        }
+        case "pie-chart":
         {
             <BbPieChart Data="@GetDataDrivenCategories(widget)" Height="100%">
                 <BbChartTooltip />
                 <BbChartLegend />
                 <BbPie DataKey="value" NameKey="name" />
             </BbPieChart>
-        },
-        "kpi" => __builder =>
+            break;
+        }
+        case "kpi":
         {
             var kpi = GetDataDrivenKpi(widget);
             <div class="flex flex-col items-center justify-center h-full gap-1">
@@ -1122,8 +1127,9 @@
                     </span>
                 }
             </div>
-        },
-        "table" => __builder =>
+            break;
+        }
+        case "table":
         {
             var rows = GetDataDrivenTableRows(widget);
             <div class="overflow-auto h-full">
@@ -1149,9 +1155,13 @@
                     </tbody>
                 </table>
             </div>
-        },
-        _ => @<div class="flex items-center justify-center h-full text-muted-foreground text-sm">Unknown widget type: @widget.Type</div>
-    };
+            break;
+        }
+        default:
+            <div class="flex items-center justify-center h-full text-muted-foreground text-sm">Unknown widget type: @widget.Type</div>
+            break;
+    }
+    </text>;
 
     private List<DataDrivenTimeSeriesPoint> GetDataDrivenTimeSeries(DataDrivenWidgetConfig widget) => widget.DataSource switch
     {

@@ -1,0 +1,64 @@
+@page "/components/scheduler"
+<PageTitle>Scheduler - Blazor Blueprint</PageTitle>
+<div class="space-y-8">
+    <h1 class="text-4xl font-bold">Scheduler</h1>
+    <p>Choose a time slot to create an appointment, or an event to edit it. Resource lanes separate rooms; overlapping appointments share the available width.</p>
+    <div class="space-y-2 max-w-sm">
+        <BbLabel For="scheduler-display-zone">Display time zone</BbLabel>
+        <BbSelect TValue="string" @bind-Value="displayZone" DisplayTextSelector="@(value => value.Replace('_', ' '))">
+            <BbSelectTrigger id="scheduler-display-zone"><BbSelectValue /></BbSelectTrigger>
+            <BbSelectContent>
+                <BbSelectItem Value='@("America/New_York")' Text="America/New York" />
+                <BbSelectItem Value='@("UTC")' Text="UTC" />
+                <BbSelectItem Value='@("Europe/London")' Text="Europe/London" />
+            </BbSelectContent>
+        </BbSelect>
+    </div>
+    <div class="flex items-center gap-2">
+        <BbCheckbox Id="scheduler-reject-save" @bind-Checked="rejectSaves" />
+        <BbLabel For="scheduler-reject-save">Reject saves to try recovery</BbLabel>
+    </div>
+    <BbScheduler @bind-Events="events" Resources="resources" @bind-Date="date" @bind-View="view" TimeZoneId="@displayZone"
+                 StartHour="8" EndHour="20" OnEventChange="SaveAsync" />
+    <p>The recurring planning session keeps 9:00 AM in New York across daylight-saving changes. Edit one occurrence to move it independently, or select Entire series. Display-zone changes preserve the stored instants.</p>
+    <CodeBlock Source="Components/Scheduler/basic.txt" />
+    <ApiReference ComponentName="Scheduler">
+        <ApiParameter Name="Events / EventsChanged" Type="IReadOnlyList&lt;SchedulerEvent&gt;">Bind appointment data. Updates use independent copies. Persist Events from OnEventChange before accepting a change.</ApiParameter>
+        <ApiParameter Name="Resources" Type="IReadOnlyList&lt;SchedulerResource&gt;">Unique resource IDs and titles. Each event can have multiple ResourceIds. Unassigned events get a separate lane.</ApiParameter>
+        <ApiParameter Name="Date / DateChanged" Type="DateOnly">Visible date. Week navigation respects FirstDayOfWeek.</ApiParameter>
+        <ApiParameter Name="View / ViewChanged" Type="SchedulerView" Default="Week">Day or Week.</ApiParameter>
+        <ApiParameter Name="FirstDayOfWeek" Type="DayOfWeek" Default="Monday">First day of the week view.</ApiParameter>
+        <ApiParameter Name="TimeZoneId" Type="string" Default="UTC">IANA display zone. SchedulerEvent.TimeZoneId independently determines recurrence wall time.</ApiParameter>
+        <ApiParameter Name="SlotMinutes / StartHour / EndHour" Type="int" Default="30 / 8 / 18">Slot interval and visible hours. Use EndHour=24 for a full day. DST days use their actual elapsed duration.</ApiParameter>
+        <ApiParameter Name="ReadOnly" Type="bool" Default="false">Disables creation and editing.</ApiParameter>
+        <ApiParameter Name="EventTemplate" Type="RenderFragment&lt;SchedulerOccurrence&gt;">Custom event content inside the accessible event button.</ApiParameter>
+        <ApiParameter Name="OnEventChange" Type="EventCallback&lt;SchedulerChangeContext&gt;">Receives Kind, Scope, Event, OccurrenceStart and proposed Events. Set Cancel to reject. Failures preserve the editor.</ApiParameter>
+        <ApiParameter Name="CreateEvent(start, resourceId) / EditEvent(occurrence, scope)" Type="void">Open the built-in editor programmatically.</ApiParameter>
+        <ApiParameter Name="Class / AriaLabel / AdditionalAttributes" Type="presentation parameters">Style and label the scheduler region.</ApiParameter>
+    </ApiReference>
+    <ApiReference ComponentName="Scheduler data and recurrence">
+        <ApiParameter Name="SchedulerEvent" Type="class">Id, Title, Start, End, TimeZoneId, ResourceIds, RecurrenceRule, ExcludedStarts, SeriesId and RecurrenceId. Clone() deep-copies its collections.</ApiParameter>
+        <ApiParameter Name="RecurrenceRule" Type="string?">RFC 5545 daily, weekly, monthly or yearly RRULE; supports BYDAY, BYMONTHDAY, COUNT and UNTIL. The editor has repeat presets plus custom rules. Missing month days follow RFC rules and are skipped.</ApiParameter>
+        <ApiParameter Name="SchedulerEngine.Expand" Type="IReadOnlyList&lt;SchedulerOccurrence&gt;">Expand a half-open range, including events crossing its start. Default limit 10,000; exceeding the limit throws.</ApiParameter>
+        <ApiParameter Name="SchedulerEngine.ToInstant" Type="DateTimeOffset">Convert wall time with Earlier or Later resolution for a repeated DST time. Missing times are rejected. Timed occurrences retain their original elapsed duration.</ApiParameter>
+        <ApiParameter Name="SchedulerEngine.ApplyChange / Validate" Type="static methods">Validate data and prepare independent create/update/delete collections, including series exceptions.</ApiParameter>
+    </ApiReference>
+    <p>Dates use the current culture. Keyboard users can Tab between slots and appointments, Enter to open the editor, and Escape to close it. Dragging, resizing, all-day events and external calendar synchronization are outside this version.</p>
+</div>
+@code {
+    private DateOnly date = new(2026, 9, 14);
+    private SchedulerView view = SchedulerView.Day;
+    private string displayZone = "America/New_York";
+    private bool rejectSaves;
+    private readonly IReadOnlyList<SchedulerResource> resources = [new("room-a", "Room A"), new("room-b", "Room B")];
+    private IReadOnlyList<SchedulerEvent> events =
+    [
+        new() { Id = "planning", Title = "Planning", Start = new(2026, 9, 14, 9, 0, 0, TimeSpan.FromHours(-4)), End = new(2026, 9, 14, 10, 0, 0, TimeSpan.FromHours(-4)), TimeZoneId = "America/New_York", ResourceIds = ["room-a"], RecurrenceRule = "FREQ=WEEKLY;BYDAY=MO,WE;COUNT=24" },
+        new() { Id = "review", Title = "Design review", Start = new(2026, 9, 14, 9, 30, 0, TimeSpan.FromHours(-4)), End = new(2026, 9, 14, 11, 0, 0, TimeSpan.FromHours(-4)), TimeZoneId = "America/New_York", ResourceIds = ["room-a", "room-b"] }
+    ];
+    private async Task SaveAsync(SchedulerChangeContext context)
+    {
+        await Task.Delay(250);
+        context.Cancel = rejectSaves;
+    }
+}
