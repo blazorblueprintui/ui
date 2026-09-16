@@ -1,120 +1,76 @@
-// Slider drag handler for primitives
-// Handles pointer drag events for smooth slider interaction
+import { createDragUpdates, releaseDragPreview, snapSliderValue } from '../drag-updates.js';
 
 const sliderStates = new Map();
 
-/**
- * Initializes drag handling for a slider element
- * @param {HTMLElement} trackElement - The slider track element
- * @param {object} dotNetRef - Reference to the Blazor component
- * @param {string} sliderId - Unique identifier for the slider
- * @param {object} options - Configuration options
- * @param {string} options.orientation - "horizontal" or "vertical"
- */
 export function initialize(trackElement, dotNetRef, sliderId, options) {
   if (!trackElement || !dotNetRef) return;
+  dispose(sliderId);
 
-  const isVertical = options?.orientation === "vertical";
-
-  const state = {
-    trackElement,
-    dotNetRef,
-    isDragging: false,
-    pointerId: null,
-  };
-
-  const calculatePercentage = (e) => {
+  let pointerId = null;
+  let generation = 0;
+  let disposed = false;
+  const properties = ['--bb-slider-position'];
+  const updates = createDragUpdates(percentage => dotNetRef.invokeMethodAsync('JsUpdateValueFromPercentage', percentage));
+  const disabled = () => trackElement.getAttribute('data-disabled') === 'true';
+  const update = e => {
+    if (disabled()) return;
     const rect = trackElement.getBoundingClientRect();
-    if (isVertical) {
-      return Math.max(
-        0,
-        Math.min(1, 1 - (e.clientY - rect.top) / rect.height)
-      );
-    }
-    return Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const vertical = (trackElement.getAttribute('data-orientation') ?? options?.orientation) === 'vertical';
+    const size = vertical ? rect.height : rect.width;
+    if (size <= 0) return;
+    const percentage = Math.max(0, Math.min(1, vertical
+      ? 1 - (e.clientY - rect.top) / size : (e.clientX - rect.left) / size));
+    const min = Number(trackElement.getAttribute('data-min') ?? 0);
+    const max = Number(trackElement.getAttribute('data-max') ?? 100);
+    const step = Number(trackElement.getAttribute('data-step') ?? 1);
+    const value = snapSliderValue(percentage, min, max, step);
+    const snapped = max > min ? (value - min) / (max - min) : 0;
+    trackElement.style.setProperty('--bb-slider-position', `${snapped * 100}%`);
+    // Send the snapped fraction so identical steps do not cross the circuit repeatedly.
+    updates.push([snapped]);
   };
-
-  const handlePointerMove = (e) => {
-    if (!state.isDragging || e.pointerId !== state.pointerId) return;
+  const down = e => {
+    if (pointerId != null || disabled() || e.button > 0) return;
     e.preventDefault();
-    const percentage = calculatePercentage(e);
-    dotNetRef
-      .invokeMethodAsync("JsUpdateValueFromPercentage", percentage)
-      .catch(() => {});
+    generation++;
+    pointerId = e.pointerId;
+    updates.begin();
+    trackElement.setPointerCapture(pointerId);
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'grabbing';
+    update(e);
   };
-
-  const handlePointerUp = (e) => {
-    if (e.pointerId !== state.pointerId) return;
-    if (state.isDragging) {
-      state.isDragging = false;
-      state.pointerId = null;
-      trackElement.releasePointerCapture(e.pointerId);
-      document.body.style.userSelect = "";
-      document.body.style.cursor = "";
-    }
-  };
-
-  const handlePointerCancel = (e) => {
-    if (e.pointerId !== state.pointerId) return;
-    state.isDragging = false;
-    state.pointerId = null;
-    document.body.style.userSelect = "";
-    document.body.style.cursor = "";
-  };
-
-  const handleTrackPointerDown = (e) => {
-    if (state.isDragging) return;
+  const move = e => {
+    if (e.pointerId !== pointerId) return;
     e.preventDefault();
-    state.isDragging = true;
-    state.pointerId = e.pointerId;
-    trackElement.setPointerCapture(e.pointerId);
-    document.body.style.userSelect = "none";
-    document.body.style.cursor = "grabbing";
-
-    const percentage = calculatePercentage(e);
-    dotNetRef
-      .invokeMethodAsync("JsUpdateValueFromPercentage", percentage)
-      .catch(() => {});
+    update(e);
   };
-
-  trackElement.addEventListener("pointerdown", handleTrackPointerDown);
-  trackElement.addEventListener("pointermove", handlePointerMove);
-  trackElement.addEventListener("pointerup", handlePointerUp);
-  trackElement.addEventListener("pointercancel", handlePointerCancel);
-
-  sliderStates.set(sliderId, {
-    state,
-    handleTrackPointerDown,
-    handlePointerMove,
-    handlePointerUp,
-    handlePointerCancel,
-    trackElement,
+  const finish = e => {
+    if (e.pointerId !== pointerId) return;
+    if (e.type === 'pointerup') update(e);
+    pointerId = null;
+    if (trackElement.hasPointerCapture(e.pointerId)) trackElement.releasePointerCapture(e.pointerId);
+    document.body.style.userSelect = '';
+    document.body.style.cursor = '';
+    const current = generation;
+    releaseDragPreview(updates, trackElement, properties, () => !disposed && generation === current && pointerId == null);
+  };
+  const listeners = { pointerdown: down, pointermove: move, pointerup: finish, pointercancel: finish, lostpointercapture: finish };
+  Object.entries(listeners).forEach(([event, handler]) => trackElement.addEventListener(event, handler));
+  sliderStates.set(sliderId, () => {
+    disposed = true;
+    updates.dispose();
+    Object.entries(listeners).forEach(([event, handler]) => trackElement.removeEventListener(event, handler));
+    if (pointerId != null) {
+      if (trackElement.hasPointerCapture(pointerId)) trackElement.releasePointerCapture(pointerId);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    }
+    properties.forEach(property => trackElement.style.removeProperty(property));
   });
 }
 
-/**
- * Removes slider drag handling
- * @param {string} sliderId - Unique identifier for the slider
- */
 export function dispose(sliderId) {
-  const stored = sliderStates.get(sliderId);
-  if (stored) {
-    stored.trackElement.removeEventListener(
-      "pointerdown",
-      stored.handleTrackPointerDown
-    );
-    stored.trackElement.removeEventListener(
-      "pointermove",
-      stored.handlePointerMove
-    );
-    stored.trackElement.removeEventListener(
-      "pointerup",
-      stored.handlePointerUp
-    );
-    stored.trackElement.removeEventListener(
-      "pointercancel",
-      stored.handlePointerCancel
-    );
-    sliderStates.delete(sliderId);
-  }
+  sliderStates.get(sliderId)?.();
+  sliderStates.delete(sliderId);
 }

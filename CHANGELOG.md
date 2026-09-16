@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+
+## Unreleased
+
+### Performance
+
+- **Paged DataGrid queries fetch the requested page.** For `IQueryable` sources without client-side search, grouping, hierarchy or row virtualization, counting and `Skip`/`Take` stay on the query provider. Full-data CSV exports run the filtered, sorted query on demand; keep its provider alive until export. `ItemsProvider` remains the asynchronous option for remote data, and formatted search and grouping retain their full-data behavior.
+- **Command search shares filtered results and an item-index lookup.** Visible items no longer each rebuild and scan the whole filtered list. Search, filter and item changes invalidate the cache; callback-only changes do not.
+- **Slider, RangeSlider and ColorPicker drag feedback is immediate in the browser.** Live .NET updates are coalesced to the latest distinct value, normally no more than every 50 ms, with one callback in flight. Release and cancellation flush the final value. RangeSlider captures pointers locally; Rating hover updates on entering an icon instead of every mouse move. Public component parameters are unchanged.
+- **TreeView search indexes parents and visible nodes.** Matching siblings share ancestor lookups, rendering no longer repeats descendant searches, and cached lazy children remain searchable after parent renders.
+
+---
+
 ## 2026-09-16 (later still)
 
 ### Fixed

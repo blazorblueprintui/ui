@@ -5,6 +5,13 @@
 @implements IAsyncDisposable
 
 <div @ref="_trackRef"
+     data-min="@Min.ToString(CultureInfo.InvariantCulture)"
+     data-max="@Max.ToString(CultureInfo.InvariantCulture)"
+     data-step="@Step.ToString(CultureInfo.InvariantCulture)"
+     data-min-range="@MinRange.ToString(CultureInfo.InvariantCulture)"
+     data-start="@StartValue.ToString(CultureInfo.InvariantCulture)"
+     data-end="@EndValue.ToString(CultureInfo.InvariantCulture)"
+     data-disabled="@(Disabled ? "true" : null)"
      class="@CssClass"
      tabindex="-1"
      @attributes="AdditionalAttributes">
@@ -12,7 +19,7 @@
     <div class="bb:relative bb:h-2 bb:w-full bb:grow bb:overflow-hidden bb:rounded-full bb:bg-secondary">
         @* Active range track *@
         <div class="bb:absolute bb:h-full bb:bg-primary"
-             style="left: @(StartPercentageValue); width: @(RangePercentageValue);">
+             style="left: var(--bb-range-start, @(StartPercentageValue)); width: var(--bb-range-width, @(RangePercentageValue));">
         </div>
     </div>
 
@@ -26,8 +33,7 @@
          aria-disabled="@Disabled"
          tabindex="@(Disabled ? -1 : 0)"
          class="@StartThumbClass"
-         style="left: @(StartPercentageValue);"
-         @onpointerdown="@(e => StartThumbDrag(e))"
+         style="left: var(--bb-range-start, @(StartPercentageValue));"
          @onkeydown="@(e => HandleStartKeyDown(e))">
         @if (ShowTooltips)
         {
@@ -45,8 +51,7 @@
          aria-disabled="@Disabled"
          tabindex="@(Disabled ? -1 : 0)"
          class="@EndThumbClass"
-         style="left: @(EndPercentageValue);"
-         @onpointerdown="@(e => EndThumbDrag(e))"
+         style="left: var(--bb-range-end, @(EndPercentageValue));"
          @onkeydown="@(e => HandleEndKeyDown(e))">
         @if (ShowTooltips)
         {
@@ -226,18 +231,6 @@
         }
     }
 
-    private async Task StartThumbDrag(PointerEventArgs e)
-    {
-        if (Disabled || _jsModule == null) return;
-        await _jsModule.InvokeVoidAsync("startDrag", _sliderId, "start", e.PointerId);
-    }
-
-    private async Task EndThumbDrag(PointerEventArgs e)
-    {
-        if (Disabled || _jsModule == null) return;
-        await _jsModule.InvokeVoidAsync("startDrag", _sliderId, "end", e.PointerId);
-    }
-
     [JSInvokable]
     public async Task UpdateValueFromPercentage(double percentage, string thumb)
     {
@@ -293,6 +286,8 @@
         value = Math.Min(value, maxStart);
         value = Math.Max(Min, value);
 
+        if (value == StartValue) return;
+
         if (IsControlled)
         {
             await ValueChanged.InvokeAsync((value, EndValue));
@@ -310,6 +305,8 @@
         var minEnd = StartValue + MinRange;
         value = Math.Max(value, minEnd);
         value = Math.Min(Max, value);
+
+        if (value == EndValue) return;
 
         if (IsControlled)
         {
