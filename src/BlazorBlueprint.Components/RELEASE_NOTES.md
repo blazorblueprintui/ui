@@ -2,11 +2,13 @@
 
 **Breaking:** all library projects now target .NET 10. .NET 8 and .NET 9 are no longer supported.
 
-- **DataGrid:** cell and batch editing with isolated drafts, DataAnnotations validation, rejection/retry, cancel, keyboard save/cancel and focus restoration.
+- **DataGrid:** cell and batch editing with isolated drafts, DataAnnotations validation, rejection/retry, cancel, keyboard save/cancel and focus restoration. Editors preserve column widths and use inline InputGroup actions. Initial sorting and ordering after saves are covered by demos with text, number, date, select and checkbox editors.
 - **Scheduler:** day/week time slots, resource lanes, overlapping appointments, create/edit/delete, recurrence exceptions, IANA time zones and explicit DST handling.
 - **TreeSelect / Cascader:** searchable hierarchy pickers with stable keys and EditContext bindings. TreeSelect uses the standard picker chevron and search styling, with cascading parent checkboxes and indeterminate states; leaf-only values preserve parent selection behavior across collapsed and filtered branches.
 - **Hierarchy picker polish:** Cascader now shares the standard chevron/search styling, matches the trigger width, and supports arrow keys, Home/End, branch navigation, search-result selection and RTL. TreeSelect preserves its search during the exit animation to avoid flashing unfiltered content on close.
 - **FileUpload:** pluggable transport, progress, cancellation and retry; browser file references survive subsequent selections.
+- **Demos:** Scheduler, TreeSelect, Cascader and Data Grid Editing now follow the shared example, accessibility and API structure and appear alphabetically in the component catalog.
+- **Picker keyboard behavior:** date selection returns focus to its trigger; Enter opens a Select without the following native click closing it again.
 
 ## What's New in v4.0.0-beta.5
 

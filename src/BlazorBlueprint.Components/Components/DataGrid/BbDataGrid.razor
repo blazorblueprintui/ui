@@ -832,37 +832,64 @@
 
     private RenderFragment RenderEditableCell(IDataGridColumn<TData> column, TData item) => @<text>
         <CascadingValue Value="_editContext">
-            <fieldset disabled="@savingEdits" data-bb-cell-editor @onclick:stopPropagation="true" class="bb:min-w-0 bb:space-y-1">
-                @column.EditTemplate!(new DataGridCellContext<TData>
-                {
-                    Item = editModel ?? item,
-                    Column = column,
-                    Value = column.GetValue(editModel ?? item)
-                })
-                <ValidationSummary class="bb:text-destructive bb:text-xs" />
-                @if (UsesEditBuffer)
-                {
-                    <div class="bb:flex bb:gap-1">
-                        <BbButton Size="ButtonSize.Small" OnClick="@(async () => await CommitEditAsync())">@Localizer["DataGrid.SaveRow"]</BbButton>
-                        <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Ghost" OnClick="CancelEditAsync">@Localizer["DataGrid.CancelRowEdit"]</BbButton>
+            @if (UsesEditBuffer)
+            {
+                <div class="bb:grid bb:min-w-0 bb:grid-cols-[minmax(0,1fr)]">
+                    @* Retain the pre-edit content's intrinsic width. Only the editor's height
+                       contributes to table layout, so opening it does not resize columns. *@
+                    <div inert aria-hidden="true" data-bb-cell-sizing class="bb:invisible bb:pointer-events-none bb:col-start-1 bb:row-start-1">
+                        @RenderCellValue(column, item, cellCheckpoint, true)
                     </div>
-                }
-            </fieldset>
+                    <fieldset disabled="@savingEdits" data-bb-cell-editor @onclick:stopPropagation="true"
+                              class="bb:col-start-1 bb:row-start-1 bb:min-w-0 bb:space-y-1 bb:[contain:inline-size]">
+                        <BbInputGroup Class="bb:h-auto bb:min-h-10 bb:focus-within:ring-2 bb:focus-within:ring-ring">
+                            <div class="bb:min-w-0 bb:flex-1 bb:[&_input]:min-w-0 bb:[&_input]:border-0 bb:[&_input]:shadow-none bb:[&_input]:focus-visible:ring-0 bb:[&>button]:w-full bb:[&>button]:min-w-0 bb:[&>button]:border-0 bb:[&>button]:shadow-none bb:[&>button]:focus-visible:ring-0 bb:[&>button>span]:truncate">
+                                @RenderCellEditor(column, item)
+                            </div>
+                            <BbInputGroupAddon Align="InputGroupAlign.InlineEnd" Class="bb:gap-0.5 bb:pr-1">
+                                <BbInputGroupButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Class="bb:w-7 bb:!p-1.5 bb:rounded-sm"
+                                                    Disabled="@savingEdits" AriaLabel="@Localizer["DataGrid.SaveRow"]" OnClick="@(async () => await CommitEditAsync())">
+                                    <LucideIcon Name="check" Size="14" aria-hidden="true" />
+                                </BbInputGroupButton>
+                                <BbInputGroupButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Class="bb:w-7 bb:!p-1.5 bb:rounded-sm"
+                                                    Disabled="@savingEdits" AriaLabel="@Localizer["DataGrid.CancelRowEdit"]" OnClick="CancelEditAsync">
+                                    <LucideIcon Name="x" Size="14" aria-hidden="true" />
+                                </BbInputGroupButton>
+                            </BbInputGroupAddon>
+                        </BbInputGroup>
+                        <ValidationSummary class="bb:whitespace-normal bb:break-words bb:text-destructive bb:text-xs" />
+                    </fieldset>
+                </div>
+            }
+            else
+            {
+                <fieldset disabled="@savingEdits" data-bb-cell-editor @onclick:stopPropagation="true" class="bb:min-w-0 bb:space-y-1">
+                    @RenderCellEditor(column, item)
+                    <ValidationSummary class="bb:text-destructive bb:text-xs" />
+                </fieldset>
+            }
         </CascadingValue>
     </text>;
 
-    private RenderFragment RenderCellValue(IDataGridColumn<TData> column, TData item) => @<text>
+    private RenderFragment RenderCellEditor(IDataGridColumn<TData> column, TData item) => column.EditTemplate!(new DataGridCellContext<TData>
+    {
+        Item = editModel ?? item,
+        Column = column,
+        Value = column.GetValue(editModel ?? item)
+    });
+
+    private RenderFragment RenderCellValue(IDataGridColumn<TData> column, TData item, TData? displayItem = null, bool sizingOnly = false) => @<text>
         @if (column.CellTemplate != null)
         {
-            @column.CellTemplate(new DataGridCellContext<TData> { Item = DisplayItem(item), Column = column, Value = column.GetValue(DisplayItem(item)) })
+            @column.CellTemplate(new DataGridCellContext<TData> { Item = displayItem ?? DisplayItem(item), Column = column, Value = column.GetValue(displayItem ?? DisplayItem(item)) })
         }
         else
         {
-            @(column.GetValue(DisplayItem(item))?.ToString() ?? "")
+            @(column.GetValue(displayItem ?? DisplayItem(item))?.ToString() ?? "")
         }
         @if (IsCellEditable(column))
         {
-            <button type="button" id="@CellTriggerId(item, column.ColumnId)" disabled="@savingEdits" class="bb:ml-2 bb:inline-flex bb:rounded bb:p-1 bb:hover:bg-muted"
+            <button type="button" id="@(sizingOnly ? null : CellTriggerId(item, column.ColumnId))" disabled="@(savingEdits || sizingOnly)" class="bb:ml-2 bb:inline-flex bb:rounded bb:p-1 bb:hover:bg-muted"
                     aria-label="@Localizer["DataGrid.EditCell", column.Title ?? column.ColumnId]" @onclick:stopPropagation="true"
                     @onclick="@(() => StartCellEditAsync(item, column.ColumnId))">
                 <LucideIcon Name="pencil" Class="bb:w-3 bb:h-3" />

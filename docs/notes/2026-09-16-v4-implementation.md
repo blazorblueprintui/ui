@@ -13,7 +13,7 @@ Work began on the user's `v4` branch. The completed changes, research and Septem
 
 Initial SDK upgrade: net10.0 throughout the 12 main solution projects, SDK 10.0.400, ASP.NET component packages 10.0.12. Fix newer analyzer findings without weakening warning enforcement. Command's code moved into a .razor.cs file to avoid a new Razor preprocessor parsing failure. MSBuild requires an unsandboxed test/build invocation for local IPC sockets.
 
-Grid design: preserve row editing. Cell/batch modes use an explicit `EditItemFactory` clone so edits are isolated; applications must deep-copy editable nested objects. Stage batch drafts by stable ItemKey, retain drafts on validation/server rejection, and apply changes only after successful commit. Include keyboard entry and focus restoration, and test source isolation.
+Grid design: preserve row editing. Cell/batch modes use an explicit `EditItemFactory` clone so edits are isolated; applications must deep-copy editable nested objects. Stage batch drafts by stable ItemKey, retain drafts on validation/server rejection, and apply changes only after successful commit. Include keyboard entry and focus restoration, and test source isolation. Inline InputGroup actions fit the existing cell width; an inert sizing copy of the pre-edit value keeps automatic column sizing stable. Demos cover text, number, date, select and checkbox editors, initial sorting, ordering after cell/batch commits and validation recovery. New demos use the shared header/example/accessibility/API structure and all appear in the component catalog.
 
 Scheduler: separate `BbScheduler` component with day/week views, resource lanes, overlapping event placement, and independent event/display IANA zones. Ical.Net expands daily/weekly/monthly/yearly RRULEs. Single-occurrence edits use exclusions and independent overrides; series edits preserve the series identity. Skipped DST wall times are rejected; repeated start and end times have independent offset choices. Persistence callbacks receive a proposed cloned collection and can reject it without losing the draft.
 
@@ -26,8 +26,8 @@ Upload handlers receive a cancellation token, a fresh size-limited browser strea
 ## Verification
 
 - Release solution build: all 12 projects, zero warnings/errors.
-- .NET suite: 248 tests covering API snapshots, conventions, buffered editing, rendered component lifecycles, recurrence/DST, hierarchy indexing/selection and upload cancellation/retry.
-- JavaScript suite: 23 tests covering existing drag controls, rapid upload input replacement, overlay exit/focus restoration, calendar focus after popup visibility, filtered tree keyboard navigation and Cascader keyboard interactions/cleanup.
+- .NET suite: 251 tests covering API snapshots, conventions, buffered editing, rendered component lifecycles, recurrence/DST, hierarchy indexing/selection and upload cancellation/retry.
+- JavaScript suite: 27 tests covering existing drag controls, rapid upload input replacement, overlay exit/focus restoration, calendar focus after popup visibility, filtered tree keyboard navigation and Cascader keyboard interactions/cleanup.
 - Release WebAssembly publish with trimming succeeds. WebAssembly AOT compilation was not tested; the optional `wasm-tools` workload is not installed.
 - Server, standalone WASM and Auto hosts start. Server and Auto map .NET 10 static assets.
 - Local NuGet packages contain net10.0 assemblies and matching Primitives dependencies; no packages were published.

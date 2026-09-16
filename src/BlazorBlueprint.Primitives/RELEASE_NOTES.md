@@ -5,6 +5,7 @@
 - `DataGridEditMode` adds `Cell` and `Batch`.
 - `DataGridEditBuffer<TData>` stages independently cloned rows using stable keys or reference identity.
 - `DataGridRowSnapshot<TData>.ApplyTo` copies accepted draft properties to the original record.
+- Editing rows allow embedded controls to handle arrow keys; activating picker and action buttons no longer also commits the row.
 - Floating overlays wait only for their own exit animation, preventing child transitions from briefly revealing a closed popup again.
 
 ## What's New in v4.0.0-beta.5

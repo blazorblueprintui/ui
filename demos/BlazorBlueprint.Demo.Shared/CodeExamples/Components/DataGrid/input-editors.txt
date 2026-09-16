@@ -1,0 +1,46 @@
+@using System.ComponentModel.DataAnnotations
+@using BlazorBlueprint.Primitives
+
+<BbDataGrid Items="tasks" TData="WorkItem" ItemKey="@(r => r.Id)" EditMode="DataGridEditMode.Cell" EditItemFactory="CloneTask" ShowPagination="false" AriaLabel="Task editor types">
+    <Columns>
+        <BbDataGridPropertyColumn TData="WorkItem" TProp="string" Property="@(r => r.Title)" Title="Task" Sortable />
+        <BbDataGridPropertyColumn TData="WorkItem" TProp="DateTime?" Property="@(r => r.DueDate)" Title="Due Date" Format="dd MMM yyyy" Sortable Width="280px">
+            <EditTemplate><BbDatePicker @bind-Value="context.DueDate" DateFormat="dd MMM yyyy" Class="w-full" /></EditTemplate>
+        </BbDataGridPropertyColumn>
+        <BbDataGridPropertyColumn TData="WorkItem" TProp="string" Property="@(r => r.Status)" Sortable Width="230px">
+            <EditTemplate>
+                <BbSelect TValue="string" @bind-Value="context.Status">
+                    <BbSelectTrigger aria-label="Status"><BbSelectValue /></BbSelectTrigger>
+                    <BbSelectContent>
+                        <BbSelectItem Value='@("Planned")' Text="Planned" />
+                        <BbSelectItem Value='@("In progress")' Text="In progress" />
+                        <BbSelectItem Value='@("Done")' Text="Done" />
+                    </BbSelectContent>
+                </BbSelect>
+            </EditTemplate>
+        </BbDataGridPropertyColumn>
+        <BbDataGridPropertyColumn TData="WorkItem" TProp="bool" Property="@(r => r.Approved)" Sortable Width="150px">
+            <CellTemplate>@(context.Approved ? "Yes" : "No")</CellTemplate>
+            <EditTemplate><div class="flex items-center px-3 h-10"><BbCheckbox @bind-Checked="context.Approved" AriaLabel="Approved" /></div></EditTemplate>
+        </BbDataGridPropertyColumn>
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private readonly List<WorkItem> tasks =
+    [
+        new() { Id = 1, Title = "Design review", DueDate = new(2026, 9, 18), Status = "In progress", Approved = false },
+        new() { Id = 2, Title = "Release notes", DueDate = new(2026, 9, 21), Status = "Planned", Approved = false },
+        new() { Id = 3, Title = "Accessibility audit", DueDate = new(2026, 9, 16), Status = "Done", Approved = true }
+    ];
+
+    private static WorkItem CloneTask(WorkItem source) => new() { Id = source.Id, Title = source.Title, DueDate = source.DueDate, Status = source.Status, Approved = source.Approved };
+
+    private sealed class WorkItem
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = "";
+        public DateTime? DueDate { get; set; }
+        public string Status { get; set; } = "Planned";
+        public bool Approved { get; set; }
+    }}

@@ -77,8 +77,14 @@
         }
     }
 
-    private void HandleClick()
+    private void HandleClick(MouseEventArgs args)
     {
+        // Enter/Space can produce a native click after HandleKeyDown already opened us.
+        // Ignore that duplicate activation; pointer clicks still toggle normally.
+        if (args.Detail == 0 && _context?.IsOpen == true)
+        {
+            return;
+        }
         _context?.Toggle(_buttonElement);
     }
 

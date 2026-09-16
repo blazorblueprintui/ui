@@ -56,7 +56,6 @@ public class FocusIndicatorTests
         ["BbInputGroup"] = "Wrapper element; the inner input carries the ring.",
         ["BbSidebarInset"] = "Layout container for page content, not a control.",
         ["BbDashboardWidget"] = "Widget shell; the focusable controls inside it carry their own.",
-        ["BbDataGrid"] = "Grid container; header cells and rows manage their own focus.",
     };
 
     [Fact]

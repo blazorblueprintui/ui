@@ -1,50 +1,106 @@
 @page "/components/scheduler"
-<PageTitle>Scheduler - Blazor Blueprint</PageTitle>
-<div class="space-y-8">
-    <h1 class="text-4xl font-bold">Scheduler</h1>
-    <p>Choose a time slot to create an appointment, or an event to edit it. Resource lanes separate rooms; overlapping appointments share the available width.</p>
-    <div class="space-y-2 max-w-sm">
-        <BbLabel For="scheduler-display-zone">Display time zone</BbLabel>
-        <BbSelect TValue="string" @bind-Value="displayZone" DisplayTextSelector="@(value => value.Replace('_', ' '))">
-            <BbSelectTrigger id="scheduler-display-zone"><BbSelectValue /></BbSelectTrigger>
-            <BbSelectContent>
-                <BbSelectItem Value='@("America/New_York")' Text="America/New York" />
-                <BbSelectItem Value='@("UTC")' Text="UTC" />
-                <BbSelectItem Value='@("Europe/London")' Text="Europe/London" />
-            </BbSelectContent>
-        </BbSelect>
+
+<PageTitle>Scheduler Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-6xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Scheduler Component</h1>
+        <p class="text-xl text-muted-foreground">Schedule appointments with time slots, recurring events, resource lanes and time zones.</p>
     </div>
-    <div class="flex items-center gap-2">
-        <BbCheckbox Id="scheduler-reject-save" @bind-Checked="rejectSaves" />
-        <BbLabel For="scheduler-reject-save">Reject saves to try recovery</BbLabel>
-    </div>
-    <BbScheduler @bind-Events="events" Resources="resources" @bind-Date="date" @bind-View="view" TimeZoneId="@displayZone"
-                 StartHour="8" EndHour="20" OnEventChange="SaveAsync" />
-    <p>The recurring planning session keeps 9:00 AM in New York across daylight-saving changes. Edit one occurrence to move it independently, or select Entire series. Display-zone changes preserve the stored instants.</p>
-    <CodeBlock Source="Components/Scheduler/basic.txt" />
-    <ApiReference ComponentName="Scheduler">
-        <ApiParameter Name="Events / EventsChanged" Type="IReadOnlyList&lt;SchedulerEvent&gt;">Bind appointment data. Updates use independent copies. Persist Events from OnEventChange before accepting a change.</ApiParameter>
-        <ApiParameter Name="Resources" Type="IReadOnlyList&lt;SchedulerResource&gt;">Unique resource IDs and titles. Each event can have multiple ResourceIds. Unassigned events get a separate lane.</ApiParameter>
-        <ApiParameter Name="Date / DateChanged" Type="DateOnly">Visible date. Week navigation respects FirstDayOfWeek.</ApiParameter>
-        <ApiParameter Name="View / ViewChanged" Type="SchedulerView" Default="Week">Day or Week.</ApiParameter>
-        <ApiParameter Name="FirstDayOfWeek" Type="DayOfWeek" Default="Monday">First day of the week view.</ApiParameter>
-        <ApiParameter Name="TimeZoneId" Type="string" Default="UTC">IANA display zone. SchedulerEvent.TimeZoneId independently determines recurrence wall time.</ApiParameter>
-        <ApiParameter Name="SlotMinutes / StartHour / EndHour" Type="int" Default="30 / 8 / 18">Slot interval and visible hours. Use EndHour=24 for a full day. DST days use their actual elapsed duration.</ApiParameter>
-        <ApiParameter Name="ReadOnly" Type="bool" Default="false">Disables creation and editing.</ApiParameter>
-        <ApiParameter Name="EventTemplate" Type="RenderFragment&lt;SchedulerOccurrence&gt;">Custom event content inside the accessible event button.</ApiParameter>
-        <ApiParameter Name="OnEventChange" Type="EventCallback&lt;SchedulerChangeContext&gt;">Receives Kind, Scope, Event, OccurrenceStart and proposed Events. Set Cancel to reject. Failures preserve the editor.</ApiParameter>
-        <ApiParameter Name="CreateEvent(start, resourceId) / EditEvent(occurrence, scope)" Type="void">Open the built-in editor programmatically.</ApiParameter>
-        <ApiParameter Name="Class / AriaLabel / AdditionalAttributes" Type="presentation parameters">Style and label the scheduler region.</ApiParameter>
-    </ApiReference>
-    <ApiReference ComponentName="Scheduler data and recurrence">
-        <ApiParameter Name="SchedulerEvent" Type="class">Id, Title, Start, End, TimeZoneId, ResourceIds, RecurrenceRule, ExcludedStarts, SeriesId and RecurrenceId. Clone() deep-copies its collections.</ApiParameter>
-        <ApiParameter Name="RecurrenceRule" Type="string?">RFC 5545 daily, weekly, monthly or yearly RRULE; supports BYDAY, BYMONTHDAY, COUNT and UNTIL. The editor has repeat presets plus custom rules. Missing month days follow RFC rules and are skipped.</ApiParameter>
-        <ApiParameter Name="SchedulerEngine.Expand" Type="IReadOnlyList&lt;SchedulerOccurrence&gt;">Expand a half-open range, including events crossing its start. Default limit 10,000; exceeding the limit throws.</ApiParameter>
-        <ApiParameter Name="SchedulerEngine.ToInstant" Type="DateTimeOffset">Convert wall time with Earlier or Later resolution for a repeated DST time. Missing times are rejected. Timed occurrences retain their original elapsed duration.</ApiParameter>
-        <ApiParameter Name="SchedulerEngine.ApplyChange / Validate" Type="static methods">Validate data and prepare independent create/update/delete collections, including series exceptions.</ApiParameter>
-    </ApiReference>
-    <p>Dates use the current culture. Keyboard users can Tab between slots and appointments, Enter to open the editor, and Escape to close it. Dragging, resizing, all-day events and external calendar synchronization are outside this version.</p>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Example</h2>
+            <p class="text-sm text-muted-foreground">Choose a time slot to create an appointment, or select an event to edit it. Switch between day and week views using the toolbar.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            <BbScheduler @bind-Events="simpleEvents" @bind-Date="simpleDate" @bind-View="simpleView"
+                         TimeZoneId="UTC" StartHour="8" EndHour="14" AriaLabel="Daily appointments" />
+        </div>
+        <CodeBlock Source="Components/Scheduler/basic.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Resources, Recurrence and Time Zones</h2>
+            <p class="text-sm text-muted-foreground">Room lanes separate resources and overlapping events share the available width. The recurring planning session stays at 9:00 AM in New York; changing the display zone shows the same appointments in local time. Edit one occurrence or the whole series.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            <div class="space-y-2 max-w-sm">
+                <BbLabel For="scheduler-display-zone">Display time zone</BbLabel>
+                <BbSelect TValue="string" @bind-Value="displayZone" DisplayTextSelector="@(value => value.Replace('_', ' '))">
+                    <BbSelectTrigger id="scheduler-display-zone"><BbSelectValue /></BbSelectTrigger>
+                    <BbSelectContent>
+                        <BbSelectItem Value='@("America/New_York")' Text="America/New York" />
+                        <BbSelectItem Value='@("UTC")' Text="UTC" />
+                        <BbSelectItem Value='@("Europe/London")' Text="Europe/London" />
+                    </BbSelectContent>
+                </BbSelect>
+            </div>
+            <div class="flex items-center gap-2">
+                <BbCheckbox Id="scheduler-reject-save" @bind-Checked="rejectSaves" />
+                <BbLabel For="scheduler-reject-save">Simulate a failed save</BbLabel>
+            </div>
+            <BbScheduler @bind-Events="events" Resources="resources" @bind-Date="date" @bind-View="view" TimeZoneId="@displayZone"
+                         StartHour="8" EndHour="20" OnEventChange="SaveAsync" />
+        </div>
+        <CodeBlock Source="Components/Scheduler/resources.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Read-Only Schedule</h2>
+            <p class="text-sm text-muted-foreground">Display the same appointments without allowing creation, editing or deletion. Date navigation and view changes remain available.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            <BbScheduler Events="simpleEvents" Date="@(new DateOnly(2026, 9, 14))" View="SchedulerView.Week"
+                         TimeZoneId="UTC" StartHour="8" EndHour="14" ReadOnly="true" AriaLabel="Read-only weekly appointments" />
+        </div>
+        <CodeBlock Source="Components/Scheduler/read-only.txt" />
+    </section>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The scheduler region, time slots and event buttons have accessible labels.</AccessibilityItem>
+            <AccessibilityItem>The event editor uses labelled Bb form controls and reports invalid times or rejected saves without discarding the draft.</AccessibilityItem>
+            <AccessibilityItem>Read-only schedules disable changes while preserving date navigation.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between the toolbar, time slots and appointments"><BbKbd>Tab</BbKbd> / <BbKbd>Shift</BbKbd> + <BbKbd>Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Open an appointment or create one in the focused time slot"><BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Close the active picker or event editor"><BbKbd>Escape</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties, event data and recurrence helpers.</p>
+        </div>
+        <ApiReference ComponentName="Scheduler">
+            <ApiParameter Name="Events / EventsChanged" Type="IReadOnlyList&lt;SchedulerEvent&gt;">Bind appointment data. Updates use independent copies. Persist Events from OnEventChange before accepting a change.</ApiParameter>
+            <ApiParameter Name="Resources" Type="IReadOnlyList&lt;SchedulerResource&gt;">Unique resource IDs and titles. Each event can have multiple ResourceIds. Unassigned events get a separate lane.</ApiParameter>
+            <ApiParameter Name="Date / DateChanged" Type="DateOnly">Visible date. Week navigation respects FirstDayOfWeek.</ApiParameter>
+            <ApiParameter Name="View / ViewChanged" Type="SchedulerView" Default="Week">Day or Week.</ApiParameter>
+            <ApiParameter Name="FirstDayOfWeek" Type="DayOfWeek" Default="Monday">First day of the week view.</ApiParameter>
+            <ApiParameter Name="TimeZoneId" Type="string" Default="UTC">IANA display zone. SchedulerEvent.TimeZoneId independently determines recurrence wall time.</ApiParameter>
+            <ApiParameter Name="SlotMinutes / StartHour / EndHour" Type="int" Default="30 / 8 / 18">Slot interval and visible hours. Use EndHour=24 for a full day. DST days use their actual elapsed duration.</ApiParameter>
+            <ApiParameter Name="ReadOnly" Type="bool" Default="false">Disables creation and editing.</ApiParameter>
+            <ApiParameter Name="EventTemplate" Type="RenderFragment&lt;SchedulerOccurrence&gt;">Custom event content inside the accessible event button.</ApiParameter>
+            <ApiParameter Name="OnEventChange" Type="EventCallback&lt;SchedulerChangeContext&gt;">Receives Kind, Scope, Event, OccurrenceStart and proposed Events. Set Cancel to reject. Failures preserve the editor.</ApiParameter>
+            <ApiParameter Name="CreateEvent(start, resourceId) / EditEvent(occurrence, scope)" Type="void">Open the built-in editor programmatically.</ApiParameter>
+            <ApiParameter Name="Class / AriaLabel / AdditionalAttributes" Type="presentation parameters">Style and label the scheduler region.</ApiParameter>
+        </ApiReference>
+        <ApiReference ComponentName="Scheduler data and recurrence">
+            <ApiParameter Name="SchedulerEvent" Type="class">Id, Title, Start, End, TimeZoneId, ResourceIds, RecurrenceRule, ExcludedStarts, SeriesId and RecurrenceId. Clone() deep-copies its collections.</ApiParameter>
+            <ApiParameter Name="RecurrenceRule" Type="string?">RFC 5545 daily, weekly, monthly or yearly RRULE; supports BYDAY, BYMONTHDAY, COUNT and UNTIL. The editor has repeat presets plus custom rules. Missing month days follow RFC rules and are skipped.</ApiParameter>
+            <ApiParameter Name="SchedulerEngine.Expand" Type="IReadOnlyList&lt;SchedulerOccurrence&gt;">Expand a half-open range, including events crossing its start. Default limit 10,000; exceeding the limit throws.</ApiParameter>
+            <ApiParameter Name="SchedulerEngine.ToInstant" Type="DateTimeOffset">Convert wall time with Earlier or Later resolution for a repeated DST time. Missing times are rejected. Timed occurrences retain their original elapsed duration.</ApiParameter>
+            <ApiParameter Name="SchedulerEngine.ApplyChange / Validate" Type="static methods">Validate data and prepare independent create/update/delete collections, including series exceptions.</ApiParameter>
+        </ApiReference>
+    </section>
 </div>
+
 @code {
     private DateOnly date = new(2026, 9, 14);
     private SchedulerView view = SchedulerView.Day;
@@ -61,4 +117,12 @@
         await Task.Delay(250);
         context.Cancel = rejectSaves;
     }
+
+    private DateOnly simpleDate = new(2026, 9, 14);
+    private SchedulerView simpleView = SchedulerView.Day;
+    private IReadOnlyList<SchedulerEvent> simpleEvents =
+    [
+        new() { Id = "standup", Title = "Team stand-up", Start = new(2026, 9, 14, 9, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 9, 30, 0, TimeSpan.Zero) },
+        new() { Id = "lunch", Title = "Lunch", Start = new(2026, 9, 14, 12, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 13, 0, 0, TimeSpan.Zero) }
+    ];
 }

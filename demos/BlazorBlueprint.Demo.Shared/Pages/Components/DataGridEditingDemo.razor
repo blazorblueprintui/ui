@@ -1,62 +1,212 @@
 @page "/components/datagrid-editing"
 @using System.ComponentModel.DataAnnotations
 @using BlazorBlueprint.Primitives
+@using BlazorBlueprint.Primitives.Table
 
-<PageTitle>Cell and Batch Editing - Blazor Blueprint</PageTitle>
-<div class="space-y-8 max-w-5xl">
-    <h1 class="text-4xl font-bold">Cell and Batch Editing</h1>
-    <p>Use the pencil beside an editable cell. Enter saves the cell; Escape discards its current changes. Tab moves between editor controls.</p>
-    <div class="flex items-center gap-2"><BbCheckbox Id="grid-reject-saves" @bind-Checked="rejectSaves" /><BbLabel For="grid-reject-saves">Reject saves to try recovery</BbLabel></div>
+<PageTitle>Data Grid Editing - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-6xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Data Grid Editing</h1>
+        <p class="text-xl text-muted-foreground">Edit individual cells or save several changes together, using the input controls that suit your data.</p>
+    </div>
+
     <section class="space-y-4">
-        <h2 class="text-2xl font-semibold">Cell editing</h2>
-        <p>Each accepted cell is saved independently. Empty names fail validation. A rejected save retains the draft.</p>
-        <BbDataGrid Items="cellRows" TData="Employee" ItemKey="@(r => r.Id)" EditMode="DataGridEditMode.Cell" EditItemFactory="Clone" OnRowCommit="SaveCellAsync">
-            <Columns>
-                <BbDataGridPropertyColumn TData="Employee" TProp="string" Property="@(r => r.Name)">
-                    <EditTemplate><BbInput @bind-Value="context.Name" /></EditTemplate>
-                </BbDataGridPropertyColumn>
-                <BbDataGridPropertyColumn TData="Employee" TProp="int" Property="@(r => r.Hours)">
-                    <EditTemplate><BbNumericInput TValue="int" @bind-Value="context.Hours" /></EditTemplate>
-                </BbDataGridPropertyColumn>
-            </Columns>
-        </BbDataGrid>
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Cell Editing</h2>
+            <p class="text-sm text-muted-foreground">Choose a pencil to edit a name or number. Use the check to save or the cross to cancel; the column keeps its width while editing.</p>
+        </div>
+        <div class="rounded-lg border p-4">
+            @* example: cell-editing *@
+            <BbDataGrid Items="cellRows" TData="Employee" ItemKey="@(r => r.Id)" EditMode="DataGridEditMode.Cell" EditItemFactory="Clone" ShowPagination="false" AriaLabel="Cell editing employees">
+                <Columns>
+                    <BbDataGridPropertyColumn TData="Employee" TProp="string" Property="@(r => r.Name)" Sortable>
+                        <EditTemplate><BbInputGroupInput @bind-Value="context.Name" AriaLabel="Name" /></EditTemplate>
+                    </BbDataGridPropertyColumn>
+                    <BbDataGridPropertyColumn TData="Employee" TProp="int" Property="@(r => r.Hours)" Sortable>
+                        <EditTemplate><BbNumericInput TValue="int" @bind-Value="context.Hours" AriaLabel="Hours" ShowButtons="false" /></EditTemplate>
+                    </BbDataGridPropertyColumn>
+                </Columns>
+            </BbDataGrid>
+            @* end example *@
+        </div>
         <CodeBlock Source="Components/DataGrid/cell-editing.txt" />
     </section>
+
     <section class="space-y-4">
-        <h2 class="text-2xl font-semibold">Batch editing</h2>
-        <p>Cell saves stage drafts. Save changes submits all staged rows in one callback; Discard changes leaves the source records untouched.</p>
-        <BbDataGrid Items="batchRows" TData="Employee" ItemKey="@(r => r.Id)" EditMode="DataGridEditMode.Batch" EditItemFactory="Clone" OnBatchCommit="SaveBatchAsync">
-            <Columns>
-                <BbDataGridPropertyColumn TData="Employee" TProp="string" Property="@(r => r.Name)">
-                    <EditTemplate><BbInput @bind-Value="context.Name" /></EditTemplate>
-                </BbDataGridPropertyColumn>
-                <BbDataGridPropertyColumn TData="Employee" TProp="int" Property="@(r => r.Hours)">
-                    <EditTemplate><BbNumericInput TValue="int" @bind-Value="context.Hours" /></EditTemplate>
-                </BbDataGridPropertyColumn>
-            </Columns>
-        </BbDataGrid>
-        <p role="status">Source: @string.Join("; ", batchRows.Select(r => $"{r.Name}: {r.Hours} hours"))</p>
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Date, Dropdown and Checkbox Editors</h2>
+            <p class="text-sm text-muted-foreground">Use a date picker, select or checkbox in an edit template. Choosing a value updates the draft; save the cell to apply it.</p>
+        </div>
+        <div class="rounded-lg border p-4">
+            @* example: input-editors *@
+            <BbDataGrid Items="tasks" TData="WorkItem" ItemKey="@(r => r.Id)" EditMode="DataGridEditMode.Cell" EditItemFactory="CloneTask" ShowPagination="false" AriaLabel="Task editor types">
+                <Columns>
+                    <BbDataGridPropertyColumn TData="WorkItem" TProp="string" Property="@(r => r.Title)" Title="Task" Sortable />
+                    <BbDataGridPropertyColumn TData="WorkItem" TProp="DateTime?" Property="@(r => r.DueDate)" Title="Due Date" Format="dd MMM yyyy" Sortable Width="280px">
+                        <EditTemplate><BbDatePicker @bind-Value="context.DueDate" DateFormat="dd MMM yyyy" Class="w-full" /></EditTemplate>
+                    </BbDataGridPropertyColumn>
+                    <BbDataGridPropertyColumn TData="WorkItem" TProp="string" Property="@(r => r.Status)" Sortable Width="230px">
+                        <EditTemplate>
+                            <BbSelect TValue="string" @bind-Value="context.Status">
+                                <BbSelectTrigger aria-label="Status"><BbSelectValue /></BbSelectTrigger>
+                                <BbSelectContent>
+                                    <BbSelectItem Value='@("Planned")' Text="Planned" />
+                                    <BbSelectItem Value='@("In progress")' Text="In progress" />
+                                    <BbSelectItem Value='@("Done")' Text="Done" />
+                                </BbSelectContent>
+                            </BbSelect>
+                        </EditTemplate>
+                    </BbDataGridPropertyColumn>
+                    <BbDataGridPropertyColumn TData="WorkItem" TProp="bool" Property="@(r => r.Approved)" Sortable Width="150px">
+                        <CellTemplate>@(context.Approved ? "Yes" : "No")</CellTemplate>
+                        <EditTemplate><div class="flex items-center px-3 h-10"><BbCheckbox @bind-Checked="context.Approved" AriaLabel="Approved" /></div></EditTemplate>
+                    </BbDataGridPropertyColumn>
+                </Columns>
+            </BbDataGrid>
+            @* end example *@
+        </div>
+        <CodeBlock Source="Components/DataGrid/input-editors.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Sorting After an Edit</h2>
+            <p class="text-sm text-muted-foreground">Rows start sorted by hours, highest first. Change Alex's hours from 32 to 50 and save: Alex moves above Morgan. Sort any header to try another order.</p>
+        </div>
+        <div class="rounded-lg border p-4">
+            @* example: editing-sorting *@
+            <BbDataGrid Items="sortedRows" TData="Employee" State="sortingState" ItemKey="@(r => r.Id)" EditMode="DataGridEditMode.Cell" EditItemFactory="Clone" ShowPagination="false" AriaLabel="Employees sorted after editing">
+                <Columns>
+                    <BbDataGridPropertyColumn TData="Employee" TProp="string" Property="@(r => r.Name)" Sortable>
+                        <EditTemplate><BbInputGroupInput @bind-Value="context.Name" AriaLabel="Name" /></EditTemplate>
+                    </BbDataGridPropertyColumn>
+                    <BbDataGridPropertyColumn TData="Employee" TProp="int" Property="@(r => r.Hours)" Sortable>
+                        <EditTemplate><BbNumericInput TValue="int" @bind-Value="context.Hours" AriaLabel="Hours" ShowButtons="false" /></EditTemplate>
+                    </BbDataGridPropertyColumn>
+                </Columns>
+            </BbDataGrid>
+            @* end example *@
+        </div>
+        <CodeBlock Source="Components/DataGrid/editing-sorting.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Batch Editing</h2>
+            <p class="text-sm text-muted-foreground">Save individual cells to stage drafts, then choose Save changes to apply the batch. The initial hours sort updates after the batch is saved. Discard changes restores the original records.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            @* example: batch-editing *@
+            <BbDataGrid Items="batchRows" TData="Employee" State="batchState" ItemKey="@(r => r.Id)" EditMode="DataGridEditMode.Batch" EditItemFactory="Clone" OnBatchCommit="SaveBatchAsync" ShowPagination="false" AriaLabel="Batch editing employees">
+                <Columns>
+                    <BbDataGridPropertyColumn TData="Employee" TProp="string" Property="@(r => r.Name)" Sortable>
+                        <EditTemplate><BbInputGroupInput @bind-Value="context.Name" AriaLabel="Name" /></EditTemplate>
+                    </BbDataGridPropertyColumn>
+                    <BbDataGridPropertyColumn TData="Employee" TProp="int" Property="@(r => r.Hours)" Sortable>
+                        <EditTemplate><BbNumericInput TValue="int" @bind-Value="context.Hours" AriaLabel="Hours" ShowButtons="false" /></EditTemplate>
+                    </BbDataGridPropertyColumn>
+                </Columns>
+            </BbDataGrid>
+            @* end example *@
+            <p class="text-sm text-muted-foreground" role="status">@batchStatus</p>
+        </div>
         <CodeBlock Source="Components/DataGrid/batch-editing.txt" />
     </section>
-    <ApiReference ComponentName="DataGrid editing">
-        <ApiParameter Name="EditMode" Type="DataGridEditMode" Default="None">None, Row, Cell or Batch. Cell and Batch require an independent clone factory.</ApiParameter>
-        <ApiParameter Name="EditItemFactory" Type="Func&lt;TData,TData&gt;">Clone every writable field, including nested editable objects. Stable ItemKey values cannot change. Accepted drafts copy public writable properties back to the original records.</ApiParameter>
-        <ApiParameter Name="OnRowCommit" Type="EventCallback&lt;DataGridRowCommitContext&lt;TData&gt;&gt;">In Cell mode Item is the draft and OriginalItem is the source. Set Cancel to reject; thrown errors retain the draft. Row mode retains its original in-place behavior.</ApiParameter>
-        <ApiParameter Name="OnBatchCommit" Type="EventCallback&lt;DataGridBatchCommitContext&lt;TData&gt;&gt;">Persist Changes atomically in your backend; each change contains OriginalItem and Item. Set Cancel to reject the entire batch. Successful callbacks apply all drafts locally.</ApiParameter>
-        <ApiParameter Name="OnBatchCancel" Type="EventCallback">Runs after all pending drafts are discarded.</ApiParameter>
-        <ApiParameter Name="PendingChanges / IsSavingEdits / EditingColumnId" Type="read-only properties">Inspect pending row drafts, save activity and the active column.</ApiParameter>
-        <ApiParameter Name="StartCellEditAsync(item, columnId)" Type="Task">Opens one editable visible column. Invalid current edits block navigation.</ApiParameter>
-        <ApiParameter Name="CommitEditAsync() / CancelEditAsync()" Type="Task">Accept or discard the active cell. In Batch mode, earlier staged cells are retained when the current cell is canceled.</ApiParameter>
-        <ApiParameter Name="CommitBatchAsync() / CancelBatchAsync()" Type="Task">Accept or discard every staged row. Commit returns false when validation or persistence fails.</ApiParameter>
-    </ApiReference>
-    <p>Use simple writable DTOs for editing. The clone factory is responsible for nested object isolation. Sorting, filtering and CSV export use committed values until a save succeeds. Keep the editing mode, factory and key selector stable while a draft is open.</p>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Validation and Save Recovery</h2>
+            <p class="text-sm text-muted-foreground">A name is required and hours must be between 0 and 80. A failed save keeps the draft open so it can be corrected or retried.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            @* example: editing-validation *@
+            <div class="flex items-center gap-2">
+                <BbCheckbox Id="grid-reject-saves" @bind-Checked="rejectSaves" />
+                <BbLabel For="grid-reject-saves">Simulate a failed save</BbLabel>
+            </div>
+            <BbDataGrid Items="validationRows" TData="Employee" ItemKey="@(r => r.Id)" EditMode="DataGridEditMode.Cell" EditItemFactory="Clone" OnRowCommit="SaveCellAsync" ShowPagination="false" AriaLabel="Editing validation and recovery">
+                <Columns>
+                    <BbDataGridPropertyColumn TData="Employee" TProp="string" Property="@(r => r.Name)">
+                        <EditTemplate><BbInputGroupInput @bind-Value="context.Name" AriaLabel="Name" /></EditTemplate>
+                    </BbDataGridPropertyColumn>
+                    <BbDataGridPropertyColumn TData="Employee" TProp="int" Property="@(r => r.Hours)">
+                        <EditTemplate><BbNumericInput TValue="int" @bind-Value="context.Hours" AriaLabel="Hours" ShowButtons="false" /></EditTemplate>
+                    </BbDataGridPropertyColumn>
+                </Columns>
+            </BbDataGrid>
+            @* end example *@
+        </div>
+        <CodeBlock Source="Components/DataGrid/editing-validation.txt" />
+    </section>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Edit buttons identify their column. Save and Cancel controls have accessible labels.</AccessibilityItem>
+            <AccessibilityItem>Validation errors remain beside the editor. Inputs and actions are disabled while a save is pending.</AccessibilityItem>
+            <AccessibilityItem>The display content retained for column sizing is hidden from assistive technology and cannot receive focus.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between edit buttons and editor controls"><BbKbd>Tab</BbKbd> / <BbKbd>Shift</BbKbd> + <BbKbd>Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Save from a text or numeric input; activate a focused button or picker"><BbKbd>Enter</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Cancel the active cell; an open picker closes first"><BbKbd>Escape</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Cell and batch editing parameters and methods. See the <a class="text-primary underline" href="/components/datagrid">Data Grid</a> page for sorting, filtering and column options.</p>
+        </div>
+        <ApiReference ComponentName="DataGrid editing">
+            <ApiParameter Name="State" Type="DataGridState&lt;TData&gt;?">Set initial sort definitions before rendering. Accepted cell or batch saves reapply the active sort; uncommitted drafts retain the source row order.</ApiParameter>
+            <ApiParameter Name="EditMode" Type="DataGridEditMode" Default="None">None, Row, Cell or Batch. Cell and Batch require an independent clone factory.</ApiParameter>
+            <ApiParameter Name="EditItemFactory" Type="Func&lt;TData,TData&gt;">Clone every writable field, including nested editable objects. Stable ItemKey values cannot change. Accepted drafts copy public writable properties back to the original records.</ApiParameter>
+            <ApiParameter Name="OnRowCommit" Type="EventCallback&lt;DataGridRowCommitContext&lt;TData&gt;&gt;">In Cell mode Item is the draft and OriginalItem is the source. Set Cancel to reject; thrown errors retain the draft. Row mode retains its original in-place behavior.</ApiParameter>
+            <ApiParameter Name="OnBatchCommit" Type="EventCallback&lt;DataGridBatchCommitContext&lt;TData&gt;&gt;">Persist Changes atomically in your backend; each change contains OriginalItem and Item. Set Cancel to reject the entire batch. Successful callbacks apply all drafts locally.</ApiParameter>
+            <ApiParameter Name="OnBatchCancel" Type="EventCallback">Runs after all pending drafts are discarded.</ApiParameter>
+            <ApiParameter Name="PendingChanges / IsSavingEdits / EditingColumnId" Type="read-only properties">Inspect pending row drafts, save activity and the active column.</ApiParameter>
+            <ApiParameter Name="StartCellEditAsync(item, columnId)" Type="Task">Opens one editable visible column. Invalid current edits block navigation.</ApiParameter>
+            <ApiParameter Name="CommitEditAsync() / CancelEditAsync()" Type="Task">Accept or discard the active cell. In Batch mode, earlier staged cells are retained when the current cell is canceled.</ApiParameter>
+            <ApiParameter Name="CommitBatchAsync() / CancelBatchAsync()" Type="Task">Accept or discard every staged row. Commit returns false when validation or persistence fails.</ApiParameter>
+        </ApiReference>
+        <ApiReference ComponentName="DataGridPropertyColumn editing">
+            <ApiParameter Name="EditTemplate" Type="RenderFragment&lt;TData&gt;">Bind an editor to the draft supplied as context. Text, number, date, select and checkbox controls are supported. Save and Cancel actions are supplied by the grid; BbInputGroupInput provides a borderless text editor.</ApiParameter>
+        </ApiReference>
+    </section>
 </div>
 
 @code {
     private bool rejectSaves;
-    private readonly List<Employee> cellRows = [new() { Id = 1, Name = "Alex", Hours = 32 }, new() { Id = 2, Name = "Sam", Hours = 24 }];
-    private readonly List<Employee> batchRows = [new() { Id = 1, Name = "Alex", Hours = 32 }, new() { Id = 2, Name = "Sam", Hours = 24 }];
+    private string batchStatus = "No batch saved yet.";
+    private readonly List<Employee> cellRows = CreateEmployees();
+    private readonly List<Employee> sortedRows = CreateEmployees();
+    private readonly List<Employee> batchRows = CreateEmployees();
+    private readonly List<Employee> validationRows = [new() { Id = 1, Name = "Alex", Hours = 32 }];
+    private readonly BlazorBlueprint.Primitives.DataGrid.DataGridState<Employee> sortingState = new();
+    private readonly BlazorBlueprint.Primitives.DataGrid.DataGridState<Employee> batchState = new();
+    private readonly List<WorkItem> tasks =
+    [
+        new() { Id = 1, Title = "Design review", DueDate = new(2026, 9, 18), Status = "In progress", Approved = false },
+        new() { Id = 2, Title = "Release notes", DueDate = new(2026, 9, 21), Status = "Planned", Approved = false },
+        new() { Id = 3, Title = "Accessibility audit", DueDate = new(2026, 9, 16), Status = "Done", Approved = true }
+    ];
+
+    protected override void OnInitialized()
+    {
+        sortingState.Sorting.SetSort("hours", SortDirection.Descending);
+        batchState.Sorting.SetSort("hours", SortDirection.Descending);
+    }
+
+    private static List<Employee> CreateEmployees() =>
+    [
+        new() { Id = 1, Name = "Alex", Hours = 32 },
+        new() { Id = 2, Name = "Sam", Hours = 24 },
+        new() { Id = 3, Name = "Morgan", Hours = 40 },
+        new() { Id = 4, Name = "Jamie", Hours = 16 }
+    ];
     private static Employee Clone(Employee source) => new() { Id = source.Id, Name = source.Name, Hours = source.Hours };
+    private static WorkItem CloneTask(WorkItem source) => new() { Id = source.Id, Title = source.Title, DueDate = source.DueDate, Status = source.Status, Approved = source.Approved };
     private async Task SaveCellAsync(DataGridRowCommitContext<Employee> context)
     {
         await Task.Delay(300);
@@ -65,12 +215,20 @@
     private async Task SaveBatchAsync(DataGridBatchCommitContext<Employee> context)
     {
         await Task.Delay(300);
-        context.Cancel = rejectSaves;
+        batchStatus = $"Saved changes to {context.Changes.Count} records.";
     }
     private sealed class Employee
     {
         public int Id { get; set; }
         [Required] public string Name { get; set; } = "";
         [Range(0, 80)] public int Hours { get; set; }
+    }
+    private sealed class WorkItem
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = "";
+        public DateTime? DueDate { get; set; }
+        public string Status { get; set; } = "Planned";
+        public bool Approved { get; set; }
     }
 }

@@ -1,0 +1,35 @@
+<div class="space-y-2 max-w-sm">
+    <BbLabel For="scheduler-display-zone">Display time zone</BbLabel>
+    <BbSelect TValue="string" @bind-Value="displayZone" DisplayTextSelector="@(value => value.Replace('_', ' '))">
+        <BbSelectTrigger id="scheduler-display-zone"><BbSelectValue /></BbSelectTrigger>
+        <BbSelectContent>
+            <BbSelectItem Value='@("America/New_York")' Text="America/New York" />
+            <BbSelectItem Value='@("UTC")' Text="UTC" />
+            <BbSelectItem Value='@("Europe/London")' Text="Europe/London" />
+        </BbSelectContent>
+    </BbSelect>
+</div>
+<div class="flex items-center gap-2">
+    <BbCheckbox Id="scheduler-reject-save" @bind-Checked="rejectSaves" />
+    <BbLabel For="scheduler-reject-save">Simulate a failed save</BbLabel>
+</div>
+<BbScheduler @bind-Events="events" Resources="resources" @bind-Date="date" @bind-View="view" TimeZoneId="@displayZone"
+             StartHour="8" EndHour="20" OnEventChange="SaveAsync" />
+
+@code {
+    private DateOnly date = new(2026, 9, 14);
+    private SchedulerView view = SchedulerView.Day;
+    private string displayZone = "America/New_York";
+    private bool rejectSaves;
+    private readonly IReadOnlyList<SchedulerResource> resources = [new("room-a", "Room A"), new("room-b", "Room B")];
+    private IReadOnlyList<SchedulerEvent> events =
+    [
+        new() { Id = "planning", Title = "Planning", Start = new(2026, 9, 14, 9, 0, 0, TimeSpan.FromHours(-4)), End = new(2026, 9, 14, 10, 0, 0, TimeSpan.FromHours(-4)), TimeZoneId = "America/New_York", ResourceIds = ["room-a"], RecurrenceRule = "FREQ=WEEKLY;BYDAY=MO,WE;COUNT=24" },
+        new() { Id = "review", Title = "Design review", Start = new(2026, 9, 14, 9, 30, 0, TimeSpan.FromHours(-4)), End = new(2026, 9, 14, 11, 0, 0, TimeSpan.FromHours(-4)), TimeZoneId = "America/New_York", ResourceIds = ["room-a", "room-b"] }
+    ];
+    private async Task SaveAsync(SchedulerChangeContext context)
+    {
+        await Task.Delay(250);
+        context.Cancel = rejectSaves;
+    }
+}

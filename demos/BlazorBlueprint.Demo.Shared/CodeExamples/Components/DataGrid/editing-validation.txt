@@ -1,25 +1,35 @@
 @using System.ComponentModel.DataAnnotations
 @using BlazorBlueprint.Primitives
 
-<BbDataGrid Items="cellRows" TData="Employee" ItemKey="@(r => r.Id)" EditMode="DataGridEditMode.Cell" EditItemFactory="Clone" ShowPagination="false" AriaLabel="Cell editing employees">
+<div class="flex items-center gap-2">
+    <BbCheckbox Id="grid-reject-saves" @bind-Checked="rejectSaves" />
+    <BbLabel For="grid-reject-saves">Simulate a failed save</BbLabel>
+</div>
+<BbDataGrid Items="validationRows" TData="Employee" ItemKey="@(r => r.Id)" EditMode="DataGridEditMode.Cell" EditItemFactory="Clone" OnRowCommit="SaveCellAsync" ShowPagination="false" AriaLabel="Editing validation and recovery">
     <Columns>
-        <BbDataGridPropertyColumn TData="Employee" TProp="string" Property="@(r => r.Name)" Sortable>
+        <BbDataGridPropertyColumn TData="Employee" TProp="string" Property="@(r => r.Name)">
             <EditTemplate><BbInputGroupInput @bind-Value="context.Name" AriaLabel="Name" /></EditTemplate>
         </BbDataGridPropertyColumn>
-        <BbDataGridPropertyColumn TData="Employee" TProp="int" Property="@(r => r.Hours)" Sortable>
+        <BbDataGridPropertyColumn TData="Employee" TProp="int" Property="@(r => r.Hours)">
             <EditTemplate><BbNumericInput TValue="int" @bind-Value="context.Hours" AriaLabel="Hours" ShowButtons="false" /></EditTemplate>
         </BbDataGridPropertyColumn>
     </Columns>
 </BbDataGrid>
 
 @code {
-    private readonly List<Employee> cellRows =
+    private readonly List<Employee> validationRows =
     [
         new() { Id = 1, Name = "Alex", Hours = 32 },
         new() { Id = 2, Name = "Sam", Hours = 24 },
         new() { Id = 3, Name = "Morgan", Hours = 40 },
         new() { Id = 4, Name = "Jamie", Hours = 16 }
     ];
+    private bool rejectSaves;
+    private async Task SaveCellAsync(DataGridRowCommitContext<Employee> context)
+    {
+        await Task.Delay(300);
+        context.Cancel = rejectSaves;
+    }
     private static Employee Clone(Employee source) => new() { Id = source.Id, Name = source.Name, Hours = source.Hours };
     private sealed class Employee
     {

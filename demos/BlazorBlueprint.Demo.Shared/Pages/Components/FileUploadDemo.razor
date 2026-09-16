@@ -11,14 +11,6 @@
         </div>
     </div>
 
-    <section class="space-y-4">
-        <h2 class="text-2xl font-semibold">Progress, cancellation and retry</h2>
-        <p>This demo reads the selected file locally with a delay; it does not send it to a server. Enable the failure switch to exercise retry. In an application, replace the callback with your upload transport.</p>
-        <div class="flex items-center gap-2"><BbCheckbox Id="upload-fail-next" @bind-Checked="failNextUpload" /><BbLabel For="upload-fail-next">Fail the next attempt</BbLabel></div>
-        <BbFileUpload Multiple="true" ShowPreview="false" UploadHandler="DemoUploadAsync" />
-        <CodeBlock Source="Components/FileUpload/transport.txt" />
-    </section>
-
     <!-- Basic Example -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -185,6 +177,21 @@
         <CodeBlock Source="Components/FileUpload/label-trigger.txt" />
     </div>
 
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Progress, Cancellation and Retry</h2>
+            <p class="text-sm text-muted-foreground">Follow upload progress, cancel an attempt and retry it. This example simulates a transfer locally; select the failure option to try recovery.</p>
+        </div>
+        <div class="rounded-lg border p-6 space-y-4">
+            <div class="flex items-center gap-2">
+                <BbCheckbox Id="upload-fail-next" @bind-Checked="failNextUpload" />
+                <BbLabel For="upload-fail-next">Fail the next attempt</BbLabel>
+            </div>
+            <BbFileUpload Multiple="true" ShowPreview="false" UploadHandler="DemoUploadAsync" />
+        </div>
+        <CodeBlock Source="Components/FileUpload/transport.txt" />
+    </section>
+
     <!-- Accessibility Notes -->
     <!-- Paste -->
     <div class="space-y-4">
@@ -281,13 +288,12 @@
             </ApiReference>
 
             <ApiReference ComponentName="FileUpload transport">
-                <ApiParameter Name="UploadHandler" Type="Func&lt;FileUploadContext,CancellationToken,Task&gt;">Optional application transport. OpenReadStream() opens a fresh size-limited stream; await ReportProgressAsync(bytesSent) with cumulative bytes. Returning successfully marks the upload complete; an exception retains the file for retry.</ApiParameter>
+                <ApiParameter Name="UploadHandler" Type="Func&lt;FileUploadContext,CancellationToken,Task&gt;">Optional application transport. OpenReadStream() opens a fresh size-limited stream; await ReportProgressAsync(bytesSent) with cumulative bytes. Returning successfully marks the upload complete; an exception retains the file for retry from byte zero. Supply your application's transport to send files to a server.</ApiParameter>
                 <ApiParameter Name="AutoUpload" Type="bool" Default="true">When a handler is supplied, automatically queue new files. Up to three uploads run concurrently.</ApiParameter>
                 <ApiParameter Name="OnUploadFinished" Type="EventCallback&lt;FileUploadItem&gt;">Runs when an attempt succeeds, fails or is canceled. UploadError retains the exception for diagnostics; the UI shows a generic error.</ApiParameter>
                 <ApiParameter Name="UploadFilesAsync() / UploadFileAsync(file) / CancelUpload(file)" Type="methods">Queue selected files, retry one failed/canceled file, or cancel an attempt. Handlers must observe the supplied token. Removing or clearing files cancels their attempts.</ApiParameter>
                 <ApiParameter Name="Status / BytesTransferred / Progress / UploadError" Type="FileUploadItem properties">Selected, Queued, Uploading, Succeeded, Canceled or Failed; bytes and percentage for the current attempt.</ApiParameter>
             </ApiReference>
-            <p class="text-sm text-muted-foreground">Retries restart from byte zero. Use application request IDs when your backend needs idempotency. Selected browser files are retained across later selections until removed. Resumable multipart uploads remain the transport's responsibility.</p>
 
             <ApiReference ComponentName="FileUploadItem">
                 <ApiParameter Name="File" Type="IBrowserFile">

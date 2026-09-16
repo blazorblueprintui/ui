@@ -1170,6 +1170,13 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     {
         _columnsVersion++;
 
+        // Initial sorting is applied before child columns register their value accessors.
+        // Reprocess once they exist so the first rows agree with the sort indicators.
+        if (_gridState.Sorting.HasSorting)
+        {
+            _needsDataRefresh = true;
+        }
+
         // Columns register during render, after data was processed. When grouping is active
         // that leaves two things stale: a group definition targeting a column that had not
         // registered yet resolves to nothing, and aggregates computed without every column

@@ -1,32 +1,106 @@
 @page "/components/cascader"
-<PageTitle>Cascader - Blazor Blueprint</PageTitle>
+
+<PageTitle>Cascader Component - Blazor Blueprint</PageTitle>
+
 <div class="space-y-8 max-w-4xl">
-    <h1 class="text-4xl font-bold">Cascader</h1>
-    <p>Navigate a hierarchy one level at a time, or search its full paths. Use Up/Down to move between items, Right to enter a branch, Left to return to its parent, and Enter to choose an item.</p>
-    <section class="space-y-4 max-w-lg">
-        <h2 class="text-2xl font-semibold">Choose a team</h2>
-        <BbCascader TItem="Category" Items="categories" ValueField="@(c => c.Id)" TextField="@(c => c.Name)" ChildrenProperty="@(c => c.Children)" @bind-Value="selected" AriaLabel="Team" />
-        <p>Selected key: @selected</p>
-        <h2 class="text-2xl font-semibold">Select branches</h2>
-        <BbCascader TItem="Category" Items="categories" ValueField="@(c => c.Id)" TextField="@(c => c.Name)" ChildrenProperty="@(c => c.Children)" ChangeOnSelect="true" @bind-Value="branch" AriaLabel="Team or department" />
-        <p>Selected: @branch</p>
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Cascader Component</h1>
+        <p class="text-xl text-muted-foreground">Browse nested options one level at a time, or search their full paths.</p>
+    </div>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Example</h2>
+            <p class="text-sm text-muted-foreground">Choose a team by following its path, or search across every level.</p>
+        </div>
+        <div class="rounded-lg border p-6 space-y-4">
+            <div class="max-w-sm">
+                <BbCascader TItem="Category" Items="categories" ValueField="@(c => c.Id)" TextField="@(c => c.Name)" ChildrenProperty="@(c => c.Children)" @bind-Value="selected" AriaLabel="Team" />
+            </div>
+            <p class="text-sm text-muted-foreground" role="status">Selected: @(selected ?? "None")</p>
+        </div>
+        <CodeBlock Source="Components/Cascader/basic.txt" />
     </section>
-    <CodeBlock Source="Components/Cascader/basic.txt" />
-    <ApiReference ComponentName="Cascader">
-        <ApiParameter Name="Items" Type="IEnumerable&lt;TItem&gt;">Root nodes in a nested hierarchy. Duplicate keys and cycles are rejected.</ApiParameter>
-        <ApiParameter Name="ValueField / TextField / ChildrenProperty" Type="accessor delegates">Required key, display label and children selectors. Keys must be unique across the entire hierarchy.</ApiParameter>
-        <ApiParameter Name="Value / ValueChanged / ValueExpression" Type="string? / callback / expression">Two-way binding and EditContext validation for a single selected key. The caption resolves immediately for preselected values.</ApiParameter>
-        <ApiParameter Name="ChangeOnSelect" Type="bool" Default="false">Allow selection of a branch while its next level opens. The default selects only leaves.</ApiParameter>
-        <ApiParameter Name="ShowSearch / Clearable" Type="bool" Default="true">Search the hierarchy and show a separate clear button. Search receives focus on opening; Up/Down moves into the results. Without search, the selected item or first root receives focus.</ApiParameter>
-        <ApiParameter Name="Disabled" Type="bool" Default="false">Disables opening, clearing and selection.</ApiParameter>
-        <ApiParameter Name="Placeholder / AriaLabel / Id / Name" Type="string?">Empty caption, accessible label, trigger ID and form field name. Hidden inputs include selected keys in form submissions.</ApiParameter>
-        <ApiParameter Name="Class / AdditionalAttributes" Type="presentation parameters">Container styling and attributes forwarded to the trigger.</ApiParameter>
-    </ApiReference>
-    <p>Bind inside an EditForm to participate in model validation. Keys remain stable when labels change. Up/Down on the closed trigger opens the first/last root. Home/End moves to the first/last item in the current level. Enter or Space opens a branch or selects a leaf. Left/Right follows the reading direction in right-to-left layouts. Escape closes the popup and returns focus to the trigger.</p>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Select Branches</h2>
+            <p class="text-sm text-muted-foreground">ChangeOnSelect accepts branches as well as leaves. Selecting a branch keeps its child column open.</p>
+        </div>
+        <div class="rounded-lg border p-6 space-y-4">
+            <div class="max-w-sm">
+                <BbCascader TItem="Category" Items="categories" ValueField="@(c => c.Id)" TextField="@(c => c.Name)" ChildrenProperty="@(c => c.Children)" ChangeOnSelect="true" @bind-Value="branch" AriaLabel="Team or department" />
+            </div>
+            <p class="text-sm text-muted-foreground" role="status">Selected: @(branch ?? "None")</p>
+        </div>
+        <CodeBlock Source="Components/Cascader/branches.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Without Search</h2>
+            <p class="text-sm text-muted-foreground">Hide search for a short hierarchy. Focus starts on the current selection; use arrow keys to navigate levels.</p>
+        </div>
+        <div class="rounded-lg border p-6 space-y-4">
+            <div class="max-w-sm">
+                <BbCascader TItem="Category" Items="categories" ValueField="@(c => c.Id)" TextField="@(c => c.Name)" ChildrenProperty="@(c => c.Children)" ShowSearch="false" @bind-Value="browseOnly" AriaLabel="Browse teams" />
+            </div>
+            <p class="text-sm text-muted-foreground" role="status">Selected: @(browseOnly ?? "None")</p>
+        </div>
+        <CodeBlock Source="Components/Cascader/without-search.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">Keep a selected path visible while preventing edits.</p>
+        </div>
+        <div class="rounded-lg border p-6 space-y-4">
+            <div class="max-w-sm">
+                <BbCascader TItem="Category" Items="categories" ValueField="@(c => c.Id)" TextField="@(c => c.Name)" ChildrenProperty="@(c => c.Children)" Value="runtime" Disabled="true" AriaLabel="Disabled team" />
+            </div>
+
+        </div>
+        <CodeBlock Source="Components/Cascader/disabled.txt" />
+    </section>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The trigger announces its expanded state and identifies the popup.</AccessibilityItem>
+            <AccessibilityItem>Each column has a level label. Branches announce expansion and the chosen item exposes its current state.</AccessibilityItem>
+            <AccessibilityItem>Search receives focus when shown. Disabled pickers cannot be opened or cleared.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Open the picker or move between items in a level"><BbKbd>ArrowDown</BbKbd> / <BbKbd>ArrowUp</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Enter a branch or return to its parent (reversed in RTL)"><BbKbd>ArrowRight</BbKbd> / <BbKbd>ArrowLeft</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move to the first or last item in a level"><BbKbd>Home</BbKbd> / <BbKbd>End</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Open a branch or select a leaf"><BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Close the popup and return focus to the trigger"><BbKbd>Escape</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <ApiReference ComponentName="Cascader">
+            <ApiParameter Name="Items" Type="IEnumerable&lt;TItem&gt;">Root nodes in a nested hierarchy. Duplicate keys and cycles are rejected.</ApiParameter>
+            <ApiParameter Name="ValueField / TextField / ChildrenProperty" Type="accessor delegates">Required key, display label and children selectors. Keys must be unique across the entire hierarchy.</ApiParameter>
+            <ApiParameter Name="Value / ValueChanged / ValueExpression" Type="string? / callback / expression">Two-way binding and EditContext validation for a single selected key. The caption resolves immediately for preselected values.</ApiParameter>
+            <ApiParameter Name="ChangeOnSelect" Type="bool" Default="false">Allow selection of a branch while its next level opens. The default selects only leaves.</ApiParameter>
+            <ApiParameter Name="ShowSearch / Clearable" Type="bool" Default="true">Search the hierarchy and show a separate clear button. Search receives focus on opening; Up/Down moves into the results. Without search, the selected item or first root receives focus.</ApiParameter>
+            <ApiParameter Name="Disabled" Type="bool" Default="false">Disables opening, clearing and selection.</ApiParameter>
+            <ApiParameter Name="Placeholder / AriaLabel / Id / Name" Type="string?">Empty caption, accessible label, trigger ID and form field name. Hidden inputs include selected keys in form submissions.</ApiParameter>
+            <ApiParameter Name="Class / AdditionalAttributes" Type="presentation parameters">Container styling and attributes forwarded to the trigger.</ApiParameter>
+        </ApiReference>
+    </section>
 </div>
+
 @code {
     private string? selected = "runtime";
     private string? branch = "engineering";
+    private string? browseOnly;
     private readonly List<Category> categories =
     [
         new("engineering", "Engineering", [new("platform", "Platform", [new("runtime", "Runtime", []), new("tools", "Tools", [])]), new("web", "Web", [])]),
