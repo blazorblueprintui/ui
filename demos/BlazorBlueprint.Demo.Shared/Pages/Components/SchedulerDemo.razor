@@ -11,13 +11,26 @@
     <section class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">Basic Example</h2>
-            <p class="text-sm text-muted-foreground">Choose a time slot to create an appointment, or select an event to edit it. Switch between day and week views using the toolbar.</p>
+            <p class="text-sm text-muted-foreground">Choose a time slot to create an appointment, or select an event to edit it. Switch between day, week and work-week views using the toolbar.</p>
         </div>
         <div class="rounded-lg border p-4 space-y-4">
             <BbScheduler @bind-Events="simpleEvents" @bind-Date="simpleDate" @bind-View="simpleView"
                          TimeZoneId="UTC" StartHour="8" EndHour="14" AriaLabel="Daily appointments" />
         </div>
         <CodeBlock Source="Components/Scheduler/basic.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Week Start and Work Week</h2>
+            <p class="text-sm text-muted-foreground">In Week view, choose Monday or Sunday as the first day. Work week always shows Monday through Friday and hides weekend appointments. Previous and Next move by one full week; returning to Week preserves your week-start choice.</p>
+        </div>
+        <div class="rounded-lg border p-4 space-y-4">
+            <BbScheduler @bind-Events="weekEvents" @bind-Date="weekDate" @bind-View="weekView"
+                         @bind-FirstDayOfWeek="weekStart" EnableTimeZones="false" TimeZoneId="UTC"
+                         StartHour="8" EndHour="12" AriaLabel="Week and work-week appointments" />
+        </div>
+        <CodeBlock Source="Components/Scheduler/week-views.txt" />
     </section>
 
     <section class="space-y-4">
@@ -95,7 +108,7 @@
 
     <AccessibilityList>
         <AriaAttributes>
-            <AccessibilityItem>The scheduler region, time slots and event buttons have accessible labels.</AccessibilityItem>
+            <AccessibilityItem>The scheduler region, time slots and event buttons have accessible labels. View buttons announce their pressed state and the week-start selector is labelled.</AccessibilityItem>
             <AccessibilityItem>The event editor uses labelled Bb form controls and reports invalid times or rejected saves without discarding the draft.</AccessibilityItem>
             <AccessibilityItem>Read-only schedules disable changes while preserving date navigation. Delete confirmation identifies whether one event, an occurrence or a series will be removed.</AccessibilityItem>
         </AriaAttributes>
@@ -114,9 +127,9 @@
         <ApiReference ComponentName="Scheduler">
             <ApiParameter Name="Events / EventsChanged" Type="IReadOnlyList&lt;SchedulerEvent&gt;">Bind appointment data. Updates use independent copies. Persist Events from OnEventChange before accepting a change.</ApiParameter>
             <ApiParameter Name="Resources" Type="IReadOnlyList&lt;SchedulerResource&gt;">Unique resource IDs and titles. Each event can have multiple ResourceIds. Unassigned events get a separate lane.</ApiParameter>
-            <ApiParameter Name="Date / DateChanged" Type="DateOnly">Visible date. Week navigation respects FirstDayOfWeek.</ApiParameter>
-            <ApiParameter Name="View / ViewChanged" Type="SchedulerView" Default="Week">Day or Week.</ApiParameter>
-            <ApiParameter Name="FirstDayOfWeek" Type="DayOfWeek" Default="Monday">First day of the week view.</ApiParameter>
+            <ApiParameter Name="Date / DateChanged" Type="DateOnly">The date whose day or week is displayed. WorkWeek uses its Monday-start week. Week and WorkWeek navigation advance seven days.</ApiParameter>
+            <ApiParameter Name="View / ViewChanged" Type="SchedulerView" Default="Week">Day, Week or WorkWeek. WorkWeek displays Monday through Friday regardless of FirstDayOfWeek.</ApiParameter>
+            <ApiParameter Name="FirstDayOfWeek / FirstDayOfWeekChanged" Type="DayOfWeek / EventCallback&lt;DayOfWeek&gt;" Default="Monday">First day in Week view. The toolbar offers Monday and Sunday. Use <code>@@bind-FirstDayOfWeek</code> to retain changes in the parent. WorkWeek always starts on Monday without changing this preference.</ApiParameter>
             <ApiParameter Name="TimeZoneId" Type="string" Default="UTC">IANA display zone. SchedulerEvent.TimeZoneId independently determines recurrence wall time.</ApiParameter>
             <ApiParameter Name="EnableTimeZones" Type="bool" Default="true">When false, hide the time-zone selector and toolbar label, and use TimeZoneId for both display and editing. Existing instants and recurrence zones are preserved. Use UTC for a fixed-offset schedule. When enabled, the built-in selector lists IANA IDs from Noda Time's TZDB that .NET supports on the host, including aliases.</ApiParameter>
             <ApiParameter Name="SlotMinutes" Type="int" Default="30">Slot size and drag/resize snapping interval. Supports 15, 30, 60 and other divisors of 1440 between 5 and 120. Resizing keeps at least one slot of duration.</ApiParameter>
@@ -155,6 +168,16 @@
         await Task.Delay(250);
         context.Cancel = rejectSaves;
     }
+
+    private DateOnly weekDate = new(2026, 9, 16);
+    private SchedulerView weekView = SchedulerView.Week;
+    private DayOfWeek weekStart = DayOfWeek.Monday;
+    private IReadOnlyList<SchedulerEvent> weekEvents =
+    [
+        new() { Id = "team-sync", Title = "Team sync", Start = new(2026, 9, 14, 9, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 9, 30, 0, TimeSpan.Zero), RecurrenceRule = "FREQ=WEEKLY;BYDAY=MO,WE,FR;COUNT=12" },
+        new() { Id = "sunday-support", Title = "Sunday support", Start = new(2026, 9, 13, 10, 0, 0, TimeSpan.Zero), End = new(2026, 9, 13, 11, 0, 0, TimeSpan.Zero) },
+        new() { Id = "maintenance", Title = "Saturday maintenance", Start = new(2026, 9, 19, 10, 0, 0, TimeSpan.Zero), End = new(2026, 9, 19, 11, 0, 0, TimeSpan.Zero) }
+    ];
 
     private int slotMinutes = 30;
     private bool allowDrag = true;

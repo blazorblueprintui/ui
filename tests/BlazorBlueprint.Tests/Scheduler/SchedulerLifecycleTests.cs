@@ -1,3 +1,4 @@
+using System.Globalization;
 using BlazorBlueprint.Components;
 using BlazorBlueprint.Tests.Performance;
 using BlazorBlueprint.Tests.Rendering;
@@ -153,6 +154,109 @@ public class SchedulerLifecycleTests
             Assert.Equal("America/New_York", scheduler.Events[0].TimeZoneId);
         });
     }
+
+    [Theory]
+    [InlineData(SchedulerView.Week, DayOfWeek.Monday, "2026-09-16", "2026-09-14", 7)]
+    [InlineData(SchedulerView.Week, DayOfWeek.Sunday, "2026-09-16", "2026-09-13", 7)]
+    [InlineData(SchedulerView.WorkWeek, DayOfWeek.Sunday, "2026-09-16", "2026-09-14", 5)]
+    [InlineData(SchedulerView.WorkWeek, DayOfWeek.Monday, "2026-09-20", "2026-09-14", 5)]
+    [InlineData(SchedulerView.Week, DayOfWeek.Sunday, "2027-01-01", "2026-12-27", 7)]
+    [InlineData(SchedulerView.WorkWeek, DayOfWeek.Monday, "2027-01-01", "2026-12-28", 5)]
+    public async Task WeekViewsRenderTheCorrectDates(SchedulerView view, DayOfWeek firstDay, string date, string firstDate, int days)
+    {
+        await RunAsync(async (renderer, scheduler, original) =>
+        {
+            await scheduler.SetParametersAsync(ParameterView.FromDictionary(new Dictionary<string, object?>
+            {
+                [nameof(BbScheduler.View)] = view,
+                [nameof(BbScheduler.FirstDayOfWeek)] = firstDay,
+                [nameof(BbScheduler.Date)] = DateOnly.ParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture)
+            }));
+            var expected = DateOnly.ParseExact(firstDate, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+            Assert.Equal(Enumerable.Range(0, days).Select(expected.AddDays), LaneDates(scheduler));
+        });
+    }
+
+    [Theory]
+    [InlineData(SchedulerView.Day, 1)]
+    [InlineData(SchedulerView.Week, 7)]
+    [InlineData(SchedulerView.WorkWeek, 7)]
+    public async Task ViewNavigationUsesWholePeriodsAndReportsDateChanges(SchedulerView view, int step)
+    {
+        await RunAsync(async (renderer, scheduler, original) =>
+        {
+            var notifications = new List<DateOnly>();
+            var date = new DateOnly(2026, 12, 30);
+            await scheduler.SetParametersAsync(ParameterView.FromDictionary(new Dictionary<string, object?>
+            {
+                [nameof(BbScheduler.Date)] = date,
+                [nameof(BbScheduler.View)] = view,
+                [nameof(BbScheduler.DateChanged)] = EventCallback.Factory.Create<DateOnly>(this, notifications.Add)
+            }));
+            var initialLanes = LaneDates(scheduler);
+            await (Task)ComponentProbe.Call(scheduler, "NavigateAsync", 1)!;
+            Assert.Equal(date.AddDays(step), scheduler.Date);
+            Assert.Equal(initialLanes.Select(d => d.AddDays(step)), LaneDates(scheduler));
+            await (Task)ComponentProbe.Call(scheduler, "NavigateAsync", -1)!;
+            Assert.Equal(initialLanes, LaneDates(scheduler));
+            Assert.Equal(date, scheduler.Date);
+            Assert.Equal(new[] { date.AddDays(step), date }, notifications);
+        });
+    }
+
+    [Fact]
+    public async Task WeekStartBindingAndViewChangesRetainTheWeekPreference()
+    {
+        await RunAsync(async (renderer, scheduler, original) =>
+        {
+            var starts = new List<DayOfWeek>();
+            var views = new List<SchedulerView>();
+            await scheduler.SetParametersAsync(ParameterView.FromDictionary(new Dictionary<string, object?>
+            {
+                [nameof(BbScheduler.View)] = SchedulerView.Week,
+                [nameof(BbScheduler.FirstDayOfWeekChanged)] = EventCallback.Factory.Create<DayOfWeek>(this, starts.Add),
+                [nameof(BbScheduler.ViewChanged)] = EventCallback.Factory.Create<SchedulerView>(this, views.Add)
+            }));
+            await (Task)ComponentProbe.Call(scheduler, "SetFirstDayOfWeekAsync", DayOfWeek.Sunday)!;
+            Assert.Equal(DayOfWeek.Sunday, LaneDates(scheduler)[0].DayOfWeek);
+            await (Task)ComponentProbe.Call(scheduler, "SetViewAsync", SchedulerView.WorkWeek)!;
+            Assert.Equal(DayOfWeek.Monday, LaneDates(scheduler)[0].DayOfWeek);
+            Assert.Equal(DayOfWeek.Friday, LaneDates(scheduler)[^1].DayOfWeek);
+            Assert.Equal(DayOfWeek.Sunday, scheduler.FirstDayOfWeek);
+            await (Task)ComponentProbe.Call(scheduler, "SetViewAsync", SchedulerView.Week)!;
+            Assert.Equal(DayOfWeek.Sunday, LaneDates(scheduler)[0].DayOfWeek);
+            Assert.Equal(DayOfWeek.Sunday, Assert.Single(starts));
+            Assert.Equal(SchedulerView.WorkWeek, views[0]);
+            Assert.Equal(SchedulerView.Week, views[1]);
+        });
+    }
+
+    [Fact]
+    public async Task WorkWeekOmitsWeekendRecurrencesAndKeepsResourceLanes()
+    {
+        await RunAsync(async (renderer, scheduler, original) =>
+        {
+            original.Start = At(9).AddDays(-1); // Sunday
+            original.End = At(10).AddDays(-1);
+            original.RecurrenceRule = "FREQ=DAILY;COUNT=7";
+            original.ResourceIds = ["a", "b"];
+            await scheduler.SetParametersAsync(ParameterView.FromDictionary(new Dictionary<string, object?>
+            {
+                [nameof(BbScheduler.View)] = SchedulerView.WorkWeek,
+                [nameof(BbScheduler.FirstDayOfWeek)] = DayOfWeek.Sunday,
+                [nameof(BbScheduler.Resources)] = new SchedulerResource[] { new("a", "A"), new("b", "B") }
+            }));
+            var dates = LaneDates(scheduler);
+            Assert.Equal(10, dates.Length);
+            Assert.All(dates.GroupBy(d => d), group => Assert.Equal(2, group.Count()));
+            var occurrences = ComponentProbe.Field<IReadOnlyList<SchedulerOccurrence>>(scheduler, "occurrences");
+            Assert.Equal(5, occurrences.Count);
+            Assert.All(occurrences, occurrence => Assert.InRange(occurrence.Start.DayOfWeek, DayOfWeek.Monday, DayOfWeek.Friday));
+        });
+    }
+
+    private static DateOnly[] LaneDates(BbScheduler scheduler) => ComponentProbe.Field<IEnumerable<object>>(scheduler, "lanes")
+        .Select(lane => (DateOnly)lane.GetType().GetProperty("Date")!.GetValue(lane)!).ToArray();
 
     private static Task Gesture(BbScheduler scheduler, SchedulerEvent original, DateTimeOffset start, DateTimeOffset end, string action, int target = 0) =>
         scheduler.CommitInteractionAsync(ComponentProbe.Field<int>(scheduler, "revision"), original.Id, original.Start.ToUnixTimeMilliseconds(), 0, target,

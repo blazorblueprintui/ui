@@ -34,7 +34,7 @@ public sealed record SchedulerResource(string Id, string Title);
 /// <summary>A materialized occurrence. Event refers to the source series or standalone event.</summary>
 public sealed record SchedulerOccurrence(SchedulerEvent Event, DateTimeOffset Start, DateTimeOffset End);
 
-public enum SchedulerView { Day, Week }
+public enum SchedulerView { Day, Week, WorkWeek }
 public enum SchedulerEditScope { Occurrence, Series }
 public enum SchedulerChangeKind { Create, Update, Delete }
 public enum SchedulerAmbiguousTimeResolution { Earlier, Later }

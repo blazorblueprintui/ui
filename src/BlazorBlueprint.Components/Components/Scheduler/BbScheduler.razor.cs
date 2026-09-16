@@ -15,7 +15,10 @@ public partial class BbScheduler
     [Parameter] public EventCallback<DateOnly> DateChanged { get; set; }
     [Parameter] public SchedulerView View { get; set; } = SchedulerView.Week;
     [Parameter] public EventCallback<SchedulerView> ViewChanged { get; set; }
+    /// <summary>First day in Week view. The toolbar offers Monday and Sunday; WorkWeek always shows Monday through Friday.</summary>
     [Parameter] public DayOfWeek FirstDayOfWeek { get; set; } = DayOfWeek.Monday;
+    /// <summary>Raised when the week-start choice changes. Supports @bind-FirstDayOfWeek.</summary>
+    [Parameter] public EventCallback<DayOfWeek> FirstDayOfWeekChanged { get; set; }
     /// <summary>The IANA time zone used for lane dates and time labels. Event zones remain independent.</summary>
     [Parameter] public string TimeZoneId { get; set; } = "UTC";
     /// <summary>Shows per-event time zones. When false, display and editor use TimeZoneId and zone controls are hidden. Stored instants and recurrence zones are preserved.</summary>
@@ -65,9 +68,10 @@ public partial class BbScheduler
     private bool disposed;
     private int revision;
 
+    private DayOfWeek EffectiveWeekStart => View == SchedulerView.WorkWeek ? DayOfWeek.Monday : FirstDayOfWeek;
     private DateOnly RangeDate => View == SchedulerView.Day ? Date
-        : Date.AddDays(-(((int)Date.DayOfWeek - (int)FirstDayOfWeek + 7) % 7));
-    private int DayCount => View == SchedulerView.Day ? 1 : 7;
+        : Date.AddDays(-(((int)Date.DayOfWeek - (int)EffectiveWeekStart + 7) % 7));
+    private int DayCount => View switch { SchedulerView.Day => 1, SchedulerView.WorkWeek => 5, _ => 7 };
     private TimeZoneInfo DisplayZone => TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId);
     private string EditorTimeZoneId => EnableTimeZones ? draft!.TimeZoneId : TimeZoneId;
     private string DeleteDescription => Localizer[editingOccurrence != null && !string.IsNullOrWhiteSpace(editingOccurrence.Event.RecurrenceRule)
@@ -238,7 +242,8 @@ public partial class BbScheduler
 
     private async Task NavigateAsync(int direction)
     {
-        Date = Date.AddDays(direction * DayCount);
+        // Both week views advance whole weeks, even when only five days are displayed.
+        Date = Date.AddDays(direction * (View == SchedulerView.Day ? 1 : 7));
         RefreshSchedule();
         await DateChanged.InvokeAsync(Date);
     }
@@ -248,6 +253,19 @@ public partial class BbScheduler
         View = view;
         RefreshSchedule();
         await ViewChanged.InvokeAsync(view);
+    }
+
+    private string WeekStartLabel(DayOfWeek day) => Localizer["Scheduler.WeekStartDay", CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(day)];
+
+    private async Task SetFirstDayOfWeekAsync(DayOfWeek day)
+    {
+        if (FirstDayOfWeek == day)
+        {
+            return;
+        }
+        FirstDayOfWeek = day;
+        RefreshSchedule();
+        await FirstDayOfWeekChanged.InvokeAsync(day);
     }
 
     /// <summary>Opens the editor for a new appointment at an instant.</summary>

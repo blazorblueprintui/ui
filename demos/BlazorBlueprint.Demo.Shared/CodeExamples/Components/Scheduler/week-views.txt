@@ -1,0 +1,15 @@
+<BbScheduler @bind-Events="weekEvents" @bind-Date="weekDate" @bind-View="weekView"
+             @bind-FirstDayOfWeek="weekStart" EnableTimeZones="false" TimeZoneId="UTC"
+             StartHour="8" EndHour="12" AriaLabel="Week and work-week appointments" />
+
+@code {
+    private DateOnly weekDate = new(2026, 9, 16);
+    private SchedulerView weekView = SchedulerView.Week;
+    private DayOfWeek weekStart = DayOfWeek.Monday;
+    private IReadOnlyList<SchedulerEvent> weekEvents =
+    [
+        new() { Id = "team-sync", Title = "Team sync", Start = new(2026, 9, 14, 9, 0, 0, TimeSpan.Zero), End = new(2026, 9, 14, 9, 30, 0, TimeSpan.Zero), RecurrenceRule = "FREQ=WEEKLY;BYDAY=MO,WE,FR;COUNT=12" },
+        new() { Id = "sunday-support", Title = "Sunday support", Start = new(2026, 9, 13, 10, 0, 0, TimeSpan.Zero), End = new(2026, 9, 13, 11, 0, 0, TimeSpan.Zero) },
+        new() { Id = "maintenance", Title = "Saturday maintenance", Start = new(2026, 9, 19, 10, 0, 0, TimeSpan.Zero), End = new(2026, 9, 19, 11, 0, 0, TimeSpan.Zero) }
+    ];
+}

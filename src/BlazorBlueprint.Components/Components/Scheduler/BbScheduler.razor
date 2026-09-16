@@ -16,8 +16,23 @@
             <span class="bb:text-sm bb:text-muted-foreground">@TimeZoneId</span>
         }
         <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => NavigateAsync(1))" AriaLabel="@Localizer["Scheduler.Next"]">&#8250;</BbButton>
-        <BbButton Variant="@(View == SchedulerView.Day ? ButtonVariant.Default : ButtonVariant.Outline)" OnClick="@(() => SetViewAsync(SchedulerView.Day))">@Localizer["Scheduler.Day"]</BbButton>
-        <BbButton Variant="@(View == SchedulerView.Week ? ButtonVariant.Default : ButtonVariant.Outline)" OnClick="@(() => SetViewAsync(SchedulerView.Week))">@Localizer["Scheduler.Week"]</BbButton>
+        @if (View == SchedulerView.Week)
+        {
+            <BbSelect TValue="DayOfWeek" Value="@FirstDayOfWeek" ValueChanged="SetFirstDayOfWeekAsync" DisplayTextSelector="WeekStartLabel">
+                <BbSelectTrigger Class="bb:w-auto bb:min-w-36" aria-label="@Localizer["Scheduler.WeekStartsOn"]"><BbSelectValue /></BbSelectTrigger>
+                <BbSelectContent>
+                    <BbSelectItem Value="DayOfWeek.Monday" Text="@WeekStartLabel(DayOfWeek.Monday)" />
+                    <BbSelectItem Value="DayOfWeek.Sunday" Text="@WeekStartLabel(DayOfWeek.Sunday)" />
+                    @if (FirstDayOfWeek is not (DayOfWeek.Monday or DayOfWeek.Sunday))
+                    {
+                        <BbSelectItem Value="@FirstDayOfWeek" Text="@WeekStartLabel(FirstDayOfWeek)" />
+                    }
+                </BbSelectContent>
+            </BbSelect>
+        }
+        <BbButton Variant="@(View == SchedulerView.Day ? ButtonVariant.Default : ButtonVariant.Outline)" aria-pressed="@((View == SchedulerView.Day).ToString().ToLowerInvariant())" OnClick="@(() => SetViewAsync(SchedulerView.Day))">@Localizer["Scheduler.Day"]</BbButton>
+        <BbButton Variant="@(View == SchedulerView.Week ? ButtonVariant.Default : ButtonVariant.Outline)" aria-pressed="@((View == SchedulerView.Week).ToString().ToLowerInvariant())" OnClick="@(() => SetViewAsync(SchedulerView.Week))">@Localizer["Scheduler.Week"]</BbButton>
+        <BbButton Variant="@(View == SchedulerView.WorkWeek ? ButtonVariant.Default : ButtonVariant.Outline)" aria-pressed="@((View == SchedulerView.WorkWeek).ToString().ToLowerInvariant())" OnClick="@(() => SetViewAsync(SchedulerView.WorkWeek))">@Localizer["Scheduler.WorkWeek"]</BbButton>
     </div>
     @if (loadError != null)
     {

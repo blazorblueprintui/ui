@@ -15,7 +15,9 @@ Initial SDK upgrade: net10.0 throughout the 12 main solution projects, SDK 10.0.
 
 Grid design: preserve row editing. Cell/batch modes use an explicit `EditItemFactory` clone so edits are isolated; applications must deep-copy editable nested objects. Stage batch drafts by stable ItemKey, retain drafts on validation/server rejection, and apply changes only after successful commit. Include keyboard entry and focus restoration, and test source isolation. Inline InputGroup actions fit the existing cell width; an inert sizing copy of the pre-edit value keeps automatic column sizing stable. Demos cover text, number, date, select and checkbox editors, initial sorting, ordering after cell/batch commits and validation recovery. New demos use the shared header/example/accessibility/API structure and all appear in the component catalog.
 
-Scheduler: separate `BbScheduler` component with day/week views, resource lanes, overlapping event placement, and independent event/display IANA zones. Ical.Net expands daily/weekly/monthly/yearly RRULEs. Single-occurrence edits use exclusions and independent overrides; series edits preserve the series identity. Skipped DST wall times are rejected; repeated start and end times have independent offset choices. Persistence callbacks receive a proposed cloned collection and can reject it without losing the draft.
+Scheduler: separate `BbScheduler` component with day/week/work-week views, resource lanes, overlapping event placement, and independent event/display IANA zones. Ical.Net expands daily/weekly/monthly/yearly RRULEs. Single-occurrence edits use exclusions and independent overrides; series edits preserve the series identity. Skipped DST wall times are rejected; repeated start and end times have independent offset choices. Persistence callbacks receive a proposed cloned collection and can reject it without losing the draft.
+
+Week view has a Monday/Sunday toolbar choice bound through FirstDayOfWeekChanged. WorkWeek uses the Monday-start week containing Date, displays Monday–Friday, and keeps seven-day navigation without overwriting the full-week start preference. The permanent week-view demo shows weekday recurrence and weekend appointments.
 
 Scheduler pointer gestures preview locally and commit once through the same persistence callback. Moving preserves elapsed duration (including overnight events) and other resource assignments; recurring gestures create occurrence exceptions. Top and bottom resize handles snap to SlotMinutes, and Escape cancels a drag. Delete requires an AlertDialog confirmation that distinguishes an event, one occurrence and an entire series. Single-zone mode hides zone selection and edits in the configured display zone without rewriting stored recurrence zones.
 
@@ -28,12 +30,13 @@ Upload handlers receive a cancellation token, a fresh size-limited browser strea
 ## Verification
 
 - Release solution build: all 12 projects, zero warnings/errors.
-- .NET suite: 260 tests covering API snapshots, conventions, buffered editing, rendered component lifecycles, recurrence/DST, hierarchy indexing/selection and upload cancellation/retry.
+- .NET suite: 271 tests covering API snapshots, conventions, buffered editing, rendered component lifecycles, recurrence/DST, hierarchy indexing/selection and upload cancellation/retry.
 - JavaScript suite: 37 tests covering existing drag controls, rapid upload input replacement, overlay exit/focus restoration, calendar focus after popup visibility, filtered tree keyboard navigation and Cascader keyboard interactions/cleanup.
 - Release WebAssembly publish with trimming succeeds. WebAssembly AOT compilation was not tested; the optional `wasm-tools` workload is not installed.
 - Server, standalone WASM and Auto hosts start. Server and Auto map .NET 10 static assets.
 - Local NuGet packages contain net10.0 assemblies and matching Primitives dependencies; no packages were published.
 - Browser checks cover grid validation, cell save, staged batch isolation/discard, scheduler resource overlap and Bb editor controls/save, hierarchy selection, and upload progress/failure/cancel/retry.
+- Scheduler week-view browser checks cover Monday/Sunday selection with the keyboard, Monday–Friday work weeks, seven-day navigation and preserving the start preference when switching views. The final Server Release rebuild has zero warnings/errors.
 - Reviewed API snapshot changes before accepting the new surfaces.
 
 Live demos: `/components/datagrid-editing`, `/components/scheduler`, `/components/tree-select`, `/components/cascader`, and the transport section of `/components/file-upload`. Each has permanent source examples and API documentation.
