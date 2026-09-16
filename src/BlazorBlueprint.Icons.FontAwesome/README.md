@@ -270,12 +270,11 @@ The `Data/FontAwesomeIconData.cs` file is auto-generated from the Iconify JSON s
 
 ## License
 
-The C# wrapper code is MIT licensed.
+The C# wrapper code is MIT licensed; see the included `LICENSE` file.
 
-Font Awesome Free icon artwork is licensed under the [Font Awesome Free License](https://fontawesome.com/license/free):
-- Icons: CC BY 4.0
-- Fonts: SIL OFL 1.1
-- Code: MIT
+Font Awesome 6 Free SVG icon artwork is licensed under [CC BY 4.0](https://fontawesome.com/license/free) by Fonticons, Inc. Iconify JSON data is converted into C# dictionaries and rendered through a Blazor component. This package does not include Font Awesome font files.
+
+The package includes the upstream attribution and license text in `THIRD-PARTY-NOTICES.txt` and declares `MIT AND CC-BY-4.0` in its NuGet metadata. Brand names and logos remain trademarks of their respective owners.
 
 ## Links
 

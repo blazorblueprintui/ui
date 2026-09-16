@@ -395,10 +395,10 @@ Four icon library packages with **5,300+ total icons**:
 
 | Package | Icons | Style | License |
 |---------|-------|-------|---------|
-| `BlazorBlueprint.Icons.Lucide` | 1,750+ | Stroke-based, consistent 24x24 | ISC |
+| `BlazorBlueprint.Icons.Lucide` | 1,750+ | Stroke-based, consistent 24x24 | ISC; MIT for Feather-derived icons |
 | `BlazorBlueprint.Icons.Heroicons` | 1,288 | 4 variants (Outline, Solid, Mini, Micro) of ~320 icons | MIT |
 | `BlazorBlueprint.Icons.Feather` | 286 | Minimalist, stroke-based 24x24 | MIT |
-| `BlazorBlueprint.Icons.FontAwesome` | 2,066 | 3 variants (1,407 Solid, 164 Regular, 495 Brands — includes brand logos) | CC BY 4.0 / SIL OFL 1.1 / MIT (Free tier) |
+| `BlazorBlueprint.Icons.FontAwesome` | 2,066 | 3 variants (1,407 Solid, 164 Regular, 495 Brands — includes brand logos) | CC BY 4.0 (SVG artwork); MIT (C# wrapper) |
 
 ## Theming
 
@@ -508,20 +508,44 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
 ## License
 
-Blazor Blueprint is open source software licensed under the [Apache License 2.0](LICENSE).
+The Components and Primitives libraries are licensed under the [Apache License 2.0](LICENSE). The icon packages' C# wrappers are MIT licensed; their icon artwork retains its upstream licenses, listed below.
 
-If you create derivative works, you must include the contents of the [NOTICE](NOTICE) file in your distribution.
+Distributions of the Apache-licensed libraries must retain the applicable contents of the [NOTICE](NOTICE) file.
+
+NuGet packages include the applicable library license and third-party notices. Notices for bundled browser assets are also served at `_content/BlazorBlueprint.Components/THIRD-PARTY-NOTICES.txt` and `_content/BlazorBlueprint.Primitives/THIRD-PARTY-NOTICES.txt`.
+
+Package-specific notices: [Components](src/BlazorBlueprint.Components/wwwroot/THIRD-PARTY-NOTICES.txt), [Primitives](src/BlazorBlueprint.Primitives/wwwroot/THIRD-PARTY-NOTICES.txt), [Lucide](src/BlazorBlueprint.Icons.Lucide/THIRD-PARTY-NOTICES.txt), [Heroicons](src/BlazorBlueprint.Icons.Heroicons/THIRD-PARTY-NOTICES.txt), [Feather](src/BlazorBlueprint.Icons.Feather/THIRD-PARTY-NOTICES.txt), and [Font Awesome](src/BlazorBlueprint.Icons.FontAwesome/THIRD-PARTY-NOTICES.txt).
 
 ## Acknowledgments
 
-Blazor Blueprint is inspired by [shadcn/ui](https://ui.shadcn.com/) and the design principles of [Radix UI](https://www.radix-ui.com/). Blazor Blueprint is a complete reimplementation for Blazor/C# and contains no code from these projects.
+Blazor Blueprint implements components in Blazor and C#, drawing on the design of [shadcn/ui](https://ui.shadcn.com/) and the interaction principles of [Radix UI](https://www.radix-ui.com/). We thank the following projects and contributors for their designs, libraries, and assets.
 
-- [shadcn/ui](https://ui.shadcn.com/) — MIT License, Copyright (c) 2023 shadcn
-- [Radix UI](https://www.radix-ui.com/) — MIT License, Copyright (c) 2022-present WorkOS
-- [Tailwind CSS](https://tailwindcss.com/) — Utility-first CSS framework
-- [Lucide Icons](https://lucide.dev/) — ISC License
-- [Heroicons](https://heroicons.com/) — MIT License, Tailwind Labs
-- [Feather Icons](https://feathericons.com/) — MIT License
-- [Font Awesome Free](https://fontawesome.com/) — CC BY 4.0 / SIL OFL 1.1 / MIT, Fonticons Inc.
-- [Apache ECharts](https://echarts.apache.org/) — Apache License 2.0
-- [SortableJS](https://sortablejs.github.io/Sortable/) — MIT License
+**Design and platform**
+
+- [shadcn/ui](https://ui.shadcn.com/) — Component design inspiration; [MIT License](https://github.com/shadcn-ui/ui/blob/main/LICENSE.md), Copyright (c) 2023 shadcn.
+- [Radix UI](https://www.radix-ui.com/) — Headless component and interaction design inspiration; [MIT License](https://github.com/radix-ui/primitives/blob/main/LICENSE), Copyright (c) 2022 WorkOS.
+- [ASP.NET Core / Blazor](https://github.com/dotnet/aspnetcore) — Component framework; MIT License, .NET Foundation and contributors.
+
+**Libraries**
+
+- [Tailwind CSS](https://tailwindcss.com/) — Utility CSS framework used to build the stylesheets; MIT License, Tailwind Labs.
+- [tw-animate-css](https://github.com/Wombosvideo/tw-animate-css) — Bundled CSS animation utilities; MIT License.
+- [TailwindMerge.NET](https://github.com/desmondinho/tailwind-merge-dotnet) — CSS class conflict resolution; MIT License. A C# adaptation of [tailwind-merge](https://github.com/dcastil/tailwind-merge).
+- [Floating UI](https://floating-ui.com/) — Bundled positioning engine for floating elements; MIT License.
+- [Apache ECharts](https://echarts.apache.org/) — Bundled charting engine; Apache License 2.0.
+- [SortableJS](https://sortablejs.github.io/Sortable/) — Bundled drag-and-drop sorting library; MIT License.
+- [Quill](https://quilljs.com/) — Rich text editing engine, loaded by the host application; BSD 3-Clause License.
+- [Markdig](https://github.com/xoofx/markdig) — Markdown parsing and HTML rendering; BSD 2-Clause License.
+- [HtmlSanitizer](https://github.com/mganss/HtmlSanitizer) — HTML sanitization for the rich text and Markdown editors; MIT License.
+
+**Icons**
+
+- [Lucide Icons](https://lucide.dev/) — [ISC License, with MIT terms for Feather-derived icons](https://github.com/lucide-icons/lucide/blob/main/LICENSE); Lucide contributors and Cole Bemis.
+- [Heroicons](https://heroicons.com/) — MIT License, Tailwind Labs.
+- [Feather Icons](https://feathericons.com/) — MIT License, Cole Bemis.
+- [Font Awesome Free](https://fontawesome.com/) — SVG icon artwork under [CC BY 4.0](https://fontawesome.com/license/free), Fonticons, Inc. The Blazor C# wrapper is MIT licensed; this package does not include Font Awesome font files.
+- [Iconify](https://iconify.design/) — JSON icon datasets used to generate the C# icon collections; each collection retains its upstream icon license.
+
+**Demo photography**
+
+- [Unsplash](https://unsplash.com/) and its contributing photographers — Photos used in the demo applications, under the [Unsplash License](https://unsplash.com/license).

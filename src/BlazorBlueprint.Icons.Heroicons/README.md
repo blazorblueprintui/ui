@@ -269,7 +269,7 @@ Works in all modern browsers that support:
 
 ## License
 
-This package is MIT licensed.
+The C# wrapper code is MIT licensed; see the included `LICENSE` file. The package also includes the upstream icon license in `THIRD-PARTY-NOTICES.txt`.
 
 Heroicons are MIT licensed by [Tailwind Labs](https://github.com/tailwindlabs/heroicons).
 

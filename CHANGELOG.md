@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 
+### Documentation and Packaging
+
+- Complete README acknowledgments and include library licenses and upstream notices in all six NuGet packages. Bundle browser-library notices as static assets, restore Floating UI and tw-animate-css license headers, and retain ECharts subcomponent notices.
+- Correct Lucide and Font Awesome package license expressions to account for their embedded artwork, while retaining MIT for their C# wrappers.
+
 ### Performance
 
 - **Paged DataGrid queries fetch the requested page.** For `IQueryable` sources without client-side search, grouping, hierarchy or row virtualization, counting and `Skip`/`Take` stay on the query provider. Full-data CSV exports run the filtered, sorted query on demand; keep its provider alive until export. `ItemsProvider` remains the asynchronous option for remote data, and formatted search and grouping retain their full-data behavior.

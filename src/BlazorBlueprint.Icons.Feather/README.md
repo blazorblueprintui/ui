@@ -220,7 +220,7 @@ Works in all modern browsers that support:
 
 ## License
 
-This package is MIT licensed.
+The C# wrapper code is MIT licensed; see the included `LICENSE` file. The package also includes the upstream icon license in `THIRD-PARTY-NOTICES.txt`.
 
 Feather icons are MIT licensed by [Cole Bemis](https://github.com/feathericons/feather).
 

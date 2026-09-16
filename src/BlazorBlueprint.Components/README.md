@@ -605,15 +605,18 @@ For full documentation, examples, and API reference, visit:
 
 - [BlazorBlueprint.Primitives](https://www.nuget.org/packages/BlazorBlueprint.Primitives) - Headless component primitives (auto-installed)
 - [BlazorBlueprint.Icons.Lucide](https://www.nuget.org/packages/BlazorBlueprint.Icons.Lucide) - Lucide icon set (auto-installed)
-- Pre-built CSS (included in package)
-- No external dependencies required!
+- [TailwindMerge.NET](https://github.com/desmondinho/tailwind-merge-dotnet), [Markdig](https://github.com/xoofx/markdig), and [HtmlSanitizer](https://github.com/mganss/HtmlSanitizer) (auto-installed)
+- Pre-built CSS, tw-animate-css animation utilities, and Apache ECharts (bundled)
 
 **Optional:**
 - Tailwind CSS (if you want to use Tailwind classes for customization)
+- Quill 2 (load its JavaScript and CSS in the host application when using RichTextEditor)
 
 ## License
 
 Apache License 2.0 - see [LICENSE](https://github.com/blazorblueprintui/ui/blob/main/LICENSE) for details.
+
+The package includes `LICENSE`, `NOTICE`, and `staticwebassets/THIRD-PARTY-NOTICES.txt`. The bundled Tailwind CSS, tw-animate-css, and ECharts assets retain their upstream licenses, including the D3, ZRender, and Microsoft helper notices within ECharts. These notices are also available at `_content/BlazorBlueprint.Components/THIRD-PARTY-NOTICES.txt`.
 
 ## Contributing
 

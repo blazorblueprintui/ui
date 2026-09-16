@@ -209,9 +209,9 @@ Works in all modern browsers that support:
 
 ## License
 
-This package is MIT licensed.
+The C# wrapper code is MIT licensed; see the included `LICENSE` file.
 
-Lucide icons are ISC licensed by [Lucide Contributors](https://github.com/lucide-icons/lucide).
+Lucide artwork is ISC licensed by [Lucide Contributors](https://github.com/lucide-icons/lucide), with MIT terms for icons derived from Cole Bemis's Feather project. The package includes both upstream notices in `THIRD-PARTY-NOTICES.txt` and declares `MIT AND ISC` in its NuGet metadata.
 
 ## Links
 

@@ -62,6 +62,8 @@ We welcome all contributions — whether it's bug fixes, new features, documenta
    ```
    The JavaScript interaction tests use Node.js 20+ and its built-in test runner, with no npm dependencies. Node.js is only needed for these development tests, not for building or consuming the library. Performance checks count query rows, filter evaluations, and interop callbacks rather than relying on machine-specific timing.
 
+When updating bundled JavaScript, CSS, or icon data, preserve upstream copyright headers and refresh the affected package's `THIRD-PARTY-NOTICES.txt` from the corresponding upstream release. Components and Primitives keep this file under `wwwroot`; icon packages keep it in the project directory. Record the upstream source and version when known, then inspect a locally built `.nupkg` to confirm that its license and notice files are included.
+
 ---
 
 ## Branching Strategy

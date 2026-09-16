@@ -427,6 +427,8 @@ For full documentation, examples, and API reference, visit:
 
 Apache License 2.0 - see [LICENSE](https://github.com/blazorblueprintui/ui/blob/main/LICENSE) for details.
 
+The package includes `LICENSE`, `NOTICE`, and `staticwebassets/THIRD-PARTY-NOTICES.txt`. The bundled Floating UI and SortableJS assets retain their MIT licenses. These notices are also available at `_content/BlazorBlueprint.Primitives/THIRD-PARTY-NOTICES.txt`.
+
 ## Contributing
 
 Contributions are welcome! Please see our [Contributing Guide](https://github.com/blazorblueprintui/ui/blob/main/CONTRIBUTING.md).
