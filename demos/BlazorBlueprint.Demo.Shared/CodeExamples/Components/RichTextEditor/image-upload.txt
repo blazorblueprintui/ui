@@ -1,0 +1,24 @@
+@* ImageUploader receives every image the user picks from the toolbar, drops or pastes.
+   Return the URL to embed, or null to reject the file. *@
+<BbRichTextEditor @bind-Value="value"
+                Toolbar="ToolbarPreset.Full"
+                ImageUploader="UploadImageAsync"
+                MaxImageSize="5 * 1024 * 1024" />
+
+@code {
+    private string? value;
+
+    private async Task<string?> UploadImageAsync(EditorImageUpload image)
+    {
+        if (!image.ContentType.StartsWith("image/"))
+        {
+            return null;
+        }
+
+        // Store the bytes wherever you keep uploads and return their address.
+        var name = $"{Guid.NewGuid():N}{Path.GetExtension(image.FileName)}";
+        await using var file = File.Create(Path.Combine(uploadFolder, name));
+        await image.Content.CopyToAsync(file);
+        return $"/uploads/{name}";
+    }
+}

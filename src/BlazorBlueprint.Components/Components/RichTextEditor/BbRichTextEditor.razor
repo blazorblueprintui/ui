@@ -9,9 +9,29 @@
     @if (Toolbar != ToolbarPreset.None && ToolbarContent == null)
     {
         <div class="@ToolbarCssClass" data-slot="toolbar">
-            <div class="bb:flex bb:items-center bb:gap-0.5">
+            <div class="bb:flex bb:flex-wrap bb:items-center bb:gap-0.5">
                 @if (Toolbar >= ToolbarPreset.Standard)
                 {
+                    <BbButton Variant="ButtonVariant.Ghost"
+                            Size="ButtonSize.IconSmall"
+                            OnClick="@(async _ => await UndoAsync())"
+                            Disabled="@(Disabled || !_canUndo)"
+                            Class="bb:h-8 bb:w-8"
+                            AriaLabel="@Localizer["RichTextEditor.Undo"]"
+                            title="@Localizer["RichTextEditor.Undo"]">
+                        <LucideIcon Name="undo-2" Size="16" />
+                    </BbButton>
+                    <BbButton Variant="ButtonVariant.Ghost"
+                            Size="ButtonSize.IconSmall"
+                            OnClick="@(async _ => await RedoAsync())"
+                            Disabled="@(Disabled || !_canRedo)"
+                            Class="bb:h-8 bb:w-8"
+                            AriaLabel="@Localizer["RichTextEditor.Redo"]"
+                            title="@Localizer["RichTextEditor.Redo"]">
+                        <LucideIcon Name="redo-2" Size="16" />
+                    </BbButton>
+                    <BbSeparator Orientation="SeparatorOrientation.Vertical" Class="bb:h-6 bb:mx-1" />
+
                     <BbNativeSelect TValue="string"
                                  Value="@_headerLevel"
                                  ValueChanged="@HandleHeaderChangeAsync"
@@ -63,6 +83,38 @@
                     </BbToggle>
                 }
 
+                @if (Toolbar == ToolbarPreset.Full)
+                {
+                    <BbToggle Pressed="@_isCode"
+                            PressedChanged="@(async _ => await ToggleFormatAsync("code"))"
+                            Size="ToggleSize.Small"
+                            Disabled="@Disabled"
+                            Class="bb:h-8 bb:w-8 bb:p-0"
+                            title="@Localizer["RichTextEditor.InlineCode"]">
+                        <LucideIcon Name="square-code" Size="16" />
+                    </BbToggle>
+
+                    <BbSeparator Orientation="SeparatorOrientation.Vertical" Class="bb:h-6 bb:mx-1" />
+                    <BbDropdownMenu>
+                        <BbDropdownMenuTrigger AsChild="true">
+                            <BbButton Variant="ButtonVariant.Ghost"
+                                    Size="ButtonSize.IconSmall"
+                                    Disabled="@Disabled"
+                                    Class="bb:h-8 bb:w-8"
+                                    AriaLabel="@Localizer["RichTextEditor.Align"]"
+                                    title="@Localizer["RichTextEditor.Align"]">
+                                <LucideIcon Name="@AlignIcon" Size="16" />
+                            </BbButton>
+                        </BbDropdownMenuTrigger>
+                        <BbDropdownMenuContent>
+                            @AlignItem("align-left", "RichTextEditor.AlignLeft", null)
+                            @AlignItem("align-center", "RichTextEditor.AlignCenter", "center")
+                            @AlignItem("align-right", "RichTextEditor.AlignRight", "right")
+                            @AlignItem("align-justify", "RichTextEditor.AlignJustify", "justify")
+                        </BbDropdownMenuContent>
+                    </BbDropdownMenu>
+                }
+
                 <BbSeparator Orientation="SeparatorOrientation.Vertical" Class="bb:h-6 bb:mx-1" />
 
                 <BbToggle Pressed="@_isBulletList"
@@ -84,6 +136,53 @@
 
                 @if (Toolbar >= ToolbarPreset.Standard)
                 {
+                    <BbToggle Pressed="@_isCheckList"
+                            PressedChanged="@(async _ => await ToggleFormatAsync("list", "check"))"
+                            Size="ToggleSize.Small"
+                            Disabled="@Disabled"
+                            Class="bb:h-8 bb:w-8 bb:p-0"
+                            title="@Localizer["RichTextEditor.CheckList"]">
+                        <LucideIcon Name="list-todo" Size="16" />
+                    </BbToggle>
+                }
+
+                @if (Toolbar == ToolbarPreset.Full)
+                {
+                    <BbSeparator Orientation="SeparatorOrientation.Vertical" Class="bb:h-6 bb:mx-1" />
+                    <BbPopover Open="@_textColorOpen" OpenChanged="HandleTextColorOpenChanged">
+                        <BbPopoverTrigger AsChild="true">
+                            <BbButton Variant="ButtonVariant.Ghost"
+                                    Size="ButtonSize.IconSmall"
+                                    Disabled="@Disabled"
+                                    Class="bb:h-8 bb:w-8"
+                                    AriaLabel="@Localizer["RichTextEditor.TextColor"]"
+                                    title="@Localizer["RichTextEditor.TextColor"]">
+                                <LucideIcon Name="baseline" Size="16" />
+                            </BbButton>
+                        </BbPopoverTrigger>
+                        <BbPopoverContent Align="PopoverAlign.Start" Class="bb:w-auto bb:p-2">
+                            @ColorPalette("color", TextColors)
+                        </BbPopoverContent>
+                    </BbPopover>
+                    <BbPopover Open="@_highlightOpen" OpenChanged="HandleHighlightOpenChanged">
+                        <BbPopoverTrigger AsChild="true">
+                            <BbButton Variant="ButtonVariant.Ghost"
+                                    Size="ButtonSize.IconSmall"
+                                    Disabled="@Disabled"
+                                    Class="bb:h-8 bb:w-8"
+                                    AriaLabel="@Localizer["RichTextEditor.Highlight"]"
+                                    title="@Localizer["RichTextEditor.Highlight"]">
+                                <LucideIcon Name="highlighter" Size="16" />
+                            </BbButton>
+                        </BbPopoverTrigger>
+                        <BbPopoverContent Align="PopoverAlign.Start" Class="bb:w-auto bb:p-2">
+                            @ColorPalette("background", HighlightColors)
+                        </BbPopoverContent>
+                    </BbPopover>
+                }
+
+                @if (Toolbar >= ToolbarPreset.Standard)
+                {
                     <BbSeparator Orientation="SeparatorOrientation.Vertical" Class="bb:h-6 bb:mx-1" />
                     <BbButton Variant="ButtonVariant.Ghost"
                             Size="ButtonSize.IconSmall"
@@ -98,6 +197,16 @@
 
                 @if (Toolbar == ToolbarPreset.Full)
                 {
+                    <BbButton Variant="ButtonVariant.Ghost"
+                            Size="ButtonSize.IconSmall"
+                            OnClick="@(async _ => await PickImageAsync())"
+                            Disabled="@Disabled"
+                            Class="bb:h-8 bb:w-8"
+                            AriaLabel="@Localizer["RichTextEditor.InsertImage"]"
+                            title="@Localizer["RichTextEditor.InsertImage"]">
+                        <LucideIcon Name="image" Size="16" />
+                    </BbButton>
+
                     <BbSeparator Orientation="SeparatorOrientation.Vertical" Class="bb:h-6 bb:mx-1" />
                     <BbToggle Pressed="@_isBlockquote"
                             PressedChanged="@(async _ => await ToggleFormatAsync("blockquote"))"
@@ -115,6 +224,57 @@
                             title="@Localizer["RichTextEditor.CodeBlock"]">
                         <LucideIcon Name="code" Size="16" />
                     </BbToggle>
+
+                    <BbSeparator Orientation="SeparatorOrientation.Vertical" Class="bb:h-6 bb:mx-1" />
+                    <BbPopover @bind-Open="_tableMenuOpen" OnOpenChange="HandleTableMenuOpenChange">
+                        <BbPopoverTrigger AsChild="true">
+                            <BbButton Variant="ButtonVariant.Ghost"
+                                    Size="ButtonSize.IconSmall"
+                                    Disabled="@Disabled"
+                                    Class="bb:h-8 bb:w-8"
+                                    AriaLabel="@Localizer["RichTextEditor.Table"]"
+                                    title="@Localizer["RichTextEditor.Table"]">
+                                <LucideIcon Name="table" Size="16" />
+                            </BbButton>
+                        </BbPopoverTrigger>
+                        <BbPopoverContent Align="PopoverAlign.Start" Class="bb:w-auto bb:p-1">
+                            @if (_isInTable)
+                            {
+                                <div class="bb:flex bb:flex-col" data-slot="table-actions">
+                                    @TableAction("between-horizontal-start", "RichTextEditor.InsertRowAbove", "insertRowAbove")
+                                    @TableAction("between-horizontal-end", "RichTextEditor.InsertRowBelow", "insertRowBelow")
+                                    @TableAction("between-vertical-start", "RichTextEditor.InsertColumnLeft", "insertColumnLeft")
+                                    @TableAction("between-vertical-end", "RichTextEditor.InsertColumnRight", "insertColumnRight")
+                                    <BbSeparator Class="bb:my-1" />
+                                    @TableAction("rows-3", "RichTextEditor.DeleteRow", "deleteRow")
+                                    @TableAction("columns-3", "RichTextEditor.DeleteColumn", "deleteColumn")
+                                    @TableAction("trash-2", "RichTextEditor.DeleteTable", "deleteTable")
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="bb:flex bb:flex-col bb:gap-2 bb:p-1" data-slot="table-picker">
+                                    <div class="bb:grid bb:grid-cols-6 bb:gap-1" role="grid" aria-label="@Localizer["RichTextEditor.InsertTable"]">
+                                        @for (var r = 1; r <= TablePickerSize; r++)
+                                        {
+                                            for (var c = 1; c <= TablePickerSize; c++)
+                                            {
+                                                var rows = r;
+                                                var columns = c;
+                                                <button type="button"
+                                                        class="@TablePickerCellClass(rows, columns)"
+                                                        aria-label="@Localizer["RichTextEditor.TableSize", rows, columns]"
+                                                        @onmouseover="@(() => SetTablePickerHover(rows, columns))"
+                                                        @onfocus="@(() => SetTablePickerHover(rows, columns))"
+                                                        @onclick="@(() => InsertTableFromPickerAsync(rows, columns))"></button>
+                                            }
+                                        }
+                                    </div>
+                                    <p class="bb:text-center bb:text-xs bb:text-muted-foreground">@TablePickerLabel</p>
+                                </div>
+                            }
+                        </BbPopoverContent>
+                    </BbPopover>
                 }
             </div>
         </div>
@@ -178,3 +338,48 @@
         </BbDialogContent>
     </BbDialog>
 </div>
+
+@code {
+    private RenderFragment AlignItem(string icon, string labelKey, string? value) => __builder =>
+    {
+        <BbDropdownMenuItem OnClick="@(async _ => await SetAlignAsync(value))">
+            <Icon><LucideIcon Name="@icon" Size="16" /></Icon>
+            <ChildContent>@Localizer[labelKey]</ChildContent>
+        </BbDropdownMenuItem>
+    };
+
+    private RenderFragment ColorPalette(string format, IReadOnlyList<string> palette) => __builder =>
+    {
+        <div class="bb:flex bb:flex-col bb:gap-2" data-slot="color-palette">
+            <div class="bb:grid bb:grid-cols-7 bb:gap-1" role="group">
+                @foreach (var color in palette)
+                {
+                    var value = color;
+                    <button type="button"
+                            class="bb:h-6 bb:w-6 bb:rounded-sm bb:border bb:border-input bb:transition-transform bb:hover:scale-110 bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring"
+                            style="background-color: @value"
+                            aria-label="@value"
+                            title="@value"
+                            @onclick="@(() => SetColorAsync(format, value))"></button>
+                }
+            </div>
+            <BbButton Variant="ButtonVariant.Ghost"
+                    Size="ButtonSize.Small"
+                    Class="bb:h-7 bb:justify-start bb:px-2 bb:font-normal"
+                    OnClick="@(async _ => await SetColorAsync(format, null))">
+                @Localizer["RichTextEditor.RemoveColor"]
+            </BbButton>
+        </div>
+    };
+
+    private RenderFragment TableAction(string icon, string labelKey, string action) => __builder =>
+    {
+        <BbButton Variant="ButtonVariant.Ghost"
+                Size="ButtonSize.Small"
+                Class="bb:h-8 bb:justify-start bb:gap-2 bb:px-2 bb:font-normal"
+                OnClick="@(async _ => await RunTableActionAsync(action))">
+            <LucideIcon Name="@icon" Size="16" />
+            @Localizer[labelKey]
+        </BbButton>
+    };
+}

@@ -37,4 +37,15 @@ public class TextChangeEventArgs
     /// Gets or sets the length of the editor content.
     /// </summary>
     public int Length { get; set; }
+
+    /// <summary>
+    /// Whether there is a user change to undo. Programmatic <see cref="BbRichTextEditor.Value"/>
+    /// updates do not count.
+    /// </summary>
+    public bool CanUndo { get; set; }
+
+    /// <summary>
+    /// Whether there is an undone change to redo.
+    /// </summary>
+    public bool CanRedo { get; set; }
 }

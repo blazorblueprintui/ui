@@ -11,17 +11,18 @@ public enum ToolbarPreset
     None,
 
     /// <summary>
-    /// Simple toolbar with basic formatting (bold, italic, underline, lists).
+    /// Bold, italic, underline, bullet and numbered lists.
     /// </summary>
     Simple,
 
     /// <summary>
-    /// Standard toolbar with common formatting options.
+    /// <see cref="Simple"/> plus undo/redo, headings, strikethrough, checklist and links.
     /// </summary>
     Standard,
 
     /// <summary>
-    /// Full toolbar with all available formatting options.
+    /// <see cref="Standard"/> plus inline code, text alignment, text colour and highlight,
+    /// images, blockquote, code block and tables.
     /// </summary>
     Full,
 

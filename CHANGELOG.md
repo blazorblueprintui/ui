@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-09-16 (later)
+
+### Added
+
+- **Tables in `BbRichTextEditor`** — The `Full` toolbar gains a table button. Outside a table it opens a size picker (up to 6 × 6); with the caret inside a table the same button offers insert row above/below, insert column left/right, delete row, delete column and delete table. The same actions are on the component reference: `InsertTableAsync(rows, columns)`, `InsertRowAboveAsync`, `InsertRowBelowAsync`, `InsertColumnLeftAsync`, `InsertColumnRightAsync`, `DeleteRowAsync`, `DeleteColumnAsync` and `DeleteTableAsync`. This is Quill 2's own built-in table module, so there is no new script to load; the HTML output is a plain `<table>`, cell borders follow `--border`, and the module's Tab, Enter and Backspace behaviour inside cells applies. Cell merging and column resizing are not part of Quill's module and are not offered. New `RichTextEditor.Table*`, `InsertRow*`, `InsertColumn*` and `Delete*` localizer keys carry the labels.
+
+- **Undo/redo, checklist, inline code, alignment, text colour, highlight and images in `BbRichTextEditor`.** `Standard` gains undo/redo buttons (Quill's history module, `userOnly` so a programmatic `Value` update is never undoable; the buttons grey out when there is nothing to do, and `TextChangeEventArgs` reports `CanUndo`/`CanRedo`) and a checklist toggle. `Full` also gains inline code, an alignment menu, text colour and highlight palettes, and an image button. Alignment uses Quill's style attributor so the output carries `text-align` inline rather than `ql-align-*` classes that mean nothing outside Quill's stylesheet; colour and highlight are inline styles too. Checklist state round-trips: Quill writes `<li data-list="checked">` but only reads `data-checked` on the list back in, so the interop adds a clipboard matcher for the item and the sanitizer keeps `data-list`. Images go through the new `ImageUploader` parameter — every picked, dropped or pasted file is streamed to it and it returns the URL to embed, or `null` to reject; `MaxImageSize` (10 MB) caps what is sent. Without a handler, images embed as data URLs, as Quill does on its own, and the sanitizer now lets `data:image/*` through on `<img src>` only. `UndoAsync`, `RedoAsync` and `InsertImageAsync(url)` join the public methods; `EditorImageUpload` is the new public type.
+
+### Changed
+
+- **`table`, `code`, `align`, `color`, `background` and `image` are now registered formats in `BbRichTextEditor`.** Pasted or bound HTML that carries them keeps them, where it used to flatten to plain paragraphs and text. `HtmlSanitizer`'s defaults already allow the table elements and the inline styles involved.
+
+- **Quill is pinned to 2.0.3 in the demo and setup notes** (`quill@2.0.3` instead of the floating `quill@2` tag), and the interop no longer carries Quill 1 fallbacks for `getSemanticHTML`. The editor has required Quill 2 since it was rewritten for it; the fallbacks only hid a wrong script version behind subtly different HTML.
+
+---
+
 ## 2026-09-16
 
 ### Changed
