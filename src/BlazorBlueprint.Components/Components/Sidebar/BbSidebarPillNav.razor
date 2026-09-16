@@ -1,0 +1,51 @@
+@namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Icons.Lucide.Components
+@inject IBbLocalizer Localizer
+@implements IDisposable
+
+@if (Context?.CollapsedMode == SidebarCollapsedMode.Pill)
+{
+    <nav @attributes="AdditionalAttributes" class="@CssClass" aria-label="@(AriaLabel ?? Localizer["Sidebar.PillNavigation"])" aria-hidden="@(!Visible ? "true" : null)" inert="@(!Visible)">
+        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Class="bb:relative bb:size-11 bb:shrink-0 bb:rounded-full" OnClick="Expand" aria-label="@Localizer["Sidebar.ExpandNavigation"]">
+            <LucideIcon Name="@(Context.Side == SidebarSide.Right ? "panel-right-open" : "panel-left-open")" Size="18" />
+        </BbButton>
+        <span class="bb:h-5 bb:w-px bb:shrink-0 bb:bg-border" aria-hidden="true"></span>
+        <div class="bb:relative bb:flex bb:min-w-0 bb:items-center bb:gap-1 bb:overflow-x-auto">
+            @if (AnimatedIndicator) { <BbSidebarSelectionIndicator Class="bb:rounded-full" /> }
+            <CascadingValue Value="this" IsFixed="false">@ChildContent</CascadingValue>
+        </div>
+        @if (TrailingContent is not null)
+        {
+            <span class="bb:h-5 bb:w-px bb:shrink-0 bb:bg-border" aria-hidden="true"></span>
+            @TrailingContent
+        }
+    </nav>
+}
+
+@code {
+    [CascadingParameter] private SidebarContext? Context { get; set; }
+    /// <summary>Pill navigation items.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Optional trailing actions.</summary>
+    [Parameter] public RenderFragment? TrailingContent { get; set; }
+    /// <summary>Viewport-fixed positioning. Disable for a positioned sample/application container.</summary>
+    [Parameter] public bool Fixed { get; set; } = true;
+    /// <summary>Animates an indicator behind the active navigation item.</summary>
+    [Parameter] public bool AnimatedIndicator { get; set; } = true;
+    /// <summary>Accessible navigation landmark name.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+    /// <summary>Additional navigation classes.</summary>
+    [Parameter] public string? Class { get; set; }
+    /// <summary>Additional HTML attributes.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+    private SidebarStateSubscription? subscription;
+    private bool Visible => Context is not null && !Context.IsOpen;
+    private void Expand() { if (Context?.IsMobile == true) { Context.SetOpenMobile(true); } else { Context?.SetOpen(true); } }
+    protected override void OnParametersSet() => (subscription ??= new(() => _ = InvokeAsync(StateHasChanged))).Observe(Context);
+    public void Dispose() => subscription?.Dispose();
+    private string CssClass => ClassNames.cn(
+        "bb:z-40 bb:flex bb:max-w-[calc(100%-2rem)] bb:items-center bb:gap-1 bb:rounded-full bb:border bb:bg-background bb:p-1 bb:text-foreground bb:shadow-lg bb:transition-[opacity,transform] bb:duration-200 bb:motion-reduce:transition-none",
+        Fixed ? "bb:fixed bb:top-[max(1rem,env(safe-area-inset-top))] bb:left-1/2 bb:-translate-x-1/2" : "bb:absolute bb:top-3 bb:left-1/2 bb:-translate-x-1/2",
+        Visible ? "bb:translate-y-0 bb:opacity-100" : "bb:pointer-events-none bb:-translate-y-4 bb:opacity-0",
+        Class);
+}

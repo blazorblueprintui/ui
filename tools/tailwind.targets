@@ -5,7 +5,9 @@
     <TailwindToolPath Condition="'$(TailwindToolPath)' == ''">$(MSBuildProjectDirectory)/../../tools</TailwindToolPath>
   </PropertyGroup>
 
-  <Target Name="BuildTailwind" BeforeTargets="Build">
+  <!-- Generate CSS before the SDK fingerprints/compresses static assets. BeforeTargets="Build"
+       runs after those dependency targets, leaving manifests and gzip payloads one build behind. -->
+  <Target Name="BuildTailwind" BeforeTargets="ResolveProjectStaticWebAssets">
     <PropertyGroup>
       <TailwindBinary Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(TailwindToolPath)/tailwindcss.exe</TailwindBinary>
       <TailwindBinary Condition="$([MSBuild]::IsOSPlatform('Linux'))">$(TailwindToolPath)/tailwindcss-linux</TailwindBinary>
@@ -21,6 +23,12 @@
     <Exec Command="$(TailwindBinary) -i $(TailwindInput) -o $(TailwindOutput) --minify"
           Condition="Exists('$(TailwindBinary)')"
           WorkingDirectory="$(MSBuildProjectDirectory)" />
+
+    <!-- A clean checkout may not have this generated file when the SDK evaluates its
+         default Content glob. Include it before static-asset discovery without duplicating it. -->
+    <ItemGroup>
+      <Content Include="$(TailwindOutput)" Exclude="@(Content)" />
+    </ItemGroup>
 
     <Error Text="Tailwind binary not found at $(TailwindBinary). Please ensure the binary is in the /tools directory."
            Condition="!Exists('$(TailwindBinary)')" />

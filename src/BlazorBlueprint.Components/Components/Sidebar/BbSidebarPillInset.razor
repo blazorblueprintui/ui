@@ -1,0 +1,21 @@
+@namespace BlazorBlueprint.Components
+@implements IDisposable
+
+<div @attributes="AdditionalAttributes" class="@ClassNames.cn("bb:min-w-0 bb:transition-[padding] bb:duration-200 bb:motion-reduce:transition-none", Active ? "bb:pt-20" : null, Active ? CollapsedClass : ExpandedClass, Class)">@ChildContent</div>
+@code {
+    [CascadingParameter] private SidebarContext? Context { get; set; }
+    /// <summary>Page content; reserves space above it while the pill is active.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Additional classes while the sidebar is expanded.</summary>
+    [Parameter] public string? ExpandedClass { get; set; }
+    /// <summary>Additional classes while the pill is active.</summary>
+    [Parameter] public string? CollapsedClass { get; set; }
+    /// <summary>Always-applied classes.</summary>
+    [Parameter] public string? Class { get; set; }
+    /// <summary>Additional HTML attributes.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+    private bool Active => Context?.CollapsedMode == SidebarCollapsedMode.Pill && !Context.IsOpen;
+    private SidebarStateSubscription? subscription;
+    protected override void OnParametersSet() => (subscription ??= new(() => _ = InvokeAsync(StateHasChanged))).Observe(Context);
+    public void Dispose() => subscription?.Dispose();
+}

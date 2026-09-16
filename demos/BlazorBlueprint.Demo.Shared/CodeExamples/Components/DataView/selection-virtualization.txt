@@ -1,0 +1,18 @@
+<BbDataView TItem="Person" Data="people" ShowPagination="false" ShowToolbar="false"
+            SelectionMode="DataTableSelectionMode.Multiple" @bind-SelectedItems="selectedPeople"
+            ItemKey="@(person => person.Id)" ItemLabel="@(person => $"Select {person.Name}")"
+            IsItemDisabled="@(person => !person.IsActive)" GroupBy="@(person => person.Department)"
+            EnableVirtualization="true" VirtualItemSize="56" OverscanCount="3" ScrollHeight="360px">
+    <GroupHeaderTemplate Context="group">
+        <h3 class="text-sm font-semibold">@group.Key — @group.Items.Count people</h3>
+    </GroupHeaderTemplate>
+    <ListTemplate Context="person">
+        <div class="flex h-12 items-center justify-between gap-2 rounded-md border px-3">
+            <span>@person.Name</span><span class="text-sm text-muted-foreground">@person.Role</span>
+        </div>
+    </ListTemplate>
+</BbDataView>
+
+@code {
+    private IReadOnlyCollection<Person> selectedPeople = [];
+}

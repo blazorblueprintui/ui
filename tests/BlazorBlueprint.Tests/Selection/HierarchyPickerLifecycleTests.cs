@@ -15,6 +15,58 @@ namespace BlazorBlueprint.Tests.Selection;
 
 public class HierarchyPickerLifecycleTests
 {
+    [Theory]
+    [InlineData(false, "root")]
+    [InlineData(false, "leaf")]
+    [InlineData(true, "leaf")]
+    public async Task TreeKeyboardExpansionPreservesSelectionAndEnterCommitsAccordingToMode(bool multiple, string target)
+    {
+        await using var provider = Services().BuildServiceProvider();
+        await using var renderer = new ComponentTestRenderer(provider, NullLoggerFactory.Instance);
+        await renderer.Dispatcher.InvokeAsync(async () =>
+        {
+            await renderer.MountAsync<BlazorBlueprint.Primitives.Services.BbPortalHost>(new());
+            var picker = await renderer.MountAsync<BbTreeSelect<Node>>(new()
+            {
+                [nameof(BbTreeSelect<Node>.Items)] = Nodes,
+                [nameof(BbTreeSelect<Node>.ValueField)] = (Func<Node, string>)(n => n.Id),
+                [nameof(BbTreeSelect<Node>.TextField)] = (Func<Node, string>)(n => n.Text),
+                [nameof(BbTreeSelect<Node>.ChildrenProperty)] = (Func<Node, IEnumerable<Node>>)(n => n.Children),
+                [nameof(BbTreeSelect<Node>.Multiple)] = multiple,
+                [nameof(BbTreeSelect<Node>.Value)] = "leaf"
+            });
+            ComponentProbe.Call(picker, "SetOpen", true);
+            await picker.SetParametersAsync(ParameterView.Empty);
+            var tree = renderer.FindComponent<BlazorBlueprint.Primitives.TreeView.BbTreeView>();
+            Assert.Equal("true", tree.AdditionalAttributes!["data-tree-select"]);
+            await tree.JsOnNodeExpand("root");
+            await tree.JsOnNodeCollapse("root");
+            await Task.Yield();
+            Assert.True(ComponentProbe.Field<bool>(picker, "open"));
+            Assert.Equal("leaf", picker.Value);
+            Assert.Empty(picker.Values);
+
+            if (multiple)
+            {
+                tree.JsOnNodeCheck(target);
+                await Task.Yield();
+                Assert.Contains(target, picker.Values);
+                Assert.True(ComponentProbe.Field<bool>(picker, "open"));
+                tree.JsOnNodeCheck(target);
+                await Task.Yield();
+                Assert.DoesNotContain(target, picker.Values);
+                Assert.True(ComponentProbe.Field<bool>(picker, "open"));
+            }
+            else
+            {
+                await tree.JsOnNodeActivate(target, target == "root");
+                await Task.Yield();
+                Assert.Equal(target, picker.Value);
+                Assert.False(ComponentProbe.Field<bool>(picker, "open"));
+            }
+        });
+    }
+
     [Fact]
     public async Task TreeSearchStaysStableDuringCloseAndResetsOnReopen()
     {

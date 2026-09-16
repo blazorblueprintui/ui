@@ -1,0 +1,30 @@
+@namespace BlazorBlueprint.Components
+@typeparam TValue
+
+<BlazorBlueprint.Primitives.Menu.BbMenuRadioItem TValue="TValue" Value="@Value" Disabled="@Disabled"
+                                                CloseOnSelect="@CloseOnSelect" class="@CssClass" @attributes="AdditionalAttributes">
+    <span aria-hidden="true" class="bb:absolute bb:start-2 bb:flex bb:h-3.5 bb:w-3.5 bb:items-center bb:justify-center">
+        <span class="bb:invisible bb:size-2 bb:rounded-full bb:bg-current bb:group-data-[state=checked]/menu-radio:visible"></span>
+    </span>
+    @ChildContent
+</BlazorBlueprint.Primitives.Menu.BbMenuRadioItem>
+
+@code {
+    /// <summary>The value represented by this item.</summary>
+    [Parameter, EditorRequired] public TValue Value { get; set; } = default!;
+    /// <summary>Disables the item.</summary>
+    [Parameter] public bool Disabled { get; set; }
+    /// <summary>Closes the entire menu when selected. Default is true.</summary>
+    [Parameter] public bool CloseOnSelect { get; set; } = true;
+    /// <summary>The item label.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Additional CSS classes.</summary>
+    [Parameter] public string? Class { get; set; }
+    /// <summary>Additional HTML attributes.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string CssClass => ClassNames.cn(
+        "bb:group/menu-radio bb:relative bb:flex bb:cursor-default bb:select-none bb:items-center bb:rounded-sm bb:py-1.5 bb:ps-8 bb:pe-2 bb:text-sm bb:outline-none",
+        "bb:focus:bg-(--bb-menu-accent) bb:focus:text-(--bb-menu-accent-foreground) bb:hover:bg-(--bb-menu-accent) bb:hover:text-(--bb-menu-accent-foreground)",
+        "bb:data-[disabled=true]:pointer-events-none bb:data-[disabled=true]:opacity-50", Class);
+}

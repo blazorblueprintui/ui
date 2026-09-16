@@ -187,8 +187,14 @@ export function initialize(containerElement, dotNetRef, instanceId) {
       case 'Enter': {
         e.preventDefault();
         if (!isDisabled(currentItem)) {
-          const hasChildren = currentItem.getAttribute('data-has-children') === 'true';
-          dotNetRef.invokeMethodAsync('JsOnNodeActivate', value, hasChildren).catch(() => {});
+          const isPicker = containerElement.getAttribute('data-tree-select') === 'true';
+          const isCheckable = currentItem.getAttribute('aria-checked') !== null;
+          if (isPicker && isCheckable) {
+            dotNetRef.invokeMethodAsync('JsOnNodeCheck', value).catch(() => {});
+          } else {
+            const hasChildren = currentItem.getAttribute('data-has-children') === 'true';
+            dotNetRef.invokeMethodAsync('JsOnNodeActivate', value, hasChildren).catch(() => {});
+          }
         }
         break;
       }
@@ -196,6 +202,16 @@ export function initialize(containerElement, dotNetRef, instanceId) {
       case ' ': {
         e.preventDefault();
         if (!isDisabled(currentItem)) {
+          // In a TreeSelect, Space navigates branches without changing the value.
+          // Enter commits a selection (or toggles a checkbox) instead.
+          if (containerElement.getAttribute('data-tree-select') === 'true') {
+            if (currentItem.getAttribute('data-has-children') === 'true') {
+              const action = currentItem.getAttribute('aria-expanded') === 'true'
+                ? 'JsOnNodeCollapse' : 'JsOnNodeExpand';
+              dotNetRef.invokeMethodAsync(action, value).catch(() => {});
+            }
+            break;
+          }
           // If checkable, toggle checkbox; otherwise, activate/select
           const isCheckable = currentItem.getAttribute('aria-checked') !== null;
           if (isCheckable) {

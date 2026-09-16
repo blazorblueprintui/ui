@@ -1,81 +1,152 @@
 @namespace BlazorBlueprint.Components
+@using System.Globalization
+@using Microsoft.JSInterop
+@using BlazorBlueprint.Primitives.Services
+@using BlazorBlueprint.Icons.Lucide.Components
+@inject IJSRuntime JS
+@inject IBbLocalizer Localizer
+@implements IAsyncDisposable
 
-<div class="@CssClass" role="region" aria-roledescription="carousel" @attributes="AdditionalAttributes">
+<div @ref="element" class="@CssClass" role="region" tabindex="0" aria-roledescription="carousel" aria-label="@AriaLabel" @attributes="AdditionalAttributes" style="@RootStyle">
     <CascadingValue Value="this" IsFixed="false">
         @ChildContent
+        @if (ShowIndicators && ItemCount > 0)
+        {
+            <div class="@IndicatorClass" role="group" aria-label="@Localizer["Carousel.ChooseSlide"]">
+                @for (var i = 0; i <= MaxIndex; i++)
+                {
+                    var index = i;
+                    <button type="button" class="bb:flex bb:size-8 bb:items-center bb:justify-center bb:rounded-full bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring"
+                            aria-label="@($"{Localizer["Carousel.Slide"]} {i + 1}")" aria-current="@(CurrentIndex == i ? "true" : null)" @onclick="@(() => GoToAsync(index))">
+                        <span class="@ClassNames.cn("bb:size-2 bb:rounded-full", CurrentIndex == i ? "bb:bg-primary" : "bb:bg-muted-foreground/40")"></span>
+                    </button>
+                }
+            </div>
+        }
+        @if (Autoplay)
+        {
+            <button type="button" data-carousel-rotation class="bb:absolute bb:right-2 bb:top-2 bb:z-10 bb:flex bb:size-9 bb:items-center bb:justify-center bb:rounded-md bb:border bb:bg-background bb:focus-visible:ring-2 bb:focus-visible:ring-ring"
+                    aria-label="@(Paused ? Localizer["Carousel.StartRotation"] : Localizer["Carousel.StopRotation"])" @onclick="@(() => SetPausedAsync(!Paused))">
+                <LucideIcon Name="@(Paused ? "play" : "pause")" Size="16" />
+            </button>
+        }
     </CascadingValue>
 </div>
 
 @code {
-    [Parameter]
-    public string? Class { get; set; }
-
-    /// <summary>
-    /// Gets or sets additional HTML attributes to apply to the root element.
-    /// </summary>
-    [Parameter(CaptureUnmatchedValues = true)]
-    public Dictionary<string, object>? AdditionalAttributes { get; set; }
-
-    [Parameter]
-    public RenderFragment? ChildContent { get; set; }
-
-    [Parameter]
-    public CarouselOrientation Orientation { get; set; } = CarouselOrientation.Horizontal;
-
-    [Parameter]
-    public bool Loop { get; set; }
-
-    internal int CurrentIndex { get; private set; }
+    [Parameter] public string? Class { get; set; }
+    /// <summary>Additional root HTML attributes.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public CarouselOrientation Orientation { get; set; } = CarouselOrientation.Horizontal;
+    [Parameter] public bool Loop { get; set; }
+    /// <summary>Accessible carousel name.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+    /// <summary>Number of visible slides, including fractional peeks. Item Class can override responsive sizing.</summary>
+    [Parameter] public double SlidesPerView { get; set; } = 1;
+    /// <summary>Space between slide contents in pixels.</summary>
+    [Parameter] public int Gap { get; set; } = 16;
+    /// <summary>Enables swipe/drag navigation. Interactive descendants retain normal behavior.</summary>
+    [Parameter] public bool Draggable { get; set; } = true;
+    /// <summary>Enables timed navigation and shows a pause/play control. Disabled by reduced-motion preferences.</summary>
+    [Parameter] public bool Autoplay { get; set; }
+    /// <summary>Autoplay interval in milliseconds, at least 1000.</summary>
+    [Parameter] public int AutoplayInterval { get; set; } = 5000;
+    /// <summary>User-controlled rotation pause state. Keyboard focus pauses until explicitly restarted.</summary>
+    [Parameter] public bool Paused { get; set; }
+    /// <summary>Called when the rotation pause state changes.</summary>
+    [Parameter] public EventCallback<bool> PausedChanged { get; set; }
+    /// <summary>The first visible slide index.</summary>
+    [Parameter] public int ActiveIndex { get; set; }
+    /// <summary>Supports two-way active index binding.</summary>
+    [Parameter] public EventCallback<int> ActiveIndexChanged { get; set; }
+    /// <summary>Called after the active slide changes, including layout clamping.</summary>
+    [Parameter] public EventCallback<int> OnSlideChanged { get; set; }
+    /// <summary>Shows built-in slide navigation buttons.</summary>
+    [Parameter] public bool ShowIndicators { get; set; }
+    /// <summary>Position of the built-in slide buttons.</summary>
+    [Parameter] public CarouselIndicatorPosition IndicatorPosition { get; set; }
+    internal int CurrentIndex => ActiveIndex;
     internal int ItemCount { get; private set; }
+    private int? measuredMax;
+    private int MaxIndex => Math.Min(Math.Max(0, ItemCount - 1), measuredMax ?? Math.Max(0, (int)Math.Ceiling(ItemCount - SlidesPerView)));
+    private ElementReference element;
+    private IJSObjectReference? module;
+    private DotNetObjectReference<BbCarousel>? reference;
+    private bool disposed;
 
-    internal void RegisterItem()
+    protected override void OnParametersSet()
     {
-        ItemCount++;
-        StateHasChanged();
+        if (!double.IsFinite(SlidesPerView) || SlidesPerView < 1) { throw new ArgumentOutOfRangeException(nameof(SlidesPerView)); }
+        ArgumentOutOfRangeException.ThrowIfNegative(Gap);
+        ArgumentOutOfRangeException.ThrowIfLessThan(AutoplayInterval, 1000);
+        ActiveIndex = Math.Max(0, ActiveIndex);
     }
-
+    internal void RegisterItem() { ItemCount++; measuredMax = null; StateHasChanged(); }
     internal void UnregisterItem()
     {
-        ItemCount--;
-        if (CurrentIndex >= ItemCount && ItemCount > 0)
-        {
-            CurrentIndex = ItemCount - 1;
-        }
+        ItemCount = Math.Max(0, ItemCount - 1); measuredMax = null;
+        if (!disposed) { _ = InvokeAsync(async () => { await GoToAsync(Math.Min(CurrentIndex, MaxIndex)); StateHasChanged(); }); }
+    }
+    internal Task Previous() => GoToAsync(CurrentIndex - 1);
+    internal Task Next() => GoToAsync(CurrentIndex + 1);
+    internal bool CanGoPrevious => ItemCount > 0 && (Loop && MaxIndex > 0 || CurrentIndex > 0);
+    internal bool CanGoNext => ItemCount > 0 && (Loop && MaxIndex > 0 || CurrentIndex < MaxIndex);
+
+    /// <summary>Navigates to a slide on the renderer dispatcher, respecting bounds and Loop.</summary>
+    public Task GoToAsync(int index) => InvokeAsync(async () =>
+    {
+        var next = index < 0 ? Loop ? MaxIndex : 0 : index > MaxIndex ? Loop ? 0 : MaxIndex : index;
+        if (next == ActiveIndex || disposed) { return; }
+        ActiveIndex = next;
+        await ActiveIndexChanged.InvokeAsync(next);
+        await OnSlideChanged.InvokeAsync(next);
+        StateHasChanged();
+    });
+    private async Task SetPausedAsync(bool paused)
+    {
+        if (Paused == paused || disposed) { return; }
+        Paused = paused;
+        await PausedChanged.InvokeAsync(paused);
         StateHasChanged();
     }
-
-    internal void GoTo(int index)
+    [JSInvokable] public Task JsOnStep(int direction) => direction < 0 ? Previous() : Next();
+    [JSInvokable] public Task JsOnPause() => SetPausedAsync(true);
+    [JSInvokable] public async Task JsOnLayout(int maximum)
     {
-        if (index < 0)
-        {
-            CurrentIndex = Loop ? ItemCount - 1 : 0;
-        }
-        else if (index >= ItemCount)
-        {
-            CurrentIndex = Loop ? 0 : ItemCount - 1;
-        }
-        else
-        {
-            CurrentIndex = index;
-        }
+        if (disposed) { return; }
+        measuredMax = Math.Max(0, maximum);
+        await GoToAsync(Math.Min(CurrentIndex, MaxIndex));
         StateHasChanged();
     }
-
-    internal void Previous()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        GoTo(CurrentIndex - 1);
+        if (disposed) { return; }
+        try
+        {
+            module ??= await JsModules.GetAsync(JS, JsModules.Versioned("./_content/BlazorBlueprint.Components/js/carousel.js", typeof(BbCarousel).Assembly));
+            if (disposed) { return; }
+            reference ??= DotNetObjectReference.Create(this);
+            await module.InvokeVoidAsync("configure", element, reference, new { index = CurrentIndex, vertical = Orientation == CarouselOrientation.Vertical, draggable = Draggable, autoplay = Autoplay, interval = AutoplayInterval, paused = Paused, loop = Loop });
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException) { }
     }
-
-    internal void Next()
+    public async ValueTask DisposeAsync()
     {
-        GoTo(CurrentIndex + 1);
+        disposed = true;
+        if (module is not null)
+        {
+            try { await module.InvokeVoidAsync("dispose", element); }
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException) { }
+        }
+        reference?.Dispose();
     }
-
-    internal bool CanGoPrevious => Loop || CurrentIndex > 0;
-    internal bool CanGoNext => Loop || CurrentIndex < ItemCount - 1;
-
-    private string CssClass => ClassNames.cn(
-        "bb:relative",
-        Class
-    );
+    private string RootStyle => $"--bb-carousel-basis:{(100 / SlidesPerView).ToString(CultureInfo.InvariantCulture)}%;--bb-carousel-gap:{Gap}px;{(AdditionalAttributes?.TryGetValue("style", out var value) == true ? value : null)}";
+    private string CssClass => ClassNames.cn("bb:relative", Class);
+    private string IndicatorClass => ClassNames.cn("bb:flex bb:items-center bb:justify-center", IndicatorPosition switch
+    {
+        CarouselIndicatorPosition.Top => "bb:absolute bb:bottom-full bb:left-0 bb:w-full bb:pb-2",
+        CarouselIndicatorPosition.Inside => "bb:absolute bb:bottom-2 bb:left-0 bb:w-full",
+        _ => "bb:pt-2"
+    });
 }

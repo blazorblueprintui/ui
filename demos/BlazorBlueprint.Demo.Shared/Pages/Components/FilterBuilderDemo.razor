@@ -305,6 +305,42 @@ var restored = FilterDefinitionExtensions.FromJson(json);</code></pre>
     </div>
 
     <!-- Accessibility Notes -->
+
+    <!-- API Reference -->
+
+
+    <LocalizationSection
+        Description="Filter builder labels including field placeholders, action buttons, date presets, and period names are configurable."
+        Labels="@(new LocalizationSection.LabelInfo[]
+        {
+            new("SelectField", "Select field...", "Placeholder for the field selector"),
+            new("FilterBuilderAriaLabel", "Filter builder", "Aria label for the filter builder region"),
+            new("RemoveCondition", "Remove condition", "Aria label for removing a condition"),
+            new("RemoveGroup", "Remove group", "Aria label for removing a group"),
+            new("AddCondition", "Add condition", "Label for the add condition button"),
+            new("AddGroup", "Add group", "Label for the add group button"),
+            new("EnterValue", "Enter value...", "Placeholder for value inputs"),
+            new("Today/Yesterday/...", "today, yesterday, ...", "Date preset labels (Today, Yesterday, Tomorrow, ThisWeek, etc.)"),
+            new("Days/Weeks/Months/...", "days, weeks, months, ...", "Period labels for InLast/InNext filters"),
+        })"
+        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+{
+    opts.FilterBuilder.AddCondition = ""Bedingung hinzufügen"";
+    opts.FilterBuilder.AddGroup = ""Gruppe hinzufügen"";
+    opts.FilterBuilder.Today = ""heute"";
+    opts.FilterBuilder.Days = ""Tage"";
+});")" />
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Presets and custom chip editors</h2>
+        <p class="text-sm text-muted-foreground">Choose a preset, search for a field, or edit Status with chips. The saved definitions remain unchanged, and the bound filter changes only after Apply. Custom editors must provide suitable values for every operator they expose.</p>
+<BbFilterBuilder @bind-Filter="presetFilter" Fields="basicFields" Presets="savedFilters"
+                 PresetDisplay="FilterPresetDisplay.Buttons" SearchableFields="true"
+                 ValueEditors="customEditors" ShowApplyButton="true" />
+        <p class="text-sm">Applied conditions: @presetFilter.TotalConditionCount</p>
+        <CodeBlock Source="Components/FilterBuilder/presets.txt" />
+
+    </section>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>
@@ -327,7 +363,6 @@ var restored = FilterDefinitionExtensions.FromJson(json);</code></pre>
         </KeyboardNavigation>
     </AccessibilityList>
 
-    <!-- API Reference -->
     <section class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">API Reference</h2>
@@ -365,34 +400,54 @@ var restored = FilterDefinitionExtensions.FromJson(json);</code></pre>
                 <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
                     Additional HTML attributes applied to the root <code>&lt;div&gt;</code> element (e.g. <code>data-testid</code>, <code>aria-label</code>).
                 </ApiParameter>
-            </ApiReference>
+
+            <ApiParameter Since="v4" Name="Presets / PresetDisplay" Type="IReadOnlyList&lt;FilterPreset&gt; / FilterPresetDisplay" Default="[] / Buttons">Reusable definitions shown as buttons or a Dropdown. Each preset has Id, Label and Filter; selected definitions are cloned.</ApiParameter>
+            <ApiParameter Name="ApplyPresetAsync(id)" Type="Task">Loads a preset on the renderer dispatcher, respecting explicit Apply mode and configured depth/condition limits. Unknown IDs throw ArgumentException.</ApiParameter>
+            <ApiParameter Since="v4" Name="SearchableFields" Type="bool" Default="false">Uses a searchable combobox for each field selector.</ApiParameter>
+            <ApiParameter Since="v4" Name="ValueEditors" Type="IReadOnlyDictionary&lt;string, RenderFragment&lt;FilterValueEditorContext&gt;&gt;?">Optional value editors by field name. Unlisted fields use built-in editors. Context exposes Field, Operator, Value, ValueEnd and SetValueAsync(value, valueEnd).</ApiParameter>
+
+        </ApiReference>
         </div>
+
+
     </section>
 
-    <LocalizationSection
-        Description="Filter builder labels including field placeholders, action buttons, date presets, and period names are configurable."
-        Labels="@(new LocalizationSection.LabelInfo[]
-        {
-            new("SelectField", "Select field...", "Placeholder for the field selector"),
-            new("FilterBuilderAriaLabel", "Filter builder", "Aria label for the filter builder region"),
-            new("RemoveCondition", "Remove condition", "Aria label for removing a condition"),
-            new("RemoveGroup", "Remove group", "Aria label for removing a group"),
-            new("AddCondition", "Add condition", "Label for the add condition button"),
-            new("AddGroup", "Add group", "Label for the add group button"),
-            new("EnterValue", "Enter value...", "Placeholder for value inputs"),
-            new("Today/Yesterday/...", "today, yesterday, ...", "Date preset labels (Today, Yesterday, Tomorrow, ThisWeek, etc.)"),
-            new("Days/Weeks/Months/...", "days, weeks, months, ...", "Period labels for InLast/InNext filters"),
-        })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
-{
-    opts.FilterBuilder.AddCondition = ""Bedingung hinzufügen"";
-    opts.FilterBuilder.AddGroup = ""Gruppe hinzufügen"";
-    opts.FilterBuilder.Today = ""heute"";
-    opts.FilterBuilder.Days = ""Tage"";
-});")" />
 </div>
 
 @code {
+    private FilterDefinition presetFilter = new();
+    private readonly FilterPreset[] savedFilters =
+    [
+        new("all", "All people", new()),
+        new("active", "Active people", new() { Conditions = [new() { Field = "Status", Operator = FilterOperator.Equals, Value = "Active" }] }),
+        new("pending", "Pending people", new() { Conditions = [new() { Field = "Status", Operator = FilterOperator.Equals, Value = "Pending" }] })
+    ];
+    private IReadOnlyDictionary<string, RenderFragment<FilterValueEditorContext>> customEditors =>
+        new Dictionary<string, RenderFragment<FilterValueEditorContext>> { ["Status"] = StatusEditor };
+    private RenderFragment<FilterValueEditorContext> StatusEditor => context => __builder =>
+    {
+        <div class="flex flex-wrap gap-1" role="group" aria-label="Status">
+            @foreach (var status in new[] { "Active", "Inactive", "Pending", "Suspended" })
+            {
+                <BbButton Size="ButtonSize.Small" Variant="@(StatusSelected(context, status) ? ButtonVariant.Secondary : ButtonVariant.Outline)"
+                          OnClick="@(() => SetStatusAsync(context, status))" aria-pressed="@StatusSelected(context, status).ToString().ToLowerInvariant()">@status</BbButton>
+            }
+        </div>
+    };
+
+    private static bool StatusSelected(FilterValueEditorContext context, string status) =>
+        context.Operator is FilterOperator.In or FilterOperator.NotIn
+            ? context.Value is IEnumerable<string> values && values.Contains(status)
+            : Equals(context.Value, status);
+
+    private static Task SetStatusAsync(FilterValueEditorContext context, string status)
+    {
+        if (context.Operator is not (FilterOperator.In or FilterOperator.NotIn)) { return context.SetValueAsync(status); }
+        var values = context.Value is IEnumerable<string> selected ? selected.ToList() : new List<string>();
+        if (!values.Remove(status)) { values.Add(status); }
+        return context.SetValueAsync(values.ToArray());
+    }
+
     // Data
     private List<Person> allPeople = new();
     private List<Person> filteredPeople = new();

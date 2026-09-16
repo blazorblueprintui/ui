@@ -29,7 +29,7 @@
                     AriaLabel="Sortable task list"
                     OnUpdate="@((args) => MoveWithin(_basicItems, args))">
             <ItemTemplate Context="item">
-                <div role="listitem"
+                <div
                      class="flex items-center gap-3 rounded-md border bg-card px-4 py-3 text-sm shadow-sm cursor-grab active:cursor-grabbing">
                     <LucideIcon Name="grip-vertical" Size="16" Class="text-muted-foreground shrink-0" />
                     <span>@item</span>
@@ -57,7 +57,7 @@
                     AriaLabel="Sortable list with drag handle"
                     OnUpdate="@((args) => MoveWithin(_handleItems, args))">
             <ItemTemplate Context="item">
-                <div role="listitem"
+                <div
                      class="flex items-center gap-3 rounded-md border bg-card px-4 py-3 text-sm shadow-sm">
                     <span class="drag-handle cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground">
                         <LucideIcon Name="grip-vertical" Size="16" />
@@ -90,11 +90,12 @@
                             Items="@_available"
                             Group="@_transferGroup"
                             AriaLabel="Available items"
+                            CanDrop="@(drop => _selected.Count < 3)"
                             OnUpdate="@((args) => MoveWithin(_available, args))"
                             OnRemove="@((args) => MoveAcross(_available, _selected, args))"
                             Class="min-h-20 rounded-md border border-dashed p-2">
                     <ItemTemplate Context="item">
-                        <div role="listitem"
+                        <div
                              class="flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm shadow-sm cursor-grab active:cursor-grabbing">
                             <LucideIcon Name="grip-vertical" Size="14" Class="text-muted-foreground shrink-0" />
                             <span>@item</span>
@@ -113,7 +114,7 @@
                             OnRemove="@((args) => MoveAcross(_selected, _available, args))"
                             Class="min-h-20 rounded-md border border-dashed p-2">
                     <ItemTemplate Context="item">
-                        <div role="listitem"
+                        <div
                              class="flex items-center gap-2 rounded-md border bg-card px-3 py-2 text-sm shadow-sm cursor-grab active:cursor-grabbing">
                             <LucideIcon Name="grip-vertical" Size="14" Class="text-muted-foreground shrink-0" />
                             <span>@item</span>
@@ -208,7 +209,28 @@
         <CodeBlock Source="Components/Sortable/kanban.txt" />
     </div>
 
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Keyboard sorting and rejected moves</h2>
+        <p class="text-sm text-muted-foreground">Tab to an item, press Space to pick it up, use arrows to move, and press Space to drop. Escape cancels without changing the collection. The first position is protected by CanMove, for both keyboard and pointer reordering.</p>
+        <BbSortable TItem="string" Items="keyboardItems" AriaLabel="Keyboard sorting example"
+            CanMove="@(move => move.OldIndex > 0 && move.NewIndex > 0)"
+            OnUpdate="@(args => MoveWithin(keyboardItems, args))">
+    <ItemTemplate Context="item">
+        <div class="flex items-center gap-2 rounded-md border bg-card p-3"><BbSortableHandle AriaLabel="@($"Reorder {item}")" />@item</div>
+    </ItemTemplate>
+    <DragOverlayTemplate Context="item"><div class="rounded-lg border bg-background px-4 py-2 shadow-xl">Moving: @item</div></DragOverlayTemplate>
+</BbSortable>
+        <CodeBlock Source="Components/Sortable/keyboard.txt" />
+        <p class="text-sm text-muted-foreground">The connected-list example above accepts at most three selected items. Source-side CanDrop runs before either transfer callback; a rejected drop restores both lists. BbSortableHandle is detected automatically when Handle is omitted. Pick up an item, then use Control plus Left/Right to transfer it between the connected lists. The example above also supplies a custom pointer preview.</p>
+        <CodeBlock Source="Components/Sortable/drop-permission.txt" />
+
+    </section>
+
     <!-- Accessibility -->
+
+    <!-- API Reference -->
+
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>
@@ -227,13 +249,15 @@
             </AccessibilityItem>
         </AriaAttributes>
         <KeyboardNavigation>
-            <KeyboardShortcutItem Description="Drag and drop is pointer-only. Provide alternative move actions (e.g., move-up / move-down buttons) for full keyboard accessibility.">
-                <BbKbd>Mouse / Touch</BbKbd>
-            </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Focus an enabled sorting handle"><BbKbd>Tab</BbKbd> / <BbKbd>Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Pick up or drop the focused item"><BbKbd>Space</BbKbd> / <BbKbd>Enter</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move a picked-up item within its list"><BbKbd>ArrowUp</BbKbd> / <BbKbd>ArrowDown</BbKbd> / <BbKbd>ArrowLeft</BbKbd> / <BbKbd>ArrowRight</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move a picked-up item to the first or last position"><BbKbd>Home</BbKbd> / <BbKbd>End</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Transfer a picked-up item to the previous or next connected list, respecting Pull, Put and CanDrop"><BbKbd>Ctrl + ArrowLeft</BbKbd> / <BbKbd>Ctrl + ArrowRight</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Cancel and restore the original order"><BbKbd>Escape</BbKbd> / <BbKbd>Tab</BbKbd></KeyboardShortcutItem>
         </KeyboardNavigation>
     </AccessibilityList>
 
-    <!-- API Reference -->
     <section class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">API Reference</h2>
@@ -241,6 +265,11 @@
         </div>
 
         <ApiReference ComponentName="BbSortable&lt;TItem&gt;">
+            <ApiParameter Since="v4" Name="KeyboardSorting" Type="bool" Default="true">Enable keyboard pickup, reordering and connected-list transfer. Sort=false blocks in-list movement but allows transfer. Respects Handle, Pull, Put and CanDrop.</ApiParameter>
+            <ApiParameter Since="v4" Name="DragOverlayTemplate" Type="RenderFragment&lt;TItem&gt;?">Decorative pointer preview rendered per item and cloned outside the list during drag. Uses fallback dragging, inherits scoped theme tokens, is inert, and receives no live interaction. Keep it lightweight; interactive events belong in ItemTemplate.</ApiParameter>
+            <ApiParameter Since="v4" Name="KeyboardInstructions" Type="string">Accessible instructions associated with each sorting handle.</ApiParameter>
+            <ApiParameter Since="v4" Name="CanDrop" Type="Func&lt;SortableDropContext&lt;TItem&gt;, bool&gt;?">Source-side permission for a cross-list drop. Receives Item, SourceId, TargetId, OldIndex, NewIndex and IsClone. Returning false suppresses both callbacks; accepted transfers notify OnRemove before OnAdd.</ApiParameter>
+            <ApiParameter Since="v4" Name="CanMove" Type="Func&lt;SortableMoveContext&lt;TItem&gt;, bool&gt;?">Return false to reject an in-list reorder before OnUpdate is raised. Receives Item, OldIndex and NewIndex. Applies to keyboard and pointer moves; cross-list transfers use OnRemove/OnAdd.</ApiParameter>
             <ApiParameter Name="ItemTemplate" Type="RenderFragment&lt;TItem&gt;?">
                 Render fragment used to display each item. The <code>context</code> variable
                 provides the data item.
@@ -317,10 +346,18 @@
                 </p>
             </div>
         </div>
+
+        <span id="sortable-handle" class="block scroll-mt-20" aria-hidden="true"></span>
+        <ApiReference Since="v4" ComponentName="SortableHandle">
+            <ApiParameter Name="AriaLabel / Disabled" Type="string / bool" Default="Reorder item / false">Accessible name and disabled state.</ApiParameter>
+            <ApiParameter Name="ChildContent / Class / AdditionalAttributes" Type="RenderFragment / string / Dictionary&lt;string, object&gt;">Optional grip content, CSS classes and HTML attributes.</ApiParameter>
+        </ApiReference>
     </section>
+
 </div>
 
 @code {
+    private readonly List<string> keyboardItems = ["Pinned: project overview", "Plan", "Build", "Review"];
     // ── Shared helpers ────────────────────────────────────────────────────────
 
     private static void MoveWithin<T>(List<T> list, (int OldIndex, int NewIndex) args)

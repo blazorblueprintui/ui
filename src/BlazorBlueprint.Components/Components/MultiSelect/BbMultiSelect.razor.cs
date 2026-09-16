@@ -480,6 +480,24 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// </summary>
     private Task Close() => CloseCore(restoreFocus: true);
 
+    /// <summary>Replaces the default clear/close footer, outside the scrolling option list.</summary>
+    [Parameter]
+    public RenderFragment? FooterContent { get; set; }
+
+    /// <summary>Closes the list, clears the search and restores trigger focus on the renderer dispatcher.</summary>
+    public Task CloseAsync() => InvokeAsync(async () =>
+    {
+        if (!_isOpen) { return; }
+        try
+        {
+            await Close();
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    });
+
     /// <summary>
     /// Closes the dropdown. <paramref name="restoreFocus"/> controls whether focus returns to the
     /// trigger — true for intentional dismissals, false for click-outside (leave focus where clicked).

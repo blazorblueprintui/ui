@@ -431,12 +431,50 @@
         <CodeBlock Source="Components/DropdownMenu/complex.txt" />
     </section>
 
+    <!-- API Reference -->
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Radio choices and nested submenus</h2>
+        <p class="text-sm text-muted-foreground">Use arrows to move through items, the forward arrow to enter a submenu, and Escape or the back arrow to return to its trigger. Forward and back follow text direction. Radio choices here keep the menu open.</p>
+<BbDropdownMenu>
+    <BbDropdownMenuTrigger AsChild="false" Class="rounded-md border px-3 py-2 focus-visible:ring-2 focus-visible:ring-ring">View and share</BbDropdownMenuTrigger>
+    <BbDropdownMenuContent>
+<BbDropdownMenuRadioGroup TValue="string" @bind-Value="menuDensity" aria-label="Density">
+    <BbDropdownMenuRadioItem Value='@("Comfortable")' CloseOnSelect="false">Comfortable</BbDropdownMenuRadioItem>
+    <BbDropdownMenuRadioItem Value='@("Compact")' CloseOnSelect="false">Compact</BbDropdownMenuRadioItem>
+    <BbDropdownMenuRadioItem Value='@("Unavailable")' Disabled="true">Unavailable</BbDropdownMenuRadioItem>
+</BbDropdownMenuRadioGroup>
+<BbDropdownMenuSeparator />
+<BbDropdownMenuSub>
+    <BbDropdownMenuSubTrigger>Share</BbDropdownMenuSubTrigger>
+    <BbDropdownMenuSubContent>
+        <BbDropdownMenuItem OnClick='@(() => menuResult = "Link copied")'>Copy link</BbDropdownMenuItem>
+        <BbDropdownMenuSub>
+            <BbDropdownMenuSubTrigger>Export</BbDropdownMenuSubTrigger>
+            <BbDropdownMenuSubContent>
+                <BbDropdownMenuItem OnClick='@(() => menuResult = "Exported CSV")'>CSV</BbDropdownMenuItem>
+                <BbDropdownMenuItem OnClick='@(() => menuResult = "Exported JSON")'>JSON</BbDropdownMenuItem>
+            </BbDropdownMenuSubContent>
+        </BbDropdownMenuSub>
+    </BbDropdownMenuSubContent>
+</BbDropdownMenuSub>
+    </BbDropdownMenuContent>
+</BbDropdownMenu>
+        <p class="text-sm">Density: @menuDensity. @menuResult</p>
+        <CodeBlock Source="Components/DropdownMenu/composition.txt" />
+    </section>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Radio and submenu API</h2>
+
+    </section>
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>Uses role="menu" and role="menuitem" for screen readers</AccessibilityItem>
             <AccessibilityItem>aria-expanded indicates dropdown open state</AccessibilityItem>
             <AccessibilityItem>Disabled items are marked with aria-disabled</AccessibilityItem>
             <AccessibilityItem>Checkbox items use role="menuitemcheckbox" with aria-checked</AccessibilityItem>
+                    <AccessibilityItem>Radio items use role="menuitemradio" and aria-checked; checkbox items use role="menuitemcheckbox". Submenu triggers announce their expanded state.</AccessibilityItem>
         </AriaAttributes>
         <KeyboardNavigation>
             <KeyboardShortcutItem Description="Open dropdown / activate item">
@@ -448,10 +486,10 @@
             <KeyboardShortcutItem Description="Close dropdown">
                 <BbKbd>Escape</BbKbd>
             </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Open a submenu or return to its parent (directions reverse in RTL)"><BbKbd>ArrowRight</BbKbd> / <BbKbd>ArrowLeft</BbKbd></KeyboardShortcutItem>
         </KeyboardNavigation>
     </AccessibilityList>
 
-    <!-- API Reference -->
     <section class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">API Reference</h2>
@@ -531,10 +569,50 @@
                 </ApiParameter>
             </ApiReference>
         </div>
+
+        <span id="dropdown-menu-radio-group" class="block scroll-mt-20" aria-hidden="true"></span>
+        <ApiReference Since="v4" ComponentName="DropdownMenuRadioGroup&lt;TValue&gt;">
+            <ApiParameter Name="Value / ValueChanged" Type="TValue / EventCallback&lt;TValue&gt;">Selected value; supports @@bind-Value.</ApiParameter>
+            <ApiParameter Name="Disabled" Type="bool" Default="false">Disables every radio item in the group.</ApiParameter>
+            <ApiParameter Name="ChildContent / AdditionalAttributes" Type="RenderFragment / Dictionary&lt;string, object&gt;">Radio items and group HTML attributes; use aria-label or aria-labelledby to label the group.</ApiParameter>
+        </ApiReference>
+
+        <span id="dropdown-menu-radio-item" class="block scroll-mt-20" aria-hidden="true"></span>
+        <ApiReference Since="v4" ComponentName="DropdownMenuRadioItem&lt;TValue&gt;">
+            <ApiParameter Name="Value" Type="TValue">Required value represented by this item.</ApiParameter>
+            <ApiParameter Name="Disabled" Type="bool" Default="false">Disables selection.</ApiParameter>
+            <ApiParameter Name="CloseOnSelect" Type="bool" Default="true">Closes the entire menu after selection.</ApiParameter>
+            <ApiParameter Name="ChildContent / Class / AdditionalAttributes" Type="RenderFragment / string / Dictionary&lt;string, object&gt;">Label, CSS classes and HTML attributes.</ApiParameter>
+        </ApiReference>
+
+        <span id="dropdown-menu-submenu" class="block scroll-mt-20" aria-hidden="true"></span>
+        <ApiReference Since="v4" ComponentName="DropdownMenuSub">
+            <ApiParameter Name="Disabled" Type="bool" Default="false">Disables opening this submenu.</ApiParameter>
+            <ApiParameter Name="ChildContent" Type="RenderFragment">A SubTrigger followed by SubContent. Submenus may be nested.</ApiParameter>
+        </ApiReference>
+
+        <span id="dropdown-menu-submenu-trigger" class="block scroll-mt-20" aria-hidden="true"></span>
+        <ApiReference Since="v4" ComponentName="DropdownMenuSubTrigger">
+            <ApiParameter Name="OpenOnHover" Type="bool" Default="true">Opens on hover without moving keyboard focus. Click or the forward arrow opens and focuses the first item.</ApiParameter>
+            <ApiParameter Name="Inset" Type="bool" Default="false">Aligns the label with items that contain icons.</ApiParameter>
+            <ApiParameter Name="ChildContent / Class / AdditionalAttributes" Type="RenderFragment / string / Dictionary&lt;string, object&gt;">Label, CSS classes and HTML attributes.</ApiParameter>
+        </ApiReference>
+
+        <span id="dropdown-menu-submenu-content" class="block scroll-mt-20" aria-hidden="true"></span>
+        <ApiReference Since="v4" ComponentName="DropdownMenuSubContent">
+            <ApiParameter Name="Side" Type="PopoverSide" Default="Right">Preferred placement; use Left in right-to-left layouts. Positioning flips near the viewport edge.</ApiParameter>
+            <ApiParameter Name="Offset / ZIndex" Type="int / int" Default="2 / 60">Trigger distance and stacking order.</ApiParameter>
+            <ApiParameter Name="Loop" Type="bool" Default="true">Wraps arrow navigation at the first and last item.</ApiParameter>
+            <ApiParameter Name="ChildContent / Class / AdditionalAttributes" Type="RenderFragment / string / Dictionary&lt;string, object&gt;">Items, CSS classes and HTML attributes.</ApiParameter>
+        </ApiReference>
     </section>
+
 </div>
 
 @code {
+    private string menuDensity = "Comfortable";
+    private string menuResult = "";
+
     // Independent state for each menu section
     private string? basicAction;
     private string? labelsAction;

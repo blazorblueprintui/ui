@@ -29,7 +29,9 @@ public static class ComponentModules
     /// <summary>
     /// The URL actually imported: <see cref="CorePath"/> with the library version as a query.
     /// </summary>
-    public static string CoreUrl { get; } = JsModules.Versioned(CorePath, typeof(ComponentModules).Assembly);
+    // Revise both the entry and its dependency URLs for local builds whose assembly
+    // informational version is unchanged, as well as for released package upgrades.
+    public static string CoreUrl { get; } = JsModules.Versioned($"{CorePath}?assets=2", typeof(ComponentModules).Assembly);
 
     /// <summary>
     /// Gets the shared core bundle for the given runtime, importing it on first use.

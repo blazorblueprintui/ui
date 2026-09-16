@@ -22,7 +22,8 @@
         <h2 class="text-2xl font-semibold border-b pb-2">Features</h2>
         <ul class="list-disc list-inside space-y-2 text-muted-foreground">
             <li>Responsive design - Sheet overlay on mobile, persistent sidebar on desktop</li>
-            <li>Collapsible with icon-only mode</li>
+            <li>Collapsible with icon-only mode or floating pill navigation</li>
+            <li>Animated selection indicators with reduced-motion support</li>
             <li>Three variants: Sidebar (default), Floating, and Inset</li>
             <li>State persistence via cookies</li>
             <li>Keyboard shortcuts (Ctrl/Cmd + B to toggle, opt-out via EnableToggleShortcut)</li>
@@ -68,7 +69,7 @@
         <p class="text-muted-foreground">A simple sidebar with menu items.</p>
 
         <!-- Collapse Mode Toggle -->
-       
+
 
         <div class="border rounded-lg p-6 bg-background">
             <div class="h-[600px] w-full border rounded-lg overflow-hidden bg-background">
@@ -645,6 +646,65 @@
 
         <CodeBlock Source="Components/Sidebar/collapsible-icons.txt" />
     </div>
+
+    <section class="space-y-4">
+        <span id="sidebar-pill-inset" class="block scroll-mt-20" aria-hidden="true"></span>
+        <span id="sidebar-pill-nav" class="block scroll-mt-20" aria-hidden="true"></span>
+        <span id="sidebar-pill-nav-item" class="block scroll-mt-20" aria-hidden="true"></span>
+        <h2 class="text-2xl font-semibold border-b pb-2">Floating Pill Navigation</h2>
+        <p class="text-muted-foreground">Use a floating navigation pill when the sidebar collapses. The inset adjusts content spacing, and the active indicator follows the selected page.</p>
+        <div class="relative overflow-hidden rounded-xl border">
+            <BbSidebarProvider CollapsedMode="SidebarCollapsedMode.Pill" Open="pillOpen" OpenChanged="@(value => pillOpen = value)" CookieKey="@((string?)null)" HeightClass="min-h-72" EnableToggleShortcut="false">
+                <BbSidebar Class="min-h-72">
+                    <BbSidebarHeader><strong class="p-2">Workspace</strong><BbSidebarTrigger /></BbSidebarHeader>
+                    <BbSidebarContent>
+                        <BbSidebarMenu>
+                            <BbSidebarMenuItem><BbSidebarMenuButton IsActive="@(pillPage == "Overview")" OnClick="@(() => pillPage = "Overview")"><LucideIcon Name="house" /><span>Overview</span></BbSidebarMenuButton></BbSidebarMenuItem>
+                            <BbSidebarMenuItem><BbSidebarMenuButton IsActive="@(pillPage == "Projects")" OnClick="@(() => pillPage = "Projects")"><LucideIcon Name="folder" /><span>Projects</span></BbSidebarMenuButton></BbSidebarMenuItem>
+                        </BbSidebarMenu>
+                    </BbSidebarContent>
+                </BbSidebar>
+                <BbSidebarPillNav Fixed="false">
+                    <BbSidebarPillNavItem Label="Overview" IsActive="@(pillPage == "Overview")" OnClick="@(() => pillPage = "Overview")"><LucideIcon Name="house" /></BbSidebarPillNavItem>
+                    <BbSidebarPillNavItem Label="Projects" IsActive="@(pillPage == "Projects")" OnClick="@(() => pillPage = "Projects")"><LucideIcon Name="folder" /></BbSidebarPillNavItem>
+                    <BbSidebarPillNavItem Label="Unavailable" Disabled="true"><LucideIcon Name="lock" /></BbSidebarPillNavItem>
+                </BbSidebarPillNav>
+                <div class="min-w-0 flex-1 p-4">
+                    <BbSidebarPillInset>
+                        <h3 class="font-semibold">@pillPage</h3>
+                        <p class="text-sm text-muted-foreground">Collapse the desktop sidebar to show compact navigation. On mobile, the pill opens the sidebar sheet.</p>
+                        <BbSidebarTrigger />
+                    </BbSidebarPillInset>
+                </div>
+            </BbSidebarProvider>
+
+        </div>
+        <CodeBlock Source="Components/Sidebar/pill.txt" />
+
+    </section>
+
+    <section class="space-y-4" id="sidebar-selection-indicator">
+        <h2 class="text-2xl font-semibold border-b pb-2">Animated Selection Indicator</h2>
+        <p class="text-muted-foreground">Animate the active item in a standard sidebar menu. Hover or focus an item to preview it, then select it to keep the indicator there. Reduced-motion preferences are respected.</p>
+        <div class="rounded-lg border bg-background p-6">
+            <BbSidebarProvider CookieKey="@((string?)null)" HeightClass="min-h-0" EnableToggleShortcut="false">
+                <div class="relative w-64 rounded-lg border bg-sidebar p-2">
+                    <BbSidebarSelectionIndicator FollowHover="true" />
+                    <BbSidebarMenu>
+                        @foreach (var itemLabel in new[] { "Overview", "Projects", "Settings" })
+                        {
+                            <BbSidebarMenuItem>
+                                <BbSidebarMenuButton IsActive="@(indicatorPage == itemLabel)" OnClick="@(() => indicatorPage = itemLabel)" Class="relative bg-transparent! hover:bg-transparent! data-[active=true]:bg-transparent!">
+                                    <span>@itemLabel</span>
+                                </BbSidebarMenuButton>
+                            </BbSidebarMenuItem>
+                        }
+                    </BbSidebarMenu>
+                </div>
+            </BbSidebarProvider>
+        </div>
+        <CodeBlock Source="Components/Sidebar/selection-indicator.txt" />
+    </section>
 
     <!-- Tree View Example -->
     <div class="space-y-4">
@@ -1313,24 +1373,9 @@
         <CodeBlock Source="Components/Sidebar/toggle-shortcut.txt" />
     </div>
 
-    <AccessibilityList>
-            <AriaAttributes>
-                <AccessibilityItem>
-                    Responsive design with Sheet overlay on mobile and persistent sidebar on desktop.
-                </AccessibilityItem>
-                <AccessibilityItem>
-                    Collapsible with icon-only mode and automatic tooltips in collapsed state.
-                </AccessibilityItem>
-                <AccessibilityItem>
-                    State persistence via cookies to remember user's sidebar preference.
-                </AccessibilityItem>
-            </AriaAttributes>
-            <KeyboardNavigation>
-                <KeyboardShortcutItem Description="Toggle sidebar open/closed (disable with EnableToggleShortcut=&quot;false&quot;)">
-                    <BbKbd>Ctrl+B</BbKbd> / <BbKbd>Cmd+B</BbKbd>
-                </KeyboardShortcutItem>
-            </KeyboardNavigation>
-        </AccessibilityList>
+
+
+
 
     <!-- API Reference -->
     <div class="space-y-4">
@@ -1410,6 +1455,26 @@
 
         <CodeBlock Source="Components/Sidebar/programmatic-control.txt" />
     </div>
+
+    <AccessibilityList>
+            <AriaAttributes>
+                <AccessibilityItem>
+                    Responsive design with Sheet overlay on mobile and persistent sidebar on desktop.
+                </AccessibilityItem>
+                <AccessibilityItem>
+                    Collapsible with icon-only mode and automatic tooltips in collapsed state.
+                </AccessibilityItem>
+                <AccessibilityItem>
+                    State persistence via cookies to remember user's sidebar preference.
+                </AccessibilityItem>
+                        <AccessibilityItem>Pill navigation uses labelled links or buttons and marks the active page with aria-current. Selection indicators are decorative and respect reduced motion.</AccessibilityItem>
+        </AriaAttributes>
+            <KeyboardNavigation>
+                <KeyboardShortcutItem Description="Toggle sidebar open/closed (disable with EnableToggleShortcut=&quot;false&quot;)">
+                    <BbKbd>Ctrl+B</BbKbd> / <BbKbd>Cmd+B</BbKbd>
+                </KeyboardShortcutItem>
+            </KeyboardNavigation>
+        </AccessibilityList>
 
     <div class="space-y-4">
         <h2 class="text-2xl font-semibold border-b pb-2">API Reference</h2>
@@ -1727,6 +1792,18 @@
                     </table>
                 </div>
             </div>
+        <ApiReference Since="v4" ComponentName="Sidebar pill navigation">
+            <ApiParameter Name="SidebarProvider.CollapsedMode" Type="SidebarCollapsedMode" Default="Icon">Pill completely hides the collapsed sidebar. Place BbSidebarPillNav alongside it. Existing desktop/mobile open bindings and shortcut behavior are retained.</ApiParameter>
+            <ApiParameter Name="PillNav.ChildContent / TrailingContent" Type="RenderFragment?">Navigation items and optional trailing actions.</ApiParameter>
+            <ApiParameter Name="PillNav.Fixed / AnimatedIndicator / AriaLabel" Type="bool / bool / string?" Default="true / true / Primary navigation">Viewport placement, moving active indicator and landmark name. Fixed=false requires a positioned ancestor.</ApiParameter>
+            <ApiParameter Name="PillNavItem.Label / ChildContent / Href / Match" Type="string / RenderFragment / string? / NavLinkMatch" Default="Prefix">Accessible name, icon and optional native link. Active state follows the URL unless IsActive is supplied.</ApiParameter>
+            <ApiParameter Name="PillNavItem.IsActive / Disabled / OnClick / Class" Type="bool? / bool / EventCallback&lt;MouseEventArgs&gt; / string?">Explicit active state, disabled state, activation callback and classes.</ApiParameter>
+            <ApiParameter Name="PillInset.ChildContent / ExpandedClass / CollapsedClass / Class" Type="RenderFragment / string?">Reserves top space while pill navigation is active; customization for each state. PillNav and PillInset also accept AdditionalAttributes.</ApiParameter>
+        </ApiReference>
+
+        <ApiReference Since="v4" ComponentName="SidebarSelectionIndicator">
+            <ApiParameter Name="SidebarSelectionIndicator.FollowHover / Duration / Class" Type="bool / int / string?" Default="false / 200 / null">Reusable selection indicator for normal sidebar menus. Place before the menu in a relative wrapper and position foreground items relative. Honors reduced motion.</ApiParameter>
+        </ApiReference>
         </div>
     </div>
 
@@ -1743,6 +1820,9 @@
 </div>
 
 @code {
+    private string indicatorPage = "Overview";
+    private bool pillOpen = true;
+    private string pillPage = "Overview";
     private bool isBasicCollapsible = true;
     private bool _controlledOpen = true;
     private bool shortcutEnabled = true;

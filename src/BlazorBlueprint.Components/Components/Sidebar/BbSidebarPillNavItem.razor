@@ -1,0 +1,29 @@
+@namespace BlazorBlueprint.Components
+@using Microsoft.AspNetCore.Components.Routing
+
+<BbSidebarMenuButton Href="@(Disabled ? null : Href)" Match="Match" IsActive="IsActive" Tooltip="@Label" OnClick="HandleClick" aria-label="@Label" disabled="@Disabled"
+                     aria-disabled="@Disabled.ToString().ToLowerInvariant()" tabindex="@(Disabled ? -1 : 0)"
+                     Class="@ClassNames.cn("bb:relative bb:size-11 bb:shrink-0 bb:justify-center bb:rounded-full", Disabled ? "bb:pointer-events-none bb:opacity-50" : null, Parent?.AnimatedIndicator == true ? "bb:data-[active=true]:bg-transparent bb:hover:bg-transparent" : null, Class)">
+    <span aria-hidden="true" class="bb:inline-flex bb:[&>svg]:size-5">@ChildContent</span>
+</BbSidebarMenuButton>
+
+@code {
+    [CascadingParameter] private BbSidebarPillNav? Parent { get; set; }
+    private Task HandleClick(MouseEventArgs args) => Disabled ? Task.CompletedTask : OnClick.InvokeAsync(args);
+    /// <summary>Accessible item name and collapsed tooltip.</summary>
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+    /// <summary>Decorative icon content.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Optional navigation URL.</summary>
+    [Parameter] public string? Href { get; set; }
+    /// <summary>Active URL matching behavior.</summary>
+    [Parameter] public NavLinkMatch Match { get; set; } = NavLinkMatch.Prefix;
+    /// <summary>Explicit active state; null derives it from Href.</summary>
+    [Parameter] public bool? IsActive { get; set; }
+    /// <summary>Prevents activation.</summary>
+    [Parameter] public bool Disabled { get; set; }
+    /// <summary>Activation callback.</summary>
+    [Parameter] public EventCallback<MouseEventArgs> OnClick { get; set; }
+    /// <summary>Additional item classes.</summary>
+    [Parameter] public string? Class { get; set; }
+}

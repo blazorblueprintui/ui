@@ -1,6 +1,7 @@
 @namespace BlazorBlueprint.Components
 @typeparam TItem where TItem : class
 @using BlazorBlueprint.Icons.Lucide.Components
+@using Microsoft.AspNetCore.Components.Web.Virtualization
 @using BlazorBlueprint.Primitives
 @using BlazorBlueprint.Primitives.Table
 
@@ -19,7 +20,7 @@
                              Class="bb:h-8 bb:w-[150px] bb:lg:w-[250px]" />
 
                     @* Sort controls – only shown when at least one field is sortable *@
-                    @if (_fields.Any(f => f.Sortable))
+                    @if (!MobileToolbar && _fields.Any(f => f.Sortable))
                     {
                         <BbDropdownMenu>
                             <BbDropdownMenuTrigger>
@@ -67,6 +68,45 @@
                         </BbDropdownMenu>
                     }
 
+                    @if (MobileToolbar && (_fields.Any(f => f.Sortable) || FilterContent is not null))
+                    {
+                        <BbButton Variant="ButtonVariant.Outline" Class="bb:min-h-[44px]" OnClick="@(() => mobileToolbarOpen = true)"
+                                  aria-haspopup="dialog" aria-expanded="@mobileToolbarOpen.ToString().ToLowerInvariant()">
+                            <LucideIcon Name="sliders-horizontal" Size="16" /> @Localizer["DataView.SortAndFilter"]
+                        </BbButton>
+                        <BbSheet @bind-Open="mobileToolbarOpen" Side="SheetSide.Bottom">
+                            <BbSheetContent Class="bb:max-h-[85dvh] bb:overflow-y-auto bb:rounded-t-xl bb:pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+                                <BbSheetHeader>
+                                    <BbSheetTitle>@Localizer["DataView.SortAndFilter"]</BbSheetTitle>
+                                    <BbSheetDescription>@Localizer["DataView.SortAndFilterDescription"]</BbSheetDescription>
+                                </BbSheetHeader>
+                                <div class="bb:space-y-4 bb:py-4">
+                                    @if (_fields.Any(f => f.Sortable))
+                                    {
+                                        <div class="bb:flex bb:flex-wrap bb:gap-2" role="group" aria-label="@Localizer["DataView.Sort"]">
+                                            @foreach (var field in _fields.Where(f => f.Sortable))
+                                            {
+                                                var fieldId = field.Id;
+                                                var active = _sortingState.SortedColumn == fieldId && _sortingState.Direction != SortDirection.None;
+                                                <BbButton Variant="@(active ? ButtonVariant.Secondary : ButtonVariant.Outline)" Class="bb:min-h-[44px]"
+                                                          OnClick="@(async () => await HandleSortFieldChanged(fieldId))" aria-pressed="@active.ToString().ToLowerInvariant()">
+                                                    @field.Header
+                                                    <LucideIcon Name="@(active ? _sortingState.Direction == SortDirection.Ascending ? "arrow-up" : "arrow-down" : "arrow-up-down")" Size="16" />
+                                                </BbButton>
+                                            }
+                                        </div>
+                                    }
+                                    @FilterContent
+                                </div>
+                                <BbButton Class="bb:min-h-[44px] bb:w-full" OnClick="@(() => mobileToolbarOpen = false)">@Localizer["DataView.Done"]</BbButton>
+                            </BbSheetContent>
+                        </BbSheet>
+                    }
+                    else if (!MobileToolbar)
+                    {
+                        @FilterContent
+                    }
+
                     @* Right side: ToolbarActions + layout toggle (both pushed to the right with ml-auto) *@
                     @if (ToolbarActions != null || CanToggleLayout)
                     {
@@ -101,7 +141,7 @@
             }
 
             @* ── Content ─────────────────────────────────────────────────── *@
-            @if (IsLoading || _isProviderLoading)
+            @if (IsLoading || (_isProviderLoading && _visibleData.Count == 0))
             {
                 @if (LoadingTemplate != null)
                 {
@@ -125,7 +165,7 @@
                     <BbEmpty Title="@Localizer["DataView.NoResultsFound"]" Size="EmptySize.Small" />
                 }
             }
-            else if (EnableInfiniteScroll && !ShowLoadMoreButton)
+            else if (VirtualizeList || (EnableInfiniteScroll && !ShowLoadMoreButton))
             {
                 @*
                     Scroll-based infinite scroll.
@@ -139,22 +179,14 @@
                     a full-width block element below all rows, never occupying an empty grid cell.
                 *@
                 <div class="bb:overflow-y-auto"
-                     style="@(ScrollHeight != null ? $"height: {ScrollHeight}" : "")"
+                     style="@(VirtualizeList ? ScrollContainerStyle : ScrollHeight != null ? $"height: {ScrollHeight}" : null)"
                      @ref="_scrollContainerRef"
                      role="region"
                      aria-live="polite">
-                    <div class="@ItemContainerCssClass" style="@ItemContainerStyle">
-                        @foreach (var item in _visibleData)
-                        {
-                            @if (EffectiveActiveTemplate != null)
-                            {
-                                @EffectiveActiveTemplate(item)
-                            }
-                        }
-                    </div>
+                    @RenderItems()
                     @* Sentinel is outside the grid so it spans the full scroll-container
                        width regardless of the column count. *@
-                    @if (CanLoadMore)
+                    @if (CanLoadMore && !ShowLoadMoreButton)
                     {
                         <div class="bb:flex bb:items-center bb:justify-center bb:py-2 bb:text-xs bb:text-muted-foreground">
                             @Localizer["DataView.LoadingMore"]
@@ -165,30 +197,18 @@
             else
             {
                 @* Regular pagination or ShowLoadMoreButton mode. *@
-                <div class="@ItemContainerCssClass" style="@ItemContainerStyle" role="region" aria-live="polite">
-                    @foreach (var item in _visibleData)
-                    {
-                        @if (EffectiveActiveTemplate != null)
-                        {
-                            @EffectiveActiveTemplate(item)
-                        }
-                    }
+                <div role="region" aria-live="polite">
+                    @RenderItems()
                 </div>
 
-                @*
-                    "Load more" button is placed OUTSIDE (after) the grid/flex container.
-                    This guarantees it always renders as a full-width block element on its
-                    own row, even when the grid has 2, 3, or 4 columns and the last row is
-                    only partially filled.
-                *@
-                @if (EnableInfiniteScroll && CanLoadMore && ShowLoadMoreButton)
-                {
-                    <div class="bb:flex bb:justify-center bb:py-4">
-                        <BbButton Variant="ButtonVariant.Outline" OnClick="LoadMore">
-                            @Localizer["DataView.LoadMore"]
-                        </BbButton>
-                    </div>
-                }
+            }
+            @if (EnableInfiniteScroll && CanLoadMore && ShowLoadMoreButton && !IsLoading)
+            {
+                <div class="bb:flex bb:justify-center bb:py-4">
+                    <BbButton Variant="ButtonVariant.Outline" OnClick="LoadMore" Disabled="@(_isLoadingMore || _isProviderLoading)">
+                        @Localizer["DataView.LoadMore"]
+                    </BbButton>
+                </div>
             }
 
             @* ── Pagination – hidden in infinite scroll mode ─────────────── *@
@@ -221,3 +241,76 @@
         @Fields
 
 </CascadingValue>
+
+@code {
+    private RenderFragment RenderItems() => __builder =>
+    {
+        if (GroupBy is null)
+        {
+            @RenderCollection(_visibleData)
+        }
+        else
+        {
+            foreach (var group in VisibleGroups)
+            {
+                <section @key="group.Key" class="bb:mb-4 bb:space-y-2" aria-label="@(group.Key ?? Localizer["DataView.OtherGroup"])">
+                    @if (GroupHeaderTemplate is not null)
+                    {
+                        @GroupHeaderTemplate(group)
+                    }
+                    else
+                    {
+                        <h3 class="bb:text-sm bb:font-semibold">@(group.Key ?? Localizer["DataView.OtherGroup"]) <span class="bb:text-muted-foreground">(@group.Items.Count)</span></h3>
+                    }
+                    @RenderCollection((ICollection<TItem>)group.Items)
+                </section>
+            }
+        }
+    };
+
+    private RenderFragment RenderCollection(ICollection<TItem> items) => __builder =>
+    {
+        if (VirtualizeList)
+        {
+            <Virtualize TItem="TItem" Items="items" ItemSize="VirtualItemSize" OverscanCount="OverscanCount" Context="item">
+                <div @key="GetItemKey(item)" class="bb:pb-2">
+                    @RenderItem(item)
+                </div>
+            </Virtualize>
+        }
+        else
+        {
+            <div class="@ItemContainerCssClass" style="@ItemContainerStyle">
+                @foreach (var item in items)
+                {
+                    @if (ItemKey is null && SelectionMode == DataTableSelectionMode.None)
+                    {
+                        @RenderItem(item)
+                    }
+                    else
+                    {
+                        <div @key="GetItemKey(item)" class="bb:min-w-0">
+                            @RenderItem(item)
+                        </div>
+                    }
+                }
+            </div>
+        }
+    };
+
+    private RenderFragment RenderItem(TItem item) => __builder =>
+    {
+        if (SelectionMode != DataTableSelectionMode.None)
+        {
+            <div class="@ClassNames.cn("bb:flex bb:items-start bb:gap-2 bb:rounded-md", IsSelected(item) ? "bb:bg-accent/50" : null)" data-selected="@IsSelected(item).ToString().ToLowerInvariant()">
+                <BbCheckbox Checked="@IsSelected(item)" CheckedChanged="@(value => ToggleSelectionAsync(item, value))"
+                            Disabled="@ItemDisabled(item)" AriaLabel="@SelectionLabel(item)" Class="bb:m-2 bb:shrink-0" />
+                <div class="bb:min-w-0 bb:flex-1">@EffectiveActiveTemplate?.Invoke(item)</div>
+            </div>
+        }
+        else
+        {
+            @EffectiveActiveTemplate?.Invoke(item)
+        }
+    };
+}

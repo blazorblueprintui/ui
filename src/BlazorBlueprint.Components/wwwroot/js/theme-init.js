@@ -87,8 +87,23 @@
             }
         }
 
-        if (typeof saved.radius === 'number') {
+        if (Number.isFinite(saved.radius) && saved.radius >= 0 && saved.radius <= 4) {
             root.style.setProperty('--radius', saved.radius + 'rem');
         }
+        var designOptions = {
+            density: ['standard', 'compact', 'dense', 'spacious'],
+            font: ['system', 'inter', 'geist', 'roboto', 'nunitosans', 'serif', 'mono'],
+            surface: ['standard', 'flat', 'elevated', 'glass'],
+            menuColor: ['default', 'muted', 'primary', 'inverse'],
+            menuAccent: ['subtle', 'primary']
+        };
+        Object.keys(designOptions).forEach(function (key) {
+            var value = saved.design && saved.design[key];
+            if (typeof value !== 'string') return;
+            value = value.toLowerCase();
+            if (designOptions[key].indexOf(value) < 0) return;
+            var attribute = 'data-bb-' + key.replace(/[A-Z]/g, function (letter) { return '-' + letter.toLowerCase(); });
+            root.setAttribute(attribute, value);
+        });
     }
 })();

@@ -12,7 +12,7 @@
  * compositionend. See composition-guard.js for why.
  */
 
-import { createCompositionGuard } from './composition-guard.js';
+import { createCompositionGuard } from './composition-guard.js?assets=2';
 
 const instances = new Map();
 

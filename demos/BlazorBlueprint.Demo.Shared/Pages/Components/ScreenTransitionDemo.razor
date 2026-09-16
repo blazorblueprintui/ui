@@ -1,0 +1,48 @@
+@page "/components/screen-transition"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Screen Transition - Blazor Blueprint</PageTitle>
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Screen Transition</h1>
+        <p class="text-xl text-muted-foreground">Animate incoming content when an application-owned screen key changes.</p>
+    </div>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Switch screens</h2>
+        <div class="rounded-lg border p-6 space-y-4">
+<div class="flex flex-wrap gap-2" role="group" aria-label="Preview screen">
+    @foreach (var name in new[] { "Overview", "Activity", "Settings" })
+    {
+        <BbButton Variant="@(screen == name ? ButtonVariant.Default : ButtonVariant.Outline)" aria-pressed="@((screen == name).ToString().ToLowerInvariant())" OnClick="@(() => screen = name)">@name</BbButton>
+    }
+</div>
+<BbScreenTransition TransitionKey="screen" Preset="MotionPreset.SlideUp">
+    <div class="rounded-lg bg-muted p-6 space-y-2">
+        <h3 class="font-semibold">@screen</h3>
+        @if (screen == "Overview") { <p>12 projects active · 4 milestones due this week.</p> }
+        else if (screen == "Activity") { <p>Alex uploaded the design review. Sam completed the release checklist.</p> }
+        else { <p>Notifications are enabled. Your workspace is visible to team members.</p> }
+    </div>
+</BbScreenTransition>
+        </div>
+        <CodeBlock Source="Components/ScreenTransition/basic.txt" />
+    </section>
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The wrapper respects reduced motion. It does not manage focus or announce a screen change.</AccessibilityItem>
+            <AccessibilityItem>Give each screen meaningful headings and manage focus or status announcements where the application requires them.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between interactive controls"><BbKbd>Tab / Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate a focused button"><BbKbd>Enter / Space</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+<ApiReference Since="v4" ComponentName="ScreenTransition"><ApiParameter Name="TransitionKey / Preset / Distance" Type="object? / MotionPreset / double" Default="null / Fade / 24">A changed key triggers the incoming animation. Distance is in pixels. Use Blazor @@key when child state should also reset; outgoing content is not retained.</ApiParameter><ApiParameter Name="Duration / Enabled / Class / ChildContent" Type="int / bool / string? / RenderFragment?" Default="250 / true / null / null">Animation duration in milliseconds, enablement, wrapper styles and incoming content. The first interactive render does not animate.</ApiParameter></ApiReference>
+    </section>
+</div>
+
+@code {
+    private string screen = "Overview";
+}

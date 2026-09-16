@@ -1,14 +1,46 @@
 @typeparam TValue
 @namespace BlazorBlueprint.Components
-@inject IJSRuntime JSRuntime
+@inject IBbLocalizer Localizer
 @using Microsoft.JSInterop
 @implements IAsyncDisposable
 
 @* Styled SelectContent wrapper around SelectContent primitive *@
-<BlazorBlueprint.Primitives.Select.BbSelectContent TValue="TValue"
-                                               class="@OuterCssClass"
-                                               @attributes="AdditionalAttributes">
-    <div @ref="_scrollRef" class="@InnerCssClass">
+@if (IsSheet && Context is not null)
+{
+    <BbSheet Open="Context.IsOpen" OpenChanged="HandleSheetOpenChanged" Side="SheetSide.Bottom">
+        <BbSheetContent Class="@ClassNames.cn("bb:max-h-[85dvh] bb:rounded-t-xl bb:pb-[max(1.5rem,env(safe-area-inset-bottom))]", Class)" @attributes="AdditionalAttributes">
+            <BbSheetHeader>
+                <BbSheetTitle>@(SheetTitle ?? Parent?.SheetTitle ?? Localizer["Select.ChooseOption"])</BbSheetTitle>
+            </BbSheetHeader>
+            @RenderSheetOptions()
+        </BbSheetContent>
+    </BbSheet>
+}
+else
+{
+    <BlazorBlueprint.Primitives.Select.BbSelectContent TValue="TValue" class="@OuterCssClass" @attributes="AdditionalAttributes">
+        @RenderOptions()
+    </BlazorBlueprint.Primitives.Select.BbSelectContent>
+}
+
+@code {
+    [CascadingParameter] private BbSelect<TValue>? Parent { get; set; }
+    /// <summary>Overrides the parent Select's presentation when supplied.</summary>
+    [Parameter] public SelectPresentation? Presentation { get; set; }
+    /// <summary>Overrides the parent Select's sheet title.</summary>
+    [Parameter] public string? SheetTitle { get; set; }
+    private bool IsSheet => (Presentation ?? Parent?.Presentation ?? SelectPresentation.Popover) == SelectPresentation.BottomSheet;
+    private RenderFragment RenderOptions() => builder =>
+    {
+        builder.OpenComponent<SelectOptionsViewport>(0);
+        builder.AddAttribute(1, nameof(SelectOptionsViewport.Class), InnerCssClass);
+        builder.AddAttribute(2, nameof(SelectOptionsViewport.OnLoadMore), OnLoadMore);
+        builder.AddAttribute(3, nameof(SelectOptionsViewport.IsLoading), IsLoading);
+        builder.AddAttribute(4, nameof(SelectOptionsViewport.ChildContent), RenderOptionItems());
+        builder.CloseComponent();
+    };
+    private RenderFragment RenderOptionItems() => __builder =>
+    {
         @ChildContent
         @if (IsLoading)
         {
@@ -22,13 +54,19 @@
                 @EndOfListMessage
             </div>
         }
-    </div>
-</BlazorBlueprint.Primitives.Select.BbSelectContent>
+    };
+    private RenderFragment RenderSheetOptions() => builder =>
+    {
+        builder.OpenComponent<SelectSheetOptions<TValue>>(0);
+        builder.AddAttribute(1, nameof(SelectSheetOptions<TValue>.Context), Context);
+        builder.AddAttribute(2, nameof(SelectSheetOptions<TValue>.ChildContent), RenderOptions());
+        builder.CloseComponent();
+    };
+    private void HandleSheetOpenChanged(bool open)
+    {
+        if (!open) { Context?.Close(restoreFocus: true); }
+    }
 
-@code {
-    private ElementReference _scrollRef;
-    private DotNetObjectReference<BbSelectContent<TValue>>? _selfRef;
-    private int _nearBottomObserver;
 
     /// <summary>
     /// Cascading parameter to infer TValue from parent Select context.
@@ -92,33 +130,9 @@
     /// <summary>
     /// Inner container: scrollable area with max height.
     /// </summary>
-    private static string InnerCssClass => "bb:max-h-60 bb:overflow-auto bb:p-1 bb:[&::-webkit-scrollbar]:hidden";
-
-    // No @onscroll — see BbCommandList for why. The browser watches the element and calls back
-    // once per arrival at the bottom, instead of the server hearing about every scroll event and
-    // awaiting a round trip to answer each one.
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (firstRender && OnLoadMore.HasDelegate)
-        {
-            _ = ObserveNearBottomAsync();
-        }
-    }
-
-    private async Task ObserveNearBottomAsync()
-    {
-        try
-        {
-            var module = await PrimitiveModules.GetAsync(JSRuntime);
-            _selfRef ??= DotNetObjectReference.Create(this);
-            _nearBottomObserver = await module.InvokeAsync<int>(
-                "elementUtils.observeNearBottom", _scrollRef, _selfRef, nameof(JsOnNearBottom), 80.0);
-        }
-        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
-        {
-            // Circuit gone, prerendering, or the list already torn down. Load-more is a courtesy.
-        }
-    }
+    private string InnerCssClass => IsSheet
+        ? "bb:max-h-[65dvh] bb:overflow-y-auto bb:p-1 bb:[&_[role=option]]:min-h-[44px]"
+        : "bb:max-h-60 bb:overflow-auto bb:p-1 bb:[&::-webkit-scrollbar]:hidden";
 
     /// <summary>
     /// Called from JavaScript when the list scrolls near its bottom.
@@ -134,24 +148,5 @@
         await OnLoadMore.InvokeAsync();
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        if (_nearBottomObserver != 0 && PrimitiveModules.TryGetLoaded(JSRuntime, out var module))
-        {
-            var id = _nearBottomObserver;
-            _nearBottomObserver = 0;
-
-            try
-            {
-                await module.InvokeVoidAsync("elementUtils.unobserveNearBottom", id);
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Circuit gone — the listener went with the document.
-            }
-        }
-
-        _selfRef?.Dispose();
-        _selfRef = null;
-    }
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }

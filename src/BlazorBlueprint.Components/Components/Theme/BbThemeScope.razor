@@ -1,0 +1,37 @@
+@namespace BlazorBlueprint.Components
+
+<div @attributes="AdditionalAttributes" data-bb-theme-scope
+     data-bb-density="@Design.Density.ToString().ToLowerInvariant()"
+     data-bb-font="@Design.Font.ToString().ToLowerInvariant()"
+     data-bb-surface="@Design.Surface.ToString().ToLowerInvariant()"
+     data-bb-menu-color="@Design.MenuColor.ToString().ToLowerInvariant()"
+     data-bb-menu-accent="@Design.MenuAccent.ToString().ToLowerInvariant()"
+     class="@ClassNames.cn("bb:font-sans", Class)" style="@ScopeStyle">
+    @ChildContent
+</div>
+
+@code {
+    /// <summary>Appearance settings for descendants, including their floating overlays.</summary>
+    [Parameter] public ThemeDesign Design { get; set; } = new();
+    /// <summary>Optional local border radius in rem. Null inherits the surrounding theme.</summary>
+    [Parameter] public double? Radius { get; set; }
+    /// <summary>The themed content. Color palettes and dark mode inherit from the document.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Additional CSS classes.</summary>
+    [Parameter] public string? Class { get; set; }
+    /// <summary>Additional HTML attributes.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string? ScopeStyle => Radius.HasValue
+        ? FormattableString.Invariant($"--radius: {Radius.Value}rem") : null;
+
+    protected override void OnParametersSet()
+    {
+        ArgumentNullException.ThrowIfNull(Design);
+        Design.Validate();
+        if (Radius.HasValue && (!double.IsFinite(Radius.Value) || Radius < 0 || Radius > 4))
+        {
+            throw new ArgumentOutOfRangeException(nameof(Radius), "Radius must be between 0 and 4 rem.");
+        }
+    }
+}

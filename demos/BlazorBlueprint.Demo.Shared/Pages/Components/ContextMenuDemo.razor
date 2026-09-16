@@ -122,6 +122,46 @@
     </div>
 
     <!-- Accessibility Notes -->
+
+    <!-- API Reference -->
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Radio choices and nested submenus</h2>
+        <p class="text-sm text-muted-foreground">Use arrows to move through items, the forward arrow to enter a submenu, and Escape or the back arrow to return to its trigger. Forward and back follow text direction. Radio choices here keep the menu open.</p>
+<BbContextMenu>
+    <BbContextMenuTrigger><div class="rounded-md border border-dashed p-8">Right-click for display and sharing options</div></BbContextMenuTrigger>
+    <BbContextMenuContent>
+<BbContextMenuCheckboxItem @bind-Checked="menuShowDetails">Show details</BbContextMenuCheckboxItem>
+<BbContextMenuRadioGroup TValue="string" @bind-Value="menuDensity" aria-label="Density">
+    <BbContextMenuRadioItem Value='@("Comfortable")' CloseOnSelect="false">Comfortable</BbContextMenuRadioItem>
+    <BbContextMenuRadioItem Value='@("Compact")' CloseOnSelect="false">Compact</BbContextMenuRadioItem>
+    <BbContextMenuRadioItem Value='@("Unavailable")' Disabled="true">Unavailable</BbContextMenuRadioItem>
+</BbContextMenuRadioGroup>
+<BbContextMenuSeparator />
+<BbContextMenuSub>
+    <BbContextMenuSubTrigger>Share</BbContextMenuSubTrigger>
+    <BbContextMenuSubContent>
+        <BbContextMenuItem OnClick='@(() => menuResult = "Link copied")'>Copy link</BbContextMenuItem>
+        <BbContextMenuSub>
+            <BbContextMenuSubTrigger>Export</BbContextMenuSubTrigger>
+            <BbContextMenuSubContent>
+                <BbContextMenuItem OnClick='@(() => menuResult = "Exported CSV")'>CSV</BbContextMenuItem>
+                <BbContextMenuItem OnClick='@(() => menuResult = "Exported JSON")'>JSON</BbContextMenuItem>
+            </BbContextMenuSubContent>
+        </BbContextMenuSub>
+    </BbContextMenuSubContent>
+</BbContextMenuSub>
+    </BbContextMenuContent>
+</BbContextMenu>
+        <p class="text-sm">Density: @menuDensity. @menuResult</p>
+        <CodeBlock Source="Components/ContextMenu/composition.txt" />
+    </section>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Radio and submenu API</h2>
+
+    </section>
+
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>
@@ -136,6 +176,7 @@
             <AccessibilityItem>
                 Disabled items are excluded from keyboard navigation via <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-disabled</code>
             </AccessibilityItem>
+                    <AccessibilityItem>Radio items use role="menuitemradio" and aria-checked; checkbox items use role="menuitemcheckbox". Submenu triggers announce their expanded state.</AccessibilityItem>
         </AriaAttributes>
         <KeyboardNavigation>
             <KeyboardShortcutItem Description="Navigate menu items">
@@ -150,10 +191,10 @@
             <KeyboardShortcutItem Description="Close the context menu">
                 <BbKbd>Escape</BbKbd>
             </KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Open a submenu or return to its parent (directions reverse in RTL)"><BbKbd>ArrowRight</BbKbd> / <BbKbd>ArrowLeft</BbKbd></KeyboardShortcutItem>
         </KeyboardNavigation>
     </AccessibilityList>
 
-    <!-- API Reference -->
     <section class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">API Reference</h2>
@@ -176,10 +217,59 @@
                 </ApiParameter>
             </ApiReference>
         </div>
+
+        <span id="context-menu-radio-group" class="block scroll-mt-20" aria-hidden="true"></span>
+        <ApiReference Since="v4" ComponentName="ContextMenuRadioGroup&lt;TValue&gt;">
+            <ApiParameter Name="Value / ValueChanged" Type="TValue / EventCallback&lt;TValue&gt;">Selected value; supports @@bind-Value.</ApiParameter>
+            <ApiParameter Name="Disabled" Type="bool" Default="false">Disables every radio item in the group.</ApiParameter>
+            <ApiParameter Name="ChildContent / AdditionalAttributes" Type="RenderFragment / Dictionary&lt;string, object&gt;">Radio items and group HTML attributes; use aria-label or aria-labelledby to label the group.</ApiParameter>
+        </ApiReference>
+
+        <span id="context-menu-radio-item" class="block scroll-mt-20" aria-hidden="true"></span>
+        <ApiReference Since="v4" ComponentName="ContextMenuRadioItem&lt;TValue&gt;">
+            <ApiParameter Name="Value" Type="TValue">Required value represented by this item.</ApiParameter>
+            <ApiParameter Name="Disabled" Type="bool" Default="false">Disables selection.</ApiParameter>
+            <ApiParameter Name="CloseOnSelect" Type="bool" Default="true">Closes the entire menu after selection.</ApiParameter>
+            <ApiParameter Name="ChildContent / Class / AdditionalAttributes" Type="RenderFragment / string / Dictionary&lt;string, object&gt;">Label, CSS classes and HTML attributes.</ApiParameter>
+        </ApiReference>
+
+        <span id="context-menu-submenu" class="block scroll-mt-20" aria-hidden="true"></span>
+        <ApiReference Since="v4" ComponentName="ContextMenuSub">
+            <ApiParameter Name="Disabled" Type="bool" Default="false">Disables opening this submenu.</ApiParameter>
+            <ApiParameter Name="ChildContent" Type="RenderFragment">A SubTrigger followed by SubContent. Submenus may be nested.</ApiParameter>
+        </ApiReference>
+
+        <span id="context-menu-submenu-trigger" class="block scroll-mt-20" aria-hidden="true"></span>
+        <ApiReference Since="v4" ComponentName="ContextMenuSubTrigger">
+            <ApiParameter Name="OpenOnHover" Type="bool" Default="true">Opens on hover without moving keyboard focus. Click or the forward arrow opens and focuses the first item.</ApiParameter>
+            <ApiParameter Name="Inset" Type="bool" Default="false">Aligns the label with items that contain icons.</ApiParameter>
+            <ApiParameter Name="ChildContent / Class / AdditionalAttributes" Type="RenderFragment / string / Dictionary&lt;string, object&gt;">Label, CSS classes and HTML attributes.</ApiParameter>
+        </ApiReference>
+
+        <span id="context-menu-submenu-content" class="block scroll-mt-20" aria-hidden="true"></span>
+        <ApiReference Since="v4" ComponentName="ContextMenuSubContent">
+            <ApiParameter Name="Side" Type="PopoverSide" Default="Right">Preferred placement; use Left in right-to-left layouts. Positioning flips near the viewport edge.</ApiParameter>
+            <ApiParameter Name="Offset / ZIndex" Type="int / int" Default="2 / 60">Trigger distance and stacking order.</ApiParameter>
+            <ApiParameter Name="Loop" Type="bool" Default="true">Wraps arrow navigation at the first and last item.</ApiParameter>
+            <ApiParameter Name="ChildContent / Class / AdditionalAttributes" Type="RenderFragment / string / Dictionary&lt;string, object&gt;">Items, CSS classes and HTML attributes.</ApiParameter>
+        </ApiReference>
+
+    <span id="context-menu-checkbox-item" class="block scroll-mt-20" aria-hidden="true"></span>
+        <ApiReference Since="v4" ComponentName="ContextMenuCheckboxItem">
+        <ApiParameter Name="Checked / CheckedChanged" Type="bool / EventCallback&lt;bool&gt;">Checked state; supports @@bind-Checked.</ApiParameter>
+        <ApiParameter Name="Disabled" Type="bool" Default="false">Disables toggling.</ApiParameter>
+        <ApiParameter Name="CloseOnSelect" Type="bool" Default="false">Closes the entire menu when toggled.</ApiParameter>
+        <ApiParameter Name="ChildContent / Class / AdditionalAttributes" Type="RenderFragment / string / Dictionary&lt;string, object&gt;">Label, CSS classes and HTML attributes.</ApiParameter>
+    </ApiReference>
     </section>
+
 </div>
 
 @code {
+    private string menuDensity = "Comfortable";
+    private string menuResult = "";
+    private bool menuShowDetails = true;
+
     private string? _lastAction;
 
     private void HandleAction(string action)

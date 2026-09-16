@@ -11,7 +11,7 @@
             <LucideIcon Name="paintbrush" Class="bb:h-4 bb:w-4" />
         </BbButton>
     </BbPopoverTrigger>
-    <BbPopoverContent Class="@ClassNames.cn("bb:w-[340px] bb:p-0", PopoverContentClass)"
+    <BbPopoverContent Class="@ClassNames.cn("bb:w-[340px] bb:max-h-[calc(100dvh-2rem)] bb:overflow-y-auto bb:p-0", PopoverContentClass)"
                       Align="@Align"
                       Strategy="@Strategy">
 
@@ -126,10 +126,69 @@
             </div>
         </div>
 
+        @if (ShowDesignOptions)
+        {
+            <BbSeparator Class="bb:my-2" />
+            <div class="bb:grid bb:grid-cols-2 bb:gap-2 bb:px-4 bb:pb-4">
+                <label class="bb:space-y-1 bb:text-xs">
+                    @Localizer["Theme.Density"]
+                    <BbNativeSelect TValue="ThemeDensity" Value="@ThemeService.Preset.Design.Density"
+                                    ValueChanged="@(value => ThemeService.SetDesignAsync(ThemeService.Preset.Design with { Density = value }))">
+                        @foreach (var option in Enum.GetValues<ThemeDensity>())
+                        {
+                            <option value="@option">@option</option>
+                        }
+                    </BbNativeSelect>
+                </label>
+                <label class="bb:space-y-1 bb:text-xs">
+                    @Localizer["Theme.Font"]
+                    <BbNativeSelect TValue="ThemeFont" Value="@ThemeService.Preset.Design.Font"
+                                    ValueChanged="@(value => ThemeService.SetDesignAsync(ThemeService.Preset.Design with { Font = value }))">
+                        @foreach (var option in Enum.GetValues<ThemeFont>())
+                        {
+                            <option value="@option">@option</option>
+                        }
+                    </BbNativeSelect>
+                </label>
+                <label class="bb:space-y-1 bb:text-xs">
+                    @Localizer["Theme.Surface"]
+                    <BbNativeSelect TValue="ThemeSurface" Value="@ThemeService.Preset.Design.Surface"
+                                    ValueChanged="@(value => ThemeService.SetDesignAsync(ThemeService.Preset.Design with { Surface = value }))">
+                        @foreach (var option in Enum.GetValues<ThemeSurface>())
+                        {
+                            <option value="@option">@option</option>
+                        }
+                    </BbNativeSelect>
+                </label>
+                <label class="bb:space-y-1 bb:text-xs">
+                    @Localizer["Theme.MenuColor"]
+                    <BbNativeSelect TValue="ThemeMenuColor" Value="@ThemeService.Preset.Design.MenuColor"
+                                    ValueChanged="@(value => ThemeService.SetDesignAsync(ThemeService.Preset.Design with { MenuColor = value }))">
+                        @foreach (var option in Enum.GetValues<ThemeMenuColor>())
+                        {
+                            <option value="@option">@option</option>
+                        }
+                    </BbNativeSelect>
+                </label>
+                <label class="bb:space-y-1 bb:text-xs">
+                    @Localizer["Theme.MenuAccent"]
+                    <BbNativeSelect TValue="ThemeMenuAccent" Value="@ThemeService.Preset.Design.MenuAccent"
+                                    ValueChanged="@(value => ThemeService.SetDesignAsync(ThemeService.Preset.Design with { MenuAccent = value }))">
+                        @foreach (var option in Enum.GetValues<ThemeMenuAccent>())
+                        {
+                            <option value="@option">@option</option>
+                        }
+                    </BbNativeSelect>
+                </label>
+            </div>
+        }
     </BbPopoverContent>
 </BbPopover>
 
 @code {
+    /// <summary>Shows density, font, surface and menu appearance selectors.</summary>
+    [Parameter] public bool ShowDesignOptions { get; set; }
+
     private bool isOpen;
 
     /// <summary>

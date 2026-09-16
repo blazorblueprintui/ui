@@ -1,0 +1,36 @@
+@namespace BlazorBlueprint.Components
+
+<BbMotion @ref="motion" Preset="Preset" Duration="@(Enabled ? Duration : 0)" Distance="Distance" Trigger="MotionTrigger.Manual" Class="@Class">
+    @ChildContent
+</BbMotion>
+
+@code {
+    /// <summary>A screen identifier. A change animates the new content without remounting its component subtree.</summary>
+    [Parameter] public object? TransitionKey { get; set; }
+    /// <summary>The screen content.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>The entrance animation.</summary>
+    [Parameter] public MotionPreset Preset { get; set; } = MotionPreset.Fade;
+    /// <summary>Duration in milliseconds.</summary>
+    [Parameter] public int Duration { get; set; } = 250;
+    /// <summary>Slide distance in pixels.</summary>
+    [Parameter] public double Distance { get; set; } = 24;
+    /// <summary>Enables transitions after the first interactive render.</summary>
+    [Parameter] public bool Enabled { get; set; } = true;
+    /// <summary>Additional wrapper classes.</summary>
+    [Parameter] public string? Class { get; set; }
+    private object? lastKey;
+    private bool pending;
+    private bool interactive;
+    private BbMotion? motion;
+    protected override void OnParametersSet()
+    {
+        pending |= interactive && !Equals(lastKey, TransitionKey);
+        lastKey = TransitionKey;
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        interactive = true;
+        if (pending && motion is not null) { pending = false; await motion.PlayAsync(); }
+    }
+}

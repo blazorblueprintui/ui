@@ -59,10 +59,10 @@ public class PrimitiveJsModuleTests
     /// <summary>
     /// <c>import * as clickOutside from './click-outside.js';</c> — the bundle imports each module
     /// into a namespace, checks it is not a stale cached copy, and then exports the namespace.
-    /// The older <c>export * as …</c> form is accepted too.
+    /// The older <c>export * as …</c> form and cache-revision queries are accepted too.
     /// </summary>
     private static readonly Regex ReExport = new(
-        @"^(?:export|import) \* as (?<ns>\w+) from '\./(?<file>[\w-]+)\.js';",
+        @"^(?:export|import) \* as (?<ns>\w+) from '\./(?<file>[\w-]+)\.js(?:\?[^']+)?';",
         RegexOptions.Multiline | RegexOptions.Compiled);
 
     /// <summary><c>export function foo</c>, <c>export async function foo</c>, <c>export const foo</c>.</summary>

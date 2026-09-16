@@ -1,0 +1,18 @@
+<BbSortable TItem="string" Items="keyboardItems" AriaLabel="Keyboard sorting example"
+            CanMove="@(move => move.OldIndex > 0 && move.NewIndex > 0)"
+            OnUpdate="@(args => MoveWithin(keyboardItems, args))">
+    <ItemTemplate Context="item">
+        <div class="flex items-center gap-2 rounded-md border bg-card p-3"><BbSortableHandle AriaLabel="@($"Reorder {item}")" />@item</div>
+    </ItemTemplate>
+    <DragOverlayTemplate Context="item"><div class="rounded-lg border bg-background px-4 py-2 shadow-xl">Moving: @item</div></DragOverlayTemplate>
+</BbSortable>
+
+@code {
+    private readonly List<string> keyboardItems = ["Pinned: project overview", "Plan", "Build", "Review"];
+    private static void MoveWithin(List<string> items, (int OldIndex, int NewIndex) move)
+    {
+        var item = items[move.OldIndex];
+        items.RemoveAt(move.OldIndex);
+        items.Insert(move.NewIndex, item);
+    }
+}

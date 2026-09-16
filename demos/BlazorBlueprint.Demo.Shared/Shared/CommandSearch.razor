@@ -54,19 +54,29 @@
 
                     <BbCommandSeparator />
 
-                    <BbCommandVirtualizedGroup TItem="LibraryItem"
+                    <BbCommandVirtualizedGroup TItem="ComponentCatalog.Entry"
                         Heading="Components"
-                        Items="Components"
+                        Items="ComponentCatalog.DemoPages"
                         ItemValue="@(item => item.Url)"
                         ItemSearchText="@(item => item.Name)"
                         MaxDisplayCount="0">
                         <ItemTemplate Context="item">
                             <LucideIcon Name="@item.Icon" Size="16" Class="mr-2 text-primary" />
                             @item.Name
+                            @if (item.IsNew)
+                            {
+                                <span class="shrink-0 rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary" title="Added in v4">v4</span>
+                            }
                             <span class="ml-auto text-xs text-muted-foreground">Styled</span>
                         </ItemTemplate>
                     </BbCommandVirtualizedGroup>
 
+                    <BbCommandSeparator />
+
+                    <BbCommandGroup Heading="Recipes">
+                        <BbCommandItem Value="/recipes/filterable-datagrid">Filterable Data Grid</BbCommandItem>
+                        <BbCommandItem Value="/recipes/mobile-shop">Mobile Shop</BbCommandItem>
+                    </BbCommandGroup>
                     <BbCommandSeparator />
 
                     <BbCommandVirtualizedGroup TItem="string"
@@ -163,82 +173,6 @@
         new LibraryItem("Tooltip", "/primitives/tooltip", "info"),
     };
 
-    // Components list
-    private static readonly LibraryItem[] Components = new[]
-    {
-        new LibraryItem("Accordion", "/components/accordion", "layers"),
-        new LibraryItem("Alert", "/components/alert", "circle-alert"),
-        new LibraryItem("Alert Dialog", "/components/alert-dialog", "triangle-alert"),
-        new LibraryItem("Aspect Ratio", "/components/aspect-ratio", "ratio"),
-        new LibraryItem("Avatar", "/components/avatar", "circle-user"),
-        new LibraryItem("Badge", "/components/badge", "badge"),
-        new LibraryItem("Breadcrumb", "/components/breadcrumb", "chevrons-right"),
-        new LibraryItem("Button", "/components/button", "mouse-pointer-click"),
-        new LibraryItem("Button Group", "/components/button-group", "group"),
-        new LibraryItem("Calendar", "/components/calendar", "calendar"),
-        new LibraryItem("Card", "/components/card", "square"),
-        new LibraryItem("Carousel", "/components/carousel", "gallery-horizontal"),
-        new LibraryItem("Checkbox", "/components/checkbox", "square-check"),
-        new LibraryItem("Collapsible", "/components/collapsible", "chevrons-up-down"),
-        new LibraryItem("Combobox", "/components/combobox", "text-cursor-input"),
-        new LibraryItem("Command", "/components/command", "command"),
-        new LibraryItem("Context Menu", "/components/context-menu", "menu"),
-        new LibraryItem("Data Grid", "/components/datagrid", "grid-3x3"),
-        new LibraryItem("Data Table", "/components/datatable", "table-2"),
-        new LibraryItem("Data View", "/components/dataview", "layout-list"),
-        new LibraryItem("Filter Builder", "/components/filterbuilder", "filter"),
-        new LibraryItem("Date Picker", "/components/date-picker", "calendar-days"),
-        new LibraryItem("Date Time Picker", "/components/date-time-picker", "calendar-clock"),
-        new LibraryItem("Dialog", "/components/dialog", "app-window"),
-        new LibraryItem("Dropdown Menu", "/components/dropdown-menu", "chevron-down"),
-        new LibraryItem("Drawer", "/components/drawer", "panel-bottom"),
-        new LibraryItem("Empty", "/components/empty", "inbox"),
-        new LibraryItem("Cell and Batch Editing", "/components/datagrid-editing", "table-2"),
-        new LibraryItem("Scheduler", "/components/scheduler", "calendar-clock"),
-        new LibraryItem("TreeSelect", "/components/tree-select", "list-tree"),
-        new LibraryItem("Cascader", "/components/cascader", "git-branch"),
-        new LibraryItem("Event Calendar", "/components/event-calendar", "calendar-days"),
-        new LibraryItem("Field", "/components/field", "pencil-line"),
-        new LibraryItem("Hover Card", "/components/hovercard", "square-mouse-pointer"),
-        new LibraryItem("Input", "/components/input", "text-cursor"),
-        new LibraryItem("Input Group", "/components/input-group", "layout-list"),
-        new LibraryItem("Input OTP", "/components/input-otp", "key-round"),
-        new LibraryItem("Item", "/components/item", "list"),
-        new LibraryItem("Kbd", "/components/kbd", "keyboard"),
-        new LibraryItem("Label", "/components/label", "tag"),
-        new LibraryItem("Markdown Editor", "/components/markdown-editor", "file-text"),
-        new LibraryItem("Menubar", "/components/menubar", "square-menu"),
-        new LibraryItem("Multi Select", "/components/multiselect", "list-checks"),
-        new LibraryItem("Native Select", "/components/native-select", "square-chevron-down"),
-        new LibraryItem("Navigation Menu", "/components/navigation-menu", "navigation"),
-        new LibraryItem("Pagination", "/components/pagination", "arrow-left-right"),
-        new LibraryItem("Popover", "/components/popover", "message-square"),
-        new LibraryItem("Progress", "/components/progress", "loader"),
-        new LibraryItem("Radio Group", "/components/radio-group", "circle-dot"),
-        new LibraryItem("Resizable", "/components/resizable", "move"),
-        new LibraryItem("Rich Text Editor", "/components/rich-text-editor", "file-type"),
-        new LibraryItem("Scroll Area", "/components/scroll-area", "scroll"),
-        new LibraryItem("Select", "/components/select", "list"),
-        new LibraryItem("Separator", "/components/separator", "minus"),
-        new LibraryItem("Sheet", "/components/sheet", "panel-right"),
-        new LibraryItem("Sidebar", "/components/sidebar", "panel-left"),
-        new LibraryItem("Slider", "/components/slider", "sliders-horizontal"),
-        new LibraryItem("Spinner", "/components/spinner", "loader"),
-        new LibraryItem("Split Button", "/components/split-button", "chevrons-down"),
-        new LibraryItem("Skeleton", "/components/skeleton", "box"),
-        new LibraryItem("Switch", "/components/switch", "toggle-left"),
-        new LibraryItem("Tabs", "/components/tabs", "folder"),
-        new LibraryItem("Textarea", "/components/textarea", "align-left"),
-        new LibraryItem("Timeline", "/components/timeline", "git-commit-horizontal"),
-        new LibraryItem("Toast", "/components/toast", "bell"),
-        new LibraryItem("Toggle", "/components/toggle", "toggle-right"),
-        new LibraryItem("Toggle Group", "/components/toggle-group", "layout-grid"),
-        new LibraryItem("Tooltip", "/components/tooltip", "info"),
-        new LibraryItem("Tree View", "/components/tree-view", "list-tree"),
-        new LibraryItem("Typography", "/components/typography", "type"),
-    };
-
-    // Icon data (loaded once)
     private static readonly string[] AllLucideIcons = LucideIconData.GetAvailableIcons().OrderBy(x => x).ToArray();
     private static readonly string[] AllHeroIcons = HeroIconData.GetAvailableIcons(HeroIconVariant.Outline).OrderBy(x => x).ToArray();
     private static readonly string[] AllFeatherIcons = FeatherIconData.GetAvailableIcons().OrderBy(x => x).ToArray();

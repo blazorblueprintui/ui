@@ -255,6 +255,167 @@ public class SchedulerLifecycleTests
         });
     }
 
+    [Theory]
+    [InlineData(SchedulerView.Day, "Pacific/Kiritimati", 14)]
+    [InlineData(SchedulerView.Week, "Pacific/Kiritimati", 14)]
+    [InlineData(SchedulerView.WorkWeek, "Pacific/Kiritimati", 14)]
+    [InlineData(SchedulerView.Day, "Pacific/Pago_Pago", -11)]
+    [InlineData(SchedulerView.Week, "Pacific/Pago_Pago", -11)]
+    [InlineData(SchedulerView.WorkWeek, "Pacific/Pago_Pago", -11)]
+    public async Task TodayUsesTheScheduleZoneAndRetainsViewAndWeekStart(SchedulerView view, string zone, int offsetHours)
+    {
+        await RunAsync(async (renderer, scheduler, original) =>
+        {
+            var notifications = new List<DateOnly>();
+            await scheduler.SetParametersAsync(ParameterView.FromDictionary(new Dictionary<string, object?>
+            {
+                [nameof(BbScheduler.Date)] = new DateOnly(2000, 1, 1),
+                [nameof(BbScheduler.View)] = view,
+                [nameof(BbScheduler.FirstDayOfWeek)] = DayOfWeek.Sunday,
+                [nameof(BbScheduler.TimeZoneId)] = zone,
+                [nameof(BbScheduler.EnableTimeZones)] = false,
+                [nameof(BbScheduler.ReadOnly)] = true,
+                [nameof(BbScheduler.DateChanged)] = EventCallback.Factory.Create<DateOnly>(this, notifications.Add)
+            }));
+            var before = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(offsetHours)).DateTime);
+            await (Task)ComponentProbe.Call(scheduler, "NavigateToTodayAsync")!;
+            var after = DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(TimeSpan.FromHours(offsetHours)).DateTime);
+            Assert.InRange(scheduler.Date, before, after);
+            Assert.Equal(new[] { scheduler.Date }, notifications);
+            Assert.Equal(view, scheduler.View);
+            Assert.Equal(DayOfWeek.Sunday, scheduler.FirstDayOfWeek);
+            var weekStart = view == SchedulerView.WorkWeek ? DayOfWeek.Monday : DayOfWeek.Sunday;
+            var first = view == SchedulerView.Day ? scheduler.Date
+                : scheduler.Date.AddDays(-(((int)scheduler.Date.DayOfWeek - (int)weekStart + 7) % 7));
+            var days = view == SchedulerView.Day ? 1 : view == SchedulerView.WorkWeek ? 5 : 7;
+            Assert.Equal(Enumerable.Range(0, days).Select(first.AddDays), LaneDates(scheduler));
+            Assert.Same(original, Assert.Single(scheduler.Events));
+        });
+    }
+
+    [Theory]
+    [InlineData("DAILY")]
+    [InlineData("MONTHLY")]
+    [InlineData("YEARLY")]
+    public async Task SimpleRepeatPresetsSaveAndReopenWithoutAnInterval(string frequency)
+    {
+        await RunAsync(async (renderer, scheduler, original) =>
+        {
+            scheduler.EditEvent(new(original, original.Start, original.End), SchedulerEditScope.Series);
+            ComponentProbe.Call(scheduler, "FrequencyChanged", frequency);
+            await (Task)ComponentProbe.Call(scheduler, "SaveAsync", false)!;
+            var saved = Assert.Single(scheduler.Events);
+            Assert.Equal($"FREQ={frequency}", saved.RecurrenceRule);
+            scheduler.EditEvent(new(saved, saved.Start, saved.End), SchedulerEditScope.Series);
+            Assert.Equal(frequency, ComponentProbe.Field<string>(scheduler, "recurrenceFrequency"));
+            Assert.Null(original.RecurrenceRule);
+        });
+    }
+
+    [Fact]
+    public async Task WeeklyCheckboxesSaveSelectedDaysAndRestoreThemWhenReopened()
+    {
+        await RunAsync(async (renderer, scheduler, original) =>
+        {
+            scheduler.EditEvent(new(original, original.Start, original.End), SchedulerEditScope.Series);
+            ComponentProbe.Call(scheduler, "FrequencyChanged", "WEEKLY");
+            Assert.Equal([DayOfWeek.Monday], ComponentProbe.Field<HashSet<DayOfWeek>>(scheduler, "recurrenceDays"));
+            ComponentProbe.Call(scheduler, "ToggleRecurrenceDay", DayOfWeek.Wednesday, true);
+            ComponentProbe.Call(scheduler, "ToggleRecurrenceDay", DayOfWeek.Friday, true);
+            await (Task)ComponentProbe.Call(scheduler, "SaveAsync", false)!;
+            var saved = Assert.Single(scheduler.Events);
+            Assert.Equal("FREQ=WEEKLY;BYDAY=MO,WE,FR", saved.RecurrenceRule);
+            Assert.Equal([14, 16, 18, 21, 23, 25], SchedulerEngine.Expand([saved], At(0), At(0).AddDays(14)).Select(item => item.Start.Day));
+            scheduler.EditEvent(new(saved, saved.Start, saved.End), SchedulerEditScope.Series);
+            Assert.Equal("WEEKLY", ComponentProbe.Field<string>(scheduler, "recurrenceFrequency"));
+            Assert.Equal([DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday], ComponentProbe.Field<HashSet<DayOfWeek>>(scheduler, "recurrenceDays").Order());
+        });
+    }
+
+    [Theory]
+    [InlineData(SchedulerEditScope.Series)]
+    [InlineData(SchedulerEditScope.Occurrence)]
+    public async Task WeeklyRepeatRequiresADayAndAllowsRetryWithoutDiscardingTheDraft(SchedulerEditScope scope)
+    {
+        await RunAsync(async (renderer, scheduler, original) =>
+        {
+            scheduler.EditEvent(new(original, original.Start, original.End), scope);
+            ComponentProbe.Call(scheduler, "FrequencyChanged", "WEEKLY");
+            ComponentProbe.Call(scheduler, "ToggleRecurrenceDay", DayOfWeek.Monday, false);
+            await (Task)ComponentProbe.Call(scheduler, "SaveAsync", false)!;
+            Assert.Same(original, Assert.Single(scheduler.Events));
+            Assert.True(ComponentProbe.Field<bool>(scheduler, "editorOpen"));
+            Assert.Contains("at least one day", ComponentProbe.Field<string>(scheduler, "editorError"));
+            ComponentProbe.Call(scheduler, "ToggleRecurrenceDay", DayOfWeek.Tuesday, true);
+            await (Task)ComponentProbe.Call(scheduler, "SaveAsync", false)!;
+            Assert.Equal("FREQ=WEEKLY;BYDAY=TU", Assert.Single(scheduler.Events).RecurrenceRule);
+        });
+    }
+
+    [Fact]
+    public async Task WeeklyPresetReadsExistingDaysAndCountBeforeChangingOneDay()
+    {
+        await RunAsync(async (renderer, scheduler, original) =>
+        {
+            original.RecurrenceRule = "FREQ=WEEKLY;INTERVAL=1;BYDAY=MO,WE;COUNT=7";
+            scheduler.EditEvent(new(original, original.Start, original.End), SchedulerEditScope.Series);
+            Assert.True(ComponentProbe.Field<bool>(scheduler, "limitRecurrence"));
+            Assert.Equal(7, ComponentProbe.Field<int?>(scheduler, "recurrenceCount"));
+            ComponentProbe.Call(scheduler, "ToggleRecurrenceDay", DayOfWeek.Wednesday, false);
+            ComponentProbe.Call(scheduler, "ToggleRecurrenceDay", DayOfWeek.Friday, true);
+            await (Task)ComponentProbe.Call(scheduler, "SaveAsync", false)!;
+            Assert.Equal("FREQ=WEEKLY;BYDAY=MO,FR;COUNT=7", Assert.Single(scheduler.Events).RecurrenceRule);
+        });
+    }
+
+    [Theory]
+    [InlineData("FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE")]
+    [InlineData("FREQ=DAILY;UNTIL=20261001T090000Z")]
+    [InlineData("FREQ=MONTHLY;BYDAY=2MO")]
+    public async Task AdvancedApplicationRulesArePreservedUnlessExplicitlyReplaced(string rule)
+    {
+        await RunAsync(async (renderer, scheduler, original) =>
+        {
+            original.RecurrenceRule = rule;
+            scheduler.EditEvent(new(original, original.Start, original.End), SchedulerEditScope.Series);
+            Assert.Equal("EXISTING", ComponentProbe.Field<string>(scheduler, "recurrenceFrequency"));
+            ComponentProbe.Field<SchedulerEvent>(scheduler, "draft").Title = "Updated title";
+            await (Task)ComponentProbe.Call(scheduler, "SaveAsync", false)!;
+            var saved = Assert.Single(scheduler.Events);
+            Assert.Equal(rule, saved.RecurrenceRule);
+            Assert.Equal("Updated title", saved.Title);
+            scheduler.EditEvent(new(saved, saved.Start, saved.End), SchedulerEditScope.Series);
+            ComponentProbe.Call(scheduler, "FrequencyChanged", "DAILY");
+            await (Task)ComponentProbe.Call(scheduler, "SaveAsync", false)!;
+            Assert.Equal("FREQ=DAILY", Assert.Single(scheduler.Events).RecurrenceRule);
+        });
+    }
+
+    [Theory]
+    [InlineData("2026-09-14", "UTC", 0, 24, 8, 640)]
+    [InlineData("2026-09-14", "UTC", 8, 18, 0, 0)]
+    [InlineData("2026-09-14", "UTC", 8, 18, 23, 800)]
+    [InlineData("2026-03-08", "America/New_York", 0, 24, 8, 560)]
+    [InlineData("2026-11-01", "America/New_York", 0, 24, 8, 720)]
+    public async Task InitialScrollUsesDisplayZoneElapsedTimeAndClampsToTheRenderedRange(
+        string date, string zone, int startHour, int endHour, int initialHour, double expectedTop)
+    {
+        await RunAsync(async (renderer, scheduler, original) =>
+        {
+            Assert.Null(ComponentProbe.Call(scheduler, "GetInitialScrollTop"));
+            await scheduler.SetParametersAsync(ParameterView.FromDictionary(new Dictionary<string, object?>
+            {
+                [nameof(BbScheduler.Date)] = DateOnly.ParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture),
+                [nameof(BbScheduler.TimeZoneId)] = zone,
+                [nameof(BbScheduler.StartHour)] = startHour,
+                [nameof(BbScheduler.EndHour)] = endHour,
+                [nameof(BbScheduler.InitialScrollHour)] = initialHour
+            }));
+            Assert.Equal(expectedTop, (double)ComponentProbe.Call(scheduler, "GetInitialScrollTop")!);
+            Assert.Null(ComponentProbe.Field<string?>(scheduler, "loadError"));
+        });
+    }
+
     private static DateOnly[] LaneDates(BbScheduler scheduler) => ComponentProbe.Field<IEnumerable<object>>(scheduler, "lanes")
         .Select(lane => (DateOnly)lane.GetType().GetProperty("Date")!.GetValue(lane)!).ToArray();
 

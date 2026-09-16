@@ -1,0 +1,60 @@
+@namespace BlazorBlueprint.Components
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div @ref="element" @attributes="AdditionalAttributes" class="@Class" style="@Style" hidden="@(!Visible)" inert="@(!Visible)" aria-hidden="@(!Visible ? "true" : null)">
+    @ChildContent
+</div>
+
+@code {
+    /// <summary>The animated content, retained in the DOM when hidden.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Controls visibility. Hidden content is inert and excluded from accessibility navigation.</summary>
+    [Parameter] public bool Visible { get; set; } = true;
+    /// <summary>The animation shape.</summary>
+    [Parameter] public MotionPreset Preset { get; set; } = MotionPreset.Fade;
+    /// <summary>The event that starts animation.</summary>
+    [Parameter] public MotionTrigger Trigger { get; set; } = MotionTrigger.Visibility;
+    /// <summary>Duration in milliseconds.</summary>
+    [Parameter] public int Duration { get; set; } = 250;
+    /// <summary>Delay in milliseconds, useful for staggered items.</summary>
+    [Parameter] public int Delay { get; set; }
+    /// <summary>CSS easing function.</summary>
+    [Parameter] public string Easing { get; set; } = "ease-out";
+    /// <summary>Distance in pixels for slide and shake presets.</summary>
+    [Parameter] public double Distance { get; set; } = 16;
+    /// <summary>Animates after the first interactive render. Prerendered content remains visible.</summary>
+    [Parameter] public bool AnimateOnFirstRender { get; set; }
+    /// <summary>Only run an InView animation once.</summary>
+    [Parameter] public bool Once { get; set; } = true;
+    /// <summary>Viewport intersection fraction required for InView animations.</summary>
+    [Parameter] public double Threshold { get; set; } = .1;
+    /// <summary>Custom Web Animations keyframes. Each dictionary maps CSS property names to values.</summary>
+    [Parameter] public IReadOnlyList<IReadOnlyDictionary<string, object>>? Keyframes { get; set; }
+    /// <summary>Additional classes on the animated wrapper.</summary>
+    [Parameter] public string? Class { get; set; }
+    /// <summary>Inline wrapper styles.</summary>
+    [Parameter] public string? Style { get; set; }
+    /// <summary>Additional HTML attributes.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+    private ElementReference element;
+    private MotionInterop? interop;
+
+    protected override void OnParametersSet()
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(Duration);
+        ArgumentOutOfRangeException.ThrowIfNegative(Delay);
+        if (!double.IsFinite(Distance) || Distance < 0) { throw new ArgumentOutOfRangeException(nameof(Distance)); }
+        if (!double.IsFinite(Threshold) || Threshold is < 0 or > 1) { throw new ArgumentOutOfRangeException(nameof(Threshold)); }
+    }
+
+    protected override Task OnAfterRenderAsync(bool firstRender) => ConfigureAsync();
+
+    private Task ConfigureAsync() => (interop ??= new(JS)).InvokeAsync("motion", element,
+        new { visible = Visible, preset = Preset.ToString(), trigger = Trigger.ToString(), duration = Duration, delay = Delay, easing = Easing, distance = Distance, first = AnimateOnFirstRender, once = Once, threshold = Threshold, keyframes = Keyframes });
+
+    /// <summary>Plays the animation on the renderer dispatcher. Reduced-motion preferences always take precedence.</summary>
+    public Task PlayAsync() => InvokeAsync(async () => { await ConfigureAsync(); await interop!.InvokeAsync("play", element); });
+    public async ValueTask DisposeAsync() { if (interop is not null) { await interop.DisposeAsync(); } }
+}

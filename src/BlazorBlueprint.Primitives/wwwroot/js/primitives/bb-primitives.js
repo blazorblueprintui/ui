@@ -41,7 +41,9 @@ import * as select from './select.js';
 import * as slider from './slider.js';
 import * as sortable from './sortable.js';
 import * as tableRowNav from './table-row-nav.js';
-import * as treeKeyboard from './tree-keyboard.js';
+// Revise the dependency URL when its keyboard contract changes: a versioned
+// entry module does not invalidate relative imports already held by a browser.
+import * as treeKeyboard from './tree-keyboard.js?rev=2';
 
 /**
  * Fails loudly when a module in this bundle is older than the bundle itself.

@@ -1,0 +1,15 @@
+<EditForm Model="model">
+    <DataAnnotationsValidator />
+    <BbTimeInput @bind-Value="model.Value" MinTime="@TimeSpan.FromHours(9)" MaxTime="@TimeSpan.FromHours(17)" Required="true" />
+    <ValidationMessage For="@(() => model.Value)" />
+    <BbButton Type="ButtonType.Submit">Save</BbButton>
+</EditForm>
+
+@code {
+    private readonly FormModel model = new();
+    private sealed class FormModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        public TimeSpan? Value { get; set; }
+    }
+}

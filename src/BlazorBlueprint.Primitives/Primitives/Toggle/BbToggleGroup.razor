@@ -91,6 +91,9 @@
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
+    /// <summary>Prevents the user from removing the last selected value. Supply an initial selection if one is mandatory.</summary>
+    [Parameter] public bool Required { get; set; }
+
     private TValue? internalValue;
     private List<TValue> internalValues = new();
     private bool IsControlled => ValueChanged.HasDelegate || ValuesChanged.HasDelegate;
@@ -146,6 +149,7 @@
         if (Type == ToggleGroupType.Single)
         {
             var currentValue = IsControlled ? Value : internalValue;
+            if (Required && EqualityComparer<TValue>.Default.Equals(currentValue, itemValue)) { return; }
             var newValue = EqualityComparer<TValue>.Default.Equals(currentValue, itemValue) ? default : itemValue;
 
             if (IsControlled)
@@ -155,6 +159,7 @@
             else
             {
                 internalValue = newValue;
+                context.Value = newValue;
                 StateHasChanged();
             }
         }
@@ -165,6 +170,7 @@
 
             if (newValues.Contains(itemValue))
             {
+                if (Required && newValues.Count == 1) { return; }
                 newValues.Remove(itemValue);
             }
             else
@@ -179,6 +185,7 @@
             else
             {
                 internalValues = newValues;
+                context.Values = newValues;
                 StateHasChanged();
             }
         }

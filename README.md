@@ -19,7 +19,7 @@ Beautiful UI components for Blazor, built with accessibility in mind. Inspired b
 </p>
 
 <p align="center">
-  <strong>115 Components</strong> · <strong>28 Primitives</strong> · <strong>11 Chart Types</strong> · <strong>5,300+ Icons</strong>
+  <strong>Styled Components</strong> · <strong>Headless Primitives</strong> · <strong>11 Chart Types</strong> · <strong>5,300+ Icons</strong>
 </p>
 
 ## Table of Contents
@@ -195,7 +195,47 @@ If you also run your own Tailwind build, load its output before or after `blazor
 
 ## Components
 
-Blazor Blueprint includes **115 styled components** organized into the following categories.
+Blazor Blueprint includes the styled component families below, with composable subcomponents and headless primitives. This checkout also includes the [v4 component additions](docs/implementation/2026-09-16-parity-progress.md); see that record for verification status and remaining work.
+
+### New in this v4 checkout
+
+The current expansion adds **37 styled Razor components**: 13 primary controls and 24 composition helpers. The primary controls have **13 focused demo pages**, each with live examples, snippets, accessibility guidance and API references. Composition helpers are documented within their owning component's page. The component homepage, sidebar and command search share the same demo-page catalog; related pages are grouped consistently, and every menu link opens a distinct demo. The combined shopping example is a **[Mobile Shop recipe](demos/BlazorBlueprint.Demo.Shared/Pages/Recipes/MobileShopRecipe.razor)** at `/recipes/mobile-shop`.
+
+Sidebar and homepage `v4` badges identify new components only. Existing components keep their original status; API-reference badges identify individual properties, methods, enum values and supporting components added in v4 (compared with v3.17). These are source additions pending release, not a claim about the stable package.
+
+All names below include the `Bb` prefix in code. Generic type parameters are omitted from the inventory.
+
+| Family | New components | Demo |
+|--------|----------------|------|
+| Segmented inputs (2) | `BbDateInput`, `BbTimeInput` | `/components/date-input`, `/components/time-input` |
+| Mobile (6) | `BbAppBar`, `BbBottomNav`, `BbBottomNavItem`, `BbNotificationBadge`, `BbQuantityStepper`, `BbSectionHeader` | `/components/app-bar`, `/components/bottom-nav`, `/components/notification-badge`, `/components/quantity-stepper`, `/components/section-header` |
+| Motion (6) | `BbMotion`, `BbHeightAnimation`, `BbSelectionIndicator`, `BbPageTransition`, `BbScreenTransition`, `BbRenderStateProvider` | `/components/motion`, `/components/height-animation`, `/components/selection-indicator`, `/components/page-transition`, `/components/screen-transition`, `/components/render-state-provider` |
+| Dropdown menu (5) | `BbDropdownMenuRadioGroup`, `BbDropdownMenuRadioItem`, `BbDropdownMenuSub`, `BbDropdownMenuSubTrigger`, `BbDropdownMenuSubContent` | `/components/dropdown-menu` |
+| Context menu (6) | `BbContextMenuCheckboxItem`, `BbContextMenuRadioGroup`, `BbContextMenuRadioItem`, `BbContextMenuSub`, `BbContextMenuSubTrigger`, `BbContextMenuSubContent` | `/components/context-menu` |
+| Menubar (5) | `BbMenubarRadioGroup`, `BbMenubarRadioItem`, `BbMenubarSub`, `BbMenubarSubTrigger`, `BbMenubarSubContent` | `/components/menubar` |
+| Sidebar (4) | `BbSidebarPillNav`, `BbSidebarPillNavItem`, `BbSidebarPillInset`, `BbSidebarSelectionIndicator` | `/components/sidebar` |
+| Other helpers (3) | `BbBadgeIcon`, `BbSortableHandle`, `BbThemeScope` | `/components/badge`, `/components/sortable`, `/components/theme` |
+
+The Primitives package also gains six shared headless components used by the styled menu families: `BbMenuRadioGroup`, `BbMenuRadioItem`, `BbMenuSub`, `BbMenuSubTrigger`, `BbMenuSubContent`, and `BlazorBlueprint.Primitives.ContextMenu.BbContextMenuCheckboxItem`. They are supporting implementations, counted separately from the 37 styled components.
+
+Existing components gain DataView selection/grouping/list virtualization and a mobile toolbar; MultiSelect footer/close; FilterBuilder presets/editors; Drawer snapping; Select bottom sheets; theme presets; richer Carousel controls; keyboard Sortable/drop permissions; and Badge, ToggleGroup and Separator variants. All additions remain open source.
+
+**TreeSelect keyboard behavior:** with a tree node focused, **Space** expands or collapses its branch. **Enter** selects and closes in single-selection mode; in checkbox mode, Enter checks/unchecks the item and keeps the dropdown open. Space on a leaf does not change the selection. `LeafOnly` continues to limit selectable values.
+
+### Mobile, Motion and Themes
+
+| Component | Description |
+|-----------|-------------|
+| **App Bar / Bottom Navigation** | Safe-area navigation, title/back actions, active links and touch-sized controls |
+| **Notification Badge / Section Header** | Accessible count/dot overlays and section headings with actions |
+| **Motion** | Entrance/exit presets, custom keyframes, viewport/hover/press/manual triggers and reduced-motion handling |
+| **Height Animation** | Expansion, collapse and automatic content resizing while retaining child state |
+| **Selection Indicator** | Animated active, hover and keyboard-focus feedback |
+| **Page / Screen Transition** | Incoming navigation and keyed screen animations with stable first renders |
+| **Render State Provider** | Cascading prerender/interactive state |
+| **Theme Scope** | Scoped density, typography, surfaces and menu appearance; floating overlays inherit the scope |
+
+Theme presets, mobile DataView sorting/filtering, drawer snap points, carousel autoplay/drag controls and sidebar pill navigation extend their existing component families. Named fonts require application-provided font assets.
 
 ### Enterprise Components
 
@@ -230,6 +270,7 @@ Production-ready components for complex data-driven applications:
 | **Color Picker** | Color selection with swatches and custom input |
 | **Combobox** | Searchable autocomplete dropdown |
 | **Currency Input** | Currency-formatted numeric input with locale support |
+| **Date Input** | Culture-ordered date segments with keyboard editing, calendar access and EditForm draft validation |
 | **Date Picker** | Date picker with popover calendar, optional manual text entry with configurable input formats, and formatting options |
 | **Date Range Picker** | Dual-calendar range selection with quick-select presets and optional auto-apply |
 | **Date Time Picker** | Combined date and time selection in one popover — calendar plus 12/24h time panel with optional seconds |
@@ -264,22 +305,24 @@ Production-ready components for complex data-driven applications:
 | **Input OTP** | One-time password input with individual digit fields |
 | **Label** | Form labels with control association |
 | **Masked Input** | Input with format masks (phone, SSN, etc.) |
-| **MultiSelect** | Searchable multi-selection with tags and checkboxes |
+| **MultiSelect** | Searchable multi-selection with tags, checkboxes, custom footer and programmatic close |
 | **Native Select** | Browser-native select with consistent styling |
 | **Numeric Input** | Numeric input with increment/decrement controls |
 | **Radio Group** | Radio buttons with keyboard navigation |
 | **Range Slider** | Dual-handle slider for selecting value ranges |
 | **Rating** | Star/icon rating input |
-| **Select** | Dropdown select with search and keyboard navigation |
+| **Select** | Keyboard-accessible selection with popover or bottom-sheet presentation |
 | **Slider** | Range input with drag support |
-| **Sortable** | Drag-and-drop sortable lists and grids powered by SortableJS, with connected multi-list support and Kanban-style boards |
+| **Sortable** | Pointer and keyboard sortable lists/grids, connected-list transfer, move/drop permissions, reusable handles and custom drag previews |
 | **Split Button** | Primary action with dropdown for secondary actions |
 | **Switch** | Toggle switch with customizable thumb |
 | **Tag Input** | Inline tag/chip input for managing string lists with suggestions, validation, and customizable triggers |
 | **Textarea** | Multi-line text input with auto-sizing and character count |
+| **Time Input** | Segmented 12/24-hour entry with optional seconds, bounds, picker and EditForm validation |
+| **Quantity Stepper** | Touch-sized quantity editing with bounds and remove-at-minimum action |
 | **Time Picker** | Time selection with hour/minute controls |
 | **Toggle** | Two-state toggle button |
-| **Toggle Group** | Single or multi-select toggle group |
+| **Toggle Group** | Single/multiple selection with required-selection and horizontal-scrolling options |
 
 ### Layout & Navigation
 
@@ -289,7 +332,7 @@ Production-ready components for complex data-driven applications:
 | **Aspect Ratio** | Maintain width/height ratio for responsive content |
 | **Breadcrumb** | Navigation trail with hierarchical location |
 | **Card** | Container with header, content, footer, and action areas |
-| **Carousel** | Slideshow for cycling through content |
+| **Carousel** | Responsive slide counts, gaps, autoplay/pause, dragging, indicators and slide-change callbacks |
 | **Collapsible** | Expandable/collapsible panels |
 | **Dock** | IDE-style docking layout with drag-and-drop panels, pinning, maximize, pop-out floating windows, and tab overflow |
 | **Item** | Flexible list items with media, content, and actions |
@@ -298,8 +341,8 @@ Production-ready components for complex data-driven applications:
 | **Resizable** | Resizable panels with drag handles |
 | **Responsive Nav** | Adaptive navigation that switches between desktop and mobile layouts |
 | **Scroll Area** | Custom scrollable area with styled scrollbars |
-| **Separator** | Visual dividers (horizontal and vertical) |
-| **Sidebar** | Responsive sidebar with collapsible icon mode, variants (default, floating, inset), and mobile sheet integration |
+| **Separator** | Horizontal/vertical dividers with solid, dashed and dotted line styles |
+| **Sidebar** | Responsive icon/pill collapse modes, animated navigation indicators, inset/floating variants and mobile sheets |
 | **Tabs** | Tabbed interfaces with controlled/uncontrolled modes |
 | **Timeline** | Vertical timeline with alignment, connector styles, loading states, and collapsible items |
 
@@ -309,12 +352,12 @@ Production-ready components for complex data-driven applications:
 |-----------|-------------|
 | **Alert Dialog** | Modal requiring user acknowledgement |
 | **Command** | Command palette with keyboard navigation, filtering, and dialog mode |
-| **Context Menu** | Right-click menu with customizable items |
+| **Context Menu** | Right-click menus with checkbox/radio items and nested submenus |
 | **Dialog** | Modal dialogs with programmatic `DialogService` (alert, prompt, custom component dialogs) and an optional native `<dialog>` rendering strategy |
-| **Drawer** | Mobile-friendly panel sliding from screen edge |
-| **Dropdown Menu** | Menus with checkbox items and keyboard navigation |
+| **Drawer** | Sliding panels with pointer/keyboard snap points and optional drag dismissal |
+| **Dropdown Menu** | Checkbox/radio choices and nested submenus with keyboard navigation |
 | **Hover Card** | Rich hover previews |
-| **Menubar** | Desktop application-style menu bar |
+| **Menubar** | Application menus with checkbox/radio choices and nested submenus |
 | **Popover** | Floating content containers |
 | **Sheet** | Slide-out panels (top, right, bottom, left) |
 | **Toast** | Notification messages with multiple positions via `ToastService` |
@@ -328,7 +371,7 @@ Production-ready components for complex data-driven applications:
 | **Dashboard Grid**   | Drag-and-drop, resizable widget layout for dashboards with responsive breakpoints, state persistence, and keyboard accessibility |
 | **DataGrid**         | Enterprise data grid with row/cell/batch editing, validation, sorting, per-column filtering, row grouping with aggregates, hierarchical tree data, selection, expandable rows, row virtualization, context menu, pinned columns, column reordering/resizing/visibility, and state persistence |
 | **DataTable**        | Tables with sorting, filtering, pagination, and row selection                                                      |
-| **DataView**         | Displays data using templates in a grid or list layout with sorting, filtering, pagination, and infinite scrolling |
+| **DataView**         | Templated grid/list layouts, selection, grouping, list virtualization, mobile sorting/filtering, pagination and infinite scrolling |
 | **Event Calendar**   | Month, Week, and Agenda views over your own event model with per-event templates, styling, and click callbacks    |
 | **Markdown Editor**  | Toolbar formatting with live preview                                                                               |
 | **Rich Text Editor** | WYSIWYG editor on Quill 2 with headings, lists and checklists, links, images with an upload hook, tables, colour, alignment, code, and undo/redo |
@@ -341,7 +384,7 @@ Production-ready components for complex data-driven applications:
 |-----------|-------------|
 | **Alert** | Callout messages with dismissible variants |
 | **Avatar** | User avatars with fallback and group support |
-| **Badge** | Status badges and labels |
+| **Badge** | Semantic/soft status variants and composable decorative icons |
 | **Copy Text** | Click-to-copy text with tooltip feedback and copied-state indicator |
 | **Dark Mode Toggle** | Button that toggles light/dark mode with customizable icons and optional label |
 | **Empty** | Empty state placeholder with icon, title, and description |
@@ -529,8 +572,8 @@ Browse `/components` for the full catalog. The v4 examples include:
 | Demo | Route | Examples |
 |------|-------|----------|
 | [DataGrid editing](demos/BlazorBlueprint.Demo.Shared/Pages/Components/DataGridEditingDemo.razor) | `/components/datagrid-editing` | Cell/batch editing, text/number/date/select/checkbox editors, validation and sorting after saves |
-| [Scheduler](demos/BlazorBlueprint.Demo.Shared/Pages/Components/SchedulerDemo.razor) | `/components/scheduler` | Week starts, work weeks, dragging/resizing, slot sizes, recurrence, resources and time zones |
-| [TreeSelect](demos/BlazorBlueprint.Demo.Shared/Pages/Components/TreeSelectDemo.razor) | `/components/tree-select` | Single/multiple selection, cascading checkboxes and leaf-only values |
+| [Scheduler](demos/BlazorBlueprint.Demo.Shared/Pages/Components/SchedulerDemo.razor) | `/components/scheduler` | Full-day scrolling with an initial visible hour, week starts, work weeks, dragging/resizing, slot sizes, recurrence, resources and time zones |
+| [TreeSelect](demos/BlazorBlueprint.Demo.Shared/Pages/Components/TreeSelectDemo.razor) | `/components/tree-select` | Single/multiple selection, cascading checkboxes, leaf-only values, Space expansion and Enter selection |
 | [Cascader](demos/BlazorBlueprint.Demo.Shared/Pages/Components/CascaderDemo.razor) | `/components/cascader` | Path search, branch selection, keyboard navigation and scrolling between levels |
 | [FileUpload](demos/BlazorBlueprint.Demo.Shared/Pages/Components/FileUploadDemo.razor) | `/components/file-upload` | Upload progress, cancellation, retry and failure recovery |
 

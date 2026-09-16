@@ -11,7 +11,7 @@
     <section class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">Basic Example</h2>
-            <p class="text-sm text-muted-foreground">Search or expand the tree to choose a team.</p>
+            <p class="text-sm text-muted-foreground">Search or expand the tree to choose a team. With a node focused, Space opens or closes its branch; Enter selects it and closes the dropdown.</p>
         </div>
         <div class="rounded-lg border p-6 space-y-4">
             <div class="max-w-sm">
@@ -25,7 +25,7 @@
     <section class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">Multiple Selection</h2>
-            <p class="text-sm text-muted-foreground">Parent checkboxes select every descendant. Partially selected branches show an indeterminate state; LeafOnly stores only leaf keys.</p>
+            <p class="text-sm text-muted-foreground">Parent checkboxes select every descendant. Partially selected branches show an indeterminate state; LeafOnly stores only leaf keys. Space opens or closes a branch; Enter checks or unchecks the focused item while keeping the dropdown open.</p>
         </div>
         <div class="rounded-lg border p-6 space-y-4">
             <div class="max-w-sm">
@@ -71,7 +71,9 @@
             <AccessibilityItem>Search and clear controls have accessible labels. Disabled pickers cannot be opened or cleared.</AccessibilityItem>
         </AriaAttributes>
         <KeyboardNavigation>
-            <KeyboardShortcutItem Description="Open the picker or select the focused node"><BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Open the picker from its trigger"><BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Toggle the focused branch open or closed without selecting"><BbKbd>Space</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Select and close in single mode; check or uncheck and stay open in multiple mode"><BbKbd>Enter</BbKbd></KeyboardShortcutItem>
             <KeyboardShortcutItem Description="Move from search to the tree"><BbKbd>Tab</BbKbd></KeyboardShortcutItem>
             <KeyboardShortcutItem Description="Move between visible tree nodes"><BbKbd>ArrowUp</BbKbd> / <BbKbd>ArrowDown</BbKbd></KeyboardShortcutItem>
             <KeyboardShortcutItem Description="Expand or collapse a branch"><BbKbd>ArrowRight</BbKbd> / <BbKbd>ArrowLeft</BbKbd></KeyboardShortcutItem>
@@ -84,10 +86,10 @@
             <h2 class="text-2xl font-semibold">API Reference</h2>
             <p class="text-muted-foreground">Component properties and parameters.</p>
         </div>
-        <ApiReference ComponentName="TreeSelect">
+        <ApiReference Since="v4" ComponentName="TreeSelect">
             <ApiParameter Name="Items" Type="IEnumerable&lt;TItem&gt;">Root nodes in a nested hierarchy. Duplicate keys and cycles are rejected.</ApiParameter>
             <ApiParameter Name="ValueField / TextField / ChildrenProperty" Type="accessor delegates">Required key, display label and children selectors. Keys must be unique across the entire hierarchy.</ApiParameter>
-            <ApiParameter Name="Value / ValueChanged / ValueExpression" Type="string? / callback / expression">Two-way binding and EditContext validation for a single selected key. The caption resolves immediately for preselected values.</ApiParameter>
+            <ApiParameter Name="Value / ValueChanged / ValueExpression" Type="string? / callback / expression">Two-way binding and EditContext validation for a single selected key. The caption resolves immediately for preselected values. Enter selects an eligible focused node and closes the dropdown, including when it is already selected. Space only expands or collapses branches.</ApiParameter>
             <ApiParameter Name="Multiple / Values / ValuesChanged / ValuesExpression" Type="multiple selection">Set Multiple and bind a HashSet&lt;string&gt; to Values. Parent checkboxes select or clear all descendants, including collapsed and search-filtered nodes. Parents show an indeterminate state for partial selection. LeafOnly stores only leaf keys without disabling parent checkbox actions. Single selection uses Value.</ApiParameter>
             <ApiParameter Name="LeafOnly / Required" Type="bool" Default="false">LeafOnly limits single selection to leaves and stores only leaf keys for multiple selection; parent checkboxes still select whole branches. Required marks the field as required. Use model validation for required-value enforcement.</ApiParameter>
             <ApiParameter Name="ShowSearch / Clearable" Type="bool" Default="true">Search the hierarchy and show a separate clear button.</ApiParameter>

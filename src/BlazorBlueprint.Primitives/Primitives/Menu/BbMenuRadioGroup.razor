@@ -1,0 +1,31 @@
+@namespace BlazorBlueprint.Primitives.Menu
+@typeparam TValue
+
+<div @attributes="AdditionalAttributes" role="group" aria-disabled="@(Disabled ? "true" : null)">
+    <CascadingValue Value="this" IsFixed="false">
+        @ChildContent
+    </CascadingValue>
+</div>
+
+@code {
+    /// <summary>The selected value.</summary>
+    [Parameter] public TValue? Value { get; set; }
+    /// <summary>Called when the selected value changes.</summary>
+    [Parameter] public EventCallback<TValue> ValueChanged { get; set; }
+    /// <summary>Disables all items in the group.</summary>
+    [Parameter] public bool Disabled { get; set; }
+    /// <summary>The radio items.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>HTML attributes, including an accessible group label.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    internal bool IsSelected(TValue? value) => EqualityComparer<TValue>.Default.Equals(Value, value);
+
+    internal async Task SelectAsync(TValue value)
+    {
+        if (Disabled || IsSelected(value)) { return; }
+        Value = value;
+        await ValueChanged.InvokeAsync(value);
+        StateHasChanged();
+    }
+}

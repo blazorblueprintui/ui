@@ -137,7 +137,30 @@
         <CodeBlock Source="Components/Carousel/image-gallery.txt" />
     </div>
 
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Autoplay, dragging and slide indicators</h2>
+        <p class="text-sm text-muted-foreground">Swipe or drag the cards. Hover temporarily pauses rotation; keyboard focus pauses it until you explicitly restart. Reduced-motion preferences disable autoplay. The first visible index is bound below.</p>
+<BbCarousel SlidesPerView="2" Gap="12" Loop="true" Autoplay="true" AutoplayInterval="4000"
+            ShowIndicators="true" @bind-Paused="paused" @bind-ActiveIndex="activeSlide" AriaLabel="Featured collections"
+            Class="mx-12">
+    <BbCarouselContent>
+        @for (var i = 1; i <= 6; i++)
+        {
+            <BbCarouselItem><div class="flex h-36 items-center justify-center rounded-lg border bg-muted text-3xl font-semibold">@i</div></BbCarouselItem>
+        }
+    </BbCarouselContent>
+    <BbCarouselPrevious />
+    <BbCarouselNext />
+</BbCarousel>
+        <p class="text-sm">First slide: @(activeSlide + 1). Rotation @(paused ? "paused" : "enabled").</p>
+        <CodeBlock Source="Components/Carousel/controls.txt" />
+
+    </section>
     <!-- Accessibility Notes -->
+
+    <!-- API Reference -->
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>
@@ -152,6 +175,8 @@
             <AccessibilityItem>
                 Navigation buttons are disabled at carousel boundaries when not looping
             </AccessibilityItem>
+                    <AccessibilityItem>Autoplay pauses for keyboard focus, pointer hover and hidden documents. Reduced-motion preferences stop automatic movement. Provide a pause/resume control when enabling autoplay.</AccessibilityItem>
+            <AccessibilityItem>Offscreen slides are inert so their interactive children do not remain in the keyboard tab sequence.</AccessibilityItem>
         </AriaAttributes>
         <KeyboardNavigation>
             <KeyboardShortcutItem Description="Activate previous/next buttons">
@@ -163,7 +188,6 @@
         </KeyboardNavigation>
     </AccessibilityList>
 
-    <!-- API Reference -->
     <section class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">API Reference</h2>
@@ -181,11 +205,23 @@
                 <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
                     Additional HTML attributes applied to the root <code>&lt;div&gt;</code> element (e.g. <code>data-testid</code>, <code>aria-label</code>).
                 </ApiParameter>
-            </ApiReference>
+
+            <ApiParameter Since="v4" Name="SlidesPerView / Gap" Type="double / int" Default="1 / 16">Visible slides (at least 1, fractional peeks allowed) and content spacing in pixels. Per-item Class can override responsive basis; browser measurements determine navigation limits.</ApiParameter>
+            <ApiParameter Since="v4" Name="Draggable" Type="bool" Default="true">Pointer drag/swipe navigation. Links, buttons and form controls retain normal interaction. Arrow keys work when the carousel region is focused.</ApiParameter>
+            <ApiParameter Since="v4" Name="Autoplay / AutoplayInterval" Type="bool / int" Default="false / 5000">Timed rotation and visible pause control; interval at least 1000ms. Pauses on hover, hidden document, keyboard focus and reduced motion.</ApiParameter>
+            <ApiParameter Since="v4" Name="Paused / PausedChanged" Type="bool / EventCallback&lt;bool&gt;" Default="false">User-controlled rotation state; supports two-way binding. Focus pauses until explicitly restarted.</ApiParameter>
+            <ApiParameter Since="v4" Name="ActiveIndex / ActiveIndexChanged / OnSlideChanged" Type="int / EventCallback&lt;int&gt; / EventCallback&lt;int&gt;" Default="0">First visible slide, binding callback and change notification. Index is clamped after layout changes.</ApiParameter>
+            <ApiParameter Since="v4" Name="GoToAsync(index)" Type="Task">Programmatic navigation respecting Loop and measured limits.</ApiParameter>
+            <ApiParameter Since="v4" Name="ShowIndicators / IndicatorPosition" Type="bool / CarouselIndicatorPosition" Default="false / Bottom">Built-in slide buttons; Bottom, Top or Inside placement.</ApiParameter>
+            <ApiParameter Since="v4" Name="AriaLabel" Type="string?">Name for the carousel region. Offscreen slides are excluded from keyboard navigation.</ApiParameter>
+
+        </ApiReference>
         </div>
+
+
     </section>
 
-    <LocalizationSection
+<LocalizationSection
         Description="Carousel navigation button aria labels are configurable."
         Labels="@(new LocalizationSection.LabelInfo[]
         {
@@ -198,3 +234,5 @@
     opts.Carousel.PreviousSlide = ""Vorherige Folie"";
 });")" />
 </div>
+
+@code { private bool paused; private int activeSlide; }

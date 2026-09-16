@@ -1,0 +1,50 @@
+@page "/components/motion"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Motion - Blazor Blueprint</PageTitle>
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Motion</h1>
+        <p class="text-xl text-muted-foreground">Animate content with presets, visibility changes and pointer or keyboard triggers. Reduced-motion preferences are respected.</p>
+    </div>
+<section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Presets and triggers</h2>
+        <p class="text-sm text-muted-foreground">Replay the cards or hover/focus the button. Visibility retains child components; hidden content is inert. Prerendered content is visible unless Visible=false, and entrance animation is opt-in.</p>
+        <BbButton OnClick="@(() => replay++)">Replay presets</BbButton>
+        <div @key="replay" class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            @foreach (var preset in Enum.GetValues<MotionPreset>())
+            {
+                <BbMotion Preset="preset" AnimateOnFirstRender="true" Duration="450">
+                    <div class="rounded-lg border bg-card p-5 text-center text-sm">@preset</div>
+                </BbMotion>
+            }
+        </div>
+        <BbMotion Trigger="MotionTrigger.Hover" Preset="MotionPreset.Pulse" Class="inline-block"><BbButton Variant="ButtonVariant.Outline">Hover or focus me</BbButton></BbMotion>
+        <CodeBlock Source="Components/Motion/presets.txt" />
+    </section>
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Hidden content remains mounted but is inert and hidden from assistive technology.</AccessibilityItem>
+            <AccessibilityItem>Motion honors prefers-reduced-motion. It adds no tab stop; interactive children retain their keyboard behavior.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between interactive controls"><BbKbd>Tab / Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate a focused button"><BbKbd>Enter / Space</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+<ApiReference Since="v4" ComponentName="Motion">
+        <ApiParameter Name="Visible / Preset / Trigger" Type="bool / MotionPreset / MotionTrigger" Default="true / Fade / Visibility">Presets include directional slides, Scale, Bounce, Pulse, ShakeX/Y and a spring-shaped entrance. Triggers: Visibility, InView, Hover (also focus), Press (also Enter/Space), Manual.</ApiParameter>
+        <ApiParameter Name="Duration / Delay / Easing / Distance" Type="int / int / string / double" Default="250 / 0 / ease-out / 16">Milliseconds, CSS easing and slide/shake distance in pixels. Delay supports staggered items. Respect for reduced motion is always enabled.</ApiParameter>
+        <ApiParameter Name="AnimateOnFirstRender / Once / Threshold" Type="bool / bool / double" Default="false / true / 0.1">First interactive entrance; InView repeat policy and intersection fraction (0–1).</ApiParameter>
+        <ApiParameter Name="Keyframes" Type="IReadOnlyList&lt;IReadOnlyDictionary&lt;string, object&gt;&gt;?">Custom Web Animations frames replace the preset. Final presentation comes from the normal styles when animation finishes.</ApiParameter>
+        <ApiParameter Name="PlayAsync()" Type="Task">Replays on the renderer dispatcher; Manual triggers use this method.</ApiParameter>
+        <ApiParameter Name="ChildContent / Class / Style / AdditionalAttributes" Type="RenderFragment / string? / string? / Dictionary">Content and wrapper customization. Content is retained while hidden.</ApiParameter>
+    </ApiReference>
+    </section>
+</div>
+
+@code {
+    private int replay;
+}

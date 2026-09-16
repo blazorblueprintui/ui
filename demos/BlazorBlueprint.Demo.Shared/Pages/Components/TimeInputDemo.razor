@@ -1,0 +1,99 @@
+@page "/components/time-input"
+@using System.Globalization
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>Time Input - Blazor Blueprint</PageTitle>
+<div class="space-y-8 max-w-4xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Time Input</h1>
+        <p class="text-xl text-muted-foreground">Edit hours, minutes and optional seconds with culture-aware 12/24-hour display.</p>
+    </div>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Segmented editing</h2>
+        <div class="rounded-lg border p-6 space-y-4">
+            <BbLabel For="basic-time">Appointment time</BbLabel>
+            <BbTimeInput Id="basic-time" @bind-Value="value" Format="TimeFormat.Hour12" AriaLabel="Appointment time" />
+            <p role="status" class="text-sm text-muted-foreground">Selected: @(value?.ToString() ?? "None")</p>
+        </div>
+        <CodeBlock Source="Components/TimeInput/basic.txt" />
+    </section>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Display options</h2>
+        <div class="rounded-lg border p-6 space-y-4">
+            <BbTimeInput @bind-Value="alternate" Format="TimeFormat.Hour24" ShowSeconds="true" MinuteStep="15" AriaLabel="Alternate time format" />
+            <BbTimeInput Value="value" Disabled="true" AriaLabel="Disabled time" />
+            <BbTimeInput Value="value" ReadOnly="true" AriaLabel="Read-only time" />
+        </div>
+        <CodeBlock Source="Components/TimeInput/options.txt" />
+    </section>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Validation and bounds</h2>
+        <EditForm Model="model" FormName="segmented-time" OnValidSubmit="@(() => saved = true)" class="rounded-lg border p-6 space-y-4">
+            <DataAnnotationsValidator />
+            <BbLabel For="required-time">Required time</BbLabel>
+            <BbTimeInput @ref="requiredInput" Id="required-time" @bind-Value="model.Value" MinTime="@TimeSpan.FromHours(9)" MaxTime="@TimeSpan.FromHours(17)" Required="true" AriaDescribedBy="time-help" />
+            <p id="time-help" class="text-sm text-muted-foreground">Choose a time between 09:00 and 17:00. Partial or invalid entries remain visible and prevent form submission.</p>
+            <ValidationMessage For="@(() => model.Value)" />
+            <div class="flex gap-2">
+                <BbButton Type="ButtonType.Submit">Save</BbButton>
+                <BbButton Variant="ButtonVariant.Outline" OnClick="Clear">Clear</BbButton>
+            </div>
+            @if (saved) { <p role="status">Saved successfully.</p> }
+        </EditForm>
+        <CodeBlock Source="Components/TimeInput/validation.txt" />
+    </section>
+
+
+        <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The control is a labelled group. Numeric segments expose spinbutton roles, individual names, current values and ranges.</AccessibilityItem>
+            <AccessibilityItem>Use Id with BbLabel for the first segment, AriaLabel for the group, and AriaDescribedBy to associate help or validation text.</AccessibilityItem>
+            <AccessibilityItem>Partial or invalid entries retain their text, mark the group and segments invalid, and add an EditContext validation message. Disabled segments cannot be edited; read-only numeric segments remain focusable.</AccessibilityItem>
+            <AccessibilityItem>In 12-hour mode, AM/PM is a BbSelect with a labelled combobox trigger and listbox options. The clock popup also uses labelled BbSelect controls for hours, minutes and optional seconds.</AccessibilityItem>
+            <AccessibilityItem>MinuteStep changes numeric keyboard increments and the picker choices. Typed minutes can use any value within the time bounds.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between numeric segments and picker controls"><BbKbd>Tab</BbKbd> / <BbKbd>Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move between numeric segments (direction follows RTL)"><BbKbd>ArrowLeft</BbKbd> / <BbKbd>ArrowRight</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Increase or decrease the focused numeric segment"><BbKbd>ArrowUp</BbKbd> / <BbKbd>ArrowDown</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Set the focused numeric segment to its minimum or maximum"><BbKbd>Home</BbKbd> / <BbKbd>End</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Clear selected segment text"><BbKbd>Backspace</BbKbd> / <BbKbd>Delete</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Open a focused select or clock button"><BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move through AM/PM or time options in an open select"><BbKbd>ArrowUp</BbKbd> / <BbKbd>ArrowDown</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Choose the focused select option"><BbKbd>Enter</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Close the active select or clock popup"><BbKbd>Escape</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+        <ApiReference Since="v4" ComponentName="TimeInput">
+            <ApiParameter Name="Value / ValueChanged / ValueExpression" Type="TimeSpan? / callback / expression">Two-way value binding and form validation. Partial or invalid text sets the bound value to null while retaining the draft.</ApiParameter>
+            <ApiParameter Name="Culture" Type="CultureInfo?" Default="null">Defaults to CultureInfo.CurrentCulture.</ApiParameter>
+            <ApiParameter Name="MinTime / MaxTime" Type="TimeSpan?">Inclusive time-of-day bounds within one day; overnight bounds are not supported.</ApiParameter>
+            <ApiParameter Name="Format" Type="TimeFormat?" Default="null">Override the current culture with Hour12 or Hour24.</ApiParameter>
+            <ApiParameter Name="ShowSeconds / MinuteStep / ShowPicker" Type="bool / int / bool" Default="false / 1 / true">Seconds visibility, keyboard/picker minute increment (1–59), and clock button. Typed minutes can use any value. Editing without seconds sets seconds to zero.</ApiParameter>
+            <ApiParameter Name="Disabled / ReadOnly / Required" Type="bool" Default="false">Disable editing, keep a read-only display, or mark segments required. Use model validation for required-value enforcement.</ApiParameter>
+            <ApiParameter Name="Id / Name / AriaLabel / AriaDescribedBy" Type="string?">First-segment ID, hidden form-field name, group label and descriptive text ID.</ApiParameter>
+            <ApiParameter Name="Class / AdditionalAttributes" Type="presentation parameters">Container styling and attributes.</ApiParameter>
+            <ApiParameter Name="ClearAsync()" Type="Task">Clear the value and every segment; ignored when disabled or read-only.</ApiParameter>
+        </ApiReference>
+    </section>
+
+</div>
+@code {
+    private TimeSpan? value = new TimeSpan(14, 30, 0);
+    private TimeSpan? alternate = new TimeSpan(14, 30, 0);
+    private readonly FormModel model = new();
+    private BbTimeInput? requiredInput;
+    private bool saved;
+    private async Task Clear()
+    {
+        saved = false;
+        if (requiredInput != null) { await requiredInput.ClearAsync(); }
+    }
+    private sealed class FormModel
+    {
+        [Required] public TimeSpan? Value { get; set; }
+    }
+}

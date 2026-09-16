@@ -2,12 +2,20 @@
 
 <div class="@RowCssClass" role="group" aria-label="@Localizer["FilterBuilder.FilterCondition"]" @attributes="AdditionalAttributes">
     @* Field selector *@
+    @if (Context?.SearchableFields == true)
+    {
+        <BbCombobox TValue="string" Value="@Condition.Field" ValueChanged="HandleFieldChanged"
+                    Options="@fieldOptions" Placeholder="@Localizer["FilterBuilder.SelectField"]" Class="@FieldSelectClass" />
+    }
+    else
+    {
     <BbSelect TValue="string"
               Value="@Condition.Field"
               ValueChanged="HandleFieldChanged"
               Options="@fieldOptions"
               Placeholder="@Localizer["FilterBuilder.SelectField"]"
               Class="@FieldSelectClass" />
+    }
 
     @* Operator selector *@
     @if (!string.IsNullOrEmpty(Condition.Field) && selectedField != null)
@@ -21,6 +29,12 @@
         @* Value input — type-aware *@
         @if (!FilterOperatorHelper.IsValuelessOperator(Condition.Operator))
         {
+            @if (Context?.ValueEditors?.TryGetValue(selectedField.Name, out var editor) == true)
+            {
+                @editor(new FilterValueEditorContext(selectedField, Condition, OnChanged))
+            }
+            else
+            {
             @switch (selectedField.Type)
             {
                 case FilterFieldType.Text:
@@ -108,6 +122,7 @@
                               Placeholder="@Localizer["FilterBuilder.SelectValue"]"
                               Class="@ValueInputClass" />
                     break;
+            }
             }
         }
     }

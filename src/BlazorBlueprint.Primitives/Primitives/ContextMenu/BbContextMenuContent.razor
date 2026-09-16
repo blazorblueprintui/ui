@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Primitives.ContextMenu
+@using BlazorBlueprint.Primitives.Menu
 @using System.ComponentModel
 @inherits BlazorBlueprint.Primitives.BbPrimitiveBase
 @inject IJSRuntime JSRuntime
@@ -26,11 +27,14 @@
          @onclick:stopPropagation="true"
          @oncontextmenu:preventDefault="true"
          @attributes="FilteredAttributes">
-        @ChildContent
+        <CascadingValue Value="menuScope" IsFixed="true">
+            @ChildContent
+        </CascadingValue>
     </div>
 }
 
 @code {
+    private MenuScope menuScope = null!;
     private ElementReference overlayRef;
     private ElementReference contentRef;
     private IJSObjectReference? menuKeyboardModule;
@@ -45,6 +49,7 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
+        menuScope = new MenuScope(() => Context?.IsOpen == true, () => Context?.Close() ?? Task.CompletedTask);
 
         if (Context == null)
         {

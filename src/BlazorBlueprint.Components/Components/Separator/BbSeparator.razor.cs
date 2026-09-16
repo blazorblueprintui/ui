@@ -84,11 +84,17 @@ public partial class BbSeparator : ComponentBase
     /// - Orientation-specific classes (width/height)
     /// - Custom classes from the Class parameter
     /// </remarks>
+    /// <summary>The visible line pattern.</summary>
+    [Parameter] public SeparatorLineStyle LineStyle { get; set; }
+
     private string CssClass => ClassNames.cn(
         "bb:shrink-0 bb:bg-border",
         Orientation == SeparatorOrientation.Horizontal
             ? "bb:h-[1px] bb:w-full"
             : "bb:h-full bb:w-[1px]",
+        LineStyle != SeparatorLineStyle.Solid ? "bb:bg-transparent bb:border-border" : null,
+        LineStyle == SeparatorLineStyle.Dashed ? "bb:border-dashed" : LineStyle == SeparatorLineStyle.Dotted ? "bb:border-dotted" : null,
+        LineStyle != SeparatorLineStyle.Solid ? Orientation == SeparatorOrientation.Horizontal ? "bb:h-0 bb:border-t" : "bb:w-0 bb:border-l" : null,
         Class
     );
 

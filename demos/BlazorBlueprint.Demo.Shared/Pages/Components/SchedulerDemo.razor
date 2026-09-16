@@ -11,11 +11,11 @@
     <section class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">Basic Example</h2>
-            <p class="text-sm text-muted-foreground">Choose a time slot to create an appointment, or select an event to edit it. Switch between day, week and work-week views using the toolbar.</p>
+            <p class="text-sm text-muted-foreground">Scroll vertically through the full 24-hour day; the initial view starts at 8 AM. Day headings remain visible while scrolling. Choose a time slot to create an appointment, or select an event to edit it. Previous, Today and Next sit together beside the centered date heading. Today uses the schedule's time zone and keeps the current view. Clicking outside the editor leaves your draft open; use Save, Cancel, the close button or Escape to finish.</p>
         </div>
         <div class="rounded-lg border p-4 space-y-4">
             <BbScheduler @bind-Events="simpleEvents" @bind-Date="simpleDate" @bind-View="simpleView"
-                         TimeZoneId="UTC" StartHour="8" EndHour="14" AriaLabel="Daily appointments" />
+                         TimeZoneId="UTC" StartHour="0" EndHour="24" InitialScrollHour="8" AriaLabel="Daily appointments" />
         </div>
         <CodeBlock Source="Components/Scheduler/basic.txt" />
     </section>
@@ -28,7 +28,7 @@
         <div class="rounded-lg border p-4 space-y-4">
             <BbScheduler @bind-Events="weekEvents" @bind-Date="weekDate" @bind-View="weekView"
                          @bind-FirstDayOfWeek="weekStart" EnableTimeZones="false" TimeZoneId="UTC"
-                         StartHour="8" EndHour="12" AriaLabel="Week and work-week appointments" />
+                         StartHour="0" EndHour="24" InitialScrollHour="8" AriaLabel="Week and work-week appointments" />
         </div>
         <CodeBlock Source="Components/Scheduler/week-views.txt" />
     </section>
@@ -62,7 +62,7 @@
             </div>
             <BbScheduler @bind-Events="interactiveEvents" Date="@(new DateOnly(2026, 9, 14))" View="SchedulerView.Day"
                          SlotMinutes="@slotMinutes" AllowDrag="@allowDrag" AllowResize="@allowResize"
-                         EnableTimeZones="false" TimeZoneId="UTC" StartHour="8" EndHour="14" AriaLabel="Drag and resize appointments" />
+                         EnableTimeZones="false" TimeZoneId="UTC" StartHour="0" EndHour="24" InitialScrollHour="8" AriaLabel="Drag and resize appointments" />
         </div>
         <CodeBlock Source="Components/Scheduler/drag-resize.txt" />
     </section>
@@ -70,7 +70,7 @@
     <section class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">Resources, Recurrence and Time Zones</h2>
-            <p class="text-sm text-muted-foreground">Room lanes separate resources and overlapping events share the available width. The recurring planning session stays at 9:00 AM in New York; changing the display zone shows the same appointments in local time. Edit one occurrence or the whole series. Dragging or resizing changes only that occurrence; moving between rooms changes its resource assignment.</p>
+            <p class="text-sm text-muted-foreground">Room lanes separate resources and overlapping events share the available width. The recurring planning session stays at 9:00 AM in New York; changing the display zone shows the same appointments in local time. Edit one occurrence or the whole series. In the editor, Daily means every day, Weekly offers weekday checkboxes, and Monthly/Yearly repeat on the start date. The occurrence limit is optional. Dragging or resizing changes only that occurrence; moving between rooms changes its resource assignment.</p>
         </div>
         <div class="rounded-lg border p-4 space-y-4">
             <div class="space-y-2 max-w-sm">
@@ -89,7 +89,7 @@
                 <BbLabel For="scheduler-reject-save">Simulate a failed save</BbLabel>
             </div>
             <BbScheduler @bind-Events="events" Resources="resources" @bind-Date="date" @bind-View="view" TimeZoneId="@displayZone"
-                         StartHour="8" EndHour="20" OnEventChange="SaveAsync" />
+                         StartHour="0" EndHour="24" InitialScrollHour="8" OnEventChange="SaveAsync" />
         </div>
         <CodeBlock Source="Components/Scheduler/resources.txt" />
     </section>
@@ -101,7 +101,7 @@
         </div>
         <div class="rounded-lg border p-4 space-y-4">
             <BbScheduler Events="simpleEvents" Date="@(new DateOnly(2026, 9, 14))" View="SchedulerView.Week"
-                         TimeZoneId="UTC" StartHour="8" EndHour="14" ReadOnly="true" AriaLabel="Read-only weekly appointments" />
+                         TimeZoneId="UTC" StartHour="0" EndHour="24" InitialScrollHour="8" ReadOnly="true" AriaLabel="Read-only weekly appointments" />
         </div>
         <CodeBlock Source="Components/Scheduler/read-only.txt" />
     </section>
@@ -109,10 +109,11 @@
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>The scheduler region, time slots and event buttons have accessible labels. View buttons announce their pressed state and the week-start selector is labelled.</AccessibilityItem>
-            <AccessibilityItem>The event editor uses labelled Bb form controls and reports invalid times or rejected saves without discarding the draft.</AccessibilityItem>
+            <AccessibilityItem>The weekly repeat choices use labelled checkboxes within a fieldset. The event editor uses labelled Bb form controls and reports invalid times or rejected saves without discarding the draft.</AccessibilityItem>
             <AccessibilityItem>Read-only schedules disable changes while preserving date navigation. Delete confirmation identifies whether one event, an occurrence or a series will be removed.</AccessibilityItem>
         </AriaAttributes>
         <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Scroll the focused time-slot region vertically"><BbKbd>ArrowUp</BbKbd> / <BbKbd>ArrowDown</BbKbd> / <BbKbd>PageUp</BbKbd> / <BbKbd>PageDown</BbKbd></KeyboardShortcutItem>
             <KeyboardShortcutItem Description="Move between the toolbar, time slots and appointments"><BbKbd>Tab</BbKbd> / <BbKbd>Shift</BbKbd> + <BbKbd>Tab</BbKbd></KeyboardShortcutItem>
             <KeyboardShortcutItem Description="Open an appointment or create one in the focused time slot"><BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd></KeyboardShortcutItem>
             <KeyboardShortcutItem Description="Cancel an active drag, or close the active picker or event editor"><BbKbd>Escape</BbKbd></KeyboardShortcutItem>
@@ -124,16 +125,17 @@
             <h2 class="text-2xl font-semibold">API Reference</h2>
             <p class="text-muted-foreground">Component properties, event data and recurrence helpers.</p>
         </div>
-        <ApiReference ComponentName="Scheduler">
+        <ApiReference Since="v4" ComponentName="Scheduler">
             <ApiParameter Name="Events / EventsChanged" Type="IReadOnlyList&lt;SchedulerEvent&gt;">Bind appointment data. Updates use independent copies. Persist Events from OnEventChange before accepting a change.</ApiParameter>
             <ApiParameter Name="Resources" Type="IReadOnlyList&lt;SchedulerResource&gt;">Unique resource IDs and titles. Each event can have multiple ResourceIds. Unassigned events get a separate lane.</ApiParameter>
-            <ApiParameter Name="Date / DateChanged" Type="DateOnly">The date whose day or week is displayed. WorkWeek uses its Monday-start week. Week and WorkWeek navigation advance seven days.</ApiParameter>
+            <ApiParameter Name="Date / DateChanged" Type="DateOnly">The date whose day or week is displayed. Today sets this to the current date in TimeZoneId and raises DateChanged while preserving View and FirstDayOfWeek. WorkWeek uses its Monday-start week. Week and WorkWeek navigation advance seven days.</ApiParameter>
             <ApiParameter Name="View / ViewChanged" Type="SchedulerView" Default="Week">Day, Week or WorkWeek. WorkWeek displays Monday through Friday regardless of FirstDayOfWeek.</ApiParameter>
             <ApiParameter Name="FirstDayOfWeek / FirstDayOfWeekChanged" Type="DayOfWeek / EventCallback&lt;DayOfWeek&gt;" Default="Monday">First day in Week view. The toolbar offers Monday and Sunday. Use <code>@@bind-FirstDayOfWeek</code> to retain changes in the parent. WorkWeek always starts on Monday without changing this preference.</ApiParameter>
             <ApiParameter Name="TimeZoneId" Type="string" Default="UTC">IANA display zone. SchedulerEvent.TimeZoneId independently determines recurrence wall time.</ApiParameter>
             <ApiParameter Name="EnableTimeZones" Type="bool" Default="true">When false, hide the time-zone selector and toolbar label, and use TimeZoneId for both display and editing. Existing instants and recurrence zones are preserved. Use UTC for a fixed-offset schedule. When enabled, the built-in selector lists IANA IDs from Noda Time's TZDB that .NET supports on the host, including aliases.</ApiParameter>
             <ApiParameter Name="SlotMinutes" Type="int" Default="30">Slot size and drag/resize snapping interval. Supports 15, 30, 60 and other divisors of 1440 between 5 and 120. Resizing keeps at least one slot of duration.</ApiParameter>
-            <ApiParameter Name="StartHour / EndHour" Type="int" Default="8 / 18">Visible hours. Use EndHour=24 for a full day. DST days use their actual elapsed duration.</ApiParameter>
+            <ApiParameter Name="StartHour / EndHour" Type="int" Default="8 / 18">The rendered hour range; hours outside it are not available by scrolling. Use StartHour=0 and EndHour=24 for a full day. DST days use their actual elapsed duration. The viewport scrolls within a maximum height of 700px or 65vh, whichever is smaller.</ApiParameter>
+            <ApiParameter Name="InitialScrollHour" Type="int?" Default="null" Since="v4">Display-zone hour (0–23) shown after the first interactive render, clamped to the rendered range. Null starts at StartHour. This does not remove earlier hours; later renders preserve the user's scroll position.</ApiParameter>
             <ApiParameter Name="AllowDrag" Type="bool" Default="true">Move appointments between visible time slots, days and resource lanes. Duration is preserved. Recurring moves create an occurrence exception. Other resource assignments are retained; moving to Unassigned clears assignments.</ApiParameter>
             <ApiParameter Name="AllowResize" Type="bool" Default="true">Resize visible top and bottom appointment edges. Changes use OnEventChange; rejected saves keep the original event and open the proposed edit for correction or retry.</ApiParameter>
             <ApiParameter Name="ReadOnly" Type="bool" Default="false">Disables creation, editing, deletion, moving and resizing.</ApiParameter>
@@ -142,9 +144,9 @@
             <ApiParameter Name="CreateEvent(start, resourceId) / EditEvent(occurrence, scope)" Type="void">Open the built-in editor programmatically.</ApiParameter>
             <ApiParameter Name="Class / AriaLabel / AdditionalAttributes" Type="presentation parameters">Style and label the scheduler region.</ApiParameter>
         </ApiReference>
-        <ApiReference ComponentName="Scheduler data and recurrence">
+        <ApiReference Since="v4" ComponentName="Scheduler data and recurrence">
             <ApiParameter Name="SchedulerEvent" Type="class">Id, Title, Start, End, TimeZoneId, ResourceIds, RecurrenceRule, ExcludedStarts, SeriesId and RecurrenceId. Clone() deep-copies its collections.</ApiParameter>
-            <ApiParameter Name="RecurrenceRule" Type="string?">RFC 5545 daily, weekly, monthly or yearly RRULE; supports BYDAY, BYMONTHDAY, COUNT and UNTIL. The editor has repeat presets plus custom rules. Missing month days follow RFC rules and are skipped.</ApiParameter>
+            <ApiParameter Name="RecurrenceRule" Type="string?">RFC 5545 daily, weekly, monthly or yearly RRULE; supports BYDAY, BYMONTHDAY, COUNT and UNTIL. The editor offers daily, weekly (with weekday checkboxes), monthly and yearly presets. Monthly and yearly repeats use the start date. More complex application-supplied rules are preserved until the user chooses a replacement; the editor does not expose raw rule syntax. Missing month days follow RFC rules and are skipped.</ApiParameter>
             <ApiParameter Name="SchedulerEngine.Expand" Type="IReadOnlyList&lt;SchedulerOccurrence&gt;">Expand a half-open range, including events crossing its start. Default limit 10,000; exceeding the limit throws.</ApiParameter>
             <ApiParameter Name="SchedulerEngine.ToInstant" Type="DateTimeOffset">Convert wall time with Earlier or Later resolution for a repeated DST time. Missing times are rejected. Timed occurrences retain their original elapsed duration.</ApiParameter>
             <ApiParameter Name="SchedulerEngine.ApplyChange / Validate" Type="static methods">Validate data and prepare independent create/update/delete collections, including series exceptions.</ApiParameter>

@@ -1,0 +1,44 @@
+@namespace BlazorBlueprint.Primitives.Menu
+@typeparam TValue
+
+<div @attributes="AdditionalAttributes" role="menuitemradio" tabindex="-1"
+     aria-checked="@IsSelected.ToString().ToLowerInvariant()"
+     aria-disabled="@IsDisabled.ToString().ToLowerInvariant()"
+     data-disabled="@(IsDisabled ? "true" : null)"
+     data-state="@(IsSelected ? "checked" : "unchecked")"
+     @onclick="SelectAsync" @onclick:stopPropagation="true">
+    @ChildContent
+</div>
+
+@code {
+    [CascadingParameter] private BbMenuRadioGroup<TValue>? Group { get; set; }
+    [CascadingParameter] private MenuScope? Scope { get; set; }
+    /// <summary>The value represented by this item.</summary>
+    [Parameter, EditorRequired] public TValue Value { get; set; } = default!;
+    /// <summary>Disables this item.</summary>
+    [Parameter] public bool Disabled { get; set; }
+    /// <summary>Closes the entire menu after selecting this item. Default is true.</summary>
+    [Parameter] public bool CloseOnSelect { get; set; } = true;
+    /// <summary>The item label.</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Additional HTML attributes.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private bool IsDisabled => Disabled || Group?.Disabled == true;
+    private bool IsSelected => Group?.IsSelected(Value) == true;
+
+    protected override void OnParametersSet()
+    {
+        if (Group is null || Scope is null)
+        {
+            throw new InvalidOperationException("Menu radio items require a radio group inside a menu content component.");
+        }
+    }
+
+    private async Task SelectAsync()
+    {
+        if (IsDisabled || Scope?.IsOpen != true) { return; }
+        await Group!.SelectAsync(Value);
+        if (CloseOnSelect) { await Scope.CloseRootAsync(); }
+    }
+}

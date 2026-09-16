@@ -1,0 +1,18 @@
+<div class="flex flex-wrap gap-2" role="group" aria-label="Preview screen">
+    @foreach (var name in new[] { "Overview", "Activity", "Settings" })
+    {
+        <BbButton Variant="@(screen == name ? ButtonVariant.Default : ButtonVariant.Outline)" aria-pressed="@((screen == name).ToString().ToLowerInvariant())" OnClick="@(() => screen = name)">@name</BbButton>
+    }
+</div>
+<BbScreenTransition TransitionKey="screen" Preset="MotionPreset.SlideUp">
+    <div class="rounded-lg bg-muted p-6 space-y-2">
+        <h3 class="font-semibold">@screen</h3>
+        @if (screen == "Overview") { <p>12 projects active · 4 milestones due this week.</p> }
+        else if (screen == "Activity") { <p>Alex uploaded the design review. Sam completed the release checklist.</p> }
+        else { <p>Notifications are enabled. Your workspace is visible to team members.</p> }
+    </div>
+</BbScreenTransition>
+
+@code {
+    private string screen = "Overview";
+}

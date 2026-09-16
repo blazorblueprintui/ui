@@ -526,15 +526,79 @@
     </div>
 
     <!-- ── Accessibility ──────────────────────────────────────────────────── -->
+
+    <!-- ── API Reference ──────────────────────────────────────────────────── -->
+
+
+    <LocalizationSection
+        Description="DataView search, empty state, and view toggle labels are configurable."
+        Labels="@(new LocalizationSection.LabelInfo[]
+        {
+            new("SearchPlaceholder", "Search...", "Placeholder for the search input"),
+            new("NoResultsFound", "No results found", "Shown when there are no items"),
+            new("Loading", "Loading...", "Shown during initial data load"),
+            new("LoadingMore", "Loading more...", "Shown during infinite scroll loading"),
+            new("LoadMore", "Load more", "Label for the load more button"),
+            new("ListView", "List view", "Aria label for the list view toggle"),
+            new("GridView", "Grid view", "Aria label for the grid view toggle"),
+            new("Sort", "Sort", "Label for the sort button"),
+        })"
+        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
+{
+    opts.DataView.SearchPlaceholder = ""Suchen..."";
+    opts.DataView.NoResultsFound = ""Keine Ergebnisse gefunden"";
+});")" />
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Grouped selection and virtualized lists</h2>
+        <p class="text-sm text-muted-foreground">Selection uses stable IDs across reloaded item instances. Inactive employees cannot be selected. Group headings remain mounted while each group's list virtualizes its rows. Use similar-height rows and include spacing in VirtualItemSize.</p>
+<BbDataView TItem="Person" Data="people" ShowPagination="false" ShowToolbar="false"
+            SelectionMode="DataTableSelectionMode.Multiple" @bind-SelectedItems="selectedPeople"
+            ItemKey="@(person => person.Id)" ItemLabel="@(person => $"Select {person.Name}")"
+            IsItemDisabled="@(person => !person.IsActive)" GroupBy="@(person => person.Department)"
+            EnableVirtualization="true" VirtualItemSize="56" OverscanCount="3" ScrollHeight="360px">
+    <GroupHeaderTemplate Context="group">
+        <h3 class="text-sm font-semibold">@group.Key — @group.Items.Count people</h3>
+    </GroupHeaderTemplate>
+    <ListTemplate Context="person">
+        <div class="flex h-12 items-center justify-between gap-2 rounded-md border px-3">
+            <span>@person.Name</span><span class="text-sm text-muted-foreground">@person.Role</span>
+        </div>
+    </ListTemplate>
+</BbDataView>
+        <p class="text-sm">@selectedPeople.Count selected</p>
+        <CodeBlock Source="Components/DataView/selection-virtualization.txt" />
+
+    </section>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Mobile sort and filter</h2>
+        <p class="text-sm text-muted-foreground">Touch-sized sorting and application-owned filters share a bottom sheet. Set MobileToolbar from your layout preference; it is enabled explicitly here at every screen size. Search remains in the toolbar.</p>
+<BbDataView TItem="Person" Data="@(activeOnly ? people.Where(p => p.IsActive) : people)" MobileToolbar="true">
+    <Fields>
+        <BbDataViewColumn TItem="Person" TValue="string" Id="name" Property="@(p => p.Name)" Header="Name" Sortable="true" Filterable="true" />
+        <BbDataViewColumn TItem="Person" TValue="string" Id="department" Property="@(p => p.Department)" Header="Department" Sortable="true" />
+    </Fields>
+    <FilterContent>
+        <BbCheckbox @bind-Checked="activeOnly" Label="Active employees only" />
+    </FilterContent>
+    <ListTemplate Context="person">
+        <div class="flex min-h-12 items-center justify-between rounded-md border p-3"><span>@person.Name</span><span>@person.Department</span></div>
+    </ListTemplate>
+</BbDataView>
+        <CodeBlock Source="Components/DataView/mobile-toolbar.txt" />
+
+    </section>
+
     <AccessibilityList>
         <AriaAttributes>
-            <AccessibilityItem>Toolbar search uses a native input with <code>role="searchbox"</code> semantics via BbInput</AccessibilityItem>
+            <AccessibilityItem>Toolbar search uses a native text input with a localized search prompt. Label any custom search controls descriptively.</AccessibilityItem>
             <AccessibilityItem>Layout-toggle buttons include a <code>title</code> attribute ("List view" / "Grid view") and are only rendered when both templates are provided</AccessibilityItem>
             <AccessibilityItem><code>title</code> on sort direction button describes the current sort direction and next action</AccessibilityItem>
             <AccessibilityItem>Empty state uses BbEmpty which renders descriptive text readable by screen readers</AccessibilityItem>
             <AccessibilityItem>Pagination uses BbPagination primitives with full keyboard and ARIA support</AccessibilityItem>
             <AccessibilityItem>Product images carry meaningful <code>alt</code> text derived from the item's name</AccessibilityItem>
             <AccessibilityItem>Avatar fallbacks use text initials readable by screen readers</AccessibilityItem>
+                    <AccessibilityItem>Selection controls use ItemLabel for their accessible names. Disabled items cannot be selected; selection state is independent of interactive links or buttons in item templates.</AccessibilityItem>
+            <AccessibilityItem>MobileToolbar opens controls in a sheet with dialog focus handling. Custom FilterContent and GroupHeaderTemplate content need meaningful labels.</AccessibilityItem>
         </AriaAttributes>
         <KeyboardNavigation>
             <KeyboardShortcutItem Description="Focus the global search input">
@@ -558,7 +622,6 @@
         </KeyboardNavigation>
     </AccessibilityList>
 
-    <!-- ── API Reference ──────────────────────────────────────────────────── -->
     <section class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">API Reference</h2>
@@ -644,7 +707,20 @@
                 <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
                     Additional HTML attributes applied to the root <code>&lt;div&gt;</code> element (e.g. <code>data-testid</code>, <code>aria-label</code>).
                 </ApiParameter>
-            </ApiReference>
+
+            <ApiParameter Since="v4" Name="MobileToolbar" Type="bool" Default="false">Shows sorting and filters in a bottom sheet, with immediate updates and a Done button. Application controls responsive activation.</ApiParameter>
+            <ApiParameter Since="v4" Name="FilterContent" Type="RenderFragment?">Custom filter controls displayed inline or in the mobile sheet. Own filter state in the application and update Data or refresh ItemsProvider.</ApiParameter>
+
+
+            <ApiParameter Since="v4" Name="SelectionMode" Type="DataTableSelectionMode" Default="None">None, Single or Multiple; selection uses separate keyboard-accessible checkbox controls so item templates may contain links and buttons.</ApiParameter>
+            <ApiParameter Since="v4" Name="SelectedItems / SelectedItemsChanged" Type="IReadOnlyCollection&lt;TItem&gt; / EventCallback">Two-way selected items. Selection persists across pages and filters.</ApiParameter>
+            <ApiParameter Since="v4" Name="ItemKey / ItemLabel / IsItemDisabled" Type="Func&lt;TItem, object&gt; / Func&lt;TItem, string&gt; / Func&lt;TItem, bool&gt;">Stable identity, accessible selection label and selection eligibility.</ApiParameter>
+            <ApiParameter Since="v4" Name="GroupBy / GroupHeaderTemplate" Type="Func&lt;TItem, string?&gt; / RenderFragment&lt;DataViewGroupContext&lt;TItem&gt;&gt;">Group currently loaded items in first-seen order. Headers receive Key and Items; group totals cover loaded items only.</ApiParameter>
+            <ApiParameter Since="v4" Name="EnableVirtualization" Type="bool" Default="false">Virtualizes loaded list rows. Grid layout renders normally. With local Data, ShowPagination=false exposes the entire filtered collection; ItemsProvider still loads pages or infinite batches.</ApiParameter>
+            <ApiParameter Since="v4" Name="VirtualItemSize / OverscanCount" Type="float / int" Default="56 / 3">Estimated row height including spacing, and extra rows around the viewport.</ApiParameter>
+            <ApiParameter Name="ScrollHeight" Type="string?">Virtualized lists default to 400px when omitted. Group headers remain in the DOM.</ApiParameter>
+
+        </ApiReference>
 
             <ApiReference ComponentName="DataViewColumn">
                 <ApiParameter Name="Header" Type="string">
@@ -676,29 +752,17 @@
                 </ApiParameter>
             </ApiReference>
         </div>
+
+
+
+
     </section>
 
-    <LocalizationSection
-        Description="DataView search, empty state, and view toggle labels are configurable."
-        Labels="@(new LocalizationSection.LabelInfo[]
-        {
-            new("SearchPlaceholder", "Search...", "Placeholder for the search input"),
-            new("NoResultsFound", "No results found", "Shown when there are no items"),
-            new("Loading", "Loading...", "Shown during initial data load"),
-            new("LoadingMore", "Loading more...", "Shown during infinite scroll loading"),
-            new("LoadMore", "Load more", "Label for the load more button"),
-            new("ListView", "List view", "Aria label for the list view toggle"),
-            new("GridView", "Grid view", "Aria label for the grid view toggle"),
-            new("Sort", "Sort", "Label for the sort button"),
-        })"
-        CodeExample="@(@"services.AddBlazorBlueprintComponents(opts =>
-{
-    opts.DataView.SearchPlaceholder = ""Suchen..."";
-    opts.DataView.NoResultsFound = ""Keine Ergebnisse gefunden"";
-});")" />
 </div>
 
 @code {
+    private bool activeOnly;
+    private IReadOnlyCollection<Person> selectedPeople = [];
     private List<Person> people = new();
     private List<Person> emptyPeople = new();
     private List<Product> products = new();

@@ -35,5 +35,21 @@ public enum BadgeVariant
     /// Uses --foreground CSS variable for text.
     /// Minimal style for subtle categorization or tags.
     /// </summary>
-    Outline
+    Outline,
+    /// <summary>Solid positive status.</summary>
+    Success,
+    /// <summary>Solid caution status.</summary>
+    Warning,
+    /// <summary>Solid informational status.</summary>
+    Info,
+    /// <summary>Soft primary palette.</summary>
+    Soft,
+    /// <summary>Soft error palette.</summary>
+    SoftDestructive,
+    /// <summary>Soft positive palette.</summary>
+    SoftSuccess,
+    /// <summary>Soft caution palette.</summary>
+    SoftWarning,
+    /// <summary>Soft informational palette.</summary>
+    SoftInfo
 }

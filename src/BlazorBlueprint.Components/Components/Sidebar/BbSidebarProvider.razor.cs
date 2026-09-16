@@ -45,6 +45,7 @@ public partial class BbSidebarProvider
     {
         // Update context when parameters change
         Context.SetVariant(Variant);
+        Context.SetCollapsedMode(CollapsedMode);
         Context.SetSide(Side);
 
         // Push controlled values down. SetOpen/SetOpenMobile no-op when the value is unchanged,

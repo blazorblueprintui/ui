@@ -2,6 +2,7 @@
 @using Microsoft.JSInterop
 @inject BlazorBlueprint.Primitives.Services.IFocusManager FocusManager
 @inject IJSRuntime JS
+@inject IBbLocalizer Localizer
 @implements IAsyncDisposable
 
 @if (Context?.IsOpen == true)
@@ -19,12 +20,31 @@
          role="dialog"
          aria-modal="true"
          tabindex="-1"
-         @attributes="AdditionalAttributes">
+         @attributes="AdditionalAttributes" style="@MergedSnapStyle">
         @if (ShowHandle)
         {
-            <div class="bb:mx-auto bb:mt-4 bb:h-2 bb:w-[100px] bb:rounded-full bb:bg-muted"></div>
+            @if (HasSnapPoints)
+            {
+                <div data-bb-drawer-handle role="slider" tabindex="0" aria-label="@Localizer["Drawer.Resize"]"
+                     aria-orientation="@(Horizontal ? "horizontal" : "vertical")" aria-valuemin="1" aria-valuemax="@Context!.SnapPoints.Count"
+                     aria-valuenow="@(Context.SnapIndex + 1)" aria-valuetext="@Context.SnapPoints[Context.SnapIndex].ToString("P0")"
+                     class="bb:mx-auto bb:flex bb:min-h-[44px] bb:w-[100px] bb:shrink-0 bb:touch-none bb:cursor-grab bb:items-center bb:justify-center bb:rounded-md bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring">
+                    <span class="bb:h-2 bb:w-full bb:rounded-full bb:bg-muted"></span>
+                </div>
+            }
+            else
+            {
+                <div class="bb:mx-auto bb:mt-4 bb:h-2 bb:w-[100px] bb:rounded-full bb:bg-muted"></div>
+            }
         }
-        @ChildContent
+        @if (HasSnapPoints)
+        {
+            <div class="bb:min-h-0 bb:flex-1 bb:overflow-y-auto">@ChildContent</div>
+        }
+        else
+        {
+            @ChildContent
+        }
     </div>
 }
 
@@ -85,6 +105,28 @@
     private string _instanceId = Guid.NewGuid().ToString("N");
     private bool _isInitialized;
     private bool _disposed;
+    private IJSObjectReference? snapModule;
+    private string? lastSnapConfiguration;
+    private bool HasSnapPoints => Context?.SnapPoints.Count > 0;
+    private bool Horizontal => Context?.Direction is DrawerDirection.Left or DrawerDirection.Right;
+    private string? MergedSnapStyle => AdditionalAttributes?.TryGetValue("style", out var style) == true
+        ? $"{style};{SnapStyle}" : SnapStyle;
+    private string? SnapStyle => HasSnapPoints ? FormattableString.Invariant($"{(Horizontal ? "width" : "height")}: {Context!.SnapPoints[Context.SnapIndex] * 100}d{(Horizontal ? "vw" : "vh")}; {(Horizontal ? "max-width" : "max-height")}: 100d{(Horizontal ? "vw" : "vh")}") : null;
+
+    /// <summary>Commits the nearest snap point after a handle gesture or keyboard action.</summary>
+    [JSInvokable]
+    public async Task JsOnSnapChanged(int index)
+    {
+        if (_disposed || Context?.IsOpen != true) { return; }
+        if (index < 0)
+        {
+            if (Context.DismissOnDrag) { await Context.SetOpen(false); }
+        }
+        else
+        {
+            await Context.SetSnapIndexAsync(index);
+        }
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -147,6 +189,34 @@
         {
             await CleanupAsync();
         }
+        await ConfigureSnapsAsync();
+    }
+
+    private async Task ConfigureSnapsAsync()
+    {
+        if (Context?.IsOpen != true) { return; }
+        var configuration = $"{Context.Direction}|{Context.SnapIndex}|{Context.DismissOnDrag}|{ShowHandle}|{string.Join(',', Context.SnapPoints)}";
+        if (configuration == lastSnapConfiguration) { return; }
+        lastSnapConfiguration = configuration;
+        try
+        {
+            if (!HasSnapPoints)
+            {
+                if (snapModule is not null) { await snapModule.InvokeVoidAsync("dispose", _contentRef); }
+                return;
+            }
+            snapModule ??= await JsModules.GetAsync(JS, JsModules.Versioned("./_content/BlazorBlueprint.Components/js/drawer-snaps.js", typeof(BbDrawerContent).Assembly));
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            await snapModule.InvokeVoidAsync("configure", _contentRef, _dotNetRef, new
+            {
+                direction = Context.Direction.ToString().ToLowerInvariant(), points = Context.SnapPoints,
+                index = Context.SnapIndex, dismiss = Context.DismissOnDrag
+            });
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException or InvalidOperationException)
+        {
+            lastSnapConfiguration = null;
+        }
     }
 
     private async Task HandleOverlayClick()
@@ -170,6 +240,12 @@
 
     private async Task CleanupAsync()
     {
+        lastSnapConfiguration = null;
+        if (snapModule is not null)
+        {
+            try { await snapModule.InvokeVoidAsync("dispose", _contentRef); }
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException) { }
+        }
         // Dispose focus trap
         if (_focusTrap != null)
         {
@@ -242,6 +318,7 @@
         "bb:fixed bb:z-50 bb:gap-4 bb:bg-background bb:p-6 bb:shadow-lg bb:transition bb:ease-in-out",
         "bb:data-[state=open]:animate-in bb:data-[state=closed]:animate-out bb:data-[state=closed]:duration-300 bb:data-[state=open]:duration-500",
         DirectionClasses,
+        HasSnapPoints ? "bb:flex bb:flex-col bb:overflow-hidden" : null,
         Class
     );
 }

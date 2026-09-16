@@ -1,4 +1,5 @@
 using BlazorBlueprint.Primitives.Filtering;
+using Microsoft.AspNetCore.Components;
 
 namespace BlazorBlueprint.Components;
 
@@ -8,6 +9,11 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public class FilterBuilderContext
 {
+    /// <summary>Whether field pickers are searchable.</summary>
+    public bool SearchableFields { get; init; }
+    /// <summary>Custom field value editors keyed by field name.</summary>
+    public IReadOnlyDictionary<string, RenderFragment<FilterValueEditorContext>>? ValueEditors { get; init; }
+
     /// <summary>
     /// Gets the available fields to filter on.
     /// </summary>

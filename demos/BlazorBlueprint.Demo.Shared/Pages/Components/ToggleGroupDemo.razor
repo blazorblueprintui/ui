@@ -196,6 +196,24 @@
         <CodeBlock Source="Components/ToggleGroup/disabled.txt" />
     </div>
 
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Required selection and scrolling</h2>
+<div class="max-w-xs rounded-lg border p-2">
+    <BbToggleGroup TValue="string" @bind-Value="requiredTab" Required="true" Scrollable="true" aria-label="Workspace section">
+        @foreach (var tab in new[] { "Overview", "Activity", "Projects", "Members", "Settings" })
+        {
+            <BbToggleGroupItem TValue="string" Value="@tab">@tab</BbToggleGroupItem>
+        }
+    </BbToggleGroup>
+</div>
+<p class="text-sm">Selected: @requiredTab</p>
+        <CodeBlock Source="Components/ToggleGroup/extended.txt" />
+
+    </section>
+
+    <!-- API Reference -->
+
+
     <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>Uses <code>role="group"</code> on the container for grouping semantics</AccessibilityItem>
@@ -212,7 +230,6 @@
         </KeyboardNavigation>
     </AccessibilityList>
 
-    <!-- API Reference -->
     <section class="space-y-4">
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">API Reference</h2>
@@ -265,10 +282,15 @@
                 </ApiParameter>
             </ApiReference>
         </div>
+
+<ApiReference ComponentName="ToggleGroup"><ApiParameter Since="v4" Name="Required" Type="bool" Default="false">Prevents deselecting the last chosen item in Single or Multiple mode. Supply an initial selection; does not auto-select or enforce EditForm validation.</ApiParameter>
+<ApiParameter Since="v4" Name="Scrollable" Type="bool" Default="false">Horizontal overflow with nonshrinking items. Keyboard focus scrolls items into view.</ApiParameter></ApiReference>
     </section>
+
 </div>
 
 @code {
+    private string requiredTab = "Overview";
     private string? _alignment = "center";
     private List<string>? _formatting = new() { "bold" };
 }

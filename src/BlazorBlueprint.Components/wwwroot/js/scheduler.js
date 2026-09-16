@@ -36,6 +36,9 @@ export function initialize(root, dotNet) {
     let suppressClickUntil = 0;
     let frame = 0;
     const viewport = root.querySelector('[data-scheduler-scroll]');
+    if (viewport && root.dataset.initialScrollTop != null) {
+        viewport.scrollTop = Number(root.dataset.initialScrollTop);
+    }
     const allowed = action => root.dataset[action === 'move' ? 'allowDrag' : 'allowResize'] === 'true';
     const bounds = lane => ({ start: Number(lane.dataset.start), end: Number(lane.dataset.end) });
     const endPreview = () => {

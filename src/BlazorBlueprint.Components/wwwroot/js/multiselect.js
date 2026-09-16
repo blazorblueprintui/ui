@@ -153,6 +153,7 @@ export function setupMultiSelectInput(inputElement, dotNetRef, inputId, contentI
 
             case 'Escape':
                 e.preventDefault();
+                e.stopPropagation();
                 // Close dropdown via Blazor
                 dotNetRef.invokeMethodAsync('HandleEscape').catch(err => {
                     console.error('Error invoking HandleEscape:', err);

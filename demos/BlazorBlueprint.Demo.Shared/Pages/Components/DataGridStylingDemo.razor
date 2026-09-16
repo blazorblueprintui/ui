@@ -367,6 +367,49 @@
         </BbDataGrid>
         <CodeBlock Source="Components/DataGrid/empty-loading.txt" />
     </div>
+
+        <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Custom row and cell templates should preserve meaningful text, labels and the grid keyboard controls.</AccessibilityItem>
+            <AccessibilityItem>Keep adequate text contrast and provide text or icons alongside color-only status cues. Interactive elements in templates need their own accessible names.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between interactive grid controls"><BbKbd>Tab</BbKbd> / <BbKbd>Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Navigate focused grid rows when EnableKeyboardNavigation is enabled"><BbKbd>ArrowUp</BbKbd> / <BbKbd>ArrowDown</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate a focused button or link"><BbKbd>Enter</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+
+        <ApiReference ComponentName="BbDataGrid">
+            <ApiParameter Name="Class" Type="string?">Additional CSS classes applied to the root container.</ApiParameter>
+            <ApiParameter Name="RowClass" Type="Func&lt;TData, string?&gt;?">Optional callback for applying custom CSS classes to data rows. Receives the row&#x27;s data item and returns additional CSS classes, or null.</ApiParameter>
+            <ApiParameter Name="Striped" Type="bool">When true, applies alternating row background colors using StripeClass. Composes with RowClass — user-provided classes take precedence for conflicts.</ApiParameter>
+            <ApiParameter Name="StripeClass" Type="string" Default="&quot;bb:even:bg-muted/30 bb:even:hover:bg-muted/70&quot;">CSS classes applied to even rows when Striped is true. Defaults to &quot;even:bg-muted/30 even:hover:bg-muted/70&quot;.</ApiParameter>
+            <ApiParameter Name="TableContainerClass" Type="string?">Additional CSS classes applied to the inner scrollable container that wraps the &lt;table&gt; element. Use this to control border radius, borders, max-height, etc.</ApiParameter>
+            <ApiParameter Name="FilterBarClass" Type="string?">Additional CSS classes applied to the active-filter indicator bar.</ApiParameter>
+            <ApiParameter Name="EmptyTemplate" Type="RenderFragment?">Custom empty state template.</ApiParameter>
+            <ApiParameter Name="LoadingTemplate" Type="RenderFragment?">Custom loading template.</ApiParameter>
+            <ApiParameter Name="EnableKeyboardNavigation" Type="bool" Default="true">Enable keyboard navigation for rows. Default is true.</ApiParameter>
+            <ApiParameter Name="AriaLabel" Type="string?">ARIA label for the grid.</ApiParameter>
+        </ApiReference>
+
+        <ApiReference ComponentName="BbDataGridPropertyColumn">
+            <ApiParameter Name="CellClass" Type="string?">Additional CSS classes for cells in this column.</ApiParameter>
+            <ApiParameter Name="HeaderClass" Type="string?">Additional CSS classes for the header cell.</ApiParameter>
+            <ApiParameter Name="CellClassFunc" Type="Func&lt;TData, string?&gt;?">Computes additional cell classes from the row's data, in addition to CellClass. Use it for conditional formatting such as highlighting negative totals.</ApiParameter>
+            <ApiParameter Name="CellTemplate" Type="RenderFragment&lt;TData&gt;?">Custom cell template. If provided, overrides the default value rendering.</ApiParameter>
+            <ApiParameter Name="HeaderTemplate" Type="RenderFragment?">Custom header content. If provided, replaces the header title text only — the grid still renders its own sort indicator, filter icon, pin icon, column menu and resize handle around it, so a Sortable or Groupable column keeps every affordance. Use it to show an icon or richer markup instead of Title.</ApiParameter>
+            <ApiParameter Name="Format" Type="string?">Format string for displaying the property value (e.g., &quot;C2&quot;, &quot;N0&quot;, &quot;d&quot;).</ApiParameter>
+            <ApiParameter Name="NoWrap" Type="bool">Whether text in this column should not wrap. When true, cell content uses white-space: nowrap and truncates with an ellipsis on overflow. Default is false.</ApiParameter>
+        </ApiReference>
+    </section>
+
 </div>
 
 @code {

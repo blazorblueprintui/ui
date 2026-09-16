@@ -4,16 +4,23 @@
 <div id="@Id"
      role="list"
      aria-label="@AriaLabel"
+     data-keyboard-sorting="@(KeyboardSorting ? "true" : "false")"
+     data-sortable-order="@(Sort ? "true" : "false")"
      @attributes="AdditionalAttributes">
     @foreach (var item in Items ?? [])
     {
-        <div @key="item">
+        <div @key="item" data-bb-sortable-item role="listitem">
             @if (ItemTemplate is not null)
             {
                 @ItemTemplate(item)
+            }
+            @if (DragOverlayTemplate is not null)
+            {
+                <div data-bb-sortable-overlay hidden inert aria-hidden="true">@DragOverlayTemplate(item)</div>
             }
         </div>
     }
 </div>
 
-<div role="status" aria-live="polite" aria-atomic="true" class="bb:sr-only">@_liveAnnouncement</div>
+<div id="@(Id + "-status")" role="status" aria-live="polite" aria-atomic="true" class="bb:sr-only">@_liveAnnouncement</div>
+<div id="@(Id + "-instructions")" class="bb:sr-only">@KeyboardInstructions</div>

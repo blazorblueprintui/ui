@@ -319,4 +319,49 @@
         </BbDataGrid>
         <CodeBlock Source="Components/DataGridHierarchy/virtualized-large-org.txt" />
     </div>
+
+        <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Hierarchy rows expose their level and expansion state. Supply an AriaLabel that identifies the data grid.</AccessibilityItem>
+            <AccessibilityItem>ExpandedNodes and its change callback allow the application to retain expansion. Loading children should preserve stable item keys and meaningful row labels.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between grid controls"><BbKbd>Tab</BbKbd> / <BbKbd>Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Navigate focused grid rows when EnableKeyboardNavigation is enabled"><BbKbd>ArrowUp</BbKbd> / <BbKbd>ArrowDown</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate a focused expand or collapse button"><BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+
+        <ApiReference ComponentName="BbDataGrid">
+            <ApiParameter Name="Items" Type="IEnumerable&lt;TData&gt;?">The data source for the grid. Can be IQueryable&lt;TData&gt; or IEnumerable&lt;TData&gt;. Mutually exclusive with ItemsProvider.</ApiParameter>
+            <ApiParameter Name="ItemKey" Type="Func&lt;TData, object&gt;?">A function that returns a stable identity key for each data item (e.g., item =&gt; item.Id). When set, selection and expansion state is tracked by key instead of reference equality, so state survives data re-fetches. Also forwarded to the Virtualize component when virtualization is enabled.</ApiParameter>
+            <ApiParameter Name="ItemValueSelector" Type="Func&lt;TData, string&gt;?">Function that extracts a unique string identifier from each item. Required when using hierarchy features.</ApiParameter>
+            <ApiParameter Name="ParentValueSelector" Type="Func&lt;TData, string?&gt;?">Function that returns the parent&#x27;s value for self-referencing (flat) hierarchical data. Mutually exclusive with ChildrenSelector.</ApiParameter>
+            <ApiParameter Name="ChildrenSelector" Type="Func&lt;TData, IEnumerable&lt;TData&gt;?&gt;?">Function that returns the children of an item for nested hierarchical data. Mutually exclusive with ParentValueSelector.</ApiParameter>
+            <ApiParameter Name="HasChildrenPredicate" Type="Func&lt;TData, bool&gt;?">Optional predicate to determine if an item has children before they are loaded. Used for lazy loading where children may not be indexed yet.</ApiParameter>
+            <ApiParameter Name="LoadChildren" Type="Func&lt;TData, Task&lt;IEnumerable&lt;TData&gt;&gt;&gt;?">Async callback to load all children for a node on demand (lazy loading - full).</ApiParameter>
+            <ApiParameter Name="LoadChildrenPaged" Type="Func&lt;TData, int, int, Task&lt;ChildPageResult&lt;TData&gt;&gt;&gt;?">Async callback to load a page of children for a node (lazy loading - paged). Parameters: parent item, skip count, take count.</ApiParameter>
+            <ApiParameter Name="ChildPageSize" Type="int?">Page size for child-level pagination in hierarchy mode. When set, each expanded node shows at most this many children with a compact pager. Set to null to show all children inline. Default is null (no child pagination).</ApiParameter>
+            <ApiParameter Name="DefaultExpandAll" Type="bool">Whether all hierarchy nodes should be expanded by default. Default is false.</ApiParameter>
+            <ApiParameter Name="DefaultExpandDepth" Type="int?">Maximum depth to expand by default (exclusive). For example, 1 expands only root nodes.</ApiParameter>
+            <ApiParameter Name="ExpandedNodes" Type="HashSet&lt;string&gt;?">The set of expanded node values in hierarchy mode. Use with @@bind-ExpandedNodes for controlled state.</ApiParameter>
+            <ApiParameter Name="ExpandedNodesChanged" Type="EventCallback&lt;HashSet&lt;string&gt;&gt;">Event callback for controlled expansion state changes.</ApiParameter>
+            <ApiParameter Name="HierarchySelectionMode" Type="HierarchySelectionMode" Default="HierarchySelectionMode.Independent">Controls how row selection interacts with the hierarchy. HierarchySelectionMode.Independent (default) treats each row independently. HierarchySelectionMode.Cascade cascades selection to descendants and shows an indeterminate state on parents with partially selected children. Only applies when SelectionMode is DataTableSelectionMode.Multiple and hierarchy mode is active.</ApiParameter>
+            <ApiParameter Name="HierarchyFilterMode" Type="HierarchyFilterMode" Default="HierarchyFilterMode.ShowMatchedSubtree">Controls how hierarchy filtering treats descendants of matching nodes. Primitives.Utilities.HierarchyFilterMode.ShowMatchedSubtree (default) shows the entire subtree of matching parents. Primitives.Utilities.HierarchyFilterMode.ShowMatchedOnly only shows items that independently match the filter. When the total item count exceeds HierarchyLargeDatasetThreshold, ShowMatchedSubtree is automatically downgraded to ShowMatchedOnly during filtering to prevent performance issues with large trees.</ApiParameter>
+            <ApiParameter Name="ShowExpandAll" Type="bool">Whether to show a built-in expand/collapse all toggle button in the hierarchy column header. Default is false.</ApiParameter>
+            <ApiParameter Name="OnExpandAll" Type="EventCallback">Event callback invoked when expand all is triggered (via the built-in toggle or ExpandAllAsync).</ApiParameter>
+            <ApiParameter Name="OnCollapseAll" Type="EventCallback">Event callback invoked when collapse all is triggered (via the built-in toggle or CollapseAllAsync).</ApiParameter>
+            <ApiParameter Name="OnNodeExpand" Type="EventCallback&lt;TData&gt;">Event callback invoked when a hierarchy node is expanded.</ApiParameter>
+            <ApiParameter Name="OnNodeCollapse" Type="EventCallback&lt;TData&gt;">Event callback invoked when a hierarchy node is collapsed.</ApiParameter>
+            <ApiParameter Name="EnableKeyboardNavigation" Type="bool" Default="true">Enable keyboard navigation for rows. Default is true.</ApiParameter>
+            <ApiParameter Name="AriaLabel" Type="string?">ARIA label for the grid.</ApiParameter>
+        </ApiReference>
+    </section>
+
 </div>

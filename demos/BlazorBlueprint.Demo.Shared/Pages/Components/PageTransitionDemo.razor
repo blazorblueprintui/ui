@@ -1,0 +1,45 @@
+@page "/components/page-transition"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Page Transition - Blazor Blueprint</PageTitle>
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Page Transition</h1>
+        <p class="text-xl text-muted-foreground">Animate incoming content when NavigationManager reports a location change.</p>
+    </div>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Navigation preview</h2>
+        <div class="rounded-lg border p-6 space-y-4">
+<div class="flex gap-3">
+    <a href="/components/page-transition?preview=overview" class="text-primary underline">Overview preview</a>
+    <a href="/components/page-transition?preview=activity" class="text-primary underline">Activity preview</a>
+</div>
+<BbPageTransition Preset="MotionPreset.SlideUp" Duration="350">
+    <div class="rounded-lg bg-muted p-6 space-y-2">
+        <h3 class="font-semibold">@(Preview == "activity" ? "Activity" : "Overview")</h3>
+        <p>@(Preview == "activity" ? "A design review was completed and a new milestone was published." : "Your workspace has three active projects and two upcoming milestones.")</p>
+    </div>
+</BbPageTransition>
+<p class="text-sm text-muted-foreground">These links change the URL while keeping the wrapper mounted. In an application, place PageTransition around the layout body or RouteView.</p>
+        </div>
+        <CodeBlock Source="Components/PageTransition/basic.txt" />
+    </section>
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>Animations honor reduced motion. The component does not replace routing or handle page titles, scroll position or focus.</AccessibilityItem>
+            <AccessibilityItem>Use normal links and a page focus strategy such as FocusOnNavigate in the application router.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Focus a navigation link"><BbKbd>Tab / Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Navigate to the focused link"><BbKbd>Enter</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+<ApiReference Since="v4" ComponentName="PageTransition"><ApiParameter Name="Preset" Type="MotionPreset" Default="Fade">The incoming animation. Place the component around the layout body or RouteView so it remains mounted across navigation.</ApiParameter><ApiParameter Name="Duration / Enabled / Class / ChildContent" Type="int / bool / string? / RenderFragment?" Default="250 / true / null / null">Animation duration in milliseconds, enablement, wrapper styles and incoming content. The first interactive render does not animate.</ApiParameter></ApiReference>
+    </section>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "preview")] public string? Preview { get; set; }
+}

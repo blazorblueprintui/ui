@@ -1,0 +1,52 @@
+@namespace BlazorBlueprint.Components
+
+@if (Href is not null)
+{
+    <a @attributes="AdditionalAttributes" href="@Href" class="@CssClass" aria-current="@(Active ? "page" : null)"
+       aria-disabled="@(Disabled ? "true" : null)" tabindex="@(Disabled ? -1 : 0)"
+       @onclick="ActivateAsync" @onclick:preventDefault="Disabled">@Content()</a>
+}
+else
+{
+    <button @attributes="AdditionalAttributes" type="button" class="@CssClass" disabled="@Disabled"
+            aria-current="@(Active ? "page" : null)" @onclick="ActivateAsync">@Content()</button>
+}
+
+@code {
+    [CascadingParameter] private BbBottomNav? Navigation { get; set; }
+    /// <summary>A unique item value.</summary>
+    [Parameter, EditorRequired] public string Value { get; set; } = "";
+    /// <summary>The visible and accessible label.</summary>
+    [Parameter, EditorRequired] public string Label { get; set; } = "";
+    /// <summary>The icon, optionally wrapped in a NotificationBadge.</summary>
+    [Parameter] public RenderFragment? Icon { get; set; }
+    /// <summary>Optional link destination. Omit for callback-driven screen selection.</summary>
+    [Parameter] public string? Href { get; set; }
+    /// <summary>Disables navigation and callbacks.</summary>
+    [Parameter] public bool Disabled { get; set; }
+    /// <summary>Called after activation.</summary>
+    [Parameter] public EventCallback OnClick { get; set; }
+    /// <summary>Additional CSS classes.</summary>
+    [Parameter] public string? Class { get; set; }
+    /// <summary>Additional HTML attributes.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+    private bool Active => Navigation?.Value == Value;
+    private string CssClass => ClassNames.cn("bb:flex bb:min-h-[56px] bb:min-w-[44px] bb:flex-1 bb:flex-col bb:items-center bb:justify-center bb:gap-1 bb:rounded-sm bb:px-2 bb:py-2 bb:text-xs bb:no-underline bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring", Active ? "bb:bg-accent/50 bb:text-primary" : "bb:text-muted-foreground bb:hover:bg-accent", Disabled ? "bb:pointer-events-none bb:opacity-50" : null, Class);
+    private RenderFragment Content() => __builder =>
+    {
+        @Icon
+        <span>@Label</span>
+    };
+
+    protected override void OnParametersSet()
+    {
+        if (Navigation is null) { throw new InvalidOperationException("BottomNavItem requires a BottomNav."); }
+    }
+
+    private async Task ActivateAsync()
+    {
+        if (Disabled) { return; }
+        await Navigation!.SelectAsync(Value);
+        await OnClick.InvokeAsync();
+    }
+}

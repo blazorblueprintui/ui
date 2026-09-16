@@ -1,0 +1,15 @@
+<BbMultiSelect TValue="string" @ref="footerSelect" @bind-Values="footerValues" Options="footerOptions">
+    <FooterContent>
+        <div class="flex items-center justify-between gap-3">
+            <span class="text-sm">@footerValues.Count() selected</span>
+            <BbButton Size="ButtonSize.Small" OnClick="ApplyFooterSelection">Apply</BbButton>
+        </div>
+    </FooterContent>
+</BbMultiSelect>
+
+@code {
+    private BbMultiSelect<string>? footerSelect;
+    private IEnumerable<string> footerValues = [];
+    private readonly SelectOption<string>[] footerOptions = [new("Design", "Design"), new("Engineering", "Engineering"), new("Support", "Support")];
+    private Task ApplyFooterSelection() => footerSelect?.CloseAsync() ?? Task.CompletedTask;
+}

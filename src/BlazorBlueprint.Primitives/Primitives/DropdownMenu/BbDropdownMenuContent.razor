@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Primitives.DropdownMenu
 @using System.ComponentModel
+@using BlazorBlueprint.Primitives.Menu
 @using BlazorBlueprint.Primitives.Floating
 @using BlazorBlueprint.Primitives.Services
 @inject IJSRuntime JSRuntime
@@ -132,6 +133,7 @@
     [Parameter]
     public PositioningStrategy Strategy { get; set; } = PositioningStrategy.Absolute;
 
+    private MenuScope menuScope = null!;
     private ElementReference _contentRef;
     private DotNetObjectReference<BbDropdownMenuContent>? _dotNetRef;
     private bool _disposed = false;
@@ -145,6 +147,8 @@
                 "DropdownMenuContent must be used within a DropdownMenu component. " +
                 "Ensure DropdownMenuContent is a child of a DropdownMenu component.");
         }
+
+        menuScope = new MenuScope(() => Context.IsOpen, () => { Context.Close(restoreFocus: true); return Task.CompletedTask; });
 
         _portalId = $"dropdown-portal-{Context.ContentId}";
 
@@ -165,7 +169,9 @@
              data-side="@Side.ToValue()">
             <CascadingValue Value="Context" IsFixed="true">
                 <CascadingValue Value="this" Name="DropdownMenuContentContext" IsFixed="true">
-                    @ChildContent
+                    <CascadingValue Value="menuScope" IsFixed="true">
+                        @ChildContent
+                    </CascadingValue>
                 </CascadingValue>
             </CascadingValue>
         </div>

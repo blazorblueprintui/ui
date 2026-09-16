@@ -1,0 +1,72 @@
+@page "/components/quantity-stepper"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>Quantity Stepper - Blazor Blueprint</PageTitle>
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Quantity Stepper</h1>
+        <p class="text-xl text-muted-foreground">A quantity input with large increment and decrement buttons, bounds and an optional remove action.</p>
+    </div>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Bounded quantity</h2>
+        <div class="rounded-lg border p-6 space-y-4">
+<BbQuantityStepper @bind-Value="quantity" Min="1" Max="8" AriaLabel="Number of notebooks" />
+<p role="status" class="text-sm text-muted-foreground">@quantity notebooks · $@(quantity * 12)</p>
+        </div>
+        <CodeBlock Source="Components/QuantityStepper/basic.txt" />
+    </section>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Remove at the minimum</h2>
+        <div class="rounded-lg border p-6 space-y-4">
+@if (removed)
+{
+    <p role="status">Item removed.</p>
+    <BbButton Variant="ButtonVariant.Outline" OnClick="@(() => { removed = false; removableQuantity = 1; })">Restore item</BbButton>
+}
+else
+{
+    <BbQuantityStepper @bind-Value="removableQuantity" Min="1" Max="5" OnRemove="@(() => removed = true)" AriaLabel="Cart quantity" />
+}
+<p class="text-sm text-muted-foreground">At the minimum, the decrease button becomes a remove action. The application handles removal.</p>
+        </div>
+        <CodeBlock Source="Components/QuantityStepper/remove.txt" />
+    </section>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Control states</h2>
+        <div class="rounded-lg border p-6 space-y-4">
+<div class="flex flex-wrap gap-8">
+    <div class="space-y-2"><p class="text-sm font-medium">Disabled</p><BbQuantityStepper Value="3" Disabled="true" AriaLabel="Disabled quantity" /></div>
+    <div class="space-y-2"><p class="text-sm font-medium">Read only</p><BbQuantityStepper Value="4" ReadOnly="true" AriaLabel="Read-only quantity" /></div>
+</div>
+        </div>
+        <CodeBlock Source="Components/QuantityStepper/states.txt" />
+    </section>
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The control groups labelled increase/decrease buttons with its numeric input. AriaLabel identifies the quantity.</AccessibilityItem>
+            <AccessibilityItem>Bounds disable unavailable actions. Read-only values remain focusable; disabled controls cannot be edited.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between enabled buttons and the input"><BbKbd>Tab / Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate the focused increase, decrease or remove button"><BbKbd>Enter / Space</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Increment or decrement the editable numeric input"><BbKbd>ArrowUp / ArrowDown</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+<ApiReference Since="v4" ComponentName="QuantityStepper">
+        <ApiParameter Name="Value / ValueChanged / ValueExpression" Type="int / EventCallback&lt;int&gt; / Expression&lt;Func&lt;int&gt;&gt;" Default="1">Two-way value and EditForm field integration.</ApiParameter>
+        <ApiParameter Name="Min / Max / Step" Type="int / int? / int" Default="1 / null / 1">Inclusive bounds and positive button increment. Typed values use the numeric input's normal validation.</ApiParameter>
+        <ApiParameter Name="OnRemove" Type="EventCallback">Changes the minus button to a remove action at the minimum. The application owns removal.</ApiParameter>
+        <ApiParameter Name="Disabled / ReadOnly" Type="bool" Default="false">Prevents editing; read-only input remains focusable.</ApiParameter>
+        <ApiParameter Name="Id / Name / AriaLabel" Type="string?">Input identity, form name and accessible quantity label.</ApiParameter>
+    <ApiParameter Name="Class / AdditionalAttributes" Type="string? / Dictionary&lt;string, object&gt;?">Additional root CSS classes and HTML attributes.</ApiParameter>
+    </ApiReference>
+    </section>
+</div>
+
+@code {
+    private int quantity = 2;
+    private int removableQuantity = 1;
+    private bool removed;
+}

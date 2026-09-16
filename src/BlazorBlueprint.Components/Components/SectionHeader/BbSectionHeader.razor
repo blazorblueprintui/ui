@@ -1,0 +1,30 @@
+@namespace BlazorBlueprint.Components
+
+<div @attributes="AdditionalAttributes" class="@ClassNames.cn("bb:flex bb:items-center bb:justify-between bb:gap-4", Separator ? "bb:border-b bb:pb-3" : null, Class)">
+    <div class="bb:min-w-0">
+        <h2 class="bb:text-lg bb:font-semibold">@Title</h2>
+        @if (!string.IsNullOrEmpty(Description))
+        {
+            <p class="bb:text-sm bb:text-muted-foreground">@Description</p>
+        }
+    </div>
+    @if (Actions is not null)
+    {
+        <div class="bb:shrink-0">@Actions</div>
+    }
+</div>
+
+@code {
+    /// <summary>The section heading.</summary>
+    [Parameter] public string? Title { get; set; }
+    /// <summary>Optional supporting text.</summary>
+    [Parameter] public string? Description { get; set; }
+    /// <summary>Trailing actions or links.</summary>
+    [Parameter] public RenderFragment? Actions { get; set; }
+    /// <summary>Adds a bottom separator.</summary>
+    [Parameter] public bool Separator { get; set; }
+    /// <summary>Additional CSS classes.</summary>
+    [Parameter] public string? Class { get; set; }
+    /// <summary>Additional HTML attributes.</summary>
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+}

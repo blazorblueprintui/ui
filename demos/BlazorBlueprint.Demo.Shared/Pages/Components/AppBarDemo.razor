@@ -1,0 +1,55 @@
+@page "/components/app-bar"
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<PageTitle>App Bar - Blazor Blueprint</PageTitle>
+<div class="max-w-4xl space-y-8">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">App Bar</h1>
+        <p class="text-xl text-muted-foreground">A compact header with a title, back navigation and trailing actions.</p>
+    </div>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Title and actions</h2>
+        <div class="rounded-lg border p-6 space-y-4">
+<BbAppBar Title="Project notes" Description="Updated just now" ShowBack="true" Sticky="false" OnBack="@(() => status = "Back selected")">
+    <Actions><BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" aria-label="Save notes" OnClick="@(() => status = "Notes saved")"><LucideIcon Name="check" Size="20" /></BbButton></Actions>
+</BbAppBar>
+<p role="status" class="text-sm text-muted-foreground">@status</p>
+        </div>
+        <CodeBlock Source="Components/AppBar/basic.txt" />
+    </section>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Custom content</h2>
+        <div class="rounded-lg border p-6 space-y-4">
+<BbAppBar Sticky="false">
+    <LeadingContent><LucideIcon Name="notebook-pen" Size="24" /></LeadingContent>
+    <TitleContent><span class="font-semibold">Team journal</span><span class="ml-2 text-xs text-muted-foreground">Shared workspace</span></TitleContent>
+    <Actions><a href="/recipes/mobile-shop" class="text-sm text-primary hover:underline">See a full layout</a></Actions>
+</BbAppBar>
+        </div>
+        <CodeBlock Source="Components/AppBar/custom.txt" />
+    </section>
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The back button has an accessible name; BackLabel overrides its default label.</AccessibilityItem>
+            <AccessibilityItem>Provide accessible names for custom icon buttons. Sticky positioning and safe-area spacing do not change keyboard behavior.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Move between interactive controls"><BbKbd>Tab / Shift + Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Activate a focused button"><BbKbd>Enter / Space</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+<ApiReference Since="v4" ComponentName="AppBar">
+        <ApiParameter Name="Title / Description" Type="string?">Title and secondary text.</ApiParameter>
+        <ApiParameter Name="TitleContent / LeadingContent / Actions" Type="RenderFragment?">Custom title, leading area and trailing actions. LeadingContent replaces the back button.</ApiParameter>
+        <ApiParameter Name="ShowBack / BackLabel / OnBack" Type="bool / string? / EventCallback&lt;MouseEventArgs&gt;" Default="false">Back-button visibility, accessible label and navigation callback.</ApiParameter>
+        <ApiParameter Name="Sticky / SafeArea" Type="bool" Default="true / true">Sticky positioning and top safe-area padding.</ApiParameter>
+    <ApiParameter Name="Class / AdditionalAttributes" Type="string? / Dictionary&lt;string, object&gt;?">Additional root CSS classes and HTML attributes.</ApiParameter>
+    </ApiReference>
+    </section>
+</div>
+
+@code {
+    private string status = "Use the back or save action.";
+}

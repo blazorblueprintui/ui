@@ -1,0 +1,80 @@
+@namespace BlazorBlueprint.Components
+@using System.Globalization
+@using BlazorBlueprint.Icons.Lucide.Components
+
+<div @ref="root" class="@CssClass" role="group" aria-label="@(AriaLabel ?? Localizer["TimeInput.Label"])"
+     aria-describedby="@AriaDescribedBy" aria-invalid="@(validation.IsInvalid ? "true" : null)" @attributes="AdditionalAttributes">
+    @foreach (var segment in Segments)
+    {
+        <input @key="segment" id="@(Id == null ? null : segment == "Hour" ? Id : $"{Id}-{segment.ToLowerInvariant()}")"
+               type="text" inputmode="numeric" autocomplete="off" role="spinbutton" data-bb-segment="@segment"
+               data-min="@Minimum(segment)" data-max="@Maximum(segment)" data-digits="2" data-step="@(segment == "Minute" ? MinuteStep : 1)"
+               maxlength="2" size="2" placeholder="@(segment == "Hour" ? "hh" : segment == "Minute" ? "mm" : "ss")"
+               aria-label="@Localizer[$"TimeInput.{segment}"]" aria-valuemin="@Minimum(segment)" aria-valuemax="@Maximum(segment)"
+               aria-valuenow="@DateTimeSegments.Number(parts[segment])" aria-describedby="@AriaDescribedBy"
+               aria-invalid="@(validation.IsInvalid ? "true" : null)" disabled="@Disabled" readonly="@ReadOnly" required="@Required"
+               class="bb:min-w-0 bb:rounded-sm bb:bg-transparent bb:text-center bb:tabular-nums bb:placeholder:text-muted-foreground bb:focus:outline-none bb:focus:bg-accent bb:focus:text-accent-foreground"
+               @bind:get="parts[segment]" @bind:set="@(text => EditAsync(segment, text))" @bind:event="oninput" />
+        @if (segment != Segments[^1])
+        {
+            <span aria-hidden="true" class="bb:text-muted-foreground">@EffectiveCulture.DateTimeFormat.TimeSeparator</span>
+        }
+    }
+    @if (Hour12)
+    {
+        <BbSelect TValue="string" Value="@(pm ? "PM" : "AM")" ValueChanged="@(v => SetPeriodAsync(v == "PM"))"
+                  DisplayTextSelector="@(v => v == "PM" ? PmLabel : AmLabel)" Disabled="@(Disabled || ReadOnly)">
+            <BbSelectTrigger Class="bb:h-7 bb:w-auto bb:min-w-16 bb:border-0 bb:bg-transparent bb:px-1 bb:shadow-none"
+                             aria-label="@Localizer["TimeInput.Period"]" aria-describedby="@AriaDescribedBy"
+                             aria-invalid="@(validation.IsInvalid ? "true" : null)">
+                <BbSelectValue />
+            </BbSelectTrigger>
+            <BbSelectContent>
+                <BbSelectItem Value="@("AM")" Text="@AmLabel" />
+                <BbSelectItem Value="@("PM")" Text="@PmLabel" />
+            </BbSelectContent>
+        </BbSelect>
+    }
+    @if (ShowPicker)
+    {
+        <BbPopover @bind-Open="open">
+            <BbPopoverTrigger AsChild="true">
+                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Class="bb:ml-auto bb:h-7 bb:w-7" Disabled="@(Disabled || ReadOnly)" aria-label="@Localizer["TimeInput.OpenPicker"]">
+                    <LucideIcon Name="clock" Size="16" />
+                </BbButton>
+            </BbPopoverTrigger>
+            <BbPopoverContent Class="bb:w-auto bb:p-3">
+                <div class="bb:flex bb:items-end bb:gap-2">
+                    @foreach (var segment in Segments)
+                    {
+                        <div class="bb:flex bb:flex-col bb:gap-1 bb:text-xs">
+                            <span>@Localizer[$"TimeInput.{segment}"]</span>
+                            <BbSelect TValue="string" Value="@parts[segment]" ValueChanged="@(v => EditAsync(segment, v ?? string.Empty))" Disabled="@(Disabled || ReadOnly)">
+                                <BbSelectTrigger Class="bb:w-20" aria-label="@Localizer[$"TimeInput.{segment}"]"><BbSelectValue Placeholder="--" /></BbSelectTrigger>
+                                <BbSelectContent>
+                                    @foreach (var number in PickerValues(segment))
+                                    {
+                                        var text = number.ToString("D2", CultureInfo.InvariantCulture);
+                                        <BbSelectItem Value="@text" Text="@text" />
+                                    }
+                                </BbSelectContent>
+                            </BbSelect>
+                        </div>
+                    }
+                    @if (Hour12)
+                    {
+                        <BbSelect TValue="string" Value="@(pm ? "PM" : "AM")" ValueChanged="@(v => SetPeriodAsync(v == "PM"))"
+                                  DisplayTextSelector="@(v => v == "PM" ? PmLabel : AmLabel)" Disabled="@(Disabled || ReadOnly)">
+                            <BbSelectTrigger Class="bb:w-20" aria-label="@Localizer["TimeInput.Period"]"><BbSelectValue /></BbSelectTrigger>
+                            <BbSelectContent>
+                                <BbSelectItem Value="@("AM")" Text="@AmLabel" />
+                                <BbSelectItem Value="@("PM")" Text="@PmLabel" />
+                            </BbSelectContent>
+                        </BbSelect>
+                    }
+                </div>
+            </BbPopoverContent>
+        </BbPopover>
+    }
+    <input type="hidden" name="@validation.GetName(Name)" value="@Value?.ToString(@"hh\:mm\:ss", CultureInfo.InvariantCulture)" disabled="@Disabled" />
+</div>
