@@ -219,6 +219,14 @@
     /// <summary>Whether overlay.open has been dispatched for this portal and overlay.close has not.</summary>
     private bool isOverlayOpen;
 
+    /// <summary>
+    /// Whether overlay.close was dispatched asking for <see cref="JsOnClosed"/> and the callback
+    /// has not arrived yet. The callback fires after the exit animation, and a component disposed
+    /// in that window — a navigation during the close — would otherwise take the .NET reference
+    /// with it and leave JS calling into nothing.
+    /// </summary>
+    private bool closeCallbackPending;
+
     /// <summary>Previous <c>IsOpen</c>, so the open and close edges can be told apart.</summary>
     private bool wasOpen;
 
@@ -496,6 +504,7 @@
             restoreFocusToId = RestoreFocusOnClose ? RestoreFocusToId : null
         };
 
+        closeCallbackPending = !ForceMount;
         Dispatch(module, "overlay.close", PortalId, options, SelfRef());
     }
 
@@ -608,6 +617,8 @@
     [EditorBrowsable(EditorBrowsableState.Never)]
     public Task JsOnClosed()
     {
+        closeCallbackPending = false;
+
         if (disposed || IsOpen || ForceMount || !isRegistered)
         {
             return Task.CompletedTask;
@@ -679,9 +690,14 @@
 
         disposed = true;
 
-        if (isOverlayOpen && PrimitiveModules.TryGetLoaded(JSRuntime, out var module))
+        // Also sent when a close is still animating in the browser. overlay.close invalidates the
+        // earlier call's token, so its JsOnClosed callback is dropped instead of reaching a
+        // reference that is about to be disposed (it logged "close callback failed" on every
+        // navigation away from an open overlay).
+        if ((isOverlayOpen || closeCallbackPending) && PrimitiveModules.TryGetLoaded(JSRuntime, out var module))
         {
             isOverlayOpen = false;
+            closeCallbackPending = false;
 
             try
             {
