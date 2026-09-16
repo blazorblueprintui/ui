@@ -19,7 +19,7 @@ Beautiful UI components for Blazor, built with accessibility in mind. Inspired b
 </p>
 
 <p align="center">
-  <strong>100+ Components</strong> · <strong>11 Chart Types</strong> · <strong>3,200+ Icons</strong>
+  <strong>112 Components</strong> · <strong>28 Primitives</strong> · <strong>11 Chart Types</strong> · <strong>5,300+ Icons</strong>
 </p>
 
 ## Table of Contents
@@ -43,6 +43,7 @@ Beautiful UI components for Blazor, built with accessibility in mind. Inspired b
 Blazor developers lack a modern, design-system-first UI library equivalent to what React developers have with shadcn/ui. Blazor Blueprint fills that gap — pre-built components and headless primitives that integrate directly with Tailwind and shadcn themes, targeting .NET 8 across Server, WebAssembly, and Auto render modes.
 
 - **Zero Configuration** — Pre-built CSS included. No Tailwind setup, no Node.js, no build tools required.
+- **Coexists with Your Tailwind** — Every utility in the prebuilt CSS is prefixed `bb:` and kept in its own cascade layer, so it never collides with your own Tailwind build.
 - **Full shadcn/ui Theme Compatibility** — Use themes from [shadcn/ui](https://ui.shadcn.com/themes) or [tweakcn](https://tweakcn.com) directly.
 - **Built with Accessibility in Mind** — Includes ARIA attributes, keyboard support, and semantic HTML structure.
 - **Dark Mode Built-in** — Light and dark themes with CSS variables, ready out of the box.
@@ -52,12 +53,16 @@ Blazor developers lack a modern, design-system-first UI library equivalent to wh
 
 Blazor Blueprint ships with a built-in MCP server and llms.txt — so Claude, Cursor, Copilot, and Windsurf generate correct component code on the first try.
 
-- **MCP Server** — 11 tools give your AI structured access to every component, pattern, and API.
-- **llms.txt** — 100+ machine-optimized docs so any LLM can understand the library without hallucinating.
+- **MCP Server** — 15 tools give your AI structured access to every component, primitive, blueprint, icon library, and the changelog.
+- **llms.txt** — 180+ machine-optimized docs so any LLM can understand the library without hallucinating.
 - **Works Everywhere** — Claude Code, Cursor, GitHub Copilot, Windsurf — any MCP-compatible AI tool.
 
 ```bash
-npx blazorblueprint add mcp-server
+# Claude Code
+claude mcp add blazorblueprint --transport stdio -- npx -y @blazorblueprint/mcp
+
+# Any other MCP client: run the server with
+npx -y @blazorblueprint/mcp
 ```
 
 Learn more at [blazorblueprintui.com](https://blazorblueprintui.com).
@@ -77,11 +82,13 @@ dotnet add package BlazorBlueprint.Primitives
 Optionally add an icon library:
 
 ```bash
-dotnet add package BlazorBlueprint.Icons.Lucide       # 1,640+ icons
+dotnet add package BlazorBlueprint.Icons.Lucide       # 1,750+ icons
 dotnet add package BlazorBlueprint.Icons.Heroicons    # 1,288 icons (4 variants)
 dotnet add package BlazorBlueprint.Icons.Feather      # 286 icons
 dotnet add package BlazorBlueprint.Icons.FontAwesome  # 2,066 icons (3 variants, includes brand logos)
 ```
+
+Upgrading from v3? Breaking changes and what to do about them are in [V4-MIGRATION-GUIDE.md](V4-MIGRATION-GUIDE.md).
 
 ### Project Template
 
@@ -119,6 +126,8 @@ builder.Services.AddBlazorBlueprintComponents();
      a flash of light. Must be a classic blocking script in <head>. See THEMING.md. -->
 <script src="_content/BlazorBlueprint.Components/js/theme-init.js"></script>
 ```
+
+If you also run your own Tailwind build, load its output before or after `blazorblueprint.css` — the library's utilities are prefixed `bb:`, so the two never define the same class. Do not `@source` the library from your Tailwind input; it is not needed. See [THEMING.md](THEMING.md).
 
 **4. Add BbPortalHost** to your root layout (required for overlays like Dialog, Sheet, Popover):
 
@@ -185,7 +194,7 @@ Production-ready components for complex data-driven applications:
 | **Chart** | 11 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Pie, Radar, Radial Bar, Scatter) built on Apache ECharts with a declarative composition API and automatic theme integration. |
 | **Dock** | IDE-style docking layout — drag-and-drop panels between regions, pinning, maximize, close/reopen, pop-out floating panels, and tab-strip overflow. |
 | **Event Calendar** | Agenda/event calendar with Month, Week, and Agenda views, generic over your own event model, with per-event templates and styling. |
-| **Rich Text Editor** | WYSIWYG editor with formatting toolbar and HTML output. |
+| **Rich Text Editor** | WYSIWYG editor on Quill 2 — headings, lists and checklists, links, images with an upload hook, tables, text colour and highlight, alignment, inline and block code, undo/redo — with sanitised HTML and Delta output. |
 | **Markdown Editor** | Toolbar formatting with split-pane live preview. |
 
 ### Form & Input
@@ -229,7 +238,7 @@ Production-ready components for complex data-driven applications:
 | **Form Field Time Picker** | Pre-configured time picker field with built-in label, description, and validation |
 | **Form Wizard** | Multi-step form wizard with step navigation, progress indication, per-step validation, and optional/skippable steps |
 | **Input** | Text input with multiple types and validation |
-| **Input Field** | Typed input with automatic conversion, formatting, and validation for 15+ types |
+| **Input Field** | Typed input with automatic conversion, formatting, and validation for a dozen built-in types (numbers, dates, times, `Guid`, `bool`, `string`) and their nullable forms |
 | **Input Group** | Enhanced inputs with icons, buttons, and addons |
 | **Input OTP** | One-time password input with individual digit fields |
 | **Label** | Form labels with control association |
@@ -280,7 +289,7 @@ Production-ready components for complex data-driven applications:
 | **Alert Dialog** | Modal requiring user acknowledgement |
 | **Command** | Command palette with keyboard navigation, filtering, and dialog mode |
 | **Context Menu** | Right-click menu with customizable items |
-| **Dialog** | Modal dialogs with programmatic `DialogService` supporting alert, prompt, and custom component dialogs |
+| **Dialog** | Modal dialogs with programmatic `DialogService` (alert, prompt, custom component dialogs) and an optional native `<dialog>` rendering strategy |
 | **Drawer** | Mobile-friendly panel sliding from screen edge |
 | **Dropdown Menu** | Menus with checkbox items and keyboard navigation |
 | **Hover Card** | Rich hover previews |
@@ -301,7 +310,7 @@ Production-ready components for complex data-driven applications:
 | **DataView**         | Displays data using templates in a grid or list layout with sorting, filtering, pagination, and infinite scrolling |
 | **Event Calendar**   | Month, Week, and Agenda views over your own event model with per-event templates, styling, and click callbacks    |
 | **Markdown Editor**  | Toolbar formatting with live preview                                                                               |
-| **Rich Text Editor** | WYSIWYG editor with formatting toolbar and HTML output                                                             |
+| **Rich Text Editor** | WYSIWYG editor on Quill 2 with headings, lists and checklists, links, images with an upload hook, tables, colour, alignment, code, and undo/redo |
 | **Tree View**        | Hierarchical data display with selection, checkboxes, lazy loading, drag-and-drop, search filtering, and data-driven or declarative modes |
 
 ### Display
@@ -382,14 +391,14 @@ Primitives are completely unstyled — bring your own CSS, Tailwind classes, or 
 
 ## Icons
 
-Four icon library packages with **5,200+ total icons**:
+Four icon library packages with **5,300+ total icons**:
 
 | Package | Icons | Style | License |
 |---------|-------|-------|---------|
-| `BlazorBlueprint.Icons.Lucide` | 1,640+ | Stroke-based, consistent 24x24 | ISC |
-| `BlazorBlueprint.Icons.Heroicons` | 1,288 | 4 variants (Outline, Solid, Mini, Micro) | MIT |
+| `BlazorBlueprint.Icons.Lucide` | 1,750+ | Stroke-based, consistent 24x24 | ISC |
+| `BlazorBlueprint.Icons.Heroicons` | 1,288 | 4 variants (Outline, Solid, Mini, Micro) of ~320 icons | MIT |
 | `BlazorBlueprint.Icons.Feather` | 286 | Minimalist, stroke-based 24x24 | MIT |
-| `BlazorBlueprint.Icons.FontAwesome` | 2,066 | 3 variants (Solid, Regular, Brands — includes brand logos) | CC BY 4.0 / SIL OFL 1.1 / MIT (Free tier) |
+| `BlazorBlueprint.Icons.FontAwesome` | 2,066 | 3 variants (1,407 Solid, 164 Regular, 495 Brands — includes brand logos) | CC BY 4.0 / SIL OFL 1.1 / MIT (Free tier) |
 
 ## Theming
 
@@ -431,7 +440,7 @@ Apply the `.dark` class to your `<html>` element. All components automatically s
 
 ## Localization
 
-All component chrome strings (button labels, placeholders, ARIA labels, status messages) are localizable via the `IBbLocalizer` interface. The built-in `DefaultBbLocalizer` provides English defaults for all 260+ strings.
+All component chrome strings (button labels, placeholders, ARIA labels, status messages) are localizable via the `IBbLocalizer` interface. The built-in `DefaultBbLocalizer` provides English defaults for all 290+ strings.
 
 ### Quick Start
 
