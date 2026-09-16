@@ -153,57 +153,57 @@ public partial class BbTimelineItem : ComponentBase
         _itemIndex = ParentTimeline?.RegisterItem() ?? 0;
 
     private string CssClass => ClassNames.cn(
-        "relative w-full",
+        "bb:relative bb:w-full",
         Class
     );
 
     private string ContentGridClass => ClassNames.cn(
-        "grid gap-4 items-start",
+        "bb:grid bb:gap-4 bb:items-start",
         Align switch
         {
-            TimelineAlign.Left => "grid-cols-[auto_1fr]",
-            TimelineAlign.Right => "grid-cols-[1fr_auto]",
-            _ => "grid-cols-[1fr_auto_1fr]"
+            TimelineAlign.Left => "bb:grid-cols-[auto_1fr]",
+            TimelineAlign.Right => "bb:grid-cols-[1fr_auto]",
+            _ => "bb:grid-cols-[1fr_auto_1fr]"
         },
         Status == TimelineStatus.InProgress ? "aria-current-step" : null
     );
 
-    private const string IconWrapperClass = "relative z-[1]";
+    private const string IconWrapperClass = "bb:relative bb:z-[1]";
 
     private string IconMinHeightClass => IconSize switch
     {
-        TimelineSize.Small => "min-h-8",
-        TimelineSize.Medium => "min-h-10",
-        TimelineSize.Large => "min-h-12",
-        _ => "min-h-10"
+        TimelineSize.Small => "bb:min-h-8",
+        TimelineSize.Medium => "bb:min-h-10",
+        TimelineSize.Large => "bb:min-h-12",
+        _ => "bb:min-h-10"
     };
 
     private string ContentWrapperClass => ClassNames.cn(
-        "grid items-center",
+        "bb:grid bb:items-center",
         IconMinHeightClass
     );
 
     private string ContentWrapperEndClass => ClassNames.cn(
-        "grid items-center justify-items-end",
+        "bb:grid bb:items-center bb:justify-items-end",
         IconMinHeightClass
     );
 
     private string ConnectorGapClass => (ParentTimeline?.Size ?? TimelineSize.Medium) switch
     {
-        TimelineSize.Small => "-mb-2",
-        TimelineSize.Medium => "-mb-4",
-        TimelineSize.Large => "-mb-6",
-        _ => "-mb-4"
+        TimelineSize.Small => "bb:-mb-2",
+        TimelineSize.Medium => "bb:-mb-4",
+        TimelineSize.Large => "bb:-mb-6",
+        _ => "bb:-mb-4"
     };
 
     private string ComputedConnectorClass => ClassNames.cn(
-        "flex-1 min-h-16",
+        "bb:flex-1 bb:min-h-16",
         ConnectorGapClass,
         ConnectorClass
     );
 
     private string DateColumnClass => ClassNames.cn(
-        "flex flex-col justify-center",
+        "bb:flex bb:flex-col bb:justify-center",
         IconMinHeightClass
     );
 }

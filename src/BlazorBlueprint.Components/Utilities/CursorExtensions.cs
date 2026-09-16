@@ -12,22 +12,22 @@ public static class CursorExtensions
     /// <returns>The Tailwind CSS class string (e.g., <c>"cursor-pointer"</c>).</returns>
     public static string ToClass(this CursorType cursor) => cursor switch
     {
-        CursorType.Default => "cursor-default",
-        CursorType.Pointer => "cursor-pointer",
-        CursorType.NotAllowed => "cursor-not-allowed",
-        CursorType.Crosshair => "cursor-crosshair",
-        CursorType.Grab => "cursor-grab",
-        CursorType.Grabbing => "cursor-grabbing",
-        CursorType.ColResize => "cursor-col-resize",
-        CursorType.RowResize => "cursor-row-resize",
-        CursorType.EResize => "cursor-e-resize",
-        CursorType.WResize => "cursor-w-resize",
-        CursorType.Wait => "cursor-wait",
-        CursorType.Text => "cursor-text",
-        CursorType.Move => "cursor-move",
-        CursorType.Help => "cursor-help",
-        CursorType.None => "cursor-none",
-        CursorType.Auto => "cursor-auto",
-        _ => "cursor-default"
+        CursorType.Default => "bb:cursor-default",
+        CursorType.Pointer => "bb:cursor-pointer",
+        CursorType.NotAllowed => "bb:cursor-not-allowed",
+        CursorType.Crosshair => "bb:cursor-crosshair",
+        CursorType.Grab => "bb:cursor-grab",
+        CursorType.Grabbing => "bb:cursor-grabbing",
+        CursorType.ColResize => "bb:cursor-col-resize",
+        CursorType.RowResize => "bb:cursor-row-resize",
+        CursorType.EResize => "bb:cursor-e-resize",
+        CursorType.WResize => "bb:cursor-w-resize",
+        CursorType.Wait => "bb:cursor-wait",
+        CursorType.Text => "bb:cursor-text",
+        CursorType.Move => "bb:cursor-move",
+        CursorType.Help => "bb:cursor-help",
+        CursorType.None => "bb:cursor-none",
+        CursorType.Auto => "bb:cursor-auto",
+        _ => "bb:cursor-default"
     };
 }

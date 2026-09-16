@@ -724,20 +724,20 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
     // === CSS Classes ===
 
     private string ContainerCssClass => ClassNames.cn(
-        "flex flex-col rounded-md border border-input bg-background",
-        "focus-within:border-ring",
-        ClassNames.when(AriaInvalid == true, "border-destructive"),
-        ClassNames.when(Disabled, "opacity-50 cursor-not-allowed"),
+        "bb:flex bb:flex-col bb:rounded-md bb:border bb:border-input bb:bg-background",
+        "bb:focus-within:border-ring",
+        ClassNames.when(AriaInvalid == true, "bb:border-destructive"),
+        ClassNames.when(Disabled, "bb:opacity-50 bb:cursor-not-allowed"),
         Class
     );
 
     private static string ToolbarCssClass => ClassNames.cn(
-        "flex flex-wrap items-center gap-1 px-3 py-2 border-b border-input bg-muted/40"
+        "bb:flex bb:flex-wrap bb:items-center bb:gap-1 bb:px-3 bb:py-2 bb:border-b bb:border-input bb:bg-muted/40"
     );
 
     private string EditorCssClass => ClassNames.cn(
-        "text-base md:text-sm",
-        ClassNames.when(Disabled, "cursor-not-allowed")
+        "bb:text-base bb:md:text-sm",
+        ClassNames.when(Disabled, "bb:cursor-not-allowed")
     );
 
     private string EditorStyle

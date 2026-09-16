@@ -520,7 +520,7 @@ internal static class DynamicFieldRenderer
         RenderWrappedField(builder, seq, field, errorText, layout, (controlBuilder, _, _) =>
         {
             controlBuilder.OpenElement(0, "div");
-            controlBuilder.AddAttribute(1, "class", "flex items-start gap-2");
+            controlBuilder.AddAttribute(1, "class", "bb:flex bb:items-start bb:gap-2");
 
             // Date picker
             controlBuilder.OpenComponent<BbDatePicker>(2);

@@ -142,15 +142,15 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
 
     private string CurrentTooltipText => copied ? Localizer["CopyText.Copied"] : Localizer["CopyText.ClickToCopy"];
 
-    private string TooltipIconCssClass => copied && isHovered ? "h-3 w-3 text-alert-success" : "h-3 w-3 text-primary";
+    private string TooltipIconCssClass => copied && isHovered ? "bb:h-3 bb:w-3 bb:text-alert-success" : "bb:h-3 bb:w-3 bb:text-primary";
 
-    private string TooltipTextCssClass => copied ? "text-alert-success" : "text-foreground";
+    private string TooltipTextCssClass => copied ? "bb:text-alert-success" : "bb:text-foreground";
 
     private string? TextCssClass => ClassNames.cn(
-        "relative inline-flex gap-1 items-center cursor-pointer text-primary font-semibold",
+        "bb:relative bb:inline-flex bb:gap-1 bb:items-center bb:cursor-pointer bb:text-primary bb:font-semibold",
         // #459: rounded-sm keeps the ring on the text rather than boxing the whole line, since
         // this is inline and usually sits mid-sentence.
-        "rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "bb:rounded-sm bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2",
         Class);
 
     // Positioning, offset and z-index now come from the floating portal, so only the visual
@@ -158,8 +158,8 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
     // tooltip when it opens rather than keeping a transparent copy in the layout. With no
     // state left to vary on, this is a constant rather than a computed class string.
     private const string TooltipCssClass =
-        "pointer-events-none inline-flex items-center gap-1.5 whitespace-nowrap " +
-        "rounded-md border bg-popover px-2.5 py-1 text-xs font-medium shadow-md";
+        "bb:pointer-events-none bb:inline-flex bb:items-center bb:gap-1.5 bb:whitespace-nowrap " +
+        "bb:rounded-md bb:border bb:bg-popover bb:px-2.5 bb:py-1 bb:text-xs bb:font-medium bb:shadow-md";
 
     private void HandleMouseEnter()
     {

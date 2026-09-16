@@ -66,9 +66,9 @@ public partial class BbFieldSet : ComponentBase
     /// </remarks>
     private string CssClass => ClassNames.cn(
         // Remove default browser styling
-        "border-0 p-0 m-0",
+        "bb:border-0 bb:p-0 bb:m-0",
         // Spacing for grouped fields
-        "space-y-4",
+        "bb:space-y-4",
         // Custom classes (if provided)
         Class
     );

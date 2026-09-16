@@ -70,15 +70,15 @@ public partial class BbButtonGroupText : ComponentBase
     /// </remarks>
     private string CssClass => ClassNames.cn(
         // Base styles - inline flex with padding
-        "inline-flex items-center justify-center",
-        "px-3 py-2",
+        "bb:inline-flex bb:items-center bb:justify-center",
+        "bb:px-3 bb:py-2",
 
         // Muted background styling
-        "bg-muted text-muted-foreground",
-        "text-sm font-medium",
+        "bb:bg-muted bb:text-muted-foreground",
+        "bb:text-sm bb:font-medium",
 
         // Icon sizing (SVG elements)
-        "[&_svg]:size-4 [&_svg]:shrink-0",
+        "bb:[&_svg]:size-4 bb:[&_svg]:shrink-0",
 
         // Custom classes (if provided)
         Class

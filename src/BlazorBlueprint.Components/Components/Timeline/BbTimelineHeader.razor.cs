@@ -26,7 +26,7 @@ public partial class BbTimelineHeader : ComponentBase
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string CssClass => ClassNames.cn(
-        "flex items-center gap-4",
+        "bb:flex bb:items-center bb:gap-4",
         Class
     );
 }

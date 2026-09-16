@@ -93,42 +93,42 @@ public partial class BbInputGroup : ComponentBase
     /// </remarks>
     private string CssClass => ClassNames.cn(
         // Base container styles
-        "group/input-group relative flex w-full",
-        "border border-input rounded-md shadow-sm",
-        "bg-background overflow-hidden",
-        "transition-colors outline-none",
+        "bb:group/input-group bb:relative bb:flex bb:w-full",
+        "bb:border bb:border-input bb:rounded-md bb:shadow-sm",
+        "bb:bg-background bb:overflow-hidden",
+        "bb:transition-colors bb:outline-none",
 
         // Default height and alignment for inputs
-        "h-9 min-w-0 items-center",
+        "bb:h-9 bb:min-w-0 bb:items-center",
 
         // Auto height when containing textarea or block addons
-        "has-[>textarea]:h-auto has-[>textarea]:items-start",
-        "has-[>[data-align=block-start]]:h-auto has-[>[data-align=block-start]]:flex-col has-[>[data-align=block-start]]:items-stretch",
-        "has-[>[data-align=block-end]]:h-auto has-[>[data-align=block-end]]:flex-col has-[>[data-align=block-end]]:items-stretch",
+        "bb:has-[>textarea]:h-auto bb:has-[>textarea]:items-start",
+        "bb:has-[>[data-align=block-start]]:h-auto bb:has-[>[data-align=block-start]]:flex-col bb:has-[>[data-align=block-start]]:items-stretch",
+        "bb:has-[>[data-align=block-end]]:h-auto bb:has-[>[data-align=block-end]]:flex-col bb:has-[>[data-align=block-end]]:items-stretch",
 
         // Reduce input padding when any inline addons present for compact spacing
-        "has-[>[data-align=inline-start]]:[&>input]:pl-1",
-        "has-[>[data-align=inline-start]]:[&>textarea]:pl-1",
-        "has-[>[data-align=inline-end]]:[&>input]:pr-1",
-        "has-[>[data-align=inline-end]]:[&>textarea]:pr-1",
+        "bb:has-[>[data-align=inline-start]]:[&>input]:pl-1",
+        "bb:has-[>[data-align=inline-start]]:[&>textarea]:pl-1",
+        "bb:has-[>[data-align=inline-end]]:[&>input]:pr-1",
+        "bb:has-[>[data-align=inline-end]]:[&>textarea]:pr-1",
 
         // Further reduce when button addons present for tight integration
-        "has-[>[data-align=inline-start]>button]:[&>input]:pl-1.5",
-        "has-[>[data-align=inline-start]>button]:[&>textarea]:pl-1.5",
-        "has-[>[data-align=inline-end]>button]:[&>input]:pr-1.5",
-        "has-[>[data-align=inline-end]>button]:[&>textarea]:pr-1.5",
+        "bb:has-[>[data-align=inline-start]>button]:[&>input]:pl-1.5",
+        "bb:has-[>[data-align=inline-start]>button]:[&>textarea]:pl-1.5",
+        "bb:has-[>[data-align=inline-end]>button]:[&>input]:pr-1.5",
+        "bb:has-[>[data-align=inline-end]>button]:[&>textarea]:pr-1.5",
 
         // Reduce input vertical padding when inline addons have buttons for uniform spacing
-        "has-[>[data-align=inline-start]>button]:[&>input]:py-1.5",
-        "has-[>[data-align=inline-end]>button]:[&>input]:py-1.5",
-        "has-[>[data-align=inline-start]>button]:[&>textarea]:py-1.5",
-        "has-[>[data-align=inline-end]>button]:[&>textarea]:py-1.5",
+        "bb:has-[>[data-align=inline-start]>button]:[&>input]:py-1.5",
+        "bb:has-[>[data-align=inline-end]>button]:[&>input]:py-1.5",
+        "bb:has-[>[data-align=inline-start]>button]:[&>textarea]:py-1.5",
+        "bb:has-[>[data-align=inline-end]>button]:[&>textarea]:py-1.5",
 
         // Focus state - when any control inside is focused
-        "has-[[data-slot=input-group-control]:focus-visible]:border-ring",
+        "bb:has-[[data-slot=input-group-control]:focus-visible]:border-ring",
 
         // Error state - when any control inside has aria-invalid
-        "has-[[data-slot=input-group-control][aria-invalid=true]]:border-destructive",
+        "bb:has-[[data-slot=input-group-control][aria-invalid=true]]:border-destructive",
 
         // Custom classes
         Class

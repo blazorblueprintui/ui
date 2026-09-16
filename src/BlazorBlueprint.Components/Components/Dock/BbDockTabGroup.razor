@@ -8,7 +8,7 @@
         <div @ref="stripRef"
              role="tablist"
              aria-orientation="horizontal"
-             class="flex min-w-0 flex-1 items-stretch overflow-hidden bb-dock-tabstrip"
+             class="bb:flex bb:min-w-0 bb:flex-1 bb:items-stretch bb:overflow-hidden bb-dock-tabstrip"
              data-dock-tabstrip="@GroupNode.Id">
             @foreach (var panelId in GroupNode.PanelIds)
             {
@@ -38,12 +38,12 @@
                      @oncontextmenu:stopPropagation="true">
                     @if (panel.Icon is not null)
                     {
-                        <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center">@panel.Icon</span>
+                        <span class="bb:flex bb:h-3.5 bb:w-3.5 bb:shrink-0 bb:items-center bb:justify-center">@panel.Icon</span>
                     }
-                    <span class="truncate">@panel.Title</span>
+                    <span class="bb:truncate">@panel.Title</span>
                     @if (Dock.IsPinned(panel.Id))
                     {
-                        <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center" aria-hidden="true">
+                        <span class="bb:flex bb:h-3.5 bb:w-3.5 bb:shrink-0 bb:items-center bb:justify-center" aria-hidden="true">
                             <LucideIcon Name="pin" Size="11" />
                         </span>
                     }
@@ -65,18 +65,18 @@
 
         @if (overflowPanelIds.Count > 0 || !IsFloating)
         {
-            <div class="flex shrink-0 items-center gap-0.5 px-1" @onpointerdown:stopPropagation="true">
+            <div class="bb:flex bb:shrink-0 bb:items-center bb:gap-0.5 bb:px-1" @onpointerdown:stopPropagation="true">
                 @if (overflowPanelIds.Count > 0)
                 {
                     <BbDropdownMenu>
                         <BbDropdownMenuTrigger AsChild="false"
-                                               Class="inline-flex h-6 items-center justify-center gap-0.5 rounded-sm px-1 text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                                               Class="bb:inline-flex bb:h-6 bb:items-center bb:justify-center bb:gap-0.5 bb:rounded-sm bb:px-1 bb:text-muted-foreground bb:transition-colors bb:hover:bg-foreground/10 bb:hover:text-foreground"
                                                aria-label="@Localizer["Dock.ShowHiddenTabs", overflowPanelIds.Count]"
                                                title="@Localizer["Dock.ShowHiddenTabs", overflowPanelIds.Count]">
                             <LucideIcon Name="ellipsis" Size="14" />
-                            <span class="text-[10px] font-medium leading-none">@overflowPanelIds.Count</span>
+                            <span class="bb:text-[10px] bb:font-medium bb:leading-none">@overflowPanelIds.Count</span>
                         </BbDropdownMenuTrigger>
-                        <BbDropdownMenuContent Align="PopoverAlign.End" Class="min-w-[10rem] max-w-[16rem]">
+                        <BbDropdownMenuContent Align="PopoverAlign.End" Class="bb:min-w-[10rem] bb:max-w-[16rem]">
                             @foreach (var hiddenId in overflowPanelIds)
                             {
                                 var hiddenPanel = Dock.GetPanel(hiddenId);
@@ -85,17 +85,17 @@
                                     continue;
                                 }
 
-                                <BbDropdownMenuItem Class="pr-1" OnClick="() => Dock.ActivatePanel(GroupNode, hiddenPanel.Id)">
-                                    <div class="flex w-full items-center gap-2">
+                                <BbDropdownMenuItem Class="bb:pr-1" OnClick="() => Dock.ActivatePanel(GroupNode, hiddenPanel.Id)">
+                                    <div class="bb:flex bb:w-full bb:items-center bb:gap-2">
                                         @if (hiddenPanel.Icon is not null)
                                         {
-                                            <span class="flex h-3.5 w-3.5 shrink-0 items-center justify-center">@hiddenPanel.Icon</span>
+                                            <span class="bb:flex bb:h-3.5 bb:w-3.5 bb:shrink-0 bb:items-center bb:justify-center">@hiddenPanel.Icon</span>
                                         }
-                                        <span class="truncate">@hiddenPanel.Title</span>
+                                        <span class="bb:truncate">@hiddenPanel.Title</span>
                                         @if (hiddenPanel.CanClose)
                                         {
                                             <button type="button"
-                                                    class="ml-auto inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                                                    class="bb:ml-auto bb:inline-flex bb:h-5 bb:w-5 bb:shrink-0 bb:items-center bb:justify-center bb:rounded-sm bb:text-muted-foreground bb:transition-colors bb:hover:bg-foreground/10 bb:hover:text-foreground"
                                                     aria-label="@Localizer["Dock.CloseTab", hiddenPanel.Title]"
                                                     title="@Localizer["Dock.CloseTab", hiddenPanel.Title]"
                                                     @onclick="() => Dock.ClosePanelAsync(hiddenPanel.Id)"
@@ -113,7 +113,7 @@
                 @if (!IsFloating)
                 {
                     <button type="button"
-                            class="inline-flex h-6 w-6 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-foreground/10 hover:text-foreground"
+                            class="bb:inline-flex bb:h-6 bb:w-6 bb:items-center bb:justify-center bb:rounded-sm bb:text-muted-foreground bb:transition-colors bb:hover:bg-foreground/10 bb:hover:text-foreground"
                             aria-label="@(IsMaximized ? Localizer["Dock.RestorePanelGroup"] : Localizer["Dock.MaximizePanelGroup"])"
                             title="@(IsMaximized ? Localizer["Dock.RestorePanelGroup"] : Localizer["Dock.MaximizePanelGroup"])"
                             @onclick="() => Dock.ToggleMaximize(GroupNode)"
@@ -125,7 +125,7 @@
         }
     </div>
 
-    <div class="relative min-h-0 flex-1 overflow-auto bg-background">
+    <div class="bb:relative bb:min-h-0 bb:flex-1 bb:overflow-auto bb:bg-background">
         @foreach (var panelId in GroupNode.PanelIds)
         {
             var panel = Dock.GetPanel(panelId);
@@ -139,7 +139,7 @@
                  id="@PanelDomId(panelId)"
                  aria-labelledby="@TabDomId(panelId)"
                  tabindex="0"
-                 class="@(isActive ? "h-full" : "hidden")"
+                 class="@(isActive ? "bb:h-full" : "bb:hidden")"
                  @key="panelId">
                 @panel.ChildContent
             </div>

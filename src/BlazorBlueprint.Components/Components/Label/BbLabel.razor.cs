@@ -134,7 +134,7 @@ public partial class BbLabel : ComponentBase
     /// </para>
     /// </remarks>
     private string CssClass => ClassNames.cn(
-        "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+        "bb:text-sm bb:font-medium bb:leading-none bb:peer-disabled:cursor-not-allowed bb:peer-disabled:opacity-70",
         Class
     );
 }

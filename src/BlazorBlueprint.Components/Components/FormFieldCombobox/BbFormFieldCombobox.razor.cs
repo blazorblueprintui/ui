@@ -119,7 +119,7 @@ public partial class BbFormFieldCombobox<TValue> : FormFieldBase
     /// Gets or sets the width of the popover content.
     /// </summary>
     [Parameter]
-    public string PopoverWidth { get; set; } = "w-[200px]";
+    public string PopoverWidth { get; set; } = "bb:w-[200px]";
 
     /// <summary>
     /// Gets or sets whether to match the dropdown width to the trigger element width.
@@ -133,7 +133,7 @@ public partial class BbFormFieldCombobox<TValue> : FormFieldBase
     /// Set to <c>null</c> or empty to disable the active style.
     /// </summary>
     [Parameter]
-    public string? ActiveClass { get; set; } = "bg-accent text-accent-foreground";
+    public string? ActiveClass { get; set; } = "bb:bg-accent bb:text-accent-foreground";
 
     /// <inheritdoc />
     protected override LambdaExpression? GetFieldExpression() => ValueExpression;

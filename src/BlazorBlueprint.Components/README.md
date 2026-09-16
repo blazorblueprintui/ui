@@ -540,6 +540,8 @@ Use the `Class` parameter to add custom CSS classes or Tailwind classes (if you 
 
 **Note:** BlazorBlueprint Components include pre-built CSS and don't require Tailwind. However, you can still use Tailwind classes for customization if you've set up Tailwind in your project.
 
+Classes you pass through `Class` come from **your** Tailwind build, not from `blazorblueprint.css`. Every utility the library ships is prefixed `bb:` (`.bb\:flex`, `.bb\:sm\:hidden`) and kept in its own cascade layer, so your build and the library's can never emit the same class name and their load order does not matter. The library strips its prefix when merging, so `Class="p-6"` still replaces the component's own `bb:p-4`. Do not `@source` this package from your Tailwind input — it finds only prefixed tokens and emits nothing. If you have no Tailwind build, the prefixed classes work anywhere on the page (`class="bb:flex bb:gap-4"`), but the set is whatever the components use and is not a stable API.
+
 ### Component Composition
 
 Build complex UIs by composing components:

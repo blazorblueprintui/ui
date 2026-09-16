@@ -54,32 +54,32 @@ public partial class BbSidebar : IDisposable
     {
         // hidden md:flex prevents the desktop sidebar from flashing on mobile screens
         // before JS detects the breakpoint and switches to the Sheet renderer.
-        var baseClasses = "group peer hidden md:flex flex-col text-sidebar-foreground shrink-0";
+        var baseClasses = "bb:group bb:peer bb:hidden bb:md:flex bb:flex-col bb:text-sidebar-foreground bb:shrink-0";
 
         // Variant-specific classes
         var variantClasses = Context?.Variant switch
         {
-            SidebarVariant.Floating => "bg-sidebar border border-sidebar-border rounded-lg shadow-lg data-[state=closed]:border-0 data-[state=closed]:shadow-none",
-            SidebarVariant.Inset => "bg-sidebar",
-            _ => "bg-sidebar border-r border-sidebar-border data-[state=closed]:border-0"
+            SidebarVariant.Floating => "bb:bg-sidebar bb:border bb:border-sidebar-border bb:rounded-lg bb:shadow-lg bb:data-[state=closed]:border-0 bb:data-[state=closed]:shadow-none",
+            SidebarVariant.Inset => "bb:bg-sidebar",
+            _ => "bb:bg-sidebar bb:border-r bb:border-sidebar-border bb:data-[state=closed]:border-0"
         };
 
         // Side-specific positioning
         var sideClasses = Context?.Side == SidebarSide.Right
-            ? "border-r-0 border-l data-[state=closed]:border-0"
+            ? "bb:border-r-0 bb:border-l bb:data-[state=closed]:border-0"
             : "";
 
         // Width and transition classes
         var widthClasses = Collapsible
-            ? "w-[var(--sidebar-width)] transition-[width] duration-200 ease-linear data-[state=collapsed]:w-[var(--sidebar-width-icon)]"
-            : "w-[var(--sidebar-width)] transition-[width,opacity] duration-200 ease-linear data-[state=closed]:w-0 data-[state=closed]:opacity-0 overflow-hidden";
+            ? "bb:w-[var(--sidebar-width)] bb:transition-[width] bb:duration-200 bb:ease-linear bb:data-[state=collapsed]:w-[var(--sidebar-width-icon)]"
+            : "bb:w-[var(--sidebar-width)] bb:transition-[width,opacity] bb:duration-200 bb:ease-linear bb:data-[state=closed]:w-0 bb:data-[state=closed]:opacity-0 bb:overflow-hidden";
 
         // Variant-specific layout classes
         var layoutClasses = Context?.Variant switch
         {
-            SidebarVariant.Floating => "fixed top-2 bottom-2 z-10",
-            SidebarVariant.Inset => "relative h-full",
-            _ => "sticky top-0 min-h-full"
+            SidebarVariant.Floating => "bb:fixed bb:top-2 bb:bottom-2 bb:z-10",
+            SidebarVariant.Inset => "bb:relative bb:h-full",
+            _ => "bb:sticky bb:top-0 bb:min-h-full"
         };
 
         // Add left/right positioning for floating/default variants
@@ -87,11 +87,11 @@ public partial class BbSidebar : IDisposable
         {
             if (Context?.Variant == SidebarVariant.Floating)
             {
-                layoutClasses += Context?.Side == SidebarSide.Right ? " right-2" : " left-2";
+                layoutClasses += Context?.Side == SidebarSide.Right ? " bb:right-2" : " bb:left-2";
             }
             else
             {
-                layoutClasses += Context?.Side == SidebarSide.Right ? " right-0" : " left-0";
+                layoutClasses += Context?.Side == SidebarSide.Right ? " bb:right-0" : " bb:left-0";
             }
         }
 
@@ -108,8 +108,8 @@ public partial class BbSidebar : IDisposable
     private string GetMobileClasses()
     {
         return ClassNames.cn(
-            "w-[var(--sidebar-width)] bg-sidebar p-0 flex flex-col",
-            "[&>button]:hidden", // Hide the default Sheet close button
+            "bb:w-[var(--sidebar-width)] bb:bg-sidebar bb:p-0 bb:flex bb:flex-col",
+            "bb:[&>button]:hidden", // Hide the default Sheet close button
             Class
         );
     }

@@ -298,7 +298,7 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
 
     // --- Computed properties ---
 
-    private string CssClass => ClassNames.cn("text-sm", Class);
+    private string CssClass => ClassNames.cn("bb:text-sm", Class);
 
     private string ActiveSearchText => SearchText ?? searchText;
 

@@ -107,7 +107,7 @@ public partial class BbFormFieldMultiSelect<TValue> : FormFieldBase
     /// Gets or sets the width of the popover content.
     /// </summary>
     [Parameter]
-    public string PopoverWidth { get; set; } = "w-[300px]";
+    public string PopoverWidth { get; set; } = "bb:w-[300px]";
 
     /// <summary>
     /// Gets or sets whether to match the dropdown width to the trigger element width.

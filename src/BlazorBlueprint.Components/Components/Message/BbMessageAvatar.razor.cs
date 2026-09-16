@@ -27,6 +27,6 @@ public partial class BbMessageAvatar : ComponentBase
 
     private string CssClass =>
         ClassNames.cn(
-            "flex w-fit min-w-8 shrink-0 items-center justify-center self-end overflow-hidden rounded-full bg-muted group-has-data-[slot=message-footer]/message:-translate-y-8",
+            "bb:flex bb:w-fit bb:min-w-8 bb:shrink-0 bb:items-center bb:justify-center bb:self-end bb:overflow-hidden bb:rounded-full bb:bg-muted bb:group-has-data-[slot=message-footer]/message:-translate-y-8",
             Class);
 }

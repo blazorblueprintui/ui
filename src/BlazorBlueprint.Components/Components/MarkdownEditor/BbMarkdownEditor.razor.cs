@@ -114,10 +114,10 @@ public partial class BbMarkdownEditor : ComponentBase, IAsyncDisposable
     /// Gets the CSS classes for the editor container.
     /// </summary>
     private string ContainerCssClass => ClassNames.cn(
-        "flex flex-col rounded-md border border-input bg-background",
-        "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
-        ClassNames.when(AriaInvalid == true, "border-destructive ring-destructive/20"),
-        ClassNames.when(Disabled, "opacity-50 cursor-not-allowed"),
+        "bb:flex bb:flex-col bb:rounded-md bb:border bb:border-input bb:bg-background",
+        "bb:focus-within:ring-2 bb:focus-within:ring-ring bb:focus-within:ring-offset-2",
+        ClassNames.when(AriaInvalid == true, "bb:border-destructive bb:ring-destructive/20"),
+        ClassNames.when(Disabled, "bb:opacity-50 bb:cursor-not-allowed"),
         Class
     );
 
@@ -130,25 +130,25 @@ public partial class BbMarkdownEditor : ComponentBase, IAsyncDisposable
     /// Gets the CSS classes for the textarea.
     /// </summary>
     private string TextareaCssClass => ClassNames.cn(
-        "flex-1 w-full resize-y border-0 bg-transparent",
-        MinHeight == null ? "min-h-[150px]" : null,
-        "px-3 py-2 text-sm placeholder:text-muted-foreground",
-        "focus:outline-none",
-        "disabled:cursor-not-allowed"
+        "bb:flex-1 bb:w-full bb:resize-y bb:border-0 bb:bg-transparent",
+        MinHeight == null ? "bb:min-h-[150px]" : null,
+        "bb:px-3 bb:py-2 bb:text-sm bb:placeholder:text-muted-foreground",
+        "bb:focus:outline-none",
+        "bb:disabled:cursor-not-allowed"
     );
 
     /// <summary>
     /// Gets the CSS classes for the preview area.
     /// </summary>
     private string PreviewCssClass => ClassNames.cn(
-        "flex-1 w-full px-3 py-2 overflow-auto",
-        MinHeight == null ? "min-h-[150px]" : null,
-        "prose prose-sm dark:prose-invert max-w-none",
-        "[&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mb-2",
-        "[&_h2]:text-xl [&_h2]:font-bold [&_h2]:mb-2",
-        "[&_h3]:text-lg [&_h3]:font-bold [&_h3]:mb-2",
-        "[&_p]:mb-2 [&_ul]:list-disc [&_ul]:ml-4 [&_ol]:list-decimal [&_ol]:ml-4",
-        "[&_li]:mb-1 [&_strong]:font-bold [&_em]:italic [&_u]:underline"
+        "bb:flex-1 bb:w-full bb:px-3 bb:py-2 bb:overflow-auto",
+        MinHeight == null ? "bb:min-h-[150px]" : null,
+        "prose prose-sm dark:prose-invert bb:max-w-none",
+        "bb:[&_h1]:text-2xl bb:[&_h1]:font-bold bb:[&_h1]:mb-2",
+        "bb:[&_h2]:text-xl bb:[&_h2]:font-bold bb:[&_h2]:mb-2",
+        "bb:[&_h3]:text-lg bb:[&_h3]:font-bold bb:[&_h3]:mb-2",
+        "bb:[&_p]:mb-2 bb:[&_ul]:list-disc bb:[&_ul]:ml-4 bb:[&_ol]:list-decimal bb:[&_ol]:ml-4",
+        "bb:[&_li]:mb-1 bb:[&_strong]:font-bold bb:[&_em]:italic bb:[&_u]:underline"
     );
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -412,13 +412,13 @@ public partial class BbMarkdownEditor : ComponentBase, IAsyncDisposable
         var isActive = _activeTab == tabValue;
         return ClassNames.cn(
             // Reset default TabsTrigger styles
-            "!shadow-none !ring-0 !ring-offset-0",
+            "bb:!shadow-none bb:!ring-0 bb:!ring-offset-0",
             // Base styles
-            "px-3 py-1 text-sm font-medium transition-colors rounded-sm",
+            "bb:px-3 bb:py-1 bb:text-sm bb:font-medium bb:transition-colors bb:rounded-sm",
             // Active state - white background, inactive - transparent
             isActive
-                ? "bg-background text-foreground shadow-sm"
-                : "bg-transparent text-muted-foreground hover:text-foreground"
+                ? "bb:bg-background bb:text-foreground bb:shadow-sm"
+                : "bb:bg-transparent bb:text-muted-foreground bb:hover:text-foreground"
         );
     }
 

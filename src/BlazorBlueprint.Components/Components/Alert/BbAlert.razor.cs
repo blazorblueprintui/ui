@@ -155,31 +155,31 @@ public partial class BbAlert : ComponentBase, IAsyncDisposable
     /// </summary>
     private string CssClass => ClassNames.cn(
         // Base alert styles
-        "relative w-full rounded-lg border p-4 text-foreground",
+        "bb:relative bb:w-full bb:rounded-lg bb:border bb:p-4 bb:text-foreground",
         // Extra right padding for dismiss button
-        Dismissible ? "pr-10" : null,
+        Dismissible ? "bb:pr-10" : null,
         // Extra bottom padding and overflow clip for countdown bar
-        ShowCountdown && AutoDismissAfter.HasValue ? "pb-2 overflow-hidden" : null,
+        ShowCountdown && AutoDismissAfter.HasValue ? "bb:pb-2 bb:overflow-hidden" : null,
         // Accent border style (thick left border)
-        AccentBorder ? "border-l-4" : null,
-        Icon != null ? "[&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&:has(svg)]:pl-11" : null,
+        AccentBorder ? "bb:border-l-4" : null,
+        Icon != null ? "bb:[&>svg+div]:translate-y-[-3px] bb:[&>svg]:absolute bb:[&>svg]:left-4 bb:[&>svg]:top-4 bb:[&:has(svg)]:pl-11" : null,
         // Variant-specific styles (border color, background tint, icon color)
         Variant switch
         {
-            AlertVariant.Default => "bg-muted/30 [&>svg]:text-muted-foreground",
+            AlertVariant.Default => "bb:bg-muted/30 bb:[&>svg]:text-muted-foreground",
             AlertVariant.Success => AccentBorder
-                ? "border-l-alert-success bg-alert-success-bg border-alert-success/30 [&>svg]:text-alert-success"
-                : "border-alert-success/30 bg-alert-success-bg [&>svg]:text-alert-success",
+                ? "bb:border-l-alert-success bb:bg-alert-success-bg bb:border-alert-success/30 bb:[&>svg]:text-alert-success"
+                : "bb:border-alert-success/30 bb:bg-alert-success-bg bb:[&>svg]:text-alert-success",
             AlertVariant.Info => AccentBorder
-                ? "border-l-alert-info bg-alert-info-bg border-alert-info/30 [&>svg]:text-alert-info"
-                : "border-alert-info/30 bg-alert-info-bg [&>svg]:text-alert-info",
+                ? "bb:border-l-alert-info bb:bg-alert-info-bg bb:border-alert-info/30 bb:[&>svg]:text-alert-info"
+                : "bb:border-alert-info/30 bb:bg-alert-info-bg bb:[&>svg]:text-alert-info",
             AlertVariant.Warning => AccentBorder
-                ? "border-l-alert-warning bg-alert-warning-bg border-alert-warning/30 [&>svg]:text-alert-warning"
-                : "border-alert-warning/30 bg-alert-warning-bg [&>svg]:text-alert-warning",
+                ? "bb:border-l-alert-warning bb:bg-alert-warning-bg bb:border-alert-warning/30 bb:[&>svg]:text-alert-warning"
+                : "bb:border-alert-warning/30 bb:bg-alert-warning-bg bb:[&>svg]:text-alert-warning",
             AlertVariant.Danger => AccentBorder
-                ? "border-l-alert-danger bg-alert-danger-bg border-alert-danger/30 [&>svg]:text-alert-danger"
-                : "border-alert-danger/30 bg-alert-danger-bg [&>svg]:text-alert-danger",
-            _ => "bg-muted/30 [&>svg]:text-muted-foreground"
+                ? "bb:border-l-alert-danger bb:bg-alert-danger-bg bb:border-alert-danger/30 bb:[&>svg]:text-alert-danger"
+                : "bb:border-alert-danger/30 bb:bg-alert-danger-bg bb:[&>svg]:text-alert-danger",
+            _ => "bb:bg-muted/30 bb:[&>svg]:text-muted-foreground"
         },
         // Custom classes (if provided)
         Class

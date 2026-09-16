@@ -204,11 +204,11 @@ public partial class BbCheckbox : ComponentBase
     private string EffectiveId => Id ?? (generatedId ??= $"checkbox-{Guid.NewGuid().ToString("N")[..8]}");
 
     private string CssClass => ClassNames.cn(
-        "peer h-5 w-5 shrink-0 rounded-sm border border-primary flex items-center justify-center",
-        "ring-offset-background focus-visible:outline-none focus-visible:ring-2",
-        "focus-visible:ring-ring focus-visible:ring-offset-2",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        (Checked || Indeterminate) ? "bg-primary text-primary-foreground" : "bg-background",
+        "bb:peer bb:h-5 bb:w-5 bb:shrink-0 bb:rounded-sm bb:border bb:border-primary bb:flex bb:items-center bb:justify-center",
+        "bb:ring-offset-background bb:focus-visible:outline-none bb:focus-visible:ring-2",
+        "bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2",
+        "bb:disabled:cursor-not-allowed bb:disabled:opacity-50",
+        (Checked || Indeterminate) ? "bb:bg-primary bb:text-primary-foreground" : "bb:bg-background",
         Class
     );
 

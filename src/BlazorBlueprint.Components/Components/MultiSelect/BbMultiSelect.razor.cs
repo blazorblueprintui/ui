@@ -191,7 +191,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// Ignored when MatchTriggerWidth is true.
     /// </summary>
     [Parameter]
-    public string PopoverWidth { get; set; } = "w-[300px]";
+    public string PopoverWidth { get; set; } = "bb:w-[300px]";
 
     /// <summary>
     /// Gets or sets whether to match the dropdown width to the trigger element width.
@@ -206,7 +206,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// Set to <c>null</c> or empty to disable the active style.
     /// </summary>
     [Parameter]
-    public string? ActiveClass { get; set; } = "bg-accent text-accent-foreground";
+    public string? ActiveClass { get; set; } = "bb:bg-accent bb:text-accent-foreground";
 
     /// <summary>
     /// Gets or sets whether clicking outside the dropdown should close it.
@@ -816,21 +816,21 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// <summary>
     /// Gets the CSS class for the multiselect container.
     /// </summary>
-    private static string ContainerClass => "relative";
+    private static string ContainerClass => "bb:relative";
 
     /// <summary>
     /// Gets the CSS class for the trigger button.
     /// Uses caching to avoid recomputation on every render.
     /// </summary>
     private string TriggerCssClass => ClassNames.cn(
-        "inline-flex items-center justify-between rounded-md text-sm font-medium",
-        "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        "disabled:opacity-50 disabled:pointer-events-none",
-        "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        "bb:inline-flex bb:items-center bb:justify-between bb:rounded-md bb:text-sm bb:font-medium",
+        "bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+        "bb:disabled:opacity-50 bb:disabled:pointer-events-none",
+        "bb:border bb:border-input bb:bg-background bb:hover:bg-accent bb:hover:text-accent-foreground",
         _isOpen ? ActiveClass : null,
         // Single-line keeps a fixed height so wrapping tags can't grow the trigger; the default
         // uses a min-height so the trigger expands to fit tags that wrap onto further rows.
-        SingleLine ? "h-10 px-3 py-1.5" : "min-h-10 px-3 py-1.5",
+        SingleLine ? "bb:h-10 bb:px-3 bb:py-1.5" : "bb:min-h-10 bb:px-3 bb:py-1.5",
         PopoverWidth,
         Class
     );
@@ -840,40 +840,40 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// wraps them onto additional rows.
     /// </summary>
     private string TagListClass => SingleLine
-        ? "flex flex-nowrap items-center gap-1 flex-1 min-w-0 overflow-hidden"
-        : "flex flex-wrap items-center gap-1 flex-1 min-w-0";
+        ? "bb:flex bb:flex-nowrap bb:items-center bb:gap-1 bb:flex-1 bb:min-w-0 bb:overflow-hidden"
+        : "bb:flex bb:flex-wrap bb:items-center bb:gap-1 bb:flex-1 bb:min-w-0";
 
     /// <summary>
     /// CSS for each selected tag badge. In single-line mode tags keep their size (and clip) rather
     /// than shrinking to fit.
     /// </summary>
-    private string TagBadgeClass => SingleLine ? "gap-1 shrink-0" : "gap-1";
+    private string TagBadgeClass => SingleLine ? "bb:gap-1 bb:shrink-0" : "bb:gap-1";
 
     /// <summary>
     /// Gets the CSS class for the tag remove button.
     /// </summary>
     private static string TagRemoveButtonCssClass =>
-        "ml-0.5 rounded-full outline-none hover:bg-secondary-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+        "bb:ml-0.5 bb:rounded-full bb:outline-none bb:hover:bg-secondary-foreground/20 bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
 
     /// <summary>
     /// Gets the CSS class for the dropdown item.
     /// </summary>
     internal static string ItemCssClass =>
-        "relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none " +
-        "data-[focused=true]:bg-accent data-[focused=true]:text-accent-foreground " +
-        "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50";
+        "bb:relative bb:flex bb:cursor-pointer bb:select-none bb:items-center bb:gap-2 bb:rounded-sm bb:px-2 bb:py-1.5 bb:text-sm bb:outline-none " +
+        "bb:data-[focused=true]:bg-accent bb:data-[focused=true]:text-accent-foreground " +
+        "bb:data-[disabled=true]:pointer-events-none bb:data-[disabled=true]:opacity-50";
 
     /// <summary>
     /// Gets the CSS class for the checkbox.
     /// Uses data-state attribute from Checkbox primitive for checked/unchecked/indeterminate styling.
     /// </summary>
     internal static string CheckboxCssClass =>
-        "h-4 w-4 shrink-0 rounded-sm border border-primary flex items-center justify-center " +
-        "focus-visible:outline-none " +
-        "disabled:cursor-not-allowed disabled:opacity-50 " +
-        "data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground " +
-        "data-[state=indeterminate]:bg-primary data-[state=indeterminate]:text-primary-foreground " +
-        "data-[state=unchecked]:bg-background";
+        "bb:h-4 bb:w-4 bb:shrink-0 bb:rounded-sm bb:border bb:border-primary bb:flex bb:items-center bb:justify-center " +
+        "bb:focus-visible:outline-none " +
+        "bb:disabled:cursor-not-allowed bb:disabled:opacity-50 " +
+        "bb:data-[state=checked]:bg-primary bb:data-[state=checked]:text-primary-foreground " +
+        "bb:data-[state=indeterminate]:bg-primary bb:data-[state=indeterminate]:text-primary-foreground " +
+        "bb:data-[state=unchecked]:bg-background";
 
     // ── Compositional mode support (used by MultiSelectItem) ───────────
 

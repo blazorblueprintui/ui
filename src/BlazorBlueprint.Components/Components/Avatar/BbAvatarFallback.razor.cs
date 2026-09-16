@@ -76,8 +76,8 @@ public partial class BbAvatarFallback : ComponentBase
     /// - Font weight for initials
     /// </remarks>
     private string CssClass => ClassNames.cn(
-        "flex h-full w-full items-center justify-center rounded-full",
-        "bg-muted text-muted-foreground font-medium",
+        "bb:flex bb:h-full bb:w-full bb:items-center bb:justify-center bb:rounded-full",
+        "bb:bg-muted bb:text-muted-foreground bb:font-medium",
         Class
     );
 }

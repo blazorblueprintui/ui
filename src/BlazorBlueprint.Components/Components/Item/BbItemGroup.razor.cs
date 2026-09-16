@@ -33,7 +33,7 @@ public partial class BbItemGroup : ComponentBase
     /// Gets the computed CSS classes for the group element.
     /// </summary>
     private string CssClass => ClassNames.cn(
-        "flex flex-col gap-0.5",
+        "bb:flex bb:flex-col bb:gap-0.5",
         Class
     );
 }

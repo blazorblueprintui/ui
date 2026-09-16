@@ -29,7 +29,7 @@ public partial class BbTimelineContent : ComponentBase
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string CssClass => ClassNames.cn(
-        "flex flex-col gap-2 pl-2",
+        "bb:flex bb:flex-col bb:gap-2 bb:pl-2",
         Class
     );
 }

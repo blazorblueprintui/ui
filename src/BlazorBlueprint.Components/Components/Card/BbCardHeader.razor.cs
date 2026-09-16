@@ -48,7 +48,7 @@ public partial class BbCardHeader : ComponentBase
     /// </summary>
     private string CssClass => ClassNames.cn(
         // Base header styles (from shadcn/ui)
-        "flex flex-col space-y-1.5 p-6",
+        "bb:flex bb:flex-col bb:space-y-1.5 bb:p-6",
         // Custom classes (if provided)
         Class
     );

@@ -35,42 +35,42 @@ public partial class BbButtonGroup : ComponentBase
     private static readonly string[] HorizontalClasses =
     [
         // Remove borders and rounded corners between adjacent buttons
-        "[&>button:not(:first-child):not(:last-child)]:rounded-none",
-        "[&>button:not(:first-child)]:border-l-0",
-        "[&>button:first-child:not(:only-child)]:rounded-r-none",
-        "[&>button:last-child:not(:only-child)]:rounded-l-none",
+        "bb:[&>button:not(:first-child):not(:last-child)]:rounded-none",
+        "bb:[&>button:not(:first-child)]:border-l-0",
+        "bb:[&>button:first-child:not(:only-child)]:rounded-r-none",
+        "bb:[&>button:last-child:not(:only-child)]:rounded-l-none",
 
         // Handle separators - buttons adjacent to separators keep their borders
-        "[&>button:has(+[data-slot=separator])]:rounded-r-none",
-        "[&>[data-slot=separator]+button]:rounded-l-none [&>[data-slot=separator]+button]:!border-l [&>[data-slot=separator]+button]:border-input",
+        "bb:[&>button:has(+[data-slot=separator])]:rounded-r-none",
+        "bb:[&>[data-slot=separator]+button]:rounded-l-none bb:[&>[data-slot=separator]+button]:!border-l bb:[&>[data-slot=separator]+button]:border-input",
 
         // Handle nested button groups with gaps
-        "[&>[data-slot=button-group]:not(:first-child)]:ml-2",
+        "bb:[&>[data-slot=button-group]:not(:first-child)]:ml-2",
 
         // Focus state z-index (bring focused button above others)
-        "[&>button:focus]:relative [&>button:focus]:z-10"
+        "bb:[&>button:focus]:relative bb:[&>button:focus]:z-10"
     ];
 
     private static readonly string[] VerticalClasses =
     [
         // Vertical layout
-        "flex-col",
+        "bb:flex-col",
 
         // Remove borders and rounded corners between adjacent buttons
-        "[&>button:not(:first-child):not(:last-child)]:rounded-none",
-        "[&>button:not(:first-child)]:border-t-0",
-        "[&>button:first-child:not(:only-child)]:rounded-b-none",
-        "[&>button:last-child:not(:only-child)]:rounded-t-none",
+        "bb:[&>button:not(:first-child):not(:last-child)]:rounded-none",
+        "bb:[&>button:not(:first-child)]:border-t-0",
+        "bb:[&>button:first-child:not(:only-child)]:rounded-b-none",
+        "bb:[&>button:last-child:not(:only-child)]:rounded-t-none",
 
         // Handle separators - buttons adjacent to separators keep their borders
-        "[&>button:has(+[data-slot=separator])]:rounded-b-none",
-        "[&>[data-slot=separator]+button]:rounded-t-none [&>[data-slot=separator]+button]:!border-t [&>[data-slot=separator]+button]:border-input",
+        "bb:[&>button:has(+[data-slot=separator])]:rounded-b-none",
+        "bb:[&>[data-slot=separator]+button]:rounded-t-none bb:[&>[data-slot=separator]+button]:!border-t bb:[&>[data-slot=separator]+button]:border-input",
 
         // Handle nested button groups with gaps
-        "[&>[data-slot=button-group]:not(:first-child)]:mt-2",
+        "bb:[&>[data-slot=button-group]:not(:first-child)]:mt-2",
 
         // Focus state z-index (bring focused button above others)
-        "[&>button:focus]:relative [&>button:focus]:z-10"
+        "bb:[&>button:focus]:relative bb:[&>button:focus]:z-10"
     ];
 
     /// <summary>
@@ -135,7 +135,7 @@ public partial class BbButtonGroup : ComponentBase
     /// </remarks>
     private string CssClass => ClassNames.cn(
         // Base styles - flex container with role="group"
-        "isolate inline-flex items-stretch",
+        "bb:isolate bb:inline-flex bb:items-stretch",
 
         // Orientation-specific styles
         Orientation switch

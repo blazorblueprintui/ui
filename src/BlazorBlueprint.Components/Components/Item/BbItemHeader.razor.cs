@@ -33,7 +33,7 @@ public partial class BbItemHeader : ComponentBase
     /// Gets the computed CSS classes for the header element.
     /// </summary>
     private string CssClass => ClassNames.cn(
-        "flex basis-full items-center justify-between",
+        "bb:flex bb:basis-full bb:items-center bb:justify-between",
         Class
     );
 }

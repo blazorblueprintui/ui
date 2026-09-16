@@ -74,47 +74,47 @@ public partial class BbTimelineIcon : ComponentBase
     private bool IsConnected => ParentTimeline?.ConnectorFit == TimelineConnectorFit.Connected;
 
     private string RingClass => ClassNames.cn(
-        "relative rounded-full shadow-sm",
-        IsConnected ? null : "ring-8 ring-background",
+        "bb:relative bb:rounded-full bb:shadow-sm",
+        IsConnected ? null : "bb:ring-8 bb:ring-background",
         Class
     );
 
     private string CssClass => ClassNames.cn(
-        "flex items-center justify-center rounded-full",
+        "bb:flex bb:items-center bb:justify-center bb:rounded-full",
         Size switch
         {
-            TimelineSize.Small => "h-8 w-8",
-            TimelineSize.Medium => "h-10 w-10",
-            TimelineSize.Large => "h-12 w-12",
-            _ => "h-10 w-10"
+            TimelineSize.Small => "bb:h-8 bb:w-8",
+            TimelineSize.Medium => "bb:h-10 bb:w-10",
+            TimelineSize.Large => "bb:h-12 bb:w-12",
+            _ => "bb:h-10 bb:w-10"
         },
         Variant == TimelineIconVariant.Outline
             ? EffectiveColor switch
             {
-                TimelineColor.Primary => "bg-background border-2 border-primary text-primary",
-                TimelineColor.Secondary => "bg-background border-2 border-secondary text-secondary",
-                TimelineColor.Muted => "bg-background border-2 border-muted text-muted-foreground",
-                TimelineColor.Accent => "bg-background border-2 border-accent text-accent",
-                TimelineColor.Destructive => "bg-background border-2 border-destructive text-destructive",
-                _ => "bg-background border-2 border-primary text-primary"
+                TimelineColor.Primary => "bb:bg-background bb:border-2 bb:border-primary bb:text-primary",
+                TimelineColor.Secondary => "bb:bg-background bb:border-2 bb:border-secondary bb:text-secondary",
+                TimelineColor.Muted => "bb:bg-background bb:border-2 bb:border-muted bb:text-muted-foreground",
+                TimelineColor.Accent => "bb:bg-background bb:border-2 bb:border-accent bb:text-accent",
+                TimelineColor.Destructive => "bb:bg-background bb:border-2 bb:border-destructive bb:text-destructive",
+                _ => "bb:bg-background bb:border-2 bb:border-primary bb:text-primary"
             }
             : EffectiveColor switch
             {
-                TimelineColor.Primary => "bg-primary text-primary-foreground",
-                TimelineColor.Secondary => "bg-secondary text-secondary-foreground",
-                TimelineColor.Muted => "bg-muted text-muted-foreground",
-                TimelineColor.Accent => "bg-accent text-accent-foreground",
-                TimelineColor.Destructive => "bg-destructive text-destructive-foreground",
-                _ => "bg-primary text-primary-foreground"
+                TimelineColor.Primary => "bb:bg-primary bb:text-primary-foreground",
+                TimelineColor.Secondary => "bb:bg-secondary bb:text-secondary-foreground",
+                TimelineColor.Muted => "bb:bg-muted bb:text-muted-foreground",
+                TimelineColor.Accent => "bb:bg-accent bb:text-accent-foreground",
+                TimelineColor.Destructive => "bb:bg-destructive bb:text-destructive-foreground",
+                _ => "bb:bg-primary bb:text-primary-foreground"
             },
-        Loading ? "animate-pulse" : null
+        Loading ? "bb:animate-pulse" : null
     );
 
     private string IconSizeClass => Size switch
     {
-        TimelineSize.Small => "h-4 w-4",
-        TimelineSize.Medium => "h-5 w-5",
-        TimelineSize.Large => "h-6 w-6",
-        _ => "h-5 w-5"
+        TimelineSize.Small => "bb:h-4 bb:w-4",
+        TimelineSize.Medium => "bb:h-5 bb:w-5",
+        TimelineSize.Large => "bb:h-6 bb:w-6",
+        _ => "bb:h-5 bb:w-5"
     };
 }

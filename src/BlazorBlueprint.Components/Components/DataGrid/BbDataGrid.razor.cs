@@ -329,7 +329,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// Defaults to <c>"even:bg-muted/30 even:hover:bg-muted/70"</c>.
     /// </summary>
     [Parameter]
-    public string StripeClass { get; set; } = "even:bg-muted/30 even:hover:bg-muted/70";
+    public string StripeClass { get; set; } = "bb:even:bg-muted/30 bb:even:hover:bg-muted/70";
 
     /// <summary>
     /// Number of extra items rendered outside the visible area when <see cref="Virtualize"/>
@@ -4123,38 +4123,38 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private string GetHeaderCellClass(IDataGridColumn<TData> column, bool isSelectColumn,
         bool isExpandColumn, bool isLastLeft, bool isFirstRight)
     {
-        var baseClass = "h-12 px-4 text-left align-middle font-medium text-muted-foreground";
+        var baseClass = "bb:h-12 bb:px-4 bb:text-left bb:align-middle bb:font-medium bb:text-muted-foreground";
 
         var pinnedClass = "";
         if (column.Pinned != ColumnPinning.None)
         {
-            var zClass = StickyHeader ? "z-30" : "z-10";
+            var zClass = StickyHeader ? "bb:z-30" : "bb:z-10";
             pinnedClass = zClass;
         }
 
         var separatorClass = "";
         if (isLastLeft)
         {
-            separatorClass = "border-r border-border";
+            separatorClass = "bb:border-r bb:border-border";
         }
         else if (isFirstRight)
         {
-            separatorClass = "border-l border-border";
+            separatorClass = "bb:border-l bb:border-border";
         }
 
         if (isSelectColumn || isExpandColumn)
         {
             // column.HeaderClass last so callers can override the baked-in width/padding
             // (e.g. compact select column). cn() is tailwind-merge, so later classes win.
-            return ClassNames.cn(baseClass, "w-12", pinnedClass, separatorClass, column.HeaderClass);
+            return ClassNames.cn(baseClass, "bb:w-12", pinnedClass, separatorClass, column.HeaderClass);
         }
 
         var needsGroup = column.Sortable || column.Filterable || (Reorderable && column.Reorderable);
-        var sortClass = column.Sortable ? "cursor-pointer select-none" : "";
-        var groupClass = needsGroup ? "group/header" : "";
+        var sortClass = column.Sortable ? "bb:cursor-pointer bb:select-none" : "";
+        var groupClass = needsGroup ? "bb:group/header" : "";
         var needsRelative = (Resizable && column.Resizable) || (Reorderable && column.Reorderable);
-        var positionClass = needsRelative ? "relative" : "";
-        var overflowClass = HasTableFixed() ? "overflow-hidden" : "";
+        var positionClass = needsRelative ? "bb:relative" : "";
+        var overflowClass = HasTableFixed() ? "bb:overflow-hidden" : "";
 
         return ClassNames.cn(baseClass, sortClass, groupClass, positionClass, overflowClass,
             pinnedClass, separatorClass, column.HeaderClass);
@@ -4192,36 +4192,36 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private string GetCellClass(IDataGridColumn<TData> column, bool isSelectColumn,
         bool isExpandColumn, bool isLastLeft, bool isFirstRight, TData? item = null)
     {
-        var baseClass = "p-4 align-middle transition-colors";
+        var baseClass = "bb:p-4 bb:align-middle bb:transition-colors";
 
         var pinnedClass = "";
         if (column.Pinned != ColumnPinning.None)
         {
-            pinnedClass = "z-10";
+            pinnedClass = "bb:z-10";
         }
 
         var separatorClass = "";
         if (isLastLeft)
         {
-            separatorClass = "border-r border-border";
+            separatorClass = "bb:border-r bb:border-border";
         }
         else if (isFirstRight)
         {
-            separatorClass = "border-l border-border";
+            separatorClass = "bb:border-l bb:border-border";
         }
 
         if (isSelectColumn || isExpandColumn)
         {
             // column.CellClass last so callers can override the baked-in width/padding
             // (e.g. CellClass="p-1" for a compact select column). cn() is tailwind-merge.
-            return ClassNames.cn(baseClass, "w-12", pinnedClass, separatorClass, column.CellClass);
+            return ClassNames.cn(baseClass, "bb:w-12", pinnedClass, separatorClass, column.CellClass);
         }
 
         var cellClass = column.CellClass;
         var perItemClass = item != null ? column.CellClassFunc?.Invoke(item) : null;
 
-        var overflowClass = HasTableFixed() ? "overflow-hidden" : "";
-        var noWrapClass = column.NoWrap ? "whitespace-nowrap overflow-hidden text-ellipsis" : "";
+        var overflowClass = HasTableFixed() ? "bb:overflow-hidden" : "";
+        var noWrapClass = column.NoWrap ? "bb:whitespace-nowrap bb:overflow-hidden bb:text-ellipsis" : "";
 
         return ClassNames.cn(baseClass, cellClass, perItemClass, overflowClass, noWrapClass, pinnedClass, separatorClass);
     }

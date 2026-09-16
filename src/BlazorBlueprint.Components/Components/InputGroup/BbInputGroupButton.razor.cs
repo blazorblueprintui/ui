@@ -133,11 +133,11 @@ public partial class BbInputGroupButton : ComponentBase
     /// </remarks>
     private string CssClass => ClassNames.cn(
         // Essential styling for InputGroup integration
-        "!border-0",        // No border (InputGroup provides border)
-        "!shadow-none",     // No shadow (InputGroup provides shadow)
-        "!h-auto",          // Auto height to fit container
-        "!text-sm",         // Small text appropriate for input context
-        "transition-colors", // Smooth color transitions
+        "bb:!border-0",        // No border (InputGroup provides border)
+        "bb:!shadow-none",     // No shadow (InputGroup provides shadow)
+        "bb:!h-auto",          // Auto height to fit container
+        "bb:!text-sm",         // Small text appropriate for input context
+        "bb:transition-colors", // Smooth color transitions
 
         // User customization (padding, border-radius, etc.)
         Class

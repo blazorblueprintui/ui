@@ -11,29 +11,29 @@
                 Class="@ButtonClass"
                 Disabled="@Disabled"
                 aria-required="@(Required ? "true" : null)">
-            <div class="h-5 w-5 rounded border border-input mr-2"
+            <div class="bb:h-5 bb:w-5 bb:rounded bb:border bb:border-input bb:mr-2"
                  style="background-color: @Value;">
             </div>
-            <span class="font-mono text-sm">@DisplayValue</span>
+            <span class="bb:font-mono bb:text-sm">@DisplayValue</span>
         </BbButton>
     </BbPopoverTrigger>
-    <BbPopoverContent Class="w-[280px] p-4" Align="@PopoverAlign.Start">
-        <div class="space-y-4">
+    <BbPopoverContent Class="bb:w-[280px] bb:p-4" Align="@PopoverAlign.Start">
+        <div class="bb:space-y-4">
             @* Color Area (Saturation/Brightness) *@
             <div @ref="_areaRef"
-                 class="relative h-[150px] w-full rounded-md cursor-crosshair overflow-hidden touch-none"
+                 class="bb:relative bb:h-[150px] bb:w-full bb:rounded-md bb:cursor-crosshair bb:overflow-hidden bb:touch-none"
                  style="background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(@_hue.ToString("0.##", CultureInfo.InvariantCulture), 100%, 50%));">
-                <div class="absolute h-4 w-4 border-2 border-white rounded-full shadow-md -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                <div class="bb:absolute bb:h-4 bb:w-4 bb:border-2 bb:border-white bb:rounded-full bb:shadow-md bb:-translate-x-1/2 bb:-translate-y-1/2 bb:pointer-events-none"
                      style="left: @((_saturation * 100).ToString("0.##", CultureInfo.InvariantCulture))%; top: @(((1 - _brightness) * 100).ToString("0.##", CultureInfo.InvariantCulture))%;">
                 </div>
             </div>
 
             @* Hue Slider *@
-            <div class="space-y-2">
+            <div class="bb:space-y-2">
                 <div @ref="_hueRef"
-                     class="relative h-3 w-full rounded-md cursor-pointer touch-none"
+                     class="bb:relative bb:h-3 bb:w-full bb:rounded-md bb:cursor-pointer bb:touch-none"
                      style="background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);">
-                    <div class="absolute top-1/2 h-5 w-2 bg-white border border-input rounded shadow-sm -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                    <div class="bb:absolute bb:top-1/2 bb:h-5 bb:w-2 bb:bg-white bb:border bb:border-input bb:rounded bb:shadow-sm bb:-translate-x-1/2 bb:-translate-y-1/2 bb:pointer-events-none"
                          style="left: @((_hue / 360 * 100).ToString("0.##", CultureInfo.InvariantCulture))%;">
                     </div>
                 </div>
@@ -42,11 +42,11 @@
             @* Alpha Slider *@
             @if (ShowAlpha)
             {
-                <div class="space-y-2">
+                <div class="bb:space-y-2">
                     <div @ref="_alphaRef"
-                         class="relative h-3 w-full rounded-md cursor-pointer touch-none"
+                         class="bb:relative bb:h-3 bb:w-full bb:rounded-md bb:cursor-pointer bb:touch-none"
                          style="background: linear-gradient(to right, transparent, @CurrentColorWithoutAlpha), url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 fill-opacity=%22.1%22><rect x=%220%22 y=%220%22 width=%228%22 height=%228%22 fill=%22%23000%22/><rect x=%228%22 y=%228%22 width=%228%22 height=%228%22 fill=%22%23000%22/></svg>');">
-                        <div class="absolute top-1/2 h-5 w-2 bg-white border border-input rounded shadow-sm -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                        <div class="bb:absolute bb:top-1/2 bb:h-5 bb:w-2 bb:bg-white bb:border bb:border-input bb:rounded bb:shadow-sm bb:-translate-x-1/2 bb:-translate-y-1/2 bb:pointer-events-none"
                              style="left: @((_alpha * 100).ToString("0.##", CultureInfo.InvariantCulture))%;">
                         </div>
                     </div>
@@ -56,45 +56,45 @@
             @* Color Preview & Inputs *@
             @if (ShowInputs)
             {
-                <div class="flex gap-2">
-                    <div class="h-10 w-10 rounded-md border border-input flex-shrink-0"
+                <div class="bb:flex bb:gap-2">
+                    <div class="bb:h-10 bb:w-10 bb:rounded-md bb:border bb:border-input bb:flex-shrink-0"
                          style="background-color: @Value;">
                     </div>
-                    <div class="flex-1">
+                    <div class="bb:flex-1">
                         <BbInput Value="@_hexInput"
                                ValueChanged="HandleHexInput"
-                               Class="font-mono text-sm"
+                               Class="bb:font-mono bb:text-sm"
                                Placeholder="#000000" />
                     </div>
                 </div>
 
                 @* RGB Inputs *@
-                <div class="grid @(ShowAlpha ? "grid-cols-4" : "grid-cols-3") gap-2">
+                <div class="bb:grid @(ShowAlpha ? "bb:grid-cols-4" : "bb:grid-cols-3") bb:gap-2">
                     <div>
-                        <label class="text-xs text-muted-foreground">R</label>
+                        <label class="bb:text-xs bb:text-muted-foreground">R</label>
                         <BbInput Value="@_r.ToString()"
                                ValueChanged="@(v => HandleRgbInput(v, 'r'))"
-                               Class="text-sm text-center" />
+                               Class="bb:text-sm bb:text-center" />
                     </div>
                     <div>
-                        <label class="text-xs text-muted-foreground">G</label>
+                        <label class="bb:text-xs bb:text-muted-foreground">G</label>
                         <BbInput Value="@_g.ToString()"
                                ValueChanged="@(v => HandleRgbInput(v, 'g'))"
-                               Class="text-sm text-center" />
+                               Class="bb:text-sm bb:text-center" />
                     </div>
                     <div>
-                        <label class="text-xs text-muted-foreground">B</label>
+                        <label class="bb:text-xs bb:text-muted-foreground">B</label>
                         <BbInput Value="@_b.ToString()"
                                ValueChanged="@(v => HandleRgbInput(v, 'b'))"
-                               Class="text-sm text-center" />
+                               Class="bb:text-sm bb:text-center" />
                     </div>
                     @if (ShowAlpha)
                     {
                         <div>
-                            <label class="text-xs text-muted-foreground">A</label>
+                            <label class="bb:text-xs bb:text-muted-foreground">A</label>
                             <BbInput Value="@($"{(int)Math.Round(_alpha * 100)}%")"
                                    ValueChanged="HandleAlphaInput"
-                                   Class="text-sm text-center" />
+                                   Class="bb:text-sm bb:text-center" />
                         </div>
                     }
                 </div>
@@ -103,13 +103,13 @@
             @* Preset Colors *@
             @if (ShowPresets)
             {
-                <div class="space-y-2">
-                    <span class="text-xs text-muted-foreground">Presets</span>
-                    <div class="flex flex-wrap gap-1">
+                <div class="bb:space-y-2">
+                    <span class="bb:text-xs bb:text-muted-foreground">Presets</span>
+                    <div class="bb:flex bb:flex-wrap bb:gap-1">
                         @foreach (var preset in EffectivePresets)
                         {
                             <button type="button"
-                                    class="h-6 w-6 rounded border border-input cursor-pointer hover:scale-110 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    class="bb:h-6 bb:w-6 bb:rounded bb:border bb:border-input bb:cursor-pointer bb:hover:scale-110 bb:transition-transform bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring"
                                     style="background-color: @preset;"
                                     @onclick="() => SelectPreset(preset)"
                                     title="@preset">
@@ -442,8 +442,8 @@
     }
 
     private string ButtonClass => ClassNames.cn(
-        "w-[180px] justify-start",
-        Disabled ? "opacity-50 pointer-events-none" : null,
+        "bb:w-[180px] bb:justify-start",
+        Disabled ? "bb:opacity-50 bb:pointer-events-none" : null,
         Class
     );
 

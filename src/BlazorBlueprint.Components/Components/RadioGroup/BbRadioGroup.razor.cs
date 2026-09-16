@@ -150,7 +150,7 @@ public partial class BbRadioGroup<TValue> : ComponentBase
     /// <summary>
     /// Gets the computed CSS classes for the radio group container.
     /// </summary>
-    private string CssClass => ClassNames.cn("grid gap-2", Class);
+    private string CssClass => ClassNames.cn("bb:grid bb:gap-2", Class);
 
     /// <summary>
     /// Handles the value change and notifies EditContext for form validation.

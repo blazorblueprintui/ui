@@ -232,37 +232,37 @@ public partial class BbButton : ComponentBase
     /// </remarks>
     private string CssClass => ClassNames.cn(
         // Base button styles (from shadcn/ui)
-        "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium",
-        "transition-colors focus-visible:outline-none focus-visible:ring-2",
-        "focus-visible:ring-ring focus-visible:ring-offset-2",
-        "cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
+        "bb:inline-flex bb:items-center bb:justify-center bb:gap-2 bb:rounded-md bb:text-sm bb:font-medium",
+        "bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2",
+        "bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2",
+        "bb:cursor-pointer bb:disabled:opacity-50 bb:disabled:cursor-not-allowed",
         // Variant-specific styles
         Variant switch
         {
-            ButtonVariant.Default => "bg-primary text-primary-foreground hover:bg-primary/90",
-            ButtonVariant.Destructive => "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-            ButtonVariant.Outline => "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-            ButtonVariant.Secondary => "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-            ButtonVariant.Ghost => "hover:bg-accent hover:text-accent-foreground",
-            ButtonVariant.Link => "text-primary underline-offset-4 hover:underline",
-            _ => "bg-primary text-primary-foreground hover:bg-primary/90"
+            ButtonVariant.Default => "bb:bg-primary bb:text-primary-foreground bb:hover:bg-primary/90",
+            ButtonVariant.Destructive => "bb:bg-destructive bb:text-destructive-foreground bb:hover:bg-destructive/90",
+            ButtonVariant.Outline => "bb:border bb:border-input bb:bg-background bb:hover:bg-accent bb:hover:text-accent-foreground",
+            ButtonVariant.Secondary => "bb:bg-secondary bb:text-secondary-foreground bb:hover:bg-secondary/80",
+            ButtonVariant.Ghost => "bb:hover:bg-accent bb:hover:text-accent-foreground",
+            ButtonVariant.Link => "bb:text-primary bb:underline-offset-4 bb:hover:underline",
+            _ => "bb:bg-primary bb:text-primary-foreground bb:hover:bg-primary/90"
         },
         // Size-specific styles
         Size switch
         {
-            ButtonSize.Small => "h-9 rounded-md px-3 text-xs",
-            ButtonSize.Default => "h-10 px-4 py-2",
-            ButtonSize.Large => "h-11 rounded-md px-8",
-            ButtonSize.Icon => "h-10 w-10",
-            ButtonSize.IconSmall => "h-9 w-9",
-            ButtonSize.IconLarge => "h-11 w-11",
-            _ => "h-10 px-4 py-2"
+            ButtonSize.Small => "bb:h-9 bb:rounded-md bb:px-3 bb:text-xs",
+            ButtonSize.Default => "bb:h-10 bb:px-4 bb:py-2",
+            ButtonSize.Large => "bb:h-11 bb:rounded-md bb:px-8",
+            ButtonSize.Icon => "bb:h-10 bb:w-10",
+            ButtonSize.IconSmall => "bb:h-9 bb:w-9",
+            ButtonSize.IconLarge => "bb:h-11 bb:w-11",
+            _ => "bb:h-10 bb:px-4 bb:py-2"
         },
         // Disabled anchor styles (`:disabled` pseudo-class doesn't work on `<a>` elements)
-        HasHref && IsDisabled ? "pointer-events-none cursor-not-allowed opacity-50" : null,
+        HasHref && IsDisabled ? "bb:pointer-events-none bb:cursor-not-allowed bb:opacity-50" : null,
         // AsChild trigger guard: while the overlay is open, ignore pointer events so a
         // single click can't close it via click-outside and re-open it via this button
-        TriggerContext is { IsOpen: true, SuppressPointerEventsWhenOpen: true } ? "pointer-events-none" : null,
+        TriggerContext is { IsOpen: true, SuppressPointerEventsWhenOpen: true } ? "bb:pointer-events-none" : null,
         // Custom classes (if provided)
         Class
     );

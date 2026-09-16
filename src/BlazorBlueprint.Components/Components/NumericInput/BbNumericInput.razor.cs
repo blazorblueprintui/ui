@@ -297,20 +297,20 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
     private string ContainerClass => ClassNames.cn(
         // items-stretch, not items-center: the stepper column sizes itself from the row rather than
         // from a height of its own, so it tracks whatever the input resolves to.
-        "flex items-stretch",
-        ShowButtons ? "rounded-md" : null
+        "bb:flex bb:items-stretch",
+        ShowButtons ? "bb:rounded-md" : null
     );
 
     private string CssClass => ClassNames.cn(
-        "flex h-10 w-full border border-input bg-background px-3 py-2 text-base",
-        "placeholder:text-muted-foreground",
-        ShowButtons ? "rounded-l-md" : "rounded-md",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        "aria-[invalid=true]:border-destructive",
-        "transition-colors",
-        "md:text-sm",
-        ShowButtons ? "pr-8 border-r-0" : null,
+        "bb:flex bb:h-10 bb:w-full bb:border bb:border-input bb:bg-background bb:px-3 bb:py-2 bb:text-base",
+        "bb:placeholder:text-muted-foreground",
+        ShowButtons ? "bb:rounded-l-md" : "bb:rounded-md",
+        "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+        "bb:disabled:cursor-not-allowed bb:disabled:opacity-50",
+        "bb:aria-[invalid=true]:border-destructive",
+        "bb:transition-colors",
+        "bb:md:text-sm",
+        ShowButtons ? "bb:pr-8 bb:border-r-0" : null,
         Class
     );
 
@@ -326,13 +326,13 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
     /// meeting the input's border. <c>min-h-0</c> lets them shrink past the icon's intrinsic height.
     /// </remarks>
     private static string ButtonClass => ClassNames.cn(
-        "flex flex-1 min-h-0 items-center justify-center w-8 border border-input bg-background",
-        "hover:bg-accent hover:text-accent-foreground",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        "first:border-b-0",
-        "first:rounded-tr-md last:rounded-br-md",
-        "transition-colors"
+        "bb:flex bb:flex-1 bb:min-h-0 bb:items-center bb:justify-center bb:w-8 bb:border bb:border-input bb:bg-background",
+        "bb:hover:bg-accent bb:hover:text-accent-foreground",
+        "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+        "bb:disabled:cursor-not-allowed bb:disabled:opacity-50",
+        "bb:first:border-b-0",
+        "bb:first:rounded-tr-md bb:last:rounded-br-md",
+        "bb:transition-colors"
     );
 
     /// <summary>

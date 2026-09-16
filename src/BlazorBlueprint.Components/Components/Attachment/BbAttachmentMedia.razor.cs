@@ -32,10 +32,10 @@ public partial class BbAttachmentMedia : ComponentBase
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string CssClass => ClassNames.cn(
-        "relative flex aspect-square w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted text-foreground group-data-[orientation=vertical]/attachment:w-full group-data-[size=sm]/attachment:w-8 group-data-[size=xs]/attachment:w-7 group-data-[size=xs]/attachment:rounded-md group-data-[state=error]/attachment:bg-destructive/10 group-data-[state=error]/attachment:text-destructive [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 group-data-[orientation=vertical]/attachment:[&_svg:not([class*='size-'])]:size-6 group-data-[size=xs]/attachment:[&_svg:not([class*='size-'])]:size-3.5",
+        "bb:relative bb:flex bb:aspect-square bb:w-10 bb:shrink-0 bb:items-center bb:justify-center bb:overflow-hidden bb:rounded-lg bb:bg-muted bb:text-foreground bb:group-data-[orientation=vertical]/attachment:w-full bb:group-data-[size=sm]/attachment:w-8 bb:group-data-[size=xs]/attachment:w-7 bb:group-data-[size=xs]/attachment:rounded-md bb:group-data-[state=error]/attachment:bg-destructive/10 bb:group-data-[state=error]/attachment:text-destructive bb:[&_svg]:pointer-events-none bb:[&_svg:not([class*='size-'])]:size-4 bb:group-data-[orientation=vertical]/attachment:[&_svg:not([class*='size-'])]:size-6 bb:group-data-[size=xs]/attachment:[&_svg:not([class*='size-'])]:size-3.5",
         Variant == AttachmentMediaVariant.Icon
-            ? "opacity-60 group-data-[state=done]/attachment:opacity-100 group-data-[state=idle]/attachment:opacity-100"
-            : "*:[img]:aspect-square *:[img]:w-full *:[img]:object-cover",
+            ? "bb:opacity-60 bb:group-data-[state=done]/attachment:opacity-100 bb:group-data-[state=idle]/attachment:opacity-100"
+            : "bb:*:[img]:aspect-square bb:*:[img]:w-full bb:*:[img]:object-cover",
         Class
     );
 }

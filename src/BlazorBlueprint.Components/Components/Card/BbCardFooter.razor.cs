@@ -44,7 +44,7 @@ public partial class BbCardFooter : ComponentBase
     /// </summary>
     private string CssClass => ClassNames.cn(
         // Base footer styles (from shadcn/ui)
-        "flex items-center p-6 pt-0",
+        "bb:flex bb:items-center bb:p-6 bb:pt-0",
         // Custom classes (if provided)
         Class
     );

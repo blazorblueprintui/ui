@@ -25,5 +25,5 @@ public partial class BbAttachmentContent : ComponentBase
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
-    private string CssClass => ClassNames.cn("max-w-full min-w-0 flex-1 leading-tight group-data-[orientation=vertical]/attachment:px-1", Class);
+    private string CssClass => ClassNames.cn("bb:max-w-full bb:min-w-0 bb:flex-1 bb:leading-tight bb:group-data-[orientation=vertical]/attachment:px-1", Class);
 }

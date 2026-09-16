@@ -43,7 +43,7 @@ public partial class BbCardContent : ComponentBase
     /// </summary>
     private string CssClass => ClassNames.cn(
         // Base content styles (from shadcn/ui)
-        "p-6 pt-0",
+        "bb:p-6 bb:pt-0",
         // Custom classes (if provided)
         Class
     );

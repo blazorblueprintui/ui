@@ -40,12 +40,12 @@ public partial class BbItemMedia : ComponentBase
     /// </summary>
     private string CssClass => ClassNames.cn(
         // Base media styles
-        "flex shrink-0 items-center justify-center",
+        "bb:flex bb:shrink-0 bb:items-center bb:justify-center",
         // Variant-specific styles
         Variant switch
         {
-            ItemMediaVariant.Icon => "size-8 rounded-md border border-border",
-            ItemMediaVariant.Image => "size-10 overflow-hidden rounded-lg",
+            ItemMediaVariant.Icon => "bb:size-8 bb:rounded-md bb:border bb:border-border",
+            ItemMediaVariant.Image => "bb:size-10 bb:overflow-hidden bb:rounded-lg",
             _ => ""
         },
         Class

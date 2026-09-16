@@ -56,11 +56,11 @@ public partial class BbFieldSeparator : ComponentBase
     /// </remarks>
     private string CssClass => ClassNames.cn(
         // Full width
-        "w-full",
+        "bb:w-full",
         // Horizontal border
-        "border-t border-border",
+        "bb:border-t bb:border-border",
         // Vertical spacing
-        "my-2",
+        "bb:my-2",
         // Custom classes (if provided)
         Class
     );

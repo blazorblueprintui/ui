@@ -14,7 +14,7 @@ namespace BlazorBlueprint.Tests.Conventions;
 public class AlertDialogTriggerFocusRingTests
 {
     private static readonly Regex StandaloneRing = new(
-        @"focus-visible:outline-none\s+focus-visible:ring-2\s+focus-visible:ring-ring\s+focus-visible:ring-offset-2",
+        @"bb:focus-visible:outline-none\s+bb:focus-visible:ring-2\s+bb:focus-visible:ring-ring\s+bb:focus-visible:ring-offset-2",
         RegexOptions.Compiled);
 
     [Fact]
@@ -30,7 +30,7 @@ public class AlertDialogTriggerFocusRingTests
 
         Assert.True(StandaloneRing.IsMatch(text!),
             "BbAlertDialogTrigger should apply the library's standard standalone-control focus ring "
-            + "(focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2) "
+            + "(bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2) "
             + "to the native button it renders, matching BbDialogTrigger/BbSheetTrigger/BbPopoverTrigger (#508).");
     }
 }

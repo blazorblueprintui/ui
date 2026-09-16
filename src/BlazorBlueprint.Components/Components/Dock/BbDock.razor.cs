@@ -76,7 +76,7 @@ public partial class BbDock : ComponentBase, IAsyncDisposable
         maximizedGroupId is null ? null : FindGroup(maximizedGroupId);
 
     private string CssClass => ClassNames.cn(
-        "relative h-full w-full select-none overflow-hidden bg-muted/20 text-foreground",
+        "bb:relative bb:h-full bb:w-full bb:select-none bb:overflow-hidden bb:bg-muted/20 bb:text-foreground",
         Class);
 
     // ----------------------------------------------------------------- Registration

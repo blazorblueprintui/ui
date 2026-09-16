@@ -114,17 +114,17 @@ public partial class BbTreeItem : ComponentBase
         IsLeaf != true && (ChildContent != null || (TreeContext?.HasChildren(Value) ?? false));
 
     private string NodeCssClass => ClassNames.cn(
-        "group/treeitem flex items-center gap-1.5 py-1 px-2 rounded-md cursor-pointer select-none",
-        "hover:bg-accent/50 transition-colors",
-        IsSelected ? "bg-accent text-accent-foreground" : "text-foreground",
-        Disabled ? "opacity-50 cursor-not-allowed" : null,
+        "bb:group/treeitem bb:flex bb:items-center bb:gap-1.5 bb:py-1 bb:px-2 bb:rounded-md bb:cursor-pointer bb:select-none",
+        "bb:hover:bg-accent/50 bb:transition-colors",
+        IsSelected ? "bb:bg-accent bb:text-accent-foreground" : "bb:text-foreground",
+        Disabled ? "bb:opacity-50 bb:cursor-not-allowed" : null,
         Class
     );
 
     private string NodeStyle => $"padding-left: {(Depth * 1.25) + 0.5}rem;";
 
     private string ChevronCssClass => ClassNames.cn(
-        "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
-        IsExpanded ? "rotate-90" : null
+        "bb:h-4 bb:w-4 bb:shrink-0 bb:text-muted-foreground bb:transition-transform bb:duration-200",
+        IsExpanded ? "bb:rotate-90" : null
     );
 }

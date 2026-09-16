@@ -77,10 +77,10 @@ public partial class BbInputGroupText : ComponentBase
     /// </remarks>
     private string CssClass => ClassNames.cn(
         // Base text styles
-        "text-sm text-muted-foreground",
-        "flex items-center gap-0.5", // Reduced gap for tighter spacing
+        "bb:text-sm bb:text-muted-foreground",
+        "bb:flex bb:items-center bb:gap-0.5", // Reduced gap for tighter spacing
         // Adjust icon sizing
-        "[&>svg]:size-4",
+        "bb:[&>svg]:size-4",
         // Custom classes
         Class
     );

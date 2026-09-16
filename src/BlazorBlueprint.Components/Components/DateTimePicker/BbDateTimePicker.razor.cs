@@ -354,26 +354,26 @@ public partial class BbDateTimePicker : ComponentBase
     /// Gets the computed CSS classes for the trigger button.
     /// </summary>
     private string ButtonCssClass => ClassNames.cn(
-        "w-[280px] justify-start text-left font-normal",
+        "bb:w-[280px] bb:justify-start bb:text-left bb:font-normal",
         // #459: the browser's own outline otherwise, next to the themed ring on the field above.
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        !Value.HasValue ? "text-muted-foreground" : null,
-        Disabled ? "opacity-50 pointer-events-none" : null,
+        "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2",
+        !Value.HasValue ? "bb:text-muted-foreground" : null,
+        Disabled ? "bb:opacity-50 bb:pointer-events-none" : null,
         Class
     );
 
     private static string ScrollButtonClass => ClassNames.cn(
-        "w-12 h-8 flex items-center justify-center",
+        "bb:w-12 bb:h-8 bb:flex bb:items-center bb:justify-center",
         // #459: no offset — these stack directly on each other in the time column.
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        "hover:bg-accent hover:text-accent-foreground",
-        "transition-colors",
-        "disabled:opacity-50 disabled:cursor-not-allowed"
+        "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+        "bb:hover:bg-accent bb:hover:text-accent-foreground",
+        "bb:transition-colors",
+        "bb:disabled:opacity-50 bb:disabled:cursor-not-allowed"
     );
 
     private string GetAmPmButtonClass(bool isAm) => ClassNames.cn(
-        "w-12 h-10 text-sm font-medium transition-colors",
-        isAm == IsAm ? "bg-primary text-primary-foreground" : "hover:bg-accent hover:text-accent-foreground",
-        "disabled:opacity-50 disabled:cursor-not-allowed"
+        "bb:w-12 bb:h-10 bb:text-sm bb:font-medium bb:transition-colors",
+        isAm == IsAm ? "bb:bg-primary bb:text-primary-foreground" : "bb:hover:bg-accent bb:hover:text-accent-foreground",
+        "bb:disabled:opacity-50 bb:disabled:cursor-not-allowed"
     );
 }

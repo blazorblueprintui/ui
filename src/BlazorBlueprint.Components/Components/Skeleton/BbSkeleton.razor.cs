@@ -154,12 +154,12 @@ public partial class BbSkeleton : ComponentBase
     /// </list>
     /// </remarks>
     private string CssClass => ClassNames.cn(
-        "animate-pulse bg-muted",
+        "bb:animate-pulse bb:bg-muted",
         Shape switch
         {
-            SkeletonShape.Circular => "rounded-full",
-            SkeletonShape.Rectangular => "rounded-md",
-            _ => "rounded-md"
+            SkeletonShape.Circular => "bb:rounded-full",
+            SkeletonShape.Rectangular => "bb:rounded-md",
+            _ => "bb:rounded-md"
         },
         Class
     );

@@ -14,21 +14,21 @@
     else
     {
         <div class="@LoadingContainerClass" role="status" aria-label="@Localizer["DashboardGrid.Loading"]">
-            <div class="space-y-4 w-full">
-                <div class="grid gap-2" style="grid-template-columns: repeat(@Columns, 1fr);">
+            <div class="bb:space-y-4 bb:w-full">
+                <div class="bb:grid bb:gap-2" style="grid-template-columns: repeat(@Columns, 1fr);">
                     @for (var i = 0; i < 4; i++)
                     {
                         <div style="grid-column: span @(Columns / 4)">
-                            <BbSkeleton Class="rounded-lg w-full" Height="@($"{RowHeight * 4 + Gap * 3}px")" />
+                            <BbSkeleton Class="bb:rounded-lg bb:w-full" Height="@($"{RowHeight * 4 + Gap * 3}px")" />
                         </div>
                     }
                 </div>
-                <div class="grid gap-2" style="grid-template-columns: repeat(@Columns, 1fr);">
+                <div class="bb:grid bb:gap-2" style="grid-template-columns: repeat(@Columns, 1fr);">
                     <div style="grid-column: span @(Columns * 2 / 3)">
-                        <BbSkeleton Class="rounded-lg w-full" Height="@($"{RowHeight * 8 + Gap * 7}px")" />
+                        <BbSkeleton Class="bb:rounded-lg bb:w-full" Height="@($"{RowHeight * 8 + Gap * 7}px")" />
                     </div>
                     <div style="grid-column: span @(Columns / 3)">
-                        <BbSkeleton Class="rounded-lg w-full" Height="@($"{RowHeight * 8 + Gap * 7}px")" />
+                        <BbSkeleton Class="bb:rounded-lg bb:w-full" Height="@($"{RowHeight * 8 + Gap * 7}px")" />
                     </div>
                 </div>
             </div>
@@ -57,7 +57,7 @@ else if (_useScrollWrapper)
         </BlazorBlueprint.Primitives.DashboardGrid.BbDashboardGrid>
     </div>
 
-    <div aria-live="polite" class="sr-only" id="@(_instanceId)-live"></div>
+    <div aria-live="polite" class="bb:sr-only" id="@(_instanceId)-live"></div>
 }
 else
 {
@@ -79,7 +79,7 @@ else
         @ChildContent
     </BlazorBlueprint.Primitives.DashboardGrid.BbDashboardGrid>
 
-    <div aria-live="polite" class="sr-only" id="@(_instanceId)-live"></div>
+    <div aria-live="polite" class="bb:sr-only" id="@(_instanceId)-live"></div>
 }
 
 @code {
@@ -141,8 +141,8 @@ else
     private bool _showBackground => Background != DashboardBackground.None && Editable && ShowGridGuide;
 
     private string CssClass => ClassNames.cn(
-        "relative grid",
-        Border && !_useScrollWrapper ? "rounded-lg border p-4" : "",
+        "bb:relative bb:grid",
+        Border && !_useScrollWrapper ? "bb:rounded-lg bb:border bb:p-4" : "",
         _showBackground ? "bb-guide-background-grid" : "",
         Class
     );
@@ -152,8 +152,8 @@ else
     private bool _useScrollWrapper => EffectiveCellWidth > 0 || MinWidth > 0 || MaxWidth > 0;
 
     private string ScrollWrapperClass => ClassNames.cn(
-        "overflow-auto",
-        Border ? "rounded-lg border p-4" : ""
+        "bb:overflow-auto",
+        Border ? "bb:rounded-lg bb:border bb:p-4" : ""
     );
 
     private RenderFragment EmptyState => __builder =>
@@ -180,9 +180,9 @@ else
                     <ChildContent>
                         @if (OnAddWidget.HasDelegate)
                         {
-                            <button type="button" class="inline-flex items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                            <button type="button" class="bb:inline-flex bb:items-center bb:gap-2 bb:rounded-md bb:border bb:bg-background bb:px-3 bb:py-1.5 bb:text-sm bb:font-medium bb:text-muted-foreground bb:hover:bg-accent bb:hover:text-accent-foreground bb:transition-colors"
                                     @onclick="OnAddWidget">
-                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                <svg class="bb:h-4 bb:w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                                      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M5 12h14" /><path d="M12 5v14" />
                                 </svg>
@@ -249,12 +249,12 @@ else
     private bool _hasNoWidgets => !Loading && _context.State.GetActiveLayout().Positions.Count == 0;
 
     private string LoadingContainerClass => ClassNames.cn(
-        "flex items-center justify-center py-12",
-        Border ? "rounded-lg border p-4" : ""
+        "bb:flex bb:items-center bb:justify-center bb:py-12",
+        Border ? "bb:rounded-lg bb:border bb:p-4" : ""
     );
 
     private string EmptyContainerClass =>
-        "absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 text-muted-foreground bg-background";
+        "bb:absolute bb:inset-0 bb:z-10 bb:flex bb:flex-col bb:items-center bb:justify-center bb:gap-3 bb:text-muted-foreground bb:bg-background";
 
 
     protected override void OnInitialized()

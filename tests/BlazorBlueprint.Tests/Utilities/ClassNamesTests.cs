@@ -100,4 +100,54 @@ public class ClassNamesTests
         Assert.Equal(
             "text-red-500 text-[calc(1rem+2px)]",
             ClassNames.cn("text-red-500", "text-[calc(1rem+2px)]"));
+
+    // Library tokens carry the `bb:` prefix (#496). A consumer's unprefixed token must still
+    // replace the library's for the same property, and library tokens must still merge among
+    // themselves exactly as unprefixed ones do.
+
+    [Fact]
+    public void ConsumerTokenReplacesPrefixedLibraryToken() =>
+        Assert.Equal("bb:rounded-md p-6", ClassNames.cn("bb:p-4 bb:rounded-md", "p-6"));
+
+    [Fact]
+    public void ConsumerTokenReplacesPrefixedLibraryTokenMidString() =>
+        Assert.Equal("bb:flex bb:items-center gap-4", ClassNames.cn("bb:flex bb:items-center bb:gap-2", "gap-4"));
+
+    [Fact]
+    public void PrefixedTokensMergeAmongThemselves() =>
+        Assert.Equal("bb:p-8", ClassNames.cn("bb:p-4", "bb:p-8"));
+
+    [Fact]
+    public void PrefixedShorthandOverridesPrefixedLonghand() =>
+        Assert.Equal("bb:p-2", ClassNames.cn("bb:px-4", "bb:p-2"));
+
+    [Fact]
+    public void PrefixedVariantsMergePerVariant() =>
+        Assert.Equal("bb:sm:p-8", ClassNames.cn("bb:sm:p-4", "bb:sm:p-8"));
+
+    [Fact]
+    public void PrefixedTokenPassedAsClassReplacesPrefixedBase() =>
+        Assert.Equal("bb:h-8", ClassNames.cn("bb:h-9", "bb:h-8"));
+
+    [Fact]
+    public void SameTokenOnBothSidesKeepsTheLaterForm() =>
+        Assert.Equal("p-4", ClassNames.cn("bb:p-4", "p-4"));
+
+    [Fact]
+    public void PrefixedGroupMarkerSurvivesConsumerOverride() =>
+        Assert.Equal("bb:group/row bg-muted", ClassNames.cn("bb:group/row bb:bg-background", "bg-muted"));
+
+    [Fact]
+    public void PrefixedArbitraryVariantIsKept() =>
+        Assert.Equal(
+            "bb:[&_svg]:shrink-0 bb:[&_svg]:size-4 text-sm",
+            ClassNames.cn("bb:[&_svg]:shrink-0 bb:[&_svg]:size-4 bb:text-xs", "text-sm"));
+
+    [Fact]
+    public void PrefixedImportantTokensMerge() =>
+        Assert.Equal("bb:!p-2", ClassNames.cn("bb:!p-0", "bb:!p-2"));
+
+    [Fact]
+    public void ConsumerOnlyInputIsUntouchedByPrefixHandling() =>
+        Assert.Equal("btn px-2", ClassNames.cn("btn", "px-4", "px-2"));
 }

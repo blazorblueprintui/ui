@@ -248,11 +248,11 @@ public partial class BbDynamicForm : ComponentBase
     {
         return columns switch
         {
-            1 => "grid grid-cols-1 gap-4",
-            2 => "grid grid-cols-1 md:grid-cols-2 gap-4",
-            3 => "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4",
+            1 => "bb:grid bb:grid-cols-1 bb:gap-4",
+            2 => "bb:grid bb:grid-cols-1 bb:md:grid-cols-2 bb:gap-4",
+            3 => "bb:grid bb:grid-cols-1 bb:md:grid-cols-2 bb:lg:grid-cols-3 bb:gap-4",
             // Clamp to 4-column responsive preset to preserve mobile layout
-            _ => "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+            _ => "bb:grid bb:grid-cols-1 bb:md:grid-cols-2 bb:lg:grid-cols-4 bb:gap-4"
         };
     }
 
@@ -619,7 +619,7 @@ public partial class BbDynamicForm : ComponentBase
 
         builder.OpenElement(seq++, "div");
         var containerClass = Layout == FormLayout.Inline
-            ? "flex flex-wrap items-end gap-4"
+            ? "bb:flex bb:flex-wrap bb:items-end bb:gap-4"
             : GetGridClass(columns);
         builder.AddAttribute(seq++, "class", containerClass);
 
@@ -645,7 +645,7 @@ public partial class BbDynamicForm : ComponentBase
             builder.SetKey(field.Name);
             if (Layout == FormLayout.Inline)
             {
-                builder.AddAttribute(seq + 1, "class", "flex-1 min-w-32");
+                builder.AddAttribute(seq + 1, "class", "bb:flex-1 bb:min-w-32");
             }
             else if (colSpanStyle is not null)
             {
@@ -682,7 +682,7 @@ public partial class BbDynamicForm : ComponentBase
     }
 
     private string FormCssClass => ClassNames.cn(
-        Layout == FormLayout.Inline ? "space-y-4" : "space-y-6",
+        Layout == FormLayout.Inline ? "bb:space-y-4" : "bb:space-y-6",
         Class
     );
 

@@ -619,27 +619,27 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
     // ══════════════════════════════════════════════════════════════════
 
     private string ContainerCssClass => ClassNames.cn(
-        "flex flex-wrap items-center gap-1.5 min-h-10 w-full rounded-md",
-        "border px-3 py-2 text-sm",
-        "transition-colors",
-        "focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+        "bb:flex bb:flex-wrap bb:items-center bb:gap-1.5 bb:min-h-10 bb:w-full bb:rounded-md",
+        "bb:border bb:px-3 bb:py-2 bb:text-sm",
+        "bb:transition-colors",
+        "bb:focus-within:outline-none bb:focus-within:ring-2 bb:focus-within:ring-ring bb:focus-within:ring-offset-2",
         Variant switch
         {
-            TagInputVariant.Secondary => "border-input bg-secondary/50",
-            _ => "border-input bg-background"
+            TagInputVariant.Secondary => "bb:border-input bb:bg-secondary/50",
+            _ => "bb:border-input bb:bg-background"
         },
-        IsInvalid ? "border-destructive focus-within:ring-destructive" : null,
-        Disabled ? "opacity-50 cursor-not-allowed" : null,
+        IsInvalid ? "bb:border-destructive bb:focus-within:ring-destructive" : null,
+        Disabled ? "bb:opacity-50 bb:cursor-not-allowed" : null,
         Class
     );
 
     private static string InputCssClass =>
-        "flex-1 min-w-[120px] bg-transparent outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed text-sm";
+        "bb:flex-1 bb:min-w-[120px] bb:bg-transparent bb:outline-none bb:placeholder:text-muted-foreground bb:disabled:cursor-not-allowed bb:text-sm";
 
     private static string SuggestionItemCssClass(bool isActive) => ClassNames.cn(
-        "flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm",
-        "hover:bg-accent hover:text-accent-foreground",
-        isActive ? "bg-accent text-accent-foreground" : null
+        "bb:flex bb:cursor-pointer bb:select-none bb:items-center bb:rounded-sm bb:px-2 bb:py-1.5 bb:text-sm",
+        "bb:hover:bg-accent bb:hover:text-accent-foreground",
+        isActive ? "bb:bg-accent bb:text-accent-foreground" : null
     );
 
     // ══════════════════════════════════════════════════════════════════

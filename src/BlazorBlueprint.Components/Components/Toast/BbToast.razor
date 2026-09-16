@@ -13,7 +13,7 @@
 
     @if (ShouldShowIcon)
     {
-        <div class="shrink-0">
+        <div class="bb:shrink-0">
             <LucideIcon Name="@IconName" Class="@IconCssClass" />
         </div>
     }
@@ -43,15 +43,15 @@
         <button type="button"
                 class="@CloseCssClass"
                 @onclick="HandleClose">
-            <LucideIcon Name="x" Class="h-4 w-4" />
-            <span class="sr-only">Close</span>
+            <LucideIcon Name="x" Class="bb:h-4 bb:w-4" />
+            <span class="bb:sr-only">Close</span>
         </button>
     }
 
     @if (ShouldShowCountdown)
     {
-        <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-current/20">
-            <div class="h-full bg-current/40"
+        <div class="bb:absolute bb:bottom-0 bb:left-0 bb:right-0 bb:h-0.5 bb:bg-current/20">
+            <div class="bb:h-full bb:bg-current/40"
                  style="animation: bb-alert-countdown @(Data.Duration)ms linear forwards; animation-play-state: @(isPaused ? "paused" : "running");"></div>
         </div>
     }
@@ -150,63 +150,63 @@
     private bool ShouldShowCountdown => ShowCountdown && Data.Duration > 0;
 
     private string CssClass => ClassNames.cn(
-        "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border shadow-lg transition-all",
-        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-80",
-        "data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full",
-        "data-[state=open]:sm:slide-in-from-bottom-full",
+        "bb:group bb:pointer-events-auto bb:relative bb:flex bb:w-full bb:items-center bb:justify-between bb:space-x-4 bb:overflow-hidden bb:rounded-md bb:border bb:shadow-lg bb:transition-all",
+        "bb:data-[state=open]:animate-in bb:data-[state=closed]:animate-out bb:data-[state=closed]:fade-out-80",
+        "bb:data-[state=closed]:slide-out-to-right-full bb:data-[state=open]:slide-in-from-top-full",
+        "bb:data-[state=open]:sm:slide-in-from-bottom-full",
         IsCompact
-            ? Data.ShowClose ? "p-3 pr-6" : "p-3"
-            : Data.ShowClose ? "p-6 pr-8" : "p-6",
+            ? Data.ShowClose ? "bb:p-3 bb:pr-6" : "bb:p-3"
+            : Data.ShowClose ? "bb:p-6 bb:pr-8" : "bb:p-6",
         Data.Variant switch
         {
-            ToastVariant.Default => "border bg-background text-foreground",
-            ToastVariant.Success => "border-alert-success/30 bg-alert-success-bg text-alert-success-foreground",
-            ToastVariant.Info => "border-alert-info/30 bg-alert-info-bg text-alert-info-foreground",
-            ToastVariant.Warning => "border-alert-warning/30 bg-alert-warning-bg text-alert-warning-foreground",
-            ToastVariant.Destructive => "destructive group border-destructive bg-destructive text-destructive-foreground",
-            _ => "border bg-background text-foreground"
+            ToastVariant.Default => "bb:border bb:bg-background bb:text-foreground",
+            ToastVariant.Success => "bb:border-alert-success/30 bb:bg-alert-success-bg bb:text-alert-success-foreground",
+            ToastVariant.Info => "bb:border-alert-info/30 bb:bg-alert-info-bg bb:text-alert-info-foreground",
+            ToastVariant.Warning => "bb:border-alert-warning/30 bb:bg-alert-warning-bg bb:text-alert-warning-foreground",
+            ToastVariant.Destructive => "destructive bb:group bb:border-destructive bb:bg-destructive bb:text-destructive-foreground",
+            _ => "bb:border bb:bg-background bb:text-foreground"
         },
         Class
     );
 
     private string IconCssClass => ClassNames.cn(
-        IsCompact ? "h-4 w-4" : "h-5 w-5",
+        IsCompact ? "bb:h-4 bb:w-4" : "bb:h-5 bb:w-5",
         Data.Variant switch
         {
-            ToastVariant.Success => "text-alert-success",
-            ToastVariant.Info => "text-alert-info",
-            ToastVariant.Warning => "text-alert-warning",
-            ToastVariant.Destructive => "text-destructive-foreground",
+            ToastVariant.Success => "bb:text-alert-success",
+            ToastVariant.Info => "bb:text-alert-info",
+            ToastVariant.Warning => "bb:text-alert-warning",
+            ToastVariant.Destructive => "bb:text-destructive-foreground",
             _ => ""
         }
     );
 
     private string ContentCssClass => ClassNames.cn(
-        "grid flex-1",
-        IsCompact ? "gap-0.5" : "gap-1"
+        "bb:grid bb:flex-1",
+        IsCompact ? "bb:gap-0.5" : "bb:gap-1"
     );
 
-    private string TitleCssClass => IsCompact ? "text-xs font-semibold" : "text-sm font-semibold";
+    private string TitleCssClass => IsCompact ? "bb:text-xs bb:font-semibold" : "bb:text-sm bb:font-semibold";
 
     private string DescriptionCssClass => ClassNames.cn(
-        IsCompact ? "text-xs" : "text-sm",
-        "opacity-90"
+        IsCompact ? "bb:text-xs" : "bb:text-sm",
+        "bb:opacity-90"
     );
 
     private string ActionCssClass => ClassNames.cn(
-        "inline-flex shrink-0 items-center justify-center rounded-md border bg-transparent font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-        IsCompact ? "h-7 px-2 text-xs" : "h-8 px-3 text-sm"
+        "bb:inline-flex bb:shrink-0 bb:items-center bb:justify-center bb:rounded-md bb:border bb:bg-transparent bb:font-medium bb:ring-offset-background bb:transition-colors bb:hover:bg-secondary bb:focus:outline-none bb:focus:ring-2 bb:focus:ring-ring bb:focus:ring-offset-2 bb:disabled:pointer-events-none bb:disabled:opacity-50",
+        IsCompact ? "bb:h-7 bb:px-2 bb:text-xs" : "bb:h-8 bb:px-3 bb:text-sm"
     );
 
     /// <summary>
     /// Gets the computed CSS classes for the close button.
     /// </summary>
     private string CloseCssClass => ClassNames.cn(
-        "absolute rounded-md p-1 opacity-0 transition-opacity",
-        "hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100",
-        IsCompact ? "right-1 top-1" : "right-2 top-2",
+        "bb:absolute bb:rounded-md bb:p-1 bb:opacity-0 bb:transition-opacity",
+        "bb:hover:text-foreground bb:focus:opacity-100 bb:focus:outline-none bb:focus:ring-2 bb:group-hover:opacity-100",
+        IsCompact ? "bb:right-1 bb:top-1" : "bb:right-2 bb:top-2",
         Data.Variant == ToastVariant.Destructive
-            ? "text-red-300 hover:text-red-50 focus:ring-red-400 focus:ring-offset-red-600"
-            : "text-foreground/50 hover:text-foreground focus:ring-ring"
+            ? "bb:text-red-300 bb:hover:text-red-50 bb:focus:ring-red-400 bb:focus:ring-offset-red-600"
+            : "bb:text-foreground/50 bb:hover:text-foreground bb:focus:ring-ring"
     );
 }

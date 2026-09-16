@@ -77,11 +77,11 @@ public partial class BbFieldDescription : ComponentBase
     /// </remarks>
     private string CssClass => ClassNames.cn(
         // Typography - smaller size
-        "text-sm",
+        "bb:text-sm",
         // Color - muted for helper text
-        "text-muted-foreground",
+        "bb:text-muted-foreground",
         // Text balancing for better line breaks
-        "text-balance",
+        "bb:text-balance",
         // Custom classes (if provided)
         Class
     );

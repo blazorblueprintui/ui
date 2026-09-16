@@ -603,56 +603,56 @@ public partial class BbFormWizard : ComponentBase
     // --- CSS ---
 
     private string CssClass => ClassNames.cn(
-        Layout == WizardLayout.Vertical ? "flex gap-8" : "flex flex-col",
+        Layout == WizardLayout.Vertical ? "bb:flex bb:gap-8" : "bb:flex bb:flex-col",
         Class
     );
 
     private string IndicatorCssClass => ClassNames.cn(
         Layout == WizardLayout.Horizontal
-            ? "flex items-start w-full"
-            : "flex flex-col shrink-0",
+            ? "bb:flex bb:items-start bb:w-full"
+            : "bb:flex bb:flex-col bb:shrink-0",
         IndicatorClass
     );
 
     private string ContentWrapperCssClass => ClassNames.cn(
-        Layout == WizardLayout.Vertical ? "flex-1 min-w-0 flex flex-col" : null
+        Layout == WizardLayout.Vertical ? "bb:flex-1 bb:min-w-0 bb:flex bb:flex-col" : null
     );
 
     private string ContentCssClass => ClassNames.cn(
-        Layout == WizardLayout.Horizontal ? "mt-6" : "flex-1",
+        Layout == WizardLayout.Horizontal ? "bb:mt-6" : "bb:flex-1",
         ContentClass
     );
 
     private string NavigationCssClass => ClassNames.cn(
-        "flex items-center justify-between pt-6 pb-2",
+        "bb:flex bb:items-center bb:justify-between bb:pt-6 bb:pb-2",
         NavigationClass
     );
 
     private static string GetStepCircleClass(WizardStepState state) => ClassNames.cn(
-        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-sm font-medium transition-colors",
+        "bb:flex bb:h-8 bb:w-8 bb:shrink-0 bb:items-center bb:justify-center bb:rounded-full bb:border-2 bb:text-sm bb:font-medium bb:transition-colors",
         state switch
         {
-            WizardStepState.Active => "border-primary bg-primary text-primary-foreground",
-            WizardStepState.Completed => "border-primary bg-primary text-primary-foreground",
-            WizardStepState.Invalid => "border-destructive bg-destructive text-destructive-foreground",
-            WizardStepState.Skipped => "border-muted-foreground/50 text-muted-foreground",
-            _ => "border-muted-foreground/25 text-muted-foreground"
+            WizardStepState.Active => "bb:border-primary bb:bg-primary bb:text-primary-foreground",
+            WizardStepState.Completed => "bb:border-primary bb:bg-primary bb:text-primary-foreground",
+            WizardStepState.Invalid => "bb:border-destructive bb:bg-destructive bb:text-destructive-foreground",
+            WizardStepState.Skipped => "bb:border-muted-foreground/50 bb:text-muted-foreground",
+            _ => "bb:border-muted-foreground/25 bb:text-muted-foreground"
         }
     );
 
     private string GetStepButtonClass(int index) => ClassNames.cn(
-        "flex group cursor-default",
+        "bb:flex bb:group bb:cursor-default",
         // #459: rounded so the ring follows the step marker rather than boxing the label too.
-        "rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "bb:rounded-md bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2",
         Layout == WizardLayout.Vertical
-            ? "flex-row items-center gap-2"
-            : "flex-col items-center shrink-0 gap-2",
-        CanNavigateToStep(index) ? "cursor-pointer" : null
+            ? "bb:flex-row bb:items-center bb:gap-2"
+            : "bb:flex-col bb:items-center bb:shrink-0 bb:gap-2",
+        CanNavigateToStep(index) ? "bb:cursor-pointer" : null
     );
 
     private static string GetStepTitleClass(WizardStepState state) => ClassNames.cn(
-        "text-sm font-medium transition-colors whitespace-nowrap",
-        state == WizardStepState.Active ? "text-foreground" : "text-muted-foreground"
+        "bb:text-sm bb:font-medium bb:transition-colors bb:whitespace-nowrap",
+        state == WizardStepState.Active ? "bb:text-foreground" : "bb:text-muted-foreground"
     );
 
     private static string GetConnectorClass(WizardStepState state, WizardLayout layout)
@@ -660,14 +660,14 @@ public partial class BbFormWizard : ComponentBase
         if (layout == WizardLayout.Horizontal)
         {
             return ClassNames.cn(
-                "flex-1 mx-2 mt-4 transition-colors",
-                state == WizardStepState.Completed ? "h-0.5 bg-primary" : "h-0.5 bg-border"
+                "bb:flex-1 bb:mx-2 bb:mt-4 bb:transition-colors",
+                state == WizardStepState.Completed ? "bb:h-0.5 bb:bg-primary" : "bb:h-0.5 bb:bg-border"
             );
         }
 
         return ClassNames.cn(
-            "transition-colors ml-[15px]",
-            state == WizardStepState.Completed ? "w-0.5 h-8 bg-primary" : "w-0.5 h-8 bg-border"
+            "bb:transition-colors bb:ml-[15px]",
+            state == WizardStepState.Completed ? "bb:w-0.5 bb:h-8 bb:bg-primary" : "bb:w-0.5 bb:h-8 bb:bg-border"
         );
     }
 }

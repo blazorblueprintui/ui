@@ -41,7 +41,7 @@ public partial class BbBubbleContent : ComponentBase
         AsChild == BubbleContentElement.Div && !string.IsNullOrEmpty(Href) ? BubbleContentElement.Anchor : AsChild;
 
     private string CssClass => ClassNames.cn(
-        "w-fit max-w-full min-w-0 overflow-hidden rounded-3xl border border-transparent px-3 py-2.5 text-sm leading-relaxed wrap-break-word group-data-[align=end]/bubble:self-end [button]:text-left [button,a]:transition-colors [button,a]:outline-none [button,a]:focus-visible:border-ring [button,a]:focus-visible:ring-3 [button,a]:focus-visible:ring-ring/30 group-data-[variant=ghost]/bubble:border-0",
+        "bb:w-fit bb:max-w-full bb:min-w-0 bb:overflow-hidden bb:rounded-3xl bb:border bb:border-transparent bb:px-3 bb:py-2.5 bb:text-sm bb:leading-relaxed bb:wrap-break-word bb:group-data-[align=end]/bubble:self-end bb:[button]:text-left bb:[button,a]:transition-colors bb:[button,a]:outline-none bb:[button,a]:focus-visible:border-ring bb:[button,a]:focus-visible:ring-3 bb:[button,a]:focus-visible:ring-ring/30 bb:group-data-[variant=ghost]/bubble:border-0",
         Class
     );
 }

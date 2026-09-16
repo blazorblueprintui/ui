@@ -25,5 +25,5 @@ public partial class BbMarkerContent : ComponentBase
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
-    private string CssClass => ClassNames.cn("min-w-0 wrap-break-word group-data-[variant=separator]/marker:flex-none group-data-[variant=separator]/marker:text-center *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground", Class);
+    private string CssClass => ClassNames.cn("bb:min-w-0 bb:wrap-break-word bb:group-data-[variant=separator]/marker:flex-none bb:group-data-[variant=separator]/marker:text-center bb:*:[a]:underline bb:*:[a]:underline-offset-3 bb:*:[a]:hover:text-foreground", Class);
 }

@@ -13,6 +13,11 @@ Blazor Blueprint uses CSS custom properties (variables) for theming, following t
 <link href="_content/BlazorBlueprint.Components/blazorblueprint.css" rel="stylesheet" />
 ```
 
+If you also run your own Tailwind build, its output can go before or after `blazorblueprint.css`.
+Every utility the library emits is prefixed `bb:` and kept in its own cascade layer, so the two
+stylesheets never define the same class and load order does not affect them. Do not `@source` the
+library's package or sources from your Tailwind input — it emits nothing useful and is not needed.
+
 ## Avoiding the theme flash on first load
 
 The saved theme lives in `localStorage`, so a prerendered or statically rendered page has no way

@@ -43,7 +43,7 @@ public partial class BbCardAction : ComponentBase
     /// </summary>
     private string CssClass => ClassNames.cn(
         // Base action styles
-        "flex items-center gap-2",
+        "bb:flex bb:items-center bb:gap-2",
         // Custom classes (if provided)
         Class
     );

@@ -243,28 +243,28 @@ public partial class BbDockTabGroup : ComponentBase, IAsyncDisposable
     }
 
     private string RootClass => ClassNames.cn(
-        "flex h-full w-full min-w-0 flex-col overflow-hidden bg-background",
+        "bb:flex bb:h-full bb:w-full bb:min-w-0 bb:flex-col bb:overflow-hidden bb:bg-background",
         // Floating windows already have a bordered wrapper; docked groups draw their own
         // outline so adjacent panels read as distinct, framed surfaces (VS-style).
-        IsFloating ? null : "border border-border/70");
+        IsFloating ? null : "bb:border bb:border-border/70");
 
     // Pixel min/max size constraints declared by the group's panels. The floating window wrapper
     // already sizes itself from these, so the constraint style only applies to docked groups.
     private string? ConstraintStyle => IsFloating ? null : Dock.GroupConstraintStyle(GroupNode);
 
     private string StripClass => ClassNames.cn(
-        "flex h-8 shrink-0 items-stretch border-b border-border/60 bg-muted/50",
-        IsFloating ? "cursor-move" : null);
+        "bb:flex bb:h-8 bb:shrink-0 bb:items-stretch bb:border-b bb:border-border/60 bb:bg-muted/50",
+        IsFloating ? "bb:cursor-move" : null);
 
     private static string TabClass(bool isActive, bool isHidden) => ClassNames.cn(
-        "group/tab relative flex h-full min-w-[88px] max-w-[200px] cursor-default items-center gap-1.5 border-r border-border/40 px-2.5 text-xs transition-colors",
-        isHidden ? "hidden" : null,
+        "bb:group/tab bb:relative bb:flex bb:h-full bb:min-w-[88px] bb:max-w-[200px] bb:cursor-default bb:items-center bb:gap-1.5 bb:border-r bb:border-border/40 bb:px-2.5 bb:text-xs bb:transition-colors",
+        isHidden ? "bb:hidden" : null,
         isActive
-            ? "z-10 -mb-px border-b border-background bg-background text-foreground after:absolute after:inset-x-0 after:top-0 after:h-[2px] after:bg-primary"
-            : "bg-transparent text-muted-foreground hover:bg-background/50 hover:text-foreground");
+            ? "bb:z-10 bb:-mb-px bb:border-b bb:border-background bb:bg-background bb:text-foreground bb:after:absolute bb:after:inset-x-0 bb:after:top-0 bb:after:h-[2px] bb:after:bg-primary"
+            : "bb:bg-transparent bb:text-muted-foreground bb:hover:bg-background/50 bb:hover:text-foreground");
 
     private static string CloseClass() => ClassNames.cn(
-        "ml-auto inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm opacity-60 transition-opacity hover:bg-foreground/10 hover:!opacity-100");
+        "bb:ml-auto bb:inline-flex bb:h-4 bb:w-4 bb:shrink-0 bb:items-center bb:justify-center bb:rounded-sm bb:opacity-60 bb:transition-opacity bb:hover:bg-foreground/10 bb:hover:!opacity-100");
 
     /// <inheritdoc />
     public async ValueTask DisposeAsync()

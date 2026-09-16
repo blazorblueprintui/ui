@@ -32,7 +32,7 @@ public partial class BbItemTitle : ComponentBase
     /// Gets the computed CSS classes for the title element.
     /// </summary>
     private string CssClass => ClassNames.cn(
-        "flex items-center gap-2 font-medium leading-none",
+        "bb:flex bb:items-center bb:gap-2 bb:font-medium bb:leading-none",
         Class
     );
 }

@@ -34,7 +34,7 @@ public partial class BbTimelineTitle : ComponentBase
     public string As { get; set; } = "h3";
 
     private string CssClass => ClassNames.cn(
-        "font-semibold leading-none tracking-tight text-foreground",
+        "bb:font-semibold bb:leading-none bb:tracking-tight bb:text-foreground",
         Class
     );
 

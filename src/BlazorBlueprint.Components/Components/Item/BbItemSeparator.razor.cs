@@ -27,7 +27,7 @@ public partial class BbItemSeparator : ComponentBase
     /// Gets the computed CSS classes for the separator element.
     /// </summary>
     private string CssClass => ClassNames.cn(
-        "my-1",
+        "bb:my-1",
         Class
     );
 }

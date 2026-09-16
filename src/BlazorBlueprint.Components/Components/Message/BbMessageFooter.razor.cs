@@ -26,7 +26,7 @@ public partial class BbMessageFooter : ComponentBase
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string CssClass => ClassNames.cn(
-        "flex max-w-full min-w-0 items-center self-start px-3 text-left text-xs font-medium text-muted-foreground group-has-data-[variant=ghost]/message:px-0 group-data-[align=end]/message:justify-end group-data-[align=end]/message:self-end group-data-[align=end]/message:text-right",
+        "bb:flex bb:max-w-full bb:min-w-0 bb:items-center bb:self-start bb:px-3 bb:text-left bb:text-xs bb:font-medium bb:text-muted-foreground bb:group-has-data-[variant=ghost]/message:px-0 bb:group-data-[align=end]/message:justify-end bb:group-data-[align=end]/message:self-end bb:group-data-[align=end]/message:text-right",
         Class
     );
 }

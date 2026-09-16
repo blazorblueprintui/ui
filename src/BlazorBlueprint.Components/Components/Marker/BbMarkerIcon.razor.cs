@@ -25,5 +25,5 @@ public partial class BbMarkerIcon : ComponentBase
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
-    private string CssClass => ClassNames.cn("size-4 shrink-0 [&_svg:not([class*='size-'])]:size-4", Class);
+    private string CssClass => ClassNames.cn("bb:size-4 bb:shrink-0 bb:[&_svg:not([class*='size-'])]:size-4", Class);
 }

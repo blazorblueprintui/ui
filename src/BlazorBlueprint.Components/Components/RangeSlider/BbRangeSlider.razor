@@ -9,9 +9,9 @@
      tabindex="-1"
      @attributes="AdditionalAttributes">
     @* Track background *@
-    <div class="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
+    <div class="bb:relative bb:h-2 bb:w-full bb:grow bb:overflow-hidden bb:rounded-full bb:bg-secondary">
         @* Active range track *@
-        <div class="absolute h-full bg-primary"
+        <div class="bb:absolute bb:h-full bb:bg-primary"
              style="left: @(StartPercentageValue); width: @(RangePercentageValue);">
         </div>
     </div>
@@ -60,7 +60,7 @@
         @foreach (var tick in TickValues)
         {
             var tickPercent = ((tick - Min) / (Max - Min)) * 100;
-            <div class="absolute top-4 w-0.5 h-2 bg-muted-foreground/30"
+            <div class="bb:absolute bb:top-4 bb:w-0.5 bb:h-2 bb:bg-muted-foreground/30"
                  style="left: @(tickPercent.ToString("0.##", CultureInfo.InvariantCulture))%; transform: translateX(-50%);">
             </div>
         }
@@ -393,33 +393,33 @@
     }
 
     private string CssClass => ClassNames.cn(
-        "relative flex w-full touch-none select-none items-center",
-        Disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+        "bb:relative bb:flex bb:w-full bb:touch-none bb:select-none bb:items-center",
+        Disabled ? "bb:opacity-50 bb:cursor-not-allowed" : "bb:cursor-pointer",
         Class
     );
 
     private string ThumbBaseClass => ClassNames.cn(
-        "absolute block h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        "disabled:pointer-events-none disabled:opacity-50",
-        "-translate-x-1/2 top-1/2 -translate-y-1/2",
-        Disabled ? "" : "cursor-grab active:cursor-grabbing"
+        "bb:absolute bb:block bb:h-5 bb:w-5 bb:rounded-full bb:border-2 bb:border-primary bb:bg-background bb:ring-offset-background bb:transition-colors",
+        "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2",
+        "bb:disabled:pointer-events-none bb:disabled:opacity-50",
+        "bb:-translate-x-1/2 bb:top-1/2 bb:-translate-y-1/2",
+        Disabled ? "" : "bb:cursor-grab bb:active:cursor-grabbing"
     );
 
     private string StartThumbClass => ClassNames.cn(
         ThumbBaseClass,
-        "z-[1]"
+        "bb:z-[1]"
     );
 
     private string EndThumbClass => ClassNames.cn(
         ThumbBaseClass,
-        "z-[2]"
+        "bb:z-[2]"
     );
 
     private string TooltipClass => ClassNames.cn(
-        "absolute -top-8 left-1/2 -translate-x-1/2",
-        "px-2 py-1 text-xs bg-primary text-primary-foreground rounded",
-        "whitespace-nowrap"
+        "bb:absolute bb:-top-8 bb:left-1/2 bb:-translate-x-1/2",
+        "bb:px-2 bb:py-1 bb:text-xs bb:bg-primary bb:text-primary-foreground bb:rounded",
+        "bb:whitespace-nowrap"
     );
 
     public async ValueTask DisposeAsync()
