@@ -25,6 +25,7 @@ Beautiful UI components for Blazor, built with accessibility in mind. Inspired b
 ## Table of Contents
 
 - [Why Blazor Blueprint?](#why-blazor-blueprint)
+- [What's New in v4](#whats-new-in-v4)
 - [AI Integration](#ai-integration)
 - [Getting Started](#getting-started)
 - [Components](#components)
@@ -49,6 +50,18 @@ Blazor developers lack a modern, design-system-first UI library equivalent to wh
 - **Dark Mode Built-in** — Light and dark themes with CSS variables, ready out of the box.
 - **Two-Layer Architecture** — Use pre-styled components for speed, or headless primitives for full control.
 
+## What's New in v4
+
+The `v4` branch includes unreleased changes. See the [changelog](CHANGELOG.md#unreleased) for the full list and the [migration guide](V4-MIGRATION-GUIDE.md) for breaking changes.
+
+- **.NET 10 minimum** — Components, Primitives and icon packages target `net10.0`. v4 drops .NET 8 and .NET 9 support.
+- **DataGrid cell and batch editing** — Isolated drafts, validation, rejected-save recovery and keyboard save/cancel. Inline editors preserve column widths, support custom Bb input controls, and reapply sorting after accepted edits. Applications supply a deep-copy `EditItemFactory` and persistence callbacks.
+- **Scheduler** — Day, Week and Monday–Friday WorkWeek views, a Monday/Sunday week-start selector, resource lanes and overlapping appointments. Create/edit events with Bb controls, confirm deletions, drag to move and resize either time boundary. Recurring series support individual exceptions; IANA time zones include daylight-saving validation. Configure 15/30/60-minute slots with `SlotMinutes`, or hide time-zone controls with `EnableTimeZones="false"` to use the configured `TimeZoneId` for display and editing. `@bind-FirstDayOfWeek` retains the Week preference; WorkWeek always starts Monday and navigates by seven days.
+- **TreeSelect and Cascader** — Searchable hierarchy selection with form bindings and keyboard navigation. TreeSelect supports cascading parent checkboxes and indeterminate states; Cascader reveals the selected path and scrolls to newly opened levels.
+- **FileUpload lifecycle** — Supply an `UploadHandler` for progress, cancellation and retry, with browser file references retained across selections.
+
+Try these features in the [source demos](#demo-applications).
+
 ## AI Integration
 
 Blazor Blueprint ships with a built-in MCP server and llms.txt — so Claude, Cursor, Copilot, and Windsurf generate correct component code on the first try.
@@ -68,6 +81,10 @@ npx -y @blazorblueprint/mcp
 Learn more at [blazorblueprintui.com](https://blazorblueprintui.com).
 
 ## Getting Started
+
+### Requirements
+
+v4 requires **.NET 10 or later** and an interactive Blazor render mode. Retarget .NET 8/9 applications before upgrading, and keep Components and Primitives on matching v4 versions. To build this branch, use the SDK specified in [global.json](global.json) (10.0.400 or a later .NET 10 feature band).
 
 ### Installation
 
@@ -187,11 +204,11 @@ Production-ready components for complex data-driven applications:
 | Component | Description |
 |-----------|-------------|
 | **Dashboard Grid** | Drag-and-drop, resizable widget layout for composing dashboards. Built on CSS Grid with responsive breakpoints, state persistence, keyboard accessibility, and loading/empty states. |
-| **Scheduler** | Day/week time slots, overlapping events, resource lanes, event editing, recurring series and IANA time zones |
-| **TreeSelect** | Searchable single/multiple hierarchy selection with form binding |
-| **Cascader** | Hierarchy columns, path search and leaf/branch selection |
+| **Scheduler** | Day/week/work-week scheduling with Monday/Sunday week starts, configurable slots, resource lanes, drag/resize, event editing, confirmed deletion, recurrence and optional per-event IANA time zones |
+| **TreeSelect** | Searchable single/multiple hierarchy selection with cascading checkboxes, indeterminate states, leaf-only selection and form binding |
+| **Cascader** | Hierarchy columns, path search, leaf/branch selection, keyboard/RTL navigation and automatic scrolling to the active level |
 | **FileUpload** | Optional transport callback with progress, cancellation, retries and preserved browser files |
-| **DataGrid** | Full-featured data grid with multi-column sorting, per-column filtering, row grouping with aggregates, hierarchical tree data, row selection, expandable rows, virtualization, context menus, pinned columns, column reordering/resizing/visibility, and state persistence. Supports `IQueryable`, `IEnumerable`, and `ItemsProvider` data sources. |
+| **DataGrid** | Full-featured data grid with row/cell/batch editing, validation, multi-column sorting, per-column filtering, row grouping with aggregates, hierarchical tree data, row selection, expandable rows, virtualization, context menus, pinned columns, column reordering/resizing/visibility, and state persistence. Supports `IQueryable`, `IEnumerable`, and `ItemsProvider` data sources. |
 | **Dynamic Form** | Schema-driven form rendering — define fields, validation rules, and layout in a schema object, and the component generates the complete form with appropriate inputs, conditional visibility, and error display. |
 | **Filter Builder** | Visual query builder for constructing complex filter expressions with AND/OR logic, nested condition groups, and type-aware operators. Pairs with DataGrid for interactive data exploration. |
 | **Form Wizard** | Multi-step form wizard with progress indicators, per-step validation, optional/skippable steps, and navigation controls. |
@@ -219,7 +236,7 @@ Production-ready components for complex data-driven applications:
 | **Dynamic Form** | Schema-driven form rendering — generates complete forms from a definition with automatic input selection, validation, conditional visibility, and layout customization |
 | **Field** | Combines label, control, description, and error for structured forms |
 | **Filter Builder** | Visual query builder for data filter expressions with AND/OR logic, condition groups, and two-way binding |
-| **File Upload** | Drag-and-drop file upload with preview |
+| **File Upload** | Drag-and-drop file selection with preview and optional upload progress, cancellation and retry |
 | **Form Field Checkbox** | Pre-configured checkbox field with built-in label, description, and validation |
 | **Form Field Checkbox Group** | Pre-configured checkbox group field with built-in label, description, and manual validation |
 | **Form Field Combobox** | Pre-configured combobox field with built-in label, description, and validation |
@@ -309,12 +326,13 @@ Production-ready components for complex data-driven applications:
 |----------------------|--------------------------------------------------------------------------------------------------------------------|
 | **Chart**            | 11 chart types (Area, Bar, Candlestick, Funnel, Gauge, Heatmap, Line, Pie, Radar, Radial Bar, Scatter) with theme integration |
 | **Dashboard Grid**   | Drag-and-drop, resizable widget layout for dashboards with responsive breakpoints, state persistence, and keyboard accessibility |
-| **DataGrid**         | Enterprise data grid with sorting, per-column filtering, row grouping with aggregates, hierarchical tree data, selection, expandable rows, row virtualization, context menu, pinned columns, column reordering/resizing/visibility, and state persistence |
+| **DataGrid**         | Enterprise data grid with row/cell/batch editing, validation, sorting, per-column filtering, row grouping with aggregates, hierarchical tree data, selection, expandable rows, row virtualization, context menu, pinned columns, column reordering/resizing/visibility, and state persistence |
 | **DataTable**        | Tables with sorting, filtering, pagination, and row selection                                                      |
 | **DataView**         | Displays data using templates in a grid or list layout with sorting, filtering, pagination, and infinite scrolling |
 | **Event Calendar**   | Month, Week, and Agenda views over your own event model with per-event templates, styling, and click callbacks    |
 | **Markdown Editor**  | Toolbar formatting with live preview                                                                               |
 | **Rich Text Editor** | WYSIWYG editor on Quill 2 with headings, lists and checklists, links, images with an upload hook, tables, colour, alignment, code, and undo/redo |
+| **Scheduler**        | Day/week/work-week appointments with resource lanes, configurable week starts and slots, drag/resize, recurring events and time-zone handling |
 | **Tree View**        | Hierarchical data display with selection, checkboxes, lazy loading, drag-and-drop, search filtering, and data-driven or declarative modes |
 
 ### Display
@@ -499,12 +517,24 @@ Key services include `IPortalService` (overlay rendering), `IFocusManager` (focu
 Demo applications are included for all three Blazor hosting models:
 
 ```bash
-dotnet run --project demos/BlazorBlueprint.Demo.Server
-dotnet run --project demos/BlazorBlueprint.Demo.Wasm
-dotnet run --project demos/BlazorBlueprint.Demo.Auto
+dotnet run --project demos/BlazorBlueprint.Demo.Server  # http://localhost:7172
+dotnet run --project demos/BlazorBlueprint.Demo.Wasm    # http://localhost:7173
+dotnet run --project demos/BlazorBlueprint.Demo.Auto    # http://localhost:7174
 ```
 
 The demos share a common Razor Class Library (`BlazorBlueprint.Demo.Shared`) with thin hosting projects per render mode, demonstrating that components work identically across Server, WebAssembly, and Auto.
+
+Browse `/components` for the full catalog. The v4 examples include:
+
+| Demo | Route | Examples |
+|------|-------|----------|
+| [DataGrid editing](demos/BlazorBlueprint.Demo.Shared/Pages/Components/DataGridEditingDemo.razor) | `/components/datagrid-editing` | Cell/batch editing, text/number/date/select/checkbox editors, validation and sorting after saves |
+| [Scheduler](demos/BlazorBlueprint.Demo.Shared/Pages/Components/SchedulerDemo.razor) | `/components/scheduler` | Week starts, work weeks, dragging/resizing, slot sizes, recurrence, resources and time zones |
+| [TreeSelect](demos/BlazorBlueprint.Demo.Shared/Pages/Components/TreeSelectDemo.razor) | `/components/tree-select` | Single/multiple selection, cascading checkboxes and leaf-only values |
+| [Cascader](demos/BlazorBlueprint.Demo.Shared/Pages/Components/CascaderDemo.razor) | `/components/cascader` | Path search, branch selection, keyboard navigation and scrolling between levels |
+| [FileUpload](demos/BlazorBlueprint.Demo.Shared/Pages/Components/FileUploadDemo.razor) | `/components/file-upload` | Upload progress, cancellation, retry and failure recovery |
+
+The demos include code examples and API references. Rebuild after changing source files; these hosts do not support hot reload.
 
 ## Contributing
 

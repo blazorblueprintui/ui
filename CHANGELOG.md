@@ -9,8 +9,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## Unreleased
 
+### Breaking Changes
+
+- **v4 requires .NET 10 or later.** Components, Primitives, icon packages, demos and tests now target `net10.0`; .NET 8 and .NET 9 are no longer supported. The source SDK is pinned to 10.0.400 with feature-band roll-forward. Retarget consuming applications and use matching v4 Components/Primitives packages. See the [v4 migration guide](V4-MIGRATION-GUIDE.md).
+
+### Added
+
+- **DataGrid cell and batch editing.** `DataGridEditMode.Cell` saves each accepted cell independently; `DataGridEditMode.Batch` stages changes until the batch is committed. Drafts are isolated through `EditItemFactory`, validated before saving, and retained when persistence rejects a change. Applications provide deep-copy factories and atomic batch persistence. Editors support keyboard save/cancel and custom text, numeric, date, select and checkbox controls; accepted changes reapply the active sorting.
+- **`BbScheduler` for time-slot scheduling.** Day, Week and WorkWeek views include resource lanes, overlapping appointments, a Bb component event editor, and delete confirmation. Week view offers a bindable Monday/Sunday start through `FirstDayOfWeek`/`FirstDayOfWeekChanged`. WorkWeek always shows Monday–Friday, navigates in seven-day steps, and preserves the full-week start preference.
+- **Scheduler drag, resize and slot sizes.** Drag events to move them between times and resource lanes, or extend the top/bottom borders to change start/end times. Gestures snap to `SlotMinutes`, including 15, 30 and 60 minutes, and use the same persistence/rejection callbacks as editor saves. `AllowDrag`, `AllowResize` and `ReadOnly` control interaction.
+- **Scheduler recurrence and time zones.** Daily, weekly, monthly and yearly rules support editing one occurrence or an entire series, with independent event/display IANA time zones and validation of skipped or repeated daylight-saving times. `EnableTimeZones="false"` hides zone controls and uses `TimeZoneId` for display and editing while preserving stored instants and recurrence zones.
+- **`BbTreeSelect` and `BbCascader`.** Searchable hierarchy pickers with stable keys, form bindings, clear/disabled states and leaf-only selection. TreeSelect supports single/multiple selection with cascading parent checkboxes and indeterminate states. Cascader provides column navigation, full-path search, optional branch selection and keyboard/RTL navigation; opening a selected path or expanding a branch reveals the newest column.
+- **FileUpload transport lifecycle.** Optional `UploadHandler` callbacks receive a size-limited browser stream and cancellation token, report progress, and support cancellation and retry. Browser file references survive subsequent selections; retry starts a fresh attempt from zero. Applications supply the upload destination.
+
+### Fixed
+
+- **DataGrid editors preserve column widths.** Inline `BbInputGroup` save/cancel actions fit inside the existing cell without widening the column or moving neighbouring columns.
+- **Hierarchy pickers match the standard Bb controls.** TreeSelect and Cascader use consistent chevrons, search rows and focus styling. Parent selection reaches collapsed/filtered descendants, and closing a TreeSelect preserves its search through the exit animation to avoid flicker.
+- **Scheduler event layout and scrolling.** Appointment content is top aligned with spacing between overlapping events. Native component scrollbars follow the light/dark theme.
+- **Picker focus and overlay dismissal.** Date pickers restore focus after selection, Enter opens a Select without a second native click closing it, and overlay exit waits ignore unrelated child animations.
+
 ### Documentation and Packaging
 
+- Add permanent DataGrid editing, Scheduler, TreeSelect, Cascader and upload lifecycle demos with code examples, accessibility notes and API references. New pages appear in the sidebar, command search and component catalog; editing demos cover several input types, validation recovery and ordering after saves. See [PR #536](https://github.com/blazorblueprintui/ui/pull/536).
 - Complete README acknowledgments and include library licenses and upstream notices in all six NuGet packages. Bundle browser-library notices as static assets, restore Floating UI and tw-animate-css license headers, and retain ECharts subcomponent notices.
 - Correct Lucide and Font Awesome package license expressions to account for their embedded artwork, while retaining MIT for their C# wrappers.
 

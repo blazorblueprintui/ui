@@ -13,9 +13,11 @@ Pre-styled Blazor components with shadcn/ui design. Beautiful defaults with zero
 - **Built with Accessibility in Mind**: Includes ARIA attributes and keyboard support via BlazorBlueprint.Primitives
 - **Composable**: Flexible component composition patterns
 - **Type-Safe**: Full C# type safety with IntelliSense support
-- **.NET 10**: Built for the latest .NET platform
+- **.NET 10 minimum**: v4 targets `net10.0`; .NET 8 and .NET 9 are no longer supported
 
 ## Installation
+
+Retarget your application to .NET 10 or later before upgrading to v4, and keep Components and Primitives on matching v4 versions. This branch includes unreleased v4 changes; see the repository's [migration guide](https://github.com/blazorblueprintui/ui/blob/v4/V4-MIGRATION-GUIDE.md) and [changelog](https://github.com/blazorblueprintui/ui/blob/v4/CHANGELOG.md).
 
 ```bash
 dotnet add package BlazorBlueprint.Components
@@ -169,11 +171,11 @@ That's it! No Tailwind installation, no build configuration needed.
 | Component | Description |
 |-----------|-------------|
 | **Dashboard Grid** | Drag-and-drop, resizable widget layout for dashboards with responsive breakpoints and state persistence |
-| **Scheduler** | Day/week time slots, overlapping events, resource lanes, event editing, recurring series and IANA time zones |
-| **TreeSelect** | Searchable single/multiple hierarchy selection with form binding |
-| **Cascader** | Hierarchy columns, path search and leaf/branch selection |
+| **Scheduler** | Day/week/work-week scheduling with Monday/Sunday week starts, configurable slots, resource lanes, drag/resize, event editing, confirmed deletion, recurrence and optional per-event IANA time zones |
+| **TreeSelect** | Searchable single/multiple hierarchy selection with cascading checkboxes, indeterminate states, leaf-only selection and form binding |
+| **Cascader** | Hierarchy columns, path search, leaf/branch selection, keyboard/RTL navigation and automatic scrolling to the active level |
 | **FileUpload** | Optional transport callback with progress, cancellation, retries and preserved browser files |
-| **DataGrid** | Enterprise data grid with sorting, filtering, row grouping, row/cell/batch editing, selection, expandable rows, virtualization, and column management |
+| **DataGrid** | Enterprise data grid with sorting, filtering, row grouping, row/cell/batch editing, isolated drafts, validation, rejected-save recovery, selection, expandable rows, virtualization, and column management |
 | **DataTable** | Tables with sorting, filtering, pagination, and row selection |
 | **DataView** | List and grid layouts with sorting, filtering, pagination, and infinite scroll |
 | **Dynamic Form** | Schema-driven form rendering from JSON or code definitions |
@@ -192,7 +194,7 @@ That's it! No Tailwind installation, no build configuration needed.
 | **Date Picker** | Date selection input with calendar popup |
 | **Date Range Picker** | Date range selection input |
 | **Field** | Form field wrapper with label, description, and error states |
-| **File Upload** | File upload with drag-and-drop support |
+| **File Upload** | Drag-and-drop file selection with preview and optional upload progress, cancellation and retry |
 | **Input** | Text input fields with multiple types and sizes |
 | **Input Field** | Integrated input with field label and description |
 | **Input Group** | Grouped input controls with addons and buttons |
