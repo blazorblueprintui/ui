@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-09-16 (later still)
+
+### Fixed
+
+- **Navigating away from an open overlay no longer logs `overlay: close callback failed`.** Clicking a link while a select, popover or menu was open closed the overlay and unloaded the page in the same gesture. The close asked the browser for a `JsOnClosed` callback once the exit animation finished; the navigation disposed the component before the animation ended, and because the portal already counted itself closed, disposal skipped its own close call and released the .NET reference the callback was about to use. Nothing broke — the callback only unregisters content that disposal had already unregistered — but every such navigation put a `System.ArgumentException: There is no tracked object` in the console. The portal now remembers that a callback is outstanding and sends one more close on disposal, which cancels the pending one on the browser side before the reference goes away. Introduced with the one-round-trip close in 4.0.0-beta.1.
+
+---
+
 ## 2026-09-16 (later)
 
 ### Added
