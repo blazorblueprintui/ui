@@ -49,6 +49,7 @@
    automatically overrides these @layer base values via CSS cascade. */
 @layer base {
   :root {
+    color-scheme: light;
     --sidebar-width: 16rem;
     --sidebar-width-mobile: 18rem;
     --sidebar-width-icon: 3rem;
@@ -156,6 +157,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     --alert-success: oklch(0.60 0.18 142);
     --alert-success-foreground: oklch(0.90 0.06 142);
     --alert-success-bg: oklch(0.18 0.008 142);
@@ -998,4 +1000,30 @@
 @keyframes bb-shimmer {
   from { background-position: 200% 0; }
   to { background-position: -200% 0; }
+}
+
+/* Native scrolling surfaces use the same theme token as BbScrollArea thumbs.
+   Scope this to library overflow utilities so host-page scrollbars remain opt-in. */
+@layer bb {
+  :where([class*="bb:overflow-"]) {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  :where([class*="bb:overflow-"])::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  :where([class*="bb:overflow-"])::-webkit-scrollbar-track,
+  :where([class*="bb:overflow-"])::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  :where([class*="bb:overflow-"])::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border: 2px solid transparent;
+    border-radius: 9999px;
+    background-clip: padding-box;
+  }
 }

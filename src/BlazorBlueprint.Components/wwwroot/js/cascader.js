@@ -41,6 +41,23 @@ function syncItems(state) {
             focusItem(state, first);
         }
     }
+    const columns = Array.from(state.popup.querySelectorAll(columnSelector));
+    const signature = columns.map(column => column.dataset.cascaderParent ?? '').join('\0');
+    if (state.columnsSignature !== signature) {
+        state.columnsSignature = signature;
+        revealPath(state);
+    }
+}
+
+function revealPath(state) {
+    if (!isOpen(state)) return;
+    const viewport = state.popup.querySelector('[data-cascader-scroll]');
+    if (!viewport) return;
+    const selected = state.popup.querySelector('[aria-current="true"]');
+    selected?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    // Keep the newest level visible without moving keyboard focus out of the search field.
+    viewport.scrollLeft = getComputedStyle(state.popup).direction === 'rtl'
+        ? -viewport.scrollWidth : viewport.scrollWidth;
 }
 
 function enterBranch(state, item, activate = false) {
@@ -140,15 +157,19 @@ export function connect(popupId) {
     if (!popup) return;
     state.popup = popup;
     state.pendingChild = null;
+    state.columnsSignature = null;
     const keydown = event => onKeyDown(state, event);
     const focusin = event => {
         const item = event.target.closest(itemSelector);
         if (item) for (const candidate of itemsIn(popup)) candidate.tabIndex = candidate === item ? 0 : -1;
     };
     const focusInitial = () => requestAnimationFrame(() => requestAnimationFrame(() => {
-        if (state.popup !== popup || !isOpen(state) || state.initialLast === undefined) return;
-        focusEntry(state, state.initialLast);
-        state.initialLast = undefined;
+        if (state.popup !== popup || !isOpen(state)) return;
+        revealPath(state);
+        if (state.initialLast !== undefined) {
+            focusEntry(state, state.initialLast);
+            state.initialLast = undefined;
+        }
     }));
     const portal = popup.closest('[data-bb-portal]');
     popup.addEventListener('keydown', keydown);

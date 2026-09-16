@@ -144,3 +144,31 @@ test('arrow keys open from the trigger, repeated opens release old handlers, and
   assert.equal(document.activeElement, f.trigger);
   dispose('picker');
 });
+
+test('opening a selected path and rendering deeper levels scrolls to the trailing edge without stealing focus', () => {
+  const f = fixture();
+  const viewport = new Element(f.popup, { cascaderScroll: '' });
+  viewport.scrollWidth = 960;
+  viewport.scrollLeft = 0;
+  new Element(viewport, { cascaderColumn: '1', cascaderParent: 'engineering' });
+  f.update();
+  f.flush();
+  assert.equal(viewport.scrollLeft, 960);
+  assert.equal(document.activeElement, f.search);
+  viewport.scrollWidth = 1280;
+  new Element(viewport, { cascaderColumn: '2', cascaderParent: 'platform' });
+  f.update();
+  assert.equal(viewport.scrollLeft, 1280);
+  // A manual scroll is respected until the selected path changes or the popup reopens.
+  viewport.scrollLeft = 100;
+  f.update();
+  assert.equal(viewport.scrollLeft, 100);
+  connect('picker');
+  f.flush();
+  assert.equal(viewport.scrollLeft, 1280);
+  globalThis.getComputedStyle = () => ({ direction: 'rtl' });
+  connect('picker');
+  f.flush();
+  assert.equal(viewport.scrollLeft, -1280);
+  dispose('picker');
+});

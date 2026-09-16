@@ -1,5 +1,7 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
+using BlazorBlueprint.Primitives.Services;
 
 namespace BlazorBlueprint.Components;
 
@@ -16,6 +18,13 @@ public partial class BbScheduler
     [Parameter] public DayOfWeek FirstDayOfWeek { get; set; } = DayOfWeek.Monday;
     /// <summary>The IANA time zone used for lane dates and time labels. Event zones remain independent.</summary>
     [Parameter] public string TimeZoneId { get; set; } = "UTC";
+    /// <summary>Shows per-event time zones. When false, display and editor use TimeZoneId and zone controls are hidden. Stored instants and recurrence zones are preserved.</summary>
+    [Parameter] public bool EnableTimeZones { get; set; } = true;
+    /// <summary>Allows dragging appointments between time slots, days and resource lanes. Recurring changes apply to one occurrence.</summary>
+    [Parameter] public bool AllowDrag { get; set; } = true;
+    /// <summary>Allows resizing the top and bottom edges of appointments, snapped to SlotMinutes.</summary>
+    [Parameter] public bool AllowResize { get; set; } = true;
+    /// <summary>Time-slot size and drag/resize snapping interval, in minutes. Supports 15, 30, 60 and other divisors of 1440 between 5 and 120.</summary>
     [Parameter] public int SlotMinutes { get; set; } = 30;
     [Parameter] public int StartHour { get; set; } = 8;
     [Parameter] public int EndHour { get; set; } = 18;
@@ -45,14 +54,60 @@ public partial class BbScheduler
     private int recurrenceInterval = 1;
     private int? recurrenceCount;
     private bool editorOpen;
+    private bool deleteConfirmationOpen;
+    private bool restoreDeleteFocus;
     private bool saving;
     private string? editorError;
     private string? loadError;
+    private ElementReference schedulerElement;
+    private IJSObjectReference? interactionModule;
+    private DotNetObjectReference<BbScheduler>? dotNetReference;
+    private bool disposed;
+    private int revision;
 
     private DateOnly RangeDate => View == SchedulerView.Day ? Date
         : Date.AddDays(-(((int)Date.DayOfWeek - (int)FirstDayOfWeek + 7) % 7));
     private int DayCount => View == SchedulerView.Day ? 1 : 7;
     private TimeZoneInfo DisplayZone => TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId);
+    private string EditorTimeZoneId => EnableTimeZones ? draft!.TimeZoneId : TimeZoneId;
+    private string DeleteDescription => Localizer[editingOccurrence != null && !string.IsNullOrWhiteSpace(editingOccurrence.Event.RecurrenceRule)
+        ? editScope == SchedulerEditScope.Series ? "Scheduler.DeleteSeriesDescription" : "Scheduler.DeleteOccurrenceDescription"
+        : "Scheduler.DeleteDescription", editingOccurrence?.Event.Title ?? ""];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (disposed)
+        {
+            return;
+        }
+        if (firstRender)
+        {
+            interactionModule = await JsModules.GetAsync(JSRuntime, JsModules.Versioned("./_content/BlazorBlueprint.Components/js/scheduler.js", typeof(BbScheduler).Assembly));
+            if (disposed)
+            {
+                return;
+            }
+            dotNetReference = DotNetObjectReference.Create(this);
+            await interactionModule.InvokeVoidAsync("initialize", schedulerElement, dotNetReference);
+        }
+        if (restoreDeleteFocus && interactionModule != null)
+        {
+            restoreDeleteFocus = false;
+            await interactionModule.InvokeVoidAsync("restoreDeleteFocus", editorId);
+        }
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        disposed = true;
+        if (interactionModule != null)
+        {
+            try { await interactionModule.InvokeVoidAsync("dispose", schedulerElement); }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException) { }
+        }
+        dotNetReference?.Dispose();
+        GC.SuppressFinalize(this);
+    }
 
     protected override void OnParametersSet()
     {
@@ -73,6 +128,7 @@ public partial class BbScheduler
 
     private void RefreshSchedule()
     {
+        revision++;
         loadError = null;
         try
         {
@@ -242,8 +298,8 @@ public partial class BbScheduler
 
     private void UpdateLocalTimes()
     {
-        var zone = TimeZoneInfo.FindSystemTimeZoneById(draft!.TimeZoneId);
-        localStart = TimeZoneInfo.ConvertTime(draft.Start, zone).DateTime;
+        var zone = TimeZoneInfo.FindSystemTimeZoneById(EditorTimeZoneId);
+        localStart = TimeZoneInfo.ConvertTime(draft!.Start, zone).DateTime;
         localEnd = TimeZoneInfo.ConvertTime(draft.End, zone).DateTime;
         startResolution = ResolutionFor(draft.Start, zone);
         endResolution = ResolutionFor(draft.End, zone);
@@ -258,7 +314,7 @@ public partial class BbScheduler
         {
             return false;
         }
-        return TimeZoneInfo.FindSystemTimeZoneById(draft.TimeZoneId).IsAmbiguousTime(DateTime.SpecifyKind(local.Value, DateTimeKind.Unspecified));
+        return TimeZoneInfo.FindSystemTimeZoneById(EditorTimeZoneId).IsAmbiguousTime(DateTime.SpecifyKind(local.Value, DateTimeKind.Unspecified));
     }
 
     private static SchedulerAmbiguousTimeResolution ResolutionFor(DateTimeOffset instant, TimeZoneInfo zone)
@@ -300,6 +356,7 @@ public partial class BbScheduler
         UpdateLocalTimes();
         ReadRecurrence();
         editorError = null;
+        deleteConfirmationOpen = false;
         editorOpen = true;
         StateHasChanged();
     }
@@ -324,6 +381,7 @@ public partial class BbScheduler
         }
         editorError = null;
         saving = true;
+        StateHasChanged();
         try
         {
             if (!delete)
@@ -332,8 +390,8 @@ public partial class BbScheduler
                 {
                     throw new ArgumentException("Start and end are required.");
                 }
-                draft.Start = SchedulerEngine.ToInstant(localStart.Value, draft.TimeZoneId, startResolution);
-                draft.End = SchedulerEngine.ToInstant(localEnd.Value, draft.TimeZoneId, endResolution);
+                draft.Start = SchedulerEngine.ToInstant(localStart.Value, EditorTimeZoneId, startResolution);
+                draft.End = SchedulerEngine.ToInstant(localEnd.Value, EditorTimeZoneId, endResolution);
                 SchedulerEngine.Validate(draft);
             }
             var kind = delete ? SchedulerChangeKind.Delete : editingOccurrence == null ? SchedulerChangeKind.Create : SchedulerChangeKind.Update;
@@ -350,6 +408,7 @@ public partial class BbScheduler
             await EventsChanged.InvokeAsync(proposed);
             Events = proposed;
             editorOpen = false;
+            deleteConfirmationOpen = false;
             RefreshSchedule();
         }
         catch (Exception ex) when (ex is ArgumentException or FormatException or TimeZoneNotFoundException or InvalidTimeZoneException or Ical.Net.Evaluation.EvaluationException)
@@ -371,7 +430,120 @@ public partial class BbScheduler
         if (!saving)
         {
             editorOpen = value;
+            if (!value)
+            {
+                deleteConfirmationOpen = false;
+            }
         }
+    }
+
+    private void RequestDelete()
+    {
+        if (editingOccurrence == null || saving || ReadOnly)
+        {
+            return;
+        }
+        editorError = null;
+        deleteConfirmationOpen = true;
+    }
+
+    private void SetDeleteConfirmationOpen(bool value)
+    {
+        if (!saving)
+        {
+            restoreDeleteFocus = deleteConfirmationOpen && !value && editorOpen;
+            deleteConfirmationOpen = value;
+        }
+    }
+
+    private Task ConfirmDeleteAsync() => deleteConfirmationOpen ? SaveAsync(true) : Task.CompletedTask;
+
+    /// <summary>Commits a browser drag/resize after checking the visible occurrence, lane and snapping bounds. Applications normally use the pointer UI or EditEvent.</summary>
+    [JSInvokable]
+    public async Task CommitInteractionAsync(int renderedRevision, string eventId, long occurrenceStart, int sourceLaneIndex,
+        int targetLaneIndex, long startMilliseconds, long endMilliseconds, string action)
+    {
+        if (disposed || ReadOnly || saving || editorOpen || renderedRevision != revision
+            || (action == "move" ? !AllowDrag : !AllowResize || action is not ("start" or "end"))
+            || sourceLaneIndex < 0 || sourceLaneIndex >= lanes.Count || targetLaneIndex < 0 || targetLaneIndex >= lanes.Count)
+        {
+            return;
+        }
+        var source = lanes[sourceLaneIndex];
+        var target = lanes[targetLaneIndex];
+        var occurrence = source.Placements.Select(p => p.Occurrence).FirstOrDefault(o => o.Event.Id == eventId && o.Start.ToUnixTimeMilliseconds() == occurrenceStart);
+        if (occurrence == null)
+        {
+            return;
+        }
+        var originalStart = occurrence.Start.ToUnixTimeMilliseconds();
+        var originalEnd = occurrence.End.ToUnixTimeMilliseconds();
+        var slot = SlotMinutes * 60_000L;
+        var laneStart = target.Start.ToUnixTimeMilliseconds();
+        var laneEnd = target.End.ToUnixTimeMilliseconds();
+        if (startMilliseconds >= endMilliseconds)
+        {
+            return;
+        }
+        if (action == "move")
+        {
+            var earliest = laneStart - Math.Max(0, source.Start.ToUnixTimeMilliseconds() - originalStart);
+            if (startMilliseconds < earliest || startMilliseconds >= laneEnd || endMilliseconds <= laneStart
+                || endMilliseconds > DateTimeOffset.MaxValue.ToUnixTimeMilliseconds() || startMilliseconds < DateTimeOffset.MinValue.ToUnixTimeMilliseconds()
+                || endMilliseconds - startMilliseconds != originalEnd - originalStart
+                || (startMilliseconds - laneStart) % slot != 0)
+            {
+                return;
+            }
+        }
+        else
+        {
+            if (sourceLaneIndex != targetLaneIndex || endMilliseconds - startMilliseconds < slot)
+            {
+                return;
+            }
+            var edge = action == "start" ? startMilliseconds : endMilliseconds;
+            if (edge < laneStart || edge > laneEnd || (edge - laneStart) % slot != 0
+                || (action == "start" ? endMilliseconds != originalEnd || originalStart < laneStart : startMilliseconds != originalStart || originalEnd > laneEnd))
+            {
+                return;
+            }
+        }
+        if (originalStart == startMilliseconds && originalEnd == endMilliseconds && sourceLaneIndex == targetLaneIndex)
+        {
+            return;
+        }
+        editingOccurrence = occurrence;
+        editScope = SchedulerEditScope.Occurrence;
+        draft = occurrence.Event.Clone();
+        draft.Start = DateTimeOffset.FromUnixTimeMilliseconds(startMilliseconds);
+        draft.End = DateTimeOffset.FromUnixTimeMilliseconds(endMilliseconds);
+        if (action == "move" && source.Resource?.Id != target.Resource?.Id)
+        {
+            if (string.IsNullOrEmpty(target.Resource?.Id))
+            {
+                draft.ResourceIds.Clear();
+            }
+            else
+            {
+                if (source.Resource != null)
+                {
+                    draft.ResourceIds.Remove(source.Resource.Id);
+                }
+                if (!draft.ResourceIds.Contains(target.Resource.Id))
+                {
+                    draft.ResourceIds.Add(target.Resource.Id);
+                }
+            }
+        }
+        UpdateLocalTimes();
+        ReadRecurrence();
+        await SaveAsync(false);
+        if (editorError != null)
+        {
+            editorOpen = true;
+        }
+        StateHasChanged();
     }
 
     private sealed record Lane(DateOnly Date, SchedulerResource? Resource, DateTimeOffset Start, DateTimeOffset End, List<Placement> Placements);
