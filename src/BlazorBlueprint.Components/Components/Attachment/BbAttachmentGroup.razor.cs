@@ -26,7 +26,7 @@ public partial class BbAttachmentGroup : ComponentBase
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string CssClass => ClassNames.cn(
-        "flex min-w-0 scroll-fade-x snap-x snap-mandatory scroll-px-1 scrollbar-none gap-3 overflow-x-auto overscroll-x-contain py-1 *:data-[slot=attachment]:flex-none *:data-[slot=attachment]:snap-start",
+        "bb:flex bb:min-w-0 bb:scroll-fade-x bb:snap-x bb:snap-mandatory bb:scroll-px-1 bb:scrollbar-none bb:gap-3 bb:overflow-x-auto bb:overscroll-x-contain bb:py-1 bb:*:data-[slot=attachment]:flex-none bb:*:data-[slot=attachment]:snap-start",
         Class
     );
 }

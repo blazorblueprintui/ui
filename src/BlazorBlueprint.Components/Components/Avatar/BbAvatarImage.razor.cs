@@ -73,7 +73,7 @@ public partial class BbAvatarImage : ComponentBase
     /// within the circular avatar container.
     /// </remarks>
     private string CssClass => ClassNames.cn(
-        "absolute inset-0 aspect-square h-full w-full object-cover",
+        "bb:absolute bb:inset-0 bb:aspect-square bb:h-full bb:w-full bb:object-cover",
         Class
     );
 

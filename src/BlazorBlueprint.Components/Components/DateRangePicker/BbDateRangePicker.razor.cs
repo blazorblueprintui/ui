@@ -226,18 +226,18 @@ public partial class BbDateRangePicker : ComponentBase
     }
 
     // Pre-computed CSS class constants — eliminates ~168 ClassNames.cn()/TailwindMerge calls per render
-    private const string CellEmpty = "h-9 w-9 flex-1 text-center text-sm p-0";
-    private const string CellDefault = "h-9 w-9 flex-1 text-center text-sm p-0 relative";
-    private const string CellInRange = "h-9 w-9 flex-1 text-center text-sm p-0 relative bg-accent";
-    private const string CellRangeStart = "h-9 w-9 flex-1 text-center text-sm p-0 relative rounded-l-md bg-accent";
-    private const string CellRangeEnd = "h-9 w-9 flex-1 text-center text-sm p-0 relative rounded-r-md bg-accent";
+    private const string CellEmpty = "bb:h-9 bb:w-9 bb:flex-1 bb:text-center bb:text-sm bb:p-0";
+    private const string CellDefault = "bb:h-9 bb:w-9 bb:flex-1 bb:text-center bb:text-sm bb:p-0 bb:relative";
+    private const string CellInRange = "bb:h-9 bb:w-9 bb:flex-1 bb:text-center bb:text-sm bb:p-0 bb:relative bb:bg-accent";
+    private const string CellRangeStart = "bb:h-9 bb:w-9 bb:flex-1 bb:text-center bb:text-sm bb:p-0 bb:relative bb:rounded-l-md bb:bg-accent";
+    private const string CellRangeEnd = "bb:h-9 bb:w-9 bb:flex-1 bb:text-center bb:text-sm bb:p-0 bb:relative bb:rounded-r-md bb:bg-accent";
 
-    private const string DayBase = "inline-flex h-9 w-full items-center justify-center rounded-md text-sm font-normal ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
-    private const string DayDefault = DayBase + " hover:bg-accent hover:text-accent-foreground";
-    private const string DayDisabled = DayBase + " text-muted-foreground opacity-50";
-    private const string DayRangeEndpoint = DayBase + " bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground";
-    private const string DayInRange = DayBase + " bg-accent text-accent-foreground";
-    private const string DayToday = DayBase + " bg-accent text-accent-foreground";
+    private const string DayBase = "bb:inline-flex bb:h-9 bb:w-full bb:items-center bb:justify-center bb:rounded-md bb:text-sm bb:font-normal bb:ring-offset-background bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2 bb:disabled:pointer-events-none bb:disabled:opacity-50";
+    private const string DayDefault = DayBase + " bb:hover:bg-accent bb:hover:text-accent-foreground";
+    private const string DayDisabled = DayBase + " bb:text-muted-foreground bb:opacity-50";
+    private const string DayRangeEndpoint = DayBase + " bb:bg-primary bb:text-primary-foreground bb:hover:bg-primary bb:hover:text-primary-foreground";
+    private const string DayInRange = DayBase + " bb:bg-accent bb:text-accent-foreground";
+    private const string DayToday = DayBase + " bb:bg-accent bb:text-accent-foreground";
 
     private bool CanApply => _selectionStart.HasValue && _selectionEnd.HasValue;
 
@@ -600,10 +600,10 @@ public partial class BbDateRangePicker : ComponentBase
         : _resolvedCulture.DateTimeFormat.GetMonthName(month);
 
     private string ButtonCssClass => ClassNames.cn(
-        ShowTwoMonths ? "w-[300px]" : "w-[240px]",
-        "justify-start text-left font-normal",
-        Value == null ? "text-muted-foreground" : null,
-        Disabled ? "opacity-50 pointer-events-none" : null,
+        ShowTwoMonths ? "bb:w-[300px]" : "bb:w-[240px]",
+        "bb:justify-start bb:text-left bb:font-normal",
+        Value == null ? "bb:text-muted-foreground" : null,
+        Disabled ? "bb:opacity-50 bb:pointer-events-none" : null,
         Class
     );
 
@@ -614,8 +614,8 @@ public partial class BbDateRangePicker : ComponentBase
                          range.Start == _selectionStart.Value && range.End == _selectionEnd.Value;
 
         return ClassNames.cn(
-            "whitespace-nowrap shrink-0 justify-start",
-            isSelected ? "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground" : null
+            "bb:whitespace-nowrap bb:shrink-0 bb:justify-start",
+            isSelected ? "bb:bg-primary bb:text-primary-foreground bb:hover:bg-primary bb:hover:text-primary-foreground" : null
         );
     }
 

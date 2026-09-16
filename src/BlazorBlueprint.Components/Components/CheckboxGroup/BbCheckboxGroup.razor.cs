@@ -58,7 +58,7 @@ public partial class BbCheckboxGroup<TValue> : ComponentBase
     private CheckboxGroupContext<TValue> context = default!;
     private readonly HashSet<TValue> registeredItems = new();
 
-    private string CssClass => ClassNames.cn("grid gap-3", Class);
+    private string CssClass => ClassNames.cn("bb:grid bb:gap-3", Class);
 
     private bool IsAllSelected => registeredItems.Count > 0
         && Values.Count >= registeredItems.Count

@@ -1,27 +1,47 @@
 /* BlazorBlueprint Components - Pre-built Tailwind CSS */
 
-/* Cascade-layer order. `bb` is declared last as a dedicated priority layer
-   for BB's hand-authored component CSS (the high-specificity attribute-selector
-   rules below) — those need to win against consumer Tailwind utilities and
-   preflight resets. Tailwind's bulk output is imported into its native layers
-   so BB's emitted utilities tie with the consumer's instead of beating them
-   (which was the cause of #318). Consumer overrides work normally via
-   specificity or by loading their stylesheet after ours. */
-@layer properties, theme, base, components, utilities, bb;
+/* Every Tailwind utility BB emits is prefixed `bb:` (`.bb\:flex`, `.bb\:sm\:hidden`)
+   and lands in its own `bb-utilities` cascade layer. A consumer running their own
+   Tailwind build therefore never produces the same class name as this file, so the
+   two builds cannot fight over an element (#496). Consumer `Class="..."` values stay
+   unprefixed; `ClassNames.cn` merges them against BB's tokens by stripping the
+   prefix, so a consumer `p-6` still replaces BB's `bb:p-4`.
 
-@import 'tailwindcss';
+   Cascade-layer order. `theme`, `base` and `components` are the consumer's own
+   layers, declared here so that a consumer stylesheet loaded *after* this one
+   keeps its preflight below its utilities. `bb-utilities` sits below the
+   consumer's `utilities` when this file loads first, so their classes win on a
+   shared element without needing `cn`. `bb` is declared last as a dedicated
+   priority layer for BB's hand-authored component CSS (the high-specificity
+   attribute-selector rules below) — those need to win against consumer Tailwind
+   utilities and preflight resets. Preflight is deliberately unprefixed and shared:
+   it is element selectors, not classes, and identical between builds. */
+@layer properties, theme, base, components, bb-utilities, utilities, bb;
+
+@import 'tailwindcss/theme.css' layer(theme) prefix(bb);
+@import 'tailwindcss/preflight.css' layer(base);
+@import 'tailwindcss/utilities.css' layer(bb-utilities) prefix(bb);
 /* tw-animate.css uses @utility (a Tailwind v4 source directive) which cannot
-   be nested inside a layer. Imported unlayered; its utilities land in the
-   default `utilities` layer. Anything in tw-animate that absolutely must win
-   should use the doubled-data-attribute trick or live inside @layer bb below. */
+   be nested inside a layer. Imported unlayered; its utilities pick up the
+   prefix and land in `bb-utilities` with everything else. Anything in tw-animate
+   that absolutely must win should use the doubled-data-attribute trick or live
+   inside @layer bb below. */
 @import './tw-animate.css';
 
-/* Configure source paths for scanning Razor files */
+/* Configure source paths for scanning Razor files. Primitives carry a handful
+   of literal utilities of their own (Menubar backdrop, Sortable live region,
+   Table focus ring) and the icon packages one (the missing-icon fallback);
+   none of them ships a stylesheet, so they are scanned here too. */
 @source "../../Components";
+@source "../../../BlazorBlueprint.Primitives/Primitives";
+@source "../../../BlazorBlueprint.Icons.Lucide/Components";
+@source "../../../BlazorBlueprint.Icons.Heroicons/Components";
+@source "../../../BlazorBlueprint.Icons.Feather/Components";
+@source "../../../BlazorBlueprint.Icons.FontAwesome/Components";
 
-/* Safelist the bare chat utilities so consumers of the prebuilt CSS can
-   apply them directly (component sources only use the variant forms). */
-@source inline("shimmer scroll-fade-x");
+/* Safelist the chat utilities so consumers of the prebuilt CSS can apply them
+   directly (component sources only use the variant forms). */
+@source inline("bb:shimmer bb:scroll-fade-x");
 
 /* Component structural variables & default theme tokens */
 /* Alert defaults let users drop in a raw tweakcn/shadcn theme without defining
@@ -428,20 +448,20 @@
 @layer utilities {
   /* ── Cell Borders ──
      Bottom border on every cell so borders stay visible under sticky cells. */
-  .group\/row > td,
-  .group\/row > th {
+  .bb\:group\/row > td,
+  .bb\:group\/row > th {
     border-bottom: 1px solid var(--border);
   }
 
   /* ── Pinned Backgrounds ──
      Pinned cells inherit the row's background for opaque sticky coverage. */
-  .group\/row > [data-pinned] {
+  .bb\:group\/row > [data-pinned] {
     background-color: inherit;
   }
 
   /* ── Hover ──
      Opaque tint on ALL body cells — identical for pinned and non-pinned. */
-  .group\/row:hover > td {
+  .bb\:group\/row:hover > td {
     background-color: color-mix(in oklab, var(--muted) 50%, var(--background));
   }
 
@@ -449,11 +469,11 @@
      Solid muted on ALL body cells. Ordered after hover so source order wins.
      The row itself also gets the background so the <tr> (bg-background) can't
      bleed through under sticky cells as a visible white line. */
-  .group\/row[aria-selected="true"] {
+  .bb\:group\/row[aria-selected="true"] {
     background-color: var(--muted);
   }
 
-  .group\/row[aria-selected="true"] > td {
+  .bb\:group\/row[aria-selected="true"] > td {
     background-color: var(--muted);
   }
 }
@@ -493,22 +513,22 @@
 
 @layer utilities {
   /* Grid animation utilities for Accordion/Collapsible */
-  .grid-rows-\[0fr\] {
+  .bb\:grid-rows-\[0fr\] {
     grid-template-rows: 0fr;
   }
 
-  .grid-rows-\[1fr\] {
+  .bb\:grid-rows-\[1fr\] {
     grid-template-rows: 1fr;
   }
 
-  .data-\[state\=open\]\:grid-rows-\[1fr\][data-state="open"] {
+  .bb\:data-\[state\=open\]\:grid-rows-\[1fr\][data-state="open"] {
     grid-template-rows: 1fr;
   }
 
-  .transition-\[grid-template-rows\] {
+  .bb\:transition-\[grid-template-rows\] {
     transition-property: grid-template-rows;
-    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
-    transition-duration: var(--tw-duration, var(--default-transition-duration));
+    transition-timing-function: var(--tw-ease, var(--bb-default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--bb-default-transition-duration));
   }
 }
 
@@ -642,14 +662,14 @@
   }
 
   /* Flex-column containers (TimelineContent): align children to the right */
-  [data-timeline-end] > :where(.flex-col) {
+  [data-timeline-end] > :where(.bb\:flex-col) {
     align-items: flex-end;
     padding-left: 0;
     padding-right: 0.5rem;
   }
 
   /* Flex-row containers (TimelineHeader): justify items to the right */
-  [data-timeline-end] :where(.flex:not(.flex-col)) {
+  [data-timeline-end] :where(.bb\:flex:not(.bb\:flex-col)) {
     justify-content: flex-end;
   }
 }
@@ -735,8 +755,8 @@
       display: flex;
       flex-direction: column;
       overflow-y: auto;
-      gap: calc(var(--spacing) * 1);
-      padding: calc(var(--spacing) * 3);
+      gap: calc(var(--bb-spacing) * 1);
+      padding: calc(var(--bb-spacing) * 3);
     }
 
     [data-drp-presets-label][data-drp-presets-label] {
@@ -744,7 +764,7 @@
     }
 
     [data-drp-calendar][data-drp-calendar] {
-      padding: calc(var(--spacing) * 3);
+      padding: calc(var(--bb-spacing) * 3);
     }
 
     [data-drp-mobile-nav][data-drp-mobile-nav] {
@@ -757,7 +777,7 @@
 
     [data-drp-calendar-2][data-drp-calendar-2] {
       display: block;
-      padding: calc(var(--spacing) * 3);
+      padding: calc(var(--bb-spacing) * 3);
     }
 
     [data-drp-cell][data-drp-cell] {
@@ -770,7 +790,7 @@
     }
 
     [data-drp-day-btn][data-drp-day-btn] {
-      width: calc(var(--spacing) * 9);
+      width: calc(var(--bb-spacing) * 9);
     }
   }
 }
@@ -780,11 +800,12 @@
 
    Looping status indicators are exempt: spinners (.animate-spin) and pulse
    (.animate-pulse) communicate ongoing work, not decoration, so freezing them
-   would misrepresent state. Add .bb-animate-keep to exempt anything else. */
+   would misrepresent state. Both BB's prefixed form and a consumer's bare form
+   are exempt. Add .bb-animate-keep to exempt anything else. */
 @layer utilities {
-  .bb-no-animate *:not(.animate-spin, .animate-pulse, .bb-animate-keep),
-  .bb-no-animate *:not(.animate-spin, .animate-pulse, .bb-animate-keep)::before,
-  .bb-no-animate *:not(.animate-spin, .animate-pulse, .bb-animate-keep)::after {
+  .bb-no-animate *:not(.animate-spin, .bb\:animate-spin, .animate-pulse, .bb\:animate-pulse, .bb-animate-keep),
+  .bb-no-animate *:not(.animate-spin, .bb\:animate-spin, .animate-pulse, .bb\:animate-pulse, .bb-animate-keep)::before,
+  .bb-no-animate *:not(.animate-spin, .bb\:animate-spin, .animate-pulse, .bb\:animate-pulse, .bb-animate-keep)::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -872,9 +893,9 @@
 } /* end @layer bb */
 
 /* Native <dialog> rendering (OverlayRenderingStrategy.Native).
-   Deliberately OUTSIDE @layer bb (and in @layer components, below utilities) so the
-   component's own Tailwind classes (p-6, max-w-lg, border, bg-background, shadow-lg)
-   override these reset defaults. showModal() puts the dialog in the top layer (native
+   Deliberately OUTSIDE @layer bb (and in @layer components, below bb-utilities) so the
+   component's own Tailwind classes (bb:p-6, bb:max-w-lg, bb:border, bb:bg-background,
+   bb:shadow-lg) override these reset defaults. showModal() puts the dialog in the top layer (native
    focus trap, inert background and ::backdrop scrim); positioning is the same fixed,
    centred set the JS path uses, so no margin/inset rules are needed here. */
 @layer components {
@@ -909,7 +930,8 @@
 }
 
 /* Chat utilities (Attachment/Marker/Message). @utility cannot be nested
-   inside a layer; these land in the `utilities` layer like tw-animate's. */
+   inside a layer; these pick up the `bb:` prefix and land in `bb-utilities`
+   like tw-animate's. */
 
 /* Animated gradient text sweep for in-progress labels
    (e.g. uploading attachment titles, "is typing..." markers). */

@@ -76,31 +76,31 @@ public partial class BbAvatar : ComponentBase
     internal BbAvatarGroup? AvatarGroupContext { get; set; }
 
     private string CssClass => ClassNames.cn(
-        "relative flex shrink-0 overflow-hidden rounded-full",
+        "bb:relative bb:flex bb:shrink-0 bb:overflow-hidden bb:rounded-full",
         Size switch
         {
-            AvatarSize.Small => "h-8 w-8 text-xs",
-            AvatarSize.Default => "h-10 w-10 text-sm",
-            AvatarSize.Large => "h-12 w-12 text-base",
-            AvatarSize.ExtraLarge => "h-16 w-16 text-lg",
-            _ => "h-10 w-10 text-sm"
+            AvatarSize.Small => "bb:h-8 bb:w-8 bb:text-xs",
+            AvatarSize.Default => "bb:h-10 bb:w-10 bb:text-sm",
+            AvatarSize.Large => "bb:h-12 bb:w-12 bb:text-base",
+            AvatarSize.ExtraLarge => "bb:h-16 bb:w-16 bb:text-lg",
+            _ => "bb:h-10 bb:w-10 bb:text-sm"
         },
-        AvatarGroupContext != null ? "border-2 border-background" : null,
+        AvatarGroupContext != null ? "bb:border-2 bb:border-background" : null,
         Class
     );
 
     private string DotSizeClass => Size switch
     {
-        AvatarSize.Small => "h-2 w-2",
-        AvatarSize.Default => "h-2.5 w-2.5",
-        AvatarSize.Large => "h-3 w-3",
-        AvatarSize.ExtraLarge => "h-3.5 w-3.5",
-        _ => "h-2.5 w-2.5"
+        AvatarSize.Small => "bb:h-2 bb:w-2",
+        AvatarSize.Default => "bb:h-2.5 bb:w-2.5",
+        AvatarSize.Large => "bb:h-3 bb:w-3",
+        AvatarSize.ExtraLarge => "bb:h-3.5 bb:w-3.5",
+        _ => "bb:h-2.5 bb:w-2.5"
     };
 
     private string DotCssClass => ClassNames.cn(
-        "absolute bottom-0 right-0 block rounded-full ring-2 ring-background",
+        "bb:absolute bb:bottom-0 bb:right-0 bb:block bb:rounded-full bb:ring-2 bb:ring-background",
         DotSizeClass,
-        DotClass ?? "bg-primary"
+        DotClass ?? "bb:bg-primary"
     );
 }

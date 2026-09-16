@@ -280,7 +280,7 @@ public abstract partial class BbChartBase : ComponentBase, IAsyncDisposable
         }
     }
 
-    private string ContainerCssClass => ClassNames.cn("w-full", Class);
+    private string ContainerCssClass => ClassNames.cn("bb:w-full", Class);
 
     private string ContainerStyle => $"height: {Height}; width: {Width};";
 

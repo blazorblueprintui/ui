@@ -213,20 +213,20 @@ public partial class BbSwitch : ComponentBase
     /// </remarks>
     private string CssClass => ClassNames.cn(
         // Base switch styles (from shadcn/ui)
-        "peer inline-flex shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent",
-        "transition-colors focus-visible:outline-none focus-visible:ring-2",
-        "focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        "disabled:cursor-not-allowed disabled:opacity-50",
+        "bb:peer bb:inline-flex bb:shrink-0 bb:cursor-pointer bb:items-center bb:rounded-full bb:border-2 bb:border-transparent",
+        "bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2",
+        "bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2 bb:focus-visible:ring-offset-background",
+        "bb:disabled:cursor-not-allowed bb:disabled:opacity-50",
         // Size variants
         Size switch
         {
-            SwitchSize.Small => "h-5 w-9",
-            SwitchSize.Medium => "h-6 w-11",
-            SwitchSize.Large => "h-7 w-14",
-            _ => "h-6 w-11"
+            SwitchSize.Small => "bb:h-5 bb:w-9",
+            SwitchSize.Medium => "bb:h-6 bb:w-11",
+            SwitchSize.Large => "bb:h-7 bb:w-14",
+            _ => "bb:h-6 bb:w-11"
         },
         // Checked state styling
-        Checked ? "bg-primary" : "bg-input",
+        Checked ? "bb:bg-primary" : "bb:bg-input",
         // Custom classes (if provided)
         Class
     );
@@ -249,20 +249,20 @@ public partial class BbSwitch : ComponentBase
             // Size variants and translations
             var (thumbSize, translateX) = Size switch
             {
-                SwitchSize.Small => ("h-4 w-4", Checked ? "translate-x-4" : "translate-x-0"),
-                SwitchSize.Medium => ("h-5 w-5", Checked ? "translate-x-5" : "translate-x-0"),
-                SwitchSize.Large => ("h-6 w-6", Checked ? "translate-x-7" : "translate-x-0"),
-                _ => ("h-5 w-5", Checked ? "translate-x-5" : "translate-x-0")
+                SwitchSize.Small => ("bb:h-4 bb:w-4", Checked ? "bb:translate-x-4" : "bb:translate-x-0"),
+                SwitchSize.Medium => ("bb:h-5 bb:w-5", Checked ? "bb:translate-x-5" : "bb:translate-x-0"),
+                SwitchSize.Large => ("bb:h-6 bb:w-6", Checked ? "bb:translate-x-7" : "bb:translate-x-0"),
+                _ => ("bb:h-5 bb:w-5", Checked ? "bb:translate-x-5" : "bb:translate-x-0")
             };
 
             return ClassNames.cn(
                 // Base thumb styles
-                "pointer-events-none block rounded-full bg-background shadow-lg ring-0 transition-transform",
+                "bb:pointer-events-none bb:block bb:rounded-full bb:bg-background bb:shadow-lg bb:ring-0 bb:transition-transform",
                 // Size and translation
                 thumbSize,
                 translateX,
                 // Flex centering when ThumbContent is provided
-                ThumbContent is not null ? "flex items-center justify-center" : null,
+                ThumbContent is not null ? "bb:flex bb:items-center bb:justify-center" : null,
                 // Custom classes (if provided)
                 ThumbClass,
                 // State-dependent classes

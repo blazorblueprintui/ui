@@ -26,7 +26,7 @@ public partial class BbAttachmentTitle : ComponentBase
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string CssClass => ClassNames.cn(
-        "block max-w-full min-w-0 truncate font-medium group-data-[state=processing]/attachment:shimmer group-data-[state=uploading]/attachment:shimmer",
+        "bb:block bb:max-w-full bb:min-w-0 bb:truncate bb:font-medium bb:group-data-[state=processing]/attachment:shimmer bb:group-data-[state=uploading]/attachment:shimmer",
         Class
     );
 }

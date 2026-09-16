@@ -459,14 +459,14 @@ public partial class BbMaskedInput : ComponentBase, IAsyncDisposable
     }
 
     private string CssClass => ClassNames.cn(
-        "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base",
-        "placeholder:text-muted-foreground",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        "aria-[invalid=true]:border-destructive",
-        "transition-colors",
-        "md:text-sm",
-        "font-mono tracking-wider",
+        "bb:flex bb:h-10 bb:w-full bb:rounded-md bb:border bb:border-input bb:bg-background bb:px-3 bb:py-2 bb:text-base",
+        "bb:placeholder:text-muted-foreground",
+        "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+        "bb:disabled:cursor-not-allowed bb:disabled:opacity-50",
+        "bb:aria-[invalid=true]:border-destructive",
+        "bb:transition-colors",
+        "bb:md:text-sm",
+        "bb:font-mono bb:tracking-wider",
         Class
     );
 }

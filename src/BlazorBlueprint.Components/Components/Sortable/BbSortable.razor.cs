@@ -150,8 +150,8 @@ public partial class BbSortable<TItem> : ComponentBase
     private string CssClass => ClassNames.cn(
         Layout switch
         {
-            SortableLayout.Grid => "grid grid-cols-2 gap-2",
-            _ => "flex flex-col gap-2"
+            SortableLayout.Grid => "bb:grid bb:grid-cols-2 bb:gap-2",
+            _ => "bb:flex bb:flex-col bb:gap-2"
         },
         Class
     );

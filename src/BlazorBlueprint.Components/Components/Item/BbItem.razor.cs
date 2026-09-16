@@ -61,25 +61,25 @@ public partial class BbItem : ComponentBase
     /// </summary>
     private string CssClass => ClassNames.cn(
         // Base item styles
-        "group relative flex items-center gap-3 rounded-lg",
+        "bb:group bb:relative bb:flex bb:items-center bb:gap-3 bb:rounded-lg",
         // Only add transition-colors if interactive
-        IsInteractive ? "transition-colors" : null,
+        IsInteractive ? "bb:transition-colors" : null,
         // Variant-specific styles
         Variant switch
         {
             ItemVariant.Outline => IsInteractive
-                ? "border border-border bg-background hover:bg-accent"
-                : "border border-border bg-background",
+                ? "bb:border bb:border-border bb:bg-background bb:hover:bg-accent"
+                : "bb:border bb:border-border bb:bg-background",
             ItemVariant.Muted => IsInteractive
-                ? "bg-muted hover:bg-muted/80"
-                : "bg-muted",
-            _ => IsInteractive ? "hover:bg-accent" : null
+                ? "bb:bg-muted bb:hover:bg-muted/80"
+                : "bb:bg-muted",
+            _ => IsInteractive ? "bb:hover:bg-accent" : null
         },
         // Size-specific styles
         Size switch
         {
-            ItemSize.Sm => "px-3 py-2 text-sm",
-            _ => "px-4 py-3"
+            ItemSize.Sm => "bb:px-3 bb:py-2 bb:text-sm",
+            _ => "bb:px-4 bb:py-3"
         },
         Class
     );

@@ -73,11 +73,11 @@ public partial class BbFieldLabel : ComponentBase
     /// </remarks>
     private string CssClass => ClassNames.cn(
         // Typography
-        "text-sm font-medium leading-none",
+        "bb:text-sm bb:font-medium bb:leading-none",
         // Prevent shrinking in horizontal layouts
-        "shrink-0",
+        "bb:shrink-0",
         // Error state via peer selector (when input has aria-invalid="true")
-        "peer-aria-[invalid=true]:text-destructive",
+        "bb:peer-aria-[invalid=true]:text-destructive",
         // Custom classes (if provided)
         Class
     );

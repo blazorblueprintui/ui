@@ -26,7 +26,7 @@
                                     aria-label="@($"Remove {GetDisplayText(value)}")"
                                     @onclick="GetRemoveHandler(value)"
                                     @onclick:stopPropagation="true">
-                                <LucideIcon Name="x" Size="12" Class="h-3 w-3" />
+                                <LucideIcon Name="x" Size="12" Class="bb:h-3 bb:w-3" />
                             </button>
                         </BbBadge>
                     }
@@ -34,30 +34,30 @@
                        to the right group below so it stays visible while the tags clip. *@
                     @if (OverflowCount > 0 && !SingleLine)
                     {
-                        <span class="text-xs text-muted-foreground">+@OverflowCount more</span>
+                        <span class="bb:text-xs bb:text-muted-foreground">+@OverflowCount more</span>
                     }
                 }
                 else
                 {
-                    <span class="text-muted-foreground">@EffectivePlaceholder</span>
+                    <span class="bb:text-muted-foreground">@EffectivePlaceholder</span>
                 }
             </div>
-            <div class="flex shrink-0 items-center gap-1 ml-2">
+            <div class="bb:flex bb:shrink-0 bb:items-center bb:gap-1 bb:ml-2">
                 @if (HasSelectedItems && OverflowCount > 0 && SingleLine)
                 {
-                    <span class="shrink-0 whitespace-nowrap text-xs text-muted-foreground">+@OverflowCount more</span>
+                    <span class="bb:shrink-0 bb:whitespace-nowrap bb:text-xs bb:text-muted-foreground">+@OverflowCount more</span>
                 }
                 @if (HasSelectedItems)
                 {
                     <button type="button"
-                            class="rounded-sm opacity-70 hover:opacity-100 focus:outline-none"
+                            class="bb:rounded-sm bb:opacity-70 bb:hover:opacity-100 bb:focus:outline-none"
                             aria-label="@Localizer["MultiSelect.Clear"]"
                             @onclick="ClearAll"
                             @onclick:stopPropagation="true">
-                        <LucideIcon Name="x" Size="14" Class="h-3.5 w-3.5" />
+                        <LucideIcon Name="x" Size="14" Class="bb:h-3.5 bb:w-3.5" />
                     </button>
                 }
-                <LucideIcon Name="chevron-down" Size="16" Class="h-4 w-4 shrink-0 opacity-50" />
+                <LucideIcon Name="chevron-down" Size="16" Class="bb:h-4 bb:w-4 bb:shrink-0 bb:opacity-50" />
             </div>
         </BbPopoverTrigger>
 
@@ -68,11 +68,11 @@
                         OnClickOutside="@GetClickOutsideHandler()"
                         AutoFocusId="@($"{Id}-search")"
                         MatchTriggerWidth="@MatchTriggerWidth"
-                        Class="@(MatchTriggerWidth ? "!p-0" : $"{PopoverWidth} !p-0")">
+                        Class="@(MatchTriggerWidth ? "bb:!p-0" : $"{PopoverWidth} bb:!p-0")">
             @* Re-cascade through the portal so MultiSelectItem can resolve the CascadingParameter *@
             <CascadingValue Value="this" IsFixed="true">
             @* Search input section - matches CommandInput styling *@
-            <div class="flex items-center border-b border-border px-3">
+            <div class="bb:flex bb:items-center bb:border-b bb:border-border bb:px-3">
                 <svg xmlns="http://www.w3.org/2000/svg"
                      width="24"
                      height="24"
@@ -82,7 +82,7 @@
                      stroke-width="2"
                      stroke-linecap="round"
                      stroke-linejoin="round"
-                     class="mr-2 h-4 w-4 shrink-0 opacity-50">
+                     class="bb:mr-2 bb:h-4 bb:w-4 bb:shrink-0 bb:opacity-50">
                     <circle cx="11" cy="11" r="8"></circle>
                     <path d="m21 21-4.35-4.35"></path>
                 </svg>
@@ -93,11 +93,11 @@
                        @bind="_searchQuery"
                        @bind:event="oninput"
                        @bind:after="HandleSearchQueryChangedAsync"
-                       class="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 ml-2" />
+                       class="bb:flex bb:h-11 bb:w-full bb:rounded-md bb:bg-transparent bb:py-3 bb:text-sm bb:outline-none bb:placeholder:text-muted-foreground bb:disabled:cursor-not-allowed bb:disabled:opacity-50 bb:ml-2" />
             </div>
 
             @* Items list section *@
-            <div id="@($"{Id}-listbox")" @ref="_listboxScrollRef" role="listbox" aria-multiselectable="true" class="max-h-[300px] overflow-y-auto p-1">
+            <div id="@($"{Id}-listbox")" @ref="_listboxScrollRef" role="listbox" aria-multiselectable="true" class="bb:max-h-[300px] bb:overflow-y-auto bb:p-1">
                 @if (IsCompositionalMode)
                 {
                     @* Compositional mode: Select All + ChildContent *@
@@ -115,21 +115,21 @@
                                       AriaLabel="@EffectiveSelectAllLabel">
                                 @if (selectAllState == SelectAllState.All)
                                 {
-                                    <LucideIcon Name="check" Size="14" Class="h-3.5 w-3.5 stroke-current" />
+                                    <LucideIcon Name="check" Size="14" Class="bb:h-3.5 bb:w-3.5 bb:stroke-current" />
                                 }
                                 else if (selectAllState == SelectAllState.Indeterminate)
                                 {
-                                    <LucideIcon Name="minus" Size="14" Class="h-3.5 w-3.5 stroke-current" />
+                                    <LucideIcon Name="minus" Size="14" Class="bb:h-3.5 bb:w-3.5 bb:stroke-current" />
                                 }
                             </BlazorBlueprint.Primitives.Checkbox.BbCheckbox>
-                            <span class="font-medium">@EffectiveSelectAllLabel</span>
+                            <span class="bb:font-medium">@EffectiveSelectAllLabel</span>
                         </div>
-                        <BbSeparator Decorative="false" Class="my-1" />
+                        <BbSeparator Decorative="false" Class="bb:my-1" />
                     }
                     @ChildContent
                     @if (_itemTextRegistry.Count > 0 && !HasFilteredItems)
                     {
-                        <div class="py-6 text-center text-sm text-muted-foreground">@EffectiveEmptyMessage</div>
+                        <div class="bb:py-6 bb:text-center bb:text-sm bb:text-muted-foreground">@EffectiveEmptyMessage</div>
                     }
                 }
                 else
@@ -137,7 +137,7 @@
                     @* Options mode: existing rendering *@
                     @if (!HasFilteredItems)
                     {
-                        <div class="py-6 text-center text-sm text-muted-foreground">@EffectiveEmptyMessage</div>
+                        <div class="bb:py-6 bb:text-center bb:text-sm bb:text-muted-foreground">@EffectiveEmptyMessage</div>
                     }
                     else
                     {
@@ -156,16 +156,16 @@
                                           AriaLabel="@EffectiveSelectAllLabel">
                                     @if (selectAllState == SelectAllState.All)
                                     {
-                                        <LucideIcon Name="check" Size="14" Class="h-3.5 w-3.5 stroke-current" />
+                                        <LucideIcon Name="check" Size="14" Class="bb:h-3.5 bb:w-3.5 bb:stroke-current" />
                                     }
                                     else if (selectAllState == SelectAllState.Indeterminate)
                                     {
-                                        <LucideIcon Name="minus" Size="14" Class="h-3.5 w-3.5 stroke-current" />
+                                        <LucideIcon Name="minus" Size="14" Class="bb:h-3.5 bb:w-3.5 bb:stroke-current" />
                                     }
                                 </BlazorBlueprint.Primitives.Checkbox.BbCheckbox>
-                                <span class="font-medium">@EffectiveSelectAllLabel</span>
+                                <span class="bb:font-medium">@EffectiveSelectAllLabel</span>
                             </div>
-                            <BbSeparator Decorative="false" Class="my-1" />
+                            <BbSeparator Decorative="false" Class="bb:my-1" />
                         }
 
                         @* Individual items *@
@@ -186,7 +186,7 @@
                                           AriaLabel="@displayText">
                                     @if (isSelected)
                                     {
-                                        <LucideIcon Name="check" Size="14" Class="h-3.5 w-3.5 stroke-current" />
+                                        <LucideIcon Name="check" Size="14" Class="bb:h-3.5 bb:w-3.5 bb:stroke-current" />
                                     }
                                 </BlazorBlueprint.Primitives.Checkbox.BbCheckbox>
                                 <span>@displayText</span>
@@ -196,28 +196,28 @@
                 }
                 @if (IsLoading)
                 {
-                    <div class="flex items-center justify-center py-2">
+                    <div class="bb:flex bb:items-center bb:justify-center bb:py-2">
                         <BbSpinner Size="SpinnerSize.Small" />
                     </div>
                 }
                 else if (!string.IsNullOrEmpty(EndOfListMessage))
                 {
-                    <div class="py-2 text-center text-xs text-muted-foreground">
+                    <div class="bb:py-2 bb:text-center bb:text-xs bb:text-muted-foreground">
                         @EndOfListMessage
                     </div>
                 }
             </div>
 
             @* Footer section *@
-            <div class="flex items-center justify-between border-t p-2">
+            <div class="bb:flex bb:items-center bb:justify-between bb:border-t bb:p-2">
                 <button type="button"
-                        class="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        class="bb:text-xs bb:text-muted-foreground bb:hover:text-foreground bb:transition-colors"
                         @onclick="ClearAll"
                         @onclick:stopPropagation="true">
                     @EffectiveClearLabel
                 </button>
                 <button type="button"
-                        class="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        class="bb:text-xs bb:text-muted-foreground bb:hover:text-foreground bb:transition-colors"
                         @onclick="Close"
                         @onclick:stopPropagation="true">
                     @EffectiveCloseLabel

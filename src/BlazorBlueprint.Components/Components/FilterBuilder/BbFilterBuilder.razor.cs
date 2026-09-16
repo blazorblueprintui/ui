@@ -217,12 +217,12 @@ public partial class BbFilterBuilder : ComponentBase, IDisposable
     }
 
     private string ContainerCssClass => ClassNames.cn(
-        "space-y-3",
-        Compact ? "text-sm" : null,
+        "bb:space-y-3",
+        Compact ? "bb:text-sm" : null,
         Class
     );
 
-    private static string ActionsCssClass => "flex items-center gap-2 pt-2";
+    private static string ActionsCssClass => "bb:flex bb:items-center bb:gap-2 bb:pt-2";
 
     public void Dispose()
     {

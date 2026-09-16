@@ -115,19 +115,19 @@ public partial class BbSidebarInset : IAsyncDisposable
 
     private string GetClasses()
     {
-        var baseClasses = "relative flex h-full flex-1 flex-col bg-background focus:outline-none";
+        var baseClasses = "bb:relative bb:flex bb:h-full bb:flex-1 bb:flex-col bb:bg-background bb:focus:outline-none";
 
         // Floating variant margins - push content when sidebar is visible
         // When sidebar is closed (hidden), remove margins
         var floatingClasses = Context?.Side == SidebarSide.Right
-            ? "md:peer-data-[variant=floating]:mr-2 md:peer-data-[variant=floating]:peer-data-[state=collapsed]:mr-[calc(var(--sidebar-width-icon)+0.5rem+0.5rem)] md:peer-data-[variant=floating]:peer-data-[state=expanded]:mr-[calc(var(--sidebar-width)+0.5rem+0.5rem)] md:peer-data-[variant=floating]:peer-data-[state=closed]:mr-0"
-            : "md:peer-data-[variant=floating]:ml-2 md:peer-data-[variant=floating]:peer-data-[state=collapsed]:ml-[calc(var(--sidebar-width-icon)+0.5rem+0.5rem)] md:peer-data-[variant=floating]:peer-data-[state=expanded]:ml-[calc(var(--sidebar-width)+0.5rem+0.5rem)] md:peer-data-[variant=floating]:peer-data-[state=closed]:ml-0";
+            ? "bb:md:peer-data-[variant=floating]:mr-2 bb:md:peer-data-[variant=floating]:peer-data-[state=collapsed]:mr-[calc(var(--sidebar-width-icon)+0.5rem+0.5rem)] bb:md:peer-data-[variant=floating]:peer-data-[state=expanded]:mr-[calc(var(--sidebar-width)+0.5rem+0.5rem)] bb:md:peer-data-[variant=floating]:peer-data-[state=closed]:mr-0"
+            : "bb:md:peer-data-[variant=floating]:ml-2 bb:md:peer-data-[variant=floating]:peer-data-[state=collapsed]:ml-[calc(var(--sidebar-width-icon)+0.5rem+0.5rem)] bb:md:peer-data-[variant=floating]:peer-data-[state=expanded]:ml-[calc(var(--sidebar-width)+0.5rem+0.5rem)] bb:md:peer-data-[variant=floating]:peer-data-[state=closed]:ml-0";
 
         // Add margin transitions
-        var transitionClasses = "transition-[margin] duration-200 ease-linear";
+        var transitionClasses = "bb:transition-[margin] bb:duration-200 bb:ease-linear";
 
         // Inset variant specific styling - margin on all sides, rounded corners, shadow, and calculated height for margins
-        var insetRoundingClasses = "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:h-[calc(100%-1rem)] md:peer-data-[variant=inset]:min-h-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow md:peer-data-[variant=inset]:bg-background";
+        var insetRoundingClasses = "bb:md:peer-data-[variant=inset]:m-2 bb:md:peer-data-[variant=inset]:h-[calc(100%-1rem)] bb:md:peer-data-[variant=inset]:min-h-0 bb:md:peer-data-[variant=inset]:rounded-xl bb:md:peer-data-[variant=inset]:shadow bb:md:peer-data-[variant=inset]:bg-background";
 
         return ClassNames.cn(
             baseClasses,

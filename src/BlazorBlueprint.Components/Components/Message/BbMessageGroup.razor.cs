@@ -25,5 +25,5 @@ public partial class BbMessageGroup : ComponentBase
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
-    private string CssClass => ClassNames.cn("flex min-w-0 flex-col gap-2", Class);
+    private string CssClass => ClassNames.cn("bb:flex bb:min-w-0 bb:flex-col bb:gap-2", Class);
 }

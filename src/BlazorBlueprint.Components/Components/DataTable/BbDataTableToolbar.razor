@@ -2,32 +2,32 @@
 @typeparam TData where TData : class
 @inject IBbLocalizer Localizer
 
-<div class="flex items-center justify-between gap-2 py-4" @attributes="AdditionalAttributes">
-    <div class="flex flex-1 items-center gap-2">
+<div class="bb:flex bb:items-center bb:justify-between bb:gap-2 bb:py-4" @attributes="AdditionalAttributes">
+    <div class="bb:flex bb:flex-1 bb:items-center bb:gap-2">
         <BbInput @bind-Value="@_searchValue"
                @bind-Value:after="@HandleSearchChanged"
                Placeholder="@Localizer["DataTable.Search"]"
-               Class="h-8 w-[150px] lg:w-[250px]" />
+               Class="bb:h-8 bb:w-[150px] bb:lg:w-[250px]" />
 
         <BbPopover>
             <BbPopoverTrigger>
-                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Class="h-8 ms-auto">
-                    <svg class="w-4 h-4 me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" Class="bb:h-8 bb:ms-auto">
+                    <svg class="bb:w-4 bb:h-4 bb:me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
                     @Localizer["DataTable.Columns"]
                 </BbButton>
             </BbPopoverTrigger>
-            <BbPopoverContent Class="w-[200px] p-0" Side="@PopoverSide.Bottom" Align="@PopoverAlign.End">
-                <div class="p-4 space-y-2">
-                    <div class="text-sm font-medium mb-3">@Localizer["DataTable.ToggleColumns"]</div>
+            <BbPopoverContent Class="bb:w-[200px] bb:p-0" Side="@PopoverSide.Bottom" Align="@PopoverAlign.End">
+                <div class="bb:p-4 bb:space-y-2">
+                    <div class="bb:text-sm bb:font-medium bb:mb-3">@Localizer["DataTable.ToggleColumns"]</div>
                     @foreach (var column in Columns)
                     {
-                        <div class="flex items-center gap-2 p-2 hover:bg-accent rounded-sm transition-colors"
+                        <div class="bb:flex bb:items-center bb:gap-2 bb:p-2 bb:hover:bg-accent bb:rounded-sm bb:transition-colors"
                              @onclick:stopPropagation="true">
                             <BbCheckbox Checked="@column.Visible"
                                       CheckedChanged="@((bool isChecked) => OnColumnVisibilityChanged?.Invoke(column.Id, isChecked))" />
-                            <span class="text-sm select-none cursor-pointer" @onclick="@(() => OnColumnVisibilityChanged?.Invoke(column.Id, !column.Visible))">@column.Header</span>
+                            <span class="bb:text-sm bb:select-none bb:cursor-pointer" @onclick="@(() => OnColumnVisibilityChanged?.Invoke(column.Id, !column.Visible))">@column.Header</span>
                         </div>
                     }
                 </div>
@@ -37,7 +37,7 @@
 
     @if (ChildContent != null)
     {
-        <div class="flex items-center gap-2">
+        <div class="bb:flex bb:items-center bb:gap-2">
             @ChildContent
         </div>
     }

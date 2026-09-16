@@ -33,7 +33,7 @@ public partial class BbItemDescription : ComponentBase
     /// Gets the computed CSS classes for the description element.
     /// </summary>
     private string CssClass => ClassNames.cn(
-        "line-clamp-2 text-sm text-muted-foreground",
+        "bb:line-clamp-2 bb:text-sm bb:text-muted-foreground",
         Class
     );
 }

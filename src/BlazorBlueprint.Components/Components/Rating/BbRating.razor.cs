@@ -103,31 +103,31 @@ public partial class BbRating : ComponentBase
     public RatingSize Size { get; set; } = RatingSize.Default;
 
     private string CssClass => ClassNames.cn(
-        "inline-flex items-center gap-1",
+        "bb:inline-flex bb:items-center bb:gap-1",
         // #459: the radiogroup is the tab stop, not each star. No offset at gap-1.
-        "rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        (Disabled || ReadOnly) ? "cursor-default" : "cursor-pointer",
-        Disabled ? "opacity-50" : null,
+        "bb:rounded-sm bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+        (Disabled || ReadOnly) ? "bb:cursor-default" : "bb:cursor-pointer",
+        Disabled ? "bb:opacity-50" : null,
         Class
     );
 
     private string IconClass => ClassNames.cn(
         Size switch
         {
-            RatingSize.Small => "h-4 w-4",
-            RatingSize.Large => "h-8 w-8",
-            _ => "h-6 w-6"
+            RatingSize.Small => "bb:h-4 bb:w-4",
+            RatingSize.Large => "bb:h-8 bb:w-8",
+            _ => "bb:h-6 bb:w-6"
         },
-        "transition-transform",
-        !(Disabled || ReadOnly) ? "hover:scale-110" : null
+        "bb:transition-transform",
+        !(Disabled || ReadOnly) ? "bb:hover:scale-110" : null
     );
 
     private string GetIconContainerClass(int index)
     {
         var isActive = GetFillPercentage(index) > 0;
         return ClassNames.cn(
-            "relative inline-flex",
-            !(Disabled || ReadOnly) ? "cursor-pointer" : null
+            "bb:relative bb:inline-flex",
+            !(Disabled || ReadOnly) ? "bb:cursor-pointer" : null
         );
     }
 

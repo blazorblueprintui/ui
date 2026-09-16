@@ -33,7 +33,7 @@ public partial class BbItemContent : ComponentBase
     /// Gets the computed CSS classes for the content element.
     /// </summary>
     private string CssClass => ClassNames.cn(
-        "flex flex-1 flex-col gap-1",
+        "bb:flex bb:flex-1 bb:flex-col bb:gap-1",
         Class
     );
 }

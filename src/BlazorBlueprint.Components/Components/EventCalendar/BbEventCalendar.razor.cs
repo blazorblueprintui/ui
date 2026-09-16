@@ -127,7 +127,7 @@ public partial class BbEventCalendar<TEvent> : ComponentBase
 
     private DayOfWeek EffectiveFirstDayOfWeek => FirstDayOfWeek ?? culture.DateTimeFormat.FirstDayOfWeek;
 
-    private string CssClass => ClassNames.cn("w-full", Class);
+    private string CssClass => ClassNames.cn("bb:w-full", Class);
 
     protected override async Task OnParametersSetAsync()
     {
@@ -407,10 +407,10 @@ public partial class BbEventCalendar<TEvent> : ComponentBase
 
     #region Styling
 
-    private const string ChipBaseClasses = "block w-full rounded px-1.5 py-0.5 text-left text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-    private const string ChipTemplateClasses = "block w-full rounded text-left text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-    private const string DayNumberBaseClasses = "flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-    private const string DayNumberTodayClasses = "flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+    private const string ChipBaseClasses = "bb:block bb:w-full bb:rounded bb:px-1.5 bb:py-0.5 bb:text-left bb:text-xs bb:font-medium bb:bg-primary/10 bb:text-primary bb:hover:bg-primary/20 bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
+    private const string ChipTemplateClasses = "bb:block bb:w-full bb:rounded bb:text-left bb:text-xs bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
+    private const string DayNumberBaseClasses = "bb:flex bb:h-6 bb:w-6 bb:items-center bb:justify-center bb:rounded-full bb:text-xs bb:font-medium bb:hover:bg-accent bb:hover:text-accent-foreground bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
+    private const string DayNumberTodayClasses = "bb:flex bb:h-6 bb:w-6 bb:items-center bb:justify-center bb:rounded-full bb:text-xs bb:font-medium bb:bg-primary bb:text-primary-foreground bb:hover:bg-primary bb:hover:text-primary-foreground bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
 
     private string GetEventChipClasses(TEvent item)
     {
@@ -423,8 +423,8 @@ public partial class BbEventCalendar<TEvent> : ComponentBase
     {
         var isOutside = day.Month != CurrentDate.Month || day.Year != CurrentDate.Year;
         return isOutside
-            ? "min-h-28 bg-card p-1.5 text-muted-foreground"
-            : "min-h-28 bg-card p-1.5";
+            ? "bb:min-h-28 bb:bg-card bb:p-1.5 bb:text-muted-foreground"
+            : "bb:min-h-28 bb:bg-card bb:p-1.5";
     }
 
     private static string GetDayNumberClasses(DateTime day) =>
@@ -432,8 +432,8 @@ public partial class BbEventCalendar<TEvent> : ComponentBase
 
     private string GetViewSwitchClasses(EventCalendarView view) =>
         View == view
-            ? "rounded-sm px-3 py-1 text-sm font-medium bg-primary text-primary-foreground"
-            : "rounded-sm px-3 py-1 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+            ? "bb:rounded-sm bb:px-3 bb:py-1 bb:text-sm bb:font-medium bb:bg-primary bb:text-primary-foreground"
+            : "bb:rounded-sm bb:px-3 bb:py-1 bb:text-sm bb:font-medium bb:text-muted-foreground bb:hover:bg-accent bb:hover:text-accent-foreground bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring";
 
     #endregion
 }

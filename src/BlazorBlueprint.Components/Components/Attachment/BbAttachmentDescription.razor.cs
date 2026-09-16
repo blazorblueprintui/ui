@@ -26,8 +26,8 @@ public partial class BbAttachmentDescription : ComponentBase
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string CssClass => ClassNames.cn(
-        "mt-0.5 block min-w-0 truncate text-xs text-muted-foreground group-data-[state=error]/attachment:text-destructive/80",
-        "w-full",
+        "bb:mt-0.5 bb:block bb:min-w-0 bb:truncate bb:text-xs bb:text-muted-foreground bb:group-data-[state=error]/attachment:text-destructive/80",
+        "bb:w-full",
         Class
     );
 }

@@ -234,17 +234,17 @@ public partial class BbInput : ComponentBase
     /// </summary>
     private string CssClass => ClassNames.cn(
         // Base input styles (from shadcn/ui)
-        "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base",
-        "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
-        "placeholder:text-muted-foreground",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        "disabled:cursor-not-allowed disabled:opacity-50",
+        "bb:flex bb:h-10 bb:w-full bb:rounded-md bb:border bb:border-input bb:bg-background bb:px-3 bb:py-2 bb:text-base",
+        "bb:file:border-0 bb:file:bg-transparent bb:file:text-sm bb:file:font-medium bb:file:text-foreground",
+        "bb:placeholder:text-muted-foreground",
+        "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+        "bb:disabled:cursor-not-allowed bb:disabled:opacity-50",
         // aria-invalid state styling (destructive error colors)
-        "aria-[invalid=true]:border-destructive",
+        "bb:aria-[invalid=true]:border-destructive",
         // Smooth transitions for state changes
-        "transition-colors",
+        "bb:transition-colors",
         // Medium screens and up: smaller text
-        "md:text-sm",
+        "bb:md:text-sm",
         // Custom classes (if provided)
         Class
     );

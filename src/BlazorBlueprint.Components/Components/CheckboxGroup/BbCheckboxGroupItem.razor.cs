@@ -50,7 +50,7 @@ public partial class BbCheckboxGroupItem<TValue> : ComponentBase, IDisposable
     private bool IsChecked => Context?.SelectedValues.Contains(Value) ?? false;
     private bool IsDisabled => Disabled || (Context?.IsDisabled ?? false);
 
-    private string CssClass => ClassNames.cn("flex items-center gap-2", Class);
+    private string CssClass => ClassNames.cn("bb:flex bb:items-center bb:gap-2", Class);
 
     protected override void OnInitialized() => Context?.RegisterItem(Value);
 

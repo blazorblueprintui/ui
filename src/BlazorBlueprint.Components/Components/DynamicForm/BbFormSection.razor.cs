@@ -61,5 +61,5 @@ public partial class BbFormSection : ComponentBase
     /// <inheritdoc />
     protected override void OnInitialized() => isExpanded = DefaultExpanded;
 
-    private string SectionCssClass => ClassNames.cn("space-y-4", Class);
+    private string SectionCssClass => ClassNames.cn("bb:space-y-4", Class);
 }

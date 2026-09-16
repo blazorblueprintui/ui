@@ -67,9 +67,9 @@ public partial class BbFieldContent : ComponentBase
     /// </remarks>
     private string CssClass => ClassNames.cn(
         // Flex column layout with gap
-        "flex flex-col gap-1.5",
+        "bb:flex bb:flex-col bb:gap-1.5",
         // Full width for responsive behavior, min-w-0 prevents overflow in horizontal layouts
-        "w-full min-w-0",
+        "bb:w-full bb:min-w-0",
         // Custom classes (if provided)
         Class
     );

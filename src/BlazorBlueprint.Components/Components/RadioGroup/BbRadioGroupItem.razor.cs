@@ -133,13 +133,13 @@ public partial class BbRadioGroupItem<TValue> : ComponentBase
     /// Gets the computed CSS classes for the radio item button.
     /// </summary>
     private string CssClass => ClassNames.cn(
-        "aspect-square h-4 w-4 rounded-full border-2",
-        IsChecked ? "border-primary bg-primary" : "border-input",
-        "text-primary ring-offset-background",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        "flex items-center justify-center",
-        HasLabel ? "peer" : null,
+        "bb:aspect-square bb:h-4 bb:w-4 bb:rounded-full bb:border-2",
+        IsChecked ? "bb:border-primary bb:bg-primary" : "bb:border-input",
+        "bb:text-primary bb:ring-offset-background",
+        "bb:focus:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2",
+        "bb:disabled:cursor-not-allowed bb:disabled:opacity-50",
+        "bb:flex bb:items-center bb:justify-center",
+        HasLabel ? "bb:peer" : null,
         Class
     );
 
@@ -147,15 +147,15 @@ public partial class BbRadioGroupItem<TValue> : ComponentBase
     /// Gets the computed CSS classes for the inner circle indicator.
     /// </summary>
     private string CircleIndicatorClass => ClassNames.cn(
-        "h-2 w-2 rounded-full bg-background",
-        !IsChecked ? "scale-0" : null,
-        "transition-transform duration-100"
+        "bb:h-2 bb:w-2 bb:rounded-full bb:bg-background",
+        !IsChecked ? "bb:scale-0" : null,
+        "bb:transition-transform bb:duration-100"
     );
 
     /// <summary>
     /// Gets the computed CSS classes for the label element.
     /// </summary>
-    private static string LabelCssClass => "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70";
+    private static string LabelCssClass => "bb:text-sm bb:font-medium bb:leading-none bb:peer-disabled:cursor-not-allowed bb:peer-disabled:opacity-70";
 
     /// <inheritdoc />
     protected override void OnInitialized()

@@ -37,44 +37,44 @@ public partial class BbField : ComponentBase
     private static readonly string[] VerticalClasses = new[]
     {
         // Full-width vertical stacking (default)
-        "flex-col w-full"
+        "bb:flex-col bb:w-full"
     };
 
     private static readonly string[] HorizontalClasses = new[]
     {
         // Row-based layout with aligned items, full width to fill container
-        "flex-row items-start w-full",
+        "bb:flex-row bb:items-start bb:w-full",
         // Adjust spacing for checkbox/radio alignment
-        "[&:has([data-slot=checkbox])]:items-center",
-        "[&:has([data-slot=radio])]:items-center",
-        "[&:has([data-slot=switch])]:items-center"
+        "bb:[&:has([data-slot=checkbox])]:items-center",
+        "bb:[&:has([data-slot=radio])]:items-center",
+        "bb:[&:has([data-slot=switch])]:items-center"
     };
 
     private static readonly string[] ResponsiveClasses = new[]
     {
         // Vertical by default, horizontal at medium breakpoint
-        "flex-col w-full",
-        "@md:flex-row @md:items-start",
+        "bb:flex-col bb:w-full",
+        "bb:@md:flex-row bb:@md:items-start",
         // Adjust spacing for checkbox/radio alignment at medium+
-        "@md:[&:has([data-slot=checkbox])]:items-center",
-        "@md:[&:has([data-slot=radio])]:items-center",
-        "@md:[&:has([data-slot=switch])]:items-center"
+        "bb:@md:[&:has([data-slot=checkbox])]:items-center",
+        "bb:@md:[&:has([data-slot=radio])]:items-center",
+        "bb:@md:[&:has([data-slot=switch])]:items-center"
     };
 
     private static readonly string[] HorizontalEndClasses = new[]
     {
         // Row-reverse layout: content first, then label (label on right/end), full width to fill container
-        "flex-row-reverse items-start w-full",
+        "bb:flex-row-reverse bb:items-start bb:w-full",
         // Adjust spacing for checkbox/radio alignment
-        "[&:has([data-slot=checkbox])]:items-center",
-        "[&:has([data-slot=radio])]:items-center",
-        "[&:has([data-slot=switch])]:items-center"
+        "bb:[&:has([data-slot=checkbox])]:items-center",
+        "bb:[&:has([data-slot=radio])]:items-center",
+        "bb:[&:has([data-slot=switch])]:items-center"
     };
 
     private static readonly string[] VerticalEndClasses = new[]
     {
         // Column-reverse layout: content first, then label (label on bottom)
-        "flex-col-reverse w-full"
+        "bb:flex-col-reverse bb:w-full"
     };
 
     /// <summary>
@@ -140,7 +140,7 @@ public partial class BbField : ComponentBase
     /// </remarks>
     private string CssClass => ClassNames.cn(
         // Base styles - flex container with gap
-        "flex gap-2",
+        "bb:flex bb:gap-2",
 
         // Orientation-specific styles
         Orientation switch
@@ -159,7 +159,7 @@ public partial class BbField : ComponentBase
         },
 
         // Error state styling
-        "data-[invalid=true]:text-destructive",
+        "bb:data-[invalid=true]:text-destructive",
 
         // Custom classes (if provided)
         Class

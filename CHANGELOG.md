@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## 2026-09-16
+
+### Changed
+
+- **BREAKING — every Tailwind utility in `blazorblueprint.css` is now prefixed `bb:`** — [#501](https://github.com/blazorblueprintui/ui/issues/501), fixing [#496](https://github.com/blazorblueprintui/ui/issues/496). The prebuilt stylesheet wrote its utilities into Tailwind's `utilities` cascade layer, the same layer a consumer's own build writes into. Layer names are global to the document, so two builds emitting the same class name were ordered by which `<link>` came second, not by Tailwind's sort order. A consumer's `sm:grid-cols-2 md:grid-cols-4` collapsed when the library loaded after their stylesheet; the library's own `hidden sm:flex` collapsed when it loaded before. No load order fixed both, and the demo had been shipping in the broken arrangement.
+
+  The library's utilities now emit as `.bb\:flex`, `.bb\:sm\:hidden` and so on, into a `bb-utilities` layer of their own, so the two builds can never produce the same selector. `ClassNames.cn` strips the prefix for the merge and puts it back on the survivors, so a consumer `Class="p-6"` still replaces the component's `bb:p-4` exactly as before; the merge no longer depends on load order either. Around 2,000 class strings across Components and Primitives were rewritten mechanically against the set of tokens the previous build emitted, and the rewrite was verified by diffing the emitted CSS: every utility gained the prefix and nothing else changed.
+
+  **What consumers do.** With your own Tailwind build: nothing in markup; drop any `@source` pointing at the library, which now finds only prefixed tokens and emits nothing. Without one: `class="flex gap-4"` in your own pages no longer matches anything in the library's file — it never officially did — so add a Tailwind build or write `class="bb:flex bb:gap-4"`. The safelisted `shimmer` and `scroll-fade-x` utilities are now `bb:shimmer` and `bb:scroll-fade-x`. Full detail in `V4-MIGRATION-GUIDE.md`.
+
+  **Guarded.** New convention tests read the built stylesheet and fail if any utility in `bb-utilities` is unprefixed or anything is written into the shared `utilities` layer, and read the sources and fail on an unprefixed token in a `class` attribute or a `cn(…)` literal — under a prefixed build that token would not collide, it would silently emit nothing. The demo no longer `@source`s the library and is a real consumer, which is how #496 gets caught next time.
+
+---
+
 ## 2026-09-15 (later)
 
 ### Changed

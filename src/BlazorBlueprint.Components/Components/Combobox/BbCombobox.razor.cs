@@ -239,7 +239,7 @@ public partial class BbCombobox<TValue> : ComponentBase
     /// Ignored when MatchTriggerWidth is true.
     /// </remarks>
     [Parameter]
-    public string PopoverWidth { get; set; } = "w-[200px]";
+    public string PopoverWidth { get; set; } = "bb:w-[200px]";
 
     /// <summary>
     /// Gets or sets whether to match the dropdown width to the trigger element width.
@@ -280,7 +280,7 @@ public partial class BbCombobox<TValue> : ComponentBase
     /// Set to <c>null</c> or empty to disable the active style.
     /// </summary>
     [Parameter]
-    public string? ActiveClass { get; set; } = "bg-accent text-accent-foreground";
+    public string? ActiveClass { get; set; } = "bb:bg-accent bb:text-accent-foreground";
 
     /// <summary>
     /// Tracks whether the popover is currently open.
@@ -470,18 +470,18 @@ public partial class BbCombobox<TValue> : ComponentBase
     /// <summary>
     /// Gets the CSS class for the combobox container.
     /// </summary>
-    private static string ContainerClass => "relative";
+    private static string ContainerClass => "bb:relative";
 
     /// <summary>
     /// Gets the CSS class for the button element (styled like ButtonVariant.Outline).
     /// </summary>
     private string ButtonCssClass => ClassNames.cn(
-        "inline-flex items-center justify-between rounded-md text-sm font-medium",
-        "transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        "disabled:opacity-50 disabled:pointer-events-none",
-        "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        "bb:inline-flex bb:items-center bb:justify-between bb:rounded-md bb:text-sm bb:font-medium",
+        "bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+        "bb:disabled:opacity-50 bb:disabled:pointer-events-none",
+        "bb:border bb:border-input bb:bg-background bb:hover:bg-accent bb:hover:text-accent-foreground",
         _isOpen ? ActiveClass : null,
-        "h-10 px-3",
+        "bb:h-10 bb:px-3",
         string.IsNullOrWhiteSpace(Class) ? PopoverWidth : null,
         Class
     );

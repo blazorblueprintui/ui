@@ -48,16 +48,16 @@ public partial class BbMarker : ComponentBase
 
     private string CssClass => ClassNames.cn(
         // #459: no offset — markers repeat down a list and an offset ring hits the rows either side.
-        "rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        "group/marker relative flex min-h-4 w-full items-center gap-2 text-left text-sm text-muted-foreground [&_svg:not([class*='size-'])]:size-4 [a]:underline [a]:underline-offset-3 [a]:hover:text-foreground",
+        "bb:rounded-sm bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+        "bb:group/marker bb:relative bb:flex bb:min-h-4 bb:w-full bb:items-center bb:gap-2 bb:text-left bb:text-sm bb:text-muted-foreground bb:[&_svg:not([class*='size-'])]:size-4 bb:[a]:underline bb:[a]:underline-offset-3 bb:[a]:hover:text-foreground",
         Variant switch
         {
-            MarkerVariant.Border => "border-b border-border pb-2",
-            MarkerVariant.Separator => "w-full items-center justify-center text-xs uppercase tracking-wide",
+            MarkerVariant.Border => "bb:border-b bb:border-border bb:pb-2",
+            MarkerVariant.Separator => "bb:w-full bb:items-center bb:justify-center bb:text-xs bb:uppercase bb:tracking-wide",
             _ => null
         },
         Variant == MarkerVariant.Separator
-            ? "before:mr-1 before:h-px before:min-w-0 before:flex-1 before:bg-border after:ml-1 after:h-px after:min-w-0 after:flex-1 after:bg-border"
+            ? "bb:before:mr-1 bb:before:h-px bb:before:min-w-0 bb:before:flex-1 bb:before:bg-border bb:after:ml-1 bb:after:h-px bb:after:min-w-0 bb:after:flex-1 bb:after:bg-border"
             : null,
         Class
     );

@@ -13,6 +13,7 @@ This guide is written as v4 is built, so it grows as changes land.
 |---|---|---|---|
 | 1 | `BbDrawerTrigger` / `BbDrawerClose` render a real `<button>` | **Medium** | Add `AsChild="true"` where the child is already a control |
 | 2 | `BbTooltipTrigger.AsChild` default → `false` | **Medium** | Add `AsChild="true"` where the child consumes the trigger context, such as a `BbButton` |
+| 3 | Every utility in `blazorblueprint.css` is prefixed `bb:` | **Low** for most; **Medium** if you relied on the shipped utilities without your own Tailwind build | Nothing if you run Tailwind. Otherwise, see below |
 
 ---
 
@@ -129,3 +130,71 @@ Those triggers render a `<button>` in their non-`AsChild` branch and are opened 
 any focusable child already delivers by bubbling. Tooltip is different because it opens on **hover
 and focus**, which do not bubble usefully — so a trigger that renders nothing genuinely has nothing
 listening. The asymmetry is in the interaction, not in the API.
+
+---
+
+## 3. Every utility in `blazorblueprint.css` is prefixed `bb:`
+
+**Issue:** [#501](https://github.com/blazorblueprintui/ui/issues/501), fixing
+[#496](https://github.com/blazorblueprintui/ui/issues/496)
+
+`blazorblueprint.css` is a prebuilt Tailwind stylesheet. In v3 its utilities were unprefixed and
+written into Tailwind's `utilities` cascade layer — the same layer your own Tailwind build writes
+into. Layer names are global to the document, so two builds emitting the same class name into the
+same layer were resolved by which `<link>` came second, not by Tailwind's sort order. Your
+`sm:grid-cols-2 md:grid-cols-4` collapsed when Blazor Blueprint loaded after your stylesheet, and
+the library's own `hidden sm:flex` collapsed when it loaded before. No load order fixed both.
+
+In v4 every utility the library emits is prefixed — `.bb\:flex`, `.bb\:sm\:hidden`,
+`.bb\:data-\[state\=open\]\:bg-accent` — and lives in a `bb-utilities` layer of its own. The two
+builds can no longer produce the same class name, so nothing depends on load order any more.
+
+### If you run your own Tailwind build
+
+**Nothing changes in your markup.** `Class="p-6"` is still `p-6`; the library strips its prefix
+when it merges, so your unprefixed class still replaces the library's for the same property:
+
+```razor
+<BbCard Class="p-6">        @* renders class="… p-6 …", with the library's bb:p-4 removed *@
+```
+
+Two things to check:
+
+- **Remove any `@source` that points at the Blazor Blueprint package or sources.** It was never
+  needed, and under v4 it finds `bb:flex`, does not recognise the `bb` variant, and emits nothing.
+- **Load order no longer matters** for utilities. Keep your theme before `blazorblueprint.css` as
+  before; put your Tailwind output wherever you like.
+
+### If you do not run Tailwind
+
+Some projects wrote Tailwind classes in their own markup and relied on `blazorblueprint.css`
+happening to contain them. That was never supported — the file only ever held the classes the
+components use — and in v4 those classes are all prefixed, so a bare `class="flex gap-4"` in your
+page matches nothing.
+
+You have two options:
+
+- **Add a Tailwind build to your project.** This is the supported path for using utilities in your
+  own markup. The [standalone CLI](https://tailwindcss.com/blog/standalone-cli) needs no Node.js.
+- **Use the prefixed classes directly:** `class="bb:flex bb:gap-4"`. They work anywhere on the
+  page, not only inside components. The set is whatever the components happen to use and may
+  change between versions, so treat this as a stopgap rather than an API.
+
+### Renamed: `shimmer` and `scroll-fade-x`
+
+These two utilities were safelisted so consumers could apply them by name. They are now
+`bb:shimmer` and `bb:scroll-fade-x`:
+
+```razor
+<!-- v3 -->
+<BbMarkerContent Class="shimmer">…</BbMarkerContent>
+
+<!-- v4 -->
+<BbMarkerContent Class="bb:shimmer">…</BbMarkerContent>
+```
+
+### Internal class names are not an API
+
+If you have CSS, JavaScript or tests that select the library's internal elements by utility class
+(`.flex-col`, `.group\/row`, `.hidden`), those selectors now need the prefix. Prefer the `data-slot`
+and other data attributes the components render; those are stable.

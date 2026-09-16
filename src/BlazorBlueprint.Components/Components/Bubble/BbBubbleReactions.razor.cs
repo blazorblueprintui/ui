@@ -38,9 +38,9 @@ public partial class BbBubbleReactions : ComponentBase
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string CssClass => ClassNames.cn(
-        "absolute z-10 flex w-fit shrink-0 items-center justify-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-sm ring-3 ring-card has-[button]:p-0",
-        Side == BubbleReactionsSide.Top ? "top-0 -translate-y-3/4" : "bottom-0 translate-y-3/4",
-        Align == BubbleReactionsAlign.Start ? "left-3" : "right-3",
+        "bb:absolute bb:z-10 bb:flex bb:w-fit bb:shrink-0 bb:items-center bb:justify-center bb:gap-1 bb:rounded-full bb:bg-muted bb:px-1.5 bb:py-0.5 bb:text-sm bb:ring-3 bb:ring-card bb:has-[button]:p-0",
+        Side == BubbleReactionsSide.Top ? "bb:top-0 bb:-translate-y-3/4" : "bb:bottom-0 bb:translate-y-3/4",
+        Align == BubbleReactionsAlign.Start ? "bb:left-3" : "bb:right-3",
         Class
     );
 }

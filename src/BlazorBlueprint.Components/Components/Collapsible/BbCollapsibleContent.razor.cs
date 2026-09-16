@@ -111,5 +111,5 @@ public partial class BbCollapsibleContent : ComponentBase
     private string? CssClass => ClassNames.cn(Class);
 
     private static string GridCssClass =>
-        "grid grid-rows-[0fr] transition-[grid-template-rows] duration-200 ease-out data-[state=open]:grid-rows-[1fr]";
+        "bb:grid bb:grid-rows-[0fr] bb:transition-[grid-template-rows] bb:duration-200 bb:ease-out bb:data-[state=open]:grid-rows-[1fr]";
 }

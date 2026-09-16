@@ -244,7 +244,7 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
     /// Gets the computed CSS classes for the container.
     /// </summary>
     private string ContainerCssClass => ClassNames.cn(
-        "w-full space-y-4",
+        "bb:w-full bb:space-y-4",
         Class
     );
 
@@ -252,14 +252,14 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
     /// Gets the computed CSS classes for the table container.
     /// </summary>
     private static string TableContainerCssClass => ClassNames.cn(
-        "rounded-md border"
+        "bb:rounded-md bb:border"
     );
 
     /// <summary>
     /// Gets the computed CSS classes for the table element.
     /// </summary>
     private static string TableCssClass => ClassNames.cn(
-        "w-full caption-bottom text-sm"
+        "bb:w-full bb:caption-bottom bb:text-sm"
     );
 
     protected override void OnInitialized()

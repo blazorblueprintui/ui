@@ -39,11 +39,11 @@ public partial class BbFieldGroup : ComponentBase
     private static readonly string[] ResponsiveClasses = new[]
     {
         // Vertical by default
-        "flex-col",
+        "bb:flex-col",
         // Container query setup for responsive behavior
-        "@container/field-group",
+        "bb:@container/field-group",
         // Horizontal at medium container width
-        "@md:flex-row @md:flex-wrap"
+        "bb:@md:flex-row bb:@md:flex-wrap"
     };
 
     /// <summary>
@@ -92,14 +92,14 @@ public partial class BbFieldGroup : ComponentBase
     /// </remarks>
     private string CssClass => ClassNames.cn(
         // Base flex container
-        "flex gap-4",
+        "bb:flex bb:gap-4",
 
         // Orientation-specific styles
         Orientation switch
         {
-            FieldGroupOrientation.Vertical => "flex-col",
+            FieldGroupOrientation.Vertical => "bb:flex-col",
 
-            FieldGroupOrientation.Horizontal => "flex-row flex-wrap",
+            FieldGroupOrientation.Horizontal => "bb:flex-row bb:flex-wrap",
 
             FieldGroupOrientation.Responsive => string.Join(" ", ResponsiveClasses),
 

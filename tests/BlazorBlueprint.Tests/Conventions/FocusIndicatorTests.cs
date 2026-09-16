@@ -124,7 +124,7 @@ public class FocusIndicatorTests
             .AppendLine("A focused control then looks identical to an unfocused one, which fails WCAG 2.4.7.")
             .AppendLine()
             .AppendLine("Add the library's ring:")
-            .AppendLine("  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2")
+            .AppendLine("  bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2")
             .AppendLine()
             .AppendLine("Drop ring-offset-2 for controls that sit directly under a label — form rows")
             .AppendLine("leave a 3px gap and an offset ring extends 4px, so it overlaps the label.")

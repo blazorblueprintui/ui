@@ -74,10 +74,10 @@ public partial class BbButtonGroupSeparator : ComponentBase
     /// </remarks>
     private string WrapperCssClass => ClassNames.cn(
         // Flex display to properly contain the separator
-        "flex items-center",
+        "bb:flex bb:items-center",
 
         // Orientation-specific margins (subtle spacing)
-        Orientation == SeparatorOrientation.Vertical ? "mx-1" : "my-1"
+        Orientation == SeparatorOrientation.Vertical ? "bb:mx-1" : "bb:my-1"
     );
 
     /// <summary>

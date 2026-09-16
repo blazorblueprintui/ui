@@ -49,7 +49,7 @@ public partial class BbCardTitle : ComponentBase
     /// </summary>
     private string CssClass => ClassNames.cn(
         // Base title styles (from shadcn/ui)
-        "text-2xl font-semibold leading-none tracking-tight",
+        "bb:text-2xl bb:font-semibold bb:leading-none bb:tracking-tight",
         // Custom classes (if provided)
         Class
     );

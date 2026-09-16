@@ -64,7 +64,7 @@ public partial class BbFieldTitle : ComponentBase
     /// </remarks>
     private string CssClass => ClassNames.cn(
         // Typography - medium weight for prominence
-        "text-sm font-medium leading-none",
+        "bb:text-sm bb:font-medium bb:leading-none",
         // Custom classes (if provided)
         Class
     );

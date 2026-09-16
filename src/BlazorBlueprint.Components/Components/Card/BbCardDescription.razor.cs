@@ -42,7 +42,7 @@ public partial class BbCardDescription : ComponentBase
     /// </summary>
     private string CssClass => ClassNames.cn(
         // Base description styles (from shadcn/ui)
-        "text-sm text-muted-foreground",
+        "bb:text-sm bb:text-muted-foreground",
         // Custom classes (if provided)
         Class
     );

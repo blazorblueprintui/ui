@@ -301,28 +301,28 @@ public partial class BbCurrencyInput : ComponentBase
     }
 
     private string ContainerClass => ClassNames.cn(
-        "flex items-center rounded-md overflow-hidden",
-        Disabled ? "opacity-50" : null
+        "bb:flex bb:items-center bb:rounded-md bb:overflow-hidden",
+        Disabled ? "bb:opacity-50" : null
     );
 
     private string CssClass => ClassNames.cn(
-        "flex h-10 w-full border border-input bg-background px-3 py-2 text-base",
-        "placeholder:text-muted-foreground",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        "aria-[invalid=true]:border-destructive",
-        "transition-colors",
-        "md:text-sm",
-        "text-right tabular-nums",
-        ShowSymbol && Currency.SymbolBefore ? "border-l-0" : "rounded-l-md",
-        ShowSymbol && !Currency.SymbolBefore ? "border-r-0" : "rounded-r-md",
+        "bb:flex bb:h-10 bb:w-full bb:border bb:border-input bb:bg-background bb:px-3 bb:py-2 bb:text-base",
+        "bb:placeholder:text-muted-foreground",
+        "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+        "bb:disabled:cursor-not-allowed bb:disabled:opacity-50",
+        "bb:aria-[invalid=true]:border-destructive",
+        "bb:transition-colors",
+        "bb:md:text-sm",
+        "bb:text-right bb:tabular-nums",
+        ShowSymbol && Currency.SymbolBefore ? "bb:border-l-0" : "bb:rounded-l-md",
+        ShowSymbol && !Currency.SymbolBefore ? "bb:border-r-0" : "bb:rounded-r-md",
         Class
     );
 
     private string SymbolClass => ClassNames.cn(
-        "flex h-10 items-center justify-center px-3 border border-input bg-muted text-muted-foreground text-sm",
-        Currency.SymbolBefore ? "border-r-0" : "border-l-0",
-        Disabled ? "opacity-50" : null
+        "bb:flex bb:h-10 bb:items-center bb:justify-center bb:px-3 bb:border bb:border-input bb:bg-muted bb:text-muted-foreground bb:text-sm",
+        Currency.SymbolBefore ? "bb:border-r-0" : "bb:border-l-0",
+        Disabled ? "bb:opacity-50" : null
     );
 
     /// <summary>

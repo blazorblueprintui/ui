@@ -1,14 +1,14 @@
 @namespace BlazorBlueprint.Components
 
-<form @onsubmit="HandleApply" @onsubmit:preventDefault="true" class="p-3 space-y-3" @attributes="AdditionalAttributes">
-    <div class="text-sm font-medium">@Localizer["DataGrid.FilterPlaceholder", ColumnTitle ?? ""]</div>
+<form @onsubmit="HandleApply" @onsubmit:preventDefault="true" class="bb:p-3 bb:space-y-3" @attributes="AdditionalAttributes">
+    <div class="bb:text-sm bb:font-medium">@Localizer["DataGrid.FilterPlaceholder", ColumnTitle ?? ""]</div>
 
     @* Operator selector *@
     <BbSelect TValue="FilterOperator"
               Value="@editCondition.Operator"
               ValueChanged="HandleOperatorChanged"
               Options="@operatorOptions"
-              Class="w-full" />
+              Class="bb:w-full" />
 
     @* Value input — type-aware *@
     @if (!FilterOperatorHelper.IsValuelessOperator(editCondition.Operator))
@@ -19,22 +19,22 @@
                 <BbInput Value="@GetStringValue()"
                          ValueChanged="HandleStringValueChanged"
                          Placeholder="@Localizer["DataGrid.FilterColumnEnterValue"]"
-                         Class="w-full" />
+                         Class="bb:w-full" />
                 break;
 
             case FilterFieldType.Number when FilterOperatorHelper.IsRangeOperator(editCondition.Operator):
-                <div class="flex items-center gap-2">
+                <div class="bb:flex bb:items-center bb:gap-2">
                     <BbNumericInput TValue="double"
                                     Value="@GetDoubleValue()"
                                     ValueChanged="HandleDoubleValueChanged"
                                     Placeholder="@Localizer["DataGrid.FilterColumnMin"]"
-                                    Class="w-full" />
-                    <span class="text-sm text-muted-foreground shrink-0">@Localizer["DataGrid.FilterColumnAnd"]</span>
+                                    Class="bb:w-full" />
+                    <span class="bb:text-sm bb:text-muted-foreground bb:shrink-0">@Localizer["DataGrid.FilterColumnAnd"]</span>
                     <BbNumericInput TValue="double"
                                     Value="@GetDoubleValueEnd()"
                                     ValueChanged="HandleDoubleValueEndChanged"
                                     Placeholder="@Localizer["DataGrid.FilterColumnMax"]"
-                                    Class="w-full" />
+                                    Class="bb:w-full" />
                 </div>
                 break;
 
@@ -43,28 +43,28 @@
                                 Value="@GetDoubleValue()"
                                 ValueChanged="HandleDoubleValueChanged"
                                 Placeholder="@Localizer["DataGrid.FilterColumnEnterValue"]"
-                                Class="w-full" />
+                                Class="bb:w-full" />
                 break;
 
             case FilterFieldType.Date or FilterFieldType.DateTime when FilterOperatorHelper.IsRangeOperator(editCondition.Operator):
                 <BbDateRangePicker Value="@GetDateRangeValue()"
                                    ValueChanged="HandleDateRangeValueChanged"
-                                   Class="w-full" />
+                                   Class="bb:w-full" />
                 break;
 
             case FilterFieldType.Date or FilterFieldType.DateTime when editCondition.Operator is FilterOperator.InLast or FilterOperator.InNext:
-                <div class="flex items-center gap-2">
+                <div class="bb:flex bb:items-center bb:gap-2">
                     <BbNumericInput TValue="int"
                                     Value="@GetInLastAmount()"
                                     ValueChanged="HandleInLastAmountChanged"
                                     Min="1"
                                     Placeholder="@Localizer["DataGrid.FilterColumnAmount"]"
-                                    Class="w-full" />
+                                    Class="bb:w-full" />
                     <BbSelect TValue="InLastPeriod"
                               Value="@GetInLastPeriod()"
                               ValueChanged="HandleInLastPeriodChanged"
                               Options="@InLastPeriodOptions"
-                              Class="w-full" />
+                              Class="bb:w-full" />
                 </div>
                 break;
 
@@ -73,14 +73,14 @@
                           Value="@GetDatePreset()"
                           ValueChanged="HandleDatePresetChanged"
                           Options="@DatePresetOptions"
-                          Class="w-full" />
+                          Class="bb:w-full" />
                 break;
 
             case FilterFieldType.Date or FilterFieldType.DateTime:
                 <BbDatePicker Value="@GetDateTimeValue()"
                               ValueChanged="HandleDateTimeValueChanged"
                               Placeholder="@Localizer["DataGrid.FilterColumnPickDate"]"
-                              Class="w-full" />
+                              Class="bb:w-full" />
                 break;
 
             case FilterFieldType.Enum when editCondition.Operator is FilterOperator.In or FilterOperator.NotIn:
@@ -89,7 +89,7 @@
                                ValuesChanged="HandleMultiSelectValuesChanged"
                                Options="@(FilterOptions ?? Array.Empty<SelectOption<string>>())"
                                Placeholder="@Localizer["DataGrid.FilterColumnSelectValues"]"
-                               Class="w-full" />
+                               Class="bb:w-full" />
                 break;
 
             case FilterFieldType.Enum:
@@ -98,13 +98,13 @@
                           ValueChanged="HandleStringValueChanged"
                           Options="@(FilterOptions ?? Array.Empty<SelectOption<string>>())"
                           Placeholder="@Localizer["DataGrid.FilterColumnSelectValue"]"
-                          Class="w-full" />
+                          Class="bb:w-full" />
                 break;
         }
     }
 
     @* Action buttons *@
-    <div class="flex items-center justify-end gap-2">
+    <div class="bb:flex bb:items-center bb:justify-end bb:gap-2">
         @if (CurrentFilter != null)
         {
             <BbButton Variant="ButtonVariant.Ghost"

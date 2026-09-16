@@ -85,10 +85,10 @@ public partial class BbSeparator : ComponentBase
     /// - Custom classes from the Class parameter
     /// </remarks>
     private string CssClass => ClassNames.cn(
-        "shrink-0 bg-border",
+        "bb:shrink-0 bb:bg-border",
         Orientation == SeparatorOrientation.Horizontal
-            ? "h-[1px] w-full"
-            : "h-full w-[1px]",
+            ? "bb:h-[1px] bb:w-full"
+            : "bb:h-full bb:w-[1px]",
         Class
     );
 

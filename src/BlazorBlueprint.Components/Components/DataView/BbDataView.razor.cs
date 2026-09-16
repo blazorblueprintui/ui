@@ -311,13 +311,13 @@ public partial class BbDataView<TItem> : ComponentBase, IAsyncDisposable where T
 
     // ── Computed properties ──────────────────────────────────────────────────
 
-    private string ContainerCssClass => ClassNames.cn("w-full space-y-4", Class);
+    private string ContainerCssClass => ClassNames.cn("bb:w-full bb:space-y-4", Class);
 
     private string ItemContainerCssClass => _effectiveLayout == DataViewLayout.Grid
         ? ClassNames.cn(GridColumnMinWidth is null
-            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-            : "grid gap-4", GridClass)
-        : ClassNames.cn("flex flex-col gap-2", ListClass);
+            ? "bb:grid bb:grid-cols-1 bb:sm:grid-cols-2 bb:lg:grid-cols-3 bb:gap-4"
+            : "bb:grid bb:gap-4", GridClass)
+        : ClassNames.cn("bb:flex bb:flex-col bb:gap-2", ListClass);
 
     private string? ItemContainerStyle => _effectiveLayout == DataViewLayout.Grid && GridColumnMinWidth is not null
         ? $"grid-template-columns: repeat(auto-fill, minmax({GridColumnMinWidth}, 1fr))"

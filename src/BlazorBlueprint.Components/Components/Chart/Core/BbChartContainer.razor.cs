@@ -47,7 +47,7 @@ public partial class BbChartContainer : ComponentBase
     /// Gets the computed CSS classes for the container.
     /// </summary>
     private string CssClass => ClassNames.cn(
-        "flex flex-col rounded-lg border bg-card text-card-foreground shadow-sm p-6",
+        "bb:flex bb:flex-col bb:rounded-lg bb:border bb:bg-card bb:text-card-foreground bb:shadow-sm bb:p-6",
         Class
     );
 }

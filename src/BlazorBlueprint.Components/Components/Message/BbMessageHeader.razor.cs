@@ -26,6 +26,6 @@ public partial class BbMessageHeader : ComponentBase
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string CssClass => ClassNames.cn(
-        "flex max-w-full min-w-0 items-center px-3 text-xs font-medium text-muted-foreground group-has-data-[variant=ghost]/message:px-0",
+        "bb:flex bb:max-w-full bb:min-w-0 bb:items-center bb:px-3 bb:text-xs bb:font-medium bb:text-muted-foreground bb:group-has-data-[variant=ghost]/message:px-0",
         Class);
 }

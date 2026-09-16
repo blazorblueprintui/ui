@@ -26,7 +26,7 @@ public partial class BbTimelineDescription : ComponentBase
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string CssClass => ClassNames.cn(
-        "max-w-sm text-sm text-muted-foreground",
+        "bb:max-w-sm bb:text-sm bb:text-muted-foreground",
         Class
     );
 }

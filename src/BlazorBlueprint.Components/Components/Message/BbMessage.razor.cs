@@ -32,8 +32,8 @@ public partial class BbMessage : ComponentBase
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string CssClass => ClassNames.cn(
-        "group/message relative flex w-full min-w-0 gap-2 text-sm data-[align=end]:flex-row-reverse",
-        Align == MessageAlign.End ? "justify-end" : "justify-start",
+        "bb:group/message bb:relative bb:flex bb:w-full bb:min-w-0 bb:gap-2 bb:text-sm bb:data-[align=end]:flex-row-reverse",
+        Align == MessageAlign.End ? "bb:justify-end" : "bb:justify-start",
         Class
     );
 }

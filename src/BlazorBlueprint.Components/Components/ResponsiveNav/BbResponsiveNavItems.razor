@@ -2,7 +2,7 @@
 @using Microsoft.AspNetCore.Components.Routing
 
 @* Desktop navigation - hidden on mobile *@
-<BbNavigationMenu Class="@ClassNames.cn("hidden md:flex", DesktopClass)">
+<BbNavigationMenu Class="@ClassNames.cn("bb:hidden bb:md:flex", DesktopClass)">
     <BbNavigationMenuList>
         @foreach (var item in Items)
         {
@@ -11,14 +11,14 @@
                 <BbNavigationMenuItem Value="@item.Text.ToLowerInvariant()">
                     <BbNavigationMenuTrigger>@item.Text</BbNavigationMenuTrigger>
                     <BbNavigationMenuContent>
-                        <div class="grid gap-3 p-4 w-[400px]">
+                        <div class="bb:grid bb:gap-3 bb:p-4 bb:w-[400px]">
                             @foreach (var child in item.Children)
                             {
-                                <a href="@child.Href" class="block p-3 rounded-lg hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                                    <span class="block font-medium mb-1">@child.Text</span>
+                                <a href="@child.Href" class="bb:block bb:p-3 bb:rounded-lg bb:hover:bg-accent bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2">
+                                    <span class="bb:block bb:font-medium bb:mb-1">@child.Text</span>
                                     @if (!string.IsNullOrEmpty(child.Description))
                                     {
-                                        <p class="text-sm text-muted-foreground">@child.Description</p>
+                                        <p class="bb:text-sm bb:text-muted-foreground">@child.Description</p>
                                     }
                                 </a>
                             }
@@ -38,24 +38,24 @@
 
 @* Mobile navigation in Sheet *@
 <BbResponsiveNavContent Header="@MobileHeader" Footer="@MobileFooter" Side="@Side">
-    <nav class="@ClassNames.cn("flex flex-col space-y-4", MobileClass)">
+    <nav class="@ClassNames.cn("bb:flex bb:flex-col bb:space-y-4", MobileClass)">
         @foreach (var item in Items)
         {
             @if (item.Children is { Count: > 0 })
             {
-                <div class="space-y-2">
-                    <span class="text-sm font-medium text-muted-foreground">@item.Text</span>
-                    <div class="pl-4 space-y-2 border-l">
+                <div class="bb:space-y-2">
+                    <span class="bb:text-sm bb:font-medium bb:text-muted-foreground">@item.Text</span>
+                    <div class="bb:pl-4 bb:space-y-2 bb:border-l">
                         @foreach (var child in item.Children)
                         {
-                            <NavLink href="@child.Href" Match="@child.Match" class="block text-sm hover:text-primary">@child.Text</NavLink>
+                            <NavLink href="@child.Href" Match="@child.Match" class="bb:block bb:text-sm bb:hover:text-primary">@child.Text</NavLink>
                         }
                     </div>
                 </div>
             }
             else
             {
-                <NavLink href="@item.Href" Match="@item.Match" class="text-lg font-medium hover:text-primary">@item.Text</NavLink>
+                <NavLink href="@item.Href" Match="@item.Match" class="bb:text-lg bb:font-medium bb:hover:text-primary">@item.Text</NavLink>
             }
         }
     </nav>

@@ -468,6 +468,8 @@ BlazorBlueprint.Primitives     ← Headless, includes ARIA attributes and keyboa
 
 **Components** ship pre-built CSS matching the shadcn/ui design system. No Tailwind setup required — just reference the stylesheet and optionally provide theme variables.
 
+Every utility in that stylesheet is prefixed `bb:` and kept in its own cascade layer, so it coexists with your own Tailwind build: your classes and the library's can never share a name, and a `Class="p-6"` you pass to a component still replaces the library's padding. Do not `@source` the library from your Tailwind input; it is not needed.
+
 **Primitives** are completely unstyled. They include ARIA attributes, focus management, and keyboard support for complex interaction patterns, giving you full control over appearance.
 
 ### Services

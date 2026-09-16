@@ -24,8 +24,8 @@
                 }
                 else
                 {
-                    <div class="flex items-center justify-center p-8 text-muted-foreground">
-                        <div class="text-sm">@Localizer["DataTable.Loading"]</div>
+                    <div class="bb:flex bb:items-center bb:justify-center bb:p-8 bb:text-muted-foreground">
+                        <div class="bb:text-sm">@Localizer["DataTable.Loading"]</div>
                     </div>
                 }
             }
@@ -53,19 +53,19 @@
                                                  Class="@TableCssClass"
                                                  AriaLabel="@AriaLabel">
                     <BlazorBlueprint.Primitives.Table.BbTableHeader>
-                        <BlazorBlueprint.Primitives.Table.BbTableRow TData="TData" Class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                        <BlazorBlueprint.Primitives.Table.BbTableRow TData="TData" Class="bb:border-b bb:transition-colors bb:hover:bg-muted/50 bb:data-[state=selected]:bg-muted">
                             @if (SelectionMode == DataTableSelectionMode.Multiple)
                             {
-                                <BlazorBlueprint.Primitives.Table.BbTableHeaderCell TData="TData" Class="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-12" role="columnheader">
+                                <BlazorBlueprint.Primitives.Table.BbTableHeaderCell TData="TData" Class="bb:h-12 bb:px-4 bb:text-left bb:align-middle bb:font-medium bb:text-muted-foreground bb:w-12" role="columnheader">
                                     <div @onclick:stopPropagation="true">
                                         @if (ShouldShowSelectAllPrompt())
                                         {
                                             <BbDropdownMenu @bind-Open="_selectAllDropdownOpen">
-                                                <BbDropdownMenuTrigger AsChild="false" Class="inline-flex items-center justify-center p-0 bg-transparent border-0 hover:bg-transparent focus:outline-none">
+                                                <BbDropdownMenuTrigger AsChild="false" Class="bb:inline-flex bb:items-center bb:justify-center bb:p-0 bb:bg-transparent bb:border-0 bb:hover:bg-transparent bb:focus:outline-none">
                                                     <BbCheckbox Checked="@IsAllSelected()"
                                                               Indeterminate="@IsSomeSelected()"
                                                               AriaLabel="@Localizer["DataTable.SelectRowsAriaLabel"]"
-                                                              Class="pointer-events-none" />
+                                                              Class="bb:pointer-events-none" />
                                                 </BbDropdownMenuTrigger>
                                                 <BbDropdownMenuContent Side="PopoverSide.Bottom" Align="PopoverAlign.Start">
                                                     <BbDropdownMenuItem OnClick="@HandleSelectAllOnCurrentPage">
@@ -101,29 +101,29 @@
                                     : (column.Sortable ? "none" : null);
 
                                 <BlazorBlueprint.Primitives.Table.BbTableHeaderCell TData="TData" ColumnId="@(column.Sortable ? column.Id : null)"
-                                                 Class="@ClassNames.cn("h-12 px-4 text-left align-middle font-medium text-muted-foreground", column.Sortable ? "cursor-pointer select-none" : "", column.HeaderClass)"
+                                                 Class="@ClassNames.cn("bb:h-12 bb:px-4 bb:text-left bb:align-middle bb:font-medium bb:text-muted-foreground", column.Sortable ? "bb:cursor-pointer bb:select-none" : "", column.HeaderClass)"
                                                  style="@GetColumnWidthStyle(column)"
                                                  aria-sort="@ariaSortValue">
-                                    <div class="flex items-center gap-2">
+                                    <div class="bb:flex bb:items-center bb:gap-2">
                                         <span>@column.Header</span>
                                         @if (column.Sortable && _tableState.Sorting.SortedColumn == column.Id)
                                         {
                                             @if (_tableState.Sorting.Direction == SortDirection.Ascending)
                                             {
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg class="bb:w-4 bb:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
                                                 </svg>
                                             }
                                             else if (_tableState.Sorting.Direction == SortDirection.Descending)
                                             {
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg class="bb:w-4 bb:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                                 </svg>
                                             }
                                         }
                                         else if (column.Sortable)
                                         {
-                                            <svg class="w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="bb:w-4 bb:h-4 bb:opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                                             </svg>
                                         }
@@ -136,10 +136,10 @@
                         @foreach (var item in _processedData)
                         {
                             var isSelected = _tableState.Selection.IsSelected(item);
-                            <BlazorBlueprint.Primitives.Table.BbTableRow TData="TData" Item="@item" Class="@ClassNames.cn("border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted", isSelected ? "bg-muted" : "")">
+                            <BlazorBlueprint.Primitives.Table.BbTableRow TData="TData" Item="@item" Class="@ClassNames.cn("bb:border-b bb:transition-colors bb:hover:bg-muted/50 bb:data-[state=selected]:bg-muted", isSelected ? "bb:bg-muted" : "")">
                                 @if (SelectionMode == DataTableSelectionMode.Multiple)
                                 {
-                                    <BlazorBlueprint.Primitives.Table.BbTableCell Class="p-4 align-middle w-12" role="gridcell">
+                                    <BlazorBlueprint.Primitives.Table.BbTableCell Class="bb:p-4 bb:align-middle bb:w-12" role="gridcell">
                                         <div @onclick:stopPropagation="true">
                                             <BbCheckbox Checked="@isSelected"
                                                       CheckedChanged="@(async (bool isChecked) => await HandleRowSelectionChanged(item, isChecked))"
@@ -149,7 +149,7 @@
                                 }
                                 @foreach (var column in _columns.Where(c => c.Visible))
                                 {
-                                    <BlazorBlueprint.Primitives.Table.BbTableCell Class="@ClassNames.cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", column.CellClass)">
+                                    <BlazorBlueprint.Primitives.Table.BbTableCell Class="@ClassNames.cn("bb:p-4 bb:align-middle bb:[&:has([role=checkbox])]:pr-0", column.CellClass)">
                                         @if (column.CellTemplate != null)
                                         {
                                             @column.CellTemplate(item)
@@ -174,13 +174,13 @@
                         PageSizes="@PageSizes"
                         OnPageChanged="@HandlePageChanged"
                         OnPageSizeChanged="@HandlePageSizeChanged"
-                        Class="flex items-center justify-between px-2 py-4">
+                        Class="bb:flex bb:items-center bb:justify-between bb:px-2 bb:py-4">
                 <BbPaginationInfo />
-                <BbPaginationContent Class="flex items-center gap-6 lg:gap-8">
+                <BbPaginationContent Class="bb:flex bb:items-center bb:gap-6 bb:lg:gap-8">
                     <BbPaginationPageSizeSelector />
-                    <div class="flex items-center gap-2">
+                    <div class="bb:flex bb:items-center bb:gap-2">
                         <BbPaginationPageDisplay />
-                        <div class="flex items-center gap-1">
+                        <div class="bb:flex bb:items-center bb:gap-1">
                             <BbPaginationItem><BbPaginationFirst /></BbPaginationItem>
                             <BbPaginationItem><BbPaginationPrevious ShowText="false" /></BbPaginationItem>
                             <BbPaginationItem><BbPaginationNext ShowText="false" /></BbPaginationItem>

@@ -296,13 +296,13 @@ public partial class BbFilterCondition : ComponentBase
 
     // CSS classes
     private string RowCssClass => ClassNames.cn(
-        "flex flex-wrap items-center",
-        Context?.Compact == true ? "gap-1" : "gap-2"
+        "bb:flex bb:flex-wrap bb:items-center",
+        Context?.Compact == true ? "bb:gap-1" : "bb:gap-2"
     );
 
-    private string FieldSelectClass => Context?.Compact == true ? "w-[140px]" : "w-[160px]";
+    private string FieldSelectClass => Context?.Compact == true ? "bb:w-[140px]" : "bb:w-[160px]";
 
-    private string OperatorSelectClass => Context?.Compact == true ? "w-[160px]" : "w-[180px]";
+    private string OperatorSelectClass => Context?.Compact == true ? "bb:w-[160px]" : "bb:w-[180px]";
 
-    private string ValueInputClass => Context?.Compact == true ? "w-[140px]" : "w-[180px]";
+    private string ValueInputClass => Context?.Compact == true ? "bb:w-[140px]" : "bb:w-[180px]";
 }

@@ -8,27 +8,27 @@
     <BbPopoverTrigger AsChild="true">
         <BbButton Variant="@Variant" Size="ButtonSize.Icon" Class="@TriggerClass"
                   aria-label="@Localizer["Theme.Switcher.Label"]">
-            <LucideIcon Name="paintbrush" Class="h-4 w-4" />
+            <LucideIcon Name="paintbrush" Class="bb:h-4 bb:w-4" />
         </BbButton>
     </BbPopoverTrigger>
-    <BbPopoverContent Class="@ClassNames.cn("w-[340px] p-0", PopoverContentClass)"
+    <BbPopoverContent Class="@ClassNames.cn("bb:w-[340px] bb:p-0", PopoverContentClass)"
                       Align="@Align"
                       Strategy="@Strategy">
 
         @* ── Header ── *@
-        <div class="p-4 pb-1">
-            <p class="text-sm font-semibold leading-none">@Localizer["Theme.Switcher.Title"]</p>
-            <p class="mt-1 text-xs text-muted-foreground">@Localizer["Theme.Switcher.Description"]</p>
+        <div class="bb:p-4 bb:pb-1">
+            <p class="bb:text-sm bb:font-semibold bb:leading-none">@Localizer["Theme.Switcher.Title"]</p>
+            <p class="bb:mt-1 bb:text-xs bb:text-muted-foreground">@Localizer["Theme.Switcher.Description"]</p>
         </div>
 
-        <BbSeparator Class="my-2" />
+        <BbSeparator Class="bb:my-2" />
 
         @if (ColorLayout == ThemeSwitcherColorLayout.Combined)
         {
             @* ── Color (combined grid, single indicator) ── *@
-            <div class="px-4 py-2 space-y-2">
-                <p class="text-xs font-medium text-muted-foreground">@Localizer["Theme.Color"]</p>
-                <div class="grid grid-cols-3 gap-1.5">
+            <div class="bb:px-4 bb:py-2 bb:space-y-2">
+                <p class="bb:text-xs bb:font-medium bb:text-muted-foreground">@Localizer["Theme.Color"]</p>
+                <div class="bb:grid bb:grid-cols-3 bb:gap-1.5">
                     @foreach (var color in baseColors)
                     {
                         @ColorChip(color.Label, color.Swatch,
@@ -47,9 +47,9 @@
         else
         {
             @* ── Base color ── *@
-            <div class="px-4 py-2 space-y-2">
-                <p class="text-xs font-medium text-muted-foreground">@Localizer["Theme.BaseColor"]</p>
-                <div class="grid grid-cols-3 gap-1.5">
+            <div class="bb:px-4 bb:py-2 bb:space-y-2">
+                <p class="bb:text-xs bb:font-medium bb:text-muted-foreground">@Localizer["Theme.BaseColor"]</p>
+                <div class="bb:grid bb:grid-cols-3 bb:gap-1.5">
                     @foreach (var color in baseColors)
                     {
                         @ColorChip(color.Label, color.Swatch,
@@ -59,12 +59,12 @@
                 </div>
             </div>
 
-            <BbSeparator Class="my-2" />
+            <BbSeparator Class="bb:my-2" />
 
             @* ── Primary color ── *@
-            <div class="px-4 py-2 space-y-2">
-                <p class="text-xs font-medium text-muted-foreground">@Localizer["Theme.PrimaryColor"]</p>
-                <div class="grid grid-cols-3 gap-1.5">
+            <div class="bb:px-4 bb:py-2 bb:space-y-2">
+                <p class="bb:text-xs bb:font-medium bb:text-muted-foreground">@Localizer["Theme.PrimaryColor"]</p>
+                <div class="bb:grid bb:grid-cols-3 bb:gap-1.5">
                     @ColorChip(Localizer["Theme.Default"], CurrentBaseSwatch,
                         ThemeService.PrimaryColor == PrimaryColor.Default,
                         () => ThemeService.SetPrimaryColorAsync(PrimaryColor.Default))
@@ -78,19 +78,19 @@
             </div>
         }
 
-        <BbSeparator Class="my-2" />
+        <BbSeparator Class="bb:my-2" />
 
         @* ── Radius ── *@
-        <div class="px-4 py-2 space-y-2">
-            <p class="text-xs font-medium text-muted-foreground">@Localizer["Theme.Radius"]</p>
-            <div class="flex gap-1.5">
+        <div class="bb:px-4 bb:py-2 bb:space-y-2">
+            <p class="bb:text-xs bb:font-medium bb:text-muted-foreground">@Localizer["Theme.Radius"]</p>
+            <div class="bb:flex bb:gap-1.5">
                 @foreach (var r in radiusOptions)
                 {
                     var isSelected = Math.Abs(ThemeService.Radius - r) < 0.001;
                     <button type="button"
                             class="@ClassNames.cn(
-                                "flex-1 rounded-md border px-2 py-1.5 text-xs text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                                isSelected ? "border-foreground bg-accent" : "border-input hover:bg-accent/50")"
+                                "bb:flex-1 bb:rounded-md bb:border bb:px-2 bb:py-1.5 bb:text-xs bb:text-center bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+                                isSelected ? "bb:border-foreground bb:bg-accent" : "bb:border-input bb:hover:bg-accent/50")"
                             @onclick="() => OnRadiusSelected(r)"
                             aria-pressed="@isSelected.ToString().ToLowerInvariant()">
                         @r.ToString("0.0##", System.Globalization.CultureInfo.InvariantCulture)
@@ -99,28 +99,28 @@
             </div>
         </div>
 
-        <BbSeparator Class="my-2" />
+        <BbSeparator Class="bb:my-2" />
 
         @* ── Mode ── *@
-        <div class="px-4 pt-2 pb-4 space-y-2">
-            <p class="text-xs font-medium text-muted-foreground">@Localizer["Theme.Mode"]</p>
-            <div class="grid grid-cols-2 gap-1.5">
+        <div class="bb:px-4 bb:pt-2 bb:pb-4 bb:space-y-2">
+            <p class="bb:text-xs bb:font-medium bb:text-muted-foreground">@Localizer["Theme.Mode"]</p>
+            <div class="bb:grid bb:grid-cols-2 bb:gap-1.5">
                 <button type="button"
                         class="@ClassNames.cn(
-                            "inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                            !ThemeService.IsDarkMode ? "border-foreground bg-accent" : "border-input hover:bg-accent/50")"
+                            "bb:inline-flex bb:items-center bb:justify-center bb:gap-1.5 bb:rounded-md bb:border bb:px-3 bb:py-1.5 bb:text-xs bb:font-medium bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+                            !ThemeService.IsDarkMode ? "bb:border-foreground bb:bg-accent" : "bb:border-input bb:hover:bg-accent/50")"
                         @onclick="() => OnModeSelected(false)"
                         aria-pressed="@((!ThemeService.IsDarkMode).ToString().ToLowerInvariant())">
-                    <LucideIcon Name="sun" Class="h-3.5 w-3.5" />
+                    <LucideIcon Name="sun" Class="bb:h-3.5 bb:w-3.5" />
                     @Localizer["Theme.Light"]
                 </button>
                 <button type="button"
                         class="@ClassNames.cn(
-                            "inline-flex items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                            ThemeService.IsDarkMode ? "border-foreground bg-accent" : "border-input hover:bg-accent/50")"
+                            "bb:inline-flex bb:items-center bb:justify-center bb:gap-1.5 bb:rounded-md bb:border bb:px-3 bb:py-1.5 bb:text-xs bb:font-medium bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+                            ThemeService.IsDarkMode ? "bb:border-foreground bb:bg-accent" : "bb:border-input bb:hover:bg-accent/50")"
                         @onclick="() => OnModeSelected(true)"
                         aria-pressed="@ThemeService.IsDarkMode.ToString().ToLowerInvariant()">
-                    <LucideIcon Name="moon" Class="h-3.5 w-3.5" />
+                    <LucideIcon Name="moon" Class="bb:h-3.5 bb:w-3.5" />
                     @Localizer["Theme.Dark"]
                 </button>
             </div>
@@ -199,20 +199,20 @@
     {
         <button type="button"
                 class="@ClassNames.cn(
-                    "inline-flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-xs transition-colors",
-                    isSelected ? "border-foreground bg-accent" : "border-input hover:bg-accent/50")"
+                    "bb:inline-flex bb:items-center bb:gap-1.5 bb:rounded-md bb:border bb:px-2 bb:py-1.5 bb:text-xs bb:transition-colors",
+                    isSelected ? "bb:border-foreground bb:bg-accent" : "bb:border-input bb:hover:bg-accent/50")"
                 @onclick="onClick"
                 aria-pressed="@isSelected.ToString().ToLowerInvariant()">
             @if (isSelected)
             {
-                <span class="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 border-foreground"
+                <span class="bb:flex bb:h-4 bb:w-4 bb:shrink-0 bb:items-center bb:justify-center bb:rounded-full bb:border-2 bb:border-foreground"
                       style="background-color: @swatch;">
-                    <LucideIcon Name="check" Class="h-2.5 w-2.5 text-white" />
+                    <LucideIcon Name="check" Class="bb:h-2.5 bb:w-2.5 bb:text-white" />
                 </span>
             }
             else
             {
-                <span class="h-4 w-4 shrink-0 rounded-full" style="background-color: @swatch;"></span>
+                <span class="bb:h-4 bb:w-4 bb:shrink-0 bb:rounded-full" style="background-color: @swatch;"></span>
             }
             @label
         </button>

@@ -122,29 +122,29 @@ public partial class BbInputGroupAddon : ComponentBase
         {
             var baseClasses = Align switch
             {
-                InputGroupAlign.InlineStart => "flex items-center gap-2 text-muted-foreground",
-                InputGroupAlign.InlineEnd => "flex items-center gap-2 text-muted-foreground",
-                InputGroupAlign.BlockStart => "flex items-center justify-start gap-2 text-muted-foreground",
-                InputGroupAlign.BlockEnd => "flex items-center justify-start gap-2 text-muted-foreground",
-                _ => "flex items-center gap-2 text-muted-foreground"
+                InputGroupAlign.InlineStart => "bb:flex bb:items-center bb:gap-2 bb:text-muted-foreground",
+                InputGroupAlign.InlineEnd => "bb:flex bb:items-center bb:gap-2 bb:text-muted-foreground",
+                InputGroupAlign.BlockStart => "bb:flex bb:items-center bb:justify-start bb:gap-2 bb:text-muted-foreground",
+                InputGroupAlign.BlockEnd => "bb:flex bb:items-center bb:justify-start bb:gap-2 bb:text-muted-foreground",
+                _ => "bb:flex bb:items-center bb:gap-2 bb:text-muted-foreground"
             };
 
             var alignmentClasses = Align switch
             {
-                InputGroupAlign.InlineStart => "pl-3 pr-0 py-0", // Left edge spacing + no gap to input (input has its own pl-3)
-                InputGroupAlign.InlineEnd => "pr-3 pl-0 py-0", // Right edge spacing + no gap from input (input has its own pr-3)
-                InputGroupAlign.BlockStart => "px-3 pt-2 pb-1 w-full", // Removed border for seamless integration
-                InputGroupAlign.BlockEnd => "px-3 pb-2 pt-1 w-full", // Removed border for seamless integration
-                _ => "pl-3 pr-0 py-0"
+                InputGroupAlign.InlineStart => "bb:pl-3 bb:pr-0 bb:py-0", // Left edge spacing + no gap to input (input has its own pl-3)
+                InputGroupAlign.InlineEnd => "bb:pr-3 bb:pl-0 bb:py-0", // Right edge spacing + no gap from input (input has its own pr-3)
+                InputGroupAlign.BlockStart => "bb:px-3 bb:pt-2 bb:pb-1 bb:w-full", // Removed border for seamless integration
+                InputGroupAlign.BlockEnd => "bb:px-3 bb:pb-2 bb:pt-1 bb:w-full", // Removed border for seamless integration
+                _ => "bb:pl-3 bb:pr-0 bb:py-0"
             };
 
             // Adjust for button children - create uniform 6px spacing on all sides
             var buttonAdjustments = Align switch
             {
-                InputGroupAlign.InlineStart => "has-[>button]:pl-1.5 has-[>button]:!py-1.5", // Uniform 6px spacing all sides
-                InputGroupAlign.InlineEnd => "has-[>button]:pr-1.5 has-[>button]:!py-1.5", // Uniform 6px spacing all sides
-                InputGroupAlign.BlockStart => "has-[>button]:-mt-1 has-[>button]:pt-1",
-                InputGroupAlign.BlockEnd => "has-[>button]:-mb-1 has-[>button]:pb-1",
+                InputGroupAlign.InlineStart => "bb:has-[>button]:pl-1.5 bb:has-[>button]:!py-1.5", // Uniform 6px spacing all sides
+                InputGroupAlign.InlineEnd => "bb:has-[>button]:pr-1.5 bb:has-[>button]:!py-1.5", // Uniform 6px spacing all sides
+                InputGroupAlign.BlockStart => "bb:has-[>button]:-mt-1 bb:has-[>button]:pt-1",
+                InputGroupAlign.BlockEnd => "bb:has-[>button]:-mb-1 bb:has-[>button]:pb-1",
                 _ => ""
             };
 

@@ -33,7 +33,7 @@ public partial class BbItemActions : ComponentBase
     /// Gets the computed CSS classes for the actions element.
     /// </summary>
     private string CssClass => ClassNames.cn(
-        "flex items-center gap-2",
+        "bb:flex bb:items-center bb:gap-2",
         Class
     );
 }

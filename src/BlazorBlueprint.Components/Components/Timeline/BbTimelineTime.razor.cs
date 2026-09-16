@@ -26,7 +26,7 @@ public partial class BbTimelineTime : ComponentBase
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string CssClass => ClassNames.cn(
-        "text-sm font-medium tracking-tight text-muted-foreground",
+        "bb:text-sm bb:font-medium bb:tracking-tight bb:text-muted-foreground",
         Class
     );
 }

@@ -89,11 +89,11 @@ public partial class BbFieldError : ComponentBase
     /// </remarks>
     private string CssClass => ClassNames.cn(
         // Typography - smaller size
-        "text-sm",
+        "bb:text-sm",
         // Font weight for visibility
-        "font-medium",
+        "bb:font-medium",
         // Destructive color for errors
-        "text-destructive",
+        "bb:text-destructive",
         // Custom classes (if provided)
         Class
     );

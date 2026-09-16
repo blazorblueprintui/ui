@@ -11,23 +11,23 @@
 
 <div class="@CssClass" @attributes="AdditionalAttributes">
     @* Calendar Header with Navigation *@
-    <div class="flex flex-col space-y-4 sm:flex-row sm:space-x-4 sm:space-y-0">
-        <div class="space-y-4">
+    <div class="bb:flex bb:flex-col bb:space-y-4 bb:sm:flex-row bb:sm:space-x-4 bb:sm:space-y-0">
+        <div class="bb:space-y-4">
             @* Month/Year Navigation *@
-            <div class="flex items-center justify-between pt-1">
+            <div class="bb:flex bb:items-center bb:justify-between bb:pt-1">
                 <BbButton Variant="ButtonVariant.Outline"
                         Size="ButtonSize.Icon"
-                        Class="h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+                        Class="bb:h-7 bb:w-7 bb:bg-transparent bb:p-0 bb:opacity-50 bb:hover:opacity-100"
                         OnClick="@PreviousMonth"
                         AriaLabel="@Localizer["Calendar.GoToPreviousMonth"]">
-                    <LucideIcon Name="chevron-left" Class="h-4 w-4" />
+                    <LucideIcon Name="chevron-left" Class="bb:h-4 bb:w-4" />
                 </BbButton>
-                <div class="flex items-center gap-1">
+                <div class="bb:flex bb:items-center bb:gap-1">
                     @if (ShowMonthYearDropdowns)
                     {
                         @* Month Select *@
-                        <BbSelect TValue="int" Value="@DisplayDate.Month" ValueChanged="@OnMonthChanged" Class="w-[120px]">
-                            <BbSelectTrigger Class="h-8 border-0 bg-transparent px-2 text-sm font-medium hover:bg-accent focus:ring-0 focus:ring-offset-0">
+                        <BbSelect TValue="int" Value="@DisplayDate.Month" ValueChanged="@OnMonthChanged" Class="bb:w-[120px]">
+                            <BbSelectTrigger Class="bb:h-8 bb:border-0 bb:bg-transparent bb:px-2 bb:text-sm bb:font-medium bb:hover:bg-accent bb:focus:ring-0 bb:focus:ring-offset-0">
                                 <span>@GetMonthName(DisplayDate.Month)</span>
                             </BbSelectTrigger>
                             <BbSelectContent>
@@ -41,8 +41,8 @@
                         @* w-[80px] left the selected year truncated: the dropdown inherits the
                            trigger width, and the selected item spends 16px on px-2 plus a 16px
                            check icon, leaving too little for four digits (#484). *@
-                        <BbSelect TValue="int" Value="@DisplayDate.Year" ValueChanged="@OnYearChanged" Class="w-[100px]">
-                            <BbSelectTrigger Class="h-8 border-0 bg-transparent px-2 text-sm font-medium hover:bg-accent focus:ring-0 focus:ring-offset-0">
+                        <BbSelect TValue="int" Value="@DisplayDate.Year" ValueChanged="@OnYearChanged" Class="bb:w-[100px]">
+                            <BbSelectTrigger Class="bb:h-8 bb:border-0 bb:bg-transparent bb:px-2 bb:text-sm bb:font-medium bb:hover:bg-accent bb:focus:ring-0 bb:focus:ring-offset-0">
                                 <span>@DisplayDate.Year</span>
                             </BbSelectTrigger>
                             <BbSelectContent>
@@ -56,27 +56,27 @@
                     else
                     {
                         @* Simple month/year text header *@
-                        <span class="text-sm font-medium">@GetMonthName(DisplayDate.Month) @DisplayDate.Year</span>
+                        <span class="bb:text-sm bb:font-medium">@GetMonthName(DisplayDate.Month) @DisplayDate.Year</span>
                     }
                 </div>
                 <BbButton Variant="ButtonVariant.Outline"
                         Size="ButtonSize.Icon"
-                        Class="h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+                        Class="bb:h-7 bb:w-7 bb:bg-transparent bb:p-0 bb:opacity-50 bb:hover:opacity-100"
                         OnClick="@NextMonth"
                         AriaLabel="@Localizer["Calendar.GoToNextMonth"]">
-                    <LucideIcon Name="chevron-right" Class="h-4 w-4" />
+                    <LucideIcon Name="chevron-right" Class="bb:h-4 bb:w-4" />
                 </BbButton>
             </div>
 
             @* Calendar Grid *@
-            <table class="w-full border-collapse space-y-1" role="grid"
+            <table class="bb:w-full bb:border-collapse bb:space-y-1" role="grid"
                    @onkeydown="HandleKeyDown"
                    @onkeydown:preventDefault="@ShouldPreventKeyDefault">
                 <thead>
-                    <tr class="flex">
+                    <tr class="bb:flex">
                         @foreach (var dayName in DayNames)
                         {
-                            <th scope="col" class="text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]">
+                            <th scope="col" class="bb:text-muted-foreground bb:rounded-md bb:w-9 bb:font-normal bb:text-[0.8rem]">
                                 @dayName
                             </th>
                         }
@@ -85,7 +85,7 @@
                 <tbody>
                     @foreach (var week in GetWeeksInMonth())
                     {
-                        <tr class="flex w-full mt-2">
+                        <tr class="bb:flex bb:w-full bb:mt-2">
                             @foreach (var day in week)
                             {
                                 var isSelected = day.HasValue && Selected.HasValue && day.Value.Date == Selected.Value.Date;
@@ -623,16 +623,16 @@
     #region Month/Year Data
 
     // Cached CSS class constants for performance
-    private const string CellBaseClasses = "h-9 w-9 text-center text-sm p-0 relative";
-    private const string CellSelectedClasses = "h-9 w-9 text-center text-sm p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md";
-    private const string CellEmptyClasses = "h-9 w-9 text-center text-sm p-0 relative text-muted-foreground opacity-50";
+    private const string CellBaseClasses = "bb:h-9 bb:w-9 bb:text-center bb:text-sm bb:p-0 bb:relative";
+    private const string CellSelectedClasses = "bb:h-9 bb:w-9 bb:text-center bb:text-sm bb:p-0 bb:relative bb:[&:has([aria-selected])]:bg-accent bb:first:[&:has([aria-selected])]:rounded-l-md bb:last:[&:has([aria-selected])]:rounded-r-md";
+    private const string CellEmptyClasses = "bb:h-9 bb:w-9 bb:text-center bb:text-sm bb:p-0 bb:relative bb:text-muted-foreground bb:opacity-50";
 
-    private const string DayBaseClasses = "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground";
-    private const string DaySelectedClasses = "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground";
-    private const string DayTodayClasses = "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground bg-accent text-accent-foreground";
-    private const string DayDisabledClasses = "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground text-muted-foreground opacity-50";
+    private const string DayBaseClasses = "bb:inline-flex bb:h-9 bb:w-9 bb:items-center bb:justify-center bb:rounded-md bb:text-sm bb:font-normal bb:ring-offset-background bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2 bb:disabled:pointer-events-none bb:disabled:opacity-50 bb:hover:bg-accent bb:hover:text-accent-foreground";
+    private const string DaySelectedClasses = "bb:inline-flex bb:h-9 bb:w-9 bb:items-center bb:justify-center bb:rounded-md bb:text-sm bb:font-normal bb:ring-offset-background bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2 bb:disabled:pointer-events-none bb:disabled:opacity-50 bb:bg-primary bb:text-primary-foreground bb:hover:bg-primary bb:hover:text-primary-foreground bb:focus:bg-primary bb:focus:text-primary-foreground";
+    private const string DayTodayClasses = "bb:inline-flex bb:h-9 bb:w-9 bb:items-center bb:justify-center bb:rounded-md bb:text-sm bb:font-normal bb:ring-offset-background bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2 bb:disabled:pointer-events-none bb:disabled:opacity-50 bb:hover:bg-accent bb:hover:text-accent-foreground bb:bg-accent bb:text-accent-foreground";
+    private const string DayDisabledClasses = "bb:inline-flex bb:h-9 bb:w-9 bb:items-center bb:justify-center bb:rounded-md bb:text-sm bb:font-normal bb:ring-offset-background bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2 bb:disabled:pointer-events-none bb:disabled:opacity-50 bb:hover:bg-accent bb:hover:text-accent-foreground bb:text-muted-foreground bb:opacity-50";
     // Outside (previous/next month) days: muted like disabled, but still interactive/clickable.
-    private const string DayOutsideClasses = "inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground text-muted-foreground opacity-50";
+    private const string DayOutsideClasses = "bb:inline-flex bb:h-9 bb:w-9 bb:items-center bb:justify-center bb:rounded-md bb:text-sm bb:font-normal bb:ring-offset-background bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2 bb:disabled:pointer-events-none bb:disabled:opacity-50 bb:hover:bg-accent bb:hover:text-accent-foreground bb:text-muted-foreground bb:opacity-50";
 
     private string GetMonthName(int month) => MonthNames is { Length: 12 }
         ? MonthNames[month - 1]
@@ -771,7 +771,7 @@
         // Add keyboard focus ring (distinct from :focus-visible for programmatic focus)
         if (isFocused && _isKeyboardNavigating && !isSelected)
         {
-            baseClass = ClassNames.cn(baseClass, "ring-2 ring-ring ring-offset-2");
+            baseClass = ClassNames.cn(baseClass, "bb:ring-2 bb:ring-ring bb:ring-offset-2");
         }
 
         var customClass = DayClassFunc?.Invoke(date);
@@ -832,7 +832,7 @@
     /// Gets the computed CSS classes for the calendar container.
     /// </summary>
     private string CssClass => ClassNames.cn(
-        "p-3",
+        "bb:p-3",
         Class
     );
 }

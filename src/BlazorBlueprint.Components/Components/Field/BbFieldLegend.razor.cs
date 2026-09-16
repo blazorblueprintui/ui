@@ -87,9 +87,9 @@ public partial class BbFieldLegend : ComponentBase
     /// </remarks>
     private string CssClass => ClassNames.cn(
         // Typography
-        "text-sm font-medium leading-none",
+        "bb:text-sm bb:font-medium bb:leading-none",
         // Spacing
-        "mb-3",
+        "bb:mb-3",
         // Custom classes (if provided)
         Class
     );

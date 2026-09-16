@@ -26,6 +26,6 @@ public partial class BbMessageContent : ComponentBase
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private string CssClass => ClassNames.cn(
-        "flex w-full min-w-0 flex-col gap-2.5 wrap-break-word group-data-[align=end]/message:*:data-slot:self-end",
+        "bb:flex bb:w-full bb:min-w-0 bb:flex-col bb:gap-2.5 bb:wrap-break-word bb:group-data-[align=end]/message:*:data-slot:self-end",
         Class);
 }

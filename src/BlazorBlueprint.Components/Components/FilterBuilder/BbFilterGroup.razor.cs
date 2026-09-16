@@ -118,20 +118,20 @@ public partial class BbFilterGroup : ComponentBase
     // Depth-based accent colors for visual nesting
     private static readonly string[] depthBorderColors = new[]
     {
-        "border-l-primary",
-        "border-l-blue-500",
-        "border-l-purple-500",
-        "border-l-orange-500"
+        "bb:border-l-primary",
+        "bb:border-l-blue-500",
+        "bb:border-l-purple-500",
+        "bb:border-l-orange-500"
     };
 
     private string DepthBorderColor => depthBorderColors[Depth % depthBorderColors.Length];
 
     private string GroupCssClass => ClassNames.cn(
-        "rounded-lg border p-3 space-y-3",
-        !IsRoot ? ClassNames.cn("border-l-4", DepthBorderColor, "bg-muted/30") : "bg-background"
+        "bb:rounded-lg bb:border bb:p-3 bb:space-y-3",
+        !IsRoot ? ClassNames.cn("bb:border-l-4", DepthBorderColor, "bb:bg-muted/30") : "bb:bg-background"
     );
 
-    private static string HeaderCssClass => "flex items-center justify-between";
+    private static string HeaderCssClass => "bb:flex bb:items-center bb:justify-between";
 
-    private static string ConditionsCssClass => "space-y-2";
+    private static string ConditionsCssClass => "bb:space-y-2";
 }

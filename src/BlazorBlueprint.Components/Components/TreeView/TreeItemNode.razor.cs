@@ -95,9 +95,9 @@ public partial class TreeItemNode<TItem> : ComponentBase
     private IEnumerable<TItem> Children => ChildrenAccessor(Item);
 
     private string NodeCssClass => ClassNames.cn(
-        "group/treeitem flex items-center gap-1.5 py-1 px-2 rounded-md cursor-pointer select-none",
-        "hover:bg-accent/50 transition-colors",
-        IsSelected ? "bg-accent text-accent-foreground" : "text-foreground"
+        "bb:group/treeitem bb:flex bb:items-center bb:gap-1.5 bb:py-1 bb:px-2 bb:rounded-md bb:cursor-pointer bb:select-none",
+        "bb:hover:bg-accent/50 bb:transition-colors",
+        IsSelected ? "bb:bg-accent bb:text-accent-foreground" : "bb:text-foreground"
     );
 
     private string NodeStyle => $"padding-left: {(Depth * 1.25) + 0.5}rem;";
@@ -105,8 +105,8 @@ public partial class TreeItemNode<TItem> : ComponentBase
     private string ChildNodeStyle => $"padding-left: {((Depth + 1) * 1.25) + 0.5}rem;";
 
     private string ChevronCssClass => ClassNames.cn(
-        "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
-        IsExpanded ? "rotate-90" : null
+        "bb:h-4 bb:w-4 bb:shrink-0 bb:text-muted-foreground bb:transition-transform bb:duration-200",
+        IsExpanded ? "bb:rotate-90" : null
     );
 
     private RenderFragment HighlightedLabel => builder =>
@@ -115,7 +115,7 @@ public partial class TreeItemNode<TItem> : ComponentBase
         if (string.IsNullOrEmpty(SearchText))
         {
             builder.OpenElement(0, "span");
-            builder.AddAttribute(1, "class", "truncate");
+            builder.AddAttribute(1, "class", "bb:truncate");
             builder.AddContent(2, text);
             builder.CloseElement();
             return;
@@ -125,14 +125,14 @@ public partial class TreeItemNode<TItem> : ComponentBase
         if (index < 0)
         {
             builder.OpenElement(0, "span");
-            builder.AddAttribute(1, "class", "truncate");
+            builder.AddAttribute(1, "class", "bb:truncate");
             builder.AddContent(2, text);
             builder.CloseElement();
             return;
         }
 
         builder.OpenElement(0, "span");
-        builder.AddAttribute(1, "class", "truncate");
+        builder.AddAttribute(1, "class", "bb:truncate");
 
         if (index > 0)
         {
@@ -140,7 +140,7 @@ public partial class TreeItemNode<TItem> : ComponentBase
         }
 
         builder.OpenElement(3, "mark");
-        builder.AddAttribute(4, "class", "bg-yellow-200 dark:bg-yellow-900/50 rounded-sm");
+        builder.AddAttribute(4, "class", "bb:bg-yellow-200 bb:dark:bg-yellow-900/50 bb:rounded-sm");
         builder.AddContent(5, text.Substring(index, SearchText.Length));
         builder.CloseElement();
 

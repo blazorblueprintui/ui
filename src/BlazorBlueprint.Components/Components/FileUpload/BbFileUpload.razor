@@ -19,7 +19,7 @@
                    accept="@Accept"
                    multiple="@Multiple"
                    disabled="@Disabled"
-                   class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                   class="bb:absolute bb:inset-0 bb:w-full bb:h-full bb:opacity-0 bb:cursor-pointer"
                    @attributes="AdditionalAttributes"
                    id="@EffectiveId" />
 
@@ -29,12 +29,12 @@
         }
         else
         {
-            <div class="flex flex-col items-center gap-2 pointer-events-none">
-                <div class="p-3 rounded-full bg-muted">
-                    <LucideIcon Name="upload" Class="h-6 w-6 text-muted-foreground" />
+            <div class="bb:flex bb:flex-col bb:items-center bb:gap-2 bb:pointer-events-none">
+                <div class="bb:p-3 bb:rounded-full bb:bg-muted">
+                    <LucideIcon Name="upload" Class="bb:h-6 bb:w-6 bb:text-muted-foreground" />
                 </div>
-                <div class="text-center">
-                    <p class="text-sm font-medium">
+                <div class="bb:text-center">
+                    <p class="bb:text-sm bb:font-medium">
                         @if (_isDragging)
                         {
                             <span>Drop files here</span>
@@ -44,17 +44,17 @@
                             <span>Drag and drop files here</span>
                         }
                     </p>
-                    <p class="text-xs text-muted-foreground mt-1">
-                        or <span class="text-primary underline">browse</span> to upload
+                    <p class="bb:text-xs bb:text-muted-foreground bb:mt-1">
+                        or <span class="bb:text-primary bb:underline">browse</span> to upload
                     </p>
                 </div>
                 @if (!string.IsNullOrEmpty(Accept))
                 {
-                    <p class="text-xs text-muted-foreground">
+                    <p class="bb:text-xs bb:text-muted-foreground">
                         Accepted: @Accept
                     </p>
                 }
-                <p class="text-xs text-muted-foreground">
+                <p class="bb:text-xs bb:text-muted-foreground">
                     Max size: @FormatSize(MaxFileSize)
                     @if (Multiple)
                     {
@@ -68,40 +68,40 @@
     @* File List *@
     @if (_files.Count > 0)
     {
-        <div class="mt-4 space-y-2">
+        <div class="bb:mt-4 bb:space-y-2">
             @foreach (var file in _files)
             {
                 <div class="@FileItemClass">
                     @* Preview or Icon *@
-                    <div class="flex-shrink-0">
+                    <div class="bb:flex-shrink-0">
                         @if (ShowPreview && file.IsImage && !string.IsNullOrEmpty(file.PreviewUrl))
                         {
                             <img src="@file.PreviewUrl"
                                  alt="@file.Name"
-                                 class="h-12 w-12 rounded object-cover" />
+                                 class="bb:h-12 bb:w-12 bb:rounded bb:object-cover" />
                         }
                         else
                         {
-                            <div class="h-12 w-12 rounded bg-muted flex items-center justify-center">
-                                <LucideIcon Name="@GetFileIcon(file)" Class="h-6 w-6 text-muted-foreground" />
+                            <div class="bb:h-12 bb:w-12 bb:rounded bb:bg-muted bb:flex bb:items-center bb:justify-center">
+                                <LucideIcon Name="@GetFileIcon(file)" Class="bb:h-6 bb:w-6 bb:text-muted-foreground" />
                             </div>
                         }
                     </div>
 
                     @* File Info *@
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium truncate">@file.Name</p>
-                        <p class="text-xs text-muted-foreground">@file.FormattedSize</p>
+                    <div class="bb:flex-1 bb:min-w-0">
+                        <p class="bb:text-sm bb:font-medium bb:truncate">@file.Name</p>
+                        <p class="bb:text-xs bb:text-muted-foreground">@file.FormattedSize</p>
                     </div>
 
                     @* Remove Button *@
                     <BbButton Variant="ButtonVariant.Ghost"
                             Size="ButtonSize.Icon"
-                            Class="h-8 w-8 flex-shrink-0"
+                            Class="bb:h-8 bb:w-8 bb:flex-shrink-0"
                             OnClick="@(() => RemoveFile(file))"
                             Disabled="@Disabled"
                             AriaLabel="@($"Remove {file.Name}")">
-                        <LucideIcon Name="x" Class="h-4 w-4" />
+                        <LucideIcon Name="x" Class="bb:h-4 bb:w-4" />
                     </BbButton>
                 </div>
             }
@@ -111,11 +111,11 @@
     @* Validation Errors *@
     @if (_errors.Count > 0)
     {
-        <div class="mt-2 space-y-1">
+        <div class="bb:mt-2 bb:space-y-1">
             @foreach (var error in _errors)
             {
-                <p class="text-sm text-destructive flex items-center gap-1">
-                    <LucideIcon Name="alert-circle" Class="h-4 w-4" />
+                <p class="bb:text-sm bb:text-destructive bb:flex bb:items-center bb:gap-1">
+                    <LucideIcon Name="alert-circle" Class="bb:h-4 bb:w-4" />
                     @error.Message
                 </p>
             }
@@ -503,25 +503,25 @@
     private string EffectiveId => Id ?? (_generatedId ??= $"file-upload-{Guid.NewGuid():N}");
 
     private string ContainerClass => ClassNames.cn(
-        "w-full",
+        "bb:w-full",
         Class
     );
 
     private string DropzoneClass => ClassNames.cn(
-        "relative flex flex-col items-center justify-center",
-        "w-full min-h-[150px] p-6",
-        "border-2 border-dashed rounded-lg",
-        "transition-colors cursor-pointer",
+        "bb:relative bb:flex bb:flex-col bb:items-center bb:justify-center",
+        "bb:w-full bb:min-h-[150px] bb:p-6",
+        "bb:border-2 bb:border-dashed bb:rounded-lg",
+        "bb:transition-colors bb:cursor-pointer",
         // #459: the real focus target is the <input type="file"> laid over this at opacity-0, so
         // focusing it changed nothing visible. focus-within puts the ring on the box the user can
         // actually see. No offset — the dashed border is already the edge.
-        "focus-within:ring-2 focus-within:ring-ring",
-        _isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-muted-foreground/50",
-        Disabled ? "opacity-50 cursor-not-allowed" : null
+        "bb:focus-within:ring-2 bb:focus-within:ring-ring",
+        _isDragging ? "bb:border-primary bb:bg-primary/5" : "bb:border-muted-foreground/25 bb:hover:border-muted-foreground/50",
+        Disabled ? "bb:opacity-50 bb:cursor-not-allowed" : null
     );
 
     private string FileItemClass => ClassNames.cn(
-        "flex items-center gap-3 p-3",
-        "border rounded-lg bg-muted/30"
+        "bb:flex bb:items-center bb:gap-3 bb:p-3",
+        "bb:border bb:rounded-lg bb:bg-muted/30"
     );
 }
