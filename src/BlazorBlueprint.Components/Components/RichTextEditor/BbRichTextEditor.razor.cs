@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Ganss.Xss;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using BlazorBlueprint.Primitives.Services;
@@ -29,7 +30,37 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
     private bool _isOrderedList;
     private bool _isBlockquote;
     private bool _isCodeBlock;
+    private bool _isCode;
+    private bool _isCheckList;
     private string _headerLevel = "";
+    private string _align = "";
+    private bool _canUndo;
+    private bool _canRedo;
+
+    // === Colour Popovers ===
+    private bool _textColorOpen;
+    private bool _highlightOpen;
+
+    /// <summary>Swatches offered for text colour: greys first, then one saturated tone per hue.</summary>
+    private static readonly string[] TextColors =
+    [
+        "#000000", "#404040", "#737373", "#a3a3a3", "#d4d4d4", "#ffffff", "#78350f",
+        "#dc2626", "#ea580c", "#ca8a04", "#16a34a", "#0891b2", "#2563eb", "#7c3aed",
+    ];
+
+    /// <summary>Swatches offered for highlight: light tints that keep text readable.</summary>
+    private static readonly string[] HighlightColors =
+    [
+        "#fef08a", "#fde68a", "#fed7aa", "#fecaca", "#fbcfe8", "#ddd6fe", "#c7d2fe",
+        "#bfdbfe", "#a5f3fc", "#99f6e4", "#bbf7d0", "#d9f99d", "#e5e5e5", "#f5f5f4",
+    ];
+
+    // === Table State ===
+    private const int TablePickerSize = 6;
+    private bool _isInTable;
+    private bool _tableMenuOpen;
+    private int _tablePickerRows;
+    private int _tablePickerColumns;
 
     // === Link Dialog State ===
     private bool _linkDialogOpen;
@@ -44,12 +75,38 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
     private bool _lastDisabled;
     private bool _lastReadOnly;
     private bool _lastLinkDialogOpen;
+    private bool _lastTableMenuOpen;
+    private bool _lastHasImageUploader;
     private bool _formatStateChanged;
 
     /// <summary>
     /// HTML sanitizer for XSS prevention. Thread-safe for static usage.
     /// </summary>
-    private static readonly HtmlSanitizer Sanitizer = new();
+    private static readonly HtmlSanitizer Sanitizer = CreateSanitizer();
+
+    private static HtmlSanitizer CreateSanitizer()
+    {
+        var sanitizer = new HtmlSanitizer();
+
+        // Quill marks checklist items with data-list="checked|unchecked"; without it a bound
+        // Value comes back as plain bullets.
+        sanitizer.AllowedAttributes.Add("data-list");
+
+        // Images inserted without an ImageUploader are data URLs, which the default rules drop.
+        // Only image data on <img src> is let through; data: stays blocked everywhere else,
+        // because on an <a href> it can carry script.
+        sanitizer.FilterUrl += (_, e) =>
+        {
+            if (e.SanitizedUrl == null
+                && string.Equals(e.Tag.TagName, "IMG", StringComparison.OrdinalIgnoreCase)
+                && e.OriginalUrl.StartsWith("data:image/", StringComparison.OrdinalIgnoreCase))
+            {
+                e.SanitizedUrl = e.OriginalUrl;
+            }
+        };
+
+        return sanitizer;
+    }
 
     // === Parameters - Value Binding ===
 
@@ -90,6 +147,25 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
     /// </summary>
     [Parameter]
     public RenderFragment? ToolbarContent { get; set; }
+
+    // === Parameters - Images ===
+
+    /// <summary>
+    /// Receives every image the user adds — from the toolbar button, a drop or a paste — and
+    /// returns the URL to embed, or <c>null</c> to reject the file. Store the image wherever
+    /// you keep uploads and return its address. Without a handler, images are embedded as
+    /// data URLs inside the HTML, which is what Quill does on its own; that works for small
+    /// pictures but bloats the value and is not what you want in a database.
+    /// </summary>
+    [Parameter]
+    public Func<EditorImageUpload, Task<string?>>? ImageUploader { get; set; }
+
+    /// <summary>
+    /// Gets or sets the largest image, in bytes, that is streamed to <see cref="ImageUploader"/>.
+    /// Larger files are rejected before any data moves. Defaults to 10 MB.
+    /// </summary>
+    [Parameter]
+    public long MaxImageSize { get; set; } = 10 * 1024 * 1024;
 
     // === Parameters - Appearance ===
 
@@ -209,6 +285,13 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
     {
         _parametersChanged = true;
 
+        var hasImageUploader = ImageUploader != null;
+        if (_jsInitialized && _jsModule != null && hasImageUploader != _lastHasImageUploader)
+        {
+            _lastHasImageUploader = hasImageUploader;
+            await _jsModule.InvokeVoidAsync("setImageUploader", _editorId, hasImageUploader);
+        }
+
         // If Value changed externally, update the editor
         if (_jsInitialized && Value != _lastKnownValue && !_pendingValueUpdate)
         {
@@ -238,6 +321,7 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
             _dotNetRef = DotNetObjectReference.Create(this);
 
             var options = BuildEditorOptions();
+            _lastHasImageUploader = ImageUploader != null;
             await _jsModule.InvokeVoidAsync("initializeEditor",
                 _editorRef, _dotNetRef, _editorId, options);
             _jsInitialized = true;
@@ -267,6 +351,14 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
     [JSInvokable]
     public async Task OnTextChangeCallback(TextChangeEventArgs args)
     {
+        if (_canUndo != args.CanUndo || _canRedo != args.CanRedo)
+        {
+            _canUndo = args.CanUndo;
+            _canRedo = args.CanRedo;
+            _formatStateChanged = true;
+            StateHasChanged();
+        }
+
         _lastKnownValue = args.Html;
         Value = args.Html;
         await ValueChanged.InvokeAsync(args.Html);
@@ -275,6 +367,25 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
         await DeltaValueChanged.InvokeAsync(args.Delta);
 
         await OnTextChange.InvokeAsync(args);
+    }
+
+    /// <summary>
+    /// Called from JavaScript with each image the user picked, dropped or pasted, when an
+    /// <see cref="ImageUploader"/> is set. Returns the URL to embed, or <c>null</c> to skip.
+    /// </summary>
+    [JSInvokable]
+    public async Task<string?> OnImageUploadCallback(IJSStreamReference stream, string fileName, string contentType, long size)
+    {
+        await using (stream)
+        {
+            if (ImageUploader == null || size > MaxImageSize)
+            {
+                return null;
+            }
+
+            await using var content = await stream.OpenReadStreamAsync(MaxImageSize);
+            return await ImageUploader(new EditorImageUpload(fileName, contentType, size, content));
+        }
     }
 
     [JSInvokable]
@@ -362,14 +473,19 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
             "italic" => _isItalic,
             "underline" => _isUnderline,
             "strike" => _isStrike,
+            "code" => _isCode,
             "blockquote" => _isBlockquote,
             "code-block" => _isCodeBlock,
             "list" when value?.ToString() == "bullet" => _isBulletList,
             "list" when value?.ToString() == "ordered" => _isOrderedList,
+            "list" when value?.ToString() == "check" => _isCheckList,
             _ => false
         };
 
-        var newValue = isActive ? false : (value ?? true);
+        // A checklist is Quill's list format with the value "unchecked" (or "checked");
+        // "check" is the toolbar's name for it.
+        var applied = value?.ToString() == "check" ? "unchecked" : value;
+        var newValue = isActive ? false : (applied ?? true);
 
         // Use formatAndGetState for all formats to ensure immediate state sync
         var formatState = await _jsModule.InvokeAsync<Dictionary<string, object?>>(
@@ -393,12 +509,18 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
         _isStrike = GetFormatBool(format, "strike");
         _isBlockquote = GetFormatBool(format, "blockquote");
         _isCodeBlock = GetFormatBool(format, "code-block");
+        _isCode = GetFormatBool(format, "code");
 
         var listValue = GetFormatString(format, "list");
         _isBulletList = listValue == "bullet";
         _isOrderedList = listValue == "ordered";
+        _isCheckList = listValue is "checked" or "unchecked";
 
         _headerLevel = GetFormatString(format, "header");
+        _align = GetFormatString(format, "align");
+
+        // Quill reports the row id of the cell that holds the caret; any value means "in a table".
+        _isInTable = !string.IsNullOrEmpty(GetFormatString(format, "table"));
 
         // Mark format state as changed for ShouldRender optimization
         _formatStateChanged = true;
@@ -418,6 +540,7 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
             _lastDisabled = Disabled;
             _lastReadOnly = ReadOnly;
             _lastLinkDialogOpen = _linkDialogOpen;
+            _lastTableMenuOpen = _tableMenuOpen;
             _formatStateChanged = false;
             return true;
         }
@@ -426,13 +549,15 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
         var disabledChanged = _lastDisabled != Disabled;
         var readOnlyChanged = _lastReadOnly != ReadOnly;
         var dialogChanged = _lastLinkDialogOpen != _linkDialogOpen;
+        var tableMenuChanged = _lastTableMenuOpen != _tableMenuOpen;
 
-        if (valueChanged || disabledChanged || readOnlyChanged || dialogChanged || _formatStateChanged)
+        if (valueChanged || disabledChanged || readOnlyChanged || dialogChanged || tableMenuChanged || _formatStateChanged)
         {
             _lastValue = Value;
             _lastDisabled = Disabled;
             _lastReadOnly = ReadOnly;
             _lastLinkDialogOpen = _linkDialogOpen;
+            _lastTableMenuOpen = _tableMenuOpen;
             _formatStateChanged = false;
             return true;
         }
@@ -574,7 +699,208 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
         await _jsModule.InvokeVoidAsync("focus", _editorId);
     }
 
+    // === Alignment, Colour, Images, History ===
+
+    private string AlignIcon => _align switch
+    {
+        "center" => "align-center",
+        "right" => "align-right",
+        "justify" => "align-justify",
+        _ => "align-left"
+    };
+
+    private async Task SetAlignAsync(string? value)
+    {
+        if (_jsModule == null || !_jsInitialized || Disabled)
+        {
+            return;
+        }
+
+        var state = await _jsModule.InvokeAsync<Dictionary<string, object?>>(
+            "formatAndGetState", _editorId, "align", value is null ? false : value);
+        UpdateFormatState(state);
+        await _jsModule.InvokeVoidAsync("focus", _editorId);
+    }
+
+    private void HandleTextColorOpenChanged(bool open)
+    {
+        _textColorOpen = open;
+        _formatStateChanged = true;
+    }
+
+    private void HandleHighlightOpenChanged(bool open)
+    {
+        _highlightOpen = open;
+        _formatStateChanged = true;
+    }
+
+    private async Task SetColorAsync(string format, string? value)
+    {
+        _textColorOpen = false;
+        _highlightOpen = false;
+        _formatStateChanged = true;
+
+        if (_jsModule == null || !_jsInitialized || Disabled)
+        {
+            return;
+        }
+
+        var state = await _jsModule.InvokeAsync<Dictionary<string, object?>>(
+            "formatAndGetState", _editorId, format, value is null ? false : value);
+        UpdateFormatState(state);
+        await _jsModule.InvokeVoidAsync("focus", _editorId);
+    }
+
+    private async Task PickImageAsync()
+    {
+        if (_jsModule == null || !_jsInitialized || Disabled)
+        {
+            return;
+        }
+
+        await _jsModule.InvokeVoidAsync("pickImage", _editorId);
+    }
+
+    private sealed class HistoryState
+    {
+        public bool CanUndo { get; set; }
+        public bool CanRedo { get; set; }
+    }
+
+    private async Task HistoryAsync(string action)
+    {
+        if (_jsModule == null || !_jsInitialized || Disabled)
+        {
+            return;
+        }
+
+        var state = await _jsModule.InvokeAsync<HistoryState>(action, _editorId);
+        _canUndo = state.CanUndo;
+        _canRedo = state.CanRedo;
+        _formatStateChanged = true;
+        StateHasChanged();
+    }
+
+    // === Table Toolbar ===
+
+    private void HandleTableMenuOpenChange(bool open)
+    {
+        if (!open)
+        {
+            SetTablePickerHover(0, 0);
+        }
+    }
+
+    private void SetTablePickerHover(int rows, int columns)
+    {
+        if (_tablePickerRows == rows && _tablePickerColumns == columns)
+        {
+            return;
+        }
+
+        _tablePickerRows = rows;
+        _tablePickerColumns = columns;
+        _formatStateChanged = true;
+    }
+
+    private string TablePickerLabel => _tablePickerRows == 0
+        ? Localizer["RichTextEditor.InsertTable"]
+        : Localizer["RichTextEditor.TableSize", _tablePickerRows, _tablePickerColumns];
+
+    private string TablePickerCellClass(int row, int column) => ClassNames.cn(
+        "bb:h-5 bb:w-5 bb:rounded-sm bb:border bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+        row <= _tablePickerRows && column <= _tablePickerColumns
+            ? "bb:border-primary bb:bg-primary/20"
+            : "bb:border-input bb:bg-background"
+    );
+
+    private async Task InsertTableFromPickerAsync(int rows, int columns)
+    {
+        _tableMenuOpen = false;
+        SetTablePickerHover(0, 0);
+        await InsertTableAsync(rows, columns);
+    }
+
+    private async Task RunTableActionAsync(string action)
+    {
+        _tableMenuOpen = false;
+        await TableActionAsync(action);
+    }
+
+    private async Task TableActionAsync(string action)
+    {
+        if (_jsModule == null || !_jsInitialized || Disabled)
+        {
+            return;
+        }
+
+        var state = await _jsModule.InvokeAsync<Dictionary<string, object?>>("tableAction", _editorId, action);
+        UpdateFormatState(state);
+    }
+
     // === Public API Methods ===
+
+    /// <summary>Undoes the last user change. Programmatic <see cref="Value"/> updates are not undoable.</summary>
+    public Task UndoAsync() => HistoryAsync("undo");
+
+    /// <summary>Redoes the last undone change.</summary>
+    public Task RedoAsync() => HistoryAsync("redo");
+
+    /// <summary>
+    /// Inserts an image by URL at the caret. Use this after storing an image yourself; images
+    /// the user adds through the toolbar, a drop or a paste go through <see cref="ImageUploader"/>.
+    /// </summary>
+    public async Task InsertImageAsync(string url)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(url);
+
+        if (_jsModule != null && _jsInitialized && !Disabled)
+        {
+            await _jsModule.InvokeVoidAsync("insertImage", _editorId, url);
+        }
+    }
+
+    /// <summary>
+    /// Inserts a table with the given number of rows and columns at the caret.
+    /// Uses Quill's built-in table module; cells are plain <c>&lt;td&gt;</c> elements and
+    /// the HTML output contains a regular <c>&lt;table&gt;</c>.
+    /// </summary>
+    /// <param name="rows">Number of rows, at least 1.</param>
+    /// <param name="columns">Number of columns, at least 1.</param>
+    public async Task InsertTableAsync(int rows, int columns)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(rows, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(columns, 1);
+
+        if (_jsModule == null || !_jsInitialized || Disabled)
+        {
+            return;
+        }
+
+        var state = await _jsModule.InvokeAsync<Dictionary<string, object?>>("insertTable", _editorId, rows, columns);
+        UpdateFormatState(state);
+    }
+
+    /// <summary>Inserts a row above the one that holds the caret. No-op outside a table.</summary>
+    public Task InsertRowAboveAsync() => TableActionAsync("insertRowAbove");
+
+    /// <summary>Inserts a row below the one that holds the caret. No-op outside a table.</summary>
+    public Task InsertRowBelowAsync() => TableActionAsync("insertRowBelow");
+
+    /// <summary>Inserts a column to the left of the one that holds the caret. No-op outside a table.</summary>
+    public Task InsertColumnLeftAsync() => TableActionAsync("insertColumnLeft");
+
+    /// <summary>Inserts a column to the right of the one that holds the caret. No-op outside a table.</summary>
+    public Task InsertColumnRightAsync() => TableActionAsync("insertColumnRight");
+
+    /// <summary>Deletes the row that holds the caret. No-op outside a table.</summary>
+    public Task DeleteRowAsync() => TableActionAsync("deleteRow");
+
+    /// <summary>Deletes the column that holds the caret. No-op outside a table.</summary>
+    public Task DeleteColumnAsync() => TableActionAsync("deleteColumn");
+
+    /// <summary>Deletes the table that holds the caret. No-op outside a table.</summary>
+    public Task DeleteTableAsync() => TableActionAsync("deleteTable");
 
     /// <summary>
     /// Focuses the editor.
@@ -718,7 +1044,8 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
     private object BuildEditorOptions() => new
     {
         placeholder = Placeholder ?? "",
-        readOnly = Disabled || ReadOnly
+        readOnly = Disabled || ReadOnly,
+        hasImageUploader = ImageUploader != null
     };
 
     // === CSS Classes ===

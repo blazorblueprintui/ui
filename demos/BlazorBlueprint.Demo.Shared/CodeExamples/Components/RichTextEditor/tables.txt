@@ -1,0 +1,19 @@
+@* The Full toolbar includes the table button: a size picker outside a table,
+   row/column/delete actions inside one. Tables round-trip as plain <table> HTML. *@
+<BbRichTextEditor @ref="editor"
+                @bind-Value="value"
+                Toolbar="ToolbarPreset.Full"
+                Placeholder="Insert a table from the toolbar..." />
+
+@* The same actions are available on the component reference. *@
+<BbButton OnClick="@(async _ => await editor!.InsertTableAsync(2, 3))">Insert 2 × 3 table</BbButton>
+<BbButton OnClick="@(async _ => await editor!.InsertRowBelowAsync())">Insert row below</BbButton>
+<BbButton OnClick="@(async _ => await editor!.DeleteTableAsync())">Delete table</BbButton>
+
+@code {
+    private BbRichTextEditor? editor;
+    private string? value = @"<table><tbody>
+<tr><td><strong>Region</strong></td><td><strong>Q1</strong></td></tr>
+<tr><td>North</td><td>120</td></tr>
+</tbody></table>";
+}

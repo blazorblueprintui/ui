@@ -112,16 +112,23 @@
             <div class="space-y-3">
                 <h3 class="font-semibold">Available Formatting (Full Toolbar)</h3>
                 <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+                    <li>Undo / Redo - <BbKbd>Ctrl+Z</BbKbd> and <BbKbd>Ctrl+Shift+Z</BbKbd>; the buttons grey out when there is nothing to undo or redo. Programmatic value updates are not undoable</li>
                     <li><strong>Bold</strong> - Select text and click B or press <BbKbd>Ctrl+B</BbKbd></li>
                     <li><em>Italic</em> - Select text and click I or press <BbKbd>Ctrl+I</BbKbd></li>
                     <li><u>Underline</u> - Select text and click U or press <BbKbd>Ctrl+U</BbKbd></li>
                     <li><s>Strikethrough</s> - Select text and click the strikethrough button</li>
+                    <li><code class="bg-muted px-1 rounded">Inline code</code> - Monospace span for identifiers and paths</li>
                     <li>Headers - H1, H2, H3 heading levels via dropdown</li>
+                    <li>Alignment - Left, centre, right or justify, written as an inline <code class="bg-muted px-1 rounded">text-align</code> style so the output renders aligned anywhere</li>
                     <li>Bullet List - Click the bullet list icon</li>
                     <li>Numbered List - Click the numbered list icon</li>
+                    <li>Checklist - Items with a checkbox; click the box in the editor to tick it. The state round-trips through the HTML as <code class="bg-muted px-1 rounded">data-list</code></li>
+                    <li>Text colour and highlight - A palette of swatches each, plus a remove option; written as inline styles</li>
                     <li>Link - Select text and click link icon to add URL</li>
+                    <li>Image - Pick a file, or drop or paste one; see the Images section for the upload hook</li>
                     <li>Blockquote - Add quoted text blocks</li>
                     <li>Code Block - Add code snippets</li>
+                    <li>Table - Pick a size to insert a table; with the caret in a table the same button offers row, column and delete actions</li>
                 </ul>
             </div>
         </div>
@@ -132,6 +139,64 @@
                             Placeholder="Try out the toolbar features..." />
             @RenderHtmlOutput(toolbarDemoValue)
         </div>
+    </section>
+
+    @* Tables *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Tables</h2>
+            <p class="text-muted-foreground">
+                The <code class="bg-muted px-1 rounded">Full</code> toolbar has a table button. Outside a table it opens a size
+                picker; inside a table it offers insert row above/below, insert column left/right, delete row, delete column and
+                delete table. Tables are plain <code class="bg-muted px-1 rounded">&lt;table&gt;</code> markup in the HTML output,
+                and pasted tables are kept. The same actions are available on the component reference, for example
+                <code class="bg-muted px-1 rounded">InsertTableAsync(rows, columns)</code> and <code class="bg-muted px-1 rounded">DeleteTableAsync()</code>.
+            </p>
+        </div>
+
+        <div class="space-y-4">
+            <div class="flex flex-wrap gap-2">
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(async _ => await tableEditor!.InsertTableAsync(2, 3))">
+                    Insert 2 × 3 table
+                </BbButton>
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(async _ => await tableEditor!.InsertRowBelowAsync())">
+                    Insert row below
+                </BbButton>
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(async _ => await tableEditor!.DeleteTableAsync())">
+                    Delete table
+                </BbButton>
+            </div>
+            <BbRichTextEditor @ref="tableEditor"
+                            @bind-Value="tableValue"
+                            Toolbar="ToolbarPreset.Full"
+                            Placeholder="Insert a table from the toolbar..." />
+            @RenderHtmlOutput(tableValue)
+        </div>
+        <CodeBlock Source="Components/RichTextEditor/tables.txt" />
+    </section>
+
+    @* Images *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Images</h2>
+            <p class="text-muted-foreground">
+                The <code class="bg-muted px-1 rounded">Full</code> toolbar has an image button, and an image can be dropped or pasted
+                into any editor. Set <code class="bg-muted px-1 rounded">ImageUploader</code> to receive each file and return the URL to
+                embed — store it wherever you keep uploads. Return <code class="bg-muted px-1 rounded">null</code> to reject a file.
+                Files over <code class="bg-muted px-1 rounded">MaxImageSize</code> (10 MB by default) are rejected before any data moves.
+                Without a handler, images are embedded as data URLs, which is what Quill does on its own; fine for a small picture, but
+                it bloats the value. This demo's handler reads the file and returns a data URL, and refuses anything over 1 MB.
+            </p>
+        </div>
+
+        <div class="space-y-4">
+            <BbRichTextEditor @bind-Value="imageValue"
+                            Toolbar="ToolbarPreset.Full"
+                            ImageUploader="UploadImageAsync"
+                            Placeholder="Insert, drop or paste an image..." />
+            <p class="text-sm text-muted-foreground">Images received by the handler: @imageUploads</p>
+        </div>
+        <CodeBlock Source="Components/RichTextEditor/image-upload.txt" />
     </section>
 
     @* Pre-populated Content *@
@@ -248,20 +313,20 @@
                 <p class="text-sm text-muted-foreground">
                     Add Quill.js CSS to your <code class="bg-muted px-1 rounded">&lt;head&gt;</code>:
                 </p>
-                <pre class="text-xs bg-muted p-3 rounded-md overflow-auto">&lt;link href="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.core.css" rel="stylesheet" /&gt;</pre>
+                <pre class="text-xs bg-muted p-3 rounded-md overflow-auto">&lt;link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.core.css" rel="stylesheet" /&gt;</pre>
                 <p class="text-sm text-muted-foreground mt-2">
                     Add Quill.js script before the closing <code class="bg-muted px-1 rounded">&lt;/body&gt;</code> tag:
                 </p>
-                <pre class="text-xs bg-muted p-3 rounded-md overflow-auto">&lt;script src="https://cdn.jsdelivr.net/npm/quill@2/dist/quill.js"&gt;&lt;/script&gt;</pre>
+                <pre class="text-xs bg-muted p-3 rounded-md overflow-auto">&lt;script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"&gt;&lt;/script&gt;</pre>
             </div>
 
             <div class="space-y-3">
                 <h3 class="font-semibold">Toolbar Presets</h3>
                 <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
                     <li><strong>None</strong> - No toolbar, plain editing area</li>
-                    <li><strong>Simple</strong> - Bold, italic, underline, and lists</li>
-                    <li><strong>Standard</strong> - Headers, basic formatting, lists, links (default)</li>
-                    <li><strong>Full</strong> - All formatting options including blockquote and code blocks</li>
+                    <li><strong>Simple</strong> - Bold, italic, underline, bullet and numbered lists</li>
+                    <li><strong>Standard</strong> - Simple plus undo/redo, headings, strikethrough, checklist and links (default)</li>
+                    <li><strong>Full</strong> - Standard plus inline code, alignment, text colour and highlight, images, blockquote, code block and tables</li>
                     <li><strong>Custom</strong> - Use ToolbarContent to provide your own toolbar</li>
                 </ul>
             </div>
@@ -308,6 +373,16 @@
             new("InsertLink", "Insert Link", "Aria label and tooltip for the link button"),
             new("Blockquote", "Blockquote", "Tooltip for the blockquote toggle"),
             new("CodeBlock", "Code Block", "Tooltip for the code block toggle"),
+            new("Undo/Redo", "Undo (Ctrl+Z), Redo (Ctrl+Shift+Z)", "Tooltips for the history buttons"),
+            new("InlineCode/CheckList", "Inline Code, Checklist", "Tooltips for the inline code and checklist toggles"),
+            new("Align/AlignLeft/AlignCenter/AlignRight/AlignJustify", "Text Alignment, Align Left, Align Center, Align Right, Justify", "Alignment button and menu items"),
+            new("TextColor/Highlight/RemoveColor", "Text Color, Highlight, Remove Color", "Colour buttons and the palette's remove option"),
+            new("InsertImage", "Insert Image", "Tooltip for the image button"),
+            new("Table/InsertTable", "Table, Insert table", "Table button tooltip and size picker heading"),
+            new("TableSize", "{0} × {1}", "Size picker label; {0} rows, {1} columns"),
+            new("InsertRowAbove/InsertRowBelow", "Insert row above, Insert row below", "Table row actions"),
+            new("InsertColumnLeft/InsertColumnRight", "Insert column left, Insert column right", "Table column actions"),
+            new("DeleteRow/DeleteColumn/DeleteTable", "Delete row, Delete column, Delete table", "Table delete actions"),
             new("EditLink/RemoveLink", "Edit Link, Remove Link", "Link dialog title and remove button"),
             new("Cancel/Update/Insert", "Cancel, Update, Insert", "Link dialog action buttons"),
         })"
@@ -370,6 +445,12 @@
                 <ApiParameter Name="Toolbar" Type="ToolbarPreset" Default="ToolbarPreset.Standard">
                     Toolbar preset. Options: None, Simple, Standard, Full, Custom.
                 </ApiParameter>
+                <ApiParameter Name="ImageUploader" Type="Func&lt;EditorImageUpload, Task&lt;string?&gt;&gt;?" Default="null">
+                    Receives every image the user picks, drops or pastes and returns the URL to embed, or null to reject it. Without it, images are embedded as data URLs.
+                </ApiParameter>
+                <ApiParameter Name="MaxImageSize" Type="long" Default="10485760">
+                    Largest image, in bytes, streamed to ImageUploader. Larger files are rejected before any data moves.
+                </ApiParameter>
                 <ApiParameter Name="ToolbarContent" Type="RenderFragment?" Default="null">
                     Custom toolbar content when Toolbar is set to Custom.
                 </ApiParameter>
@@ -416,6 +497,33 @@
     private string? fullValue;
     private string? noToolbarValue;
     private string? toolbarDemoValue;
+    private BbRichTextEditor? tableEditor;
+    private string? imageValue;
+    private int imageUploads;
+
+    private async Task<string?> UploadImageAsync(EditorImageUpload image)
+    {
+        if (image.Size > 1024 * 1024)
+        {
+            return null;
+        }
+
+        using var buffer = new MemoryStream();
+        await image.Content.CopyToAsync(buffer);
+        imageUploads++;
+
+        // A real handler writes the bytes to blob storage or disk and returns that URL.
+        return $"data:{image.ContentType};base64,{Convert.ToBase64String(buffer.ToArray())}";
+    }
+    private string? tableValue = @"<p>Quarterly numbers:</p>
+<table>
+<tbody>
+<tr><td><strong>Region</strong></td><td><strong>Q1</strong></td><td><strong>Q2</strong></td></tr>
+<tr><td>North</td><td>120</td><td>135</td></tr>
+<tr><td>South</td><td>98</td><td>110</td></tr>
+</tbody>
+</table>
+<p>Put the caret in a cell and open the table menu to add or remove rows and columns.</p>";
     private string? feedbackValue;
     private string? maxHeightValue;
     private string? fixedHeightValue;
