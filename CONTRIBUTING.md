@@ -55,6 +55,13 @@ We welcome all contributions — whether it's bug fixes, new features, documenta
    dotnet build
    ```
 
+6. **Run regression tests:**
+   ```bash
+   dotnet test tests/BlazorBlueprint.Tests
+   node --test tests/js/*.test.mjs
+   ```
+   The JavaScript interaction tests use Node.js 20+ and its built-in test runner, with no npm dependencies. Node.js is only needed for these development tests, not for building or consuming the library. Performance checks count query rows, filter evaluations, and interop callbacks rather than relying on machine-specific timing.
+
 ---
 
 ## Branching Strategy

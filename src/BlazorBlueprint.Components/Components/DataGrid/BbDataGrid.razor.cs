@@ -38,6 +38,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     private IReadOnlyList<TData>? _exportRows;
 
+    // A paged query need not fetch every row until the user actually exports it.
+    private IQueryable<TData>? exportQuery;
+
     private IJSObjectReference? downloadModule;
 
     private TData? _editingItem;
@@ -1670,6 +1673,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private async Task ProcessDataAsync()
     {
         InitializeColumnState();
+        exportQuery = null;
 
         if (ItemsProvider != null)
         {
@@ -1709,9 +1713,28 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             var sorted = filtered.ApplyMultiSort(
                 _gridState.Sorting.Definitions, columns);
 
-            var sortedList = ApplyGlobalSearch(sorted.ToList()).ToList();
+            var queryableGroupings = ResolveGroupings();
 
-            if (ResolveGroupings() is { Count: > 0 } queryableGroupings)
+            // Search matches formatted display values and grouping needs the complete set.
+            // Otherwise keep Count/Skip/Take on the provider (e.g. SQL), not on a List.
+            if (!Virtualize && string.IsNullOrWhiteSpace(SearchText) && queryableGroupings.Count == 0)
+            {
+                _groupedRenderItems = null;
+                _gridState.Pagination.TotalItems = filtered.Count();
+                _processedData = sorted
+                    .Skip(_gridState.Pagination.StartIndex)
+                    .Take(_gridState.Pagination.PageSize)
+                    .ToList();
+                _allSortedData = Array.Empty<TData>();
+                _exportRows = null;
+                exportQuery = sorted;
+                UpdateVirtualizationList();
+                return;
+            }
+
+            var sortedList = ApplyGlobalSearch(sorted).ToList();
+
+            if (queryableGroupings.Count > 0)
             {
                 ProcessGroupedData(sortedList, queryableGroupings);
                 return;
@@ -3953,8 +3976,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// exports <c>Active</c> and not the key behind it.
     /// <para>
     /// <see cref="ExportScope"/> chooses between every filtered row and just the page on screen.
-    /// A grid backed by an <see cref="ItemsProvider"/> only holds the page it fetched, so it
-    /// exports that page and logs a warning the first time.
+    /// A paged <see cref="IQueryable{T}"/> source is queried for all matching rows when the
+    /// export is requested; keep its query provider alive until then. An <see cref="ItemsProvider"/>
+    /// only holds the page it fetched, so it exports that page and logs a warning the first time.
     /// </para>
     /// </remarks>
     /// <returns>The CSV text that was downloaded.</returns>
@@ -4001,6 +4025,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         if (_exportRows != null)
         {
             return _exportRows;
+        }
+
+        if (exportQuery != null)
+        {
+            return exportQuery.ToList();
         }
 
         // An ItemsProvider only returned the page that was asked for, so that is all there is to

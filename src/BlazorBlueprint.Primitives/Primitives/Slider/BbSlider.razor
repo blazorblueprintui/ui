@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Primitives.Slider
 @using System.ComponentModel
+@using System.Globalization
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
 
@@ -10,6 +11,9 @@
 
 <CascadingValue Value="this" IsFixed="false">
     <div @ref="trackRef"
+         data-min="@Min.ToString(CultureInfo.InvariantCulture)"
+         data-max="@Max.ToString(CultureInfo.InvariantCulture)"
+         data-step="@Step.ToString(CultureInfo.InvariantCulture)"
          data-orientation="@Orientation.ToString().ToLower()"
          data-disabled="@(Disabled ? "true" : null)"
          @onkeydown="HandleKeyDown"
@@ -162,6 +166,11 @@
     {
         value = Math.Round(value / Step) * Step;
         value = Math.Max(Min, Math.Min(Max, value));
+
+        if (value == CurrentValue)
+        {
+            return;
+        }
 
         if (IsControlled)
         {

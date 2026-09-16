@@ -171,6 +171,7 @@
                 onSelect: OnSelect,
                 groupId: GroupId
             );
+            UpdateVisibilityAndFilteredIndex();
         }
     }
 
@@ -247,38 +248,8 @@
             return;
         }
 
-        var thisItem = Context.GetItemByIndex(_index);
-        if (thisItem == null)
-        {
-            _isVisible = false;
-            _filteredIndex = -1;
-            return;
-        }
-
-        // Check if item passes filter
-        if (string.IsNullOrWhiteSpace(Context.SearchQuery))
-        {
-            _isVisible = true;
-        }
-        else if (Context.FilterFunction != null)
-        {
-            _isVisible = Context.FilterFunction(thisItem, Context.SearchQuery);
-        }
-        else
-        {
-            _isVisible = thisItem.SearchText?.Contains(Context.SearchQuery, StringComparison.OrdinalIgnoreCase) ?? false;
-        }
-
-        // Update filtered index for efficient focus handling
-        if (_isVisible)
-        {
-            var filteredItems = Context.GetFilteredItems();
-            _filteredIndex = filteredItems.IndexOf(thisItem);
-        }
-        else
-        {
-            _filteredIndex = -1;
-        }
+        _filteredIndex = Context.GetFilteredIndex(_index);
+        _isVisible = _filteredIndex >= 0;
     }
 
     public void Dispose()

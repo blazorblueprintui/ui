@@ -89,6 +89,8 @@ public class CommandContext
     private bool _disabled;
     private bool _hasRegisteredItems;
     private bool _isKeyboardNavigating; // Flag to suppress hover during keyboard nav
+    private List<CommandItemMetadata>? filteredItems;
+    private readonly Dictionary<CommandItemMetadata, int> filteredIndices = new();
 
     /// <summary>
     /// Event that is raised when the state changes.
@@ -141,7 +143,13 @@ public class CommandContext
     public Func<CommandItemMetadata, string, bool>? FilterFunction
     {
         get => _filterFunction;
-        set => _filterFunction = value;
+        set
+        {
+            // A stable delegate can close over mutable state. The parent reapplies this
+            // parameter once per render, which is also the refresh boundary for that state.
+            _filterFunction = value;
+            InvalidateFilter();
+        }
     }
 
     /// <summary>
@@ -253,6 +261,7 @@ public class CommandContext
         if (_searchQuery != query)
         {
             _searchQuery = query;
+            InvalidateFilter();
             _focusedIndex = -1; // Reset focus when search changes
             _focusedVirtualizedGroupIndex = -1; // Reset virtualized group focus
 
@@ -282,6 +291,7 @@ public class CommandContext
             GroupId = groupId
         };
         _items.Add(metadata);
+        InvalidateFilter();
         _hasRegisteredItems = true;
         NotifyStateChanged(); // Notify so CommandEmpty can update
         return _items.Count - 1;
@@ -294,11 +304,22 @@ public class CommandContext
     {
         if (index >= 0 && index < _items.Count)
         {
-            _items[index].Value = value;
-            _items[index].SearchText = searchText ?? value;
-            _items[index].Disabled = disabled;
-            _items[index].OnSelect = onSelect;
-            _items[index].GroupId = groupId;
+            var item = _items[index];
+            if (item == null)
+            {
+                return;
+            }
+
+            if (item.Value != value || item.SearchText != (searchText ?? value)
+                || item.Disabled != disabled || item.GroupId != groupId)
+            {
+                InvalidateFilter();
+            }
+            item.Value = value;
+            item.SearchText = searchText ?? value;
+            item.Disabled = disabled;
+            item.OnSelect = onSelect;
+            item.GroupId = groupId;
         }
     }
 
@@ -310,6 +331,7 @@ public class CommandContext
         if (index >= 0 && index < _items.Count)
         {
             _items[index] = null!; // Mark as null, don't remove to preserve indices
+            InvalidateFilter();
             NotifyStateChanged(); // Notify so CommandEmpty can update
         }
     }
@@ -319,19 +341,45 @@ public class CommandContext
     /// </summary>
     public List<CommandItemMetadata> GetFilteredItems()
     {
-        if (string.IsNullOrWhiteSpace(_searchQuery))
+        // Metadata is public and mutable. An explicit snapshot request still observes edits
+        // made through GetItemByIndex, while component render paths use the cached lookup.
+        InvalidateFilter();
+        return new(GetFilteredItemsCore());
+    }
+
+    // Keep the public list a caller-owned snapshot. Internal consumers share the result and
+    // index map, so refreshing N item components doesn't run the predicate N times per item.
+    private List<CommandItemMetadata> GetFilteredItemsCore()
+    {
+        if (filteredItems != null)
         {
-            return _items.Where(i => i != null).ToList();
+            return filteredItems;
         }
 
-        if (_filterFunction != null)
+        filteredItems = new List<CommandItemMetadata>();
+        filteredIndices.Clear();
+        var showAll = string.IsNullOrWhiteSpace(_searchQuery);
+        foreach (var item in _items)
         {
-            return _items.Where(i => i != null && _filterFunction(i, _searchQuery)).ToList();
+            if (item != null && (showAll || (_filterFunction != null
+                ? _filterFunction(item, _searchQuery)
+                : item.SearchText?.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) == true)))
+            {
+                filteredIndices[item] = filteredItems.Count;
+                filteredItems.Add(item);
+            }
         }
 
-        return _items
-            .Where(i => i != null && (i.SearchText?.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ?? false))
-            .ToList();
+        return filteredItems;
+    }
+
+    private void InvalidateFilter() => filteredItems = null;
+
+    internal int GetFilteredIndex(int registrationIndex)
+    {
+        GetFilteredItemsCore();
+        var item = GetItemByIndex(registrationIndex);
+        return item != null && filteredIndices.TryGetValue(item, out var index) ? index : -1;
     }
 
     /// <summary>
@@ -367,7 +415,7 @@ public class CommandContext
             return true;
         }
 
-        return GetFilteredItems().Any(i => !i.Disabled);
+        return GetFilteredItemsCore().Any(i => !i.Disabled);
     }
 
     /// <summary>
@@ -377,7 +425,7 @@ public class CommandContext
     /// <returns>True if the group has visible items, false otherwise.</returns>
     public bool GroupHasVisibleItems(string groupId)
     {
-        var filteredItems = GetFilteredItems();
+        var filteredItems = GetFilteredItemsCore();
         return filteredItems.Any(i => i.GroupId == groupId);
     }
 
@@ -417,7 +465,7 @@ public class CommandContext
                 return;
             }
 
-            var filteredIndex = GetFilteredItems().IndexOf(item);
+            var filteredIndex = GetFilteredIndex(rawIndex);
             if (filteredIndex < 0)
             {
                 return;
@@ -480,7 +528,7 @@ public class CommandContext
             OnKeyboardNavigationChanged?.Invoke(true);
         }
 
-        var allFiltered = GetFilteredItems();
+        var allFiltered = GetFilteredItemsCore();
         var enabledFilteredItems = allFiltered.Where(i => !i.Disabled).ToList();
 
         // Get virtualized groups that have visible items
@@ -705,7 +753,7 @@ public class CommandContext
 
     private void FocusFirstRegularItem()
     {
-        var allFiltered = GetFilteredItems();
+        var allFiltered = GetFilteredItemsCore();
         for (var i = 0; i < allFiltered.Count; i++)
         {
             if (!allFiltered[i].Disabled)
@@ -718,7 +766,7 @@ public class CommandContext
 
     private void FocusLastRegularItem()
     {
-        var allFiltered = GetFilteredItems();
+        var allFiltered = GetFilteredItemsCore();
         for (var i = allFiltered.Count - 1; i >= 0; i--)
         {
             if (!allFiltered[i].Disabled)
@@ -742,7 +790,7 @@ public class CommandContext
         }
 
         // First try regular items
-        var filteredItems = GetFilteredItems();
+        var filteredItems = GetFilteredItemsCore();
         for (var i = 0; i < filteredItems.Count; i++)
         {
             if (!filteredItems[i].Disabled)
@@ -788,7 +836,7 @@ public class CommandContext
         }
 
         // Then try regular items
-        var filteredItems = GetFilteredItems();
+        var filteredItems = GetFilteredItemsCore();
         for (var i = filteredItems.Count - 1; i >= 0; i--)
         {
             if (!filteredItems[i].Disabled)
@@ -831,7 +879,7 @@ public class CommandContext
         }
 
         // Regular item selection
-        var filteredItems = GetFilteredItems();
+        var filteredItems = GetFilteredItemsCore();
         if (_focusedIndex >= 0 && _focusedIndex < filteredItems.Count)
         {
             var item = filteredItems[_focusedIndex];

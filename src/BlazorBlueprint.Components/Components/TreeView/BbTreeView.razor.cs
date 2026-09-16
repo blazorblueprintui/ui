@@ -23,6 +23,8 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
     private HashSet<string> errorNodes = new();
     private Dictionary<string, TItem>? itemsByValue;
     private Dictionary<string, List<TItem>>? childrenByParent;
+    private readonly Dictionary<string, string?> parentByValue = new();
+    private readonly HashSet<string> searchVisibleValues = new();
     private System.Timers.Timer? debounceTimer;
     private bool disposed;
     private const string RootSentinel = "\0__tree_root__";
@@ -335,6 +337,8 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
 
     private void BuildItemIndex()
     {
+        parentByValue.Clear();
+        searchVisibleValues.Clear();
         if (Items == null || ValueField == null)
         {
             itemsByValue = null;
@@ -352,11 +356,8 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
             {
                 var value = ValueField(item);
                 itemsByValue[value] = item;
-            }
-
-            foreach (var item in Items)
-            {
                 var parentId = ParentField(item);
+                parentByValue[value] = parentId;
                 var key = parentId ?? RootSentinel;
                 if (!childrenByParent.TryGetValue(key, out var list))
                 {
@@ -374,6 +375,27 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
                 IndexItemRecursive(item, null);
             }
         }
+
+        // Preserve the index of loaded descendants when a parent re-renders with the same
+        // source. A cached child may itself have loaded children.
+        foreach (var pair in loadedChildren)
+        {
+            if (itemsByValue.ContainsKey(pair.Key))
+            {
+                foreach (var child in pair.Value)
+                {
+                    if (!itemsByValue.ContainsKey(ValueField(child)))
+                    {
+                        IndexItemRecursive(child, pair.Key);
+                    }
+                }
+            }
+        }
+
+        if (IsSearchActive)
+        {
+            UpdateSearchMatches();
+        }
     }
 
     private void IndexItemRecursive(TItem item, string? parentKey)
@@ -385,6 +407,7 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
 
         var value = ValueField(item);
         itemsByValue![value] = item;
+        parentByValue[value] = parentKey;
 
         var key = parentKey ?? RootSentinel;
         if (!childrenByParent!.TryGetValue(key, out var list))
@@ -394,15 +417,14 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
         }
         list.Add(item);
 
-        if (ChildrenProperty != null)
+        var children = loadedChildren.TryGetValue(value, out var loaded)
+            ? loaded
+            : ChildrenProperty?.Invoke(item);
+        if (children != null)
         {
-            var children = ChildrenProperty(item);
-            if (children != null)
+            foreach (var child in children)
             {
-                foreach (var child in children)
-                {
-                    IndexItemRecursive(child, value);
-                }
+                IndexItemRecursive(child, value);
             }
         }
     }
@@ -533,22 +555,10 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
         // Save current expand state before search
         if (preSearchExpandedValues == null)
         {
-            preSearchExpandedValues = new HashSet<string>(effectiveExpandedValues ?? new HashSet<string>());
+            preSearchExpandedValues = new HashSet<string>(ExpandedValues ?? managedExpandedValues ?? new HashSet<string>());
         }
 
-        // Compute which nodes to show and expand
-        searchExpandedValues = new HashSet<string>();
-        if (Items != null && ValueField != null && TextField != null)
-        {
-            foreach (var item in GetAllItems())
-            {
-                if (MatchesSearch(item))
-                {
-                    // Expand all ancestors of matching nodes
-                    ExpandAncestorsOf(item);
-                }
-            }
-        }
+        UpdateSearchMatches();
 
         if (OnSearch.HasDelegate)
         {
@@ -566,83 +576,38 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
         return TextField(item).Contains(ActiveSearchText, StringComparison.OrdinalIgnoreCase);
     }
 
-    internal bool IsFilteredOut(TItem item)
+    internal bool IsFilteredOut(TItem item) =>
+        IsSearchActive && TextField != null && ValueField != null
+        && !searchVisibleValues.Contains(ValueField(item));
+
+    private void UpdateSearchMatches()
     {
-        if (!IsSearchActive || TextField == null || ValueField == null)
-        {
-            return false;
-        }
-
-        // If this node matches, it's not filtered out
-        if (MatchesSearch(item))
-        {
-            return false;
-        }
-
-        // If any descendant matches, this node is not filtered out
-        return !HasMatchingDescendant(item);
-    }
-
-    private bool HasMatchingDescendant(TItem item)
-    {
-        var children = GetChildren(item);
-        foreach (var child in children)
-        {
-            if (MatchesSearch(child) || HasMatchingDescendant(child))
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void ExpandAncestorsOf(TItem item)
-    {
-        if (ValueField == null || (ParentField == null && ChildrenProperty == null))
+        searchVisibleValues.Clear();
+        searchExpandedValues = new HashSet<string>();
+        if (itemsByValue == null || TextField == null)
         {
             return;
         }
 
-        if (ParentField != null)
+        foreach (var (value, item) in itemsByValue)
         {
-            // Flat data: walk up parent chain
-            var parentId = ParentField(item);
-            while (parentId != null)
+            if (!MatchesSearch(item))
             {
-                searchExpandedValues.Add(parentId);
-                var parent = GetItemByValue(parentId);
-                if (parent == null)
+                continue;
+            }
+
+            searchVisibleValues.Add(value);
+            var current = value;
+            while (parentByValue.TryGetValue(current, out var parent) && parent != null)
+            {
+                // Once a shared ancestor is visited, its ancestors are already included.
+                // This also terminates malformed parent cycles.
+                if (!searchExpandedValues.Add(parent))
                 {
                     break;
                 }
-                parentId = ParentField(parent);
-            }
-        }
-        else
-        {
-            // Nested data: we need to find ancestors via index
-            var value = ValueField(item);
-            if (childrenByParent == null)
-            {
-                return;
-            }
-
-            // Build a reverse map from child to parent
-            foreach (var kvp in childrenByParent)
-            {
-                foreach (var child in kvp.Value)
-                {
-                    if (ValueField(child) == value && kvp.Key != RootSentinel)
-                    {
-                        searchExpandedValues.Add(kvp.Key);
-                        var parentItem = GetItemByValue(kvp.Key);
-                        if (parentItem != null)
-                        {
-                            ExpandAncestorsOf(parentItem);
-                        }
-                        return;
-                    }
-                }
+                searchVisibleValues.Add(parent);
+                current = parent;
             }
         }
     }
@@ -702,17 +667,7 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
             var childList = children.ToList();
             loadedChildren[value] = childList;
 
-            // Index newly loaded children
-            if (itemsByValue != null)
-            {
-                foreach (var child in childList)
-                {
-                    if (ValueField != null)
-                    {
-                        itemsByValue[ValueField(child)] = child;
-                    }
-                }
-            }
+            BuildItemIndex();
         }
         catch
         {

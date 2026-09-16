@@ -193,7 +193,7 @@ public partial class BbRating : ComponentBase
         }
     }
 
-    private void HandleMouseMove(MouseEventArgs e, int index)
+    private void HandleMouseEnter(int index)
     {
         if (Disabled || ReadOnly)
         {

@@ -18,13 +18,13 @@
         </BbButton>
     </BbPopoverTrigger>
     <BbPopoverContent Class="bb:w-[280px] bb:p-4" Align="@PopoverAlign.Start">
-        <div class="bb:space-y-4">
+        <div class="bb:space-y-4" data-bb-color-picker data-disabled="@(Disabled ? "true" : null)">
             @* Color Area (Saturation/Brightness) *@
             <div @ref="_areaRef"
                  class="bb:relative bb:h-[150px] bb:w-full bb:rounded-md bb:cursor-crosshair bb:overflow-hidden bb:touch-none"
-                 style="background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(@_hue.ToString("0.##", CultureInfo.InvariantCulture), 100%, 50%));">
+                 style="background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(var(--bb-color-hue, @_hue.ToString("0.##", CultureInfo.InvariantCulture)), 100%, 50%));">
                 <div class="bb:absolute bb:h-4 bb:w-4 bb:border-2 bb:border-white bb:rounded-full bb:shadow-md bb:-translate-x-1/2 bb:-translate-y-1/2 bb:pointer-events-none"
-                     style="left: @((_saturation * 100).ToString("0.##", CultureInfo.InvariantCulture))%; top: @(((1 - _brightness) * 100).ToString("0.##", CultureInfo.InvariantCulture))%;">
+                     style="left: var(--bb-color-saturation, @((_saturation * 100).ToString("0.##", CultureInfo.InvariantCulture))%); top: var(--bb-color-brightness, @(((1 - _brightness) * 100).ToString("0.##", CultureInfo.InvariantCulture))%);">
                 </div>
             </div>
 
@@ -34,7 +34,7 @@
                      class="bb:relative bb:h-3 bb:w-full bb:rounded-md bb:cursor-pointer bb:touch-none"
                      style="background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);">
                     <div class="bb:absolute bb:top-1/2 bb:h-5 bb:w-2 bb:bg-white bb:border bb:border-input bb:rounded bb:shadow-sm bb:-translate-x-1/2 bb:-translate-y-1/2 bb:pointer-events-none"
-                         style="left: @((_hue / 360 * 100).ToString("0.##", CultureInfo.InvariantCulture))%;">
+                         style="left: var(--bb-color-hue-position, @((_hue / 360 * 100).ToString("0.##", CultureInfo.InvariantCulture))%);">
                     </div>
                 </div>
             </div>
@@ -47,7 +47,7 @@
                          class="bb:relative bb:h-3 bb:w-full bb:rounded-md bb:cursor-pointer bb:touch-none"
                          style="background: linear-gradient(to right, transparent, @CurrentColorWithoutAlpha), url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 fill-opacity=%22.1%22><rect x=%220%22 y=%220%22 width=%228%22 height=%228%22 fill=%22%23000%22/><rect x=%228%22 y=%228%22 width=%228%22 height=%228%22 fill=%22%23000%22/></svg>');">
                         <div class="bb:absolute bb:top-1/2 bb:h-5 bb:w-2 bb:bg-white bb:border bb:border-input bb:rounded bb:shadow-sm bb:-translate-x-1/2 bb:-translate-y-1/2 bb:pointer-events-none"
-                             style="left: @((_alpha * 100).ToString("0.##", CultureInfo.InvariantCulture))%;">
+                             style="left: var(--bb-color-alpha-position, @((_alpha * 100).ToString("0.##", CultureInfo.InvariantCulture))%);">
                         </div>
                     </div>
                 </div>
@@ -321,7 +321,7 @@
     [JSInvokable]
     public async Task UpdateAreaFromJs(double satPct, double brightPct)
     {
-        if (_disposed) return;
+        if (_disposed || Disabled) return;
 
         _saturation = Math.Max(0, Math.Min(1, satPct));
         _brightness = Math.Max(0, Math.Min(1, brightPct));
@@ -331,7 +331,7 @@
     [JSInvokable]
     public async Task UpdateSliderFromJs(string type, double pct)
     {
-        if (_disposed) return;
+        if (_disposed || Disabled) return;
 
         pct = Math.Max(0, Math.Min(1, pct));
 
