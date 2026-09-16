@@ -499,7 +499,7 @@ public class TailwindPrefixTests
                 continue;
             }
 
-            var verbatim = i > 0 && code[i - 1] == '@' || i > 1 && code[i - 2] == '@';
+            var verbatim = (i > 0 && code[i - 1] == '@') || (i > 1 && code[i - 2] == '@');
             var end = SkipQuoted(code, i);
             while (verbatim && end + 1 < code.Length && code[end + 1] == '"')
             {

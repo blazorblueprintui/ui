@@ -34,7 +34,7 @@ dotnet run --project demos/BlazorBlueprint.Demo.Auto       # port 7174
 
 ## Architecture
 
-**Two-layer component library** inspired by shadcn/ui and Radix UI, targeting .NET 8 Blazor (Server, WASM, and Auto render modes): `Primitives` are headless and unstyled, `Components` are styled and built on top of them.
+**Two-layer component library** inspired by shadcn/ui and Radix UI, targeting .NET 10 Blazor (Server, WASM, and Auto render modes): `Primitives` are headless and unstyled, `Components` are styled and built on top of them.
 
 ### Dependency flow
 `Components` → `Primitives` + `Icons.Lucide` (ProjectReference locally, PackageReference when packing for NuGet).

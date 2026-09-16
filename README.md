@@ -19,7 +19,7 @@ Beautiful UI components for Blazor, built with accessibility in mind. Inspired b
 </p>
 
 <p align="center">
-  <strong>112 Components</strong> · <strong>28 Primitives</strong> · <strong>11 Chart Types</strong> · <strong>5,300+ Icons</strong>
+  <strong>115 Components</strong> · <strong>28 Primitives</strong> · <strong>11 Chart Types</strong> · <strong>5,300+ Icons</strong>
 </p>
 
 ## Table of Contents
@@ -40,7 +40,7 @@ Beautiful UI components for Blazor, built with accessibility in mind. Inspired b
 
 ## Why Blazor Blueprint?
 
-Blazor developers lack a modern, design-system-first UI library equivalent to what React developers have with shadcn/ui. Blazor Blueprint fills that gap — pre-built components and headless primitives that integrate directly with Tailwind and shadcn themes, targeting .NET 8 across Server, WebAssembly, and Auto render modes.
+Blazor developers lack a modern, design-system-first UI library equivalent to what React developers have with shadcn/ui. Blazor Blueprint fills that gap — pre-built components and headless primitives that integrate directly with Tailwind and shadcn themes, targeting .NET 10 across Server, WebAssembly, and Auto render modes.
 
 - **Zero Configuration** — Pre-built CSS included. No Tailwind setup, no Node.js, no build tools required.
 - **Coexists with Your Tailwind** — Every utility in the prebuilt CSS is prefixed `bb:` and kept in its own cascade layer, so it never collides with your own Tailwind build.
@@ -178,7 +178,7 @@ If you also run your own Tailwind build, load its output before or after `blazor
 
 ## Components
 
-Blazor Blueprint includes **112 styled components** organized into the following categories.
+Blazor Blueprint includes **115 styled components** organized into the following categories.
 
 ### Enterprise Components
 
@@ -187,6 +187,10 @@ Production-ready components for complex data-driven applications:
 | Component | Description |
 |-----------|-------------|
 | **Dashboard Grid** | Drag-and-drop, resizable widget layout for composing dashboards. Built on CSS Grid with responsive breakpoints, state persistence, keyboard accessibility, and loading/empty states. |
+| **Scheduler** | Day/week time slots, overlapping events, resource lanes, event editing, recurring series and IANA time zones |
+| **TreeSelect** | Searchable single/multiple hierarchy selection with form binding |
+| **Cascader** | Hierarchy columns, path search and leaf/branch selection |
+| **FileUpload** | Optional transport callback with progress, cancellation, retries and preserved browser files |
 | **DataGrid** | Full-featured data grid with multi-column sorting, per-column filtering, row grouping with aggregates, hierarchical tree data, row selection, expandable rows, virtualization, context menus, pinned columns, column reordering/resizing/visibility, and state persistence. Supports `IQueryable`, `IEnumerable`, and `ItemsProvider` data sources. |
 | **Dynamic Form** | Schema-driven form rendering — define fields, validation rules, and layout in a schema object, and the component generates the complete form with appropriate inputs, conditional visibility, and error display. |
 | **Filter Builder** | Visual query builder for constructing complex filter expressions with AND/OR logic, nested condition groups, and type-aware operators. Pairs with DataGrid for interactive data exploration. |

@@ -122,7 +122,10 @@ public static class JsModules
     {
         private readonly IJSObjectReference inner;
 
-        public NonOwningReference(IJSObjectReference inner) => this.inner = inner;
+        public NonOwningReference(IJSObjectReference inner)
+        {
+            this.inner = inner;
+        }
 
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args)
             => inner.InvokeAsync<TValue>(identifier, args);

@@ -36,10 +36,18 @@ export function scrollIntoView(elementId, block = 'nearest', behavior = 'instant
  * Focuses an element by its ID.
  * @param {string} elementId - The ID of the element to focus
  */
-export function focusElement(elementId) {
+export async function focusElement(elementId) {
     const element = document.getElementById(elementId);
-    if (element) {
-        element.focus();
+    // Portal content can exist before asynchronous positioning reveals it. Focusing a
+    // hidden element silently does nothing, leaving a nested calendar unreachable.
+    // Wait locally for the reveal without adding another .NET interop round trip.
+    for (let frame = 0; element && element.isConnected && frame < 30; frame++) {
+        const style = window.getComputedStyle(element);
+        if (style.visibility !== 'hidden' && style.display !== 'none' && element.getClientRects().length > 0) {
+            element.focus();
+            return;
+        }
+        await new Promise(resolve => requestAnimationFrame(resolve));
     }
 }
 

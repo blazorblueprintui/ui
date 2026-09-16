@@ -161,15 +161,9 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
         "bb:pointer-events-none bb:inline-flex bb:items-center bb:gap-1.5 bb:whitespace-nowrap " +
         "bb:rounded-md bb:border bb:bg-popover bb:px-2.5 bb:py-1 bb:text-xs bb:font-medium bb:shadow-md";
 
-    private void HandleMouseEnter()
-    {
-        ShowTooltip();
-    }
+    private void HandleMouseEnter() => ShowTooltip();
 
-    private void HandleMouseLeave()
-    {
-        isHovered = false;
-    }
+    private void HandleMouseLeave() => isHovered = false;
 
     /// <summary>
     /// Shows the tooltip on focus, but only when the focus came from the keyboard.
@@ -208,10 +202,7 @@ public partial class BbCopyText : ComponentBase, IAsyncDisposable
         }
     }
 
-    private void HandleBlur()
-    {
-        isHovered = false;
-    }
+    private void HandleBlur() => isHovered = false;
 
     private void ShowTooltip()
     {

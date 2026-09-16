@@ -1,0 +1,26 @@
+<!-- Local streaming demonstration: replace with your application transport. -->
+<BbFileUpload Multiple="true" UploadHandler="DemoUploadAsync" />
+
+@code {
+    private bool failNextUpload;
+    private async Task DemoUploadAsync(FileUploadContext context, CancellationToken cancellationToken)
+    {
+        var fail = failNextUpload;
+        failNextUpload = false;
+        await InvokeAsync(StateHasChanged);
+        await using var stream = context.OpenReadStream();
+        var buffer = new byte[16 * 1024];
+        long transferred = 0;
+        int read;
+        while ((read = await stream.ReadAsync(buffer, cancellationToken)) > 0)
+        {
+            await Task.Delay(100, cancellationToken);
+            transferred += read;
+            await context.ReportProgressAsync(transferred);
+            if (fail)
+            {
+                throw new IOException("Demonstration failure; retry is available.");
+            }
+        }
+    }
+}

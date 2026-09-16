@@ -1,0 +1,10 @@
+<BbCascader TItem="Category" Items="categories" ValueField="@(c => c.Id)" TextField="@(c => c.Name)" ChildrenProperty="@(c => c.Children)" Value="runtime" Disabled="true" AriaLabel="Disabled team" />
+
+@code {
+    private readonly List<Category> categories =
+    [
+        new("engineering", "Engineering", [new("platform", "Platform", [new("runtime", "Runtime", []), new("tools", "Tools", [])]), new("web", "Web", [])]),
+        new("design", "Design", [new("product", "Product", []), new("brand", "Brand", [])])
+    ];
+    private sealed record Category(string Id, string Name, List<Category> Children);
+}

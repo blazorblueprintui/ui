@@ -1,0 +1,237 @@
+@namespace BlazorBlueprint.Components
+@typeparam TItem
+@using System.Linq.Expressions
+@using Microsoft.AspNetCore.Components.Forms
+@using BlazorBlueprint.Icons.Lucide.Components
+@using BlazorBlueprint.Primitives.Services
+@inject IBbLocalizer Localizer
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+<div @ref="container" class="@ClassNames.cn("bb:flex bb:items-center bb:gap-1", Class)">
+    <BbPopover Open="@open" OpenChanged="SetOpen" RestoreFocusOnClose="true">
+        <BbPopoverTrigger AsChild="false" id="@Id" aria-haspopup="dialog" aria-expanded="@open.ToString().ToLowerInvariant()"
+                          aria-controls="@popupId" aria-label="@(AriaLabel ?? Localizer["Cascader.Label"])"
+                          aria-invalid="@(validation.IsInvalid ? "true" : null)" disabled="@Disabled"
+                          data-cascader-trigger="true" class="@TriggerClass"
+                          @attributes="AdditionalAttributes">
+            <span class="@ClassNames.cn("bb:truncate", Value == null ? "bb:text-muted-foreground" : null)">@(Value == null ? Placeholder ?? Localizer["Cascader.Placeholder"] : PathLabel(Value))</span>
+            <LucideIcon Name="chevron-down" Size="16" Class="bb:ms-2 bb:h-4 bb:w-4 bb:shrink-0 bb:opacity-50" aria-hidden="true" />
+        </BbPopoverTrigger>
+        <BbPopoverContent Align="PopoverAlign.Start" MatchTriggerWidth="true" Class="bb:max-w-[90vw] bb:p-0"
+                          AutoFocusId="@(ShowSearch ? searchId : InitialItemId)" OnContentReady="ConnectKeyboardAsync"
+                          aria-label="@(AriaLabel ?? Localizer["Cascader.Label"])">
+          <div id="@popupId">
+            @if (ShowSearch)
+            {
+                <div class="bb:flex bb:items-center bb:rounded-t-md bb:border-b bb:border-border bb:px-3 bb:focus-within:ring-2 bb:focus-within:ring-ring bb:focus-within:ring-inset bb:focus-within:border-b-transparent">
+                    <LucideIcon Name="search" Size="16" Class="bb:mr-2 bb:h-4 bb:w-4 bb:shrink-0 bb:opacity-50" aria-hidden="true" />
+                    <BbInput Id="@searchId" Value="@search" ValueChanged="@(v => search = v ?? "")" UpdateTiming="UpdateTiming.Immediate"
+                             Placeholder="@Localizer["Cascader.Search"]" AriaLabel="@Localizer["Cascader.Search"]" data-cascader-search="true"
+                             Class="bb:ml-2 bb:h-11 bb:rounded-none bb:border-0 bb:bg-transparent bb:px-0 bb:py-3 bb:text-sm bb:focus-visible:ring-0" />
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(search))
+            {
+                <div class="bb:max-h-64 bb:overflow-auto bb:p-1" data-cascader-column="0">
+                    @foreach (var node in SearchResults)
+                    {
+                        <button @key="node.Value" id="@NodeId(node.Value)" type="button" data-cascader-item="@node.Value"
+                                class="@ItemClass" aria-current="@(Value == node.Value ? "true" : null)"
+                                @onclick="@(() => SelectAsync(node.Value))">@PathLabel(node.Value)</button>
+                    }
+                    @if (!SearchResults.Any())
+                    {
+                        <p role="status" class="bb:p-2 bb:text-sm bb:text-muted-foreground">@Localizer["Cascader.Empty"]</p>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="bb:flex bb:overflow-x-auto bb:p-1" data-cascader-scroll>
+                    @for (var column = 0; column < Columns.Count; column++)
+                    {
+                        var depth = column;
+                        <div class="bb:max-h-64 bb:min-w-40 bb:flex-1 bb:overflow-y-auto bb:border-e bb:border-border bb:px-1 bb:last:border-e-0"
+                             data-cascader-column="@depth" data-cascader-parent="@(depth > 0 ? path[depth - 1] : null)" role="group" aria-label="@Localizer["Cascader.Level", depth + 1]">
+                            @foreach (var key in Columns[column])
+                            {
+                                var node = index!.Nodes[key];
+                                <button @key="key" id="@NodeId(key)" type="button" data-cascader-item="@key"
+                                        class="@ClassNames.cn(ItemClass, path.Contains(key) ? "bb:bg-accent bb:text-accent-foreground" : null)"
+                                        aria-expanded="@(node.Children.Count > 0 ? path.Contains(key).ToString().ToLowerInvariant() : null)"
+                                        aria-current="@(Value == key ? "true" : null)" @onclick="@(() => NavigateAsync(node, depth))">
+                                    <span class="bb:truncate">@node.Text</span>
+                                    @if (node.Children.Count > 0)
+                                    {
+                                        <LucideIcon Name="chevron-right" Size="16" Class="bb:ms-2 bb:h-4 bb:w-4 bb:shrink-0 bb:opacity-50 bb:rtl:rotate-180" aria-hidden="true" />
+                                    }
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+          </div>
+        </BbPopoverContent>
+    </BbPopover>
+    @if (Clearable && Value != null)
+    {
+        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Icon" Disabled="@Disabled" AriaLabel="@Localizer["Cascader.Clear"]" OnClick="@(() => SelectAsync(null))"><LucideIcon Name="x" Size="16" aria-hidden="true" /></BbButton>
+    }
+    <input type="hidden" name="@validation.GetEffectiveName(Name)" value="@Value" disabled="@Disabled" />
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IEnumerable<TItem> Items { get; set; } = [];
+    [Parameter, EditorRequired] public Func<TItem, string> ValueField { get; set; } = default!;
+    [Parameter, EditorRequired] public Func<TItem, string> TextField { get; set; } = default!;
+    [Parameter, EditorRequired] public Func<TItem, IEnumerable<TItem>?> ChildrenProperty { get; set; } = default!;
+    /// <summary>The selected node's unique key. Its full path is derived from Items.</summary>
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public Expression<Func<string?>>? ValueExpression { get; set; }
+    /// <summary>Allows selecting branches while continuing to navigate their children.</summary>
+    [Parameter] public bool ChangeOnSelect { get; set; }
+    [Parameter] public bool ShowSearch { get; set; } = true;
+    [Parameter] public bool Clearable { get; set; } = true;
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public string? AriaLabel { get; set; }
+    [Parameter] public string? Id { get; set; }
+    [Parameter] public string? Name { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+    [CascadingParameter] private EditContext? EditContext { get; set; }
+    private readonly InputValidationBehavior validation = new();
+    private readonly string popupId = $"bb-cascader-{Guid.NewGuid():N}";
+    private readonly string searchId = $"bb-cascader-search-{Guid.NewGuid():N}";
+    private ElementReference container;
+    private IJSObjectReference? keyboardModule;
+    private bool disposed;
+    private HierarchyIndex<TItem>? index;
+    private List<string> path = [];
+    private string? previousValue;
+    private bool open;
+    private string search = string.Empty;
+    private const string ItemClass = "bb:flex bb:w-full bb:items-center bb:justify-between bb:rounded-sm bb:px-2 bb:py-1.5 bb:text-start bb:text-sm bb:hover:bg-accent bb:focus-visible:outline-none bb:focus-visible:bg-accent bb:focus-visible:text-accent-foreground";
+    private string TriggerClass => ClassNames.cn(
+        "bb:flex bb:h-10 bb:w-full bb:items-center bb:justify-between bb:rounded-md bb:border bb:border-input bb:bg-background bb:px-3 bb:py-2 bb:text-sm",
+        "bb:hover:bg-accent bb:hover:text-accent-foreground bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:disabled:cursor-not-allowed bb:disabled:opacity-50",
+        open ? "bb:bg-accent bb:text-accent-foreground" : null);
+    private string NodeId(string key) => $"{popupId}-item-{Uri.EscapeDataString(key)}";
+    private string? InitialItemId => (Value != null && index!.Nodes.ContainsKey(Value) ? Value : index!.Roots.FirstOrDefault()) is { } key ? NodeId(key) : null;
+    private string PathLabel(string value) => index!.Nodes.ContainsKey(value) ? string.Join(" / ", index.Path(value).Select(n => n.Text)) : value;
+    private IEnumerable<HierarchyIndex<TItem>.Node> SearchResults => index!.Nodes.Values
+        .Where(n => (ChangeOnSelect || n.Children.Count == 0) && PathLabel(n.Value).Contains(search, StringComparison.CurrentCultureIgnoreCase));
+    private List<List<string>> Columns
+    {
+        get
+        {
+            var columns = new List<List<string>> { index!.Roots };
+            foreach (var key in path)
+            {
+                if (index.Nodes.TryGetValue(key, out var node) && node.Children.Count > 0)
+                {
+                    columns.Add(node.Children);
+                }
+            }
+            return columns;
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        index = new(Items, ValueField, TextField, ChildrenProperty);
+        validation.Update(EditContext, ValueExpression);
+        if (previousValue != Value || path.Any(key => !index.Nodes.ContainsKey(key)))
+        {
+            path = index.Path(Value).Select(n => n.Value).ToList();
+            previousValue = Value;
+        }
+        if (Disabled)
+        {
+            open = false;
+        }
+    }
+
+    private void SetOpen(bool value)
+    {
+        var nextOpen = !Disabled && value;
+        if (nextOpen && !open)
+        {
+            path = index!.Path(Value).Select(n => n.Value).ToList();
+            search = string.Empty;
+        }
+        open = nextOpen;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            keyboardModule = await JsModules.GetAsync(JSRuntime, JsModules.Versioned("./_content/BlazorBlueprint.Components/js/cascader.js", typeof(BbCascader<>).Assembly));
+            if (!disposed)
+            {
+                await keyboardModule.InvokeVoidAsync("initialize", container, popupId);
+            }
+        }
+    }
+
+    private async Task ConnectKeyboardAsync()
+    {
+        if (open && !disposed)
+        {
+            keyboardModule ??= await JsModules.GetAsync(JSRuntime, JsModules.Versioned("./_content/BlazorBlueprint.Components/js/cascader.js", typeof(BbCascader<>).Assembly));
+            if (!disposed)
+            {
+                await keyboardModule.InvokeVoidAsync("connect", popupId);
+            }
+        }
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        disposed = true;
+        if (keyboardModule != null)
+        {
+            try
+            {
+                await keyboardModule.InvokeVoidAsync("dispose", popupId);
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or TaskCanceledException or ObjectDisposedException)
+            {
+                // The browser may already be gone during circuit teardown.
+            }
+        }
+    }
+
+    private async Task NavigateAsync(HierarchyIndex<TItem>.Node node, int depth)
+    {
+        if (Disabled)
+        {
+            return;
+        }
+        path = path.Take(depth).Append(node.Value).ToList();
+        if (ChangeOnSelect || node.Children.Count == 0)
+        {
+            await SelectAsync(node.Value, node.Children.Count == 0);
+        }
+    }
+
+    private async Task SelectAsync(string? value, bool close = true)
+    {
+        if (Disabled)
+        {
+            return;
+        }
+        Value = value;
+        previousValue = value;
+        await ValueChanged.InvokeAsync(value);
+        validation.NotifyFieldChanged();
+        if (close)
+        {
+            open = false;
+        }
+    }
+}

@@ -25,6 +25,8 @@ app.UseStaticFiles();
 
 app.UseAntiforgery();
 
+app.MapStaticAssets();
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddAdditionalAssemblies(typeof(BlazorBlueprint.Demo.Routes).Assembly);

@@ -134,10 +134,8 @@ public class RowEditingTests
     }
 
     [Fact]
-    public void CaptureRejectsANullItem()
-    {
+    public void CaptureRejectsANullItem() =>
         Assert.Throws<ArgumentNullException>(() => DataGridRowSnapshot<Employee>.Capture(null!));
-    }
 
     [Fact]
     public void TwoSnapshotsOfTheSameItemAreIndependent()

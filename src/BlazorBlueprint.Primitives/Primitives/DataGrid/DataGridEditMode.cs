@@ -18,5 +18,11 @@ public enum DataGridEditMode
     /// A whole row goes into edit at once: every editable cell becomes an input, and the changes
     /// are committed or discarded together.
     /// </summary>
-    Row
+    Row,
+
+    /// <summary>Edits one cell in an isolated draft and commits it when accepted.</summary>
+    Cell,
+
+    /// <summary>Stages isolated cell edits across rows until the whole batch is saved or discarded.</summary>
+    Batch
 }

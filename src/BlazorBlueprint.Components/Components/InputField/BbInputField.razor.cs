@@ -333,17 +333,11 @@ public partial class BbInputField<TValue> : ComponentBase
 
         if (CascadedEditContext != subscribedEditContext)
         {
-            if (subscribedEditContext is not null)
-            {
-                subscribedEditContext.OnValidationStateChanged -= OnValidationStateChanged;
-            }
+            subscribedEditContext?.OnValidationStateChanged -= OnValidationStateChanged;
 
             subscribedEditContext = CascadedEditContext;
 
-            if (subscribedEditContext is not null)
-            {
-                subscribedEditContext.OnValidationStateChanged += OnValidationStateChanged;
-            }
+            subscribedEditContext?.OnValidationStateChanged += OnValidationStateChanged;
         }
 
         validation.Update(CascadedEditContext, ValueExpression);
@@ -592,10 +586,7 @@ public partial class BbInputField<TValue> : ComponentBase
     {
         disposed = true;
 
-        if (subscribedEditContext is not null)
-        {
-            subscribedEditContext.OnValidationStateChanged -= OnValidationStateChanged;
-        }
+        subscribedEditContext?.OnValidationStateChanged -= OnValidationStateChanged;
 
         if (jsModule != null && jsInitialized)
         {

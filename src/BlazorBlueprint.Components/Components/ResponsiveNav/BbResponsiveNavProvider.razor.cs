@@ -69,10 +69,7 @@ public partial class BbResponsiveNavProvider
 
     public async ValueTask DisposeAsync()
     {
-        if (Context != null)
-        {
-            Context.StateChanged -= OnStateChanged;
-        }
+        Context?.StateChanged -= OnStateChanged;
 
         if (_module != null)
         {

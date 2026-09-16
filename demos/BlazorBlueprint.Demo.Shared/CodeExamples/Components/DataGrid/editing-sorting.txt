@@ -1,0 +1,33 @@
+@using System.ComponentModel.DataAnnotations
+@using BlazorBlueprint.Primitives.Table
+@using BlazorBlueprint.Primitives
+
+<BbDataGrid Items="sortedRows" TData="Employee" State="sortingState" ItemKey="@(r => r.Id)" EditMode="DataGridEditMode.Cell" EditItemFactory="Clone" ShowPagination="false" AriaLabel="Employees sorted after editing">
+    <Columns>
+        <BbDataGridPropertyColumn TData="Employee" TProp="string" Property="@(r => r.Name)" Sortable>
+            <EditTemplate><BbInputGroupInput @bind-Value="context.Name" AriaLabel="Name" /></EditTemplate>
+        </BbDataGridPropertyColumn>
+        <BbDataGridPropertyColumn TData="Employee" TProp="int" Property="@(r => r.Hours)" Sortable>
+            <EditTemplate><BbNumericInput TValue="int" @bind-Value="context.Hours" AriaLabel="Hours" ShowButtons="false" /></EditTemplate>
+        </BbDataGridPropertyColumn>
+    </Columns>
+</BbDataGrid>
+
+@code {
+    private readonly List<Employee> sortedRows =
+    [
+        new() { Id = 1, Name = "Alex", Hours = 32 },
+        new() { Id = 2, Name = "Sam", Hours = 24 },
+        new() { Id = 3, Name = "Morgan", Hours = 40 },
+        new() { Id = 4, Name = "Jamie", Hours = 16 }
+    ];
+    private readonly BlazorBlueprint.Primitives.DataGrid.DataGridState<Employee> sortingState = new();
+    protected override void OnInitialized() => sortingState.Sorting.SetSort("hours", SortDirection.Descending);
+    private static Employee Clone(Employee source) => new() { Id = source.Id, Name = source.Name, Hours = source.Hours };
+    private sealed class Employee
+    {
+        public int Id { get; set; }
+        [Required] public string Name { get; set; } = "";
+        [Range(0, 80)] public int Hours { get; set; }
+    }
+}

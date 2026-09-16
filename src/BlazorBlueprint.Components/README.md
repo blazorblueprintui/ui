@@ -13,7 +13,7 @@ Pre-styled Blazor components with shadcn/ui design. Beautiful defaults with zero
 - **Built with Accessibility in Mind**: Includes ARIA attributes and keyboard support via BlazorBlueprint.Primitives
 - **Composable**: Flexible component composition patterns
 - **Type-Safe**: Full C# type safety with IntelliSense support
-- **.NET 8**: Built for the latest .NET platform
+- **.NET 10**: Built for the latest .NET platform
 
 ## Installation
 
@@ -169,7 +169,11 @@ That's it! No Tailwind installation, no build configuration needed.
 | Component | Description |
 |-----------|-------------|
 | **Dashboard Grid** | Drag-and-drop, resizable widget layout for dashboards with responsive breakpoints and state persistence |
-| **DataGrid** | Enterprise data grid with sorting, filtering, row grouping, selection, expandable rows, virtualization, and column management |
+| **Scheduler** | Day/week time slots, overlapping events, resource lanes, event editing, recurring series and IANA time zones |
+| **TreeSelect** | Searchable single/multiple hierarchy selection with form binding |
+| **Cascader** | Hierarchy columns, path search and leaf/branch selection |
+| **FileUpload** | Optional transport callback with progress, cancellation, retries and preserved browser files |
+| **DataGrid** | Enterprise data grid with sorting, filtering, row grouping, row/cell/batch editing, selection, expandable rows, virtualization, and column management |
 | **DataTable** | Tables with sorting, filtering, pagination, and row selection |
 | **DataView** | List and grid layouts with sorting, filtering, pagination, and infinite scroll |
 | **Dynamic Form** | Schema-driven form rendering from JSON or code definitions |

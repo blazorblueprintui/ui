@@ -10,6 +10,7 @@
 <BlazorBlueprint.Primitives.TreeView.BbTreeItem Value="@NodeValue"
                                                   Disabled="@false"
                                                   IsLeaf="@(HasChildren ? null : true)"
+                                                  hidden="@IsFilteredOut(Item)"
                                                   @attributes="AdditionalAttributes">
     <NodeContent>
         <div class="@NodeCssClass"
@@ -94,7 +95,7 @@
         {
             @foreach (var child in Children)
             {
-                if (!IsFilteredOut(child))
+                if (!IsFilteredOut(child) || (Checkable && TreeContext?.CheckStrictly == false))
                 {
                     <TreeItemNode TItem="TItem"
                                   Item="child"

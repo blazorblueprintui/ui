@@ -70,7 +70,7 @@ public class CultureInvariantStyleTests
         Assert.True(violations.Count == 0, BuildMessage(violations));
     }
 
-    private static string BuildMessage(IReadOnlyCollection<string> violations)
+    private static string BuildMessage(List<string> violations)
     {
         var message = new StringBuilder()
             .AppendLine(CultureInfo.InvariantCulture,

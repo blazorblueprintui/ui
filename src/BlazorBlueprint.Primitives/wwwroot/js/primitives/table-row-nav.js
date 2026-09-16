@@ -103,12 +103,9 @@ export function preventSpaceKeyScroll(element) {
         if (element._bbInteractiveKeyDown) {
             element._bbInteractiveKeyDown = false;
 
-            // A row being edited needs Enter and Escape to reach Blazor, because that is how the
-            // edit is committed or discarded from inside an input. Stopping propagation here
-            // would block every Blazor handler in the row, not just the row's own, because Blazor
-            // listens at the document. The row's C# handler knows it is editing and does not run
-            // its selection shortcuts for these keys.
-            if (element.dataset.editing === 'true' && (e.key === 'Enter' || e.key === 'Escape')) {
+            // Editors need their own Blazor key handlers (including select-trigger arrows).
+            // The editing row only handles save/cancel and leaves other keys to its controls.
+            if (element.dataset.editing === 'true') {
                 return;
             }
 
@@ -178,12 +175,8 @@ export function delegateRowBehaviour(container) {
 
         row._bbInteractiveKeyDown = false;
 
-        // A row being edited needs Enter and Escape to reach Blazor, because that is how the edit
-        // is committed or discarded from inside an input. Stopping propagation here would block
-        // every Blazor handler in the row, not just the row's own, because Blazor listens at the
-        // document. The row's C# handler knows it is editing and does not run its selection
-        // shortcuts for these keys.
-        if (row.dataset.editing === 'true' && (e.key === 'Enter' || e.key === 'Escape')) {
+        // Leave editor key events available to Blazor's document-level delegation.
+        if (row.dataset.editing === 'true') {
             return;
         }
 
@@ -269,11 +262,17 @@ export function moveFocusToNextRow(element) {
  * still in. Blurring first forces that change through.
  *
  * @param {HTMLElement} rowElement - The <tr> row element
- * @returns {boolean} True when something inside the row was focused and has been blurred.
+ * @returns {boolean} Whether Enter should commit the row after flushing the focused input.
  */
 export function blurFocusedInput(rowElement) {
     const active = document.activeElement;
     if (!rowElement || !active || active === document.body || !rowElement.contains(active)) {
+        return false;
+    }
+
+    // Enter activates picker triggers and action buttons. It must not also save the row.
+    // An open picker's portalled content is excluded by the contains check above.
+    if (active.closest('button,a[href],select,[role="combobox"],[role="button"],[role="checkbox"],[role="switch"]')) {
         return false;
     }
 

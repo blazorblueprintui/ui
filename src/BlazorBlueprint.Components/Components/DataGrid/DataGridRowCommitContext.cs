@@ -8,17 +8,22 @@ namespace BlazorBlueprint.Components;
 public class DataGridRowCommitContext<TData> where TData : class
 {
     /// <summary>
-    /// Gets the item that was edited, with the user's changes already applied to it.
+    /// Gets the edited model: the original record in Row mode, or an isolated draft in Cell mode.
     /// </summary>
     public required TData Item { get; init; }
+
+    /// <summary>
+    /// Gets the unmodified source record in buffered cell mode; null in legacy row mode.
+    /// In cell mode Item is a draft and is applied only after this callback accepts it.
+    /// </summary>
+    public TData? OriginalItem { get; init; }
 
     /// <summary>
     /// Gets or sets whether to keep the row in edit instead of closing it.
     /// </summary>
     /// <remarks>
     /// Set this when the save fails — a server rejection, a conflict, a rule the grid cannot
-    /// check — so the user keeps their typing and can correct it. The values stay on the item
-    /// either way; this only decides whether the row closes.
+    /// check — so the user keeps their typing and can correct it. Row mode keeps values on the original item; Cell mode retains the isolated draft.
     /// </remarks>
     public bool Cancel { get; set; }
 }

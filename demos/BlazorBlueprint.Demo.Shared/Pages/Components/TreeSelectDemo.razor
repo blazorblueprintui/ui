@@ -1,0 +1,111 @@
+@page "/components/tree-select"
+
+<PageTitle>TreeSelect Component - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">TreeSelect Component</h1>
+        <p class="text-xl text-muted-foreground">Select one or more values from a searchable hierarchy.</p>
+    </div>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Example</h2>
+            <p class="text-sm text-muted-foreground">Search or expand the tree to choose a team.</p>
+        </div>
+        <div class="rounded-lg border p-6 space-y-4">
+            <div class="max-w-sm">
+                <BbTreeSelect TItem="Category" Items="categories" ValueField="@(c => c.Id)" TextField="@(c => c.Name)" ChildrenProperty="@(c => c.Children)" @bind-Value="selected" AriaLabel="Team" />
+            </div>
+            <p class="text-sm text-muted-foreground" role="status">Selected: @(selected ?? "None")</p>
+        </div>
+        <CodeBlock Source="Components/TreeSelect/basic.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Multiple Selection</h2>
+            <p class="text-sm text-muted-foreground">Parent checkboxes select every descendant. Partially selected branches show an indeterminate state; LeafOnly stores only leaf keys.</p>
+        </div>
+        <div class="rounded-lg border p-6 space-y-4">
+            <div class="max-w-sm">
+                <BbTreeSelect TItem="Category" Items="categories" ValueField="@(c => c.Id)" TextField="@(c => c.Name)" ChildrenProperty="@(c => c.Children)" Multiple="true" LeafOnly="true" @bind-Values="selectedMany" AriaLabel="Teams" />
+            </div>
+            <p class="text-sm text-muted-foreground" role="status">Selected: @(selectedMany.Count == 0 ? "None" : string.Join(", ", selectedMany))</p>
+        </div>
+        <CodeBlock Source="Components/TreeSelect/multiple.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Leaf Selection</h2>
+            <p class="text-sm text-muted-foreground">Allow a single selection from the leaves while keeping branches available for navigation.</p>
+        </div>
+        <div class="rounded-lg border p-6 space-y-4">
+            <div class="max-w-sm">
+                <BbTreeSelect TItem="Category" Items="categories" ValueField="@(c => c.Id)" TextField="@(c => c.Name)" ChildrenProperty="@(c => c.Children)" LeafOnly="true" @bind-Value="leaf" Placeholder="Choose a team..." AriaLabel="Leaf team" />
+            </div>
+            <p class="text-sm text-muted-foreground" role="status">Selected: @(leaf ?? "None")</p>
+        </div>
+        <CodeBlock Source="Components/TreeSelect/leaf-only.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Disabled</h2>
+            <p class="text-sm text-muted-foreground">A disabled picker displays its current value without allowing changes.</p>
+        </div>
+        <div class="rounded-lg border p-6 space-y-4">
+            <div class="max-w-sm">
+                <BbTreeSelect TItem="Category" Items="categories" ValueField="@(c => c.Id)" TextField="@(c => c.Name)" ChildrenProperty="@(c => c.Children)" Value="runtime" Disabled="true" AriaLabel="Disabled team" />
+            </div>
+
+        </div>
+        <CodeBlock Source="Components/TreeSelect/disabled.txt" />
+    </section>
+
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>The trigger exposes its expanded state and identifies the tree popup.</AccessibilityItem>
+            <AccessibilityItem>Tree items announce selection, expansion and checked or indeterminate states.</AccessibilityItem>
+            <AccessibilityItem>Search and clear controls have accessible labels. Disabled pickers cannot be opened or cleared.</AccessibilityItem>
+        </AriaAttributes>
+        <KeyboardNavigation>
+            <KeyboardShortcutItem Description="Open the picker or select the focused node"><BbKbd>Enter</BbKbd> / <BbKbd>Space</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move from search to the tree"><BbKbd>Tab</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Move between visible tree nodes"><BbKbd>ArrowUp</BbKbd> / <BbKbd>ArrowDown</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Expand or collapse a branch"><BbKbd>ArrowRight</BbKbd> / <BbKbd>ArrowLeft</BbKbd></KeyboardShortcutItem>
+            <KeyboardShortcutItem Description="Close the popup and return focus to the trigger"><BbKbd>Escape</BbKbd></KeyboardShortcutItem>
+        </KeyboardNavigation>
+    </AccessibilityList>
+
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <ApiReference ComponentName="TreeSelect">
+            <ApiParameter Name="Items" Type="IEnumerable&lt;TItem&gt;">Root nodes in a nested hierarchy. Duplicate keys and cycles are rejected.</ApiParameter>
+            <ApiParameter Name="ValueField / TextField / ChildrenProperty" Type="accessor delegates">Required key, display label and children selectors. Keys must be unique across the entire hierarchy.</ApiParameter>
+            <ApiParameter Name="Value / ValueChanged / ValueExpression" Type="string? / callback / expression">Two-way binding and EditContext validation for a single selected key. The caption resolves immediately for preselected values.</ApiParameter>
+            <ApiParameter Name="Multiple / Values / ValuesChanged / ValuesExpression" Type="multiple selection">Set Multiple and bind a HashSet&lt;string&gt; to Values. Parent checkboxes select or clear all descendants, including collapsed and search-filtered nodes. Parents show an indeterminate state for partial selection. LeafOnly stores only leaf keys without disabling parent checkbox actions. Single selection uses Value.</ApiParameter>
+            <ApiParameter Name="LeafOnly / Required" Type="bool" Default="false">LeafOnly limits single selection to leaves and stores only leaf keys for multiple selection; parent checkboxes still select whole branches. Required marks the field as required. Use model validation for required-value enforcement.</ApiParameter>
+            <ApiParameter Name="ShowSearch / Clearable" Type="bool" Default="true">Search the hierarchy and show a separate clear button.</ApiParameter>
+            <ApiParameter Name="Disabled" Type="bool" Default="false">Disables opening, clearing and selection.</ApiParameter>
+            <ApiParameter Name="Placeholder / AriaLabel / Id / Name" Type="string?">Empty caption, accessible label, trigger ID and form field name. Hidden inputs include selected keys in form submissions.</ApiParameter>
+            <ApiParameter Name="Class / AdditionalAttributes" Type="presentation parameters">Container styling and attributes forwarded to the trigger.</ApiParameter>
+        </ApiReference>
+    </section>
+</div>
+
+@code {
+    private string? selected = "runtime";
+    private HashSet<string> selectedMany = ["runtime", "brand"];
+    private string? leaf;
+    private readonly List<Category> categories =
+    [
+        new("engineering", "Engineering", [new("platform", "Platform", [new("runtime", "Runtime", []), new("tools", "Tools", [])]), new("web", "Web", [])]),
+        new("design", "Design", [new("product", "Product", []), new("brand", "Brand", [])])
+    ];
+    private sealed record Category(string Id, string Name, List<Category> Children);
+}

@@ -268,7 +268,8 @@ export async function open(portalId, reference, options = {}, dotNetRef = null) 
  * @param {string} portalId - The overlay to close.
  * @param {Object} options - `notifyClosed` asks for a `JsOnClosed` callback once the element is
  *   hidden, for owners that unmount their content afterwards. `keyboard` names content whose key
- *   handlers should be released. `restoreFocusToId` names the element to focus once hidden.
+ *   handlers should be released. `restoreFocusToId` names the element to focus once hidden;
+ *   `restoreFocusToElement` supplies the anchor when a composed trigger overrides that ID.
  * @param {Object} dotNetRef - .NET reference for the `notifyClosed` callback.
  */
 export async function close(portalId, options = {}, dotNetRef = null) {
@@ -310,8 +311,9 @@ export async function close(portalId, options = {}, dotNetRef = null) {
         // selection. The owner used to do this from C# after its close render, as an awaited
         // FocusAsync — a round trip spent putting focus somewhere the browser could put it
         // itself. A click outside does not restore: focus stays where the user clicked.
-        if (options.restoreFocusToId) {
-            const target = document.getElementById(options.restoreFocusToId);
+        if (options.restoreFocusToId || options.restoreFocusToElement) {
+            const target = (options.restoreFocusToId && document.getElementById(options.restoreFocusToId))
+                || options.restoreFocusToElement;
             if (target) {
                 try {
                     target.focus({ preventScroll: true });

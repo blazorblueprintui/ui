@@ -1,3 +1,13 @@
+## Unreleased v4 — .NET 10
+
+**Breaking:** all library projects now target .NET 10. .NET 8 and .NET 9 are no longer supported.
+
+- `DataGridEditMode` adds `Cell` and `Batch`.
+- `DataGridEditBuffer<TData>` stages independently cloned rows using stable keys or reference identity.
+- `DataGridRowSnapshot<TData>.ApplyTo` copies accepted draft properties to the original record.
+- Editing rows allow embedded controls to handle arrow keys; activating picker and action buttons no longer also commits the row.
+- Floating overlays wait only for their own exit animation, preventing child transitions from briefly revealing a closed popup again.
+
 ## What's New in v4.0.0-beta.5
 
 **This is a prerelease.** The API may still change before the stable v4.0.0 release.

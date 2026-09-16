@@ -120,7 +120,7 @@
         // stopPropagation() for interactive targets, so this method
         // is only invoked for row-level keyboard events.
 
-        if (IsKeyboardNavigable)
+        if (IsKeyboardNavigable && !IsRowEditing)
         {
             switch (e.Key)
             {
@@ -148,8 +148,10 @@
                     // An input that only writes its value back on change has not done so yet:
                     // this handler runs before the browser fires that change. Blurring it forces
                     // the value through, so Enter does not drop the field the user was in.
-                    await BlurFocusedInput();
-                    await Context.OnCommitEdit();
+                    if (await BlurFocusedInput())
+                    {
+                        await Context.OnCommitEdit();
+                    }
                 }
 
                 return;
@@ -180,7 +182,7 @@
         }
     }
 
-    private async Task BlurFocusedInput()
+    private async Task<bool> BlurFocusedInput()
     {
         try
         {
@@ -191,12 +193,14 @@
                 // Let the change event the blur just fired reach Blazor and update the model
                 // before the commit reads it.
                 await Task.Yield();
+                return true;
             }
         }
         catch
         {
             // No browser to blur in — prerendering, or a circuit that has gone away.
         }
+        return false;
     }
 
     private async Task MoveFocus(string method)

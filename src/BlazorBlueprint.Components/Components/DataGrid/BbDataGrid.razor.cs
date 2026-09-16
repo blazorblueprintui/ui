@@ -916,17 +916,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             return;
         }
 
-        if (_observedItems != null)
-        {
-            _observedItems.CollectionChanged -= HandleItemsCollectionChanged;
-        }
+        _observedItems?.CollectionChanged -= HandleItemsCollectionChanged;
 
         _observedItems = incoming;
 
-        if (_observedItems != null)
-        {
-            _observedItems.CollectionChanged += HandleItemsCollectionChanged;
-        }
+        _observedItems?.CollectionChanged += HandleItemsCollectionChanged;
     }
 
     private void HandleItemsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) =>
@@ -993,6 +987,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             await DelegateRowBehaviourAsync();
         }
 
+        await FocusCellEditorAsync();
+
         if (!Resizable && !Reorderable)
         {
             return;
@@ -1048,42 +1044,27 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// Registers a column definition from a child column component.
     /// Called during the child's OnInitialized.
     /// </summary>
-    internal void RegisterColumn<TProp>(BbDataGridPropertyColumn<TData, TProp> column)
-    {
-        AddColumn(column);
-    }
+    internal void RegisterColumn<TProp>(BbDataGridPropertyColumn<TData, TProp> column) => AddColumn(column);
 
     /// <summary>
     /// Registers a template column.
     /// </summary>
-    internal void RegisterColumn(BbDataGridTemplateColumn<TData> column)
-    {
-        AddColumn(column);
-    }
+    internal void RegisterColumn(BbDataGridTemplateColumn<TData> column) => AddColumn(column);
 
     /// <summary>
     /// Registers an edit column.
     /// </summary>
-    internal void RegisterColumn(BbDataGridEditColumn<TData> column)
-    {
-        AddColumn(column);
-    }
+    internal void RegisterColumn(BbDataGridEditColumn<TData> column) => AddColumn(column);
 
     /// <summary>
     /// Registers a select column. Always laid out first, ahead of every data column.
     /// </summary>
-    internal void RegisterColumn(BbDataGridSelectColumn<TData> column)
-    {
-        AddColumn(column);
-    }
+    internal void RegisterColumn(BbDataGridSelectColumn<TData> column) => AddColumn(column);
 
     /// <summary>
     /// Registers a hierarchy column (which also acts as a property column with expand/collapse).
     /// </summary>
-    internal void RegisterHierarchyColumnDef(IDataGridColumn<TData> column)
-    {
-        AddColumn(column);
-    }
+    internal void RegisterHierarchyColumnDef(IDataGridColumn<TData> column) => AddColumn(column);
 
     /// <summary>
     /// Registers an expand column. Laid out after the select column (if present),
@@ -1188,6 +1169,13 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private void OnColumnRegistered()
     {
         _columnsVersion++;
+
+        // Initial sorting is applied before child columns register their value accessors.
+        // Reprocess once they exist so the first rows agree with the sort indicators.
+        if (_gridState.Sorting.HasSorting)
+        {
+            _needsDataRefresh = true;
+        }
 
         // Columns register during render, after data was processed. When grouping is active
         // that leaves two things stale: a group definition targeting a column that had not
@@ -3860,6 +3848,16 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     {
         ArgumentNullException.ThrowIfNull(item);
 
+        if (UsesEditBuffer)
+        {
+            var column = _columns.Find(c => c.Visible && c.EditTemplate != null);
+            if (column != null)
+            {
+                await StartCellEditAsync(item, column.ColumnId);
+            }
+            return;
+        }
+
         if (EditMode == DataGridEditMode.None)
         {
             return;
@@ -3894,6 +3892,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// <returns>True when the row closed.</returns>
     public async Task<bool> CommitEditAsync()
     {
+        if (UsesEditBuffer)
+        {
+            return await CommitBufferedCellAsync();
+        }
+
         if (_editingItem == null)
         {
             return true;
@@ -3934,13 +3937,32 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// </summary>
     public async Task CancelEditAsync()
     {
+        if (savingEdits)
+        {
+            return;
+        }
+
         if (_editingItem == null)
         {
             return;
         }
 
         var item = _editingItem;
-        _editSnapshot?.Restore();
+        if (UsesEditBuffer)
+        {
+            if (EditMode == DataGridEditMode.Cell || !cellHadDraft)
+            {
+                editBuffer?.Discard(item);
+            }
+            else if (cellCheckpoint != null && editModel != null)
+            {
+                DataGridRowSnapshot<TData>.Capture(cellCheckpoint).ApplyTo(editModel);
+            }
+        }
+        else
+        {
+            _editSnapshot?.Restore();
+        }
         ClearEditState();
 
         if (OnRowCancel.HasDelegate)
@@ -3954,6 +3976,14 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     private void ClearEditState()
     {
+        pendingFocusId = returnFocusId;
+        returnFocusId = null;
+        editValidation?.Dispose();
+        editValidation = null;
+        editModel = null;
+        cellCheckpoint = null;
+        editingColumnId = null;
+        editError = null;
         _editingItem = null;
         _editSnapshot = null;
         _editContext = null;
@@ -3964,7 +3994,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// Gets whether a cell should render its edit template rather than its value.
     /// </summary>
     private bool ShouldRenderEditor(IDataGridColumn<TData> column, TData item) =>
-        EditMode != DataGridEditMode.None && column.EditTemplate != null && IsEditing(item);
+        EditMode != DataGridEditMode.None && column.EditTemplate != null && IsEditing(item)
+        && (!UsesEditBuffer || editingColumnId == column.ColumnId);
 
     /// <summary>
     /// Builds the CSV for the current rows and downloads it in the browser.
@@ -4386,12 +4417,11 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     public async ValueTask DisposeAsync()
     {
         GC.SuppressFinalize(this);
+        editValidation?.Dispose();
+        editBuffer?.Clear();
 
-        if (_observedItems != null)
-        {
-            _observedItems.CollectionChanged -= HandleItemsCollectionChanged;
-            _observedItems = null;
-        }
+        _observedItems?.CollectionChanged -= HandleItemsCollectionChanged;
+        _observedItems = null;
 
         _loadCts?.Cancel();
         _loadCts?.Dispose();

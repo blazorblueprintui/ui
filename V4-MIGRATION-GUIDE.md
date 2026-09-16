@@ -1,5 +1,9 @@
 # Blazor Blueprint v4 Migration Guide
 
+## .NET 10 minimum
+
+Blazor Blueprint v4 requires .NET 10 or later. .NET 8 and .NET 9 are no longer supported. Install .NET 10 (the source repository uses SDK 10.0.400 or a later feature band), change consuming projects to `net10.0`, and update their Microsoft.AspNetCore.Components package references to 10.0.x before upgrading Bb. The library, icon packages, demo hosts and tests all target `net10.0`.
+
 This guide helps you upgrade from Blazor Blueprint **v3** to **v4**. Breaking changes that require
 code updates come first, followed by anything you can adopt at your own pace.
 
@@ -11,6 +15,7 @@ This guide is written as v4 is built, so it grows as changes land.
 
 | # | Breaking Change | Severity | Action Required |
 |---|---|---|---|
+| 0 | .NET 10 minimum for all Bb packages | **High** | Retarget applications to `net10.0` or later; .NET 8/9 cannot consume v4 |
 | 1 | `BbDrawerTrigger` / `BbDrawerClose` render a real `<button>` | **Medium** | Add `AsChild="true"` where the child is already a control |
 | 2 | `BbTooltipTrigger.AsChild` default → `false` | **Medium** | Add `AsChild="true"` where the child consumes the trigger context, such as a `BbButton` |
 | 3 | Every utility in `blazorblueprint.css` is prefixed `bb:` | **Low** for most; **Medium** if you relied on the shipped utilities without your own Tailwind build | Nothing if you run Tailwind. Otherwise, see below |
@@ -198,3 +203,16 @@ These two utilities were safelisted so consumers could apply them by name. They 
 If you have CSS, JavaScript or tests that select the library's internal elements by utility class
 (`.flex-col`, `.group\/row`, `.hidden`), those selectors now need the prefix. Prefer the `data-slot`
 and other data attributes the components render; those are stable.
+
+## New v4 editing and scheduling APIs
+
+- `BbDataGrid` adds `DataGridEditMode.Cell` and `Batch`. Supply `EditItemFactory` to make independent editable DTO copies, including nested objects. Existing `Row` mode continues binding to the original row. Cell callbacks receive a draft as `Item` and the source as `OriginalItem`; batch callbacks receive all `Changes` and must persist them atomically. Failed validation or rejected saves retain drafts. Use stable, uneditable `ItemKey` values.
+- `BbScheduler` adds day/week time slots, resource lanes, an event editor, recurrence and time zones. It is separate from `BbEventCalendar`. Bind `Events`, use `OnEventChange` for persistence, and set `Cancel` to reject. Start/End are instants; an event's IANA time zone governs recurrence. Ical.Net 5.2.3 expands daily/weekly/monthly/yearly RRULEs, with occurrence exclusions and overrides. Timed events keep their elapsed duration across DST. The editor distinguishes repeated start/end times and rejects skipped times.
+- `BbTreeSelect<TItem>` and `BbCascader<TItem>` accept nested `Items` plus key/text/children selectors. Bind stable string keys through `Value`, or `Values` in TreeSelect multiple mode. `ValueExpression`/`ValuesExpression` integrate with `EditContext`.
+- `BbFileUpload` remains a file selector when `UploadHandler` is null. With a handler, automatic uploads report `FileUploadItem.Status`, `BytesTransferred` and `Progress`. Observe the cancellation token and report cumulative bytes through `FileUploadContext.ReportProgressAsync`. Retry opens a fresh stream from byte zero. Retained hidden inputs preserve browser file handles across subsequent selections; removing/clearing files cancels their attempts.
+
+Live demos and complete code examples are available at `/components/datagrid-editing`, `/components/scheduler`, `/components/tree-select`, `/components/cascader` and `/components/file-upload`.
+
+## Building release packages
+
+Build and pack the current projects together by default; their project references keep the Components and Primitives APIs aligned. For the release workflow that switches to published package references, pass both `-p:UsePackageReferences=true` and `-p:PrimitivesPackageVersion=<matching .NET 10 v4 release>`. Publish that Primitives version first. The old hard-coded `4.0.0-beta.5` reference cannot supply the new editing APIs and has been removed. No packages are published by a local build or pack.

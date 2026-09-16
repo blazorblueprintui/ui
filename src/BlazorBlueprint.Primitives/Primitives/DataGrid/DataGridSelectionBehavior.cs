@@ -1,10 +1,11 @@
+using BlazorBlueprint.Primitives.Table;
+
 // Deliberately in the BlazorBlueprint.Primitives namespace rather than
 // BlazorBlueprint.Primitives.DataGrid, alongside SortDirection. An app that imports
 // BlazorBlueprint.Components cannot also import BlazorBlueprint.Primitives.DataGrid without
 // making the name BbDataGrid ambiguous, so an enum a consumer has to name in markup goes here.
 namespace BlazorBlueprint.Primitives;
 
-using BlazorBlueprint.Primitives.Table;
 
 
 /// <summary>
