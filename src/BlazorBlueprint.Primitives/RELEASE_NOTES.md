@@ -1,4 +1,4 @@
-## What's New in v4.0.0-beta.3
+## What's New in v4.0.0-beta.4
 
 **This is a prerelease.** The API may still change before the stable v4.0.0 release.
 
@@ -14,6 +14,7 @@
 - **escape-keydown.js**: `initialize` now takes an optional `methodName` argument; the default callback name changed from `HandleEscape` to `JsOnEscapeKey`.
 - **PrimitiveModules** imports the bundle through the new versioned `ModuleUrl`, not `ModulePath`. Code that passed `ModulePath` to `JsModules.TryGetLoaded` must pass `ModuleUrl` instead.
 - **bb-primitives.js** now throws at load when any module it imports is older than the bundle. A stale cached file that previously failed later with a missing-function error now fails immediately with the file named.
+- **BbTableRow**, **BbDataGridRow**, **BbMenubarContent**, **BbSortable**: the few Tailwind utilities these primitives render themselves (row focus ring, menubar backdrop, sortable `sr-only` live region) are now `bb:`-prefixed and served from the `bb-utilities` layer in `blazorblueprint.css`. A consumer's own Tailwind build no longer emits them, so remove any `@source` that points at the library and update CSS or test selectors that matched the old unprefixed class names.
 
 ### New Features
 
