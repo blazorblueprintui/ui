@@ -69,15 +69,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
-## 2026-09-16 (later still)
-
-### Fixed
-
-- **Navigating away from an open overlay no longer logs `overlay: close callback failed`.** Clicking a link while a select, popover or menu was open closed the overlay and unloaded the page in the same gesture. The close asked the browser for a `JsOnClosed` callback once the exit animation finished; the navigation disposed the component before the animation ended, and because the portal already counted itself closed, disposal skipped its own close call and released the .NET reference the callback was about to use. Nothing broke — the callback only unregisters content that disposal had already unregistered — but every such navigation put a `System.ArgumentException: There is no tracked object` in the console. The portal now remembers that a callback is outstanding and sends one more close on disposal, which cancels the pending one on the browser side before the reference goes away. Introduced with the one-round-trip close in 4.0.0-beta.1.
-
----
-
-## 2026-09-16 (later)
+## 2026-09-16
 
 ### Added
 
@@ -91,12 +83,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **Quill is pinned to 2.0.3 in the demo and setup notes** (`quill@2.0.3` instead of the floating `quill@2` tag), and the interop no longer carries Quill 1 fallbacks for `getSemanticHTML`. The editor has required Quill 2 since it was rewritten for it; the fallbacks only hid a wrong script version behind subtly different HTML.
 
----
-
-## 2026-09-16
-
-### Changed
-
 - **BREAKING — every Tailwind utility in `blazorblueprint.css` is now prefixed `bb:`** — [#501](https://github.com/blazorblueprintui/ui/issues/501), fixing [#496](https://github.com/blazorblueprintui/ui/issues/496). The prebuilt stylesheet wrote its utilities into Tailwind's `utilities` cascade layer, the same layer a consumer's own build writes into. Layer names are global to the document, so two builds emitting the same class name were ordered by which `<link>` came second, not by Tailwind's sort order. A consumer's `sm:grid-cols-2 md:grid-cols-4` collapsed when the library loaded after their stylesheet; the library's own `hidden sm:flex` collapsed when it loaded before. No load order fixed both, and the demo had been shipping in the broken arrangement.
 
   The library's utilities now emit as `.bb\:flex`, `.bb\:sm\:hidden` and so on, into a `bb-utilities` layer of their own, so the two builds can never produce the same selector. `ClassNames.cn` strips the prefix for the merge and puts it back on the survivors, so a consumer `Class="p-6"` still replaces the component's `bb:p-4` exactly as before; the merge no longer depends on load order either. Around 2,000 class strings across Components and Primitives were rewritten mechanically against the set of tokens the previous build emitted, and the rewrite was verified by diffing the emitted CSS: every utility gained the prefix and nothing else changed.
@@ -105,9 +91,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
   **Guarded.** New convention tests read the built stylesheet and fail if any utility in `bb-utilities` is unprefixed or anything is written into the shared `utilities` layer, and read the sources and fail on an unprefixed token in a `class` attribute or a `cn(…)` literal — under a prefixed build that token would not collide, it would silently emit nothing. The demo no longer `@source`s the library and is a real consumer, which is how #496 gets caught next time.
 
+### Fixed
+
+- **Navigating away from an open overlay no longer logs `overlay: close callback failed`.** Clicking a link while a select, popover or menu was open closed the overlay and unloaded the page in the same gesture. The close asked the browser for a `JsOnClosed` callback once the exit animation finished; the navigation disposed the component before the animation ended, and because the portal already counted itself closed, disposal skipped its own close call and released the .NET reference the callback was about to use. Nothing broke — the callback only unregisters content that disposal had already unregistered — but every such navigation put a `System.ArgumentException: There is no tracked object` in the console. The portal now remembers that a callback is outstanding and sends one more close on disposal, which cancels the pending one on the browser side before the reference goes away. Introduced with the one-round-trip close in 4.0.0-beta.1.
+
 ---
 
-## 2026-09-15 (later)
+## 2026-09-15
+
+### Added
+
+- **`JsModules.TryGetLoaded`** and **`PrimitiveModules.TryGetLoaded`** — get an already-imported module without awaiting. For callers that must issue interop from a synchronous pass, where awaiting the import would put the call a round trip behind the render it needs to travel with. Returning `false` is "not yet", not an error: the caller falls back to the awaited path, which pays one round trip and warms the cache for every call after it.
+
+- **`BbFloatingPortal.SideElementId`** — names the element that carries the resolved `data-side`, written by JS as soon as the overlay is positioned and kept current when a scroll flips it.
+
+- **`BbFloatingPortal.Keyboard`** (`FloatingKeyboardOptions`, `FloatingKeyboardKind`) — declares listbox or menu key handling to be wired inside the open call and released inside the close.
+
+- **`BbFloatingPortal.ScrollToCurrentIn`** and **`ScrollToCurrentSelector`**, surfaced on both layers of `BbPopoverContent` as **`ScrollToSelected`** and **`ScrollToSelectedSelector`** — scroll the chosen item into view each time the overlay opens, before it is revealed.
 
 ### Changed
 
@@ -118,22 +118,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Focus happens inside the open and close calls, not a round trip after.** `BbCombobox` and `BbMultiSelect` focused their search box from the popover's ready callback — a round trip after the content rendered, then a 50ms sleep, then another round trip for `FocusAsync`. The new `BbPopoverContent.AutoFocusId` (and `BbFloatingPortal.AutoFocusId`) focuses the element one frame after the reveal, inside the call that positions the overlay. `BbCommandInput` gains an `Id` so an owner can name it. On the way out, Select, Popover and DropdownMenu awaited `FocusManager.RestoreFocus` after their close render on every Escape and every selection; `RestoreFocusToId` and `RestoreFocusOnClose` ride along with `overlay.close` and the browser puts focus back on the trigger itself. `BbNavigationMenuTrigger`'s ArrowDown no longer sleeps 50ms before focusing the first item.
 
 - **`BbPopoverContent` only asks for the portal's ready callback when a consumer set `OnContentReady`.** Nothing in the library listens to `Context.OnContentReady`, so the callback — ack-gated, and a re-render of its receiver — was a round trip spent notifying no one.
-
-### Fixed
-
-- **No `async void` handler can take the circuit down.** Eight fire-and-forget handlers — close timers, debounce, state-change and location-change subscribers — caught one or two exceptions and let the rest escape. Nothing awaits an `async void` method, so an escaping exception has no caller to reach and Blazor Server treats it as fatal. The sidebar's scroll-to-top was one of these. Every one now catches everything; each does best-effort work and none of it is worth a dead circuit.
-
-- **A stale cached JavaScript module fails loudly, and a new release is a new URL.** A consumer behind a CDN with a long browser-cache TTL deployed a new build and got a four-hour-old `sidebar.js` under the new bundle; `sidebar.initialize` was not a function and every circuit died with nothing to say why. The C# import of each bundle now carries the library version as a query (`PrimitiveModules.ModuleUrl`, the new `ComponentModules.CoreUrl`, built by `JsModules.Versioned`), so a cached entry file is never a valid answer for a new release. And each bundle asserts one export it depends on from every module it imports, at load, throwing an error that names the stale file and says what to do — the import rejects, consumers catch it and degrade, and the console says which file is old.
-
-### Known
-
-- **Popover and dropdown menu still open in two round trips**, not one. The second is a portal-host flush: the content's registration and its root's unconditional re-render both reach the host in the same render batch, and the host — unable to tell a same-batch refresh from a genuine mid-cycle update (#418) — defers a flush that lands one round trip after the overlay is already on screen. Removing the content's own open-side `StateHasChanged` did not clear it. The fix needs the host to know where a render batch ends, which Blazor does not expose; parked with that analysis.
-
----
-
-## 2026-09-15
-
-### Changed
 
 - **An overlay opens in one circuit round trip, and closes in one.** Measured on a real deployment at a ~90ms round trip, opening a `BbSelect` on 3.14.1 cost **11** sequential round trips — 1.6 seconds, and 5.5 seconds on a 500ms circuit. 4.0.0-beta.1 cut that to **5**. It is now **1**, and the arrow keys and hover cost **none at all**.
 
@@ -172,17 +156,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **`BbTooltipContent` and `BbHoverCardContent` no longer ask for the portal's ready callback.** Both handlers were empty, and on Server the callback is ack-gated, so asking for it cost a round trip to do nothing.
 
-### Added
-
-- **`JsModules.TryGetLoaded`** and **`PrimitiveModules.TryGetLoaded`** — get an already-imported module without awaiting. For callers that must issue interop from a synchronous pass, where awaiting the import would put the call a round trip behind the render it needs to travel with. Returning `false` is "not yet", not an error: the caller falls back to the awaited path, which pays one round trip and warms the cache for every call after it.
-
-- **`BbFloatingPortal.SideElementId`** — names the element that carries the resolved `data-side`, written by JS as soon as the overlay is positioned and kept current when a scroll flips it.
-
-- **`BbFloatingPortal.Keyboard`** (`FloatingKeyboardOptions`, `FloatingKeyboardKind`) — declares listbox or menu key handling to be wired inside the open call and released inside the close.
-
-- **`BbFloatingPortal.ScrollToCurrentIn`** and **`ScrollToCurrentSelector`**, surfaced on both layers of `BbPopoverContent` as **`ScrollToSelected`** and **`ScrollToSelectedSelector`** — scroll the chosen item into view each time the overlay opens, before it is revealed.
-
 ### Fixed
+
+- **No `async void` handler can take the circuit down.** Eight fire-and-forget handlers — close timers, debounce, state-change and location-change subscribers — caught one or two exceptions and let the rest escape. Nothing awaits an `async void` method, so an escaping exception has no caller to reach and Blazor Server treats it as fatal. The sidebar's scroll-to-top was one of these. Every one now catches everything; each does best-effort work and none of it is worth a dead circuit.
+
+- **A stale cached JavaScript module fails loudly, and a new release is a new URL.** A consumer behind a CDN with a long browser-cache TTL deployed a new build and got a four-hour-old `sidebar.js` under the new bundle; `sidebar.initialize` was not a function and every circuit died with nothing to say why. The C# import of each bundle now carries the library version as a query (`PrimitiveModules.ModuleUrl`, the new `ComponentModules.CoreUrl`, built by `JsModules.Versioned`), so a cached entry file is never a valid answer for a new release. And each bundle asserts one export it depends on from every module it imports, at load, throwing an error that names the stale file and says what to do — the import rejects, consumers catch it and degrade, and the console says which file is old.
 
 - **Navigating between pages no longer kills the circuit.** `BbSidebarInset` scrolls the main area to the top on every navigation, and it called `scrollToTop` — the name the function had before the five common modules were bundled into `bb-components-core.js`. The bundle re-exports each module under its file name in camelCase, so the bare identifier resolved to nothing and every client-side navigation threw `Could not find 'scrollToTop'`. The handler is `async void`, so the exception had nowhere to go and took the connection down with it; a reload fixed it until the next link click.
 
@@ -203,6 +181,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`BbCombobox` no longer discards a paged list when it closes.** Closing it told the consumer the search had been cleared even when nothing had been typed, which a paged list correctly reads as "reload your first page". Scroll in seven pages, pick an item from the last of them, and closing threw all seven away: reopening showed page one, and the chosen item was no longer in the list at all. The notification now fires only when there is a search to clear.
 
 - **A closing overlay's exit animation is no longer cut short by its own unmount.** Content that is unmounted on close (`ForceMount="false"`) has to survive long enough to animate, so the unmount can no longer share the close's render. JS reports back once the animation has finished and the element is hidden, and the unmount happens then — one round trip later, behind an overlay the user already cannot see. Content that stays mounted needs no callback at all.
+
+### Known
+
+- **Popover and dropdown menu still open in two round trips**, not one. The second is a portal-host flush: the content's registration and its root's unconditional re-render both reach the host in the same render batch, and the host — unable to tell a same-batch refresh from a genuine mid-cycle update (#418) — defers a flush that lands one round trip after the overlay is already on screen. Removing the content's own open-side `StateHasChanged` did not clear it. The fix needs the host to know where a render batch ends, which Blazor does not expose; parked with that analysis.
 
 ---
 
