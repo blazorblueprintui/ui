@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Important Rules
 
 - Never commit to git unless explicitly instructed to
+- Keep internal plans, research, reviews and implementation notes in the private `devkit/docs/` repository. Do not create or commit an internal `docs/` tree in this public repository.
 - This application does not support hot-reload — rebuild to see changes
 - Do NOT add `Co-Authored-By` lines to commit messages
 - Do NOT add "Generated with Claude" / AI-attribution footers to PR bodies or GitHub issue/PR comments
