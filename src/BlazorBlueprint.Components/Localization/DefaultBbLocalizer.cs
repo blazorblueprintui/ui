@@ -471,6 +471,18 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Pagination.PageFormat"] = "Page {0} of {1}",
         ["Pagination.NoItems"] = "No items",
 
+        // PdfViewer
+        ["PdfViewer.AriaLabel"] = "PDF document",
+        ["PdfViewer.CurrentPage"] = "Current page",
+        ["PdfViewer.Download"] = "Download PDF",
+        ["PdfViewer.FitToWidth"] = "Fit to width",
+        ["PdfViewer.Loading"] = "Loading PDF…",
+        ["PdfViewer.LoadFailed"] = "Unable to load the PDF document.",
+        ["PdfViewer.NextPage"] = "Next page",
+        ["PdfViewer.PreviousPage"] = "Previous page",
+        ["PdfViewer.ZoomIn"] = "Zoom in",
+        ["PdfViewer.ZoomOut"] = "Zoom out",
+
         // QuantityStepper
         ["QuantityStepper.Label"] = "Quantity",
         ["QuantityStepper.Remove"] = "Remove item",

@@ -1,0 +1,110 @@
+﻿@namespace BlazorBlueprint.Components
+@using Microsoft.JSInterop
+@using System.Globalization
+@using BlazorBlueprint.Icons.Lucide.Components
+@inject IJSRuntime JS
+@inject IBbLocalizer Localizer
+@implements IAsyncDisposable
+
+<div id="@Id" class="@ContainerCssClass" data-slot="pdf-viewer" role="region" aria-label="@EffectiveAriaLabel" @attributes="AdditionalAttributes">
+    @if (Toolbar)
+    {
+        <div class="@ToolbarCssClass" data-slot="toolbar">
+            <div class="bb:flex bb:flex-wrap bb:items-center bb:gap-1">
+                <BbButton Variant="ButtonVariant.Ghost"
+                          Size="ButtonSize.IconSmall"
+                          OnClick="PreviousPageAsync"
+                          Disabled="@(!CanGoPrevious)"
+                          title="@Localizer["PdfViewer.PreviousPage"]"
+                          aria-label="@Localizer["PdfViewer.PreviousPage"]">
+                    <LucideIcon Name="chevron-left" Size="16" />
+                </BbButton>
+
+                <BbButton Variant="ButtonVariant.Ghost"
+                          Size="ButtonSize.IconSmall"
+                          OnClick="NextPageAsync"
+                          Disabled="@(!CanGoNext)"
+                          title="@Localizer["PdfViewer.NextPage"]"
+                          aria-label="@Localizer["PdfViewer.NextPage"]">
+                    <LucideIcon Name="chevron-right" Size="16" />
+                </BbButton>
+
+                <span class="bb:flex bb:items-center bb:gap-1 bb:px-1" aria-label="@Localizer["PdfViewer.CurrentPage"]">
+                    <BbInput @bind-Value="pageInput"
+                             @bind-Value:after="GoToPageInputAsync"
+                             Disabled="@(pageCount == 0)"
+                             Class="bb:w-14 bb:text-center"
+                             AriaLabel="@Localizer["PdfViewer.CurrentPage"]" />
+                    <span class="bb:text-sm bb:text-muted-foreground">/</span>
+                    <span class="bb:text-sm bb:text-muted-foreground bb:min-w-6 bb:text-center bb:tabular-nums">@(pageCount > 0 ? pageCount.ToString(CultureInfo.InvariantCulture) : "–")</span>
+                </span>
+            </div>
+
+            <BbSeparator Orientation="SeparatorOrientation.Vertical" Class="bb:h-6 bb:mx-1" />
+
+            <div class="bb:flex bb:flex-wrap bb:items-center bb:gap-1">
+                <BbButton Variant="ButtonVariant.Ghost"
+                          Size="ButtonSize.IconSmall"
+                          OnClick="ZoomOutAsync"
+                          Disabled="@(!CanZoomOut)"
+                          title="@Localizer["PdfViewer.ZoomOut"]"
+                          aria-label="@Localizer["PdfViewer.ZoomOut"]">
+                    <LucideIcon Name="zoom-out" Size="16" />
+                </BbButton>
+
+                <span class="bb:w-14 bb:text-center bb:text-sm bb:tabular-nums" role="status" aria-live="polite">
+                    @(CurrentScale.ToString("0%", CultureInfo.InvariantCulture))
+                </span>
+
+                <BbButton Variant="ButtonVariant.Ghost"
+                          Size="ButtonSize.IconSmall"
+                          OnClick="ZoomInAsync"
+                          Disabled="@(!CanZoomIn)"
+                          title="@Localizer["PdfViewer.ZoomIn"]"
+                          aria-label="@Localizer["PdfViewer.ZoomIn"]">
+                    <LucideIcon Name="zoom-in" Size="16" />
+                </BbButton>
+
+                <BbButton Variant="ButtonVariant.Ghost"
+                          Size="ButtonSize.IconSmall"
+                          OnClick="FitToWidthAsync"
+                          Disabled="@(!IsDocumentReady)"
+                          title="@Localizer["PdfViewer.FitToWidth"]"
+                          aria-label="@Localizer["PdfViewer.FitToWidth"]">
+                    <LucideIcon Name="scaling" Size="16" />
+                </BbButton>
+            </div>
+
+            <BbSeparator Orientation="SeparatorOrientation.Vertical" Class="bb:h-6 bb:mx-1" />
+
+            <BbButton Variant="ButtonVariant.Ghost"
+                      Size="ButtonSize.IconSmall"
+                      OnClick="@(() => DownloadAsync())"
+                      Disabled="@(!IsDocumentReady)"
+                      title="@Localizer["PdfViewer.Download"]"
+                      aria-label="@Localizer["PdfViewer.Download"]">
+                <LucideIcon Name="download" Size="16" />
+            </BbButton>
+        </div>
+    }
+
+    <div class="@ViewportCssClass" style="@ViewportStyle" data-slot="viewport">
+        <canvas @ref="canvas" class="@CanvasCssClass"></canvas>
+
+        @if (isLoading)
+        {
+            <div class="bb:absolute bb:inset-0 bb:flex bb:items-center bb:justify-center bb:bg-background/60" role="status" aria-live="polite">
+                <div class="bb:flex bb:items-center bb:gap-2 bb:text-muted-foreground">
+                    <LucideIcon Name="loader-circle" Size="20" />
+                    <span class="bb:text-sm">@Localizer["PdfViewer.Loading"]</span>
+                </div>
+            </div>
+        }
+        else if (loadError is not null)
+        {
+            <div class="bb:absolute bb:inset-0 bb:flex bb:items-center bb:justify-center bb:bg-background/60" role="alert">
+                <p class="bb:max-w-72 bb:px-4 bb:text-center bb:text-sm bb:text-destructive">@loadError</p>
+            </div>
+        }
+    </div>
+</div>

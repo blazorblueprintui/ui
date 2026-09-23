@@ -1,0 +1,308 @@
+@page "/components/pdf-viewer"
+<PageTitle>PDF Viewer - Blazor Blueprint</PageTitle>
+
+<div class="space-y-10 max-w-4xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">PDF Viewer</h1>
+        <p class="text-xl text-muted-foreground">
+            A PDF viewer built on PDF.js with page navigation, zoom, fit-to-width and download,
+            all in a toolbar styled to match the design system.
+        </p>
+    </div>
+
+    @* Basic Example *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Basic Usage</h2>
+            <p class="text-muted-foreground">
+                Point the viewer at any PDF with the <code class="bg-muted px-1 rounded">Url</code> parameter.
+                The document loads asynchronously and the toolbar appears with it.
+            </p>
+        </div>
+
+        <div class="space-y-4">
+            <BbPdfViewer Url="https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf" />
+        </div>
+        <CodeBlock Source="Components/PdfViewer/basic.txt" />
+    </section>
+
+    @* Without Toolbar *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Without Toolbar</h2>
+            <p class="text-muted-foreground">
+                Set <code class="bg-muted px-1 rounded">Toolbar="false"</code> for an embed-style viewer. You can still
+                drive navigation and zoom from the component reference.
+            </p>
+        </div>
+
+        <div class="space-y-4">
+            <BbPdfViewer Url="https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf" Toolbar="false" Height="480px" />
+        </div>
+        <CodeBlock Source="Components/PdfViewer/toolbar.txt" />
+    </section>
+
+    @* Load a Local File *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Load a Local File</h2>
+            <p class="text-muted-foreground">
+                Load a document from bytes instead of a URL. The
+                <code class="bg-muted px-1 rounded">LoadDataAsync</code> method takes a
+                <code class="bg-muted px-1 rounded">byte[]</code> or a <code class="bg-muted px-1 rounded">Stream</code> and
+                streams it to the browser through a <code class="bg-muted px-1 rounded">DotNetStreamReference</code>, so no
+                web request is involved. Pick a file below and its stream is passed straight through.
+            </p>
+        </div>
+
+        <div class="space-y-4">
+            <div class="flex flex-wrap items-center gap-2">
+                <InputFile OnChange="@LoadLocalPdf" Accept=".pdf" />
+                <span class="text-sm text-muted-foreground">@localPdfStatus</span>
+            </div>
+            <BbPdfViewer @ref="localViewer" Height="440px" />
+        </div>
+        <CodeBlock Source="Components/PdfViewer/local-file.txt" />
+    </section>
+
+    @* Height and Zoom Bounds *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Height and Zoom Bounds</h2>
+            <p class="text-muted-foreground">
+                Control the viewport height with <code class="bg-muted px-1 rounded">Height</code> and the starting zoom with
+                <code class="bg-muted px-1 rounded">DefaultScale</code>. Zoom is clamped between
+                <code class="bg-muted px-1 rounded">MinScale</code> and <code class="bg-muted px-1 rounded">MaxScale</code>.
+            </p>
+        </div>
+
+        <div class="space-y-4">
+            <BbPdfViewer Url="https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf"
+                         Height="480px"
+                         DefaultScale="1"
+                         MinScale="0.5"
+                         MaxScale="2" />
+        </div>
+        <CodeBlock Source="Components/PdfViewer/height-zoom.txt" />
+    </section>
+
+    @* Events and Component API *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Events and Component API</h2>
+            <p class="text-muted-foreground">
+                <code class="bg-muted px-1 rounded">OnPageChanged</code> fires whenever the visible page changes, and
+                <code class="bg-muted px-1 rounded">OnDocumentLoaded</code> fires once a document finishes loading. The same
+                actions are available on the component reference, for example
+                <code class="bg-muted px-1 rounded">NextPageAsync()</code>, <code class="bg-muted px-1 rounded">GoToPageAsync(page)</code>
+                and <code class="bg-muted px-1 rounded">FitToWidthAsync()</code>. Live values can be read with
+                <code class="bg-muted px-1 rounded">GetCurrentPageAsync()</code>, <code class="bg-muted px-1 rounded">GetPageCountAsync()</code>
+                and <code class="bg-muted px-1 rounded">GetScaleAsync()</code>.
+            </p>
+        </div>
+
+        <div class="space-y-4">
+            <div class="flex flex-wrap gap-2">
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(async () => { if (viewer is not null) await viewer.NextPageAsync(); })">
+                    Next page
+                </BbButton>
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(async () => { if (viewer is not null) await viewer.PreviousPageAsync(); })">
+                    Previous page
+                </BbButton>
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(async () => { if (viewer is not null) await viewer.GoToPageAsync(3); })">
+                    Go to page 3
+                </BbButton>
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(async () => { if (viewer is not null) await viewer.ZoomInAsync(); })">
+                    Zoom in
+                </BbButton>
+                <BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(async () => { if (viewer is not null) await viewer.FitToWidthAsync(); })">
+                    Fit to width
+                </BbButton>
+            </div>
+
+            <BbPdfViewer @ref="viewer"
+                         Url="https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf"
+                         Height="480px"
+                         OnPageChanged="OnDemoPageChanged"
+                         OnDocumentLoaded="OnDemoDocumentLoaded" />
+
+            <p class="text-sm text-muted-foreground" aria-live="polite">@demoStatus</p>
+        </div>
+        <CodeBlock Source="Components/PdfViewer/events.txt" />
+    </section>
+
+    @* Usage Notes *@
+    <section class="space-y-6">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Usage Notes</h2>
+        </div>
+
+        <div class="rounded-lg border p-6 space-y-4">
+            <div class="space-y-3">
+                <h3 class="font-semibold">Setup Requirements</h3>
+                <p class="text-sm text-muted-foreground">
+                    None. PDF.js ships inside the package and loads on demand the first time a viewer renders,
+                    so there is no script or stylesheet to add to your host page.
+                </p>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="font-semibold">Changing the Document</h3>
+                <p class="text-sm text-muted-foreground">
+                    Set a new <code class="bg-muted px-1 rounded">Url</code> to replace the document, or pass
+                    <code class="bg-muted px-1 rounded">null</code> / an empty string to clear the viewer. For documents
+                    that exist only in the browser (from an <code class="bg-muted px-1 rounded">InputFile</code> or a generated
+                    byte stream), call <code class="bg-muted px-1 rounded">LoadDataAsync(byte[])</code> or
+                    <code class="bg-muted px-1 rounded">LoadDataAsync(Stream)</code> instead — no URL or network request is needed,
+                    and a later <code class="bg-muted px-1 rounded">Url</code> change replaces the bytes.
+                </p>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="font-semibold">Component API</h3>
+                <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+                    <li><code class="text-xs bg-muted px-1 py-0.5 rounded">PreviousPageAsync()</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">NextPageAsync()</code> - step through the document</li>
+                    <li><code class="text-xs bg-muted px-1 py-0.5 rounded">GoToPageAsync(page)</code> - jump to a page; out-of-range values are clamped</li>
+                    <li><code class="text-xs bg-muted px-1 py-0.5 rounded">ZoomInAsync()</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">ZoomOutAsync()</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">SetScaleAsync(scale)</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">FitToWidthAsync()</code> - adjust zoom</li>
+                    <li><code class="text-xs bg-muted px-1 py-0.5 rounded">LoadDataAsync(byte[])</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">LoadDataAsync(Stream)</code> - load a document from local bytes</li>
+                    <li><code class="text-xs bg-muted px-1 py-0.5 rounded">DownloadAsync(fileName?)</code> - save the open document as a PDF</li>
+                    <li><code class="text-xs bg-muted px-1 py-0.5 rounded">GetCurrentPageAsync()</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">GetPageCountAsync()</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">GetScaleAsync()</code> - read live state</li>
+                </ul>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="font-semibold">Key Features</h3>
+                <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+                    <li>Rendering powered by PDF.js, bundled in the package</li>
+                    <li>Page navigation with a direct jump-to-page input</li>
+                    <li>Zoom with in/out buttons, inner and outer bounds, and fit-to-width</li>
+                    <li>Download button saves the document as a file instead of navigating to it</li>
+                    <li>Hi-DPI aware rendering for crisp text on retina displays</li>
+                    <li>Page cache with render cancellation for fast, flicker-free paging</li>
+                </ul>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="font-semibold">Accessibility</h3>
+                <ul class="space-y-2 text-sm text-muted-foreground list-disc list-inside">
+                    <li>The region exposes a localized <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-label</code>, overridable via the <code class="text-xs bg-muted px-1 py-0.5 rounded">AriaLabel</code> parameter</li>
+                    <li>Toolbar buttons carry <code class="text-xs bg-muted px-1 py-0.5 rounded">title</code> and <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-label</code> tooltips</li>
+                    <li>Page and zoom state are announced through <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-live</code> regions</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <LocalizationSection
+        Description="Toolbar tooltips, loading text, and the accessible region label are configurable via IBbLocalizer with PdfViewer.* keys."
+        Labels="@(new LocalizationSection.LabelInfo[]
+        {
+            new("AriaLabel", "PDF document", "Accessible label for the viewer region"),
+            new("PreviousPage", "Previous page", "Tooltip for the previous page button"),
+            new("NextPage", "Next page", "Tooltip for the next page button"),
+            new("CurrentPage", "Current page", "Aria label for the page number input"),
+            new("ZoomIn", "Zoom in", "Tooltip for the zoom in button"),
+            new("ZoomOut", "Zoom out", "Tooltip for the zoom out button"),
+            new("FitToWidth", "Fit to width", "Tooltip for the fit-to-width button"),
+            new("Download", "Download PDF", "Tooltip for the download button"),
+            new("Loading", "Loading PDF…", "Shown while the document is being fetched"),
+            new("LoadFailed", "Unable to load the PDF document.", "Shown when the document cannot be loaded"),
+        })"
+        CodeExample="@(@"builder.Services.AddBlazorBlueprintComponents(localizer =>
+{
+    localizer.Set(""PdfViewer.Loading"", ""Dokument wird geladen…"");
+    localizer.Set(""PdfViewer.NextPage"", ""Nächste Seite"");
+    localizer.Set(""PdfViewer.Download"", ""PDF herunterladen"");
+});")" />
+
+    <!-- Accessibility Notes -->
+    <AccessibilityList>
+        <AriaAttributes>
+            <AccessibilityItem>
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-label</code> parameter sets an accessible label on the viewer region
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Toolbar buttons expose descriptive <code class="text-xs bg-muted px-1 py-0.5 rounded">title</code> and <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-label</code> tooltips
+            </AccessibilityItem>
+            <AccessibilityItem>
+                Page number and zoom are announced through <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-live</code> regions
+            </AccessibilityItem>
+        </AriaAttributes>
+    </AccessibilityList>
+
+    <!-- API Reference -->
+    <section class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">API Reference</h2>
+            <p class="text-muted-foreground">Component properties and parameters.</p>
+        </div>
+        <div class="space-y-4">
+            <ApiReference ComponentName="BbPdfViewer">
+                <ApiParameter Name="Url" Type="string?" Default="null">
+                    URL of the PDF document to display. Set a new value to replace the document; set <code>null</code> or an empty string to clear the viewer.
+                </ApiParameter>
+                <ApiParameter Name="Toolbar" Type="bool" Default="true">
+                    Whether the toolbar (page navigation, zoom, fit-to-width, download) is rendered.
+                </ApiParameter>
+                <ApiParameter Name="DefaultScale" Type="double" Default="1.25">
+                    Zoom scale used when a document first loads.
+                </ApiParameter>
+                <ApiParameter Name="MinScale" Type="double" Default="0.5">
+                    Smallest zoom scale the toolbar and methods allow.
+                </ApiParameter>
+                <ApiParameter Name="MaxScale" Type="double" Default="3.0">
+                    Largest zoom scale the toolbar and methods allow.
+                </ApiParameter>
+                <ApiParameter Name="Height" Type="string?" Default="&quot;640px&quot;">
+                    Height of the scrollable canvas area as a CSS length. When null, the viewer fills its parent's height.
+                </ApiParameter>
+                <ApiParameter Name="Class" Type="string?" Default="null">
+                    Additional CSS classes for the container.
+                </ApiParameter>
+                <ApiParameter Name="Id" Type="string?" Default="null">
+                    HTML id attribute for the container.
+                </ApiParameter>
+                <ApiParameter Name="AriaLabel" Type="string?" Default="null">
+                    ARIA label for the viewer region. Localized default used when null.
+                </ApiParameter>
+                <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
+                    Additional HTML attributes applied to the root <code>&lt;div&gt;</code> element (e.g. <code>data-testid</code>).
+                </ApiParameter>
+                <ApiParameter Name="OnDocumentLoaded" Type="EventCallback&lt;int&gt;">
+                    Fired after a document loads, with the number of pages in it.
+                </ApiParameter>
+                <ApiParameter Name="OnPageChanged" Type="EventCallback&lt;PdfViewerPageChangeEventArgs&gt;">
+                    Fired when the visible page changes; carries <code>Page</code> and <code>PageCount</code>.
+                </ApiParameter>
+            </ApiReference>
+        </div>
+    </section>
+</div>
+
+@code {
+    private BbPdfViewer? viewer;
+    private BbPdfViewer? localViewer;
+    private string demoStatus = "No document loaded";
+    private string localPdfStatus = "No file selected";
+
+    private void OnDemoDocumentLoaded(int pageCount)
+    {
+        demoStatus = pageCount > 0 ? "Page 1 of " + pageCount : "Document load failed";
+    }
+
+    private void OnDemoPageChanged(PdfViewerPageChangeEventArgs args)
+    {
+        demoStatus = "Page " + args.Page + " of " + args.PageCount;
+    }
+
+    private async Task LoadLocalPdf(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        localPdfStatus = "Loading " + file.Name + "…";
+        if (localViewer is not null)
+        {
+            await localViewer.LoadDataAsync(file.OpenReadStream(maxAllowedSize: 25 * 1024 * 1024));
+        }
+        localPdfStatus = "Loaded " + file.Name;
+    }
+}

@@ -1,0 +1,15 @@
+<InputFile OnChange="@HandleFileAsync" Accept=".pdf" />
+
+@* Load documents that exist only in the browser - the stream is streamed to
+   the browser, so no URL or web request is involved. *@
+<BbPdfViewer @ref="pdf" Height="560px" />
+
+@code {
+    private BbPdfViewer? pdf;
+
+    private async Task HandleFileAsync(InputFileChangeEventArgs e)
+    {
+        // The stream is consumed and disposed by the transfer.
+        await pdf!.LoadDataAsync(e.File.OpenReadStream(maxAllowedSize: 25 * 1024 * 1024));
+    }
+}
