@@ -62,6 +62,7 @@ BlazorBlueprint.Components can load it or not; the two stylesheets agree.
 | **Context Menu** | Right-click menu with keyboard navigation and positioning |
 | **Dashboard Grid** | Widget layout state, drag-and-drop coordination, resize handling, responsive breakpoints |
 | **DataGrid** | Headless data grid with sorting, filtering, pagination, selection, expansion, row grouping, and state management |
+| **Data Matrix** | ECC 200 encoder with ASCII, C40, Text, X12, EDIFACT and Base 256 modes, returning headless module geometry |
 | **Dialog** | Modal dialogs with backdrop, focus management, and portal rendering |
 | **Direction** | Writing direction for everything inside it, cascaded as a context and written as a `dir` attribute |
 | **Dropdown Menu** | Context menus with items, checkbox items, separators, and keyboard shortcuts |
