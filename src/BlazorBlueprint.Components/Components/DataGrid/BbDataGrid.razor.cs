@@ -3498,20 +3498,34 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// Called from JS when a column resize drag completes.
     /// Receives all column widths to commit to state at once.
     /// </summary>
+    /// <param name="resizedColumnId">The column the user dragged.</param>
+    /// <param name="widths">Every width the drag settled on, keyed by column ID.</param>
+    /// <remarks>
+    /// A reported width that is not a width is refused rather than stored: no drag can mean "zero
+    /// wide", and storing the zero left the column drawn at zero pixels across a reload. Refusing
+    /// it leaves the column as it was, which is what repairs state that already carries one.
+    /// </remarks>
     [JSInvokable]
     public async Task OnResizeCompleted(string resizedColumnId, Dictionary<string, double> widths)
     {
         foreach (var (colId, widthPx) in widths)
         {
-            _gridState.Columns.SetWidth(colId, $"{Math.Round(widthPx)}px");
+            if (!ColumnWidth.IsUsablePixels(widthPx))
+            {
+                continue;
+            }
+
+            _gridState.Columns.SetWidth(colId, ColumnWidth.FormatPixels(widthPx));
         }
 
         _stateVersion++;
 
         if (OnColumnResize.HasDelegate)
         {
-            var width = widths.TryGetValue(resizedColumnId, out var w) ? $"{Math.Round(w)}px" : "";
-            await OnColumnResize.InvokeAsync((resizedColumnId, width));
+            // What the state accepted, not what the drag reported: a refused width must not reach
+            // a consumer that persists it.
+            await OnColumnResize.InvokeAsync(
+                (resizedColumnId, _gridState.Columns.GetWidth(resizedColumnId) ?? string.Empty));
         }
 
         await NotifyStateChangedAsync();
@@ -4299,33 +4313,37 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         return ClassNames.cn(baseClass, cellClass, perItemClass, overflowClass, noWrapClass, pinnedClass, separatorClass);
     }
 
-    private string? GetColumnWidthStyle(IDataGridColumn<TData> column)
+    /// <summary>
+    /// Resolves the width a column renders at: the width the state holds, or the column's
+    /// declared Width when the state has none to offer.
+    /// </summary>
+    /// <param name="column">The column to resolve.</param>
+    /// <returns>The width value, or null when neither the state nor the column declares one.</returns>
+    /// <remarks>
+    /// Every reader of a width goes through here, so the rendered style and the sticky offset
+    /// maths cannot disagree about how wide a column is. A state width that is not a width is
+    /// treated as unset; a declared width is never second-guessed.
+    /// </remarks>
+    private string? ResolveColumnWidth(IDataGridColumn<TData> column)
     {
         var stateWidth = columnStateInitialized ? _gridState.Columns.GetWidth(column.ColumnId) : null;
-        var width = stateWidth ?? column.Width;
+
+        return ColumnWidth.IsRenderable(stateWidth) ? stateWidth : column.Width;
+    }
+
+    private string? GetColumnWidthStyle(IDataGridColumn<TData> column)
+    {
+        var width = ResolveColumnWidth(column);
         return width != null ? $"width: {width}" : null;
     }
 
     /// <summary>
     /// Resolves a column's effective pixel width from state (post-resize) or the column's
-    /// declared Width parameter. Falls back to 150px for non-pixel or missing widths,
-    /// since sticky offset calculation requires a numeric value.
+    /// declared Width parameter. Falls back to 150px for non-pixel, missing or unusable
+    /// widths, since sticky offset calculation requires a numeric value.
     /// </summary>
-    private double GetEffectiveWidthPx(IDataGridColumn<TData> column)
-    {
-        var stateWidth = columnStateInitialized ? _gridState.Columns.GetWidth(column.ColumnId) : null;
-        var width = stateWidth ?? column.Width;
-
-        if (width != null && width.EndsWith("px", StringComparison.OrdinalIgnoreCase)
-            && double.TryParse(width.AsSpan(0, width.Length - 2),
-                System.Globalization.NumberStyles.Any,
-                System.Globalization.CultureInfo.InvariantCulture, out var px))
-        {
-            return px;
-        }
-
-        return 150.0;
-    }
+    private double GetEffectiveWidthPx(IDataGridColumn<TData> column) =>
+        ColumnWidth.TryParsePixels(ResolveColumnWidth(column), out var px) ? px : 150.0;
 
     /// <summary>
     /// Computes the CSS style string for a pinned column (position: sticky + left/right offset).

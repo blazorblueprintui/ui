@@ -130,10 +130,14 @@ public class DataGridColumnState
     /// </summary>
     /// <param name="columnId">The column ID.</param>
     /// <param name="width">The width value (e.g., "200px", "20%").</param>
+    /// <remarks>
+    /// A value that is not a width is stored as null instead, so state persisted while it carried
+    /// one is repaired by the act of restoring it. See <see cref="ColumnWidth"/>.
+    /// </remarks>
     public void SetWidth(string columnId, string? width)
     {
         var entry = GetOrCreateEntry(columnId);
-        entry.Width = width;
+        entry.Width = ColumnWidth.Normalize(width);
     }
 
     /// <summary>
@@ -228,7 +232,7 @@ public class DataGridColumnState
     /// Gets the width of a column.
     /// </summary>
     /// <param name="columnId">The column ID to check.</param>
-    /// <returns>The width, or null if not set.</returns>
+    /// <returns>The width, or null if not set, or if what was set is not a width.</returns>
     public string? GetWidth(string columnId)
     {
         var entry = entries.FirstOrDefault(e => e.ColumnId == columnId);
@@ -245,6 +249,10 @@ public class DataGridColumnState
     /// Used internally for restoring state from a persisted snapshot.
     /// </summary>
     /// <param name="snapshots">The column state snapshots to restore.</param>
+    /// <remarks>
+    /// A snapshot is a document written by an older build, so its widths are normalized on the
+    /// way in: a persisted <c>0px</c> becomes "unset" rather than a column drawn at zero pixels.
+    /// </remarks>
     internal void RestoreFromSnapshots(IEnumerable<ColumnStateSnapshot> snapshots)
     {
         entries.Clear();
@@ -254,7 +262,7 @@ public class DataGridColumnState
             {
                 ColumnId = snapshot.ColumnId,
                 Visible = snapshot.Visible,
-                Width = snapshot.Width,
+                Width = ColumnWidth.Normalize(snapshot.Width),
                 Order = snapshot.Order
             });
         }

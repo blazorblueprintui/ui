@@ -82,13 +82,16 @@ export function setupResizeHandles(gridId) {
       // Snapshot the managed column widths and freeze them on their <col> elements.
       // Matched by data-column-id rather than by position: a Gantt's colgroup also holds one
       // <col> per timeline slot, and those are not columns anyone can drag.
+      // A column that measures zero is left alone: every column is measured, so a control column
+      // with nothing to measure would otherwise be frozen at zero and stay that way.
       const ths = Array.from(table.querySelectorAll('thead th[data-column-id]'));
       const colFor = id => table.querySelector(`colgroup col[data-column-id="${CSS.escape(id)}"]`);
 
       ths.forEach(th => {
         const col = colFor(th.getAttribute('data-column-id'));
-        if (col) {
-          col.style.width = Math.round(th.getBoundingClientRect().width) + 'px';
+        const width = Math.round(th.getBoundingClientRect().width);
+        if (col && width > 0) {
+          col.style.width = width + 'px';
         }
       });
 
@@ -133,13 +136,24 @@ export function setupResizeHandles(gridId) {
 
         state.isDragging = false;
 
-        // Commit all column widths to Blazor
+        // Commit the widths the drag settled on to Blazor. A column with nothing to report is left
+        // out rather than reported as zero: every column is measured, and a control column whose
+        // header is screen-reader text only measures zero. Reported, that zero became the column's
+        // width and outranked the width the column declares.
         const widths = {};
         ths.forEach(th => {
           const id = th.getAttribute('data-column-id');
           const col = id ? colFor(id) : null;
-          if (id && col) {
-            widths[id] = parseFloat(col.style.width) || th.getBoundingClientRect().width;
+          if (!id || !col) return;
+
+          // The frozen width is what the drag settled on; measuring covers a column left unfrozen.
+          const frozen = parseFloat(col.style.width);
+          const width = Number.isFinite(frozen) && frozen > 0
+            ? frozen
+            : Math.round(th.getBoundingClientRect().width);
+
+          if (width > 0) {
+            widths[id] = width;
           }
         });
 

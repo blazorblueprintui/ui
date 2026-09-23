@@ -380,7 +380,11 @@ public class DataGridContext<TData> : PrimitiveContextWithEvents<DataGridState<T
     /// Sets the width of a column.
     /// </summary>
     /// <param name="columnId">The column ID.</param>
-    /// <param name="width">The width value (e.g., "200px"), or null for auto.</param>
+    /// <param name="width">
+    /// The width value (e.g., "200px"), or null for auto. A value that is not a width — zero
+    /// pixels, a zero percentage, an empty string — is treated as null. See
+    /// <see cref="ColumnWidth"/>.
+    /// </param>
     public void SetColumnWidth(string columnId, string? width)
     {
         UpdateState(state => state.Columns.SetWidth(columnId, width));
