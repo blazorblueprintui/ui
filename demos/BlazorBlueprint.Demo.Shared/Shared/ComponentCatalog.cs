@@ -56,6 +56,7 @@ internal static class ComponentCatalog
             new("Data Grid Editing", "/components/datagrid-editing", "Cell and batch editing with validation, input templates and sorting after saves", "table-2"),
             new("Data Grid Hierarchy", "/components/datagrid-hierarchy", "Display hierarchical tree data within the DataGrid using a flat-row rendering approach, with expand/collapse, depth-based indentation, per-level sorting, and child pagination.", "component"),
             new("Data Grid Styling", "/components/datagrid-styling", "Customize cell content, headers, row appearance, and grid styling with Tailwind CSS utilities.", "component"),
+            new("Data Matrix", "/components/data-matrix", "ECC 200 square and rectangular symbols drawn as SVG in C#", "qr-code", IsNew: true, Component: "BbDataMatrix"),
             new("Data Table", "/components/datatable", "Powerful tables with sorting, filtering, pagination, and selection", "table-2"),
             new("Data View", "/components/dataview", "List and grid layouts with sorting, filtering, pagination, and infinite scroll", "layout-list"),
             new("Date Input", "/components/date-input", "Edit day, month and four-digit year separately, in your culture’s date order.", "calendar-clock", IsNew: true, Component: "BbDateInput"),

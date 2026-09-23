@@ -1,0 +1,195 @@
+@page "/components/data-matrix"
+@using System.Text
+@using BlazorBlueprint.Primitives.DataMatrix
+<PageTitle>Data Matrix - Blazor Blueprint</PageTitle>
+
+<div class="space-y-8 max-w-4xl">
+    <div class="space-y-3">
+        <h1 class="text-4xl font-bold tracking-tight">Data Matrix</h1>
+        <p class="text-xl text-muted-foreground">
+            A Data Matrix ECC 200 symbol drawn as SVG. Encoding, error correction and placement run
+            entirely in C#, without JavaScript or an image request.
+        </p>
+    </div>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Basic Usage</h2>
+        <p class="text-muted-foreground">Set <code>Value</code> to encode a label, identifier or other text.</p>
+        <div class="rounded-lg border bg-card p-6 flex justify-center">
+            <BbDataMatrix Value="BB-2026-0917" ShowValue="true" />
+        </div>
+        <CodeBlock Source="Components/DataMatrix/basic.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Automatic Encoding</h2>
+        <p class="text-muted-foreground">
+            Auto combines ASCII digit pairs with C40, Text, X12, EDIFACT or Base 256 segments when
+            they save space. The smallest symbol that holds the resulting codewords is selected.
+        </p>
+        <div class="rounded-lg border bg-card p-6 space-y-4">
+            <BbInput Label="Value" @bind-Value="liveValue" UpdateTiming="UpdateTiming.Debounced"
+                     DebounceInterval="250" />
+            <div class="flex flex-col items-center gap-3">
+                <BbDataMatrix Value="@liveValue" OnEncoded="@(s => liveSymbol = s)" />
+                @if (liveSymbol is { } live)
+                {
+                    <p class="text-sm text-muted-foreground">
+                        @live.Width × @live.Height modules · @live.DataCapacity data codewords · @live.Shape
+                    </p>
+                    <p class="text-xs text-muted-foreground">Modes: @string.Join(", ", live.ModesUsed)</p>
+                }
+            </div>
+        </div>
+        <CodeBlock Source="Components/DataMatrix/automatic.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Square and Rectangular</h2>
+        <p class="text-muted-foreground">
+            Square and Rectangle restrict the size search. Rectangle includes the six classic
+            ECC 200 rectangular sizes; DMRE is not included.
+        </p>
+        <div class="rounded-lg border bg-card p-6 grid gap-6 sm:grid-cols-2 justify-items-center">
+            <div class="flex flex-col items-center gap-2">
+                <BbDataMatrix Value="ABC123456789" Shape="DataMatrixSymbolShape.Square" Size="10rem" />
+                <span class="text-sm">Square</span>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+                <BbDataMatrix Value="ABC123456789" Shape="DataMatrixSymbolShape.Rectangle" Size="14rem" />
+                <span class="text-sm">Rectangle</span>
+            </div>
+        </div>
+        <CodeBlock Source="Components/DataMatrix/shape.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">GS1 Data Matrix</h2>
+        <p class="text-muted-foreground">
+            Set <code>IsGs1</code> for the leading FNC1. Pass the actual GS1 element string: AI
+            parentheses such as <code>(01)</code> are only display notation and are not parsed.
+            Insert U+001D after a variable-length field when another field follows it. The example
+            carries GTIN (01), expiry (17), lot (10), then serial (21).
+        </p>
+        <div class="rounded-lg border bg-card p-6 flex justify-center">
+            <BbDataMatrix Value="@gs1Value" IsGs1="true" ShowValue="true" Size="14rem" />
+        </div>
+        <CodeBlock Source="Components/DataMatrix/gs1.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Colour and Size</h2>
+        <p class="text-muted-foreground">
+            The default stays dark on white in both application themes. Keep strong contrast and a
+            clear quiet zone when changing colours.
+        </p>
+        <div class="rounded-lg border bg-card p-6 grid gap-6 sm:grid-cols-2 justify-items-center">
+            <BbDataMatrix Value="BRAND-42" Size="9rem" />
+            <BbDataMatrix Value="BRAND-42" Size="9rem"
+                          Foreground="#1e3a8a" Background="#eff6ff" QuietZone="2" />
+        </div>
+        <CodeBlock Source="Components/DataMatrix/styling.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Accessibility</h2>
+        <p class="text-muted-foreground">
+            Give a useful accessible name or show the payload as text when it is not already nearby.
+            Invalid content renders an alert instead of breaking a Blazor Server circuit.
+        </p>
+        <div class="rounded-lg border bg-card p-6 flex flex-col items-center gap-4">
+            <BbDataMatrix Value="ORDER-4051" AriaLabel="Data Matrix for order 4051"
+                          Label="Order 4051" ShowValue="true" />
+            <BbDataMatrix Value="@overlongValue" EncodingMode="DataMatrixEncodingMode.Base256" />
+        </div>
+        <CodeBlock Source="Components/DataMatrix/accessibility.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">SVG and Headless Geometry</h2>
+        <p class="text-muted-foreground">
+            <code>GetSvg()</code> returns the standalone SVG. The primitive encoder returns a module
+            grid with no colour or sizing, for a custom renderer or printer.
+        </p>
+        <div class="rounded-lg border bg-card p-6 flex flex-col items-center gap-4">
+            <BbDataMatrix @ref="downloadCode" Value="HEADLESS-42" Size="10rem" />
+            <a class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground"
+               download="data-matrix.svg" href="@DownloadHref">Download the SVG</a>
+            <pre class="overflow-x-auto rounded-md bg-white text-black p-3 text-[0.5rem] leading-[0.55rem] font-mono"><code>@AsciiArt</code></pre>
+        </div>
+        <CodeBlock Source="Components/DataMatrix/headless.txt" />
+    </section>
+
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">API Reference</h2>
+        <ApiReference ComponentName="BbDataMatrix">
+            <ApiParameter Name="Value" Type="string?">Text to encode. Empty values render nothing.</ApiParameter>
+            <ApiParameter Name="EncodingMode" Type="DataMatrixEncodingMode" Default="Auto">Auto, Ascii, C40, Text, X12, Edifact or Base256.</ApiParameter>
+            <ApiParameter Name="Shape" Type="DataMatrixSymbolShape" Default="Auto">Auto, Square or Rectangle.</ApiParameter>
+            <ApiParameter Name="IsGs1" Type="bool" Default="false">Adds FNC1 semantics to an already prepared GS1 element string.</ApiParameter>
+            <ApiParameter Name="Size" Type="string" Default="12rem">Rendered SVG width as a CSS length.</ApiParameter>
+            <ApiParameter Name="Foreground" Type="string" Default="#18181b">Dark-module colour.</ApiParameter>
+            <ApiParameter Name="Background" Type="string" Default="#ffffff">Background and quiet-zone colour.</ApiParameter>
+            <ApiParameter Name="QuietZone" Type="int" Default="1">Light margin in modules.</ApiParameter>
+            <ApiParameter Name="ShowValue" Type="bool" Default="false">Show the payload below the symbol.</ApiParameter>
+            <ApiParameter Name="Label" Type="string?">Visible label above the symbol.</ApiParameter>
+            <ApiParameter Name="AriaLabel" Type="string?">Accessible name for the SVG.</ApiParameter>
+            <ApiParameter Name="OnEncoded" Type="EventCallback&lt;DataMatrixSymbol?&gt;">Receives the current symbol or null.</ApiParameter>
+            <ApiParameter Name="Symbol" Type="DataMatrixSymbol?">Read-only headless geometry and metadata.</ApiParameter>
+            <ApiParameter Name="GetSvg()" Type="string?">Standalone SVG markup.</ApiParameter>
+            <ApiParameter Name="Class" Type="string?">Additional root CSS classes.</ApiParameter>
+            <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">Additional root attributes.</ApiParameter>
+        </ApiReference>
+        <ApiReference ComponentName="DataMatrixEncoder">
+            <ApiParameter Name="Encode(value, mode, shape, isGs1)" Type="DataMatrixSymbol">Encodes ECC 200 with square or classic rectangular symbol selection.</ApiParameter>
+        </ApiReference>
+        <ApiReference ComponentName="DataMatrixSymbol">
+            <ApiParameter Name="this[int x, int y]" Type="bool">Dark module lookup; out-of-range reads as light.</ApiParameter>
+            <ApiParameter Name="Width / Height" Type="int">Module dimensions, excluding quiet zone.</ApiParameter>
+            <ApiParameter Name="DataCapacity / ErrorCodewords" Type="int">Codeword counts.</ApiParameter>
+            <ApiParameter Name="RegionWidth / RegionHeight" Type="int">Data-region dimensions.</ApiParameter>
+            <ApiParameter Name="Mode / ModesUsed / Shape / IsGs1 / UsesUtf8Eci" Type="metadata">Requested mode, actual modes and symbol metadata.</ApiParameter>
+        </ApiReference>
+    </section>
+</div>
+
+@code {
+    private string liveValue = "ABC123456789";
+    private DataMatrixSymbol? liveSymbol;
+    private BbDataMatrix? downloadCode;
+
+    private readonly string gs1Value = "01095011015300031727010110ABC123\u001D21XYZ";
+    private readonly string overlongValue = new('A', 1600);
+
+    private string DownloadHref => downloadCode?.GetSvg() is { } markup
+        ? "data:image/svg+xml;base64," + Convert.ToBase64String(Encoding.UTF8.GetBytes(markup))
+        : "#";
+
+    private static string AsciiArt
+    {
+        get
+        {
+            var code = DataMatrixEncoder.Encode("HEADLESS-42");
+            var builder = new StringBuilder();
+            for (var y = -1; y <= code.Height; y++)
+            {
+                for (var x = -1; x <= code.Width; x++)
+                {
+                    builder.Append(code[x, y] ? "██" : "  ");
+                }
+
+                builder.Append('\n');
+            }
+
+            return builder.ToString();
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            StateHasChanged();
+        }
+    }
+}

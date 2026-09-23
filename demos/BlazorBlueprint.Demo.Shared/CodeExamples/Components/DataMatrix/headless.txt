@@ -1,0 +1,18 @@
+@using System.Text
+@using BlazorBlueprint.Primitives.DataMatrix
+
+<BbDataMatrix @ref="code" Value="HEADLESS-42" />
+<a download="data-matrix.svg" href="@DownloadHref">Download the SVG</a>
+
+@code {
+    private BbDataMatrix? code;
+    private string DownloadHref => code?.GetSvg() is { } markup
+        ? "data:image/svg+xml;base64," + Convert.ToBase64String(Encoding.UTF8.GetBytes(markup))
+        : "#";
+
+    private static void InspectModules()
+    {
+        var symbol = DataMatrixEncoder.Encode("HEADLESS-42");
+        Console.WriteLine($"{symbol.Width} × {symbol.Height}: {symbol[1, 1]}");
+    }
+}

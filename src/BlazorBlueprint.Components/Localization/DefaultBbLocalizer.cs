@@ -89,6 +89,11 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Barcode.InputMsi"] = "Digits.",
         ["Barcode.InputTelepen"] = "Any ASCII text.",
 
+        // DataMatrix
+        ["DataMatrix.AriaLabel"] = "Data Matrix code",
+        ["DataMatrix.AriaLabelWithValue"] = "Data Matrix code for {0}",
+        ["DataMatrix.InvalidValue"] = "This value cannot be encoded in the selected Data Matrix symbol.",
+
         // BottomNav
         ["BottomNav.Label"] = "Primary navigation",
 

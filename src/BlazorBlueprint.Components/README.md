@@ -138,6 +138,7 @@ That's it! No Tailwind installation, no build configuration needed.
 | **Chip** | Selectable, dismissible pills, grouped with `BbChipSet` |
 | **Collapsible** | Expandable content area with trigger control |
 | **Copy Text** | Click-to-copy text with tooltip feedback and copied-state indicator |
+| **Data Matrix** | ECC 200 square and classic rectangular symbols drawn as SVG, with GS1 FNC1 and UTF-8 ECI |
 | **Dark Mode Toggle** | Button that toggles light/dark mode with customizable icons and optional label |
 | **Empty** | Empty state placeholder for no-content scenarios |
 | **Fab** | Floating action button for a screen's one main action |

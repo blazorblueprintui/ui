@@ -1,0 +1,27 @@
+@namespace BlazorBlueprint.Components
+@inject IBbLocalizer Localizer
+
+@* Data Matrix is encoded in C# and rendered as a single SVG path. *@
+
+<div class="@RootClass" data-slot="data-matrix" @attributes="AdditionalAttributes">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <BbLabel Class="bb:mb-2 bb:block">@Label</BbLabel>
+    }
+
+    @if (encodeError is not null)
+    {
+        <p role="alert" class="bb:text-sm bb:text-destructive">@encodeError</p>
+    }
+    else if (svg is not null)
+    {
+        @((MarkupString)svg)
+
+        @if (ShowValue)
+        {
+            <p class="bb:mt-2 bb:max-w-full bb:text-center bb:text-xs bb:break-all bb:text-muted-foreground">
+                @DisplayValue
+            </p>
+        }
+    }
+</div>
