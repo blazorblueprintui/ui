@@ -14,17 +14,28 @@ public class ColumnWidthTests
     [InlineData("150PX")]
     [InlineData("0.5px")]
     [InlineData("20%")]
+    [InlineData("2.5rem")]
+    [InlineData("1e3px")]
+    [InlineData("12ch")]
+    [InlineData("100cqw")]
     [InlineData("auto")]
     [InlineData("fit-content")]
+    [InlineData("min-content")]
+    [InlineData("var(--column-width)")]
     [InlineData("clamp(4rem, 20%, 10rem)")]
     [InlineData("calc(100% - 2rem)")]
     public void AWidthIsRenderable(string width) => Assert.True(ColumnWidth.IsRenderable(width));
 
     [Theory]
     [InlineData("0px")]
+    [InlineData("0rem")]
+    [InlineData("0vw")]
+    [InlineData("0ch")]
     [InlineData("0")]
     [InlineData("0%")]
     [InlineData("-10px")]
+    [InlineData("-1em")]
+    [InlineData("-2.5rem")]
     [InlineData("-1%")]
     [InlineData("0.4px")]
     [InlineData("NaNpx")]
@@ -32,6 +43,10 @@ public class ColumnWidthTests
     [InlineData("NaN%")]
     [InlineData("Infinity%")]
     [InlineData("Infinity")]
+    [InlineData("1")]
+    [InlineData("-1")]
+    [InlineData("1e3")]
+    [InlineData("1foo")]
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
@@ -43,6 +58,25 @@ public class ColumnWidthTests
     {
         Assert.Equal("20%", ColumnWidth.Normalize("20%"));
         Assert.Null(ColumnWidth.Normalize("0px"));
+    }
+
+    [Fact]
+    public void AWidthWrittenStraightOntoATrackedEntryIsStillNormalized()
+    {
+        var columns = new DataGridColumnState();
+        columns.SetWidth("name", "140px");
+
+        columns.Entries.Single().Width = "0px";
+
+        Assert.Null(columns.GetWidth("name"));
+    }
+
+    [Fact]
+    public void AnEntryKeepsAWidthItWasBuiltWith()
+    {
+        var entry = new ColumnStateEntry { ColumnId = "name", Width = "20%" };
+
+        Assert.Equal("20%", entry.Width);
     }
 
     [Theory]

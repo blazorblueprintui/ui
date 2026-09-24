@@ -132,12 +132,12 @@ public class DataGridColumnState
     /// <param name="width">The width value (e.g., "200px", "20%").</param>
     /// <remarks>
     /// A value that is not a width is stored as null instead, so state persisted while it carried
-    /// one is repaired by the act of restoring it. See <see cref="ColumnWidth"/>.
+    /// one is repaired by the act of restoring it. See <see cref="ColumnStateEntry.Width"/>.
     /// </remarks>
     public void SetWidth(string columnId, string? width)
     {
         var entry = GetOrCreateEntry(columnId);
-        entry.Width = ColumnWidth.Normalize(width);
+        entry.Width = width;
     }
 
     /// <summary>
@@ -262,7 +262,7 @@ public class DataGridColumnState
             {
                 ColumnId = snapshot.ColumnId,
                 Visible = snapshot.Visible,
-                Width = ColumnWidth.Normalize(snapshot.Width),
+                Width = snapshot.Width,
                 Order = snapshot.Order
             });
         }
@@ -299,6 +299,8 @@ public class DataGridColumnState
 /// </summary>
 public class ColumnStateEntry
 {
+    private string? width;
+
     /// <summary>
     /// Gets or sets the column ID.
     /// </summary>
@@ -312,7 +314,17 @@ public class ColumnStateEntry
     /// <summary>
     /// Gets or sets the column width (e.g., "200px", "20%"). Null for auto.
     /// </summary>
-    public string? Width { get; set; }
+    /// <remarks>
+    /// The setter applies <see cref="ColumnWidth.Normalize"/>, so a value that is not a width —
+    /// zero pixels, a unitless number, an empty string — is stored as null however it arrives.
+    /// This property is public and settable and is the only storage a width has, so the rule
+    /// belongs here rather than only in the callers that remember to apply it.
+    /// </remarks>
+    public string? Width
+    {
+        get => width;
+        set => width = ColumnWidth.Normalize(value);
+    }
 
     /// <summary>
     /// Gets or sets the display order of the column (zero-based).

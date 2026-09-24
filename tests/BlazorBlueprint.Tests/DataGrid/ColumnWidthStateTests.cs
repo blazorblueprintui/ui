@@ -53,6 +53,23 @@ public class ColumnWidthStateTests
     }
 
     [Fact]
+    public async Task AZeroLengthInAnotherUnitFallsBackToTheDeclaredWidth()
+    {
+        await WithGridAsync(DefaultColumns, async (grid, state, renderer) =>
+        {
+            state.Columns.SetWidth(Actions, "0rem");
+            await ReRenderAsync(grid, state, renderer);
+
+            Assert.Equal($"width: {DeclaredWidth}", ColStyle(renderer.Markup(), Actions));
+
+            state.Columns.SetWidth(Actions, "-1em");
+            await ReRenderAsync(grid, state, renderer);
+
+            Assert.Equal($"width: {DeclaredWidth}", ColStyle(renderer.Markup(), Actions));
+        });
+    }
+
+    [Fact]
     public async Task AStateWidthFromAResizeStillWins()
     {
         // The declared width is what a zero falls back to, not what replaces every resize: a width
@@ -222,6 +239,27 @@ public class ColumnWidthStateTests
 
             Assert.NotNull(headerStyle);
             Assert.Contains("right: 150px", headerStyle, StringComparison.Ordinal);
+        });
+    }
+
+    [Fact]
+    public async Task APinnedColumnCountsAZeroDeclaredWidthAsZero()
+    {
+        ColumnSpec[] columns =
+        [
+            new(Name),
+            new(Actions, DeclaredWidth, ColumnPinning.Right),
+            new(Status, "0px", ColumnPinning.Right)
+        ];
+
+        await WithGridAsync(columns, async (grid, state, renderer) =>
+        {
+            await ReRenderAsync(grid, state, renderer, columns);
+
+            var headerStyle = HeaderStyle(renderer.Markup(), Actions);
+
+            Assert.NotNull(headerStyle);
+            Assert.Contains("right: 0px", headerStyle, StringComparison.Ordinal);
         });
     }
 
