@@ -203,6 +203,29 @@ public class ColumnWidthStateTests
     }
 
     [Fact]
+    public async Task APinnedColumnDoesNotOffsetByANegativeDeclaredWidth()
+    {
+        // A negative width is invalid CSS, so the browser drops it and the column is not actually
+        // that wide: offsetting its neighbour backwards is worse than the 150px fallback.
+        ColumnSpec[] columns =
+        [
+            new(Name),
+            new(Actions, DeclaredWidth, ColumnPinning.Right),
+            new(Status, "-10px", ColumnPinning.Right)
+        ];
+
+        await WithGridAsync(columns, async (grid, state, renderer) =>
+        {
+            await ReRenderAsync(grid, state, renderer, columns);
+
+            var headerStyle = HeaderStyle(renderer.Markup(), Actions);
+
+            Assert.NotNull(headerStyle);
+            Assert.Contains("right: 150px", headerStyle, StringComparison.Ordinal);
+        });
+    }
+
+    [Fact]
     public async Task AResizeCallbackHearsWhatTheStateAccepted()
     {
         var reported = new List<(string ColumnId, string Width)>();

@@ -50,9 +50,10 @@ function fakeElement(attributes = {}) {
  * A grid shaped the way the module expects one: a container holding a table, a header cell and a
  * <col> per managed column, one resize handle per draggable column, and an interop stub that
  * records the calls. `columns` gives each column's header measurement, so a column measured at
- * zero is the control column the module has to leave alone.
+ * zero is the control column the module has to leave alone. `declared` gives the inline width a
+ * <col> already carries, which is what the grid renders for the width that column declares.
  */
-function buildGrid(columns, { tableWidth = 600, frozen = {} } = {}) {
+function buildGrid(columns, { tableWidth = 600, declared = {} } = {}) {
   const documentListeners = new Map();
   const calls = [];
   const cols = new Map();
@@ -86,7 +87,7 @@ function buildGrid(columns, { tableWidth = 600, frozen = {} } = {}) {
 
   for (const column of columns) {
     const col = fakeElement();
-    col.style.width = frozen[column.id];
+    col.style.width = declared[column.id];
     cols.set(column.id, col);
 
     const header = fakeElement({ 'data-column-id': column.id });
@@ -201,7 +202,27 @@ test('a column already carrying a zero inline width is still left out of the rep
     grid.drag('name', { from: 200, to: 260 });
 
     assert.ok(!('actions' in grid.payload().widths));
-  }, { frozen: { actions: '0px' } });
+  }, { declared: { actions: '0px' } });
+});
+
+test('a column that declares a width is not reported as one the drag resized', async () => {
+  // A column this drag left unfrozen still carries the width it declares on its <col>, which is
+  // not a width the drag measured and must not be committed as one.
+  await withGrid([NAME, ACTIONS], grid => {
+    grid.drag('name', { from: 200, to: 260 });
+
+    assert.ok(!('actions' in grid.payload().widths));
+    assert.equal(grid.cols.get('actions').style.width, '80px', 'the declared width is left alone');
+  }, { declared: { actions: '80px' } });
+});
+
+test('a declared percentage is not reported as pixels', async () => {
+  // parseFloat('20%') is 20, which would be committed as 20px.
+  await withGrid([NAME, ACTIONS], grid => {
+    grid.drag('name', { from: 200, to: 260 });
+
+    assert.ok(!('actions' in grid.payload().widths));
+  }, { declared: { actions: '20%' } });
 });
 
 test('a drag past the minimum width reports the minimum, not a collapsed width', async () => {

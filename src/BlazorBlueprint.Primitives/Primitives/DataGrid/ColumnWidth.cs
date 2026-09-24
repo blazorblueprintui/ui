@@ -98,12 +98,12 @@ public static class ColumnWidth
                 CultureInfo.InvariantCulture,
                 out var percent))
         {
-            return percent > 0;
+            return double.IsFinite(percent) && percent > 0;
         }
 
         if (double.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out var bare))
         {
-            return bare > 0;
+            return double.IsFinite(bare) && bare > 0;
         }
 
         // Not a number to judge — auto, fit-content, clamp(...).

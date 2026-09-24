@@ -389,7 +389,7 @@ public class DataGridContext<TData> : PrimitiveContextWithEvents<DataGridState<T
     {
         UpdateState(state => state.Columns.SetWidth(columnId, width));
 
-        OnColumnResize?.Invoke(columnId, width);
+        OnColumnResize?.Invoke(columnId, ColumnWidth.Normalize(width));
     }
 
     /// <summary>

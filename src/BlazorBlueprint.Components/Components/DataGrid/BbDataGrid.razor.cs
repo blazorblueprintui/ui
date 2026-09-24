@@ -4339,11 +4339,20 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     /// <summary>
     /// Resolves a column's effective pixel width from state (post-resize) or the column's
-    /// declared Width parameter. Falls back to 150px for non-pixel, missing or unusable
-    /// widths, since sticky offset calculation requires a numeric value.
+    /// declared Width parameter, for the sticky offset maths, which needs a number.
     /// </summary>
-    private double GetEffectiveWidthPx(IDataGridColumn<TData> column) =>
-        ColumnWidth.TryParsePixels(ResolveColumnWidth(column), out var px) ? px : 150.0;
+    /// <remarks>
+    /// Falls back to 150px for a width it cannot measure against. A declared <c>0px</c> is
+    /// measured as zero, since that is what the column renders as, but a negative or non-finite
+    /// declaration is no guide at all — the browser drops an invalid width rather than honouring
+    /// it — and offsetting a column backwards would be worse than assuming the usual fallback.
+    /// </remarks>
+    private double GetEffectiveWidthPx(IDataGridColumn<TData> column)
+    {
+        var width = ResolveColumnWidth(column);
+
+        return ColumnWidth.TryParsePixels(width, out var px) && double.IsFinite(px) && px >= 0 ? px : 150.0;
+    }
 
     /// <summary>
     /// Computes the CSS style string for a pinned column (position: sticky + left/right offset).
