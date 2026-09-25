@@ -48,3 +48,19 @@ These are targeted interaction regressions, not a screen-reader certification or
 `npm run test:state-changes` builds and starts the small test fixture on port 7188, runs Chromium and WebKit, and stops the fixture afterward. It covers signature restoration across modes, Gantt/Pivot redraws and errors, keyboard Tab behavior, ListBox labels, changing chart callbacks, FileUpload resets, and escaped radar tooltips. Run it with demo hosts stopped so its build can update static assets safely. The browser overrides above also apply.
 
 To test an already running fixture, set `BB_STATE_CHANGES_URL`. The fixture project is `fixtures/StateChanges/StateChanges.csproj`; it references the current source projects and is separate from the product demos.
+
+## Accessibility audit
+
+`npm run test:a11y` checks the Server demo in Chromium, so only that host needs to be running. It has two parts:
+
+- `a11y-axe.checks.mjs` runs axe-core with the WCAG 2.0, 2.1 and 2.2 A and AA tags on every component, primitive and chart demo. The routes are read from the demo pages' `@page` directives, so new demos are included automatically. Each page is scanned inside `#main-content`; the header and sidebar are scanned once on their own.
+- `a11y-keyboard.checks.mjs` drives Dialog, AlertDialog, Sheet, Popover, DropdownMenu, ContextMenu, Menubar, Select, Combobox, Tabs, Accordion, DatePicker, DataGrid and Tooltip with Tab, Shift+Tab, Enter, Space, Escape and the arrow keys. It checks that focus is visible, moves into overlays, stays inside modals and returns to the trigger on close. Each scenario runs with and without `prefers-reduced-motion: reduce`.
+
+By default the audit runs in report mode: findings are written to `test-results/a11y/report.md` and `report.json`, and the tests pass. Set `BB_A11Y_MODE=enforce` to fail any test with a finding. A test still fails in report mode if a demo element it drives is missing.
+
+```sh
+npm run test:a11y
+BB_A11Y_MODE=enforce npm run test:a11y
+```
+
+`BB_SERVER_URL` and `BB_CHROMIUM_CHANNEL` apply as above.
