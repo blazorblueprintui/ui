@@ -9,8 +9,9 @@ namespace BlazorBlueprint.Primitives.DataGrid;
 /// A pixel width whose rounded value is not positive is not a width, it is the absence of one: a
 /// resize drag reports every column's measured width, and a column with nothing to measure — a
 /// control column whose header is screen-reader text only — measures zero. Zero of any other unit
-/// is no width either. Positive percentages and the lengths this type cannot evaluate —
-/// <c>auto</c>, <c>clamp(...)</c>, <c>var(...)</c> — are left to the browser.
+/// is no width either. A number wearing a unit is a length whatever the unit, a number wearing none
+/// is not, and what this type cannot read — <c>auto</c>, <c>clamp(...)</c>, <c>var(...)</c> — is
+/// left to the browser.
 /// </remarks>
 public static class ColumnWidth
 {
@@ -18,15 +19,6 @@ public static class ColumnWidth
     /// The smallest pixel width that survives being rounded to whole pixels.
     /// </summary>
     public const double MinimumUsablePixels = 0.5;
-
-    private static readonly string[] LengthUnits =
-    [
-        "%", "px", "em", "rem", "ex", "ch", "cap", "ic", "lh", "rlh",
-        "vw", "vh", "vmin", "vmax", "dvw", "dvh", "dvmin", "dvmax",
-        "svw", "svh", "svmin", "svmax", "lvw", "lvh", "lvmin", "lvmax",
-        "cqw", "cqh", "cqi", "cqb", "cqmin", "cqmax",
-        "cm", "mm", "q", "in", "pt", "pc"
-    ];
 
     /// <summary>
     /// Determines whether a measured pixel width is a width at all.
@@ -115,26 +107,45 @@ public static class ColumnWidth
         return true;
     }
 
+    /// <summary>
+    /// Reads a number followed by a CSS unit, such as <c>2rem</c>, <c>20%</c> or <c>10vi</c>.
+    /// </summary>
+    /// <param name="text">The trimmed width value.</param>
+    /// <param name="length">The parsed number, or zero when there is none.</param>
+    /// <returns>True when the value is a number wearing a unit.</returns>
+    /// <remarks>
+    /// There is deliberately no list of known units. Unit names are open-ended — viewport, container
+    /// and font-relative families keep growing — and a unit this type has not heard of is a unit all
+    /// the same, so listing them only throws away widths someone asked for. Only the sign is judged.
+    /// </remarks>
     private static bool TryParseLength(string text, out double length)
     {
         length = 0;
 
-        foreach (var unit in LengthUnits)
-        {
-            if (!text.EndsWith(unit, StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
+        var unitStart = text.Length;
 
-            var number = text.AsSpan(0, text.Length - unit.Length);
-            if (!number.IsEmpty
-                && double.TryParse(number, NumberStyles.Any, CultureInfo.InvariantCulture, out length))
+        if (text.EndsWith('%'))
+        {
+            unitStart--;
+        }
+        else
+        {
+            while (unitStart > 0 && char.IsAsciiLetter(text[unitStart - 1]))
             {
-                return true;
+                unitStart--;
             }
         }
 
-        return false;
+        if (unitStart == 0 || unitStart == text.Length)
+        {
+            return false;
+        }
+
+        return double.TryParse(
+            text.AsSpan(0, unitStart),
+            NumberStyles.Any,
+            CultureInfo.InvariantCulture,
+            out length);
     }
 
     private static bool IsNumberWithoutLengthUnit(string text)

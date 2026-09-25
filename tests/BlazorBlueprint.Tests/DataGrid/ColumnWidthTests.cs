@@ -18,18 +18,33 @@ public class ColumnWidthTests
     [InlineData("1e3px")]
     [InlineData("12ch")]
     [InlineData("100cqw")]
+    [InlineData("10vi")]
+    [InlineData("10vb")]
+    [InlineData("10svb")]
     [InlineData("auto")]
     [InlineData("fit-content")]
     [InlineData("min-content")]
+    [InlineData("-webkit-fill-available")]
     [InlineData("var(--column-width)")]
     [InlineData("clamp(4rem, 20%, 10rem)")]
     [InlineData("calc(100% - 2rem)")]
     public void AWidthIsRenderable(string width) => Assert.True(ColumnWidth.IsRenderable(width));
 
+    [Fact]
+    public void AUnitThisTypeHasNotHeardOfIsStillALength()
+    {
+        // No list of known units: guessing wrong there throws away a width someone asked for, which
+        // is how 10vi went missing. Only a number wearing no unit at all is refused.
+        Assert.True(ColumnWidth.IsRenderable("10vi"));
+        Assert.True(ColumnWidth.IsRenderable("1foo"));
+        Assert.False(ColumnWidth.IsRenderable("1"));
+    }
+
     [Theory]
     [InlineData("0px")]
     [InlineData("0rem")]
     [InlineData("0vw")]
+    [InlineData("0vi")]
     [InlineData("0ch")]
     [InlineData("0")]
     [InlineData("0%")]
@@ -46,7 +61,6 @@ public class ColumnWidthTests
     [InlineData("1")]
     [InlineData("-1")]
     [InlineData("1e3")]
-    [InlineData("1foo")]
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
