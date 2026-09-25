@@ -347,6 +347,17 @@ const scenarios = {
         }
     },
 
+    async "navigation-menu"(page, audit) {
+        const { check } = audit;
+        const nav = example(page, "Simple Links", page.getByRole("navigation"));
+        await check("Top-level links can be reached with Tab", "critical", "Tab through the “Simple Links” section.", async () => {
+            const stops = await nav.locator("a[href]").evaluateAll((links) => links.filter((a) => a.tabIndex >= 0).length);
+            if (stops === 0) {
+                throw new Error("Every top-level link has tabindex=\"-1\", so Tab skips the whole menu");
+            }
+        });
+    },
+
     async select(page, audit) {
         const { check } = audit;
         const trigger = example(page, "Data-Binding Mode", page.getByRole("combobox"));

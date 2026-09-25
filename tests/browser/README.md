@@ -54,7 +54,7 @@ To test an already running fixture, set `BB_STATE_CHANGES_URL`. The fixture proj
 `npm run test:a11y` checks the Server demo in Chromium, so only that host needs to be running. It has two parts:
 
 - `a11y-axe.checks.mjs` runs axe-core with the WCAG 2.0, 2.1 and 2.2 A and AA tags on every component, primitive and chart demo. The routes are read from the demo pages' `@page` directives, so new demos are included automatically. Each page is scanned inside `#main-content`; the header and sidebar are scanned once on their own.
-- `a11y-keyboard.checks.mjs` drives Dialog, AlertDialog, Sheet, Popover, DropdownMenu, ContextMenu, Menubar, Select, Combobox, Tabs, Accordion, DatePicker, DataGrid and Tooltip with Tab, Shift+Tab, Enter, Space, Escape and the arrow keys. It checks that focus is visible, moves into overlays, stays inside modals and returns to the trigger on close. Each scenario runs with and without `prefers-reduced-motion: reduce`.
+- `a11y-keyboard.checks.mjs` drives Dialog, AlertDialog, Sheet, Popover, DropdownMenu, ContextMenu, Menubar, NavigationMenu, Select, Combobox, Tabs, Accordion, DatePicker, DataGrid and Tooltip with Tab, Shift+Tab, Enter, Space, Escape and the arrow keys. It checks that focus is visible, moves into overlays, stays inside modals and returns to the trigger on close. Each scenario runs with and without `prefers-reduced-motion: reduce`.
 
 By default the audit runs in report mode: findings are written to `test-results/a11y/report.md` and `report.json`, and the tests pass. Set `BB_A11Y_MODE=enforce` to fail any test with a finding. A test still fails in report mode if a demo element it drives is missing.
 
