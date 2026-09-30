@@ -82,13 +82,20 @@ export function setupResizeHandles(gridId) {
       // Snapshot the managed column widths and freeze them on their <col> elements.
       // Matched by data-column-id rather than by position: a Gantt's colgroup also holds one
       // <col> per timeline slot, and those are not columns anyone can drag.
+      // A column that measures zero is left alone: every column is measured, so a control column
+      // with nothing to measure would otherwise be frozen at zero and stay that way.
       const ths = Array.from(table.querySelectorAll('thead th[data-column-id]'));
       const colFor = id => table.querySelector(`colgroup col[data-column-id="${CSS.escape(id)}"]`);
 
+      const settled = new Map();
+
       ths.forEach(th => {
-        const col = colFor(th.getAttribute('data-column-id'));
-        if (col) {
-          col.style.width = Math.round(th.getBoundingClientRect().width) + 'px';
+        const id = th.getAttribute('data-column-id');
+        const col = id ? colFor(id) : null;
+        const width = Math.round(th.getBoundingClientRect().width);
+        if (col && width > 0) {
+          col.style.width = width + 'px';
+          settled.set(id, width);
         }
       });
 
@@ -115,6 +122,7 @@ export function setupResizeHandles(gridId) {
         const newWidth = Math.max(state.minWidth, Math.round(startWidth + delta));
         if (activeCol) {
           activeCol.style.width = newWidth + 'px';
+          settled.set(columnId, newWidth);
           // Update table width to match the new total
           table.style.width = (totalWidth - startWidth + newWidth) + 'px';
         }
@@ -133,15 +141,10 @@ export function setupResizeHandles(gridId) {
 
         state.isDragging = false;
 
-        // Commit all column widths to Blazor
-        const widths = {};
-        ths.forEach(th => {
-          const id = th.getAttribute('data-column-id');
-          const col = id ? colFor(id) : null;
-          if (id && col) {
-            widths[id] = parseFloat(col.style.width) || th.getBoundingClientRect().width;
-          }
-        });
+        // Commit the widths the drag settled on to Blazor. A column the drag measured nothing for is
+        // not in here at all: reporting the zero it measures is what put "0px" into the column
+        // state, where it outranked the width the column declares.
+        const widths = Object.fromEntries(settled);
 
         state.dotNetRef.invokeMethodAsync('OnResizeCompleted', columnId, widths)
           .catch(() => { /* component may be disposed */ });
