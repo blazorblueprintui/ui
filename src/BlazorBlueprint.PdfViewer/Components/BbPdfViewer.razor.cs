@@ -1,11 +1,12 @@
 using System.Globalization;
 using System.IO;
+using BlazorBlueprint.Components;
 using BlazorBlueprint.Primitives.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 
-namespace BlazorBlueprint.Components;
+namespace BlazorBlueprint.PdfViewer;
 
 /// <summary>
 /// A PDF viewer component built on PDF.js that follows the shadcn/ui design system.
@@ -57,6 +58,12 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
 
     [Inject]
     private ILogger<BbPdfViewer> Logger { get; set; } = null!;
+
+    // The viewer's strings come from the application's localiser when it has them, and otherwise
+    // from this package's own English: DefaultBbLocalizer does not know an add-on package's keys.
+    private PdfViewerText? text;
+
+    private PdfViewerText Localizer => text ??= new PdfViewerText(BbLocalizer);
 
     // === Parameters - Source ===
 
@@ -182,7 +189,7 @@ public partial class BbPdfViewer : ComponentBase, IAsyncDisposable
         {
             jsModule = await JsModules.GetAsync(
                 JS,
-                "./_content/BlazorBlueprint.Components/js/pdfjs-interop.js");
+                "./_content/BlazorBlueprint.PdfViewer/js/pdfjs-interop.js");
         }
         catch (Exception ex)
         {

@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace BlazorBlueprint.Components;
+namespace BlazorBlueprint.PdfViewer;
 
 /// <summary>
 /// Event arguments for the <see cref="BbPdfViewer.OnPageChanged"/> event.
