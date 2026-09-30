@@ -116,6 +116,12 @@ dotnet add package BlazorBlueprint.Icons.Feather      # 286 icons
 dotnet add package BlazorBlueprint.Icons.FontAwesome  # 2,066 icons (3 variants, includes brand logos)
 ```
 
+Optionally add the PDF viewer, a package of its own because PDF.js is over 2 MB of script and WebAssembly. Its setup is in the [package README](src/BlazorBlueprint.PdfViewer/README.md):
+
+```bash
+dotnet add package BlazorBlueprint.PdfViewer
+```
+
 Upgrading from v3? Breaking changes and what to do about them are in [V4-MIGRATION-GUIDE.md](V4-MIGRATION-GUIDE.md).
 
 ### Project Template

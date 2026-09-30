@@ -2,6 +2,7 @@ using System.Globalization;
 using System.IO;
 using System.Reflection;
 using BlazorBlueprint.Components;
+using BlazorBlueprint.PdfViewer;
 using BlazorBlueprint.Tests.Performance;
 using BlazorBlueprint.Tests.Rendering;
 using Microsoft.AspNetCore.Components;

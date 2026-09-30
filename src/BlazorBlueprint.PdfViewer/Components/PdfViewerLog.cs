@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace BlazorBlueprint.Components;
+namespace BlazorBlueprint.PdfViewer;
 
 /// <summary>
 /// Source-generated log messages for <see cref="BbPdfViewer"/>. The viewer shows its users a
