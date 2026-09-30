@@ -117,17 +117,46 @@ export async function computePosition(reference, floating, options = {}) {
         strategy
     });
 
+        const resolvedStrategy = result.strategy || strategy;
+
         return {
             x: result.x,
             y: result.y,
             placement: result.placement,
             transformOrigin: getTransformOrigin(result.placement),
-            strategy: result.strategy || strategy
+            strategy: resolvedStrategy,
+            zIndex: layerAbove(reference, baseZIndex(resolvedStrategy))
         };
     } catch (error) {
         console.error('Failed to compute position:', error);
         throw error;  // Re-throw for caller to handle
     }
+}
+
+// Higher for fixed positioning (nested dropdowns) so it appears above parent popovers.
+function baseZIndex(strategy) {
+    return strategy === 'fixed' ? 9999 : 50;
+}
+
+/**
+ * The z-index that paints a floating element above the layer its reference sits in.
+ * Floating content is portalled out of that layer, so without this a trigger inside a raised
+ * container — the toast stack is z-100 — would open its overlay underneath the container.
+ * @param {HTMLElement} reference - Reference element
+ * @param {number} base - The z-index to use when no ancestor is raised above it
+ * @returns {number} The z-index for the floating element
+ */
+function layerAbove(reference, base) {
+    let zIndex = base;
+
+    for (let el = reference.parentElement; el && el !== document.body; el = el.parentElement) {
+        const value = parseInt(getComputedStyle(el).zIndex, 10);
+        if (!isNaN(value) && value >= zIndex) {
+            zIndex = value + 1;
+        }
+    }
+
+    return zIndex;
 }
 
 /**
@@ -139,14 +168,14 @@ export async function computePosition(reference, floating, options = {}) {
 export function applyPosition(floating, position, makeVisible = false) {
     if (!floating || !position) return;
 
-    // Apply all positioning styles atomically to prevent flash
-    // Use higher z-index for fixed positioning (nested dropdowns) to ensure they appear above parent popovers
-    const zIndex = position.strategy === 'fixed' ? '9999' : '50';
+    // Apply all positioning styles atomically to prevent flash. A position that came through
+    // C# (PositionResult) carries no zIndex and falls back to the strategy's base.
+    const zIndex = position.zIndex ?? baseZIndex(position.strategy);
     Object.assign(floating.style, {
         position: position.strategy || 'absolute',
         left: `${position.x}px`,
         top: `${position.y}px`,
-        zIndex: zIndex,
+        zIndex: String(zIndex),
         transformOrigin: position.transformOrigin || ''
     });
 
