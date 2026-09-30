@@ -57,8 +57,20 @@
 <button @onclick="() => unrelatedRenders++">Unrelated render</button>
 <p id="unrelated-renders">@unrelatedRenders</p>
 </section>
+<section id="multiselect-dialog">
+<button @onclick="() => pickerDialogOpen = true">Open picker dialog</button>
+<p id="picker-dialog-open">@pickerDialogOpen</p><p id="picker-values">@string.Join(",", pickerValues ?? [])</p>
+<BbDialog @bind-Open="pickerDialogOpen">
+<BbDialogContent>
+<BbDialogHeader><BbDialogTitle>Picker dialog</BbDialogTitle></BbDialogHeader>
+<BbMultiSelect TValue="string" AriaLabel="Picker" Options="options" @bind-Values="pickerValues" />
+</BbDialogContent>
+</BbDialog>
+</section>
 <BbPortalHost />
 @code {
+    private bool pickerDialogOpen;
+    private IEnumerable<string>? pickerValues;
     private int unrelatedRenders;
     private IReadOnlyList<FileUploadItem>? files;
     private bool listen;
