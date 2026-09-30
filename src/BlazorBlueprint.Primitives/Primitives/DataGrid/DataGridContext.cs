@@ -383,13 +383,13 @@ public class DataGridContext<TData> : PrimitiveContextWithEvents<DataGridState<T
     /// <param name="width">
     /// The width value (e.g., "200px"), or null for auto. A value that is not a width — zero
     /// pixels, a zero percentage, an empty string — is treated as null. See
-    /// <see cref="ColumnWidth"/>.
+    /// <see cref="DataGridColumnWidth"/>.
     /// </param>
     public void SetColumnWidth(string columnId, string? width)
     {
         UpdateState(state => state.Columns.SetWidth(columnId, width));
 
-        OnColumnResize?.Invoke(columnId, ColumnWidth.Normalize(width));
+        OnColumnResize?.Invoke(columnId, DataGridColumnWidth.Normalize(width));
     }
 
     /// <summary>

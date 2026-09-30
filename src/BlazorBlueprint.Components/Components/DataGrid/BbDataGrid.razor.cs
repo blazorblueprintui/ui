@@ -3510,12 +3510,12 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     {
         foreach (var (colId, widthPx) in widths)
         {
-            if (!ColumnWidth.IsUsablePixels(widthPx))
+            if (!DataGridColumnWidth.IsUsablePixels(widthPx))
             {
                 continue;
             }
 
-            _gridState.Columns.SetWidth(colId, ColumnWidth.FormatPixels(widthPx));
+            _gridState.Columns.SetWidth(colId, DataGridColumnWidth.FormatPixels(widthPx));
         }
 
         _stateVersion++;
@@ -4328,7 +4328,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     {
         var stateWidth = columnStateInitialized ? _gridState.Columns.GetWidth(column.ColumnId) : null;
 
-        return ColumnWidth.IsRenderable(stateWidth) ? stateWidth : column.Width;
+        return DataGridColumnWidth.IsRenderable(stateWidth) ? stateWidth : column.Width;
     }
 
     private string? GetColumnWidthStyle(IDataGridColumn<TData> column)
@@ -4351,7 +4351,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     {
         var width = ResolveColumnWidth(column);
 
-        return ColumnWidth.TryParsePixels(width, out var px) && double.IsFinite(px) && px >= 0 ? px : 150.0;
+        return DataGridColumnWidth.TryParsePixels(width, out var px) && double.IsFinite(px) && px >= 0 ? px : 150.0;
     }
 
     /// <summary>

@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Globalization;
 
 namespace BlazorBlueprint.Primitives.DataGrid;
@@ -12,8 +13,13 @@ namespace BlazorBlueprint.Primitives.DataGrid;
 /// is no width either. A number wearing a unit is a length whatever the unit, a number wearing none
 /// is not, and what this type cannot read — <c>auto</c>, <c>clamp(...)</c>, <c>var(...)</c> — is
 /// left to the browser.
+/// <para>
+/// Public only because the styled DataGrid and Gantt in the Components package share it; it is not
+/// meant for application code.
+/// </para>
 /// </remarks>
-public static class ColumnWidth
+[EditorBrowsable(EditorBrowsableState.Never)]
+public static class DataGridColumnWidth
 {
     /// <summary>
     /// The smallest pixel width that survives being rounded to whole pixels.
@@ -66,7 +72,7 @@ public static class ColumnWidth
 
         return double.TryParse(
             text.AsSpan(0, text.Length - 2),
-            NumberStyles.Any,
+            NumberStyles.Float,
             CultureInfo.InvariantCulture,
             out pixels);
     }
@@ -143,14 +149,14 @@ public static class ColumnWidth
 
         return double.TryParse(
             text.AsSpan(0, unitStart),
-            NumberStyles.Any,
+            NumberStyles.Float,
             CultureInfo.InvariantCulture,
             out length);
     }
 
     private static bool IsNumberWithoutLengthUnit(string text)
     {
-        if (double.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out _))
+        if (double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out _))
         {
             return true;
         }

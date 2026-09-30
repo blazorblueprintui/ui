@@ -6,7 +6,7 @@ namespace BlazorBlueprint.Tests.DataGrid;
 /// The rule that decides which width values are widths. Tested here rather than only through a
 /// grid, because it is the one thing the drag report, the column state and the renderer agree on.
 /// </summary>
-public class ColumnWidthTests
+public class DataGridColumnWidthTests
 {
     [Theory]
     [InlineData("150px")]
@@ -28,16 +28,16 @@ public class ColumnWidthTests
     [InlineData("var(--column-width)")]
     [InlineData("clamp(4rem, 20%, 10rem)")]
     [InlineData("calc(100% - 2rem)")]
-    public void AWidthIsRenderable(string width) => Assert.True(ColumnWidth.IsRenderable(width));
+    public void AWidthIsRenderable(string width) => Assert.True(DataGridColumnWidth.IsRenderable(width));
 
     [Fact]
     public void AUnitThisTypeHasNotHeardOfIsStillALength()
     {
         // No list of known units: guessing wrong there throws away a width someone asked for, which
         // is how 10vi went missing. Only a number wearing no unit at all is refused.
-        Assert.True(ColumnWidth.IsRenderable("10vi"));
-        Assert.True(ColumnWidth.IsRenderable("1foo"));
-        Assert.False(ColumnWidth.IsRenderable("1"));
+        Assert.True(DataGridColumnWidth.IsRenderable("10vi"));
+        Assert.True(DataGridColumnWidth.IsRenderable("1foo"));
+        Assert.False(DataGridColumnWidth.IsRenderable("1"));
     }
 
     [Theory]
@@ -61,17 +61,20 @@ public class ColumnWidthTests
     [InlineData("1")]
     [InlineData("-1")]
     [InlineData("1e3")]
+    [InlineData("12,5px")]
+    [InlineData("0,4px")]
+    [InlineData("1,000px")]
     [InlineData("")]
     [InlineData("   ")]
     [InlineData(null)]
     public void SomethingThatIsNotAWidthIsNotRenderable(string? width) =>
-        Assert.False(ColumnWidth.IsRenderable(width));
+        Assert.False(DataGridColumnWidth.IsRenderable(width));
 
     [Fact]
     public void NormalizingKeepsAWidthAndDropsEverythingElse()
     {
-        Assert.Equal("20%", ColumnWidth.Normalize("20%"));
-        Assert.Null(ColumnWidth.Normalize("0px"));
+        Assert.Equal("20%", DataGridColumnWidth.Normalize("20%"));
+        Assert.Null(DataGridColumnWidth.Normalize("0px"));
     }
 
     [Fact]
@@ -102,12 +105,12 @@ public class ColumnWidthTests
     [InlineData(double.NaN, false)]
     [InlineData(double.PositiveInfinity, false)]
     public void OnlyAMeasurableWidthIsUsable(double pixels, bool expected) =>
-        Assert.Equal(expected, ColumnWidth.IsUsablePixels(pixels));
+        Assert.Equal(expected, DataGridColumnWidth.IsUsablePixels(pixels));
 
     [Theory]
     [InlineData(220.4, "220px")]
     [InlineData(220.6, "221px")]
     [InlineData(0.5, "1px")]
     public void AnAcceptedMeasurementFormatsAsWholePixels(double pixels, string expected) =>
-        Assert.Equal(expected, ColumnWidth.FormatPixels(pixels));
+        Assert.Equal(expected, DataGridColumnWidth.FormatPixels(pixels));
 }

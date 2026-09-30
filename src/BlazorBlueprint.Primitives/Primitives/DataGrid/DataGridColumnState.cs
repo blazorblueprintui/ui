@@ -315,7 +315,7 @@ public class ColumnStateEntry
     /// Gets or sets the column width (e.g., "200px", "20%"). Null for auto.
     /// </summary>
     /// <remarks>
-    /// The setter applies <see cref="ColumnWidth.Normalize"/>, so a value that is not a width —
+    /// The setter applies <see cref="DataGridColumnWidth.Normalize"/>, so a value that is not a width —
     /// zero pixels, a unitless number, an empty string — is stored as null however it arrives.
     /// This property is public and settable and is the only storage a width has, so the rule
     /// belongs here rather than only in the callers that remember to apply it.
@@ -323,7 +323,7 @@ public class ColumnStateEntry
     public string? Width
     {
         get => width;
-        set => width = ColumnWidth.Normalize(value);
+        set => width = DataGridColumnWidth.Normalize(value);
     }
 
     /// <summary>
