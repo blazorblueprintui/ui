@@ -17,7 +17,8 @@
                  ShowCountdown="@(toast.ShowCountdown ?? ShowCountdown)"
                  OnDismiss="@(() => HandleDismiss(toast.Id))"
                  OnPause="@(() => HandlePause(toast.Id))"
-                 OnResume="@(() => HandleResume(toast.Id))" />
+                 OnResume="@(() => HandleResume(toast.Id))"
+                 OnHold="@(() => HandleHold(toast.Id))" />
     }
 </div>
 
@@ -33,7 +34,8 @@
                      ShowCountdown="@(toast.ShowCountdown ?? ShowCountdown)"
                      OnDismiss="@(() => HandleDismiss(toast.Id))"
                      OnPause="@(() => HandlePause(toast.Id))"
-                     OnResume="@(() => HandleResume(toast.Id))" />
+                     OnResume="@(() => HandleResume(toast.Id))"
+                     OnHold="@(() => HandleHold(toast.Id))" />
         }
     </div>
 }
@@ -207,6 +209,17 @@
         {
             state.IsPaused = false;
             state.ResumeSignal?.TrySetResult();
+        }
+    }
+
+    // Unlike HandlePause this ignores PauseOnHover and nothing resumes it: the timer stays
+    // parked until the toast is dismissed, which completes its resume signal.
+    private void HandleHold(string id)
+    {
+        if (timerStates.TryGetValue(id, out var state))
+        {
+            state.IsPaused = true;
+            state.Cts?.Cancel();
         }
     }
 
