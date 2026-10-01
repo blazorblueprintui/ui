@@ -63,6 +63,8 @@ We welcome all contributions — whether it's bug fixes, new features, documenta
    ```
    The JavaScript interaction tests use Node.js 20+ and its built-in test runner, with no npm dependencies. Node.js is only needed for these development tests, not for building or consuming the library. Performance checks count query rows, filter evaluations, and interop callbacks rather than relying on machine-specific timing.
 
+   Component rendering tests use bUnit in `tests/BlazorBlueprint.Tests/Components`. Add new tests to the existing xUnit project and create a fresh `ComponentBunitContext` for each test. It registers the library services; configure bUnit's `JSInterop` for any JavaScript calls the component makes. Assert against rendered elements, ARIA attributes, and user-triggered callbacks with `Find`, `Click`, and `WaitForAssertion` for asynchronous updates. Keep browser-native interactions and JavaScript execution in the Playwright or JavaScript suites.
+
    The CSS check requires Python 3 and a solution build. It verifies that each demo host's static asset metadata and compressed stylesheets match the generated CSS. With a freshly started demo, also check HTTP delivery:
    ```bash
    python3 scripts/check-static-css.py --base-url http://localhost:7172
