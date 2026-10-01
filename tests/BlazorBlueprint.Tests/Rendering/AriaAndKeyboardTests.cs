@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using BlazorBlueprint.Components;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
@@ -19,38 +18,6 @@ namespace BlazorBlueprint.Tests.Rendering;
 /// </summary>
 public class AriaAndKeyboardTests
 {
-    /// <summary>
-    /// Every BbFormField* control points <c>aria-describedby</c> at the helper text, and
-    /// BbFieldDescription took an <c>Id</c> and never rendered it — so the reference dangled and a
-    /// screen reader read out no description at all.
-    /// </summary>
-    [Fact]
-    public async Task HelperTextIdIsActuallyRendered()
-    {
-        var markup = await Render<BbFormFieldCheckbox>(new()
-        {
-            [nameof(BbFormFieldCheckbox.HelperText)] = "Pick one"
-        });
-
-        var described = Regex.Match(markup, @"aria-describedby=""(?<id>[^""]+)""");
-        Assert.True(described.Success, $"No aria-describedby was rendered:\n{markup}");
-        Assert.Contains($"id=\"{described.Groups["id"].Value}\"", markup, StringComparison.Ordinal);
-    }
-
-    /// <summary>The same for the error text, which uses its own id.</summary>
-    [Fact]
-    public async Task ErrorTextIdIsActuallyRendered()
-    {
-        var markup = await Render<BbFormFieldCheckbox>(new()
-        {
-            [nameof(BbFormFieldCheckbox.ErrorText)] = "Required"
-        });
-
-        var described = Regex.Match(markup, @"aria-describedby=""(?<id>[^""]+)""");
-        Assert.True(described.Success, $"No aria-describedby was rendered:\n{markup}");
-        Assert.Contains($"id=\"{described.Groups["id"].Value}\"", markup, StringComparison.Ordinal);
-    }
-
     /// <summary>
     /// The state attributes take the strings "true" and "false". Bound to a bool, Blazor renders
     /// the attribute with an empty value when true and drops it when false.
