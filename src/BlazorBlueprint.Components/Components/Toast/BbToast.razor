@@ -1,12 +1,17 @@
 @namespace BlazorBlueprint.Components
 @using BlazorBlueprint.Icons.Lucide.Components
+@using BlazorBlueprint.Primitives.Services
+@inject IJSRuntime JS
+@implements IDisposable
 
 @*
     Individual Toast component - displays a single toast notification.
 *@
 
-<div class="@CssClass" role="alert"
-     data-state="open"
+<div @ref="_contentRef"
+     class="@CssClass"
+     role="alert"
+     data-state="@(Data.IsDismissing ? "closed" : "open")"
      @onmouseenter="HandleMouseEnter"
      @onmouseleave="HandleMouseLeave"
      @attributes="AdditionalAttributes">
@@ -101,6 +106,36 @@
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private bool isPaused;
+    private ElementReference _contentRef;
+    private bool _exitWaitStarted;
+    private bool _disposed;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Data.IsDismissing && !_exitWaitStarted)
+        {
+            _exitWaitStarted = true;
+            await WaitForExitThenCompleteAsync();
+        }
+    }
+
+    private async Task WaitForExitThenCompleteAsync()
+    {
+        await OverlayExit.WaitAsync(JS, _contentRef, OverlayExit.FadeFallbackDelay);
+
+        if (_disposed)
+        {
+            return;
+        }
+
+        await OnDismiss.InvokeAsync();
+    }
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        _disposed = true;
+    }
 
     private async Task HandleClose()
     {

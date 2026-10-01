@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Primitives.Sheet
 @using System.ComponentModel
+@using BlazorBlueprint.Primitives.Services
 @inject IFocusManager FocusManager
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
@@ -9,7 +10,7 @@
     Handles focus trap, escape key, scroll lock, side-specific positioning, and ARIA attributes.
 *@
 
-@if (Context.IsOpen)
+@if (Context.IsPresent)
 {
     <div @ref="_contentRef"
          id="@Context.ContentId"
@@ -19,7 +20,7 @@
          aria-describedby="@Context.DescriptionId"
          tabindex="-1"
          @attributes="AdditionalAttributes"
-         data-state="open"
+         data-state="@(Context.IsOpen ? "open" : "closed")"
          data-side="@Context.Side.ToString().ToLower()">
         @ChildContent
     </div>
@@ -96,6 +97,7 @@
     private DotNetObjectReference<BbSheetContent>? _dotNetRef;
     private string _instanceId = Guid.NewGuid().ToString("N");
     private bool _isInitialized = false;
+    private bool _exitWaitStarted;
     private bool _disposed;
 
     protected override void OnInitialized()
@@ -116,6 +118,7 @@
         if (Context.IsOpen && !_isInitialized)
         {
             _isInitialized = true;
+            _exitWaitStarted = false;
 
             // Set up focus trap
             if (TrapFocus)
@@ -168,10 +171,36 @@
                 // JS interop not available during prerendering
             }
         }
-        else if (!Context.IsOpen && _isInitialized)
+        else if (!Context.IsOpen)
         {
-            await CleanupAsync();
+            // Closing (or already closed but still mounted). The context keeps IsPresent set until
+            // the exit animation finishes, so the overlay and content are unmounted only after the
+            // close render has played. Cleanup is idempotent — HandleContextStateChanged may already
+            // have run it, in which case _isInitialized is false and nothing repeats.
+            if (_isInitialized)
+            {
+                await CleanupAsync();
+            }
+
+            if (Context.IsPresent && !_exitWaitStarted)
+            {
+                _exitWaitStarted = true;
+                await WaitForExitThenCompleteAsync();
+            }
         }
+    }
+
+private async Task WaitForExitThenCompleteAsync()
+    {
+        await OverlayExit.WaitAsync(JSRuntime, _contentRef, OverlayExit.SlideFallbackDelay);
+
+        if (_disposed || Context.IsOpen)
+        {
+            return;
+        }
+
+        Context.CompleteClose();
+        StateHasChanged();
     }
 
     private void HandleContextStateChanged()

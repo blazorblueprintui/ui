@@ -167,7 +167,7 @@
         if (!state.Dismissed && !disposed)
         {
             state.Dismissed = true;
-            await InvokeAsync(() => ToastService.Dismiss(id));
+            await InvokeAsync(() => HandleDismiss(id));
         }
     }
 
@@ -179,7 +179,24 @@
             state.Cts?.Cancel();
             state.ResumeSignal?.TrySetResult();
         }
-        ToastService.Dismiss(id);
+
+        var toast = ToastService.Toasts.FirstOrDefault(t => t.Id == id);
+        if (toast == null)
+        {
+            return;
+        }
+
+        // Second call — fired by BbToast after its exit animation finished — actually removes it.
+        if (toast.IsDismissing)
+        {
+            ToastService.Dismiss(id);
+            return;
+        }
+
+        // First call: mark the toast as dismissing so it re-renders data-state="closed" and plays
+        // its exit animation. BbToast invokes OnDismiss (this handler again) once that finished.
+        toast.IsDismissing = true;
+        InvokeAsync(StateHasChanged);
     }
 
     private void HandlePause(string id)

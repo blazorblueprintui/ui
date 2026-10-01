@@ -39,6 +39,13 @@ public abstract class DialogData
     internal Task<DialogResult> Completion => tcs.Task;
 
     /// <summary>
+    /// Gets or sets whether the dialog has been resolved but is still rendering its closed-state
+    /// exit animation. Managed internally by <see cref="DialogService"/>; the provider keeps the
+    /// dialog mounted with <c>data-state="closed"</c> while set, then removes it.
+    /// </summary>
+    internal bool IsClosing { get; set; }
+
+    /// <summary>
     /// Resolves the dialog with the specified result.
     /// </summary>
     /// <param name="result">The result supplied by the dialog renderer.</param>

@@ -19,19 +19,19 @@
 
 @if (_useNative)
 {
-    @if (Context.IsOpen)
+    @if (Context.IsPresent)
     {
         <dialog @ref="_contentRef"
                 id="@Context.ContentId"
                 aria-labelledby="@Context.TitleId"
                 aria-describedby="@Context.DescriptionId"
                 @attributes="AdditionalAttributes"
-                data-state="open">
+                data-state="@(Context.IsOpen ? "open" : "closed")">
             @ChildContent
         </dialog>
     }
 }
-else if (Context.IsOpen)
+else if (Context.IsPresent)
 {
     <div @ref="_contentRef"
          id="@Context.ContentId"
@@ -41,7 +41,7 @@ else if (Context.IsOpen)
          aria-describedby="@Context.DescriptionId"
          tabindex="-1"
          @attributes="AdditionalAttributes"
-         data-state="open">
+         data-state="@(Context.IsOpen ? "open" : "closed")">
         @ChildContent
     </div>
 }
@@ -138,6 +138,7 @@ else if (Context.IsOpen)
     private DotNetObjectReference<BbDialogContent>? _dotNetRef;
     private string _instanceId = Guid.NewGuid().ToString("N");
     private bool _isInitialized = false;
+    private bool _exitWaitStarted;
     private bool _disposed;
     private bool _useNative;
     private bool _nativeInitialized = false;
@@ -174,6 +175,7 @@ else if (Context.IsOpen)
         if (Context.IsOpen && !_nativeInitialized)
         {
             _nativeInitialized = true;
+            _exitWaitStarted = false;
 
             try
             {
@@ -207,10 +209,41 @@ else if (Context.IsOpen)
                 // Expected during circuit disconnect or prerendering.
             }
         }
-        else if (!Context.IsOpen && _nativeInitialized)
+        else if (!Context.IsOpen)
         {
-            await CleanupNativeAsync();
+            // Closing (or already closed but still mounted). The context keeps IsPresent set until
+            // the exit animation finishes, so the dialog and its backdrop stay mounted — and, on
+            // the native path, stay in the top layer — until the close render has played.
+            if (_nativeInitialized)
+            {
+                await CleanupNativeAsync();
+            }
+
+            if (Context.IsPresent && !_exitWaitStarted)
+            {
+                _exitWaitStarted = true;
+                await ExitNativeDialogAsync();
+            }
         }
+    }
+
+    /// <summary>
+    /// Completes the native strategy's exit: waits for the dialog's animate-out (and the backdrop
+    /// fade added for the closed state), then closes the <c>&lt;dialog&gt;</c> so the browser
+    /// returns focus to the trigger, then unmounts.
+    /// </summary>
+    private async Task ExitNativeDialogAsync()
+    {
+        await OverlayExit.WaitAsync(JSRuntime, _contentRef, OverlayExit.SlideFallbackDelay);
+
+        if (_disposed || Context.IsOpen)
+        {
+            return;
+        }
+
+        await CloseNativeDialogAsync();
+        Context.CompleteClose();
+        StateHasChanged();
     }
 
     private async Task HandleJsLifecycleAsync()
@@ -218,6 +251,7 @@ else if (Context.IsOpen)
         if (Context.IsOpen && !_isInitialized)
         {
             _isInitialized = true;
+            _exitWaitStarted = false;
 
             // Set up focus trap
             if (TrapFocus)
@@ -270,10 +304,36 @@ else if (Context.IsOpen)
                 // JS interop not available during prerendering
             }
         }
-        else if (!Context.IsOpen && _isInitialized)
+        else if (!Context.IsOpen)
         {
-            await CleanupJsAsync();
+            // Closing (or already closed but still mounted). The context keeps IsPresent set until
+            // the exit animation finishes, so the overlay and content are unmounted only after the
+            // close render has played. Cleanup is idempotent — HandleContextStateChanged may already
+            // have run it, in which case _isInitialized is false and nothing repeats.
+            if (_isInitialized)
+            {
+                await CleanupJsAsync();
+            }
+
+            if (Context.IsPresent && !_exitWaitStarted)
+            {
+                _exitWaitStarted = true;
+                await WaitForExitThenCompleteAsync();
+            }
         }
+    }
+
+    private async Task WaitForExitThenCompleteAsync()
+    {
+        await OverlayExit.WaitAsync(JSRuntime, _contentRef, OverlayExit.SlideFallbackDelay);
+
+        if (_disposed || Context.IsOpen)
+        {
+            return;
+        }
+
+        Context.CompleteClose();
+        StateHasChanged();
     }
 
     private void HandleContextStateChanged()
@@ -314,7 +374,8 @@ else if (Context.IsOpen)
 
         if (CloseOnEscape && Context.AllowDismiss)
         {
-            await CloseNativeDialogAsync();
+            // Defer dialog.close() until the exit animation has played — ExitNativeDialogAsync
+            // closes it afterwards, restoring focus once the fade-out is done.
             Context.Close();
         }
     }
@@ -342,16 +403,15 @@ else if (Context.IsOpen)
 
         if (CloseOnOverlayClick && Context.AllowDismiss)
         {
-            await CloseNativeDialogAsync();
             Context.Close();
         }
     }
 
     /// <summary>
-    /// Closes the native <c>&lt;dialog&gt;</c> element itself, restoring focus to the trigger,
-    /// before the open state flips to <c>false</c> and the element is unmounted. Closing via the
-    /// element (rather than relying on Blazor removing it from the DOM) is what lets the browser
-    /// return focus to the element that had it before <c>showModal()</c>.
+    /// Closes the native <c>&lt;dialog&gt;</c> element, restoring focus to the trigger. Called after
+    /// the closed-state exit animation has played: closing via the element (rather than relying on
+    /// Blazor removing it from the DOM after <c>CompleteClose</c>) is what lets the browser return
+    /// focus to the element that had it before <c>showModal()</c>.
     /// </summary>
     private async Task CloseNativeDialogAsync()
     {
@@ -399,19 +459,6 @@ else if (Context.IsOpen)
                 // Cleanup may already be disposed or circuit disconnected.
             }
             _nativeDialogSetup = null;
-        }
-
-        // Ensure the dialog is closed if it was left open (e.g. ForceMount kept it mounted).
-        if (Context.IsOpen == false)
-        {
-            try
-            {
-                await NativeOverlayService.CloseDialogAsync(_contentRef);
-            }
-            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
-            {
-                // Expected during circuit disconnect.
-            }
         }
 
         _nativeInitialized = false;
@@ -466,6 +513,9 @@ else if (Context.IsOpen)
         if (_useNative)
         {
             await CleanupNativeAsync();
+            // Release the top layer if the dialog is gone without going through the exit path
+            // (e.g. the consumer unmounted the component while open).
+            await CloseNativeDialogAsync();
         }
         else
         {

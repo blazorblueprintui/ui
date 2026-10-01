@@ -1,22 +1,23 @@
 @namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Primitives.Services
 @using Microsoft.JSInterop
 @inject BlazorBlueprint.Primitives.Services.IFocusManager FocusManager
 @inject IJSRuntime JS
 @inject IBbLocalizer Localizer
 @implements IAsyncDisposable
 
-@if (Context?.IsOpen == true)
+@if (Context?.IsPresent == true)
 {
     @* Overlay *@
-    <div class="bb:fixed bb:inset-0 bb:z-50 bb:bg-black/80 bb:data-[state=open]:animate-in bb:data-[state=closed]:animate-out bb:data-[state=closed]:fade-out-0 bb:data-[state=open]:fade-in-0"
-         data-state="open"
+    <div class="bb:fixed bb:inset-0 bb:z-50 bb:bg-black/80 bb:data-[state=open]:animate-in bb:data-[state=closed]:animate-out bb:data-[state=closed]:fade-out-0 bb:data-[state=open]:fade-in-0 bb:data-[state=closed]:pointer-events-none"
+         data-state="@(Context!.IsOpen ? "open" : "closed")"
          @onclick="HandleOverlayClick">
     </div>
 
     @* Drawer Content *@
     <div @ref="_contentRef"
          class="@CssClass"
-         data-state="open"
+         data-state="@(Context!.IsOpen ? "open" : "closed")"
          role="dialog"
          aria-modal="true"
          tabindex="-1"
@@ -104,6 +105,7 @@
     private DotNetObjectReference<BbDrawerContent>? _dotNetRef;
     private string _instanceId = Guid.NewGuid().ToString("N");
     private bool _isInitialized;
+    private bool _exitWaitStarted;
     private bool _disposed;
     private IJSObjectReference? snapModule;
     private string? lastSnapConfiguration;
@@ -133,6 +135,7 @@
         if (Context?.IsOpen == true && !_isInitialized)
         {
             _isInitialized = true;
+            _exitWaitStarted = false;
 
             // Set up focus trap
             if (TrapFocus)
@@ -191,8 +194,30 @@
             // Only an intentional close restores focus. Disposal during navigation must not
             // move focus back into the page being removed, and the trap must be released first.
             await FocusManager.RestoreFocus(Context?.TriggerElement);
+
+            // Closing (or already closed but still mounted). The context keeps IsPresent set until
+            // the exit animation finishes, so the overlay and content are unmounted only after the
+            // close render has played.
+            if (Context != null && Context.IsPresent && !_exitWaitStarted)
+            {
+                _exitWaitStarted = true;
+                await WaitForExitThenCompleteAsync();
+            }
         }
         await ConfigureSnapsAsync();
+    }
+
+    private async Task WaitForExitThenCompleteAsync()
+    {
+        await OverlayExit.WaitAsync(JS, _contentRef, OverlayExit.SlideFallbackDelay);
+
+        if (_disposed || Context?.IsOpen == true)
+        {
+            return;
+        }
+
+        Context?.CompleteClose();
+        StateHasChanged();
     }
 
     private async Task ConfigureSnapsAsync()
@@ -224,7 +249,7 @@
 
     private async Task HandleOverlayClick()
     {
-        if (Context != null)
+        if (Context != null && Context.IsOpen)
         {
             await Context.SetOpen(false);
         }
@@ -319,7 +344,7 @@
 
     private string CssClass => ClassNames.cn(
         "bb:fixed bb:z-50 bb:gap-4 bb:bg-background bb:p-6 bb:shadow-lg bb:transition bb:ease-in-out",
-        "bb:data-[state=open]:animate-in bb:data-[state=closed]:animate-out bb:data-[state=closed]:duration-300 bb:data-[state=open]:duration-500",
+        "bb:data-[state=open]:animate-in bb:data-[state=closed]:animate-out bb:data-[state=closed]:duration-300 bb:data-[state=open]:duration-500 bb:data-[state=closed]:pointer-events-none",
         DirectionClasses,
         HasSnapPoints ? "bb:flex bb:flex-col bb:overflow-hidden" : null,
         Class

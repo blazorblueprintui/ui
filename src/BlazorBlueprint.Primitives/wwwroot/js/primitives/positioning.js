@@ -7,6 +7,7 @@
 // makes the browser resolve the whole graph while it fetches this file, so the pair costs one
 // round trip instead of two.
 import * as floatingUIBundled from '../vendor/floating-ui-dom.esm.min.js';
+import { waitForExit } from './animation.js';
 
 // Store cleanup functions with unique IDs to avoid passing functions through JS interop
 const cleanupRegistry = new Map();
@@ -201,7 +202,7 @@ export async function hidePosition(floating) {
     // Immediate, and not deferred: a closing overlay must stop intercepting input at once.
     floating.style.setProperty('pointer-events', 'none', 'important');
 
-    await waitForExitAnimation(floating);
+    await waitForExit(floating);
 
     // The animation is long enough to reopen inside, and a reopen re-applies the visible style
     // before this resumes. Hiding anyway would blank an overlay the user just asked for.
@@ -211,43 +212,6 @@ export async function hidePosition(floating) {
     floating.style.setProperty('opacity', '0', 'important');
     floating.style.top = '-9999px';
     floating.style.left = '-9999px';
-}
-
-/** Longest an exit animation may hold the element visible before we hide it regardless. */
-const EXIT_ANIMATION_TIMEOUT_MS = 1000;
-
-/**
- * Resolves once the element's exit animation has finished, or immediately if there is none.
- *
- * @param {HTMLElement} el - The element whose animations to wait on.
- */
-async function waitForExitAnimation(el) {
-    // getAnimations reports nothing until the browser has processed the class and attribute
-    // change that starts the animation, so give it one frame to do that first.
-    await new Promise(resolve => requestAnimationFrame(() => resolve()));
-
-    if (typeof el.getAnimations !== 'function') return;
-
-    // The exit animation belongs to the wrapper or its direct content element. Descendant
-    // transitions (tree chevrons, hovered rows, checkboxes) can outlast the exit fade just as a
-    // loading spinner can. Waiting for them lets the completed fade revert to full opacity,
-    // briefly revealing the popup again before we hide it.
-    const running = el.getAnimations({ subtree: true }).filter(a => {
-        if (a.playState !== 'running') return false;
-        const target = a.effect?.target;
-        if (target !== el && !(target?.parentElement === el && target.dataset.state === 'closed')) return false;
-        const iterations = a.effect?.getTiming?.().iterations;
-        return iterations !== Infinity;
-    });
-    if (running.length === 0) return;
-
-    // allSettled, not all: a cancelled animation rejects, and a cancelled exit animation still
-    // means we are done waiting. The timeout is a backstop for an animation that never ends
-    // (infinite iteration, a paused element) — without it the overlay would stay on screen.
-    await Promise.race([
-        Promise.allSettled(running.map(a => a.finished)),
-        new Promise(resolve => setTimeout(resolve, EXIT_ANIMATION_TIMEOUT_MS)),
-    ]);
 }
 
 export async function autoUpdate(reference, floating, options = {}) {

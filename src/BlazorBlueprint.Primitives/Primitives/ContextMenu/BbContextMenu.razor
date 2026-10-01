@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Primitives.ContextMenu
 @using System.ComponentModel
+@using BlazorBlueprint.Primitives.Utilities
 @implements IAsyncDisposable
 
 @*
@@ -47,14 +48,34 @@
 
     internal bool NeedsFocus { get; set; }
 
+    /// <summary>Gets whether the menu is playing its closed-state exit animation. While set, the
+    /// overlay and content stay mounted with <c>data-state="closed"</c> so their animate-out
+    /// classes get a window to run in, then <see cref="CompleteClose"/> clears it to unmount.</summary>
+    internal bool IsAnimatingOut => exit.IsAnimatingOut;
+
+    /// <summary>Gets whether the menu should be present in the DOM: open, or playing its exit animation.</summary>
+    internal bool IsPresent => exit.IsPresent(IsOpen);
+
+    private readonly ExitAnimationGate exit = new();
+
     private bool disposed;
 
     protected override void OnParametersSet()
     {
         if (Open is { } open)
         {
-            NeedsFocus = open && !IsOpen;
+            var wasOpen = IsOpen;
+            NeedsFocus = open && !wasOpen;
             IsOpen = open;
+
+            if (open)
+            {
+                exit.Cancel();
+            }
+            else if (wasOpen)
+            {
+                exit.Begin();
+            }
         }
     }
 
@@ -67,6 +88,7 @@
         Y = y;
         IsOpen = true;
         NeedsFocus = true;
+        exit.Cancel();
 
         if (OpenChanged.HasDelegate)
         {
@@ -77,11 +99,17 @@
     }
 
     /// <summary>
-    /// Closes the context menu.
+    /// Closes the context menu, keeping the overlay and content mounted for their exit animation.
     /// </summary>
     public async Task Close()
     {
+        if (!IsOpen)
+        {
+            return;
+        }
+
         IsOpen = false;
+        exit.Begin();
 
         if (OpenChanged.HasDelegate)
         {
@@ -90,6 +118,13 @@
 
         StateHasChanged();
     }
+
+    /// <summary>
+    /// Ends the exit animation, allowing the overlay and content to unmount. No-op while the menu
+    /// is open, so a reopen that beats the animation to the punch keeps the menu mounted.
+    /// </summary>
+    internal void CompleteClose() =>
+        _ = exit.CompleteClose(IsOpen);
 
     [JSInvokable]
     [EditorBrowsable(EditorBrowsableState.Never)]

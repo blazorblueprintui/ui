@@ -77,4 +77,11 @@ public class ToastData
     /// Timestamp when the toast was created.
     /// </summary>
     public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+    /// <summary>
+    /// Set while the toast is playing its closed-state exit animation. The toast stays in the
+    /// service (and keeps rendering) with <c>data-state="closed"</c> until the animation finishes,
+    /// then the provider actually removes it.
+    /// </summary>
+    internal bool IsDismissing { get; set; }
 }

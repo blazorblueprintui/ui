@@ -20,12 +20,12 @@
 {
     @* Default: render through the PortalService (JS strategy). *@
 }
-else if (Context.IsOpen || ForceMount)
-{
-    <CascadingValue Value="Context" IsFixed="false">
-        @ChildContent
-    </CascadingValue>
-}
+else if (Context.IsPresent || ForceMount)
+    {
+        <CascadingValue Value="Context" IsFixed="false">
+            @ChildContent
+        </CascadingValue>
+    }
 
 @code {
     [CascadingParameter]
@@ -95,7 +95,7 @@ else if (Context.IsOpen || ForceMount)
         if (string.IsNullOrEmpty(Container) && !_useNative)
         {
             // Register initial portal if dialog is open or force mount
-            if (Context.IsOpen || ForceMount)
+            if (Context.IsPresent || ForceMount)
             {
                 RegisterPortal();
             }
@@ -123,7 +123,7 @@ else if (Context.IsOpen || ForceMount)
             return;
         }
 
-        if (Context.IsOpen || ForceMount)
+        if (Context.IsPresent || ForceMount)
         {
             if (!_isRegistered)
             {

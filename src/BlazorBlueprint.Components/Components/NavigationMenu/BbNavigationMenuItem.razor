@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Primitives.Utilities
 
 @*
     Navigation Menu Item - a single item in the navigation menu.
@@ -53,12 +54,50 @@
         get => Menu?.ActiveItem == Value;
         set
         {
-            if (Menu != null)
+            if (Menu == null)
             {
-                Menu.ActiveItem = value ? Value : null;
+                return;
+            }
+
+            if (value)
+            {
+                exit.Cancel();
+                Menu.ActiveItem = Value;
+            }
+            else
+            {
+                // Only a genuine open→closed transition animates. Setting a closed item closed
+                // again (Escape with no dropdown, stale calls) must not leave a ghost panel behind.
+                if (Menu.ActiveItem == Value)
+                {
+                    exit.Begin();
+                }
+
+                Menu.ActiveItem = null;
             }
         }
     }
+
+    /// <summary>
+    /// Gets whether the item is playing its closed-state exit animation. While set, the content
+    /// panel stays mounted with <c>data-state="closed"</c> so its animate-out classes get a window
+    /// to run in, then <see cref="CompleteClose"/> clears it to unmount.
+    /// </summary>
+    internal bool IsAnimatingOut => exit.IsAnimatingOut;
+
+    /// <summary>
+    /// Gets whether the item's content should be present in the DOM: open, or playing its exit animation.
+    /// </summary>
+    internal bool IsPresent => exit.IsPresent(IsOpen);
+
+    /// <summary>
+    /// Ends the exit animation, allowing the content panel to unmount. No-op while the item is
+    /// open, so a reopen that beats the animation to the punch keeps the panel mounted.
+    /// </summary>
+    internal void CompleteClose() =>
+        _ = exit.CompleteClose(IsOpen);
+
+    private readonly ExitAnimationGate exit = new();
 
     /// <summary>
     /// Registers the trigger component for focus management.

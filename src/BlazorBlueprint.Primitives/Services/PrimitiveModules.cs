@@ -57,9 +57,10 @@ public static class PrimitiveModules
     /// checks for that itself as it loads and fails with a message that names the file.
     /// </para>
     /// </remarks>
-    // Asset revision 5 updates the entry URL for the new signature-pad module, including
-    // local builds that retain the same informational assembly version.
-    public static string ModuleUrl { get; } = JsModules.Versioned($"{ModulePath}?assets=5", typeof(PrimitiveModules).Assembly);
+    // Asset revision 6 updates the entry URL for the new animation module shared
+    // by overlay exit animations, including local builds that retain the same
+    // informational assembly version.
+    public static string ModuleUrl { get; } = JsModules.Versioned($"{ModulePath}?assets=6", typeof(PrimitiveModules).Assembly);
 
     /// <summary>
     /// Gets the shared primitive bundle for the given runtime, importing it on first use.

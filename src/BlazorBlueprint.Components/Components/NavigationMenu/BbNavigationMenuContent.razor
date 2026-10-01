@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Primitives.Services
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
 
@@ -6,13 +7,13 @@
     Navigation Menu Content - the dropdown content panel.
 *@
 
-@if (MenuItem?.IsOpen == true)
+@if (MenuItem?.IsPresent == true)
 {
     <div @ref="_contentRef"
          class="@CssClass"
          role="menu"
          tabindex="@(IsKeyboardNavigationEnabled ? -1 : null)"
-         data-state="@(MenuItem?.IsOpen == true ? "open" : "closed")"
+         data-state="@(MenuItem!.IsOpen ? "open" : "closed")"
          @onmouseenter="HandleMouseEnter"
          @onmouseleave="HandleMouseLeave"
          @onclick="HandleClick"
@@ -28,6 +29,8 @@
     private DotNetObjectReference<BbNavigationMenuContent>? _dotNetRef;
     private bool _moduleLoaded = false;
     private bool _wasOpen = false;
+    private bool _exitWaitStarted;
+    private bool disposed;
 
     /// <summary>
     /// Reference to the parent menu item.
@@ -72,6 +75,10 @@
         }
 
         var isOpen = MenuItem?.IsOpen == true;
+        if (isOpen)
+        {
+            _exitWaitStarted = false;
+        }
 
         // Only set up keyboard navigation if enabled
         if (IsKeyboardNavigationEnabled)
@@ -126,7 +133,28 @@
             }
         }
 
+        // Closing (or already closed but still mounted). The item keeps IsPresent set until the
+        // exit animation finishes, so the panel is unmounted only after the close render played.
+        if (!isOpen && _wasOpen && MenuItem is { IsPresent: true } && !_exitWaitStarted)
+        {
+            _exitWaitStarted = true;
+            await WaitForExitThenCompleteAsync();
+        }
+
         _wasOpen = isOpen;
+    }
+
+    private async Task WaitForExitThenCompleteAsync()
+    {
+        await OverlayExit.WaitAsync(JSRuntime, _contentRef, OverlayExit.FadeFallbackDelay);
+
+        if (disposed || MenuItem?.IsOpen == true)
+        {
+            return;
+        }
+
+        MenuItem?.CompleteClose();
+        StateHasChanged();
     }
 
     /// <summary>
@@ -213,11 +241,14 @@
         "bb:data-[state=open]:animate-in bb:data-[state=closed]:animate-out",
         "bb:data-[state=closed]:fade-out-0 bb:data-[state=open]:fade-in-0",
         "bb:data-[state=closed]:zoom-out-95 bb:data-[state=open]:zoom-in-95",
+        "bb:data-[state=closed]:pointer-events-none",
         Class
     );
 
     public async ValueTask DisposeAsync()
     {
+        disposed = true;
+
         if (_keyboardCleanup != null)
         {
             try

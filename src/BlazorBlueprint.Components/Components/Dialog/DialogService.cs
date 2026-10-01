@@ -166,18 +166,65 @@ public class DialogService
 
     /// <summary>
     /// Resolves a dialog with the specified result and removes it from the collection.
+    /// <para>
+    /// The caller's await completes immediately (the result is set synchronously), but the dialog
+    /// leaves the collection only after its closed-state exit animation has had a window to play —
+    /// <see cref="DialogData.IsClosing"/> keeps it mounted by the provider in the meantime.
+    /// </para>
     /// </summary>
     internal void Resolve(string id, DialogResult result)
     {
         var dialog = dialogs.FirstOrDefault(d => d.Id == id);
-        if (dialog is null)
+        if (dialog is null || dialog.IsClosing)
         {
             return;
         }
 
-        dialogs.Remove(dialog);
         dialog.SetResult(result);
+        dialog.IsClosing = true;
         OnChange?.Invoke();
+
+        RemoveWhenClosed(dialog);
+    }
+
+    /// <summary>
+    /// Delays removal until the provider has rendered the dialog closed. Marshalled through the
+    /// synchronization context that resolved the dialog (the Blazor renderer on Blazor Server), so
+    /// the dialog collection is only ever mutated from the renderer thread.
+    /// </summary>
+    private void RemoveWhenClosed(DialogData dialog)
+    {
+        if (SynchronizationContext.Current is { } syncContext)
+        {
+            syncContext.Post(_ => CompleteRemoval(), null);
+        }
+        else
+        {
+            CompleteRemoval();
+        }
+
+        void CompleteRemoval() => _ = DelayedRemoveAsync(dialog);
+    }
+
+    /// <summary>
+    /// Awaits on the calling thread's synchronization context (so it stays on the renderer thread)
+    /// before removing the dialog and notifying the provider.
+    /// </summary>
+    private async Task DelayedRemoveAsync(DialogData dialog)
+    {
+        try
+        {
+            await Task.Delay(exitAnimationDelay);
+        }
+        catch (Exception)
+        {
+            return;
+        }
+
+        if (dialogs.Remove(dialog))
+        {
+            OnChange?.Invoke();
+        }
     }
 
     /// <summary>
@@ -187,10 +234,20 @@ public class DialogService
     {
         foreach (var dialog in dialogs.ToList())
         {
-            dialog.SetResult(DialogResult.Cancel());
+            if (!dialog.IsClosing)
+            {
+                dialog.SetResult(DialogResult.Cancel());
+                dialog.IsClosing = true;
+            }
         }
 
         dialogs.Clear();
         OnChange?.Invoke();
     }
+
+    /// <summary>
+    /// How long a resolved dialog stays mounted after resolution while its exit animation plays.
+    /// Matches the off-canvas/zoom-out exit durations the provider styles use.
+    /// </summary>
+    private static readonly TimeSpan exitAnimationDelay = TimeSpan.FromMilliseconds(300);
 }

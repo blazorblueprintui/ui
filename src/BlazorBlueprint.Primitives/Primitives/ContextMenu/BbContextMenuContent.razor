@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Primitives.ContextMenu
 @using BlazorBlueprint.Primitives.Menu
+@using BlazorBlueprint.Primitives.Services
 @using System.ComponentModel
 @inherits BlazorBlueprint.Primitives.BbPrimitiveBase
 @inject IJSRuntime JSRuntime
@@ -10,10 +11,10 @@
     Handles keyboard navigation via menu-keyboard.js and escape key dismiss.
 *@
 
-@if (Context?.IsOpen == true)
+@if (Context?.IsPresent == true)
 {
     <div @ref="overlayRef"
-         style="position: fixed; inset: 0; z-index: 40;"
+         style="position: fixed; inset: 0; z-index: 40;@((Context?.IsOpen ?? false) ? string.Empty : " pointer-events: none;")"
          @onclick="HandleOverlayClick"
          @onclick:stopPropagation="true"
          @oncontextmenu="HandleOverlayContextMenu"
@@ -22,7 +23,7 @@
     <div @ref="contentRef"
          role="menu"
          tabindex="-1"
-         data-state="open"
+         data-state="@(Context!.IsOpen ? "open" : "closed")"
          style="@MergedContentStyle"
          @onclick:stopPropagation="true"
          @oncontextmenu:preventDefault="true"
@@ -42,6 +43,7 @@
     private readonly string instanceId = Guid.NewGuid().ToString("N")[..8];
     private bool disposed;
     private bool wasOpen;
+    private bool _exitWaitStarted;
 
     [CascadingParameter]
     private BbContextMenu? Context { get; set; }
@@ -79,6 +81,7 @@
         if (Context?.IsOpen == true && (!wasOpen || Context.NeedsFocus))
         {
             wasOpen = true;
+            _exitWaitStarted = false;
             if (Context != null)
             {
                 Context.NeedsFocus = false;
@@ -110,7 +113,29 @@
         {
             wasOpen = false;
             await CleanupKeyboardAsync();
+
+            // Closing (or already closed but still mounted). The context keeps IsPresent set until
+            // the exit animation finishes, so the overlay and content are unmounted only after the
+            // close render has played.
+            if (Context != null && Context.IsPresent && !_exitWaitStarted)
+            {
+                _exitWaitStarted = true;
+                await WaitForExitThenCompleteAsync();
+            }
         }
+    }
+
+    private async Task WaitForExitThenCompleteAsync()
+    {
+        await OverlayExit.WaitAsync(JSRuntime, contentRef, OverlayExit.FadeFallbackDelay);
+
+        if (disposed || Context?.IsOpen == true)
+        {
+            return;
+        }
+
+        Context?.CompleteClose();
+        StateHasChanged();
     }
 
     [JSInvokable]

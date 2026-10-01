@@ -1,9 +1,17 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
+import { waitForExit } from '../../src/BlazorBlueprint.Primitives/wwwroot/js/primitives/animation.js';
 
+// The data: URL module cannot resolve the relative './animation.js' import, so stub it with the
+// real implementation borrowed from the test's own module scope.
 const source = (await readFile(new URL('../../src/BlazorBlueprint.Primitives/wwwroot/js/primitives/positioning.js', import.meta.url), 'utf8'))
-  .replace(/^import .*;$/gm, 'const floatingUIBundled = {};');
+  .replace(/^import .*;$/gm, (line) =>
+    line.includes('floating-ui-dom')
+      ? 'const floatingUIBundled = {};'
+      : 'const waitForExit = globalThis.__testWaitForExit;');
+
+globalThis.__testWaitForExit = waitForExit;
 const { hidePosition } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 
 test('a popup hides when its exit ends without waiting for a longer tree transition or spinner', async () => {

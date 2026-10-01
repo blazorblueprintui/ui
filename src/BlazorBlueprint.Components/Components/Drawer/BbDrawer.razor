@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Primitives.Utilities
 
 @* Drawer - A mobile-friendly slide panel built on Sheet primitive *@
 <CascadingValue Value="this" IsFixed="false">
@@ -40,6 +41,44 @@
             }
         }
         if (SnapPoints.Count > 0 && (SnapIndex < 0 || SnapIndex >= SnapPoints.Count)) { throw new ArgumentOutOfRangeException(nameof(SnapIndex)); }
+
+        // Controlled mode flips the Open parameter rather than calling SetOpen, so the open→closed
+        // transition (and with it the kept-mounted exit window) is detected here, against the value
+        // last seen. Uncontrolled transitions are applied inside SetOpen directly.
+        if (Open.HasValue && Open.Value != _lastOpen)
+        {
+            ApplyOpenTransition(Open.Value);
+            _lastOpen = Open.Value;
+        }
+    }
+
+    /// <summary>Gets whether the drawer is playing its closed-state exit animation. While set, the
+    /// overlay and content stay mounted with <c>data-state="closed"</c> so their animate-out classes
+    /// get a window to run in, then <see cref="CompleteClose"/> clears it to unmount.</summary>
+    internal bool IsAnimatingOut => exit.IsAnimatingOut;
+
+    /// <summary>Gets whether the drawer should be present in the DOM: open, or playing its exit animation.</summary>
+    internal bool IsPresent => exit.IsPresent(IsOpen);
+
+    /// <summary>Ends the exit animation, allowing the overlay and content to unmount. No-op while
+    /// the drawer is open, so a reopen that beats the animation to the punch stays mounted.</summary>
+    internal void CompleteClose() =>
+        _ = exit.CompleteClose(IsOpen);
+
+    private readonly ExitAnimationGate exit = new();
+
+    private bool _lastOpen;
+
+    private void ApplyOpenTransition(bool open)
+    {
+        if (open)
+        {
+            exit.Cancel();
+        }
+        else
+        {
+            exit.Begin();
+        }
     }
 
     internal async Task SetSnapIndexAsync(int index)
@@ -73,6 +112,8 @@
         }
 
         _internalOpen = open;
+        ApplyOpenTransition(open);
+        _lastOpen = open;
         StateHasChanged();
         await OpenChanged.InvokeAsync(open);
     }
@@ -80,5 +121,6 @@
     protected override void OnInitialized()
     {
         _internalOpen = DefaultOpen;
+        _lastOpen = Open ?? DefaultOpen;
     }
 }
