@@ -205,3 +205,37 @@ test('radar tooltips display untrusted labels as text', async ({ page }) => {
     await expect(page.locator('#tooltip-fixture img')).toHaveCount(0);
     expect(await page.evaluate(() => window.tooltipExecuted)).toBeUndefined();
 });
+
+test('Escape in a MultiSelect inside a dialog closes only the list, after typing or after clicking an option', async ({ page }) => {
+    const section = page.locator('#multiselect-dialog');
+    const dialogOpen = page.locator('#picker-dialog-open');
+    const list = page.locator('[role=listbox][aria-multiselectable=true]');
+    const trigger = page.getByRole('combobox', { name: 'Picker', exact: true });
+    await section.getByRole('button', { name: 'Open picker dialog' }).click();
+    await expect(dialogOpen).toHaveText('True');
+
+    // Typed in the search box: the input's own handler takes Escape.
+    await trigger.click();
+    await expect(list).toBeVisible();
+    const search = page.locator('input[id$="-search"]');
+    await expect(search).toBeFocused();
+    await search.pressSequentially('Be');
+    await page.keyboard.press('Escape');
+    await expect(list).toHaveCount(0);
+    await expect(dialogOpen).toHaveText('True');
+
+    // Clicked an option: focus has left the search box, so the open list must take Escape itself.
+    await trigger.click();
+    await expect(list).toBeVisible();
+    await list.getByRole('option', { name: 'Alpha' }).click();
+    await expect(page.locator('#picker-values')).toHaveText('a');
+    await page.keyboard.press('Escape');
+    await expect(list).toHaveCount(0);
+    await expect(dialogOpen).toHaveText('True');
+    await expect(page.locator('#picker-values')).toHaveText('a');
+    await expect(trigger).toBeVisible();
+
+    // With the list closed, Escape goes back to closing the dialog.
+    await page.keyboard.press('Escape');
+    await expect(dialogOpen).toHaveText('False');
+});
