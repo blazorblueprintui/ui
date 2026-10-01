@@ -189,6 +189,11 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-background: var(--background);
+  /* The colour of whatever an opaque fill sits on: the page, unless a container that paints its
+     own background (BbCard, popovers, dashboard widgets) declares --bb-surface. Tables and grids
+     fill sticky headers and pinned columns with it, so inside a card they match the card rather
+     than showing as a page-coloured box. */
+  --color-surface: var(--bb-surface, var(--background));
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
@@ -491,12 +496,12 @@
   /* ── Hover ──
      Opaque tint on ALL body cells — identical for pinned and non-pinned. */
   .bb\:group\/row:hover > td {
-    background-color: color-mix(in oklab, var(--muted) 50%, var(--background));
+    background-color: color-mix(in oklab, var(--muted) 50%, var(--bb-surface, var(--background)));
   }
 
   /* ── Selected ──
      Solid muted on ALL body cells. Ordered after hover so source order wins.
-     The row itself also gets the background so the <tr> (bg-background) can't
+     The row itself also gets the background so the <tr> (bg-surface) can't
      bleed through under sticky cells as a visible white line. */
   .bb\:group\/row[aria-selected="true"] {
     background-color: var(--muted);

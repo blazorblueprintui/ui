@@ -368,6 +368,41 @@
         <CodeBlock Source="Components/DataGrid/empty-loading.txt" />
     </div>
 
+    <!-- Inside a Card -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Inside a Card</h2>
+            <p class="text-sm text-muted-foreground">
+                Sticky headers and pinned columns need an opaque fill, so the grid paints them with the colour of the
+                surface it sits on: the page, or the card it is in. <code class="bg-muted px-1 py-0.5 rounded">BbCard</code>, popovers and dashboard
+                widgets declare that colour in the <code class="bg-muted px-1 py-0.5 rounded">--bb-surface</code> CSS variable. A container of your own
+                that paints its own background can do the same, for example
+                <code class="bg-muted px-1 py-0.5 rounded">style="--bb-surface: var(--muted)"</code>. Switch to dark mode, where cards and the page
+                differ, to see it.
+            </p>
+        </div>
+        <BbCard>
+            <BbCardHeader>
+                <BbCardTitle>Team</BbCardTitle>
+                <BbCardDescription>Scroll down and across: the header and the pinned name column keep the card's colour.</BbCardDescription>
+            </BbCardHeader>
+            <BbCardContent>
+                <BbDataGrid TData="Person" Items="@people" InitialPageSize="20" StickyHeader="true"
+                            TableContainerClass="max-h-72 overflow-auto">
+                    <Columns>
+                        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)"
+                            Width="180px" Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Width="260px" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Width="180px" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Role)" Width="180px" />
+                        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" Width="140px" />
+                    </Columns>
+                </BbDataGrid>
+            </BbCardContent>
+        </BbCard>
+        <CodeBlock Source="Components/DataGrid/inside-card.txt" />
+    </div>
+
         <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>Custom row and cell templates should preserve meaningful text, labels and the grid keyboard controls.</AccessibilityItem>
