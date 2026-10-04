@@ -25,10 +25,11 @@ public class FocusIndicatorTests
 
     /// <summary>
     /// A ring, a ring-coloured border, or a background/text change on focus or on the
-    /// highlighted/selected state of a list item.
+    /// highlighted/selected state of a list item. A wrapper that rings itself when a child is
+    /// focused (<c>has-[…:focus-visible]:ring-2</c>) counts too.
     /// </summary>
     private static readonly Regex HasIndicator = new(
-        @"focus(?:-visible|-within)?:(?:ring-[1-9]|border-ring|bg-|text-)"
+        @"focus(?:-visible|-within)?\]?:(?:ring-[1-9]|border-ring|bg-|text-)"
         + @"|data-\[(?:focused|highlighted)[^\]]*\]:(?:bg-|text-|ring-)",
         RegexOptions.Compiled);
 
@@ -53,7 +54,8 @@ public class FocusIndicatorTests
     /// </summary>
     private static readonly Dictionary<string, string> Allowed = new(StringComparer.Ordinal)
     {
-        ["BbInputGroup"] = "Wrapper element; the inner input carries the ring.",
+        ["BbInputGroupInput"] = "Lives inside BbInputGroup, which draws the ring round the whole group.",
+        ["BbInputGroupTextarea"] = "Lives inside BbInputGroup, which draws the ring round the whole group.",
         ["BbSidebarInset"] = "Layout container for page content, not a control.",
         ["BbDashboardWidget"] = "Widget shell; the focusable controls inside it carry their own.",
     };
