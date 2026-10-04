@@ -239,3 +239,46 @@ test('Escape in a MultiSelect inside a dialog closes only the list, after typing
     await page.keyboard.press('Escape');
     await expect(dialogOpen).toHaveText('False');
 });
+
+test('overlays open and dismiss without crypto.randomUUID, as on a plain-HTTP site', async ({ page }) => {
+    // Browsers define randomUUID only in a secure context: https, or localhost. A site on plain
+    // HTTP and any other host has none, so remove it before any of the page's scripts run.
+    await page.addInitScript(() => { delete Crypto.prototype.randomUUID; });
+    const errors = [];
+    page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+    await page.reload();
+    await expect(page.locator('#chart-callback svg')).toBeVisible();
+    expect(await page.evaluate(() => typeof crypto.randomUUID)).toBe('undefined');
+
+    const outside = page.locator('h1');
+    const overlays = [
+        [page.getByRole('button', { name: 'Open popover', exact: true }), page.getByText('Popover body')],
+        [page.getByRole('combobox', { name: 'Fruit', exact: true }), page.getByRole('option', { name: 'Apple' })],
+        [page.getByRole('button', { name: 'Open menu', exact: true }), page.getByRole('menu')],
+    ];
+    for (const [trigger, content] of overlays) {
+        await trigger.click();
+        await expect(content).toBeVisible();
+        await page.keyboard.press('Escape');
+        await expect(content).toBeHidden();
+
+        await trigger.click();
+        await expect(content).toBeVisible();
+        await outside.click();
+        await expect(content).toBeHidden();
+    }
+
+    // A dialog, with a list opened and dismissed inside it.
+    const dialogOpen = page.locator('#picker-dialog-open');
+    const list = page.locator('[role=listbox][aria-multiselectable=true]');
+    await page.getByRole('button', { name: 'Open picker dialog' }).click();
+    await expect(dialogOpen).toHaveText('True');
+    await page.getByRole('combobox', { name: 'Picker', exact: true }).click();
+    await expect(list).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(list).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await expect(dialogOpen).toHaveText('False');
+
+    expect(errors.filter(text => /overlay|randomUUID/.test(text))).toEqual([]);
+});

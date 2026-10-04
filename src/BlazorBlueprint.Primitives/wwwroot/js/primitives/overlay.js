@@ -209,36 +209,59 @@ export async function open(portalId, reference, options = {}, dotNetRef = null) 
             // autoUpdate repositions on scroll and resize. Its own first update runs here and is
             // harmless — applyPosition without makeVisible writes coordinates only, never
             // visibility. It also keeps data-side honest when a scroll flips the overlay.
-            const handle = await positioning.autoUpdate(reference, floating, {
-                ...options,
-                onPlacement: placement => applySide(options.sideElementId, placement)
-            });
+            //
+            // A failure here is logged and survived. The overlay is already on screen, and letting
+            // it throw skipped the dismissal listeners below and left the overlay there with
+            // nothing able to close it — every overlay on a plain-HTTP site, when this threw on a
+            // missing crypto.randomUUID. Without auto-update it simply stays where it opened.
+            let handle = null;
+            try {
+                handle = await positioning.autoUpdate(reference, floating, {
+                    ...options,
+                    onPlacement: placement => applySide(options.sideElementId, placement)
+                });
+            } catch (error) {
+                console.error(`overlay: failed to keep '${portalId}' positioned`, error);
+            }
 
             if (!isCurrent(portalId, token)) {
-                handle.apply();
+                handle?.apply();
                 return null;
             }
 
-            cleanups.push(() => handle.apply());
+            if (handle) {
+                cleanups.push(() => handle.apply());
+            }
         }
 
         // Wired here rather than by the owner after the fact. Each listener the owner registered
         // itself cost another round trip, and until they landed the overlay was visible but did
         // not respond to a click outside it.
+        //
+        // Each one on its own, for the same reason as above: the overlay is visible by now, and
+        // one listener failing must not cost it the other way out.
         const dismiss = options.dismiss;
         if (dismiss && dotNetRef) {
             if (dismiss.onOutsideInteraction) {
-                const handle = clickOutside.onClickOutsideByIds(
-                    dismiss.contentId, dotNetRef, 'JsOnDismissOutside', dismiss.triggerId);
-                cleanups.push(() => handle.dispose());
+                try {
+                    const handle = clickOutside.onClickOutsideByIds(
+                        dismiss.contentId, dotNetRef, 'JsOnDismissOutside', dismiss.triggerId);
+                    cleanups.push(() => handle.dispose());
+                } catch (error) {
+                    console.error(`overlay: failed to wire outside dismissal for '${portalId}'`, error);
+                }
             }
 
             if (dismiss.onEscapeKey) {
                 // The shared stack, not a listener of our own: Escape must dismiss the topmost
                 // overlay only. A popover opened inside a dialog is above it and goes first; the
                 // dialog is still there for the next press.
-                escapeKeydown.initialize(dotNetRef, portalId, 'JsOnDismissEscape');
-                cleanups.push(() => escapeKeydown.dispose(portalId));
+                try {
+                    escapeKeydown.initialize(dotNetRef, portalId, 'JsOnDismissEscape');
+                    cleanups.push(() => escapeKeydown.dispose(portalId));
+                } catch (error) {
+                    console.error(`overlay: failed to wire Escape dismissal for '${portalId}'`, error);
+                }
             }
         }
 
