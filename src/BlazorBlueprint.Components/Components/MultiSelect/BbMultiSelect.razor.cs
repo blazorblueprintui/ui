@@ -163,9 +163,33 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
 
     /// <summary>
     /// Gets or sets additional HTML attributes to apply to the root element.
+    /// Use <see cref="TriggerAttributes"/> for attributes that belong on the trigger button.
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Gets or sets the <c>id</c> of the trigger button, so a <c>&lt;label for&gt;</c> can point at it.
+    /// Focus returns to this element when the dropdown closes. When unset, an id is generated.
+    /// </summary>
+    [Parameter]
+    public string? TriggerId { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the trigger button, such as
+    /// <c>data-testid</c> or <c>aria-*</c>. They are applied last, so they override the
+    /// component's own attributes of the same name. <see cref="TriggerId"/> wins over an
+    /// <c>id</c> given here.
+    /// </summary>
+    [Parameter]
+    public Dictionary<string, object>? TriggerAttributes { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the trigger is marked invalid with <c>aria-invalid="true"</c>.
+    /// When unset, follows the field's validation state in a parent <c>EditForm</c>.
+    /// </summary>
+    [Parameter]
+    public bool? IsInvalid { get; set; }
 
     /// <summary>
     /// Gets or sets whether the multiselect is disabled.
@@ -348,9 +372,9 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     }
 
     /// <summary>
-    /// Gets whether the multiselect is in an invalid state (for validation).
+    /// Gets whether the bound field has validation messages in the parent EditContext.
     /// </summary>
-    private bool IsInvalid
+    private bool HasValidationMessages
     {
         get
         {
@@ -361,6 +385,17 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
             return false;
         }
     }
+
+    /// <summary>
+    /// Gets whether the trigger renders <c>aria-invalid="true"</c>: <see cref="IsInvalid"/> when set,
+    /// otherwise <see cref="HasValidationMessages"/>.
+    /// </summary>
+    private bool EffectiveInvalid => IsInvalid ?? HasValidationMessages;
+
+    /// <summary>
+    /// <see cref="TriggerAttributes"/> with <see cref="TriggerId"/> folded in as <c>id</c>.
+    /// </summary>
+    private Dictionary<string, object>? triggerButtonAttributes;
 
     /// <summary>
     /// Validates required parameters.
@@ -385,6 +420,8 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
             _editContext = CascadedEditContext;
             _fieldIdentifier = FieldIdentifier.Create(ValuesExpression);
         }
+
+        triggerButtonAttributes = TriggerButtonAttributes.Merge(TriggerAttributes, TriggerId);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -852,6 +889,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
         "bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
         "bb:disabled:opacity-50 bb:disabled:pointer-events-none",
         "bb:border bb:border-input bb:bg-background bb:hover:bg-accent bb:hover:text-accent-foreground",
+        "bb:aria-[invalid=true]:border-destructive",
         _isOpen ? ActiveClass : null,
         // Single-line keeps a fixed height so wrapping tags can't grow the trigger; the default
         // uses a min-height so the trigger expands to fit tags that wrap onto further rows.
