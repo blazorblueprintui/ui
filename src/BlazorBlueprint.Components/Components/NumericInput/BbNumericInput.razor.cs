@@ -323,6 +323,9 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         }
     }
 
+    private static string? AriaValue(TValue? value) =>
+        value?.ToString(null, CultureInfo.InvariantCulture);
+
     private static bool IsFloatingPoint =>
         typeof(TValue) == typeof(double) ||
         typeof(TValue) == typeof(float) ||
