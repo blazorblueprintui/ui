@@ -12,12 +12,17 @@ namespace BlazorBlueprint.Tests.Components;
 
 /// <summary>
 /// Renders components under cultures that write decimals with a comma, and checks that no number
-/// reaches an inline style or an SVG attribute as <c>1,75</c>.
+/// reaches an inline style, an SVG attribute, an aria-value* attribute or a data-* attribute as
+/// <c>1,75</c>.
 /// <para>
 /// The browser drops such a declaration in silence: under cs-CZ the tree lost its indentation
 /// (#577). <see cref="Conventions.CultureInvariantStyleTests"/> scans Razor markup for the same
 /// mistake, but cannot see a string built in a code-behind or a number bound straight to an SVG
 /// attribute. Rendering catches both.
+/// </para>
+/// <para>
+/// Screen readers parse aria-valuenow, -min and -max, and scripts parse data-* attributes, as
+/// invariant numbers, so <c>33,3</c> there is not a number either.
 /// </para>
 /// </summary>
 public class CommaDecimalCultureTests
@@ -27,6 +32,10 @@ public class CommaDecimalCultureTests
     // Their grammar separates numbers with commas, so "10,20" there is valid SVG, not a decimal.
     private static readonly HashSet<string> ListValuedSvgAttributes =
         new(StringComparer.OrdinalIgnoreCase) { "d", "points", "viewBox", "transform", "stroke-dasharray" };
+
+    // aria-valuetext is left out on purpose: it is read aloud as written, so it may follow the culture.
+    private static readonly HashSet<string> AriaNumberAttributes =
+        new(StringComparer.Ordinal) { "aria-valuenow", "aria-valuemin", "aria-valuemax" };
 
     public static TheoryData<string> CommaDecimalCultures => new() { "cs-CZ", "de-DE" };
 
@@ -96,6 +105,63 @@ public class CommaDecimalCultureTests
         var cut = context.Render<BbProgress>(parameters => parameters.Add(p => p.Value, 33.3));
 
         Assert.Contains(cut.FindAll("[style]"), e => e.GetAttribute("style") == "transform: translateX(-66.7%)");
+        AssertNoCommaDecimals(cut.FindAll("*"));
+    });
+
+    [Theory]
+    [MemberData(nameof(CommaDecimalCultures))]
+    public void ProgressAnnouncesInvariantNumbers(string culture) => InCulture(culture, () =>
+    {
+        using var context = new ComponentBunitContext();
+
+        var cut = context.Render<BbProgress>(parameters => parameters
+            .Add(p => p.Value, 33.3)
+            .Add(p => p.Max, 99.9));
+
+        var bar = cut.Find("[role='progressbar']");
+        Assert.Equal("33.3", bar.GetAttribute("aria-valuenow"));
+        Assert.Equal("99.9", bar.GetAttribute("aria-valuemax"));
+        Assert.Equal(2, cut.FindAll("[data-value='33.3'][data-max='99.9']").Count);
+        AssertNoCommaDecimals(cut.FindAll("*"));
+    });
+
+    [Theory]
+    [MemberData(nameof(CommaDecimalCultures))]
+    public void RangeSliderAnnouncesInvariantNumbers(string culture) => InCulture(culture, () =>
+    {
+        using var context = new ComponentBunitContext();
+        context.JSInterop.Mode = JSRuntimeMode.Loose;
+
+        var cut = context.Render<BbRangeSlider>(parameters => parameters
+            .Add(p => p.Min, 0.5)
+            .Add(p => p.Max, 99.5)
+            .Add(p => p.Step, 0.5)
+            .Add(p => p.DefaultStart, 12.5)
+            .Add(p => p.DefaultEnd, 87.5));
+
+        var thumbs = cut.FindAll("[role='slider']");
+        Assert.Equal(["12.5", "87.5"], thumbs.Select(t => t.GetAttribute("aria-valuenow")));
+        Assert.All(thumbs, t => Assert.Equal("0.5", t.GetAttribute("aria-valuemin")));
+        Assert.All(thumbs, t => Assert.Equal("99.5", t.GetAttribute("aria-valuemax")));
+        AssertNoCommaDecimals(cut.FindAll("*"));
+    });
+
+    [Theory]
+    [MemberData(nameof(CommaDecimalCultures))]
+    public void NumericInputAnnouncesInvariantNumbers(string culture) => InCulture(culture, () =>
+    {
+        using var context = new ComponentBunitContext();
+        context.JSInterop.Mode = JSRuntimeMode.Loose;
+
+        var cut = context.Render<BbNumericInput<double>>(parameters => parameters
+            .Add(p => p.Value, 2.5)
+            .Add(p => p.Min, 0.5)
+            .Add(p => p.Max, 9.5));
+
+        var input = cut.Find("input");
+        Assert.Equal("2.5", input.GetAttribute("aria-valuenow"));
+        Assert.Equal("0.5", input.GetAttribute("aria-valuemin"));
+        Assert.Equal("9.5", input.GetAttribute("aria-valuemax"));
         AssertNoCommaDecimals(cut.FindAll("*"));
     });
 
@@ -205,8 +271,10 @@ public class CommaDecimalCultureTests
             {
                 var isCss = attribute.Name == "style";
                 var isSvgNumber = inSvg && !ListValuedSvgAttributes.Contains(attribute.Name);
+                var isParsedNumber = AriaNumberAttributes.Contains(attribute.Name)
+                    || attribute.Name.StartsWith("data-", StringComparison.Ordinal);
 
-                if ((isCss || isSvgNumber) && CommaDecimal.IsMatch(attribute.Value))
+                if ((isCss || isSvgNumber || isParsedNumber) && CommaDecimal.IsMatch(attribute.Value))
                 {
                     offenders.Add($"<{element.LocalName} {attribute.Name}=\"{attribute.Value}\">");
                 }
