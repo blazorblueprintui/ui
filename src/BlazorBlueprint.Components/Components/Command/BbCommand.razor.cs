@@ -70,6 +70,12 @@ public partial class BbCommand
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     /// <summary>
+    /// The id a host component gives this command, so it can name the list before the list renders.
+    /// </summary>
+    [CascadingParameter(Name = CommandContext.HostIdCascadeName)]
+    private string? HostId { get; set; }
+
+    /// <summary>
     /// Gets the computed CSS classes for the command container.
     /// </summary>
     private string CssClass => ClassNames.cn(
@@ -80,6 +86,12 @@ public partial class BbCommand
 
     protected override void OnInitialized()
     {
+        // Before the first render, so every child reads the host's id from the start.
+        if (HostId is not null)
+        {
+            _context.Id = HostId;
+        }
+
         _context.OnValueChange = OnValueChange;
         _context.FilterFunction = FilterFunction;
         _context.Disabled = Disabled;
