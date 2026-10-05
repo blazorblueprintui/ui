@@ -6,7 +6,7 @@
         <BbPopover Open="_isOpen" OpenChanged="HandleOpenChanged" RestoreFocusOnClose="_restoreFocusOnClose">
             <BbPopoverTrigger AsChild="false" role="combobox" aria-label="@AriaLabel"
                            aria-expanded="@GetIsOpen().ToString().ToLower()"
-                           aria-controls="@($"{Id}-listbox")"
+                           aria-controls="@CommandContext.GetListId(Id)"
                            aria-haspopup="listbox"
                            aria-describedby="@AriaDescribedBy"
                            aria-required="@(Required ? "true" : null)"
@@ -35,6 +35,9 @@
                               ScrollToSelected="true" ScrollToSelectedSelector="[data-bb-current=&quot;true&quot;]" Class="@(MatchTriggerWidth ? "bb:!p-0" : $"{PopoverWidth} bb:!p-0")">
                 @* Re-cascade through the portal so ComboboxItem can resolve the CascadingParameter *@
                 <CascadingValue Value="this" IsFixed="true">
+                @* The command takes this combobox's id, so its list renders the id the trigger's
+                   aria-controls names. *@
+                <CascadingValue Name="@CommandContext.HostIdCascadeName" Value="Id" IsFixed="true">
                 <BbCommand SearchQuery="@SearchQuery" SearchQueryChanged="@HandleSearchQueryChanged" FilterFunction="@_filterFunction">
                     <BbCommandInput Id="@_searchInputId" Placeholder="@EffectiveSearchPlaceholder" />
                     <BbCommandList OnLoadMore="@OnLoadMore" IsLoading="@IsLoading" EndOfListMessage="@EndOfListMessage">
@@ -77,6 +80,7 @@
                         }
                     </BbCommandList>
                 </BbCommand>
+                </CascadingValue>
                 </CascadingValue>
             </BbPopoverContent>
         </BbPopover>

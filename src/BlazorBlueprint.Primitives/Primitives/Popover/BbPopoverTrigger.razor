@@ -17,9 +17,9 @@ else
             @ref="@_triggerRef"
             @onclick="HandleClick"
             @attributes="buttonAttributes"
-            aria-haspopup="true"
+            aria-haspopup="@(ariaHasPopup ?? "true")"
             aria-expanded="@Context.IsOpen.ToString().ToLower()"
-            aria-controls="@Context.ContentId"
+            aria-controls="@(ariaControls ?? Context.ContentId)"
             style="@(Context.IsOpen ? "pointer-events: none;" : "")">
         @ChildContent
     </button>
@@ -52,10 +52,17 @@ else
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     /// <summary>
-    /// <see cref="AdditionalAttributes"/> without <c>id</c>: the button always renders
-    /// <c>Context.TriggerId</c>, which an <c>id</c> given here has already been folded into.
+    /// <see cref="AdditionalAttributes"/> without <c>id</c>, <c>aria-haspopup</c> or <c>aria-controls</c>:
+    /// the button always renders <c>Context.TriggerId</c>, which an <c>id</c> given here has already
+    /// been folded into, and renders the two aria attributes itself.
     /// </summary>
     private Dictionary<string, object>? buttonAttributes;
+
+    // A component whose popover holds a listbox or tree of its own names it here. The button's
+    // own aria-haspopup and aria-controls used to come after the splat and win, so Combobox,
+    // MultiSelect, TreeSelect and Cascader all rendered aria-haspopup="true" and named the popover.
+    private string? ariaHasPopup;
+    private string? ariaControls;
 
     /// <summary>
     /// Custom click handler. If provided, this is called in addition to the default toggle behavior.
@@ -162,7 +169,10 @@ else
         var id = AsChild ? null : AdditionalAttributes?.GetValueOrDefault("id") as string;
         Context.SetTriggerId(id);
 
-        if (AdditionalAttributes is null || !AdditionalAttributes.ContainsKey("id"))
+        ariaHasPopup = null;
+        ariaControls = null;
+
+        if (AdditionalAttributes is null || !HasOwnAttribute(AdditionalAttributes))
         {
             buttonAttributes = AdditionalAttributes;
         }
@@ -170,9 +180,24 @@ else
         {
             var filtered = new Dictionary<string, object>(AdditionalAttributes, StringComparer.OrdinalIgnoreCase);
             filtered.Remove("id");
+            if (filtered.Remove("aria-haspopup", out var hasPopup))
+            {
+                ariaHasPopup = hasPopup?.ToString();
+            }
+
+            if (filtered.Remove("aria-controls", out var controls))
+            {
+                ariaControls = controls?.ToString();
+            }
+
             buttonAttributes = filtered.Count > 0 ? filtered : null;
         }
     }
+
+    private static readonly string[] OwnAttributes = ["id", "aria-haspopup", "aria-controls"];
+
+    private static bool HasOwnAttribute(Dictionary<string, object> attributes) =>
+        attributes.Keys.Any(key => OwnAttributes.Contains(key, StringComparer.OrdinalIgnoreCase));
 
     protected override void OnAfterRender(bool firstRender)
     {
