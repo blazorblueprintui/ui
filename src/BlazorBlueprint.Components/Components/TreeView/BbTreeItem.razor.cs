@@ -121,7 +121,7 @@ public partial class BbTreeItem : ComponentBase
         Class
     );
 
-    private string NodeStyle => $"padding-left: {(Depth * 1.25) + 0.5}rem;";
+    private string NodeStyle => FormattableString.Invariant($"padding-left: {(Depth * 1.25) + 0.5}rem;");
 
     private string ChevronCssClass => ClassNames.cn(
         "bb:h-4 bb:w-4 bb:shrink-0 bb:text-muted-foreground bb:transition-transform bb:duration-200",

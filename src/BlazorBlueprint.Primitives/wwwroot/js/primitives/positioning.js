@@ -7,6 +7,7 @@
 // makes the browser resolve the whole graph while it fetches this file, so the pair costs one
 // round trip instead of two.
 import * as floatingUIBundled from '../vendor/floating-ui-dom.esm.min.js';
+import { createId } from '../unique-id.js';
 
 // Store cleanup functions with unique IDs to avoid passing functions through JS interop
 const cleanupRegistry = new Map();
@@ -312,7 +313,7 @@ export async function autoUpdate(reference, floating, options = {}) {
         const cleanupFunc = lib.autoUpdate(reference, floating, update);
 
         // Store cleanup function in registry with unique ID
-        const id = crypto.randomUUID();
+        const id = createId();
         cleanupRegistry.set(id, cleanupFunc);
 
         // Return disposable object with ID (no functions in the object)
