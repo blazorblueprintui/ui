@@ -40,6 +40,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     private bool _lastIsOpen;
     private string _lastSearchQuery = string.Empty;
     private bool _lastDisabled;
+    private bool _lastInvalid;
 
     // Cached event handlers to avoid allocations on every render
     // CS8714 suppressed: Option values used as keys are always non-null in practice
@@ -417,12 +418,37 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
         // Initialize EditContext integration if available
         if (CascadedEditContext != null && ValuesExpression != null)
         {
-            _editContext = CascadedEditContext;
+            SubscribeTo(CascadedEditContext);
             _fieldIdentifier = FieldIdentifier.Create(ValuesExpression);
+        }
+        else
+        {
+            // No bound field any more: forget the old one so its messages stop marking the trigger invalid.
+            SubscribeTo(null);
+            _fieldIdentifier = default;
         }
 
         triggerButtonAttributes = TriggerButtonAttributes.Merge(TriggerAttributes, TriggerId);
     }
+
+    /// <summary>
+    /// Moves the validation-state subscription to <paramref name="editContext"/>, so the trigger's
+    /// <c>aria-invalid</c> follows validation that runs after render, without a parent render.
+    /// </summary>
+    private void SubscribeTo(EditContext? editContext)
+    {
+        if (ReferenceEquals(_editContext, editContext))
+        {
+            return;
+        }
+
+        _editContext?.OnValidationStateChanged -= HandleValidationStateChanged;
+        _editContext = editContext;
+        _editContext?.OnValidationStateChanged += HandleValidationStateChanged;
+    }
+
+    private void HandleValidationStateChanged(object? sender, ValidationStateChangedEventArgs args) =>
+        _ = InvokeAsync(StateHasChanged);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -831,6 +857,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         GC.SuppressFinalize(this);
+        SubscribeTo(null);
         await CleanupJsAsync();
 
         _dotNetRef?.Dispose();
@@ -845,6 +872,10 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
     /// </summary>
     protected override bool ShouldRender()
     {
+        // Validation can change without a parameter change (see HandleValidationStateChanged),
+        // so the trigger's invalid state is tracked like the rest.
+        var invalid = EffectiveInvalid;
+
         if (_parametersChanged)
         {
             _parametersChanged = false;
@@ -853,6 +884,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
             _lastIsOpen = _isOpen;
             _lastSearchQuery = _searchQuery;
             _lastDisabled = Disabled;
+            _lastInvalid = invalid;
             return true;
         }
 
@@ -861,14 +893,16 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
         var openChanged = _lastIsOpen != _isOpen;
         var searchChanged = _lastSearchQuery != _searchQuery;
         var disabledChanged = _lastDisabled != Disabled;
+        var invalidChanged = _lastInvalid != invalid;
 
-        if (optionsChanged || valuesChanged || openChanged || searchChanged || disabledChanged)
+        if (optionsChanged || valuesChanged || openChanged || searchChanged || disabledChanged || invalidChanged)
         {
             _lastOptions = Options;
             _lastValues = Values;
             _lastIsOpen = _isOpen;
             _lastSearchQuery = _searchQuery;
             _lastDisabled = Disabled;
+            _lastInvalid = invalid;
             return true;
         }
 
