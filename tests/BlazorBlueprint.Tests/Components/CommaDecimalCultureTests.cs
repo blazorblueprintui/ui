@@ -207,7 +207,39 @@ public class CommaDecimalCultureTests
         }
     });
 
-    private static void InCulture(string name, Action test)
+    [Theory]
+    [MemberData(nameof(CommaDecimalCultures))]
+    public Task NumericInputKeepsDecimalsThroughFocusAndBlur(string culture) => InCulture(culture, async () =>
+    {
+        using var context = new ComponentBunitContext();
+        context.JSInterop.Mode = JSRuntimeMode.Loose;
+        var value = 33.3;
+
+        var cut = context.Render<BbNumericInput<double>>(parameters => parameters
+            .Add(p => p.Value, value)
+            .Add(p => p.ValueChanged, v => value = v));
+        var rendered = cut.Find("input").GetAttribute("value");
+
+        await cut.InvokeAsync(cut.Instance.JsOnFocus);
+        var editing = cut.Find("input").GetAttribute("value");
+
+        // The parser treats a comma as a thousands separator, so blurring on "33,3" committed 333.
+        await cut.InvokeAsync(() => cut.Instance.JsOnBlur(editing));
+
+        Assert.Multiple(
+            () => Assert.Equal("33.3", rendered),
+            () => Assert.Equal("33.3", editing),
+            () => Assert.Equal(33.3, value));
+    });
+
+    private static void InCulture(string name, Action test) =>
+        InCulture(name, () =>
+        {
+            test();
+            return Task.CompletedTask;
+        }).GetAwaiter().GetResult();
+
+    private static async Task InCulture(string name, Func<Task> test)
     {
         var original = CultureInfo.CurrentCulture;
 
@@ -219,7 +251,7 @@ public class CommaDecimalCultureTests
             // tests would pass without proving anything.
             Assert.Equal(",", CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator);
 
-            test();
+            await test();
         }
         finally
         {

@@ -319,7 +319,7 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
                 return string.Format(CultureInfo.InvariantCulture, $"{{0:F{DecimalPlaces.Value}}}", Value);
             }
 
-            return Value.ToString() ?? string.Empty;
+            return Value.ToString(null, CultureInfo.InvariantCulture);
         }
     }
 
@@ -434,7 +434,7 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
     {
         if (disposed) { return; }
 
-        editingValue = Value.ToString() ?? string.Empty;
+        editingValue = Value.ToString(null, CultureInfo.InvariantCulture);
         isEditing = true;
         StateHasChanged();
     }
@@ -554,7 +554,7 @@ public partial class BbNumericInput<TValue> : ComponentBase where TValue : struc
         if (!clampedValue.Equals(Value))
         {
             Value = clampedValue;
-            editingValue = clampedValue.ToString() ?? string.Empty;
+            editingValue = clampedValue.ToString(null, CultureInfo.InvariantCulture);
             await ValueChanged.InvokeAsync(clampedValue);
             NotifyFieldChanged();
         }
