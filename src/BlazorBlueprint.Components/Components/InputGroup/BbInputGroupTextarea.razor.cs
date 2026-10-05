@@ -171,7 +171,7 @@ public partial class BbInputGroupTextarea : ComponentBase
         "bb:flex-1 bb:bg-transparent bb:px-3 bb:py-2 bb:text-base bb:min-h-[60px]",
         "bb:border-0 bb:rounded-none", // No border or radius for seamless integration
         "bb:placeholder:text-muted-foreground",
-        "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
+        "bb:focus-visible:outline-none", // The parent InputGroup draws the focus ring
         "bb:disabled:cursor-not-allowed bb:disabled:opacity-50",
         "bb:resize-none", // Prevent resize for cleaner appearance
         // Medium screens and up: smaller text
