@@ -16,7 +16,7 @@ else
             id="@Context.TriggerId"
             @ref="@_triggerRef"
             @onclick="HandleClick"
-            @attributes="AdditionalAttributes"
+            @attributes="buttonAttributes"
             aria-haspopup="true"
             aria-expanded="@Context.IsOpen.ToString().ToLower()"
             aria-controls="@Context.ContentId"
@@ -50,6 +50,12 @@ else
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// <see cref="AdditionalAttributes"/> without <c>id</c>: the button always renders
+    /// <c>Context.TriggerId</c>, which an <c>id</c> given here has already been folded into.
+    /// </summary>
+    private Dictionary<string, object>? buttonAttributes;
 
     /// <summary>
     /// Custom click handler. If provided, this is called in addition to the default toggle behavior.
@@ -145,6 +151,26 @@ else
             throw new InvalidOperationException(
                 "PopoverTrigger must be used within a Popover component. " +
                 "Ensure PopoverTrigger is a child of a Popover component.");
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        // An id given to the button (e.g. so a <label for> can point at it) becomes the popover's
+        // trigger id. Otherwise the button carried the given id while focus restore and
+        // click-outside went on looking for the generated one, which no element had.
+        var id = AsChild ? null : AdditionalAttributes?.GetValueOrDefault("id") as string;
+        Context.SetTriggerId(id);
+
+        if (AdditionalAttributes is null || !AdditionalAttributes.ContainsKey("id"))
+        {
+            buttonAttributes = AdditionalAttributes;
+        }
+        else
+        {
+            var filtered = new Dictionary<string, object>(AdditionalAttributes, StringComparer.OrdinalIgnoreCase);
+            filtered.Remove("id");
+            buttonAttributes = filtered.Count > 0 ? filtered : null;
         }
     }
 

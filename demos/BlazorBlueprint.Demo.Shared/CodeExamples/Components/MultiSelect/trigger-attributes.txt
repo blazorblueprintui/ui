@@ -1,0 +1,19 @@
+<label for="skills" class="text-sm font-medium">Skills</label>
+<BbMultiSelect TValue="string"
+            Options="languages"
+            @bind-Values="skills"
+            TriggerId="skills"
+            TriggerAttributes="triggerAttributes"
+            IsInvalid="@(skills?.Any() != true)"
+            AriaDescribedBy="@(skills?.Any() != true ? "skills-error" : null)"
+            Placeholder="Select your skills..."
+            MatchTriggerWidth="true" />
+@if (skills?.Any() != true)
+{
+    <p id="skills-error" class="text-sm text-destructive">Pick at least one skill.</p>
+}
+
+@code {
+    private IEnumerable<string>? skills;
+    private readonly Dictionary<string, object> triggerAttributes = new() { ["data-testid"] = "skills-trigger" };
+}

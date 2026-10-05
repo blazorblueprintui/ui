@@ -78,12 +78,21 @@
 <BbDropdownMenuContent><BbDropdownMenuItem>Profile</BbDropdownMenuItem></BbDropdownMenuContent>
 </BbDropdownMenu>
 </section>
+<section id="trigger-labels">
+<label for="breakfast-trigger">Breakfast</label>
+<BbCombobox TValue="string" Options="options" @bind-Value="breakfast" TriggerId="breakfast-trigger" TriggerAttributes="breakfastAttributes" IsInvalid="true" />
+<label for="lunch-trigger">Lunch</label>
+<BbMultiSelect TValue="string" Options="options" @bind-Values="lunch" TriggerId="lunch-trigger" />
+</section>
 <BbPortalHost />
 @code {
     private string? fruit;
     private readonly SelectOption<string>[] fruits = [new("apple", "Apple"), new("pear", "Pear")];
     private bool pickerDialogOpen;
     private IEnumerable<string>? pickerValues;
+    private string? breakfast;
+    private IEnumerable<string>? lunch;
+    private readonly Dictionary<string, object> breakfastAttributes = new() { ["data-testid"] = "breakfast" };
     private int unrelatedRenders;
     private IReadOnlyList<FileUploadItem>? files;
     private bool listen;

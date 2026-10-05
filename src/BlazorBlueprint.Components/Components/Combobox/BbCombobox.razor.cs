@@ -47,7 +47,7 @@ namespace BlazorBlueprint.Components;
 /// &lt;/Combobox&gt;
 /// </code>
 /// </example>
-public partial class BbCombobox<TValue> : ComponentBase
+public partial class BbCombobox<TValue> : ComponentBase, IDisposable
 {
     /// <summary>The accessible name of the control.</summary>
     [Parameter] public string? AriaLabel { get; set; }
@@ -68,6 +68,7 @@ public partial class BbCombobox<TValue> : ComponentBase
     private TValue? _lastValue;
     private bool _lastDisabled;
     private string _lastSearchQuery = string.Empty;
+    private bool _lastInvalid;
 
     // Bypass for ShouldRender when the trigger needs to pick up a freshly-registered
     // display text for the current selection. ComboboxItem children register their text on
@@ -78,6 +79,10 @@ public partial class BbCombobox<TValue> : ComponentBase
 
     protected override bool ShouldRender()
     {
+        // Validation can change without a parameter change (see HandleValidationStateChanged),
+        // so the trigger's invalid state is tracked like the rest.
+        var invalid = EffectiveInvalid;
+
         if (_parametersChanged || _triggerTextDirty)
         {
             _parametersChanged = false;
@@ -87,6 +92,7 @@ public partial class BbCombobox<TValue> : ComponentBase
             _lastDisabled = Disabled;
             _lastSearchQuery = SearchQuery;
             _lastOptions = Options;
+            _lastInvalid = invalid;
             return true;
         }
 
@@ -94,13 +100,15 @@ public partial class BbCombobox<TValue> : ComponentBase
             || !EqualityComparer<TValue>.Default.Equals(Value, _lastValue)
             || Disabled != _lastDisabled
             || SearchQuery != _lastSearchQuery
-            || !ReferenceEquals(Options, _lastOptions))
+            || !ReferenceEquals(Options, _lastOptions)
+            || invalid != _lastInvalid)
         {
             _lastIsOpen = _isOpen;
             _lastValue = Value;
             _lastDisabled = Disabled;
             _lastSearchQuery = SearchQuery;
             _lastOptions = Options;
+            _lastInvalid = invalid;
             return true;
         }
 
@@ -213,9 +221,33 @@ public partial class BbCombobox<TValue> : ComponentBase
 
     /// <summary>
     /// Gets or sets additional HTML attributes to apply to the root element.
+    /// Use <see cref="TriggerAttributes"/> for attributes that belong on the trigger button.
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    /// <summary>
+    /// Gets or sets the <c>id</c> of the trigger button, so a <c>&lt;label for&gt;</c> can point at it.
+    /// Focus returns to this element when the dropdown closes. When unset, an id is generated.
+    /// </summary>
+    [Parameter]
+    public string? TriggerId { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional HTML attributes to apply to the trigger button, such as
+    /// <c>data-testid</c> or <c>aria-*</c>. They are applied last, so they override the
+    /// component's own attributes of the same name. <see cref="TriggerId"/> wins over an
+    /// <c>id</c> given here.
+    /// </summary>
+    [Parameter]
+    public Dictionary<string, object>? TriggerAttributes { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the trigger is marked invalid with <c>aria-invalid="true"</c>.
+    /// When unset, follows the field's validation state in a parent <c>EditForm</c>.
+    /// </summary>
+    [Parameter]
+    public bool? IsInvalid { get; set; }
 
     /// <summary>
     /// Gets or sets whether the combobox is disabled.
@@ -344,10 +376,55 @@ public partial class BbCombobox<TValue> : ComponentBase
 
         if (CascadedEditContext != null && ValueExpression != null)
         {
-            _editContext = CascadedEditContext;
+            SubscribeTo(CascadedEditContext);
             _fieldIdentifier = FieldIdentifier.Create(ValueExpression);
         }
+        else
+        {
+            // No bound field any more: forget the old one so its messages stop marking the trigger invalid.
+            SubscribeTo(null);
+            _fieldIdentifier = default;
+        }
+
+        triggerButtonAttributes = TriggerButtonAttributes.Merge(TriggerAttributes, TriggerId);
     }
+
+    /// <summary>
+    /// Moves the validation-state subscription to <paramref name="editContext"/>, so the trigger's
+    /// <c>aria-invalid</c> follows validation that runs after render, without a parent render.
+    /// </summary>
+    private void SubscribeTo(EditContext? editContext)
+    {
+        if (ReferenceEquals(_editContext, editContext))
+        {
+            return;
+        }
+
+        _editContext?.OnValidationStateChanged -= HandleValidationStateChanged;
+        _editContext = editContext;
+        _editContext?.OnValidationStateChanged += HandleValidationStateChanged;
+    }
+
+    private void HandleValidationStateChanged(object? sender, ValidationStateChangedEventArgs args) =>
+        _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        SubscribeTo(null);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// <see cref="TriggerAttributes"/> with <see cref="TriggerId"/> folded in as <c>id</c>.
+    /// </summary>
+    private Dictionary<string, object>? triggerButtonAttributes;
+
+    /// <summary>
+    /// Gets whether the trigger renders <c>aria-invalid="true"</c>: <see cref="IsInvalid"/> when set,
+    /// otherwise whether the bound field has validation messages in the parent EditContext.
+    /// </summary>
+    private bool EffectiveInvalid => IsInvalid ?? (_editContext != null && _fieldIdentifier.FieldName != null
+        && _editContext.GetValidationMessages(_fieldIdentifier).Any());
 
     /// <summary>
     /// Gets the display text for the currently selected item. Resolution order:
@@ -484,6 +561,7 @@ public partial class BbCombobox<TValue> : ComponentBase
         "bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
         "bb:disabled:opacity-50 bb:disabled:pointer-events-none",
         "bb:border bb:border-input bb:bg-background bb:hover:bg-accent bb:hover:text-accent-foreground",
+        "bb:aria-[invalid=true]:border-destructive",
         _isOpen ? ActiveClass : null,
         "bb:h-10 bb:px-3",
         string.IsNullOrWhiteSpace(Class) ? PopoverWidth : null,

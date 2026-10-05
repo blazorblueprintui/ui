@@ -240,6 +240,20 @@ test('Escape in a MultiSelect inside a dialog closes only the list, after typing
     await expect(dialogOpen).toHaveText('False');
 });
 
+test('a label names the Combobox and MultiSelect triggers, opens them, and focus returns to their own id', async ({ page }) => {
+    await expect(page.getByTestId('breakfast')).toHaveAttribute('id', 'breakfast-trigger');
+    await expect(page.getByTestId('breakfast')).toHaveAttribute('aria-invalid', 'true');
+    for (const [name, id] of [['Breakfast', 'breakfast-trigger'], ['Lunch', 'lunch-trigger']]) {
+        const trigger = page.getByRole('combobox', { name, exact: true });
+        await expect(trigger).toHaveAttribute('id', id);
+        await page.locator(`label[for="${id}"]`).click();
+        await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+        await page.keyboard.press('Escape');
+        await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+        await expect(trigger).toBeFocused();
+    }
+});
+
 test('overlays open and dismiss without crypto.randomUUID, as on a plain-HTTP site', async ({ page }) => {
     // Browsers define randomUUID only in a secure context: https, or localhost. A site on plain
     // HTTP and any other host has none, so remove it before any of the page's scripts run.
