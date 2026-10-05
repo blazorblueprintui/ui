@@ -68,18 +68,31 @@
 </BbDialog>
 </section>
 <section id="trigger-labels">
-<label for="fruit-trigger">Fruit</label>
-<BbCombobox TValue="string" Options="options" @bind-Value="fruit" TriggerId="fruit-trigger" TriggerAttributes="fruitAttributes" IsInvalid="true" />
-<label for="fruits-trigger">Fruits</label>
-<BbMultiSelect TValue="string" Options="options" @bind-Values="fruits" TriggerId="fruits-trigger" />
+<label for="snack-trigger">Snack</label>
+<BbCombobox TValue="string" Options="options" @bind-Value="snack" TriggerId="snack-trigger" TriggerAttributes="snackAttributes" IsInvalid="true" />
+<label for="snacks-trigger">Snacks</label>
+<BbMultiSelect TValue="string" Options="options" @bind-Values="snacks" TriggerId="snacks-trigger" />
+</section>
+<section id="overlays">
+<BbPopover>
+<BbPopoverTrigger><BbButton>Open popover</BbButton></BbPopoverTrigger>
+<BbPopoverContent><p>Popover body</p></BbPopoverContent>
+</BbPopover>
+<BbSelect TValue="string" AriaLabel="Fruit" Options="fruits" @bind-Value="fruit" Placeholder="Pick a fruit" />
+<BbDropdownMenu>
+<BbDropdownMenuTrigger AsChild="false">Open menu</BbDropdownMenuTrigger>
+<BbDropdownMenuContent><BbDropdownMenuItem>Profile</BbDropdownMenuItem></BbDropdownMenuContent>
+</BbDropdownMenu>
 </section>
 <BbPortalHost />
 @code {
+    private string? fruit;
+    private readonly SelectOption<string>[] fruits = [new("apple", "Apple"), new("pear", "Pear")];
     private bool pickerDialogOpen;
     private IEnumerable<string>? pickerValues;
-    private string? fruit;
-    private IEnumerable<string>? fruits;
-    private readonly Dictionary<string, object> fruitAttributes = new() { ["data-testid"] = "fruit" };
+    private string? snack;
+    private IEnumerable<string>? snacks;
+    private readonly Dictionary<string, object> snackAttributes = new() { ["data-testid"] = "snack" };
     private int unrelatedRenders;
     private IReadOnlyList<FileUploadItem>? files;
     private bool listen;
