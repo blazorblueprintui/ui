@@ -47,7 +47,7 @@ namespace BlazorBlueprint.Components;
 /// &lt;/Combobox&gt;
 /// </code>
 /// </example>
-public partial class BbCombobox<TValue> : ComponentBase
+public partial class BbCombobox<TValue> : ComponentBase, IDisposable
 {
     /// <summary>The accessible name of the control.</summary>
     [Parameter] public string? AriaLabel { get; set; }
@@ -68,6 +68,7 @@ public partial class BbCombobox<TValue> : ComponentBase
     private TValue? _lastValue;
     private bool _lastDisabled;
     private string _lastSearchQuery = string.Empty;
+    private bool _lastInvalid;
 
     // Bypass for ShouldRender when the trigger needs to pick up a freshly-registered
     // display text for the current selection. ComboboxItem children register their text on
@@ -78,6 +79,10 @@ public partial class BbCombobox<TValue> : ComponentBase
 
     protected override bool ShouldRender()
     {
+        // Validation can change without a parameter change (see HandleValidationStateChanged),
+        // so the trigger's invalid state is tracked like the rest.
+        var invalid = EffectiveInvalid;
+
         if (_parametersChanged || _triggerTextDirty)
         {
             _parametersChanged = false;
@@ -87,6 +92,7 @@ public partial class BbCombobox<TValue> : ComponentBase
             _lastDisabled = Disabled;
             _lastSearchQuery = SearchQuery;
             _lastOptions = Options;
+            _lastInvalid = invalid;
             return true;
         }
 
@@ -94,13 +100,15 @@ public partial class BbCombobox<TValue> : ComponentBase
             || !EqualityComparer<TValue>.Default.Equals(Value, _lastValue)
             || Disabled != _lastDisabled
             || SearchQuery != _lastSearchQuery
-            || !ReferenceEquals(Options, _lastOptions))
+            || !ReferenceEquals(Options, _lastOptions)
+            || invalid != _lastInvalid)
         {
             _lastIsOpen = _isOpen;
             _lastValue = Value;
             _lastDisabled = Disabled;
             _lastSearchQuery = SearchQuery;
             _lastOptions = Options;
+            _lastInvalid = invalid;
             return true;
         }
 
@@ -368,11 +376,42 @@ public partial class BbCombobox<TValue> : ComponentBase
 
         if (CascadedEditContext != null && ValueExpression != null)
         {
-            _editContext = CascadedEditContext;
+            SubscribeTo(CascadedEditContext);
             _fieldIdentifier = FieldIdentifier.Create(ValueExpression);
+        }
+        else
+        {
+            // No bound field any more: forget the old one so its messages stop marking the trigger invalid.
+            SubscribeTo(null);
+            _fieldIdentifier = default;
         }
 
         triggerButtonAttributes = TriggerButtonAttributes.Merge(TriggerAttributes, TriggerId);
+    }
+
+    /// <summary>
+    /// Moves the validation-state subscription to <paramref name="editContext"/>, so the trigger's
+    /// <c>aria-invalid</c> follows validation that runs after render, without a parent render.
+    /// </summary>
+    private void SubscribeTo(EditContext? editContext)
+    {
+        if (ReferenceEquals(_editContext, editContext))
+        {
+            return;
+        }
+
+        _editContext?.OnValidationStateChanged -= HandleValidationStateChanged;
+        _editContext = editContext;
+        _editContext?.OnValidationStateChanged += HandleValidationStateChanged;
+    }
+
+    private void HandleValidationStateChanged(object? sender, ValidationStateChangedEventArgs args) =>
+        _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        SubscribeTo(null);
+        GC.SuppressFinalize(this);
     }
 
     /// <summary>

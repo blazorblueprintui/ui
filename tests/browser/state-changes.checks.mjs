@@ -241,9 +241,9 @@ test('Escape in a MultiSelect inside a dialog closes only the list, after typing
 });
 
 test('a label names the Combobox and MultiSelect triggers, opens them, and focus returns to their own id', async ({ page }) => {
-    await expect(page.getByTestId('snack')).toHaveAttribute('id', 'snack-trigger');
-    await expect(page.getByTestId('snack')).toHaveAttribute('aria-invalid', 'true');
-    for (const [name, id] of [['Snack', 'snack-trigger'], ['Snacks', 'snacks-trigger']]) {
+    await expect(page.getByTestId('breakfast')).toHaveAttribute('id', 'breakfast-trigger');
+    await expect(page.getByTestId('breakfast')).toHaveAttribute('aria-invalid', 'true');
+    for (const [name, id] of [['Breakfast', 'breakfast-trigger'], ['Lunch', 'lunch-trigger']]) {
         const trigger = page.getByRole('combobox', { name, exact: true });
         await expect(trigger).toHaveAttribute('id', id);
         await page.locator(`label[for="${id}"]`).click();
