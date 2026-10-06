@@ -3,9 +3,10 @@
 @using System.Linq.Expressions
 @using System.Globalization
 @inject IJSRuntime JS
+@inject IBbLocalizer Localizer
 @implements IAsyncDisposable
 
-<BbPopover @bind-Open="_isOpen">
+<BbPopover Open="_isOpen" OpenChanged="HandleOpenChanged">
     <BbPopoverTrigger AsChild="true">
         <BbButton Variant="ButtonVariant.Outline"
                 Class="@ButtonClass"
@@ -59,7 +60,7 @@
             {
                 <div class="bb:flex bb:gap-2">
                     <div class="bb:h-10 bb:w-10 bb:rounded-md bb:border bb:border-input bb:flex-shrink-0"
-                         style="background-color: @Value;">
+                         style="background-color: @_draftValue;">
                     </div>
                     <div class="bb:flex-1">
                         <BbInput Value="@_hexInput"
@@ -98,6 +99,7 @@
                                    Class="bb:text-sm bb:text-center" />
                         </div>
                     }
+
                 </div>
             }
 
@@ -105,7 +107,7 @@
             @if (ShowPresets)
             {
                 <div class="bb:space-y-2">
-                    <span class="bb:text-xs bb:text-muted-foreground">Presets</span>
+                    <span class="bb:text-xs bb:text-muted-foreground">@Localizer["ColorPicker.Presets"]</span>
                     <div class="bb:flex bb:flex-wrap bb:gap-1">
                         @foreach (var preset in EffectivePresets)
                         {
@@ -119,6 +121,20 @@
                     </div>
                 </div>
             }
+
+            @if (ActionButtons)
+            {
+                @* Cancel/Apply Buttons *@
+                <div class="bb:flex bb:w-full bb:gap-2">
+                    <BbButton Variant="ButtonVariant.Outline" Class="bb:flex-1" Size="ButtonSize.Small" OnClick="Cancel">
+                        @Localizer["ColorPicker.Cancel"]
+                    </BbButton>
+                    <BbButton Class="bb:flex-1" Size="ButtonSize.Small" OnClick="Apply">
+                        @Localizer["ColorPicker.Apply"]
+                    </BbButton>
+                </div>
+            }
+
         </div>
     </BbPopoverContent>
 </BbPopover>
@@ -131,6 +147,7 @@
     private double _alpha = 1;
     private int _r, _g, _b;
     private string _hexInput = "#000000";
+    private string _draftValue = "#000000";
     private string? _previousValue;
     private FieldIdentifier _fieldIdentifier;
     private EditContext? _editContext;
@@ -204,6 +221,13 @@
     public bool ShowInputs { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets whether to show Cancel and Apply buttons.
+    /// When false, color changes are applied immediately.
+    /// </summary>
+    [Parameter]
+    public bool ActionButtons { get; set; }
+
+    /// <summary>
     /// Gets or sets whether the picker is disabled.
     /// </summary>
     [Parameter]
@@ -241,9 +265,13 @@
     {
         get
         {
-            if (!ShowAlpha) return Value;
-            var hex = ColorUtils.ToHex(_r, _g, _b);
-            return _alpha < 1 ? $"{hex} {(int)Math.Round(_alpha * 100)}%" : hex;
+            if (!ShowAlpha || !ColorUtils.IsValidHex(Value)) return Value;
+
+            var (r, g, b, alpha) = ColorUtils.ParseHex(Value);
+            var hex = ColorUtils.ToHex(r, g, b);
+            return alpha.HasValue && alpha.Value < 255
+                ? $"{hex} {(int)Math.Round(alpha.Value / 255.0 * 100)}%"
+                : hex;
         }
     }
 
@@ -255,6 +283,7 @@
         }
 
         ParseValue(Value);
+        _draftValue = Value;
         _previousValue = Value;
     }
 
@@ -263,6 +292,7 @@
         if (Value != _previousValue && ColorUtils.IsValidHex(Value))
         {
             ParseValue(Value);
+            _draftValue = Value;
             _previousValue = Value;
         }
 
@@ -281,6 +311,13 @@
         }
 
         _wasOpen = _isOpen;
+    }
+
+    private void HandleOpenChanged(bool isOpen)
+    {
+        _isOpen = isOpen;
+        ParseValue(Value);
+        _draftValue = Value;
     }
 
     private async Task InitializeJsAsync()
@@ -384,16 +421,45 @@
 
         _hexInput = ColorUtils.ToHex(r, g, b);
 
-        _previousValue = newValue;
-        Value = newValue;
-        await ValueChanged.InvokeAsync(newValue);
+        _draftValue = newValue;
 
-        if (_editContext != null && ValueExpression != null && _fieldIdentifier.FieldName != null)
+        if (!ActionButtons)
         {
-            _editContext.NotifyFieldChanged(_fieldIdentifier);
+            _previousValue = newValue;
+            Value = newValue;
+            await ValueChanged.InvokeAsync(newValue);
+
+            if (_editContext != null && ValueExpression != null && _fieldIdentifier.FieldName != null)
+            {
+                _editContext.NotifyFieldChanged(_fieldIdentifier);
+            }
         }
 
         StateHasChanged();
+    }
+
+    private void Cancel()
+    {
+        ParseValue(Value);
+        _draftValue = Value;
+        _isOpen = false;
+    }
+
+    private async Task Apply()
+    {
+        if (_draftValue != Value)
+        {
+            Value = _draftValue;
+            _previousValue = _draftValue;
+            await ValueChanged.InvokeAsync(_draftValue);
+
+            if (_editContext != null && ValueExpression != null && _fieldIdentifier.FieldName != null)
+            {
+                _editContext.NotifyFieldChanged(_fieldIdentifier);
+            }
+        }
+
+        _isOpen = false;
     }
 
     private async Task HandleHexInput(string? value)
