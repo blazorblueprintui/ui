@@ -390,6 +390,40 @@
         <CodeBlock Source="Components/DataGrid/compact-rows.txt" />
     </div>
 
+    <!-- ── Compact Expand and Edit Columns ────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Compact Expand and Edit Columns</h2>
+            <p class="text-sm text-muted-foreground">
+                <code class="bg-muted px-1 py-0.5 rounded">BbDataGridExpandColumn</code> and
+                <code class="bg-muted px-1 py-0.5 rounded">BbDataGridEditColumn</code> take
+                <code class="bg-muted px-1 py-0.5 rounded">CellClass</code> and
+                <code class="bg-muted px-1 py-0.5 rounded">HeaderClass</code> too, so a dense grid stays dense
+                with the chevron and the Edit buttons in it.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@editablePeople" InitialPageSize="5"
+                   EditMode="DataGridEditMode.Row">
+            <Columns>
+                <BbDataGridExpandColumn CellClass="p-1" HeaderClass="p-1" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" CellClass="p-1" HeaderClass="p-1">
+                    <EditTemplate>
+                        <BbInput @bind-Value="context.Name" Class="h-8" />
+                    </EditTemplate>
+                </BbDataGridPropertyColumn>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" CellClass="p-1" HeaderClass="p-1" />
+                <BbDataGridEditColumn TData="Person" CellClass="p-1" HeaderClass="p-1" />
+            </Columns>
+            <DetailTemplate>
+                <div class="text-sm">
+                    <span class="font-medium text-muted-foreground">Role:</span>
+                    <span class="ml-2">@context.Role</span>
+                </div>
+            </DetailTemplate>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/compact-control-columns.txt" />
+    </div>
+
     <!-- ── Expandable Rows ────────────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -1586,6 +1620,12 @@
                 <ApiParameter Name="Width" Type="string?" Default="120px">
                     Column width. Defaults to a width that fits the Save and Cancel buttons.
                 </ApiParameter>
+                <ApiParameter Name="CellClass" Type="string?">
+                    Additional CSS classes applied to the edit cells, the ones holding the Edit, Save and Cancel buttons.
+                </ApiParameter>
+                <ApiParameter Name="HeaderClass" Type="string?">
+                    Additional CSS classes applied to the header cell.
+                </ApiParameter>
                 <ApiParameter Name="Pinned" Type="ColumnPinning" Default="None">
                     Pins the column to an edge of the scrollable viewport. Pin it right on a wide grid so the Save button stays reachable without scrolling back.
                 </ApiParameter>
@@ -1594,6 +1634,12 @@
             <ApiReference ComponentName="DataGridExpandColumn">
                 <ApiParameter Name="Width" Type="string?" Default="48px">
                     Column width for the expand chevron column. Defaults to a compact button width.
+                </ApiParameter>
+                <ApiParameter Name="CellClass" Type="string?">
+                    Additional CSS classes applied to the expand cells. Use e.g. "p-1" to override the default padding for a compact row height.
+                </ApiParameter>
+                <ApiParameter Name="HeaderClass" Type="string?">
+                    Additional CSS classes applied to the header cell.
                 </ApiParameter>
                 <ApiParameter Name="Pinned" Type="ColumnPinning" Default="None">
                     Whether this column is pinned to an edge of the scrollable viewport.
