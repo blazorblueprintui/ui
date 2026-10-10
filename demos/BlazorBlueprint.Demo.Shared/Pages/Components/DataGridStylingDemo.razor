@@ -325,12 +325,14 @@
                 <h3 class="text-lg font-medium">Colored Header</h3>
                 <p class="text-sm text-muted-foreground">
                     Apply a distinct background colour to the header row using
-                    <code class="bg-muted px-1 py-0.5 rounded">HeaderClass</code> on each column.
+                    <code class="bg-muted px-1 py-0.5 rounded">HeaderClass</code> on each column, including
+                    <code class="bg-muted px-1 py-0.5 rounded">BbDataGridExpandColumn</code>.
                     TailwindMerge automatically resolves conflicting classes with the base header styles.
                 </p>
             </div>
             <BbDataGrid TData="Person" Items="@people" InitialPageSize="5">
                 <Columns>
+                    <BbDataGridExpandColumn HeaderClass="bg-primary text-primary-foreground" />
                     <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" Sortable
                         HeaderClass="bg-primary text-primary-foreground" />
                     <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Sortable
@@ -340,6 +342,12 @@
                     <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Status)"
                         HeaderClass="bg-primary text-primary-foreground" />
                 </Columns>
+                <DetailTemplate>
+                    <div class="text-sm">
+                        <span class="font-medium text-muted-foreground">Email:</span>
+                        <span class="ml-2">@context.Email</span>
+                    </div>
+                </DetailTemplate>
             </BbDataGrid>
             <CodeBlock Source="Components/DataGrid/custom-colored-header.txt" />
         </div>
