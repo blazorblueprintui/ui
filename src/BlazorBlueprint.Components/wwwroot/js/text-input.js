@@ -51,7 +51,9 @@ export function initialize(element, dotNetRef, instanceId, config) {
     dotNetRef.invokeMethodAsync('JsOnChange', value).catch(() => {});
   };
 
+  // Handlers read state.config, never the config passed in here, so updateConfig takes effect.
   const updateCharacterCount = () => {
+    const { config } = state;
     if (!config.hasCharacterCount || !config.characterCountSelector) {
       return;
     }
@@ -81,6 +83,7 @@ export function initialize(element, dotNetRef, instanceId, config) {
   };
 
   const handleInput = () => {
+    const { config } = state;
     const value = element.value;
 
     // The counter tracks the element, not the bound value, so it stays live while composing.
