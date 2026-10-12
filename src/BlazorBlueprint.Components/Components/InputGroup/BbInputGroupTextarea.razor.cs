@@ -297,9 +297,13 @@ public partial class BbInputGroupTextarea : ComponentBase
             value = null;
         }
 
+        // Immediate and Debounced usually raised this value already while typing. Raising it
+        // again on blur would run a @bind-Value:after handler twice for one edit.
+        var changed = !string.Equals(Value, value, StringComparison.Ordinal);
+
         Value = value;
 
-        if (ValueChanged.HasDelegate)
+        if (changed && ValueChanged.HasDelegate)
         {
             await ValueChanged.InvokeAsync(value);
         }
