@@ -136,6 +136,7 @@ export function initialize(element, dotNetRef, instanceId, config) {
     state,
     handleInput,
     handleChange,
+    cancelPending,
     guard,
     element
   };
@@ -179,9 +180,14 @@ export function initialize(element, dotNetRef, instanceId, config) {
  */
 export function updateConfig(instanceId, config) {
   const stored = instances.get(instanceId);
-  if (stored) {
-    stored.state.config = config;
+  if (!stored) {
+    return;
   }
+  // A timer or frame queued under the old mode would send a stale value after the switch.
+  if (stored.state.config.mode !== config.mode) {
+    stored.cancelPending();
+  }
+  stored.state.config = config;
 }
 
 /**

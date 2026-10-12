@@ -9,9 +9,10 @@ const source = (await readFile(new URL(`${base}text-input.js`, import.meta.url),
 const { initialize, updateConfig, dispose } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 
 function fixture(t, config) {
-  const frames = [];
-  globalThis.requestAnimationFrame = fn => frames.push(fn);
-  globalThis.cancelAnimationFrame = () => {};
+  const frames = new Map();
+  let nextFrame = 1;
+  globalThis.requestAnimationFrame = fn => { frames.set(nextFrame, fn); return nextFrame++; };
+  globalThis.cancelAnimationFrame = id => frames.delete(id);
   t.after(() => {
     delete globalThis.requestAnimationFrame;
     delete globalThis.cancelAnimationFrame;
@@ -31,7 +32,11 @@ function fixture(t, config) {
     element.value = value;
     listeners.get('input')();
   };
-  const flushFrames = () => frames.splice(0).forEach(fn => fn());
+  const flushFrames = () => {
+    const queued = [...frames.values()];
+    frames.clear();
+    queued.forEach(fn => fn());
+  };
   return { id, type, calls, flushFrames };
 }
 
@@ -62,4 +67,34 @@ test('updateConfig changes the debounce interval', t => {
   type('a');
   t.mock.timers.tick(100);
   assert.deepEqual(calls, [['JsOnInput', 'a']]);
+});
+
+test('updateConfig from debounced to immediate drops the pending debounced value', t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { id, type, calls, flushFrames } = fixture(t, { mode: 'debounced', debounceMs: 500 });
+  type('a');
+  updateConfig(id, { mode: 'immediate', debounceMs: 500 });
+  type('ab');
+  flushFrames();
+  t.mock.timers.tick(500);
+  assert.deepEqual(calls, [['JsOnInput', 'ab']]);
+});
+
+test('updateConfig from debounced to onchange drops the pending debounced value', t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { id, type, calls } = fixture(t, { mode: 'debounced', debounceMs: 500 });
+  type('a');
+  updateConfig(id, { mode: 'onchange', debounceMs: 500 });
+  type('ab');
+  t.mock.timers.tick(500);
+  assert.deepEqual(calls, []);
+});
+
+test('updateConfig from immediate to onchange drops the queued frame', t => {
+  const { id, type, calls, flushFrames } = fixture(t, { mode: 'immediate', debounceMs: 0 });
+  type('a');
+  updateConfig(id, { mode: 'onchange', debounceMs: 0 });
+  type('ab');
+  flushFrames();
+  assert.deepEqual(calls, []);
 });
