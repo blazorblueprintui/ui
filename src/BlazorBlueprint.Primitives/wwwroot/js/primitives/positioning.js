@@ -224,8 +224,11 @@ export function applyPosition(floating, position, makeVisible = false) {
  * a click during the animation.
  *
  * @param {HTMLElement} floating - The floating element to hide.
+ * @param {() => boolean} [isReopened] - Whether the overlay was opened again while this waited.
+ *   Defaults to reading `data-state`, which only works when the closed render has already been
+ *   applied. overlay.close() runs ahead of that render on Blazor Server, so it passes its own check.
  */
-export async function hidePosition(floating) {
+export async function hidePosition(floating, isReopened = () => floating.dataset.state === 'open') {
     if (!floating) return;
 
     // Immediate, and not deferred: a closing overlay must stop intercepting input at once.
@@ -235,7 +238,7 @@ export async function hidePosition(floating) {
 
     // The animation is long enough to reopen inside, and a reopen re-applies the visible style
     // before this resumes. Hiding anyway would blank an overlay the user just asked for.
-    if (floating.dataset.state === 'open') return;
+    if (isReopened()) return;
 
     floating.style.setProperty('visibility', 'hidden', 'important');
     floating.style.setProperty('opacity', '0', 'important');

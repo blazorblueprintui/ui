@@ -325,8 +325,12 @@ export async function close(portalId, options = {}, dotNetRef = null) {
         // this to unmount its content.
         const floating = document.querySelector(`[data-bb-portal="${CSS.escape(portalId)}"]`);
 
+        // A reopen is told by the token, not by data-state. This call reaches the browser ahead
+        // of the render that writes data-state="closed" — a whole round trip ahead on Blazor
+        // Server when the portal host is still waiting on its previous batch — so data-state
+        // still read "open", the hide was skipped, and the overlay stayed on screen (#608).
         if (floating) {
-            await positioning.hidePosition(floating);
+            await positioning.hidePosition(floating, () => !isCurrent(portalId, token));
         }
 
         if (!isCurrent(portalId, token)) {
