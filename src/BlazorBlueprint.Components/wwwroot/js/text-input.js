@@ -51,7 +51,9 @@ export function initialize(element, dotNetRef, instanceId, config) {
     dotNetRef.invokeMethodAsync('JsOnChange', value).catch(() => {});
   };
 
+  // Handlers read state.config, never the config passed in here, so updateConfig takes effect.
   const updateCharacterCount = () => {
+    const { config } = state;
     if (!config.hasCharacterCount || !config.characterCountSelector) {
       return;
     }
@@ -81,6 +83,7 @@ export function initialize(element, dotNetRef, instanceId, config) {
   };
 
   const handleInput = () => {
+    const { config } = state;
     const value = element.value;
 
     // The counter tracks the element, not the bound value, so it stays live while composing.
@@ -133,6 +136,7 @@ export function initialize(element, dotNetRef, instanceId, config) {
     state,
     handleInput,
     handleChange,
+    cancelPending,
     guard,
     element
   };
@@ -176,9 +180,14 @@ export function initialize(element, dotNetRef, instanceId, config) {
  */
 export function updateConfig(instanceId, config) {
   const stored = instances.get(instanceId);
-  if (stored) {
-    stored.state.config = config;
+  if (!stored) {
+    return;
   }
+  // A timer or frame queued under the old mode would send a stale value after the switch.
+  if (stored.state.config.mode !== config.mode) {
+    stored.cancelPending();
+  }
+  stored.state.config = config;
 }
 
 /**
