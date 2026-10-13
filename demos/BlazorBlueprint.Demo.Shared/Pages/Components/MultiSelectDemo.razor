@@ -273,6 +273,38 @@
         <CodeBlock Source="Components/MultiSelect/disabled.txt" />
     </section>
 
+    <!-- Trigger Id, Attributes and Invalid State -->
+    <section class="space-y-4">
+        <h2 class="text-2xl font-semibold">Label, Test Id and Invalid State</h2>
+        <p class="text-sm text-muted-foreground">
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">TriggerId</code> sets the id of the trigger button, so a
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">&lt;label for&gt;</code> names it and clicking the label opens it.
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">TriggerAttributes</code> go on the button as well
+            (<code class="text-xs bg-muted px-1 py-0.5 rounded">AdditionalAttributes</code> stay on the root element), and
+            <code class="text-xs bg-muted px-1 py-0.5 rounded">IsInvalid</code> sets <code class="text-xs bg-muted px-1 py-0.5 rounded">aria-invalid</code>.
+            Inside an EditForm, leave <code class="text-xs bg-muted px-1 py-0.5 rounded">IsInvalid</code> unset to follow validation.
+        </p>
+
+        <div class="max-w-md space-y-2">
+            <label for="multiselect-demo-skills" class="text-sm font-medium">Skills</label>
+            <BbMultiSelect TValue="string"
+                        Options="languages"
+                        @bind-Values="labelledSkills"
+                        TriggerId="multiselect-demo-skills"
+                        TriggerAttributes="labelledSkillsAttributes"
+                        IsInvalid="@(labelledSkills?.Any() != true)"
+                        AriaDescribedBy="@(labelledSkills?.Any() != true ? "multiselect-demo-skills-error" : null)"
+                        Placeholder="Select your skills..."
+                        MatchTriggerWidth="true" />
+            @if (labelledSkills?.Any() != true)
+            {
+                <p id="multiselect-demo-skills-error" class="text-sm text-destructive">Pick at least one skill.</p>
+            }
+        </div>
+
+        <CodeBlock Source="Components/MultiSelect/trigger-attributes.txt" />
+    </section>
+
     <!-- Form Example -->
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">Form Integration</h2>
@@ -562,8 +594,17 @@
                 <ApiParameter Name="ChildContent" Type="RenderFragment?">
                     Content for compositional mode. Use MultiSelectItem components as children.
                 </ApiParameter>
+                <ApiParameter Since="v4.2" Name="TriggerId" Type="string?" Default="null">
+                    Id of the trigger button, so a <code>&lt;label for&gt;</code> can point at it. Focus returns to it when the dropdown closes. Generated when unset.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="TriggerAttributes" Type="Dictionary&lt;string, object&gt;?" Default="null">
+                    HTML attributes applied to the trigger button (e.g. <code>data-testid</code>). Applied last, so they override the component's own; <code>TriggerId</code> wins over an <code>id</code> here.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="IsInvalid" Type="bool?" Default="null">
+                    Sets <code>aria-invalid="true"</code> on the trigger. When unset, follows the field's validation state in a parent EditForm.
+                </ApiParameter>
                 <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
-                    Additional HTML attributes applied to the root <code>&lt;div&gt;</code> element (e.g. <code>data-testid</code>, <code>aria-label</code>).
+                    Additional HTML attributes applied to the root <code>&lt;div&gt;</code> element (e.g. <code>data-testid</code>, <code>aria-label</code>). Use <code>TriggerAttributes</code> for the trigger button.
                 </ApiParameter>
             </ApiReference>
 
@@ -628,6 +669,10 @@
 
     // Disabled example
     private IEnumerable<string> disabledValues = new[] { "csharp", "typescript" };
+
+    // Label, test id and invalid state example
+    private IEnumerable<string>? labelledSkills;
+    private readonly Dictionary<string, object> labelledSkillsAttributes = new() { ["data-testid"] = "skills-trigger" };
 
     // Match trigger width examples
     private IEnumerable<string>? matchWidthLanguages;

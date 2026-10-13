@@ -5,57 +5,75 @@
     Individual Toast component - displays a single toast notification.
 *@
 
-<div class="@CssClass" role="alert"
-     data-state="open"
-     @onmouseenter="HandleMouseEnter"
-     @onmouseleave="HandleMouseLeave"
-     @attributes="AdditionalAttributes">
+<CascadingValue TValue="IToastReference" Value="reference" IsFixed="true">
+    <div class="@CssClass" role="alert"
+         data-state="open"
+         @onmouseenter="HandleMouseEnter"
+         @onmouseleave="HandleMouseLeave"
+         @onpointerdown="HandleEngage"
+         @onfocusin="HandleEngage"
+         @attributes="AdditionalAttributes">
 
-    @if (ShouldShowIcon)
-    {
-        <div class="bb:shrink-0">
-            <LucideIcon Name="@IconName" Class="@IconCssClass" />
-        </div>
-    }
-
-    <div class="@ContentCssClass">
-        @if (!string.IsNullOrEmpty(Data.Title))
+        @if (ShouldShowIcon)
         {
-            <div class="@TitleCssClass">@Data.Title</div>
+            <div class="bb:shrink-0">
+                @if (Data.Icon != null)
+                {
+                    @Data.Icon
+                }
+                else
+                {
+                    <LucideIcon Name="@IconName" Class="@IconCssClass" />
+                }
+            </div>
         }
-        @if (!string.IsNullOrEmpty(Data.Description))
+
+        <div class="@ContentCssClass">
+            @if (!string.IsNullOrEmpty(Data.Title))
+            {
+                <div class="@TitleCssClass">@Data.Title</div>
+            }
+            @if (!string.IsNullOrEmpty(Data.Description))
+            {
+                <div class="@DescriptionCssClass">@Data.Description</div>
+            }
+            @Data.Content
+            @if (Data.Actions != null)
+            {
+                <div class="@ActionsCssClass">
+                    @Data.Actions
+                </div>
+            }
+        </div>
+
+        @if (!string.IsNullOrEmpty(Data.ActionText) && Data.OnAction != null)
         {
-            <div class="@DescriptionCssClass">@Data.Description</div>
+            <button type="button"
+                    class="@ActionCssClass"
+                    @onclick="HandleAction">
+                @Data.ActionText
+            </button>
+        }
+
+        @if (Data.ShowClose)
+        {
+            <button type="button"
+                    class="@CloseCssClass"
+                    @onclick="HandleClose">
+                <LucideIcon Name="x" Class="bb:h-4 bb:w-4" />
+                <span class="bb:sr-only">Close</span>
+            </button>
+        }
+
+        @if (ShouldShowCountdown)
+        {
+            <div class="bb:absolute bb:bottom-0 bb:inset-x-0 bb:h-0.5 bb:bg-current/20">
+                <div class="bb:h-full bb:bg-current/40"
+                     style="animation: bb-alert-countdown @(Data.Duration)ms linear forwards; animation-play-state: @(isPaused ? "paused" : "running");"></div>
+            </div>
         }
     </div>
-
-    @if (!string.IsNullOrEmpty(Data.ActionText) && Data.OnAction != null)
-    {
-        <button type="button"
-                class="@ActionCssClass"
-                @onclick="HandleAction">
-            @Data.ActionText
-        </button>
-    }
-
-    @if (Data.ShowClose)
-    {
-        <button type="button"
-                class="@CloseCssClass"
-                @onclick="HandleClose">
-            <LucideIcon Name="x" Class="bb:h-4 bb:w-4" />
-            <span class="bb:sr-only">Close</span>
-        </button>
-    }
-
-    @if (ShouldShowCountdown)
-    {
-        <div class="bb:absolute bb:bottom-0 bb:inset-x-0 bb:h-0.5 bb:bg-current/20">
-            <div class="bb:h-full bb:bg-current/40"
-                 style="animation: bb-alert-countdown @(Data.Duration)ms linear forwards; animation-play-state: @(isPaused ? "paused" : "running");"></div>
-        </div>
-    }
-</div>
+</CascadingValue>
 
 @code {
     /// <summary>
@@ -83,6 +101,17 @@
     public EventCallback OnResume { get; set; }
 
     /// <summary>
+    /// Callback when auto-dismiss should stop for good: the user pressed or moved focus inside a
+    /// toast that has <see cref="ToastData.Content"/> or <see cref="ToastData.Actions"/>.
+    /// </summary>
+    /// <remarks>
+    /// Hover alone can't keep such a toast open: a menu or picker opened from it renders outside
+    /// the toast, so moving the pointer onto it reads as leaving.
+    /// </remarks>
+    [Parameter]
+    public EventCallback OnHold { get; set; }
+
+    /// <summary>
     /// Whether to show a visual countdown progress bar at the bottom of the toast.
     /// </summary>
     [Parameter]
@@ -101,6 +130,16 @@
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
     private bool isPaused;
+    private bool isHeld;
+    private IToastReference reference = default!;
+
+    protected override void OnInitialized() => reference = new ToastReference(this);
+
+    // Cascaded to the toast's content: dismissing goes the same way as the close button.
+    private sealed class ToastReference(BbToast toast) : IToastReference
+    {
+        public Task DismissAsync() => toast.OnDismiss.InvokeAsync();
+    }
 
     private async Task HandleClose()
     {
@@ -122,8 +161,28 @@
         }
     }
 
+    private async Task HandleEngage()
+    {
+        if (isHeld || !HasRichContent)
+        {
+            return;
+        }
+
+        isHeld = true;
+        isPaused = true;
+        if (OnHold.HasDelegate)
+        {
+            await OnHold.InvokeAsync();
+        }
+    }
+
     private async Task HandleMouseLeave()
     {
+        if (isHeld)
+        {
+            return;
+        }
+
         isPaused = false;
         if (OnResume.HasDelegate)
         {
@@ -131,7 +190,7 @@
         }
     }
 
-    private bool ShouldShowIcon => Data.ShowIcon && Data.Variant != ToastVariant.Default;
+    private bool ShouldShowIcon => Data.ShowIcon && (Data.Icon != null || Data.Variant != ToastVariant.Default);
 
     private string IconName => Data.Variant switch
     {
@@ -144,16 +203,21 @@
 
     private bool IsCompact => Data.Size == ToastSize.Compact;
 
+    // A body or an action row makes the toast tall; the icon then sits beside the first line
+    // rather than centred against the whole block.
+    private bool HasRichContent => Data.Content != null || Data.Actions != null;
+
     /// <summary>
     /// Gets the computed CSS classes for the toast.
     /// </summary>
     private bool ShouldShowCountdown => ShowCountdown && Data.Duration > 0;
 
     private string CssClass => ClassNames.cn(
-        "bb:group bb:pointer-events-auto bb:relative bb:flex bb:w-full bb:items-center bb:justify-between bb:space-x-4 bb:overflow-hidden bb:rounded-md bb:border bb:shadow-lg bb:transition-all",
+        "bb:group bb:pointer-events-auto bb:relative bb:flex bb:w-full bb:justify-between bb:space-x-4 bb:overflow-hidden bb:rounded-md bb:border bb:shadow-lg bb:transition-all",
         "bb:data-[state=open]:animate-in bb:data-[state=closed]:animate-out bb:data-[state=closed]:fade-out-80",
         "bb:data-[state=closed]:slide-out-to-right-full bb:data-[state=open]:slide-in-from-top-full",
         "bb:data-[state=open]:sm:slide-in-from-bottom-full",
+        HasRichContent ? "bb:items-start" : "bb:items-center",
         IsCompact
             ? Data.ShowClose ? "bb:p-3 bb:pe-6" : "bb:p-3"
             : Data.ShowClose ? "bb:p-6 bb:pe-8" : "bb:p-6",
@@ -182,7 +246,7 @@
     );
 
     private string ContentCssClass => ClassNames.cn(
-        "bb:grid bb:flex-1",
+        "bb:grid bb:min-w-0 bb:flex-1",
         IsCompact ? "bb:gap-0.5" : "bb:gap-1"
     );
 
@@ -191,6 +255,11 @@
     private string DescriptionCssClass => ClassNames.cn(
         IsCompact ? "bb:text-xs" : "bb:text-sm",
         "bb:opacity-90"
+    );
+
+    private string ActionsCssClass => ClassNames.cn(
+        "bb:flex bb:flex-wrap bb:items-center bb:gap-2",
+        IsCompact ? "bb:mt-1.5" : "bb:mt-2"
     );
 
     private string ActionCssClass => ClassNames.cn(

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using BlazorBlueprint.Icons.Feather.Data;
 
@@ -89,4 +90,10 @@ public partial class FeatherIcon : ComponentBase
     /// The combined CSS class string.
     /// </summary>
     private string CssClass => string.IsNullOrEmpty(Class) ? string.Empty : Class;
+
+    /// <summary>
+    /// The stroke width, formatted invariantly so a comma-decimal culture does not write "1,5",
+    /// which SVG drops.
+    /// </summary>
+    private string StrokeWidthValue => StrokeWidth.ToString(CultureInfo.InvariantCulture);
 }

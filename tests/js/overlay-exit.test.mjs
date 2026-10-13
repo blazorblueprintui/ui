@@ -3,7 +3,8 @@ import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
 
 const source = (await readFile(new URL('../../src/BlazorBlueprint.Primitives/wwwroot/js/primitives/positioning.js', import.meta.url), 'utf8'))
-  .replace(/^import .*;$/gm, 'const floatingUIBundled = {};');
+  .replace(/^import \* as floatingUIBundled from .*;$/m, 'const floatingUIBundled = {};')
+  .replace(/^import \{ createId \} from .*;$/m, "const createId = () => 'id';");
 const { hidePosition } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 
 test('a popup hides when its exit ends without waiting for a longer tree transition or spinner', async () => {

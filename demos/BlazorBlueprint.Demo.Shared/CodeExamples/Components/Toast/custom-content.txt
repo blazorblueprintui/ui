@@ -1,0 +1,50 @@
+@* ReplyToast.razor: the toast's content, written as an ordinary component *@
+@inject NavigationManager Navigation
+
+<div class="flex gap-4">
+    <BbAvatar Class="shrink-0">
+        <BbAvatarFallback Class="bg-cyan-100 font-semibold text-cyan-900">@Initials</BbAvatarFallback>
+    </BbAvatar>
+    <div class="grid min-w-0 gap-1">
+        <div class="flex items-baseline gap-2">
+            <span class="font-semibold">@Author replied</span>
+            <span class="text-sm text-muted-foreground">now</span>
+        </div>
+        <p class="line-clamp-2 text-sm text-muted-foreground">@Message</p>
+        <div class="mt-2 flex flex-wrap gap-2">
+            <BbButton Size="ButtonSize.Small" OnClick="@(() => OpenAsync("/chat"))">
+                Open chat
+            </BbButton>
+            <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Outline" OnClick="@(() => OpenAsync($"/review/{Ticket}"))">
+                Review @Ticket
+            </BbButton>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Cascaded by the toast, so the component can dismiss the toast it is shown in.
+    [CascadingParameter]
+    public IToastReference Toast { get; set; } = default!;
+
+    [Parameter] public string Author { get; set; } = "";
+    [Parameter] public string Initials { get; set; } = "";
+    [Parameter] public string Ticket { get; set; } = "";
+    [Parameter] public string Message { get; set; } = "";
+
+    private async Task OpenAsync(string url)
+    {
+        await Toast.DismissAsync();
+        Navigation.NavigateTo(url);
+    }
+}
+
+
+@* Showing it, from a page or from any service that has ToastService *@
+ToastService.Show<ReplyToast>(new()
+{
+    [nameof(ReplyToast.Author)] = "Clara",
+    [nameof(ReplyToast.Initials)] = "CT",
+    [nameof(ReplyToast.Ticket)] = "ML-15",
+    [nameof(ReplyToast.Message)] = "ML-15 is ready for your review. Pip kept the new line hidden..."
+}, new ToastData { Duration = 0 });

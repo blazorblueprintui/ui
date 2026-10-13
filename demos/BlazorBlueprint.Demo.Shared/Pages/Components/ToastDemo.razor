@@ -137,6 +137,44 @@
         <CodeBlock Source="Components/Toast/with-action.txt" />
     </div>
 
+    <!-- Custom Content -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Custom Content</h2>
+            <p class="text-sm text-muted-foreground">
+                Show a component in a toast with <code class="text-xs bg-muted px-1 py-0.5 rounded">ToastService.Show&lt;TComponent&gt;(parameters, toast)</code>.
+                The component is ordinary Razor markup and receives an <code class="text-xs bg-muted px-1 py-0.5 rounded">IToastReference</code> cascading parameter,
+                so its buttons can dismiss the toast. Pass a <code class="text-xs bg-muted px-1 py-0.5 rounded">ToastData</code> to set the variant, duration, position and the rest.
+            </p>
+        </div>
+        <BbButton OnClick="@ShowReplyToast">
+            Show Reply Notification
+        </BbButton>
+
+        <CodeBlock Source="Components/Toast/custom-content.txt" />
+    </div>
+
+    <!-- Inline Content -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Inline Content</h2>
+            <p class="text-sm text-muted-foreground">
+                For something small, set the slots on <code class="text-xs bg-muted px-1 py-0.5 rounded">ToastData</code> directly. <code class="text-xs bg-muted px-1 py-0.5 rounded">Icon</code> replaces the variant icon,
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">Content</code> renders below the title and description, and <code class="text-xs bg-muted px-1 py-0.5 rounded">Actions</code> lays buttons out in a row beneath.
+                Clicking an action does not dismiss the toast; call <code class="text-xs bg-muted px-1 py-0.5 rounded">ToastService.Dismiss(toast.Id)</code> when it should.
+            </p>
+            <p class="text-sm text-muted-foreground">
+                Menus, selects and pickers inside a toast open above it. Once you press or tab into a toast with custom content,
+                it stops auto-dismissing, so it stays until you close it or an action dismisses it.
+            </p>
+        </div>
+        <BbButton Variant="ButtonVariant.Outline" OnClick="@ShowExportToast">
+            With a Menu
+        </BbButton>
+
+        <CodeBlock Source="Components/Toast/inline-content.txt" />
+    </div>
+
     <!-- Position Options -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -281,6 +319,9 @@
                 <ApiParameter Name="Show(ToastData toast)" Type="void">
                     Show a toast with full control
                 </ApiParameter>
+                <ApiParameter Name="Show&lt;TComponent&gt;(parameters?, toast?)" Type="void">
+                    Show a component in a toast. It receives <code>IToastReference</code> as a cascading parameter; the optional <code>ToastData</code> sets the toast's other settings.
+                </ApiParameter>
                 <ApiParameter Name="Show(description, title?, variant?, duration?)" Type="void">
                     Quick toast
                 </ApiParameter>
@@ -329,6 +370,9 @@
                 <ApiParameter Name="Description" Type="string">
                     Main message content
                 </ApiParameter>
+                <ApiParameter Name="Content" Type="RenderFragment?">
+                    Markup or components rendered below the title and description.
+                </ApiParameter>
                 <ApiParameter Name="Variant" Type="ToastVariant" Default="Default">
                     Default, Success, Info, Warning, or Destructive
                 </ApiParameter>
@@ -340,6 +384,9 @@
                 </ApiParameter>
                 <ApiParameter Name="ShowIcon" Type="bool" Default="true">
                     Show variant-specific icon (Default variant has no icon).
+                </ApiParameter>
+                <ApiParameter Name="Icon" Type="RenderFragment?">
+                    Custom icon (an avatar, image or any icon) shown in place of the variant icon, for every variant.
                 </ApiParameter>
                 <ApiParameter Name="Duration" Type="int" Default="5000">
                     Auto-dismiss time in ms (0 for no auto-dismiss).
@@ -353,8 +400,17 @@
                 <ApiParameter Name="OnAction" Type="Action?">
                     Action button callback
                 </ApiParameter>
+                <ApiParameter Name="Actions" Type="RenderFragment?">
+                    Buttons or other components shown in a row below the content. Clicking them does not dismiss the toast.
+                </ApiParameter>
                 <ApiParameter Name="ShowCountdown" Type="bool?" Default="null">
                     Show countdown bar. When null, uses BbToastProvider's ShowCountdown setting.
+                </ApiParameter>
+            </ApiReference>
+
+            <ApiReference ComponentName="IToastReference">
+                <ApiParameter Name="DismissAsync()" Type="Task">
+                    Dismisses the toast. Cascaded to everything rendered inside a toast, including components shown with <code>Show&lt;TComponent&gt;()</code>.
                 </ApiParameter>
             </ApiReference>
         </div>
@@ -407,6 +463,50 @@
             ActionText = "Undo",
             OnAction = () => ToastService.Success("Post restored!")
         });
+    }
+
+    private void ShowReplyToast()
+    {
+        ToastService.Show<ReplyToast>(new()
+        {
+            [nameof(ReplyToast.Author)] = "Clara",
+            [nameof(ReplyToast.Initials)] = "CT",
+            [nameof(ReplyToast.Ticket)] = "ML-15",
+            [nameof(ReplyToast.Message)] = "ML-15 is ready for your review. Pip kept the new line hidden when there are no carried-over days to show."
+        }, new ToastData { Duration = 0 });
+    }
+
+    private void ShowExportToast()
+    {
+        var toast = new ToastData
+        {
+            Title = "Export ready",
+            Description = "Q3 leave report, 214 rows.",
+            Variant = ToastVariant.Success,
+            Duration = 8000
+        };
+
+        toast.Actions = @<BbDropdownMenu>
+                            <BbDropdownMenuTrigger AsChild>
+                                <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Outline">
+                                    Download
+                                    <LucideIcon Name="chevron-down" Size="14" />
+                                </BbButton>
+                            </BbDropdownMenuTrigger>
+                            <BbDropdownMenuContent>
+                                <BbDropdownMenuItem OnClick="@(() => Download(toast, "PDF"))">PDF</BbDropdownMenuItem>
+                                <BbDropdownMenuItem OnClick="@(() => Download(toast, "CSV"))">CSV</BbDropdownMenuItem>
+                                <BbDropdownMenuItem OnClick="@(() => Download(toast, "Excel"))">Excel</BbDropdownMenuItem>
+                            </BbDropdownMenuContent>
+                        </BbDropdownMenu>;
+
+        ToastService.Show(toast);
+    }
+
+    private void Download(ToastData toast, string format)
+    {
+        ToastService.Dismiss(toast.Id);
+        ToastService.Info($"Downloading {format}...");
     }
 
     private void ShowPersistentToast()

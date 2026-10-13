@@ -100,9 +100,9 @@ public partial class TreeItemNode<TItem> : ComponentBase
         IsSelected ? "bb:bg-accent bb:text-accent-foreground" : "bb:text-foreground"
     );
 
-    private string NodeStyle => $"padding-left: {(Depth * 1.25) + 0.5}rem;";
+    private string NodeStyle => FormattableString.Invariant($"padding-left: {(Depth * 1.25) + 0.5}rem;");
 
-    private string ChildNodeStyle => $"padding-left: {((Depth + 1) * 1.25) + 0.5}rem;";
+    private string ChildNodeStyle => FormattableString.Invariant($"padding-left: {((Depth + 1) * 1.25) + 0.5}rem;");
 
     private string ChevronCssClass => ClassNames.cn(
         "bb:h-4 bb:w-4 bb:shrink-0 bb:text-muted-foreground bb:transition-transform bb:duration-200",

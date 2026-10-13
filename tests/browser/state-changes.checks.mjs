@@ -205,3 +205,94 @@ test('radar tooltips display untrusted labels as text', async ({ page }) => {
     await expect(page.locator('#tooltip-fixture img')).toHaveCount(0);
     expect(await page.evaluate(() => window.tooltipExecuted)).toBeUndefined();
 });
+
+test('Escape in a MultiSelect inside a dialog closes only the list, after typing or after clicking an option', async ({ page }) => {
+    const section = page.locator('#multiselect-dialog');
+    const dialogOpen = page.locator('#picker-dialog-open');
+    const list = page.locator('[role=listbox][aria-multiselectable=true]');
+    const trigger = page.getByRole('combobox', { name: 'Picker', exact: true });
+    await section.getByRole('button', { name: 'Open picker dialog' }).click();
+    await expect(dialogOpen).toHaveText('True');
+
+    // Typed in the search box: the input's own handler takes Escape.
+    await trigger.click();
+    await expect(list).toBeVisible();
+    const search = page.locator('input[id$="-search"]');
+    await expect(search).toBeFocused();
+    await search.pressSequentially('Be');
+    await page.keyboard.press('Escape');
+    await expect(list).toHaveCount(0);
+    await expect(dialogOpen).toHaveText('True');
+
+    // Clicked an option: focus has left the search box, so the open list must take Escape itself.
+    await trigger.click();
+    await expect(list).toBeVisible();
+    await list.getByRole('option', { name: 'Alpha' }).click();
+    await expect(page.locator('#picker-values')).toHaveText('a');
+    await page.keyboard.press('Escape');
+    await expect(list).toHaveCount(0);
+    await expect(dialogOpen).toHaveText('True');
+    await expect(page.locator('#picker-values')).toHaveText('a');
+    await expect(trigger).toBeVisible();
+
+    // With the list closed, Escape goes back to closing the dialog.
+    await page.keyboard.press('Escape');
+    await expect(dialogOpen).toHaveText('False');
+});
+
+test('a label names the Combobox and MultiSelect triggers, opens them, and focus returns to their own id', async ({ page }) => {
+    await expect(page.getByTestId('breakfast')).toHaveAttribute('id', 'breakfast-trigger');
+    await expect(page.getByTestId('breakfast')).toHaveAttribute('aria-invalid', 'true');
+    for (const [name, id] of [['Breakfast', 'breakfast-trigger'], ['Lunch', 'lunch-trigger']]) {
+        const trigger = page.getByRole('combobox', { name, exact: true });
+        await expect(trigger).toHaveAttribute('id', id);
+        await page.locator(`label[for="${id}"]`).click();
+        await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+        await page.keyboard.press('Escape');
+        await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+        await expect(trigger).toBeFocused();
+    }
+});
+
+test('overlays open and dismiss without crypto.randomUUID, as on a plain-HTTP site', async ({ page }) => {
+    // Browsers define randomUUID only in a secure context: https, or localhost. A site on plain
+    // HTTP and any other host has none, so remove it before any of the page's scripts run.
+    await page.addInitScript(() => { delete Crypto.prototype.randomUUID; });
+    const errors = [];
+    page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+    await page.reload();
+    await expect(page.locator('#chart-callback svg')).toBeVisible();
+    expect(await page.evaluate(() => typeof crypto.randomUUID)).toBe('undefined');
+
+    const outside = page.locator('h1');
+    const overlays = [
+        [page.getByRole('button', { name: 'Open popover', exact: true }), page.getByText('Popover body')],
+        [page.getByRole('combobox', { name: 'Fruit', exact: true }), page.getByRole('option', { name: 'Apple' })],
+        [page.getByRole('button', { name: 'Open menu', exact: true }), page.getByRole('menu')],
+    ];
+    for (const [trigger, content] of overlays) {
+        await trigger.click();
+        await expect(content).toBeVisible();
+        await page.keyboard.press('Escape');
+        await expect(content).toBeHidden();
+
+        await trigger.click();
+        await expect(content).toBeVisible();
+        await outside.click();
+        await expect(content).toBeHidden();
+    }
+
+    // A dialog, with a list opened and dismissed inside it.
+    const dialogOpen = page.locator('#picker-dialog-open');
+    const list = page.locator('[role=listbox][aria-multiselectable=true]');
+    await page.getByRole('button', { name: 'Open picker dialog' }).click();
+    await expect(dialogOpen).toHaveText('True');
+    await page.getByRole('combobox', { name: 'Picker', exact: true }).click();
+    await expect(list).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(list).toHaveCount(0);
+    await page.keyboard.press('Escape');
+    await expect(dialogOpen).toHaveText('False');
+
+    expect(errors.filter(text => /overlay|randomUUID/.test(text))).toEqual([]);
+});

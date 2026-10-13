@@ -39,6 +39,18 @@ public partial class BbDataGridEditColumn<TData> : ComponentBase, IDataGridColum
     public ColumnPinning Pinned { get; set; } = ColumnPinning.None;
 
     /// <summary>
+    /// Additional CSS classes for the edit cells, the ones holding the Edit, Save and Cancel buttons.
+    /// </summary>
+    [Parameter]
+    public string? CellClass { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes for the header cell.
+    /// </summary>
+    [Parameter]
+    public string? HeaderClass { get; set; }
+
+    /// <summary>
     /// The parent DataGrid component. Set via cascading parameter.
     /// </summary>
     [CascadingParameter]
@@ -70,9 +82,9 @@ public partial class BbDataGridEditColumn<TData> : ComponentBase, IDataGridColum
 
     RenderFragment<DataGridHeaderContext<TData>>? IDataGridColumn<TData>.HeaderTemplate => null;
 
-    string? IDataGridColumn<TData>.CellClass => null;
+    string? IDataGridColumn<TData>.CellClass => CellClass;
 
-    string? IDataGridColumn<TData>.HeaderClass => null;
+    string? IDataGridColumn<TData>.HeaderClass => HeaderClass;
 
     bool IDataGridColumn<TData>.NoWrap => true;
 

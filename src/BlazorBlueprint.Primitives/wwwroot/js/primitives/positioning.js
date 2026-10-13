@@ -7,6 +7,7 @@
 // makes the browser resolve the whole graph while it fetches this file, so the pair costs one
 // round trip instead of two.
 import * as floatingUIBundled from '../vendor/floating-ui-dom.esm.min.js';
+import { createId } from '../unique-id.js';
 
 // Store cleanup functions with unique IDs to avoid passing functions through JS interop
 const cleanupRegistry = new Map();
@@ -117,17 +118,46 @@ export async function computePosition(reference, floating, options = {}) {
         strategy
     });
 
+        const resolvedStrategy = result.strategy || strategy;
+
         return {
             x: result.x,
             y: result.y,
             placement: result.placement,
             transformOrigin: getTransformOrigin(result.placement),
-            strategy: result.strategy || strategy
+            strategy: resolvedStrategy,
+            zIndex: layerAbove(reference, baseZIndex(resolvedStrategy))
         };
     } catch (error) {
         console.error('Failed to compute position:', error);
         throw error;  // Re-throw for caller to handle
     }
+}
+
+// Higher for fixed positioning (nested dropdowns) so it appears above parent popovers.
+function baseZIndex(strategy) {
+    return strategy === 'fixed' ? 9999 : 50;
+}
+
+/**
+ * The z-index that paints a floating element above the layer its reference sits in.
+ * Floating content is portalled out of that layer, so without this a trigger inside a raised
+ * container — the toast stack is z-100 — would open its overlay underneath the container.
+ * @param {HTMLElement} reference - Reference element
+ * @param {number} base - The z-index to use when no ancestor is raised above it
+ * @returns {number} The z-index for the floating element
+ */
+function layerAbove(reference, base) {
+    let zIndex = base;
+
+    for (let el = reference.parentElement; el && el !== document.body; el = el.parentElement) {
+        const value = parseInt(getComputedStyle(el).zIndex, 10);
+        if (!isNaN(value) && value >= zIndex) {
+            zIndex = value + 1;
+        }
+    }
+
+    return zIndex;
 }
 
 /**
@@ -139,14 +169,14 @@ export async function computePosition(reference, floating, options = {}) {
 export function applyPosition(floating, position, makeVisible = false) {
     if (!floating || !position) return;
 
-    // Apply all positioning styles atomically to prevent flash
-    // Use higher z-index for fixed positioning (nested dropdowns) to ensure they appear above parent popovers
-    const zIndex = position.strategy === 'fixed' ? '9999' : '50';
+    // Apply all positioning styles atomically to prevent flash. A position that came through
+    // C# (PositionResult) carries no zIndex and falls back to the strategy's base.
+    const zIndex = position.zIndex ?? baseZIndex(position.strategy);
     Object.assign(floating.style, {
         position: position.strategy || 'absolute',
         left: `${position.x}px`,
         top: `${position.y}px`,
-        zIndex: zIndex,
+        zIndex: String(zIndex),
         transformOrigin: position.transformOrigin || ''
     });
 
@@ -194,8 +224,11 @@ export function applyPosition(floating, position, makeVisible = false) {
  * a click during the animation.
  *
  * @param {HTMLElement} floating - The floating element to hide.
+ * @param {() => boolean} [isReopened] - Whether the overlay was opened again while this waited.
+ *   Defaults to reading `data-state`, which only works when the closed render has already been
+ *   applied. overlay.close() runs ahead of that render on Blazor Server, so it passes its own check.
  */
-export async function hidePosition(floating) {
+export async function hidePosition(floating, isReopened = () => floating.dataset.state === 'open') {
     if (!floating) return;
 
     // Immediate, and not deferred: a closing overlay must stop intercepting input at once.
@@ -205,7 +238,7 @@ export async function hidePosition(floating) {
 
     // The animation is long enough to reopen inside, and a reopen re-applies the visible style
     // before this resumes. Hiding anyway would blank an overlay the user just asked for.
-    if (floating.dataset.state === 'open') return;
+    if (isReopened()) return;
 
     floating.style.setProperty('visibility', 'hidden', 'important');
     floating.style.setProperty('opacity', '0', 'important');
@@ -283,7 +316,7 @@ export async function autoUpdate(reference, floating, options = {}) {
         const cleanupFunc = lib.autoUpdate(reference, floating, update);
 
         // Store cleanup function in registry with unique ID
-        const id = crypto.randomUUID();
+        const id = createId();
         cleanupRegistry.set(id, cleanupFunc);
 
         // Return disposable object with ID (no functions in the object)

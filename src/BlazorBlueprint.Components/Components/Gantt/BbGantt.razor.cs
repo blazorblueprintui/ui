@@ -1,3 +1,4 @@
+using BlazorBlueprint.Primitives.DataGrid;
 using BlazorBlueprint.Primitives.Gantt;
 using BlazorBlueprint.Primitives.Services;
 using Microsoft.AspNetCore.Components;
@@ -494,7 +495,12 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
     /// Records a column width a drag settled on. Called from JavaScript.
     /// </summary>
     /// <param name="columnId">The key of the column that was dragged.</param>
-    /// <param name="dragged">Every managed column's width at the end of the drag.</param>
+    /// <param name="dragged">The managed columns' widths at the end of the drag.</param>
+    /// <remarks>
+    /// The drag reports more than the column dragged, and the script already leaves out a column that
+    /// measures nothing. A width that is not a width is still refused here rather than recorded, so
+    /// the column keeps the width it had whatever the caller sends.
+    /// </remarks>
     [JSInvokable]
     public void OnResizeCompleted(string columnId, Dictionary<string, double> dragged)
     {
@@ -502,7 +508,12 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
 
         foreach (var (key, width) in dragged)
         {
-            widths[key] = (int)Math.Round(width);
+            if (!DataGridColumnWidth.IsUsablePixels(width))
+            {
+                continue;
+            }
+
+            widths[key] = (int)Math.Round(width, MidpointRounding.AwayFromZero);
         }
 
         // The table has to be re-measured against the new task list width, or the bars stay where

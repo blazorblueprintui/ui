@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using BlazorBlueprint.Icons.Lucide.Data;
 
@@ -118,4 +119,10 @@ public partial class LucideIcon : ComponentBase
             return string.Join(" ", classes);
         }
     }
+
+    /// <summary>
+    /// The stroke width, formatted invariantly so a comma-decimal culture does not write "1,5",
+    /// which SVG drops.
+    /// </summary>
+    private string StrokeWidthValue => StrokeWidth.ToString(CultureInfo.InvariantCulture);
 }

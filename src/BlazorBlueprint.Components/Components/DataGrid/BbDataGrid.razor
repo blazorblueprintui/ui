@@ -166,11 +166,11 @@
                             }
                         </colgroup>
                     }
-                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader Class="@ClassNames.cn("bb:bg-background", StickyHeader ? "bb:sticky bb:top-0 bb:z-20" : "")">
+                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader Class="@ClassNames.cn("bb:bg-surface", StickyHeader ? "bb:sticky bb:top-0 bb:z-20" : "")">
                         @* Through cn() so the bare `group/row` marker ships too: the primitive
                            concatenates Class verbatim, and a consumer's `group-hover/row:*` resolves
                            against the unprefixed marker their own Tailwind build emits. *@
-                        <BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Class="@ClassNames.cn("bb:group/row bb:bg-background")">
+                        <BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Class="@ClassNames.cn("bb:group/row bb:bg-surface")">
                             @foreach (var column in _cachedVisibleColumns)
                             {
                                 var sortDirection = _gridState.Sorting.GetDirection(column.ColumnId);
@@ -384,7 +384,7 @@
                             }
                         </BlazorBlueprint.Primitives.DataGrid.BbDataGridRow>
                     </BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader>
-                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridBody Class="bb:bg-background">
+                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridBody Class="bb:bg-surface">
                         @if (ShowFilterBar && _gridState.Filtering.HasFilters)
                         {
                             <tr class="@ClassNames.cn("bb:border-b bb:bg-muted/30", FilterBarClass)">
@@ -555,7 +555,7 @@
 
     private RenderFragment<TData> RenderDataRow => item =>
         @<BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Item="@item"
-            Class="@ClassNames.cn("bb:group/row bb:bg-background", Striped ? StripeClass : null, RowClass?.Invoke(item), IsEditing(item) ? "bb:bg-muted/40" : null)">
+            Class="@ClassNames.cn("bb:group/row bb:bg-surface", Striped ? StripeClass : null, RowClass?.Invoke(item), IsEditing(item) ? "bb:bg-muted/40" : null)">
             @{
                 var rowIsEditing = IsEditing(item);
             }
@@ -767,7 +767,7 @@
     private RenderFragment<DataGridRenderItem<TData>> RenderHierarchyRow => renderItem =>
     {
         var item = renderItem.Item!;
-        var rowClass = ClassNames.cn("bb:group/row bb:bg-background",
+        var rowClass = ClassNames.cn("bb:group/row bb:bg-surface",
             Striped ? StripeClass : null,
             !renderItem.MatchesFilter ? "bb:opacity-50" : "",
             RowClass?.Invoke(item));
