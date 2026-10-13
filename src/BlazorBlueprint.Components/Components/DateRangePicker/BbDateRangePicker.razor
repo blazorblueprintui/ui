@@ -22,12 +22,14 @@
         <div class="bb:flex bb:flex-col">
             @if (ShowPresets)
             {
+                @* One answer drives both layouts, so they always highlight the same preset *@
+                var selectedPresetIndex = SelectedPresetIndex;
                 <div class="bb:flex bb:flex-col bb:border-b" data-drp-body>
                     <div class="bb:p-3 bb:border-b" data-drp-presets>
                         @* Mobile: native select *@
                         <div data-drp-presets-select>
                             <BbNativeSelect TValue="int?"
-                                            Value="SelectedPresetIndex"
+                                            Value="selectedPresetIndex"
                                             ValueChanged="OnPresetSelectChanged"
                                             AriaLabel="@Localizer["DateRangePicker.QuickSelect"]"
                                             Placeholder="@Localizer[_selectionStart.HasValue || _selectionEnd.HasValue ? "DateRangePicker.Custom" : "DateRangePicker.Placeholder"]"
@@ -41,15 +43,15 @@
                         @* Desktop: button sidebar *@
                         <div class="bb:hidden" data-drp-presets-inner>
                             <span class="bb:hidden bb:text-xs bb:font-medium bb:text-muted-foreground bb:mb-1" data-drp-presets-label>@Localizer["DateRangePicker.QuickSelect"]</span>
-                            @foreach (var quickPick in EffectivePresets)
+                            @for (var i = 0; i < EffectivePresets.Count; i++)
                             {
-                                var captured = quickPick;
+                                var index = i;
                                 <BbButton Variant="ButtonVariant.Ghost"
                                           Size="ButtonSize.Small"
-                                          Class="@GetPresetButtonClass(captured)"
+                                          Class="@GetPresetButtonClass(index == selectedPresetIndex)"
                                           data-drp-preset-btn
-                                          OnClick="@(() => ApplyPreset(captured))">
-                                    @ResolveLabel(captured)
+                                          OnClick="@(() => ApplyPreset(index))">
+                                    @ResolveLabel(EffectivePresets[index])
                                 </BbButton>
                             }
                         </div>
@@ -200,6 +202,7 @@
     private RenderFragment RenderMonthGridInline(DateTime monthDate) => __builder =>
     {
         var weeks = monthDate == _displayMonth1 ? GetWeeksInMonth1() : GetWeeksInMonth2();
+        var today = Today;
         <table class="bb:w-full bb:border-collapse">
             <thead>
                 <tr class="bb:flex">
@@ -222,7 +225,7 @@
                                 var isInRange = !isDisabled && IsInRange(dateValue);
                                 var isRangeStart = !isDisabled && IsRangeStart(dateValue);
                                 var isRangeEnd = !isDisabled && IsRangeEnd(dateValue);
-                                var isToday = dateValue.Date == DateTime.Today;
+                                var isToday = dateValue.Date == today;
 
                                 <td class="@GetCellClass(day, isInRange, isRangeStart, isRangeEnd)" data-drp-cell>
                                     <button type="button"

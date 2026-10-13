@@ -1,0 +1,48 @@
+@* The body of the reply toast on the Toast demo page, shown with ToastService.Show<ReplyToast>(). *@
+@inject ToastService ToastService
+
+<div class="flex gap-4">
+    <BbAvatar Class="shrink-0">
+        <BbAvatarFallback Class="bg-cyan-100 font-semibold text-cyan-900">@Initials</BbAvatarFallback>
+    </BbAvatar>
+    <div class="grid min-w-0 gap-1">
+        <div class="flex items-baseline gap-2">
+            <span class="font-semibold">@Author replied</span>
+            <span class="text-sm text-muted-foreground">now</span>
+        </div>
+        <p class="line-clamp-2 text-sm text-muted-foreground">@Message</p>
+        <div class="mt-2 flex flex-wrap gap-2">
+            <BbButton Size="ButtonSize.Small" OnClick="@(() => OpenAsync("Opening the chat..."))">
+                Open chat
+            </BbButton>
+            <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Outline" OnClick="@(() => OpenAsync($"Opening {Ticket}..."))">
+                Review @Ticket
+            </BbButton>
+        </div>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    public IToastReference Toast { get; set; } = default!;
+
+    [Parameter]
+    public string Author { get; set; } = "";
+
+    [Parameter]
+    public string Initials { get; set; } = "";
+
+    [Parameter]
+    public string Ticket { get; set; } = "";
+
+    [Parameter]
+    public string Message { get; set; } = "";
+
+    private async Task OpenAsync(string message)
+    {
+        await Toast.DismissAsync();
+
+        // A real app would navigate here.
+        ToastService.Info(message);
+    }
+}

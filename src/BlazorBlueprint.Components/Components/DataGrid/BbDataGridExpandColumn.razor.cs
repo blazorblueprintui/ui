@@ -26,6 +26,20 @@ public partial class BbDataGridExpandColumn<TData> : ComponentBase, IDataGridCol
     public ColumnPinning Pinned { get; set; } = ColumnPinning.None;
 
     /// <summary>
+    /// Additional CSS classes for the expand cells. Useful for matching a compact row height —
+    /// e.g. <c>CellClass="p-1"</c> to override the default cell padding so the chevron column
+    /// doesn't force a taller row than the rest of the grid.
+    /// </summary>
+    [Parameter]
+    public string? CellClass { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes for the header cell.
+    /// </summary>
+    [Parameter]
+    public string? HeaderClass { get; set; }
+
+    /// <summary>
     /// Template for rendering detail rows when a row is expanded.
     /// Detail rows use the same column structure as the parent grid,
     /// rendering proper table rows aligned with the grid's columns.
@@ -67,9 +81,9 @@ public partial class BbDataGridExpandColumn<TData> : ComponentBase, IDataGridCol
 
     RenderFragment<DataGridHeaderContext<TData>>? IDataGridColumn<TData>.HeaderTemplate => null;
 
-    string? IDataGridColumn<TData>.CellClass => null;
+    string? IDataGridColumn<TData>.CellClass => CellClass;
 
-    string? IDataGridColumn<TData>.HeaderClass => null;
+    string? IDataGridColumn<TData>.HeaderClass => HeaderClass;
 
     bool IDataGridColumn<TData>.NoWrap => false;
 

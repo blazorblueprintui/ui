@@ -1,14 +1,15 @@
 @namespace BlazorBlueprint.Primitives.Progress
+@using System.Globalization
 
 <CascadingValue Value="this" IsFixed="false">
     <div role="progressbar"
-         aria-valuenow="@(Value.HasValue ? Value : null)"
+         aria-valuenow="@ValueAttribute"
          aria-valuemin="0"
-         aria-valuemax="@Max"
+         aria-valuemax="@MaxAttribute"
          aria-valuetext="@ValueText"
          data-state="@DataState"
-         data-value="@(Value.HasValue ? Value : null)"
-         data-max="@Max"
+         data-value="@ValueAttribute"
+         data-max="@MaxAttribute"
          @attributes="AdditionalAttributes">
         @ChildContent
     </div>
@@ -54,6 +55,11 @@
     internal string DataState => Value.HasValue
         ? (Value.Value >= Max ? "complete" : "loading")
         : "indeterminate";
+
+    // Screen readers and scripts parse these, so they stay invariant: "33,3" is not a number to them.
+    internal string? ValueAttribute => Value?.ToString(CultureInfo.InvariantCulture);
+
+    internal string MaxAttribute => Max.ToString(CultureInfo.InvariantCulture);
 
     private string? ValueText => Value.HasValue && GetValueLabel != null
         ? GetValueLabel(Value.Value, Max)

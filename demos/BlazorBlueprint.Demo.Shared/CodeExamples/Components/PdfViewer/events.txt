@@ -1,0 +1,23 @@
+<BbPdfViewer @ref="viewer"
+            Url="https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf"
+            Height="480px"
+            OnPageChanged="@(e => status = $"Page {e.Page} of {e.PageCount}")"
+            OnDocumentLoaded="@(count => status = $"Page 1 of {count}")" />
+
+<BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(async () => { if (viewer is not null) await viewer.PreviousPageAsync(); })">
+    Previous
+</BbButton>
+<BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => viewer?.NextPageAsync())">
+    Next
+</BbButton>
+<BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => viewer?.GoToPageAsync(3))">
+    Go to page 3
+</BbButton>
+<BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => viewer?.ZoomInAsync())">
+    Zoom in
+</BbButton>
+<BbButton Variant="ButtonVariant.Outline" Size="ButtonSize.Small" OnClick="@(() => viewer?.FitToWidthAsync())">
+    Fit to width
+</BbButton>
+
+<p>@status</p>

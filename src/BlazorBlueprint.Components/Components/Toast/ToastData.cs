@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Components;
+
 namespace BlazorBlueprint.Components;
 
 /// <summary>
@@ -21,6 +23,18 @@ public class ToastData
     public string? Description { get; set; }
 
     /// <summary>
+    /// Optional content rendered below the title and description: any markup or components.
+    /// </summary>
+    /// <remarks>
+    /// Leave <see cref="Title"/> and <see cref="Description"/> empty to lay out the whole body
+    /// yourself. For more than a line or two, write a component and show it with
+    /// <see cref="ToastService.Show{TComponent}(Dictionary{string, object?}?, ToastData?)"/>.
+    /// The fragment is rendered by the toast provider, not by the component that created it, so
+    /// it does not re-render when that component's state changes.
+    /// </remarks>
+    public RenderFragment? Content { get; set; }
+
+    /// <summary>
     /// The visual variant of the toast.
     /// </summary>
     public ToastVariant Variant { get; set; } = ToastVariant.Default;
@@ -42,9 +56,23 @@ public class ToastData
     public bool ShowIcon { get; set; } = true;
 
     /// <summary>
+    /// Optional custom icon, such as an avatar or image, shown in place of the variant icon.
+    /// </summary>
+    /// <remarks>
+    /// Shows for every variant, <see cref="ToastVariant.Default"/> included.
+    /// <see cref="ShowIcon"/> set to false still hides it.
+    /// </remarks>
+    public RenderFragment? Icon { get; set; }
+
+    /// <summary>
     /// Duration in milliseconds before auto-dismiss.
     /// Set to 0 for no auto-dismiss. Default is 5000ms (5 seconds).
     /// </summary>
+    /// <remarks>
+    /// A toast with <see cref="Content"/> or <see cref="Actions"/> stops counting down for good
+    /// once the user presses or moves focus inside it, so a menu opened from it can't be dismissed
+    /// out from under them.
+    /// </remarks>
     public int Duration { get; set; } = 5000;
 
     /// <summary>
@@ -61,6 +89,15 @@ public class ToastData
     /// Optional action button callback.
     /// </summary>
     public Action? OnAction { get; set; }
+
+    /// <summary>
+    /// Optional buttons or other components shown in a row below the toast's content.
+    /// </summary>
+    /// <remarks>
+    /// Unlike <see cref="ActionText"/>, clicking inside the row does not dismiss the toast;
+    /// call <see cref="ToastService.Dismiss(string)"/> with <see cref="Id"/> when an action is done.
+    /// </remarks>
+    public RenderFragment? Actions { get; set; }
 
     /// <summary>
     /// Whether to show a visual countdown progress bar at the bottom of the toast.

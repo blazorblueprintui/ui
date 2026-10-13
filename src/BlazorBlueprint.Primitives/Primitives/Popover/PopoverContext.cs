@@ -36,6 +36,8 @@ public class PopoverContext : PrimitiveContextWithEvents<PopoverState>
 {
     internal bool AllowDismiss { get; set; } = true;
 
+    private string? customTriggerId;
+
     /// <summary>
     /// Initializes a new instance of the PopoverContext.
     /// </summary>
@@ -44,9 +46,18 @@ public class PopoverContext : PrimitiveContextWithEvents<PopoverState>
     }
 
     /// <summary>
-    /// Gets the ID for the popover trigger button.
+    /// Gets the ID for the popover trigger button: the <c>id</c> given to the trigger, if any,
+    /// otherwise one generated for this popover.
     /// </summary>
-    public string TriggerId => GetScopedId("trigger");
+    public string TriggerId => customTriggerId ?? GetScopedId("trigger");
+
+    /// <summary>
+    /// Uses the id given to the trigger (e.g. so a <c>&lt;label for&gt;</c> can point at it) as
+    /// <see cref="TriggerId"/>, so focus restore and click-outside refer to the element actually
+    /// rendered. Null or empty goes back to the generated id.
+    /// </summary>
+    internal void SetTriggerId(string? id) =>
+        customTriggerId = string.IsNullOrEmpty(id) ? null : id;
 
     /// <summary>
     /// Gets the ID for the popover content container.

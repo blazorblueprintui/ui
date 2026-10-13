@@ -1,0 +1,25 @@
+@* Inside a BbCard the header and pinned columns are filled with the card's colour,
+   not the page's. BbCard, popovers and dashboard widgets set --bb-surface for you. *@
+<BbCard>
+    <BbCardHeader>
+        <BbCardTitle>Team</BbCardTitle>
+    </BbCardHeader>
+    <BbCardContent>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="20" StickyHeader="true"
+                    TableContainerClass="max-h-72 overflow-auto">
+            <Columns>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)"
+                    Width="180px" Pinned="ColumnPinning.Left" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" Width="260px" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" Width="180px" />
+            </Columns>
+        </BbDataGrid>
+    </BbCardContent>
+</BbCard>
+
+@* A container of your own that paints its own background declares it the same way. *@
+<div class="rounded-lg bg-muted p-4" style="--bb-surface: var(--muted)">
+    <BbDataGrid TData="Person" Items="@people" StickyHeader="true">
+        ...
+    </BbDataGrid>
+</div>

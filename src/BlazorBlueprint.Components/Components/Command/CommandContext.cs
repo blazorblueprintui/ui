@@ -79,6 +79,13 @@ public interface IVirtualizedGroupHandler
 /// </summary>
 public class CommandContext
 {
+    /// <summary>
+    /// Name of the cascading id a component that hosts a <see cref="BbCommand"/> can give it, so the
+    /// host knows the list's id before the list renders: a Combobox trigger names it in
+    /// <c>aria-controls</c> while the list is still unmounted inside a closed popover.
+    /// </summary>
+    internal const string HostIdCascadeName = "BbCommandHostId";
+
     private readonly List<CommandItemMetadata> _items = new();
     private readonly List<IVirtualizedGroupHandler> _virtualizedGroups = new();
     private string _searchQuery = string.Empty;
@@ -119,7 +126,11 @@ public class CommandContext
     /// <summary>
     /// Gets the unique ID for this command context.
     /// </summary>
-    public string Id { get; } = $"command-{Guid.NewGuid():N}";
+    /// <remarks>
+    /// Set once by <see cref="BbCommand"/>, before its children render, when a host cascades an id
+    /// under <see cref="HostIdCascadeName"/>.
+    /// </remarks>
+    public string Id { get; internal set; } = $"command-{Guid.NewGuid():N}";
 
     /// <summary>
     /// Gets the ID for the command input.
@@ -129,7 +140,12 @@ public class CommandContext
     /// <summary>
     /// Gets the ID for the command list.
     /// </summary>
-    public string ListId => $"{Id}-list";
+    public string ListId => GetListId(Id);
+
+    /// <summary>
+    /// The id <see cref="BbCommandList"/> renders for a command whose context id is <paramref name="id"/>.
+    /// </summary>
+    internal static string GetListId(string id) => $"{id}-list";
 
     /// <summary>
     /// Gets the current search query.

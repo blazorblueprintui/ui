@@ -1,0 +1,23 @@
+<BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+            EditMode="DataGridEditMode.Row">
+    <Columns>
+        @* The expand and edit columns take CellClass/HeaderClass like any other column,
+           so the same padding override keeps their rows as compact as the rest. *@
+        <BbDataGridExpandColumn CellClass="p-1" HeaderClass="p-1" />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)"
+                                  CellClass="p-1" HeaderClass="p-1">
+            <EditTemplate>
+                <BbInput @bind-Value="context.Name" Class="h-8" />
+            </EditTemplate>
+        </BbDataGridPropertyColumn>
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)"
+                                  CellClass="p-1" HeaderClass="p-1" />
+        <BbDataGridEditColumn TData="Person" CellClass="p-1" HeaderClass="p-1" />
+    </Columns>
+    <DetailTemplate>
+        <div class="text-sm">
+            <span class="font-medium text-muted-foreground">Role:</span>
+            <span class="ml-2">@context.Role</span>
+        </div>
+    </DetailTemplate>
+</BbDataGrid>
