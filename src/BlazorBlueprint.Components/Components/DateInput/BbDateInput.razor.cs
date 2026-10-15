@@ -68,7 +68,7 @@ public partial class BbDateInput : ComponentBase, IAsyncDisposable
         && DateTimeSegments.Number(parts["Month"]) is > 0 and <= 12 and var month
         ? DateTime.DaysInMonth(year, month) : 31;
     private string CssClass => ClassNames.cn(
-        "bb:flex bb:h-10 bb:w-fit bb:items-center bb:gap-1 bb:rounded-md bb:border bb:border-input bb:bg-background bb:px-3 bb:text-base bb:md:text-sm bb:focus-within:ring-2 bb:focus-within:ring-ring bb:aria-[invalid=true]:border-destructive",
+        "bb:flex bb:h-10 bb:w-fit bb:items-center bb:gap-1 bb:rounded-md bb:border bb:border-input bb:bg-transparent bb:dark:bg-input/30 bb:px-3 bb:text-base bb:shadow-xs bb:md:text-sm bb:focus-within:ring-2 bb:focus-within:ring-ring bb:aria-[invalid=true]:border-destructive",
         Disabled ? "bb:opacity-50 bb:cursor-not-allowed" : null, Class);
 
     protected override void OnParametersSet()

@@ -95,7 +95,7 @@ public partial class BbInputGroup : ComponentBase
         // Base container styles
         "bb:group/input-group bb:relative bb:flex bb:w-full",
         "bb:border bb:border-input bb:rounded-md bb:shadow-sm",
-        "bb:bg-background bb:overflow-hidden",
+        "bb:bg-transparent bb:dark:bg-input/30 bb:overflow-hidden",
         "bb:transition-colors bb:outline-none",
 
         // Default height and alignment for inputs

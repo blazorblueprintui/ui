@@ -337,12 +337,12 @@ public partial class BbCurrencyInput : ComponentBase
     }
 
     private string ContainerClass => ClassNames.cn(
-        "bb:flex bb:items-center bb:rounded-md bb:overflow-hidden",
+        "bb:flex bb:items-center bb:rounded-md bb:overflow-hidden bb:shadow-xs",
         Disabled ? "bb:opacity-50" : null
     );
 
     private string CssClass => ClassNames.cn(
-        "bb:flex bb:h-10 bb:w-full bb:border bb:border-input bb:bg-background bb:px-3 bb:py-2 bb:text-base",
+        "bb:flex bb:h-10 bb:w-full bb:border bb:border-input bb:bg-transparent bb:dark:bg-input/30 bb:px-3 bb:py-2 bb:text-base",
         "bb:placeholder:text-muted-foreground",
         "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
         "bb:disabled:cursor-not-allowed bb:disabled:opacity-50",
