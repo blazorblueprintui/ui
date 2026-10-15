@@ -83,7 +83,7 @@ public partial class BbTimeInput : ComponentBase, IAsyncDisposable
         return segment == "Minute" ? values.Where(n => n % MinuteStep == 0 || n == DateTimeSegments.Number(parts[segment])) : values;
     }
     private string CssClass => ClassNames.cn(
-        "bb:flex bb:h-10 bb:w-fit bb:items-center bb:gap-1 bb:rounded-md bb:border bb:border-input bb:bg-background bb:px-3 bb:text-base bb:md:text-sm bb:focus-within:ring-2 bb:focus-within:ring-ring bb:aria-[invalid=true]:border-destructive",
+        "bb:flex bb:h-10 bb:w-fit bb:items-center bb:gap-1 bb:rounded-md bb:border bb:border-input bb:bg-transparent bb:dark:bg-input/30 bb:px-3 bb:text-base bb:shadow-xs bb:md:text-sm bb:focus-within:ring-2 bb:focus-within:ring-ring bb:aria-[invalid=true]:border-destructive",
         Disabled ? "bb:opacity-50 bb:cursor-not-allowed" : null, Class);
 
     protected override void OnParametersSet()

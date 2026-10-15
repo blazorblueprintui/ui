@@ -922,7 +922,7 @@ public partial class BbMultiSelect<TValue> : ComponentBase, IAsyncDisposable
         "bb:inline-flex bb:items-center bb:justify-between bb:rounded-md bb:text-sm bb:font-medium",
         "bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
         "bb:disabled:opacity-50 bb:disabled:pointer-events-none",
-        "bb:border bb:border-input bb:bg-background bb:hover:bg-accent bb:hover:text-accent-foreground",
+        "bb:border bb:border-input bb:bg-transparent bb:dark:bg-input/30 bb:shadow-xs bb:hover:bg-accent bb:hover:text-accent-foreground bb:dark:hover:bg-input/50",
         "bb:aria-[invalid=true]:border-destructive",
         _isOpen ? ActiveClass : null,
         // Single-line keeps a fixed height so wrapping tags can't grow the trigger; the default

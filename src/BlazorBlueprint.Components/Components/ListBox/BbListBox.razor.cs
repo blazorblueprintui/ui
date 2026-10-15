@@ -231,7 +231,7 @@ public partial class BbListBox<TValue> : ComponentBase, IAsyncDisposable
         Class);
 
     private const string FrameClass =
-        "bb:rounded-md bb:border bb:border-input bb:bg-background bb:overflow-hidden";
+        "bb:rounded-md bb:border bb:border-input bb:bg-transparent bb:dark:bg-input/30 bb:shadow-xs bb:overflow-hidden";
 
     private const string CheckboxClass =
         "bb:h-4 bb:w-4 bb:shrink-0 bb:rounded-sm bb:border bb:border-primary bb:flex bb:items-center bb:justify-center " +

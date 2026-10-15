@@ -241,7 +241,11 @@ public partial class BbButton : ComponentBase
         {
             ButtonVariant.Default => "bb:bg-primary bb:text-primary-foreground bb:hover:bg-primary/90",
             ButtonVariant.Destructive => "bb:bg-destructive bb:text-destructive-foreground bb:hover:bg-destructive/90",
-            ButtonVariant.Outline => "bb:border bb:border-input bb:bg-background bb:hover:bg-accent bb:hover:text-accent-foreground",
+            // shadcn's outline fill. bg-background/100 draws the same colour as bg-background, but
+            // PdfViewer's stylesheet, which loads later, repeats .bb:bg-background, and that copy would
+            // override dark:bg-input/30. It is still a plain background colour, so cn drops it when Class
+            // sets its own (e.g. bb:bg-primary).
+            ButtonVariant.Outline => "bb:border bb:border-input bb:bg-background/100 bb:shadow-xs bb:hover:bg-accent bb:hover:text-accent-foreground bb:dark:bg-input/30 bb:dark:border-input bb:dark:hover:bg-input/50",
             ButtonVariant.Secondary => "bb:bg-secondary bb:text-secondary-foreground bb:hover:bg-secondary/80",
             ButtonVariant.Ghost => "bb:hover:bg-accent bb:hover:text-accent-foreground",
             ButtonVariant.Link => "bb:text-primary bb:underline-offset-4 bb:hover:underline",
