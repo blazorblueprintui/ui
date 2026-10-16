@@ -29,9 +29,10 @@ public class DialogContext : PrimitiveContextWithEvents<DialogState>
 
     /// <summary>
     /// The exit animation registered by the content, or null when the dialog leaves the page as
-    /// soon as it closes.
+    /// soon as it closes. Its argument says whether this exit is still the current one: a reopen,
+    /// or a newer close, supersedes it.
     /// </summary>
-    internal Func<Task>? ExitAnimation { get; set; }
+    internal Func<Func<bool>, Task>? ExitAnimation { get; set; }
 
     /// <summary>
     /// Whether the dialog has closed but is still on the page, playing its exit animation.
@@ -129,16 +130,17 @@ public class DialogContext : PrimitiveContextWithEvents<DialogState>
         IsExiting = false;
     }
 
-    private async Task FinishExitAsync(Func<Task> exit, int version)
+    private async Task FinishExitAsync(Func<Func<bool>, Task> exit, int version)
     {
         try
         {
-            await exit();
+            await exit(() => version == exitVersion);
         }
         finally
         {
-            // A reopen, or a newer close, owns presence now.
-            if (version == exitVersion && !State.IsOpen)
+            // A reopen, or a newer close, owns presence now. An exit that ends at once does so
+            // before the open state turns closed, so it must not wait for that state here.
+            if (version == exitVersion)
             {
                 IsExiting = false;
                 NotifyStateChanged();

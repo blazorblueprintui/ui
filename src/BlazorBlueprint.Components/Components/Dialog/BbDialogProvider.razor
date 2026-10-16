@@ -87,7 +87,9 @@
     {
         PlayEnterAnimations();
 
-        if (DialogService.Dialogs.Count > 0 && !isInitialized)
+        // Modal protection follows the dialogs on screen, so a dialog playing its exit keeps the
+        // focus trap, scroll lock and Escape handling until it leaves.
+        if (rendered.Count > 0 && !isInitialized)
         {
             isInitialized = true;
 
@@ -115,16 +117,16 @@
             {
             }
         }
-        else if (DialogService.Dialogs.Count > 0 && isInitialized)
+        else if (rendered.Count > 0 && isInitialized)
         {
             // Re-trap focus on the topmost dialog when the stack changes
-            var topmostId = DialogService.Dialogs[^1].Id;
+            var topmostId = rendered[^1].Id;
             if (focusTrapDialogId != topmostId)
             {
                 await TrapFocusOnTopmostAsync();
             }
         }
-        else if (DialogService.Dialogs.Count == 0 && isInitialized)
+        else if (rendered.Count == 0 && isInitialized)
         {
             await CleanupJsAsync();
         }
@@ -146,7 +148,7 @@
             focusTrapDialogId = null;
         }
 
-        var topmostDialog = DialogService.Dialogs[^1];
+        var topmostDialog = rendered[^1];
         if (contentRefs.TryGetValue(topmostDialog.Id, out var elementRef))
         {
             try
@@ -163,12 +165,14 @@
     [JSInvokable]
     public void JsOnEscapeKey()
     {
-        if (disposed || DialogService.Dialogs.Count == 0)
+        if (disposed || rendered.Count == 0)
         {
             return;
         }
 
-        var topmost = DialogService.Dialogs[^1];
+        // A topmost dialog that is already leaving has its result, so Escape does nothing until
+        // it has gone; it must not reach the dialog underneath.
+        var topmost = rendered[^1];
         InvokeAsync(() => TryBackdropClose(topmost));
     }
 
@@ -222,11 +226,14 @@
         }
         finally
         {
-            Forget(dialog);
-            if (!disposed)
+            await InvokeAsync(() =>
             {
-                StateHasChanged();
-            }
+                Forget(dialog);
+                if (!disposed)
+                {
+                    StateHasChanged();
+                }
+            });
         }
     }
 

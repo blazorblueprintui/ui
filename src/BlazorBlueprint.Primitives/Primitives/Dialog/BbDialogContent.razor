@@ -201,7 +201,7 @@ else if (Context.IsPresent)
         }
     }
 
-    private async Task RunExitAnimationAsync()
+    private async Task RunExitAnimationAsync(Func<bool> isCurrent)
     {
         if (ExitAnimation is { } exit)
         {
@@ -209,8 +209,9 @@ else if (Context.IsPresent)
         }
 
         // The <dialog> left in the top layer for the animation is closed here, while it is still
-        // in the DOM, so the browser restores focus to the trigger.
-        if (_useNative)
+        // in the DOM, so the browser restores focus to the trigger. Not for a superseded exit: the
+        // same element may already be open again.
+        if (_useNative && isCurrent())
         {
             await CloseNativeDialogAsync();
         }
