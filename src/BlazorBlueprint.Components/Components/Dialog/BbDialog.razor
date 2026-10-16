@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Components
 @using BlazorBlueprint.Primitives.Services
+@using BlazorBlueprint.Components.Components.Dialog.Internals
 
 @*
     Styled Dialog component wrapper.
@@ -13,7 +14,9 @@
                                          Modal="@Modal"
                                          @attributes="AdditionalAttributes"
                                          RenderingStrategy="@RenderingStrategy">
-    @ChildContent
+    <CascadingValue TValue="DialogAnimation" Name="DialogAnimation" Value="@animation">
+        @ChildContent
+    </CascadingValue>
 </BlazorBlueprint.Primitives.Dialog.BbDialog>
 
 @code {
@@ -57,6 +60,42 @@
     public bool Modal { get; set; } = true;
 
     /// <summary>
+    /// The Motion preset played when the dialog opens. When null (the default), the dialog
+    /// uses its built-in fade and zoom. <see cref="EnterKeyframes"/> take precedence.
+    /// </summary>
+    [Parameter]
+    public MotionPreset? EnterPreset { get; set; }
+
+    /// <summary>
+    /// The Motion preset played, in reverse, when the dialog closes; the dialog stays on the page
+    /// until it ends. When null (the default), the dialog leaves as soon as it closes.
+    /// <see cref="ExitKeyframes"/> take precedence.
+    /// </summary>
+    [Parameter]
+    public MotionPreset? ExitPreset { get; set; }
+
+    /// <summary>
+    /// Custom Web Animations keyframes played when the dialog opens. Each dictionary maps CSS
+    /// property names to values. Overrides <see cref="EnterPreset"/>.
+    /// </summary>
+    [Parameter]
+    public IReadOnlyList<IReadOnlyDictionary<string, object>>? EnterKeyframes { get; set; }
+
+    /// <summary>
+    /// Custom Web Animations keyframes played, as written, when the dialog closes; the dialog stays
+    /// on the page until they end. Overrides <see cref="ExitPreset"/>.
+    /// </summary>
+    [Parameter]
+    public IReadOnlyList<IReadOnlyDictionary<string, object>>? ExitKeyframes { get; set; }
+
+    /// <summary>
+    /// Duration in milliseconds of the enter and exit animations, and of the overlay's fade while
+    /// either is set. Default is 200. Reduced-motion preferences skip the animations.
+    /// </summary>
+    [Parameter]
+    public int AnimationDuration { get; set; } = 200;
+
+    /// <summary>
     /// Gets or sets additional HTML attributes to apply to the root element.
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
@@ -73,4 +112,12 @@
     /// </summary>
     [Parameter]
     public OverlayRenderingStrategy? RenderingStrategy { get; set; }
+
+    private DialogAnimation? animation;
+
+    protected override void OnParametersSet()
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(AnimationDuration);
+        animation = DialogAnimation.Create(EnterPreset, ExitPreset, EnterKeyframes, ExitKeyframes, AnimationDuration);
+    }
 }

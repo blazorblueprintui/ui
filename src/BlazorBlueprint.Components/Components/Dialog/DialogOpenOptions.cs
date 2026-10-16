@@ -29,6 +29,40 @@ public sealed class DialogOpenOptions
     public DialogSize Size { get; set; } = DialogSize.Default;
 
     /// <summary>
+    /// The Motion preset played when the dialog opens. When null, the dialog uses its built-in
+    /// fade and zoom. <see cref="EnterKeyframes"/> take precedence.
+    /// Default: null.
+    /// </summary>
+    public MotionPreset? EnterPreset { get; set; }
+
+    /// <summary>
+    /// The Motion preset played, in reverse, when the dialog closes; the dialog stays on the page
+    /// until it ends. When null, the dialog leaves as soon as it closes.
+    /// <see cref="ExitKeyframes"/> take precedence.
+    /// Default: null.
+    /// </summary>
+    public MotionPreset? ExitPreset { get; set; }
+
+    /// <summary>
+    /// Custom Web Animations keyframes played when the dialog opens. Each dictionary maps CSS
+    /// property names to values. Overrides <see cref="EnterPreset"/>.
+    /// </summary>
+    public IReadOnlyList<IReadOnlyDictionary<string, object>>? EnterKeyframes { get; set; }
+
+    /// <summary>
+    /// Custom Web Animations keyframes played, as written, when the dialog closes; the dialog stays
+    /// on the page until they end. Overrides <see cref="ExitPreset"/>.
+    /// </summary>
+    public IReadOnlyList<IReadOnlyDictionary<string, object>>? ExitKeyframes { get; set; }
+
+    /// <summary>
+    /// Duration in milliseconds of the enter and exit animations, and of the overlay's fade while
+    /// either is set. Reduced-motion preferences skip the animations.
+    /// Default: 200.
+    /// </summary>
+    public int AnimationDuration { get; set; } = 200;
+
+    /// <summary>
     /// Prevents closing via Escape key or backdrop click.
     /// Default: false.
     /// </summary>

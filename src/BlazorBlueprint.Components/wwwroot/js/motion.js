@@ -100,6 +100,38 @@ export function play(element) {
     if (state?.type === 'motion') { runMotion(element, state); }
 }
 
+// One-shot enter or exit on an element Motion does not own, such as a dialog. Resolves when it ends
+// or is replaced. An exit keeps its last frame so the element stays hidden until it is removed.
+const transitions = new WeakMap();
+export function transition(element, config) {
+    transitions.get(element)?.();
+    transitions.delete(element);
+    if (preference()?.matches || !config.duration || !element?.animate) { return Promise.resolve(); }
+    const custom = config.keyframes?.length;
+    const frames = custom ? config.keyframes : presetFrames(config.preset, config.distance);
+    // Presets describe an entrance, so an exit plays one backwards; custom exit keyframes play as written.
+    const used = config.exiting && !custom ? [...frames].reverse().map(frame => ({ ...frame, ...(frame.offset != null ? { offset: 1 - frame.offset } : {}) })) : frames;
+    return new Promise(resolve => {
+        let animation;
+        try {
+            animation = element.animate(used, { duration: config.duration, easing: config.easing || 'ease-out', fill: 'both' });
+        } catch (error) {
+            console.warn('BlazorBlueprint: invalid motion keyframes or easing.', error);
+            resolve();
+            return;
+        }
+        const replace = () => { animation.cancel(); resolve(); };
+        transitions.set(element, replace);
+        animation.finished.then(() => {
+            if (transitions.get(element) !== replace) { return; }
+            // A held exit frame must still give way if the element is reopened before it is removed.
+            if (config.exiting) { transitions.set(element, () => animation.cancel()); }
+            else { transitions.delete(element); animation.cancel(); }
+            resolve();
+        }, resolve);
+    });
+}
+
 export function height(element, config) {
     let state = states.get(element);
     if (state?.type === 'height') {

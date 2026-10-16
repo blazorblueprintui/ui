@@ -539,6 +539,53 @@
     </div>
 
     <div class="space-y-4">
+        <h2 class="text-2xl font-semibold">Animations <span class="text-xs font-normal text-primary bg-primary/10 px-1.5 py-0.5 rounded">New</span></h2>
+        <p class="text-sm text-muted-foreground">
+            Set <code>EnterPreset</code> and <code>ExitPreset</code> to any <code>MotionPreset</code> to choose how the
+            dialog opens and closes. An exit preset plays in reverse, and the dialog stays on the page until it ends.
+            <code>EnterKeyframes</code> and <code>ExitKeyframes</code> take custom Web Animations keyframes instead, and
+            <code>AnimationDuration</code> sets the length. <code>DialogOpenOptions</code> takes the same options.
+            Users who ask for reduced motion see no animation.
+        </p>
+
+        <div class="flex flex-wrap items-center gap-2">
+            <BbButton Variant="ButtonVariant.Outline" OnClick="() => OpenAnimated(MotionPreset.Fade)">Fade</BbButton>
+            <BbButton Variant="ButtonVariant.Outline" OnClick="() => OpenAnimated(MotionPreset.Scale)">Scale</BbButton>
+            <BbButton Variant="ButtonVariant.Outline" OnClick="() => OpenAnimated(MotionPreset.SlideUp)">SlideUp</BbButton>
+            <BbButton Variant="ButtonVariant.Outline" OnClick="() => OpenAnimated(MotionPreset.SlideLeft)">SlideLeft</BbButton>
+            <BbButton Variant="ButtonVariant.Outline" OnClick="() => OpenAnimated(MotionPreset.Spring)">Spring</BbButton>
+            <BbButton Variant="ButtonVariant.Outline" OnClick="() => OpenAnimated(null)">Custom keyframes</BbButton>
+        </div>
+
+        <BbDialog @bind-Open="isAnimatedDialogOpen"
+                  EnterPreset="@animatedPreset"
+                  ExitPreset="@animatedPreset"
+                  EnterKeyframes="@(animatedPreset is null ? dropInKeyframes : null)"
+                  ExitKeyframes="@(animatedPreset is null ? dropOutKeyframes : null)"
+                  AnimationDuration="300">
+            <BbDialogContent>
+                <BbDialogHeader>
+                    <BbDialogTitle>@(animatedPreset?.ToString() ?? "Custom keyframes")</BbDialogTitle>
+                    <BbDialogDescription>
+                        Close this dialog to see its exit animation.
+                    </BbDialogDescription>
+                </BbDialogHeader>
+                <BbDialogFooter>
+                    <BbDialogClose>
+                        <BbButton Variant="ButtonVariant.Outline">Close</BbButton>
+                    </BbDialogClose>
+                </BbDialogFooter>
+            </BbDialogContent>
+        </BbDialog>
+
+        <div class="flex items-center gap-4">
+            <BbButton OnClick="HandleAnimatedServiceDialog">Slide in via DialogService</BbButton>
+        </div>
+
+        <CodeBlock Source="Components/Dialog/animations.txt" />
+    </div>
+
+    <div class="space-y-4">
         <h2 class="text-2xl font-semibold">Form in Dialog</h2>
         <p class="text-sm text-muted-foreground">
             Dialog with bound input fields. Typing should feel instant with no flicker — keyboard events
@@ -809,6 +856,22 @@
                 <ApiParameter Name="OnOpenChange" Type="EventCallback&lt;bool&gt;">
                     Event callback invoked when the dialog open state changes.
                 </ApiParameter>
+                <ApiParameter Since="v4.2" Name="EnterPreset" Type="MotionPreset?" Default="null">
+                    The <code>Motion</code> preset played when the dialog opens. When null, the dialog uses its built-in fade and zoom.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="ExitPreset" Type="MotionPreset?" Default="null">
+                    The <code>Motion</code> preset played, in reverse, when the dialog closes. The dialog stays on the page until it ends.
+                    When null, the dialog leaves as soon as it closes.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="EnterKeyframes" Type="IReadOnlyList&lt;IReadOnlyDictionary&lt;string, object&gt;&gt;?" Default="null">
+                    Custom Web Animations keyframes played when the dialog opens. Overrides <code>EnterPreset</code>.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="ExitKeyframes" Type="IReadOnlyList&lt;IReadOnlyDictionary&lt;string, object&gt;&gt;?" Default="null">
+                    Custom Web Animations keyframes played, as written, when the dialog closes. Overrides <code>ExitPreset</code>.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="AnimationDuration" Type="int" Default="200">
+                    Duration in milliseconds of the enter and exit animations. Reduced-motion preferences skip them.
+                </ApiParameter>
                 <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
                     Additional HTML attributes applied to the component's root element (e.g. <code>data-testid</code>, <code>aria-label</code>).
                 </ApiParameter>
@@ -981,6 +1044,22 @@
                 <ApiParameter Name="PreventClose" Type="bool" Default="false">
                     Prevents closing via Escape key or backdrop click.
                 </ApiParameter>
+                <ApiParameter Since="v4.2" Name="EnterPreset" Type="MotionPreset?" Default="null">
+                    The <code>Motion</code> preset played when the dialog opens. Same as <code>EnterPreset</code> on <code>Dialog</code>.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="ExitPreset" Type="MotionPreset?" Default="null">
+                    The <code>Motion</code> preset played, in reverse, when the dialog closes. The dialog stays on the page until it ends;
+                    the <code>OpenAsync</code> result does not wait for it.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="EnterKeyframes" Type="IReadOnlyList&lt;IReadOnlyDictionary&lt;string, object&gt;&gt;?" Default="null">
+                    Custom Web Animations keyframes played when the dialog opens. Overrides <code>EnterPreset</code>.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="ExitKeyframes" Type="IReadOnlyList&lt;IReadOnlyDictionary&lt;string, object&gt;&gt;?" Default="null">
+                    Custom Web Animations keyframes played, as written, when the dialog closes. Overrides <code>ExitPreset</code>.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="AnimationDuration" Type="int" Default="200">
+                    Duration in milliseconds of the enter and exit animations.
+                </ApiParameter>
             </ApiReference>
 
 <ApiReference ComponentName="IDialogReference">
@@ -1020,6 +1099,22 @@
     private string promptResult = "-";
     private string customResult = "-";
     private string nativeServiceResult = "-";
+
+    // Animations
+    private bool isAnimatedDialogOpen;
+    private MotionPreset? animatedPreset = MotionPreset.Scale;
+
+    private static readonly IReadOnlyList<IReadOnlyDictionary<string, object>> dropInKeyframes =
+    [
+        new Dictionary<string, object> { ["opacity"] = 0, ["transform"] = "translateY(-48px) rotate(-3deg)" },
+        new Dictionary<string, object> { ["opacity"] = 1, ["transform"] = "translateY(0) rotate(0)" }
+    ];
+
+    private static readonly IReadOnlyList<IReadOnlyDictionary<string, object>> dropOutKeyframes =
+    [
+        new Dictionary<string, object> { ["opacity"] = 1, ["transform"] = "translateY(0) rotate(0)" },
+        new Dictionary<string, object> { ["opacity"] = 0, ["transform"] = "translateY(48px) rotate(3deg)" }
+    ];
 
     // Form in Dialog
     private string? formFirstName;
@@ -1145,6 +1240,26 @@
             customResult = "Cancelled";
         }
     }
+
+    private void OpenAnimated(MotionPreset? preset)
+    {
+        animatedPreset = preset;
+        isAnimatedDialogOpen = true;
+    }
+
+    private async Task HandleAnimatedServiceDialog() =>
+        await DialogService.OpenAsync<NativeDialogBodyComponent>(
+            new Dictionary<string, object?>
+            {
+                ["Message"] = "This dialog slides in from the right and slides back out when it closes."
+            },
+            new DialogOpenOptions
+            {
+                Title = "Animated Dialog",
+                EnterPreset = MotionPreset.SlideLeft,
+                ExitPreset = MotionPreset.SlideLeft,
+                AnimationDuration = 300
+            });
 
     private async Task HandleOpenNativeService()
     {
