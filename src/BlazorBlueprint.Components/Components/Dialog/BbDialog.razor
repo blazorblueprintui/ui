@@ -13,7 +13,9 @@
                                          Modal="@Modal"
                                          @attributes="AdditionalAttributes"
                                          RenderingStrategy="@RenderingStrategy">
-    @ChildContent
+    <CascadingValue TValue="DialogPosition" Name="DialogPosition" Value="@Position">
+        @ChildContent
+    </CascadingValue>
 </BlazorBlueprint.Primitives.Dialog.BbDialog>
 
 @code {
@@ -55,6 +57,13 @@
     /// </summary>
     [Parameter]
     public bool Modal { get; set; } = true;
+
+    /// <summary>
+    /// Where the dialog sits in the viewport.
+    /// Default is <see cref="DialogPosition.Center"/>.
+    /// </summary>
+    [Parameter]
+    public DialogPosition Position { get; set; } = DialogPosition.Center;
 
     /// <summary>
     /// Gets or sets additional HTML attributes to apply to the root element.

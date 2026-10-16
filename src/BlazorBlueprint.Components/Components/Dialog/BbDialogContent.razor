@@ -1,6 +1,7 @@
 @namespace BlazorBlueprint.Components
 @using BlazorBlueprint.Icons.Lucide.Components
 @using BlazorBlueprint.Primitives.Services
+@using BlazorBlueprint.Components.Components.Dialog.Internals
 @inject IBbLocalizer Localizer
 @inject INativeOverlayService NativeOverlayService
 
@@ -43,6 +44,9 @@
 @code {
     [CascadingParameter(Name = "DialogRenderingStrategy")]
     private OverlayRenderingStrategy? RenderingStrategy { get; set; }
+
+    [CascadingParameter(Name = "DialogPosition")]
+    private DialogPosition Position { get; set; }
 
     /// <summary>
     /// The content to render inside the dialog.
@@ -142,13 +146,14 @@
     /// <summary>
     /// Gets the computed CSS classes for the dialog content.
     /// Uses the cn() utility for intelligent class merging and Tailwind conflict resolution.
-    /// Both rendering strategies use the same fixed, centred presentation — the native path
-    /// additionally enters the top layer via showModal() for its backdrop/focus-trap/inertness,
-    /// so no separate positioning branch is needed.
+    /// Both rendering strategies use the same fixed presentation, placed by the parent dialog's
+    /// <see cref="BbDialog.Position"/> — the native path additionally enters the top layer via
+    /// showModal() for its backdrop/focus-trap/inertness, so no separate positioning branch is needed.
     /// </summary>
     private string GetClassNames() =>
         ClassNames.cn(
-            "bb:fixed bb:left-[50%] bb:top-[50%] bb:z-50 bb:grid bb:w-full bb:max-w-lg bb:translate-x-[-50%] bb:translate-y-[-50%]",
+            "bb:fixed bb:z-50 bb:grid bb:w-full bb:max-w-lg",
+            DialogPositionClasses.Get(Position),
             "bb:gap-4 bb:border bb:bg-background bb:p-6 bb:shadow-lg bb:duration-200",
             "bb:data-[state=open]:animate-in bb:data-[state=closed]:animate-out",
             "bb:data-[state=closed]:fade-out-0 bb:data-[state=open]:fade-in-0",

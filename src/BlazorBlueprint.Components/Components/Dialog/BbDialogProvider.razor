@@ -52,8 +52,8 @@
 
 @code {
     private const string DialogContainerBaseClass =
-        "bb:fixed bb:left-[50%] bb:top-[50%] bb:z-50 bb:grid bb:w-full " +
-        "bb:translate-x-[-50%] bb:translate-y-[-50%] bb:gap-4 bb:border bb:bg-background bb:p-6 bb:shadow-lg bb:sm:rounded-lg bb:animate-in bb:fade-in-0 bb:zoom-in-95";
+        "bb:fixed bb:z-50 bb:grid bb:w-full " +
+        "bb:gap-4 bb:border bb:bg-background bb:p-6 bb:shadow-lg bb:sm:rounded-lg bb:animate-in bb:fade-in-0 bb:zoom-in-95";
 
     private readonly Dictionary<string, ElementReference> contentRefs = new();
     private IAsyncDisposable? focusTrap;
@@ -188,7 +188,10 @@
             }
             : "bb:max-w-lg";
 
-        return $"{DialogContainerBaseClass} {sizeClass}";
+        var positionClass = DialogPositionClasses.Get(
+            dialog is ComponentDialogData positioned ? positioned.Options.Position : DialogPosition.Center);
+
+        return ClassNames.cn(DialogContainerBaseClass, positionClass, sizeClass);
     }
 
     private async Task CleanupJsAsync()

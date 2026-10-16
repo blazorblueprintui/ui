@@ -229,6 +229,39 @@
     </div>
 
     <div class="space-y-4">
+        <h2 class="text-2xl font-semibold">Position <span class="text-xs font-normal text-primary bg-primary/10 px-1.5 py-0.5 rounded">New</span></h2>
+        <p class="text-sm text-muted-foreground">
+            Set <code>Position</code> on the dialog to place it somewhere other than the centre of the viewport.
+            Dialogs opened with <code>DialogService.OpenAsync&lt;TComponent&gt;()</code> take the same value through
+            <code>DialogOpenOptions.Position</code>.
+        </p>
+
+        <div class="flex flex-wrap gap-2">
+            @foreach (var position in Enum.GetValues<DialogPosition>())
+            {
+                <BbButton Variant="ButtonVariant.Outline" OnClick="() => OpenAtPosition(position)">@position</BbButton>
+            }
+        </div>
+
+        <BbDialog @bind-Open="isPositionDialogOpen" Position="@dialogPosition">
+            <BbDialogContent>
+                <BbDialogHeader>
+                    <BbDialogTitle>@dialogPosition</BbDialogTitle>
+                    <BbDialogDescription>
+                        This dialog uses <code>Position="DialogPosition.@dialogPosition"</code>.
+                    </BbDialogDescription>
+                </BbDialogHeader>
+            </BbDialogContent>
+        </BbDialog>
+
+        <div class="flex items-center gap-4">
+            <BbButton OnClick="HandlePositionedServiceDialog">Open on the Right via DialogService</BbButton>
+        </div>
+
+        <CodeBlock Source="Components/Dialog/position.txt" />
+    </div>
+
+    <div class="space-y-4">
         <h2 class="text-2xl font-semibold">Without Close Button</h2>
         <p class="text-sm text-muted-foreground">
             Hide the default close button using ShowClose="false".
@@ -800,6 +833,9 @@
                 <ApiParameter Name="Modal" Type="bool" Default="true">
                     Whether the dialog is modal. Modal dialogs trap focus and lock scroll.
                 </ApiParameter>
+                <ApiParameter Since="v4.2" Name="Position" Type="DialogPosition" Default="DialogPosition.Center">
+                    Where the dialog sits in the viewport. Options: <code>Center</code>, <code>TopCenter</code>, <code>BottomCenter</code>, <code>CenterLeft</code>, <code>CenterRight</code>, <code>TopLeft</code>, <code>TopRight</code>, <code>BottomLeft</code>, <code>BottomRight</code>.
+                </ApiParameter>
                 <ApiParameter Since="v4" Name="RenderingStrategy" Type="OverlayRenderingStrategy?" Default="null">
                     Overrides how the dialog renders. <code>Native</code> uses the browser's built-in
                     <code>&lt;dialog&gt;</code> element (top layer, native focus trap/Escape/backdrop), which needs no
@@ -978,6 +1014,9 @@
                 <ApiParameter Name="Size" Type="DialogSize" Default="DialogSize.Default">
                     Controls the dialog width preset. Options: <code>Small</code>, <code>Default</code>, <code>Large</code>, <code>ExtraLarge</code>, <code>Full</code>.
                 </ApiParameter>
+                <ApiParameter Since="v4.2" Name="Position" Type="DialogPosition" Default="DialogPosition.Center">
+                    Where the dialog sits in the viewport. Takes the same values as the <code>Position</code> parameter on <code>Dialog</code>.
+                </ApiParameter>
                 <ApiParameter Name="PreventClose" Type="bool" Default="false">
                     Prevents closing via Escape key or backdrop click.
                 </ApiParameter>
@@ -1020,6 +1059,9 @@
     private string promptResult = "-";
     private string customResult = "-";
     private string nativeServiceResult = "-";
+
+    private bool isPositionDialogOpen;
+    private DialogPosition dialogPosition = DialogPosition.CenterRight;
 
     // Form in Dialog
     private string? formFirstName;
@@ -1160,6 +1202,26 @@
             });
 
         nativeServiceResult = result.Cancelled ? "Cancelled" : "Closed";
+    }
+
+    private void OpenAtPosition(DialogPosition position)
+    {
+        dialogPosition = position;
+        isPositionDialogOpen = true;
+    }
+
+    private async Task HandlePositionedServiceDialog()
+    {
+        await DialogService.OpenAsync<NativeDialogBodyComponent>(
+            new Dictionary<string, object?>
+            {
+                ["Message"] = "This dialog was opened with DialogOpenOptions.Position set to CenterRight."
+            },
+            new DialogOpenOptions
+            {
+                Title = "Positioned Dialog",
+                Position = DialogPosition.CenterRight
+            });
     }
 
     public sealed class NativeDialogBodyComponent : ComponentBase
