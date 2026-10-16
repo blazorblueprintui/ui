@@ -29,6 +29,12 @@ public sealed class DialogOpenOptions
     public DialogSize Size { get; set; } = DialogSize.Default;
 
     /// <summary>
+    /// Where the dialog sits in the viewport.
+    /// Default: <see cref="DialogPosition.Center"/>.
+    /// </summary>
+    public DialogPosition Position { get; set; } = DialogPosition.Center;
+
+    /// <summary>
     /// Prevents closing via Escape key or backdrop click.
     /// Default: false.
     /// </summary>
