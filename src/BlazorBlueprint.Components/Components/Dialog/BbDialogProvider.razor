@@ -10,19 +10,23 @@
     Place this component once at the root of your application (e.g., in MainLayout).
 *@
 
-@foreach (var dialog in DialogService.Dialogs)
+@foreach (var dialog in rendered)
 {
     var titleId = $"bb-dialog-{dialog.Id}-title";
     var descId = $"bb-dialog-{dialog.Id}-desc";
+    var animation = GetAnimation(dialog);
+    var isLeaving = leaving.Contains(dialog.Id);
 
     <div @key="dialog.Id">
 
         @* Overlay *@
-        <div class="bb:animate-in bb:fade-in-0 bb:fixed bb:inset-0 bb:z-50 bb:bg-black/80"
+        <div class="@(isLeaving ? "bb:animate-out bb:fade-out-0" : "bb:animate-in bb:fade-in-0") bb:fixed bb:inset-0 bb:z-50 bb:bg-black/80"
+             style="@animation?.OverlayStyle"
              @onclick="() => TryBackdropClose(dialog)" />
 
         @* Content *@
-        <div class="@GetDialogContainerClass(dialog)"
+        <div class="@GetDialogContainerClass(dialog, animation)"
+             data-state="@(isLeaving ? "closed" : "open")"
              @ref="contentRefs[dialog.Id]"
              role="@(dialog is AlertDialogData or ConfirmDialogData ? "alertdialog" : "dialog")"
              aria-modal="true"
@@ -53,9 +57,16 @@
 @code {
     private const string DialogContainerBaseClass =
         "bb:fixed bb:z-50 bb:grid bb:w-full " +
-        "bb:gap-4 bb:border bb:bg-background bb:p-6 bb:shadow-lg bb:sm:rounded-lg bb:animate-in bb:fade-in-0 bb:zoom-in-95";
+        "bb:gap-4 bb:border bb:bg-background bb:p-6 bb:shadow-lg bb:sm:rounded-lg bb:animate-in bb:fade-in-0";
 
     private readonly Dictionary<string, ElementReference> contentRefs = new();
+
+    // The dialogs on screen, in stacking order: the service's open dialogs, plus any that have
+    // closed but are still playing their exit animation.
+    private readonly List<DialogData> rendered = new();
+    private readonly HashSet<string> leaving = new();
+    private readonly HashSet<string> entered = new();
+    private MotionInterop? motion;
     private IAsyncDisposable? focusTrap;
     private string? focusTrapDialogId;
     private IJSObjectReference? portalModule;
@@ -67,11 +78,18 @@
     private bool disposed;
 
     protected override void OnInitialized()
-        => DialogService.OnChange += HandleChange;
+    {
+        SyncRendered();
+        DialogService.OnChange += HandleChange;
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (DialogService.Dialogs.Count > 0 && !isInitialized)
+        PlayEnterAnimations();
+
+        // Modal protection follows the dialogs on screen, so a dialog playing its exit keeps the
+        // focus trap, scroll lock and Escape handling until it leaves.
+        if (rendered.Count > 0 && !isInitialized)
         {
             isInitialized = true;
 
@@ -99,16 +117,16 @@
             {
             }
         }
-        else if (DialogService.Dialogs.Count > 0 && isInitialized)
+        else if (rendered.Count > 0 && isInitialized)
         {
             // Re-trap focus on the topmost dialog when the stack changes
-            var topmostId = DialogService.Dialogs[^1].Id;
+            var topmostId = rendered[^1].Id;
             if (focusTrapDialogId != topmostId)
             {
                 await TrapFocusOnTopmostAsync();
             }
         }
-        else if (DialogService.Dialogs.Count == 0 && isInitialized)
+        else if (rendered.Count == 0 && isInitialized)
         {
             await CleanupJsAsync();
         }
@@ -130,7 +148,7 @@
             focusTrapDialogId = null;
         }
 
-        var topmostDialog = DialogService.Dialogs[^1];
+        var topmostDialog = rendered[^1];
         if (contentRefs.TryGetValue(topmostDialog.Id, out var elementRef))
         {
             try
@@ -147,17 +165,106 @@
     [JSInvokable]
     public void JsOnEscapeKey()
     {
-        if (disposed || DialogService.Dialogs.Count == 0)
+        if (disposed || rendered.Count == 0)
         {
             return;
         }
 
-        var topmost = DialogService.Dialogs[^1];
+        // A topmost dialog that is already leaving has its result, so Escape does nothing until
+        // it has gone; it must not reach the dialog underneath.
+        var topmost = rendered[^1];
         InvokeAsync(() => TryBackdropClose(topmost));
     }
 
     private void HandleChange()
-        => InvokeAsync(StateHasChanged);
+        => InvokeAsync(() =>
+        {
+            SyncRendered();
+            StateHasChanged();
+        });
+
+    /// <summary>
+    /// Brings <see cref="rendered"/> in line with the service. A closed dialog with an exit
+    /// animation stays, in place, until the animation ends; any other closed dialog goes at once.
+    /// </summary>
+    private void SyncRendered()
+    {
+        var open = DialogService.Dialogs;
+
+        foreach (var dialog in rendered.ToList())
+        {
+            if (open.Contains(dialog) || leaving.Contains(dialog.Id))
+            {
+                continue;
+            }
+
+            if (GetAnimation(dialog) is { HasExit: true } animation && contentRefs.TryGetValue(dialog.Id, out var element))
+            {
+                leaving.Add(dialog.Id);
+                _ = PlayExitAsync(dialog, animation, element);
+            }
+            else
+            {
+                Forget(dialog);
+            }
+        }
+
+        foreach (var dialog in open)
+        {
+            if (!rendered.Contains(dialog))
+            {
+                rendered.Add(dialog);
+            }
+        }
+    }
+
+    private async Task PlayExitAsync(DialogData dialog, DialogAnimation animation, ElementReference element)
+    {
+        try
+        {
+            await animation.PlayAsync(motion ??= new(JSRuntime), element, exiting: true);
+        }
+        finally
+        {
+            await InvokeAsync(() =>
+            {
+                Forget(dialog);
+                if (!disposed)
+                {
+                    StateHasChanged();
+                }
+            });
+        }
+    }
+
+    private void PlayEnterAnimations()
+    {
+        foreach (var dialog in rendered)
+        {
+            if (leaving.Contains(dialog.Id) || !entered.Add(dialog.Id))
+            {
+                continue;
+            }
+
+            if (GetAnimation(dialog) is { HasEnter: true } animation && contentRefs.TryGetValue(dialog.Id, out var element))
+            {
+                _ = animation.PlayAsync(motion ??= new(JSRuntime), element, exiting: false);
+            }
+        }
+    }
+
+    private void Forget(DialogData dialog)
+    {
+        rendered.Remove(dialog);
+        leaving.Remove(dialog.Id);
+        entered.Remove(dialog.Id);
+        contentRefs.Remove(dialog.Id);
+    }
+
+    private static DialogAnimation? GetAnimation(DialogData dialog) =>
+        dialog is ComponentDialogData { Options: var options }
+            ? DialogAnimation.Create(options.EnterPreset, options.ExitPreset, options.EnterKeyframes, options.ExitKeyframes, options.AnimationDuration)
+            : null;
 
     private void TryBackdropClose(DialogData dialog)
     {
@@ -175,7 +282,7 @@
         DialogService.Resolve(dialog.Id, DialogResult.Cancel());
     }
 
-    private static string GetDialogContainerClass(DialogData dialog)
+    private static string GetDialogContainerClass(DialogData dialog, DialogAnimation? animation)
     {
         var sizeClass = dialog is ComponentDialogData component
             ? component.Options.Size switch
@@ -191,7 +298,11 @@
         var positionClass = DialogPositionClasses.Get(
             dialog is ComponentDialogData positioned ? positioned.Options.Position : DialogPosition.Center);
 
-        return ClassNames.cn(DialogContainerBaseClass, positionClass, sizeClass);
+        // A Motion enter takes over from the built-in zoom; the CSS fade only keeps the content
+        // from showing before the Motion enter starts.
+        var zoomClass = animation is { HasEnter: true } ? null : "bb:zoom-in-95";
+
+        return ClassNames.cn(DialogContainerBaseClass, positionClass, zoomClass, sizeClass);
     }
 
     private async Task CleanupJsAsync()
@@ -250,6 +361,11 @@
         disposed = true;
         DialogService.OnChange -= HandleChange;
         await CleanupJsAsync();
+        if (motion is not null)
+        {
+            await motion.DisposeAsync();
+        }
+
         DialogService.CancelAll();
     }
 }

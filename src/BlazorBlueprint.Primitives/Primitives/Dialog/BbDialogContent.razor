@@ -19,19 +19,19 @@
 
 @if (_useNative)
 {
-    @if (Context.IsOpen)
+    @if (Context.IsPresent)
     {
         <dialog @ref="_contentRef"
                 id="@Context.ContentId"
                 aria-labelledby="@Context.TitleId"
                 aria-describedby="@Context.DescriptionId"
                 @attributes="AdditionalAttributes"
-                data-state="open">
+                data-state="@(Context.IsOpen ? "open" : "closed")">
             @ChildContent
         </dialog>
     }
 }
-else if (Context.IsOpen)
+else if (Context.IsPresent)
 {
     <div @ref="_contentRef"
          id="@Context.ContentId"
@@ -41,7 +41,7 @@ else if (Context.IsOpen)
          aria-describedby="@Context.DescriptionId"
          tabindex="-1"
          @attributes="AdditionalAttributes"
-         data-state="open">
+         data-state="@(Context.IsOpen ? "open" : "closed")">
         @ChildContent
     </div>
 }
@@ -130,6 +130,22 @@ else if (Context.IsOpen)
     [Parameter]
     public EventCallback<KeyboardEventArgs> OnEscapeKeyDown { get; set; }
 
+    /// <summary>
+    /// Runs each time the content opens, after it has rendered, with the content element.
+    /// Use it to play an enter animation.
+    /// </summary>
+    [Parameter]
+    public Func<ElementReference, Task>? EnterAnimation { get; set; }
+
+    /// <summary>
+    /// Runs when the dialog closes, with the content element. The portal, overlay and content stay
+    /// rendered, with <c>data-state="closed"</c>, until the returned task ends, so an exit animation
+    /// can finish before the dialog leaves the page. When null (the default), the dialog leaves the
+    /// page as soon as it closes.
+    /// </summary>
+    [Parameter]
+    public Func<ElementReference, Task>? ExitAnimation { get; set; }
+
     private ElementReference _contentRef;
     private IAsyncDisposable? _focusTrap;
     private IJSObjectReference? _portalModule;
@@ -142,6 +158,7 @@ else if (Context.IsOpen)
     private bool _useNative;
     private bool _nativeInitialized = false;
     private IAsyncDisposable? _nativeDialogSetup;
+    private bool _entered;
 
     protected override void OnInitialized()
     {
@@ -158,15 +175,46 @@ else if (Context.IsOpen)
         Context.OnStateChanged += HandleContextStateChanged;
     }
 
+    protected override void OnParametersSet() =>
+        Context.ExitAnimation = ExitAnimation is null ? null : RunExitAnimationAsync;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (_useNative)
         {
             await HandleNativeLifecycleAsync();
-            return;
+        }
+        else
+        {
+            await HandleJsLifecycleAsync();
         }
 
-        await HandleJsLifecycleAsync();
+        if (!Context.IsOpen)
+        {
+            _entered = false;
+        }
+        // Waits for the element to be set up, which a native-to-JavaScript fallback has just undone.
+        else if (!_entered && (_useNative ? _nativeInitialized : _isInitialized) && EnterAnimation is { } enter)
+        {
+            _entered = true;
+            await enter(_contentRef);
+        }
+    }
+
+    private async Task RunExitAnimationAsync(Func<bool> isCurrent)
+    {
+        if (ExitAnimation is { } exit)
+        {
+            await exit(_contentRef);
+        }
+
+        // The <dialog> left in the top layer for the animation is closed here, while it is still
+        // in the DOM, so the browser restores focus to the trigger. Not for a superseded exit: the
+        // same element may already be open again.
+        if (_useNative && isCurrent())
+        {
+            await CloseNativeDialogAsync();
+        }
     }
 
     private async Task HandleNativeLifecycleAsync()
@@ -207,7 +255,7 @@ else if (Context.IsOpen)
                 // Expected during circuit disconnect or prerendering.
             }
         }
-        else if (!Context.IsOpen && _nativeInitialized)
+        else if (!Context.IsPresent && _nativeInitialized)
         {
             await CleanupNativeAsync();
         }
@@ -270,7 +318,7 @@ else if (Context.IsOpen)
                 // JS interop not available during prerendering
             }
         }
-        else if (!Context.IsOpen && _isInitialized)
+        else if (!Context.IsPresent && _isInitialized)
         {
             await CleanupJsAsync();
         }
@@ -278,7 +326,8 @@ else if (Context.IsOpen)
 
     private void HandleContextStateChanged()
     {
-        if (!Context.IsOpen && (_isInitialized || _nativeInitialized))
+        // An exiting dialog keeps its focus trap, scroll lock and top-layer place until it leaves.
+        if (!Context.IsPresent && (_isInitialized || _nativeInitialized))
         {
             // Dialog closed, clean up on the Blazor sync context
             _ = InvokeAsync(async () =>
@@ -314,7 +363,7 @@ else if (Context.IsOpen)
 
         if (CloseOnEscape && Context.AllowDismiss)
         {
-            await CloseNativeDialogAsync();
+            await CloseNativeBeforeCloseAsync();
             Context.Close();
         }
     }
@@ -342,7 +391,7 @@ else if (Context.IsOpen)
 
         if (CloseOnOverlayClick && Context.AllowDismiss)
         {
-            await CloseNativeDialogAsync();
+            await CloseNativeBeforeCloseAsync();
             Context.Close();
         }
     }
@@ -353,6 +402,13 @@ else if (Context.IsOpen)
     /// element (rather than relying on Blazor removing it from the DOM) is what lets the browser
     /// return focus to the element that had it before <c>showModal()</c>.
     /// </summary>
+    /// <summary>
+    /// Closes the native element ahead of the state change, unless an exit animation will play on it
+    /// first; <see cref="RunExitAnimationAsync"/> closes it then.
+    /// </summary>
+    private Task CloseNativeBeforeCloseAsync() =>
+        Context.ExitAnimation is null ? CloseNativeDialogAsync() : Task.CompletedTask;
+
     private async Task CloseNativeDialogAsync()
     {
         try
@@ -479,6 +535,7 @@ else if (Context.IsOpen)
         if (Context != null)
         {
             Context.OnStateChanged -= HandleContextStateChanged;
+            Context.ExitAnimation = null;
         }
     }
 }
