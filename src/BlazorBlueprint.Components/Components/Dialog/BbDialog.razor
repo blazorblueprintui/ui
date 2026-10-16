@@ -15,7 +15,9 @@
                                          @attributes="AdditionalAttributes"
                                          RenderingStrategy="@RenderingStrategy">
     <CascadingValue TValue="DialogAnimation" Name="DialogAnimation" Value="@animation">
-        @ChildContent
+        <CascadingValue TValue="DialogPosition" Name="DialogPosition" Value="@Position">
+            @ChildContent
+        </CascadingValue>
     </CascadingValue>
 </BlazorBlueprint.Primitives.Dialog.BbDialog>
 
@@ -94,6 +96,13 @@
     /// </summary>
     [Parameter]
     public int AnimationDuration { get; set; } = 200;
+
+    /// <summary>
+    /// Where the dialog sits in the viewport.
+    /// Default is <see cref="DialogPosition.Center"/>.
+    /// </summary>
+    [Parameter]
+    public DialogPosition Position { get; set; } = DialogPosition.Center;
 
     /// <summary>
     /// Gets or sets additional HTML attributes to apply to the root element.

@@ -56,8 +56,8 @@
 
 @code {
     private const string DialogContainerBaseClass =
-        "bb:fixed bb:left-[50%] bb:top-[50%] bb:z-50 bb:grid bb:w-full " +
-        "bb:translate-x-[-50%] bb:translate-y-[-50%] bb:gap-4 bb:border bb:bg-background bb:p-6 bb:shadow-lg bb:sm:rounded-lg bb:animate-in bb:fade-in-0";
+        "bb:fixed bb:z-50 bb:grid bb:w-full " +
+        "bb:gap-4 bb:border bb:bg-background bb:p-6 bb:shadow-lg bb:sm:rounded-lg bb:animate-in bb:fade-in-0";
 
     private readonly Dictionary<string, ElementReference> contentRefs = new();
 
@@ -295,11 +295,14 @@
             }
             : "bb:max-w-lg";
 
+        var positionClass = DialogPositionClasses.Get(
+            dialog is ComponentDialogData positioned ? positioned.Options.Position : DialogPosition.Center);
+
         // A Motion enter takes over from the built-in zoom; the CSS fade only keeps the content
         // from showing before the Motion enter starts.
-        var zoomClass = animation is { HasEnter: true } ? string.Empty : " bb:zoom-in-95";
+        var zoomClass = animation is { HasEnter: true } ? null : "bb:zoom-in-95";
 
-        return $"{DialogContainerBaseClass}{zoomClass} {sizeClass}";
+        return ClassNames.cn(DialogContainerBaseClass, positionClass, zoomClass, sizeClass);
     }
 
     private async Task CleanupJsAsync()
