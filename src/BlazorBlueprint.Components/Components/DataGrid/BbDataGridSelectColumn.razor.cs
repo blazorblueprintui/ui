@@ -50,6 +50,13 @@ public partial class BbDataGridSelectColumn<TData> : ComponentBase, IDataGridCol
     public DataGridSelectAllScope SelectAllScope { get; set; } = DataGridSelectAllScope.Prompt;
 
     /// <summary>
+    /// Whether the selection checkboxes are hidden when the grid's <c>MobileLayout</c> stacks
+    /// its rows. Default is false, which shows each row's checkbox as the first line of its card.
+    /// </summary>
+    [Parameter]
+    public bool HideOnMobile { get; set; }
+
+    /// <summary>
     /// The parent DataGrid component. Set via cascading parameter.
     /// </summary>
     [CascadingParameter]
@@ -86,6 +93,8 @@ public partial class BbDataGridSelectColumn<TData> : ComponentBase, IDataGridCol
     string? IDataGridColumn<TData>.HeaderClass => HeaderClass;
 
     bool IDataGridColumn<TData>.NoWrap => false;
+
+    bool IDataGridColumn<TData>.HideOnMobile => HideOnMobile;
 
     AggregateFunction IDataGridColumn<TData>.Aggregate => AggregateFunction.None;
 

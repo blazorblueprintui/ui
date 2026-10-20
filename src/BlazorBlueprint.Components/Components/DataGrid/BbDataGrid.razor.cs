@@ -359,6 +359,28 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     public string? TableContainerClass { get; set; }
 
     /// <summary>
+    /// How the grid lays out its rows below <see cref="MobileBreakpoint"/>.
+    /// Default is <see cref="DataGridMobileLayout.None"/>, which keeps the table at every width.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="DataGridMobileLayout.Stacked"/> turns each row into a card, with each cell's
+    /// label beside its value. The label is the column's <c>MobileLabel</c>, or its title when
+    /// that is not set. The grid writes the labels into the page itself, and the switch is done
+    /// in CSS with a media query, so it needs no JavaScript and works before the page is
+    /// interactive. The header row is hidden in the stacked layout, so its sort, filter and
+    /// select-all controls are not shown there.
+    /// </remarks>
+    [Parameter]
+    public DataGridMobileLayout MobileLayout { get; set; } = DataGridMobileLayout.None;
+
+    /// <summary>
+    /// The screen width below which <see cref="MobileLayout"/> applies.
+    /// Default is <see cref="DataGridBreakpoint.Sm"/> (below 640px).
+    /// </summary>
+    [Parameter]
+    public DataGridBreakpoint MobileBreakpoint { get; set; } = DataGridBreakpoint.Sm;
+
+    /// <summary>
     /// Whether to show the active-filter indicator bar below the header.
     /// When shown, it displays a count of active filters and a "Clear all" button.
     /// Default is true.
@@ -2793,6 +2815,16 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         GetPinnedStyle(column, _cachedVisibleColumns);
 
     /// <summary>
+    /// Computes the stacked-layout label for a detail row cell.
+    /// </summary>
+    internal string? ComputeDetailMobileLabel(IDataGridColumn<TData> column) => GetMobileLabel(column);
+
+    /// <summary>
+    /// Computes whether a detail row cell is hidden in the stacked layout.
+    /// </summary>
+    internal string? ComputeDetailHideOnMobile(IDataGridColumn<TData> column) => GetHideOnMobileAttribute(column);
+
+    /// <summary>
     /// Registers a column as the hierarchy toggle column.
     /// </summary>
     internal void RegisterHierarchyColumn(IDataGridColumn<TData> column)
@@ -4312,6 +4344,39 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
         return ClassNames.cn(baseClass, cellClass, perItemClass, overflowClass, noWrapClass, pinnedClass, separatorClass);
     }
+
+    private bool IsStacked => MobileLayout == DataGridMobileLayout.Stacked;
+
+    /// <summary>
+    /// The breakpoint the stacked-layout CSS keys on, or null when the grid never stacks, so a
+    /// grid left at <see cref="DataGridMobileLayout.None"/> renders exactly as it did before.
+    /// </summary>
+    private string? GetMobileBreakpointAttribute() => !IsStacked ? null : MobileBreakpoint switch
+    {
+        DataGridBreakpoint.Md => "md",
+        DataGridBreakpoint.Lg => "lg",
+        _ => "sm"
+    };
+
+    /// <summary>
+    /// The label a body cell shows in the stacked layout: the column's MobileLabel, else its
+    /// title. Null when the grid does not stack or the label is blank, which leaves the cell
+    /// with no <c>data-label</c> and so no label at all.
+    /// </summary>
+    private string? GetMobileLabel(IDataGridColumn<TData> column)
+    {
+        if (!IsStacked)
+        {
+            return null;
+        }
+
+        var label = column.MobileLabel ?? column.Title;
+
+        return string.IsNullOrWhiteSpace(label) ? null : label;
+    }
+
+    private string? GetHideOnMobileAttribute(IDataGridColumn<TData> column) =>
+        IsStacked && column.HideOnMobile ? "true" : null;
 
     /// <summary>
     /// Resolves the width a column renders at: the width the state holds, or the column's
