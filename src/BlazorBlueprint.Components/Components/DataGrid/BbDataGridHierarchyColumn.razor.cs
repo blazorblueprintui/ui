@@ -141,6 +141,20 @@ public partial class BbDataGridHierarchyColumn<TData, TProp> : ComponentBase, ID
     public bool NoWrap { get; set; }
 
     /// <summary>
+    /// The label shown beside this column's value when the grid's <c>MobileLayout</c> stacks
+    /// its rows. Null (the default) uses the column title; an empty string shows no label.
+    /// </summary>
+    [Parameter]
+    public string? MobileLabel { get; set; }
+
+    /// <summary>
+    /// Whether this column is hidden when the grid's <c>MobileLayout</c> stacks its rows.
+    /// Default is false.
+    /// </summary>
+    [Parameter]
+    public bool HideOnMobile { get; set; }
+
+    /// <summary>
     /// Whether this column supports per-column filtering. Default is false.
     /// </summary>
     [Parameter]
@@ -196,6 +210,10 @@ public partial class BbDataGridHierarchyColumn<TData, TProp> : ComponentBase, ID
     Func<TData, string?>? IDataGridColumn<TData>.CellClassFunc => CellClassFunc;
     string? IDataGridColumn<TData>.HeaderClass => HeaderClass;
     bool IDataGridColumn<TData>.NoWrap => NoWrap;
+
+    string? IDataGridColumn<TData>.MobileLabel => MobileLabel;
+
+    bool IDataGridColumn<TData>.HideOnMobile => HideOnMobile;
     AggregateFunction IDataGridColumn<TData>.Aggregate => AggregateFunction.None;
     string? IDataGridColumn<TData>.AggregateFormat => null;
 

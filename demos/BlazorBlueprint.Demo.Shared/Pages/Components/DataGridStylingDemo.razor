@@ -403,6 +403,40 @@
         <CodeBlock Source="Components/DataGrid/inside-card.txt" />
     </div>
 
+    <!-- ── Stacked Layout on Mobile ────────────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Stacked Layout on Mobile</h2>
+            <p class="text-sm text-muted-foreground">
+                Set <code class="bg-muted px-1 py-0.5 rounded">MobileLayout="DataGridMobileLayout.Stacked"</code> and below
+                <code class="bg-muted px-1 py-0.5 rounded">MobileBreakpoint</code> each row becomes a card, with each cell's label
+                beside its value. The label is the column title, or <code class="bg-muted px-1 py-0.5 rounded">MobileLabel</code>
+                when set; an empty <code class="bg-muted px-1 py-0.5 rounded">MobileLabel</code> shows no label, and
+                <code class="bg-muted px-1 py-0.5 rounded">HideOnMobile</code> drops a column. This grid stacks below 768px:
+                narrow the window to see it.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+                    SelectionMode="DataTableSelectionMode.Multiple"
+                    MobileLayout="DataGridMobileLayout.Stacked"
+                    MobileBreakpoint="DataGridBreakpoint.Md">
+            <Columns>
+                <BbDataGridSelectColumn TData="Person" Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)"
+                    Width="180px" Pinned="BlazorBlueprint.Primitives.DataGrid.ColumnPinning.Left" Sortable />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" HideOnMobile />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" MobileLabel="Dept." />
+                <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" />
+                <BbDataGridTemplateColumn TData="Person" Title="Actions" MobileLabel="">
+                    <ChildContent Context="person">
+                        <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small">Edit</BbButton>
+                    </ChildContent>
+                </BbDataGridTemplateColumn>
+            </Columns>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/stacked-mobile-layout.txt" />
+    </div>
+
         <AccessibilityList>
         <AriaAttributes>
             <AccessibilityItem>Custom row and cell templates should preserve meaningful text, labels and the grid keyboard controls.</AccessibilityItem>
@@ -432,6 +466,8 @@
             <ApiParameter Name="LoadingTemplate" Type="RenderFragment?">Custom loading template.</ApiParameter>
             <ApiParameter Name="EnableKeyboardNavigation" Type="bool" Default="true">Enable keyboard navigation for rows. Default is true.</ApiParameter>
             <ApiParameter Name="AriaLabel" Type="string?">ARIA label for the grid.</ApiParameter>
+            <ApiParameter Name="MobileLayout" Type="DataGridMobileLayout" Default="None">How rows are laid out below MobileBreakpoint. Stacked turns each row into a card, with each cell's label beside its value. The header row is hidden in the stacked layout.</ApiParameter>
+            <ApiParameter Name="MobileBreakpoint" Type="DataGridBreakpoint" Default="Sm">The screen width below which MobileLayout applies: Sm (640px), Md (768px) or Lg (1024px).</ApiParameter>
         </ApiReference>
 
         <ApiReference ComponentName="BbDataGridPropertyColumn">
@@ -442,6 +478,8 @@
             <ApiParameter Name="HeaderTemplate" Type="RenderFragment?">Custom header content. If provided, replaces the header title text only — the grid still renders its own sort indicator, filter icon, pin icon, column menu and resize handle around it, so a Sortable or Groupable column keeps every affordance. Use it to show an icon or richer markup instead of Title.</ApiParameter>
             <ApiParameter Name="Format" Type="string?">Format string for displaying the property value (e.g., &quot;C2&quot;, &quot;N0&quot;, &quot;d&quot;).</ApiParameter>
             <ApiParameter Name="NoWrap" Type="bool">Whether text in this column should not wrap. When true, cell content uses white-space: nowrap and truncates with an ellipsis on overflow. Default is false.</ApiParameter>
+            <ApiParameter Name="MobileLabel" Type="string?">The label shown beside this column's value when the grid's MobileLayout stacks its rows. Null uses the column title; an empty string shows no label.</ApiParameter>
+            <ApiParameter Name="HideOnMobile" Type="bool" Default="false">Hides this column when the grid's MobileLayout stacks its rows.</ApiParameter>
         </ApiReference>
     </section>
 

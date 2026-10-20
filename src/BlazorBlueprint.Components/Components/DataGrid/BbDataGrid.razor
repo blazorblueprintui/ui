@@ -7,7 +7,7 @@
 @inject IBbLocalizer Localizer
 
 <CascadingValue Value="this" IsFixed="true">
-    <div class="@ClassNames.cn("bb:w-full", Class)" @attributes="AdditionalAttributes">
+    <div class="@ClassNames.cn("bb:w-full", Class)" data-mobile-stacked="@GetMobileBreakpointAttribute()" @attributes="AdditionalAttributes">
         @if (ShowSearch || ShowExport || Toolbar != null)
         {
             <div class="bb:flex bb:items-center bb:justify-between bb:gap-2 bb:py-4">
@@ -166,7 +166,10 @@
                             }
                         </colgroup>
                     }
-                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader Class="@ClassNames.cn("bb:bg-surface", StickyHeader ? "bb:sticky bb:top-0 bb:z-20" : "")">
+                    @* The row groups get an explicit role in the stacked layout: once CSS makes the table
+                       elements blocks, some browsers stop exposing them as a table. *@
+                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader Class="@ClassNames.cn("bb:bg-surface", StickyHeader ? "bb:sticky bb:top-0 bb:z-20" : "")"
+                        role="@(IsStacked ? "rowgroup" : null)">
                         @* Through cn() so the bare `group/row` marker ships too: the primitive
                            concatenates Class verbatim, and a consumer's `group-hover/row:*` resolves
                            against the unprefixed marker their own Tailwind build emits. *@
@@ -384,7 +387,7 @@
                             }
                         </BlazorBlueprint.Primitives.DataGrid.BbDataGridRow>
                     </BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader>
-                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridBody Class="bb:bg-surface">
+                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridBody Class="bb:bg-surface" role="@(IsStacked ? "rowgroup" : null)">
                         @if (ShowFilterBar && _gridState.Filtering.HasFilters)
                         {
                             <tr class="@ClassNames.cn("bb:border-b bb:bg-muted/30", FilterBarClass)">
@@ -580,7 +583,9 @@
                     @key="@column.ColumnId"
                     Class="@GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight, item)"
                     style="@pinnedStyle"
-                    data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)">
+                    data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)"
+                    data-label="@GetMobileLabel(column)"
+                    data-hide-on-mobile="@GetHideOnMobileAttribute(column)">
                     @if (isEditColumn)
                     {
                         <div @onclick:stopPropagation="true" class="bb:flex bb:items-center bb:gap-1">
@@ -788,7 +793,9 @@
                     @key="@column.ColumnId"
                     Class="@GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight, item)"
                     style="@pinnedStyle"
-                    data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)">
+                    data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)"
+                    data-label="@GetMobileLabel(column)"
+                    data-hide-on-mobile="@GetHideOnMobileAttribute(column)">
                     @if (isSelectColumn)
                     {
                         <div @onclick:stopPropagation="true">

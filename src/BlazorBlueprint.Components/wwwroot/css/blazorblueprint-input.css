@@ -36,6 +36,15 @@
    machine a dark-themed app kept light badges and inputs (#559). */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* DataGrid stacked layout (MobileLayout="Stacked"). The grid writes its breakpoint on its
+   root as data-mobile-stacked, and the rules apply only below that width. The child
+   combinators stop the rules reaching a grid nested inside a stacked grid's detail row. */
+@custom-variant bb-datagrid-stacked {
+  @media (width < 40rem) { [data-mobile-stacked="sm"] > div > & { @slot; } }
+  @media (width < 48rem) { [data-mobile-stacked="md"] > div > & { @slot; } }
+  @media (width < 64rem) { [data-mobile-stacked="lg"] > div > & { @slot; } }
+}
+
 /* Configure source paths for scanning Razor files. Primitives carry a handful
    of literal utilities of their own (Menubar backdrop, Sortable live region,
    Table focus ring) and the icon packages one (the missing-icon fallback);
@@ -540,6 +549,85 @@
 
   [role="row"][tabindex="0"]:focus > [role="gridcell"]:only-child {
     box-shadow: inset 2px 0 0 0 var(--ring), inset -2px 0 0 0 var(--ring), inset 0 2px 0 0 var(--ring), inset 0 -2px 0 0 var(--ring);
+  }
+}
+
+/* DataGrid stacked layout — below the breakpoint each row becomes a block, and each cell a
+   line with its label (data-label, written by the grid) before its value. The header is
+   hidden, since every cell carries its own label. Ordered after the rules above, and more
+   specific, so it replaces their per-cell borders and focus ring. The rules nest inside the
+   one variant because it wraps a compound selector in :is(), which would drop ::before and
+   lose the child chain below the table. */
+@layer utilities {
+  table[role="grid"] {
+    @variant bb-datagrid-stacked {
+      display: block;
+      width: 100%;
+      min-width: 0;
+
+      & > colgroup,
+      & > thead {
+        display: none;
+      }
+
+      & > tbody {
+        display: block;
+      }
+
+      & > tbody > tr {
+        display: block;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      /* position is !important because a pinned cell's sticky offset is an inline style. */
+      & > tbody > tr > td {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.25rem 1rem;
+        width: auto;
+        padding: 0.375rem 1rem;
+        border: 0;
+        position: static !important;
+        inset: auto !important;
+      }
+
+      /* The label sits at the start and pushes the value to the end. A cell with no label
+         (an actions column, the selection checkbox) starts its content at the start. */
+      & > tbody > tr > td[data-label] {
+        justify-content: flex-end;
+        text-align: end;
+      }
+
+      & > tbody > tr > td[data-label]::before {
+        content: attr(data-label);
+        margin-inline-end: auto;
+        text-align: start;
+        font-weight: 500;
+        color: var(--muted-foreground);
+      }
+
+      /* Full-width rows — the filter bar, the no-results row, group headers, detail
+         templates — keep their own content layout. */
+      & > tbody > tr > td[colspan] {
+        display: block;
+      }
+
+      & > tbody > tr > td[data-hide-on-mobile] {
+        display: none;
+      }
+
+      & > tbody > tr[role="row"][tabindex="0"]:focus {
+        outline: 2px solid var(--ring);
+        outline-offset: -2px;
+      }
+
+      & > tbody > tr[role="row"][tabindex="0"]:focus > [role="gridcell"] {
+        box-shadow: none;
+      }
+    }
   }
 }
 

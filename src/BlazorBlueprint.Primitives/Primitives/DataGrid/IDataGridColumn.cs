@@ -188,6 +188,19 @@ public interface IDataGridColumn<TData> where TData : class
     public bool NoWrap { get; }
 
     /// <summary>
+    /// Gets the label shown beside this column's value when the grid stacks its rows on a small
+    /// screen, or null to use <see cref="Title"/>. An empty string shows no label.
+    /// Default is null.
+    /// </summary>
+    public string? MobileLabel => null;
+
+    /// <summary>
+    /// Gets whether this column is hidden when the grid stacks its rows on a small screen.
+    /// Default is false.
+    /// </summary>
+    public bool HideOnMobile => false;
+
+    /// <summary>
     /// Gets the aggregate function to compute for this column when grouping is active.
     /// Default is <see cref="AggregateFunction.None"/>.
     /// </summary>
