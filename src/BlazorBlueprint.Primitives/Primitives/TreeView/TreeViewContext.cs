@@ -12,6 +12,11 @@ internal sealed class TreeNodeInfo
     public int Depth { get; set; }
     public bool Disabled { get; set; }
     public int Order { get; set; }
+
+    /// <summary>
+    /// 0-based index in the parent's sibling list. Valid while the list is not marked stale.
+    /// </summary>
+    public int Index { get; set; }
 }
 
 /// <summary>
@@ -22,7 +27,11 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
 {
     private const string RootParentKey = "\0__root__";
     private readonly Dictionary<string, TreeNodeInfo> nodeRegistry = new();
+    // Each sibling list stays in Order: nodes are appended with an increasing Order and only removed.
     private readonly Dictionary<string, List<TreeNodeInfo>> childrenByParent = new();
+
+    // Parent keys whose sibling lists had a node removed, so their Index values need refreshing.
+    private readonly HashSet<string> staleSiblingIndexes = new();
     private int nextOrder;
 
     /// <summary>
@@ -88,6 +97,7 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
             siblings = new List<TreeNodeInfo>();
             childrenByParent[key] = siblings;
         }
+        info.Index = siblings.Count;
         siblings.Add(info);
 
         // Auto-expand this node during initial render so ChildContent renders
@@ -122,6 +132,11 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
             if (siblings.Count == 0)
             {
                 childrenByParent.Remove(key);
+                staleSiblingIndexes.Remove(key);
+            }
+            else
+            {
+                staleSiblingIndexes.Add(key);
             }
         }
     }
@@ -249,21 +264,23 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
             return 0;
         }
 
-        if (!childrenByParent.TryGetValue(ParentKey(info.ParentValue), out var siblings))
+        var key = ParentKey(info.ParentValue);
+        if (!childrenByParent.TryGetValue(key, out var siblings))
         {
             return 0;
         }
 
-        var ordered = siblings.OrderBy(n => n.Order).ToList();
-        for (var i = 0; i < ordered.Count; i++)
+        // Every node calls this on each render, so keep it O(1): refresh a list's indexes
+        // once after removals rather than scanning the siblings on every call (#622).
+        if (staleSiblingIndexes.Remove(key))
         {
-            if (ordered[i].Value == value)
+            for (var i = 0; i < siblings.Count; i++)
             {
-                return i + 1;
+                siblings[i].Index = i;
             }
         }
 
-        return 0;
+        return info.Index + 1;
     }
 
     /// <summary>
@@ -282,10 +299,8 @@ public class TreeViewContext : PrimitiveContextWithEvents<TreeViewState>
             return false;
         }
 
-        var firstEnabled = roots
-            .Where(n => !n.Disabled)
-            .OrderBy(n => n.Order)
-            .FirstOrDefault();
+        // The list is already in Order, so the first enabled entry is the answer.
+        var firstEnabled = roots.Find(n => !n.Disabled);
 
         return firstEnabled?.Value == value;
     }

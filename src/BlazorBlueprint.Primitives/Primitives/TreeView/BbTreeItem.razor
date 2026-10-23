@@ -2,26 +2,30 @@
 @implements IDisposable
 
 @* TreeItem primitive - individual tree node with ARIA attributes *@
+@{
+    var state = CaptureTreeState();
+    renderedTreeState = state;
+}
 <div id="@Context.GetNodeId(Value)"
      role="treeitem"
-     tabindex="@(IsFocusable ? 0 : -1)"
-     aria-expanded="@(HasChildContent ? (IsExpanded ? "true" : "false") : null)"
-     aria-selected="@(Context.SelectionMode != TreeSelectionMode.None ? (IsSelected ? "true" : "false") : null)"
-     aria-checked="@AriaCheckedValue"
+     tabindex="@(state.IsFocusable ? 0 : -1)"
+     aria-expanded="@(state.HasChildContent ? (state.IsExpanded ? "true" : "false") : null)"
+     aria-selected="@(state.SelectionMode != TreeSelectionMode.None ? (state.IsSelected ? "true" : "false") : null)"
+     aria-checked="@state.AriaChecked"
      aria-level="@(Depth + 1)"
-     aria-setsize="@Context.GetSetSize(Value)"
-     aria-posinset="@Context.GetPosInSet(Value)"
+     aria-setsize="@state.SetSize"
+     aria-posinset="@state.PosInSet"
      aria-disabled="@(Disabled ? "true" : null)"
      data-value="@Value"
      data-depth="@Depth"
-     data-state="@(IsExpanded ? "open" : "closed")"
-     data-selected="@(IsSelected ? "true" : "false")"
-     data-has-children="@(HasChildContent ? "true" : "false")"
+     data-state="@(state.IsExpanded ? "open" : "closed")"
+     data-selected="@(state.IsSelected ? "true" : "false")"
+     data-has-children="@(state.HasChildContent ? "true" : "false")"
      @attributes="AdditionalAttributes">
     @NodeContent
-    @if (HasChildContent && (IsExpanded || RequiresCascadeRendering))
+    @if (state.HasChildContent && (state.IsExpanded || state.RequiresCascadeRendering))
     {
-        <div role="group" style="@(IsExpanded ? null : "display:none")">
+        <div role="group" style="@(state.IsExpanded ? null : "display:none")">
             <CascadingValue Value="this" IsFixed="true">
                 @ChildContent
             </CascadingValue>
@@ -121,6 +125,35 @@
     /// </summary>
     private bool RequiresCascadeRendering => Context.Checkable && !Context.CheckStrictly;
 
+    // What this node took from the tree's shared state at its last render. A tree state
+    // change re-renders only the nodes whose own output changed, not every node (#622).
+    // IsChecked is here for styled items that show a checkbox when the tree is not checkable.
+    private RenderedTreeState? renderedTreeState;
+
+    private readonly record struct RenderedTreeState(
+        bool IsExpanded,
+        bool IsSelected,
+        bool IsChecked,
+        TreeSelectionMode SelectionMode,
+        string? AriaChecked,
+        bool IsFocusable,
+        bool HasChildContent,
+        bool RequiresCascadeRendering,
+        int SetSize,
+        int PosInSet);
+
+    private RenderedTreeState CaptureTreeState() => new(
+        IsExpanded,
+        IsSelected,
+        IsChecked,
+        Context.SelectionMode,
+        AriaCheckedValue,
+        IsFocusable,
+        HasChildContent,
+        RequiresCascadeRendering,
+        Context.GetSetSize(Value),
+        Context.GetPosInSet(Value));
+
     private string? AriaCheckedValue
     {
         get
@@ -147,12 +180,20 @@
         }
 
         Context.RegisterNode(Value, ParentItem?.Value, Depth, Disabled);
-        Context.OnStateChanged += StateHasChanged;
+        Context.OnStateChanged += HandleContextStateChanged;
     }
 
     protected override void OnParametersSet()
     {
         Context.UpdateNodeDisabled(Value, Disabled);
+    }
+
+    private void HandleContextStateChanged()
+    {
+        if (renderedTreeState != CaptureTreeState())
+        {
+            StateHasChanged();
+        }
     }
 
     /// <summary>
@@ -190,7 +231,7 @@
 
     public void Dispose()
     {
-        Context.OnStateChanged -= StateHasChanged;
+        Context.OnStateChanged -= HandleContextStateChanged;
         Context.UnregisterNode(Value);
     }
 }
