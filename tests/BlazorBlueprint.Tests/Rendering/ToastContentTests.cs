@@ -127,6 +127,36 @@ public class ToastContentTests
         Assert.Contains(toasts.Toasts, t => t.Id == held.Id);
     }
 
+    /// <summary>
+    /// Navigating to a page with another layout disposes the layout's provider and mounts a new
+    /// one, while the scoped service keeps the toasts (#621). The new provider has to time them out.
+    /// </summary>
+    [Fact]
+    public async Task AToastShownBeforeTheProviderIsReplacedStillTimesOut()
+    {
+        await using var provider = Services().BuildServiceProvider();
+        await using var renderer = new ComponentTestRenderer(provider, NullLoggerFactory.Instance);
+        var toasts = provider.GetRequiredService<ToastService>();
+
+        var toast = new ToastData { Description = "Saved", Duration = 200 };
+
+        await renderer.Dispatcher.InvokeAsync(async () =>
+        {
+            var first = await renderer.MountAsync<BbToastProvider>([]);
+            toasts.Show(toast);
+            await first.DisposeAsync();
+            await renderer.MountAsync<BbToastProvider>([]);
+        });
+
+        var deadline = DateTime.UtcNow.AddSeconds(5);
+        while (toasts.Toasts.Count > 0 && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(20);
+        }
+
+        Assert.Empty(toasts.Toasts);
+    }
+
     [Fact]
     public async Task AComponentShownInAToastGetsItsParametersAndCanDismissTheToast()
     {

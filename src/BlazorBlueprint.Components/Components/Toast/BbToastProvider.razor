@@ -92,20 +92,16 @@
     protected override void OnInitialized()
     {
         ToastService.OnChange += HandleToastsChanged;
+
+        // The service is scoped, so its toasts outlive this provider. Navigating to a page with
+        // another layout disposes the old provider, timers and all, and mounts a new one: start
+        // timers for the toasts it inherits, or they stay until the next toast is shown (#621).
+        StartTimersForNewToasts();
     }
 
     private void HandleToastsChanged()
     {
-        // Start timers for new toasts
-        foreach (var toast in ToastService.Toasts)
-        {
-            if (!timerStates.ContainsKey(toast.Id) && toast.Duration > 0)
-            {
-                var state = new ToastTimerState { RemainingMs = toast.Duration };
-                timerStates[toast.Id] = state;
-                _ = RunDismissTimerAsync(toast.Id, state);
-            }
-        }
+        StartTimersForNewToasts();
 
         // Clean up stale entries (toasts removed externally)
         var activeIds = new HashSet<string>(ToastService.Toasts.Select(t => t.Id));
@@ -122,6 +118,21 @@
         }
 
         InvokeAsync(StateHasChanged);
+    }
+
+    // An inherited toast gets its full duration again: the old provider's remaining time is lost
+    // with it.
+    private void StartTimersForNewToasts()
+    {
+        foreach (var toast in ToastService.Toasts)
+        {
+            if (!timerStates.ContainsKey(toast.Id) && toast.Duration > 0)
+            {
+                var state = new ToastTimerState { RemainingMs = toast.Duration };
+                timerStates[toast.Id] = state;
+                _ = RunDismissTimerAsync(toast.Id, state);
+            }
+        }
     }
 
     private async Task RunDismissTimerAsync(string id, ToastTimerState state)
