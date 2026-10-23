@@ -113,18 +113,40 @@ public partial class BbTreeItem : ComponentBase
     private bool HasExpandableChildren =>
         IsLeaf != true && (ChildContent != null || (TreeContext?.HasChildren(Value) ?? false));
 
-    private string NodeCssClass => ClassNames.cn(
-        "bb:group/treeitem bb:flex bb:items-center bb:gap-1.5 bb:py-1 bb:px-2 bb:rounded-md bb:cursor-pointer bb:select-none",
-        "bb:hover:bg-accent/50 bb:transition-colors",
-        IsSelected ? "bb:bg-accent bb:text-accent-foreground" : "bb:text-foreground",
-        Disabled ? "bb:opacity-50 bb:cursor-not-allowed" : null,
-        Class
-    );
+    // Every node renders these on each tree update, so merge the classes only when their
+    // inputs change rather than per node per render (#622).
+    private static readonly string ExpandedChevronCssClass = BuildChevronCssClass(true);
+    private static readonly string CollapsedChevronCssClass = BuildChevronCssClass(false);
+    private (bool Selected, bool Disabled, string? Class)? nodeCssClassKey;
+    private string nodeCssClass = string.Empty;
+
+    private string NodeCssClass
+    {
+        get
+        {
+            var key = (IsSelected, Disabled, Class);
+            if (nodeCssClassKey != key)
+            {
+                nodeCssClassKey = key;
+                nodeCssClass = ClassNames.cn(
+                    "bb:group/treeitem bb:flex bb:items-center bb:gap-1.5 bb:py-1 bb:px-2 bb:rounded-md bb:cursor-pointer bb:select-none",
+                    "bb:hover:bg-accent/50 bb:transition-colors",
+                    IsSelected ? "bb:bg-accent bb:text-accent-foreground" : "bb:text-foreground",
+                    Disabled ? "bb:opacity-50 bb:cursor-not-allowed" : null,
+                    Class
+                );
+            }
+
+            return nodeCssClass;
+        }
+    }
 
     private string NodeStyle => FormattableString.Invariant($"padding-left: {(Depth * 1.25) + 0.5}rem;");
 
-    private string ChevronCssClass => ClassNames.cn(
+    private string ChevronCssClass => IsExpanded ? ExpandedChevronCssClass : CollapsedChevronCssClass;
+
+    private static string BuildChevronCssClass(bool expanded) => ClassNames.cn(
         "bb:h-4 bb:w-4 bb:shrink-0 bb:text-muted-foreground bb:transition-transform bb:duration-200",
-        IsExpanded ? "bb:rotate-90" : null
+        expanded ? "bb:rotate-90" : null
     );
 }

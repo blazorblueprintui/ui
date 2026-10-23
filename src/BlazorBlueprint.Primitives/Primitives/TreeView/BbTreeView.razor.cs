@@ -416,9 +416,11 @@ public partial class BbTreeView : IAsyncDisposable
         // Do NOT call StateHasChanged() here — BbTreeItem instances re-render via their
         // own OnStateChanged subscription, and an intermediate render would cause
         // SyncStateToContext to overwrite context state with stale parameter values.
+        // Skip a callback when its bound parameter already holds the context's value: each
+        // callback re-renders the parent, and with it every node in the tree (#622).
         try
         {
-            if (ExpandedValuesChanged.HasDelegate)
+            if (ExpandedValuesChanged.HasDelegate && !IsBound(ExpandedValues, context.State.ExpandedValues))
             {
                 await ExpandedValuesChanged.InvokeAsync(new HashSet<string>(context.State.ExpandedValues));
             }
@@ -426,15 +428,19 @@ public partial class BbTreeView : IAsyncDisposable
             if (SelectionMode == TreeSelectionMode.Single && SelectedValueChanged.HasDelegate)
             {
                 var selected = context.State.SelectedValues.FirstOrDefault();
-                await SelectedValueChanged.InvokeAsync(selected);
+                if (SelectedValue == null || SelectedValue != selected)
+                {
+                    await SelectedValueChanged.InvokeAsync(selected);
+                }
             }
 
-            if (SelectionMode == TreeSelectionMode.Multiple && SelectedValuesChanged.HasDelegate)
+            if (SelectionMode == TreeSelectionMode.Multiple && SelectedValuesChanged.HasDelegate
+                && !IsBound(SelectedValues, context.State.SelectedValues))
             {
                 await SelectedValuesChanged.InvokeAsync(new HashSet<string>(context.State.SelectedValues));
             }
 
-            if (Checkable && CheckedValuesChanged.HasDelegate)
+            if (Checkable && CheckedValuesChanged.HasDelegate && !IsBound(CheckedValues, context.State.CheckedValues))
             {
                 await CheckedValuesChanged.InvokeAsync(new HashSet<string>(context.State.CheckedValues));
             }
@@ -444,6 +450,9 @@ public partial class BbTreeView : IAsyncDisposable
             // Component may be disposed during async operation
         }
     }
+
+    private static bool IsBound(HashSet<string>? parameter, HashSet<string> state) =>
+        parameter != null && parameter.SetEquals(state);
 
     /// <summary>
     /// Expands all nodes in the tree.

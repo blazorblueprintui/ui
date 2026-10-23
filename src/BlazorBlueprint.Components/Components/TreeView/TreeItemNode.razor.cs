@@ -94,19 +94,30 @@ public partial class TreeItemNode<TItem> : ComponentBase
 
     private IEnumerable<TItem> Children => ChildrenAccessor(Item);
 
-    private string NodeCssClass => ClassNames.cn(
+    // Every node renders these on each tree update, and they depend only on one flag, so
+    // merge each variant once rather than per node per render (#622).
+    private static readonly string SelectedNodeCssClass = BuildNodeCssClass(true);
+    private static readonly string UnselectedNodeCssClass = BuildNodeCssClass(false);
+    private static readonly string ExpandedChevronCssClass = BuildChevronCssClass(true);
+    private static readonly string CollapsedChevronCssClass = BuildChevronCssClass(false);
+
+    private string NodeCssClass => IsSelected ? SelectedNodeCssClass : UnselectedNodeCssClass;
+
+    private static string BuildNodeCssClass(bool selected) => ClassNames.cn(
         "bb:group/treeitem bb:flex bb:items-center bb:gap-1.5 bb:py-1 bb:px-2 bb:rounded-md bb:cursor-pointer bb:select-none",
         "bb:hover:bg-accent/50 bb:transition-colors",
-        IsSelected ? "bb:bg-accent bb:text-accent-foreground" : "bb:text-foreground"
+        selected ? "bb:bg-accent bb:text-accent-foreground" : "bb:text-foreground"
     );
 
     private string NodeStyle => FormattableString.Invariant($"padding-left: {(Depth * 1.25) + 0.5}rem;");
 
     private string ChildNodeStyle => FormattableString.Invariant($"padding-left: {((Depth + 1) * 1.25) + 0.5}rem;");
 
-    private string ChevronCssClass => ClassNames.cn(
+    private string ChevronCssClass => IsExpanded ? ExpandedChevronCssClass : CollapsedChevronCssClass;
+
+    private static string BuildChevronCssClass(bool expanded) => ClassNames.cn(
         "bb:h-4 bb:w-4 bb:shrink-0 bb:text-muted-foreground bb:transition-transform bb:duration-200",
-        IsExpanded ? "bb:rotate-90" : null
+        expanded ? "bb:rotate-90" : null
     );
 
     private RenderFragment HighlightedLabel => builder =>
