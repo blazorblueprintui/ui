@@ -1,0 +1,32 @@
+@inject IKeyboardShortcutService KeyboardShortcuts
+@implements IAsyncDisposable
+
+<label for="notes">Notes</label>
+<textarea id="notes" placeholder="Press Ctrl+S while typing."></textarea>
+<p>@status</p>
+
+@code {
+    private IDisposable? saveShortcut;
+    private string? status;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            saveShortcut = await KeyboardShortcuts.RegisterAsync(
+                "Ctrl+S", SaveAsync, allowInEditable: true);
+        }
+    }
+
+    private Task SaveAsync() => InvokeAsync(() =>
+    {
+        status = "Saved";
+        StateHasChanged();
+    });
+
+    public ValueTask DisposeAsync()
+    {
+        saveShortcut?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}

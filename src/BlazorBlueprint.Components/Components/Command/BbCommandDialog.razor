@@ -55,6 +55,12 @@
     public string? Shortcut { get; set; }
 
     /// <summary>
+    /// Gets or sets whether Shortcut can fire in inputs, textareas, selects and contenteditable elements. Default: false.
+    /// </summary>
+    [Parameter]
+    public bool AllowShortcutInEditable { get; set; }
+
+    /// <summary>
     /// Event callback invoked when a command item is selected.
     /// </summary>
     [Parameter]
@@ -93,7 +99,7 @@
                 _isOpen = !_isOpen;
                 StateHasChanged();
                 return Task.CompletedTask;
-            });
+            }, allowInEditable: AllowShortcutInEditable);
         }
     }
 

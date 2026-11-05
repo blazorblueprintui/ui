@@ -103,6 +103,7 @@
         <h2 class="text-2xl font-semibold">CommandDialog with Shortcut</h2>
         <p class="text-sm text-muted-foreground">
             Use <code class="bg-muted px-1 py-0.5 rounded">CommandDialog</code> to get a command palette with a built-in keyboard shortcut. Press <BbKbd>Ctrl+J</BbKbd> to open.
+            Set <code>AllowShortcutInEditable="true"</code> to use it while typing, including in the palette search field.
         </p>
 
         <div class="flex flex-col gap-2">
@@ -117,7 +118,7 @@
             }
         </div>
 
-        <BbCommandDialog @bind-Open="isCommandDialogOpen" Shortcut="Ctrl+J" OnValueChange="HandleDialogSelect">
+        <BbCommandDialog @bind-Open="isCommandDialogOpen" Shortcut="Ctrl+J" AllowShortcutInEditable="true" OnValueChange="HandleDialogSelect">
             <BbCommandInput Placeholder="Type a command or search..." AutoFocus="true" />
             <BbCommandList>
                 <BbCommandEmpty>No results found.</BbCommandEmpty>
@@ -649,6 +650,9 @@
                 </ApiParameter>
                 <ApiParameter Name="Shortcut" Type="string?" Default="null">
                     Keyboard shortcut to toggle the dialog (e.g., "Ctrl+J", "Ctrl+K").
+                </ApiParameter>
+                <ApiParameter Name="AllowShortcutInEditable" Type="bool" Default="false">
+                    Allows Shortcut to fire in inputs, textareas, selects and contenteditable elements.
                 </ApiParameter>
                 <ApiParameter Name="OnValueChange" Type="EventCallback&lt;string&gt;">
                     Callback when an item is selected.

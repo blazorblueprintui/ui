@@ -45,6 +45,12 @@
     [Parameter]
     public string? Shortcut { get; set; }
 
+    /// <summary>
+    /// Gets or sets whether Shortcut can fire in inputs, textareas, selects and contenteditable elements. Default: false.
+    /// </summary>
+    [Parameter]
+    public bool AllowShortcutInEditable { get; set; }
+
     private IDisposable? shortcutRegistration;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -57,7 +63,7 @@
                 {
                     await OnClick.InvokeAsync();
                 }
-            });
+            }, allowInEditable: AllowShortcutInEditable);
         }
     }
 
