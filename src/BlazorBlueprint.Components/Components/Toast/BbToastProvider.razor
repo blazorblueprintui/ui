@@ -1,31 +1,22 @@
 @namespace BlazorBlueprint.Components
 @implements IAsyncDisposable
 @inject ToastService ToastService
+@inject IBbLocalizer Localizer
 
 @*
     Toast Provider - renders the toast container and manages toast lifecycle.
     Place this component once at the root of your application (e.g., in MainLayout).
 *@
 
-@* Main toast stack (toasts without per-toast position overrides) *@
-<div class="@GetContainerCssClass(EffectivePosition)" @attributes="AdditionalAttributes">
-    @foreach (var toast in GetToastsForPosition(null))
-    {
-        <BbToast @key="toast.Id"
-                 Data="@toast"
-                 Class="@toast.Class"
-                 ShowCountdown="@(toast.ShowCountdown ?? ShowCountdown)"
-                 OnDismiss="@(() => HandleDismiss(toast.Id))"
-                 OnPause="@(() => HandlePause(toast.Id))"
-                 OnResume="@(() => HandleResume(toast.Id))" />
-    }
-</div>
-
-@* Per-toast position containers *@
-@foreach (var position in GetCustomPositions())
-{
-    <div class="@GetContainerCssClass(position)">
-        @foreach (var toast in GetToastsForPosition(position))
+@*
+    One live region around every stack, rendered before any toast, so screen readers announce
+    toasts politely - including those in per-position stacks created on demand. Absolute keeps it
+    out of the page flow without creating a stacking context for the fixed stacks inside.
+*@
+<section class="bb:absolute" aria-label="@Localizer["Toast.Region"]" aria-live="polite">
+    @* Main toast stack (toasts without per-toast position overrides) *@
+    <div class="@GetContainerCssClass(EffectivePosition)" @attributes="AdditionalAttributes">
+        @foreach (var toast in GetToastsForPosition(null))
         {
             <BbToast @key="toast.Id"
                      Data="@toast"
@@ -36,7 +27,24 @@
                      OnResume="@(() => HandleResume(toast.Id))" />
         }
     </div>
-}
+
+    @* Per-toast position containers *@
+    @foreach (var position in GetCustomPositions())
+    {
+        <div class="@GetContainerCssClass(position)">
+            @foreach (var toast in GetToastsForPosition(position))
+            {
+                <BbToast @key="toast.Id"
+                         Data="@toast"
+                         Class="@toast.Class"
+                         ShowCountdown="@(toast.ShowCountdown ?? ShowCountdown)"
+                         OnDismiss="@(() => HandleDismiss(toast.Id))"
+                         OnPause="@(() => HandlePause(toast.Id))"
+                         OnResume="@(() => HandleResume(toast.Id))" />
+            }
+        </div>
+    }
+</section>
 
 @code {
     private readonly Dictionary<string, ToastTimerState> timerStates = new();
@@ -82,7 +90,7 @@
     /// Gets or sets additional HTML attributes.
     /// </summary>
     /// <remarks>
-    /// Captured for API consistency; this component renders multiple root elements, so these attributes have no effect.
+    /// Applied to the main toast stack, not to per-toast position stacks or the live region around them.
     /// </remarks>
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
