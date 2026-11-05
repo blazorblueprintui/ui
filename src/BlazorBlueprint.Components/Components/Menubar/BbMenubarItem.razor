@@ -46,31 +46,70 @@
     public string? Shortcut { get; set; }
 
     private IDisposable? shortcutRegistration;
+    private string? registeredShortcut;
+    private bool registeringShortcut;
+    private bool disposed;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && !string.IsNullOrEmpty(Shortcut) && !Disabled)
+        if (disposed || registeringShortcut)
         {
-            shortcutRegistration = await KeyboardShortcuts.RegisterAsync(Shortcut, async () =>
+            return;
+        }
+
+        registeringShortcut = true;
+        try
+        {
+            // Parameter updates can arrive while registration is awaiting JS interop.
+            while (!disposed && registeredShortcut != Shortcut)
             {
-                if (!Disabled)
+                var shortcut = Shortcut;
+                shortcutRegistration?.Dispose();
+                shortcutRegistration = null;
+
+                if (!string.IsNullOrEmpty(shortcut))
                 {
-                    await OnClick.InvokeAsync();
+                    var registration = await KeyboardShortcuts.RegisterAsync(shortcut, async () =>
+                    {
+                        if (!disposed && !Disabled)
+                        {
+                            await OnClick.InvokeAsync();
+                        }
+                    });
+
+                    if (disposed)
+                    {
+                        registration.Dispose();
+                    }
+                    else
+                    {
+                        shortcutRegistration = registration;
+                    }
                 }
-            });
+
+                registeredShortcut = shortcut;
+            }
+        }
+        finally
+        {
+            registeringShortcut = false;
         }
     }
 
     private async Task HandleClick() =>
         await OnClick.InvokeAsync();
 
-    public void Dispose() =>
-        shortcutRegistration?.Dispose();
-
-    public async ValueTask DisposeAsync()
+    public void Dispose()
     {
+        disposed = true;
         shortcutRegistration?.Dispose();
-        await ValueTask.CompletedTask;
+        shortcutRegistration = null;
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        Dispose();
+        return ValueTask.CompletedTask;
     }
 
     private string CssClass => ClassNames.cn(
