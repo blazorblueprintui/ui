@@ -66,7 +66,7 @@ public class KeyboardShortcutService : IKeyboardShortcutService
         var toRemove = _shortcuts.FirstOrDefault(kvp => kvp.Value.Id == id);
         if (toRemove.Key != null)
         {
-            UnregisterInternal(toRemove.Key);
+            UnregisterInternal(toRemove.Key, id);
         }
     }
 
@@ -160,8 +160,14 @@ public class KeyboardShortcutService : IKeyboardShortcutService
         }
     }
 
-    private void UnregisterInternal(string normalizedKey)
+    private void UnregisterInternal(string normalizedKey, string id)
     {
+        // A later registration may have replaced this one for the same key; that one stays.
+        if (!_shortcuts.TryGetValue(normalizedKey, out var current) || current.Id != id)
+        {
+            return;
+        }
+
         if (_shortcuts.Remove(normalizedKey) && _module != null)
         {
             // Fire-and-forget unregister from JS
@@ -208,7 +214,7 @@ public class KeyboardShortcutService : IKeyboardShortcutService
 
             if (!_service._disposed)
             {
-                _service.UnregisterInternal(_normalizedKey);
+                _service.UnregisterInternal(_normalizedKey, _id);
             }
         }
     }
