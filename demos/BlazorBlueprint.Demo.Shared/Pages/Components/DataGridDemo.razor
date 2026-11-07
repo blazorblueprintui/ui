@@ -390,6 +390,40 @@
         <CodeBlock Source="Components/DataGrid/compact-rows.txt" />
     </div>
 
+    <!-- ── Compact Expand and Edit Columns ────────────────────────── -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">Compact Expand and Edit Columns</h2>
+            <p class="text-sm text-muted-foreground">
+                <code class="bg-muted px-1 py-0.5 rounded">BbDataGridExpandColumn</code> and
+                <code class="bg-muted px-1 py-0.5 rounded">BbDataGridEditColumn</code> take
+                <code class="bg-muted px-1 py-0.5 rounded">CellClass</code> and
+                <code class="bg-muted px-1 py-0.5 rounded">HeaderClass</code> too, so a dense grid stays dense
+                with the chevron and the Edit buttons in it.
+            </p>
+        </div>
+        <BbDataGrid TData="Person" Items="@editablePeople" InitialPageSize="5"
+                   EditMode="DataGridEditMode.Row">
+            <Columns>
+                <BbDataGridExpandColumn CellClass="p-1" HeaderClass="p-1" />
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)" CellClass="p-1" HeaderClass="p-1">
+                    <EditTemplate>
+                        <BbInput @bind-Value="context.Name" Class="h-8" />
+                    </EditTemplate>
+                </BbDataGridPropertyColumn>
+                <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" CellClass="p-1" HeaderClass="p-1" />
+                <BbDataGridEditColumn TData="Person" CellClass="p-1" HeaderClass="p-1" />
+            </Columns>
+            <DetailTemplate>
+                <div class="text-sm">
+                    <span class="font-medium text-muted-foreground">Role:</span>
+                    <span class="ml-2">@context.Role</span>
+                </div>
+            </DetailTemplate>
+        </BbDataGrid>
+        <CodeBlock Source="Components/DataGrid/compact-control-columns.txt" />
+    </div>
+
     <!-- ── Expandable Rows ────────────────────────────────────────── -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -1301,6 +1335,12 @@
                 <ApiParameter Name="StickyHeader" Type="bool" Default="false">
                     Keep the header row visible while scrolling. Useful with virtualized grids inside a fixed-height scroll container.
                 </ApiParameter>
+                <ApiParameter Name="MobileLayout" Type="DataGridMobileLayout" Default="None">
+                    How rows are laid out below MobileBreakpoint. <code>Stacked</code> turns each row into a card, with each cell's label beside its value. The switch is done in CSS, with no JavaScript. The header row is hidden in the stacked layout.
+                </ApiParameter>
+                <ApiParameter Name="MobileBreakpoint" Type="DataGridBreakpoint" Default="Sm">
+                    The screen width below which MobileLayout applies: <code>Sm</code> (640px), <code>Md</code> (768px) or <code>Lg</code> (1024px).
+                </ApiParameter>
                 <ApiParameter Name="ItemSize" Type="float" Default="48">
                     Row height in pixels for virtualization. Used by the Virtualize component to calculate scroll position.
                 </ApiParameter>
@@ -1481,6 +1521,12 @@
                 <ApiParameter Name="NoWrap" Type="bool" Default="false">
                     Whether text in this column should not wrap. When true, cell content uses white-space: nowrap and truncates with an ellipsis on overflow.
                 </ApiParameter>
+                <ApiParameter Name="MobileLabel" Type="string?" Default="null">
+                    The label shown beside this column's value when the grid's MobileLayout stacks its rows. Null uses the column title; an empty string shows no label.
+                </ApiParameter>
+                <ApiParameter Name="HideOnMobile" Type="bool" Default="false">
+                    Hides this column when the grid's MobileLayout stacks its rows.
+                </ApiParameter>
                 <ApiParameter Name="Aggregate" Type="AggregateFunction" Default="None">
                     Aggregate function to compute in group headers when grouping is active. Options: None, Count, Sum, Average, Min, Max.
                 </ApiParameter>
@@ -1556,6 +1602,12 @@
                 <ApiParameter Name="NoWrap" Type="bool" Default="false">
                     Whether text in this column should not wrap. When true, cell content uses white-space: nowrap and truncates with an ellipsis on overflow.
                 </ApiParameter>
+                <ApiParameter Name="MobileLabel" Type="string?" Default="null">
+                    The label shown beside this column's value when the grid's MobileLayout stacks its rows. Null uses the column title; an empty string shows no label.
+                </ApiParameter>
+                <ApiParameter Name="HideOnMobile" Type="bool" Default="false">
+                    Hides this column when the grid's MobileLayout stacks its rows.
+                </ApiParameter>
                 <ApiParameter Name="Aggregate" Type="AggregateFunction" Default="None">
                     Aggregate function to compute in group headers when grouping is active. Requires SortBy to provide a value accessor for numeric aggregates.
                 </ApiParameter>
@@ -1580,11 +1632,20 @@
                 <ApiParameter Name="SelectAllScope" Type="DataGridSelectAllScope" Default="Prompt">
                     Select-all header behaviour when paginated. <code>Prompt</code> (default) shows a "this page / all items" menu across pages; <code>CurrentPage</code> removes the menu so the header checkbox toggles only the current page's rows, leaving other pages' selections intact.
                 </ApiParameter>
+                <ApiParameter Name="HideOnMobile" Type="bool" Default="false">
+                    Hides the checkboxes when the grid's MobileLayout stacks its rows. Left false, each row's checkbox is the first line of its card.
+                </ApiParameter>
             </ApiReference>
 
             <ApiReference ComponentName="DataGridEditColumn">
                 <ApiParameter Name="Width" Type="string?" Default="120px">
                     Column width. Defaults to a width that fits the Save and Cancel buttons.
+                </ApiParameter>
+                <ApiParameter Name="CellClass" Type="string?">
+                    Additional CSS classes applied to the edit cells, the ones holding the Edit, Save and Cancel buttons.
+                </ApiParameter>
+                <ApiParameter Name="HeaderClass" Type="string?">
+                    Additional CSS classes applied to the header cell.
                 </ApiParameter>
                 <ApiParameter Name="Pinned" Type="ColumnPinning" Default="None">
                     Pins the column to an edge of the scrollable viewport. Pin it right on a wide grid so the Save button stays reachable without scrolling back.
@@ -1594,6 +1655,12 @@
             <ApiReference ComponentName="DataGridExpandColumn">
                 <ApiParameter Name="Width" Type="string?" Default="48px">
                     Column width for the expand chevron column. Defaults to a compact button width.
+                </ApiParameter>
+                <ApiParameter Name="CellClass" Type="string?">
+                    Additional CSS classes applied to the expand cells. Use e.g. "p-1" to override the default padding for a compact row height.
+                </ApiParameter>
+                <ApiParameter Name="HeaderClass" Type="string?">
+                    Additional CSS classes applied to the header cell.
                 </ApiParameter>
                 <ApiParameter Name="Pinned" Type="ColumnPinning" Default="None">
                     Whether this column is pinned to an edge of the scrollable viewport.

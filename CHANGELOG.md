@@ -7,6 +7,71 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ---
 
 
+## 2026-11-07 (v4.2.0)
+
+### Upgrade notes
+
+- **Default text parameters are now `null`.** Text parameters that used to default to English now default to `null` and fall back to `IBbLocalizer`, so the rendered English is unchanged. This covers `BbFormFieldCombobox`, `BbFormFieldMultiSelect`, `BbCheckboxGroup.SelectAllLabel`, `BbTimePicker.Placeholder`, `BbCommandInput.Placeholder`, `BbTreeView.SearchPlaceholder`, `BbDynamicForm.SubmitText`, and the `DialogService` option texts (`DialogOptions.ConfirmText`/`CancelText`, `AlertDialogOptions.ButtonText`). Code that *reads* one of these before setting it now gets `null` (#637).
+- **`GanttBuilder` throws `GanttBuildException`.** It derives from `ArgumentException`, so `catch (ArgumentException)` still works, but a check for that exact type no longer matches (#637).
+- **Input fields use shadcn v4's fill.** Field boxes are now `bg-transparent dark:bg-input/30` with `shadow-xs`, so a theme's `--input` colour shows in dark mode (#611).
+- **Floating content stacks above its trigger's layer.** Popovers, dropdowns and selects now take a z-index above any raised container their trigger sits in, instead of a fixed 50 (#609).
+- **ASP.NET Core floor is 10.0.14.** The libraries now reference `Microsoft.AspNetCore.Components.Web` 10.0.14 (#639).
+
+### Added
+
+- **BlazorBlueprint.PdfViewer**, a new opt-in package: `BbPdfViewer`, built on PDF.js, with paging, zoom, fit-to-width and download, loading from a URL or from bytes and streams (`LoadDataAsync`). It is in its own package because PDF.js is over 2 MB. The legacy PDF.js build and its image decoders ship with it, so older browsers and scanned documents work (#570).
+- **Dialog**: `Position` (`DialogPosition`, nine placements), plus enter and exit animations (`EnterPreset`, `ExitPreset`, `EnterKeyframes`, `ExitKeyframes`, `AnimationDuration`) on `BbDialog` and `DialogOpenOptions`. A closing dialog stays mounted until its exit animation ends, and reduced motion skips the animations (#612, #613).
+- **Sheet**: non-modal mode. `BbSheetContent.ShowOverlay="false"` renders no overlay, sets `aria-modal="false"`, doesn't trap focus or lock scroll, and leaves the page usable. `CloseOnInteractOutside` closes it on a pointer-down outside (#626).
+- **Overlays**: modal overlays carry `data-slot` (`sheet-overlay`, `dialog-overlay`, `alert-dialog-overlay`, `drawer-overlay`), so they can be styled without relying on generated ids (#626).
+- **DataGrid**:
+  - `MobileLayout="Stacked"` turns rows into cards below `MobileBreakpoint`. Columns take `MobileLabel` and `HideOnMobile` (#616).
+  - `HeaderClass` and `CellClass` on the expand and edit columns (#597).
+- **Toast**:
+  - `ToastService.Show<TComponent>()` shows a component in a toast. `IToastReference.DismissAsync()` lets it close itself.
+  - `ToastData.Icon`, `Content` and `Actions` slots.
+  - A toast with `Content` or `Actions` stops auto-dismissing once the user presses or moves focus inside it.
+- **Combobox, MultiSelect**: `TriggerId`, `TriggerAttributes` and `IsInvalid`, so a `<label for>` can point at the trigger and the invalid state is announced (#574).
+- **ColorPicker**: `ActionButtons` stages the change until Apply, or discards it on Cancel (#600).
+- **Keyboard shortcuts**: `RegisterAsync(..., allowInEditable: true)` lets a shortcut fire inside inputs. `BbMenubarItem` and `BbCommandDialog` gain `AllowShortcutInEditable` (#632).
+- **Localization**:
+  - `DefaultBbLocalizer.EnglishDefaults` lists every key with its English text, and the Localization guide's key table is generated from it (#638).
+  - About 90 new keys cover text that was hard-coded English, including barcode, Gantt and form validation messages (#637).
+  - `BarcodeFormatException.Error`/`Arguments` (`BarcodeFormatError`) and `GanttBuildException` (`GanttBuildError`) give each failure a machine-readable reason.
+- **Theme switcher**: each radius button previews its own corner radius (#601).
+
+### Fixed
+
+- **Overlays**:
+  - Overlays can be closed on plain-HTTP sites, where `crypto.randomUUID` is missing (#575).
+  - Tooltips and overlays hide when the close render arrives late on Blazor Server (#608).
+- **Comma-decimal cultures (cs-CZ, de-DE)**: CSS, SVG, ARIA and `data-*` numbers are written invariantly. This fixes TreeView indentation, Progress, context menu position, icon stroke widths and Rating, and NumericInput keeps its decimals (#577).
+- **TreeView**: selection stays fast with thousands of siblings (#622).
+- **Toast**:
+  - Toasts already showing time out after navigating to a page with another layout (#621).
+  - Only error toasts interrupt screen readers; the rest are announced politely through a live region (#630).
+- **Text inputs**:
+  - `BbInput` and the other text inputs no longer raise `ValueChanged` again on blur with the value typing already raised (#605).
+  - `UpdateTiming` and `DebounceInterval` changes apply after the first render.
+- **Menus**:
+  - The Menubar has a single Tab stop (#634).
+  - Clicks inside a portaled submenu keep the Menubar open (#633).
+  - Menubar item shortcuts update when parameters change (#635).
+  - Keyboard-focused menu items scroll into view (#636).
+- **Keyboard shortcuts**:
+  - Disposing an older handle no longer removes a newer registration for the same key (#629).
+  - Shortcuts ignore IME composition (#631).
+- **Forms**: FormFieldSelect, FormFieldCombobox and FormFieldMultiSelect labels point at the trigger, and their invalid state reaches `aria-invalid` (#574). Combobox `aria-controls` names the list that actually opens.
+- **DataGrid**:
+  - Sticky headers and rows use the surface they sit on (new `--bb-surface` token), so a grid in a dark card no longer shows a darker box.
+  - A column width is never stored as zero.
+  - Wide `BbDataTable`s scroll inside their border (#617).
+- **Other components**:
+  - Gauge colours the progress arc with `Color` and `ProgressColor` (#625).
+  - DateRangePicker highlights only the picked preset when presets share a range (#582).
+  - InputGroup draws one focus ring (#585).
+  - MultiSelect's Escape closes only the list inside a dialog.
+  - ColorPicker presets label spacing (#598).
+
 ## 2026-09-22
 
 ### Fixed

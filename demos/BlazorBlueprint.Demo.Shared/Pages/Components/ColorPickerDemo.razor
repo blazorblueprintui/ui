@@ -29,6 +29,22 @@
         <CodeBlock Source="Components/ColorPicker/basic.txt" />
     </div>
 
+    <!-- With Action Buttons -->
+    <div class="space-y-4">
+        <div class="space-y-2">
+            <h2 class="text-2xl font-semibold">With Action Buttons</h2>
+            <p class="text-sm text-muted-foreground">
+                Select apply to commit changes or cancel to close the dialog.
+            </p>
+        </div>
+        <BbColorPicker @bind-Value="_actionButtonsColor" ActionButtons="true" />
+        <p class="text-sm text-muted-foreground">Selected: @_actionButtonsColor</p>
+        <div class="h-16 w-32 rounded-md border border-input"
+             style="background-color: @_actionButtonsColor;">
+        </div>
+        <CodeBlock Source="Components/ColorPicker/action-buttons.txt" />
+    </div>
+
     <!-- With Alpha Channel -->
     <div class="space-y-4">
         <div class="space-y-2">
@@ -223,6 +239,9 @@
                 <ApiParameter Name="Format" Type="ColorFormat" Default="Hex">
                     Output format (Hex, RGB, HSL).
                 </ApiParameter>
+                <ApiParameter Name="ActionButtons" Type="bool" Default="false">
+                    Shows a cancel and apply button.
+                </ApiParameter>
                 <ApiParameter Name="ShowAlpha" Type="bool" Default="false">
                     Show alpha slider.
                 </ApiParameter>
@@ -254,6 +273,7 @@
 
 @code {
     private string _basicColor = "#3B82F6";
+    private string _actionButtonsColor = "#B846E7";
     private string _alphaColor = "#3B82F680";
     private string _noPresetsColor = "#10B981";
     private string _customPresetsColor = "#6366F1";

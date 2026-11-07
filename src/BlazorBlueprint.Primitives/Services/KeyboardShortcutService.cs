@@ -31,17 +31,19 @@ public class KeyboardShortcutService : IKeyboardShortcutService
     public bool IsSuspended => _suspended;
 
     /// <inheritdoc />
-    public async Task<IDisposable> RegisterAsync(string shortcut, Func<Task> callback)
-    {
-        var id = $"shortcut_{Interlocked.Increment(ref _registrationCounter)}";
-        return await RegisterAsync(shortcut, callback, id);
-    }
+    public Task<IDisposable> RegisterAsync(string shortcut, Func<Task> callback) =>
+        RegisterAsync(shortcut, callback, allowInEditable: false);
 
     /// <inheritdoc />
-    public async Task<IDisposable> RegisterAsync(string shortcut, Func<Task> callback, string id)
+    public Task<IDisposable> RegisterAsync(string shortcut, Func<Task> callback, string id) =>
+        RegisterAsync(shortcut, callback, allowInEditable: false, id);
+
+    /// <inheritdoc />
+    public async Task<IDisposable> RegisterAsync(string shortcut, Func<Task> callback, bool allowInEditable, string? id = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, nameof(KeyboardShortcutService));
 
+        id ??= $"shortcut_{Interlocked.Increment(ref _registrationCounter)}";
         var parsed = KeyboardShortcut.Parse(shortcut);
         var normalizedKey = parsed.GetNormalizedKey();
 
@@ -54,7 +56,7 @@ public class KeyboardShortcutService : IKeyboardShortcutService
         // Register with JavaScript
         if (_module != null)
         {
-            await _module.InvokeVoidAsync("keyboardShortcuts.registerShortcut", normalizedKey);
+            await _module.InvokeVoidAsync("keyboardShortcuts.registerShortcut", normalizedKey, allowInEditable);
         }
 
         return new ShortcutHandle(this, normalizedKey, id);
@@ -66,7 +68,7 @@ public class KeyboardShortcutService : IKeyboardShortcutService
         var toRemove = _shortcuts.FirstOrDefault(kvp => kvp.Value.Id == id);
         if (toRemove.Key != null)
         {
-            UnregisterInternal(toRemove.Key);
+            UnregisterInternal(toRemove.Key, id);
         }
     }
 
@@ -160,8 +162,14 @@ public class KeyboardShortcutService : IKeyboardShortcutService
         }
     }
 
-    private void UnregisterInternal(string normalizedKey)
+    private void UnregisterInternal(string normalizedKey, string id)
     {
+        // A later registration may have replaced this one for the same key; that one stays.
+        if (!_shortcuts.TryGetValue(normalizedKey, out var current) || current.Id != id)
+        {
+            return;
+        }
+
         if (_shortcuts.Remove(normalizedKey) && _module != null)
         {
             // Fire-and-forget unregister from JS
@@ -208,7 +216,7 @@ public class KeyboardShortcutService : IKeyboardShortcutService
 
             if (!_service._disposed)
             {
-                _service.UnregisterInternal(_normalizedKey);
+                _service.UnregisterInternal(_normalizedKey, _id);
             }
         }
     }

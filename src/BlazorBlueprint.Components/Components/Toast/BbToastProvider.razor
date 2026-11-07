@@ -1,31 +1,22 @@
 @namespace BlazorBlueprint.Components
 @implements IAsyncDisposable
 @inject ToastService ToastService
+@inject IBbLocalizer Localizer
 
 @*
     Toast Provider - renders the toast container and manages toast lifecycle.
     Place this component once at the root of your application (e.g., in MainLayout).
 *@
 
-@* Main toast stack (toasts without per-toast position overrides) *@
-<div class="@GetContainerCssClass(EffectivePosition)" @attributes="AdditionalAttributes">
-    @foreach (var toast in GetToastsForPosition(null))
-    {
-        <BbToast @key="toast.Id"
-                 Data="@toast"
-                 Class="@toast.Class"
-                 ShowCountdown="@(toast.ShowCountdown ?? ShowCountdown)"
-                 OnDismiss="@(() => HandleDismiss(toast.Id))"
-                 OnPause="@(() => HandlePause(toast.Id))"
-                 OnResume="@(() => HandleResume(toast.Id))" />
-    }
-</div>
-
-@* Per-toast position containers *@
-@foreach (var position in GetCustomPositions())
-{
-    <div class="@GetContainerCssClass(position)">
-        @foreach (var toast in GetToastsForPosition(position))
+@*
+    One live region around every stack, rendered before any toast, so screen readers announce
+    toasts politely - including those in per-position stacks created on demand. Absolute keeps it
+    out of the page flow without creating a stacking context for the fixed stacks inside.
+*@
+<section class="bb:absolute" aria-label="@Localizer["Toast.Region"]" aria-live="polite">
+    @* Main toast stack (toasts without per-toast position overrides) *@
+    <div class="@GetContainerCssClass(EffectivePosition)" @attributes="AdditionalAttributes">
+        @foreach (var toast in GetToastsForPosition(null))
         {
             <BbToast @key="toast.Id"
                      Data="@toast"
@@ -33,10 +24,29 @@
                      ShowCountdown="@(toast.ShowCountdown ?? ShowCountdown)"
                      OnDismiss="@(() => HandleDismiss(toast.Id))"
                      OnPause="@(() => HandlePause(toast.Id))"
-                     OnResume="@(() => HandleResume(toast.Id))" />
+                     OnResume="@(() => HandleResume(toast.Id))"
+                     OnHold="@(() => HandleHold(toast.Id))" />
         }
     </div>
-}
+
+    @* Per-toast position containers *@
+    @foreach (var position in GetCustomPositions())
+    {
+        <div class="@GetContainerCssClass(position)">
+            @foreach (var toast in GetToastsForPosition(position))
+            {
+                <BbToast @key="toast.Id"
+                         Data="@toast"
+                         Class="@toast.Class"
+                         ShowCountdown="@(toast.ShowCountdown ?? ShowCountdown)"
+                         OnDismiss="@(() => HandleDismiss(toast.Id))"
+                         OnPause="@(() => HandlePause(toast.Id))"
+                         OnResume="@(() => HandleResume(toast.Id))"
+                         OnHold="@(() => HandleHold(toast.Id))" />
+            }
+        </div>
+    }
+</section>
 
 @code {
     private readonly Dictionary<string, ToastTimerState> timerStates = new();
@@ -82,7 +92,7 @@
     /// Gets or sets additional HTML attributes.
     /// </summary>
     /// <remarks>
-    /// Captured for API consistency; this component renders multiple root elements, so these attributes have no effect.
+    /// Applied to the main toast stack, not to per-toast position stacks or the live region around them.
     /// </remarks>
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
@@ -90,20 +100,16 @@
     protected override void OnInitialized()
     {
         ToastService.OnChange += HandleToastsChanged;
+
+        // The service is scoped, so its toasts outlive this provider. Navigating to a page with
+        // another layout disposes the old provider, timers and all, and mounts a new one: start
+        // timers for the toasts it inherits, or they stay until the next toast is shown (#621).
+        StartTimersForNewToasts();
     }
 
     private void HandleToastsChanged()
     {
-        // Start timers for new toasts
-        foreach (var toast in ToastService.Toasts)
-        {
-            if (!timerStates.ContainsKey(toast.Id) && toast.Duration > 0)
-            {
-                var state = new ToastTimerState { RemainingMs = toast.Duration };
-                timerStates[toast.Id] = state;
-                _ = RunDismissTimerAsync(toast.Id, state);
-            }
-        }
+        StartTimersForNewToasts();
 
         // Clean up stale entries (toasts removed externally)
         var activeIds = new HashSet<string>(ToastService.Toasts.Select(t => t.Id));
@@ -120,6 +126,21 @@
         }
 
         InvokeAsync(StateHasChanged);
+    }
+
+    // An inherited toast gets its full duration again: the old provider's remaining time is lost
+    // with it.
+    private void StartTimersForNewToasts()
+    {
+        foreach (var toast in ToastService.Toasts)
+        {
+            if (!timerStates.ContainsKey(toast.Id) && toast.Duration > 0)
+            {
+                var state = new ToastTimerState { RemainingMs = toast.Duration };
+                timerStates[toast.Id] = state;
+                _ = RunDismissTimerAsync(toast.Id, state);
+            }
+        }
     }
 
     private async Task RunDismissTimerAsync(string id, ToastTimerState state)
@@ -207,6 +228,17 @@
         {
             state.IsPaused = false;
             state.ResumeSignal?.TrySetResult();
+        }
+    }
+
+    // Unlike HandlePause this ignores PauseOnHover and nothing resumes it: the timer stays
+    // parked until the toast is dismissed, which completes its resume signal.
+    private void HandleHold(string id)
+    {
+        if (timerStates.TryGetValue(id, out var state))
+        {
+            state.IsPaused = true;
+            state.Cts?.Cancel();
         }
     }
 

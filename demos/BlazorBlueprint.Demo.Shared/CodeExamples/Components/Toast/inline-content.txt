@@ -1,0 +1,36 @@
+@code {
+    private void ShowExportToast()
+    {
+        var toast = new ToastData
+        {
+            Title = "Export ready",
+            Description = "Q3 leave report, 214 rows.",
+            Variant = ToastVariant.Success,
+            Duration = 8000
+        };
+
+        // Opening the menu stops the countdown. Actions don't dismiss the toast on their own,
+        // so each item dismisses it by Id.
+        toast.Actions = @<BbDropdownMenu>
+                            <BbDropdownMenuTrigger AsChild>
+                                <BbButton Size="ButtonSize.Small" Variant="ButtonVariant.Outline">
+                                    Download
+                                    <LucideIcon Name="chevron-down" Size="14" />
+                                </BbButton>
+                            </BbDropdownMenuTrigger>
+                            <BbDropdownMenuContent>
+                                <BbDropdownMenuItem OnClick="@(() => Download(toast, "pdf"))">PDF</BbDropdownMenuItem>
+                                <BbDropdownMenuItem OnClick="@(() => Download(toast, "csv"))">CSV</BbDropdownMenuItem>
+                                <BbDropdownMenuItem OnClick="@(() => Download(toast, "xlsx"))">Excel</BbDropdownMenuItem>
+                            </BbDropdownMenuContent>
+                        </BbDropdownMenu>;
+
+        ToastService.Show(toast);
+    }
+
+    private void Download(ToastData toast, string format)
+    {
+        ToastService.Dismiss(toast.Id);
+        Navigation.NavigateTo($"/reports/q3-leave.{format}", forceLoad: true);
+    }
+}

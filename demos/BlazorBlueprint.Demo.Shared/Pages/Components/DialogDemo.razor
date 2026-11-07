@@ -229,6 +229,39 @@
     </div>
 
     <div class="space-y-4">
+        <h2 class="text-2xl font-semibold">Position <span class="text-xs font-normal text-primary bg-primary/10 px-1.5 py-0.5 rounded">New</span></h2>
+        <p class="text-sm text-muted-foreground">
+            Set <code>Position</code> on the dialog to place it somewhere other than the centre of the viewport.
+            Dialogs opened with <code>DialogService.OpenAsync&lt;TComponent&gt;()</code> take the same value through
+            <code>DialogOpenOptions.Position</code>.
+        </p>
+
+        <div class="flex flex-wrap gap-2">
+            @foreach (var position in Enum.GetValues<DialogPosition>())
+            {
+                <BbButton Variant="ButtonVariant.Outline" OnClick="() => OpenAtPosition(position)">@position</BbButton>
+            }
+        </div>
+
+        <BbDialog @bind-Open="isPositionDialogOpen" Position="@dialogPosition">
+            <BbDialogContent>
+                <BbDialogHeader>
+                    <BbDialogTitle>@dialogPosition</BbDialogTitle>
+                    <BbDialogDescription>
+                        This dialog uses <code>Position="DialogPosition.@dialogPosition"</code>.
+                    </BbDialogDescription>
+                </BbDialogHeader>
+            </BbDialogContent>
+        </BbDialog>
+
+        <div class="flex items-center gap-4">
+            <BbButton OnClick="HandlePositionedServiceDialog">Open on the Right via DialogService</BbButton>
+        </div>
+
+        <CodeBlock Source="Components/Dialog/position.txt" />
+    </div>
+
+    <div class="space-y-4">
         <h2 class="text-2xl font-semibold">Without Close Button</h2>
         <p class="text-sm text-muted-foreground">
             Hide the default close button using ShowClose="false".
@@ -539,6 +572,53 @@
     </div>
 
     <div class="space-y-4">
+        <h2 class="text-2xl font-semibold">Animations <span class="text-xs font-normal text-primary bg-primary/10 px-1.5 py-0.5 rounded">New</span></h2>
+        <p class="text-sm text-muted-foreground">
+            Set <code>EnterPreset</code> and <code>ExitPreset</code> to any <code>MotionPreset</code> to choose how the
+            dialog opens and closes. An exit preset plays in reverse, and the dialog stays on the page until it ends.
+            <code>EnterKeyframes</code> and <code>ExitKeyframes</code> take custom Web Animations keyframes instead, and
+            <code>AnimationDuration</code> sets the length. <code>DialogOpenOptions</code> takes the same options.
+            Users who ask for reduced motion see no animation.
+        </p>
+
+        <div class="flex flex-wrap items-center gap-2">
+            <BbButton Variant="ButtonVariant.Outline" OnClick="() => OpenAnimated(MotionPreset.Fade)">Fade</BbButton>
+            <BbButton Variant="ButtonVariant.Outline" OnClick="() => OpenAnimated(MotionPreset.Scale)">Scale</BbButton>
+            <BbButton Variant="ButtonVariant.Outline" OnClick="() => OpenAnimated(MotionPreset.SlideUp)">SlideUp</BbButton>
+            <BbButton Variant="ButtonVariant.Outline" OnClick="() => OpenAnimated(MotionPreset.SlideLeft)">SlideLeft</BbButton>
+            <BbButton Variant="ButtonVariant.Outline" OnClick="() => OpenAnimated(MotionPreset.Spring)">Spring</BbButton>
+            <BbButton Variant="ButtonVariant.Outline" OnClick="() => OpenAnimated(null)">Custom keyframes</BbButton>
+        </div>
+
+        <BbDialog @bind-Open="isAnimatedDialogOpen"
+                  EnterPreset="@animatedPreset"
+                  ExitPreset="@animatedPreset"
+                  EnterKeyframes="@(animatedPreset is null ? dropInKeyframes : null)"
+                  ExitKeyframes="@(animatedPreset is null ? dropOutKeyframes : null)"
+                  AnimationDuration="300">
+            <BbDialogContent>
+                <BbDialogHeader>
+                    <BbDialogTitle>@(animatedPreset?.ToString() ?? "Custom keyframes")</BbDialogTitle>
+                    <BbDialogDescription>
+                        Close this dialog to see its exit animation.
+                    </BbDialogDescription>
+                </BbDialogHeader>
+                <BbDialogFooter>
+                    <BbDialogClose>
+                        <BbButton Variant="ButtonVariant.Outline">Close</BbButton>
+                    </BbDialogClose>
+                </BbDialogFooter>
+            </BbDialogContent>
+        </BbDialog>
+
+        <div class="flex items-center gap-4">
+            <BbButton OnClick="HandleAnimatedServiceDialog">Slide in via DialogService</BbButton>
+        </div>
+
+        <CodeBlock Source="Components/Dialog/animations.txt" />
+    </div>
+
+    <div class="space-y-4">
         <h2 class="text-2xl font-semibold">Form in Dialog</h2>
         <p class="text-sm text-muted-foreground">
             Dialog with bound input fields. Typing should feel instant with no flicker — keyboard events
@@ -800,6 +880,9 @@
                 <ApiParameter Name="Modal" Type="bool" Default="true">
                     Whether the dialog is modal. Modal dialogs trap focus and lock scroll.
                 </ApiParameter>
+                <ApiParameter Since="v4.2" Name="Position" Type="DialogPosition" Default="DialogPosition.Center">
+                    Where the dialog sits in the viewport. Options: <code>Center</code>, <code>TopCenter</code>, <code>BottomCenter</code>, <code>CenterLeft</code>, <code>CenterRight</code>, <code>TopLeft</code>, <code>TopRight</code>, <code>BottomLeft</code>, <code>BottomRight</code>.
+                </ApiParameter>
                 <ApiParameter Since="v4" Name="RenderingStrategy" Type="OverlayRenderingStrategy?" Default="null">
                     Overrides how the dialog renders. <code>Native</code> uses the browser's built-in
                     <code>&lt;dialog&gt;</code> element (top layer, native focus trap/Escape/backdrop), which needs no
@@ -808,6 +891,22 @@
                 </ApiParameter>
                 <ApiParameter Name="OnOpenChange" Type="EventCallback&lt;bool&gt;">
                     Event callback invoked when the dialog open state changes.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="EnterPreset" Type="MotionPreset?" Default="null">
+                    The <code>Motion</code> preset played when the dialog opens. When null, the dialog uses its built-in fade and zoom.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="ExitPreset" Type="MotionPreset?" Default="null">
+                    The <code>Motion</code> preset played, in reverse, when the dialog closes. The dialog stays on the page until it ends.
+                    When null, the dialog leaves as soon as it closes.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="EnterKeyframes" Type="IReadOnlyList&lt;IReadOnlyDictionary&lt;string, object&gt;&gt;?" Default="null">
+                    Custom Web Animations keyframes played when the dialog opens. Overrides <code>EnterPreset</code>.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="ExitKeyframes" Type="IReadOnlyList&lt;IReadOnlyDictionary&lt;string, object&gt;&gt;?" Default="null">
+                    Custom Web Animations keyframes played, as written, when the dialog closes. Overrides <code>ExitPreset</code>.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="AnimationDuration" Type="int" Default="200">
+                    Duration in milliseconds of the enter and exit animations. Reduced-motion preferences skip them.
                 </ApiParameter>
                 <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
                     Additional HTML attributes applied to the component's root element (e.g. <code>data-testid</code>, <code>aria-label</code>).
@@ -930,11 +1029,11 @@
             </ApiReference>
 
 <ApiReference ComponentName="ConfirmDialogOptions">
-                <ApiParameter Name="ConfirmText" Type="string" Default="&quot;Continue&quot;">
-                    The label for the confirm button.
+                <ApiParameter Name="ConfirmText" Type="string?" Default="null">
+                    The label for the confirm button. When null, it uses the localized <code>ConfirmDialog.Confirm</code> key (&quot;Continue&quot;).
                 </ApiParameter>
-                <ApiParameter Name="CancelText" Type="string" Default="&quot;Cancel&quot;">
-                    The label for the cancel button.
+                <ApiParameter Name="CancelText" Type="string?" Default="null">
+                    The label for the cancel button. When null, it uses the localized <code>ConfirmDialog.Cancel</code> key (&quot;Cancel&quot;).
                 </ApiParameter>
                 <ApiParameter Name="Destructive" Type="bool" Default="false">
                     Whether the confirm button should use the destructive variant.
@@ -942,17 +1041,17 @@
             </ApiReference>
 
 <ApiReference ComponentName="AlertDialogOptions">
-                <ApiParameter Name="ButtonText" Type="string" Default="&quot;OK&quot;">
-                    The label for the acknowledgment button.
+                <ApiParameter Name="ButtonText" Type="string?" Default="null">
+                    The label for the acknowledgment button. When null, it uses the localized <code>AlertDialog.Button</code> key (&quot;OK&quot;).
                 </ApiParameter>
             </ApiReference>
 
 <ApiReference ComponentName="PromptDialogOptions">
-                <ApiParameter Name="ConfirmText" Type="string" Default="&quot;OK&quot;">
-                    The label for the confirm button.
+                <ApiParameter Name="ConfirmText" Type="string?" Default="null">
+                    The label for the confirm button. When null, it uses the localized <code>PromptDialog.Confirm</code> key (&quot;OK&quot;).
                 </ApiParameter>
-                <ApiParameter Name="CancelText" Type="string" Default="&quot;Cancel&quot;">
-                    The label for the cancel button.
+                <ApiParameter Name="CancelText" Type="string?" Default="null">
+                    The label for the cancel button. When null, it uses the localized <code>PromptDialog.Cancel</code> key (&quot;Cancel&quot;).
                 </ApiParameter>
                 <ApiParameter Name="DefaultValue" Type="string?">
                     The initial value of the input field.
@@ -978,8 +1077,27 @@
                 <ApiParameter Name="Size" Type="DialogSize" Default="DialogSize.Default">
                     Controls the dialog width preset. Options: <code>Small</code>, <code>Default</code>, <code>Large</code>, <code>ExtraLarge</code>, <code>Full</code>.
                 </ApiParameter>
+                <ApiParameter Since="v4.2" Name="Position" Type="DialogPosition" Default="DialogPosition.Center">
+                    Where the dialog sits in the viewport. Takes the same values as the <code>Position</code> parameter on <code>Dialog</code>.
+                </ApiParameter>
                 <ApiParameter Name="PreventClose" Type="bool" Default="false">
                     Prevents closing via Escape key or backdrop click.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="EnterPreset" Type="MotionPreset?" Default="null">
+                    The <code>Motion</code> preset played when the dialog opens. Same as <code>EnterPreset</code> on <code>Dialog</code>.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="ExitPreset" Type="MotionPreset?" Default="null">
+                    The <code>Motion</code> preset played, in reverse, when the dialog closes. The dialog stays on the page until it ends;
+                    the <code>OpenAsync</code> result does not wait for it.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="EnterKeyframes" Type="IReadOnlyList&lt;IReadOnlyDictionary&lt;string, object&gt;&gt;?" Default="null">
+                    Custom Web Animations keyframes played when the dialog opens. Overrides <code>EnterPreset</code>.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="ExitKeyframes" Type="IReadOnlyList&lt;IReadOnlyDictionary&lt;string, object&gt;&gt;?" Default="null">
+                    Custom Web Animations keyframes played, as written, when the dialog closes. Overrides <code>ExitPreset</code>.
+                </ApiParameter>
+                <ApiParameter Since="v4.2" Name="AnimationDuration" Type="int" Default="200">
+                    Duration in milliseconds of the enter and exit animations.
                 </ApiParameter>
             </ApiReference>
 
@@ -1020,6 +1138,25 @@
     private string promptResult = "-";
     private string customResult = "-";
     private string nativeServiceResult = "-";
+
+    private bool isPositionDialogOpen;
+    private DialogPosition dialogPosition = DialogPosition.CenterRight;
+
+    // Animations
+    private bool isAnimatedDialogOpen;
+    private MotionPreset? animatedPreset = MotionPreset.Scale;
+
+    private static readonly IReadOnlyList<IReadOnlyDictionary<string, object>> dropInKeyframes =
+    [
+        new Dictionary<string, object> { ["opacity"] = 0, ["transform"] = "translateY(-48px) rotate(-3deg)" },
+        new Dictionary<string, object> { ["opacity"] = 1, ["transform"] = "translateY(0) rotate(0)" }
+    ];
+
+    private static readonly IReadOnlyList<IReadOnlyDictionary<string, object>> dropOutKeyframes =
+    [
+        new Dictionary<string, object> { ["opacity"] = 1, ["transform"] = "translateY(0) rotate(0)" },
+        new Dictionary<string, object> { ["opacity"] = 0, ["transform"] = "translateY(48px) rotate(3deg)" }
+    ];
 
     // Form in Dialog
     private string? formFirstName;
@@ -1146,6 +1283,26 @@
         }
     }
 
+    private void OpenAnimated(MotionPreset? preset)
+    {
+        animatedPreset = preset;
+        isAnimatedDialogOpen = true;
+    }
+
+    private async Task HandleAnimatedServiceDialog() =>
+        await DialogService.OpenAsync<NativeDialogBodyComponent>(
+            new Dictionary<string, object?>
+            {
+                ["Message"] = "This dialog slides in from the right and slides back out when it closes."
+            },
+            new DialogOpenOptions
+            {
+                Title = "Animated Dialog",
+                EnterPreset = MotionPreset.SlideLeft,
+                ExitPreset = MotionPreset.SlideLeft,
+                AnimationDuration = 300
+            });
+
     private async Task HandleOpenNativeService()
     {
         var result = await DialogService.OpenAsync<NativeDialogBodyComponent>(
@@ -1160,6 +1317,26 @@
             });
 
         nativeServiceResult = result.Cancelled ? "Cancelled" : "Closed";
+    }
+
+    private void OpenAtPosition(DialogPosition position)
+    {
+        dialogPosition = position;
+        isPositionDialogOpen = true;
+    }
+
+    private async Task HandlePositionedServiceDialog()
+    {
+        await DialogService.OpenAsync<NativeDialogBodyComponent>(
+            new Dictionary<string, object?>
+            {
+                ["Message"] = "This dialog was opened with DialogOpenOptions.Position set to CenterRight."
+            },
+            new DialogOpenOptions
+            {
+                Title = "Positioned Dialog",
+                Position = DialogPosition.CenterRight
+            });
     }
 
     public sealed class NativeDialogBodyComponent : ComponentBase

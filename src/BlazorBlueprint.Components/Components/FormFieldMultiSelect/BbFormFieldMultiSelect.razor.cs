@@ -50,27 +50,31 @@ public partial class BbFormFieldMultiSelect<TValue> : FormFieldBase
 
     /// <summary>
     /// Gets or sets the placeholder text shown when no items are selected.
+    /// When null, the inner multi-select uses IBbLocalizer with key "MultiSelect.Placeholder" ("Select items...").
     /// </summary>
     [Parameter]
-    public string Placeholder { get; set; } = "Select items...";
+    public string? Placeholder { get; set; }
 
     /// <summary>
     /// Gets or sets the placeholder text shown in the search input.
+    /// When null, the inner multi-select uses IBbLocalizer with key "MultiSelect.SearchPlaceholder" ("Search...").
     /// </summary>
     [Parameter]
-    public string SearchPlaceholder { get; set; } = "Search...";
+    public string? SearchPlaceholder { get; set; }
 
     /// <summary>
     /// Gets or sets the message displayed when no items match the search.
+    /// When null, the inner multi-select uses IBbLocalizer with key "MultiSelect.EmptyMessage" ("No results found.").
     /// </summary>
     [Parameter]
-    public string EmptyMessage { get; set; } = "No results found.";
+    public string? EmptyMessage { get; set; }
 
     /// <summary>
     /// Gets or sets the label for the Select All option.
+    /// When null, the inner multi-select uses IBbLocalizer with key "MultiSelect.SelectAll" ("Select All").
     /// </summary>
     [Parameter]
-    public string SelectAllLabel { get; set; } = "Select All";
+    public string? SelectAllLabel { get; set; }
 
     /// <summary>
     /// Gets or sets whether to show the Select All option.
@@ -80,15 +84,17 @@ public partial class BbFormFieldMultiSelect<TValue> : FormFieldBase
 
     /// <summary>
     /// Gets or sets the label for the Clear button.
+    /// When null, the inner multi-select uses IBbLocalizer with key "MultiSelect.Clear" ("Clear").
     /// </summary>
     [Parameter]
-    public string ClearLabel { get; set; } = "Clear";
+    public string? ClearLabel { get; set; }
 
     /// <summary>
     /// Gets or sets the label for the Close button.
+    /// When null, the inner multi-select uses IBbLocalizer with key "MultiSelect.Close" ("Close").
     /// </summary>
     [Parameter]
-    public string CloseLabel { get; set; } = "Close";
+    public string? CloseLabel { get; set; }
 
     /// <summary>
     /// Gets or sets whether the multiselect is disabled.

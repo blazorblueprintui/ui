@@ -1,11 +1,39 @@
 // Root-level keyboard navigation and outside dismissal for headless menus.
 const registrations = new WeakMap();
+
+function isInsideMenu(root, target) {
+    const visited = new Set();
+    while (target) {
+        if (root.contains(target)) return true;
+        // Portaled submenus are DOM siblings. Follow their labelled trigger back to the owner.
+        const menu = target.closest?.('[role="menu"][aria-labelledby]');
+        if (!menu || visited.has(menu)) return false;
+        visited.add(menu);
+        target = document.getElementById(menu.getAttribute('aria-labelledby'));
+        if (!target?.hasAttribute('data-bb-submenu-trigger')) return false;
+    }
+    return false;
+}
+
 export function initialize(root, navigation = false, enabled = true, dotNetRef = null) {
     let state = registrations.get(root);
-    if (state) { state.enabled = enabled; return; }
-    state = { enabled, pending: null };
-    const triggers = () => [...root.querySelectorAll(navigation ? '[data-nav-trigger]' : 'button[aria-haspopup="menu"]')]
-        .filter(el => !el.disabled && el.closest(navigation ? 'nav' : '[role="menubar"]') === root);
+    if (state) { state.enabled = enabled; state.syncTabStop(); return; }
+    state = { enabled, pending: null, current: null };
+    const topLevelTriggers = () => [...root.querySelectorAll(navigation ? '[data-nav-trigger]' : 'button[aria-haspopup="menu"]')]
+        .filter(el => el.closest(navigation ? 'nav' : '[role="menu"], [role="menubar"]') === root);
+    const triggers = () => topLevelTriggers().filter(el => !el.disabled);
+    const syncTabStop = () => {
+        if (navigation) return;
+        const list = triggers();
+        state.current = list.includes(document.activeElement) ? document.activeElement
+            : list.includes(state.current) ? state.current : list[0];
+        for (const trigger of topLevelTriggers()) {
+            const tabIndex = trigger === state.current ? '0' : '-1';
+            if (trigger.getAttribute('tabindex') !== tabIndex) trigger.setAttribute('tabindex', tabIndex);
+        }
+    };
+    state.syncTabStop = syncTabStop;
+    const focusin = () => syncTabStop();
     const panelFor = trigger => navigation ? trigger.closest('[data-nav-item]')?.querySelector('[role="menu"]') : null;
     const focusPending = () => {
         if (!state.pending) return;
@@ -28,7 +56,7 @@ export function initialize(root, navigation = false, enabled = true, dotNetRef =
             if (event.key === 'ArrowLeft') next = (index + (rtl ? 1 : -1) + list.length) % list.length;
             if (event.key === 'Home') next = 0;
             if (event.key === 'End') next = list.length - 1;
-            if (next !== undefined) { event.preventDefault(); list[next].focus(); return; }
+            if (next !== undefined) { event.preventDefault(); list[next].focus(); syncTabStop(); return; }
             if (['ArrowDown', 'ArrowUp'].includes(event.key)) {
                 event.preventDefault();
                 if (navigation) state.pending = { trigger, last: event.key === 'ArrowUp' };
@@ -55,15 +83,17 @@ export function initialize(root, navigation = false, enabled = true, dotNetRef =
         if (links[next]) { event.preventDefault(); links[next].focus(); }
     };
     const outside = event => {
-        if (root.contains(event.target)) return;
+        if (navigation ? root.contains(event.target) : isInsideMenu(root, event.target)) return;
         if (navigation) dotNetRef?.invokeMethodAsync('JsCloseMenus').catch(() => {});
         else triggers().find(el => el.getAttribute('aria-expanded') === 'true')?.click();
     };
-    const observer = new MutationObserver(focusPending);
-    observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-state'] });
+    const observer = new MutationObserver(() => { syncTabStop(); focusPending(); });
+    observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-state', 'disabled'] });
+    syncTabStop();
+    if (!navigation) root.addEventListener('focusin', focusin);
     root.addEventListener('keydown', keydown);
     document.addEventListener('pointerdown', outside);
-    state.dispose = () => { observer.disconnect(); root.removeEventListener('keydown', keydown); document.removeEventListener('pointerdown', outside); };
+    state.dispose = () => { observer.disconnect(); root.removeEventListener('keydown', keydown); root.removeEventListener('focusin', focusin); document.removeEventListener('pointerdown', outside); };
     registrations.set(root, state);
 }
 export function dispose(root) { registrations.get(root)?.dispose(); registrations.delete(root); }

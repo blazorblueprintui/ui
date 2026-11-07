@@ -206,117 +206,43 @@ builder.Services.AddScoped&lt;IBbLocalizer, AppBbLocalizer&gt;();</code></pre>
             <h2 class="text-2xl font-semibold">Available Keys</h2>
             <p class="text-muted-foreground leading-relaxed">
                 All keys use dot notation: <code class="text-xs bg-muted px-1 py-0.5 rounded">ComponentName.PropertyName</code>.
-                Keys marked with <strong>(format)</strong> accept <code class="text-xs bg-muted px-1 py-0.5 rounded">string.Format</code> arguments.
+                This table is generated from <code class="text-xs bg-muted px-1 py-0.5 rounded">DefaultBbLocalizer.EnglishDefaults</code>,
+                so it always matches the installed version. Keys with placeholders take
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">string.Format</code> arguments: keep every
+                <code class="text-xs bg-muted px-1 py-0.5 rounded">{0}</code>-style placeholder in your translation, in any order.
             </p>
-            <div class="overflow-x-auto">
+            <p class="text-muted-foreground leading-relaxed">
+                To start a translation file, export the same list:
+            </p>
+            <div class="rounded-lg border bg-muted/50 p-4">
+                <pre class="text-sm overflow-x-auto"><code>var json = JsonSerializer.Serialize(DefaultBbLocalizer.EnglishDefaults,
+    new JsonSerializerOptions { WriteIndented = true });</code></pre>
+            </div>
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <BbInput @bind-Value="keyFilter" UpdateTiming="UpdateTiming.Immediate"
+                         Placeholder="Filter by key or text..." aria-label="Filter localization keys" Class="sm:max-w-xs" />
+                <p class="text-sm text-muted-foreground">
+                    @FilteredKeys.Count() of @DefaultBbLocalizer.EnglishDefaults.Count keys
+                </p>
+            </div>
+            <div class="overflow-x-auto max-h-[36rem] overflow-y-auto rounded-md border">
                 <table class="w-full text-sm border-collapse">
-                    <thead>
+                    <thead class="sticky top-0 bg-background">
                         <tr class="border-b">
-                            <th class="text-left py-2 px-3 font-medium">Component</th>
-                            <th class="text-left py-2 px-3 font-medium">Keys</th>
+                            <th class="text-left py-2 px-3 font-medium">Key</th>
+                            <th class="text-left py-2 px-3 font-medium">English default</th>
+                            <th class="text-left py-2 px-3 font-medium">Placeholders</th>
                         </tr>
                     </thead>
                     <tbody class="text-muted-foreground">
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Calendar</code></td>
-                            <td class="py-2 px-3">GoToPreviousMonth, GoToNextMonth</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">DataGrid</code></td>
-                            <td class="py-2 px-3">Loading, NoResultsFound, SelectAllRows, ExpandAll, CollapseAll, PreviousPage, NextPage, FilterPlaceholder <strong>(format)</strong>, ShowingRange <strong>(format)</strong>, RowsSelected <strong>(format)</strong>, +30 more</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">DataTable</code></td>
-                            <td class="py-2 px-3">Loading, NoResultsFound, Search, Columns, ToggleColumns, SelectAllRows, SelectThisRow, +6 more</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Pagination</code></td>
-                            <td class="py-2 px-3">Previous, Next, RowsPerPage, ShowingFormat, PageFormat, GoToFirstPage, GoToLastPage, MorePages, NoItems</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Combobox</code></td>
-                            <td class="py-2 px-3">Placeholder, SearchPlaceholder, EmptyMessage</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">MultiSelect</code></td>
-                            <td class="py-2 px-3">Placeholder, SearchPlaceholder, EmptyMessage, SelectAll, Clear, Close</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">DatePicker</code></td>
-                            <td class="py-2 px-3">Placeholder</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">DateRangePicker</code></td>
-                            <td class="py-2 px-3">Placeholder, QuickSelect, Today, Yesterday, Last7Days, Last30Days, Clear, Apply, DaysSelected <strong>(format)</strong>, +4 more</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">FormWizard</code></td>
-                            <td class="py-2 px-3">Next, Back, Skip, Complete, WizardProgress</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">FilterBuilder</code></td>
-                            <td class="py-2 px-3">SelectField, AddCondition, AddGroup, RemoveCondition, date preset labels, period labels, +28 more</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Dialog</code> / <code class="text-xs bg-muted px-1 py-0.5 rounded">Sheet</code></td>
-                            <td class="py-2 px-3">Close</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Sidebar</code></td>
-                            <td class="py-2 px-3">ToggleSidebar</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Carousel</code></td>
-                            <td class="py-2 px-3">NextSlide, PreviousSlide</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">DataView</code></td>
-                            <td class="py-2 px-3">SearchPlaceholder, NoResultsFound, Loading, LoadMore, ListView, GridView, Sort</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">MarkdownEditor</code></td>
-                            <td class="py-2 px-3">SelectHeadingLevel, Bold, Italic, Underline, BulletList, NumberedList</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">RichTextEditor</code></td>
-                            <td class="py-2 px-3">Normal, Heading1/2/3, Bold, Italic, Underline, Strikethrough, BulletList, NumberedList, InsertLink, Blockquote, CodeBlock, EditLink, RemoveLink, Cancel, Update, Insert</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Alert</code></td>
-                            <td class="py-2 px-3">Dismiss</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Breadcrumb</code></td>
-                            <td class="py-2 px-3">Breadcrumb, More</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Command</code></td>
-                            <td class="py-2 px-3">CommandMenu, CommandList</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">DashboardGrid</code></td>
-                            <td class="py-2 px-3">Loading, NoWidgets, AddWidget, RemoveWidget, ResizeWidget</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">NumericInput</code></td>
-                            <td class="py-2 px-3">IncreaseValue, DecreaseValue</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">TagInput</code></td>
-                            <td class="py-2 px-3">Placeholder, RemoveTag <strong>(format)</strong>, ClearAllTags, TagSuggestions</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Rating</code></td>
-                            <td class="py-2 px-3">Rating</td>
-                        </tr>
-                        <tr class="border-b">
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">ResponsiveNav</code></td>
-                            <td class="py-2 px-3">ToggleMenu</td>
-                        </tr>
-                        <tr>
-                            <td class="py-2 px-3"><code class="text-xs bg-muted px-1 py-0.5 rounded">Timeline</code></td>
-                            <td class="py-2 px-3">Timeline</td>
-                        </tr>
+                        @foreach (var entry in FilteredKeys)
+                        {
+                            <tr class="border-b last:border-b-0" @key="entry.Key">
+                                <td class="py-2 px-3 align-top"><code class="text-xs bg-muted px-1 py-0.5 rounded">@entry.Key</code></td>
+                                <td class="py-2 px-3 align-top">@entry.Value</td>
+                                <td class="py-2 px-3 align-top whitespace-nowrap">@string.Join(" ", Placeholders(entry.Value))</td>
+                            </tr>
+                        }
                     </tbody>
                 </table>
             </div>
@@ -345,3 +271,20 @@ builder.Services.AddScoped&lt;IBbLocalizer, AppBbLocalizer&gt;();</code></pre>
 
     </div>
 </div>
+
+@code {
+    private static readonly System.Text.RegularExpressions.Regex PlaceholderPattern =
+        new(@"\{\d+(?:[,:][^}]*)?\}", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private string? keyFilter;
+
+    private IEnumerable<KeyValuePair<string, string>> FilteredKeys =>
+        DefaultBbLocalizer.EnglishDefaults
+            .Where(entry => string.IsNullOrWhiteSpace(keyFilter)
+                || entry.Key.Contains(keyFilter, StringComparison.OrdinalIgnoreCase)
+                || entry.Value.Contains(keyFilter, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(entry => entry.Key, StringComparer.Ordinal);
+
+    private static IEnumerable<string> Placeholders(string value) =>
+        PlaceholderPattern.Matches(value).Select(match => match.Value).Distinct();
+}

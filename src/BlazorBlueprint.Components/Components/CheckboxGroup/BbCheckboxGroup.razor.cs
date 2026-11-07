@@ -31,9 +31,10 @@ public partial class BbCheckboxGroup<TValue> : ComponentBase
 
     /// <summary>
     /// Gets or sets the label for the select-all checkbox.
+    /// When null, uses IBbLocalizer with key "CheckboxGroup.SelectAll" ("Select all").
     /// </summary>
     [Parameter]
-    public string SelectAllLabel { get; set; } = "Select all";
+    public string? SelectAllLabel { get; set; }
 
     /// <summary>
     /// Gets or sets whether all items in the group are disabled.

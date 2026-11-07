@@ -62,7 +62,9 @@ internal static class PostalEncoder
         {
             throw new BarcodeFormatException(
                 $"POSTNET carries a 5-digit ZIP, a 9-digit ZIP+4 or an 11-digit delivery point code. This value has {digits.Length} digits.",
-                nameof(value));
+                nameof(value),
+                BarcodeFormatError.PostnetWrongLength,
+                digits.Length);
         }
 
         // The check digit brings the sum of every digit up to the next multiple of ten.
@@ -109,13 +111,15 @@ internal static class PostalEncoder
             {
                 throw new BarcodeFormatException(
                     $"The Royal Mail 4-state code holds digits and upper-case letters, and this value contains '{c}'.",
-                    nameof(value));
+                    nameof(value),
+                    BarcodeFormatError.Rm4sccInvalidCharacter,
+                    c);
             }
         }
 
         if (upper.Length == 0)
         {
-            throw new BarcodeFormatException("The Royal Mail 4-state code needs at least one character.", nameof(value));
+            throw new BarcodeFormatException("The Royal Mail 4-state code needs at least one character.", nameof(value), BarcodeFormatError.Rm4sccEmpty);
         }
 
         var builder = new BarcodeBuilder();
@@ -218,7 +222,9 @@ internal static class PostalEncoder
         {
             throw new BarcodeFormatException(
                 $"Pharmacode carries a whole number from 3 to 131070, and this value is \"{value}\".",
-                nameof(value));
+                nameof(value),
+                BarcodeFormatError.PharmacodeOutOfRange,
+                value);
         }
 
         // The number is read off in binary from the bottom up, so the bars come out backwards.

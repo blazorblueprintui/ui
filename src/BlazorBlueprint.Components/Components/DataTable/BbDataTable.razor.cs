@@ -252,7 +252,7 @@ public partial class BbDataTable<TData> : ComponentBase where TData : class
     /// Gets the computed CSS classes for the table container.
     /// </summary>
     private static string TableContainerCssClass => ClassNames.cn(
-        "bb:rounded-md bb:border"
+        "bb:relative bb:w-full bb:overflow-x-auto bb:rounded-md bb:border"
     );
 
     /// <summary>

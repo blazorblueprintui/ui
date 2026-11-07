@@ -216,9 +216,10 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
 
     /// <summary>
     /// Placeholder text for the search input.
+    /// When null, uses IBbLocalizer with key "TreeView.SearchPlaceholder" ("Search...").
     /// </summary>
     [Parameter]
-    public string SearchPlaceholder { get; set; } = "Search...";
+    public string? SearchPlaceholder { get; set; }
 
     /// <summary>
     /// External search text for filtering (two-way bindable).
@@ -690,6 +691,11 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
     }
 
     // --- Event handlers ---
+
+    // Listen for node clicks only when the app does: invoking the callback re-renders this
+    // tree, and with it every node (#622).
+    private EventCallback<string> NodeClickCallback =>
+        OnNodeClick.HasDelegate ? EventCallback.Factory.Create<string>(this, HandleNodeClick) : default;
 
     private async Task HandleNodeClick(string value)
     {

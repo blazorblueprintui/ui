@@ -46,7 +46,7 @@ public static class BarcodeEncoder
         // their keys.
         if (value.Length == 0)
         {
-            throw new BarcodeFormatException("There is nothing to encode.", nameof(value));
+            throw new BarcodeFormatException("There is nothing to encode.", nameof(value), BarcodeFormatError.Empty);
         }
 
         return type switch
@@ -113,7 +113,10 @@ public static class BarcodeEncoder
             {
                 throw new BarcodeFormatException(
                     $"{type} holds digits only, and this value contains '{c}'. {DescribeInput(type)}",
-                    nameof(value));
+                    nameof(value),
+                    BarcodeFormatError.NotDigits,
+                    type,
+                    c);
             }
 
             digits[count] = c;

@@ -226,7 +226,9 @@ public partial class BbGauge : SeriesBase
                 Show = true,
                 Width = ProgressWidth,
                 RoundCap = ProgressRoundCap,
-                Color = ProgressColor ?? resolvedColor
+                ItemStyle = (ProgressColor ?? resolvedColor) is { } progressColor
+                    ? new EChartsItemStyleOption { Color = progressColor }
+                    : null
             };
         }
 

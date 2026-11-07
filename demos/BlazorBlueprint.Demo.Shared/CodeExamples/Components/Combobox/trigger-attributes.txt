@@ -1,0 +1,20 @@
+<label for="framework" class="text-sm font-medium">Framework</label>
+<BbCombobox TValue="string"
+         Options="frameworks"
+         @bind-Value="framework"
+         TriggerId="framework"
+         TriggerAttributes="triggerAttributes"
+         IsInvalid="@(framework is null)"
+         AriaDescribedBy="@(framework is null ? "framework-error" : null)"
+         Placeholder="Select framework..."
+         Class="w-full"
+         MatchTriggerWidth="true" />
+@if (framework is null)
+{
+    <p id="framework-error" class="text-sm text-destructive">Pick a framework.</p>
+}
+
+@code {
+    private string? framework;
+    private readonly Dictionary<string, object> triggerAttributes = new() { ["data-testid"] = "framework-trigger" };
+}

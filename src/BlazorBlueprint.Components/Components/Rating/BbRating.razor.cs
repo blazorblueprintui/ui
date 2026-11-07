@@ -148,6 +148,13 @@ public partial class BbRating : ComponentBase
         return 0;
     }
 
+    // Invariant, so a half fill is never written "0,5" into the SVG under a comma-decimal culture.
+    private string GradientId(string shape, double fill) =>
+        string.Create(CultureInfo.InvariantCulture, $"{shape}-gradient-{_instanceId}-{fill}");
+
+    private static string StopOffset(double fill) =>
+        string.Create(CultureInfo.InvariantCulture, $"{fill * 100}%");
+
     private async Task HandleClick(int index)
     {
         if (Disabled || ReadOnly)

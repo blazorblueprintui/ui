@@ -50,7 +50,9 @@ internal static class Code39Encoder
             {
                 throw new BarcodeFormatException(
                     $"Code 39 holds digits, letters and - . space $ / + %, and this value contains '{value[i]}'. Use Code 128 for anything else.",
-                    nameof(value));
+                    nameof(value),
+                    BarcodeFormatError.Code39InvalidCharacter,
+                    value[i]);
             }
 
             indexes[i] = index;

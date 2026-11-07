@@ -45,6 +45,7 @@ public partial class LogicalPropertyTests
         ["BbSidebarInset.razor.cs"] = "margins pair with SidebarSide",
         ["BbSidebarRail.razor"] = "rail sits against a physical sidebar side",
         ["BbToastProvider.razor"] = "ToastPosition names physical corners",
+        ["DialogPositionClasses.cs"] = "DialogPosition names physical sides and corners",
         ["BbBadge.razor.cs"] = "BadgeDotPosition names physical corners",
         ["BbNotificationBadge.razor"] = "BadgeDotPosition names physical corners",
         ["BbTooltipContent.razor"] = "the arrow's edges come from a physical PopoverSide",

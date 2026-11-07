@@ -1,5 +1,7 @@
 // Click-outside detection for dropdowns, popovers, and dialogs
 
+import { createId } from '../unique-id.js';
+
 // Store cleanup functions with unique IDs to avoid passing functions through JS interop
 const cleanupRegistry = new Map();
 
@@ -59,7 +61,7 @@ export function onFocusOutside(element, dotNetRef, methodName = 'HandleFocusOuts
         document.removeEventListener('focusin', handleFocusIn, true);
     };
 
-    const id = crypto.randomUUID();
+    const id = createId();
     cleanupRegistry.set(id, cleanupFunc);
 
     return {
@@ -91,7 +93,7 @@ export function onInteractOutside(element, dotNetRef, methodName = 'HandleIntera
         cleanupFocus.dispose();
     };
 
-    const id = crypto.randomUUID();
+    const id = createId();
     cleanupRegistry.set(id, cleanupFunc);
 
     return {
@@ -275,7 +277,7 @@ export function onClickOutsideByIds(elementId, dotNetRef, methodName = 'JsOnClic
         document.removeEventListener('pointerup', handlePointerUp, true);
     };
 
-    const id = crypto.randomUUID();
+    const id = createId();
     cleanupRegistry.set(id, cleanupFunc);
 
     return {

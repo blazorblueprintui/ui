@@ -2,7 +2,7 @@
 // Provides document-level keyboard event handling with Blazor interop
 
 let dotNetRef = null;
-let registeredShortcuts = new Set();
+let registeredShortcuts = new Map();
 let keydownHandler = null;
 
 /**
@@ -19,9 +19,10 @@ export function initialize(dotNetReference) {
 /**
  * Registers a shortcut key combination to listen for.
  * @param {string} normalizedKey - The normalized key combination (e.g., "ctrl+shift+t")
+ * @param {boolean} allowInEditable - Whether the shortcut can fire in editable elements
  */
-export function registerShortcut(normalizedKey) {
-    registeredShortcuts.add(normalizedKey.toLowerCase());
+export function registerShortcut(normalizedKey, allowInEditable = false) {
+    registeredShortcuts.set(normalizedKey.toLowerCase(), allowInEditable);
 }
 
 /**
@@ -49,12 +50,17 @@ export function dispose() {
  * @param {KeyboardEvent} event - The keyboard event
  */
 function handleKeyDown(event) {
-    // Skip if target is an input element (user is typing)
-    if (shouldSkipEvent(event)) {
+    // Leave IME composition to the input method, including legacy keyCode events.
+    if (event.isComposing || event.keyCode === 229) {
         return;
     }
 
     const normalizedKey = getNormalizedKey(event);
+
+    // Skip editable elements unless this registration opts in.
+    if (shouldSkipEvent(event) && !registeredShortcuts.get(normalizedKey)) {
+        return;
+    }
 
     if (registeredShortcuts.has(normalizedKey)) {
         event.preventDefault();
