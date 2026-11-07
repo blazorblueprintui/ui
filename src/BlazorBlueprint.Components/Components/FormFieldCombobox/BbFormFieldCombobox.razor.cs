@@ -45,21 +45,24 @@ public partial class BbFormFieldCombobox<TValue> : FormFieldBase
 
     /// <summary>
     /// Gets or sets the placeholder text shown when no item is selected.
+    /// When null, the inner combobox uses IBbLocalizer with key "Combobox.Placeholder" ("Select an option...").
     /// </summary>
     [Parameter]
-    public string Placeholder { get; set; } = "Select an option...";
+    public string? Placeholder { get; set; }
 
     /// <summary>
     /// Gets or sets the placeholder text shown in the search input.
+    /// When null, the inner combobox uses IBbLocalizer with key "Combobox.SearchPlaceholder" ("Search...").
     /// </summary>
     [Parameter]
-    public string SearchPlaceholder { get; set; } = "Search...";
+    public string? SearchPlaceholder { get; set; }
 
     /// <summary>
     /// Gets or sets the message displayed when no items match the search.
+    /// When null, the inner combobox uses IBbLocalizer with key "Combobox.EmptyMessage" ("No results found.").
     /// </summary>
     [Parameter]
-    public string EmptyMessage { get; set; } = "No results found.";
+    public string? EmptyMessage { get; set; }
 
     /// <summary>
     /// Gets or sets the current search query text.

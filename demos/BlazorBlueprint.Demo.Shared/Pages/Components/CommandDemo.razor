@@ -103,6 +103,7 @@
         <h2 class="text-2xl font-semibold">CommandDialog with Shortcut</h2>
         <p class="text-sm text-muted-foreground">
             Use <code class="bg-muted px-1 py-0.5 rounded">CommandDialog</code> to get a command palette with a built-in keyboard shortcut. Press <BbKbd>Ctrl+J</BbKbd> to open.
+            Set <code>AllowShortcutInEditable="true"</code> to use it while typing, including in the palette search field.
         </p>
 
         <div class="flex flex-col gap-2">
@@ -117,7 +118,7 @@
             }
         </div>
 
-        <BbCommandDialog @bind-Open="isCommandDialogOpen" Shortcut="Ctrl+J" OnValueChange="HandleDialogSelect">
+        <BbCommandDialog @bind-Open="isCommandDialogOpen" Shortcut="Ctrl+J" AllowShortcutInEditable="true" OnValueChange="HandleDialogSelect">
             <BbCommandInput Placeholder="Type a command or search..." AutoFocus="true" />
             <BbCommandList>
                 <BbCommandEmpty>No results found.</BbCommandEmpty>
@@ -650,6 +651,9 @@
                 <ApiParameter Name="Shortcut" Type="string?" Default="null">
                     Keyboard shortcut to toggle the dialog (e.g., "Ctrl+J", "Ctrl+K").
                 </ApiParameter>
+                <ApiParameter Name="AllowShortcutInEditable" Type="bool" Default="false">
+                    Allows Shortcut to fire in inputs, textareas, selects and contenteditable elements.
+                </ApiParameter>
                 <ApiParameter Name="OnValueChange" Type="EventCallback&lt;string&gt;">
                     Callback when an item is selected.
                 </ApiParameter>
@@ -665,8 +669,8 @@
             </ApiReference>
 
             <ApiReference ComponentName="CommandInput">
-                <ApiParameter Name="Placeholder" Type="string" Default="&quot;Type a command or search...&quot;">
-                    Placeholder text for the search input.
+                <ApiParameter Name="Placeholder" Type="string?" Default="null">
+                    Placeholder text for the search input. When null, it uses the localized <code>Command.Placeholder</code> key (&quot;Type a command or search...&quot;).
                 </ApiParameter>
                 <ApiParameter Since="v4" Name="Id" Type="string?" Default="generated">
                     The id of the input element. Pass the same value as a surrounding popover's AutoFocusId to have the input focused as the popover opens, inside the call that reveals it.

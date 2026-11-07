@@ -244,7 +244,12 @@ public partial class BbBarcode : ComponentBase
                 // nothing else — this used to strip a parameter-name suffix off the framework's
                 // composed message, which printed the raw resource key Arg_ParamName_Name on
                 // WebAssembly, where that resource is trimmed away.
-                encodeError = error.Message;
+                //
+                // A refusal that carries its reason is shown through the localizer instead, so
+                // the sentence can be translated; the English keys hold the encoder's own text.
+                encodeError = error is BarcodeFormatException { Error: not BarcodeFormatError.Unspecified } format
+                    ? LocalizeError(format)
+                    : error.Message;
             }
         }
 
@@ -252,6 +257,25 @@ public partial class BbBarcode : ComponentBase
         {
             await OnEncoded.InvokeAsync(symbol);
         }
+    }
+
+    /// <summary>
+    /// Words an encoder refusal through the localizer, under <c>Barcode.{reason}</c>.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="BarcodeFormatError.NotDigits"/> ends with what the symbology accepts, which
+    /// comes from <c>Barcode.Input{type}</c> so that half is translated too.
+    /// </remarks>
+    private string LocalizeError(BarcodeFormatException error)
+    {
+        var arguments = error.Arguments.ToList();
+
+        if (error.Error == BarcodeFormatError.NotDigits && arguments.Count > 0 && arguments[0] is BarcodeType type)
+        {
+            arguments.Add(Localizer[$"Barcode.Input{type}"]);
+        }
+
+        return Localizer[$"Barcode.{error.Error}", [.. arguments]];
     }
 
     /// <summary>

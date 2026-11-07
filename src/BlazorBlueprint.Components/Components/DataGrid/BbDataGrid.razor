@@ -7,7 +7,7 @@
 @inject IBbLocalizer Localizer
 
 <CascadingValue Value="this" IsFixed="true">
-    <div class="@ClassNames.cn("bb:w-full", Class)" @attributes="AdditionalAttributes">
+    <div class="@ClassNames.cn("bb:w-full", Class)" data-mobile-stacked="@GetMobileBreakpointAttribute()" @attributes="AdditionalAttributes">
         @if (ShowSearch || ShowExport || Toolbar != null)
         {
             <div class="bb:flex bb:items-center bb:justify-between bb:gap-2 bb:py-4">
@@ -166,11 +166,14 @@
                             }
                         </colgroup>
                     }
-                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader Class="@ClassNames.cn("bb:bg-background", StickyHeader ? "bb:sticky bb:top-0 bb:z-20" : "")">
+                    @* The row groups get an explicit role in the stacked layout: once CSS makes the table
+                       elements blocks, some browsers stop exposing them as a table. *@
+                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader Class="@ClassNames.cn("bb:bg-surface", StickyHeader ? "bb:sticky bb:top-0 bb:z-20" : "")"
+                        role="@(IsStacked ? "rowgroup" : null)">
                         @* Through cn() so the bare `group/row` marker ships too: the primitive
                            concatenates Class verbatim, and a consumer's `group-hover/row:*` resolves
                            against the unprefixed marker their own Tailwind build emits. *@
-                        <BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Class="@ClassNames.cn("bb:group/row bb:bg-background")">
+                        <BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Class="@ClassNames.cn("bb:group/row bb:bg-surface")">
                             @foreach (var column in _cachedVisibleColumns)
                             {
                                 var sortDirection = _gridState.Sorting.GetDirection(column.ColumnId);
@@ -384,7 +387,7 @@
                             }
                         </BlazorBlueprint.Primitives.DataGrid.BbDataGridRow>
                     </BlazorBlueprint.Primitives.DataGrid.BbDataGridHeader>
-                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridBody Class="bb:bg-background">
+                    <BlazorBlueprint.Primitives.DataGrid.BbDataGridBody Class="bb:bg-surface" role="@(IsStacked ? "rowgroup" : null)">
                         @if (ShowFilterBar && _gridState.Filtering.HasFilters)
                         {
                             <tr class="@ClassNames.cn("bb:border-b bb:bg-muted/30", FilterBarClass)">
@@ -555,7 +558,7 @@
 
     private RenderFragment<TData> RenderDataRow => item =>
         @<BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Item="@item"
-            Class="@ClassNames.cn("bb:group/row bb:bg-background", Striped ? StripeClass : null, RowClass?.Invoke(item), IsEditing(item) ? "bb:bg-muted/40" : null)">
+            Class="@ClassNames.cn("bb:group/row bb:bg-surface", Striped ? StripeClass : null, RowClass?.Invoke(item), IsEditing(item) ? "bb:bg-muted/40" : null)">
             @{
                 var rowIsEditing = IsEditing(item);
             }
@@ -580,7 +583,9 @@
                     @key="@column.ColumnId"
                     Class="@GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight, item)"
                     style="@pinnedStyle"
-                    data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)">
+                    data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)"
+                    data-label="@GetMobileLabel(column)"
+                    data-hide-on-mobile="@GetHideOnMobileAttribute(column)">
                     @if (isEditColumn)
                     {
                         <div @onclick:stopPropagation="true" class="bb:flex bb:items-center bb:gap-1">
@@ -767,7 +772,7 @@
     private RenderFragment<DataGridRenderItem<TData>> RenderHierarchyRow => renderItem =>
     {
         var item = renderItem.Item!;
-        var rowClass = ClassNames.cn("bb:group/row bb:bg-background",
+        var rowClass = ClassNames.cn("bb:group/row bb:bg-surface",
             Striped ? StripeClass : null,
             !renderItem.MatchesFilter ? "bb:opacity-50" : "",
             RowClass?.Invoke(item));
@@ -788,7 +793,9 @@
                     @key="@column.ColumnId"
                     Class="@GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight, item)"
                     style="@pinnedStyle"
-                    data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)">
+                    data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)"
+                    data-label="@GetMobileLabel(column)"
+                    data-hide-on-mobile="@GetHideOnMobileAttribute(column)">
                     @if (isSelectColumn)
                     {
                         <div @onclick:stopPropagation="true">

@@ -7,6 +7,8 @@
 @*
     SheetContent is the main content container for the sheet.
     Handles focus trap, escape key, scroll lock, side-specific positioning, and ARIA attributes.
+    With NonModal set it behaves as a non-modal dialog instead: no focus trap, no scroll lock,
+    aria-modal="false", and (with CloseOnInteractOutside) a pointer-down outside closes it.
 *@
 
 @if (Context.IsOpen)
@@ -14,7 +16,7 @@
     <div @ref="_contentRef"
          id="@Context.ContentId"
          role="dialog"
-         aria-modal="true"
+         aria-modal="@(NonModal ? "false" : "true")"
          aria-labelledby="@Context.TitleId"
          aria-describedby="@Context.DescriptionId"
          tabindex="-1"
@@ -88,11 +90,49 @@
     [Parameter]
     public EventCallback<KeyboardEventArgs> OnEscapeKeyDown { get; set; }
 
+    /// <summary>
+    /// Whether the sheet behaves as a non-modal dialog, leaving the page behind it usable.
+    /// Default is false.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// When true, the content gets <c>aria-modal="false"</c>, focus is moved into it on open
+    /// (following <see cref="InitialFocus"/> and <see cref="InitialFocusElement"/>) but not
+    /// trapped, and body scroll is not locked: <see cref="TrapFocus"/> and
+    /// <see cref="LockScroll"/> are ignored. Escape still closes the sheet, and a pointer-down
+    /// outside it closes it too unless <see cref="CloseOnInteractOutside"/> is false. Both follow
+    /// the sheet's <c>Modal</c> setting, which decides whether the sheet can be dismissed at all.
+    /// </para>
+    /// <para>
+    /// Render no <see cref="BbSheetOverlay"/> alongside a non-modal sheet: an overlay would
+    /// block the page this mode exists to keep usable. This is distinct from the sheet's
+    /// <c>Modal</c> parameter, which only controls dismissal. Read when the sheet opens:
+    /// changing it while the sheet is open takes effect the next time it opens.
+    /// </para>
+    /// </remarks>
+    [Parameter]
+    public bool NonModal { get; set; }
+
+    /// <summary>
+    /// Whether a pointer-down outside the content closes the sheet. Only applies when
+    /// <see cref="NonModal"/> is true; a modal sheet is dismissed through its overlay instead.
+    /// Default is true.
+    /// </summary>
+    /// <remarks>
+    /// The trigger does not count as outside (it toggles the sheet itself), and neither does
+    /// floating content portaled out of the sheet, such as a popover, select or dropdown menu
+    /// opened from inside it. A dialog or another sheet opened from inside it does count as
+    /// outside.
+    /// </remarks>
+    [Parameter]
+    public bool CloseOnInteractOutside { get; set; } = true;
+
     private ElementReference _contentRef;
     private IAsyncDisposable? _focusTrap;
     private IJSObjectReference? _portalModule;
     private IJSObjectReference? _scrollLockCleanup;
     private IJSObjectReference? _escapeModule;
+    private IJSObjectReference? _interactOutsideHandle;
     private DotNetObjectReference<BbSheetContent>? _dotNetRef;
     private string _instanceId = Guid.NewGuid().ToString("N");
     private bool _isInitialized = false;
@@ -117,8 +157,12 @@
         {
             _isInitialized = true;
 
-            // Set up focus trap
-            if (TrapFocus)
+            // Set up focus trap. A non-modal sheet only takes focus on open; it does not keep it.
+            if (NonModal)
+            {
+                await FocusInitialAsync();
+            }
+            else if (TrapFocus)
             {
                 try
                 {
@@ -134,8 +178,8 @@
                 }
             }
 
-            // Lock body scroll
-            if (LockScroll)
+            // Lock body scroll (never for a non-modal sheet, whose page stays usable)
+            if (LockScroll && !NonModal)
             {
                 try
                 {
@@ -166,6 +210,29 @@
             catch (InvalidOperationException)
             {
                 // JS interop not available during prerendering
+            }
+
+            // Close on a pointer-down outside a non-modal sheet. The shared click-outside helper
+            // excludes the trigger and any floating content portaled out of the sheet. Registered
+            // whatever CloseOnInteractOutside says, which is read per pointer-down so it can change
+            // while the sheet is open.
+            if (NonModal)
+            {
+                try
+                {
+                    var module = await PrimitiveModules.GetAsync(JSRuntime);
+                    _dotNetRef ??= DotNetObjectReference.Create(this);
+                    _interactOutsideHandle = await module.InvokeAsync<IJSObjectReference>(
+                        "clickOutside.onClickOutsideByIds", Context.ContentId, _dotNetRef, nameof(JsOnInteractOutside), Context.TriggerId);
+                }
+                catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+                {
+                    // Expected during circuit disconnect or module loading failure
+                }
+                catch (InvalidOperationException)
+                {
+                    // JS interop not available during prerendering
+                }
             }
         }
         else if (!Context.IsOpen && _isInitialized)
@@ -209,6 +276,41 @@
         }
     }
 
+    [JSInvokable]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public Task JsOnInteractOutside()
+    {
+        if (_disposed || !Context.IsOpen) { return Task.CompletedTask; }
+
+        // Same rule as the overlay click: the sheet's Modal decides whether it can be dismissed
+        if (NonModal && CloseOnInteractOutside && Context.Modal)
+        {
+            Context.Close();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    // Moves focus into a non-modal sheet the same way the modal one does (InitialFocusElement,
+    // then data-autofocus, then InitialFocus), by establishing the trap and releasing it straight
+    // away, so the two modes can never disagree about where focus lands.
+    private async Task FocusInitialAsync()
+    {
+        try
+        {
+            var trap = await FocusManager.TrapFocus(_contentRef, InitialFocus, InitialFocusElement);
+            await trap.DisposeAsync();
+        }
+        catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+        {
+            // Expected during circuit disconnect, or when the element is gone
+        }
+        catch (InvalidOperationException)
+        {
+            // JS interop not available during prerendering
+        }
+    }
+
     private async Task CleanupAsync()
     {
         // Dispose focus trap
@@ -230,6 +332,21 @@
                 // Cleanup may already be disposed or circuit disconnected
             }
             _scrollLockCleanup = null;
+        }
+
+        // Remove the outside-interaction listener
+        if (_interactOutsideHandle != null)
+        {
+            try
+            {
+                await _interactOutsideHandle.InvokeVoidAsync("dispose");
+                await _interactOutsideHandle.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSDisconnectedException or JSException or TaskCanceledException or ObjectDisposedException)
+            {
+                // Cleanup may already be disposed or circuit disconnected
+            }
+            _interactOutsideHandle = null;
         }
 
         // Remove escape key listener

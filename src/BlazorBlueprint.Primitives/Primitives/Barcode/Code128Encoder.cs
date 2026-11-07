@@ -49,7 +49,9 @@ internal static class Code128Encoder
             {
                 throw new BarcodeFormatException(
                     $"Code 128 holds ASCII only, and this value contains '{c}'. Use a QR code for anything beyond that.",
-                    nameof(value));
+                    nameof(value),
+                    BarcodeFormatError.Code128NotAscii,
+                    c);
             }
         }
 

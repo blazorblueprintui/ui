@@ -220,6 +220,8 @@
                 <p class="text-muted-foreground">
                     Register global keyboard shortcuts via <code>IKeyboardShortcutService</code>.
                     Shortcuts fire even when the menu is closed.
+                    By default, editable elements keep their normal keyboard behavior. Opt in per registration
+                    with <code>allowInEditable: true</code> to handle a shortcut while typing.
                 </p>
             </div>
 
@@ -276,6 +278,13 @@
             </div>
 
             <CodeBlock Source="Primitives/DropdownMenu/keyboard-shortcuts.txt" />
+
+            <div class="space-y-2">
+                <label for="shortcut-save-notes" class="text-sm font-medium">Notes</label>
+                <textarea id="shortcut-save-notes" class="w-full border rounded-md bg-background p-2" placeholder="Type here, then press Ctrl+S to save."></textarea>
+                <p class="text-sm text-muted-foreground">Ctrl+S works while typing. The other shortcuts above keep the default behavior.</p>
+            </div>
+            <CodeBlock Source="Primitives/DropdownMenu/editable-shortcuts.txt" />
         </section>
 
         <AccessibilityList>
@@ -330,6 +339,16 @@
                 <p class="text-muted-foreground">Component properties and parameters.</p>
             </div>
             <div class="space-y-4">
+                <ApiReference ComponentName="IKeyboardShortcutService">
+                    <ApiParameter Name="RegisterAsync(shortcut, callback, allowInEditable, id = null)" Type="Task&lt;IDisposable&gt;">
+                        Registers a shortcut with a per-registration editable opt-in. Set <code>allowInEditable</code> to true
+                        for inputs, textareas, selects and contenteditable elements. Existing overloads skip these elements.
+                        The optional <code>id</code> can be used with <code>Unregister</code>; dispose the returned handle to unregister.
+                        Custom services must implement this overload to support true; the default interface implementation
+                        delegates to the existing overloads for false and throws <code>NotSupportedException</code> for true.
+                    </ApiParameter>
+                </ApiReference>
+
                 <ApiReference ComponentName="DropdownMenu">
                     <ApiParameter Name="Open" Type="bool?" Default="null">
                         Controls whether the dropdown menu is open (controlled mode). When null, the dropdown menu manages its own state (uncontrolled mode). Supports two-way binding with <code>@@bind-Open</code>.
@@ -487,7 +506,7 @@
         {
             _shortcutNew = await KeyboardShortcuts.RegisterAsync("Ctrl+Shift+N", () => HandleShortcutAsync("New File"));
             _shortcutOpen = await KeyboardShortcuts.RegisterAsync("Ctrl+O", () => HandleShortcutAsync("Open"));
-            _shortcutSave = await KeyboardShortcuts.RegisterAsync("Ctrl+S", () => HandleShortcutAsync("Save"));
+            _shortcutSave = await KeyboardShortcuts.RegisterAsync("Ctrl+S", () => HandleShortcutAsync("Save"), allowInEditable: true);
             _shortcutSaveAs = await KeyboardShortcuts.RegisterAsync("Ctrl+Shift+S", () => HandleShortcutAsync("Save As"));
         }
     }

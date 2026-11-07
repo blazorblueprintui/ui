@@ -1,3 +1,5 @@
+using System.Collections.Frozen;
+
 namespace BlazorBlueprint.Components;
 
 /// <summary>
@@ -17,7 +19,7 @@ namespace BlazorBlueprint.Components;
 /// </remarks>
 public class DefaultBbLocalizer : IBbLocalizer
 {
-    private readonly Dictionary<string, string> defaults = new(StringComparer.Ordinal)
+    private static readonly FrozenDictionary<string, string> englishDefaults = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["Attachment.Open"] = "Open attachment",
         ["Sortable.Handle"] = "Reorder item",
@@ -48,11 +50,44 @@ public class DefaultBbLocalizer : IBbLocalizer
         // Alert
         ["Alert.Dismiss"] = "Dismiss",
 
+        // AlertDialog (DialogService.AlertAsync)
+        ["AlertDialog.Button"] = "OK",
+
         // AppBar
         ["AppBar.Back"] = "Go back",
 
         // Barcode
         ["Barcode.AriaLabel"] = "{0} barcode for {1}",
+        ["Barcode.Empty"] = "There is nothing to encode.",
+        ["Barcode.NotDigits"] = "{0} holds digits only, and this value contains '{1}'. {2}",
+        ["Barcode.Code128NotAscii"] = "Code 128 holds ASCII only, and this value contains '{0}'. Use a QR code for anything beyond that.",
+        ["Barcode.Code39InvalidCharacter"] = "Code 39 holds digits, letters and - . space $ / + %, and this value contains '{0}'. Use Code 128 for anything else.",
+        ["Barcode.WrongLength"] = "{0} needs {1} digits, or {2} with the check digit already on the end. This value has {3}.",
+        ["Barcode.WrongCheckDigit"] = "The check digit is wrong: {0} of {1} ends in {2}, not {3}. Leave the check digit off and it is worked out.",
+        ["Barcode.InvalidIsbn"] = "An ISBN is 10 digits, or 13 beginning 978 or 979, with or without hyphens. This value is \"{0}\".",
+        ["Barcode.InvalidIssn"] = "An ISSN is 8 characters, with or without a hyphen. This value is \"{0}\".",
+        ["Barcode.ItfTooShort"] = "Interleaved 2 of 5 needs at least two digits.",
+        ["Barcode.CodabarInvalidCharacter"] = "Codabar holds digits and - $ : / . +, wrapped in a start and stop letter from A to D. This value contains '{0}'.",
+        ["Barcode.MsiEmpty"] = "MSI needs at least one digit.",
+        ["Barcode.PostnetWrongLength"] = "POSTNET carries a 5-digit ZIP, a 9-digit ZIP+4 or an 11-digit delivery point code. This value has {0} digits.",
+        ["Barcode.Rm4sccInvalidCharacter"] = "The Royal Mail 4-state code holds digits and upper-case letters, and this value contains '{0}'.",
+        ["Barcode.Rm4sccEmpty"] = "The Royal Mail 4-state code needs at least one character.",
+        ["Barcode.PharmacodeOutOfRange"] = "Pharmacode carries a whole number from 3 to 131070, and this value is \"{0}\".",
+        ["Barcode.TelepenNotAscii"] = "Telepen holds ASCII only, and this value contains '{0}'.",
+        ["Barcode.InputCode128"] = "Any ASCII text.",
+        ["Barcode.InputCode39"] = "Digits, letters and - . space $ / + %.",
+        ["Barcode.InputEan13"] = "12 digits, or 13 with the check digit.",
+        ["Barcode.InputEan8"] = "7 digits, or 8 with the check digit.",
+        ["Barcode.InputUpcA"] = "11 digits, or 12 with the check digit.",
+        ["Barcode.InputItf"] = "Digits, an even number of them.",
+        ["Barcode.InputCodabar"] = "Digits and - $ : / . +, optionally wrapped in a start and stop letter A to D.",
+        ["Barcode.InputPostnet"] = "A 5, 9 or 11 digit ZIP code.",
+        ["Barcode.InputPharmacode"] = "A whole number from 3 to 131070.",
+        ["Barcode.InputRm4scc"] = "Digits and upper-case letters.",
+        ["Barcode.InputIsbn"] = "A 10 or 13 digit ISBN, with or without hyphens.",
+        ["Barcode.InputIssn"] = "An 8 character ISSN, with or without a hyphen.",
+        ["Barcode.InputMsi"] = "Digits.",
+        ["Barcode.InputTelepen"] = "Any ASCII text.",
 
         // BottomNav
         ["BottomNav.Label"] = "Primary navigation",
@@ -72,6 +107,8 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Carousel.StopRotation"] = "Stop automatic rotation",
         ["Carousel.NextSlide"] = "Next slide",
         ["Carousel.PreviousSlide"] = "Previous slide",
+        ["Carousel.RoleDescription"] = "carousel",
+        ["Carousel.SlideRoleDescription"] = "slide",
 
         // Cascader
         ["Cascader.Label"] = "Select a category",
@@ -81,17 +118,32 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Cascader.Clear"] = "Clear selection",
         ["Cascader.Level"] = "Level {0}",
 
+        // CheckboxGroup
+        ["CheckboxGroup.SelectAll"] = "Select all",
+
         // Chip
         ["Chip.Dismiss"] = "Remove",
+
+        // Color Picker
+        ["ColorPicker.Presets"] = "Presets",
+        ["ColorPicker.Cancel"] = "Cancel",
+        ["ColorPicker.Apply"] = "Apply",
 
         // Combobox
         ["Combobox.EmptyMessage"] = "No results found.",
         ["Combobox.Placeholder"] = "Select an option...",
         ["Combobox.SearchPlaceholder"] = "Search...",
+        ["Combobox.Selected"] = "Selected",
 
         // Command
         ["Command.CommandMenu"] = "Command menu",
         ["Command.CommandList"] = "Command list",
+        ["Command.Placeholder"] = "Type a command or search...",
+        ["Command.Loading"] = "Loading...",
+
+        // ConfirmDialog (DialogService.ConfirmAsync)
+        ["ConfirmDialog.Confirm"] = "Continue",
+        ["ConfirmDialog.Cancel"] = "Cancel",
 
         // CopyText
         ["CopyText.Copied"] = "Copied!",
@@ -202,6 +254,7 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["DataView.SortAndFilter"] = "Sort and filter",
         ["DataView.SortAndFilterDescription"] = "Changes update the results immediately. Select a sort field again to change direction.",
         ["DataView.Done"] = "Done",
+        ["DataView.ItemsPerPage"] = "Items per page",
 
         // DateInput
         ["DateInput.Label"] = "Date",
@@ -262,6 +315,19 @@ public class DefaultBbLocalizer : IBbLocalizer
 
         // Drawer
         ["Drawer.Resize"] = "Resize drawer",
+
+        // DynamicForm
+        ["DynamicForm.Submit"] = "Submit",
+        ["DynamicForm.ValidationErrors"] = "Validation Errors",
+        ["DynamicForm.Required"] = "{0} is required.",
+        ["DynamicForm.MinLength"] = "{0} must be at least {1} characters.",
+        ["DynamicForm.MaxLength"] = "{0} must be at most {1} characters.",
+        ["DynamicForm.Min"] = "{0} must be at least {1}.",
+        ["DynamicForm.Max"] = "{0} must be at most {1}.",
+        ["DynamicForm.Pattern"] = "{0} does not match the required format.",
+        ["DynamicForm.Email"] = "{0} must be a valid email address.",
+        ["DynamicForm.Url"] = "{0} must be a valid URL.",
+        ["DynamicForm.Phone"] = "{0} must be a valid phone number.",
 
         // EventCalendar
         ["EventCalendar.Today"] = "Today",
@@ -354,6 +420,23 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["FilterBuilder.OperatorGreaterThanDate"] = "is after",
         ["FilterBuilder.OperatorLessThanDate"] = "is before",
 
+        // FormFieldInput
+        ["FormField.ParseError"] = "'{0}' is not a valid {1}.",
+        ["FormField.PatternError"] = "'{0}' does not match the required format.",
+        ["FormField.ValueError"] = "The entered value is not valid.",
+        ["FormField.InvalidInput"] = "Invalid input.",
+        ["FormField.TypeText"] = "text value",
+        ["FormField.TypeWholeNumber"] = "whole number",
+        ["FormField.TypeNumber"] = "number",
+        ["FormField.TypeDate"] = "date",
+        ["FormField.TypeTime"] = "time",
+        ["FormField.TypeGuid"] = "GUID",
+        ["FormField.TypeBoolean"] = "true/false value",
+
+        // FormSection
+        ["FormSection.Expand"] = "Expand section",
+        ["FormSection.Collapse"] = "Collapse section",
+
         // FormWizard
         ["FormWizard.WizardProgress"] = "Wizard progress",
         ["FormWizard.Back"] = "Back",
@@ -401,6 +484,9 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Gantt.LegendMilestone"] = "Milestone",
         ["Gantt.LegendToday"] = "Today",
         ["Gantt.LegendNonWorking"] = "Non-working day",
+        ["Gantt.MissingId"] = "Every task needs an identifier.",
+        ["Gantt.DuplicateId"] = "Two tasks share the identifier '{0}'.",
+        ["Gantt.ParentLoop"] = "The parent identifiers form a loop.",
 
         // Link
         ["Link.OpensInNewTab"] = "(opens in a new tab)",
@@ -429,6 +515,9 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["MarkdownEditor.Underline"] = "Underline (Ctrl+U)",
         ["MarkdownEditor.BulletList"] = "Bullet list",
         ["MarkdownEditor.NumberedList"] = "Numbered list",
+        ["MarkdownEditor.Write"] = "Write",
+        ["MarkdownEditor.Preview"] = "Preview",
+        ["MarkdownEditor.TextStyle"] = "Text Style",
 
         // MultiSelect
         ["MultiSelect.EmptyMessage"] = "No results found.",
@@ -471,6 +560,12 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Pagination.PageFormat"] = "Page {0} of {1}",
         ["Pagination.NoItems"] = "No items",
 
+        // PromptDialog (DialogService.PromptAsync)
+        ["PromptDialog.Confirm"] = "OK",
+        ["PromptDialog.Cancel"] = "Cancel",
+        ["PromptDialog.Required"] = "The value is required",
+        ["PromptDialog.MaxLength"] = "Value must be at most {0} characters.",
+
         // QuantityStepper
         ["QuantityStepper.Label"] = "Quantity",
         ["QuantityStepper.Remove"] = "Remove item",
@@ -482,8 +577,13 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["QrCode.AriaLabelWithValue"] = "QR code for {0}",
         ["QrCode.TooLong"] = "This value is too long to fit in a QR code.",
 
+        // RangeSlider
+        ["RangeSlider.RangeStart"] = "Range start",
+        ["RangeSlider.RangeEnd"] = "Range end",
+
         // Rating
         ["Rating.Rating"] = "Rating",
+        ["Rating.ItemLabel"] = "{0} out of {1}",
 
         // ResponsiveNav
         ["ResponsiveNav.ToggleMenu"] = "Toggle Menu",
@@ -536,6 +636,9 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["RichTextEditor.DeleteRow"] = "Delete Row",
         ["RichTextEditor.DeleteColumn"] = "Delete Column",
         ["RichTextEditor.DeleteTable"] = "Delete Table",
+        ["RichTextEditor.LinkUrl"] = "URL",
+        ["RichTextEditor.LinkUrlPlaceholder"] = "https://example.com",
+        ["RichTextEditor.InvalidUrl"] = "Please enter a valid URL",
 
         // Scheduler
         ["Scheduler.Repeat"] = "Repeat",
@@ -658,6 +761,12 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Sortable.Removed"] = "Item removed from position {0} and placed at position {1} in another list.",
         ["Sortable.Received"] = "Item received at position {0}.",
 
+        // Spinner
+        ["Spinner.Loading"] = "Loading",
+
+        // SplitButton
+        ["SplitButton.MoreOptions"] = "More options",
+
         // Tabs
         ["Tabs.Add"] = "New tab",
         ["Tabs.Close"] = "Close",
@@ -668,6 +777,7 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["TagInput.RemoveTag"] = "Remove {0}",
         ["TagInput.ClearAllTags"] = "Clear all tags",
         ["TagInput.TagSuggestions"] = "Tag suggestions",
+        ["TagInput.AddTag"] = "Add tag",
 
         // Theme
         ["Theme.Switcher.Label"] = "Customize theme",
@@ -700,13 +810,39 @@ public class DefaultBbLocalizer : IBbLocalizer
 
         // Timeline
         ["Timeline.Timeline"] = "Timeline",
+        ["Timeline.Empty"] = "No timeline items to display",
+
+        // TimePicker
+        ["TimePicker.Placeholder"] = "Select time",
+
+        // Toast
+        ["Toast.Region"] = "Notifications",
+        ["Toast.Close"] = "Close",
 
         // TreeSelect
         ["TreeSelect.Label"] = "Select from tree",
         ["TreeSelect.Placeholder"] = "Select an item…",
         ["TreeSelect.Clear"] = "Clear selection",
         ["TreeSelect.Search"] = "Search…",
-    };
+
+        // TreeView
+        ["TreeView.SearchPlaceholder"] = "Search...",
+        ["TreeView.FailedToLoad"] = "Failed to load",
+        ["TreeView.Retry"] = "Retry",
+    }.ToFrozenDictionary(StringComparer.Ordinal);
+
+    private readonly Dictionary<string, string> defaults = new(englishDefaults, StringComparer.Ordinal);
+
+    /// <summary>
+    /// Gets every localization key with its built-in English text.
+    /// </summary>
+    /// <remarks>
+    /// Overrides made with <see cref="Set"/> are not reflected here. Use this to list the available
+    /// keys, or to export them as a starting point for a translation (for example as JSON).
+    /// Values that take <see cref="string.Format(string, object[])"/> arguments contain
+    /// <c>{0}</c>-style placeholders.
+    /// </remarks>
+    public static IReadOnlyDictionary<string, string> EnglishDefaults => englishDefaults;
 
     /// <inheritdoc />
     public virtual string this[string key] =>

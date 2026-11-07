@@ -7,17 +7,6 @@ namespace BlazorBlueprint.Components;
 public class PromptDialogOptions : DialogOptions
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="PromptDialogOptions"/> class.
-    /// </summary>
-    /// <remarks>
-    /// Sets the default confirmation button text to <c>"OK"</c>.
-    /// </remarks>
-    public PromptDialogOptions()
-    {
-        ConfirmText = "OK";
-    }
-
-    /// <summary>
     /// Gets or sets the initial value of the input field.
     /// </summary>
     public string? DefaultValue { get; set; }

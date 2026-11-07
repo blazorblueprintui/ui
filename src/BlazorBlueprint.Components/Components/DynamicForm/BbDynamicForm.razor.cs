@@ -85,9 +85,10 @@ public partial class BbDynamicForm : ComponentBase
 
     /// <summary>
     /// Gets or sets the text for the built-in submit button.
+    /// When null, uses IBbLocalizer with key "DynamicForm.Submit" ("Submit").
     /// </summary>
     [Parameter]
-    public string SubmitText { get; set; } = "Submit";
+    public string? SubmitText { get; set; }
 
     /// <summary>
     /// Gets or sets whether to show the built-in submit button.
@@ -363,7 +364,7 @@ public partial class BbDynamicForm : ComponentBase
         return fieldErrors.Count == 0;
     }
 
-    private static string? ValidateField(FormFieldDefinition field, object? value)
+    private string? ValidateField(FormFieldDefinition field, object? value)
     {
         // Required check — for boolean fields, "required" means the value must be true
         if (field.Required)
@@ -372,12 +373,12 @@ public partial class BbDynamicForm : ComponentBase
             {
                 if (!CoerceToBool(value))
                 {
-                    return $"{field.Label ?? field.Name} is required.";
+                    return Localizer["DynamicForm.Required", field.Label ?? field.Name];
                 }
             }
             else if (IsEmpty(value))
             {
-                return $"{field.Label ?? field.Name} is required.";
+                return Localizer["DynamicForm.Required", field.Label ?? field.Name];
             }
         }
 
@@ -404,7 +405,7 @@ public partial class BbDynamicForm : ComponentBase
         return null;
     }
 
-    private static string? EvaluateValidation(FormFieldDefinition field, FieldValidation validation, object? value)
+    private string? EvaluateValidation(FormFieldDefinition field, FieldValidation validation, object? value)
     {
         var label = field.Label ?? field.Name;
         var str = value is IFormattable formattable
@@ -416,7 +417,7 @@ public partial class BbDynamicForm : ComponentBase
             case ValidationType.Required:
                 if (IsEmpty(value))
                 {
-                    return validation.Message ?? $"{label} is required.";
+                    return validation.Message ?? Localizer["DynamicForm.Required", label];
                 }
 
                 break;
@@ -427,7 +428,7 @@ public partial class BbDynamicForm : ComponentBase
                     var min = Convert.ToInt32(validation.Value, CultureInfo.InvariantCulture);
                     if (str.Length < min)
                     {
-                        return validation.Message ?? $"{label} must be at least {min} characters.";
+                        return validation.Message ?? Localizer["DynamicForm.MinLength", label, min];
                     }
                 }
 
@@ -439,7 +440,7 @@ public partial class BbDynamicForm : ComponentBase
                     var max = Convert.ToInt32(validation.Value, CultureInfo.InvariantCulture);
                     if (str.Length > max)
                     {
-                        return validation.Message ?? $"{label} must be at most {max} characters.";
+                        return validation.Message ?? Localizer["DynamicForm.MaxLength", label, max];
                     }
                 }
 
@@ -451,7 +452,7 @@ public partial class BbDynamicForm : ComponentBase
                     var minVal = Convert.ToDouble(validation.Value, CultureInfo.InvariantCulture);
                     if (minNum < minVal)
                     {
-                        return validation.Message ?? $"{label} must be at least {minVal}.";
+                        return validation.Message ?? Localizer["DynamicForm.Min", label, minVal];
                     }
                 }
 
@@ -463,7 +464,7 @@ public partial class BbDynamicForm : ComponentBase
                     var maxVal = Convert.ToDouble(validation.Value, CultureInfo.InvariantCulture);
                     if (maxNum > maxVal)
                     {
-                        return validation.Message ?? $"{label} must be at most {maxVal}.";
+                        return validation.Message ?? Localizer["DynamicForm.Max", label, maxVal];
                     }
                 }
 
@@ -476,12 +477,12 @@ public partial class BbDynamicForm : ComponentBase
                     {
                         if (!Regex.IsMatch(str, pattern, RegexOptions.None, TimeSpan.FromSeconds(1)))
                         {
-                            return validation.Message ?? $"{label} does not match the required format.";
+                            return validation.Message ?? Localizer["DynamicForm.Pattern", label];
                         }
                     }
                     catch (RegexMatchTimeoutException)
                     {
-                        return validation.Message ?? $"{label} does not match the required format.";
+                        return validation.Message ?? Localizer["DynamicForm.Pattern", label];
                     }
                 }
 
@@ -490,7 +491,7 @@ public partial class BbDynamicForm : ComponentBase
             case ValidationType.Email:
                 if (!Regex.IsMatch(str, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
                 {
-                    return validation.Message ?? $"{label} must be a valid email address.";
+                    return validation.Message ?? Localizer["DynamicForm.Email", label];
                 }
 
                 break;
@@ -498,7 +499,7 @@ public partial class BbDynamicForm : ComponentBase
             case ValidationType.Url:
                 if (!Uri.TryCreate(str, UriKind.Absolute, out _))
                 {
-                    return validation.Message ?? $"{label} must be a valid URL.";
+                    return validation.Message ?? Localizer["DynamicForm.Url", label];
                 }
 
                 break;
@@ -506,7 +507,7 @@ public partial class BbDynamicForm : ComponentBase
             case ValidationType.Phone:
                 if (!Regex.IsMatch(str, @"^[\d\s\-\+\(\)]+$"))
                 {
-                    return validation.Message ?? $"{label} must be a valid phone number.";
+                    return validation.Message ?? Localizer["DynamicForm.Phone", label];
                 }
 
                 break;

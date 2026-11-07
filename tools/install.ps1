@@ -1,5 +1,8 @@
 # Tailwind CLI Downloader for Windows
-$url = "https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-windows-x64.exe"
+
+# Pinned for reproducible builds; override with $env:TAILWIND_VERSION = "vX.Y.Z"
+$version = if ($env:TAILWIND_VERSION) { $env:TAILWIND_VERSION } else { "v4.3.5" }
+$url = "https://github.com/tailwindlabs/tailwindcss/releases/download/$version/tailwindcss-windows-x64.exe"
 $target = "./tailwindcss.exe"
 
 Write-Host "Downloading Tailwind CLI from $url..." -ForegroundColor Cyan

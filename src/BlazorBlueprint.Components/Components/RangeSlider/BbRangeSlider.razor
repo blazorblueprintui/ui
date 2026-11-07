@@ -2,6 +2,7 @@
 @using Microsoft.JSInterop
 @using System.Globalization
 @inject IJSRuntime JS
+@inject IBbLocalizer Localizer
 @implements IAsyncDisposable
 
 <div @ref="_trackRef"
@@ -29,10 +30,10 @@
     @* Start Thumb *@
     <div data-thumb="start"
          role="slider"
-         aria-label="@(StartLabel ?? "Range start")"
-         aria-valuemin="@Min"
-         aria-valuemax="@Max"
-         aria-valuenow="@StartValue"
+         aria-label="@(StartLabel ?? Localizer["RangeSlider.RangeStart"])"
+         aria-valuemin="@Min.ToString(CultureInfo.InvariantCulture)"
+         aria-valuemax="@Max.ToString(CultureInfo.InvariantCulture)"
+         aria-valuenow="@StartValue.ToString(CultureInfo.InvariantCulture)"
          aria-disabled="@(Disabled ? "true" : "false")"
          aria-orientation="@(IsVertical ? "vertical" : "horizontal")"
          tabindex="@(Disabled ? -1 : 0)"
@@ -48,10 +49,10 @@
     @* End Thumb *@
     <div data-thumb="end"
          role="slider"
-         aria-label="@(EndLabel ?? "Range end")"
-         aria-valuemin="@Min"
-         aria-valuemax="@Max"
-         aria-valuenow="@EndValue"
+         aria-label="@(EndLabel ?? Localizer["RangeSlider.RangeEnd"])"
+         aria-valuemin="@Min.ToString(CultureInfo.InvariantCulture)"
+         aria-valuemax="@Max.ToString(CultureInfo.InvariantCulture)"
+         aria-valuenow="@EndValue.ToString(CultureInfo.InvariantCulture)"
          aria-disabled="@(Disabled ? "true" : "false")"
          aria-orientation="@(IsVertical ? "vertical" : "horizontal")"
          tabindex="@(Disabled ? -1 : 0)"
@@ -189,12 +190,14 @@
 
     /// <summary>
     /// Gets or sets the ARIA label for the start thumb.
+    /// When null, uses IBbLocalizer with key "RangeSlider.RangeStart" ("Range start").
     /// </summary>
     [Parameter]
     public string? StartLabel { get; set; }
 
     /// <summary>
     /// Gets or sets the ARIA label for the end thumb.
+    /// When null, uses IBbLocalizer with key "RangeSlider.RangeEnd" ("Range end").
     /// </summary>
     [Parameter]
     public string? EndLabel { get; set; }

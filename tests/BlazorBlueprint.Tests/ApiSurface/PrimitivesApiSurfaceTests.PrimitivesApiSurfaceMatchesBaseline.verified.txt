@@ -271,6 +271,8 @@
   - ChildContent : RenderFragment
   - CloseOnEscape : Boolean
   - CloseOnOverlayClick : Boolean
+  - EnterAnimation : Func<ElementReference, Task>
+  - ExitAnimation : Func<ElementReference, Task>
   - InitialFocus : FocusTrapInitialFocus
   - InitialFocusElement : ElementReference?
   - LockScroll : Boolean
@@ -701,9 +703,11 @@
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
   - ChildContent : RenderFragment
   - CloseOnEscape : Boolean
+  - CloseOnInteractOutside : Boolean
   - InitialFocus : FocusTrapInitialFocus
   - InitialFocusElement : ElementReference?
   - LockScroll : Boolean
+  - NonModal : Boolean
   - OnEscapeKeyDown : EventCallback<KeyboardEventArgs>
   - TrapFocus : Boolean
   - Context : SheetContext [CascadingParameter]
@@ -1032,6 +1036,25 @@
   - Single = 0
   - Multiple = 1
 
+### BarcodeFormatError (BlazorBlueprint.Primitives.Barcode)
+  - Unspecified = 0
+  - Empty = 1
+  - NotDigits = 2
+  - Code128NotAscii = 3
+  - Code39InvalidCharacter = 4
+  - WrongLength = 5
+  - WrongCheckDigit = 6
+  - InvalidIsbn = 7
+  - InvalidIssn = 8
+  - ItfTooShort = 9
+  - CodabarInvalidCharacter = 10
+  - MsiEmpty = 11
+  - PostnetWrongLength = 12
+  - Rm4sccInvalidCharacter = 13
+  - Rm4sccEmpty = 14
+  - PharmacodeOutOfRange = 15
+  - TelepenNotAscii = 16
+
 ### BarcodeType (BlazorBlueprint.Primitives.Barcode)
   - Code128 = 0
   - Code39 = 1
@@ -1150,6 +1173,12 @@
 ### GanttAnchor (BlazorBlueprint.Primitives.Gantt)
   - Start = 0
   - End = 1
+
+### GanttBuildError (BlazorBlueprint.Primitives.Gantt)
+  - Unspecified = 0
+  - MissingId = 1
+  - DuplicateId = 2
+  - ParentLoop = 3
 
 ### GanttDependencyType (BlazorBlueprint.Primitives.Gantt)
   - FinishToStart = 0
@@ -1351,7 +1380,9 @@
   - Groupable : Boolean { get; }
   - HeaderClass : String { get; }
   - HeaderTemplate : RenderFragment<DataGridHeaderContext<TData>> { get; }
+  - HideOnMobile : Boolean { get; }
   - Hideable : Boolean { get; }
+  - MobileLabel : String { get; }
   - NoWrap : Boolean { get; }
   - Order : Int32? { get; }
   - Pinned : ColumnPinning { get; }
@@ -1393,6 +1424,7 @@
   - IsSuspended : Boolean { get; }
   - RegisterAsync(String shortcut, Func<Task> callback) : Task<IDisposable>
   - RegisterAsync(String shortcut, Func<Task> callback, String id) : Task<IDisposable>
+  - RegisterAsync(String shortcut, Func<Task> callback, Boolean allowInEditable, String id) : Task<IDisposable>
   - Resume() : Void
   - Suspend() : Void
   - Unregister(String id) : Void

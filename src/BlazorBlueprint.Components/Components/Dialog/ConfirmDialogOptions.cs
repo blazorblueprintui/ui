@@ -5,11 +5,6 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 public class ConfirmDialogOptions : DialogOptions
 {
-    public ConfirmDialogOptions()
-    {
-        ConfirmText = "Continue";
-    }
-
     /// <summary>
     /// Whether the confirm button should use the destructive variant.
     /// Default: false (uses primary/default variant).

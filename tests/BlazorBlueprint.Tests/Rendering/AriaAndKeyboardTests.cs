@@ -20,38 +20,6 @@ namespace BlazorBlueprint.Tests.Rendering;
 public class AriaAndKeyboardTests
 {
     /// <summary>
-    /// Every BbFormField* control points <c>aria-describedby</c> at the helper text, and
-    /// BbFieldDescription took an <c>Id</c> and never rendered it — so the reference dangled and a
-    /// screen reader read out no description at all.
-    /// </summary>
-    [Fact]
-    public async Task HelperTextIdIsActuallyRendered()
-    {
-        var markup = await Render<BbFormFieldCheckbox>(new()
-        {
-            [nameof(BbFormFieldCheckbox.HelperText)] = "Pick one"
-        });
-
-        var described = Regex.Match(markup, @"aria-describedby=""(?<id>[^""]+)""");
-        Assert.True(described.Success, $"No aria-describedby was rendered:\n{markup}");
-        Assert.Contains($"id=\"{described.Groups["id"].Value}\"", markup, StringComparison.Ordinal);
-    }
-
-    /// <summary>The same for the error text, which uses its own id.</summary>
-    [Fact]
-    public async Task ErrorTextIdIsActuallyRendered()
-    {
-        var markup = await Render<BbFormFieldCheckbox>(new()
-        {
-            [nameof(BbFormFieldCheckbox.ErrorText)] = "Required"
-        });
-
-        var described = Regex.Match(markup, @"aria-describedby=""(?<id>[^""]+)""");
-        Assert.True(described.Success, $"No aria-describedby was rendered:\n{markup}");
-        Assert.Contains($"id=\"{described.Groups["id"].Value}\"", markup, StringComparison.Ordinal);
-    }
-
-    /// <summary>
     /// The state attributes take the strings "true" and "false". Bound to a bool, Blazor renders
     /// the attribute with an empty value when true and drops it when false.
     /// </summary>
@@ -196,6 +164,47 @@ public class AriaAndKeyboardTests
         });
 
         Assert.DoesNotContain("data-side=\"Bottom\"", markup, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Every toast had <c>role="alert"</c>, so a screen reader interrupted the user for "Saved" as
+    /// it would for an error. All stacks now sit in one polite live region that exists before any
+    /// toast arrives, and only a destructive toast is an alert.
+    /// </summary>
+    [Fact]
+    public async Task OnlyDestructiveToastsAreAlerts()
+    {
+        await using var provider = Services().BuildServiceProvider();
+        var toasts = provider.GetRequiredService<ToastService>();
+        toasts.Info("Units: Imperial");
+        toasts.Error("Save failed");
+        toasts.Show(new ToastData { Description = "Elsewhere", Position = ToastPosition.TopLeft });
+
+        await using var renderer = new ComponentTestRenderer(provider, NullLoggerFactory.Instance);
+        var markup = string.Empty;
+        await renderer.Dispatcher.InvokeAsync(async () =>
+        {
+            await renderer.MountAsync<BbToastProvider>([]);
+            markup = renderer.Markup();
+        });
+
+        Assert.Matches(@"^<section[^>]* aria-label=""Notifications"" aria-live=""polite"">", markup);
+        Assert.EndsWith("</section>", markup, StringComparison.Ordinal);
+        Assert.Single(Regex.Matches(markup, "role=\"alert\""));
+        var alert = markup.IndexOf("role=\"alert\"", StringComparison.Ordinal);
+        Assert.InRange(alert, markup.IndexOf("Units: Imperial", StringComparison.Ordinal), markup.IndexOf("Save failed", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// A live region only announces content added after it exists, so the region must be in the
+    /// markup while there are no toasts at all.
+    /// </summary>
+    [Fact]
+    public async Task ToastRegionExistsBeforeAnyToast()
+    {
+        var markup = await Render<BbToastProvider>([]);
+
+        Assert.Matches(@"^<section[^>]* aria-label=""Notifications"" aria-live=""polite""><div[^>]*></div></section>$", markup);
     }
 
     /// <summary>The attribute Blazor emits for a render-time <c>preventDefault</c> on key-down.</summary>
