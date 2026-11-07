@@ -1,5 +1,6 @@
 @using BlazorBlueprint.Components.Components.Dialog.Internals.Shared
 @inject DialogService DialogService
+@inject IBbLocalizer Localizer
 
 
 <DialogHeader Title="@Dialog.Title"
@@ -10,12 +11,12 @@
 <div class="bb:flex bb:flex-col-reverse bb:sm:flex-row bb:sm:justify-end bb:sm:space-x-2">
     <BbButton Variant="ButtonVariant.Outline"
               OnClick="Cancel">
-        @Dialog.Options.CancelText
+        @(Dialog.Options.CancelText ?? Localizer["ConfirmDialog.Cancel"])
     </BbButton>
 
     <BbButton Variant="@(Dialog.Options.Destructive ? ButtonVariant.Destructive : ButtonVariant.Default)"
               OnClick="Confirm">
-        @Dialog.Options.ConfirmText
+        @(Dialog.Options.ConfirmText ?? Localizer["ConfirmDialog.Confirm"])
     </BbButton>
 </div>
 

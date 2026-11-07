@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Components
+@inject IBbLocalizer Localizer
 
 @*
     Spinner component - displays a loading indicator.
@@ -10,7 +11,7 @@
      fill="none"
      viewBox="0 0 24 24"
      role="status"
-     aria-label="@(AriaLabel ?? "Loading")"
+     aria-label="@(AriaLabel ?? Localizer["Spinner.Loading"])"
      @attributes="AdditionalAttributes">
     <circle class="bb:opacity-25"
             cx="12"
@@ -40,7 +41,7 @@
 
     /// <summary>
     /// Accessible label for the spinner.
-    /// Default is "Loading".
+    /// When null, uses IBbLocalizer with key "Spinner.Loading" ("Loading").
     /// </summary>
     [Parameter]
     public string? AriaLabel { get; set; }

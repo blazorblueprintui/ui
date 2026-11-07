@@ -1,6 +1,7 @@
 @namespace BlazorBlueprint.Components
 @implements IDisposable
 @inject IJSRuntime JSRuntime
+@inject IBbLocalizer Localizer
 
 <div class="@CssClass" @attributes="AdditionalAttributes">
     <svg xmlns="http://www.w3.org/2000/svg"
@@ -19,7 +20,7 @@
     <input @ref="_inputRef"
            id="@_inputId"
            type="text"
-           placeholder="@Placeholder"
+           placeholder="@(Placeholder ?? Localizer["Command.Placeholder"])"
            disabled="@IsDisabled"
            value="@_displayValue"
            @oninput="HandleInput"
@@ -68,9 +69,10 @@
 
     /// <summary>
     /// Gets or sets the placeholder text for the input.
+    /// When null, uses IBbLocalizer with key "Command.Placeholder" ("Type a command or search...").
     /// </summary>
     [Parameter]
-    public string Placeholder { get; set; } = "Type a command or search...";
+    public string? Placeholder { get; set; }
 
     /// <summary>
     /// Gets or sets whether the input is disabled.

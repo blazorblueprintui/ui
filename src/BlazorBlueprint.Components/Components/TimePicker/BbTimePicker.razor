@@ -2,6 +2,7 @@
 @using BlazorBlueprint.Icons.Lucide.Components
 @using Microsoft.AspNetCore.Components.Forms
 @using System.Linq.Expressions
+@inject IBbLocalizer Localizer
 
 <BbPopover @bind-Open="_isOpen">
     <BbPopoverTrigger AsChild="true">
@@ -17,7 +18,7 @@
             }
             else
             {
-                <span class="bb:text-muted-foreground">@Placeholder</span>
+                <span class="bb:text-muted-foreground">@(Placeholder ?? Localizer["TimePicker.Placeholder"])</span>
             }
         </BbButton>
     </BbPopoverTrigger>
@@ -26,7 +27,7 @@
             <div class="bb:flex bb:items-center bb:gap-2">
                 <!-- Hour Column -->
                 <div class="bb:flex bb:flex-col bb:items-center">
-                    <span class="bb:text-xs bb:text-muted-foreground bb:mb-1">Hour</span>
+                    <span class="bb:text-xs bb:text-muted-foreground bb:mb-1">@Localizer["DateTimePicker.Hour"]</span>
                     <div class="bb:flex bb:flex-col bb:items-center bb:border bb:rounded-md">
                         <button type="button"
                                 class="@ScrollButtonClass"
@@ -54,7 +55,7 @@
 
                 <!-- Minute Column -->
                 <div class="bb:flex bb:flex-col bb:items-center">
-                    <span class="bb:text-xs bb:text-muted-foreground bb:mb-1">Min</span>
+                    <span class="bb:text-xs bb:text-muted-foreground bb:mb-1">@Localizer["DateTimePicker.Minute"]</span>
                     <div class="bb:flex bb:flex-col bb:items-center bb:border bb:rounded-md">
                         <button type="button"
                                 class="@ScrollButtonClass"
@@ -84,7 +85,7 @@
 
                     <!-- Second Column -->
                     <div class="bb:flex bb:flex-col bb:items-center">
-                        <span class="bb:text-xs bb:text-muted-foreground bb:mb-1">Sec</span>
+                        <span class="bb:text-xs bb:text-muted-foreground bb:mb-1">@Localizer["DateTimePicker.Second"]</span>
                         <div class="bb:flex bb:flex-col bb:items-center bb:border bb:rounded-md">
                             <button type="button"
                                     class="@ScrollButtonClass"
@@ -119,13 +120,13 @@
                                     class="@GetAmPmButtonClass(true)"
                                     @onclick="() => SetAmPm(true)"
                                     disabled="@Disabled">
-                                AM
+                                @Localizer["DateTimePicker.AM"]
                             </button>
                             <button type="button"
                                     class="@GetAmPmButtonClass(false)"
                                     @onclick="() => SetAmPm(false)"
                                     disabled="@Disabled">
-                                PM
+                                @Localizer["DateTimePicker.PM"]
                             </button>
                         </div>
                     </div>
@@ -138,13 +139,13 @@
                         class="bb:flex-1 bb:inline-flex bb:items-center bb:justify-center bb:whitespace-nowrap bb:rounded-md bb:text-sm bb:font-medium bb:ring-offset-background bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2 bb:disabled:pointer-events-none bb:disabled:opacity-50 bb:border bb:border-input bb:bg-background bb:hover:bg-accent bb:hover:text-accent-foreground bb:h-8 bb:px-3"
                         disabled="@Disabled"
                         @onclick="SetNow">
-                    Now
+                    @Localizer["DateTimePicker.Now"]
                 </button>
                 <button type="button"
                         class="bb:flex-1 bb:inline-flex bb:items-center bb:justify-center bb:whitespace-nowrap bb:rounded-md bb:text-sm bb:font-medium bb:ring-offset-background bb:transition-colors bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring bb:focus-visible:ring-offset-2 bb:disabled:pointer-events-none bb:disabled:opacity-50 bb:border bb:border-input bb:bg-background bb:hover:bg-accent bb:hover:text-accent-foreground bb:h-8 bb:px-3"
                         disabled="@(Disabled || !Value.HasValue)"
                         @onclick="Clear">
-                    Clear
+                    @Localizer["DateTimePicker.Clear"]
                 </button>
             </div>
         </div>
@@ -247,9 +248,10 @@
 
     /// <summary>
     /// Placeholder text when no time is selected.
+    /// When null, uses IBbLocalizer with key "TimePicker.Placeholder" ("Select time").
     /// </summary>
     [Parameter]
-    public string Placeholder { get; set; } = "Select time";
+    public string? Placeholder { get; set; }
 
     /// <summary>
     /// Whether the time picker is disabled.
@@ -341,7 +343,7 @@
         {
             var hour = time.Hours % 12;
             if (hour == 0) hour = 12;
-            var amPm = time.Hours < 12 ? "AM" : "PM";
+            var amPm = time.Hours < 12 ? Localizer["DateTimePicker.AM"] : Localizer["DateTimePicker.PM"];
 
             return ShowSeconds
                 ? $"{hour:D2}:{time.Minutes:D2}:{time.Seconds:D2} {amPm}"

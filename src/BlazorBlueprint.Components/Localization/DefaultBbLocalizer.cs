@@ -1,3 +1,5 @@
+using System.Collections.Frozen;
+
 namespace BlazorBlueprint.Components;
 
 /// <summary>
@@ -17,7 +19,7 @@ namespace BlazorBlueprint.Components;
 /// </remarks>
 public class DefaultBbLocalizer : IBbLocalizer
 {
-    private readonly Dictionary<string, string> defaults = new(StringComparer.Ordinal)
+    private static readonly FrozenDictionary<string, string> englishDefaults = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["Attachment.Open"] = "Open attachment",
         ["Sortable.Handle"] = "Reorder item",
@@ -48,6 +50,9 @@ public class DefaultBbLocalizer : IBbLocalizer
         // Alert
         ["Alert.Dismiss"] = "Dismiss",
 
+        // AlertDialog (DialogService.AlertAsync)
+        ["AlertDialog.Button"] = "OK",
+
         // AppBar
         ["AppBar.Back"] = "Go back",
 
@@ -72,6 +77,8 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Carousel.StopRotation"] = "Stop automatic rotation",
         ["Carousel.NextSlide"] = "Next slide",
         ["Carousel.PreviousSlide"] = "Previous slide",
+        ["Carousel.RoleDescription"] = "carousel",
+        ["Carousel.SlideRoleDescription"] = "slide",
 
         // Cascader
         ["Cascader.Label"] = "Select a category",
@@ -80,6 +87,9 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Cascader.Empty"] = "No matching paths",
         ["Cascader.Clear"] = "Clear selection",
         ["Cascader.Level"] = "Level {0}",
+
+        // CheckboxGroup
+        ["CheckboxGroup.SelectAll"] = "Select all",
 
         // Chip
         ["Chip.Dismiss"] = "Remove",
@@ -93,10 +103,17 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Combobox.EmptyMessage"] = "No results found.",
         ["Combobox.Placeholder"] = "Select an option...",
         ["Combobox.SearchPlaceholder"] = "Search...",
+        ["Combobox.Selected"] = "Selected",
 
         // Command
         ["Command.CommandMenu"] = "Command menu",
         ["Command.CommandList"] = "Command list",
+        ["Command.Placeholder"] = "Type a command or search...",
+        ["Command.Loading"] = "Loading...",
+
+        // ConfirmDialog (DialogService.ConfirmAsync)
+        ["ConfirmDialog.Confirm"] = "Continue",
+        ["ConfirmDialog.Cancel"] = "Cancel",
 
         // CopyText
         ["CopyText.Copied"] = "Copied!",
@@ -207,6 +224,7 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["DataView.SortAndFilter"] = "Sort and filter",
         ["DataView.SortAndFilterDescription"] = "Changes update the results immediately. Select a sort field again to change direction.",
         ["DataView.Done"] = "Done",
+        ["DataView.ItemsPerPage"] = "Items per page",
 
         // DateInput
         ["DateInput.Label"] = "Date",
@@ -267,6 +285,10 @@ public class DefaultBbLocalizer : IBbLocalizer
 
         // Drawer
         ["Drawer.Resize"] = "Resize drawer",
+
+        // DynamicForm
+        ["DynamicForm.Submit"] = "Submit",
+        ["DynamicForm.ValidationErrors"] = "Validation Errors",
 
         // EventCalendar
         ["EventCalendar.Today"] = "Today",
@@ -359,6 +381,10 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["FilterBuilder.OperatorGreaterThanDate"] = "is after",
         ["FilterBuilder.OperatorLessThanDate"] = "is before",
 
+        // FormSection
+        ["FormSection.Expand"] = "Expand section",
+        ["FormSection.Collapse"] = "Collapse section",
+
         // FormWizard
         ["FormWizard.WizardProgress"] = "Wizard progress",
         ["FormWizard.Back"] = "Back",
@@ -434,6 +460,9 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["MarkdownEditor.Underline"] = "Underline (Ctrl+U)",
         ["MarkdownEditor.BulletList"] = "Bullet list",
         ["MarkdownEditor.NumberedList"] = "Numbered list",
+        ["MarkdownEditor.Write"] = "Write",
+        ["MarkdownEditor.Preview"] = "Preview",
+        ["MarkdownEditor.TextStyle"] = "Text Style",
 
         // MultiSelect
         ["MultiSelect.EmptyMessage"] = "No results found.",
@@ -476,6 +505,12 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Pagination.PageFormat"] = "Page {0} of {1}",
         ["Pagination.NoItems"] = "No items",
 
+        // PromptDialog (DialogService.PromptAsync)
+        ["PromptDialog.Confirm"] = "OK",
+        ["PromptDialog.Cancel"] = "Cancel",
+        ["PromptDialog.Required"] = "The value is required",
+        ["PromptDialog.MaxLength"] = "Value must be at most {0} characters.",
+
         // QuantityStepper
         ["QuantityStepper.Label"] = "Quantity",
         ["QuantityStepper.Remove"] = "Remove item",
@@ -487,8 +522,13 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["QrCode.AriaLabelWithValue"] = "QR code for {0}",
         ["QrCode.TooLong"] = "This value is too long to fit in a QR code.",
 
+        // RangeSlider
+        ["RangeSlider.RangeStart"] = "Range start",
+        ["RangeSlider.RangeEnd"] = "Range end",
+
         // Rating
         ["Rating.Rating"] = "Rating",
+        ["Rating.ItemLabel"] = "{0} out of {1}",
 
         // ResponsiveNav
         ["ResponsiveNav.ToggleMenu"] = "Toggle Menu",
@@ -541,6 +581,9 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["RichTextEditor.DeleteRow"] = "Delete Row",
         ["RichTextEditor.DeleteColumn"] = "Delete Column",
         ["RichTextEditor.DeleteTable"] = "Delete Table",
+        ["RichTextEditor.LinkUrl"] = "URL",
+        ["RichTextEditor.LinkUrlPlaceholder"] = "https://example.com",
+        ["RichTextEditor.InvalidUrl"] = "Please enter a valid URL",
 
         // Scheduler
         ["Scheduler.Repeat"] = "Repeat",
@@ -663,6 +706,12 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Sortable.Removed"] = "Item removed from position {0} and placed at position {1} in another list.",
         ["Sortable.Received"] = "Item received at position {0}.",
 
+        // Spinner
+        ["Spinner.Loading"] = "Loading",
+
+        // SplitButton
+        ["SplitButton.MoreOptions"] = "More options",
+
         // Tabs
         ["Tabs.Add"] = "New tab",
         ["Tabs.Close"] = "Close",
@@ -673,6 +722,7 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["TagInput.RemoveTag"] = "Remove {0}",
         ["TagInput.ClearAllTags"] = "Clear all tags",
         ["TagInput.TagSuggestions"] = "Tag suggestions",
+        ["TagInput.AddTag"] = "Add tag",
 
         // Theme
         ["Theme.Switcher.Label"] = "Customize theme",
@@ -705,16 +755,39 @@ public class DefaultBbLocalizer : IBbLocalizer
 
         // Timeline
         ["Timeline.Timeline"] = "Timeline",
+        ["Timeline.Empty"] = "No timeline items to display",
+
+        // TimePicker
+        ["TimePicker.Placeholder"] = "Select time",
 
         // Toast
         ["Toast.Region"] = "Notifications",
+        ["Toast.Close"] = "Close",
 
         // TreeSelect
         ["TreeSelect.Label"] = "Select from tree",
         ["TreeSelect.Placeholder"] = "Select an item…",
         ["TreeSelect.Clear"] = "Clear selection",
         ["TreeSelect.Search"] = "Search…",
-    };
+
+        // TreeView
+        ["TreeView.SearchPlaceholder"] = "Search...",
+        ["TreeView.FailedToLoad"] = "Failed to load",
+        ["TreeView.Retry"] = "Retry",
+    }.ToFrozenDictionary(StringComparer.Ordinal);
+
+    private readonly Dictionary<string, string> defaults = new(englishDefaults, StringComparer.Ordinal);
+
+    /// <summary>
+    /// Gets every localization key with its built-in English text.
+    /// </summary>
+    /// <remarks>
+    /// Overrides made with <see cref="Set"/> are not reflected here. Use this to list the available
+    /// keys, or to export them as a starting point for a translation (for example as JSON).
+    /// Values that take <see cref="string.Format(string, object[])"/> arguments contain
+    /// <c>{0}</c>-style placeholders.
+    /// </remarks>
+    public static IReadOnlyDictionary<string, string> EnglishDefaults => englishDefaults;
 
     /// <inheritdoc />
     public virtual string this[string key] =>

@@ -7,7 +7,7 @@ public sealed class AlertDialogOptions
 {
     /// <summary>
     /// The label for the acknowledgment button.
-    /// Default: "OK".
+    /// When null, uses IBbLocalizer with key "AlertDialog.Button" ("OK").
     /// </summary>
-    public string ButtonText { get; set; } = "OK";
+    public string? ButtonText { get; set; }
 }
