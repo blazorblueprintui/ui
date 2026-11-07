@@ -26,9 +26,10 @@ function getEnabledMenuItems(container) {
 }
 
 /**
- * Focus a menu item reliably. Uses preventScroll and falls back to
- * temporarily setting tabindex="0" if the initial focus() call fails
- * (can happen with anchor elements in some browser/framework contexts).
+ * Focus a menu item reliably and reveal it within its own panel.
+ * Uses preventScroll and falls back to temporarily setting tabindex="0"
+ * if the initial focus() call fails (can happen with anchor elements in
+ * some browser/framework contexts).
  */
 function focusMenuItem(item) {
   if (!item) return;
@@ -39,6 +40,18 @@ function focusMenuItem(item) {
     item.focus({ preventScroll: true });
     item.setAttribute('tabindex', prev ?? '-1');
   }
+
+  const menu = item.closest('[role="menu"]');
+  if (!menu || menu.scrollHeight <= menu.clientHeight || !menu.offsetHeight) return;
+
+  const panel = menu.getBoundingClientRect();
+  const box = item.getBoundingClientRect();
+  // Rects include the opening scale animation; scrollTop uses unscaled CSS pixels.
+  const scale = panel.height / menu.offsetHeight || 1;
+  const top = panel.top + menu.clientTop * scale;
+  const bottom = top + menu.clientHeight * scale;
+  if (box.top < top) menu.scrollTop -= (top - box.top) / scale;
+  else if (box.bottom > bottom) menu.scrollTop += (box.bottom - bottom) / scale;
 }
 
 /**
