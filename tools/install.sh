@@ -1,6 +1,9 @@
 #!/bin/bash
 # Tailwind CLI Downloader for Linux/macOS (Multi-Arch)
 
+# Pinned for reproducible builds; override with TAILWIND_VERSION=vX.Y.Z
+VERSION="${TAILWIND_VERSION:-v4.3.5}"
+
 ARCH=$(uname -m)
 OS=$(uname -s)
 
@@ -26,7 +29,7 @@ else
     exit 1
 fi
 
-URL="https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-$PLATFORM"
+URL="https://github.com/tailwindlabs/tailwindcss/releases/download/$VERSION/tailwindcss-$PLATFORM"
 
 echo "Downloading $URL..."
 curl -L "$URL" -o "./$TARGET"
