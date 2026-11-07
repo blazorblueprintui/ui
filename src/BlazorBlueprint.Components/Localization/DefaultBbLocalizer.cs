@@ -701,6 +701,9 @@ public class DefaultBbLocalizer : IBbLocalizer
         // Timeline
         ["Timeline.Timeline"] = "Timeline",
 
+        // Toast
+        ["Toast.Region"] = "Notifications",
+
         // TreeSelect
         ["TreeSelect.Label"] = "Select from tree",
         ["TreeSelect.Placeholder"] = "Select an item…",
