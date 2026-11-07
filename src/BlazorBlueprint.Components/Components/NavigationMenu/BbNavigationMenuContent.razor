@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Primitives.Services
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
 
@@ -6,13 +7,13 @@
     Navigation Menu Content - the dropdown content panel.
 *@
 
-@if (MenuItem?.IsOpen == true)
+@if (MenuItem?.IsPresent == true)
 {
     <div @ref="_contentRef"
          class="@CssClass"
          role="menu"
          tabindex="@(IsKeyboardNavigationEnabled ? -1 : null)"
-         data-state="@(MenuItem?.IsOpen == true ? "open" : "closed")"
+         data-state="@(MenuItem!.IsOpen ? "open" : "closed")"
          @onmouseenter="HandleMouseEnter"
          @onmouseleave="HandleMouseLeave"
          @onclick="HandleClick"
@@ -58,6 +59,16 @@
         MenuItem?.RegisterContent(this);
     }
 
+    protected override void OnParametersSet() =>
+        MenuItem?.ExitAnimation = WaitForExitAsync;
+
+    /// <summary>
+    /// Holds the dropdown on the page until its closed-state CSS animation has played. The gate's
+    /// supersede check releases it if the item is reopened first, so this only has to wait.
+    /// </summary>
+    private Task WaitForExitAsync(Func<bool> isCurrent) =>
+        OverlayExit.WaitAsync(JSRuntime, _contentRef, OverlayExit.FadeFallbackDelay);
+
     /// <summary>
     /// Gets whether keyboard navigation is enabled on the parent menu.
     /// </summary>
@@ -91,7 +102,7 @@
             }
 
             // Set up keyboard navigation when menu opens
-            if (isOpen && !_wasOpen && _navModule != null)
+            if (isOpen && !_wasOpen && _navModule != null && _keyboardCleanup == null)
             {
                 try
                 {
@@ -108,8 +119,9 @@
                 }
             }
 
-            // Clean up keyboard navigation when menu closes
-            if (!isOpen && _wasOpen && _keyboardCleanup != null)
+            // Clean up keyboard navigation once the panel has actually left the page, not on the
+            // render that starts its exit animation.
+            if (!isOpen && MenuItem?.IsPresent != true && _keyboardCleanup != null)
             {
                 try
                 {
@@ -213,6 +225,7 @@
         "bb:data-[state=open]:animate-in bb:data-[state=closed]:animate-out",
         "bb:data-[state=closed]:fade-out-0 bb:data-[state=open]:fade-in-0",
         "bb:data-[state=closed]:zoom-out-95 bb:data-[state=open]:zoom-in-95",
+        "bb:data-[state=closed]:pointer-events-none",
         Class
     );
 
@@ -233,5 +246,10 @@
 
 
         _dotNetRef?.Dispose();
+
+        if (MenuItem != null)
+        {
+            MenuItem.ExitAnimation = null;
+        }
     }
 }
