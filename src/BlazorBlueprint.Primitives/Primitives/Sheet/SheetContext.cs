@@ -1,4 +1,5 @@
 using BlazorBlueprint.Primitives.Contexts;
+using BlazorBlueprint.Primitives.Utilities;
 
 namespace BlazorBlueprint.Primitives.Sheet;
 
@@ -35,12 +36,36 @@ public class SheetState
 /// </summary>
 public class SheetContext : PrimitiveContextWithEvents<SheetState>
 {
+    private readonly ExitAnimationGate exit = new();
+
     /// <summary>
     /// Initializes a new instance of the SheetContext.
     /// </summary>
     public SheetContext() : base(new SheetState(), "sheet")
     {
     }
+
+    /// <summary>
+    /// The exit animation registered by the content, or null when the sheet leaves the page as
+    /// soon as it closes. Its argument says whether this exit is still the current one: a reopen,
+    /// or a newer close, supersedes it.
+    /// </summary>
+    internal Func<Func<bool>, Task>? ExitAnimation
+    {
+        get => exit.ExitAnimation;
+        set => exit.ExitAnimation = value;
+    }
+
+    /// <summary>
+    /// Gets whether the sheet has closed but is still on the page, playing its exit animation.
+    /// </summary>
+    internal bool IsExiting => exit.IsAnimatingOut;
+
+    /// <summary>
+    /// Gets whether the sheet's portal, overlay and content should be rendered: while it is open,
+    /// and while its exit animation plays.
+    /// </summary>
+    internal bool IsPresent => exit.IsPresent(State.IsOpen);
 
     /// <summary>
     /// Gets the ID for the sheet trigger button.
@@ -88,6 +113,7 @@ public class SheetContext : PrimitiveContextWithEvents<SheetState>
     /// <param name="triggerElement">Optional element that triggered the sheet.</param>
     public void Open(object? triggerElement = null)
     {
+        exit.Cancel();
         UpdateState(state =>
         {
             state.IsOpen = true;
@@ -96,10 +122,30 @@ public class SheetContext : PrimitiveContextWithEvents<SheetState>
     }
 
     /// <summary>
-    /// Closes the sheet.
+    /// Closes the sheet, keeping its overlay and content mounted until the exit animation ends.
     /// </summary>
-    public void Close() =>
+    public void Close()
+    {
+        if (State.IsOpen)
+        {
+            BeginExit();
+        }
+
         UpdateState(state => state.IsOpen = false);
+    }
+
+    /// <summary>
+    /// Keeps the sheet on the page while its exit animation plays, then lets it go. Call this
+    /// just before an open sheet's state turns closed, while its content is still rendered.
+    /// </summary>
+    internal void BeginExit() =>
+        exit.Begin(NotifyStateChanged);
+
+    /// <summary>
+    /// Drops a running exit, so a sheet reopened mid-exit stays on the page.
+    /// </summary>
+    internal void CancelExit() =>
+        exit.Cancel();
 
     /// <summary>
     /// Toggles the sheet open/closed state.

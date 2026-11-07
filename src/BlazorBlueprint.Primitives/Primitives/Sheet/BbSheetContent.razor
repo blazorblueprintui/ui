@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Primitives.Sheet
 @using System.ComponentModel
+@using BlazorBlueprint.Primitives.Services
 @inject IFocusManager FocusManager
 @inject IJSRuntime JSRuntime
 @implements IAsyncDisposable
@@ -11,7 +12,7 @@
     aria-modal="false", and (with CloseOnInteractOutside) a pointer-down outside closes it.
 *@
 
-@if (Context.IsOpen)
+@if (Context.IsPresent)
 {
     <div @ref="_contentRef"
          id="@Context.ContentId"
@@ -21,7 +22,7 @@
          aria-describedby="@Context.DescriptionId"
          tabindex="-1"
          @attributes="AdditionalAttributes"
-         data-state="open"
+         data-state="@(Context.IsOpen ? "open" : "closed")"
          data-side="@Context.Side.ToString().ToLower()">
         @ChildContent
     </div>
@@ -151,6 +152,16 @@
         Context.OnStateChanged += HandleContextStateChanged;
     }
 
+    protected override void OnParametersSet() =>
+        Context.ExitAnimation = WaitForExitAsync;
+
+    /// <summary>
+    /// Holds the sheet on the page until its closed-state CSS animation has played. The gate's
+    /// supersede check releases the sheet if it is reopened first, so this only has to wait.
+    /// </summary>
+    private Task WaitForExitAsync(Func<bool> isCurrent) =>
+        OverlayExit.WaitAsync(JSRuntime, _contentRef, OverlayExit.SlideFallbackDelay);
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (Context.IsOpen && !_isInitialized)
@@ -235,7 +246,7 @@
                 }
             }
         }
-        else if (!Context.IsOpen && _isInitialized)
+        else if (!Context.IsPresent && _isInitialized)
         {
             await CleanupAsync();
         }
@@ -243,7 +254,8 @@
 
     private void HandleContextStateChanged()
     {
-        if (!Context.IsOpen && _isInitialized)
+        // An exiting sheet keeps its focus trap and scroll lock until it leaves.
+        if (!Context.IsPresent && _isInitialized)
         {
             // Sheet closed, clean up on the Blazor sync context
             _ = InvokeAsync(async () =>
@@ -381,6 +393,7 @@
         if (Context != null)
         {
             Context.OnStateChanged -= HandleContextStateChanged;
+            Context.ExitAnimation = null;
         }
     }
 }
