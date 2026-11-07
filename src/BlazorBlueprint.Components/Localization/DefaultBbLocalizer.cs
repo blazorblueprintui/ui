@@ -84,6 +84,11 @@ public class DefaultBbLocalizer : IBbLocalizer
         // Chip
         ["Chip.Dismiss"] = "Remove",
 
+        // Color Picker
+        ["ColorPicker.Presets"] = "Presets",
+        ["ColorPicker.Cancel"] = "Cancel",
+        ["ColorPicker.Apply"] = "Apply",
+
         // Combobox
         ["Combobox.EmptyMessage"] = "No results found.",
         ["Combobox.Placeholder"] = "Select an option...",
