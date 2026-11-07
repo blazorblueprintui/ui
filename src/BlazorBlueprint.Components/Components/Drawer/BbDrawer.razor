@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Primitives.Utilities
 
 @* Drawer - A mobile-friendly slide panel built on Sheet primitive *@
 <CascadingValue Value="this" IsFixed="false">
@@ -40,6 +41,51 @@
             }
         }
         if (SnapPoints.Count > 0 && (SnapIndex < 0 || SnapIndex >= SnapPoints.Count)) { throw new ArgumentOutOfRangeException(nameof(SnapIndex)); }
+
+        // A controlled Open change bypasses SetOpen, so detect the open→closed transition here,
+        // while the content is still rendered, and start its exit animation.
+        if (IsOpen != lastOpen)
+        {
+            ApplyOpenTransition(IsOpen);
+            lastOpen = IsOpen;
+        }
+    }
+
+    /// <summary>
+    /// The exit animation registered by the content, or null when the drawer leaves the page as
+    /// soon as it closes.
+    /// </summary>
+    internal Func<Func<bool>, Task>? ExitAnimation
+    {
+        get => exit.ExitAnimation;
+        set => exit.ExitAnimation = value;
+    }
+
+    /// <summary>
+    /// Gets whether the drawer has closed but is still on the page, playing its exit animation.
+    /// </summary>
+    internal bool IsExiting => exit.IsAnimatingOut;
+
+    /// <summary>
+    /// Gets whether the drawer's overlay and content should be rendered: while it is open, and
+    /// while its exit animation plays.
+    /// </summary>
+    internal bool IsPresent => exit.IsPresent(IsOpen);
+
+    private readonly ExitAnimationGate exit = new();
+
+    private bool lastOpen;
+
+    private void ApplyOpenTransition(bool open)
+    {
+        if (open)
+        {
+            exit.Cancel();
+        }
+        else
+        {
+            exit.Begin(() => _ = InvokeAsync(StateHasChanged));
+        }
     }
 
     internal async Task SetSnapIndexAsync(int index)
@@ -73,6 +119,8 @@
         }
 
         _internalOpen = open;
+        lastOpen = open;
+        ApplyOpenTransition(open);
         StateHasChanged();
         await OpenChanged.InvokeAsync(open);
     }
@@ -80,5 +128,6 @@
     protected override void OnInitialized()
     {
         _internalOpen = DefaultOpen;
+        lastOpen = IsOpen;
     }
 }

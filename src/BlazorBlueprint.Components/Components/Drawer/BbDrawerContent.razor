@@ -1,23 +1,24 @@
 @namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Primitives.Services
 @using Microsoft.JSInterop
 @inject BlazorBlueprint.Primitives.Services.IFocusManager FocusManager
 @inject IJSRuntime JS
 @inject IBbLocalizer Localizer
 @implements IAsyncDisposable
 
-@if (Context?.IsOpen == true)
+@if (Context?.IsPresent == true)
 {
     @* Overlay *@
     <div data-slot="drawer-overlay"
-         class="bb:fixed bb:inset-0 bb:z-50 bb:bg-black/80 bb:data-[state=open]:animate-in bb:data-[state=closed]:animate-out bb:data-[state=closed]:fade-out-0 bb:data-[state=open]:fade-in-0"
-         data-state="open"
+         class="bb:fixed bb:inset-0 bb:z-50 bb:bg-black/80 bb:data-[state=open]:animate-in bb:data-[state=closed]:animate-out bb:data-[state=closed]:fade-out-0 bb:data-[state=open]:fade-in-0 bb:data-[state=closed]:pointer-events-none"
+         data-state="@(Context!.IsOpen ? "open" : "closed")"
          @onclick="HandleOverlayClick">
     </div>
 
     @* Drawer Content *@
     <div @ref="_contentRef"
          class="@CssClass"
-         data-state="open"
+         data-state="@(Context!.IsOpen ? "open" : "closed")"
          role="dialog"
          aria-modal="true"
          tabindex="-1"
@@ -186,7 +187,7 @@
                 // JS interop not available during prerendering
             }
         }
-        else if (Context?.IsOpen != true && _isInitialized)
+        else if (Context?.IsPresent != true && _isInitialized)
         {
             await CleanupAsync();
             // Only an intentional close restores focus. Disposal during navigation must not
@@ -195,6 +196,16 @@
         }
         await ConfigureSnapsAsync();
     }
+
+    protected override void OnParametersSet() =>
+        Context?.ExitAnimation = WaitForExitAsync;
+
+    /// <summary>
+    /// Holds the drawer on the page until its closed-state CSS animation has played. The gate's
+    /// supersede check releases it if the drawer is reopened first, so this only has to wait.
+    /// </summary>
+    private Task WaitForExitAsync(Func<bool> isCurrent) =>
+        OverlayExit.WaitAsync(JS, _contentRef, OverlayExit.SlideFallbackDelay);
 
     private async Task ConfigureSnapsAsync()
     {
@@ -225,7 +236,7 @@
 
     private async Task HandleOverlayClick()
     {
-        if (Context != null)
+        if (Context != null && Context.IsOpen)
         {
             await Context.SetOpen(false);
         }
@@ -307,6 +318,11 @@
 
 
         _dotNetRef?.Dispose();
+
+        if (Context != null)
+        {
+            Context.ExitAnimation = null;
+        }
     }
 
     private string DirectionClasses => Context?.Direction switch
@@ -320,7 +336,7 @@
 
     private string CssClass => ClassNames.cn(
         "bb:fixed bb:z-50 bb:gap-4 bb:bg-background bb:p-6 bb:shadow-lg bb:transition bb:ease-in-out",
-        "bb:data-[state=open]:animate-in bb:data-[state=closed]:animate-out bb:data-[state=closed]:duration-300 bb:data-[state=open]:duration-500",
+        "bb:data-[state=open]:animate-in bb:data-[state=closed]:animate-out bb:data-[state=closed]:duration-300 bb:data-[state=open]:duration-500 bb:data-[state=closed]:pointer-events-none",
         DirectionClasses,
         HasSnapPoints ? "bb:flex bb:flex-col bb:overflow-hidden" : null,
         Class
