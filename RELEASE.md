@@ -4,7 +4,7 @@ This document describes how Blazor Blueprint packages are published to NuGet.
 
 ## Overview
 
-Blazor Blueprint uses a **monorepo with independent package versioning**. Each of the six packages can be released independently with its own version number:
+Blazor Blueprint uses a **monorepo with independent package versioning**. Each of the seven packages can be released independently with its own version number:
 
 - **BlazorBlueprint.Primitives** - Headless UI primitives
 - **BlazorBlueprint.Components** - Styled components
@@ -12,6 +12,7 @@ Blazor Blueprint uses a **monorepo with independent package versioning**. Each o
 - **BlazorBlueprint.Icons.Heroicons** - Heroicons library
 - **BlazorBlueprint.Icons.Feather** - Feather icon library
 - **BlazorBlueprint.Icons.FontAwesome** - Font Awesome Free icon library
+- **BlazorBlueprint.PdfViewer** - PDF viewer built on PDF.js (add-on to Components)
 
 ## Prerequisites
 
@@ -35,7 +36,7 @@ You need:
 The scripts are interactive — they show you what changed, prompt for versions, and summarise before doing anything.
 
 ```bash
-# Primitives and/or Components
+# Primitives, Components and/or PdfViewer
 ./devkit/scripts/release.sh
 
 # Prerelease from the v4.1.0 branch
@@ -53,9 +54,11 @@ Use `--dry-run` on any release script to walk through every step without executi
 
 ## How It Works
 
-### `release.sh` — Primitives and Components
+### `release.sh` — Primitives, Components and PdfViewer
 
-Releases either package, or both in a single run. It builds, packs, and publishes locally, and polls NuGet for availability when Components depends on a freshly released Primitives. Creates the `develop` → `main` PR when done.
+Releases any one of these packages, or a combination, in a single run. The dependency chain is Primitives → Components → PdfViewer: each package is packed against the published NuGet version of the one before it, and the script polls NuGet for availability when a package depends on one released earlier in the same run. Creates the `develop` → `main` PR when done.
+
+PdfViewer has its own version line (`pdfviewer/v*`, starting at 1.0.0) and is published without release notes.
 
 Flags:
 
@@ -66,11 +69,11 @@ Flags:
 | `--skip-tests` | Skip .NET and JavaScript tests (for re-releases where code has not changed) |
 | `--clear-cache` | Clear the NuGet HTTP cache before building, when a freshly published package isn't resolving |
 
-### `release-beta.sh` — Primitives and Components prereleases
+### `release-beta.sh` — Primitives, Components and PdfViewer prereleases
 
 Runs from the branch named by `--branch` (default `v4`; pass `--branch v4.1.0` for this branch). Select a base such as `4.1.0` and an identifier such as `beta`; the script derives the next number from local tags. It refuses stable versions and releases from `main`.
 
-The script runs the .NET and JavaScript suites, prepares release notes, tags and publishes Primitives, waits for NuGet availability, then updates Components to use that Primitives version and publishes Components. It pushes the release branch and package tags without opening a PR to `main`.
+The script runs the .NET and JavaScript suites, prepares release notes, tags and publishes Primitives, waits for NuGet availability, then updates Components to use that Primitives version and publishes Components. PdfViewer follows the same pattern after Components; until it has a stable release, its prereleases build towards 1.0.0. It pushes the release branch and package tags without opening a PR to `main`.
 
 It supports the same flags as `release.sh`, plus `--branch NAME`. `--skip-tests` skips both the .NET and JavaScript suites. `--skip-notes` uses the existing package notes as written, so check their version headings before using it for publication. Browser checks run separately as described in [tests/browser/README.md](tests/browser/README.md).
 
@@ -103,6 +106,7 @@ Tags follow the pattern `<package>/v<version>` and are created by the release sc
 | Icons.Heroicons | `icons-heroicons/v` |
 | Icons.Feather | `icons-feather/v` |
 | Icons.FontAwesome | `icons-fontawesome/v` |
+| PdfViewer | `pdfviewer/v` |
 
 Examples: `primitives/v3.13.0`, `components/v3.13.0`, `icons-lucide/v2.0.1`, `icons-fontawesome/v2.0.0`
 
@@ -137,6 +141,7 @@ BlazorBlueprint.Icons.Lucide      2.0.1
 BlazorBlueprint.Icons.Heroicons   2.0.0
 BlazorBlueprint.Icons.Feather     2.0.0
 BlazorBlueprint.Icons.FontAwesome 2.0.0
+BlazorBlueprint.PdfViewer         1.0.0
 ```
 
 This allows you to:
@@ -178,6 +183,7 @@ Packages appear at:
 - https://www.nuget.org/packages/BlazorBlueprint.Icons.Heroicons
 - https://www.nuget.org/packages/BlazorBlueprint.Icons.Feather
 - https://www.nuget.org/packages/BlazorBlueprint.Icons.FontAwesome
+- https://www.nuget.org/packages/BlazorBlueprint.PdfViewer
 
 **Note:** It may take 5-10 minutes for packages to appear on NuGet.org after publishing.
 
