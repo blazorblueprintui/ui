@@ -5,11 +5,15 @@
 @*
     Styled SheetContent component with shadcn/ui classes and side-specific animations.
     Includes overlay, sheet panel, and close button.
+    With ShowOverlay="false" no overlay is rendered and the sheet is non-modal.
 *@
 
 <BlazorBlueprint.Primitives.Sheet.BbSheetPortal Container="@Container">
-    <BlazorBlueprint.Primitives.Sheet.BbSheetOverlay data-slot="sheet-overlay" class="bb:fixed bb:inset-0 bb:z-50 bb:bg-black/80 bb:data-[state=open]:animate-in bb:data-[state=closed]:animate-out bb:data-[state=closed]:fade-out-0 bb:data-[state=open]:fade-in-0"
-                                                      CloseOnClick="@CloseOnOverlayClick" />
+    @if (ShowOverlay)
+    {
+        <BlazorBlueprint.Primitives.Sheet.BbSheetOverlay data-slot="sheet-overlay" class="bb:fixed bb:inset-0 bb:z-50 bb:bg-black/80 bb:data-[state=open]:animate-in bb:data-[state=closed]:animate-out bb:data-[state=closed]:fade-out-0 bb:data-[state=open]:fade-in-0"
+                                                          CloseOnClick="@CloseOnOverlayClick" />
+    }
 
     <BlazorBlueprint.Primitives.Sheet.BbSheetContent
         class="@GetClassNames()"
@@ -18,6 +22,8 @@
         InitialFocus="@InitialFocus"
         InitialFocusElement="@InitialFocusElement"
         LockScroll="@LockScroll"
+        NonModal="@(!ShowOverlay)"
+        CloseOnInteractOutside="@CloseOnInteractOutside"
         OnEscapeKeyDown="@OnEscapeKeyDown"
         @attributes="AdditionalAttributes">
         @ChildContent
@@ -78,6 +84,33 @@
     public bool ShowClose { get; set; } = true;
 
     /// <summary>
+    /// Whether to render the overlay (backdrop) behind the sheet, making it modal.
+    /// Default is true.
+    /// </summary>
+    /// <remarks>
+    /// When false, no overlay is rendered and the sheet is non-modal: the page behind it stays
+    /// usable, the content gets <c>aria-modal="false"</c>, focus moves into the sheet on open but
+    /// is not trapped, and body scroll is not locked (<see cref="TrapFocus"/> and
+    /// <see cref="LockScroll"/> are ignored). Escape still closes it, and so does a pointer-down
+    /// outside it unless <see cref="CloseOnInteractOutside"/> is false. The sheet's <c>Modal</c>
+    /// parameter still decides whether it can be dismissed at all.
+    /// </remarks>
+    [Parameter]
+    public bool ShowOverlay { get; set; } = true;
+
+    /// <summary>
+    /// Whether a pointer-down outside the sheet closes it. Only applies when
+    /// <see cref="ShowOverlay"/> is false; with the overlay, use <see cref="CloseOnOverlayClick"/>.
+    /// Default is true.
+    /// </summary>
+    /// <remarks>
+    /// The trigger and floating content opened from inside the sheet (a popover, select or
+    /// dropdown menu) do not count as outside. The click still reaches the page behind.
+    /// </remarks>
+    [Parameter]
+    public bool CloseOnInteractOutside { get; set; } = true;
+
+    /// <summary>
     /// Whether clicking the overlay (backdrop) should close the sheet.
     /// Default is true.
     /// </summary>
@@ -93,7 +126,7 @@
 
     /// <summary>
     /// Whether to trap focus within the sheet.
-    /// Default is true for modal sheets.
+    /// Default is true. Ignored when <see cref="ShowOverlay"/> is false.
     /// </summary>
     [Parameter]
     public bool TrapFocus { get; set; } = true;
@@ -120,7 +153,7 @@
 
     /// <summary>
     /// Whether to lock body scroll when sheet is open.
-    /// Default is true for modal sheets.
+    /// Default is true. Ignored when <see cref="ShowOverlay"/> is false.
     /// </summary>
     [Parameter]
     public bool LockScroll { get; set; } = true;
