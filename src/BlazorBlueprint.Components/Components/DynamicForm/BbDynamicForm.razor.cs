@@ -85,9 +85,10 @@ public partial class BbDynamicForm : ComponentBase
 
     /// <summary>
     /// Gets or sets the text for the built-in submit button.
+    /// When null, uses IBbLocalizer with key "DynamicForm.Submit" ("Submit").
     /// </summary>
     [Parameter]
-    public string SubmitText { get; set; } = "Submit";
+    public string? SubmitText { get; set; }
 
     /// <summary>
     /// Gets or sets whether to show the built-in submit button.

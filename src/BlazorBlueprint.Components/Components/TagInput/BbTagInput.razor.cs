@@ -167,6 +167,7 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
 
     /// <summary>
     /// Accessible label for the tag input container.
+    /// When null, uses IBbLocalizer with key "TagInput.AddTag" ("Add tag").
     /// </summary>
     [Parameter]
     public string? AriaLabel { get; set; }

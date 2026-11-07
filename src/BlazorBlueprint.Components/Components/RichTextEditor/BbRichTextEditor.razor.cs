@@ -642,7 +642,7 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
         }
         else if (!IsValidUrl(_linkUrl))
         {
-            _linkUrlError = "Please enter a valid URL";
+            _linkUrlError = Localizer["RichTextEditor.InvalidUrl"];
         }
         else
         {

@@ -216,9 +216,10 @@ public partial class BbTreeView<TItem> : ComponentBase, IAsyncDisposable
 
     /// <summary>
     /// Placeholder text for the search input.
+    /// When null, uses IBbLocalizer with key "TreeView.SearchPlaceholder" ("Search...").
     /// </summary>
     [Parameter]
-    public string SearchPlaceholder { get; set; } = "Search...";
+    public string? SearchPlaceholder { get; set; }
 
     /// <summary>
     /// External search text for filtering (two-way bindable).

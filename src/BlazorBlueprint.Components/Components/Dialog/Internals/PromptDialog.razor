@@ -1,5 +1,6 @@
 @using BlazorBlueprint.Components.Components.Dialog.Internals.Shared
 @inject DialogService DialogService
+@inject IBbLocalizer Localizer
 
 
 <DialogHeader Title="@Dialog.Title"
@@ -19,12 +20,12 @@
 <div class="bb:flex bb:flex-col-reverse bb:sm:flex-row bb:sm:justify-end bb:sm:space-x-2">
     <BbButton Variant="ButtonVariant.Outline"
               OnClick="Cancel">
-        @Dialog.Options.CancelText
+        @(Dialog.Options.CancelText ?? Localizer["PromptDialog.Cancel"])
     </BbButton>
 
     <BbButton Disabled="@IsInvalid"
               OnClick="Submit">
-        @Dialog.Options.ConfirmText
+        @(Dialog.Options.ConfirmText ?? Localizer["PromptDialog.Confirm"])
     </BbButton>
 </div>
 
@@ -44,10 +45,10 @@
             var errors = new List<string>();
 
             if (Dialog.Options.Required && string.IsNullOrWhiteSpace(inputValue))
-                errors.Add("The value is required");
+                errors.Add(Localizer["PromptDialog.Required"]);
 
             if (Dialog.Options.MaxLength is > 0 && inputValue?.Length > Dialog.Options.MaxLength)
-                errors.Add($"Value must be at most {Dialog.Options.MaxLength} characters.");
+                errors.Add(Localizer["PromptDialog.MaxLength", Dialog.Options.MaxLength]);
 
             return errors;
         }

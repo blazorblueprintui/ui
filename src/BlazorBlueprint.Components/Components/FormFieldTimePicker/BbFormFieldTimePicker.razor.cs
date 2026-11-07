@@ -80,9 +80,10 @@ public partial class BbFormFieldTimePicker : FormFieldBase
 
     /// <summary>
     /// Gets or sets the placeholder text when no time is selected.
+    /// When null, the inner time picker uses IBbLocalizer with key "TimePicker.Placeholder" ("Select time").
     /// </summary>
     [Parameter]
-    public string Placeholder { get; set; } = "Select time";
+    public string? Placeholder { get; set; }
 
     /// <summary>
     /// Gets or sets whether the time picker is disabled.
