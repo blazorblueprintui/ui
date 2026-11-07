@@ -53,7 +53,6 @@ test('a direct closed-state child is part of the exit', async () => {
   const element = {};
   const content = { parentElement: element, dataset: { state: 'closed' } };
   element.getAnimations = () => [animation(content, new Promise(resolve => { finish = resolve; }))];
-
   let done = false;
   const waiting = waitForExit(element).then(() => { done = true; });
 
@@ -98,6 +97,23 @@ test('a cancelled animation still ends the wait', async () => {
   withAnimationFrame();
   const element = {};
   element.getAnimations = () => [animation(element, Promise.reject(new Error('cancelled')))];
+
+  await waitForExit(element);
+});
+
+test('an open direct child is not part of the exit', async () => {
+  withAnimationFrame();
+  const element = {};
+  const child = { parentElement: element, dataset: { state: 'open' } };
+  element.getAnimations = () => [animation(child, new Promise(() => {}))];
+
+  await waitForExit(element);
+});
+
+test('reduced motion (an already-finished 0.01ms animation) ends the wait at once', async () => {
+  withAnimationFrame();
+  const element = {};
+  element.getAnimations = () => [animation(element, Promise.resolve(), 'running', 1)];
 
   await waitForExit(element);
 });
