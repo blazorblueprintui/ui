@@ -234,7 +234,7 @@ public partial class BbInput : ComponentBase
     /// </summary>
     private string CssClass => ClassNames.cn(
         // Base input styles (from shadcn/ui)
-        "bb:flex bb:h-10 bb:w-full bb:rounded-md bb:border bb:border-input bb:bg-background bb:px-3 bb:py-2 bb:text-base",
+        "bb:flex bb:h-10 bb:w-full bb:rounded-md bb:border bb:border-input bb:bg-transparent bb:dark:bg-input/30 bb:px-3 bb:py-2 bb:text-base bb:shadow-xs",
         "bb:file:border-0 bb:file:bg-transparent bb:file:text-sm bb:file:font-medium bb:file:text-foreground",
         "bb:placeholder:text-muted-foreground",
         "bb:focus-visible:outline-none bb:focus-visible:ring-2 bb:focus-visible:ring-ring",
@@ -384,9 +384,13 @@ public partial class BbInput : ComponentBase
             value = null;
         }
 
+        // Immediate and Debounced usually raised this value already while typing. Raising it
+        // again on blur would run a @bind-Value:after handler twice for one edit.
+        var changed = !string.Equals(Value, value, StringComparison.Ordinal);
+
         Value = value;
 
-        if (ValueChanged.HasDelegate)
+        if (changed && ValueChanged.HasDelegate)
         {
             await ValueChanged.InvokeAsync(value);
         }

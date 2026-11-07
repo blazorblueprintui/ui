@@ -23,6 +23,10 @@ public partial class BbDateRangePicker : ComponentBase
     // OnParametersSet guard
     private DateRange? _previousValue;
 
+    // The preset the user picked. Two presets can resolve to the same dates (Last 30 days and
+    // This month on 30 September), so the dates alone can't say which one to highlight.
+    private int? chosenPresetIndex;
+
     // Caching fields
     private CultureInfo _resolvedCulture = CultureInfo.CurrentCulture;
     private DayOfWeek _cachedFirstDayOfWeek;
@@ -36,6 +40,7 @@ public partial class BbDateRangePicker : ComponentBase
     private DateTime _lastDisplayMonth2;
     private DateTime? _lastSelectionStart;
     private DateTime? _lastSelectionEnd;
+    private int? lastChosenPresetIndex;
     private DateRange? _lastValue;
     private DateTime? _lastMinDate;
     private DateTime? _lastMaxDate;
@@ -134,6 +139,11 @@ public partial class BbDateRangePicker : ComponentBase
     };
 
     private IReadOnlyList<DateRangeQuickPick> EffectivePresets => Presets ?? DefaultPresets;
+
+    // Lets tests pin the date the presets resolve against; apps always read the system clock.
+    internal Func<DateTime> TodayProvider { get; set; } = static () => DateTime.Today;
+
+    private DateTime Today => TodayProvider();
 
     /// <summary>
     /// The first day of the week. Defaults to the current culture's first day of week.
@@ -266,6 +276,13 @@ public partial class BbDateRangePicker : ComponentBase
             _previousValue = Value;
             _selectionStart = Value?.Start;
             _selectionEnd = Value?.End;
+
+            // An applied preset comes back here through the binding; keep it only if the new
+            // value is still that preset's range.
+            if (chosenPresetIndex is int chosen && !IsSelectedPreset(chosen))
+            {
+                chosenPresetIndex = null;
+            }
         }
 
         // Capture culture at parameter-set time so it's stable across render cycles
@@ -294,7 +311,7 @@ public partial class BbDateRangePicker : ComponentBase
         }
         else
         {
-            _displayMonth1 = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+            _displayMonth1 = new DateTime(Today.Year, Today.Month, 1);
         }
         _displayMonth2 = _displayMonth1.AddMonths(1);
     }
@@ -324,6 +341,8 @@ public partial class BbDateRangePicker : ComponentBase
         {
             return;
         }
+
+        chosenPresetIndex = null;
 
         if (!_selectionStart.HasValue || (_selectionStart.HasValue && _selectionEnd.HasValue))
         {
@@ -386,21 +405,29 @@ public partial class BbDateRangePicker : ComponentBase
     {
         _selectionStart = null;
         _selectionEnd = null;
+        chosenPresetIndex = null;
         Value = null;
         await ValueChanged.InvokeAsync(null);
         StateHasChanged();
     }
 
+    // The one preset to highlight, in both the sidebar and the native select.
     // The calendar draft is the source of truth, including before Apply is pressed.
     // A nullable index lets the native select show Custom/empty instead of selecting index zero.
     private int? SelectedPresetIndex
     {
         get
         {
-            var presets = EffectivePresets;
-            for (var i = 0; i < presets.Count; i++)
+            // The picked preset wins while the draft is still its range; otherwise (a value from
+            // outside, or the picked range has gone stale) fall back to the first preset that matches.
+            if (chosenPresetIndex is int chosen && IsSelectedPreset(chosen))
             {
-                if (IsSelectedPreset(presets[i]))
+                return chosen;
+            }
+
+            for (var i = 0; i < EffectivePresets.Count; i++)
+            {
+                if (IsSelectedPreset(i))
                 {
                     return i;
                 }
@@ -413,17 +440,23 @@ public partial class BbDateRangePicker : ComponentBase
     {
         // Reconcile the native select even if constraints reject the requested preset.
         _parametersChanged = true;
-        if (index is int selected && selected >= 0 && selected < EffectivePresets.Count)
+        if (index is int selected)
         {
-            await ApplyPreset(EffectivePresets[selected]);
+            await ApplyPreset(selected);
         }
     }
 
-    private async Task ApplyPreset(DateRangeQuickPick quickPick)
+    private async Task ApplyPreset(int index)
     {
-        var range = ResolveRange(quickPick);
+        if (index < 0 || index >= EffectivePresets.Count)
+        {
+            return;
+        }
+
+        var range = ResolveRange(EffectivePresets[index]);
         if (range != null && CountSelectedDays(range.Start, range.End) > 0)
         {
+            chosenPresetIndex = index;
             _selectionStart = range.Start;
             _selectionEnd = range.End;
             _displayMonth1 = new DateTime(range.Start.Year, range.Start.Month, 1);
@@ -440,15 +473,15 @@ public partial class BbDateRangePicker : ComponentBase
         }
     }
 
-    private static DateRange? ResolveRange(DateRangeQuickPick quickPick) =>
+    private DateRange? ResolveRange(DateRangeQuickPick quickPick) =>
         quickPick.Preset.HasValue ? GetPresetRange(quickPick.Preset.Value) : quickPick.RangeFactory?.Invoke();
 
     private string ResolveLabel(DateRangeQuickPick quickPick) =>
         quickPick.Preset.HasValue ? GetPresetLabel(quickPick.Preset.Value) : quickPick.Label ?? string.Empty;
 
-    private static DateRange? GetPresetRange(DateRangePreset preset)
+    private DateRange? GetPresetRange(DateRangePreset preset)
     {
-        var today = DateTime.Today;
+        var today = Today;
         return preset switch
         {
             DateRangePreset.Today => new DateRange(today, today),
@@ -622,22 +655,24 @@ public partial class BbDateRangePicker : ComponentBase
         Class
     );
 
-    private bool IsSelectedPreset(DateRangeQuickPick quickPick)
+    // Whether the preset's range equals the current selection. Several presets can match at once;
+    // SelectedPresetIndex decides which one is highlighted.
+    private bool IsSelectedPreset(int index)
     {
-        if (!_selectionStart.HasValue || !_selectionEnd.HasValue)
+        if (!_selectionStart.HasValue || !_selectionEnd.HasValue || index < 0 || index >= EffectivePresets.Count)
         {
             return false;
         }
-        var range = ResolveRange(quickPick);
+        var range = ResolveRange(EffectivePresets[index]);
         return range != null && range.Start.Date == _selectionStart.Value.Date &&
                range.End.Date == _selectionEnd.Value.Date;
     }
 
-    private string GetPresetButtonClass(DateRangeQuickPick quickPick)
+    private static string GetPresetButtonClass(bool isSelected)
     {
         return ClassNames.cn(
             "bb:whitespace-nowrap bb:shrink-0 bb:justify-start",
-            IsSelectedPreset(quickPick) ? "bb:bg-primary bb:text-primary-foreground bb:hover:bg-primary bb:hover:text-primary-foreground" : null
+            isSelected ? "bb:bg-primary bb:text-primary-foreground bb:hover:bg-primary bb:hover:text-primary-foreground" : null
         );
     }
 
@@ -708,6 +743,7 @@ public partial class BbDateRangePicker : ComponentBase
             _lastDisplayMonth2 = _displayMonth2;
             _lastSelectionStart = _selectionStart;
             _lastSelectionEnd = _selectionEnd;
+            lastChosenPresetIndex = chosenPresetIndex;
             _lastValue = Value;
             _lastMinDate = MinDate;
             _lastMaxDate = MaxDate;
@@ -720,11 +756,13 @@ public partial class BbDateRangePicker : ComponentBase
             return true;
         }
 
+        // A preset with the same dates as the current one changes only chosenPresetIndex.
         var changed = _lastIsOpen != _isOpen
             || _lastDisplayMonth1 != _displayMonth1
             || _lastDisplayMonth2 != _displayMonth2
             || _lastSelectionStart != _selectionStart
             || _lastSelectionEnd != _selectionEnd
+            || lastChosenPresetIndex != chosenPresetIndex
             || _lastValue != Value
             || _lastMinDate != MinDate
             || _lastMaxDate != MaxDate
@@ -742,6 +780,7 @@ public partial class BbDateRangePicker : ComponentBase
             _lastDisplayMonth2 = _displayMonth2;
             _lastSelectionStart = _selectionStart;
             _lastSelectionEnd = _selectionEnd;
+            lastChosenPresetIndex = chosenPresetIndex;
             _lastValue = Value;
             _lastMinDate = MinDate;
             _lastMaxDate = MaxDate;

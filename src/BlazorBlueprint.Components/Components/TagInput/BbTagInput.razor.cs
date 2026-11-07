@@ -645,13 +645,13 @@ public partial class BbTagInput : ComponentBase, IAsyncDisposable
 
     private string ContainerCssClass => ClassNames.cn(
         "bb:flex bb:flex-wrap bb:items-center bb:gap-1.5 bb:min-h-10 bb:w-full bb:rounded-md",
-        "bb:border bb:px-3 bb:py-2 bb:text-sm",
+        "bb:border bb:px-3 bb:py-2 bb:text-sm bb:shadow-xs",
         "bb:transition-colors",
         "bb:focus-within:outline-none bb:focus-within:ring-2 bb:focus-within:ring-ring bb:focus-within:ring-offset-2",
         Variant switch
         {
             TagInputVariant.Secondary => "bb:border-input bb:bg-secondary/50",
-            _ => "bb:border-input bb:bg-background"
+            _ => "bb:border-input bb:bg-transparent bb:dark:bg-input/30"
         },
         IsInvalid ? "bb:border-destructive bb:focus-within:ring-destructive" : null,
         Disabled ? "bb:opacity-50 bb:cursor-not-allowed" : null,

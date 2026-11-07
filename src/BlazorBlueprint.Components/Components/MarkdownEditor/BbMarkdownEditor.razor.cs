@@ -114,7 +114,7 @@ public partial class BbMarkdownEditor : ComponentBase, IAsyncDisposable
     /// Gets the CSS classes for the editor container.
     /// </summary>
     private string ContainerCssClass => ClassNames.cn(
-        "bb:flex bb:flex-col bb:rounded-md bb:border bb:border-input bb:bg-background",
+        "bb:flex bb:flex-col bb:rounded-md bb:border bb:border-input bb:bg-transparent bb:dark:bg-input/30 bb:shadow-xs",
         "bb:focus-within:ring-2 bb:focus-within:ring-ring bb:focus-within:ring-offset-2",
         ClassNames.when(AriaInvalid == true, "bb:border-destructive bb:ring-destructive/20"),
         ClassNames.when(Disabled, "bb:opacity-50 bb:cursor-not-allowed"),

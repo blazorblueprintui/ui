@@ -1,0 +1,22 @@
+<BbDataGrid TData="Person" Items="@people" InitialPageSize="5"
+            SelectionMode="DataTableSelectionMode.Multiple"
+            MobileLayout="DataGridMobileLayout.Stacked"
+            MobileBreakpoint="DataGridBreakpoint.Md">
+    <Columns>
+        @* Cells keep the table's column order, and pinned columns come first, so pin the
+           checkbox too to keep it the first line of each card. *@
+        <BbDataGridSelectColumn TData="Person" Pinned="ColumnPinning.Left" />
+        @* Pinned columns stop being sticky once the row is a card. *@
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Name)"
+            Width="180px" Pinned="ColumnPinning.Left" Sortable />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Email)" HideOnMobile />
+        <BbDataGridPropertyColumn TData="Person" TProp="string" Property="@(p => p.Department)" MobileLabel="Dept." />
+        <BbDataGridPropertyColumn TData="Person" TProp="int" Property="@(p => p.Salary)" Format="C0" />
+        @* An empty MobileLabel shows the buttons with no label. *@
+        <BbDataGridTemplateColumn TData="Person" Title="Actions" MobileLabel="">
+            <ChildContent Context="person">
+                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small">Edit</BbButton>
+            </ChildContent>
+        </BbDataGridTemplateColumn>
+    </Columns>
+</BbDataGrid>

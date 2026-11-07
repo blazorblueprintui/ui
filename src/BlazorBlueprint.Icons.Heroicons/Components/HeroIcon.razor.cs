@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using BlazorBlueprint.Icons.Heroicons.Data;
 
@@ -119,9 +120,10 @@ public partial class HeroIcon : ComponentBase
     }
 
     /// <summary>
-    /// The computed stroke width for outline icons.
+    /// The computed stroke width for outline icons, formatted invariantly so a comma-decimal
+    /// culture does not write "1,5", which SVG drops.
     /// </summary>
-    private double ComputedStrokeWidth => StrokeWidth ?? 1.5;
+    private string ComputedStrokeWidth => (StrokeWidth ?? 1.5).ToString(CultureInfo.InvariantCulture);
 
     /// <summary>
     /// The viewBox for the icon based on variant.
