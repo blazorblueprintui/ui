@@ -33,6 +33,29 @@ public interface IKeyboardShortcutService : IAsyncDisposable
     public Task<IDisposable> RegisterAsync(string shortcut, Func<Task> callback, string id);
 
     /// <summary>
+    /// Registers a keyboard shortcut with optional handling while focus is in an editable element.
+    /// </summary>
+    /// <param name="shortcut">The shortcut string (e.g., "Ctrl+S").</param>
+    /// <param name="callback">The async callback to invoke when the shortcut is pressed.</param>
+    /// <param name="allowInEditable">Whether to handle the shortcut in inputs, textareas, selects and contenteditable elements.</param>
+    /// <param name="id">An optional unique identifier for later unregistration. When null, an identifier is generated.</param>
+    /// <returns>A disposable handle to unregister the shortcut.</returns>
+    /// <exception cref="NotSupportedException">The implementation does not support shortcuts in editable elements.</exception>
+    /// <remarks>
+    /// The default implementation delegates to the existing overloads when <paramref name="allowInEditable"/>
+    /// is false, and throws when it is true. Custom services must override this overload to support the opt-in.
+    /// </remarks>
+    public Task<IDisposable> RegisterAsync(string shortcut, Func<Task> callback, bool allowInEditable, string? id = null)
+    {
+        if (allowInEditable)
+        {
+            throw new NotSupportedException("This keyboard shortcut service does not support shortcuts in editable elements.");
+        }
+
+        return id == null ? RegisterAsync(shortcut, callback) : RegisterAsync(shortcut, callback, id);
+    }
+
+    /// <summary>
     /// Unregisters a shortcut by its unique identifier.
     /// </summary>
     /// <param name="id">The identifier used when registering the shortcut.</param>

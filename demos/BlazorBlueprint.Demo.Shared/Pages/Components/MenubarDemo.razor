@@ -18,7 +18,8 @@
         <div class="space-y-2">
             <h2 class="text-2xl font-semibold">Example</h2>
             <p class="text-sm text-muted-foreground">
-                A menubar with working keyboard shortcuts. Press shortcuts anywhere on the page - they work even when menus are closed.
+                A menubar with working keyboard shortcuts, even when menus are closed.
+                Print opts in with AllowShortcutInEditable and also works while typing.
             </p>
         </div>
 
@@ -38,7 +39,7 @@
                         <BbMenubarSeparator />
                         <BbMenubarItem OnClick="@(() => HandleShortcutAction("Share"))">Share</BbMenubarItem>
                         <BbMenubarSeparator />
-                        <BbMenubarItem Shortcut="Ctrl+Shift+P" OnClick="@(() => HandleShortcutAction("Print"))">
+                        <BbMenubarItem Shortcut="Ctrl+Shift+P" AllowShortcutInEditable="true" OnClick="@(() => HandleShortcutAction("Print"))">
                             Print...
                             <BbMenubarShortcut>Ctrl+Shift+P</BbMenubarShortcut>
                         </BbMenubarItem>
@@ -110,7 +111,9 @@
         </div>
 
         <div class="mt-4 p-4 bg-muted rounded-lg">
-            <p class="font-medium mb-3">Available shortcuts:</p>
+            <label for="menubar-shortcut-notes" class="block text-sm font-medium mb-2">Try Print while typing</label>
+            <BbInput id="menubar-shortcut-notes" Placeholder="Press Ctrl+Shift+P here." />
+            <p class="font-medium my-3">Available shortcuts:</p>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                 <div class="flex items-center gap-2">
                     <BbKbd Keys="Ctrl+Shift+T" Size="KbdSize.Small" /> <span class="text-muted-foreground">New Tab</span>
@@ -279,6 +282,9 @@
                 </ApiParameter>
                 <ApiParameter Name="Shortcut" Type="string?" Default="null">
                     Keyboard shortcut to auto-register globally (e.g., "Ctrl+N", "F1").
+                </ApiParameter>
+                <ApiParameter Name="AllowShortcutInEditable" Type="bool" Default="false">
+                    Allows Shortcut to fire in inputs, textareas, selects and contenteditable elements.
                 </ApiParameter>
                 <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">
                     Additional HTML attributes applied to the component's root element (e.g. <code>data-testid</code>, <code>aria-label</code>).

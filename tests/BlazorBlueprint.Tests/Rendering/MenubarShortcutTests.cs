@@ -62,6 +62,28 @@ public class MenubarShortcutTests
         });
     }
 
+    [Fact]
+    public async Task ChangingAllowShortcutInEditableReregistersTheShortcut()
+    {
+        var javaScript = new ShortcutJavaScript();
+        await RunAsync(async (renderer, shortcuts) =>
+        {
+            var clicks = 0;
+            var item = await renderer.MountAsync<BbMenubarItem>(new()
+            {
+                [nameof(BbMenubarItem.Shortcut)] = "Ctrl+N",
+                [nameof(BbMenubarItem.OnClick)] = EventCallback.Factory.Create(this, () => clicks++)
+            });
+            Assert.Equal([false], javaScript.AllowInEditable);
+
+            await SetParametersAsync(item, new() { [nameof(BbMenubarItem.AllowShortcutInEditable)] = true });
+            Assert.Equal([false, true], javaScript.AllowInEditable);
+
+            await shortcuts.HandleShortcutAsync("ctrl+n");
+            Assert.Equal(1, clicks);
+        }, javaScript);
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]
@@ -186,6 +208,7 @@ public class MenubarShortcutTests
         public int Registrations { get; private set; }
         public int Unregistrations { get; private set; }
         public Task? PendingRegistration { get; init; }
+        public List<bool> AllowInEditable { get; } = [];
 
         public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
             InvokeAsync<TValue>(identifier, CancellationToken.None, args);
@@ -196,6 +219,7 @@ public class MenubarShortcutTests
             if (identifier == "keyboardShortcuts.registerShortcut")
             {
                 Registrations++;
+                AllowInEditable.Add(args is { Length: > 1 } && args[1] is true);
                 if (PendingRegistration != null)
                 {
                     await PendingRegistration;
