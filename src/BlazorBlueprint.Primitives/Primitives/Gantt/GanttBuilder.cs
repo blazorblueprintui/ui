@@ -16,8 +16,8 @@ public static class GanttBuilder
     /// <param name="source">Where the tasks come from and how the timeline is cut up.</param>
     /// <returns>The chart.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="source"/> is null.</exception>
-    /// <exception cref="ArgumentException">
-    /// Two tasks share an identifier, or the parent identifiers form a loop.
+    /// <exception cref="GanttBuildException">
+    /// A task has no identifier, two tasks share an identifier, or the parent identifiers form a loop.
     /// </exception>
     public static GanttChart<TItem> Build<TItem>(GanttSource<TItem> source)
     {
@@ -52,7 +52,7 @@ public static class GanttBuilder
             var id = source.Id(item);
             if (string.IsNullOrEmpty(id))
             {
-                throw new ArgumentException("Every task needs an identifier.", nameof(source));
+                throw new GanttBuildException("Every task needs an identifier.", nameof(source), GanttBuildError.MissingId);
             }
 
             var start = source.Start(item);
@@ -73,7 +73,7 @@ public static class GanttBuilder
 
             if (!nodes.TryAdd(id, node))
             {
-                throw new ArgumentException($"Two tasks share the identifier '{id}'.", nameof(source));
+                throw new GanttBuildException($"Two tasks share the identifier '{id}'.", nameof(source), GanttBuildError.DuplicateId, id);
             }
         }
 
@@ -113,7 +113,7 @@ public static class GanttBuilder
 
         if (reachable != nodes.Count)
         {
-            throw new ArgumentException("The parent identifiers form a loop.", nameof(source));
+            throw new GanttBuildException("The parent identifiers form a loop.", nameof(source), GanttBuildError.ParentLoop);
         }
 
         return roots;

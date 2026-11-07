@@ -20,10 +20,28 @@ namespace BlazorBlueprint.Primitives.Barcode;
 /// The parameter name is still carried on <see cref="ArgumentException.ParamName"/> for anything
 /// that wants it. It is only kept out of the text.
 /// </para>
+/// <para>
+/// <see cref="Error"/> and <see cref="Arguments"/> say the same thing in a form a program can read,
+/// so a component can show its own translated sentence instead of the English
+/// <see cref="Message"/>.
+/// </para>
 /// </remarks>
 public sealed class BarcodeFormatException : ArgumentException
 {
     private readonly string text;
+
+    /// <summary>Creates the exception with the reason it was thrown.</summary>
+    /// <param name="message">What is wrong, as a sentence to show someone.</param>
+    /// <param name="paramName">The argument at fault.</param>
+    /// <param name="error">What is wrong, for a program to read.</param>
+    /// <param name="arguments">The values the message was formatted with.</param>
+    internal BarcodeFormatException(string message, string? paramName, BarcodeFormatError error, params object[] arguments)
+        : base(message, paramName)
+    {
+        text = message;
+        Error = error;
+        Arguments = arguments;
+    }
 
     /// <summary>Creates the exception.</summary>
     /// <param name="message">What is wrong, as a sentence to show someone.</param>
@@ -56,6 +74,18 @@ public sealed class BarcodeFormatException : ArgumentException
     {
         text = message;
     }
+
+    /// <summary>
+    /// Gets what is wrong, for a program to read. <see cref="BarcodeFormatError.Unspecified"/> when
+    /// the exception was created without a reason.
+    /// </summary>
+    public BarcodeFormatError Error { get; }
+
+    /// <summary>
+    /// Gets the values <see cref="Message"/> was formatted with, in the order
+    /// <see cref="BarcodeFormatError"/> documents for each reason. Empty when there are none.
+    /// </summary>
+    public IReadOnlyList<object> Arguments { get; } = [];
 
     /// <summary>Gets what is wrong, as a sentence and nothing else.</summary>
     public override string Message => text;

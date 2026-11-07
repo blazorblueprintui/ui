@@ -58,6 +58,36 @@ public class DefaultBbLocalizer : IBbLocalizer
 
         // Barcode
         ["Barcode.AriaLabel"] = "{0} barcode for {1}",
+        ["Barcode.Empty"] = "There is nothing to encode.",
+        ["Barcode.NotDigits"] = "{0} holds digits only, and this value contains '{1}'. {2}",
+        ["Barcode.Code128NotAscii"] = "Code 128 holds ASCII only, and this value contains '{0}'. Use a QR code for anything beyond that.",
+        ["Barcode.Code39InvalidCharacter"] = "Code 39 holds digits, letters and - . space $ / + %, and this value contains '{0}'. Use Code 128 for anything else.",
+        ["Barcode.WrongLength"] = "{0} needs {1} digits, or {2} with the check digit already on the end. This value has {3}.",
+        ["Barcode.WrongCheckDigit"] = "The check digit is wrong: {0} of {1} ends in {2}, not {3}. Leave the check digit off and it is worked out.",
+        ["Barcode.InvalidIsbn"] = "An ISBN is 10 digits, or 13 beginning 978 or 979, with or without hyphens. This value is \"{0}\".",
+        ["Barcode.InvalidIssn"] = "An ISSN is 8 characters, with or without a hyphen. This value is \"{0}\".",
+        ["Barcode.ItfTooShort"] = "Interleaved 2 of 5 needs at least two digits.",
+        ["Barcode.CodabarInvalidCharacter"] = "Codabar holds digits and - $ : / . +, wrapped in a start and stop letter from A to D. This value contains '{0}'.",
+        ["Barcode.MsiEmpty"] = "MSI needs at least one digit.",
+        ["Barcode.PostnetWrongLength"] = "POSTNET carries a 5-digit ZIP, a 9-digit ZIP+4 or an 11-digit delivery point code. This value has {0} digits.",
+        ["Barcode.Rm4sccInvalidCharacter"] = "The Royal Mail 4-state code holds digits and upper-case letters, and this value contains '{0}'.",
+        ["Barcode.Rm4sccEmpty"] = "The Royal Mail 4-state code needs at least one character.",
+        ["Barcode.PharmacodeOutOfRange"] = "Pharmacode carries a whole number from 3 to 131070, and this value is \"{0}\".",
+        ["Barcode.TelepenNotAscii"] = "Telepen holds ASCII only, and this value contains '{0}'.",
+        ["Barcode.InputCode128"] = "Any ASCII text.",
+        ["Barcode.InputCode39"] = "Digits, letters and - . space $ / + %.",
+        ["Barcode.InputEan13"] = "12 digits, or 13 with the check digit.",
+        ["Barcode.InputEan8"] = "7 digits, or 8 with the check digit.",
+        ["Barcode.InputUpcA"] = "11 digits, or 12 with the check digit.",
+        ["Barcode.InputItf"] = "Digits, an even number of them.",
+        ["Barcode.InputCodabar"] = "Digits and - $ : / . +, optionally wrapped in a start and stop letter A to D.",
+        ["Barcode.InputPostnet"] = "A 5, 9 or 11 digit ZIP code.",
+        ["Barcode.InputPharmacode"] = "A whole number from 3 to 131070.",
+        ["Barcode.InputRm4scc"] = "Digits and upper-case letters.",
+        ["Barcode.InputIsbn"] = "A 10 or 13 digit ISBN, with or without hyphens.",
+        ["Barcode.InputIssn"] = "An 8 character ISSN, with or without a hyphen.",
+        ["Barcode.InputMsi"] = "Digits.",
+        ["Barcode.InputTelepen"] = "Any ASCII text.",
 
         // BottomNav
         ["BottomNav.Label"] = "Primary navigation",
@@ -289,6 +319,15 @@ public class DefaultBbLocalizer : IBbLocalizer
         // DynamicForm
         ["DynamicForm.Submit"] = "Submit",
         ["DynamicForm.ValidationErrors"] = "Validation Errors",
+        ["DynamicForm.Required"] = "{0} is required.",
+        ["DynamicForm.MinLength"] = "{0} must be at least {1} characters.",
+        ["DynamicForm.MaxLength"] = "{0} must be at most {1} characters.",
+        ["DynamicForm.Min"] = "{0} must be at least {1}.",
+        ["DynamicForm.Max"] = "{0} must be at most {1}.",
+        ["DynamicForm.Pattern"] = "{0} does not match the required format.",
+        ["DynamicForm.Email"] = "{0} must be a valid email address.",
+        ["DynamicForm.Url"] = "{0} must be a valid URL.",
+        ["DynamicForm.Phone"] = "{0} must be a valid phone number.",
 
         // EventCalendar
         ["EventCalendar.Today"] = "Today",
@@ -381,6 +420,19 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["FilterBuilder.OperatorGreaterThanDate"] = "is after",
         ["FilterBuilder.OperatorLessThanDate"] = "is before",
 
+        // FormFieldInput
+        ["FormField.ParseError"] = "'{0}' is not a valid {1}.",
+        ["FormField.PatternError"] = "'{0}' does not match the required format.",
+        ["FormField.ValueError"] = "The entered value is not valid.",
+        ["FormField.InvalidInput"] = "Invalid input.",
+        ["FormField.TypeText"] = "text value",
+        ["FormField.TypeWholeNumber"] = "whole number",
+        ["FormField.TypeNumber"] = "number",
+        ["FormField.TypeDate"] = "date",
+        ["FormField.TypeTime"] = "time",
+        ["FormField.TypeGuid"] = "GUID",
+        ["FormField.TypeBoolean"] = "true/false value",
+
         // FormSection
         ["FormSection.Expand"] = "Expand section",
         ["FormSection.Collapse"] = "Collapse section",
@@ -432,6 +484,9 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["Gantt.LegendMilestone"] = "Milestone",
         ["Gantt.LegendToday"] = "Today",
         ["Gantt.LegendNonWorking"] = "Non-working day",
+        ["Gantt.MissingId"] = "Every task needs an identifier.",
+        ["Gantt.DuplicateId"] = "Two tasks share the identifier '{0}'.",
+        ["Gantt.ParentLoop"] = "The parent identifiers form a loop.",
 
         // Link
         ["Link.OpensInNewTab"] = "(opens in a new tab)",

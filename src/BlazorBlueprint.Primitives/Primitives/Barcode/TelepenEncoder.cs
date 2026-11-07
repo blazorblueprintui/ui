@@ -65,7 +65,9 @@ internal static class TelepenEncoder
             {
                 throw new BarcodeFormatException(
                     $"Telepen holds ASCII only, and this value contains '{c}'.",
-                    nameof(value));
+                    nameof(value),
+                    BarcodeFormatError.TelepenNotAscii,
+                    c);
             }
         }
 

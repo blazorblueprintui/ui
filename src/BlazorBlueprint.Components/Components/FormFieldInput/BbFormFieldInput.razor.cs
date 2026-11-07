@@ -44,6 +44,9 @@ public partial class BbFormFieldInput<TValue> : FormFieldBase
     private bool _hasError;
     private string? _errorMessage;
 
+    [Inject]
+    private IBbLocalizer Localizer { get; set; } = default!;
+
     // --- InputField Pass-Through Parameters ---
 
     /// <summary>
@@ -203,45 +206,45 @@ public partial class BbFormFieldInput<TValue> : FormFieldBase
         }
     }
 
-    private static string GenerateErrorMessage(InputParseException ex) => ex.ErrorKind switch
+    private string GenerateErrorMessage(InputParseException ex) => ex.ErrorKind switch
     {
-        InputFieldErrorKind.Parse => $"'{ex.RawInput}' is not a valid {GetFriendlyTypeName(ex.TargetType)}.",
-        InputFieldErrorKind.PatternValidation => $"'{ex.RawInput}' does not match the required format.",
-        InputFieldErrorKind.ValueValidation => "The entered value is not valid.",
-        _ => "Invalid input."
+        InputFieldErrorKind.Parse => Localizer["FormField.ParseError", ex.RawInput, GetFriendlyTypeName(ex.TargetType)],
+        InputFieldErrorKind.PatternValidation => Localizer["FormField.PatternError", ex.RawInput],
+        InputFieldErrorKind.ValueValidation => Localizer["FormField.ValueError"],
+        _ => Localizer["FormField.InvalidInput"]
     };
 
-    private static string GetFriendlyTypeName(Type type)
+    private string GetFriendlyTypeName(Type type)
     {
         var underlying = Nullable.GetUnderlyingType(type) ?? type;
 
         if (underlying == typeof(string))
         {
-            return "text value";
+            return Localizer["FormField.TypeText"];
         }
         if (underlying == typeof(int) || underlying == typeof(long))
         {
-            return "whole number";
+            return Localizer["FormField.TypeWholeNumber"];
         }
         if (underlying == typeof(float) || underlying == typeof(double) || underlying == typeof(decimal))
         {
-            return "number";
+            return Localizer["FormField.TypeNumber"];
         }
         if (underlying == typeof(DateTime) || underlying == typeof(DateTimeOffset) || underlying == typeof(DateOnly))
         {
-            return "date";
+            return Localizer["FormField.TypeDate"];
         }
         if (underlying == typeof(TimeOnly))
         {
-            return "time";
+            return Localizer["FormField.TypeTime"];
         }
         if (underlying == typeof(Guid))
         {
-            return "GUID";
+            return Localizer["FormField.TypeGuid"];
         }
         if (underlying == typeof(bool))
         {
-            return "true/false value";
+            return Localizer["FormField.TypeBoolean"];
         }
 
         return underlying.Name.ToLowerInvariant();
