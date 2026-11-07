@@ -1,0 +1,35 @@
+@* ShowOverlay="false" opens the sheet beside the page: no backdrop, no focus trap,
+   no scroll lock, aria-modal="false". Escape and a click outside still close it. *@
+<BbSheet @bind-Open="isOpen">
+    <BbSheetTrigger>
+        <BbButton Variant="ButtonVariant.Outline">View settings</BbButton>
+    </BbSheetTrigger>
+    <BbSheetContent ShowOverlay="false" CloseOnInteractOutside="@closeOnOutsideClick">
+        <BbSheetHeader>
+            <BbSheetTitle>View settings</BbSheetTitle>
+            <BbSheetDescription>Changes apply immediately to the table.</BbSheetDescription>
+        </BbSheetHeader>
+        <div class="space-y-3 py-4">
+            <div class="flex items-center gap-2">
+                <BbCheckbox @bind-Checked="showEmail" Id="show-email" />
+                <label for="show-email" class="text-sm font-medium leading-none">Show email column</label>
+            </div>
+            <div class="flex items-center gap-2">
+                <BbCheckbox @bind-Checked="compactRows" Id="compact-rows" />
+                <label for="compact-rows" class="text-sm font-medium leading-none">Compact rows</label>
+            </div>
+        </div>
+    </BbSheetContent>
+</BbSheet>
+
+@* The table behind the sheet stays clickable while it is open *@
+<table class="w-full text-sm">
+    ...
+</table>
+
+@code {
+    private bool isOpen;
+    private bool closeOnOutsideClick = true; // false keeps the sheet open on a click beside it
+    private bool showEmail = true;
+    private bool compactRows;
+}

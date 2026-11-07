@@ -413,13 +413,110 @@
         <CodeBlock Source="Components/Sheet/non-dismissible.txt" />
     </div>
 
+    <div class="space-y-4">
+        <h2 class="text-2xl font-semibold">Non-Modal (Without Overlay)</h2>
+        <p class="text-sm text-muted-foreground">
+            Set <code class="bg-muted px-1 py-0.5 rounded">ShowOverlay="false"</code> on <code class="bg-muted px-1 py-0.5 rounded">BbSheetContent</code> to open the sheet beside the page instead of over it.
+            No backdrop is rendered, focus is not trapped and scroll is not locked, so the page behind stays usable while settings apply live.
+            Escape still closes the sheet, and so does a click outside it unless <code class="bg-muted px-1 py-0.5 rounded">CloseOnInteractOutside="false"</code>.
+        </p>
+
+        <div class="space-y-3 rounded-lg border p-4" data-testid="non-modal-page">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <BbCheckbox @bind-Checked="nonModalCloseOutside" Id="non-modal-close-outside" />
+                    <label for="non-modal-close-outside" class="text-sm font-medium leading-none">
+                        Close on outside click
+                    </label>
+                </div>
+
+                <BbSheet @bind-Open="isNonModalOpen">
+                    <BbSheetTrigger>
+                        <BbButton Variant="ButtonVariant.Outline" data-testid="non-modal-trigger">
+                            <LucideIcon Name="settings-2" Size="16" />
+                            View settings
+                        </BbButton>
+                    </BbSheetTrigger>
+
+                    <BbSheetContent ShowOverlay="false" CloseOnInteractOutside="@nonModalCloseOutside" data-testid="non-modal-sheet">
+                        <BbSheetHeader>
+                            <BbSheetTitle>View settings</BbSheetTitle>
+                            <BbSheetDescription>
+                                Changes apply immediately to the table.
+                            </BbSheetDescription>
+                        </BbSheetHeader>
+
+                        <div class="space-y-3 py-4">
+                            <div class="flex items-center gap-2">
+                                <BbCheckbox @bind-Checked="showEmail" Id="non-modal-show-email" />
+                                <label for="non-modal-show-email" class="text-sm font-medium leading-none">Show email column</label>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <BbCheckbox @bind-Checked="showRole" Id="non-modal-show-role" />
+                                <label for="non-modal-show-role" class="text-sm font-medium leading-none">Show role column</label>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <BbCheckbox @bind-Checked="compactRows" Id="non-modal-compact" />
+                                <label for="non-modal-compact" class="text-sm font-medium leading-none">Compact rows</label>
+                            </div>
+                        </div>
+                    </BbSheetContent>
+                </BbSheet>
+            </div>
+
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b text-left text-muted-foreground">
+                        <th class="py-2 font-medium">Name</th>
+                        @if (showEmail)
+                        {
+                            <th class="py-2 font-medium">Email</th>
+                        }
+                        @if (showRole)
+                        {
+                            <th class="py-2 font-medium">Role</th>
+                        }
+                        <th class="py-2"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var member in teamMembers)
+                    {
+                        <tr class="border-b last:border-0 @(selectedMember == member.Name ? "bg-muted" : "")">
+                            <td class="@(compactRows ? "py-1" : "py-3")">@member.Name</td>
+                            @if (showEmail)
+                            {
+                                <td class="@(compactRows ? "py-1" : "py-3") text-muted-foreground">@member.Email</td>
+                            }
+                            @if (showRole)
+                            {
+                                <td class="@(compactRows ? "py-1" : "py-3")">@member.Role</td>
+                            }
+                            <td class="@(compactRows ? "py-1" : "py-3") text-right">
+                                <BbButton Variant="ButtonVariant.Ghost" Size="ButtonSize.Small" OnClick="@(() => selectedMember = member.Name)">
+                                    Select
+                                </BbButton>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <p class="text-sm text-muted-foreground" data-testid="non-modal-status">
+                Sheet open: <strong>@isNonModalOpen</strong> · Selected: <strong>@(selectedMember ?? "none")</strong>
+            </p>
+        </div>
+
+        <CodeBlock Source="Components/Sheet/non-modal.txt" />
+    </div>
+
     <AccessibilityList>
         <AriaAttributes>
-            <AccessibilityItem>Renders with <code>role="dialog"</code> and <code>aria-modal="true"</code> for screen readers</AccessibilityItem>
+            <AccessibilityItem>Renders with <code>role="dialog"</code> and <code>aria-modal="true"</code> for screen readers (<code>aria-modal="false"</code> with <code>ShowOverlay="false"</code>)</AccessibilityItem>
             <AccessibilityItem><code>aria-labelledby</code> automatically linked to SheetTitle</AccessibilityItem>
             <AccessibilityItem><code>aria-describedby</code> automatically linked to SheetDescription</AccessibilityItem>
-            <AccessibilityItem>Focus is trapped within the sheet when open</AccessibilityItem>
-            <AccessibilityItem>Body scroll is locked when sheet is open</AccessibilityItem>
+            <AccessibilityItem>Focus is trapped within the sheet when open (moved into it, but not trapped, with <code>ShowOverlay="false"</code>)</AccessibilityItem>
+            <AccessibilityItem>Body scroll is locked when sheet is open (not with <code>ShowOverlay="false"</code>)</AccessibilityItem>
             <AccessibilityItem>Respects <code>prefers-reduced-motion</code> for animations</AccessibilityItem>
         </AriaAttributes>
         <KeyboardNavigation>
@@ -477,6 +574,12 @@
                 <ApiParameter Name="ShowClose" Type="bool" Default="true">
                     Whether to show the close button (X icon).
                 </ApiParameter>
+                <ApiParameter Name="ShowOverlay" Type="bool" Default="true">
+                    Whether to render the backdrop overlay, making the sheet modal. When false the sheet is non-modal: no overlay, <code>aria-modal="false"</code>, focus moves into the sheet but is not trapped, and body scroll is not locked (<code>TrapFocus</code> and <code>LockScroll</code> are ignored). Escape still closes it. <code>Modal</code> on <code>BbSheet</code> still decides whether it can be dismissed at all.
+                </ApiParameter>
+                <ApiParameter Name="CloseOnInteractOutside" Type="bool" Default="true">
+                    Only with <code>ShowOverlay="false"</code>: whether a pointer-down outside the sheet closes it. The trigger and floating content opened from inside the sheet (popovers, selects, menus) do not count as outside. The click still reaches the page.
+                </ApiParameter>
                 <ApiParameter Name="CloseOnOverlayClick" Type="bool" Default="true">
                     Whether clicking the backdrop overlay should close the sheet.
                 </ApiParameter>
@@ -484,10 +587,10 @@
                     Whether pressing Escape should close the sheet.
                 </ApiParameter>
                 <ApiParameter Name="TrapFocus" Type="bool" Default="true">
-                    Whether to trap focus within the sheet.
+                    Whether to trap focus within the sheet. Ignored when <code>ShowOverlay</code> is false.
                 </ApiParameter>
                 <ApiParameter Name="LockScroll" Type="bool" Default="true">
-                    Whether to lock body scroll when sheet is open.
+                    Whether to lock body scroll when sheet is open. Ignored when <code>ShowOverlay</code> is false.
                 </ApiParameter>
                 <ApiParameter Name="Class" Type="string?" Default="null">
                     Additional CSS classes for custom width or styling.
@@ -531,4 +634,20 @@
 
 @code {
     private bool isSheetOpen = false;
+
+    private bool isNonModalOpen;
+    private bool nonModalCloseOutside = true;
+    private bool showEmail = true;
+    private bool showRole = true;
+    private bool compactRows;
+    private string? selectedMember;
+
+    private sealed record TeamMember(string Name, string Email, string Role);
+
+    private readonly TeamMember[] teamMembers =
+    [
+        new("Olivia Martin", "olivia@example.com", "Owner"),
+        new("Jackson Lee", "jackson@example.com", "Developer"),
+        new("Isabella Nguyen", "isabella@example.com", "Designer"),
+    ];
 }
