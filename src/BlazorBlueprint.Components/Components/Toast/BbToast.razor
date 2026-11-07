@@ -1,6 +1,9 @@
 @namespace BlazorBlueprint.Components
 @using BlazorBlueprint.Icons.Lucide.Components
+@using BlazorBlueprint.Primitives.Services
 @inject IBbLocalizer Localizer
+@inject IJSRuntime JS
+@implements IDisposable
 
 @*
     Individual Toast component - displays a single toast notification.
@@ -8,8 +11,9 @@
 
 <CascadingValue TValue="IToastReference" Value="reference" IsFixed="true">
     @* Only errors interrupt; the rest are announced politely by BbToastProvider's live region. *@
-    <div class="@CssClass" role="@(Data.Variant == ToastVariant.Destructive ? "alert" : null)"
-         data-state="open"
+    <div @ref="_contentRef"
+         class="@CssClass" role="@(Data.Variant == ToastVariant.Destructive ? "alert" : null)"
+         data-state="@(Data.IsDismissing ? "closed" : "open")"
          @onmouseenter="HandleMouseEnter"
          @onmouseleave="HandleMouseLeave"
          @onpointerdown="HandleEngage"
@@ -91,6 +95,13 @@
     public EventCallback OnDismiss { get; set; }
 
     /// <summary>
+    /// Callback when the toast has finished animating out, for a host that keeps it mounted until
+    /// then. A host can dismiss it from <see cref="OnDismiss"/>.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnDismissed { get; set; }
+
+    /// <summary>
     /// Callback when auto-dismiss should pause (mouse enter).
     /// </summary>
     [Parameter]
@@ -133,9 +144,44 @@
 
     private bool isPaused;
     private bool isHeld;
+    private ElementReference _contentRef;
+    private bool _exitWaitStarted;
+    private bool _disposed;
     private IToastReference reference = default!;
 
     protected override void OnInitialized() => reference = new ToastReference(this);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Data.IsDismissing && !_exitWaitStarted)
+        {
+            _exitWaitStarted = true;
+
+            // The toast stays in the provider's list, rendered with data-state="closed", until its
+            // CSS exit animation has played; only then does the provider remove it.
+            await OverlayExit.WaitAsync(JS, _contentRef, OverlayExit.FadeFallbackDelay);
+
+            if (_disposed)
+            {
+                return;
+            }
+
+            if (OnDismissed.HasDelegate)
+            {
+                await OnDismissed.InvokeAsync();
+            }
+        }
+        else if (!Data.IsDismissing)
+        {
+            _exitWaitStarted = false;
+        }
+    }
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        _disposed = true;
+    }
 
     // Cascaded to the toast's content: dismissing goes the same way as the close button.
     private sealed class ToastReference(BbToast toast) : IToastReference
@@ -219,6 +265,7 @@
         "bb:data-[state=open]:animate-in bb:data-[state=closed]:animate-out bb:data-[state=closed]:fade-out-80",
         "bb:data-[state=closed]:slide-out-to-right-full bb:data-[state=open]:slide-in-from-top-full",
         "bb:data-[state=open]:sm:slide-in-from-bottom-full",
+        "bb:data-[state=closed]:pointer-events-none",
         HasRichContent ? "bb:items-start" : "bb:items-center",
         IsCompact
             ? Data.ShowClose ? "bb:p-3 bb:pe-6" : "bb:p-3"

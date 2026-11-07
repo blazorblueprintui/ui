@@ -114,4 +114,13 @@ public class ToastData
     /// Timestamp when the toast was created.
     /// </summary>
     public DateTime CreatedAt { get; set; } = DateTime.Now;
+
+    /// <summary>
+    /// Whether the toast is playing its exit animation.
+    /// </summary>
+    /// <remarks>
+    /// Set by the provider once a dismissal is accepted. While set, further dismiss requests are
+    /// ignored and the toast stays mounted until <c>BbToast</c> reports the exit is complete.
+    /// </remarks>
+    internal bool IsDismissing { get; set; }
 }

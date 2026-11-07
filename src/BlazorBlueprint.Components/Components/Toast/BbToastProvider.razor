@@ -23,6 +23,7 @@
                      Class="@toast.Class"
                      ShowCountdown="@(toast.ShowCountdown ?? ShowCountdown)"
                      OnDismiss="@(() => HandleDismiss(toast.Id))"
+                     OnDismissed="@(() => RemoveToast(toast.Id))"
                      OnPause="@(() => HandlePause(toast.Id))"
                      OnResume="@(() => HandleResume(toast.Id))"
                      OnHold="@(() => HandleHold(toast.Id))" />
@@ -40,6 +41,7 @@
                          Class="@toast.Class"
                          ShowCountdown="@(toast.ShowCountdown ?? ShowCountdown)"
                          OnDismiss="@(() => HandleDismiss(toast.Id))"
+                         OnDismissed="@(() => RemoveToast(toast.Id))"
                          OnPause="@(() => HandlePause(toast.Id))"
                          OnResume="@(() => HandleResume(toast.Id))"
                          OnHold="@(() => HandleHold(toast.Id))" />
@@ -188,10 +190,16 @@
         if (!state.Dismissed && !disposed)
         {
             state.Dismissed = true;
-            await InvokeAsync(() => ToastService.Dismiss(id));
+            await InvokeAsync(() => HandleDismiss(id));
         }
     }
 
+    /// <summary>
+    /// Asks the toast to dismiss. The first request keeps it rendered a moment longer with
+    /// <c>data-state="closed"</c> so its exit animation can play; <see cref="RemoveToast"/> takes
+    /// it out of the service once that animation has finished. Repeat requests while it is already
+    /// leaving are ignored, so a second click or a timer tick cannot cut the animation short.
+    /// </summary>
     private void HandleDismiss(string id)
     {
         if (timerStates.TryGetValue(id, out var state))
@@ -200,6 +208,22 @@
             state.Cts?.Cancel();
             state.ResumeSignal?.TrySetResult();
         }
+
+        var toast = ToastService.Toasts.FirstOrDefault(t => t.Id == id);
+        if (toast == null || toast.IsDismissing)
+        {
+            return;
+        }
+
+        toast.IsDismissing = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    /// Removes a toast once it has finished animating out.
+    /// </summary>
+    private void RemoveToast(string id)
+    {
         ToastService.Dismiss(id);
     }
 
