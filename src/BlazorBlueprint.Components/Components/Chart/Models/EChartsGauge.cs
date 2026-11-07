@@ -16,9 +16,11 @@ internal sealed class EChartsGaugeProgressOption
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? RoundCap { get; set; }
 
-    [JsonPropertyName("color")]
+    // ECharts reads the progress arc's colour from progress.itemStyle.color; a progress.color
+    // option does not exist and is dropped silently (#625).
+    [JsonPropertyName("itemStyle")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string? Color { get; set; }
+    public EChartsItemStyleOption? ItemStyle { get; set; }
 }
 
 internal sealed class EChartsGaugeAxisLineOption
