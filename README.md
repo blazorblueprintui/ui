@@ -68,7 +68,7 @@ See the [changelog](CHANGELOG.md#2026-09-19) for the full list and the [migratio
 - **TreeSelect and Cascader** — Searchable hierarchy selection with form bindings and keyboard navigation. TreeSelect supports cascading parent checkboxes and indeterminate states; Cascader reveals the selected path and scrolls to newly opened levels.
 - **Menu families** — DropdownMenu, ContextMenu and Menubar gain shared submenu and radio-item families, and ContextMenu gains checkbox items, so the three stay consistent with each other.
 - **FileUpload lifecycle** — Supply an `UploadHandler` for progress, cancellation and retry, with browser file references retained across selections.
-- **Localizable throughout** — Every piece of component chrome reads from `IBbLocalizer`; the built-in English defaults cover all 546 strings.
+- **Localizable throughout** — Every piece of component chrome reads from `IBbLocalizer`; the built-in English defaults cover every string, and `DefaultBbLocalizer.EnglishDefaults` lists them all.
 - **Browser regression coverage** — A Playwright suite runs against Server, WebAssembly and Interactive Auto in Chromium and WebKit, covering keyboard navigation, mobile overlays, scoped themes, scheduler editing and Auto's hand-off to WebAssembly.
 
 Try these features in the [source demos](#demo-applications).
@@ -576,7 +576,7 @@ Apply the `.dark` class to your `<html>` element. All components automatically s
 
 ## Localization
 
-All component chrome strings (button labels, placeholders, ARIA labels, status messages) are localizable via the `IBbLocalizer` interface. The built-in `DefaultBbLocalizer` provides English defaults for all 546 strings.
+All component chrome strings (button labels, placeholders, ARIA labels, status messages) are localizable via the `IBbLocalizer` interface. The built-in `DefaultBbLocalizer` provides English defaults for every string; `DefaultBbLocalizer.EnglishDefaults` lists each key with its English text.
 
 ### Quick Start
 

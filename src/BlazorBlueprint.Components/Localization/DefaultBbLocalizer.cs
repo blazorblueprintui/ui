@@ -1,3 +1,5 @@
+using System.Collections.Frozen;
+
 namespace BlazorBlueprint.Components;
 
 /// <summary>
@@ -17,7 +19,7 @@ namespace BlazorBlueprint.Components;
 /// </remarks>
 public class DefaultBbLocalizer : IBbLocalizer
 {
-    private readonly Dictionary<string, string> defaults = new(StringComparer.Ordinal)
+    private static readonly FrozenDictionary<string, string> englishDefaults = new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["Attachment.Open"] = "Open attachment",
         ["Sortable.Handle"] = "Reorder item",
@@ -714,7 +716,20 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["TreeSelect.Placeholder"] = "Select an item…",
         ["TreeSelect.Clear"] = "Clear selection",
         ["TreeSelect.Search"] = "Search…",
-    };
+    }.ToFrozenDictionary(StringComparer.Ordinal);
+
+    private readonly Dictionary<string, string> defaults = new(englishDefaults, StringComparer.Ordinal);
+
+    /// <summary>
+    /// Gets every localization key with its built-in English text.
+    /// </summary>
+    /// <remarks>
+    /// Overrides made with <see cref="Set"/> are not reflected here. Use this to list the available
+    /// keys, or to export them as a starting point for a translation (for example as JSON).
+    /// Values that take <see cref="string.Format(string, object[])"/> arguments contain
+    /// <c>{0}</c>-style placeholders.
+    /// </remarks>
+    public static IReadOnlyDictionary<string, string> EnglishDefaults => englishDefaults;
 
     /// <inheritdoc />
     public virtual string this[string key] =>
