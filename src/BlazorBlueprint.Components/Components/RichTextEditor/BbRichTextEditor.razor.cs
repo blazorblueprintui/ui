@@ -1051,7 +1051,7 @@ public partial class BbRichTextEditor : ComponentBase, IAsyncDisposable
     // === CSS Classes ===
 
     private string ContainerCssClass => ClassNames.cn(
-        "bb:flex bb:flex-col bb:rounded-md bb:border bb:border-input bb:bg-background",
+        "bb:flex bb:flex-col bb:rounded-md bb:border bb:border-input bb:bg-transparent bb:dark:bg-input/30 bb:shadow-xs",
         "bb:focus-within:border-ring",
         ClassNames.when(AriaInvalid == true, "bb:border-destructive"),
         ClassNames.when(Disabled, "bb:opacity-50 bb:cursor-not-allowed"),

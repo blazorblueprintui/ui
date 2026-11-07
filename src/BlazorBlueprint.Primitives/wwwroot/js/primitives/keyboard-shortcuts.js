@@ -50,6 +50,11 @@ export function dispose() {
  * @param {KeyboardEvent} event - The keyboard event
  */
 function handleKeyDown(event) {
+    // Leave IME composition to the input method, including legacy keyCode events.
+    if (event.isComposing || event.keyCode === 229) {
+        return;
+    }
+
     const normalizedKey = getNormalizedKey(event);
 
     // Skip editable elements unless this registration opts in.

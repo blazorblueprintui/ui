@@ -5,10 +5,15 @@ import { readFile } from 'node:fs/promises';
 const source = await readFile(new URL('../../src/BlazorBlueprint.Primitives/wwwroot/js/primitives/menu-keyboard.js', import.meta.url), 'utf8');
 const { initialize, dispose, focusInitial } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 let serial = 0;
-function menu(direction = 'ltr') {
+function menu(direction = 'ltr', scale = 1) {
+  const previousDocument = globalThis.document;
+  const previousGetComputedStyle = globalThis.getComputedStyle;
   const handlers = new Map();
   const items = [];
   const panel = {
+    scrollTop: 0, offsetHeight: 104, clientHeight: 100, clientTop: 2,
+    get scrollHeight() { return Math.max(100, items.length * 30); },
+    getBoundingClientRect: () => ({ top: 100, bottom: 100 + 104 * scale, height: 104 * scale }),
     direction, items, querySelectorAll: () => items,
     contains: item => items.includes(item), closest: () => panel,
     addEventListener: (name, cb) => handlers.set(name, cb),
@@ -19,6 +24,10 @@ function menu(direction = 'ltr') {
     const attributes = new Map(Object.entries(attrs));
     const entry = {
       textContent: label, clicks: 0,
+      getBoundingClientRect() {
+        const top = 100 + (panel.clientTop + items.indexOf(entry) * 30 - panel.scrollTop) * scale;
+        return { top, bottom: top + 30 * scale };
+      },
       getAttribute: name => attributes.get(name) ?? null,
       hasAttribute: name => attributes.has(name),
       setAttribute: (name, value) => attributes.set(name, value),
@@ -41,7 +50,11 @@ function menu(direction = 'ltr') {
       handlers.get('keydown')(event);
       return event;
     },
-    end: () => dispose(id)
+    end() {
+      dispose(id);
+      globalThis.document = previousDocument;
+      globalThis.getComputedStyle = previousGetComputedStyle;
+    }
   };
 }
 
@@ -73,6 +86,7 @@ test('forward arrow opens a submenu before switching menubar menus, and reuses a
   document.getElementById = id => id === 'child' ? child.panel : null;
   m.key('ArrowRight'); assert.equal(document.activeElement, leaf);
   m.end();
+  child.end();
 });
 
 test('submenu back and Escape close only the current submenu and reverse in RTL', () => {
@@ -92,4 +106,49 @@ test('handled events and modifier shortcuts are left alone', () => {
   m.key('Enter', { ctrlKey: true });
   assert.equal(item.clicks, 0);
   m.end();
+});
+
+test('keyboard focus reveals items in the menu viewport, including during its scale animation', () => {
+  for (const mode of ['vertical', 'menubar', 'submenu']) {
+    for (const scale of [1, 0.95, 0.5]) {
+      const m = menu('ltr', scale);
+      const items = ['Alpha', 'Bravo', 'Charlie', 'Delta', 'Echo', 'Zulu'].map(label => m.item(label));
+      m.start(mode);
+      focusInitial(m.panel, 'first');
+      assert.equal(m.panel.scrollTop, 0);
+      for (let i = 0; i < 4; i++) m.key('ArrowDown');
+      assert.equal(document.activeElement, items[4]);
+      assert.ok(Math.abs(m.panel.scrollTop - 50) < 0.001);
+      m.key('End');
+      assert.equal(document.activeElement, items[5]);
+      assert.ok(Math.abs(m.panel.scrollTop - 80) < 0.001);
+      m.key('Home'); assert.equal(m.panel.scrollTop, 0);
+      m.key('ArrowUp'); assert.ok(Math.abs(m.panel.scrollTop - 80) < 0.001);
+      m.key('ArrowDown'); assert.equal(m.panel.scrollTop, 0);
+      m.key('z');
+      assert.equal(document.activeElement, items[5]);
+      assert.ok(Math.abs(m.panel.scrollTop - 80) < 0.001);
+      m.end();
+    }
+  }
+});
+
+test('initial last-item focus reveals only its own panel after the tabindex fallback', () => {
+  const parent = menu();
+  parent.panel.scrollTop = 40;
+  const child = menu();
+  for (let i = 0; i < 5; i++) child.item(`Item ${i}`);
+  const last = child.item('Last');
+  let attempts = 0;
+  last.focus = options => {
+    assert.deepEqual(options, { preventScroll: true });
+    if (++attempts === 2) document.activeElement = last;
+  };
+  focusInitial(child.panel, 'last');
+  assert.equal(document.activeElement, last);
+  assert.equal(last.getAttribute('tabindex'), '-1');
+  assert.equal(child.panel.scrollTop, 80);
+  assert.equal(parent.panel.scrollTop, 40);
+  child.end();
+  parent.end();
 });

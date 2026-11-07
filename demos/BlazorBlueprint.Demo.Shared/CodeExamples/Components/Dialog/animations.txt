@@ -1,0 +1,41 @@
+<BbDialog EnterPreset="MotionPreset.Scale" ExitPreset="MotionPreset.Scale" AnimationDuration="300">
+    <BbDialogTrigger>
+        <BbButton>Open</BbButton>
+    </BbDialogTrigger>
+    <BbDialogContent>
+        <BbDialogHeader>
+            <BbDialogTitle>Scale</BbDialogTitle>
+            <BbDialogDescription>Close this dialog to see its exit animation.</BbDialogDescription>
+        </BbDialogHeader>
+    </BbDialogContent>
+</BbDialog>
+
+@* Custom keyframes: an exit plays as written, not reversed *@
+<BbDialog EnterKeyframes="dropIn" ExitKeyframes="dropOut">
+    ...
+</BbDialog>
+
+@inject DialogService DialogService
+
+@code {
+    private static readonly IReadOnlyList<IReadOnlyDictionary<string, object>> dropIn =
+    [
+        new Dictionary<string, object> { ["opacity"] = 0, ["transform"] = "translateY(-48px) rotate(-3deg)" },
+        new Dictionary<string, object> { ["opacity"] = 1, ["transform"] = "translateY(0) rotate(0)" }
+    ];
+
+    private static readonly IReadOnlyList<IReadOnlyDictionary<string, object>> dropOut =
+    [
+        new Dictionary<string, object> { ["opacity"] = 1, ["transform"] = "translateY(0) rotate(0)" },
+        new Dictionary<string, object> { ["opacity"] = 0, ["transform"] = "translateY(48px) rotate(3deg)" }
+    ];
+
+    private Task OpenAnimated() =>
+        DialogService.OpenAsync<MyDialogBody>(new DialogOpenOptions
+        {
+            Title = "Animated Dialog",
+            EnterPreset = MotionPreset.SlideLeft,
+            ExitPreset = MotionPreset.SlideLeft,
+            AnimationDuration = 300
+        });
+}

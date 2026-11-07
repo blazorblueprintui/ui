@@ -734,6 +734,7 @@
   - Disabled : Boolean
   - EmptyMessage : String
   - EndOfListMessage : String
+  - IsInvalid : Boolean?
   - IsLoading : Boolean
   - MatchTriggerWidth : Boolean
   - OnLoadMore : EventCallback
@@ -745,6 +746,8 @@
   - SearchQuery : String
   - SearchQueryChanged : EventCallback<String>
   - SelectedItemText : String
+  - TriggerAttributes : Dictionary<String, Object>
+  - TriggerId : String
   - Value : TValue
   - ValueChanged : EventCallback<TValue>
   - ValueExpression : Expression<Func<TValue>>
@@ -759,6 +762,7 @@
   - OnValueChange : EventCallback<String>
   - SearchQuery : String
   - SearchQueryChanged : EventCallback<String>
+  - HostId : String [CascadingParameter]
 
 ### BbCommandDialog (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
@@ -1073,12 +1077,16 @@
   - ParentGrid : BbDataGrid<TData> [CascadingParameter]
 
 ### BbDataGridEditColumn`1 (BlazorBlueprint.Components)
+  - CellClass : String
+  - HeaderClass : String
   - Pinned : ColumnPinning
   - Width : String
   - ParentGrid : BbDataGrid<TData> [CascadingParameter]
 
 ### BbDataGridExpandColumn`1 (BlazorBlueprint.Components)
+  - CellClass : String
   - DetailRows : RenderFragment<TData>
+  - HeaderClass : String
   - Pinned : ColumnPinning
   - Width : String
   - ParentGrid : BbDataGrid<TData> [CascadingParameter]
@@ -1100,9 +1108,11 @@
   - Filterable : Boolean
   - Format : String
   - HeaderClass : String
+  - HideOnMobile : Boolean
   - Hideable : Boolean
   - Id : String
   - IndentSize : Int32
+  - MobileLabel : String
   - NoWrap : Boolean
   - Order : Int32?
   - Pinned : ColumnPinning
@@ -1129,8 +1139,10 @@
   - Groupable : Boolean
   - HeaderClass : String
   - HeaderTemplate : RenderFragment
+  - HideOnMobile : Boolean
   - Hideable : Boolean
   - Id : String
+  - MobileLabel : String
   - NoWrap : Boolean
   - Order : Int32?
   - Pinned : ColumnPinning
@@ -1147,6 +1159,7 @@
 ### BbDataGridSelectColumn`1 (BlazorBlueprint.Components)
   - CellClass : String
   - HeaderClass : String
+  - HideOnMobile : Boolean
   - Pinned : ColumnPinning
   - SelectAllScope : DataGridSelectAllScope
   - Width : String
@@ -1165,8 +1178,10 @@
   - Groupable : Boolean
   - HeaderClass : String
   - HeaderTemplate : RenderFragment
+  - HideOnMobile : Boolean
   - Hideable : Boolean
   - Id : String
+  - MobileLabel : String
   - NoWrap : Boolean
   - Order : Int32?
   - Pinned : ColumnPinning
@@ -1220,6 +1235,8 @@
   - LoadChildrenPaged : Func<TData, Int32, Int32, Task<ChildPageResult<TData>>>
   - LoadingTemplate : RenderFragment
   - MinColumnWidth : Int32
+  - MobileBreakpoint : DataGridBreakpoint
+  - MobileLayout : DataGridMobileLayout
   - OnBatchCancel : EventCallback
   - OnBatchCommit : EventCallback<DataGridBatchCommitContext<TData>>
   - OnCollapseAll : EventCallback
@@ -1475,12 +1492,18 @@
 
 ### BbDialog (BlazorBlueprint.Components)
   - AdditionalAttributes : Dictionary<String, Object> [CaptureUnmatchedValues]
+  - AnimationDuration : Int32
   - ChildContent : RenderFragment
   - DefaultOpen : Boolean
+  - EnterKeyframes : IReadOnlyList<IReadOnlyDictionary<String, Object>>
+  - EnterPreset : MotionPreset?
+  - ExitKeyframes : IReadOnlyList<IReadOnlyDictionary<String, Object>>
+  - ExitPreset : MotionPreset?
   - Modal : Boolean
   - OnOpenChange : EventCallback<Boolean>
   - Open : Boolean?
   - OpenChanged : EventCallback<Boolean>
+  - Position : DialogPosition
   - RenderingStrategy : OverlayRenderingStrategy?
 
 ### BbDialogClose (BlazorBlueprint.Components)
@@ -1503,6 +1526,8 @@
   - OnEscapeKeyDown : EventCallback<KeyboardEventArgs>
   - ShowClose : Boolean
   - TrapFocus : Boolean
+  - Animation : DialogAnimation [CascadingParameter]
+  - Position : DialogPosition [CascadingParameter]
   - RenderingStrategy : OverlayRenderingStrategy? [CascadingParameter]
 
 ### BbDialogDescription (BlazorBlueprint.Components)
@@ -3287,6 +3312,7 @@
   - EmptyMessage : String
   - EndOfListMessage : String
   - FooterContent : RenderFragment
+  - IsInvalid : Boolean?
   - IsLoading : Boolean
   - MatchTriggerWidth : Boolean
   - MaxDisplayTags : Int32
@@ -3300,6 +3326,8 @@
   - SelectAllLabel : String
   - ShowSelectAll : Boolean
   - SingleLine : Boolean
+  - TriggerAttributes : Dictionary<String, Object>
+  - TriggerId : String
   - Values : IEnumerable<TValue>
   - ValuesChanged : EventCallback<IEnumerable<TValue>>
   - ValuesExpression : Expression<Func<IEnumerable<TValue>>>
@@ -4782,6 +4810,7 @@
   - Class : String
   - Data : ToastData [EditorRequired]
   - OnDismiss : EventCallback
+  - OnHold : EventCallback
   - OnPause : EventCallback
   - OnResume : EventCallback
   - ShowCountdown : Boolean
@@ -5299,9 +5328,18 @@
   - None = 0
   - Grid = 1
 
+### DataGridBreakpoint (BlazorBlueprint.Components)
+  - Sm = 0
+  - Md = 1
+  - Lg = 2
+
 ### DataGridExportScope (BlazorBlueprint.Components)
   - FilteredRows = 0
   - CurrentPage = 1
+
+### DataGridMobileLayout (BlazorBlueprint.Components)
+  - None = 0
+  - Stacked = 1
 
 ### DataGridSelectAllScope (BlazorBlueprint.Components)
   - Prompt = 0
@@ -5325,6 +5363,17 @@
   - LastMonth = 5
   - ThisYear = 6
   - Custom = 7
+
+### DialogPosition (BlazorBlueprint.Components)
+  - Center = 0
+  - TopCenter = 1
+  - BottomCenter = 2
+  - CenterLeft = 3
+  - CenterRight = 4
+  - TopLeft = 5
+  - TopRight = 6
+  - BottomLeft = 7
+  - BottomRight = 8
 
 ### DialogSize (BlazorBlueprint.Components)
   - Small = 0
@@ -6022,6 +6071,9 @@
 ### IMenubarItem (BlazorBlueprint.Components)
   - IsDisabled : Boolean { get; }
   - FocusAsync() : Task
+
+### IToastReference (BlazorBlueprint.Components)
+  - DismissAsync() : Task
 
 ### IVirtualizedGroupHandler (BlazorBlueprint.Components)
   - FocusedIndex : Int32 { get; set; }
