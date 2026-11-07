@@ -1,4 +1,5 @@
 @namespace BlazorBlueprint.Components
+@using BlazorBlueprint.Primitives.Utilities
 
 @*
     Navigation Menu Item - a single item in the navigation menu.
@@ -58,6 +59,48 @@
                 Menu.ActiveItem = value ? Value : null;
             }
         }
+    }
+
+    /// <summary>
+    /// The exit animation registered by the content, or null when the dropdown leaves the page as
+    /// soon as it closes.
+    /// </summary>
+    internal Func<Func<bool>, Task>? ExitAnimation
+    {
+        get => exit.ExitAnimation;
+        set => exit.ExitAnimation = value;
+    }
+
+    /// <summary>
+    /// Gets whether the dropdown has closed but is still on the page, playing its exit animation.
+    /// </summary>
+    internal bool IsPresent => exit.IsPresent(IsOpen);
+
+    private readonly ExitAnimationGate exit = new();
+
+    private bool lastIsOpen;
+
+    protected override void OnParametersSet()
+    {
+        // Every way of closing an item — the trigger, Escape, the shared hover timer setting the
+        // parent's ActiveItem to null — re-renders through here, so this is the one place the
+        // open→closed transition needs to be detected.
+        var isOpen = IsOpen;
+        if (isOpen == lastIsOpen)
+        {
+            return;
+        }
+
+        if (isOpen)
+        {
+            exit.Cancel();
+        }
+        else
+        {
+            exit.Begin(() => _ = InvokeAsync(StateHasChanged));
+        }
+
+        lastIsOpen = isOpen;
     }
 
     /// <summary>

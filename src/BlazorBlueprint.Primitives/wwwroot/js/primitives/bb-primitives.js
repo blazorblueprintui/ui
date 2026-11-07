@@ -24,6 +24,7 @@
  * the call sites predictable.
  */
 
+import * as animation from './animation.js';
 import * as clickOutside from './click-outside.js';
 import * as elementUtils from './element-utils.js';
 import * as escapeKeydown from './escape-keydown.js';
@@ -71,6 +72,7 @@ function assertFresh(fileName, module, exportName) {
     }
 }
 
+assertFresh('animation.js', animation, 'waitForExit');
 assertFresh('click-outside.js', clickOutside, 'onClickOutsideByIds');
 assertFresh('element-utils.js', elementUtils, 'observeNearBottom');
 assertFresh('escape-keydown.js', escapeKeydown, 'initialize');
@@ -93,6 +95,7 @@ assertFresh('table-row-nav.js', tableRowNav, 'delegateRowBehaviour');
 assertFresh('tree-keyboard.js', treeKeyboard, 'initialize');
 
 export {
+    animation,
     clickOutside,
     elementUtils,
     escapeKeydown,

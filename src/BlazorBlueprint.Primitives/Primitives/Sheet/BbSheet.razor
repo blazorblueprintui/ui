@@ -116,6 +116,15 @@
         // Update controlled value if it changed
         if (_state.IsControlled && Open.HasValue)
         {
+            if (_context.State.IsOpen && !Open.Value)
+            {
+                _context.BeginExit();
+            }
+            else if (Open.Value && _context.IsExiting)
+            {
+                _context.CancelExit();
+            }
+
             _state.ControlledValue = Open.Value;
             _context.State.IsOpen = Open.Value;
 

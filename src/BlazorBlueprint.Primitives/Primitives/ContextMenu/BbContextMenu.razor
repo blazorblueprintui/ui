@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Primitives.ContextMenu
 @using System.ComponentModel
+@using BlazorBlueprint.Primitives.Utilities
 @implements IAsyncDisposable
 
 @*
@@ -47,6 +48,29 @@
 
     internal bool NeedsFocus { get; set; }
 
+    /// <summary>
+    /// The exit animation registered by the content, or null when the menu leaves the page as soon
+    /// as it closes.
+    /// </summary>
+    internal Func<Func<bool>, Task>? ExitAnimation
+    {
+        get => exit.ExitAnimation;
+        set => exit.ExitAnimation = value;
+    }
+
+    /// <summary>
+    /// Gets whether the menu has closed but is still on the page, playing its exit animation.
+    /// </summary>
+    internal bool IsExiting => exit.IsAnimatingOut;
+
+    /// <summary>
+    /// Gets whether the menu's overlay and content should be rendered: while it is open, and while
+    /// its exit animation plays.
+    /// </summary>
+    internal bool IsPresent => exit.IsPresent(IsOpen);
+
+    private readonly ExitAnimationGate exit = new();
+
     private bool disposed;
 
     protected override void OnParametersSet()
@@ -54,15 +78,31 @@
         if (Open is { } open)
         {
             NeedsFocus = open && !IsOpen;
+
+            // A controlled change bypasses OpenAt/Close, so start or drop the exit here while the
+            // content is still rendered.
+            if (open && !IsOpen)
+            {
+                exit.Cancel();
+            }
+            else if (!open && IsOpen)
+            {
+                BeginExit();
+            }
+
             IsOpen = open;
         }
     }
+
+    private void BeginExit() =>
+        exit.Begin(() => _ = InvokeAsync(StateHasChanged));
 
     /// <summary>
     /// Opens the context menu at the specified coordinates.
     /// </summary>
     public async Task OpenAt(double x, double y)
     {
+        exit.Cancel();
         X = x;
         Y = y;
         IsOpen = true;
@@ -77,10 +117,15 @@
     }
 
     /// <summary>
-    /// Closes the context menu.
+    /// Closes the context menu, keeping its content mounted until the exit animation ends.
     /// </summary>
     public async Task Close()
     {
+        if (IsOpen)
+        {
+            BeginExit();
+        }
+
         IsOpen = false;
 
         if (OpenChanged.HasDelegate)

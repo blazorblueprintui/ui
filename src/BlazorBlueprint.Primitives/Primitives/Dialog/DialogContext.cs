@@ -1,4 +1,5 @@
 using BlazorBlueprint.Primitives.Contexts;
+using BlazorBlueprint.Primitives.Utilities;
 
 namespace BlazorBlueprint.Primitives.Dialog;
 
@@ -27,25 +28,29 @@ public class DialogContext : PrimitiveContextWithEvents<DialogState>
 {
     internal bool AllowDismiss { get; set; } = true;
 
+    private readonly ExitAnimationGate exit = new();
+
     /// <summary>
     /// The exit animation registered by the content, or null when the dialog leaves the page as
     /// soon as it closes. Its argument says whether this exit is still the current one: a reopen,
     /// or a newer close, supersedes it.
     /// </summary>
-    internal Func<Func<bool>, Task>? ExitAnimation { get; set; }
+    internal Func<Func<bool>, Task>? ExitAnimation
+    {
+        get => exit.ExitAnimation;
+        set => exit.ExitAnimation = value;
+    }
 
     /// <summary>
     /// Whether the dialog has closed but is still on the page, playing its exit animation.
     /// </summary>
-    internal bool IsExiting { get; private set; }
+    internal bool IsExiting => exit.IsAnimatingOut;
 
     /// <summary>
     /// Whether the dialog's portal, overlay and content should be rendered: while it is open, and
     /// while its exit animation plays.
     /// </summary>
-    internal bool IsPresent => State.IsOpen || IsExiting;
-
-    private int exitVersion;
+    internal bool IsPresent => exit.IsPresent(State.IsOpen);
 
     /// <summary>
     /// Initializes a new instance of the DialogContext.
@@ -110,43 +115,14 @@ public class DialogContext : PrimitiveContextWithEvents<DialogState>
     /// Keeps the dialog on the page while its exit animation plays, then lets it go. Call this
     /// just before an open dialog's state turns closed, while its content is still rendered.
     /// </summary>
-    internal void BeginExit()
-    {
-        if (ExitAnimation is not { } exit)
-        {
-            return;
-        }
-
-        IsExiting = true;
-        _ = FinishExitAsync(exit, ++exitVersion);
-    }
+    internal void BeginExit() =>
+        exit.Begin(NotifyStateChanged);
 
     /// <summary>
     /// Drops a running exit, so a dialog reopened mid-exit stays on the page.
     /// </summary>
-    internal void CancelExit()
-    {
-        exitVersion++;
-        IsExiting = false;
-    }
-
-    private async Task FinishExitAsync(Func<Func<bool>, Task> exit, int version)
-    {
-        try
-        {
-            await exit(() => version == exitVersion);
-        }
-        finally
-        {
-            // A reopen, or a newer close, owns presence now. An exit that ends at once does so
-            // before the open state turns closed, so it must not wait for that state here.
-            if (version == exitVersion)
-            {
-                IsExiting = false;
-                NotifyStateChanged();
-            }
-        }
-    }
+    internal void CancelExit() =>
+        exit.Cancel();
 
     /// <summary>
     /// Toggles the dialog open/closed state.
