@@ -82,7 +82,12 @@ internal static class EanUpcEncoder
         {
             throw new BarcodeFormatException(
                 $"{type} needs {length - 1} digits, or {length} with the check digit already on the end. This value has {digits.Length}.",
-                nameof(digits));
+                nameof(digits),
+                BarcodeFormatError.WrongLength,
+                type,
+                length - 1,
+                length,
+                digits.Length);
         }
 
         var expected = CheckDigit(digits[..^1]);
@@ -90,7 +95,12 @@ internal static class EanUpcEncoder
         {
             throw new BarcodeFormatException(
                 $"The check digit is wrong: {type} of {digits[..^1]} ends in {expected}, not {digits[^1]}. Leave the check digit off and it is worked out.",
-                nameof(digits));
+                nameof(digits),
+                BarcodeFormatError.WrongCheckDigit,
+                type,
+                digits[..^1],
+                expected,
+                digits[^1]);
         }
 
         return digits;
@@ -235,7 +245,9 @@ internal static class EanUpcEncoder
 
         throw new BarcodeFormatException(
             $"An ISBN is 10 digits, or 13 beginning 978 or 979, with or without hyphens. This value is \"{value}\".",
-            nameof(value));
+            nameof(value),
+            BarcodeFormatError.InvalidIsbn,
+            value);
     }
 
     /// <summary>
@@ -259,7 +271,9 @@ internal static class EanUpcEncoder
 
         throw new BarcodeFormatException(
             $"An ISSN is 8 characters, with or without a hyphen. This value is \"{value}\".",
-            nameof(value));
+            nameof(value),
+            BarcodeFormatError.InvalidIssn,
+            value);
     }
 
     private static string Strip(string value) =>

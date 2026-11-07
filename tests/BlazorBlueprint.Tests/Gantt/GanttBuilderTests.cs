@@ -84,7 +84,7 @@ public class GanttBuilderTests
             new Task("a", null, "Two", On(2026, 3, 2), On(2026, 3, 3)),
         };
 
-        Assert.Throws<ArgumentException>(() => GanttBuilder.Build(Source(duplicate)));
+        Assert.Throws<GanttBuildException>(() => GanttBuilder.Build(Source(duplicate)));
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class GanttBuilderTests
             new Task("b", "a", "B", On(2026, 3, 2), On(2026, 3, 3)),
         };
 
-        Assert.Throws<ArgumentException>(() => GanttBuilder.Build(Source(loop)));
+        Assert.Throws<GanttBuildException>(() => GanttBuilder.Build(Source(loop)));
     }
 
     [Fact]

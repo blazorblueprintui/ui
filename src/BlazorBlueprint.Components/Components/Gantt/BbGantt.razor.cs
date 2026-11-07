@@ -993,8 +993,12 @@ public partial class BbGantt<TItem> : ComponentBase, IAsyncDisposable
         {
             // A plan that cannot be drawn is a declaration problem, not a bug. Say so in the markup
             // rather than throwing, which on Blazor Server would take the circuit down.
+            // A refusal that carries its reason is worded through the localizer, so it can be
+            // translated; the English keys hold the builder's own text.
             chart = null;
-            buildError = error.Message;
+            buildError = error is GanttBuildException { Error: not GanttBuildError.Unspecified } build
+                ? Localizer[$"Gantt.{build.Error}", [.. build.Arguments]]
+                : error.Message;
         }
     }
 
