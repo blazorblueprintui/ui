@@ -1,5 +1,6 @@
 @namespace BlazorBlueprint.Primitives.ContextMenu
 @using BlazorBlueprint.Primitives.Menu
+@using BlazorBlueprint.Primitives.Services
 @using System.ComponentModel
 @inherits BlazorBlueprint.Primitives.BbPrimitiveBase
 @inject IJSRuntime JSRuntime
@@ -10,7 +11,7 @@
     Handles keyboard navigation via menu-keyboard.js and escape key dismiss.
 *@
 
-@if (Context?.IsOpen == true)
+@if (Context?.IsPresent == true)
 {
     <div @ref="overlayRef"
          style="position: fixed; inset: 0; z-index: 40;"
@@ -22,7 +23,7 @@
     <div @ref="contentRef"
          role="menu"
          tabindex="-1"
-         data-state="open"
+         data-state="@(Context!.IsOpen ? "open" : "closed")"
          style="@MergedContentStyle"
          @onclick:stopPropagation="true"
          @oncontextmenu:preventDefault="true"
@@ -57,6 +58,16 @@
                 "BbContextMenuContent must be used within a BbContextMenu component.");
         }
     }
+
+    protected override void OnParametersSet() =>
+        Context!.ExitAnimation = WaitForExitAsync;
+
+    /// <summary>
+    /// Holds the menu on the page until its closed-state CSS animation has played. The gate's
+    /// supersede check releases it if the menu is reopened first, so this only has to wait.
+    /// </summary>
+    private Task WaitForExitAsync(Func<bool> isCurrent) =>
+        OverlayExit.WaitAsync(JSRuntime, contentRef, OverlayExit.FadeFallbackDelay);
 
     /// <summary>
     /// The menu content.
@@ -106,7 +117,7 @@
                 // JS interop not available during prerendering
             }
         }
-        else if (Context?.IsOpen != true && wasOpen)
+        else if (Context?.IsPresent != true && wasOpen)
         {
             wasOpen = false;
             await CleanupKeyboardAsync();
@@ -145,7 +156,7 @@
 
     private async Task HandleOverlayClick()
     {
-        if (Context != null)
+        if (Context != null && Context.IsOpen)
         {
             await Context.Close();
         }
@@ -153,7 +164,7 @@
 
     private async Task HandleOverlayContextMenu(MouseEventArgs e)
     {
-        if (Context != null)
+        if (Context != null && Context.IsOpen)
         {
             await Context.Close();
         }
@@ -168,5 +179,10 @@
 
 
         dotNetRef?.Dispose();
+
+        if (Context != null)
+        {
+            Context.ExitAnimation = null;
+        }
     }
 }
