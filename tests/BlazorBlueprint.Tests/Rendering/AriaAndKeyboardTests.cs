@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using BlazorBlueprint.Components;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
@@ -163,6 +164,47 @@ public class AriaAndKeyboardTests
         });
 
         Assert.DoesNotContain("data-side=\"Bottom\"", markup, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Every toast had <c>role="alert"</c>, so a screen reader interrupted the user for "Saved" as
+    /// it would for an error. All stacks now sit in one polite live region that exists before any
+    /// toast arrives, and only a destructive toast is an alert.
+    /// </summary>
+    [Fact]
+    public async Task OnlyDestructiveToastsAreAlerts()
+    {
+        await using var provider = Services().BuildServiceProvider();
+        var toasts = provider.GetRequiredService<ToastService>();
+        toasts.Info("Units: Imperial");
+        toasts.Error("Save failed");
+        toasts.Show(new ToastData { Description = "Elsewhere", Position = ToastPosition.TopLeft });
+
+        await using var renderer = new ComponentTestRenderer(provider, NullLoggerFactory.Instance);
+        var markup = string.Empty;
+        await renderer.Dispatcher.InvokeAsync(async () =>
+        {
+            await renderer.MountAsync<BbToastProvider>([]);
+            markup = renderer.Markup();
+        });
+
+        Assert.Matches(@"^<section[^>]* aria-label=""Notifications"" aria-live=""polite"">", markup);
+        Assert.EndsWith("</section>", markup, StringComparison.Ordinal);
+        Assert.Single(Regex.Matches(markup, "role=\"alert\""));
+        var alert = markup.IndexOf("role=\"alert\"", StringComparison.Ordinal);
+        Assert.InRange(alert, markup.IndexOf("Units: Imperial", StringComparison.Ordinal), markup.IndexOf("Save failed", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// A live region only announces content added after it exists, so the region must be in the
+    /// markup while there are no toasts at all.
+    /// </summary>
+    [Fact]
+    public async Task ToastRegionExistsBeforeAnyToast()
+    {
+        var markup = await Render<BbToastProvider>([]);
+
+        Assert.Matches(@"^<section[^>]* aria-label=""Notifications"" aria-live=""polite""><div[^>]*></div></section>$", markup);
     }
 
     /// <summary>The attribute Blazor emits for a render-time <c>preventDefault</c> on key-down.</summary>
