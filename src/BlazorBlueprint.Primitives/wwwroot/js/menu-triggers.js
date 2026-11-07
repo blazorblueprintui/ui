@@ -1,5 +1,20 @@
 // Root-level keyboard navigation and outside dismissal for headless menus.
 const registrations = new WeakMap();
+
+function isInsideMenu(root, target) {
+    const visited = new Set();
+    while (target) {
+        if (root.contains(target)) return true;
+        // Portaled submenus are DOM siblings. Follow their labelled trigger back to the owner.
+        const menu = target.closest?.('[role="menu"][aria-labelledby]');
+        if (!menu || visited.has(menu)) return false;
+        visited.add(menu);
+        target = document.getElementById(menu.getAttribute('aria-labelledby'));
+        if (!target?.hasAttribute('data-bb-submenu-trigger')) return false;
+    }
+    return false;
+}
+
 export function initialize(root, navigation = false, enabled = true, dotNetRef = null) {
     let state = registrations.get(root);
     if (state) { state.enabled = enabled; state.syncTabStop(); return; }
@@ -68,7 +83,7 @@ export function initialize(root, navigation = false, enabled = true, dotNetRef =
         if (links[next]) { event.preventDefault(); links[next].focus(); }
     };
     const outside = event => {
-        if (root.contains(event.target)) return;
+        if (navigation ? root.contains(event.target) : isInsideMenu(root, event.target)) return;
         if (navigation) dotNetRef?.invokeMethodAsync('JsCloseMenus').catch(() => {});
         else triggers().find(el => el.getAttribute('aria-expanded') === 'true')?.click();
     };

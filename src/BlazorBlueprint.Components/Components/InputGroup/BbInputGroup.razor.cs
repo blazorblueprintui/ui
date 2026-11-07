@@ -84,7 +84,7 @@ public partial class BbInputGroup : ComponentBase
     /// <item>Base: Border, shadow, rounded corners, flex container</item>
     /// <item>Height: h-9 for inputs, h-auto for textareas or block addons</item>
     /// <item>Alignment: Dynamic padding based on inline addon positions</item>
-    /// <item>Focus: Border color change when any child control is focused</item>
+    /// <item>Focus: Ring around the group when any child control has keyboard focus</item>
     /// <item>Error: Border color change when any child control has aria-invalid</item>
     /// </list>
     /// <para>
@@ -95,7 +95,7 @@ public partial class BbInputGroup : ComponentBase
         // Base container styles
         "bb:group/input-group bb:relative bb:flex bb:w-full",
         "bb:border bb:border-input bb:rounded-md bb:shadow-sm",
-        "bb:bg-background bb:overflow-hidden",
+        "bb:bg-transparent bb:dark:bg-input/30 bb:overflow-hidden",
         "bb:transition-colors bb:outline-none",
 
         // Default height and alignment for inputs
@@ -124,8 +124,10 @@ public partial class BbInputGroup : ComponentBase
         "bb:has-[>[data-align=inline-start]>button]:[&>textarea]:py-1.5",
         "bb:has-[>[data-align=inline-end]>button]:[&>textarea]:py-1.5",
 
-        // Focus state - when any control inside is focused
-        "bb:has-[[data-slot=input-group-control]:focus-visible]:border-ring",
+        // Focus state - one ring round the whole group when the control inside has keyboard focus.
+        // Matches the standalone Input's ring and leaves the border alone, so an invalid group
+        // keeps its destructive border while focused.
+        "bb:has-[[data-slot=input-group-control]:focus-visible]:ring-2 bb:has-[[data-slot=input-group-control]:focus-visible]:ring-ring",
 
         // Error state - when any control inside has aria-invalid
         "bb:has-[[data-slot=input-group-control][aria-invalid=true]]:border-destructive",

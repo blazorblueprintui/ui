@@ -1,0 +1,22 @@
+/* BlazorBlueprint PDF Viewer — loaded after blazorblueprint.css, as the add-on packages' stylesheets
+   are. It carries only the `bb:` utilities the viewer's own markup uses: Components' stylesheet is
+   built from Components' markup, so it cannot be relied on for them.
+   The @layer statement must stay byte-identical to the base package's. */
+@layer properties, theme, base, components, bb-utilities, utilities, bb;
+
+@import 'tailwindcss/theme.css' layer(theme) prefix(bb);
+@import 'tailwindcss/utilities.css' layer(bb-utilities) prefix(bb);
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* The theme tokens the viewer's utilities read, mapped as blazorblueprint.css maps them. */
+@theme inline {
+  --color-background: var(--background);
+  --color-input: var(--input);
+  --color-destructive: var(--destructive);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --radius-md: calc(var(--radius) * 0.8);
+}
+
+@source "../../Components";

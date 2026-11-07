@@ -49,6 +49,11 @@ export function dispose() {
  * @param {KeyboardEvent} event - The keyboard event
  */
 function handleKeyDown(event) {
+    // Leave IME composition to the input method, including legacy keyCode events.
+    if (event.isComposing || event.keyCode === 229) {
+        return;
+    }
+
     // Skip if target is an input element (user is typing)
     if (shouldSkipEvent(event)) {
         return;

@@ -359,6 +359,28 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     public string? TableContainerClass { get; set; }
 
     /// <summary>
+    /// How the grid lays out its rows below <see cref="MobileBreakpoint"/>.
+    /// Default is <see cref="DataGridMobileLayout.None"/>, which keeps the table at every width.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="DataGridMobileLayout.Stacked"/> turns each row into a card, with each cell's
+    /// label beside its value. The label is the column's <c>MobileLabel</c>, or its title when
+    /// that is not set. The grid writes the labels into the page itself, and the switch is done
+    /// in CSS with a media query, so it needs no JavaScript and works before the page is
+    /// interactive. The header row is hidden in the stacked layout, so its sort, filter and
+    /// select-all controls are not shown there.
+    /// </remarks>
+    [Parameter]
+    public DataGridMobileLayout MobileLayout { get; set; } = DataGridMobileLayout.None;
+
+    /// <summary>
+    /// The screen width below which <see cref="MobileLayout"/> applies.
+    /// Default is <see cref="DataGridBreakpoint.Sm"/> (below 640px).
+    /// </summary>
+    [Parameter]
+    public DataGridBreakpoint MobileBreakpoint { get; set; } = DataGridBreakpoint.Sm;
+
+    /// <summary>
     /// Whether to show the active-filter indicator bar below the header.
     /// When shown, it displays a count of active filters and a "Clear all" button.
     /// Default is true.
@@ -2793,6 +2815,16 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         GetPinnedStyle(column, _cachedVisibleColumns);
 
     /// <summary>
+    /// Computes the stacked-layout label for a detail row cell.
+    /// </summary>
+    internal string? ComputeDetailMobileLabel(IDataGridColumn<TData> column) => GetMobileLabel(column);
+
+    /// <summary>
+    /// Computes whether a detail row cell is hidden in the stacked layout.
+    /// </summary>
+    internal string? ComputeDetailHideOnMobile(IDataGridColumn<TData> column) => GetHideOnMobileAttribute(column);
+
+    /// <summary>
     /// Registers a column as the hierarchy toggle column.
     /// </summary>
     internal void RegisterHierarchyColumn(IDataGridColumn<TData> column)
@@ -3498,20 +3530,34 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// Called from JS when a column resize drag completes.
     /// Receives all column widths to commit to state at once.
     /// </summary>
+    /// <param name="resizedColumnId">The column the user dragged.</param>
+    /// <param name="widths">Every width the drag settled on, keyed by column ID.</param>
+    /// <remarks>
+    /// A reported width that is not a width is refused rather than stored: no drag can mean "zero
+    /// wide", and storing the zero left the column drawn at zero pixels across a reload. Refusing
+    /// it leaves the column as it was, which is what repairs state that already carries one.
+    /// </remarks>
     [JSInvokable]
     public async Task OnResizeCompleted(string resizedColumnId, Dictionary<string, double> widths)
     {
         foreach (var (colId, widthPx) in widths)
         {
-            _gridState.Columns.SetWidth(colId, $"{Math.Round(widthPx)}px");
+            if (!DataGridColumnWidth.IsUsablePixels(widthPx))
+            {
+                continue;
+            }
+
+            _gridState.Columns.SetWidth(colId, DataGridColumnWidth.FormatPixels(widthPx));
         }
 
         _stateVersion++;
 
         if (OnColumnResize.HasDelegate)
         {
-            var width = widths.TryGetValue(resizedColumnId, out var w) ? $"{Math.Round(w)}px" : "";
-            await OnColumnResize.InvokeAsync((resizedColumnId, width));
+            // What the state accepted, not what the drag reported: a refused width must not reach
+            // a consumer that persists it.
+            await OnColumnResize.InvokeAsync(
+                (resizedColumnId, _gridState.Columns.GetWidth(resizedColumnId) ?? string.Empty));
         }
 
         await NotifyStateChangedAsync();
@@ -4299,32 +4345,78 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         return ClassNames.cn(baseClass, cellClass, perItemClass, overflowClass, noWrapClass, pinnedClass, separatorClass);
     }
 
-    private string? GetColumnWidthStyle(IDataGridColumn<TData> column)
+    private bool IsStacked => MobileLayout == DataGridMobileLayout.Stacked;
+
+    /// <summary>
+    /// The breakpoint the stacked-layout CSS keys on, or null when the grid never stacks, so a
+    /// grid left at <see cref="DataGridMobileLayout.None"/> renders exactly as it did before.
+    /// </summary>
+    private string? GetMobileBreakpointAttribute() => !IsStacked ? null : MobileBreakpoint switch
+    {
+        DataGridBreakpoint.Md => "md",
+        DataGridBreakpoint.Lg => "lg",
+        _ => "sm"
+    };
+
+    /// <summary>
+    /// The label a body cell shows in the stacked layout: the column's MobileLabel, else its
+    /// title. Null when the grid does not stack or the label is blank, which leaves the cell
+    /// with no <c>data-label</c> and so no label at all.
+    /// </summary>
+    private string? GetMobileLabel(IDataGridColumn<TData> column)
+    {
+        if (!IsStacked)
+        {
+            return null;
+        }
+
+        var label = column.MobileLabel ?? column.Title;
+
+        return string.IsNullOrWhiteSpace(label) ? null : label;
+    }
+
+    private string? GetHideOnMobileAttribute(IDataGridColumn<TData> column) =>
+        IsStacked && column.HideOnMobile ? "true" : null;
+
+    /// <summary>
+    /// Resolves the width a column renders at: the width the state holds, or the column's
+    /// declared Width when the state has none to offer.
+    /// </summary>
+    /// <param name="column">The column to resolve.</param>
+    /// <returns>The width value, or null when neither the state nor the column declares one.</returns>
+    /// <remarks>
+    /// Every reader of a width goes through here, so the rendered style and the sticky offset
+    /// maths cannot disagree about how wide a column is. A state width that is not a width is
+    /// treated as unset; a declared width is never second-guessed.
+    /// </remarks>
+    private string? ResolveColumnWidth(IDataGridColumn<TData> column)
     {
         var stateWidth = columnStateInitialized ? _gridState.Columns.GetWidth(column.ColumnId) : null;
-        var width = stateWidth ?? column.Width;
+
+        return DataGridColumnWidth.IsRenderable(stateWidth) ? stateWidth : column.Width;
+    }
+
+    private string? GetColumnWidthStyle(IDataGridColumn<TData> column)
+    {
+        var width = ResolveColumnWidth(column);
         return width != null ? $"width: {width}" : null;
     }
 
     /// <summary>
     /// Resolves a column's effective pixel width from state (post-resize) or the column's
-    /// declared Width parameter. Falls back to 150px for non-pixel or missing widths,
-    /// since sticky offset calculation requires a numeric value.
+    /// declared Width parameter, for the sticky offset maths, which needs a number.
     /// </summary>
+    /// <remarks>
+    /// Falls back to 150px for a width it cannot measure against. A declared <c>0px</c> is
+    /// measured as zero, since that is what the column renders as, but a negative or non-finite
+    /// declaration is no guide at all — the browser drops an invalid width rather than honouring
+    /// it — and offsetting a column backwards would be worse than assuming the usual fallback.
+    /// </remarks>
     private double GetEffectiveWidthPx(IDataGridColumn<TData> column)
     {
-        var stateWidth = columnStateInitialized ? _gridState.Columns.GetWidth(column.ColumnId) : null;
-        var width = stateWidth ?? column.Width;
+        var width = ResolveColumnWidth(column);
 
-        if (width != null && width.EndsWith("px", StringComparison.OrdinalIgnoreCase)
-            && double.TryParse(width.AsSpan(0, width.Length - 2),
-                System.Globalization.NumberStyles.Any,
-                System.Globalization.CultureInfo.InvariantCulture, out var px))
-        {
-            return px;
-        }
-
-        return 150.0;
+        return DataGridColumnWidth.TryParsePixels(width, out var px) && double.IsFinite(px) && px >= 0 ? px : 150.0;
     }
 
     /// <summary>

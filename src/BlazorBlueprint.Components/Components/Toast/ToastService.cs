@@ -1,9 +1,15 @@
+using Microsoft.AspNetCore.Components;
+
 namespace BlazorBlueprint.Components;
 
 /// <summary>
 /// Service for managing toast notifications.
-/// Register as a singleton or scoped service in DI.
+/// Registered as a scoped service by <c>AddBlazorBlueprintComponents()</c>.
 /// </summary>
+/// <remarks>
+/// Keep it scoped. On Blazor Server a singleton would share every toast, and the render
+/// fragments a toast holds, between all connected users.
+/// </remarks>
 public class ToastService
 {
     private readonly List<ToastData> toasts = new();
@@ -65,6 +71,39 @@ public class ToastService
             toasts.Add(toast);
         }
         OnChange?.Invoke();
+    }
+
+    /// <summary>
+    /// Shows a toast whose body is a component, so its content is written as ordinary Razor markup.
+    /// </summary>
+    /// <remarks>
+    /// The component renders in the toast's <see cref="ToastData.Content"/> and receives an
+    /// <see cref="IToastReference"/> as a cascading parameter, so it can dismiss its own toast.
+    /// </remarks>
+    /// <typeparam name="TComponent">The component to show.</typeparam>
+    /// <param name="parameters">Parameter values for the component, keyed by parameter name.</param>
+    /// <param name="toast">
+    /// The toast to show it in, for its variant, duration, position and other settings. Its
+    /// <see cref="ToastData.Content"/> is replaced by the component.
+    /// </param>
+    public void Show<TComponent>(Dictionary<string, object?>? parameters = null, ToastData? toast = null)
+        where TComponent : IComponent
+    {
+        // A copy, so a caller reusing the dictionary can't change a toast that is already showing.
+        var values = parameters?.ToArray() ?? [];
+
+        toast ??= new ToastData();
+        toast.Content = builder =>
+        {
+            builder.OpenComponent<TComponent>(0);
+            foreach (var (name, value) in values)
+            {
+                builder.AddComponentParameter(1, name, value);
+            }
+            builder.CloseComponent();
+        };
+
+        Show(toast);
     }
 
     /// <summary>

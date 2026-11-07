@@ -6,7 +6,7 @@
 <BbField Orientation="@Orientation" IsInvalid="@IsInvalid" Class="@Class">
     @if (Label is not null)
     {
-        <BbFieldLabel>@Label</BbFieldLabel>
+        <BbFieldLabel For="@ControlId">@Label</BbFieldLabel>
     }
     <BbFieldContent>
         <BbSelect AriaLabel="@AriaLabel" TValue="TValue"
@@ -18,7 +18,8 @@
                 DisplayTextSelector="@GetEffectiveDisplayTextSelector()"
                 Class="@InputClass"
                 @attributes="AdditionalAttributes">
-            <BbSelectTrigger TValue="TValue" id="@ControlId" aria-describedby="@DescribedById">
+            <BbSelectTrigger TValue="TValue" id="@ControlId" aria-describedby="@DescribedById"
+                             aria-invalid="@(IsInvalid ? "true" : null)">
                 <BbSelectValue Placeholder="@Placeholder" />
             </BbSelectTrigger>
             <BbSelectContent TValue="TValue" OnLoadMore="@OnLoadMore" IsLoading="@IsLoading" EndOfListMessage="@EndOfListMessage">
