@@ -518,6 +518,55 @@ public class DataMatrixEncoderTests
         Assert.Equal("10ABC", Gs1ElementString.FromHumanReadable("(10)ABC"));
     }
 
+    [Theory]
+    [InlineData("(10)LOT 7", " ")]
+    [InlineData("(10)LOTó", "ó")]
+    [InlineData("(21)A#1", "#")]
+    [InlineData("(21)A\tB", "U+0009")]
+    public void Gs1NotationRefusesCharactersOutsideSet82(string notation, string character)
+    {
+        var refused = AssertRefused(DataMatrixFormatError.Gs1InvalidCharacter,
+            () => Gs1ElementString.FromHumanReadable(notation));
+
+        Assert.Equal(notation[1..3], refused.Arguments[0]);
+        Assert.Equal(character, refused.Arguments[1]);
+    }
+
+    [Fact]
+    public void Gs1NotationAcceptsEverySet82Character() =>
+        Assert.Equal("21!\"%&'()*+,-./:;<=>?_azAZ09",
+            Gs1ElementString.FromHumanReadable("(21)!\"%&'()*+,-./:;<=>?_azAZ09"));
+
+    [Theory]
+    [InlineData("(3103)00018X")]
+    [InlineData("(17)27O101")]
+    [InlineData("(20)A1")]
+    public void Gs1NotationRefusesNonDigitsInEveryPredefinedLengthElement(string notation) =>
+        AssertRefused(DataMatrixFormatError.Gs1NotDigits, () => Gs1ElementString.FromHumanReadable(notation));
+
+    [Theory]
+    [InlineData("(17)271332")]
+    [InlineData("(17)270230")]
+    [InlineData("(11)250229")]
+    [InlineData("(15)270015")]
+    [InlineData("(13)270431")]
+    public void Gs1NotationRefusesDatesThatDoNotExist(string notation)
+    {
+        var refused = AssertRefused(DataMatrixFormatError.Gs1InvalidDate,
+            () => Gs1ElementString.FromHumanReadable(notation));
+
+        Assert.Equal(notation[4..], refused.Arguments[1]);
+    }
+
+    [Theory]
+    [InlineData("(17)270101")]
+    [InlineData("(17)271200")]
+    [InlineData("(11)240229")]
+    [InlineData("(16)271231")]
+    [InlineData("(12)270430")]
+    public void Gs1NotationAcceptsRealDatesAndDayZero(string notation) =>
+        Assert.Equal(notation[1..3] + notation[4..], Gs1ElementString.FromHumanReadable(notation));
+
     [Fact]
     public void SameValueAlwaysProducesTheSameModules()
     {

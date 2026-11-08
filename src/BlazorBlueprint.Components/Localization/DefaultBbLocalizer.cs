@@ -104,6 +104,8 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["DataMatrix.DoesNotFitSize"] = "This value does not fit the {0} symbol, which holds {1} data codewords.",
         ["DataMatrix.Gs1NotDigits"] = "GS1 element ({0}) holds digits only.",
         ["DataMatrix.Gs1WrongCheckDigit"] = "GS1 element ({0}) ends in the wrong check digit: it should be {1}, not {2}.",
+        ["DataMatrix.Gs1InvalidCharacter"] = "GS1 element ({0}) cannot hold '{1}'. GS1 allows letters, digits and ! \" % & ' ( ) * + , - . / : ; < = > ? _ only.",
+        ["DataMatrix.Gs1InvalidDate"] = "GS1 element ({0}) is not a real date: {1} should be YYMMDD, with day 00 for the end of the month.",
 
         // BottomNav
         ["BottomNav.Label"] = "Primary navigation",

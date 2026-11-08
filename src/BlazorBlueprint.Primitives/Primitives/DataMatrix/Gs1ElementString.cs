@@ -12,10 +12,15 @@ namespace BlazorBlueprint.Primitives.DataMatrix;
 /// as FNC1.
 /// </para>
 /// <para>
-/// Elements with a predefined length (AIs starting 00-04, 11-20, 31-36 and 41, per the GS1 General
-/// Specifications) are checked for that length. The identifiers that end in a GS1 check digit,
-/// SSCC (00), GTIN (01, 02) and GLN (410-417), are checked to be digits with the right check
-/// digit. Other AI values are not validated. Data that itself contains a parenthesized two to four
+/// Every element is checked against the stable rules of the GS1 General Specifications: its data
+/// uses only GS1 character set 82; elements with a predefined length (AIs starting 00-04, 11-20,
+/// 31-36 and 41) have that length and hold digits only; SSCC (00), GTIN (01, 02) and GLN
+/// (410-417) end in the right check digit; and the dates in AIs 11, 12, 13, 15, 16 and 17
+/// (YYMMDD) are real dates, where day 00 means the end of the month.
+/// </para>
+/// <para>
+/// The AI dictionary itself is not checked: an AI GS1 has not assigned, or a variable-length value
+/// in the wrong format for its AI, passes. Data that itself contains a parenthesized two to four
 /// digit number is ambiguous in this notation; pass the element string instead.
 /// </para>
 /// </remarks>
@@ -38,9 +43,10 @@ public static class Gs1ElementString
     /// <returns>The element string, with U+001D after variable-length elements that are followed by another.</returns>
     /// <exception cref="ArgumentNullException">The text is null.</exception>
     /// <exception cref="DataMatrixFormatException">
-    /// The text does not start with a two to four digit AI in parentheses, an element has no data,
-    /// an element contains U+001D, or an element with a predefined length has the wrong length.
-    /// <see cref="DataMatrixFormatException.Error"/> says which.
+    /// The text does not start with a two to four digit AI in parentheses, or an element has no
+    /// data, contains U+001D or a character outside GS1 character set 82, has the wrong predefined
+    /// length, holds something other than digits where only digits belong, ends in the wrong check
+    /// digit, or is not a real date. <see cref="DataMatrixFormatException.Error"/> says which.
     /// </exception>
     public static string FromHumanReadable(string text)
     {
@@ -85,13 +91,28 @@ public static class Gs1ElementString
                     ai, totalLength - ai.Length, data.Length);
             }
 
+            foreach (var c in data)
+            {
+                if (!IsCharacterSet82(c))
+                {
+                    throw DataMatrixFormatException.Create(nameof(text), DataMatrixFormatError.Gs1InvalidCharacter,
+                        ai, DataMatrixEncoder.Describe(c));
+                }
+            }
+
+            // Every predefined-length element is numeric: identifiers, dates, measures and counts.
+            if (isPredefined && !data.All(char.IsAsciiDigit))
+            {
+                throw DataMatrixFormatException.Create(nameof(text), DataMatrixFormatError.Gs1NotDigits, ai);
+            }
+
+            if (IsDate(ai) && !IsRealDate(data))
+            {
+                throw DataMatrixFormatException.Create(nameof(text), DataMatrixFormatError.Gs1InvalidDate, ai, data);
+            }
+
             if (HasCheckDigit(ai))
             {
-                if (!data.All(char.IsAsciiDigit))
-                {
-                    throw DataMatrixFormatException.Create(nameof(text), DataMatrixFormatError.Gs1NotDigits, ai);
-                }
-
                 var expected = CheckDigit(data.AsSpan(0, data.Length - 1));
                 if (data[^1] != expected)
                 {
@@ -114,6 +135,34 @@ public static class Gs1ElementString
             ai = nextAi;
             position = nextPosition;
         }
+    }
+
+    /// <summary>
+    /// GS1 character set 82: the digits, both cases of A-Z, and ! " % &amp; ' ( ) * + , - . / : ; &lt; = &gt; ? _
+    /// </summary>
+    private static bool IsCharacterSet82(char c) =>
+        char.IsAsciiLetterOrDigit(c) || c is '!' or '"' or '%' or '&' or '\'' or '(' or ')' or '*' or '+'
+            or ',' or '-' or '.' or '/' or ':' or ';' or '<' or '=' or '>' or '?' or '_';
+
+    /// <summary>Production (11), due (12), packaging (13), best before (15), sell by (16) and expiry (17) dates.</summary>
+    private static bool IsDate(string ai) => ai is "11" or "12" or "13" or "15" or "16" or "17";
+
+    /// <summary>
+    /// Whether six digits YYMMDD name a real date. Day 00 means the end of the month. GS1 resolves
+    /// the century within a sliding window around the current year, which today spans 1977-2076, so
+    /// a year divisible by four is a leap year.
+    /// </summary>
+    private static bool IsRealDate(string yymmdd)
+    {
+        var year = ((yymmdd[0] - '0') * 10) + (yymmdd[1] - '0');
+        var month = ((yymmdd[2] - '0') * 10) + (yymmdd[3] - '0');
+        var day = ((yymmdd[4] - '0') * 10) + (yymmdd[5] - '0');
+        if (month is < 1 or > 12)
+        {
+            return false;
+        }
+
+        return day == 0 || day <= DateTime.DaysInMonth(year % 4 == 0 ? 2000 : 2001, month);
     }
 
     /// <summary>SSCC (00), GTIN (01, 02) and GLN (410-417) end in a GS1 mod 10 check digit.</summary>

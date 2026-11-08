@@ -134,6 +134,21 @@ public class DataMatrixComponentTests
     }
 
     [Fact]
+    public void EveryRefusalReasonHasALocalizerKeyMatchingTheEncoderSentence()
+    {
+        // A missing key would show the raw "DataMatrix.{reason}" in the alert, because the
+        // localizer returns the key itself when it has no text for it.
+        object[] arguments = ["A", "B", "C"];
+        foreach (var reason in Enum.GetValues<DataMatrixFormatError>().Where(r => r != DataMatrixFormatError.Unspecified))
+        {
+            var key = $"DataMatrix.{reason}";
+            Assert.True(DefaultBbLocalizer.EnglishDefaults.TryGetValue(key, out var english), $"Missing {key}");
+            Assert.Equal(DataMatrixFormatException.Create("value", reason, arguments).Message,
+                string.Format(System.Globalization.CultureInfo.InvariantCulture, english, arguments));
+        }
+    }
+
+    [Fact]
     public async Task OversizeInputSetsErrorStateWithoutThrowing()
     {
         var component = Create();

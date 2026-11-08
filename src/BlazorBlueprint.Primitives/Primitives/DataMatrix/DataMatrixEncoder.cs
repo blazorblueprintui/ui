@@ -440,7 +440,7 @@ public static class DataMatrixEncoder
     private static bool IsDigit(byte value) => value is >= (byte)'0' and <= (byte)'9';
 
     /// <summary>A character as it should read in a message: control characters as U+XXXX.</summary>
-    private static string Describe(char c) =>
+    internal static string Describe(char c) =>
         char.IsControl(c) || char.IsSurrogate(c)
             ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"U+{(int)c:X4}")
             : c.ToString();

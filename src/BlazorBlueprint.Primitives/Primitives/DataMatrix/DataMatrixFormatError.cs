@@ -55,8 +55,8 @@ public enum DataMatrixFormatError
     DoesNotFitSize,
 
     /// <summary>
-    /// A GS1 identifier that must be all digits (SSCC, GTIN or GLN) contains something else.
-    /// Arguments: the Application Identifier.
+    /// A GS1 element with a predefined length, which holds digits only (identifiers, dates,
+    /// measures), contains something else. Arguments: the Application Identifier.
     /// </summary>
     Gs1NotDigits,
 
@@ -65,4 +65,16 @@ public enum DataMatrixFormatError
     /// check digit expected, and the check digit given.
     /// </summary>
     Gs1WrongCheckDigit,
+
+    /// <summary>
+    /// A GS1 element holds a character outside GS1 character set 82. Arguments: the Application
+    /// Identifier and the character, as a string.
+    /// </summary>
+    Gs1InvalidCharacter,
+
+    /// <summary>
+    /// A GS1 date (AI 11, 12, 13, 15, 16 or 17) is not a real YYMMDD date. Arguments: the
+    /// Application Identifier and the six digits given.
+    /// </summary>
+    Gs1InvalidDate,
 }
