@@ -102,9 +102,9 @@
             label: the AI parentheses are not encoded, and an FNC1 separator is added after each
             variable-length element, such as lot (10), that another element follows. Elements with
             a predefined length, such as GTIN (01) and expiry (17), are checked for it, and SSCC,
-            GTIN and GLN must end in the right GS1 check digit. An element
-            string with U+001D separators works too and encodes the same symbol. The example
-            carries GTIN (01), expiry (17), lot (10), then serial (21).
+            GTIN and GLN must end in the right GS1 check digit. An element string with U+001D
+            separators works too and encodes the same symbol. The example carries GTIN (01),
+            expiry (17), lot (10), then serial (21).
         </p>
         <div class="rounded-lg border bg-card p-6 flex justify-center">
             <BbDataMatrix Value="@gs1Value" IsGs1="true" ShowValue="true" Size="14rem" />
@@ -132,8 +132,8 @@
             Give a useful accessible name or show the payload as text when it is not already nearby.
             Invalid content renders an alert instead of breaking a Blazor Server circuit. The alert
             says what is wrong, such as a value that is too long, a GS1 element of the wrong length
-            or a GTIN with the wrong check digit, and every message goes through <code>IBbLocalizer</code> under
-            <code>DataMatrix.*</code> keys, so it can be translated.
+            or a GTIN with the wrong check digit, and every message goes through
+            <code>IBbLocalizer</code> under <code>DataMatrix.*</code> keys, so it can be translated.
         </p>
         <div class="rounded-lg border bg-card p-6 flex flex-col items-center gap-4">
             <BbDataMatrix Value="ORDER-4051" AriaLabel="Data Matrix for order 4051"
@@ -184,7 +184,12 @@
             <ApiParameter Name="Encode(value, mode, shape, isGs1, size)" Type="DataMatrixSymbol">Encodes ECC 200 with square, classic rectangular or DMRE symbol selection, or a fixed size.</ApiParameter>
         </ApiReference>
         <ApiReference ComponentName="Gs1ElementString">
-            <ApiParameter Name="FromHumanReadable(text)" Type="string">Converts (AI) notation to an element string with U+001D after variable-length elements, checking predefined lengths.</ApiParameter>
+            <ApiParameter Name="FromHumanReadable(text)" Type="string">Converts (AI) notation to an element string with U+001D after variable-length elements, checking predefined lengths and the SSCC, GTIN and GLN check digit.</ApiParameter>
+        </ApiReference>
+        <ApiReference ComponentName="DataMatrixFormatException">
+            <ApiParameter Name="Error" Type="DataMatrixFormatError">Why the value was refused, such as TooLong, DoesNotFitSize or Gs1WrongCheckDigit.</ApiParameter>
+            <ApiParameter Name="Arguments" Type="IReadOnlyList&lt;object&gt;">The values the message was formatted with, in the order each DataMatrixFormatError member documents.</ApiParameter>
+            <ApiParameter Name="Message" Type="string">The English sentence alone; BbDataMatrix words it through IBbLocalizer under DataMatrix.{Error}.</ApiParameter>
         </ApiReference>
         <ApiReference ComponentName="DataMatrixSymbol">
             <ApiParameter Name="this[int x, int y]" Type="bool">Dark module lookup; out-of-range reads as light.</ApiParameter>
