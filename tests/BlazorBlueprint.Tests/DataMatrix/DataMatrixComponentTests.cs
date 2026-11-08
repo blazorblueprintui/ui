@@ -45,6 +45,50 @@ public class DataMatrixComponentTests
     }
 
     [Fact]
+    public async Task Gs1NotationEncodesAsElementStringAndKeepsItsReadableLabel()
+    {
+        var component = Create();
+        SetParameter(component, nameof(BbDataMatrix.Value), "(01)09501101530003(10)ABC123(21)XYZ");
+        SetParameter(component, nameof(BbDataMatrix.IsGs1), true);
+
+        await component.EncodeAsync();
+
+        var symbol = Assert.IsType<DataMatrixSymbol>(component.Symbol);
+        Assert.True(symbol.IsGs1);
+        var root = XDocument.Parse(Assert.IsType<string>(component.GetSvg())).Root;
+        Assert.Equal("Data Matrix code for (01)09501101530003(10)ABC123(21)XYZ",
+            root?.Attribute("aria-label")?.Value);
+    }
+
+    [Fact]
+    public async Task MalformedGs1NotationSetsErrorStateWithoutThrowing()
+    {
+        var component = Create();
+        SetParameter(component, nameof(BbDataMatrix.Value), "(01)123");
+        SetParameter(component, nameof(BbDataMatrix.IsGs1), true);
+
+        await component.EncodeAsync();
+
+        Assert.Null(component.Symbol);
+        Assert.NotNull(typeof(BbDataMatrix).GetField("encodeError", BindingFlags.Instance | BindingFlags.NonPublic)?
+            .GetValue(component));
+    }
+
+    [Fact]
+    public async Task RectangleExtendedShapeRendersADmreSymbol()
+    {
+        var component = Create();
+        SetParameter(component, nameof(BbDataMatrix.Value), new string('1', 36));
+        SetParameter(component, nameof(BbDataMatrix.Shape), DataMatrixSymbolShape.RectangleExtended);
+
+        await component.EncodeAsync();
+
+        var symbol = Assert.IsType<DataMatrixSymbol>(component.Symbol);
+        Assert.Equal((48, 8, DataMatrixSymbolShape.RectangleExtended), (symbol.Width, symbol.Height, symbol.Shape));
+        Assert.Equal("0 0 50 10", XDocument.Parse(component.GetSvg()!).Root?.Attribute("viewBox")?.Value);
+    }
+
+    [Fact]
     public async Task OversizeInputSetsErrorStateWithoutThrowing()
     {
         var component = Create();

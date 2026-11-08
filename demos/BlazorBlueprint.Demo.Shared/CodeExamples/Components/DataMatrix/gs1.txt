@@ -1,7 +1,10 @@
-@* Actual GS1 element string: 01 GTIN, 17 expiry, 10 lot, GS, 21 serial.
-   AI parentheses are display notation and are not passed to the encoder. *@
-@code {
-    private const string Gs1Value = "01095011015300031727010110ABC123\u001D21XYZ";
-}
+@* GTIN (01), expiry (17), lot (10), serial (21), written as printed on the label.
+   The parentheses are not encoded; FNC1 follows the variable-length lot. *@
+<BbDataMatrix Value="(01)09501101530003(17)270101(10)ABC123(21)XYZ" IsGs1="true" ShowValue="true" />
 
-<BbDataMatrix Value="@Gs1Value" IsGs1="true" ShowValue="true" />
+@* The same symbol from the element string, with U+001D after the lot. *@
+<BbDataMatrix Value="@ElementString" IsGs1="true" />
+
+@code {
+    private const string ElementString = "01095011015300031727010110ABC123\u001D21XYZ";
+}

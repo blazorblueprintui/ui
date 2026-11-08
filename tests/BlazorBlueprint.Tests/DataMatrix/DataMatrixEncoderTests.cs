@@ -261,9 +261,11 @@ public class DataMatrixEncoderTests
     }
 
     [Fact]
-    public void EveryClassicSymbolPlacesDataAndDrawsRegionBorders()
+    public void EverySymbolPlacesDataAndDrawsRegionBorders()
     {
-        Assert.Equal(30, DataMatrixSymbolInfo.All.Length);
+        Assert.Equal(30, DataMatrixSymbolInfo.Classic.Length);
+        Assert.Equal(18, DataMatrixSymbolInfo.Dmre.Length);
+        Assert.Equal(48, DataMatrixSymbolInfo.All.Length);
         foreach (var info in DataMatrixSymbolInfo.All)
         {
             var data = new byte[info.DataCapacity];
@@ -290,7 +292,7 @@ public class DataMatrixEncoderTests
     [Fact]
     public void EveryClassicSizeDecodesAtItsAsciiCapacity()
     {
-        foreach (var info in DataMatrixSymbolInfo.All)
+        foreach (var info in DataMatrixSymbolInfo.Classic)
         {
             var value = new string('1', info.DataCapacity * 2);
             var shape = info.Width == info.Height
@@ -301,6 +303,107 @@ public class DataMatrixEncoderTests
             Assert.Equal(info.Height, symbol.Height);
             Assert.Equal(value, Decode(symbol));
         }
+    }
+
+    [Fact]
+    public void DmreTableListsTheEighteenIsoIec21471Sizes()
+    {
+        (int Width, int Height)[] expected =
+        [
+            (48, 8), (64, 8), (80, 8), (96, 8), (120, 8), (144, 8), (64, 12), (88, 12), (64, 16),
+            (36, 20), (44, 20), (64, 20), (48, 22), (48, 24), (64, 24), (40, 26), (48, 26), (64, 26),
+        ];
+
+        Assert.Equal(expected, DataMatrixSymbolInfo.Dmre.Select(info => (info.Width, info.Height)));
+        Assert.All(DataMatrixSymbolInfo.Dmre, info => Assert.True(info.IsDmre));
+        Assert.DoesNotContain(DataMatrixSymbolInfo.Classic, info => info.IsDmre);
+    }
+
+    [Fact]
+    public void EveryDmreSizeDecodesAtItsAsciiCapacity()
+    {
+        // Several DMRE sizes are never the smallest choice for any length (8x80 holds 32
+        // codewords, as does the smaller classic 16x36), so place each size directly rather than
+        // through symbol selection. ZXing's decoder sizes each symbol from its own DMRE table.
+        foreach (var info in DataMatrixSymbolInfo.Dmre)
+        {
+            var value = new string('7', info.DataCapacity * 2);
+            var data = DataMatrixEncoder.EncodeData(Encoding.ASCII.GetBytes(value), DataMatrixEncodingMode.Ascii);
+            DataMatrixEncoder.Pad(data, info.DataCapacity);
+            var modules = new DataMatrixPlacement(DataMatrixErrorCorrection.Add([.. data], info), info).Draw();
+
+            Assert.True(value == Decode(modules, info.Width, info.Height), $"{info.Width}x{info.Height}");
+        }
+    }
+
+    [Fact]
+    public void OnlyRectangleExtendedChoosesDmre()
+    {
+        // 18 codewords: classic rectangles need 12x36 (432 modules), DMRE fits 8x48 (384).
+        var value = new string('1', 36);
+
+        var classic = DataMatrixEncoder.Encode(value, DataMatrixEncodingMode.Ascii, DataMatrixSymbolShape.Rectangle);
+        var automatic = DataMatrixEncoder.Encode(value, DataMatrixEncodingMode.Ascii);
+        var extended = DataMatrixEncoder.Encode(value, DataMatrixEncodingMode.Ascii,
+            DataMatrixSymbolShape.RectangleExtended);
+
+        Assert.Equal((36, 12, DataMatrixSymbolShape.Rectangle), (classic.Width, classic.Height, classic.Shape));
+        Assert.Equal(DataMatrixSymbolShape.Square, automatic.Shape);
+        Assert.Equal((48, 8, DataMatrixSymbolShape.RectangleExtended), (extended.Width, extended.Height, extended.Shape));
+        Assert.Equal(value, Decode(extended));
+    }
+
+    [Fact]
+    public void RectangleExtendedReachesTheLargestDmreAndRejectsMore()
+    {
+        var fits = new string('1', 118 * 2);
+        var symbol = DataMatrixEncoder.Encode(fits, DataMatrixEncodingMode.Ascii,
+            DataMatrixSymbolShape.RectangleExtended);
+
+        Assert.Equal((64, 26), (symbol.Width, symbol.Height));
+        Assert.Equal(fits, Decode(symbol));
+        Assert.Throws<ArgumentException>(() => DataMatrixEncoder.Encode(new string('1', 119 * 2),
+            DataMatrixEncodingMode.Ascii, DataMatrixSymbolShape.RectangleExtended));
+    }
+
+    [Fact]
+    public void Gs1NotationBecomesAnElementStringWithSeparatorsOnlyAfterVariableLengthElements() =>
+        Assert.Equal("01095011015300031727010110ABC123\u001D21XYZ",
+            Gs1ElementString.FromHumanReadable("(01)09501101530003(17)270101(10)ABC123(21)XYZ"));
+
+    [Theory]
+    [InlineData("(21)A(22)B", "21A\u001D22B")]
+    [InlineData("(3103)000189(10)L1", "3103000189" + "10L1")]
+    [InlineData("(10)AB(C)(21)X", "10AB(C)\u001D21X")]
+    [InlineData("(8200)https://example.com", "8200https://example.com")]
+    public void Gs1NotationHandlesFourDigitAisAndLiteralParentheses(string notation, string expected) =>
+        Assert.Equal(expected, Gs1ElementString.FromHumanReadable(notation));
+
+    [Theory]
+    [InlineData("0109501101530003")]
+    [InlineData("(1)ABC")]
+    [InlineData("(12345)ABC")]
+    [InlineData("(10)")]
+    [InlineData("(10)ABC(21)")]
+    [InlineData("(01)0950110153000")]
+    [InlineData("(17)2701011")]
+    [InlineData("(10)A\u001DB")]
+    public void Gs1NotationRejectsMalformedInput(string notation) =>
+        Assert.Throws<ArgumentException>(() => Gs1ElementString.FromHumanReadable(notation));
+
+    [Fact]
+    public void Gs1NotationEncodesTheSameSymbolAsTheElementString()
+    {
+        const string notation = "(01)09501101530003(17)270101(10)ABC123(21)XYZ";
+        const string elementString = "01095011015300031727010110ABC123\u001D21XYZ";
+
+        var fromNotation = DataMatrixEncoder.Encode(notation, isGs1: true);
+        var fromElementString = DataMatrixEncoder.Encode(elementString, isGs1: true);
+
+        Assert.Equal(Flatten(fromElementString), Flatten(fromNotation));
+        Assert.Equal("\u001D" + elementString, Decode(fromNotation));
+        // Without IsGs1 the parentheses are ordinary text.
+        Assert.Equal(notation, Decode(DataMatrixEncoder.Encode(notation)));
     }
 
     [Fact]
@@ -345,12 +448,26 @@ public class DataMatrixEncoderTests
 
     private static string Decode(DataMatrixSymbol symbol)
     {
-        var bits = new BitMatrix(symbol.Width, symbol.Height);
+        var modules = new bool[symbol.Width * symbol.Height];
         for (var y = 0; y < symbol.Height; y++)
         {
             for (var x = 0; x < symbol.Width; x++)
             {
-                if (symbol[x, y])
+                modules[(y * symbol.Width) + x] = symbol[x, y];
+            }
+        }
+
+        return Decode(modules, symbol.Width, symbol.Height);
+    }
+
+    private static string Decode(bool[] modules, int width, int height)
+    {
+        var bits = new BitMatrix(width, height);
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                if (modules[(y * width) + x])
                 {
                     bits[x, y] = true;
                 }

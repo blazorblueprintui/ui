@@ -48,19 +48,25 @@
     </section>
 
     <section class="space-y-4">
-        <h2 class="text-2xl font-semibold">Square and Rectangular</h2>
+        <h2 class="text-2xl font-semibold">Square, Rectangular and DMRE</h2>
         <p class="text-muted-foreground">
-            Square and Rectangle restrict the size search. Rectangle includes the six classic
-            ECC 200 rectangular sizes; DMRE is not included.
+            <code>Square</code> and <code>Rectangle</code> restrict the size search to the classic
+            ECC 200 sizes. <code>RectangleExtended</code> adds the 18 DMRE sizes from ISO/IEC 21471,
+            for low, wide labels. <code>Auto</code> never picks DMRE, because older scanners may not
+            read it. Here the same 18-codeword value gives 18 × 18, 36 × 12 and 48 × 8 modules.
         </p>
-        <div class="rounded-lg border bg-card p-6 grid gap-6 sm:grid-cols-2 justify-items-center">
+        <div class="rounded-lg border bg-card p-6 grid gap-6 md:grid-cols-3 items-end justify-items-center">
             <div class="flex flex-col items-center gap-2">
-                <BbDataMatrix Value="ABC123456789" Shape="DataMatrixSymbolShape.Square" Size="10rem" />
+                <BbDataMatrix Value="@shapeValue" Shape="DataMatrixSymbolShape.Square" Size="7rem" />
                 <span class="text-sm">Square</span>
             </div>
             <div class="flex flex-col items-center gap-2">
-                <BbDataMatrix Value="ABC123456789" Shape="DataMatrixSymbolShape.Rectangle" Size="14rem" />
+                <BbDataMatrix Value="@shapeValue" Shape="DataMatrixSymbolShape.Rectangle" Size="13.3rem" />
                 <span class="text-sm">Rectangle</span>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+                <BbDataMatrix Value="@shapeValue" Shape="DataMatrixSymbolShape.RectangleExtended" Size="17.5rem" />
+                <span class="text-sm">RectangleExtended (DMRE)</span>
             </div>
         </div>
         <CodeBlock Source="Components/DataMatrix/shape.txt" />
@@ -69,9 +75,11 @@
     <section class="space-y-4">
         <h2 class="text-2xl font-semibold">GS1 Data Matrix</h2>
         <p class="text-muted-foreground">
-            Set <code>IsGs1</code> for the leading FNC1. Pass the actual GS1 element string: AI
-            parentheses such as <code>(01)</code> are only display notation and are not parsed.
-            Insert U+001D after a variable-length field when another field follows it. The example
+            Set <code>IsGs1</code> for the leading FNC1. Write the value as it is printed on the
+            label: the AI parentheses are not encoded, and an FNC1 separator is added after each
+            variable-length element, such as lot (10), that another element follows. Elements with
+            a predefined length, such as GTIN (01) and expiry (17), are checked for it. An element
+            string with U+001D separators works too and encodes the same symbol. The example
             carries GTIN (01), expiry (17), lot (10), then serial (21).
         </p>
         <div class="rounded-lg border bg-card p-6 flex justify-center">
@@ -128,8 +136,8 @@
         <ApiReference ComponentName="BbDataMatrix">
             <ApiParameter Name="Value" Type="string?">Text to encode. Empty values render nothing.</ApiParameter>
             <ApiParameter Name="EncodingMode" Type="DataMatrixEncodingMode" Default="Auto">Auto, Ascii, C40, Text, X12, Edifact or Base256.</ApiParameter>
-            <ApiParameter Name="Shape" Type="DataMatrixSymbolShape" Default="Auto">Auto, Square or Rectangle.</ApiParameter>
-            <ApiParameter Name="IsGs1" Type="bool" Default="false">Adds FNC1 semantics to an already prepared GS1 element string.</ApiParameter>
+            <ApiParameter Name="Shape" Type="DataMatrixSymbolShape" Default="Auto">Auto, Square, Rectangle or RectangleExtended, which adds the DMRE sizes.</ApiParameter>
+            <ApiParameter Name="IsGs1" Type="bool" Default="false">GS1 data with a leading FNC1, written as (AI) notation or as an element string.</ApiParameter>
             <ApiParameter Name="Size" Type="string" Default="12rem">Rendered SVG width as a CSS length.</ApiParameter>
             <ApiParameter Name="Foreground" Type="string" Default="#18181b">Dark-module colour.</ApiParameter>
             <ApiParameter Name="Background" Type="string" Default="#ffffff">Background and quiet-zone colour.</ApiParameter>
@@ -144,7 +152,10 @@
             <ApiParameter Name="AdditionalAttributes" Type="Dictionary&lt;string, object&gt;?">Additional root attributes.</ApiParameter>
         </ApiReference>
         <ApiReference ComponentName="DataMatrixEncoder">
-            <ApiParameter Name="Encode(value, mode, shape, isGs1)" Type="DataMatrixSymbol">Encodes ECC 200 with square or classic rectangular symbol selection.</ApiParameter>
+            <ApiParameter Name="Encode(value, mode, shape, isGs1)" Type="DataMatrixSymbol">Encodes ECC 200 with square, classic rectangular or DMRE symbol selection.</ApiParameter>
+        </ApiReference>
+        <ApiReference ComponentName="Gs1ElementString">
+            <ApiParameter Name="FromHumanReadable(text)" Type="string">Converts (AI) notation to an element string with U+001D after variable-length elements, checking predefined lengths.</ApiParameter>
         </ApiReference>
         <ApiReference ComponentName="DataMatrixSymbol">
             <ApiParameter Name="this[int x, int y]" Type="bool">Dark module lookup; out-of-range reads as light.</ApiParameter>
@@ -161,7 +172,8 @@
     private DataMatrixSymbol? liveSymbol;
     private BbDataMatrix? downloadCode;
 
-    private readonly string gs1Value = "01095011015300031727010110ABC123\u001D21XYZ";
+    private readonly string shapeValue = "123456789012345678901234567890123456";
+    private readonly string gs1Value = "(01)09501101530003(17)270101(10)ABC123(21)XYZ";
     private readonly string overlongValue = new('A', 1600);
 
     private string DownloadHref => downloadCode?.GetSvg() is { } markup

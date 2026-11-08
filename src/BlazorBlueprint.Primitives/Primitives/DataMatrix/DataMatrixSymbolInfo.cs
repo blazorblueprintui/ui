@@ -1,9 +1,11 @@
 namespace BlazorBlueprint.Primitives.DataMatrix;
 
-/// <summary>Classic ECC 200 symbol attributes, excluding DMRE.</summary>
+/// <summary>ECC 200 symbol attributes for the classic sizes and the DMRE rectangles.</summary>
 /// <remarks>
-/// Region dimensions and capacities follow the ECC 200 symbol table in ISO/IEC 16022. The last
-/// entry has eight 156-codeword data blocks and two 155-codeword data blocks.
+/// Classic region dimensions and capacities follow the ECC 200 symbol table in ISO/IEC 16022. The
+/// largest classic entry has eight 156-codeword data blocks and two 155-codeword data blocks. The
+/// DMRE (Data Matrix Rectangular Extension) entries follow ISO/IEC 21471; each is one row of
+/// regions and one Reed-Solomon block.
 /// </remarks>
 internal sealed record DataMatrixSymbolInfo(
     int DataCapacity,
@@ -12,7 +14,8 @@ internal sealed record DataMatrixSymbolInfo(
     int RegionHeight,
     int RegionColumns,
     int RegionRows,
-    int BlockCount)
+    int BlockCount,
+    bool IsDmre = false)
 {
     internal int Width => (RegionWidth + 2) * RegionColumns;
 
@@ -23,7 +26,7 @@ internal sealed record DataMatrixSymbolInfo(
     internal int DataLengthForBlock(int block) =>
         DataCapacity == 1558 ? block < 8 ? 156 : 155 : DataCapacity / BlockCount;
 
-    internal static readonly DataMatrixSymbolInfo[] All =
+    internal static readonly DataMatrixSymbolInfo[] Classic =
     [
         new(3, 5, 8, 8, 1, 1, 1),
         new(5, 7, 10, 10, 1, 1, 1),
@@ -57,15 +60,45 @@ internal sealed record DataMatrixSymbolInfo(
         new(1558, 620, 22, 22, 6, 6, 10),
     ];
 
+    /// <summary>The 18 DMRE sizes, from 8x48 to 26x64 modules.</summary>
+    internal static readonly DataMatrixSymbolInfo[] Dmre =
+    [
+        new(18, 15, 22, 6, 2, 1, 1, true),
+        new(24, 18, 14, 6, 4, 1, 1, true),
+        new(32, 22, 18, 6, 4, 1, 1, true),
+        new(38, 28, 22, 6, 4, 1, 1, true),
+        new(49, 32, 18, 6, 6, 1, 1, true),
+        new(63, 36, 22, 6, 6, 1, 1, true),
+        new(43, 27, 14, 10, 4, 1, 1, true),
+        new(64, 36, 20, 10, 4, 1, 1, true),
+        new(62, 36, 14, 14, 4, 1, 1, true),
+        new(44, 28, 16, 18, 2, 1, 1, true),
+        new(56, 34, 20, 18, 2, 1, 1, true),
+        new(84, 42, 14, 18, 4, 1, 1, true),
+        new(72, 38, 22, 20, 2, 1, 1, true),
+        new(80, 41, 22, 22, 2, 1, 1, true),
+        new(108, 46, 14, 22, 4, 1, 1, true),
+        new(70, 38, 18, 24, 2, 1, 1, true),
+        new(90, 42, 22, 24, 2, 1, 1, true),
+        new(118, 50, 14, 24, 4, 1, 1, true),
+    ];
+
+    internal static readonly DataMatrixSymbolInfo[] All = [.. Classic, .. Dmre];
+
+    internal static bool Allows(DataMatrixSymbolInfo info, DataMatrixSymbolShape shape) => shape switch
+    {
+        DataMatrixSymbolShape.Auto => !info.IsDmre,
+        DataMatrixSymbolShape.Square => info.Width == info.Height,
+        DataMatrixSymbolShape.Rectangle => !info.IsDmre && info.Width != info.Height,
+        DataMatrixSymbolShape.RectangleExtended => info.Width != info.Height,
+        _ => false,
+    };
+
+    internal static int MaximumCapacity(DataMatrixSymbolShape shape) =>
+        All.Where(info => Allows(info, shape)).Max(info => info.DataCapacity);
+
     internal static DataMatrixSymbolInfo? Choose(int count, DataMatrixSymbolShape shape) =>
-        All.Where(info => count <= info.DataCapacity
-                && (shape switch
-                {
-                    DataMatrixSymbolShape.Auto => true,
-                    DataMatrixSymbolShape.Square => info.Width == info.Height,
-                    DataMatrixSymbolShape.Rectangle => info.Width != info.Height,
-                    _ => false,
-                }))
+        All.Where(info => count <= info.DataCapacity && Allows(info, shape))
             .OrderBy(info => info.Width * info.Height)
             .ThenBy(info => Math.Max(info.Width, info.Height))
             .FirstOrDefault();

@@ -58,7 +58,10 @@ public sealed class DataMatrixSymbol
     /// <summary>Gets the encodation modes actually used by the payload, in first-use order.</summary>
     public IReadOnlyList<DataMatrixEncodingMode> ModesUsed { get; }
 
-    /// <summary>Gets the actual symbol shape.</summary>
+    /// <summary>
+    /// Gets the actual symbol shape: Square, Rectangle for a classic rectangle, or
+    /// RectangleExtended for a DMRE size.
+    /// </summary>
     public DataMatrixSymbolShape Shape { get; }
 
     /// <summary>Gets whether the symbol starts with the GS1 FNC1 codeword.</summary>

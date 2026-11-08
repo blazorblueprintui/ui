@@ -2,11 +2,12 @@ using System.Text;
 
 namespace BlazorBlueprint.Primitives.DataMatrix;
 
-/// <summary>Encodes text as a classic Data Matrix ECC 200 symbol.</summary>
+/// <summary>Encodes text as a Data Matrix ECC 200 symbol, classic or DMRE.</summary>
 /// <remarks>
 /// Latin-1 text uses the default character set. Text beyond Latin-1 is encoded as UTF-8 with ECI
-/// assignment 26. GS1 input must already be an element string; ASCII group separators (U+001D)
-/// become FNC1 separators. Parenthesized, human-readable AI notation is not parsed.
+/// assignment 26. GS1 input is either an element string, where ASCII group separators (U+001D)
+/// become FNC1 separators, or human-readable notation such as <c>(01)09501101530003(10)ABC</c>,
+/// which <see cref="Gs1ElementString.FromHumanReadable(string)"/> converts first.
 /// </remarks>
 public static class DataMatrixEncoder
 {
@@ -19,10 +20,14 @@ public static class DataMatrixEncoder
     /// <summary>Encodes a value into a Data Matrix ECC 200 module grid.</summary>
     /// <param name="value">The nonempty text to encode.</param>
     /// <param name="mode">The encodation mode, or Auto to choose compact segments.</param>
-    /// <param name="shape">The allowed symbol shape. Rectangle selects only classic rectangles.</param>
+    /// <param name="shape">
+    /// The allowed symbol shape. Rectangle selects only classic rectangles; RectangleExtended also
+    /// allows the DMRE sizes.
+    /// </param>
     /// <param name="isGs1">
-    /// Prefix FNC1 and encode U+001D separators as FNC1. Supply a GS1 element string without AI
-    /// parentheses, with U+001D after variable-length elements when another element follows.
+    /// Prefix FNC1 and encode U+001D separators as FNC1. Supply either a GS1 element string, with
+    /// U+001D after variable-length elements when another element follows, or human-readable
+    /// notation starting with a parenthesized AI, which is converted to an element string first.
     /// </param>
     /// <returns>The finished headless symbol.</returns>
     /// <exception cref="ArgumentException">The value is empty, invalid, or too large.</exception>
@@ -44,12 +49,18 @@ public static class DataMatrixEncoder
             throw new ArgumentOutOfRangeException(nameof(shape));
         }
 
+        // An element string always starts with AI digits, so a leading parenthesis can only mean
+        // human-readable notation.
+        if (isGs1 && value[0] == '(')
+        {
+            value = Gs1ElementString.FromHumanReadable(value);
+        }
+
         var usesUtf8Eci = value.Any(c => c > 255);
         var payload = usesUtf8Eci ? StrictUtf8.GetBytes(value) : value.Select(c => (byte)c).ToArray();
         // Digit pairs are the densest possible encodation, at one codeword for two bytes.
         // This cheap bound avoids a quadratic mode search for clearly oversized user input.
-        var maximumDataCapacity = shape == DataMatrixSymbolShape.Rectangle ? 49 : 1558;
-        if (payload.Length > maximumDataCapacity * 2)
+        if (payload.Length > DataMatrixSymbolInfo.MaximumCapacity(shape) * 2)
         {
             throw new ArgumentException("The value is too long for a Data Matrix ECC 200 symbol.", nameof(value));
         }
@@ -78,7 +89,8 @@ public static class DataMatrixEncoder
         return new DataMatrixSymbol(
             info.Width, info.Height, info.DataCapacity, info.ErrorCodewords,
             info.RegionWidth, info.RegionHeight, mode, modesUsed,
-            info.Width == info.Height ? DataMatrixSymbolShape.Square : DataMatrixSymbolShape.Rectangle,
+            info.IsDmre ? DataMatrixSymbolShape.RectangleExtended
+                : info.Width == info.Height ? DataMatrixSymbolShape.Square : DataMatrixSymbolShape.Rectangle,
             isGs1, usesUtf8Eci, modules);
     }
 

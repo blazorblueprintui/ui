@@ -449,7 +449,7 @@ Production-ready components for complex data-driven applications:
 | **Barcode** | Fourteen linear symbologies drawn as SVG on encoders written in C# — Code 128/39, EAN-13/8, UPC-A, ITF, Codabar, ISBN, ISSN, MSI, Telepen, Pharmacode, POSTNET and Royal Mail 4-state |
 | **Badge** | Semantic/soft status variants and composable decorative icons |
 | **Copy Text** | Click-to-copy text with tooltip feedback and copied-state indicator |
-| **Data Matrix** | ECC 200 square and classic rectangular symbols drawn as SVG, with automatic or explicit encodation, GS1 FNC1 and UTF-8 ECI |
+| **Data Matrix** | ECC 200 square, rectangular and DMRE symbols drawn as SVG, with automatic or explicit encodation, GS1 (including (AI) notation) and UTF-8 ECI |
 | **Dark Mode Toggle** | Button that toggles light/dark mode with customizable icons and optional label |
 | **Empty** | Empty state placeholder with icon, title, and description |
 | **Kbd** | Keyboard shortcut display |
@@ -487,7 +487,7 @@ Use primitives when you need full design freedom or are building a custom design
 | **Context Menu** | Right-click menu with keyboard navigation and positioning |
 | **Dashboard Grid** | Widget layout state, drag-and-drop coordination, resize handling, responsive breakpoints |
 | **DataGrid** | Headless data grid with sorting, filtering, pagination, selection, expansion, row grouping, and state management |
-| **Data Matrix** | Dependency-free ECC 200 encoder with six encodation modes, Reed-Solomon correction and headless module geometry |
+| **Data Matrix** | Dependency-free ECC 200 and DMRE encoder with six encodation modes, Reed-Solomon correction, GS1 notation parsing and headless module geometry |
 | **Dialog** | Focus trapping, escape to close, scroll locking, portal rendering |
 | **Direction** | Writing direction for everything inside it, cascaded as a context and written as a `dir` attribute |
 | **Dropdown Menu** | Open/close, keyboard navigation, click-outside dismissal |

@@ -29,14 +29,20 @@ public partial class BbDataMatrix : ComponentBase
     [Parameter]
     public DataMatrixEncodingMode EncodingMode { get; set; } = DataMatrixEncodingMode.Auto;
 
-    /// <summary>Gets or sets the symbol shape. Rectangle uses only classic ECC 200 rectangles.</summary>
+    /// <summary>Gets or sets the symbol shape.</summary>
+    /// <remarks>
+    /// Auto, Square and Rectangle use the classic ECC 200 sizes. RectangleExtended also allows the
+    /// DMRE (ISO/IEC 21471) rectangles, which older scanners may not read.
+    /// </remarks>
     [Parameter]
     public DataMatrixSymbolShape Shape { get; set; } = DataMatrixSymbolShape.Auto;
 
-    /// <summary>Gets or sets whether the payload is a GS1 element string.</summary>
+    /// <summary>Gets or sets whether the payload is GS1 data.</summary>
     /// <remarks>
-    /// This adds the leading FNC1 and turns U+001D separators into FNC1. Supply actual AI data
-    /// without display parentheses; this component does not parse human-readable GS1 notation.
+    /// This adds the leading FNC1 and turns U+001D separators into FNC1. The value can be an
+    /// element string, or human-readable notation such as <c>(01)09501101530003(10)ABC123</c>,
+    /// which is converted with <see cref="Gs1ElementString.FromHumanReadable(string)"/>. Notation
+    /// is shown as written when <see cref="ShowValue"/> is on.
     /// </remarks>
     [Parameter]
     public bool IsGs1 { get; set; }

@@ -123,6 +123,13 @@ internal sealed class DataMatrixPlacement(byte[] codewords, DataMatrixSymbolInfo
             row += 4 - ((columns + 4) % 8);
         }
 
+        // ISO/IEC 21471 Annex E: the six-row DMRE mapping matrices can wrap past the bottom.
+        // Classic ECC 200 sizes never reach this branch.
+        if (row >= rows)
+        {
+            row -= rows;
+        }
+
         cells[(row * columns) + column] =
             (sbyte)((codewords[position] >>> (8 - bit)) & 1);
     }
