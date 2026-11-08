@@ -113,7 +113,7 @@ public class DataMatrixEncoderTests
         Assert.False(latin1.UsesUtf8Eci);
         Assert.Equal([241, 27], DataMatrixEncoder.EncodeData([], DataMatrixEncodingMode.Ascii,
             usesUtf8Eci: true));
-        Assert.Throws<EncoderFallbackException>(() => DataMatrixEncoder.Encode("\uD800"));
+        AssertRefused(DataMatrixFormatError.InvalidText, () => DataMatrixEncoder.Encode("\uD800"));
     }
 
     [Theory]
@@ -189,7 +189,7 @@ public class DataMatrixEncoderTests
 
         Assert.Equal(36, symbol.Width);
         Assert.Equal(12, symbol.Height);
-        Assert.Throws<ArgumentException>(() => DataMatrixEncoder.Encode(new string('1', 99),
+        AssertRefused(DataMatrixFormatError.TooLong, () => DataMatrixEncoder.Encode(new string('1', 99),
             DataMatrixEncodingMode.Ascii, DataMatrixSymbolShape.Rectangle));
     }
 
@@ -256,7 +256,7 @@ public class DataMatrixEncoderTests
         Assert.Equal(value, Decode(symbol));
         Assert.Equal((byte)44, DataMatrixEncoder.EncodeData(
             Enumerable.Repeat((byte)0xFF, 1556).ToArray(), DataMatrixEncodingMode.Base256)[1]);
-        Assert.Throws<ArgumentException>(() => DataMatrixEncoder.Encode(
+        AssertRefused(DataMatrixFormatError.TooLong, () => DataMatrixEncoder.Encode(
             new string('ÿ', 1557), DataMatrixEncodingMode.Base256));
     }
 
@@ -362,8 +362,9 @@ public class DataMatrixEncoderTests
 
         Assert.Equal((64, 26), (symbol.Width, symbol.Height));
         Assert.Equal(fits, Decode(symbol));
-        Assert.Throws<ArgumentException>(() => DataMatrixEncoder.Encode(new string('1', 119 * 2),
-            DataMatrixEncodingMode.Ascii, DataMatrixSymbolShape.RectangleExtended));
+        var refused = AssertRefused(DataMatrixFormatError.TooLong, () => DataMatrixEncoder.Encode(
+            new string('1', 119 * 2), DataMatrixEncodingMode.Ascii, DataMatrixSymbolShape.RectangleExtended));
+        Assert.Equal([DataMatrixSymbolShape.RectangleExtended, 118], refused.Arguments);
     }
 
     [Fact]
@@ -380,16 +381,43 @@ public class DataMatrixEncoderTests
         Assert.Equal(expected, Gs1ElementString.FromHumanReadable(notation));
 
     [Theory]
-    [InlineData("0109501101530003")]
-    [InlineData("(1)ABC")]
-    [InlineData("(12345)ABC")]
-    [InlineData("(10)")]
-    [InlineData("(10)ABC(21)")]
-    [InlineData("(01)0950110153000")]
-    [InlineData("(17)2701011")]
-    [InlineData("(10)A\u001DB")]
-    public void Gs1NotationRejectsMalformedInput(string notation) =>
-        Assert.Throws<ArgumentException>(() => Gs1ElementString.FromHumanReadable(notation));
+    [InlineData("", DataMatrixFormatError.Gs1MissingAi)]
+    [InlineData("0109501101530003", DataMatrixFormatError.Gs1MissingAi)]
+    [InlineData("(1)ABC", DataMatrixFormatError.Gs1MissingAi)]
+    [InlineData("(12345)ABC", DataMatrixFormatError.Gs1MissingAi)]
+    [InlineData("(10)", DataMatrixFormatError.Gs1EmptyElement)]
+    [InlineData("(10)ABC(21)", DataMatrixFormatError.Gs1EmptyElement)]
+    [InlineData("(01)0950110153000", DataMatrixFormatError.Gs1WrongLength)]
+    [InlineData("(17)2701011", DataMatrixFormatError.Gs1WrongLength)]
+    [InlineData("(10)A\u001DB", DataMatrixFormatError.Gs1SeparatorInNotation)]
+    public void Gs1NotationRejectsMalformedInputWithItsReason(string notation, DataMatrixFormatError reason) =>
+        AssertRefused(reason, () => Gs1ElementString.FromHumanReadable(notation));
+
+    [Fact]
+    public void Gs1WrongLengthCarriesTheElementAndBothLengths()
+    {
+        var refused = AssertRefused(DataMatrixFormatError.Gs1WrongLength,
+            () => DataMatrixEncoder.Encode("(01)0950110153000(10)ABC", isGs1: true));
+
+        Assert.Equal(["01", 14, 13], refused.Arguments);
+        Assert.Equal("GS1 element (01) needs 14 data characters, and this value has 13.", refused.Message);
+        Assert.Equal("text", refused.ParamName);
+    }
+
+    [Fact]
+    public void ExplicitModeRefusalNamesTheModeAndCharacter()
+    {
+        var lower = AssertRefused(DataMatrixFormatError.CharacterNotInMode,
+            () => DataMatrixEncoder.Encode("ABCd", DataMatrixEncodingMode.X12));
+        var control = AssertRefused(DataMatrixFormatError.CharacterNotInMode,
+            () => DataMatrixEncoder.Encode("AB\tC", DataMatrixEncodingMode.Edifact));
+
+        Assert.Equal([DataMatrixEncodingMode.X12, "d"], lower.Arguments);
+        Assert.Equal([DataMatrixEncodingMode.Edifact, "U+0009"], control.Arguments);
+        // The GS1 separator is not refused: it becomes FNC1 outside the mode.
+        Assert.Equal("\u001DABC\u001DDEF",
+            Decode(DataMatrixEncoder.Encode("ABC\u001DDEF", DataMatrixEncodingMode.X12, isGs1: true)));
+    }
 
     [Fact]
     public void Gs1NotationEncodesTheSameSymbolAsTheElementString()
@@ -437,14 +465,38 @@ public class DataMatrixEncoderTests
     [Fact]
     public void RejectsInvalidArgumentsAndUnsupportedModeCharacters()
     {
-        Assert.Throws<ArgumentException>(() => DataMatrixEncoder.Encode(string.Empty));
+        AssertRefused(DataMatrixFormatError.Empty, () => DataMatrixEncoder.Encode(string.Empty));
         Assert.Throws<ArgumentNullException>(() => DataMatrixEncoder.Encode(null!));
+        Assert.Throws<ArgumentNullException>(() => Gs1ElementString.FromHumanReadable(null!));
         Assert.Throws<ArgumentOutOfRangeException>(() => DataMatrixEncoder.Encode("x", (DataMatrixEncodingMode)99));
         Assert.Throws<ArgumentOutOfRangeException>(() => DataMatrixEncoder.Encode("x", shape: (DataMatrixSymbolShape)99));
-        Assert.Throws<ArgumentException>(() => DataMatrixEncoder.Encode("a", DataMatrixEncodingMode.X12));
-        Assert.Throws<ArgumentException>(() => DataMatrixEncoder.Encode("_", DataMatrixEncodingMode.Edifact));
-        Assert.Throws<ArgumentException>(() => DataMatrixEncoder.Encode(new string('1', 4000)));
+        AssertRefused(DataMatrixFormatError.CharacterNotInMode, () => DataMatrixEncoder.Encode("a", DataMatrixEncodingMode.X12));
+        AssertRefused(DataMatrixFormatError.CharacterNotInMode, () => DataMatrixEncoder.Encode("_", DataMatrixEncodingMode.Edifact));
+        AssertRefused(DataMatrixFormatError.TooLong, () => DataMatrixEncoder.Encode(new string('1', 4000)));
     }
+
+    [Fact]
+    public void RefusalMessageIsTheSentenceAlone()
+    {
+        // ArgumentException.Message would append a parameter-name suffix from a framework resource
+        // that WebAssembly trims; the format exception keeps the sentence on its own.
+        var refused = AssertRefused(DataMatrixFormatError.TooLong,
+            () => DataMatrixEncoder.Encode(new string('1', 200), DataMatrixEncodingMode.Ascii, DataMatrixSymbolShape.Rectangle));
+
+        Assert.Equal("This value is too long for a Data Matrix symbol of shape Rectangle, which holds at most 49 data codewords.",
+            refused.Message);
+        Assert.Equal("value", refused.ParamName);
+    }
+
+    private static DataMatrixFormatException AssertRefused(DataMatrixFormatError reason, Action action)
+    {
+        var refused = Assert.Throws<DataMatrixFormatException>(action);
+        Assert.Equal(reason, refused.Error);
+        return refused;
+    }
+
+    private static DataMatrixFormatException AssertRefused(DataMatrixFormatError reason, Func<object> action) =>
+        AssertRefused(reason, () => { action(); });
 
     private static string Decode(DataMatrixSymbol symbol)
     {

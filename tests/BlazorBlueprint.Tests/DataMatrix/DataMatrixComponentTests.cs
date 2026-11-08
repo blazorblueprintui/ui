@@ -70,8 +70,34 @@ public class DataMatrixComponentTests
         await component.EncodeAsync();
 
         Assert.Null(component.Symbol);
-        Assert.NotNull(typeof(BbDataMatrix).GetField("encodeError", BindingFlags.Instance | BindingFlags.NonPublic)?
-            .GetValue(component));
+        Assert.Equal("GS1 element (01) needs 14 data characters, and this value has 3.", EncodeError(component));
+    }
+
+    [Fact]
+    public async Task RefusalIsWordedThroughTheLocalizer()
+    {
+        var localizer = new DefaultBbLocalizer();
+        localizer.Set("DataMatrix.Gs1WrongLength", "Element GS1 ({0}) wymaga {1} znaków danych, a ma {2}.");
+        var component = Create(localizer);
+        SetParameter(component, nameof(BbDataMatrix.Value), "(01)123");
+        SetParameter(component, nameof(BbDataMatrix.IsGs1), true);
+
+        await component.EncodeAsync();
+
+        Assert.Equal("Element GS1 (01) wymaga 14 znaków danych, a ma 3.", EncodeError(component));
+    }
+
+    [Fact]
+    public async Task ExplicitModeRefusalNamesTheModeAndCharacter()
+    {
+        var component = Create();
+        SetParameter(component, nameof(BbDataMatrix.Value), "ABCd");
+        SetParameter(component, nameof(BbDataMatrix.EncodingMode), DataMatrixEncodingMode.X12);
+
+        await component.EncodeAsync();
+
+        Assert.Equal("X12 encodation cannot carry 'd'. Use Auto to choose a mode for each part of the value.",
+            EncodeError(component));
     }
 
     [Fact]
@@ -99,18 +125,21 @@ public class DataMatrixComponentTests
 
         Assert.Null(component.GetSvg());
         Assert.Null(component.Symbol);
-        Assert.Equal("This value cannot be encoded in the selected Data Matrix symbol.",
-            typeof(BbDataMatrix).GetField("encodeError", BindingFlags.Instance | BindingFlags.NonPublic)?
-                .GetValue(component));
+        Assert.Equal("This value is too long for a Data Matrix symbol of shape Auto, which holds at most 1558 data codewords.",
+            EncodeError(component));
     }
 
-    private static TestDataMatrix Create()
+    private static TestDataMatrix Create(DefaultBbLocalizer? localizer = null)
     {
         var component = new TestDataMatrix();
         typeof(BbDataMatrix).GetProperty("Localizer", BindingFlags.Instance | BindingFlags.NonPublic)!
-            .SetValue(component, new DefaultBbLocalizer());
+            .SetValue(component, localizer ?? new DefaultBbLocalizer());
         return component;
     }
+
+    private static string? EncodeError(TestDataMatrix component) =>
+        (string?)typeof(BbDataMatrix).GetField("encodeError", BindingFlags.Instance | BindingFlags.NonPublic)?
+            .GetValue(component);
 
     private static void SetParameter(TestDataMatrix component, string name, object value) =>
         typeof(BbDataMatrix).GetProperty(name)!.SetValue(component, value);

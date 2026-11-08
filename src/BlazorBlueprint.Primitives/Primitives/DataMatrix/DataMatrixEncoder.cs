@@ -30,7 +30,11 @@ public static class DataMatrixEncoder
     /// notation starting with a parenthesized AI, which is converted to an element string first.
     /// </param>
     /// <returns>The finished headless symbol.</returns>
-    /// <exception cref="ArgumentException">The value is empty, invalid, or too large.</exception>
+    /// <exception cref="ArgumentNullException">The value is null.</exception>
+    /// <exception cref="DataMatrixFormatException">
+    /// The value is empty, too long, not valid text, holds a character the explicit mode cannot
+    /// carry, or is malformed GS1 notation. <see cref="DataMatrixFormatException.Error"/> says which.
+    /// </exception>
     /// <exception cref="ArgumentOutOfRangeException">An enum value is unknown.</exception>
     public static DataMatrixSymbol Encode(
         string value,
@@ -38,7 +42,12 @@ public static class DataMatrixEncoder
         DataMatrixSymbolShape shape = DataMatrixSymbolShape.Auto,
         bool isGs1 = false)
     {
-        ArgumentException.ThrowIfNullOrEmpty(value);
+        ArgumentNullException.ThrowIfNull(value);
+        if (value.Length == 0)
+        {
+            throw DataMatrixFormatException.Create(nameof(value), DataMatrixFormatError.Empty);
+        }
+
         if (!Enum.IsDefined(mode))
         {
             throw new ArgumentOutOfRangeException(nameof(mode));
@@ -56,13 +65,40 @@ public static class DataMatrixEncoder
             value = Gs1ElementString.FromHumanReadable(value);
         }
 
+        if (mode is DataMatrixEncodingMode.X12 or DataMatrixEncodingMode.Edifact)
+        {
+            foreach (var c in value)
+            {
+                var allowed = (isGs1 && c == '\u001D')
+                    || (c <= 255 && (mode == DataMatrixEncodingMode.X12 ? X12Value((byte)c) >= 0 : IsEdifact((byte)c)));
+                if (!allowed)
+                {
+                    throw DataMatrixFormatException.Create(nameof(value),
+                        DataMatrixFormatError.CharacterNotInMode, mode, Describe(c));
+                }
+            }
+        }
+
         var usesUtf8Eci = value.Any(c => c > 255);
-        var payload = usesUtf8Eci ? StrictUtf8.GetBytes(value) : value.Select(c => (byte)c).ToArray();
+        byte[] payload;
+        try
+        {
+            payload = usesUtf8Eci ? StrictUtf8.GetBytes(value) : value.Select(c => (byte)c).ToArray();
+        }
+        catch (EncoderFallbackException)
+        {
+            throw DataMatrixFormatException.Create(nameof(value), DataMatrixFormatError.InvalidText);
+        }
+
+        var maximumCapacity = DataMatrixSymbolInfo.MaximumCapacity(shape);
         // Digit pairs are the densest possible encodation, at one codeword for two bytes.
         // This cheap bound avoids a quadratic mode search for clearly oversized user input.
-        if (payload.Length > DataMatrixSymbolInfo.MaximumCapacity(shape) * 2)
+        // A Base 256 segment longer than the largest symbol can hold is refused here too, with
+        // the same reason, rather than deep inside the segment writer.
+        if (payload.Length > maximumCapacity * 2
+            || (mode == DataMatrixEncodingMode.Base256 && LongestBase256Segment(payload, isGs1) > 1556))
         {
-            throw new ArgumentException("The value is too long for a Data Matrix ECC 200 symbol.", nameof(value));
+            throw DataMatrixFormatException.Create(nameof(value), DataMatrixFormatError.TooLong, shape, maximumCapacity);
         }
 
         var data = EncodeDataCore(payload, mode, isGs1, usesUtf8Eci,
@@ -78,9 +114,7 @@ public static class DataMatrixEncoder
         }
 
         var info = (omitUnlatch ? withoutUnlatch : DataMatrixSymbolInfo.Choose(data.Count, shape))
-            ?? throw new ArgumentException(
-                $"The value needs {data.Count} data codewords and does not fit a {shape} Data Matrix ECC 200 symbol.",
-                nameof(value));
+            ?? throw DataMatrixFormatException.Create(nameof(value), DataMatrixFormatError.TooLong, shape, maximumCapacity);
 
         Pad(data, info.DataCapacity);
         var allCodewords = DataMatrixErrorCorrection.Add([.. data], info);
@@ -386,6 +420,31 @@ public static class DataMatrixEncoder
     }
 
     private static bool IsDigit(byte value) => value is >= (byte)'0' and <= (byte)'9';
+
+    /// <summary>A character as it should read in a message: control characters as U+XXXX.</summary>
+    private static string Describe(char c) =>
+        char.IsControl(c) || char.IsSurrogate(c)
+            ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"U+{(int)c:X4}")
+            : c.ToString();
+
+    /// <summary>The longest run of bytes that would form one Base 256 segment.</summary>
+    private static int LongestBase256Segment(ReadOnlySpan<byte> payload, bool isGs1)
+    {
+        if (!isGs1)
+        {
+            return payload.Length;
+        }
+
+        var longest = 0;
+        var current = 0;
+        foreach (var value in payload)
+        {
+            current = value == 29 ? 0 : current + 1;
+            longest = Math.Max(longest, current);
+        }
+
+        return longest;
+    }
 
     private static void AddMode(List<DataMatrixEncodingMode> used, DataMatrixEncodingMode mode)
     {

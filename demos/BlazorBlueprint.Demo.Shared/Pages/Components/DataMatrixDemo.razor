@@ -106,12 +106,16 @@
         <h2 class="text-2xl font-semibold">Accessibility</h2>
         <p class="text-muted-foreground">
             Give a useful accessible name or show the payload as text when it is not already nearby.
-            Invalid content renders an alert instead of breaking a Blazor Server circuit.
+            Invalid content renders an alert instead of breaking a Blazor Server circuit. The alert
+            says what is wrong, such as a value that is too long or a GS1 element of the wrong
+            length, and every message goes through <code>IBbLocalizer</code> under
+            <code>DataMatrix.*</code> keys, so it can be translated.
         </p>
         <div class="rounded-lg border bg-card p-6 flex flex-col items-center gap-4">
             <BbDataMatrix Value="ORDER-4051" AriaLabel="Data Matrix for order 4051"
                           Label="Order 4051" ShowValue="true" />
             <BbDataMatrix Value="@overlongValue" EncodingMode="DataMatrixEncodingMode.Base256" />
+            <BbDataMatrix Value="(01)0950110153000(10)ABC123" IsGs1="true" />
         </div>
         <CodeBlock Source="Components/DataMatrix/accessibility.txt" />
     </section>

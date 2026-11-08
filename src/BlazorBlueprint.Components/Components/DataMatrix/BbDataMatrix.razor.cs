@@ -122,10 +122,14 @@ public partial class BbDataMatrix : ComponentBase
                 symbol = DataMatrixEncoder.Encode(Value, EncodingMode, Shape, IsGs1);
                 svg = BuildSvg(symbol);
             }
-            catch (ArgumentException)
+            catch (ArgumentException error)
             {
                 // Invalid input is content, so show an alert rather than breaking a Server circuit.
-                encodeError = Localizer["DataMatrix.InvalidValue"];
+                // A refusal that carries its reason is worded through the localizer under
+                // DataMatrix.{reason}; anything else falls back to the general message.
+                encodeError = error is DataMatrixFormatException { Error: not DataMatrixFormatError.Unspecified } format
+                    ? Localizer[$"DataMatrix.{format.Error}", [.. format.Arguments]]
+                    : Localizer["DataMatrix.InvalidValue"];
             }
         }
 

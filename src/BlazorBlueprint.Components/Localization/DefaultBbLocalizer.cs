@@ -93,6 +93,14 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["DataMatrix.AriaLabel"] = "Data Matrix code",
         ["DataMatrix.AriaLabelWithValue"] = "Data Matrix code for {0}",
         ["DataMatrix.InvalidValue"] = "This value cannot be encoded in the selected Data Matrix symbol.",
+        ["DataMatrix.Empty"] = "There is nothing to encode.",
+        ["DataMatrix.TooLong"] = "This value is too long for a Data Matrix symbol of shape {0}, which holds at most {1} data codewords.",
+        ["DataMatrix.CharacterNotInMode"] = "{0} encodation cannot carry '{1}'. Use Auto to choose a mode for each part of the value.",
+        ["DataMatrix.InvalidText"] = "This value is not valid Unicode text.",
+        ["DataMatrix.Gs1MissingAi"] = "GS1 notation must start with an Application Identifier in parentheses, such as (01).",
+        ["DataMatrix.Gs1EmptyElement"] = "GS1 element ({0}) has no data.",
+        ["DataMatrix.Gs1SeparatorInNotation"] = "GS1 element ({0}) contains a group separator. Use either (AI) notation or an element string, not both.",
+        ["DataMatrix.Gs1WrongLength"] = "GS1 element ({0}) needs {1} data characters, and this value has {2}.",
 
         // BottomNav
         ["BottomNav.Label"] = "Primary navigation",

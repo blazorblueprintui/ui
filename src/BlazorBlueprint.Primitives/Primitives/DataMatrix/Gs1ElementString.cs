@@ -35,18 +35,18 @@ public static class Gs1ElementString
     /// <summary>Converts human-readable GS1 notation into a GS1 element string.</summary>
     /// <param name="text">Notation such as <c>(01)09501101530003(10)ABC123(21)XYZ</c>.</param>
     /// <returns>The element string, with U+001D after variable-length elements that are followed by another.</returns>
-    /// <exception cref="ArgumentException">
-    /// The text does not start with an AI, an AI is not two to four digits, an element has no
-    /// data, or an element with a predefined length has the wrong length.
+    /// <exception cref="ArgumentNullException">The text is null.</exception>
+    /// <exception cref="DataMatrixFormatException">
+    /// The text does not start with a two to four digit AI in parentheses, an element has no data,
+    /// an element contains U+001D, or an element with a predefined length has the wrong length.
+    /// <see cref="DataMatrixFormatException.Error"/> says which.
     /// </exception>
     public static string FromHumanReadable(string text)
     {
-        ArgumentException.ThrowIfNullOrEmpty(text);
+        ArgumentNullException.ThrowIfNull(text);
         if (!TryReadAi(text, 0, out var ai, out var position))
         {
-            throw new ArgumentException(
-                "GS1 notation must start with a parenthesized Application Identifier such as (01).",
-                nameof(text));
+            throw DataMatrixFormatException.Create(nameof(text), DataMatrixFormatError.Gs1MissingAi);
         }
 
         var builder = new StringBuilder(text.Length);
@@ -69,22 +69,19 @@ public static class Gs1ElementString
             var data = text[dataStart..end];
             if (data.Length == 0)
             {
-                throw new ArgumentException($"GS1 element ({ai}) has no data.", nameof(text));
+                throw DataMatrixFormatException.Create(nameof(text), DataMatrixFormatError.Gs1EmptyElement, ai);
             }
 
             if (data.Contains(GroupSeparator, StringComparison.Ordinal))
             {
-                throw new ArgumentException(
-                    $"GS1 element ({ai}) contains a group separator; use either notation or an element string, not both.",
-                    nameof(text));
+                throw DataMatrixFormatException.Create(nameof(text), DataMatrixFormatError.Gs1SeparatorInNotation, ai);
             }
 
             var isPredefined = PredefinedLengths.TryGetValue(ai[..2], out var totalLength);
             if (isPredefined && ai.Length + data.Length != totalLength)
             {
-                throw new ArgumentException(
-                    $"GS1 element ({ai}) must have {totalLength - ai.Length} data characters, not {data.Length}.",
-                    nameof(text));
+                throw DataMatrixFormatException.Create(nameof(text), DataMatrixFormatError.Gs1WrongLength,
+                    ai, totalLength - ai.Length, data.Length);
             }
 
             builder.Append(ai).Append(data);
