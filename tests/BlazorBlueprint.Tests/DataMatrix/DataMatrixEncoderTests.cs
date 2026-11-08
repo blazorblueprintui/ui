@@ -435,6 +435,90 @@ public class DataMatrixEncoderTests
     }
 
     [Fact]
+    public void SymbolSizeNamesMatchTheSymbolTableRowsByColumns()
+    {
+        var sizes = Enum.GetValues<DataMatrixSymbolSize>().Where(size => size != DataMatrixSymbolSize.Auto).ToArray();
+        Assert.Equal(DataMatrixSymbolInfo.All.Length, sizes.Length);
+
+        foreach (var size in sizes)
+        {
+            var name = size.ToString();
+            var digits = name.TrimStart("SquareRectangleDmre".ToCharArray()).Split('x').Select(int.Parse).ToArray();
+            var (rows, columns) = digits.Length == 1 ? (digits[0], digits[0]) : (digits[0], digits[1]);
+            var info = DataMatrixSymbolInfo.ForSize(size);
+
+            Assert.True((rows, columns) == (info.Height, info.Width), $"{name} is {info.Height}x{info.Width}");
+            Assert.Equal(name.StartsWith("Dmre", StringComparison.Ordinal), info.IsDmre);
+        }
+    }
+
+    [Fact]
+    public void FixedSizeKeepsTheSameSymbolWhateverTheLength()
+    {
+        var shortValue = DataMatrixEncoder.Encode("SN-1", size: DataMatrixSymbolSize.Square16);
+        var longValue = DataMatrixEncoder.Encode("SN-2026-000417", size: DataMatrixSymbolSize.Square16);
+
+        Assert.Equal((16, 16), (shortValue.Width, shortValue.Height));
+        Assert.Equal((16, 16), (longValue.Width, longValue.Height));
+        Assert.Equal("SN-1", Decode(shortValue));
+        Assert.Equal("SN-2026-000417", Decode(longValue));
+    }
+
+    [Fact]
+    public void FixedSizeReachesSizesAutoNeverPicksAndOverridesShape()
+    {
+        // 8x80 is never the smallest choice: the classic 16x36 holds as much in fewer modules.
+        var strip = DataMatrixEncoder.Encode("LOT-42", size: DataMatrixSymbolSize.Dmre8x80);
+        var rectangle = DataMatrixEncoder.Encode("A1", shape: DataMatrixSymbolShape.Square,
+            size: DataMatrixSymbolSize.Rectangle8x18);
+
+        Assert.Equal((80, 8, DataMatrixSymbolShape.RectangleExtended), (strip.Width, strip.Height, strip.Shape));
+        Assert.Equal("LOT-42", Decode(strip));
+        Assert.Equal((18, 8, DataMatrixSymbolShape.Rectangle), (rectangle.Width, rectangle.Height, rectangle.Shape));
+        Assert.Equal("A1", Decode(rectangle));
+    }
+
+    [Fact]
+    public void FixedSizeRefusesAValueThatDoesNotFit()
+    {
+        var refused = AssertRefused(DataMatrixFormatError.DoesNotFitSize,
+            () => DataMatrixEncoder.Encode("ABCDEFG", size: DataMatrixSymbolSize.Square10));
+
+        Assert.Equal([DataMatrixSymbolSize.Square10, 3], refused.Arguments);
+        Assert.Equal("This value does not fit the Square10 symbol, which holds 3 data codewords.", refused.Message);
+        Assert.Throws<ArgumentOutOfRangeException>(() => DataMatrixEncoder.Encode("x", size: (DataMatrixSymbolSize)99));
+    }
+
+    [Theory]
+    [InlineData("0950110153000", '3')]
+    [InlineData("10614141123456789", '7')]
+    [InlineData("541234500001", '3')]
+    public void Gs1CheckDigitMatchesPublishedExamples(string digits, char expected) =>
+        Assert.Equal(expected, Gs1ElementString.CheckDigit(digits));
+
+    [Theory]
+    [InlineData("(00)106141411234567897(21)A")]
+    [InlineData("(02)09501101530003(37)10")]
+    [InlineData("(414)5412345000013(21)A")]
+    public void Gs1NotationAcceptsValidCheckDigits(string notation) =>
+        Assert.StartsWith(notation[1..3], Gs1ElementString.FromHumanReadable(notation), StringComparison.Ordinal);
+
+    [Fact]
+    public void Gs1NotationRefusesAWrongCheckDigitOrNonDigits()
+    {
+        var wrong = AssertRefused(DataMatrixFormatError.Gs1WrongCheckDigit,
+            () => Gs1ElementString.FromHumanReadable("(01)09501101530004(10)ABC"));
+        var letters = AssertRefused(DataMatrixFormatError.Gs1NotDigits,
+            () => Gs1ElementString.FromHumanReadable("(414)541234500001X"));
+
+        Assert.Equal(["01", "3", "4"], wrong.Arguments);
+        Assert.Equal("GS1 element (01) ends in the wrong check digit: it should be 3, not 4.", wrong.Message);
+        Assert.Equal(["414"], letters.Arguments);
+        // AIs without a check digit, such as the lot (10), are not checked.
+        Assert.Equal("10ABC", Gs1ElementString.FromHumanReadable("(10)ABC"));
+    }
+
+    [Fact]
     public void SameValueAlwaysProducesTheSameModules()
     {
         var first = DataMatrixEncoder.Encode("AIMAIMAIM1234567890abcdef");

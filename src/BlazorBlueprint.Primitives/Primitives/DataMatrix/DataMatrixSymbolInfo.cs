@@ -83,7 +83,11 @@ internal sealed record DataMatrixSymbolInfo(
         new(118, 50, 14, 24, 4, 1, 1, true),
     ];
 
+    /// <summary>Classic then DMRE sizes, in the order <see cref="DataMatrixSymbolSize"/> lists them.</summary>
     internal static readonly DataMatrixSymbolInfo[] All = [.. Classic, .. Dmre];
+
+    /// <summary>The attributes of a fixed size. Each named size is its position in <see cref="All"/> plus one.</summary>
+    internal static DataMatrixSymbolInfo ForSize(DataMatrixSymbolSize size) => All[(int)size - 1];
 
     internal static bool Allows(DataMatrixSymbolInfo info, DataMatrixSymbolShape shape) => shape switch
     {

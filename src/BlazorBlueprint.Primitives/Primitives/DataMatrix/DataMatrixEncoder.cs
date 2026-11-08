@@ -29,18 +29,24 @@ public static class DataMatrixEncoder
     /// U+001D after variable-length elements when another element follows, or human-readable
     /// notation starting with a parenthesized AI, which is converted to an element string first.
     /// </param>
+    /// <param name="size">
+    /// A fixed symbol size, or Auto for the smallest that fits. A fixed size takes precedence over
+    /// <paramref name="shape"/>.
+    /// </param>
     /// <returns>The finished headless symbol.</returns>
     /// <exception cref="ArgumentNullException">The value is null.</exception>
     /// <exception cref="DataMatrixFormatException">
-    /// The value is empty, too long, not valid text, holds a character the explicit mode cannot
-    /// carry, or is malformed GS1 notation. <see cref="DataMatrixFormatException.Error"/> says which.
+    /// The value is empty, too long or does not fit the fixed size, is not valid text, holds a
+    /// character the explicit mode cannot carry, or is malformed GS1 notation.
+    /// <see cref="DataMatrixFormatException.Error"/> says which.
     /// </exception>
     /// <exception cref="ArgumentOutOfRangeException">An enum value is unknown.</exception>
     public static DataMatrixSymbol Encode(
         string value,
         DataMatrixEncodingMode mode = DataMatrixEncodingMode.Auto,
         DataMatrixSymbolShape shape = DataMatrixSymbolShape.Auto,
-        bool isGs1 = false)
+        bool isGs1 = false,
+        DataMatrixSymbolSize size = DataMatrixSymbolSize.Auto)
     {
         ArgumentNullException.ThrowIfNull(value);
         if (value.Length == 0)
@@ -57,6 +63,13 @@ public static class DataMatrixEncoder
         {
             throw new ArgumentOutOfRangeException(nameof(shape));
         }
+
+        if (!Enum.IsDefined(size))
+        {
+            throw new ArgumentOutOfRangeException(nameof(size));
+        }
+
+        var fixedInfo = size == DataMatrixSymbolSize.Auto ? null : DataMatrixSymbolInfo.ForSize(size);
 
         // An element string always starts with AI digits, so a leading parenthesis can only mean
         // human-readable notation.
@@ -90,7 +103,14 @@ public static class DataMatrixEncoder
             throw DataMatrixFormatException.Create(nameof(value), DataMatrixFormatError.InvalidText);
         }
 
-        var maximumCapacity = DataMatrixSymbolInfo.MaximumCapacity(shape);
+        var maximumCapacity = fixedInfo?.DataCapacity ?? DataMatrixSymbolInfo.MaximumCapacity(shape);
+        DataMatrixFormatException TooLong() => fixedInfo is null
+            ? DataMatrixFormatException.Create(nameof(value), DataMatrixFormatError.TooLong, shape, maximumCapacity)
+            : DataMatrixFormatException.Create(nameof(value), DataMatrixFormatError.DoesNotFitSize, size, maximumCapacity);
+        DataMatrixSymbolInfo? Choose(int count) => fixedInfo is null
+            ? DataMatrixSymbolInfo.Choose(count, shape)
+            : count <= fixedInfo.DataCapacity ? fixedInfo : null;
+
         // Digit pairs are the densest possible encodation, at one codeword for two bytes.
         // This cheap bound avoids a quadratic mode search for clearly oversized user input.
         // A Base 256 segment longer than the largest symbol can hold is refused here too, with
@@ -98,13 +118,12 @@ public static class DataMatrixEncoder
         if (payload.Length > maximumCapacity * 2
             || (mode == DataMatrixEncodingMode.Base256 && LongestBase256Segment(payload, isGs1) > 1556))
         {
-            throw DataMatrixFormatException.Create(nameof(value), DataMatrixFormatError.TooLong, shape, maximumCapacity);
+            throw TooLong();
         }
 
         var data = EncodeDataCore(payload, mode, isGs1, usesUtf8Eci,
             out var terminalMode, out var modesUsed);
-        var withoutUnlatch = terminalMode is not null
-            ? DataMatrixSymbolInfo.Choose(data.Count - 1, shape) : null;
+        var withoutUnlatch = terminalMode is not null ? Choose(data.Count - 1) : null;
         var availableAfterPayload = withoutUnlatch?.DataCapacity - (data.Count - 1);
         var omitUnlatch = availableAfterPayload == 0
             || (terminalMode == DataMatrixEncodingMode.Edifact && availableAfterPayload is >= 1 and <= 2);
@@ -113,8 +132,7 @@ public static class DataMatrixEncoder
             data.RemoveAt(data.Count - 1);
         }
 
-        var info = (omitUnlatch ? withoutUnlatch : DataMatrixSymbolInfo.Choose(data.Count, shape))
-            ?? throw DataMatrixFormatException.Create(nameof(value), DataMatrixFormatError.TooLong, shape, maximumCapacity);
+        var info = (omitUnlatch ? withoutUnlatch : Choose(data.Count)) ?? throw TooLong();
 
         Pad(data, info.DataCapacity);
         var allCodewords = DataMatrixErrorCorrection.Add([.. data], info);

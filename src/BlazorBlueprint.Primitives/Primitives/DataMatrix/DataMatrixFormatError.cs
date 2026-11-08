@@ -47,4 +47,22 @@ public enum DataMatrixFormatError
     /// Identifier, the number of data characters it needs, and the number given.
     /// </summary>
     Gs1WrongLength,
+
+    /// <summary>
+    /// The value does not fit the fixed symbol size. Arguments: the
+    /// <see cref="DataMatrixSymbolSize"/> and the data codewords it holds.
+    /// </summary>
+    DoesNotFitSize,
+
+    /// <summary>
+    /// A GS1 identifier that must be all digits (SSCC, GTIN or GLN) contains something else.
+    /// Arguments: the Application Identifier.
+    /// </summary>
+    Gs1NotDigits,
+
+    /// <summary>
+    /// A GS1 identifier ends in the wrong check digit. Arguments: the Application Identifier, the
+    /// check digit expected, and the check digit given.
+    /// </summary>
+    Gs1WrongCheckDigit,
 }

@@ -37,6 +37,15 @@ public partial class BbDataMatrix : ComponentBase
     [Parameter]
     public DataMatrixSymbolShape Shape { get; set; } = DataMatrixSymbolShape.Auto;
 
+    /// <summary>Gets or sets a fixed symbol size in modules, or Auto for the smallest that fits.</summary>
+    /// <remarks>
+    /// A fixed size keeps a series of labels identical whatever the value's length, or fits a
+    /// strip of fixed height, and takes precedence over <see cref="Shape"/>. A value that does not
+    /// fit it renders an alert. This is the module grid; <see cref="Size"/> sets the rendered width.
+    /// </remarks>
+    [Parameter]
+    public DataMatrixSymbolSize SymbolSize { get; set; } = DataMatrixSymbolSize.Auto;
+
     /// <summary>Gets or sets whether the payload is GS1 data.</summary>
     /// <remarks>
     /// This adds the leading FNC1 and turns U+001D separators into FNC1. The value can be an
@@ -119,7 +128,7 @@ public partial class BbDataMatrix : ComponentBase
         {
             try
             {
-                symbol = DataMatrixEncoder.Encode(Value, EncodingMode, Shape, IsGs1);
+                symbol = DataMatrixEncoder.Encode(Value, EncodingMode, Shape, IsGs1, SymbolSize);
                 svg = BuildSvg(symbol);
             }
             catch (ArgumentException error)

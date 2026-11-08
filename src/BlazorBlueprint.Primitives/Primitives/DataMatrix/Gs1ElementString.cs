@@ -13,9 +13,10 @@ namespace BlazorBlueprint.Primitives.DataMatrix;
 /// </para>
 /// <para>
 /// Elements with a predefined length (AIs starting 00-04, 11-20, 31-36 and 41, per the GS1 General
-/// Specifications) are checked for that length. AI values and check digits are not otherwise
-/// validated. Data that itself contains a parenthesized two to four digit number is ambiguous in
-/// this notation; pass the element string instead.
+/// Specifications) are checked for that length. The identifiers that end in a GS1 check digit,
+/// SSCC (00), GTIN (01, 02) and GLN (410-417), are checked to be digits with the right check
+/// digit. Other AI values are not validated. Data that itself contains a parenthesized two to four
+/// digit number is ambiguous in this notation; pass the element string instead.
 /// </para>
 /// </remarks>
 public static class Gs1ElementString
@@ -84,6 +85,21 @@ public static class Gs1ElementString
                     ai, totalLength - ai.Length, data.Length);
             }
 
+            if (HasCheckDigit(ai))
+            {
+                if (!data.All(char.IsAsciiDigit))
+                {
+                    throw DataMatrixFormatException.Create(nameof(text), DataMatrixFormatError.Gs1NotDigits, ai);
+                }
+
+                var expected = CheckDigit(data.AsSpan(0, data.Length - 1));
+                if (data[^1] != expected)
+                {
+                    throw DataMatrixFormatException.Create(nameof(text), DataMatrixFormatError.Gs1WrongCheckDigit,
+                        ai, expected.ToString(), data[^1].ToString());
+                }
+            }
+
             builder.Append(ai).Append(data);
             if (nextAi is null)
             {
@@ -98,6 +114,26 @@ public static class Gs1ElementString
             ai = nextAi;
             position = nextPosition;
         }
+    }
+
+    /// <summary>SSCC (00), GTIN (01, 02) and GLN (410-417) end in a GS1 mod 10 check digit.</summary>
+    private static bool HasCheckDigit(string ai) =>
+        ai is "00" or "01" or "02" || (ai.Length == 3 && ai[0] == '4' && ai[1] == '1' && ai[2] is >= '0' and <= '7');
+
+    /// <summary>
+    /// The GS1 mod 10 check digit: weights 3 and 1 alternate from the rightmost digit, and the
+    /// check digit brings the sum up to a multiple of ten.
+    /// </summary>
+    internal static char CheckDigit(ReadOnlySpan<char> digits)
+    {
+        var sum = 0;
+        for (var i = 0; i < digits.Length; i++)
+        {
+            var weight = i % 2 == 0 ? 3 : 1;
+            sum += (digits[digits.Length - 1 - i] - '0') * weight;
+        }
+
+        return (char)('0' + ((10 - (sum % 10)) % 10));
     }
 
     /// <summary>Reads "(" + two to four digits + ")" at <paramref name="start"/>.</summary>

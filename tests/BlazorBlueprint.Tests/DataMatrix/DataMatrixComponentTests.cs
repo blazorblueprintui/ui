@@ -115,6 +115,25 @@ public class DataMatrixComponentTests
     }
 
     [Fact]
+    public async Task SymbolSizeFixesTheGridAndSaysWhenAValueDoesNotFit()
+    {
+        var component = Create();
+        SetParameter(component, nameof(BbDataMatrix.Value), "LOT-42");
+        SetParameter(component, nameof(BbDataMatrix.SymbolSize), DataMatrixSymbolSize.Dmre8x80);
+
+        await component.EncodeAsync();
+
+        Assert.Equal("0 0 82 10", XDocument.Parse(component.GetSvg()!).Root?.Attribute("viewBox")?.Value);
+
+        SetParameter(component, nameof(BbDataMatrix.Value), "ABCDEFG");
+        SetParameter(component, nameof(BbDataMatrix.SymbolSize), DataMatrixSymbolSize.Square10);
+        await component.EncodeAsync();
+
+        Assert.Null(component.Symbol);
+        Assert.Equal("This value does not fit the Square10 symbol, which holds 3 data codewords.", EncodeError(component));
+    }
+
+    [Fact]
     public async Task OversizeInputSetsErrorStateWithoutThrowing()
     {
         var component = Create();

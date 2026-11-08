@@ -101,6 +101,9 @@ public class DefaultBbLocalizer : IBbLocalizer
         ["DataMatrix.Gs1EmptyElement"] = "GS1 element ({0}) has no data.",
         ["DataMatrix.Gs1SeparatorInNotation"] = "GS1 element ({0}) contains a group separator. Use either (AI) notation or an element string, not both.",
         ["DataMatrix.Gs1WrongLength"] = "GS1 element ({0}) needs {1} data characters, and this value has {2}.",
+        ["DataMatrix.DoesNotFitSize"] = "This value does not fit the {0} symbol, which holds {1} data codewords.",
+        ["DataMatrix.Gs1NotDigits"] = "GS1 element ({0}) holds digits only.",
+        ["DataMatrix.Gs1WrongCheckDigit"] = "GS1 element ({0}) ends in the wrong check digit: it should be {1}, not {2}.",
 
         // BottomNav
         ["BottomNav.Label"] = "Primary navigation",

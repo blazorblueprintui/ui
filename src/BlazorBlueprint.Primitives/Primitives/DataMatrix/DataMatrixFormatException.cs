@@ -91,6 +91,9 @@ public sealed class DataMatrixFormatException : ArgumentException
         [DataMatrixFormatError.Gs1EmptyElement] = "GS1 element ({0}) has no data.",
         [DataMatrixFormatError.Gs1SeparatorInNotation] = "GS1 element ({0}) contains a group separator. Use either (AI) notation or an element string, not both.",
         [DataMatrixFormatError.Gs1WrongLength] = "GS1 element ({0}) needs {1} data characters, and this value has {2}.",
+        [DataMatrixFormatError.DoesNotFitSize] = "This value does not fit the {0} symbol, which holds {1} data codewords.",
+        [DataMatrixFormatError.Gs1NotDigits] = "GS1 element ({0}) holds digits only.",
+        [DataMatrixFormatError.Gs1WrongCheckDigit] = "GS1 element ({0}) ends in the wrong check digit: it should be {1}, not {2}.",
     };
 
     internal static DataMatrixFormatException Create(string paramName, DataMatrixFormatError error, params object[] arguments) =>
