@@ -256,19 +256,25 @@ public class CsvExportTests
         Assert.StartsWith("'", field, StringComparison.Ordinal);
     }
 
+    // A number is recognised in the current culture, so each case pins the culture it is written
+    // in. Unpinned, "-0.5" failed on any comma-decimal machine whose group separator is not '.'.
     [Theory]
-    [InlineData("-1500")]
-    [InlineData("+42")]
-    [InlineData("-0.5")]
-    public void LeavesANegativeOrSignedNumberAlone(string numeric)
+    [InlineData("en-US", "-1500")]
+    [InlineData("en-US", "+42")]
+    [InlineData("en-US", "-0.5")]
+    [InlineData("pl-PL", "-1500")]
+    [InlineData("pl-PL", "+42")]
+    [InlineData("pl-PL", "-0,5")]
+    public void LeavesANegativeOrSignedNumberAlone(string culture, string numeric) => InCulture(culture, () =>
     {
         var columns = new List<IDataGridColumn<Employee>> { new Column("name", "Name", e => e.Name) };
         var rows = new[] { new Employee { Name = numeric } };
 
         var csv = DataGridCsvWriter.Write(rows, columns, includeHeader: false);
 
-        Assert.Equal(numeric + "\r\n", csv);
-    }
+        // A comma-decimal number contains the delimiter, so it is quoted, but not prefixed.
+        Assert.Equal((numeric.Contains(',', StringComparison.Ordinal) ? $"\"{numeric}\"" : numeric) + "\r\n", csv);
+    });
 
     [Fact]
     public void LeavesAnOrdinaryValueAlone()
@@ -323,5 +329,20 @@ public class CsvExportTests
         var csv = DataGridCsvWriter.Write(rows, Array.Empty<IDataGridColumn<Employee>>());
 
         Assert.Equal("\r\n\r\n", csv);
+    }
+
+    private static void InCulture(string name, Action test)
+    {
+        var original = CultureInfo.CurrentCulture;
+
+        try
+        {
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo(name);
+            test();
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = original;
+        }
     }
 }
