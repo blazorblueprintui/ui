@@ -142,7 +142,8 @@
                 RefreshVisibleColumnsCache();
                 <BlazorBlueprint.Primitives.DataGrid.BbDataGrid TData="TData"
                     Items="@_processedData"
-                    @bind-State="@_gridState"
+                    State="@_gridState"
+                    StateChanged="@_handlePrimitiveStateChanged"
                     SelectionMode="@GetPrimitiveSelectionMode()"
                     SelectionBehavior="@SelectionBehavior"
                     IsRowEditing="@(EditMode != DataGridEditMode.None ? _isRowEditing : null)"
@@ -558,7 +559,7 @@
 
     private RenderFragment<TData> RenderDataRow => item =>
         @<BlazorBlueprint.Primitives.DataGrid.BbDataGridRow TData="TData" Item="@item"
-            Class="@ClassNames.cn("bb:group/row bb:bg-surface", Striped ? StripeClass : null, RowClass?.Invoke(item), IsEditing(item) ? "bb:bg-muted/40" : null)">
+            Class="@GetRowClass(item)">
             @{
                 var rowIsEditing = IsEditing(item);
             }
@@ -579,9 +580,12 @@
                 var isFirstRight = column.ColumnId == _cachedFirstRightId;
                 var pinnedStyle = GetPinnedStyle(column, _cachedVisibleColumns);
 
-                <BlazorBlueprint.Primitives.DataGrid.BbDataGridCell
+                @* A plain td rather than the primitive BbDataGridCell, which renders exactly this: a
+                   component per cell cost a parameter set, a render and a diff for every cell on
+                   every render, about 1,100 of them for a 100-row page (#655). *@
+                <td role="gridcell"
                     @key="@column.ColumnId"
-                    Class="@GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight, item)"
+                    class="@GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight, item)"
                     style="@pinnedStyle"
                     data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)"
                     data-label="@GetMobileLabel(column)"
@@ -643,7 +647,7 @@
                     {
                         @RenderCellValue(column, item)
                     }
-                </BlazorBlueprint.Primitives.DataGrid.BbDataGridCell>
+                </td>
             }
         </BlazorBlueprint.Primitives.DataGrid.BbDataGridRow>;
 
@@ -789,9 +793,12 @@
                 var isFirstRight = column.ColumnId == _cachedFirstRightId;
                 var pinnedStyle = GetPinnedStyle(column, _cachedVisibleColumns);
 
-                <BlazorBlueprint.Primitives.DataGrid.BbDataGridCell
+                @* A plain td rather than the primitive BbDataGridCell, which renders exactly this: a
+                   component per cell cost a parameter set, a render and a diff for every cell on
+                   every render, about 1,100 of them for a 100-row page (#655). *@
+                <td role="gridcell"
                     @key="@column.ColumnId"
-                    Class="@GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight, item)"
+                    class="@GetCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight, item)"
                     style="@pinnedStyle"
                     data-pinned="@(column.Pinned != ColumnPinning.None ? "true" : null)"
                     data-label="@GetMobileLabel(column)"
@@ -843,7 +850,7 @@
                     {
                         @RenderCellValue(column, item)
                     }
-                </BlazorBlueprint.Primitives.DataGrid.BbDataGridCell>
+                </td>
             }
         </BlazorBlueprint.Primitives.DataGrid.BbDataGridRow>;
     };

@@ -57,6 +57,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
 
     private readonly Func<TData, bool> _isRowEditing;
 
+    private readonly EventCallback<DataGridState<TData>> _handlePrimitiveStateChanged;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="BbDataGrid{TData}"/> class.
     /// </summary>
@@ -65,6 +67,22 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         _commitEditFromRow = async () => await CommitEditAsync();
         _cancelEditFromRow = CancelEditAsync;
         _isRowEditing = IsEditing;
+        _handlePrimitiveStateChanged = EventCallback.Factory.Create<DataGridState<TData>>(this, HandlePrimitiveStateChanged);
+    }
+
+    /// <summary>
+    /// Receives the primitive grid's state changes (selection, sort, page) and re-renders.
+    /// </summary>
+    /// <remarks>
+    /// The primitive leaves the render to this grid when it is bound like this (see its
+    /// <c>ParentDrivesRender</c>). Each context action also reaches a handler here that re-renders
+    /// on its own, but the version is bumped regardless so <see cref="ShouldRender"/> can never
+    /// swallow a state change: a plain <c>@bind-State</c> assignment changed nothing it checks.
+    /// </remarks>
+    private void HandlePrimitiveStateChanged(DataGridState<TData> state)
+    {
+        _gridState = state;
+        _stateVersion++;
     }
 
     private bool warnedAboutProviderExportScope;
@@ -114,6 +132,12 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private List<IDataGridColumn<TData>> _cachedVisibleColumns = new();
     private string? _cachedLastLeftId;
     private string? _cachedFirstRightId;
+
+    // Cell and row classes that do not depend on the row, merged once per render rather than once
+    // per cell. ClassNames.cn() validates and merges every token it is given, and running it for
+    // every cell of a 100-row page was a large share of a page change in WebAssembly (#655).
+    private readonly Dictionary<IDataGridColumn<TData>, string> cellClassCache = new(ReferenceEqualityComparer.Instance);
+    private string? rowClassCache;
 
     // Expand column reference for detail rows
     private BbDataGridExpandColumn<TData>? _expandColumn;
@@ -1436,6 +1460,8 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private void RefreshVisibleColumnsCache()
     {
         _cachedVisibleColumns = GetVisibleColumns();
+        cellClassCache.Clear();
+        rowClassCache = null;
         _cachedLastLeftId = _cachedVisibleColumns.LastOrDefault(c => c.Pinned == ColumnPinning.Left)?.ColumnId;
         _cachedFirstRightId = _cachedVisibleColumns.FirstOrDefault(c => c.Pinned == ColumnPinning.Right)?.ColumnId;
     }
@@ -4308,8 +4334,34 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         return Math.Max(1, _cachedVisibleColumns.Count - aggregateColumnCount);
     }
 
+    /// <summary>
+    /// The class for a body cell. Everything but <c>CellClassFunc</c> is the same for every row of
+    /// a column, so that part is merged once per render and reused; only a cell whose
+    /// <c>CellClassFunc</c> returns a class for its row is merged on its own.
+    /// </summary>
     private string GetCellClass(IDataGridColumn<TData> column, bool isSelectColumn,
         bool isExpandColumn, bool isLastLeft, bool isFirstRight, TData? item = null)
+    {
+        if (!isSelectColumn && !isExpandColumn && item != null && column.CellClassFunc != null)
+        {
+            var perItemClass = column.CellClassFunc(item);
+            if (!string.IsNullOrWhiteSpace(perItemClass))
+            {
+                return BuildCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight, perItemClass);
+            }
+        }
+
+        if (!cellClassCache.TryGetValue(column, out var cached))
+        {
+            cached = BuildCellClass(column, isSelectColumn, isExpandColumn, isLastLeft, isFirstRight, null);
+            cellClassCache[column] = cached;
+        }
+
+        return cached;
+    }
+
+    private string BuildCellClass(IDataGridColumn<TData> column, bool isSelectColumn,
+        bool isExpandColumn, bool isLastLeft, bool isFirstRight, string? perItemClass)
     {
         var baseClass = "bb:p-4 bb:align-middle bb:transition-colors";
 
@@ -4337,12 +4389,27 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         }
 
         var cellClass = column.CellClass;
-        var perItemClass = item != null ? column.CellClassFunc?.Invoke(item) : null;
 
         var overflowClass = HasTableFixed() ? "bb:overflow-hidden" : "";
         var noWrapClass = column.NoWrap ? "bb:whitespace-nowrap bb:overflow-hidden bb:text-ellipsis" : "";
 
         return ClassNames.cn(baseClass, cellClass, perItemClass, overflowClass, noWrapClass, pinnedClass, separatorClass);
+    }
+
+    /// <summary>
+    /// The class for a data row. Without a <c>RowClass</c> callback or an edit in progress it is the
+    /// same for every row, so it is merged once per render.
+    /// </summary>
+    private string GetRowClass(TData item)
+    {
+        var perItemClass = RowClass?.Invoke(item);
+        var editing = IsEditing(item);
+        if (!string.IsNullOrWhiteSpace(perItemClass) || editing)
+        {
+            return ClassNames.cn("bb:group/row bb:bg-surface", Striped ? StripeClass : null, perItemClass, editing ? "bb:bg-muted/40" : null);
+        }
+
+        return rowClassCache ??= ClassNames.cn("bb:group/row bb:bg-surface", Striped ? StripeClass : null);
     }
 
     private bool IsStacked => MobileLayout == DataGridMobileLayout.Stacked;

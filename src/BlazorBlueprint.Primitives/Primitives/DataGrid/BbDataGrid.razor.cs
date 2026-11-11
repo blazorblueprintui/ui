@@ -625,6 +625,27 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
         }
     }
 
+    /// <summary>
+    /// Whether a parent owns both this grid's rows (<see cref="ManualPagination"/>) and its state
+    /// (<see cref="State"/> with a <see cref="StateChanged"/> handler), and so re-renders it on
+    /// every state change.
+    /// </summary>
+    /// <remarks>
+    /// In that arrangement this grid does not queue a render of its own after a state change. The
+    /// parent's render reaches it a moment later with fresh parameters anyway, and because the
+    /// parent's render arrives through intermediate components it was always processed after ours,
+    /// so every row and cell rendered twice per interaction (#655).
+    /// </remarks>
+    private bool ParentDrivesRender => ManualPagination && IsControlled && StateChanged.HasDelegate;
+
+    private void RenderUnlessParentDrives()
+    {
+        if (!ParentDrivesRender)
+        {
+            StateHasChanged();
+        }
+    }
+
     private void HandleContextStateChanged()
     {
         stateVersion++;
@@ -634,7 +655,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
             _ = StateChanged.InvokeAsync(State!);
         }
 
-        StateHasChanged();
+        RenderUnlessParentDrives();
     }
 
     private async Task ProcessDataAndNotifyAsync()
@@ -647,7 +668,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
             await StateChanged.InvokeAsync(State!);
         }
 
-        StateHasChanged();
+        RenderUnlessParentDrives();
     }
 
     private async Task NotifyStateChangedAsync()
@@ -659,7 +680,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IDisposable where TData 
             await StateChanged.InvokeAsync(State!);
         }
 
-        StateHasChanged();
+        RenderUnlessParentDrives();
     }
 
     private int GetAriaRowCount() => EffectiveState.Pagination.TotalItems + 1; // +1 for header row

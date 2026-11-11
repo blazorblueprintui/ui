@@ -149,15 +149,22 @@ public class DataGridContext<TData> : PrimitiveContextWithEvents<DataGridState<T
     /// </summary>
     /// <param name="columnId">The ID of the column to sort.</param>
     /// <param name="multiSort">Whether to add to existing sorts (Ctrl+Click behavior).</param>
+    /// <remarks>
+    /// The state-changed notification is raised after <see cref="OnSortChange"/>, not before. The
+    /// sort and page handlers are where the owning grid reloads its rows and queues its own render;
+    /// notifying first queued this grid's render ahead of its parent's, so the parent's render then
+    /// re-rendered every row a second time (#655). The paging methods below follow the same order.
+    /// </remarks>
     public void ToggleSort(string columnId, bool multiSort = false)
     {
         UpdateState(state =>
         {
             state.Sorting.ToggleSort(columnId, multiSort);
             state.Pagination.Reset();
-        });
+        }, notifyChanged: false);
 
         OnSortChange?.Invoke(State.Sorting.Definitions);
+        NotifyStateChanged();
     }
 
     /// <summary>
@@ -169,9 +176,10 @@ public class DataGridContext<TData> : PrimitiveContextWithEvents<DataGridState<T
         {
             state.Sorting.SetSort(columnId, direction);
             state.Pagination.Reset();
-        });
+        }, notifyChanged: false);
 
         OnSortChange?.Invoke(State.Sorting.Definitions);
+        NotifyStateChanged();
     }
 
     /// <summary>
@@ -309,9 +317,10 @@ public class DataGridContext<TData> : PrimitiveContextWithEvents<DataGridState<T
     /// </summary>
     public void GoToPage(int page)
     {
-        UpdateState(state => state.Pagination.GoToPage(page));
+        UpdateState(state => state.Pagination.GoToPage(page), notifyChanged: false);
 
         OnPageChange?.Invoke(page);
+        NotifyStateChanged();
     }
 
     /// <summary>
@@ -322,9 +331,10 @@ public class DataGridContext<TData> : PrimitiveContextWithEvents<DataGridState<T
         if (State.Pagination.CanGoNext)
         {
             var newPage = State.Pagination.CurrentPage + 1;
-            UpdateState(state => state.Pagination.NextPage());
+            UpdateState(state => state.Pagination.NextPage(), notifyChanged: false);
 
             OnPageChange?.Invoke(newPage);
+            NotifyStateChanged();
         }
     }
 
@@ -336,9 +346,10 @@ public class DataGridContext<TData> : PrimitiveContextWithEvents<DataGridState<T
         if (State.Pagination.CanGoPrevious)
         {
             var newPage = State.Pagination.CurrentPage - 1;
-            UpdateState(state => state.Pagination.PreviousPage());
+            UpdateState(state => state.Pagination.PreviousPage(), notifyChanged: false);
 
             OnPageChange?.Invoke(newPage);
+            NotifyStateChanged();
         }
     }
 
@@ -347,9 +358,10 @@ public class DataGridContext<TData> : PrimitiveContextWithEvents<DataGridState<T
     /// </summary>
     public void ChangePageSize(int pageSize)
     {
-        UpdateState(state => state.Pagination.PageSize = pageSize);
+        UpdateState(state => state.Pagination.PageSize = pageSize, notifyChanged: false);
 
         OnPageSizeChange?.Invoke(pageSize);
+        NotifyStateChanged();
     }
 
     /// <summary>
