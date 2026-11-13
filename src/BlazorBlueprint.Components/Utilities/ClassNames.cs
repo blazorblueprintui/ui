@@ -1,5 +1,6 @@
+using System.Buffers;
 using System.Collections;
-using System.Text.RegularExpressions;
+using System.Collections.Concurrent;
 using TailwindMerge;
 
 namespace BlazorBlueprint.Components;
@@ -60,9 +61,19 @@ public static class ClassNames
     private static readonly char[] WhitespaceSeparators = [' ', '\t', '\n', '\r'];
     private static readonly TwMerge twMerge = new();
 
-    // Regex to validate CSS class names - allows alphanumeric, hyphens, underscores, colons, slashes, brackets, dots, percentages, and CSS combinator characters
-    // This covers Tailwind classes like "w-1/2", "hover:bg-blue-500", "data-[state=open]:block", "text-[14px]", "[&>svg]:absolute"
-    private static readonly Regex ValidClassNameRegex = new(@"^[a-zA-Z0-9_\-:/.[\]()%!@#&>+~=*,' ]+$", RegexOptions.Compiled);
+    // The characters a class name may contain: alphanumerics, hyphens, underscores, colons, slashes,
+    // brackets, dots, percentages and CSS combinator characters. This covers Tailwind classes like
+    // "w-1/2", "hover:bg-blue-500", "data-[state=open]:block", "text-[14px]", "[&>svg]:absolute".
+    private static readonly SearchValues<char> ValidClassNameChars =
+        SearchValues.Create("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-:/.[]()%!@#&>+~=*,' ");
+
+    // Results of cn() keyed on its string inputs. Components call cn() with the same few inputs on
+    // every render (every cell of a data grid, every item of a list), and the merge behind it costs
+    // far more than a lookup. Bounded so per-item class strings cannot grow it without limit: when
+    // full it is emptied and refills with whatever is in use.
+    private const int MaxCachedResults = 4096;
+    private const int MaxCachedKeyLength = 2048;
+    private static readonly ConcurrentDictionary<string, string> resultCache = new(StringComparer.Ordinal);
 
     /// <summary>
     /// Validates that a CSS class name contains only safe characters.
@@ -84,7 +95,7 @@ public static class ClassNames
             return false;
         }
 
-        return ValidClassNameRegex.IsMatch(className);
+        return !className.AsSpan().ContainsAnyExcept(ValidClassNameChars);
     }
 
     /// <summary>
@@ -112,6 +123,29 @@ public static class ClassNames
             return string.Empty;
         }
 
+        var key = CacheKey(inputs);
+        if (key is not null && resultCache.TryGetValue(key, out var cached))
+        {
+            return cached;
+        }
+
+        var result = Merge(inputs);
+
+        if (key is not null)
+        {
+            if (resultCache.Count >= MaxCachedResults)
+            {
+                resultCache.Clear();
+            }
+
+            resultCache[key] = result;
+        }
+
+        return result;
+    }
+
+    private static string Merge(object?[] inputs)
+    {
         var classes = new List<string>();
 
         foreach (var input in inputs)
@@ -125,6 +159,48 @@ public static class ClassNames
         }
 
         return WithBareMarkers(MergeWithPrefix(classes));
+    }
+
+    /// <summary>
+    /// The cache key for a call whose inputs are all strings, nulls or booleans (nearly every call),
+    /// or null to skip the cache. Strings are split on whitespace and booleans and nulls are
+    /// ignored, so the result depends only on the strings joined by a space.
+    /// </summary>
+    private static string? CacheKey(object?[] inputs)
+    {
+        var length = 0;
+        foreach (var input in inputs)
+        {
+            switch (input)
+            {
+                case null or bool:
+                    continue;
+                case string str:
+                    length += str.Length + 1;
+                    continue;
+                default:
+                    return null;
+            }
+        }
+
+        if (length > MaxCachedKeyLength)
+        {
+            return null;
+        }
+
+        return string.Create(length, inputs, static (span, values) =>
+        {
+            var position = 0;
+            foreach (var value in values)
+            {
+                if (value is string str)
+                {
+                    str.AsSpan().CopyTo(span[position..]);
+                    position += str.Length;
+                    span[position++] = ' ';
+                }
+            }
+        });
     }
 
     /// <summary>

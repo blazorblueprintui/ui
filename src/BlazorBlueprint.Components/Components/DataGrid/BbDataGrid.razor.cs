@@ -90,11 +90,12 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     private List<TData>? _processedDataList;
     private CancellationTokenSource? _loadCts;
     private bool _selectAllDropdownOpen;
-    private readonly Dictionary<string, bool> _filterPopoverOpen = new();
+    // Bumped to close any open header popup (filter popover, column menu) after an action taken
+    // from it. The popups hold their own open state: see DataGridPopupScope.
+    private int headerPopupCloseVersion;
     private bool _needsDataRefresh = true;
     private bool columnStateInitialized;
     private int columnStateSyncedVersion = -1;
-    private readonly Dictionary<string, bool> _headerMenuOpen = new();
 
     // Grouping/hierarchy state
     private List<DataGridRenderItem<TData>>? _groupedRenderItems;
@@ -137,6 +138,10 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     // per cell. ClassNames.cn() validates and merges every token it is given, and running it for
     // every cell of a 100-row page was a large share of a page change in WebAssembly (#655).
     private readonly Dictionary<IDataGridColumn<TData>, string> cellClassCache = new(ReferenceEqualityComparer.Instance);
+
+    // Pinned (sticky) offsets per column for the current render. Each pinned cell otherwise walks
+    // every visible column to sum the widths before it.
+    private readonly Dictionary<IDataGridColumn<TData>, string?> pinnedStyleCache = new(ReferenceEqualityComparer.Instance);
     private string? rowClassCache;
 
     // Expand column reference for detail rows
@@ -1387,32 +1392,34 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
         return columnId;
     }
 
-    private bool GetHeaderMenuOpen(string columnId) =>
-        _headerMenuOpen.TryGetValue(columnId, out var open) && open;
-
-    private void SetHeaderMenuOpen(string columnId, bool open)
+    /// <summary>
+    /// Wraps a header popup in a <see cref="DataGridPopupScope"/>, which holds its open state so
+    /// opening it re-renders the scope rather than the grid. Built here rather than as a tag in
+    /// markup because the scope is internal, and Razor only resolves public component tags.
+    /// </summary>
+    private RenderFragment PopupScope(RenderFragment<DataGridPopupState> popup) => builder =>
     {
-        _headerMenuOpen[columnId] = open;
-
-        // Same reasoning as SetFilterPopoverOpen — BbDropdownMenu is controlled the same way.
-        _stateVersion++;
-    }
+        builder.OpenComponent<DataGridPopupScope>(0);
+        builder.AddComponentParameter(1, nameof(DataGridPopupScope.CloseVersion), headerPopupCloseVersion);
+        builder.AddComponentParameter(2, nameof(DataGridPopupScope.ChildContent), popup);
+        builder.CloseComponent();
+    };
 
     private async Task HandleGroupByColumnAsync(string columnId)
     {
-        _headerMenuOpen[columnId] = false;
+        headerPopupCloseVersion++;
         await GroupByColumnAsync(columnId);
     }
 
     private async Task HandleUngroupColumnAsync(string columnId)
     {
-        _headerMenuOpen[columnId] = false;
+        headerPopupCloseVersion++;
         await RemoveGroupByColumnAsync(columnId);
     }
 
     private async Task HandleAddGroupColumnAsync(string columnId)
     {
-        _headerMenuOpen[columnId] = false;
+        headerPopupCloseVersion++;
         await AddGroupByColumnAsync(columnId);
     }
 
@@ -1461,6 +1468,7 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     {
         _cachedVisibleColumns = GetVisibleColumns();
         cellClassCache.Clear();
+        pinnedStyleCache.Clear();
         rowClassCache = null;
         _cachedLastLeftId = _cachedVisibleColumns.LastOrDefault(c => c.Pinned == ColumnPinning.Left)?.ColumnId;
         _cachedFirstRightId = _cachedVisibleColumns.FirstOrDefault(c => c.Pinned == ColumnPinning.Right)?.ColumnId;
@@ -3162,23 +3170,9 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
     /// Handles a column filter being applied or cleared.
     /// Updates state, resets pagination, reprocesses data, and fires OnFilter.
     /// </summary>
-    private bool GetFilterPopoverOpen(string columnId) =>
-        _filterPopoverOpen.TryGetValue(columnId, out var open) && open;
-
-    private void SetFilterPopoverOpen(string columnId, bool open)
-    {
-        _filterPopoverOpen[columnId] = open;
-
-        // ShouldRender gates on these version counters, so a change it cannot see is a change
-        // that never reaches the DOM. Without the bump the grid skipped the re-render, BbPopover
-        // never received fresh parameters, and its controlled value stayed stale — after which
-        // dismissing a filter stopped reporting back and left the button dead (#437).
-        _stateVersion++;
-    }
-
     internal async Task HandleColumnFilterChanged(string columnId, FilterCondition? condition)
     {
-        _filterPopoverOpen[columnId] = false;
+        headerPopupCloseVersion++;
         _filterVersion++;
         _gridState.Filtering.SetFilter(columnId, condition);
         _gridState.Pagination.GoToPage(1);
@@ -4498,6 +4492,23 @@ public partial class BbDataGrid<TData> : ComponentBase, IAsyncDisposable where T
             return null;
         }
 
+        if (!ReferenceEquals(visibleColumns, _cachedVisibleColumns))
+        {
+            return BuildPinnedStyle(column, visibleColumns);
+        }
+
+        if (!pinnedStyleCache.TryGetValue(column, out var style))
+        {
+            style = BuildPinnedStyle(column, visibleColumns);
+            pinnedStyleCache[column] = style;
+        }
+
+        return style;
+    }
+
+    private string BuildPinnedStyle(IDataGridColumn<TData> column,
+        IReadOnlyList<IDataGridColumn<TData>> visibleColumns)
+    {
         var offset = 0.0;
 
         if (column.Pinned == ColumnPinning.Left)

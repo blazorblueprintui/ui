@@ -9,7 +9,7 @@ namespace BlazorBlueprint.Components;
 /// Use this for columns that display actions, badges, or other custom content.
 /// </summary>
 /// <typeparam name="TData">The type of data items in the grid.</typeparam>
-public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridColumn<TData>, IFilterableColumn
+public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridColumn<TData>, IFilterableColumn, IItemCellTemplateColumn<TData>
     where TData : class
 {
     private Func<TData, object>? compiledSortBy;
@@ -228,7 +228,7 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
 
     // IDataGridColumn implementation
 
-    public string ColumnId => Id ?? Title.ToLowerInvariant().Replace(" ", "-");
+    public string ColumnId => Id ?? DeriveColumnId();
 
     string? IDataGridColumn<TData>.Title => Title;
 
@@ -251,6 +251,8 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
     bool IDataGridColumn<TData>.Reorderable => Reorderable && Pinned == ColumnPinning.None;
 
     ColumnPinning IDataGridColumn<TData>.Pinned => Pinned;
+
+    RenderFragment<TData>? IItemCellTemplateColumn<TData>.ItemCellTemplate => ChildContent;
 
     RenderFragment<DataGridCellContext<TData>>? IDataGridColumn<TData>.CellTemplate =>
         ChildContent != null
@@ -378,5 +380,20 @@ public partial class BbDataGridTemplateColumn<TData> : ComponentBase, IDataGridC
         }
 
         ParentGrid.RegisterColumn(this);
+    }
+
+    private string? derivedColumnId;
+    private string? derivedIdTitle;
+
+    // The grid reads the ID many times per cell per render; derive it once per Title.
+    private string DeriveColumnId()
+    {
+        if (derivedColumnId is null || !ReferenceEquals(derivedIdTitle, Title))
+        {
+            derivedColumnId = Title.ToLowerInvariant().Replace(" ", "-");
+            derivedIdTitle = Title;
+        }
+
+        return derivedColumnId;
     }
 }

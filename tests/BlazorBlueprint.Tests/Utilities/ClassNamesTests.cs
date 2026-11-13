@@ -175,4 +175,37 @@ public class ClassNamesTests
     [Fact]
     public void ConsumerOnlyInputIsUntouchedByPrefixHandling() =>
         Assert.Equal("btn px-2", ClassNames.cn("btn", "px-4", "px-2"));
+
+    [Theory]
+    [InlineData("btn expression(alert(1))", "btn")]
+    [InlineData("btn javascript:alert", "btn")]
+    [InlineData("btn bg-[url(x.png)]", "btn")]
+    [InlineData("btn @import", "btn")]
+    [InlineData("btn a<b", "btn")]
+    [InlineData("btn a;b", "btn")]
+    [InlineData("btn a\"b", "btn")]
+    [InlineData("btn [&>svg]:size-4 w-1/2 data-[state=open]:block", "btn [&>svg]:size-4 w-1/2 data-[state=open]:block")]
+    public void UnsafeTokensAreDroppedAndSafeOnesKept(string input, string expected) =>
+        Assert.Equal(expected, ClassNames.cn(input));
+
+    [Fact]
+    public void OverlongTokenIsDropped() =>
+        Assert.Equal("btn", ClassNames.cn("btn", new string('a', 201)));
+
+    [Fact]
+    public void RepeatedCallsReturnTheSameResult()
+    {
+        // cn() caches its results; a cached call must match the first.
+        var first = ClassNames.cn("bb:p-4 bb:rounded-md", "p-6", null, false);
+        Assert.Equal(first, ClassNames.cn("bb:p-4 bb:rounded-md", "p-6", null, false));
+        Assert.Equal("bb:rounded-md p-6", first);
+    }
+
+    [Fact]
+    public void SplittingInputsAcrossArgumentsGivesTheSameResult() =>
+        Assert.Equal(ClassNames.cn("px-4 py-2", "px-2"), ClassNames.cn("px-4", "py-2 px-2"));
+
+    [Fact]
+    public void NonStringInputsBypassTheCacheButStillMerge() =>
+        Assert.Equal("a c px-2", ClassNames.cn("a", new List<string> { "px-4", "c" }, "px-2"));
 }

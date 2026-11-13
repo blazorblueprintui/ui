@@ -14,11 +14,14 @@ namespace BlazorBlueprint.Components;
 /// </summary>
 /// <typeparam name="TData">The type of data items in the grid.</typeparam>
 /// <typeparam name="TProp">The type of the property this column binds to.</typeparam>
-public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDataGridColumn<TData>, IFilterableColumn
+public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDataGridColumn<TData>, IFilterableColumn, IItemCellTemplateColumn<TData>
     where TData : class
 {
     private string? resolvedTitle;
     private Func<TData, TProp>? compiledProperty;
+    private string? derivedColumnId;
+    private Expression? derivedIdProperty;
+    private string? derivedIdTitle;
     private Func<TData, object?>? compiledSortAndFilterBy;
 
     /// <summary>
@@ -307,6 +310,8 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
 
     ColumnPinning IDataGridColumn<TData>.Pinned => Pinned;
 
+    RenderFragment<TData>? IItemCellTemplateColumn<TData>.ItemCellTemplate => CellTemplate;
+
     RenderFragment<DataGridCellContext<TData>>? IDataGridColumn<TData>.CellTemplate =>
         CellTemplate != null
             ? context => CellTemplate(context.Item)
@@ -508,13 +513,20 @@ public partial class BbDataGridPropertyColumn<TData, TProp> : ComponentBase, IDa
 
     private string GetColumnId()
     {
-        // Derive ID from the property expression member name
-        if (Property.Body is MemberExpression member)
+        // The grid reads the ID many times per cell per render; derive it once per Property/Title.
+        var title = Title ?? resolvedTitle;
+        if (derivedColumnId is not null && ReferenceEquals(derivedIdProperty, Property) && ReferenceEquals(derivedIdTitle, title))
         {
-            return member.Member.Name.ToLowerInvariant();
+            return derivedColumnId;
         }
 
-        return (Title ?? resolvedTitle ?? "column").ToLowerInvariant().Replace(" ", "-");
+        // Derive ID from the property expression member name
+        derivedColumnId = Property.Body is MemberExpression member
+            ? member.Member.Name.ToLowerInvariant()
+            : (title ?? "column").ToLowerInvariant().Replace(" ", "-");
+        derivedIdProperty = Property;
+        derivedIdTitle = title;
+        return derivedColumnId;
     }
 
     private string InferTitleFromExpression()

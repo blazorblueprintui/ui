@@ -301,8 +301,10 @@
                                                 var hasActiveFilter = _gridState.Filtering.HasFilter(column.ColumnId);
                                                 var filterColumn = column;
                                                 <div @onclick:stopPropagation="true" class="bb:inline-flex">
-                                                    <BbPopover Open="@(GetFilterPopoverOpen(filterColumn.ColumnId))"
-                                                               OpenChanged="@(open => SetFilterPopoverOpen(filterColumn.ColumnId, open))">
+                                                    @* The open state lives in the scope so opening the filter re-renders
+                                                       the scope, not every row of the grid. *@
+                                                    @PopupScope(filterPopup => @<BbPopover Open="@filterPopup.Open"
+                                                               OpenChanged="@filterPopup.OpenChanged">
                                                         <BbPopoverTrigger AsChild="true">
                                                             <BbButton Variant="ButtonVariant.Ghost"
                                                                       Size="ButtonSize.Icon"
@@ -329,7 +331,7 @@
                                                                 }
                                                             }
                                                         </BbPopoverContent>
-                                                    </BbPopover>
+                                                    </BbPopover>)
                                                 </div>
                                             }
                                             @if (CanGroupColumn(column))
@@ -337,8 +339,8 @@
                                                 var menuColumn = column;
                                                 var isGroupedByColumn = IsGroupedBy(menuColumn.ColumnId);
                                                 <div @onclick:stopPropagation="true" class="bb:inline-flex">
-                                                    <BbDropdownMenu Open="@(GetHeaderMenuOpen(menuColumn.ColumnId))"
-                                                                    OpenChanged="@(open => SetHeaderMenuOpen(menuColumn.ColumnId, open))">
+                                                    @PopupScope(columnMenu => @<BbDropdownMenu Open="@columnMenu.Open"
+                                                                    OpenChanged="@columnMenu.OpenChanged">
                                                         <BbDropdownMenuTrigger AsChild="true">
                                                             <BbButton Variant="ButtonVariant.Ghost"
                                                                       Size="ButtonSize.Icon"
@@ -374,7 +376,7 @@
                                                                 }
                                                             }
                                                         </BbDropdownMenuContent>
-                                                    </BbDropdownMenu>
+                                                    </BbDropdownMenu>)
                                                 </div>
                                             }
                                         </div>
@@ -916,9 +918,14 @@
     });
 
     private RenderFragment RenderCellValue(IDataGridColumn<TData> column, TData item, TData? displayItem = null, bool sizingOnly = false) => @<text>
-        @if (column.CellTemplate != null)
+        @if (column is IItemCellTemplateColumn<TData> { ItemCellTemplate: { } itemTemplate })
         {
-            @column.CellTemplate(new DataGridCellContext<TData> { Item = displayItem ?? DisplayItem(item), Column = column, Value = column.GetValue(displayItem ?? DisplayItem(item)) })
+            @itemTemplate(displayItem ?? DisplayItem(item))
+        }
+        else if (column.CellTemplate is { } cellTemplate)
+        {
+            var shown = displayItem ?? DisplayItem(item);
+            @cellTemplate(new DataGridCellContext<TData> { Item = shown, Column = column, Value = column.GetValue(shown) })
         }
         else
         {
